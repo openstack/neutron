@@ -259,7 +259,7 @@ command:
    +-------------------------------+-------------+--------------------------------+
 
 
-Use the :command:`neutron rbac-show` command to see the details:
+Use the :command:`openstack network rbac show` command to see the details:
 
 .. code-block:: console
 

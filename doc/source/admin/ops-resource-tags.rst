@@ -112,106 +112,153 @@ Add a tag to a resource:
 
 .. code-block:: console
 
-    $ neutron tag-add --resource-type network --resource ab442634-1cc9-49e5-bd49-0dac9c811f69 --tag red
-    $ neutron net-show net
-    +-------------------------+--------------------------------------+
-    | Field                   | Value                                |
-    +-------------------------+--------------------------------------+
-    | admin_state_up          | True                                 |
-    | availability_zone_hints |                                      |
-    | availability_zones      |                                      |
-    | id                      | ab442634-1cc9-49e5-bd49-0dac9c811f69 |
-    | ipv4_address_scope      |                                      |
-    | ipv6_address_scope      |                                      |
-    | mtu                     | 1450                                 |
-    | name                    | net                                  |
-    | port_security_enabled   | True                                 |
-    | router:external         | False                                |
-    | shared                  | False                                |
-    | status                  | ACTIVE                               |
-    | subnets                 |                                      |
-    | tags                    | red                                  |
-    | tenant_id               | e6710680bfd14555891f265644e1dd5c     |
-    +-------------------------+--------------------------------------+
+    $ openstack network set --tag red ab442634-1cc9-49e5-bd49-0dac9c811f69
+    $ openstack network show net
+    +---------------------------+----------------------------------------------------------------------------+
+    | Field                     | Value                                                                      |
+    +---------------------------+----------------------------------------------------------------------------+
+    | admin_state_up            | UP                                                                         |
+    | availability_zone_hints   |                                                                            |
+    | availability_zones        | nova                                                                       |
+    | created_at                | 2018-07-11T09:44:50Z                                                       |
+    | description               |                                                                            |
+    | dns_domain                | None                                                                       |
+    | id                        | ab442634-1cc9-49e5-bd49-0dac9c811f69                                       |
+    | ipv4_address_scope        | None                                                                       |
+    | ipv6_address_scope        | None                                                                       |
+    | is_default                | None                                                                       |
+    | is_vlan_transparent       | None                                                                       |
+    | mtu                       | 1450                                                                       |
+    | name                      | net                                                                        |
+    | port_security_enabled     | True                                                                       |
+    | project_id                | e6710680bfd14555891f265644e1dd5c                                           |
+    | provider:network_type     | vxlan                                                                      |
+    | provider:physical_network | None                                                                       |
+    | provider:segmentation_id  | 1047                                                                       |
+    | qos_policy_id             | None                                                                       |
+    | revision_number           | 5                                                                          |
+    | router:external           | Internal                                                                   |
+    | segments                  | None                                                                       |
+    | shared                    | False                                                                      |
+    | status                    | ACTIVE                                                                     |
+    | subnets                   |                                                                            |
+    | tags                      | red                                                                        |
+    | updated_at                | 2018-07-16T06:22:01Z                                                       |
+    +---------------------------+----------------------------------------------------------------------------+
 
 Remove a tag from a resource:
 
 .. code-block:: console
 
-    $ neutron tag-remove --resource-type network --resource ab442634-1cc9-49e5-bd49-0dac9c811f69 --tag red
-    $ neutron net-show net
-    +-------------------------+--------------------------------------+
-    | Field                   | Value                                |
-    +-------------------------+--------------------------------------+
-    | admin_state_up          | True                                 |
-    | availability_zone_hints |                                      |
-    | availability_zones      |                                      |
-    | id                      | ab442634-1cc9-49e5-bd49-0dac9c811f69 |
-    | ipv4_address_scope      |                                      |
-    | ipv6_address_scope      |                                      |
-    | mtu                     | 1450                                 |
-    | name                    | net                                  |
-    | port_security_enabled   | True                                 |
-    | router:external         | False                                |
-    | shared                  | False                                |
-    | status                  | ACTIVE                               |
-    | subnets                 |                                      |
-    | tags                    |                                      |
-    | tenant_id               | e6710680bfd14555891f265644e1dd5c     |
-    +-------------------------+--------------------------------------+
+    $ openstack network unset --tag red ab442634-1cc9-49e5-bd49-0dac9c811f69
+    $ openstack network show net
+    +---------------------------+----------------------------------------------------------------------------+
+    | Field                     | Value                                                                      |
+    +---------------------------+----------------------------------------------------------------------------+
+    | admin_state_up            | UP                                                                         |
+    | availability_zone_hints   |                                                                            |
+    | availability_zones        | nova                                                                       |
+    | created_at                | 2018-07-11T09:44:50Z                                                       |
+    | description               |                                                                            |
+    | dns_domain                | None                                                                       |
+    | id                        | ab442634-1cc9-49e5-bd49-0dac9c811f69                                       |
+    | ipv4_address_scope        | None                                                                       |
+    | ipv6_address_scope        | None                                                                       |
+    | is_default                | None                                                                       |
+    | is_vlan_transparent       | None                                                                       |
+    | mtu                       | 1450                                                                       |
+    | name                      | net                                                                        |
+    | port_security_enabled     | True                                                                       |
+    | project_id                | e6710680bfd14555891f265644e1dd5c                                           |
+    | provider:network_type     | vxlan                                                                      |
+    | provider:physical_network | None                                                                       |
+    | provider:segmentation_id  | 1047                                                                       |
+    | qos_policy_id             | None                                                                       |
+    | revision_number           | 5                                                                          |
+    | router:external           | Internal                                                                   |
+    | segments                  | None                                                                       |
+    | shared                    | False                                                                      |
+    | status                    | ACTIVE                                                                     |
+    | subnets                   |                                                                            |
+    | tags                      |                                                                            |
+    | updated_at                | 2018-07-16T06:32:11Z                                                       |
+    +---------------------------+----------------------------------------------------------------------------+
 
 Replace all tags on the resource:
 
 .. code-block:: console
 
-    $ neutron tag-replace --resource-type network --resource ab442634-1cc9-49e5-bd49-0dac9c811f69 --tag red --tag blue
-    $ neutron net-show net
-    +-------------------------+--------------------------------------+
-    | Field                   | Value                                |
-    +-------------------------+--------------------------------------+
-    | admin_state_up          | True                                 |
-    | availability_zone_hints |                                      |
-    | availability_zones      |                                      |
-    | id                      | ab442634-1cc9-49e5-bd49-0dac9c811f69 |
-    | ipv4_address_scope      |                                      |
-    | ipv6_address_scope      |                                      |
-    | mtu                     | 1450                                 |
-    | name                    | net                                  |
-    | port_security_enabled   | True                                 |
-    | router:external         | False                                |
-    | shared                  | False                                |
-    | status                  | ACTIVE                               |
-    | subnets                 |                                      |
-    | tags                    | red                                  |
-    |                         | blue                                 |
-    | tenant_id               | e6710680bfd14555891f265644e1dd5c     |
-    +-------------------------+--------------------------------------+
+    $ openstack network set --tag red --tag blue ab442634-1cc9-49e5-bd49-0dac9c811f69
+    $ openstack network show net
+    +---------------------------+----------------------------------------------------------------------------+
+    | Field                     | Value                                                                      |
+    +---------------------------+----------------------------------------------------------------------------+
+    | admin_state_up            | UP                                                                         |
+    | availability_zone_hints   |                                                                            |
+    | availability_zones        | nova                                                                       |
+    | created_at                | 2018-07-11T09:44:50Z                                                       |
+    | description               |                                                                            |
+    | dns_domain                | None                                                                       |
+    | id                        | ab442634-1cc9-49e5-bd49-0dac9c811f69                                       |
+    | ipv4_address_scope        | None                                                                       |
+    | ipv6_address_scope        | None                                                                       |
+    | is_default                | None                                                                       |
+    | is_vlan_transparent       | None                                                                       |
+    | mtu                       | 1450                                                                       |
+    | name                      | net                                                                        |
+    | port_security_enabled     | True                                                                       |
+    | project_id                | e6710680bfd14555891f265644e1dd5c                                           |
+    | provider:network_type     | vxlan                                                                      |
+    | provider:physical_network | None                                                                       |
+    | provider:segmentation_id  | 1047                                                                       |
+    | qos_policy_id             | None                                                                       |
+    | revision_number           | 5                                                                          |
+    | router:external           | Internal                                                                   |
+    | segments                  | None                                                                       |
+    | shared                    | False                                                                      |
+    | status                    | ACTIVE                                                                     |
+    | subnets                   |                                                                            |
+    | tags                      | blue, red                                                                  |
+    | updated_at                | 2018-07-16T06:50:19Z                                                       |
+    +---------------------------+----------------------------------------------------------------------------+
 
 Clear tags from a resource:
 
 .. code-block:: console
 
-    $ neutron tag-remove --resource-type network --resource ab442634-1cc9-49e5-bd49-0dac9c811f69 --all
-    $ neutron net-show net
-    +-------------------------+--------------------------------------+
-    | Field                   | Value                                |
-    +-------------------------+--------------------------------------+
-    | admin_state_up          | True                                 |
-    | availability_zone_hints |                                      |
-    | availability_zones      |                                      |
-    | id                      | ab442634-1cc9-49e5-bd49-0dac9c811f69 |
-    | ipv4_address_scope      |                                      |
-    | ipv6_address_scope      |                                      |
-    | mtu                     | 1450                                 |
-    | name                    | net                                  |
-    | port_security_enabled   | True                                 |
-    | router:external         | False                                |
-    | shared                  | False                                |
-    | status                  | ACTIVE                               |
-    | subnets                 |                                      |
-    | tags                    |                                      |
-    | tenant_id               | e6710680bfd14555891f265644e1dd5c     |
-    +-------------------------+--------------------------------------+
+    $ openstack network unset --all-tag ab442634-1cc9-49e5-bd49-0dac9c811f69
+    $ openstack network show net
+    +---------------------------+----------------------------------------------------------------------------+
+    | Field                     | Value                                                                      |
+    +---------------------------+----------------------------------------------------------------------------+
+    | admin_state_up            | UP                                                                         |
+    | availability_zone_hints   |                                                                            |
+    | availability_zones        | nova                                                                       |
+    | created_at                | 2018-07-11T09:44:50Z                                                       |
+    | description               |                                                                            |
+    | dns_domain                | None                                                                       |
+    | id                        | ab442634-1cc9-49e5-bd49-0dac9c811f69                                       |
+    | ipv4_address_scope        | None                                                                       |
+    | ipv6_address_scope        | None                                                                       |
+    | is_default                | None                                                                       |
+    | is_vlan_transparent       | None                                                                       |
+    | mtu                       | 1450                                                                       |
+    | name                      | net                                                                        |
+    | port_security_enabled     | True                                                                       |
+    | project_id                | e6710680bfd14555891f265644e1dd5c                                           |
+    | provider:network_type     | vxlan                                                                      |
+    | provider:physical_network | None                                                                       |
+    | provider:segmentation_id  | 1047                                                                       |
+    | qos_policy_id             | None                                                                       |
+    | revision_number           | 5                                                                          |
+    | router:external           | Internal                                                                   |
+    | segments                  | None                                                                       |
+    | shared                    | False                                                                      |
+    | status                    | ACTIVE                                                                     |
+    | subnets                   |                                                                            |
+    | tags                      |                                                                            |
+    | updated_at                | 2018-07-16T07:03:02Z                                                       |
+    +---------------------------+----------------------------------------------------------------------------+
 
 Get list of resources with tag filters from networks. The networks are:
 test-net1 with "red" tag, test-net2 with "red" and "blue" tags, test-net3 with
@@ -221,21 +268,21 @@ Get list of resources with ``tags`` filter:
 
 .. code-block:: console
 
-    $ neutron net-list --tags red,blue
+    $ openstack network list --tags red,blue
     +--------------------------------------+-----------+---------+
-    | id                                   | name      | subnets |
+    | ID                                   | Name      | Subnets |
     +--------------------------------------+-----------+---------+
     | 8ca3b9ed-f578-45fa-8c44-c53f13aec05a | test-net3 |         |
     | e736e63d-42e4-4f4c-836c-6ad286ffd68a | test-net2 |         |
     +--------------------------------------+-----------+---------+
 
-Get list of resources with ``tags-any`` filter:
+Get list of resources with ``any-tags`` filter:
 
 .. code-block:: console
 
-    $ neutron net-list --tags-any red,blue
+    $ openstack network list --any-tags red,blue
     +--------------------------------------+-----------+---------+
-    | id                                   | name      | subnets |
+    | ID                                   | Name      | Subnets |
     +--------------------------------------+-----------+---------+
     | 30491224-3855-431f-a688-fb29df004d82 | test-net1 |         |
     | 8ca3b9ed-f578-45fa-8c44-c53f13aec05a | test-net3 |         |
@@ -246,21 +293,21 @@ Get list of resources with ``not-tags`` filter:
 
 .. code-block:: console
 
-    $ neutron net-list --not-tags red,blue
+    $ openstack network list --not-tags red,blue
     +--------------------------------------+-----------+---------+
-    | id                                   | name      | subnets |
+    | ID                                   | Name      | Subnets |
     +--------------------------------------+-----------+---------+
     | 30491224-3855-431f-a688-fb29df004d82 | test-net1 |         |
     | cdb3ed08-ca63-4090-ba12-30b366372993 | test-net4 |         |
     +--------------------------------------+-----------+---------+
 
-Get list of resources with ``not-tags-any`` filter:
+Get list of resources with ``not-any-tags`` filter:
 
 .. code-block:: console
 
-    $ neutron net-list --not-tags-any red,blue
+    $ openstack network list --not-any-tags red,blue
     +--------------------------------------+-----------+---------+
-    | id                                   | name      | subnets |
+    | ID                                   | Name      | Subnets |
     +--------------------------------------+-----------+---------+
     | cdb3ed08-ca63-4090-ba12-30b366372993 | test-net4 |         |
     +--------------------------------------+-----------+---------+

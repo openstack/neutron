@@ -249,32 +249,33 @@ Create the provider and self-service networks
 
    .. code-block:: console
 
-      $ neutron subnet-create --name provider --subnetpool provider \
-        --prefixlen 24 --allocation-pool start=203.0.113.11,end=203.0.113.254 \
-        --gateway 203.0.113.1 provider
-      Created a new subnet:
-      +-------------------+---------------------------------------------------+
-      | Field             | Value                                             |
-      +-------------------+---------------------------------------------------+
-      | allocation_pools  | {"start": "203.0.113.11", "end": "203.0.113.254"} |
-      | cidr              | 203.0.113.0/24                                    |
-      | created_at        | 2016-03-17T23:17:16                               |
-      | description       |                                                   |
-      | dns_nameservers   |                                                   |
-      | enable_dhcp       | True                                              |
-      | gateway_ip        | 203.0.113.1                                       |
-      | host_routes       |                                                   |
-      | id                | 8ed65d41-2b2a-4f3a-9f92-45adb266e01a              |
-      | ip_version        | 4                                                 |
-      | ipv6_address_mode |                                                   |
-      | ipv6_ra_mode      |                                                   |
-      | name              | provider                                          |
-      | network_id        | 68ec148c-181f-4656-8334-8f4eb148689d              |
-      | subnetpool_id     | 3771c0e7-7096-46d3-a3bd-699c58e70259              |
-      | tags              | []                                                |
-      | tenant_id         | b3ac05ef10bf441fbf4aa17f16ae1e6d                  |
-      | updated_at        | 2016-03-17T23:17:16                               |
-      +-------------------+---------------------------------------------------+
+      $ openstack subnet create --subnet-pool provider \
+        --prefix-length 24 --gateway 203.0.113.1 --network provider \
+        --allocation-pool start=203.0.113.11,end=203.0.113.254 provider
+      +-------------------+--------------------------------------+
+      | Field             | Value                                |
+      +-------------------+--------------------------------------+
+      | allocation_pools  | 203.0.113.11-203.0.113.254           |
+      | cidr              | 203.0.113.0/24                       |
+      | created_at        | 2016-03-17T23:17:16                  |
+      | description       |                                      |
+      | dns_nameservers   |                                      |
+      | enable_dhcp       | True                                 |
+      | gateway_ip        | 203.0.113.1                          |
+      | host_routes       |                                      |
+      | id                | 8ed65d41-2b2a-4f3a-9f92-45adb266e01a |
+      | ip_version        | 4                                    |
+      | ipv6_address_mode | None                                 |
+      | ipv6_ra_mode      | None                                 |
+      | name              | provider                             |
+      | network_id        | 68ec148c-181f-4656-8334-8f4eb148689d |
+      | project_id        | b3ac05ef10bf441fbf4aa17f16ae1e6d     |
+      | segment_id        | None                                 |
+      | service_types     |                                      |
+      | subnetpool_id     | 3771c0e7-7096-46d3-a3bd-699c58e70259 |
+      | tags              |                                      |
+      | updated_at        | 2016-03-17T23:17:16                  |
+      +-------------------+--------------------------------------+
 
    .. note::
 
@@ -380,13 +381,12 @@ Create the provider and self-service networks
 
    .. code-block:: console
 
-      $ neutron subnet-create --name selfservice1 --subnetpool selfservice \
-        --prefixlen 25 selfservice1
-      Created a new subnet:
+      $ openstack subnet create --network selfservice1 --subnet-pool selfservice \
+        --prefix-length 25 selfservice1
       +-------------------+----------------------------------------------------+
       | Field             | Value                                              |
       +-------------------+----------------------------------------------------+
-      | allocation_pools  | {"start": "192.0.2.2", "end": "192.0.2.127"}       |
+      | allocation_pools  | 192.0.2.2-192.0.2.127                              |
       | cidr              | 192.0.2.0/25                                       |
       | created_at        | 2016-03-17T23:20:20                                |
       | description       |                                                    |
@@ -400,6 +400,7 @@ Create the provider and self-service networks
       | ipv6_ra_mode      |                                                    |
       | name              | selfservice1                                       |
       | network_id        | be79de1e-5f56-11e6-9dfb-233e41cec48c               |
+      | project_id        | b3ac05ef10bf441fbf4aa17f16ae1e6d                   |
       | revision_number   | 1                                                  |
       | subnetpool_id     | c7e9737a-cfd3-45b5-a861-d1cee1135a92               |
       | tags              | []                                                 |
@@ -407,13 +408,12 @@ Create the provider and self-service networks
       | updated_at        | 2016-03-17T23:20:20                                |
       +-------------------+----------------------------------------------------+
 
-      $ neutron subnet-create --name selfservice2 --subnetpool selfservice \
-        --prefixlen 25 selfservice2
-      Created a new subnet:
+      $ openstack subnet create --network selfservice2 --subnet-pool selfservice \
+        --prefix-length 25 selfservice2
       +-------------------+------------------------------------------------+
       | Field             | Value                                          |
       +-------------------+------------------------------------------------+
-      | allocation_pools  | {"start": "192.0.2.130", "end": "192.0.2.254"} |
+      | allocation_pools  | 192.0.2.130-192.0.2.254                        |
       | cidr              | 192.0.2.128/25                                 |
       | created_at        | 2016-03-17T23:20:20                            |
       | description       |                                                |
@@ -427,6 +427,7 @@ Create the provider and self-service networks
       | ipv6_ra_mode      |                                                |
       | name              | selfservice2                                   |
       | network_id        | c1fd9846-5f56-11e6-a8ac-0f998d9cc0a2           |
+      | project_id        | b3ac05ef10bf441fbf4aa17f16ae1e6d               |
       | revision_number   | 1                                              |
       | subnetpool_id     | c7e9737a-cfd3-45b5-a861-d1cee1135a92           |
       | tags              | []                                             |
@@ -439,12 +440,11 @@ Create the provider and self-service networks
 
    .. code-block:: console
 
-      $ neutron subnet-create --name subnet3 selfservice3 198.51.100.0/24
-      Created a new subnet:
+      $ openstack subnet create --network selfservice3 --prefix 198.51.100.0/24 subnet3
       +-------------------+----------------------------------------------------+
       | Field             | Value                                              |
       +-------------------+----------------------------------------------------+
-      | allocation_pools  | {"start": "198.51.100.2", "end": "198.51.100.254"} |
+      | allocation_pools  | 198.51.100.2-198.51.100.254                        |
       | cidr              | 198.51.100.0/24                                    |
       | created_at        | 2016-03-17T23:20:20                                |
       | description       |                                                    |
@@ -458,6 +458,7 @@ Create the provider and self-service networks
       | ipv6_ra_mode      |                                                    |
       | name              | selfservice3                                       |
       | network_id        | c283dc1c-5f56-11e6-bfb6-efc30e1eb73b               |
+      | project_id        | b3ac05ef10bf441fbf4aa17f16ae1e6d                   |
       | revision_number   | 1                                                  |
       | subnetpool_id     |                                                    |
       | tags              | []                                                 |
@@ -548,27 +549,21 @@ Create and configure the routers
 
    .. code-block:: console
 
-      $ neutron router-interface-add router1 selfservice1
-      Added interface 90e3880a-5f5c-11e6-914c-9f3e20c8c151 to router router1.
+      $ openstack router add subnet router1 selfservice1
 
-      $ neutron router-interface-add router2 selfservice2
-      Added interface 91628362-5f5c-11e6-826a-7322fb03a821 to router router2.
+      $ openstack router add subnet router2 selfservice2
 
-      $ neutron router-interface-add router3 selfservice3
-      Added interface 91d51044-5f5c-11e6-bf55-ffd180541cc2 to router router3.
+      $ openstack router add subnet router3 selfservice3
 
 #. Add the provider network as a gateway on each router.
 
    .. code-block:: console
 
-      $ neutron router-gateway-set router1 provider
-      Set gateway for router router1
+      $ openstack router set --external-gateway provider router1
 
-      $ neutron router-gateway-set router2 provider
-      Set gateway for router router2
+      $ openstack router set --external-gateway provider router2
 
-      $ neutron router-gateway-set router3 provider
-      Set gateway for router router3
+      $ openstack router set --external-gateway provider router3
 
 Create and configure the BGP speaker
 ------------------------------------
@@ -815,13 +810,13 @@ assist with verifying operation of the BGP speaker.
 
 .. code-block:: console
 
-   $ neutron port-list --device_owner="network:floatingip_agent_gateway"
+   $ openstack port list --device-owner network:floatingip_agent_gateway
    +--------------------------------------+------+-------------------+--------------------------------------------------------------------------------------------------------+
-   | id                                   | name | mac_address       | fixed_ips                                                                                              |
+   | ID                                   | Name | MAC Address       | Fixed IP Addresses                                                                                     |
    +--------------------------------------+------+-------------------+--------------------------------------------------------------------------------------------------------+
-   | 87cf2970-4970-462e-939e-00e808295dfa |      | fa:16:3e:7c:68:e3 | {"subnet_id": "8ed65d41-2b2a-4f3a-9f92-45adb266e01a", "ip_address": "203.0.113.12"}                    |
-   | 8d218440-0d2e-49d0-8a7b-3266a6146dc1 |      | fa:16:3e:9d:78:cf | {"subnet_id": "8ed65d41-2b2a-4f3a-9f92-45adb266e01a", "ip_address": "203.0.113.13"}                    |
-   | 87cf2970-4970-462e-939e-00e802281dfa |      | fa:16:3e:6b:18:e0 | {"subnet_id": "8ed65d41-2b2a-4f3a-9f92-45adb266e01a", "ip_address": "203.0.113.14"}                    |
+   | 87cf2970-4970-462e-939e-00e808295dfa |      | fa:16:3e:7c:68:e3 | ip_address='203.0.113.12', subnet_id='8ed65d41-2b2a-4f3a-9f92-45adb266e01a'                            |
+   | 8d218440-0d2e-49d0-8a7b-3266a6146dc1 |      | fa:16:3e:9d:78:cf | ip_address='203.0.113.13', subnet_id='8ed65d41-2b2a-4f3a-9f92-45adb266e01a'                            |
+   | 87cf2970-4970-462e-939e-00e802281dfa |      | fa:16:3e:6b:18:e0 | ip_address='203.0.113.14', subnet_id='8ed65d41-2b2a-4f3a-9f92-45adb266e01a'                            |
    +--------------------------------------+------+-------------------+--------------------------------------------------------------------------------------------------------+
 
 IPv6
