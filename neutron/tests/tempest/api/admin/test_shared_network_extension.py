@@ -263,25 +263,9 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         with testtools.ExpectedException(lib_exc.Conflict):
             self.admin_client.delete_rbac_policy(res['policy']['id'])
 
-        # a wildcard policy should allow the specific policy to be deleted
-        # since it allows the remaining port
-        wild = self.admin_client.create_rbac_policy(
-            object_type='network', object_id=res['network']['id'],
-            action='access_as_shared', target_tenant='*')['rbac_policy']
-        self.admin_client.delete_rbac_policy(res['policy']['id'])
-
-        # now that wildcard is the only remaining, it should be subjected to
-        # to the same restriction
-        with testtools.ExpectedException(lib_exc.Conflict):
-            self.admin_client.delete_rbac_policy(wild['id'])
-        # similarly, we can't update the policy to a different tenant
-        with testtools.ExpectedException(lib_exc.Conflict):
-            self.admin_client.update_rbac_policy(
-                wild['id'], target_tenant=self.client2.tenant_id)
-
         self.client.delete_port(port['id'])
         # anchor is gone, delete should pass
-        self.admin_client.delete_rbac_policy(wild['id'])
+        self.admin_client.delete_rbac_policy(res['policy']['id'])
 
     @decorators.idempotent_id('34d627da-a732-68c0-2e1a-bc4a19246698')
     def test_delete_self_share_rule(self):
