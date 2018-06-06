@@ -35,7 +35,8 @@ class SecurityGroupRBAC(rbac.RBACBaseObject):
 class SecurityGroup(rbac_db.NeutronRbacObject):
     # Version 1.0: Initial version
     # Version 1.1: Add RBAC support
-    VERSION = '1.1'
+    # Version 1.2: Added stateful support
+    VERSION = '1.2'
 
     # required by RbacNeutronMetaclass
     rbac_db_cls = SecurityGroupRBAC
@@ -46,6 +47,7 @@ class SecurityGroup(rbac_db.NeutronRbacObject):
         'name': obj_fields.StringField(nullable=True),
         'project_id': obj_fields.StringField(nullable=True),
         'shared': obj_fields.BooleanField(default=False),
+        'stateful': obj_fields.BooleanField(default=True),
         'is_default': obj_fields.BooleanField(default=False),
         'rules': obj_fields.ListOfObjectsField(
             'SecurityGroupRule', nullable=True
@@ -83,10 +85,16 @@ class SecurityGroup(rbac_db.NeutronRbacObject):
                     bool(db_obj.get('default_security_group')))
             self.obj_reset_changes(['is_default'])
 
+    @classmethod
+    def get_sg_by_id(cls, context, sg_id):
+        return super(SecurityGroup, cls).get_object(context, id=sg_id)
+
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 1):
             primitive.pop('shared')
+        if _target_version < (1, 2):
+            primitive.pop('stateful')
 
     @classmethod
     def get_bound_tenant_ids(cls, context, obj_id):

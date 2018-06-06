@@ -96,6 +96,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                                   desired_state=s))
 
         tenant_id = s['tenant_id']
+        stateful = s.get('stateful', True)
 
         if not default_sg:
             self._ensure_default_security_group(context, tenant_id)
@@ -109,7 +110,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             sg = sg_obj.SecurityGroup(
                 context, id=s.get('id') or uuidutils.generate_uuid(),
                 description=s['description'], project_id=tenant_id,
-                name=s['name'], is_default=default_sg)
+                name=s['name'], is_default=default_sg, stateful=stateful)
             sg.create()
 
             delta = len(ext_sg.sg_supported_ethertypes)
@@ -277,6 +278,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
     @db_api.retry_if_session_inactive()
     def update_security_group(self, context, id, security_group):
         s = security_group['security_group']
+        if 'stateful' in s:
+            filters = {'security_group_id': [id]}
+            with db_api.CONTEXT_READER.using(context):
+                ports = self._get_port_security_group_bindings(context,
+                                                               filters)
+                if ports:
+                    raise ext_sg.SecurityGroupInUse(id=id)
 
         kwargs = {
             'context': context,
@@ -311,6 +319,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
     def _make_security_group_dict(self, security_group, fields=None):
         res = {'id': security_group['id'],
                'name': security_group['name'],
+               'stateful': security_group['stateful'],
                'tenant_id': security_group['tenant_id'],
                'description': security_group['description']}
         if security_group.rules:
@@ -621,6 +630,15 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                                    tenant_id=rule['tenant_id'])
         return security_group_id
 
+    @staticmethod
+    def _validate_sgs_for_port(security_groups):
+        if not security_groups:
+            return
+        if not len(set(sg.stateful for sg in security_groups)) == 1:
+            msg = ("Cannot apply both stateful and stateless security "
+                   "groups on the same port at the same time")
+            raise ext_sg.SecurityGroupConflict(reason=msg)
+
     def _validate_security_group_rules(self, context, security_group_rules):
         sg_id = self._validate_single_tenant_and_group(security_group_rules)
         for rule in security_group_rules['security_group_rules']:
@@ -793,15 +811,16 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         return port_res
 
     def _process_port_create_security_group(self, context, port,
-                                            security_group_ids):
-        if validators.is_attr_set(security_group_ids):
-            for security_group_id in security_group_ids:
+                                            security_groups):
+        self._validate_sgs_for_port(security_groups)
+        if validators.is_attr_set(security_groups):
+            for sg in security_groups:
                 self._create_port_security_group_binding(context, port['id'],
-                                                         security_group_id)
+                                                         sg.id)
         # Convert to list as a set might be passed here and
         # this has to be serialized
-        port[ext_sg.SECURITYGROUPS] = (security_group_ids and
-                                       list(security_group_ids) or [])
+        port[ext_sg.SECURITYGROUPS] = ([sg.id for sg in security_groups] if
+                                       security_groups else [])
 
     def _get_default_sg_id(self, context, tenant_id):
         default_group = sg_obj.DefaultSecurityGroup.get_object(
@@ -844,7 +863,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
     def _get_security_groups_on_port(self, context, port):
         """Check that all security groups on port belong to tenant.
 
-        :returns: all security groups IDs on port belonging to tenant.
+        :returns: all security groups on port belonging to tenant)
+
         """
         port = port['port']
         if not validators.is_attr_set(port.get(ext_sg.SECURITYGROUPS)):
@@ -869,7 +889,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         if port_sg_missing:
             raise ext_sg.SecurityGroupNotFound(id=', '.join(port_sg_missing))
 
-        return list(requested_groups)
+        return sg_objs
 
     def _ensure_default_security_group_on_port(self, context, port):
         # we don't apply security groups for dhcp, router
@@ -920,13 +940,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                 original_port.get(ext_sg.SECURITYGROUPS),
                 port_updates[ext_sg.SECURITYGROUPS])):
             # delete the port binding and read it with the new rules
-            port_updates[ext_sg.SECURITYGROUPS] = (
-                self._get_security_groups_on_port(context, port))
+            sgs = self._get_security_groups_on_port(context, port)
+            port_updates[ext_sg.SECURITYGROUPS] = [sg.id for sg in sgs]
             self._delete_port_security_group_bindings(context, id)
             self._process_port_create_security_group(
                 context,
                 updated_port,
-                port_updates[ext_sg.SECURITYGROUPS])
+                sgs)
             need_notify = True
         else:
             updated_port[ext_sg.SECURITYGROUPS] = (

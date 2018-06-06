@@ -98,7 +98,7 @@ object_data = {
     'RouterL3AgentBinding': '1.0-c5ba6c95e3a4c1236a55f490cd67da82',
     'RouterPort': '1.0-c8c8f499bcdd59186fcd83f323106908',
     'RouterRoute': '1.0-07fc5337c801fb8c6ccfbcc5afb45907',
-    'SecurityGroup': '1.1-f712265418f154f7c080e02857ffe2ef',
+    'SecurityGroup': '1.2-7b63b834e511856f54a09282d6843ecc',
     'SecurityGroupPortBinding': '1.0-6879d5c0af80396ef5a72934b6a6ef20',
     'SecurityGroupRBAC': '1.0-192845c5ed0718e1c54fac36936fcd7d',
     'SecurityGroupRule': '1.0-e9b8dace9d48b936c62ad40fe1f339d5',

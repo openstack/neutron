@@ -27,6 +27,7 @@ from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import securitygroup as ext_sg
+from neutron.objects import securitygroup as sg_obj
 
 
 DIRECTION_IP_PREFIX = {'ingress': 'source_ip_prefix',
@@ -189,9 +190,12 @@ class SecurityGroupInfoAPIMixin(object):
                     remote_security_group_info[remote_gid][ethertype] = set()
 
             direction = rule_in_db['direction']
+            stateful = self._is_security_group_stateful(context,
+                                                        security_group_id)
             rule_dict = {
                 'direction': direction,
-                'ethertype': ethertype}
+                'ethertype': ethertype,
+                'stateful': stateful}
 
             for key in ('protocol', 'port_range_min', 'port_range_max',
                         'remote_ip_prefix', 'remote_group_id'):
@@ -351,6 +355,14 @@ class SecurityGroupInfoAPIMixin(object):
         """
         raise NotImplementedError()
 
+    def _is_security_group_stateful(self, context, sg_id):
+        """Return whether the security group is stateful or not.
+
+        Return True if the security group associated with the given ID
+        is stateful, else False.
+        """
+        return True
+
 
 class SecurityGroupServerRpcMixin(SecurityGroupInfoAPIMixin,
                                   SecurityGroupServerNotifierRpcMixin):
@@ -415,3 +427,7 @@ class SecurityGroupServerRpcMixin(SecurityGroupInfoAPIMixin,
             if allowed_addr_ip:
                 ips_by_group[security_group_id].add(allowed_addr_ip)
         return ips_by_group
+
+    @db_api.retry_if_session_inactive()
+    def _is_security_group_stateful(self, context, sg_id):
+        return sg_obj.SecurityGroup.get_sg_by_id(context, sg_id).stateful

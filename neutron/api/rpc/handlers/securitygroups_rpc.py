@@ -24,6 +24,7 @@ from neutron_lib.utils import net
 from oslo_log import log as logging
 import oslo_messaging
 
+from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.db import securitygroups_rpc_base as sg_rpc_base
 
@@ -354,3 +355,7 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
         sg_ids = set((sg_id for p in ports.values()
                       for sg_id in p['security_group_ids']))
         return [(sg_id, ) for sg_id in sg_ids]
+
+    def _is_security_group_stateful(self, context, sg_id):
+        sg = self.rcache.get_resource_by_id(resources.SECURITYGROUP, sg_id)
+        return sg.stateful

@@ -92,8 +92,6 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def create_port(self, context, port):
         p = port['port']
-        p[ext_sg.SECURITYGROUPS] = self._get_security_groups_on_port(
-            context, port)
         neutron_db = super(PortSecurityTestPlugin, self).create_port(
             context, port)
         p.update(neutron_db)
@@ -111,9 +109,12 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         if has_ip and port_security:
             self._ensure_default_security_group_on_port(context, port)
 
+        sgs = self._get_security_groups_on_port(context, port)
+        p[ext_sg.SECURITYGROUPS] = [sg['id'] for sg in sgs] if sgs else None
+
         if (p.get(ext_sg.SECURITYGROUPS) and p[psec.PORTSECURITY]):
             self._process_port_create_security_group(
-                context, p, p[ext_sg.SECURITYGROUPS])
+                context, p, sgs)
 
         return port['port']
 
@@ -156,11 +157,11 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             if (delete_security_groups or has_security_groups):
                 # delete the port binding and read it with the new rules.
                 self._delete_port_security_group_bindings(context, id)
-                sgids = self._get_security_groups_on_port(context, port)
+                sgs = self._get_security_groups_on_port(context, port)
                 # process port create sec groups needs port id
                 port['id'] = id
                 self._process_port_create_security_group(context,
-                                                         ret_port, sgids)
+                                                         ret_port, sgs)
 
             if psec.PORTSECURITY in port['port']:
                 self._process_port_port_security_update(

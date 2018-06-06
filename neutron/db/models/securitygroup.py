@@ -16,6 +16,7 @@ from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
+from sqlalchemy import sql
 
 from neutron.db import models_v2
 from neutron.db import rbac_db_models
@@ -28,6 +29,9 @@ class SecurityGroup(standard_attr.HasStandardAttributes, model_base.BASEV2,
     """Represents a v2 neutron security group."""
 
     name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
+    stateful = sa.Column(sa.Boolean,
+                         default=True, server_default=sql.true(),
+                         nullable=False)
     rbac_entries = sa.orm.relationship(rbac_db_models.SecurityGroupRBAC,
                                        backref='security_group',
                                        lazy='subquery',

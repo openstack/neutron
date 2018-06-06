@@ -97,7 +97,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
     def test_update_security_group_conflict(self):
         with mock.patch.object(registry, "notify") as mock_notify:
             mock_notify.side_effect = exceptions.CallbackFailure(Exception())
-            secgroup = {'security_group': mock.ANY}
+            secgroup = {'security_group': FAKE_SECGROUP}
             with testtools.ExpectedException(
                     securitygroup.SecurityGroupConflict):
                 self.mixin.update_security_group(self.ctx, 'foo_id', secgroup)
@@ -272,6 +272,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             'project_id': FAKE_SECGROUP['security_group']['tenant_id'],
             'name': 'default',
             'description': 'Default security group',
+            'stateful': mock.ANY,
             'security_group_rules': [
                 # Four rules for egress/ingress and ipv4/ipv6
                 mock.ANY, mock.ANY, mock.ANY, mock.ANY,

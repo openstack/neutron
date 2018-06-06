@@ -80,6 +80,16 @@ class SecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
                 # generated; we picked the former here
                 rule['remote_group_id'] = None
 
+    def _create_test_security_group(self):
+        self.objs[0].create()
+        return self.objs[0]
+
+    def test_object_version_degradation_1_2_to_1_1_no_stateful(self):
+        sg_stateful_obj = self._create_test_security_group()
+        sg_no_stateful_obj = sg_stateful_obj.obj_to_primitive('1.1')
+        self.assertNotIn('stateful',
+                         sg_no_stateful_obj['versioned_object.data'])
+
     def test_is_default_True(self):
         fields = self.obj_fields[0].copy()
         sg_obj = self._make_object(fields)
