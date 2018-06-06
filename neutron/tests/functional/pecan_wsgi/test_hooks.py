@@ -46,7 +46,7 @@ class TestOwnershipHook(test_functional.PecanFunctionalTest):
         self.assertEqual(201, port_response.status_int)
 
 
-class TestQueryParamatersHook(test_functional.PecanFunctionalTest):
+class TestQueryParametersHook(test_functional.PecanFunctionalTest):
 
     def test_if_match_on_update(self):
         net_response = jsonutils.loads(self.app.post_json(
@@ -63,11 +63,11 @@ class TestQueryParamatersHook(test_functional.PecanFunctionalTest):
         self.assertEqual(400, response.status_int)
 
 
-class TestQueryParamatersHookWithRevision(test_functional.PecanFunctionalTest):
+class TestQueryParametersHookWithRevision(test_functional.PecanFunctionalTest):
 
     def setUp(self):
         cfg.CONF.set_override('service_plugins', ['revisions'])
-        super(TestQueryParamatersHookWithRevision, self).setUp()
+        super(TestQueryParametersHookWithRevision, self).setUp()
 
     def test_if_match_on_update(self):
         net_response = jsonutils.loads(self.app.post_json(
