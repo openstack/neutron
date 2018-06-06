@@ -387,7 +387,7 @@ class BaseTestCase(DietTestCase):
             'oslo_messaging.Notifier', fake_notifier.FakeNotifier))
 
         self.messaging_conf = messaging_conffixture.ConfFixture(CONF)
-        self.messaging_conf.transport_driver = 'fake'
+        self.messaging_conf.transport_url = 'fake://'
         # NOTE(russellb) We want all calls to return immediately.
         self.messaging_conf.response_timeout = 0
         self.useFixture(self.messaging_conf)
