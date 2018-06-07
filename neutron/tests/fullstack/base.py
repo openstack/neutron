@@ -101,5 +101,6 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
             # happen only after RPC is established
             common_utils.wait_until_true(
                 done,
+                timeout=count * (ping_timeout + 1),
                 exception=RuntimeError("Could not ping the other VM, L2 agent "
                                        "restart leads to network disruption"))
