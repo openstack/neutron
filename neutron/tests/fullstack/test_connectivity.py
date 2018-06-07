@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from concurrent import futures
 import signal
 
 from neutron_lib import constants
@@ -246,22 +245,6 @@ class TestUninterruptedConnectivityOnL2AgentRestart(
         # Restart agents on all nodes simultaneously while pinging across
         # the hosts. The ping has to cross int and phys bridges and travels
         # via central bridge as the vms are on separate hosts.
-        with net_helpers.async_ping(ns0, [ip1], timeout=2,
-                                    count=agent_restart_timeout) as done:
-            LOG.debug("Restarting agents")
-            executor = futures.ThreadPoolExecutor(max_workers=len(agents))
-            restarts = [agent.restart(executor=executor)
-                        for agent in agents]
-
-            futures.wait(restarts, timeout=agent_restart_timeout)
-
-            self.assertTrue(all([r.done() for r in restarts]))
-            LOG.debug("Restarting agents - done")
-
-            # It is necessary to give agents time to initialize
-            # because some crucial steps (e.g. setting up bridge flows)
-            # happen only after RPC is established
-            common_utils.wait_until_true(
-                done,
-                exception=RuntimeError("Could not ping the other VM, L2 agent "
-                                       "restart leads to network disruption"))
+        self._assert_ping_during_agents_restart(
+            agents, ns0, [ip1], restart_timeout=agent_restart_timeout,
+            ping_timeout=2, count=agent_restart_timeout)

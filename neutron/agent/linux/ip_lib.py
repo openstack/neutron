@@ -1254,3 +1254,10 @@ def set_ip_nonlocal_bind_for_namespace(namespace):
             "different network node, and the peer side getting a "
             "populated ARP cache for a given floating IP address.",
             IP_NONLOCAL_BIND)
+
+
+def get_ipv6_forwarding(device, namespace=None):
+    """Get kernel value of IPv6 forwarding for device in given namespace."""
+    cmd = ['sysctl', '-b', "net.ipv6.conf.%s.forwarding" % device]
+    ip_wrapper = IPWrapper(namespace)
+    return int(ip_wrapper.netns.execute(cmd, run_as_root=True))
