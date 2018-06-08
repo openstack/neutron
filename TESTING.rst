@@ -404,7 +404,7 @@ Rally Tests
 
 Rally tests (rally-jobs/plugins) use the `rally <http://rally.readthedocs.io/>`_
 infrastructure to exercise a neutron deployment. Guidelines for writing a
-good rally test can be found in the `rally plugin documentation <http://rally.readthedocs.io/en/latest/plugins.html>`_.
+good rally test can be found in the `rally plugin documentation <http://rally.readthedocs.io/en/latest/plugins/>`_.
 There are also some examples in tree; the process for adding rally plugins to
 neutron requires three steps: 1) write a plugin and place it under rally-jobs/plugins/.
 This is your rally scenario; 2) (optional) add a setup file under rally-jobs/extra/.
