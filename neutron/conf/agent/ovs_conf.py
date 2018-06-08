@@ -26,6 +26,13 @@ OPTS = [
                help=_('Timeout in seconds for ovs-vsctl commands. '
                       'If the timeout expires, ovs commands will fail with '
                       'ALARMCLOCK error.')),
+    cfg.IntOpt('bridge_mac_table_size',
+               default=50000,
+               help=_('The maximum number of MAC addresses to learn on '
+                      'a bridge managed by the Neutron OVS agent. Values '
+                      'outside a reasonable range (10 to 1,000,000) might be '
+                      'overridden by Open vSwitch according to the '
+                      'documentation.')),
 ]
 
 
