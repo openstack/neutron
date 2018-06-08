@@ -232,6 +232,8 @@ class OVSBridge(BaseOVS):
                           'protocols', *protocols).execute(check_error=True)
 
     def create(self, secure_mode=False):
+        other_config = {
+            'mac-table-size': str(cfg.CONF.bridge_mac_table_size)}
         with self.ovsdb.transaction() as txn:
             txn.add(
                 self.ovsdb.add_br(self.br_name,
@@ -243,6 +245,9 @@ class OVSBridge(BaseOVS):
             txn.add(
                 self.ovsdb.db_add('Bridge', self.br_name,
                                   'protocols', constants.OPENFLOW10))
+            txn.add(
+                self.ovsdb.db_set('Bridge', self.br_name,
+                                  ('other_config', other_config)))
             if secure_mode:
                 txn.add(self.ovsdb.set_fail_mode(self.br_name,
                                                  FAILMODE_SECURE))
