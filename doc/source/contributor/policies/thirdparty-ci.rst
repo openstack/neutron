@@ -130,4 +130,4 @@ References
 
 .. [1] http://ci.openstack.org/third_party.html
 .. [2] https://review.openstack.org/#/q/status:open+project:openstack-infra/system-config+branch:master+topic:third-party,n,z
-.. [3] https://github.com/openstack-infra/project-config/blob/master/zuul/layout.yaml
+.. [3] https://github.com/openstack-infra/project-config/blob/master/dev/zuul/layout.yaml
