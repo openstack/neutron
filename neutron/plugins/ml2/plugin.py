@@ -1023,8 +1023,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.notifier.network_delete(context, network['id'])
 
     def _before_create_subnet(self, context, subnet):
-        # TODO(kevinbenton): BEFORE notification should be added here
-        pass
+        subnet_data = subnet[subnet_def.RESOURCE_NAME]
+        registry.notify(resources.SUBNET, events.BEFORE_CREATE, self,
+                        context=context, subnet=subnet_data)
 
     def _create_subnet_db(self, context, subnet):
         with db_api.context_manager.writer.using(context):

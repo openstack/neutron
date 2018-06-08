@@ -498,6 +498,19 @@ class TestMl2NetworksWithAvailabilityZone(TestMl2NetworksV2):
 class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                        Ml2PluginV2TestCase):
 
+    def test_subnet_before_create_callback(self):
+        before_create = mock.Mock()
+        registry.subscribe(before_create, resources.SUBNET,
+                           events.BEFORE_CREATE)
+        with self.subnet() as s:
+            before_create.assert_called_once_with(
+                resources.SUBNET, events.BEFORE_CREATE, mock.ANY,
+                context=mock.ANY, subnet=mock.ANY)
+            kwargs = before_create.mock_calls[0][2]
+            self.assertEqual(s['subnet']['cidr'], kwargs['subnet']['cidr'])
+            self.assertEqual(s['subnet']['network_id'],
+                             kwargs['subnet']['network_id'])
+
     def test_subnet_after_create_callback(self):
         after_create = mock.Mock()
         registry.subscribe(after_create, resources.SUBNET, events.AFTER_CREATE)
