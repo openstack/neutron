@@ -600,13 +600,22 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             'enable_services_on_agents_with_admin_state_down', True)
         self._test_network_add_to_dhcp_agent(admin_state_up=False)
 
-    def test_network_remove_from_dhcp_agent(self):
+    def _test_network_remove_from_dhcp_agent(self,
+                                             concurrent_port_delete=False):
         agent = helpers.register_dhcp_agent(DHCP_HOSTA)
         hosta_id = agent.id
-        with self.port() as port1:
+        with self.port(device_owner=constants.DEVICE_OWNER_DHCP,
+                       host=DHCP_HOSTA) as port1:
             num_before_remove = len(
                 self._list_networks_hosted_by_dhcp_agent(
                     hosta_id)['networks'])
+            if concurrent_port_delete:
+                plugin = directory.get_plugin()
+                # Return a foo port to emulate the port not found scenario
+                # caused by a concurrent port deletion during unscheduling
+                port = {'id': 'foo_port_id', 'device_id': 'foo_device_id'}
+                mock.patch.object(plugin, 'get_ports',
+                                  return_value=[port]).start()
             self._remove_network_from_dhcp_agent(hosta_id,
                                                  port1['port']['network_id'])
             num_after_remove = len(
@@ -614,6 +623,12 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                     hosta_id)['networks'])
         self.assertEqual(1, num_before_remove)
         self.assertEqual(0, num_after_remove)
+
+    def test_network_remove_from_dhcp_agent(self):
+        self._test_network_remove_from_dhcp_agent()
+
+    def test_network_remove_from_dhcp_agent_on_concurrent_port_delete(self):
+        self._test_network_remove_from_dhcp_agent(concurrent_port_delete=True)
 
     def test_list_active_networks_on_not_registered_yet_dhcp_agent(self):
         plugin = directory.get_plugin()

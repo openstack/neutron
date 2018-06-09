@@ -19,6 +19,7 @@ import time
 
 from neutron_lib import constants
 from neutron_lib import context as ncontext
+from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.exceptions import dhcpagentscheduler as das_exc
 from oslo_config import cfg
@@ -408,7 +409,11 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         # update_port passing and another failing
         for port in ports:
             port['device_id'] = constants.DEVICE_ID_RESERVED_DHCP_PORT
-            self.update_port(context, port['id'], dict(port=port))
+            try:
+                self.update_port(context, port['id'], dict(port=port))
+            except n_exc.PortNotFound:
+                LOG.debug("DHCP port %s has been deleted concurrently",
+                          port['id'])
         binding_obj.delete()
 
         if not notify:
