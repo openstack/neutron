@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Adds host routes for subnets on the same network when using routed
+    networks. Static routes will be configured for subnets associated with
+    other segments on the same network. This ensures that traffic within an L3
+    routed network stays within the network even when the default route is on
+    a different interface.
