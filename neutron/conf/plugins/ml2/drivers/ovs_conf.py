@@ -106,7 +106,7 @@ agent_opts = [
                       "ovsdb monitor after losing communication with it.")),
     cfg.ListOpt('tunnel_types', default=DEFAULT_TUNNEL_TYPES,
                 help=_("Network types supported by the agent "
-                       "(gre and/or vxlan).")),
+                       "(gre, vxlan and/or geneve).")),
     cfg.PortOpt('vxlan_udp_port', default=n_const.VXLAN_UDP_PORT,
                 help=_("The UDP port to use for VXLAN tunnels.")),
     cfg.IntOpt('veth_mtu', default=9000,
