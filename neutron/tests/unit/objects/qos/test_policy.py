@@ -123,6 +123,12 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
             (super(QosPolicyObjectTestCase, self).
              test_to_dict_makes_primitive_field_value())
 
+    def test_get_policy_obj_not_found(self):
+        context = self.context.elevated()
+        self.assertRaises(n_exc.QosPolicyNotFound,
+                          policy.QosPolicy.get_policy_obj,
+                          context, "fake_id")
+
 
 class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
                                 testlib_api.SqlTestCase):

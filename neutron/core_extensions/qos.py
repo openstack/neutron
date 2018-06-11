@@ -32,12 +32,6 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
                 plugin_constants.QOS in directory.get_plugins())
         return self._plugin_loaded
 
-    def _get_policy_obj(self, context, policy_id):
-        obj = policy_object.QosPolicy.get_object(context, id=policy_id)
-        if obj is None:
-            raise n_exc.QosPolicyNotFound(policy_id=policy_id)
-        return obj
-
     def _check_policy_change_permission(self, context, old_policy):
         """An existing policy can be modified only if one of the following is
         true:
@@ -59,7 +53,8 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
 
         qos_policy_id = port_changes.get(qos_consts.QOS_POLICY_ID)
         if qos_policy_id is not None:
-            policy = self._get_policy_obj(context, qos_policy_id)
+            policy = policy_object.QosPolicy.get_policy_obj(
+                context, qos_policy_id)
             policy.attach_port(port['id'])
         port[qos_consts.QOS_POLICY_ID] = qos_policy_id
 
@@ -72,7 +67,8 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
                 qos_policy_id = policy_obj.qos_policy_id
 
         if qos_policy_id is not None:
-            policy = self._get_policy_obj(context, qos_policy_id)
+            policy = policy_object.QosPolicy.get_policy_obj(
+                context, qos_policy_id)
             policy.attach_network(network['id'])
         network[qos_consts.QOS_POLICY_ID] = qos_policy_id
 
@@ -85,7 +81,8 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
 
         qos_policy_id = network_changes.get(qos_consts.QOS_POLICY_ID)
         if qos_policy_id is not None:
-            policy = self._get_policy_obj(context, qos_policy_id)
+            policy = policy_object.QosPolicy.get_policy_obj(
+                context, qos_policy_id)
             policy.attach_network(network['id'])
         network[qos_consts.QOS_POLICY_ID] = qos_policy_id
 

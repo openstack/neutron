@@ -15,7 +15,6 @@
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.services.qos import constants as qos_consts
 
-from neutron.common import exceptions as n_exc
 from neutron.db import _resource_extend as resource_extend
 from neutron.objects.qos import policy as policy_object
 
@@ -34,18 +33,12 @@ class FloatingQoSDbMixin(object):
             fip_res[qos_consts.QOS_POLICY_ID] = None
         return fip_res
 
-    def _get_policy_obj(self, context, policy_id):
-        obj = policy_object.QosPolicy.get_object(context, id=policy_id)
-        if obj is None:
-            raise n_exc.QosPolicyNotFound(policy_id=policy_id)
-        return obj
-
     def _create_fip_qos_db(self, context, fip_id, policy_id):
-        policy = self._get_policy_obj(context, policy_id)
+        policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
         policy.attach_floatingip(fip_id)
 
     def _delete_fip_qos_db(self, context, fip_id, policy_id):
-        policy = self._get_policy_obj(context, policy_id)
+        policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
         policy.detach_floatingip(fip_id)
 
     def _process_extra_fip_qos_create(self, context, fip_id, fip):
