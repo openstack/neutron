@@ -23,6 +23,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
@@ -860,8 +861,15 @@ class _DVRAgentInterfaceMixin(object):
         will return the existing port and will not
         create a new one.
         """
-        l3_agent_db = self._get_agent_by_type_and_host(
-            context, const.AGENT_TYPE_L3, host)
+        try:
+            l3_agent_db = self._get_agent_by_type_and_host(
+                context, const.AGENT_TYPE_L3, host)
+        except agent_exc.AgentNotFoundByTypeHost(
+            agent_type=const.AGENT_TYPE_L3, host=host):
+            LOG.warning("%(ag)s agent not found for the given host: %(host)s",
+                        {'ag': const.AGENT_TYPE_L3,
+                         'host': host})
+            return
         l3_agent_mode = self._get_agent_mode(l3_agent_db)
         if l3_agent_mode == l3_const.L3_AGENT_MODE_DVR_NO_EXTERNAL:
             return
@@ -1049,6 +1057,10 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
             if host is not None:
                 l3_agent_on_host = self.get_dvr_agent_on_host(
                     context, host)
+                if not l3_agent_on_host:
+                    LOG.warning("No valid L3 agent found for the given host: "
+                                "%s", host)
+                    return
                 agent_mode = self._get_agent_mode(l3_agent_on_host[0])
                 if agent_mode == l3_const.L3_AGENT_MODE_DVR_NO_EXTERNAL:
                     # If the agent hosting the fixed port is in
