@@ -55,7 +55,7 @@ multiple constraints onto the software.
    (otherwise newer services that require the newer schema would not work).
 
 `More info on rolling upgrades in OpenStack
-<http://governance.openstack.org/reference/tags/assert_supports-rolling-upgrade.html>`_.
+<https://governance.openstack.org/tc/reference/tags/assert_supports-rolling-upgrade.html>`_.
 
 Those requirements are achieved in Neutron by:
 
@@ -235,7 +235,7 @@ There are several upgrade related gotchas that should be tracked by reviewers.
 
 First things first, a general advice to reviewers: make sure new code does not
 violate requirements set by `global OpenStack deprecation policy
-<http://governance.openstack.org/reference/tags/assert_follows-standard-deprecation.html>`_.
+<https://governance.openstack.org/tc/reference/tags/assert_follows-standard-deprecation.html>`_.
 
 Now to specifics:
 

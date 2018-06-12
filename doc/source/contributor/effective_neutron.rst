@@ -325,7 +325,7 @@ deprecation. Config items have `deprecation options supported by oslo.config
 <https://docs.openstack.org/oslo.config/latest/reference/opts.html>`_.
 
 The deprecation process must follow the `standard deprecation requirements
-<http://governance.openstack.org/reference/tags/assert_follows-standard-deprecation.html#requirements>`_.
+<https://governance.openstack.org/tc/reference/tags/assert_follows-standard-deprecation.html#requirements>`_.
 In terms of neutron development, this means:
 
 * A launchpad bug to track the deprecation.
