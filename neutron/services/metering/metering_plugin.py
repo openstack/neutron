@@ -26,6 +26,7 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
     """Implementation of the Neutron Metering Service Plugin."""
     supported_extension_aliases = [metering_apidef.ALIAS]
     path_prefix = "/metering"
+    __filter_validation_support = True
 
     def __init__(self):
         super(MeteringPlugin, self).__init__()

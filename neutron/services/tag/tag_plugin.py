@@ -39,6 +39,8 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tagging.TagPluginBase):
 
     supported_extension_aliases = ['standard-attr-tag']
 
+    __filter_validation_support = True
+
     def __new__(cls, *args, **kwargs):
         inst = super(TagPlugin, cls).__new__(cls, *args, **kwargs)
         inst._filter_methods = []  # prevent GC of our partial functions

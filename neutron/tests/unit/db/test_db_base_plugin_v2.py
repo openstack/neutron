@@ -158,6 +158,12 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
         self._skip_native_pagination = not _is_native_pagination_support()
 
+        def _is_filter_validation_support():
+            return 'filter-validation' in (directory.get_plugin().
+                                           supported_extension_aliases)
+
+        self._skip_filter_validation = not _is_filter_validation_support()
+
         def _is_native_sorting_support():
             native_sorting_attr_name = (
                 "_%s__native_sorting_support" %
@@ -560,13 +566,13 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         return self.deserialize(self.fmt, res)
 
     def _list(self, resource, fmt=None, neutron_context=None,
-              query_params=None):
+              query_params=None, expected_code=webob.exc.HTTPOk.code):
         fmt = fmt or self.fmt
         req = self.new_list_request(resource, fmt, query_params)
         if neutron_context:
             req.environ['neutron.context'] = neutron_context
         res = req.get_response(self._api_for_resource(resource))
-        self.assertEqual(webob.exc.HTTPOk.code, res.status_int)
+        self.assertEqual(expected_code, res.status_int)
         return self.deserialize(fmt, res)
 
     def _fail_second_call(self, patched_plugin, orig, *args, **kwargs):
@@ -595,13 +601,16 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         self.assertEqual(items[1]['name'], 'test_1')
 
     def _test_list_resources(self, resource, items, neutron_context=None,
-                             query_params=None):
+                             query_params=None,
+                             expected_code=webob.exc.HTTPOk.code):
         res = self._list('%ss' % resource,
                          neutron_context=neutron_context,
-                         query_params=query_params)
-        resource = resource.replace('-', '_')
-        self.assertItemsEqual([i['id'] for i in res['%ss' % resource]],
-                              [i[resource]['id'] for i in items])
+                         query_params=query_params,
+                         expected_code=expected_code)
+        if expected_code == webob.exc.HTTPOk.code:
+            resource = resource.replace('-', '_')
+            self.assertItemsEqual([i['id'] for i in res['%ss' % resource]],
+                                  [i[resource]['id'] for i in items])
 
     @contextlib.contextmanager
     def network(self, name='net1',
@@ -5018,6 +5027,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                           query_params=query_params)
 
     def test_list_subnets_filtering_by_unknown_filter(self):
+        if self._skip_filter_validation:
+            self.skipTest("Plugin does not support filter validation")
         with self.network() as network:
             with self.subnet(network=network,
                              gateway_ip='10.0.0.1',
@@ -5028,11 +5039,13 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 subnets = (v1, v2)
                 query_params = 'admin_state_up=True'
                 self._test_list_resources('subnet', subnets,
-                                          query_params=query_params)
+                    query_params=query_params,
+                    expected_code=webob.exc.HTTPClientError.code)
                 # test with other value to check if we have the same results
                 query_params = 'admin_state_up=False'
                 self._test_list_resources('subnet', subnets,
-                                          query_params=query_params)
+                    query_params=query_params,
+                    expected_code=webob.exc.HTTPClientError.code)
 
     def test_list_subnets_with_parameter(self):
         with self.network() as network:

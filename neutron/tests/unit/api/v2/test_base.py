@@ -86,9 +86,11 @@ class APIv2TestBase(base.BaseTestCase):
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
         instance = self.plugin.return_value
-        instance.supported_extension_aliases = ['empty-string-filtering']
+        instance.supported_extension_aliases = ['empty-string-filtering',
+                                                'filter-validation']
         instance._NeutronPluginBaseV2__native_pagination_support = True
         instance._NeutronPluginBaseV2__native_sorting_support = True
+        instance._NeutronPluginBaseV2__filter_validation_support = True
         tools.make_mock_plugin_json_encodable(instance)
 
         api = router.APIRouter()
@@ -1611,6 +1613,52 @@ class FiltersTestCase(base.BaseTestCase):
         expect_attr_info = {'tenant_id': {'key': 'val'},
                             'project_id': {'key': 'val'}}
         self.assertEqual(expect_attr_info, attr_info)
+
+    @mock.patch('neutron.api.api_common.is_filter_validation_enabled',
+                return_value=True)
+    def test_attr_info_with_filter_validation(self, mock_validation_enabled):
+        attr_info = {}
+        self._test_attr_info(attr_info)
+
+        attr_info = {'foo': {}}
+        self._test_attr_info(attr_info)
+
+        attr_info = {'foo': {'is_filter': False}}
+        self._test_attr_info(attr_info)
+
+        attr_info = {'foo': {'is_filter': False}, 'bar': {'is_filter': True},
+                     'baz': {'is_filter': True}, 'qux': {'is_filter': True}}
+        self._test_attr_info(attr_info)
+
+        attr_info = {'foo': {'is_filter': True}, 'bar': {'is_filter': True},
+                     'baz': {'is_filter': True}, 'qux': {'is_filter': True}}
+        expect_val = {'foo': ['4'], 'bar': ['3'], 'baz': ['2'], 'qux': ['1']}
+        self._test_attr_info(attr_info, expect_val)
+
+        attr_info = {'foo': {'is_filter': True}, 'bar': {'is_filter': True},
+                     'baz': {'is_filter': True}, 'qux': {'is_filter': True},
+                     'quz': {}}
+        expect_val = {'foo': ['4'], 'bar': ['3'], 'baz': ['2'], 'qux': ['1']}
+        self._test_attr_info(attr_info, expect_val)
+
+        attr_info = {'foo': {'is_filter': True}, 'bar': {'is_filter': True},
+                     'baz': {'is_filter': True}, 'qux': {'is_filter': True},
+                     'quz': {'is_filter': False}}
+        expect_val = {'foo': ['4'], 'bar': ['3'], 'baz': ['2'], 'qux': ['1']}
+        self._test_attr_info(attr_info, expect_val)
+
+    def _test_attr_info(self, attr_info, expect_val=None):
+        path = '/?foo=4&bar=3&baz=2&qux=1'
+        request = webob.Request.blank(path)
+        if expect_val:
+            actual_val = api_common.get_filters(
+                request, attr_info,
+                is_filter_validation_supported=True)
+            self.assertEqual(expect_val, actual_val)
+        else:
+            self.assertRaises(
+                exc.HTTPBadRequest, api_common.get_filters, request, attr_info,
+                is_filter_validation_supported=True)
 
     def test_attr_info_without_conversion(self):
         path = '/?foo=4&bar=3&baz=2&qux=1'

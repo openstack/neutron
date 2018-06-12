@@ -44,6 +44,7 @@ import six
 
 import neutron
 from neutron._i18n import _
+from neutron.api import api_common
 from neutron.common import exceptions
 from neutron.db import api as db_api
 
@@ -818,3 +819,11 @@ def get_port_binding_by_status_and_host(bindings, status, host='',
                 return binding
     if raise_if_not_found:
         raise exceptions.PortBindingNotFound(port_id=port_id, host=host)
+
+
+def disable_extension_by_service_plugin(core_plugin, service_plugin):
+    if ('filter-validation' in core_plugin.supported_extension_aliases and
+            not api_common.is_filter_validation_supported(service_plugin)):
+        core_plugin.supported_extension_aliases.remove('filter-validation')
+        LOG.info('Disable filter validation extension by service plugin '
+                 '%s.', service_plugin.__class__.__name__)

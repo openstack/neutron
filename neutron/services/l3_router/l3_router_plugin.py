@@ -88,6 +88,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
 
     __native_pagination_support = True
     __native_sorting_support = True
+    __filter_validation_support = True
 
     @resource_registry.tracked_resources(router=l3_models.Router,
                                          floatingip=l3_models.FloatingIP)

@@ -1,0 +1,38 @@
+---
+prelude: >
+    Perform validation on filter parameters on listing resources.
+features:
+  - |
+    Starting from this release, neutron server will perform validation on
+    filter parameters on list requests. Neutron will return a 400 response
+    if the request contains invalid filter parameters.
+    The list of valid parameters is documented in the neutron API reference.
+
+    Add an API extension ``filter-validation`` to indicate this new API
+    behavior. This extension can be disabled by operators via a config option.
+upgrade:
+  - |
+    Prior to the upgrade, if a request contains an unknown or unsupported
+    parameter, the server will silently ignore the invalid input.
+    After the upgrade, the server will return a 400 Bad Request response
+    instead.
+
+    API users might observe that requests that received a successful response
+    now receive a failure response. If they encounter such experience,
+    they are suggested to confirm if the API extension ``filter-validation``
+    is present and validate filter parameters in their requests.
+
+    Operators can disable this feature if they want to maintain
+    backward-compatibility. If they choose to do that, the API extension
+    ``filter-validation`` will not be present and the API behavior is
+    unchanged.
+other:
+  - |
+    Each plugin can decide if it wants to support filter validation by
+    setting ``__filter_validation_support`` to True or False. If this field is
+    not set, the default value is False.
+    Right now, the ML2 plugin and all the in-tree service plugins support
+    filter validation. Out-of-tree plugins will have filter validation
+    disabled by default but they can turn it on if they choose to.
+    For filter validation to be supported, the core plugin and all the
+    services plugins in a deployment must support it.

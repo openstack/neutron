@@ -87,6 +87,7 @@ from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.db import segments_db
 from neutron.db import subnet_service_type_mixin
 from neutron.db import vlantransparent_db
+from neutron.extensions import filter_validation
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
 from neutron.objects import base as base_obj
@@ -148,6 +149,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     __native_bulk_support = True
     __native_pagination_support = True
     __native_sorting_support = True
+    # This attribute specifies whether the plugin supports or not
+    # filter validations. Name mangling is used in
+    # order to ensure it is qualified by class
+    __filter_validation_support = True
 
     # List of supported extensions
     _supported_extension_aliases = ["provider", "external-net", "binding",
@@ -166,6 +171,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "ip-substring-filtering",
                                     "port-security-groups-filtering",
                                     "empty-string-filtering",
+                                    "filter-validation",
                                     "port-mac-address-regenerate",
                                     "binding-extended"]
 
@@ -176,6 +182,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             aliases += self.extension_manager.extension_aliases()
             sg_rpc.disable_security_group_extension_by_config(aliases)
             vlantransparent._disable_extension_by_config(aliases)
+            filter_validation._disable_extension_by_config(aliases)
             self._aliases = aliases
         return self._aliases
 

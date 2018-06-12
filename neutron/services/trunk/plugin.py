@@ -50,6 +50,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
 
     __native_pagination_support = True
     __native_sorting_support = True
+    __filter_validation_support = True
 
     def __init__(self):
         self._rpc_backend = None

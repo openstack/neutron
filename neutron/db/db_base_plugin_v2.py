@@ -140,6 +140,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     __native_bulk_support = True
     __native_pagination_support = True
     __native_sorting_support = True
+    # This attribute specifies whether the plugin supports or not
+    # filter validations. Name mangling is used in
+    # order to ensure it is qualified by class
+    __filter_validation_support = False
 
     def has_native_datastore(self):
         return True

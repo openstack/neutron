@@ -35,6 +35,7 @@ class MultiServiceCorePlugin(object):
 
 
 class CorePluginWithAgentNotifiers(object):
+    supported_extension_aliases = []
     agent_notifiers = {'l3': 'l3_agent_notifier',
                        'dhcp': 'dhcp_agent_notifier'}
 

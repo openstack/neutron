@@ -24,6 +24,8 @@ class Plugin(db.AutoAllocatedTopologyMixin):
 
     supported_extension_aliases = ["auto-allocated-topology"]
 
+    __filter_validation_support = True
+
     @classmethod
     def get_instance(cls):
         if cls._instance is None:

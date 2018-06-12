@@ -167,6 +167,8 @@ class NeutronPecanController(object):
                 raise exceptions.Invalid(
                     _("Native pagination depends on native sorting")
                 )
+        self.filter_validation = api_common.is_filter_validation_supported(
+            self.plugin)
         self.primary_key = self._get_primary_key()
 
         self.parent = parent_resource

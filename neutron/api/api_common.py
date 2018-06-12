@@ -62,13 +62,21 @@ def check_request_for_revision_constraint(request):
     return revision_number
 
 
-def get_filters(request, attr_info, skips=None):
+def is_filter_validation_enabled():
+    return 'filter-validation' in (extensions.PluginAwareExtensionManager.
+                                   get_instance().extensions)
+
+
+def get_filters(request, attr_info, skips=None,
+                is_filter_validation_supported=False):
     return get_filters_from_dict(request.GET.dict_of_lists(),
                                  attr_info,
-                                 skips)
+                                 skips,
+                                 is_filter_validation_supported)
 
 
-def get_filters_from_dict(data, attr_info, skips=None):
+def get_filters_from_dict(data, attr_info, skips=None,
+                          is_filter_validation_supported=False):
     """Extracts the filters from a dict of query parameters.
 
     Returns a dict of lists for the filters:
@@ -80,12 +88,19 @@ def get_filters_from_dict(data, attr_info, skips=None):
     is_empty_string_supported = is_empty_string_filtering_supported()
     skips = skips or []
     res = {}
+    invalid_keys = []
+    check_is_filter = False
+    if is_filter_validation_supported and is_filter_validation_enabled():
+        check_is_filter = True
     for key, values in data.items():
         if key in skips or hasattr(model_base.BASEV2, key):
             continue
         values = [v for v in values
                   if v or (v == "" and is_empty_string_supported)]
         key_attr_info = attr_info.get(key, {})
+        if check_is_filter and not key_attr_info.get('is_filter'):
+            invalid_keys.append(key)
+            continue
         if 'convert_list_to' in key_attr_info:
             values = key_attr_info['convert_list_to'](values)
         elif 'convert_to' in key_attr_info:
@@ -93,6 +108,9 @@ def get_filters_from_dict(data, attr_info, skips=None):
             values = [convert_to(v) for v in values]
         if values:
             res[key] = values
+    if invalid_keys:
+        msg = _("%s is invalid attribute for filtering") % invalid_keys
+        raise exc.HTTPBadRequest(explanation=msg)
     return res
 
 
@@ -246,6 +264,12 @@ def is_native_sorting_supported(plugin):
     native_sorting_attr_name = ("_%s__native_sorting_support"
                                 % plugin.__class__.__name__)
     return getattr(plugin, native_sorting_attr_name, False)
+
+
+def is_filter_validation_supported(plugin):
+    filter_validation_attr_name = ("_%s__filter_validation_support"
+                                   % plugin.__class__.__name__)
+    return getattr(plugin, filter_validation_attr_name, False)
 
 
 class PaginationHelper(object):

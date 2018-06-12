@@ -54,22 +54,27 @@ RESOURCE_ATTRIBUTE_MAP = {
     RESOURCE_COLLECTION: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
-               'is_visible': True, 'primary_key': True},
+               'is_visible': True, 'primary_key': True,
+               'is_filter': True},
         'object_type': {'allow_post': True, 'allow_put': False,
                         'convert_to': convert_valid_object_type,
                         'is_visible': True, 'default': None,
+                        'is_filter': True,
                         'enforce_policy': True},
         'object_id': {'allow_post': True, 'allow_put': False,
                       'validate': {'type:uuid': None},
-                      'is_visible': True, 'enforce_policy': True},
+                      'is_visible': True, 'enforce_policy': True,
+                      'is_filter': True},
         'target_tenant': {'allow_post': True, 'allow_put': True,
                           'validate': {
                               'type:string': db_const.PROJECT_ID_FIELD_SIZE},
-                          'is_visible': True, 'enforce_policy': True},
+                          'is_visible': True, 'enforce_policy': True,
+                          'is_filter': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'validate': {
                           'type:string': db_const.PROJECT_ID_FIELD_SIZE},
-                      'required_by_policy': True, 'is_visible': True},
+                      'required_by_policy': True, 'is_visible': True,
+                      'is_filter': True},
         'action': {'allow_post': True, 'allow_put': False,
                    # action depends on type so validation has to occur in
                    # the extension
@@ -77,7 +82,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                        'type:string': db_const.DESCRIPTION_FIELD_SIZE},
                    # we set enforce_policy so operators can define policies
                    # that restrict actions
-                   'is_visible': True, 'enforce_policy': True}
+                   'is_visible': True, 'enforce_policy': True,
+                   'is_filter': True}
     }
 }
 

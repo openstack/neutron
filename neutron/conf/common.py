@@ -117,6 +117,11 @@ core_opts = [
     cfg.BoolOpt('vlan_transparent', default=False,
                 help=_('If True, then allow plugins that support it to '
                        'create VLAN transparent networks.')),
+    cfg.BoolOpt('filter_validation', default=True,
+                help=_('If True, then allow plugins to decide '
+                       'whether to perform validations on filter parameters. '
+                       'Filter validation is enabled if this config'
+                       'is turned on and it is supported by all plugins')),
     cfg.IntOpt('global_physnet_mtu', default=constants.DEFAULT_NETWORK_MTU,
                deprecated_name='segment_mtu', deprecated_group='ml2',
                help=_('MTU of the underlying physical network. Neutron uses '

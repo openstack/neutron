@@ -27,6 +27,7 @@ from osprofiler import profiler
 import six
 
 from neutron._i18n import _
+from neutron.common import utils
 from neutron.plugins.common import constants
 
 
@@ -220,6 +221,9 @@ class NeutronManager(object):
             if (hasattr(plugin, 'agent_notifiers') and
                     hasattr(plugin_inst, 'agent_notifiers')):
                 plugin.agent_notifiers.update(plugin_inst.agent_notifiers)
+
+            # disable incompatible extensions in core plugin if any
+            utils.disable_extension_by_service_plugin(plugin, plugin_inst)
 
             LOG.debug("Successfully loaded %(type)s plugin. "
                       "Description: %(desc)s",
