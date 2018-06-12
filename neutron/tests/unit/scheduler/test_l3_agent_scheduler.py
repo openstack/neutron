@@ -792,13 +792,28 @@ class L3DvrScheduler(l3_db.L3_NAT_db_mixin,
     pass
 
 
-class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
+class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
+                             test_db_base_plugin_v2.
+                             NeutronDbPluginV2TestCase):
+
+    l3_plugin = ('neutron.tests.unit.extensions.test_l3.'
+                 'TestL3NatAgentSchedulingServicePlugin')
 
     def setUp(self):
-        super(L3DvrSchedulerTestCase, self).setUp()
+        if self.l3_plugin:
+            service_plugins = {
+                'l3_plugin_name': self.l3_plugin,
+                'flavors_plugin_name': 'neutron.services.flavors.'
+                                       'flavors_plugin.FlavorsPlugin'
+            }
+        else:
+            service_plugins = None
+        super(L3DvrSchedulerTestCase, self).setUp('ml2',
+            service_plugins=service_plugins)
         self.setup_coreplugin('ml2')
         self.adminContext = n_context.get_admin_context()
         self.dut = L3DvrScheduler()
+        self.l3plugin = directory.get_plugin(plugin_constants.L3)
 
     def test__notify_l3_agent_update_port_with_allowed_address_pairs_revert(
             self):
@@ -1271,6 +1286,38 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             sub_ids = self.dut.get_subnet_ids_on_router(self.adminContext,
                                                         r1['id'])
             self.assertEqual(0, len(sub_ids))
+
+    def test__check_dvr_serviceable_ports_on_host(self):
+        # HOST_DVR = 'my_l3_host_dvr'
+        # HOST_DVR_SNAT = 'my_l3_host_dvr_snat'
+        # HOST_DVR is a sub-string of HOST_DVR_SNAT
+        self._register_l3_dvr_agents()
+
+        host_args = {'admin_state_up': True,
+                     portbindings.PROFILE: {'migrating to': HOST_DVR_SNAT}}
+        with self.network() as network:
+            with self.subnet(network=network) as subnet:
+                subnet_ids = []
+                subnet_ids.append(subnet['subnet']['id'])
+                with self.port(subnet=subnet,
+                               device_owner=DEVICE_OWNER_COMPUTE,
+                               arg_list=('admin_state_up',
+                               portbindings.PROFILE,), **host_args):
+                    # Check DVR serviceable ports on HOST_DVR_SNAT.
+                    # Should find existence since it is an exact match to the
+                    # target host name of the port binding profile.
+                    result0 = self.l3plugin. \
+                        _check_dvr_serviceable_ports_on_host(self.adminContext,
+                        self.l3_dvr_snat_agent['host'], subnet_ids)
+                    # Check DVR serviceable ports on HOST_DVR.
+                    # Should not find existence since the sub-string won't get
+                    # matched with the target host.
+                    result1 = self.l3plugin. \
+                        _check_dvr_serviceable_ports_on_host(self.adminContext,
+                        self.l3_dvr_agent['host'], subnet_ids)
+
+        self.assertTrue(result0)
+        self.assertFalse(result1)
 
     def _prepare_schedule_snat_tests(self):
         agent = agent_model.Agent()
