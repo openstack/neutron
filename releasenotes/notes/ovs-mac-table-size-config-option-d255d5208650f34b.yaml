@@ -1,0 +1,14 @@
+---
+features:
+  - |
+    A new config option ``bridge_mac_table_size`` has been added for
+    Neutron OVS agent.
+    This value will be set on every Open vSwitch bridge managed by the
+    openvswitch-neutron-agent in ``other_config:mac-table-size`` column
+    in ovsdb.
+    Default value for this new option is set to 50000 and it should be enough
+    for most systems.
+    More details about this option can be found in `Open vSwitch documentation
+    <http://www.openvswitch.org/support/dist-docs/ovs-vswitchd.conf.db.5.html>`_
+    For more information see bug
+    `1775797 <https://bugs.launchpad.net/neutron/+bug/1775797>`_.
