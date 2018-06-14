@@ -601,7 +601,16 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 self.connect_rtr_2_fip()
         super(DvrLocalRouter, self).process_external()
 
+    def _check_rtr_2_fip_connect(self):
+        """Checks if the rtr to fip connect exists, if not sets to false."""
+        fip_ns_name = self.fip_ns.get_name()
+        if ip_lib.network_namespace_exists(fip_ns_name):
+            fip_2_rtr_name = self.fip_ns.get_int_device_name(self.router_id)
+            if not ip_lib.device_exists(fip_2_rtr_name, namespace=fip_ns_name):
+                self.rtr_fip_connect = False
+
     def connect_rtr_2_fip(self):
+        self._check_rtr_2_fip_connect()
         if self.fip_ns.agent_gateway_port and not self.rtr_fip_connect:
             ex_gw_port = self.get_ex_gw_port()
             self.fip_ns.create_rtr_2_fip_link(self)

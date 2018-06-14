@@ -206,6 +206,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri.rtr_fip_connect = False
         ex_gw_port = {'network_id': 'fake_net_id'}
         ri.create_dvr_external_gateway_on_agent(ex_gw_port)
+        ri._check_rtr_2_fip_connect = mock.Mock()
         ri.connect_rtr_2_fip()
         self.assertTrue(ri._check_if_address_scopes_match.called)
         if address_scopes_match:
@@ -329,6 +330,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri.fip_ns = mock.Mock()
         ri.fip_ns.agent_gateway_port = agent_gw_port
         ri.create_dvr_external_gateway_on_agent(ri.ex_gw_port)
+        ri._check_rtr_2_fip_connect = mock.Mock()
         ri.connect_rtr_2_fip()
         self.assertTrue(ri.rtr_fip_connect)
         ri.fip_ns.allocate_rule_priority.return_value = FIP_PRI
