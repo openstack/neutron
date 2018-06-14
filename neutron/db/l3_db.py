@@ -692,6 +692,27 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             raise n_exc.BadRequest(resource='router', msg=msg)
         return port
 
+    def _validate_port_in_range_or_admin(self, context, subnets, port):
+        if context.is_admin:
+            return
+        subnets_by_id = {}
+        for s in subnets:
+            addr_set = netaddr.IPSet()
+            for range in s['allocation_pools']:
+                addr_set.add(netaddr.IPRange(netaddr.IPAddress(range['start']),
+                                             netaddr.IPAddress(range['end'])))
+            subnets_by_id[s['id']] = (addr_set, s['project_id'],)
+        for subnet_id, ip in [(fix_ip['subnet_id'], fix_ip['ip_address'],)
+                              for fix_ip in port['fixed_ips']]:
+            if (ip not in subnets_by_id[subnet_id][0] and
+                    context.project_id != subnets_by_id[subnet_id][1]):
+                msg = (_('Cannot add interface to router because specified '
+                         'port %(port)s has an IP address out of the '
+                         'allocation pool of subnet %(subnet)s, which is not '
+                         'owned by the project making the request') %
+                       {'port': port['id'], 'subnet': subnet_id})
+                raise n_exc.BadRequest(resource='router', msg=msg)
+
     def _validate_router_port_info(self, context, router, port_id):
         with db_api.autonested_transaction(context.session):
             # check again within transaction to mitigate race
@@ -727,6 +748,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 msg = _("Cannot have multiple "
                         "IPv4 subnets on router port")
                 raise n_exc.BadRequest(resource='router', msg=msg)
+            self._validate_port_in_range_or_admin(context, subnets, port)
             return port, subnets
 
     def _notify_attaching_interface(self, context, router_db, port,
@@ -787,6 +809,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         subnet = self._core_plugin.get_subnet(context, subnet_id)
         if not subnet['gateway_ip']:
             msg = _('Subnet for router interface must have a gateway IP')
+            raise n_exc.BadRequest(resource='router', msg=msg)
+        if subnet['project_id'] != context.project_id and not context.is_admin:
+            msg = (_('Cannot add interface to router because subnet %s is not '
+                     'owned by project making the request') % subnet_id)
             raise n_exc.BadRequest(resource='router', msg=msg)
         if (subnet['ip_version'] == 6 and subnet['ipv6_ra_mode'] is None and
                 subnet['ipv6_address_mode'] is not None):
