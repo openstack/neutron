@@ -23,6 +23,7 @@ from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
+from neutron.tests import base as tests_base
 from neutron.tests.common.exclusive_resources import ip_network
 from neutron.tests.common import machine_fixtures
 from neutron.tests.fullstack import base
@@ -322,6 +323,7 @@ class TestHAL3Agent(TestL3Agent):
                 "master",
                 self._get_keepalived_state(keepalived_state_file))
 
+    @tests_base.unstable_test("bug 1776459")
     def test_ha_router_restart_agents_no_packet_lost(self):
         tenant_id = uuidutils.generate_uuid()
         ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
