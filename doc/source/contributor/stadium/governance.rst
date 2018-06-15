@@ -62,7 +62,7 @@ the Neutron umbrella is counterproductive.
 
 These challenges led the Neutron team to find a better balance between autonomy
 and consistency and lay down criteria that more clearly identify when a project
-can be eligible for inclusion in the `Neutron governance <http://governance.openstack.org/reference/projects/neutron.html>`_.
+can be eligible for inclusion in the `Neutron governance <https://governance.openstack.org/tc/reference/projects/neutron.html>`_.
 
 This document describes these criteria, and document the steps involved to
 maintain the integrity of the Stadium, and how to ensure this integrity be
@@ -108,12 +108,12 @@ mature OpenStack projects:
   information on how to do testing, please refer to the
   :doc:`Neutron testing documentation </contributor/testing/testing>`.
 
-* Good release footprint, according to the chosen `release model <http://governance.openstack.org/reference/tags/#release-management-tags>`_.
+* Good release footprint, according to the chosen `release model <https://governance.openstack.org/tc/reference/tags/#release-management-tags>`_.
 
-* Adherence to deprecation and `stable backports policies <http://governance.openstack.org/reference/tags/#stable-maintenance-tags>`_.
+* Adherence to deprecation and `stable backports policies <https://governance.openstack.org/tc/reference/tags/#stable-maintenance-tags>`_.
 
-* Demonstrated ability to do `upgrades <http://governance.openstack.org/reference/tags/assert_supports-upgrade.html>`_
-  and/or `rolling upgrades <http://governance.openstack.org/reference/tags/assert_supports-rolling-upgrade.html>`_,
+* Demonstrated ability to do `upgrades <https://governance.openstack.org/tc/reference/tags/assert_supports-upgrade.html>`_
+  and/or `rolling upgrades <https://governance.openstack.org/tc/reference/tags/assert_supports-rolling-upgrade.html>`_,
   where applicable. This means having grenade support on top of the CI
   coverage as described above.
 
@@ -267,7 +267,7 @@ Checklist
   Once, everything is set up and your project is released, make sure
   you see an entry on the release page (e.g. `Pike <http://releases.openstack.org/pike/index.html#other-projects>`_.
   Make sure you release according to the project declared release
-  `model <http://governance.openstack.org/reference/projects/neutron.html#deliverables-and-tags>`_.
+  `model <https://governance.openstack.org/tc/reference/projects/neutron.html#deliverables-and-tags>`_.
 
 * How to port OpenStack Client over to python-neutronclient: client
   API bindings and client command line interface support must be

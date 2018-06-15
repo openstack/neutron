@@ -18,7 +18,7 @@ Neutron Stadium
 
 This section contains information on policies and procedures for the so called
 Neutron Stadium. The Neutron Stadium is the list of projects that show up in the
-OpenStack `Governance Document <http://governance.openstack.org/reference/projects/neutron.html>`_.
+OpenStack `Governance Document <https://governance.openstack.org/tc/reference/projects/neutron.html>`_.
 
 The list includes projects that the Neutron PTL and core team are directly
 involved in, and manage on a day to day basis. To do so, the PTL and team

@@ -182,7 +182,7 @@ separate repositories with their own core reviewer teams. For each one of
 these repositories in the following repository list, there is a core team
 associated with it:
 
-* `Neutron project team <http://governance.openstack.org/reference/projects/neutron.html>`_
+* `Neutron project team <https://governance.openstack.org/tc/reference/projects/neutron.html>`_
 
 These teams are also responsible for handling their own specs/RFEs/features if
 they choose to use them.  However, by choosing to be a part of the Neutron

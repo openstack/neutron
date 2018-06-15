@@ -134,7 +134,7 @@ However, you should add Neutron (Or any other project) to that list only if you
 expect that a patch is needed to that repo in order to solve the bug.
 
 It's also worth adding that some of these projects are part of the so
-called Neutron `stadium <http://governance.openstack.org/reference/projects/neutron.html#deliverables-and-tags>`_.
+called Neutron `stadium <https://governance.openstack.org/tc/reference/projects/neutron.html#deliverables-and-tags>`_.
 Because of that, their release is managed centrally by the Neutron
 release team; requests for releases need to be funnelled and screened
 properly before they can happen. Release request process is described
