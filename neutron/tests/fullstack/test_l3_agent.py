@@ -349,6 +349,10 @@ class TestHAL3Agent(TestL3Agent):
 
         router_ip = router['external_gateway_info'][
             'external_fixed_ips'][0]['ip_address']
+        # Let's check first if connectivity from external_vm to router's
+        # external gateway IP is possible before we restart agents
+        external_vm.block_until_ping(router_ip)
+
         l3_agents = [host.agents['l3'] for host in self.environment.hosts]
 
         self._assert_ping_during_agents_restart(
