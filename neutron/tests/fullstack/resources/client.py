@@ -156,12 +156,12 @@ class ClientFixture(fixtures.Fixture):
 
         def detach_and_delete_policy():
             qos_policy_id = policy['policy']['id']
-            ports_with_policy = self.client.list_ports(
-                qos_policy_id=qos_policy_id)['ports']
+            ports_with_policy = self.client.list_ports()['ports']
             for port in ports_with_policy:
-                self.client.update_port(
-                    port['id'],
-                    body={'port': {'qos_policy_id': None}})
+                if qos_policy_id == port['qos_policy_id']:
+                    self.client.update_port(
+                        port['id'],
+                        body={'port': {'qos_policy_id': None}})
             self.client.delete_qos_policy(qos_policy_id)
 
         # NOTE: We'll need to add support for detaching from network once
