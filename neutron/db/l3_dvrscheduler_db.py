@@ -352,6 +352,13 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         if not subnet_ids:
             return False
 
+        # The port binding profile filter for host performs a "contains"
+        # operation. This produces a LIKE expression targeting a sub-string
+        # match: column LIKE '%' || <host> || '%'.
+        # Add quotes to force an exact match of the host name in the port
+        # binding profile dictionary.
+        profile_host = "\"%s\"" % host
+
         Binding = ml2_models.PortBinding
         IPAllocation = models_v2.IPAllocation
         Port = models_v2.Port
@@ -369,7 +376,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         query = query.filter(device_filter)
         host_filter = or_(
             ml2_models.PortBinding.host == host,
-            ml2_models.PortBinding.profile.contains(host))
+            ml2_models.PortBinding.profile.contains(profile_host))
         query = query.filter(host_filter)
         return query.first() is not None
 
