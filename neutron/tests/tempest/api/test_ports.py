@@ -108,7 +108,7 @@ class PortsTestJSON(base.BaseNetworkTest):
         body = self.client.update_port(body['id'],
                                        dns_name='d2', dns_domain='d.org.')
         self.assertEqual('d2', body['port']['dns_name'])
-        self.assertEqual('d.org.', body['dns_domain'])
+        self.assertEqual('d.org.', body['port']['dns_domain'])
         self._confirm_dns_assignment(body['port'])
         body = self.client.show_port(body['port']['id'])['port']
         self.assertEqual('d2', body['dns_name'])
