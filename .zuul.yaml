@@ -1,6 +1,6 @@
 - project:
     templates:
-      - neutron-tempest-plugin-jobs
+      - neutron-tempest-plugin-jobs-queens
     check:
       jobs:
         - neutron-functional
