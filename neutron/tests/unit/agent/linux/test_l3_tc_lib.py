@@ -227,7 +227,7 @@ class TestFloatingIPTcCommandBase(base.BaseTestCase):
         prio = ['prio', 1]
         match = ['u32', 'match', 'ip', 'dst', FLOATING_IP_1]
         police = ['police', 'rate', '1kbit', 'burst', '1kbit',
-                  'drop', 'flowid', ':1']
+                  'mtu', '64kb', 'drop', 'flowid', ':1']
         args = protocol + prio + match + police
         cmd = ['tc', 'filter', 'add', 'dev', FLOATING_IP_DEVICE_NAME,
                'parent', INGRESS_QSIC_ID] + args
@@ -329,7 +329,7 @@ class TestFloatingIPTcCommand(base.BaseTestCase):
                     _match = 'dst'
                     match = ['u32', 'match', 'ip', _match, ip]
                     police = ['police', 'rate', '1kbit', 'burst', '1kbit',
-                              'drop', 'flowid', ':1']
+                              'mtu', '64kb', 'drop', 'flowid', ':1']
                     args = protocol + prio + match + police
 
                     self.execute.assert_called_once_with(

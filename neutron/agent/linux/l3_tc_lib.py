@@ -117,7 +117,7 @@ class FloatingIPTcCommandBase(ip_lib.IPDevice):
         _match = 'src' if direction == constants.EGRESS_DIRECTION else 'dst'
         match = ['u32', 'match', 'ip', _match, ip]
         police = ['police', 'rate', rate_value, 'burst', burst_value,
-                  'drop', 'flowid', ':1']
+                  'mtu', '64kb', 'drop', 'flowid', ':1']
         args = protocol + prio + match + police
         cmd = ['filter', 'add', 'dev', self.name,
                'parent', qdisc_id] + args
