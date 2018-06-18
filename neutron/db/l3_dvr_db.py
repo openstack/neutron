@@ -896,7 +896,7 @@ class _DVRAgentInterfaceMixin(object):
                 return f_port
 
     def _generate_arp_table_and_notify_agent(
-        self, context, fixed_ip, mac_address, notifier, nud_state='permanent'):
+        self, context, fixed_ip, mac_address, notifier):
         """Generates the arp table entry and notifies the l3 agent."""
         ip_address = fixed_ip['ip_address']
         subnet = fixed_ip['subnet_id']
@@ -908,8 +908,7 @@ class _DVRAgentInterfaceMixin(object):
             return
         arp_table = {'ip_address': ip_address,
                      'mac_address': mac_address,
-                     'subnet_id': subnet,
-                     'nud_state': nud_state}
+                     'subnet_id': subnet}
         notifier(context, router_id, arp_table)
 
     def _get_subnet_id_for_given_fixed_ip(
@@ -953,14 +952,11 @@ class _DVRAgentInterfaceMixin(object):
             return
         allowed_address_pair_fixed_ips = (
             self._get_allowed_address_pair_fixed_ips(context, port_dict))
-        for fixed_ip in fixed_ips:
+        changed_fixed_ips = fixed_ips + allowed_address_pair_fixed_ips
+        for fixed_ip in changed_fixed_ips:
             self._generate_arp_table_and_notify_agent(
                 context, fixed_ip, port_dict['mac_address'],
                 self.l3_rpc_notifier.add_arp_entry)
-        for fixed_ip in allowed_address_pair_fixed_ips:
-            self._generate_arp_table_and_notify_agent(
-                context, fixed_ip, port_dict['mac_address'],
-                self.l3_rpc_notifier.add_arp_entry, nud_state='reachable')
 
     def delete_arp_entry_for_dvr_service_port(
         self, context, port_dict, fixed_ips_to_delete=None):
