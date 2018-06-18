@@ -10,7 +10,7 @@ Server
 Major release
 ~~~~~~~~~~~~~
 
-Major release is cut off once per development cycle and has an assigned name
+A Major release is cut off once per development cycle and has an assigned name
 (Liberty, Mitaka, ...)
 
 Prior to major release,
@@ -19,20 +19,20 @@ Prior to major release,
 #. consider blocking trivial patches to keep the gate clean;
 #. revise the current list of blueprints and bugs targeted for the release;
    roll over anything that does not fit there, or won't make it (note that no
-   new features land master after so called feature freeze is claimed by
+   new features land in master after so called feature freeze is claimed by
    release team; there is a feature freeze exception (FFE) process described in
    release engineering documentation in more details:
    http://docs.openstack.org/project-team-guide/release-management.html);
 #. start collecting state for targeted features from the team. For example,
-   propose a postmortem patch for neutron-specs as in:
+   propose a post-mortem patch for neutron-specs as in:
    https://review.openstack.org/#/c/286413/
 #. revise deprecation warnings collected in latest Jenkins runs: some of them
    may indicate a problem that should be fixed prior to release (see
    deprecations.txt file in those log directories); also, check whether any
    Launchpad bugs with the 'deprecation' tag need a clean-up or a follow-up in
-   the context of the release planned;
+   the context of the release being planned;
 #. check that release notes and sample configuration files render correctly,
-   arrange clean-up if needed.
+   arrange clean-up if needed;
 #. ensure all doc links are valid by running ``tox -e linkcheck`` and
    addressing any broken links.
 
@@ -44,7 +44,7 @@ New major release process contains several phases:
 #. once the team is ready to release the first release candidate (RC1), either
    PTL or one of release liaisons proposes a patch for openstack/releases repo.
    For example, see: https://review.openstack.org/#/c/292445/
-#. once the openstack/releases patch land, release team creates a new stable
+#. once the openstack/releases patch lands, release team creates a new stable
    branch using hash values specified in the patch;
 #. at this point, master branch is open for patches targeted to the next
    release; PTL unblocks all patches that were blocked in step 1;
@@ -54,7 +54,7 @@ New major release process contains several phases:
    master branch, and are then backported to the newly created stable branch;
 #. if patches landed in the release stable branch as per the previous step, a
    new release candidate that would include those patches should be requested
-   by PTL in openstack/releases repo.
+   by PTL in openstack/releases repo;
 #. eventually, the latest release candidate requested by PTL becomes the final
    major release of the project.
 
@@ -72,11 +72,11 @@ In the new stable branch, you should make sure that:
 #. if the branch uses constraints to manage gated dependency versions, the
    default constraints file name points to corresponding stable branch in
    openstack/requirements repo;
-#. if the branch fetches any other projects as dependencies, f.e. by using
+#. if the branch fetches any other projects as dependencies, e.g. by using
    tox_install.sh as an install_command in tox.ini, git repository links point
    to corresponding stable branches of those dependency projects.
 
-Note that some of those steps may be covered by OpenStack release team.
+Note that some of those steps may be covered by the OpenStack release team.
 
 In the opened master branch, you should:
 
@@ -84,7 +84,7 @@ In the opened master branch, you should:
    release name.
 
 While preparing the next release and even in the middle of development, it's
-worth keeping the infrastructure clean. Consider using those tools to declutter
+worth keeping the infrastructure clean. Consider using these tools to declutter
 the project infrastructure:
 
 #. declutter Gerrit::
@@ -99,9 +99,13 @@ the project infrastructure:
 Minor release
 ~~~~~~~~~~~~~
 
-Minor release is a release created from existing stable branch after the
-initial major release, and that usually contains bug fixes and small
-improvements only.
+A Minor release is created from an existing stable branch after the initial
+major release, and usually contains bug fixes and small improvements only.
+The minor release frequency should follow the release schedule for the current
+series. For example, assuming the current release is Rocky, stable branch
+releases should coincide with milestones R1, R2, R3 and the final release.
+Stable branches can be also released more frequently if needed, for example,
+if there is a major bug fix that has merged recently
 
 The following steps should be taken before claiming a successful minor release:
 
