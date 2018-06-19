@@ -866,12 +866,16 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(self.agent.int_br,
                                   'get_vifs_by_ids',
                                   return_value={}),\
+                mock.patch.object(self.agent.ext_manager,
+                                  "delete_port") as ext_mgr_delete_port,\
                 mock.patch.object(self.agent,
                                   'treat_vif_port') as treat_vif_port:
             skip_devs = self.agent.treat_devices_added_or_updated([], False)
             # The function should return False for resync and no device
             # processed
             self.assertEqual((['the_skipped_one'], [], set()), skip_devs)
+            ext_mgr_delete_port.assert_called_once_with(
+                self.agent.context, {'port_id': 'the_skipped_one'})
             self.assertFalse(treat_vif_port.called)
 
     def test_treat_devices_added_failed_devices(self):
