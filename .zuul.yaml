@@ -70,7 +70,7 @@
       - openstack/python-senlinclient
       - openstack/python-watcherclient
       - openstack/python-zaqarclient
-      - openstack/rally
+      - {"name": "openstack/rally", "override-checkout": "0.12.1"}
       - openstack/senlin
       - openstack/tripleo-image-elements
       - openstack/watcher
