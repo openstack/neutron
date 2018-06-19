@@ -12,12 +12,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from concurrent import futures
 import os
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
+from neutron.common import utils as common_utils
 from neutron.tests import base as tests_base
 from neutron.tests.common import helpers
+from neutron.tests.common import net_helpers
 from neutron.tests.fullstack.resources import client as client_resource
 from neutron.tests import tools
 from neutron.tests.unit import testlib_api
@@ -27,6 +31,8 @@ from neutron.tests.unit import testlib_api
 DEFAULT_LOG_DIR = os.path.join(helpers.get_test_log_path(),
                                'dsvm-fullstack-logs')
 ROOTDIR = os.path.dirname(__file__)
+
+LOG = logging.getLogger(__name__)
 
 
 class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
@@ -71,3 +77,27 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
     def get_name(self):
         class_name, test_name = self.id().split(".")[-2:]
         return "%s.%s" % (class_name, test_name)
+
+    def _assert_ping_during_agents_restart(
+            self, agents, src_namespace, ips, restart_timeout=10,
+            ping_timeout=1, count=10):
+        with net_helpers.async_ping(
+                src_namespace, ips, timeout=ping_timeout,
+                count=count) as done:
+            LOG.debug("Restarting agents")
+            executor = futures.ThreadPoolExecutor(max_workers=len(agents))
+            restarts = [agent.restart(executor=executor)
+                        for agent in agents]
+
+            futures.wait(restarts, timeout=restart_timeout)
+
+            self.assertTrue(all([r.done() for r in restarts]))
+            LOG.debug("Restarting agents - done")
+
+            # It is necessary to give agents time to initialize
+            # because some crucial steps (e.g. setting up bridge flows)
+            # happen only after RPC is established
+            common_utils.wait_until_true(
+                done,
+                exception=RuntimeError("Could not ping the other VM, L2 agent "
+                                       "restart leads to network disruption"))

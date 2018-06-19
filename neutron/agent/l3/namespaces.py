@@ -88,7 +88,7 @@ class Namespace(object):
         self.driver = driver
         self.use_ipv6 = use_ipv6
 
-    def create(self):
+    def create(self, ipv6_forwarding=True):
         # See networking (netdev) tree, file
         # Documentation/networking/ip-sysctl.txt for an explanation of
         # these sysctl values.
@@ -103,7 +103,8 @@ class Namespace(object):
         cmd = ['sysctl', '-w', 'net.ipv4.conf.all.arp_announce=2']
         ip_wrapper.netns.execute(cmd)
         if self.use_ipv6:
-            cmd = ['sysctl', '-w', 'net.ipv6.conf.all.forwarding=1']
+            cmd = ['sysctl', '-w',
+                   'net.ipv6.conf.all.forwarding=%d' % int(ipv6_forwarding)]
             ip_wrapper.netns.execute(cmd)
 
     def delete(self):
