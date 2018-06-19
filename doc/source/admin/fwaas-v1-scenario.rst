@@ -17,7 +17,7 @@ FWaaS management options are also available in the Dashboard.
       service_provider = FIREWALL:Iptables:neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver:default
 
       [fwaas]
-      driver = neutron_fwaas.services.firewall.drivers.linux.iptables_fwaas.IptablesFwaasDriver
+      driver = iptables
       enabled = True
 
    .. note::
