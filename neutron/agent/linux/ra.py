@@ -13,6 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
+import pwd
+
 from itertools import chain as iter_chain
 
 import jinja2
@@ -125,7 +128,8 @@ class DaemonMonitor(object):
 
         contents = buf.getvalue()
         LOG.debug("radvd config = %s", contents)
-        file_utils.replace_file(radvd_conf, contents)
+        # radvd conf file can't be writeable by self/group
+        file_utils.replace_file(radvd_conf, contents, file_mode=0o444)
         return radvd_conf
 
     def _get_radvd_process_manager(self, callback=None):
@@ -139,6 +143,8 @@ class DaemonMonitor(object):
 
     def _spawn_radvd(self, radvd_conf):
         def callback(pid_file):
+            # drop radvd daemon privileges and run as the neutron user
+            radvd_user = pwd.getpwuid(os.geteuid()).pw_name
             # we need to use -m syslog and f.e. not -m stderr (the default)
             # or -m stderr_syslog so that radvd 2.0+ will close stderr and
             # exit after daemonization; otherwise, the current thread will
@@ -147,6 +153,7 @@ class DaemonMonitor(object):
             radvd_cmd = [RADVD_SERVICE_CMD,
                          '-C', '%s' % radvd_conf,
                          '-p', '%s' % pid_file,
+                         '-u', '%s' % radvd_user,
                          '-m', 'syslog']
             return radvd_cmd
 
