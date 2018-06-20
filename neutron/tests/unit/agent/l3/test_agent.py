@@ -58,6 +58,7 @@ from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.conf import common as base_config
 from neutron.tests import base
 from neutron.tests.common import l3_test_common
+from neutron.tests.unit.agent.linux.test_utils import FakeUser
 
 _uuid = uuidutils.generate_uuid
 HOSTNAME = 'myhost'
@@ -2791,7 +2792,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         self.assertFalse(ri.remove_floating_ip.called)
 
-    def test_spawn_radvd(self):
+    @mock.patch('os.geteuid', return_value='490')
+    @mock.patch('pwd.getpwuid', return_value=FakeUser('neutron'))
+    def test_spawn_radvd(self, geteuid, getpwuid):
         router = l3_test_common.prepare_router_data(ip_version=6)
 
         conffile = '/fake/radvd.conf'
@@ -2829,6 +2832,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         cmd = _join(*cmd)
         self.assertIn(_join('-C', conffile), cmd)
         self.assertIn(_join('-p', pidfile), cmd)
+        self.assertIn(_join('-u', 'neutron'), cmd)
         self.assertIn(_join('-m', 'syslog'), cmd)
 
     def test_generate_radvd_mtu_conf(self):
