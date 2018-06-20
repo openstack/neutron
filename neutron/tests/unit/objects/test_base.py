@@ -1889,6 +1889,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         cls_ = resource
         return cls_.get_objects(neutron_context)
 
+    @test_base.unstable_test("bug 1775220")
     def test_get_objects_queries_constant(self):
         iter_db_obj = iter(self.db_objs)
 
