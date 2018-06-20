@@ -2036,7 +2036,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
                               return_value=[]):
             new_context = plugin._bind_port(context)
             self.assertEqual(mock_port, new_context.original)
-            self.assertFalse(new_context == context)
+            self.assertNotEqual(new_context, context)
 
 
 class TestMl2PortBindingNoSG(TestMl2PortBinding):
@@ -2830,7 +2830,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
             # Assert it is not changed
             self.assertEqual(seg_id, segment[driver_api.SEGMENTATION_ID])
         else:
-            self.assertTrue(segment[driver_api.SEGMENTATION_ID] > 0)
+            self.assertGreater(segment[driver_api.SEGMENTATION_ID], 0)
 
         return segment
 

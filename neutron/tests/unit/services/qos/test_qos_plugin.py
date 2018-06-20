@@ -943,5 +943,5 @@ class TestQosPlugin(base.BaseQosTestCase):
                 action_index = mock_manager.mock_calls.index(
                     get_rule_mock_call)
 
-            self.assertTrue(
-                action_index < mock_manager.mock_calls.index(driver_mock_call))
+            self.assertLess(
+                action_index, mock_manager.mock_calls.index(driver_mock_call))

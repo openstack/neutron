@@ -25,13 +25,13 @@ extras==1.0.0
 fasteners==0.7.0
 fixtures==3.0.0
 flake8-import-order==0.12
-flake8==2.5.5
+flake8==2.6.2
 future==0.16.0
 futurist==1.2.0
 gitdb==0.6.4
 GitPython==1.0.1
 greenlet==0.4.10
-hacking==0.12.0
+hacking==1.1.0
 httplib2==0.9.1
 imagesize==0.7.1
 iso8601==0.1.11
@@ -96,7 +96,7 @@ positional==1.2.1
 prettytable==0.7.2
 psutil==3.2.2
 pycadf==1.1.0
-pycodestyle==2.3.1
+pycodestyle==2.4.0
 pycparser==2.18
 pyflakes==0.8.1
 Pygments==2.2.0

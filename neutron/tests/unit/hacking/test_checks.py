@@ -14,8 +14,8 @@ import re
 
 from flake8 import engine
 from hacking.tests import test_doctest as hacking_doctest
-import pep8
 import pkg_resources
+import pycodestyle
 import testscenarios
 import testtools
 from testtools import content
@@ -235,7 +235,7 @@ class HackingTestCase(base.BaseTestCase):
 
 # TODO(amotoki): Migrate existing unit tests above to docstring tests.
 # NOTE(amotoki): Is it better to enhance HackingDocTestCase in hacking repo to
-# pass filename to pep8.Checker so that we can reuse it in this test.
+# pass filename to pycodestyle.Checker so that we can reuse it in this test.
 # I am not sure whether unit test class is public.
 
 SELFTEST_REGEX = re.compile(r'\b(Okay|N\d{3})(\((\S+)\))?:\s(.*)')
@@ -249,7 +249,7 @@ class HackingDocTestCase(hacking_doctest.HackingTestCase):
 
     scenarios = file_cases
 
-    def test_pep8(self):
+    def test_pycodestyle(self):
 
         # NOTE(jecarey): Add tests marked as off_by_default to enable testing
         turn_on = set(['H106'])
@@ -258,8 +258,8 @@ class HackingDocTestCase(hacking_doctest.HackingTestCase):
         self.options.select = tuple(turn_on)
         self.options.ignore = ('N530',)
 
-        report = pep8.BaseReport(self.options)
-        checker = pep8.Checker(filename=self.filename, lines=self.lines,
+        report = pycodestyle.BaseReport(self.options)
+        checker = pycodestyle.Checker(filename=self.filename, lines=self.lines,
                                options=self.options, report=report)
         checker.check_all()
         self.addDetail('doctest', content.text_content(self.raw))

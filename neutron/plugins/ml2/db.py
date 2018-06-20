@@ -342,4 +342,5 @@ def subscribe():
                        resources.SEGMENT,
                        events.BEFORE_DELETE)
 
+
 subscribe()

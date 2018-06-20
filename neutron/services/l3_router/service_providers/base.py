@@ -31,6 +31,7 @@ class _FeatureFlag(object):
             raise RuntimeError(_("A driver can't require a feature and not "
                                  "support it."))
 
+
 UNSUPPORTED = _FeatureFlag(supports=False, requires=False)
 OPTIONAL = _FeatureFlag(supports=True, requires=False)
 MANDATORY = _FeatureFlag(supports=True, requires=True)

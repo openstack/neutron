@@ -68,6 +68,7 @@ def is_retriable(e):
     # looking savepoints mangled by deadlocks. see bug/1590298 for details.
     return _is_nested_instance(e, db_exc.DBError) and '1305' in str(e)
 
+
 _retry_db_errors = oslo_db_api.wrap_db_retry(
     max_retries=MAX_RETRIES,
     retry_interval=0.1,
