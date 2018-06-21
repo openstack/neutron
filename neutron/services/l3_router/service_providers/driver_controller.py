@@ -180,12 +180,15 @@ class DriverController(object):
             router = self.l3_plugin.get_router(context, router_id)
             driver = self._attrs_to_driver(router)
             driver_name = driver.name
-            self._stm.add_resource_association(context, plugin_constants.L3,
-                                               driver_name, router_id)
-            registry.notify(
-                resources.ROUTER_CONTROLLER, events.PRECOMMIT_ADD_ASSOCIATION,
-                self, context=context, router_id=router_id,
-                router=router, old_driver=None, new_driver=driver)
+            with context.session.begin(subtransactions=True):
+                self._stm.add_resource_association(
+                    context, plugin_constants.L3,
+                    driver_name, router_id)
+                registry.notify(
+                    resources.ROUTER_CONTROLLER,
+                    events.PRECOMMIT_ADD_ASSOCIATION,
+                    self, context=context, router_id=router_id,
+                    router=router, old_driver=None, new_driver=driver)
         return self.drivers[driver_name]
 
     def _get_provider_for_create(self, context, router):
