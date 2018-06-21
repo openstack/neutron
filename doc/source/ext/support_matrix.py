@@ -284,7 +284,7 @@ class SupportMatrixDirective(rst.Directive):
 
         # then one column for each backend driver
         impls = matrix.targets.keys()
-        impls.sort()
+        impls = sorted(impls)
         for key in impls:
             target = matrix.targets[key]
             implcol = nodes.entry()
@@ -324,7 +324,7 @@ class SupportMatrixDirective(rst.Directive):
 
             # and then one column for each backend driver
             impls = matrix.targets.keys()
-            impls.sort()
+            impls = sorted(impls)
             for key in impls:
                 target = matrix.targets[key]
                 impl = feature.implementations[key]

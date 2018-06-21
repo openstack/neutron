@@ -264,7 +264,7 @@ _config_generator_config_files = [
 ]
 
 
-def _get_config_generator_config_definition(config_file):
+def _get_config_generator_config_definition(conf):
     config_file_path = '../../etc/oslo-config-generator/%s' % conf
     # oslo_config.sphinxconfiggen appends '.conf.sample' to the filename,
     # strip file extentension (.conf or .ini).
