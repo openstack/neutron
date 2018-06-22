@@ -20,6 +20,7 @@ import abc
 import contextlib
 import functools
 import inspect
+import logging
 import os
 import os.path
 
@@ -179,6 +180,17 @@ class DietTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(DietTestCase, self).setUp()
+
+        # Suppress some log messages during test runs, otherwise it may cause
+        # issues with subunit parser when running on Python 3. It happened for
+        # example for neutron-functional tests.
+        # With this suppress of log levels DEBUG logs will not be captured by
+        # stestr on pythonlogging stream and will not cause this parser issue.
+        supress_logs = ['neutron', 'neutron_lib', 'stevedore', 'oslo_policy',
+                        'oslo_concurrency', 'oslo_db', 'alembic', 'ovsdbapp']
+        for supress_log in supress_logs:
+            logger = logging.getLogger(supress_log)
+            logger.setLevel(logging.ERROR)
 
         # FIXME(amuller): this must be called in the Neutron unit tests base
         # class. Moving this may cause non-deterministic failures. Bug #1489098

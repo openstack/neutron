@@ -15,6 +15,7 @@
     check:
       jobs:
         - neutron-functional
+        - neutron-functional-python27
         - neutron-fullstack
         - neutron-rally-task
         - neutron-tempest-dvr
@@ -57,6 +58,7 @@
     gate:
       jobs:
         - neutron-functional
+        - neutron-functional-python27
         - neutron-fullstack
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
@@ -79,7 +81,6 @@
         - neutron-tempest-with-os-ken-master
     experimental:
       jobs:
-        - neutron-functional-python35
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
         - neutron-tempest-with-uwsgi
@@ -112,20 +113,10 @@
       - ^releasenotes/.*$
 
 - job:
-    name: neutron-functional-python35
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-functional-python35/run.yaml
-    post-run: playbooks/legacy/neutron-functional-python35/post.yaml
-    timeout: 7800
-    required-projects:
-      - openstack-infra/devstack-gate
-      - openstack/neutron
-    irrelevant-files:
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^releasenotes/.*$
-    voting: false
+    name: neutron-functional-python27
+    parent: neutron-functional
+    run: playbooks/legacy/neutron-functional-python27/run.yaml
+    post-run: playbooks/legacy/neutron-functional-python27/post.yaml
 
 - job:
     name: neutron-fullstack
