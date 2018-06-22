@@ -363,6 +363,13 @@ class FakePortWithClientIdNum(object):
                     opt_value='test_client_id_num')]
 
 
+class FakePortWithClientIdNumStr(object):
+    def __init__(self):
+        self.extra_dhcp_opts = [
+            DhcpOpt(opt_name=str(dhcp.DHCP_OPT_CLIENT_ID_NUM),
+                    opt_value='test_client_id_num')]
+
+
 class FakeV4HostRoute(object):
     def __init__(self):
         self.destination = '20.0.0.1/24'
@@ -635,6 +642,14 @@ class FakeV4NetworkClientIdNum(object):
         self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         self.subnets = [FakeV4Subnet()]
         self.ports = [FakePortWithClientIdNum()]
+        self.namespace = 'qdhcp-ns'
+
+
+class FakeV4NetworkClientIdNumStr(object):
+    def __init__(self):
+        self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+        self.subnets = [FakeV4Subnet()]
+        self.ports = [FakePortWithClientIdNumStr()]
         self.namespace = 'qdhcp-ns'
 
 
@@ -2640,6 +2655,11 @@ class TestDnsmasq(TestBase):
         dm = self._get_dnsmasq(FakeV4NetworkClientIdNum())
         self.assertEqual('test_client_id_num',
                          dm._get_client_id(FakePortWithClientIdNum()))
+
+    def test_client_id_num_str(self):
+        dm = self._get_dnsmasq(FakeV4NetworkClientIdNumStr())
+        self.assertEqual('test_client_id_num',
+                         dm._get_client_id(FakePortWithClientIdNumStr()))
 
 
 class TestDeviceManager(TestConfBase):
