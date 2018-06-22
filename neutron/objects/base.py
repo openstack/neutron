@@ -691,7 +691,6 @@ class NeutronDbObject(NeutronObject):
 
     def _get_changed_synthetic_fields(self):
         fields = self.obj_get_changes()
-        fields = get_updatable_fields(self, fields)
         for field in self._get_changed_persistent_fields():
             if field in fields:
                 del fields[field]
