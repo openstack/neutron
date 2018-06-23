@@ -68,7 +68,7 @@ class NeutronConfigFixture(ConfigFixture):
                      'password': rabbitmq_environment.password,
                      'host': rabbitmq_environment.host,
                      'vhost': rabbitmq_environment.vhost},
-                'api_workers': 2,
+                'api_workers': '2',
             },
             'database': {
                 'connection': connection,
