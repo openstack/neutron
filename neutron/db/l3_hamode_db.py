@@ -16,12 +16,15 @@
 import functools
 
 import netaddr
+from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.api.definitions import l3_ext_ha_mode as l3_ext_ha_apidef
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as providernet
 from neutron_lib.api import extensions
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
+from neutron_lib.callbacks import priority_group
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
@@ -124,6 +127,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                              'ha_vr_id': router_db.extra_attributes.ha_vr_id})
                         return
 
+                    old_router = self._make_router_dict(router_db)
                     allocated_vr_ids = self._get_allocated_vr_id(context,
                                                                  network_id)
                     available_vr_ids = VR_ID_RANGE - allocated_vr_ids
@@ -141,6 +145,15 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                         "Router %(router_id)s has been allocated a ha_vr_id "
                         "%(ha_vr_id)d.",
                         {'router_id': router_id, 'ha_vr_id': allocation.vr_id})
+                    router_body = {l3_apidef.ROUTER:
+                            {l3_ext_ha_apidef.HA_INFO: True,
+                             'ha_vr_id': allocation.vr_id}}
+                    registry.publish(resources.ROUTER, events.PRECOMMIT_UPDATE,
+                                     self, payload=events.DBEventPayload(
+                                         context, request_body=router_body,
+                                         states=(old_router,),
+                                         resource_id=router_id,
+                                         desired_state=router_db))
 
                     return allocation.vr_id
 
@@ -343,7 +356,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         return n_utils.create_object_with_dependency(
             creator, dep_getter, dep_creator, dep_id_attr, dep_deleter)[1]
 
-    @registry.receives(resources.ROUTER, [events.BEFORE_CREATE])
+    @registry.receives(resources.ROUTER, [events.BEFORE_CREATE],
+                       priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     @db_api.retry_if_session_inactive()
     def _before_router_create(self, resource, event, trigger,
                               context, router, **kwargs):
@@ -356,7 +370,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         if not self.get_ha_network(context, router['tenant_id']):
             self._create_ha_network(context, router['tenant_id'])
 
-    @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
+    @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE],
+                       priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     def _precommit_router_create(self, resource, event, trigger, context,
                                  router, router_db, **kwargs):
         """Event handler to set ha flag and status on creation."""
@@ -375,7 +390,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 l3ha_exc.HANetworkConcurrentDeletion(
                         tenant_id=router['tenant_id']))
 
-    @registry.receives(resources.ROUTER, [events.AFTER_CREATE])
+    @registry.receives(resources.ROUTER, [events.AFTER_CREATE],
+                       priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     def _after_router_create(self, resource, event, trigger, context,
                              router_id, router, router_db, **kwargs):
         if not router['ha']:
@@ -396,7 +412,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                     context, router_id,
                     {'status': constants.ERROR})['status']
 
-    @registry.receives(resources.ROUTER, [events.PRECOMMIT_UPDATE])
+    @registry.receives(resources.ROUTER, [events.PRECOMMIT_UPDATE],
+                       priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     def _validate_migration(self, resource, event, trigger, payload=None):
         """Event handler on precommit update to validate migration."""
 
@@ -443,7 +460,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         self.set_extra_attr_value(
             payload.context, payload.desired_state, 'ha', requested_ha_state)
 
-    @registry.receives(resources.ROUTER, [events.AFTER_UPDATE])
+    @registry.receives(resources.ROUTER, [events.AFTER_UPDATE],
+                       priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     def _reconfigure_ha_resources(self, resource, event, trigger, context,
                                   router_id, old_router, router, router_db,
                                   **kwargs):
@@ -498,7 +516,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                      "%(tenant)s.",
                      {'network': net_id, 'tenant': tenant_id})
 
-    @registry.receives(resources.ROUTER, [events.PRECOMMIT_DELETE])
+    @registry.receives(resources.ROUTER, [events.PRECOMMIT_DELETE],
+                       priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     def _release_router_vr_id(self, resource, event, trigger, context,
                               router_db, **kwargs):
         """Event handler for removal of VRID during router delete."""
@@ -509,7 +528,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 self._delete_vr_id_allocation(
                     context, ha_network, router_db.extra_attributes.ha_vr_id)
 
-    @registry.receives(resources.ROUTER, [events.AFTER_DELETE])
+    @registry.receives(resources.ROUTER, [events.AFTER_DELETE],
+                       priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     @db_api.retry_if_session_inactive()
     def _cleanup_ha_network(self, resource, event, trigger, context,
                             router_id, original, **kwargs):

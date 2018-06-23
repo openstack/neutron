@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib.callbacks import events
+from neutron_lib.callbacks import priority_group
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_const
@@ -63,14 +64,16 @@ class DriverController(object):
                 plugin_constants.FLAVORS)
         return self._flavor_plugin_ref
 
-    @registry.receives(resources.ROUTER, [events.BEFORE_CREATE])
+    @registry.receives(resources.ROUTER, [events.BEFORE_CREATE],
+                       priority_group.PRIORITY_ROUTER_CONTROLLER)
     def _check_router_request(self, resource, event, trigger, context,
                               router, **kwargs):
         """Validates that API request is sane (flags compat with flavor)."""
         drv = self._get_provider_for_create(context, router)
         _ensure_driver_supports_request(drv, router)
 
-    @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
+    @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE],
+                       priority_group.PRIORITY_ROUTER_CONTROLLER)
     def _set_router_provider(self, resource, event, trigger, context, router,
                              router_db, **kwargs):
         """Associates a router with a service provider.
@@ -84,14 +87,26 @@ class DriverController(object):
         drv = self._get_provider_for_create(context, router)
         self._stm.add_resource_association(context, plugin_constants.L3,
                                            drv.name, router['id'])
+        registry.notify(
+            resources.ROUTER_CONTROLLER, events.PRECOMMIT_ADD_ASSOCIATION,
+            trigger, context=context, router=router,
+            router_db=router_db, old_driver=None,
+            new_driver=drv, **kwargs)
 
-    @registry.receives(resources.ROUTER, [events.PRECOMMIT_DELETE])
+    @registry.receives(resources.ROUTER, [events.PRECOMMIT_DELETE],
+                       priority_group.PRIORITY_ROUTER_CONTROLLER)
     def _clear_router_provider(self, resource, event, trigger, context,
                                router_id, **kwargs):
         """Remove the association between a router and a service provider."""
+        drv = self.get_provider_for_router(context, router_id)
+        registry.notify(
+            resources.ROUTER_CONTROLLER, events.PRECOMMIT_DELETE_ASSOCIATIONS,
+            trigger, context=context, router_id=router_id,
+            old_driver=drv, new_driver=None, **kwargs)
         self._stm.del_resource_associations(context, [router_id])
 
-    @registry.receives(resources.ROUTER, [events.PRECOMMIT_UPDATE])
+    @registry.receives(resources.ROUTER, [events.PRECOMMIT_UPDATE],
+                       priority_group.PRIORITY_ROUTER_CONTROLLER)
     def _update_router_provider(self, resource, event, trigger, payload=None):
         """Handle transition between providers.
 
@@ -141,11 +156,19 @@ class DriverController(object):
             _ensure_driver_supports_request(new_drv, payload.request_body)
             # TODO(kevinbenton): notify old driver explicitly of driver change
             with payload.context.session.begin(subtransactions=True):
+                registry.publish(
+                    resources.ROUTER_CONTROLLER,
+                    events.PRECOMMIT_DELETE_ASSOCIATIONS,
+                    trigger, payload=payload)
                 self._stm.del_resource_associations(
                     payload.context, [payload.resource_id])
                 self._stm.add_resource_association(
                     payload.context, plugin_constants.L3,
                     new_drv.name, payload.resource_id)
+                registry.publish(
+                    resources.ROUTER_CONTROLLER,
+                    events.PRECOMMIT_ADD_ASSOCIATION,
+                    trigger, payload=payload),
 
     def get_provider_for_router(self, context, router_id):
         """Return the provider driver handle for a router id."""
@@ -159,6 +182,10 @@ class DriverController(object):
             driver_name = driver.name
             self._stm.add_resource_association(context, plugin_constants.L3,
                                                driver_name, router_id)
+            registry.notify(
+                resources.ROUTER_CONTROLLER, events.PRECOMMIT_ADD_ASSOCIATION,
+                self, context=context, router_id=router_id,
+                router=router, old_driver=None, new_driver=driver)
         return self.drivers[driver_name]
 
     def _get_provider_for_create(self, context, router):

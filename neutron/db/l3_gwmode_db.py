@@ -14,6 +14,9 @@
 #
 
 from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from oslo_config import cfg
 import sqlalchemy as sa
 from sqlalchemy import sql
@@ -57,7 +60,15 @@ class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
         if not router:
             router = self._get_router(context, router_id)
         with context.session.begin(subtransactions=True):
+            old_router = self._make_router_dict(router)
             router.enable_snat = self._get_enable_snat(info)
+            router_body = {l3_apidef.ROUTER:
+                {l3_apidef.EXTERNAL_GW_INFO: info}}
+            registry.publish(resources.ROUTER, events.PRECOMMIT_UPDATE, self,
+                             payload=events.DBEventPayload(
+                                 context, request_body=router_body,
+                                 states=(old_router,), resource_id=router_id,
+                                 desired_state=router))
 
         # Calls superclass, pass router db object for avoiding re-loading
         super(L3_NAT_dbonly_mixin, self)._update_router_gw_info(
