@@ -24,6 +24,7 @@ from neutron.common import exceptions as n_exc
 LOG = logging.getLogger(__name__)
 CONTRACK_MGRS = {}
 MAX_CONNTRACK_ZONES = 65535
+ZONE_START = 4097
 
 
 @lockutils.synchronized('conntrack')
@@ -186,15 +187,15 @@ class IpConntrackManager(object):
         # call set to dedup because old ports may be mapped to the same zone.
         zones_in_use = sorted(set(self._device_zone_map.values()))
         if not zones_in_use:
-            return 1
+            return ZONE_START
         # attempt to increment onto the highest used zone first. if we hit the
         # end, go back and look for any gaps left by removed devices.
         last = zones_in_use[-1]
         if last < MAX_CONNTRACK_ZONES:
-            return last + 1
+            return max(last + 1, ZONE_START)
         for index, used in enumerate(zones_in_use):
-            if used - index != 1:
+            if used - index != ZONE_START:
                 # gap found, let's use it!
-                return index + 1
+                return index + ZONE_START
         # conntrack zones exhausted :( :(
         raise n_exc.CTZoneExhaustedError()
