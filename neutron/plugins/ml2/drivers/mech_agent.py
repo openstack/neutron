@@ -14,10 +14,12 @@
 #    under the License.
 
 import abc
+import uuid
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
+from neutron_lib.placement import utils as place_utils
 from neutron_lib.plugins.ml2 import api
 from oslo_log import log
 import six
@@ -160,6 +162,73 @@ class AgentMechanismDriverBase(api.MechanismDriver):
             raise ValueError(_("All possible vnic_types were blacklisted for "
                                "%s mechanism driver!") % self.agent_type)
         return supported_vnic_types
+
+    def _possible_agents_for_port(self, context):
+        agent_filters = {
+            'host': [context.current['binding:host_id']],
+            'agent_type': [self.agent_type],
+            'admin_state_up': [True],
+            # By not filtering for 'alive' we may report being responsible
+            # and still not being able to handle the binding. But that case
+            # will be properly logged and handled very soon. That is when
+            # trying to bind with a dead agent.
+        }
+        return context._plugin.get_agents(
+            context._plugin_context,
+            filters=agent_filters,
+        )
+
+    def responsible_for_ports_allocation(self, context):
+        """Report if an agent is responsible for a resource provider.
+
+        :param context: PortContext instance describing the port
+        :returns: True for responsible, False for not responsible
+
+        An agent based mechanism driver is reponsible for a resource provider
+        if an agent of it is responsible for that resource provider. An agent
+        reports responsibility by including the resource provider in the
+        configurations field of the agent heartbeat.
+        """
+        uuid_ns = self.resource_provider_uuid5_namespace
+        if uuid_ns is None:
+            return False
+        if 'allocation' not in context.current['binding:profile']:
+            return False
+
+        rp = uuid.UUID(context.current['binding:profile']['allocation'])
+        host_agents = self._possible_agents_for_port(context)
+
+        reported = {}
+        for agent in host_agents:
+            if 'resource_provider_bandwidths' in agent['configurations']:
+                for device in agent['configurations'][
+                        'resource_provider_bandwidths'].keys():
+                    device_rp_uuid = place_utils.device_resource_provider_uuid(
+                        namespace=uuid_ns,
+                        host=agent['host'],
+                        device=device)
+                    if device_rp_uuid == rp:
+                        reported[agent['id']] = agent
+
+        if len(reported) == 1:
+            agent = list(reported.values())[0]
+            LOG.debug("Agent %(agent)s of type %(agent_type)s reports to be "
+                      "responsible for resource provider %(rsc_provider)s",
+                      {'agent': agent['id'],
+                       'agent_type': agent['agent_type'],
+                       'rsc_provider': rp})
+            return True
+        elif len(reported) > 1:
+            LOG.error("Agent misconfiguration, multiple agents on the same "
+                      "host %(host)s reports being responsible for resource "
+                      "provider %(rsc_provider)s: %(agents)s",
+                      {'host': context.current['binding:host_id'],
+                       'rsc_provider': rp,
+                       'agents': reported.keys()})
+            return False
+        else:
+            # not responsible, must be somebody else
+            return False
 
 
 @six.add_metaclass(abc.ABCMeta)

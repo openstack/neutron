@@ -60,3 +60,7 @@ class FakeAgentMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def get_mappings(self, agent):
         return dict(agent['configurations'].get('interface_mappings', {}))
+
+
+class AnotherFakeAgentMechanismDriver(FakeAgentMechanismDriver):
+    pass
