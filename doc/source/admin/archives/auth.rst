@@ -10,8 +10,8 @@ to the Networking service must provide an authentication token in
 ``X-Auth-Token`` request header. Users obtain this token by
 authenticating with the Identity service endpoint. For more information
 about authentication with the Identity service, see `OpenStack Identity
-service API v2.0
-Reference <https://developer.openstack.org/api-ref/identity/v2/>`__.
+service API v3
+Reference <https://developer.openstack.org/api-ref/identity/v3/>`__.
 When the Identity service is enabled, it is not mandatory to specify the
 project ID for resources in create requests because the project ID is
 derived from the authentication token.
