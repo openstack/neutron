@@ -166,7 +166,15 @@ class FipNamespace(namespaces.Namespace):
                          namespace=ns_name,
                          prefix=FIP_EXT_DEV_PREFIX,
                          mtu=ex_gw_port.get('mtu'))
-
+        if self.agent_conf.external_network_bridge:
+            # NOTE(Swami): for OVS implementations remove the DEAD VLAN tag
+            # on ports. DEAD VLAN tag is added to each newly created port
+            # and should be removed by L2 agent but if
+            # external_network_bridge is set than external gateway port is
+            # created in this bridge and will not be touched by L2 agent.
+            # This is related to lp#1767422
+            self.driver.remove_vlan_tag(
+                self.agent_conf.external_network_bridge, interface_name)
         # Remove stale fg devices
         ip_wrapper = ip_lib.IPWrapper(namespace=ns_name)
         devices = ip_wrapper.get_devices()
