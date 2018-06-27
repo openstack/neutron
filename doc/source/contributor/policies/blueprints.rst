@@ -84,7 +84,7 @@ The workflow for the life an RFE in Launchpad is as follows:
 
   * Priority: there will be only two priorities to choose from, High and Low.
     It is worth noting that priority is not to be confused with
-    `importance <https://wiki.openstack.org/wiki/Bugs#Importance>`_,
+    `importance <https://docs.openstack.org/project-team-guide/bugs.html#Importance>`_,
     which is a property of Launchpad Bugs. Priority gives an indication of
     how promptly a work item should be tackled to allow it to complete. High
     priority is to be chosen for work items that must make substantial
