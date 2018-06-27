@@ -1091,7 +1091,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         :param internal_subnet: The subnet for the fixed-ip.
         :param external_network_id: The external network for floating-ip.
 
-        :raises: ExternalGatewayForFloatingIPNotFound if no suitable router \
+        :raises: ExternalGatewayForFloatingIPNotFound if no suitable router
                  is found.
         """
 
