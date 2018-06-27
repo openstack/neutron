@@ -123,6 +123,9 @@ class NeutronConfigFixture(ConfigFixture):
     def _generate_policy_json(self):
         return c_helpers.find_sample_file('policy.json')
 
+    def get_host(self):
+        return self.config['DEFAULT']['host']
+
 
 class ML2ConfigFixture(ConfigFixture):
 
