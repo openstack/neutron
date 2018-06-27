@@ -29,6 +29,7 @@ from neutron.common import utils as n_utils
 from neutron.db import agentschedulers_db
 from neutron.db.models import agent as agent_model
 from neutron.db.models import l3agent as rb_model
+from neutron.extensions import agent as ext_agent
 from neutron.extensions import l3agentscheduler
 from neutron.extensions import router_availability_zone as router_az
 from neutron.objects import agent as ag_obj
@@ -299,8 +300,11 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         return self.get_sync_data(context, router_ids=router_ids, active=True)
 
     def list_router_ids_on_host(self, context, host, router_ids=None):
-        agent = self._get_agent_by_type_and_host(
-            context, constants.AGENT_TYPE_L3, host)
+        try:
+            agent = self._get_agent_by_type_and_host(
+                context, constants.AGENT_TYPE_L3, host)
+        except ext_agent.AgentNotFoundByTypeHost:
+            return []
         if not agentschedulers_db.services_available(agent.admin_state_up):
             return []
         return self._get_router_ids_for_agent(context, agent, router_ids)
