@@ -13,6 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
+from oslo_config import cfg
+
 from neutron.cmd import sanity_check
 from neutron.tests import base
 
@@ -21,4 +24,6 @@ class TestSanityCheck(base.BaseTestCase):
 
     def test_setup_conf(self):
         # verify that configuration can be successfully imported
-        sanity_check.setup_conf()
+        with mock.patch.object(sanity_check.cfg, 'CONF',
+                               return_value=cfg.ConfigOpts()):
+            sanity_check.setup_conf()
