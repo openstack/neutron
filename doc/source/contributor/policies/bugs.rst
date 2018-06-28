@@ -149,7 +149,7 @@ Bug Screening Best Practices
 When screening bug reports, the first step for the bug deputy is to assess
 how well written the bug report is, and whether there is enough information
 for anyone else besides the bug submitter to reproduce the bug and come up
-with a fix. There is plenty of information on the `OpenStack wiki <https://wiki.openstack.org/wiki/Bugs>`_
+with a fix. There is plenty of information on the `OpenStack Bugs <https://docs.openstack.org/project-team-guide/bugs.html>`_
 on how to write a good bug `report <https://wiki.openstack.org/wiki/BugFilingRecommendations>`_
 and to learn how to tell a good bug report from a bad one. Should the bug
 report not adhere to these best practices, the bug deputy's first step
@@ -206,7 +206,7 @@ following these suggestions:
     single node? Is it multi-node? Are you reporting an issue in your own
     environment or something you encountered in the OpenStack CI
     Infrastructure, aka the Gate?
-  * Perceived severity: what would you consider the `importance <https://wiki.openstack.org/wiki/Bugs#Importance>`_
+  * Perceived severity: what would you consider the `importance <https://docs.openstack.org/project-team-guide/bugs.html#Importance>`_
     to be?
 
 * Tags (Affected component): try to use the existing tags by relying on
