@@ -713,8 +713,9 @@ class NeutronDbObject(NeutronObject):
         # subclasses=True
         for field in self.synthetic_fields:
             try:
+                field_def = self.fields[field]
                 objclasses = NeutronObjectRegistry.obj_classes(
-                ).get(self.fields[field].objname)
+                ).get(field_def.objname)
             except AttributeError:
                 # NOTE(rossella_s) this is probably because this field is not
                 # an ObjectField
@@ -735,25 +736,28 @@ class NeutronDbObject(NeutronObject):
 
             synthetic_field_db_name = (
                 self.fields_need_translation.get(field, field))
-            synth_db_objs = (db_obj.get(synthetic_field_db_name, None)
-                             if db_obj else None)
 
             # synth_db_objs can be list, empty list or None, that is why
             # we need 'is not None', because [] is valid case for 'True'
-            if synth_db_objs is not None:
-                if not isinstance(synth_db_objs, list):
-                    synth_db_objs = [synth_db_objs]
-                synth_objs = [objclass._load_object(self.obj_context, obj)
-                              for obj in synth_db_objs]
-            else:
-                synth_objs = objclass.get_objects(
-                    self.obj_context, **{
-                        k: getattr(self, v) if v in self else db_obj.get(v)
-                        for k, v in foreign_keys.items()})
-            if isinstance(self.fields[field], obj_fields.ObjectField):
-                setattr(self, field, synth_objs[0] if synth_objs else None)
-            else:
+            if isinstance(field_def, obj_fields.ListOfObjectsField):
+                synth_db_objs = (db_obj.get(synthetic_field_db_name, None)
+                                 if db_obj else None)
+                if synth_db_objs is not None:
+                    synth_objs = [objclass._load_object(self.obj_context, obj)
+                                  for obj in synth_db_objs]
+                else:
+                    synth_objs = objclass.get_objects(
+                        self.obj_context, **{
+                            k: getattr(self, v) if v in self else db_obj.get(v)
+                            for k, v in foreign_keys.items()})
                 setattr(self, field, synth_objs)
+            else:
+                synth_db_obj = (db_obj.get(synthetic_field_db_name, None)
+                                if db_obj else None)
+                if synth_db_obj:
+                    synth_db_obj = objclass._load_object(self.obj_context,
+                                                         synth_db_obj)
+                setattr(self, field, synth_db_obj)
             self.obj_reset_changes([field])
 
     def create(self):
