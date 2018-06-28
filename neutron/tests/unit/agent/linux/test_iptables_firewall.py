@@ -134,37 +134,36 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-out tapfake_dev '
-                                    '--physdev-is-bridged '
-                                    '-j $sg-chain', comment=ic.VM_INT_SG),
+                                    '--physdev-is-bridged -j $sg-chain',
+                                    top=True, comment=ic.VM_INT_SG),
                  mock.call.add_rule('sg-chain',
                                     '-m physdev --physdev-out tapfake_dev '
-                                    '--physdev-is-bridged '
-                                    '-j $ifake_dev',
-                                    comment=ic.SG_TO_VM_SG),
+                                    '--physdev-is-bridged -j $ifake_dev',
+                                    top=False, comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule(
                      'ifake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ifake_dev',
                      '-m state --state INVALID -j DROP',
-                     comment=None),
-                 mock.call.add_rule(
-                     'ifake_dev',
-                     '-j $sg-fallback', comment=None),
+                     top=False, comment=None),
+                 mock.call.add_rule('ifake_dev',
+                                    '-j $sg-fallback',
+                                    top=False, comment=None),
                  mock.call.add_chain('ofake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-in tapfake_dev '
-                                    '--physdev-is-bridged '
-                                    '-j $sg-chain', comment=ic.VM_INT_SG),
+                                    '--physdev-is-bridged -j $sg-chain',
+                                    top=True, comment=ic.VM_INT_SG),
                  mock.call.add_rule('sg-chain',
                                     '-m physdev --physdev-in tapfake_dev '
                                     '--physdev-is-bridged -j $ofake_dev',
-                                    comment=ic.SG_TO_VM_SG),
+                                    top=False, comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule('INPUT',
                                     '-m physdev --physdev-in tapfake_dev '
                                     '--physdev-is-bridged -j $ofake_dev',
-                                    comment=ic.INPUT_TO_SG),
+                                    top=False, comment=ic.INPUT_TO_SG),
                  mock.call.add_chain('sfake_dev'),
                  mock.call.add_rule(
                      'sfake_dev',
@@ -178,28 +177,29 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'ofake_dev',
                      '-s 0.0.0.0/32 -d 255.255.255.255/32 -p udp -m udp '
                      '--sport 68 --dport 67 -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule('ofake_dev', '-j $sfake_dev',
-                                    comment=None),
+                                    top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 68 --dport 67 -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 67 --dport 68 -j DROP',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
-                     '-m state --state INVALID -j DROP', comment=None),
+                     '-m state --state INVALID -j DROP',
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-j $sg-fallback',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule('sg-chain', '-j ACCEPT')]
 
         self.v4filter_inst.assert_has_calls(calls)
@@ -208,7 +208,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv4',
                 'direction': 'ingress'}
         ingress = mock.call.add_rule('ifake_dev', '-j RETURN',
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -218,7 +218,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'ingress',
                 'source_ip_prefix': prefix}
         ingress = mock.call.add_rule(
-            'ifake_dev', '-s %s -j RETURN' % prefix, comment=None)
+            'ifake_dev', '-s %s -j RETURN' % prefix, top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -227,7 +227,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'ingress',
                 'protocol': 'tcp'}
         ingress = mock.call.add_rule(
-            'ifake_dev', '-p tcp -j RETURN', comment=None)
+            'ifake_dev', '-p tcp -j RETURN', top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -239,7 +239,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'source_ip_prefix': prefix}
         ingress = mock.call.add_rule('ifake_dev',
                                      '-s %s -p tcp -j RETURN' % prefix,
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -248,7 +248,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'ingress',
                 'protocol': 'icmp'}
         ingress = mock.call.add_rule('ifake_dev', '-p icmp -j RETURN',
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -260,7 +260,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'source_ip_prefix': prefix}
         ingress = mock.call.add_rule(
             'ifake_dev', '-s %s -p icmp -j RETURN' % prefix,
-            comment=None)
+            top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -272,7 +272,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'port_range_max': 10}
         ingress = mock.call.add_rule('ifake_dev',
                                      '-p tcp -m tcp --dport 10 -j RETURN',
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -284,7 +284,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'port_range_max': 10}
         ingress = mock.call.add_rule('ifake_dev',
                                      '-p tcp -m tcp --dport 10 -j RETURN',
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -297,7 +297,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         ingress = mock.call.add_rule(
             'ifake_dev',
             '-p tcp -m tcp -m multiport --dports 10:100 -j RETURN',
-            comment=None)
+            top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -312,7 +312,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         ingress = mock.call.add_rule(
             'ifake_dev',
             '-s %s -p tcp -m tcp -m multiport --dports 10:100 '
-            '-j RETURN' % prefix, comment=None)
+            '-j RETURN' % prefix, top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -321,7 +321,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'ingress',
                 'protocol': 'udp'}
         ingress = mock.call.add_rule(
-            'ifake_dev', '-p udp -j RETURN', comment=None)
+            'ifake_dev', '-p udp -j RETURN', top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -333,7 +333,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'source_ip_prefix': prefix}
         ingress = mock.call.add_rule('ifake_dev',
                                      '-s %s -p udp -j RETURN' % prefix,
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -345,7 +345,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'port_range_max': 10}
         ingress = mock.call.add_rule('ifake_dev',
                                      '-p udp -m udp --dport 10 -j RETURN',
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -358,7 +358,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         ingress = mock.call.add_rule(
             'ifake_dev',
             '-p udp -m udp -m multiport --dports 10:100 -j RETURN',
-            comment=None)
+            top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -373,7 +373,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         ingress = mock.call.add_rule(
             'ifake_dev',
             '-s %s -p udp -m udp -m multiport --dports 10:100 '
-            '-j RETURN' % prefix, comment=None)
+            '-j RETURN' % prefix, top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -385,7 +385,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'port_range_max': 10}
         ingress = mock.call.add_rule('ifake_dev',
                                      '-p dccp -m dccp --dport 10 -j RETURN',
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -397,7 +397,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'port_range_max': 10}
         ingress = mock.call.add_rule('ifake_dev',
                                      '-p sctp -m sctp --dport 10 -j RETURN',
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -405,7 +405,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv4',
                 'direction': 'ingress',
                 'protocol': ''}
-        ingress = mock.call.add_rule('ifake_dev', '-j RETURN', comment=None)
+        ingress = mock.call.add_rule('ifake_dev', '-j RETURN',
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -413,7 +414,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv4',
                 'direction': 'ingress',
                 'protocol': '0'}
-        ingress = mock.call.add_rule('ifake_dev', '-j RETURN', comment=None)
+        ingress = mock.call.add_rule('ifake_dev', '-j RETURN',
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -423,7 +425,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'protocol': 'encap'}
         ingress = mock.call.add_rule('ifake_dev',
                                      '-p encap -j RETURN',
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -433,14 +435,15 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'protocol': '98'}
         ingress = mock.call.add_rule('ifake_dev',
                                      '-p encap -j RETURN',
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
     def test_filter_ipv4_egress(self):
         rule = {'ethertype': 'IPv4',
                 'direction': 'egress'}
-        egress = mock.call.add_rule('ofake_dev', '-j RETURN', comment=None)
+        egress = mock.call.add_rule('ofake_dev', '-j RETURN',
+                                    top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -450,7 +453,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'egress',
                 'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
-            'ofake_dev', '-d %s -j RETURN' % prefix, comment=None)
+            'ofake_dev', '-d %s -j RETURN' % prefix, top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -460,7 +463,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'egress',
                 'source_ip_prefix': prefix}
         egress = mock.call.add_rule(
-            'ofake_dev', '-s %s -j RETURN' % prefix, comment=None)
+            'ofake_dev', '-s %s -j RETURN' % prefix, top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -469,7 +472,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'egress',
                 'protocol': 'tcp'}
         egress = mock.call.add_rule(
-            'ofake_dev', '-p tcp -j RETURN', comment=None)
+            'ofake_dev', '-p tcp -j RETURN', top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -481,7 +484,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'dest_ip_prefix': prefix}
         egress = mock.call.add_rule('ofake_dev',
                                     '-d %s -p tcp -j RETURN' % prefix,
-                                    comment=None)
+                                    top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -490,7 +493,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'egress',
                 'protocol': 'icmp'}
         egress = mock.call.add_rule('ofake_dev', '-p icmp -j RETURN',
-                                    comment=None)
+                                    top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -502,7 +505,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
             'ofake_dev', '-d %s -p icmp -j RETURN' % prefix,
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -516,7 +519,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-d %s -p icmp -m icmp --icmp-type 8 -j RETURN' % prefix,
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -531,7 +534,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             'ofake_dev',
             '-d %s -p icmp -m icmp --icmp-type echo-request '
             '-j RETURN' % prefix,
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -546,7 +549,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-d %s -p icmp -m icmp --icmp-type 8/0 -j RETURN' % prefix,
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -561,7 +564,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-d %s -p icmp -m icmp --icmp-type 8/0 -j RETURN' % prefix,
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -573,7 +576,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'port_range_max': 10}
         egress = mock.call.add_rule('ofake_dev',
                                     '-p tcp -m tcp --dport 10 -j RETURN',
-                                    comment=None)
+                                    top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -586,7 +589,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-p tcp -m tcp -m multiport --dports 10:100 -j RETURN',
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -601,7 +604,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-d %s -p tcp -m tcp -m multiport --dports 10:100 '
-            '-j RETURN' % prefix, comment=None)
+            '-j RETURN' % prefix, top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -610,7 +613,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'egress',
                 'protocol': 'udp'}
         egress = mock.call.add_rule(
-            'ofake_dev', '-p udp -j RETURN', comment=None)
+            'ofake_dev', '-p udp -j RETURN', top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -622,7 +625,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'dest_ip_prefix': prefix}
         egress = mock.call.add_rule('ofake_dev',
                                     '-d %s -p udp -j RETURN' % prefix,
-                                    comment=None)
+                                    top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -634,7 +637,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'port_range_max': 10}
         egress = mock.call.add_rule('ofake_dev',
                                     '-p udp -m udp --dport 10 -j RETURN',
-                                    comment=None)
+                                    top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -647,7 +650,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-p udp -m udp -m multiport --dports 10:100 -j RETURN',
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -662,7 +665,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-d %s -p udp -m udp -m multiport --dports 10:100 '
-            '-j RETURN' % prefix, comment=None)
+            '-j RETURN' % prefix, top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -670,7 +673,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv6',
                 'direction': 'ingress'}
         ingress = mock.call.add_rule('ifake_dev', '-j RETURN',
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -680,7 +683,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'ingress',
                 'source_ip_prefix': prefix}
         ingress = mock.call.add_rule(
-            'ifake_dev', '-s %s -j RETURN' % prefix, comment=None)
+            'ifake_dev', '-s %s -j RETURN' % prefix, top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -689,7 +692,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'ingress',
                 'protocol': 'tcp'}
         ingress = mock.call.add_rule(
-            'ifake_dev', '-p tcp -j RETURN', comment=None)
+            'ifake_dev', '-p tcp -j RETURN', top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -701,7 +704,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'source_ip_prefix': prefix}
         ingress = mock.call.add_rule('ifake_dev',
                                      '-s %s -p tcp -j RETURN' % prefix,
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -713,7 +716,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'port_range_max': 10}
         ingress = mock.call.add_rule('ifake_dev',
                                      '-p tcp -m tcp --dport 10 -j RETURN',
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -722,7 +725,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'ingress',
                 'protocol': 'icmp'}
         ingress = mock.call.add_rule(
-            'ifake_dev', '-p ipv6-icmp -j RETURN', comment=None)
+            'ifake_dev', '-p ipv6-icmp -j RETURN', top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -734,7 +737,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'source_ip_prefix': prefix}
         ingress = mock.call.add_rule(
             'ifake_dev', '-s %s -p ipv6-icmp -j RETURN' % prefix,
-            comment=None)
+            top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -747,7 +750,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         ingress = mock.call.add_rule(
             'ifake_dev',
             '-p tcp -m tcp -m multiport --dports 10:100 -j RETURN',
-            comment=None)
+            top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -760,7 +763,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         ingress = mock.call.add_rule(
             'ifake_dev',
             '-p tcp -m tcp -m multiport --dports 0:100 -j RETURN',
-            comment=None)
+            top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -781,7 +784,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         ingress = mock.call.add_rule(
             'ifake_dev',
             '-s %s -p tcp -m tcp -m multiport --dports 10:100 '
-            '-j RETURN' % prefix, comment=None)
+            '-j RETURN' % prefix, top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -790,7 +793,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'ingress',
                 'protocol': 'udp'}
         ingress = mock.call.add_rule(
-            'ifake_dev', '-p udp -j RETURN', comment=None)
+            'ifake_dev', '-p udp -j RETURN', top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -802,7 +805,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'source_ip_prefix': prefix}
         ingress = mock.call.add_rule('ifake_dev',
                                      '-s %s -p udp -j RETURN' % prefix,
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -814,7 +817,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'port_range_max': 10}
         ingress = mock.call.add_rule('ifake_dev',
                                      '-p udp -m udp --dport 10 -j RETURN',
-                                     comment=None)
+                                     top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -827,7 +830,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         ingress = mock.call.add_rule(
             'ifake_dev',
             '-p udp -m udp -m multiport --dports 10:100 -j RETURN',
-            comment=None)
+            top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -842,14 +845,15 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         ingress = mock.call.add_rule(
             'ifake_dev',
             '-s %s -p udp -m udp -m multiport --dports 10:100 '
-            '-j RETURN' % prefix, comment=None)
+            '-j RETURN' % prefix, top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
     def test_filter_ipv6_egress(self):
         rule = {'ethertype': 'IPv6',
                 'direction': 'egress'}
-        egress = mock.call.add_rule('ofake_dev', '-j RETURN', comment=None)
+        egress = mock.call.add_rule('ofake_dev', '-j RETURN',
+                                    top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -859,7 +863,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'egress',
                 'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
-            'ofake_dev', '-d %s -j RETURN' % prefix, comment=None)
+            'ofake_dev', '-d %s -j RETURN' % prefix, top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -868,7 +872,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'egress',
                 'protocol': 'tcp'}
         egress = mock.call.add_rule(
-            'ofake_dev', '-p tcp -j RETURN', comment=None)
+            'ofake_dev', '-p tcp -j RETURN', top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -880,7 +884,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'dest_ip_prefix': prefix}
         egress = mock.call.add_rule('ofake_dev',
                                     '-d %s -p tcp -j RETURN' % prefix,
-                                    comment=None)
+                                    top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -889,7 +893,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'egress',
                 'protocol': 'icmp'}
         egress = mock.call.add_rule(
-            'ofake_dev', '-p ipv6-icmp -j RETURN', comment=None)
+            'ofake_dev', '-p ipv6-icmp -j RETURN', top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -901,7 +905,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
             'ofake_dev', '-d %s -p ipv6-icmp -j RETURN' % prefix,
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -915,7 +919,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-d %s -p ipv6-icmp -m icmp6 --icmpv6-type 8 -j RETURN' % prefix,
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -930,7 +934,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             'ofake_dev',
             '-d %s -p ipv6-icmp -m icmp6 --icmpv6-type echo-request '
             '-j RETURN' % prefix,
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -945,7 +949,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-d %s -p ipv6-icmp -m icmp6 --icmpv6-type 8/0 -j RETURN' % prefix,
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -960,7 +964,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-d %s -p ipv6-icmp -m icmp6 --icmpv6-type 8/0 -j RETURN' % prefix,
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -975,7 +979,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-d %s -p ipv6-icmp -m icmp6 --icmpv6-type 8/0 -j RETURN' % prefix,
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -987,7 +991,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'port_range_max': 10}
         egress = mock.call.add_rule('ofake_dev',
                                     '-p tcp -m tcp --dport 10 -j RETURN',
-                                    comment=None)
+                                    top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -1000,7 +1004,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-p tcp -m tcp -m multiport --dports 10:100 -j RETURN',
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -1015,7 +1019,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-d %s -p tcp -m tcp -m multiport --dports 10:100 '
-            '-j RETURN' % prefix, comment=None)
+            '-j RETURN' % prefix, top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -1024,7 +1028,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'direction': 'egress',
                 'protocol': 'udp'}
         egress = mock.call.add_rule(
-            'ofake_dev', '-p udp -j RETURN', comment=None)
+            'ofake_dev', '-p udp -j RETURN', top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -1036,7 +1040,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'dest_ip_prefix': prefix}
         egress = mock.call.add_rule('ofake_dev',
                                     '-d %s -p udp -j RETURN' % prefix,
-                                    comment=None)
+                                    top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -1048,7 +1052,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'port_range_max': 10}
         egress = mock.call.add_rule('ofake_dev',
                                     '-p udp -m udp --dport 10 -j RETURN',
-                                    comment=None)
+                                    top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -1061,7 +1065,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-p udp -m udp -m multiport --dports 10:100 -j RETURN',
-            comment=None)
+            top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -1076,7 +1080,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = mock.call.add_rule(
             'ofake_dev',
             '-d %s -p udp -m udp -m multiport --dports 10:100 '
-            '-j RETURN' % prefix, comment=None)
+            '-j RETURN' % prefix, top=False, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -1095,15 +1099,21 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             calls.append(
                 mock.call.add_rule('FORWARD',
                                    '-m physdev --physdev-out tapfake_dev '
-                                   '--physdev-is-bridged '
-                                   '-j ACCEPT', comment=ic.TRUSTED_ACCEPT))
-        filter_inst = self.v4filter_inst
+                                   '--physdev-is-bridged -j ACCEPT',
+                                   top=False, comment=ic.TRUSTED_ACCEPT))
+            calls.append(
+                mock.call.add_rule('FORWARD',
+                                   '-m physdev --physdev-in tapfake_dev '
+                                   '--physdev-is-bridged -j ACCEPT',
+                                   top=False, comment=ic.TRUSTED_ACCEPT))
+
         self.firewall.process_trusted_ports([port['id']])
 
-        comb = zip(calls, filter_inst.mock_calls)
-        for (l, r) in comb:
-            self.assertEqual(l, r)
-        filter_inst.assert_has_calls(calls)
+        for filter_inst in [self.v4filter_inst, self.v6filter_inst]:
+            comb = zip(calls, filter_inst.mock_calls)
+            for (l, r) in comb:
+                self.assertEqual(l, r)
+            filter_inst.assert_has_calls(calls)
         self.assertIn(port['id'], self.firewall.trusted_ports)
 
     def test_process_trusted_ports(self):
@@ -1127,13 +1137,18 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 mock.call.remove_rule('FORWARD',
                                       '-m physdev --physdev-out tapfake_dev '
                                       '--physdev-is-bridged -j ACCEPT'))
-        filter_inst = self.v4filter_inst
+            calls.append(
+                mock.call.remove_rule('FORWARD',
+                                      '-m physdev --physdev-in tapfake_dev '
+                                      '--physdev-is-bridged -j ACCEPT'))
+
         self.firewall.remove_trusted_ports([port['id']])
 
-        comb = zip(calls, filter_inst.mock_calls)
-        for (l, r) in comb:
-            self.assertEqual(l, r)
-        filter_inst.assert_has_calls(calls)
+        for filter_inst in [self.v4filter_inst, self.v6filter_inst]:
+            comb = zip(calls, filter_inst.mock_calls)
+            for (l, r) in comb:
+                self.assertEqual(l, r)
+            filter_inst.assert_has_calls(calls)
         self.assertNotIn(port['id'], self.firewall.trusted_ports)
 
     def test_remove_trusted_ports(self):
@@ -1154,7 +1169,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             'ofake_dev',
             '-s 0.0.0.0/32 -d 255.255.255.255/32 -p udp -m udp '
             '--sport 68 --dport 67 -j RETURN',
-            comment=None)]
+            top=False, comment=None)]
 
         if ethertype == 'IPv6':
             filter_inst = self.v6filter_inst
@@ -1163,7 +1178,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                             '-s ::/128 -d ff02::/16 '
                                             '-p ipv6-icmp -m icmp6 '
                                             '--icmpv6-type %s -j RETURN' %
-                                            icmp6_type,
+                                            icmp6_type, top=False,
                                             comment=None) for icmp6_type
                          in constants.ICMPV6_ALLOWED_UNSPEC_ADDR_TYPES]
         sg = [rule]
@@ -1184,13 +1199,12 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-out tapfake_dev '
-                                    '--physdev-is-bridged '
-                                    '-j $sg-chain', comment=ic.VM_INT_SG),
+                                    '--physdev-is-bridged -j $sg-chain',
+                                    top=True, comment=ic.VM_INT_SG),
                  mock.call.add_rule('sg-chain',
                                     '-m physdev --physdev-out tapfake_dev '
-                                    '--physdev-is-bridged '
-                                    '-j $ifake_dev',
-                                    comment=ic.SG_TO_VM_SG)
+                                    '--physdev-is-bridged -j $ifake_dev',
+                                    top=False, comment=ic.SG_TO_VM_SG)
                  ]
         if ethertype == 'IPv6':
             for icmp6_type in firewall.ICMPV6_ALLOWED_INGRESS_TYPES:
@@ -1198,12 +1212,12 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                     mock.call.add_rule('ifake_dev',
                                        '-p ipv6-icmp -m icmp6 --icmpv6-type '
                                        '%s -j RETURN' %
-                                       icmp6_type, comment=None))
+                                       icmp6_type, top=False, comment=None))
         calls += [
             mock.call.add_rule(
                 'ifake_dev',
                 '-m state --state RELATED,ESTABLISHED -j RETURN',
-                comment=None
+                top=False, comment=None
             )
         ]
 
@@ -1212,22 +1226,24 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
         calls += [mock.call.add_rule(
                       'ifake_dev',
-                      '-m state --state INVALID -j DROP', comment=None),
+                      '-m state --state INVALID -j DROP',
+                      top=False, comment=None),
                   mock.call.add_rule('ifake_dev',
-                                     '-j $sg-fallback', comment=None),
+                                     '-j $sg-fallback',
+                                     top=False, comment=None),
                   mock.call.add_chain('ofake_dev'),
                   mock.call.add_rule('FORWARD',
                                      '-m physdev --physdev-in tapfake_dev '
-                                     '--physdev-is-bridged '
-                                     '-j $sg-chain', comment=ic.VM_INT_SG),
+                                     '--physdev-is-bridged -j $sg-chain',
+                                     top=True, comment=ic.VM_INT_SG),
                   mock.call.add_rule('sg-chain',
                                      '-m physdev --physdev-in tapfake_dev '
                                      '--physdev-is-bridged -j $ofake_dev',
-                                     comment=ic.SG_TO_VM_SG),
+                                     top=False, comment=ic.SG_TO_VM_SG),
                   mock.call.add_rule('INPUT',
                                      '-m physdev --physdev-in tapfake_dev '
                                      '--physdev-is-bridged -j $ofake_dev',
-                                     comment=ic.INPUT_TO_SG),
+                                     top=False, comment=ic.INPUT_TO_SG),
                   mock.call.add_chain('sfake_dev'),
                   mock.call.add_rule(
                       'sfake_dev',
@@ -1244,38 +1260,39 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                         comment=ic.PAIR_DROP))
         calls += dhcp_rule
         calls.append(mock.call.add_rule('ofake_dev', '-j $sfake_dev',
-                                        comment=None))
+                                        top=False, comment=None))
         if ethertype == 'IPv4':
             calls.append(mock.call.add_rule(
                 'ofake_dev',
                 '-p udp -m udp --sport 68 --dport 67 -j RETURN',
-                comment=None))
+                top=False, comment=None))
             calls.append(mock.call.add_rule(
                 'ofake_dev',
                 '-p udp -m udp --sport 67 --dport 68 -j DROP',
-                comment=None))
+                top=False, comment=None))
         if ethertype == 'IPv6':
             calls.append(mock.call.add_rule('ofake_dev',
                                             '-p ipv6-icmp -m icmp6 '
                                             '--icmpv6-type %s -j DROP' %
                                             constants.ICMPV6_TYPE_RA,
-                                            comment=None))
+                                            top=False, comment=None))
             calls.append(mock.call.add_rule('ofake_dev',
                                             '-p ipv6-icmp -j RETURN',
-                                            comment=None))
+                                            top=False, comment=None))
             calls.append(mock.call.add_rule('ofake_dev', '-p udp -m udp '
                                             '--sport 546 --dport 547 '
-                                            '-j RETURN', comment=None))
+                                            '-j RETURN',
+                                            top=False, comment=None))
             calls.append(mock.call.add_rule(
                 'ofake_dev',
                 '-p udp -m udp --sport 547 --dport 546 -j DROP',
-                comment=None))
+                top=False, comment=None))
 
         calls += [
             mock.call.add_rule(
                 'ofake_dev',
                 '-m state --state RELATED,ESTABLISHED -j RETURN',
-                comment=None),
+                top=False, comment=None),
         ]
 
         if egress_expected_call:
@@ -1283,9 +1300,11 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
         calls += [mock.call.add_rule(
                       'ofake_dev',
-                      '-m state --state INVALID -j DROP', comment=None),
+                      '-m state --state INVALID -j DROP',
+                      top=False, comment=None),
                   mock.call.add_rule('ofake_dev',
-                                     '-j $sg-fallback', comment=None),
+                                     '-j $sg-fallback',
+                                     top=False, comment=None),
                   mock.call.add_rule('sg-chain', '-j ACCEPT')]
         comb = zip(calls, filter_inst.mock_calls)
         for (l, r) in comb:
@@ -1522,40 +1541,41 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'FORWARD',
                      '-m physdev --physdev-out tapfake_dev '
                      '--physdev-is-bridged -j $sg-chain',
-                     comment=ic.VM_INT_SG),
+                     top=True, comment=ic.VM_INT_SG),
                  mock.call.add_rule(
                      'sg-chain',
                      '-m physdev --physdev-out tapfake_dev '
                      '--physdev-is-bridged -j $ifake_dev',
-                     comment=ic.SG_TO_VM_SG),
+                     top=False, comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule(
                      'ifake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule('ifake_dev', '-j RETURN',
-                                    comment=None),
+                                    top=False, comment=None),
                  mock.call.add_rule(
                      'ifake_dev',
-                     '-m state --state INVALID -j DROP', comment=None),
-                 mock.call.add_rule(
-                     'ifake_dev',
-                     '-j $sg-fallback', comment=None),
+                     '-m state --state INVALID -j DROP',
+                     top=False, comment=None),
+                 mock.call.add_rule('ifake_dev',
+                                    '-j $sg-fallback',
+                                    top=False, comment=None),
                  mock.call.add_chain('ofake_dev'),
                  mock.call.add_rule(
                      'FORWARD',
                      '-m physdev --physdev-in tapfake_dev '
                      '--physdev-is-bridged -j $sg-chain',
-                     comment=ic.VM_INT_SG),
+                     top=True, comment=ic.VM_INT_SG),
                  mock.call.add_rule(
                      'sg-chain',
                      '-m physdev --physdev-in tapfake_dev '
                      '--physdev-is-bridged -j $ofake_dev',
-                     comment=ic.SG_TO_VM_SG),
+                     top=False, comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule(
                      'INPUT',
                      '-m physdev --physdev-in tapfake_dev '
                      '--physdev-is-bridged -j $ofake_dev',
-                     comment=ic.INPUT_TO_SG),
+                     top=False, comment=ic.INPUT_TO_SG),
                  mock.call.add_chain('sfake_dev'),
                  mock.call.add_rule(
                      'sfake_dev',
@@ -1569,27 +1589,27 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'ofake_dev',
                      '-s 0.0.0.0/32 -d 255.255.255.255/32 -p udp -m udp '
                      '--sport 68 --dport 67 -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule('ofake_dev', '-j $sfake_dev',
-                                    comment=None),
+                                    top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 68 --dport 67 -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 67 --dport 68 -j DROP',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev', '-m state --state INVALID -j DROP',
-                     comment=None),
-                 mock.call.add_rule(
-                     'ofake_dev',
-                     '-j $sg-fallback', comment=None),
+                     top=False, comment=None),
+                 mock.call.add_rule('ofake_dev',
+                                    '-j $sg-fallback',
+                                    top=False, comment=None),
                  mock.call.add_rule('sg-chain', '-j ACCEPT'),
                  mock.call.remove_chain('ifake_dev'),
                  mock.call.remove_chain('ofake_dev'),
@@ -1610,38 +1630,39 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'FORWARD',
                      '-m physdev --physdev-out tapfake_dev '
                      '--physdev-is-bridged -j $sg-chain',
-                     comment=ic.VM_INT_SG),
+                     top=True, comment=ic.VM_INT_SG),
                  mock.call.add_rule(
                      'sg-chain',
                      '-m physdev --physdev-out tapfake_dev '
                      '--physdev-is-bridged -j $ifake_dev',
-                     comment=ic.SG_TO_VM_SG),
+                     top=False, comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule(
                      'ifake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ifake_dev',
-                     '-m state --state INVALID -j DROP', comment=None),
-                 mock.call.add_rule(
-                     'ifake_dev',
-                     '-j $sg-fallback', comment=None),
+                     '-m state --state INVALID -j DROP',
+                     top=False, comment=None),
+                 mock.call.add_rule('ifake_dev',
+                                    '-j $sg-fallback',
+                                    top=False, comment=None),
                  mock.call.add_chain('ofake_dev'),
                  mock.call.add_rule(
                      'FORWARD',
                      '-m physdev --physdev-in tapfake_dev '
                      '--physdev-is-bridged -j $sg-chain',
-                     comment=ic.VM_INT_SG),
+                     top=True, comment=ic.VM_INT_SG),
                  mock.call.add_rule(
                      'sg-chain',
                      '-m physdev --physdev-in tapfake_dev '
                      '--physdev-is-bridged -j $ofake_dev',
-                     comment=ic.SG_TO_VM_SG),
+                     top=False, comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule(
                      'INPUT',
                      '-m physdev --physdev-in tapfake_dev '
                      '--physdev-is-bridged -j $ofake_dev',
-                     comment=ic.INPUT_TO_SG),
+                     top=False, comment=ic.INPUT_TO_SG),
                  mock.call.add_chain('sfake_dev'),
                  mock.call.add_rule(
                      'sfake_dev',
@@ -1655,29 +1676,30 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'ofake_dev',
                      '-s 0.0.0.0/32 -d 255.255.255.255/32 -p udp -m udp '
                      '--sport 68 --dport 67 -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule('ofake_dev', '-j $sfake_dev',
-                                    comment=None),
+                                    top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 68 --dport 67 -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 67 --dport 68 -j DROP',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule('ofake_dev', '-j RETURN',
-                                    comment=None),
+                                    top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
-                     '-m state --state INVALID -j DROP', comment=None),
+                     '-m state --state INVALID -j DROP',
+                     top=False, comment=None),
                  mock.call.add_rule('ofake_dev',
                                     '-j $sg-fallback',
-                                    comment=None),
+                                    top=False, comment=None),
                  mock.call.add_rule('sg-chain', '-j ACCEPT'),
                  mock.call.remove_chain('ifake_dev'),
                  mock.call.remove_chain('ofake_dev'),
@@ -1828,35 +1850,36 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-out tapfake_dev '
-                                    '--physdev-is-bridged '
-                                    '-j $sg-chain', comment=ic.VM_INT_SG),
+                                    '--physdev-is-bridged -j $sg-chain',
+                                    top=True, comment=ic.VM_INT_SG),
                  mock.call.add_rule('sg-chain',
                                     '-m physdev --physdev-out tapfake_dev '
-                                    '--physdev-is-bridged '
-                                    '-j $ifake_dev',
-                                    comment=ic.SG_TO_VM_SG),
+                                    '--physdev-is-bridged -j $ifake_dev',
+                                    top=False, comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule(
                      'ifake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ifake_dev',
-                     '-m state --state INVALID -j DROP', comment=None),
+                     '-m state --state INVALID -j DROP',
+                     top=False, comment=None),
                  mock.call.add_rule('ifake_dev',
-                                    '-j $sg-fallback', comment=None),
+                                    '-j $sg-fallback',
+                                    top=False, comment=None),
                  mock.call.add_chain('ofake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-in tapfake_dev '
-                                    '--physdev-is-bridged '
-                                    '-j $sg-chain', comment=ic.VM_INT_SG),
+                                    '--physdev-is-bridged -j $sg-chain',
+                                    top=True, comment=ic.VM_INT_SG),
                  mock.call.add_rule('sg-chain',
                                     '-m physdev --physdev-in tapfake_dev '
                                     '--physdev-is-bridged -j $ofake_dev',
-                                    comment=ic.SG_TO_VM_SG),
+                                    top=False, comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule('INPUT',
                                     '-m physdev --physdev-in tapfake_dev '
                                     '--physdev-is-bridged -j $ofake_dev',
-                                    comment=ic.INPUT_TO_SG),
+                                    top=False, comment=ic.INPUT_TO_SG),
                  mock.call.add_chain('sfake_dev'),
                  mock.call.add_rule(
                      'sfake_dev',
@@ -1875,26 +1898,28 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'ofake_dev',
                      '-s 0.0.0.0/32 -d 255.255.255.255/32 -p udp -m udp '
                      '--sport 68 --dport 67 -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule('ofake_dev', '-j $sfake_dev',
-                                    comment=None),
+                                    top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 68 --dport 67 -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 67 --dport 68 -j DROP',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
-                     '-m state --state INVALID -j DROP', comment=None),
+                     '-m state --state INVALID -j DROP',
+                     top=False, comment=None),
                  mock.call.add_rule('ofake_dev',
-                                    '-j $sg-fallback', comment=None),
+                                    '-j $sg-fallback',
+                                    top=False, comment=None),
                  mock.call.add_rule('sg-chain', '-j ACCEPT')]
         self.v4filter_inst.assert_has_calls(calls)
 
@@ -1918,35 +1943,35 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-out tapfake_dev '
-                                    '--physdev-is-bridged '
-                                    '-j $sg-chain', comment=ic.VM_INT_SG),
+                                    '--physdev-is-bridged -j $sg-chain',
+                                    top=True, comment=ic.VM_INT_SG),
                  mock.call.add_rule('sg-chain',
                                     '-m physdev --physdev-out tapfake_dev '
-                                    '--physdev-is-bridged '
-                                    '-j $ifake_dev',
-                                    comment=ic.SG_TO_VM_SG),
+                                    '--physdev-is-bridged -j $ifake_dev',
+                                    top=False, comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule(
                      'ifake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ifake_dev',
-                     '-m state --state INVALID -j DROP', comment=None),
+                     '-m state --state INVALID -j DROP',
+                     top=False, comment=None),
                  mock.call.add_rule('ifake_dev', '-j $sg-fallback',
-                                    comment=None),
+                                    top=False, comment=None),
                  mock.call.add_chain('ofake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-in tapfake_dev '
-                                    '--physdev-is-bridged '
-                                    '-j $sg-chain', comment=ic.VM_INT_SG),
+                                    '--physdev-is-bridged -j $sg-chain',
+                                    top=True, comment=ic.VM_INT_SG),
                  mock.call.add_rule('sg-chain',
                                     '-m physdev --physdev-in tapfake_dev '
                                     '--physdev-is-bridged -j $ofake_dev',
-                                    comment=ic.SG_TO_VM_SG),
+                                    top=False, comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule('INPUT',
                                     '-m physdev --physdev-in tapfake_dev '
                                     '--physdev-is-bridged -j $ofake_dev',
-                                    comment=ic.INPUT_TO_SG),
+                                    top=False, comment=ic.INPUT_TO_SG),
                  mock.call.add_chain('sfake_dev'),
                  mock.call.add_rule(
                      'sfake_dev',
@@ -1959,27 +1984,27 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'ofake_dev',
                      '-s 0.0.0.0/32 -d 255.255.255.255/32 -p udp -m udp '
                      '--sport 68 --dport 67 -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule('ofake_dev', '-j $sfake_dev',
-                                    comment=None),
+                                    top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 68 --dport 67 -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 67 --dport 68 -j DROP',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-m state --state INVALID -j DROP',
-                     comment=None),
+                     top=False, comment=None),
                  mock.call.add_rule('ofake_dev', '-j $sg-fallback',
-                                    comment=None),
+                                    top=False, comment=None),
                  mock.call.add_rule('sg-chain', '-j ACCEPT')]
         self.v4filter_inst.assert_has_calls(calls)
 
