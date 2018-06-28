@@ -1075,8 +1075,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 vm_arp_table = {
                     'ip_address': vm_port_fixed_ips[0]['ip_address'],
                     'mac_address': vm_port_mac,
-                    'subnet_id': vm_port_subnet_id,
-                    'nud_state': 'permanent'}
+                    'subnet_id': vm_port_subnet_id}
                 vm_port2 = self.core_plugin.update_port(
                     self.context, int_port2['port']['id'],
                     {'port': {portbindings.HOST_ID: HOST2}})
@@ -1128,8 +1127,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 vrrp_arp_table1 = {
                     'ip_address': vrrp_port_fixed_ips[0]['ip_address'],
                     'mac_address': vm_port_mac,
-                    'subnet_id': vrrp_port_subnet_id,
-                    'nud_state': 'reachable'}
+                    'subnet_id': vrrp_port_subnet_id}
 
                 expected_calls = [
                         mock.call(self.context,
@@ -1244,8 +1242,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 vm_arp_table = {
                     'ip_address': vm_port_fixed_ips[0]['ip_address'],
                     'mac_address': vm_port_mac,
-                    'subnet_id': vm_port_subnet_id,
-                    'nud_state': 'permanent'}
+                    'subnet_id': vm_port_subnet_id}
                 self.assertEqual(1, l3_notifier.add_arp_entry.call_count)
                 floating_ip = {'floating_network_id': ext_net['network']['id'],
                                'router_id': router['id'],
@@ -1274,8 +1271,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 vrrp_arp_table1 = {
                     'ip_address': vrrp_port_fixed_ips[0]['ip_address'],
                     'mac_address': vm_port_mac,
-                    'subnet_id': vrrp_port_subnet_id,
-                    'nud_state': 'reachable'}
+                    'subnet_id': vrrp_port_subnet_id}
 
                 expected_calls = [
                         mock.call(self.context,
