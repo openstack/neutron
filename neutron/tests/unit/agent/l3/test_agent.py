@@ -2279,9 +2279,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                   'distributed': True, 'ha': True,
                   'external_gateway_info': {}, 'routes': [],
                   'admin_state_up': True}
-
-        agent._process_router_if_compatible(router)
-        self.assertIn(router['id'], agent.router_info)
+        with mock.patch.object(agent, 'check_ha_state_for_router') as chsfr:
+            agent._process_router_if_compatible(router)
+            self.assertIn(router['id'], agent.router_info)
+            self.assertFalse(chsfr.called)
 
     def test_process_router_if_compatible_with_no_ext_net_in_conf(self):
         self.conf.set_override('external_network_bridge', 'br-ex')

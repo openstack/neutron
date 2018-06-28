@@ -468,13 +468,14 @@ class L3NATAgent(ha.AgentMixin,
         self.l3_ext_manager.add_router(self.context, router)
 
     def _process_updated_router(self, router):
+        ri = self.router_info[router['id']]
         is_dvr_only_agent = (
             self.conf.agent_mode == lib_const.L3_AGENT_MODE_DVR)
+        is_ha_router = getattr(ri, 'ha_state', None) is not None
         # For HA routers check that DB state matches actual state
-        if router.get('ha') and not is_dvr_only_agent:
+        if router.get('ha') and not is_dvr_only_agent and is_ha_router:
             self.check_ha_state_for_router(
                 router['id'], router.get(l3_constants.HA_ROUTER_STATE_KEY))
-        ri = self.router_info[router['id']]
         ri.router = router
         registry.notify(resources.ROUTER, events.BEFORE_UPDATE,
                         self, router=ri)
