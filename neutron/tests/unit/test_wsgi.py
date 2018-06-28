@@ -26,6 +26,7 @@ import webob
 import webob.exc
 
 from neutron.common import exceptions as n_exc
+from neutron.common import ipv6_utils
 from neutron.tests import base
 from neutron.tests.common import helpers
 from neutron import wsgi
@@ -108,6 +109,9 @@ class TestWSGIServer(base.BaseTestCase):
         server.wait()
         launcher.wait.assert_called_once_with()
 
+    @testtools.skipIf(
+        not ipv6_utils.is_enabled_and_bind_by_default(),
+        'IPv6 support disabled on host')
     def test_start_random_port_with_ipv6(self):
         server = wsgi.Server("test_random_port")
         server.start(None, 0, host="::1")
