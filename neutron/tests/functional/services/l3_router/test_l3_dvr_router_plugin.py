@@ -19,6 +19,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib.exceptions import agent as agent_exc
 
 from neutron_lib import constants
 from neutron_lib import context
@@ -305,6 +306,10 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             self.l3_plugin._get_agent_gw_ports_exist_for_network(
                 self.context, ext_net_id, "", self.l3_agent['id']))
 
+    def test_create_floating_ip_with_no_dvr_agents(self):
+        self._test_create_floating_ip_agent_notification(
+            test_agent_mode=None)
+
     def _test_create_floating_ip_agent_notification(
         self, dvr=True, test_agent_mode=constants.L3_AGENT_MODE_DVR):
         with self.subnet() as ext_subnet,\
@@ -315,8 +320,9 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 self.context, int_port['port']['id'],
                 {'port': {portbindings.HOST_ID: 'host1'}})
             # and create l3 agents on corresponding hosts
-            helpers.register_l3_agent(host='host1',
-                agent_mode=test_agent_mode)
+            if test_agent_mode is not None:
+                helpers.register_l3_agent(host='host1',
+                    agent_mode=test_agent_mode)
 
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
@@ -331,6 +337,14 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             self.l3_plugin.add_router_interface(
                 self.context, router['id'],
                 {'subnet_id': int_subnet['subnet']['id']})
+            if test_agent_mode is None:
+                self.assertRaises(
+                    agent_exc.AgentNotFoundByTypeHost,
+                    self.l3_plugin.create_fip_agent_gw_port_if_not_exists,
+                    self.context,
+                    ext_net_id,
+                    'host1')
+                return
             floating_ip = {'floating_network_id': ext_net_id,
                            'router_id': router['id'],
                            'port_id': int_port['port']['id'],
@@ -498,6 +512,10 @@ class L3DvrTestCase(L3DvrTestCaseBase):
     def test_update_floating_ip_agent_notification_non_dvr(self):
         self._test_update_floating_ip_agent_notification(dvr=False)
 
+    def test_delete_floating_ip_with_no_agents(self):
+        self._test_delete_floating_ip_agent_notification(
+            test_agent_mode=None)
+
     def _test_delete_floating_ip_agent_notification(
         self, dvr=True, test_agent_mode=constants.L3_AGENT_MODE_DVR):
         with self.subnet() as ext_subnet,\
@@ -531,8 +549,19 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                            'dns_name': '', 'dns_domain': ''}
             floating_ip = self.l3_plugin.create_floatingip(
                 self.context, {'floatingip': floating_ip})
+            if test_agent_mode is None:
+                with mock.patch.object(
+                        self.l3_plugin, 'get_dvr_agent_on_host') as a_mock,\
+                        mock.patch.object(self.l3_plugin,
+                                          '_l3_rpc_notifier') as l3_notif:
+                    a_mock.return_value = None
+                    self.l3_plugin.delete_floatingip(
+                        self.context, floating_ip['id'])
+                    self.assertFalse(
+                        l3_notif.routers_updated_on_host.called)
+                    return
             with mock.patch.object(
-                    self.l3_plugin, '_l3_rpc_notifier') as l3_notif:
+                        self.l3_plugin, '_l3_rpc_notifier') as l3_notif:
                 self.l3_plugin.delete_floatingip(
                     self.context, floating_ip['id'])
                 if dvr:
@@ -552,7 +581,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                                 assert_called_once_with(
                                     self.context, [router['id']], 'host0')
                             self.assertFalse(l3_notif.routers_updated.called)
-                    else:
+                    if test_agent_mode == (
+                            constants.L3_AGENT_MODE_DVR):
                         l3_notif.routers_updated_on_host.\
                             assert_called_once_with(
                                 self.context, [router['id']], 'host1')
