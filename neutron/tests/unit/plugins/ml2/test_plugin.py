@@ -962,6 +962,29 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             host_arg={portbindings.HOST_ID: HOST},
             arg_list=(portbindings.HOST_ID,))
 
+    def test_update_port_regenerate_mac(self):
+        ctx = context.get_admin_context()
+        plugin = directory.get_plugin()
+        data = {'port': {'mac_address': None}}
+        with self.port() as port:
+            current_mac = port['port']['mac_address']
+            req = self.new_update_request('ports', data, port['port']['id'])
+            self.assertEqual(200, req.get_response(self.api).status_int)
+            new_mac = plugin.get_port(ctx, port['port']['id'])['mac_address']
+            self.assertNotEqual(current_mac, new_mac)
+            self.assertTrue(netaddr.valid_mac(new_mac))
+
+    def test_update_port_mac_does_not_change(self):
+        ctx = context.get_admin_context()
+        plugin = directory.get_plugin()
+        data = {'port': {'description': 'Port Description'}}
+        with self.port() as port:
+            current_mac = port['port']['mac_address']
+            req = self.new_update_request('ports', data, port['port']['id'])
+            self.assertEqual(200, req.get_response(self.api).status_int)
+            new_mac = plugin.get_port(ctx, port['port']['id'])['mac_address']
+            self.assertEqual(current_mac, new_mac)
+
     def test_update_non_existent_port(self):
         ctx = context.get_admin_context()
         plugin = directory.get_plugin()

@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Adds  api extenstion ``port-mac-address-regenerate``. When passing
+    ``'null'`` (``None``) as the ``mac_address`` on port update a converter
+    will generate a new mac address that will be assigned to the port.
+    `RFE:  #1768690 <https://bugs.launchpad.net/neutron/+bug/1768690>`_.
