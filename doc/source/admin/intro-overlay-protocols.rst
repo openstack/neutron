@@ -32,3 +32,14 @@ Layer 2 overlay scheme on a Layer 3 network. It allows an overlay layer-2
 network to spread across multiple underlay layer-3 network domains. Each
 overlay is termed a VXLAN segment. Only VMs within the same VXLAN segment
 can communicate.
+
+Generic Network Virtualization Encapsulation (GENEVE)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Geneve is designed to recognize and accommodate changing capabilities and
+needs of different devices in network virtualization. It provides a
+framework for tunneling rather than being prescriptive about the entire
+system. Geneve defines the content of the metadata flexibly that is added
+during encapsulation and tries to adapt to various virtualization scenarios.
+It uses UDP as its transport protocol and is dynamic in size using extensible
+option headers. Geneve supports unicast, multicast, and broadcast.
