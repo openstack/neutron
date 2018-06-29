@@ -55,21 +55,38 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
         self.assertIsNone(self.rcache.get_resource_by_id('goose', 2))
 
     def test__flood_cache_for_query_pulls_once(self):
+        resources = [OVOLikeThing(66), OVOLikeThing(67)]
+        received_kw = []
+        receiver = lambda *a, **k: received_kw.append(k)
+        registry.subscribe(receiver, 'goose', events.AFTER_UPDATE)
+
+        self._pullmock.bulk_pull.side_effect = [
+            resources,
+            [resources[0]],
+            [resources[1]],
+            [resources[1]]
+        ]
+
         self.rcache._flood_cache_for_query('goose', id=(66, 67),
                                            name=('a', 'b'))
         self._pullmock.bulk_pull.assert_called_once_with(
             mock.ANY, 'goose',
             filter_kwargs={'id': (66, 67), 'name': ('a', 'b')})
+
         self._pullmock.bulk_pull.reset_mock()
         self.rcache._flood_cache_for_query('goose', id=(66, ), name=('a', ))
         self.assertFalse(self._pullmock.called)
         self.rcache._flood_cache_for_query('goose', id=(67, ), name=('b', ))
         self.assertFalse(self._pullmock.called)
+
         # querying by just ID should trigger a new call since ID+name is a more
         # specific query
         self.rcache._flood_cache_for_query('goose', id=(67, ))
         self._pullmock.bulk_pull.assert_called_once_with(
             mock.ANY, 'goose', filter_kwargs={'id': (67, )})
+
+        self.assertItemsEqual(
+            resources, [rec['updated'] for rec in received_kw])
 
     def test_bulk_pull_doesnt_wipe_out_newer_data(self):
         self.rcache.record_resource_update(
