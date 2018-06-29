@@ -104,6 +104,9 @@ class TestDvrFipNs(base.BaseTestCase):
         self.fip_ns.create_or_update_gateway_port(agent_gw_port)
         self.assertTrue(fip_create.called)
         self.assertEqual(1, self.driver.plug.call_count)
+        ext_net_bridge = self.conf.external_network_bridge
+        if ext_net_bridge:
+            self.assertEqual(1, self.driver.remove_vlan_tag.call_count)
         self.assertEqual(1, self.driver.init_l3.call_count)
 
     @mock.patch.object(ip_lib, 'IPDevice')
