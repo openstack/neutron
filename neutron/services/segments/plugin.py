@@ -38,7 +38,6 @@ from oslo_utils import excutils
 
 from neutron._i18n import _
 from neutron.db import _resource_extend as resource_extend
-from neutron.db import models_v2
 from neutron.extensions import segment
 from neutron.notifiers import batch_notifier
 from neutron.objects import network as net_obj
@@ -64,7 +63,8 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
     supported_extension_aliases = ["segment", "ip_allocation",
                                    l2adj_apidef.ALIAS,
                                    "standard-attr-segment",
-                                   "subnet-segmentid-writable"]
+                                   "subnet-segmentid-writable",
+                                   'segments-peer-subnet-host-routes']
 
     __native_pagination_support = True
     __native_sorting_support = True
@@ -437,12 +437,11 @@ class NovaSegmentNotifier(object):
 @registry.has_registry_receivers
 class SegmentHostRoutes(object):
 
-    def _get_network(self, context, network_id):
-        return context.session.query(models_v2.Network).filter(
-            models_v2.Network.id == network_id).one()
+    def _get_subnets(self, context, network_id):
+        return subnet_obj.Subnet.get_objects(context, network_id=network_id)
 
     def _calculate_routed_network_host_routes(self, context, ip_version,
-                                              network=None, subnet_id=None,
+                                              network_id=None, subnet_id=None,
                                               segment_id=None,
                                               host_routes=None,
                                               gateway_ip=None,
@@ -456,7 +455,7 @@ class SegmentHostRoutes(object):
         and AFTER_DELETE.
 
         :param ip_version: IP version (4/6).
-        :param network: Network.
+        :param network_id: Network ID.
         :param subnet_id: UUID of the subnet.
         :param segment_id: Segement ID associated with the subnet.
         :param host_routes: Current host_routes of the subnet.
@@ -479,13 +478,13 @@ class SegmentHostRoutes(object):
             if delete_route in host_routes:
                 host_routes.remove(delete_route)
 
-        for subnet in network.subnets:
+        for subnet in self._get_subnets(context, network_id):
             if (subnet.id == subnet_id or subnet.segment_id == segment_id or
                     subnet.ip_version != ip_version):
                 continue
             subnet_ip_net = netaddr.IPNetwork(subnet.cidr)
             if old_gateway_ip:
-                old_route = {'destination': subnet.cidr,
+                old_route = {'destination': str(subnet.cidr),
                              'nexthop': old_gateway_ip}
                 if old_route in host_routes:
                     host_routes.remove(old_route)
@@ -514,6 +513,38 @@ class SegmentHostRoutes(object):
                  set((route['destination'],
                       route['nexthop']) for route in calc_host_routes)))
 
+    def _update_routed_network_host_routes(self, context, network_id,
+                                           deleted_cidr=None):
+        """Update host routes on subnets on a routed network after event
+
+        Host routes on the subnets on a routed network may need updates after
+        any CREATE or DELETE event.
+
+        :param network_id: Network ID
+        :param deleted_cidr: The cidr of a deleted subnet.
+        """
+        for subnet in self._get_subnets(context, network_id):
+            host_routes = [{'destination': str(route.destination),
+                            'nexthop': route.nexthop}
+                           for route in subnet.host_routes]
+            calc_host_routes = self._calculate_routed_network_host_routes(
+                context=context,
+                ip_version=subnet.ip_version,
+                network_id=subnet.network_id,
+                subnet_id=subnet.id,
+                segment_id=subnet.segment_id,
+                host_routes=copy.deepcopy(host_routes),
+                gateway_ip=subnet.gateway_ip,
+                deleted_cidr=deleted_cidr)
+            if self._host_routes_need_update(host_routes, calc_host_routes):
+                LOG.debug(
+                    "Updating host routes for subnet %s on routed network %s",
+                    (subnet.id, subnet.network_id))
+                plugin = directory.get_plugin()
+                plugin.update_subnet(context, subnet.id,
+                                     {'subnet': {
+                                         'host_routes': calc_host_routes}})
+
     @registry.receives(resources.SUBNET, [events.BEFORE_CREATE])
     def host_routes_before_create(self, resource, event, trigger, context,
                                   subnet, **kwargs):
@@ -524,11 +555,10 @@ class SegmentHostRoutes(object):
         else:
             host_routes = []
         if segment_id is not None and validators.is_attr_set(gateway_ip):
-            network = self._get_network(context, subnet['network_id'])
             calc_host_routes = self._calculate_routed_network_host_routes(
                 context=context,
                 ip_version=netaddr.IPNetwork(subnet['cidr']).version,
-                network=network,
+                network_id=subnet['network_id'],
                 segment_id=subnet['segment_id'],
                 host_routes=copy.deepcopy(host_routes),
                 gateway_ip=gateway_ip)
@@ -546,11 +576,10 @@ class SegmentHostRoutes(object):
         host_routes = subnet.get('host_routes', original_subnet['host_routes'])
         if (segment_id and (host_routes != original_subnet['host_routes'] or
                             gateway_ip != original_subnet['gateway_ip'])):
-            network = self._get_network(context, original_subnet['network_id'])
             calc_host_routes = self._calculate_routed_network_host_routes(
                 context=context,
                 ip_version=netaddr.IPNetwork(original_subnet['cidr']).version,
-                network=network,
+                network_id=original_subnet['network_id'],
                 segment_id=segment_id,
                 host_routes=copy.deepcopy(host_routes),
                 gateway_ip=gateway_ip,
@@ -558,3 +587,23 @@ class SegmentHostRoutes(object):
                         gateway_ip != original_subnet['gateway_ip']) else None)
             if self._host_routes_need_update(host_routes, calc_host_routes):
                 subnet['host_routes'] = calc_host_routes
+
+    @registry.receives(resources.SUBNET, [events.AFTER_CREATE])
+    def host_routes_after_create(self, resource, event, trigger, **kwargs):
+        context = kwargs['context']
+        subnet = kwargs['subnet']
+        # If there are other subnets on the network and subnet has segment_id
+        # ensure host routes for all subnets are updated.
+        if (len(self._get_subnets(context, subnet['network_id'])) > 1 and
+                subnet.get('segment_id')):
+            self._update_routed_network_host_routes(context,
+                                                    subnet['network_id'])
+
+    @registry.receives(resources.SUBNET, [events.AFTER_DELETE])
+    def host_routes_after_delete(self, resource, event, trigger, context,
+                                 subnet, **kwargs):
+        # If this is a routed network, remove any routes to this subnet on
+        # this networks remaining subnets.
+        if subnet.get('segment_id'):
+            self._update_routed_network_host_routes(
+                context, subnet['network_id'], deleted_cidr=subnet['cidr'])

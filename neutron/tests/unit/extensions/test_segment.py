@@ -2498,9 +2498,7 @@ class TestSegmentHostRoutes(TestSegmentML2):
             sub_res = self.deserialize(self.fmt, raw_res)['subnet']
             self.assertIn(sub_res['cidr'], cidrs)
             self.assertIn(sub_res['gateway_ip'], gateway_ips)
-            # TODO(hjensas): Remove the conditinal in next patch in series.
-            if len(sub_res['host_routes']) > 0:
-                self.assertIn(sub_res['host_routes'][0], host_routes)
+            self.assertIn(sub_res['host_routes'][0], host_routes)
 
     def test_host_routes_two_subnets_with_same_segment_association(self):
         """Creates two subnets associated to the same segment.
@@ -2540,6 +2538,33 @@ class TestSegmentHostRoutes(TestSegmentML2):
         self.assertEqual([], res_subnet0['subnet']['host_routes'])
         self.assertEqual([], res_subnet1['subnet']['host_routes'])
 
+    def test_host_routes_create_two_subnets_then_delete_one(self):
+        """Delete subnet after creating two subnets associated same segment.
+
+        Host routes with destination to the subnet that is deleted are removed
+        from the remaining subnets.
+        """
+        gateway_ips = ['10.0.1.1', '10.0.2.1']
+        cidrs = ['10.0.1.0/24', '10.0.2.0/24']
+        net, subnet0, subnet1 = self._create_subnets_segments(gateway_ips,
+                                                              cidrs)
+
+        sh_req = self.new_show_request('subnets', subnet1['id'])
+        raw_res = sh_req.get_response(self.api)
+        sub_res = self.deserialize(self.fmt, raw_res)
+        self.assertEqual([{'destination': cidrs[0],
+                           'nexthop': gateway_ips[1]}],
+                         sub_res['subnet']['host_routes'])
+
+        del_req = self.new_delete_request('subnets', subnet0['id'])
+        del_req.get_response(self.api)
+
+        sh_req = self.new_show_request('subnets', subnet1['id'])
+        raw_res = sh_req.get_response(self.api)
+        sub_res = self.deserialize(self.fmt, raw_res)
+
+        self.assertEqual([], sub_res['subnet']['host_routes'])
+
     def test_host_routes_two_subnets_then_change_gateway_ip(self):
         gateway_ips = ['10.0.1.1', '10.0.2.1']
         cidrs = ['10.0.1.0/24', '10.0.2.0/24']
@@ -2557,9 +2582,7 @@ class TestSegmentHostRoutes(TestSegmentML2):
             sub_res = self.deserialize(self.fmt, raw_res)['subnet']
             self.assertIn(sub_res['cidr'], cidrs)
             self.assertIn(sub_res['gateway_ip'], gateway_ips)
-            # TODO(hjensas): Remove the conditinal in next patch in series.
-            if len(sub_res['host_routes']) > 0:
-                self.assertIn(sub_res['host_routes'][0], host_routes)
+            self.assertIn(sub_res['host_routes'][0], host_routes)
 
         new_gateway_ip = '10.0.1.254'
         data = {'subnet': {'gateway_ip': new_gateway_ip,
