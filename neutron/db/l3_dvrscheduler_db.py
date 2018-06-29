@@ -453,8 +453,13 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
             fips = l3plugin._get_floatingips_by_port_id(
                 context, port_id=original_port['id'])
             fip = fips[0] if fips else None
-            if fip and not (removed_routers and
-                            fip['router_id'] in removed_routers):
+            removed_router_ids = [
+                info['router_id'] for info in removed_routers
+            ]
+            if (fip and
+                l3plugin.is_distributed_router(fip['router_id']) and
+                not (removed_routers and
+                     fip['router_id'] in removed_router_ids)):
                 l3plugin.l3_rpc_notifier.routers_updated_on_host(
                     context, [fip['router_id']],
                     original_port[portbindings.HOST_ID])
