@@ -24,7 +24,10 @@ import six
 import testtools
 
 from neutron.agent.l3 import agent as neutron_l3_agent
+from neutron.agent.l3 import dvr_edge_ha_router as dvr_ha_router
+from neutron.agent.l3 import dvr_edge_router
 from neutron.agent.l3 import dvr_fip_ns
+from neutron.agent.l3 import dvr_local_router
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
@@ -1275,6 +1278,40 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                                                   snat_port_name)
         self._assert_no_ip_addresses_on_interface(namespace,
                                                   ex_gw_port_name)
+
+    @mock.patch.object(dvr_local_router.DvrLocalRouter, 'connect_rtr_2_fip')
+    @mock.patch.object(
+        dvr_ha_router.DvrEdgeHaRouter, '_get_centralized_fip_cidr_set')
+    def test_dvr_ha_router_with_centralized_fip_calls_keepalived_cidr(
+        self, connect_rtr_2_fip_mock, fip_cidr_centralized_mock):
+
+        self._setup_dvr_ha_agents()
+        self._setup_dvr_ha_bridges()
+
+        router1 = self._create_dvr_ha_router(
+            self.agent, enable_gw=True,
+            enable_centralized_fip=True,
+            snat_bound_fip=True)
+        self.assertTrue(fip_cidr_centralized_mock.called)
+        restarted_agent = neutron_l3_agent.L3NATAgentWithStateReport(
+            self.agent.host, self.agent.conf)
+        self.manage_router(restarted_agent, router1.router)
+        self.assertTrue(fip_cidr_centralized_mock.called)
+
+    @mock.patch.object(dvr_local_router.DvrLocalRouter, 'connect_rtr_2_fip')
+    @mock.patch.object(
+        dvr_edge_router.DvrEdgeRouter, '_get_centralized_fip_cidr_set')
+    def test_dvr_router_with_centralized_fip_calls_keepalived_cidr(
+        self, connect_rtr_2_fip_mock, fip_cidr_centralized_mock):
+
+        router_info = self.generate_dvr_router_info(
+            enable_gw=True, enable_centralized_fip=True, snat_bound_fip=True)
+        router1 = self.manage_router(self.agent, router_info)
+        self.assertTrue(fip_cidr_centralized_mock.called)
+        restarted_agent = neutron_l3_agent.L3NATAgentWithStateReport(
+            self.agent.host, self.agent.conf)
+        self.manage_router(restarted_agent, router1.router)
+        self.assertTrue(fip_cidr_centralized_mock.called)
 
     def _test_dvr_ha_router_failover_with_gw_and_fip(self, enable_gw,
                                                      enable_centralized_fip,
