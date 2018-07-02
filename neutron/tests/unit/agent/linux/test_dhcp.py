@@ -461,7 +461,14 @@ class FakeV4SubnetAgentWithNoDnsProvided(FakeV4Subnet):
         self.host_routes = []
 
 
-class FakeV4MultipleAgentsWithoutDnsProvided(object):
+class FakeNetworkBase(object):
+    dns_domain = 'openstacklocal'
+
+    def get(self, attr, default=None):
+        return getattr(self, attr) or default
+
+
+class FakeV4MultipleAgentsWithoutDnsProvided(FakeNetworkBase):
     def __init__(self):
         self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
         self.subnets = [FakeV4SubnetMultipleAgentsWithoutDnsProvided()]
@@ -470,7 +477,7 @@ class FakeV4MultipleAgentsWithoutDnsProvided(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeV4AgentWithoutDnsProvided(object):
+class FakeV4AgentWithoutDnsProvided(FakeNetworkBase):
     def __init__(self):
         self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
         self.subnets = [FakeV4SubnetMultipleAgentsWithoutDnsProvided()]
@@ -479,7 +486,7 @@ class FakeV4AgentWithoutDnsProvided(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeV4AgentWithManyDnsProvided(object):
+class FakeV4AgentWithManyDnsProvided(FakeNetworkBase):
     def __init__(self):
         self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
         self.subnets = [FakeV4SubnetAgentWithManyDnsProvided()]
@@ -488,7 +495,7 @@ class FakeV4AgentWithManyDnsProvided(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeV4AgentWithNoDnsProvided(object):
+class FakeV4AgentWithNoDnsProvided(FakeNetworkBase):
     def __init__(self):
         self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
         self.subnets = [FakeV4SubnetAgentWithNoDnsProvided()]
@@ -503,7 +510,7 @@ class FakeV4SubnetMultipleAgentsWithDnsProvided(FakeV4Subnet):
         self.host_routes = []
 
 
-class FakeV4MultipleAgentsWithDnsProvided(object):
+class FakeV4MultipleAgentsWithDnsProvided(FakeNetworkBase):
     def __init__(self):
         self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
         self.subnets = [FakeV4SubnetMultipleAgentsWithDnsProvided()]
@@ -621,7 +628,7 @@ class FakeV4SubnetNoRouter(FakeV4Subnet):
         self.dns_nameservers = []
 
 
-class FakeV4Network(object):
+class FakeV4Network(FakeNetworkBase):
     def __init__(self):
         self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         self.subnets = [FakeV4Subnet()]
@@ -629,7 +636,7 @@ class FakeV4Network(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeV4NetworkClientId(object):
+class FakeV4NetworkClientId(FakeNetworkBase):
     def __init__(self):
         self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         self.subnets = [FakeV4Subnet()]
@@ -637,7 +644,7 @@ class FakeV4NetworkClientId(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeV4NetworkClientIdNum(object):
+class FakeV4NetworkClientIdNum(FakeNetworkBase):
     def __init__(self):
         self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         self.subnets = [FakeV4Subnet()]
@@ -645,7 +652,7 @@ class FakeV4NetworkClientIdNum(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeV4NetworkClientIdNumStr(object):
+class FakeV4NetworkClientIdNumStr(FakeNetworkBase):
     def __init__(self):
         self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         self.subnets = [FakeV4Subnet()]
@@ -653,7 +660,7 @@ class FakeV4NetworkClientIdNumStr(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeV6Network(object):
+class FakeV6Network(FakeNetworkBase):
     def __init__(self):
         self.id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
         self.subnets = [FakeV6Subnet()]
@@ -661,7 +668,7 @@ class FakeV6Network(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeDualNetwork(object):
+class FakeDualNetwork(FakeNetworkBase):
     def __init__(self, domain='openstacklocal'):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
@@ -669,9 +676,10 @@ class FakeDualNetwork(object):
         self.ports = [FakePort1(domain=domain), FakeV6Port(domain=domain),
                       FakeDualPort(domain=domain),
                       FakeRouterPort(domain=domain)]
+        self.dns_domain = domain
 
 
-class FakeDeviceManagerNetwork(object):
+class FakeDeviceManagerNetwork(FakeNetworkBase):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
@@ -682,7 +690,7 @@ class FakeDeviceManagerNetwork(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeDualNetworkReserved(object):
+class FakeDualNetworkReserved(FakeNetworkBase):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
@@ -691,7 +699,7 @@ class FakeDualNetworkReserved(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeDualNetworkReserved2(object):
+class FakeDualNetworkReserved2(FakeNetworkBase):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
@@ -701,7 +709,7 @@ class FakeDualNetworkReserved2(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeNetworkDhcpPort(object):
+class FakeNetworkDhcpPort(FakeNetworkBase):
     def __init__(self):
         self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         self.subnets = [FakeV4Subnet()]
@@ -709,7 +717,7 @@ class FakeNetworkDhcpPort(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeDualNetworkGatewayRoute(object):
+class FakeDualNetworkGatewayRoute(FakeNetworkBase):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4SubnetGatewayRoute(), FakeV6SubnetDHCPStateful()]
@@ -717,7 +725,7 @@ class FakeDualNetworkGatewayRoute(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeDualNetworkSingleDHCP(object):
+class FakeDualNetworkSingleDHCP(FakeNetworkBase):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4Subnet(), FakeV4SubnetNoDHCP()]
@@ -725,7 +733,7 @@ class FakeDualNetworkSingleDHCP(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeDualNetworkSingleDHCPBothAttaced(object):
+class FakeDualNetworkSingleDHCPBothAttaced(FakeNetworkBase):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         # dhcp-agent actually can't get the subnet with dhcp disabled
@@ -734,7 +742,7 @@ class FakeDualNetworkSingleDHCPBothAttaced(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeDualNetworkDualDHCP(object):
+class FakeDualNetworkDualDHCP(FakeNetworkBase):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4Subnet(), FakeV4Subnet2()]
@@ -742,7 +750,7 @@ class FakeDualNetworkDualDHCP(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeDualNetworkDualDHCPOnLinkSubnetRoutesDisabled(object):
+class FakeDualNetworkDualDHCPOnLinkSubnetRoutesDisabled(FakeNetworkBase):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4Subnet(), FakeV4SubnetSegmentID()]
@@ -750,7 +758,7 @@ class FakeDualNetworkDualDHCPOnLinkSubnetRoutesDisabled(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeNonLocalSubnets(object):
+class FakeNonLocalSubnets(FakeNetworkBase):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4SubnetSegmentID2()]
@@ -759,7 +767,7 @@ class FakeNonLocalSubnets(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeDualNetworkTriDHCPOneOnLinkSubnetRoute(object):
+class FakeDualNetworkTriDHCPOneOnLinkSubnetRoute(FakeNetworkBase):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4Subnet(), FakeV4Subnet2(),
@@ -769,28 +777,28 @@ class FakeDualNetworkTriDHCPOneOnLinkSubnetRoute(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeV4NoGatewayNetwork(object):
+class FakeV4NoGatewayNetwork(FakeNetworkBase):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4SubnetNoGateway()]
         self.ports = [FakePort1()]
 
 
-class FakeV4NetworkNoRouter(object):
+class FakeV4NetworkNoRouter(FakeNetworkBase):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4SubnetNoRouter()]
         self.ports = [FakePort1()]
 
 
-class FakeV4MetadataNetwork(object):
+class FakeV4MetadataNetwork(FakeNetworkBase):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4MetadataSubnet()]
         self.ports = [FakeRouterPort(ip_address='169.254.169.253')]
 
 
-class FakeV4NetworkDistRouter(object):
+class FakeV4NetworkDistRouter(FakeNetworkBase):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4Subnet()]
@@ -799,7 +807,7 @@ class FakeV4NetworkDistRouter(object):
                           dev_owner=constants.DEVICE_OWNER_DVR_INTERFACE)]
 
 
-class FakeDualV4Pxe3Ports(object):
+class FakeDualV4Pxe3Ports(FakeNetworkBase):
     def __init__(self, port_detail="portsSame"):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4Subnet(), FakeV4SubnetNoDHCP()]
@@ -833,7 +841,7 @@ class FakeDualV4Pxe3Ports(object):
                 DhcpOpt(opt_name='bootfile-name', opt_value='pxelinux3.0')]
 
 
-class FakeV4NetworkPxe2Ports(object):
+class FakeV4NetworkPxe2Ports(FakeNetworkBase):
     def __init__(self, port_detail="portsSame"):
         self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
         self.subnets = [FakeV4Subnet()]
@@ -859,7 +867,7 @@ class FakeV4NetworkPxe2Ports(object):
                 DhcpOpt(opt_name='bootfile-name', opt_value='pxelinux.0')]
 
 
-class FakeV4NetworkPxe3Ports(object):
+class FakeV4NetworkPxe3Ports(FakeNetworkBase):
     def __init__(self, port_detail="portsSame"):
         self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
         self.subnets = [FakeV4Subnet()]
@@ -893,7 +901,7 @@ class FakeV4NetworkPxe3Ports(object):
                 DhcpOpt(opt_name='bootfile-name', opt_value='pxelinux3.0')]
 
 
-class FakeV6NetworkPxePort(object):
+class FakeV6NetworkPxePort(FakeNetworkBase):
     def __init__(self):
         self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
         self.subnets = [FakeV6SubnetDHCPStateful()]
@@ -906,7 +914,7 @@ class FakeV6NetworkPxePort(object):
                     ip_version=6)]
 
 
-class FakeV6NetworkPxePortWrongOptVersion(object):
+class FakeV6NetworkPxePortWrongOptVersion(FakeNetworkBase):
     def __init__(self):
         self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
         self.subnets = [FakeV6SubnetDHCPStateful()]
@@ -919,14 +927,14 @@ class FakeV6NetworkPxePortWrongOptVersion(object):
                     ip_version=6)]
 
 
-class FakeDualStackNetworkSingleDHCP(object):
+class FakeDualStackNetworkSingleDHCP(FakeNetworkBase):
     def __init__(self):
         self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
         self.subnets = [FakeV4Subnet(), FakeV6SubnetSlaac()]
         self.ports = [FakePort1(), FakePort4(), FakeRouterPort()]
 
 
-class FakeDualStackNetworkingSingleDHCPTags(object):
+class FakeDualStackNetworkingSingleDHCPTags(FakeNetworkBase):
     def __init__(self):
         self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
         self.subnets = [FakeV4Subnet(), FakeV6SubnetSlaac()]
@@ -937,7 +945,7 @@ class FakeDualStackNetworkingSingleDHCPTags(object):
                         opt_value='pxelinux.0')]
 
 
-class FakeV4NetworkMultipleTags(object):
+class FakeV4NetworkMultipleTags(FakeNetworkBase):
     def __init__(self):
         self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
         self.subnets = [FakeV4Subnet()]
@@ -947,7 +955,7 @@ class FakeV4NetworkMultipleTags(object):
             DhcpOpt(opt_name='tag:ipxe,bootfile-name', opt_value='pxelinux.0')]
 
 
-class FakeV6NetworkStatelessDHCP(object):
+class FakeV6NetworkStatelessDHCP(FakeNetworkBase):
     def __init__(self):
         self.id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
         self.subnets = [FakeV6SubnetStateless()]
@@ -955,7 +963,7 @@ class FakeV6NetworkStatelessDHCP(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeV6NetworkStatelessDHCPNoDnsProvided(object):
+class FakeV6NetworkStatelessDHCPNoDnsProvided(FakeNetworkBase):
     def __init__(self):
         self.id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
         self.subnets = [FakeV6SubnetStatelessNoDnsProvided()]
@@ -963,7 +971,7 @@ class FakeV6NetworkStatelessDHCPNoDnsProvided(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeV6NetworkStatelessDHCPBadPrefixLength(object):
+class FakeV6NetworkStatelessDHCPBadPrefixLength(FakeNetworkBase):
     def __init__(self):
         self.id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
         self.subnets = [FakeV6SubnetStatelessBadPrefixLength()]
@@ -971,7 +979,7 @@ class FakeV6NetworkStatelessDHCPBadPrefixLength(object):
         self.namespace = 'qdhcp-ns'
 
 
-class FakeNetworkWithV6SatelessAndV4DHCPSubnets(object):
+class FakeNetworkWithV6SatelessAndV4DHCPSubnets(FakeNetworkBase):
     def __init__(self):
         self.id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
         self.subnets = [FakeV6SubnetStateless(), FakeV4Subnet()]
@@ -1321,10 +1329,22 @@ class TestDnsmasq(TestBase):
         (exp_host_name, exp_host_data,
          exp_addn_name, exp_addn_data) = self._test_no_dns_domain_alloc_data
         self.conf.set_override('dns_domain', '')
-        network = FakeDualNetwork(domain=self.conf.dns_domain)
+        network = FakeDualNetwork(domain='')
         self._test_spawn(['--conf-file='], network=network)
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
                                     mock.call(exp_addn_name, exp_addn_data)])
+
+    def test_spawn_with_dns_domain_conf(self):
+        self.conf.set_override('dns_domain', 'starwars.local')
+        network = FakeDualNetwork(domain=None)
+        self._test_spawn(
+            ['--conf-file=', '--domain=starwars.local'], network=network)
+
+    def test_spawn_with_dns_domain_api(self):
+        self.conf.set_override('dns_domain', 'wrong.answer')
+        network = FakeDualNetwork(domain='right.answer')
+        self._test_spawn(
+            ['--conf-file=', '--domain=right.answer'], network=network)
 
     def test_spawn_no_dhcp_range(self):
         network = FakeV6Network()
