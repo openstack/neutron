@@ -43,11 +43,11 @@ from neutron._i18n import _
 from neutron.common import utils
 from neutron.db import agents_db
 from neutron.db import api as db_api
-from neutron.db import models_v2
 from neutron.db import provisioning_blocks
 from neutron.db import securitygroups_db as sg_db
 from neutron.db import segments_db
 from neutron.objects import base as base_obj
+from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db as ml2_db
@@ -720,18 +720,17 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         self.assertFalse(ups.called)
 
     def test__port_provisioned_no_binding(self):
+        device_id = uuidutils.generate_uuid()
         plugin = directory.get_plugin()
         with self.network() as net:
             net_id = net['network']['id']
-        port_id = 'fake_id'
-        port_db = models_v2.Port(
-            id=port_id, tenant_id='tenant', network_id=net_id,
-            mac_address='08:00:01:02:03:04', admin_state_up=True,
-            status='ACTIVE', device_id='vm_id',
-            device_owner=DEVICE_OWNER_COMPUTE
-        )
-        with db_api.context_manager.writer.using(self.context):
-            self.context.session.add(port_db)
+        port_id = uuidutils.generate_uuid()
+        port_obj.Port(self.context,
+                id=port_id, project_id='tenant', network_id=net_id,
+                mac_address=netaddr.EUI('08-00-01-02-03-04'),
+                admin_state_up=True, status='ACTIVE',
+                device_id=device_id,
+                device_owner=DEVICE_OWNER_COMPUTE).create()
         self.assertIsNone(plugin._port_provisioned('port', 'evt', 'trigger',
                                                    self.context, port_id))
 
