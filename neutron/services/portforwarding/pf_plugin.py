@@ -18,6 +18,7 @@ import functools
 
 import netaddr
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
+from neutron_lib.api.definitions import l3
 from neutron_lib.callbacks import registry
 from neutron_lib import constants as lib_consts
 from neutron_lib.db import utils as db_utils
@@ -64,7 +65,8 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
     This class implements a Port Forwarding plugin.
     """
 
-    supported_extension_aliases = ['floating-ip-port-forwarding']
+    supported_extension_aliases = ['floating-ip-port-forwarding',
+                                   'expose-port-forwarding-in-fip']
 
     __native_pagination_support = True
     __native_sorting_support = True
@@ -74,6 +76,26 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         self.push_api = resources_rpc.ResourcesPushRpcApi()
         self.l3_plugin = directory.get_plugin(constants.L3)
         self.core_plugin = directory.get_plugin()
+
+    @staticmethod
+    @resource_extend.extends([l3.FLOATINGIPS])
+    def _extend_floatingip_dict(result_dict, db):
+        fields = [apidef.INTERNAL_IP_ADDRESS, apidef.PROTOCOL,
+                  apidef.INTERNAL_PORT, apidef.EXTERNAL_PORT]
+        result_dict[apidef.COLLECTION_NAME] = []
+        if db.port_forwardings:
+            port_forwarding_result = []
+            for port_forwarding in db.port_forwardings:
+                pf_dict = pf.PortForwarding.modify_fields_from_db(
+                    port_forwarding)
+                for key in list(pf_dict.keys()):
+                    if key not in fields:
+                        pf_dict.pop(key)
+                    elif key == apidef.INTERNAL_IP_ADDRESS:
+                        pf_dict[key] = str(pf_dict[key])
+                port_forwarding_result.append(pf_dict)
+            result_dict[apidef.COLLECTION_NAME] = port_forwarding_result
+        return result_dict
 
     def _get_internal_ip_subnet(self, request_ip, fixed_ips):
         request_ip = netaddr.IPNetwork(request_ip)
