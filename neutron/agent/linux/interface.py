@@ -238,6 +238,17 @@ class LinuxInterfaceDriver(object):
     def get_device_name(self, port):
         return (self.DEV_NAME_PREFIX + port.id)[:self.DEV_NAME_LEN]
 
+    def remove_vlan_tag(self, bridge, interface_name):
+        """Remove vlan tag from given interface.
+
+        This method is necessary only for the case when deprecated
+        option 'external_network_bridge' is used in L3 agent as
+        external gateway port is then created in this external bridge
+        directly and it will have DEAD_VLAN_TAG added by default.
+        """
+        # TODO(slaweq): remove it when external_network_bridge option will be
+        # removed
+
     @staticmethod
     def configure_ipv6_ra(namespace, dev_name, value):
         """Configure handling of IPv6 Router Advertisements on an
@@ -344,6 +355,10 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
 
         ovs = ovs_lib.OVSBridge(bridge)
         ovs.replace_port(device_name, *attrs)
+
+    def remove_vlan_tag(self, bridge, interface):
+        ovs = ovs_lib.OVSBridge(bridge)
+        ovs.clear_db_attribute("Port", interface, "tag")
 
     def plug_new(self, network_id, port_id, device_name, mac_address,
                  bridge=None, namespace=None, prefix=None, mtu=None):
