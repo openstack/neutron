@@ -70,6 +70,11 @@ class TestAZAgentCase(AZTestCommon):
         res = self._list('availability_zones')
         azs = res['availability_zones']
         self.assertItemsEqual(expected, azs)
+        # list with filters
+        res = self._list('availability_zones',
+                         query_params="availability_zone=nova1")
+        azs = res['availability_zones']
+        self.assertItemsEqual(expected[:1], azs)
         # not admin case
         ctx = context.Context('', 'noadmin')
         res = self._list('availability_zones', neutron_context=ctx)
