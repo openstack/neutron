@@ -523,6 +523,8 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.DateTimeField: tools.get_random_datetime,
     obj_fields.DictOfStringsField: get_random_dict_of_strings,
     obj_fields.IPAddressField: tools.get_random_ip_address,
+    obj_fields.IPV4AddressField: lambda: tools.get_random_ip_address(
+        version=constants.IP_VERSION_4),
     obj_fields.IntegerField: tools.get_random_integer,
     obj_fields.ListOfObjectsField: lambda: [],
     obj_fields.ListOfStringsField: tools.get_random_string_list,
