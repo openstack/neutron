@@ -18,6 +18,7 @@ from neutronclient.common import exceptions as nc_exc
 from oslo_config import cfg
 
 from neutron.agent.linux import ip_lib
+from neutron.common import constants as common_const
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as lb_agent
@@ -36,7 +37,8 @@ class EnvironmentDescription(object):
     def __init__(self, network_type='vxlan', l2_pop=True, qos=False,
                  mech_drivers='openvswitch,linuxbridge',
                  service_plugins='router', arp_responder=False,
-                 agent_down_time=75, router_scheduler=None):
+                 agent_down_time=75, router_scheduler=None,
+                 global_mtu=common_const.DEFAULT_NETWORK_MTU):
         self.network_type = network_type
         self.l2_pop = l2_pop
         self.qos = qos
@@ -45,7 +47,7 @@ class EnvironmentDescription(object):
         self.arp_responder = arp_responder
         self.agent_down_time = agent_down_time
         self.router_scheduler = router_scheduler
-
+        self.global_mtu = global_mtu
         self.service_plugins = service_plugins
         if self.qos:
             self.service_plugins += ',qos'
