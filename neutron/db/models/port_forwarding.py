@@ -56,3 +56,4 @@ class PortForwarding(model_base.BASEV2, model_base.HasId):
                             lazy='subquery', uselist=True,
                             cascade='delete')
     )
+    revises_on_change = ('floating_ip', 'port',)
