@@ -2,7 +2,7 @@ DOWNLOAD_DEFAULT_IMAGES=False
 IMAGE_URLS="http://cloud-images.ubuntu.com/releases/16.04/release-20170113/ubuntu-16.04-server-cloudimg-amd64-disk1.img,"
 DEFAULT_INSTANCE_TYPE=ds512M
 DEFAULT_INSTANCE_USER=ubuntu
-BUILD_TIMEOUT=392
+BUILD_TIMEOUT=784
 
 [[test-config|$TEMPEST_CONFIG]]
 
