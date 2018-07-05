@@ -832,6 +832,14 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         data = {}
         self._test_create_failure_bad_request('networks', data)
 
+    def test_create_object_string_not_json(self):
+        data = {'network': 'a string'}
+        self._test_create_failure_bad_request('networks', data)
+
+    def test_create_object_boolean_not_json(self):
+        data = {'network': True}
+        self._test_create_failure_bad_request('networks', data)
+
     def test_create_missing_attr(self):
         data = {'port': {'what': 'who', 'tenant_id': _uuid()}}
         self._test_create_failure_bad_request('ports', data)

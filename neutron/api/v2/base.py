@@ -710,6 +710,9 @@ class Controller(object):
         if res_dict is None:
             msg = _("Unable to find '%s' in request body") % resource
             raise webob.exc.HTTPBadRequest(msg)
+        if not isinstance(res_dict, dict):
+            msg = _("Object '%s' contains invalid data") % resource
+            raise webob.exc.HTTPBadRequest(msg)
 
         attr_ops = attributes.AttributeInfo(attr_info)
         attr_ops.populate_project_id(context, res_dict, is_create)
