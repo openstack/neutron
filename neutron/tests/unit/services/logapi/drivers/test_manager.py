@@ -14,12 +14,15 @@
 #    under the License.
 
 import mock
+from neutron_lib.callbacks import events
+from neutron_lib import fixture
 
 from neutron.common import exceptions
 from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.common import exceptions as log_exc
 from neutron.services.logapi.drivers import base as log_driver_base
 from neutron.services.logapi.drivers import manager as driver_mgr
+from neutron.tests import tools
 from neutron.tests.unit.services.logapi import base
 
 
@@ -51,7 +54,6 @@ class TestLogDriversManagerBase(base.BaseLogTestCase):
     @staticmethod
     def _create_manager_with_drivers(drivers_details):
         for name, driver_details in drivers_details.items():
-
             class LogDriver(log_driver_base.DriverBase):
                 @property
                 def is_loaded(self):
@@ -126,3 +128,61 @@ class TestLogDriversCalls(TestLogDriversManagerBase):
         log_obj = mock.sentinel.log_obj
         self.assertRaises(exceptions.DriverCallError, self.driver_manager.call,
                           'wrong_method', context=context, log_objs=[log_obj])
+
+
+class TestHandleResourceCallback(TestLogDriversManagerBase):
+    """Test handle resource callback"""
+
+    def setUp(self):
+        super(TestHandleResourceCallback, self).setUp()
+        self._cb_mgr = mock.Mock()
+        self.useFixture(fixture.CallbackRegistryFixture(
+            callback_manager=self._cb_mgr))
+        self.driver_manager = driver_mgr.LoggingServiceDriverManager()
+
+    def test_subscribe_resources_cb(self):
+
+        class FakeResourceCB1(driver_mgr.ResourceCallBackBase):
+            def handle_event(self, resource, event, trigger, **kwargs):
+                pass
+
+        class FakeResourceCB2(driver_mgr.ResourceCallBackBase):
+            def handle_event(self, resource, event, trigger, **kwargs):
+                pass
+
+        driver_mgr.RESOURCE_CB_CLASS_MAP = {'fake_resource1': FakeResourceCB1,
+                                            'fake_resource2': FakeResourceCB2}
+
+        self.driver_manager._setup_resources_cb_handle()
+
+        fake_resource_cb1 = FakeResourceCB1(
+            'fake_resource1', self.driver_manager.call)
+        fake_resource_cb2 = FakeResourceCB2(
+            'fake_resource2', self.driver_manager.call)
+        assert_calls = [
+            mock.call(
+                *tools.get_subscribe_args(
+                    fake_resource_cb1.handle_event,
+                    'fake_resource1', events.AFTER_CREATE)),
+            mock.call(
+                *tools.get_subscribe_args(
+                    fake_resource_cb1.handle_event,
+                    'fake_resource1', events.AFTER_UPDATE)),
+            mock.call(
+                *tools.get_subscribe_args(
+                    fake_resource_cb1.handle_event,
+                    'fake_resource1', events.AFTER_DELETE)),
+            mock.call(
+                *tools.get_subscribe_args(
+                    fake_resource_cb2.handle_event,
+                    'fake_resource2', events.AFTER_CREATE)),
+            mock.call(
+                *tools.get_subscribe_args(
+                    fake_resource_cb2.handle_event,
+                    'fake_resource2', events.AFTER_UPDATE)),
+            mock.call(
+                *tools.get_subscribe_args(
+                    fake_resource_cb2.handle_event,
+                    'fake_resource2', events.AFTER_DELETE)),
+        ]
+        self._cb_mgr.subscribe.assert_has_calls(assert_calls)

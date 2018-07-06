@@ -19,7 +19,9 @@ from oslo_log import log as logging
 from oslo_utils import importutils
 
 from neutron.services.logapi.common import constants as log_const
+from neutron.services.logapi.common import sg_callback
 from neutron.services.logapi.drivers import base
+from neutron.services.logapi.drivers import manager
 from neutron.services.logapi.rpc import server as server_rpc
 
 LOG = logging.getLogger(__name__)
@@ -60,4 +62,8 @@ def register():
     importutils.import_module(
         'neutron.services.logapi.common.sg_validate'
     )
+    # Register resource callback handler
+    manager.register(
+        resources.SECURITY_GROUP_RULE, sg_callback.SecurityGroupRuleCallBack)
+
     LOG.debug('Open vSwitch logging driver registered')
