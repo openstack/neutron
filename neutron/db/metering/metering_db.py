@@ -13,13 +13,13 @@
 # under the License.
 
 import netaddr
+from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import metering as metering_exc
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
 from neutron.common import constants
-from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin as base_db
 from neutron.db import l3_dvr_db

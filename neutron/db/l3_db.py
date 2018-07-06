@@ -26,6 +26,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context as n_ctx
+from neutron_lib.db import utils as lib_db_utils
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
@@ -209,7 +210,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # plugins.
         if process_extensions:
             resource_extend.apply_funcs(l3_apidef.ROUTERS, res, router)
-        return db_utils.resource_fields(res, fields)
+        return lib_db_utils.resource_fields(res, fields)
 
     def _create_router_db(self, context, router, tenant_id):
         """Create the DB object."""
@@ -591,8 +592,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     def get_routers(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None,
                     page_reverse=False):
-        marker_obj = db_utils.get_marker_obj(self, context, 'router',
-                                             limit, marker)
+        marker_obj = lib_db_utils.get_marker_obj(
+            self, context, 'router', limit, marker)
         return model_query.get_collection(context, l3_models.Router,
                                           self._make_router_dict,
                                           filters=filters, fields=fields,
@@ -1072,7 +1073,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if process_extensions:
             resource_extend.apply_funcs(
                 l3_apidef.FLOATINGIPS, res, floatingip.db_obj)
-        return db_utils.resource_fields(res, fields)
+        return lib_db_utils.resource_fields(res, fields)
 
     def _get_router_for_floatingip(self, context, internal_port,
                                    internal_subnet_id,

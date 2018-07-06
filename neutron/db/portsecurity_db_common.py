@@ -13,8 +13,8 @@
 #    under the License.
 
 from neutron_lib.api.definitions import port_security as psec
+from neutron_lib.db import utils as db_utils
 
-from neutron.db import _utils as db_utils
 from neutron.objects import network
 from neutron.objects.port.extensions import port_security as p_ps
 

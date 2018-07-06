@@ -12,11 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import flavors as flav_exc
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 
-from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import servicetype_db as sdb

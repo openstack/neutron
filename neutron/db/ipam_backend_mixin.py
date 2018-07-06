@@ -22,6 +22,7 @@ from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api import validators
 from neutron_lib import constants as const
+from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -33,7 +34,6 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.db import _model_query as model_query
-from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db.models import segment as segment_model

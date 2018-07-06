@@ -27,6 +27,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context as ctx
 from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import utils as ndb_utils
 from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
@@ -47,7 +48,6 @@ from neutron.common import ipv6_utils
 from neutron.common import utils
 from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
-from neutron.db import _utils as ndb_utils
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_pluggable_backend

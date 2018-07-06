@@ -18,6 +18,7 @@ import itertools
 import os
 
 from neutron_lib.db import constants as db_const
+from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -26,7 +27,6 @@ import stevedore
 
 from neutron._i18n import _
 from neutron.conf.services import provider_configuration as prov_config
-from neutron.db import _utils as db_utils
 
 LOG = logging.getLogger(__name__)
 
