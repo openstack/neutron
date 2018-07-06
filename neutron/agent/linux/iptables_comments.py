@@ -33,5 +33,6 @@ INVALID_DROP = ("Drop packets that appear related to an existing connection "
 ALLOW_ASSOC = ('Direct packets associated with a known session to the RETURN '
                'chain.')
 PORT_SEC_ACCEPT = 'Accept all packets when port security is disabled.'
+TRUSTED_ACCEPT = 'Accept all packets when port is trusted.'
 IPV6_RA_DROP = 'Drop IPv6 Router Advts from VM Instance.'
 IPV6_ICMP_ALLOW = 'Allow IPv6 ICMP traffic.'

@@ -58,6 +58,20 @@ class SecurityGroupAgentRpc(object):
         self.plugin_rpc = plugin_rpc
         self.init_firewall(defer_refresh_firewall, integration_bridge)
 
+    def _get_trusted_devices(self, device_ids, devices):
+        trusted_devices = []
+        # Devices which are already added in firewall ports should
+        # not be treated as trusted devices but as regular ports
+        all_devices = devices.copy()
+        all_devices.update(self.firewall.ports)
+        device_names = [
+            dev['device'] for dev in all_devices.values()]
+        for device_id in device_ids:
+            if (device_id not in all_devices.keys() and
+                    device_id not in device_names):
+                trusted_devices.append(device_id)
+        return trusted_devices
+
     def init_firewall(self, defer_refresh_firewall=False,
                       integration_bridge=None):
         firewall_driver = cfg.CONF.SECURITYGROUP.firewall_driver or 'noop'
@@ -127,7 +141,7 @@ class SecurityGroupAgentRpc(object):
         else:
             devices = self.plugin_rpc.security_group_rules_for_devices(
                 self.context, list(device_ids))
-        trusted_devices = list(set(device_ids) - set(devices.keys()))
+        trusted_devices = self._get_trusted_devices(device_ids, devices)
 
         with self.firewall.defer_apply():
             if self.use_enhanced_rpc:
