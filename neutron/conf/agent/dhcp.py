@@ -24,7 +24,17 @@ DHCP_AGENT_OPTS = [
     cfg.IntOpt('resync_interval', default=5,
                help=_("The DHCP agent will resync its state with Neutron to "
                       "recover from any transient notification or RPC errors. "
-                      "The interval is number of seconds between attempts.")),
+                      "The interval is maximum number of seconds between "
+                      "attempts. The resync can be done more often based on "
+                      "the events triggered.")),
+    cfg.IntOpt('resync_throttle', default=1,
+               help=_("Throttle the number of resync state events between the "
+                      "local DHCP state and Neutron to only once per "
+                      "'resync_throttle' seconds. The value of throttle "
+                      "introduces a minimum interval between resync state "
+                      "events. Otherwise the resync may end up in a "
+                      "busy-loop. The value must be less than "
+                      "resync_interval.")),
     cfg.StrOpt('dhcp_driver',
                default='neutron.agent.linux.dhcp.Dnsmasq',
                help=_("The driver used to manage the DHCP server.")),

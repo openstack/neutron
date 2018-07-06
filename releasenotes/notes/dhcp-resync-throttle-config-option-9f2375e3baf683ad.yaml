@@ -1,0 +1,17 @@
+---
+features:
+  -
+    A new config option ``resync_throttle`` has been added for Neutron DHCP
+    agent.
+    This new option allows to throttle the number of resync state events
+    between the local DHCP state and Neutron to only once per
+    ``resync_throttle`` seconds.
+    Default value for this new option is set to 1 and it should be configured
+    per a user's specific scenario, i.e. how responsive the user would like
+    his/her system to be for those DHCP resync state events.
+    The option is introduced together with the event driven periodic task for
+    DHCP agents. This enhances the agent with a faster reaction on the resync
+    request but ensuring a minimum interval taken between them to avoid too
+    frequent resyncing.
+    For more information see bug
+    `1780370 <https://bugs.launchpad.net/neutron/+bug/1780370>`_.
