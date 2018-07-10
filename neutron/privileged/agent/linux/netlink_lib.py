@@ -117,8 +117,8 @@ class ConntrackManager(object):
                      6: nfct.nfct_set_attr_u16}
         }
 
-        self.converters = {'src': str,
-                           'dst': str,
+        self.converters = {'src': bytes,
+                           'dst': bytes,
                            'ipversion': nl_constants.IPVERSION_SOCKET.get,
                            'protocol': constants.IP_PROTOCOL_MAP.get,
                            'code': int,
@@ -173,7 +173,7 @@ class ConntrackManager(object):
         dest = ctypes.create_string_buffer(
             nl_constants.IPVERSION_BUFFER[addr_family])
         libc.inet_pton(nl_constants.IPVERSION_SOCKET[addr_family],
-                       source, dest)
+                       source.encode('utf-8'), dest)
         return dest.raw
 
     def _set_attributes(self, conntrack, entry):
