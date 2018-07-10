@@ -524,3 +524,27 @@ class TestIECUnitConversions(BaseUnitConversionTest, base.BaseTestCase):
                 expected_kilobits,
                 utils.bits_to_kilobits(input_bits, self.base_unit)
             )
+
+
+class TestRpBandwidthValidator(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestRpBandwidthValidator, self).setUp()
+        self.device_name_set = {'ens4', 'ens7'}
+        self.valid_rp_bandwidths = {
+            'ens7': {'egress': 10000, 'ingress': 10000}
+        }
+        self.not_valid_rp_bandwidth = {
+            'ens8': {'egress': 10000, 'ingress': 10000}
+        }
+
+    def test_validate_rp_bandwidth_with_device_names(self):
+        try:
+            utils.validate_rp_bandwidth(self.valid_rp_bandwidths,
+                                        self.device_name_set)
+        except ValueError:
+            self.fail("validate_rp_bandwidth failed to validate %s" %
+                      self.valid_rp_bandwidths)
+
+        self.assertRaises(ValueError, utils.validate_rp_bandwidth,
+                          self.not_valid_rp_bandwidth, self.device_name_set)

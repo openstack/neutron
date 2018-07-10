@@ -62,6 +62,34 @@ ovs_opts = [
                        "mapping, make sure to disconnect it from the "
                        "integration bridge as it won't be managed by the "
                        "agent anymore.")),
+    cfg.ListOpt('resource_provider_bandwidths',
+                default=[],
+                help=_("Comma-separated list of "
+                       "<bridge>:<egress_bw>:<ingress_bw> tuples, showing "
+                       "the available bandwidth for the given bridge in the "
+                       "given direction. The direction is meant from VM "
+                       "perspective. Bandwidth is measured in kilobits per "
+                       "second (kbps). The bridge must appear in "
+                       "bridge_mappings as the value. But not all bridges in "
+                       "bridge_mappings must be listed here. For a bridge not "
+                       "listed here we neither create a resource provider in "
+                       "placement nor report inventories against. An omitted "
+                       "direction means we do not report an inventory for the "
+                       "corresponding class.")),
+    cfg.DictOpt('resource_provider_inventory_defaults',
+                default={'allocation_ratio': 1.0,
+                         'min_unit': 1,
+                         'step_size': 1,
+                         'reserved': 0},
+                help=_("Key:value pairs to specify defaults used "
+                       "while reporting resource provider inventories. "
+                       "Possible keys with their types: "
+                       "allocation_ratio:float, "
+                       "max_unit:int, min_unit:int, "
+                       "reserved:int, step_size:int, "
+                       "See also: "
+                       "https://developer.openstack.org/api-ref/placement/"
+                       "#update-resource-provider-inventories")),
     cfg.BoolOpt('use_veth_interconnection', default=False,
                 help=_("Use veths instead of patch ports to interconnect the "
                        "integration bridge to physical networks. "
