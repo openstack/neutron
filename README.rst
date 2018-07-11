@@ -15,6 +15,7 @@ To learn more about neutron:
   * Documentation: https://docs.openstack.org
   * Features: https://specs.openstack.org/openstack/neutron-specs
   * Defects: https://launchpad.net/neutron
+  * Release notes: https://docs.openstack.org/releasenotes/neutron/index.html
 
 Get in touch via `email <mailto:openstack-dev@lists.openstack.org>`_. Use
 [Neutron] in your subject.
