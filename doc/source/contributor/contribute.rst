@@ -344,7 +344,7 @@ oslo.i18n
 
 * Each subproject repository should have its own oslo.i18n integration
   wrapper module ``${MODULE_NAME}/_i18n.py``. The detail is found at
-  https://docs.openstack.org/oslo.i18n/latest/usage.html.
+  https://docs.openstack.org/oslo.i18n/latest/user/usage.html.
 
   .. note::
 
