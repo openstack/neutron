@@ -208,17 +208,20 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         if router.get('ha'):
             plugin = directory.get_plugin(plugin_constants.L3)
             plugin.delete_ha_interfaces_on_host(context, router_id, agent.host)
+
+        l3_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_L3)
+        if not l3_notifier:
+            return
         # NOTE(Swami): Need to verify if there are DVR serviceable
         # ports owned by this agent. If owned by this agent, then
         # the routers should be retained. This flag will be used
         # to check if there are valid routers in this agent.
         retain_router = self._check_router_retain_needed(context, router,
             agent.host)
-        l3_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_L3)
-        if retain_router and l3_notifier:
+        if retain_router:
             l3_notifier.routers_updated_on_host(
                 context, [router_id], agent.host)
-        elif l3_notifier:
+        else:
             l3_notifier.router_removed_from_agent(
                 context, router_id, agent.host)
 
