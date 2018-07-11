@@ -345,18 +345,3 @@ class PortBindingsVnicTestCaseMixin(object):
             self.assertEqual(2, len(ports))
             for non_admin_port in ports:
                 self._check_response_portbindings_vnic_type(non_admin_port)
-
-    def test_ports_vnic_type_list(self):
-        cfg.CONF.set_default('allow_overlapping_ips', True)
-        vnic_arg = {portbindings.VNIC_TYPE: self.vnic_type}
-        with self.port(name='name1',
-                       arg_list=(portbindings.VNIC_TYPE,),
-                       **vnic_arg) as port1,\
-                self.port(name='name2') as port2,\
-                self.port(name='name3',
-                          arg_list=(portbindings.VNIC_TYPE,),
-                          **vnic_arg) as port3:
-            self._test_list_resources(
-                'port', (port1, port2, port3),
-                query_params='%s=%s' % (portbindings.VNIC_TYPE,
-                                        self.vnic_type))
