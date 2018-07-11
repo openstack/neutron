@@ -19,6 +19,7 @@ import netaddr
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib import constants
 from neutron_lib import context as nctx
+from neutron_lib.db import api as db_api
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -28,7 +29,6 @@ import testscenarios
 from webob import exc
 
 from neutron.common import utils
-from neutron.db import api as db_api
 from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
 from neutron.db.models import l3 as l3_models

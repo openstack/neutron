@@ -14,13 +14,13 @@
 
 import mock
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_utils import uuidutils
 import testtools
 
-from neutron.db import api as db_api
 from neutron.db.quota import api as quota_api
 from neutron.quota import resource
 from neutron.tests import base

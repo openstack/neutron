@@ -20,6 +20,7 @@ import netaddr
 from neutron_lib.agent import topics
 from neutron_lib import constants as p_const
 from neutron_lib import context
+from neutron_lib.db import api as lib_db_api
 from neutron_lib import exceptions as exc
 from neutron_lib.plugins.ml2 import api
 from neutron_lib.plugins import utils as plugin_utils
@@ -348,37 +349,37 @@ class EndpointTunnelTypeDriver(ML2TunnelTypeDriver):
 
     def get_endpoint_by_host(self, host):
         LOG.debug("get_endpoint_by_host() called for host %s", host)
-        session = db_api.get_reader_session()
+        session = lib_db_api.get_reader_session()
         return (session.query(self.endpoint_model).
                 filter_by(host=host).first())
 
     def get_endpoint_by_ip(self, ip):
         LOG.debug("get_endpoint_by_ip() called for ip %s", ip)
-        session = db_api.get_reader_session()
+        session = lib_db_api.get_reader_session()
         return (session.query(self.endpoint_model).
                 filter_by(ip_address=ip).first())
 
     def delete_endpoint(self, ip):
         LOG.debug("delete_endpoint() called for ip %s", ip)
-        session = db_api.get_writer_session()
+        session = lib_db_api.get_writer_session()
         session.query(self.endpoint_model).filter_by(ip_address=ip).delete()
 
     def delete_endpoint_by_host_or_ip(self, host, ip):
         LOG.debug("delete_endpoint_by_host_or_ip() called for "
                   "host %(host)s or %(ip)s", {'host': host, 'ip': ip})
-        session = db_api.get_writer_session()
+        session = lib_db_api.get_writer_session()
         session.query(self.endpoint_model).filter(
             or_(self.endpoint_model.host == host,
                 self.endpoint_model.ip_address == ip)).delete()
 
     def _get_endpoints(self):
         LOG.debug("_get_endpoints() called")
-        session = db_api.get_reader_session()
+        session = lib_db_api.get_reader_session()
         return session.query(self.endpoint_model)
 
     def _add_endpoint(self, ip, host, **kwargs):
         LOG.debug("_add_endpoint() called for ip %s", ip)
-        session = db_api.get_writer_session()
+        session = lib_db_api.get_writer_session()
         try:
             endpoint = self.endpoint_model(ip_address=ip, host=host, **kwargs)
             endpoint.save(session)
