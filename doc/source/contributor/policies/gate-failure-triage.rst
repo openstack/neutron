@@ -84,7 +84,7 @@ to debug the job directly on the test node in a ``live`` setting.
 
 This can be done in two ways:
 
-1. Using the `remote_pdb <https://pypi.python.org/pypi/remote-pdb>`_ python
+1. Using the `remote_pdb <https://pypi.org/project/remote-pdb>`_ python
    module and ``telnet`` to directly access the python debugger while in the
    failed test.
 
