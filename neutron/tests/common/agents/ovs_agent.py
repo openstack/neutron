@@ -40,11 +40,13 @@ def get_tunnel_name_full(cls, network_type, local_ip, remote_ip):
 
     return '%s-%s-%s' % (network_type, source_ip_hash, remote_ip_hash)
 
+
 ovs_neutron_agent.OVSNeutronAgent.get_tunnel_name = get_tunnel_name_full
 
 
 def main():
     _main()
+
 
 if __name__ == "__main__":
     sys.exit(main())

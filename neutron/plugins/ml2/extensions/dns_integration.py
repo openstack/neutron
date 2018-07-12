@@ -531,4 +531,5 @@ def subscribe():
         _delete_port_in_external_dns_service, resources.PORT,
         events.BEFORE_DELETE)
 
+
 subscribe()

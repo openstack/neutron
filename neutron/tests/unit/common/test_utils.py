@@ -439,7 +439,7 @@ class TestThrottler(base.BaseTestCase):
 
         def sleep_mock(amount_to_sleep):
             sleep(amount_to_sleep)
-            self.assertTrue(threshold > amount_to_sleep)
+            self.assertGreater(threshold, amount_to_sleep)
 
         with mock.patch.object(utils.eventlet, "sleep",
                                side_effect=sleep_mock):
@@ -455,7 +455,7 @@ class TestThrottler(base.BaseTestCase):
         throttled_func()
 
         self.assertEqual(3, orig_function.call_count)
-        self.assertTrue(timestamp < lock_with_timer.timestamp)
+        self.assertLess(timestamp, lock_with_timer.timestamp)
 
     def test_method_docstring_is_preserved(self):
         class Klass(object):

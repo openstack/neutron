@@ -37,6 +37,7 @@ def nonzero(f):
     else:
         return f.__nonzero__()
 
+
 # Useful global dummy variables.
 NET_UUID = '3faeebfe-5d37-11e1-a64b-000c29d5f0a7'
 LS_ID = 420

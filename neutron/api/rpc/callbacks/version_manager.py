@@ -233,6 +233,7 @@ class CachedResourceConsumerTracker(object):
         self._check_expiration()
         self._versions.report()
 
+
 _cached_version_tracker = None
 
 

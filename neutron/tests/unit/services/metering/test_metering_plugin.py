@@ -292,9 +292,9 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         with self.router(tenant_id=self.tenant_id, set_context=True):
             with self.metering_label(tenant_id=self.tenant_id,
                                      set_context=True) as label:
-                l = label['metering_label']
+                la = label['metering_label']
                 self.mock_uuid.return_value = second_uuid
-                with self.metering_label_rule(l['id']):
+                with self.metering_label_rule(la['id']):
                     self.mock_add_rule.assert_called_with(self.ctx,
                                                           expected_add)
                     self._delete('metering-label-rules', second_uuid)

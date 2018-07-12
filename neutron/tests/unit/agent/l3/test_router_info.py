@@ -190,7 +190,7 @@ class TestRouterInfo(base.BaseTestCase):
                                         {}, **self.ri_kwargs)
         new_mark_ids.pop()
         self.assertEqual(new_mark_ids, new_ri.available_mark_ids)
-        self.assertTrue(ri.available_mark_ids != new_ri.available_mark_ids)
+        self.assertNotEqual(ri.available_mark_ids, new_ri.available_mark_ids)
 
     def test_process_delete(self):
         ri = router_info.RouterInfo(mock.Mock(), _uuid(), {}, **self.ri_kwargs)

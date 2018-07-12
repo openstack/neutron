@@ -1363,9 +1363,9 @@ class SecurityGroupAgentRpcApiTestCase(base.BaseTestCase):
             None, security_groups=[])
         self.assertFalse(self.mock_cast.called)
 
+
 # Note(nati) bn -> binary_name
 # id -> device_id
-
 PHYSDEV_MOD = '-m physdev'
 PHYSDEV_IS_BRIDGED = '--physdev-is-bridged'
 

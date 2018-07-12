@@ -95,6 +95,7 @@ class PlumberTestCase(base.BaseTestCase):
                     'tap47198374-5c']
         self.assertEqual(expected, names)
 
+
 IP_LINK_OUTPUT = """
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00 promiscuity 0

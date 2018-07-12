@@ -80,6 +80,7 @@ class TestCountableResource(resource.CountableResource):
     def default(self):
         return self.flag
 
+
 PROJECT = 'prj_test'
 RESOURCE = 'res_test'
 ALT_RESOURCE = 'res_test_meh'

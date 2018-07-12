@@ -51,6 +51,7 @@ def get_binary_name():
     """Grab the name of the binary we're running in."""
     return os.path.basename(sys.argv[0])[:16].replace(' ', '_')
 
+
 binary_name = get_binary_name()
 
 # A length of a chain name must be less than or equal to 11 characters.

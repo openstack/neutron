@@ -362,6 +362,7 @@ def _generate_raw_restore_dump(iptables_args):
             'COMMIT\n'
             '# Completed by iptables_manager\n' % iptables_args)
 
+
 MANGLE_DUMP = _generate_mangle_dump(IPTABLES_ARG)
 MANGLE_DUMP_V6 = _generate_mangle_dump_v6(IPTABLES_ARG)
 RAW_DUMP = _generate_raw_dump(IPTABLES_ARG)

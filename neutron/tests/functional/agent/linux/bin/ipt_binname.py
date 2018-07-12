@@ -31,6 +31,7 @@ def print_binary_name():
 
     print(iptables_manager.binary_name)
 
+
 if __name__ == "__main__":
     if 'spawn' in sys.argv:
         eventlet.spawn(print_binary_name).wait()

@@ -251,6 +251,7 @@ def setup_conf():
     conf.register_opts(bind_opts)
     return conf
 
+
 # add a logging setup method here for convenience
 setup_logging = config.setup_logging
 

@@ -207,6 +207,7 @@ def _validate_name_not_default(data, max_len=db_const.NAME_FIELD_SIZE):
     if data.lower() == "default":
         raise SecurityGroupDefaultAlreadyExists()
 
+
 validators.add_validator('name_not_default', _validate_name_not_default)
 
 sg_supported_protocols = ([None] + list(const.IP_PROTOCOL_MAP.keys()))

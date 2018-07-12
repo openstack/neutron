@@ -308,7 +308,8 @@ class SqlTestCase(BaseSqlTestCase, base.BaseTestCase):
 
 
 class OpportunisticDBTestMixin(object):
-    """Mixin that converts a BaseSqlTestCase to use the OpportunisticSqlFixture.
+    """Mixin that converts a BaseSqlTestCase to use the
+    OpportunisticSqlFixture.
     """
 
     SKIP_ON_UNAVAILABLE_DB = not base.bool_from_env('OS_FAIL_ON_MISSING_DEPS')
