@@ -650,21 +650,50 @@ no less than the specified bandwidth to each port on which the rule is
 applied. However, as this feature is not yet integrated with the Compute
 scheduler, minimum bandwidth cannot be guaranteed.
 
-It is also possible to combine several rules in one policy:
+It is also possible to combine several rules in one policy, as long as the type
+or direction of each rule is different. For example, You can specify two
+``bandwidth-limit`` rules, one with ``egress`` and one with ``ingress``
+direction.
 
 .. code-block:: console
 
     $ openstack network qos rule create --type bandwidth-limit \
-        --max-kbps 50000 --max-burst-kbits 50000 bandwidth-control
+        --max-kbps 50000 --max-burst-kbits 50000 --egress bandwidth-control
     +----------------+--------------------------------------+
     | Field          | Value                                |
     +----------------+--------------------------------------+
+    | direction      | egress                               |
     | id             | 0db48906-a762-4d32-8694-3f65214c34a6 |
     | max_burst_kbps | 50000                                |
     | max_kbps       | 50000                                |
     | name           | None                                 |
     | project_id     |                                      |
     +----------------+--------------------------------------+
+
+    $ openstack network qos rule create --type bandwidth-limit \
+        --max-kbps 10000 --max-burst-kbits 10000 --ingress bandwidth-control
+    +----------------+--------------------------------------+
+    | Field          | Value                                |
+    +----------------+--------------------------------------+
+    | direction      | ingress                              |
+    | id             | faabef24-e23a-4fdf-8e92-f8cb66998834 |
+    | max_burst_kbps | 10000                                |
+    | max_kbps       | 10000                                |
+    | name           | None                                 |
+    | project_id     |                                      |
+    +----------------+--------------------------------------+
+
+    $ openstack network qos rule create --type minimum-bandwidth \
+        --min-kbps 1000 --egress bandwidth-control
+    +------------+--------------------------------------+
+    | Field      | Value                                |
+    +------------+--------------------------------------+
+    | direction  | egress                               |
+    | id         | da858b32-44bc-43c9-b92b-cf6e2fa836ab |
+    | min_kbps   | 1000                                 |
+    | name       | None                                 |
+    | project_id |                                      |
+    +------------+--------------------------------------+
 
     $ openstack network qos policy show bandwidth-control
     +-------------------+-------------------------------------------------------------------+
@@ -676,9 +705,15 @@ It is also possible to combine several rules in one policy:
     | name              | bandwidth-control                                                 |
     | project_id        | 7cc5a84e415d48e69d2b06aa67b317d8                                  |
     | revision_number   | 4                                                                 |
-    | rules             | [{u'max_kbps': 50000, u'type': u'bandwidth_limit',                |
+    | rules             | [{u'max_kbps': 50000, u'direction': u'egress',                    |
+    |                   |   u'type': u'bandwidth_limit',                                    |
     |                   |   u'id': u'0db48906-a762-4d32-8694-3f65214c34a6',                 |
     |                   |   u'max_burst_kbps': 50000,                                       |
+    |                   |   u'qos_policy_id': u'8491547e-add1-4c6c-a50e-42121237256c'},     |
+    |                   | [{u'max_kbps': 10000, u'direction': u'ingress',                   |
+    |                   |   u'type': u'bandwidth_limit',                                    |
+    |                   |   u'id': u'faabef24-e23a-4fdf-8e92-f8cb66998834',                 |
+    |                   |   u'max_burst_kbps': 10000,                                       |
     |                   |   u'qos_policy_id': u'8491547e-add1-4c6c-a50e-42121237256c'},     |
     |                   |  {u'direction':                                                   |
     |                   |   u'egress', u'min_kbps': 1000, u'type': u'minimum_bandwidth',    |
