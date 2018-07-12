@@ -41,6 +41,7 @@ from neutron_lib.exceptions import port_security as psec_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
+from neutron_lib.plugins import utils as p_utils
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_config import cfg
 from oslo_db import exception as os_db_exception
@@ -86,7 +87,6 @@ from neutron.db import subnet_service_type_mixin
 from neutron.db import vlantransparent_db
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
-from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_context

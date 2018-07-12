@@ -25,6 +25,7 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import exceptions as obj_exc
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
+from neutron_lib.plugins import utils as p_utils
 from oslo_log import log as logging
 
 from neutron._i18n import _
@@ -35,7 +36,6 @@ from neutron.db import common_db_mixin
 from neutron.objects import auto_allocate as auto_allocate_obj
 from neutron.objects import base as base_obj
 from neutron.objects import network as net_obj
-from neutron.plugins.common import utils as p_utils
 from neutron.services.auto_allocate import exceptions
 
 LOG = logging.getLogger(__name__)
