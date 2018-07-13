@@ -126,6 +126,24 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         return _dict
 
     @classmethod
+    def get_policy_obj(cls, context, policy_id):
+        """Fetch a QoS policy.
+
+        :param context: neutron api request context
+        :type context: neutron.context.Context
+        :param policy_id: the id of the QosPolicy to fetch
+        :type policy_id: str uuid
+
+        :returns: a QosPolicy object
+        :raises: n_exc.QosPolicyNotFound
+        """
+
+        obj = cls.get_object(context, id=policy_id)
+        if obj is None:
+            raise exceptions.QosPolicyNotFound(policy_id=policy_id)
+        return obj
+
+    @classmethod
     def get_object(cls, context, **kwargs):
         # We want to get the policy regardless of its tenant id. We'll make
         # sure the tenant has permission to access the policy later on.

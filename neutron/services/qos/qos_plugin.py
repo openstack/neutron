@@ -192,7 +192,8 @@ class QoSPlugin(qos.QoSPluginBase):
         """
         policy_data = policy['policy']
         with db_api.context_manager.writer.using(context):
-            policy_obj = self._get_policy_obj(context, policy_id)
+            policy_obj = policy_object.QosPolicy.get_policy_obj(
+                context, policy_id)
             policy_obj.update_fields(policy_data, reset_changes=True)
             policy_obj.update()
             self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
@@ -223,22 +224,6 @@ class QoSPlugin(qos.QoSPluginBase):
         self.driver_manager.call(qos_consts.DELETE_POLICY,
                                  context, policy)
 
-    def _get_policy_obj(self, context, policy_id):
-        """Fetch a QoS policy.
-
-        :param context: neutron api request context
-        :type context: neutron.context.Context
-        :param policy_id: the id of the QosPolicy to fetch
-        :type policy_id: str uuid
-
-        :returns: a QosPolicy object
-        :raises: n_exc.QosPolicyNotFound
-        """
-        obj = policy_object.QosPolicy.get_object(context, id=policy_id)
-        if obj is None:
-            raise n_exc.QosPolicyNotFound(policy_id=policy_id)
-        return obj
-
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
     def get_policy(self, context, policy_id, fields=None):
@@ -251,7 +236,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
         :returns: a QosPolicy object
         """
-        return self._get_policy_obj(context, policy_id)
+        return policy_object.QosPolicy.get_policy_obj(context, policy_id)
 
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
@@ -314,7 +299,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
         with db_api.autonested_transaction(context.session):
             # Ensure that we have access to the policy.
-            policy = self._get_policy_obj(context, policy_id)
+            policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
             checker.check_bandwidth_rule_conflict(policy, rule_data)
             rule = rule_cls(context, qos_policy_id=policy_id, **rule_data)
             checker.check_rules_conflict(policy, rule)
@@ -351,7 +336,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
         with db_api.autonested_transaction(context.session):
             # Ensure we have access to the policy.
-            policy = self._get_policy_obj(context, policy_id)
+            policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
             # Ensure the rule belongs to the policy.
             checker.check_bandwidth_rule_conflict(policy, rule_data)
             policy.get_rule_by_id(rule_id)
@@ -384,7 +369,7 @@ class QoSPlugin(qos.QoSPluginBase):
         """
         with db_api.autonested_transaction(context.session):
             # Ensure we have access to the policy.
-            policy = self._get_policy_obj(context, policy_id)
+            policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
             rule = policy.get_rule_by_id(rule_id)
             rule.delete()
             policy.obj_load_attr('rules')
@@ -413,7 +398,7 @@ class QoSPlugin(qos.QoSPluginBase):
         """
         with db_api.autonested_transaction(context.session):
             # Ensure we have access to the policy.
-            self._get_policy_obj(context, policy_id)
+            policy_object.QosPolicy.get_policy_obj(context, policy_id)
             rule = rule_cls.get_object(context, id=rule_id)
         if not rule:
             raise n_exc.QosRuleNotFound(policy_id=policy_id, rule_id=rule_id)
@@ -438,7 +423,7 @@ class QoSPlugin(qos.QoSPluginBase):
         """
         with db_api.autonested_transaction(context.session):
             # Ensure we have access to the policy.
-            self._get_policy_obj(context, policy_id)
+            policy_object.QosPolicy.get_policy_obj(context, policy_id)
             filters = filters or dict()
             filters[qos_consts.QOS_POLICY_ID] = policy_id
             pager = base_obj.Pager(sorts, limit, page_reverse, marker)

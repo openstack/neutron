@@ -930,7 +930,8 @@ class TestQosPlugin(base.BaseQosTestCase):
 
             # some actions get rule from policy
             get_rule_mock_call = getattr(
-                mock.call.QosPolicy.get_object().get_rule_by_id(), action)()
+                mock.call.QosPolicy.get_policy_obj().get_rule_by_id(),
+                action)()
             # some actions construct rule from class reference
             rule_mock_call = getattr(mock.call.RuleCls(), action)()
 
