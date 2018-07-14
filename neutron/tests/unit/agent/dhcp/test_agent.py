@@ -255,10 +255,11 @@ class TestDhcpAgent(base.BaseTestCase):
                                'periodic_resync',
                                autospec=True) as mock_periodic_resync:
             with mock.patch(state_rpc_str) as state_rpc:
-                with mock.patch.object(sys, 'argv') as sys_argv:
-                    sys_argv.return_value = [
-                        'dhcp', '--config-file',
-                        base.etcdir('neutron.conf')]
+                test_args = [
+                    'dhcp', '--config-file',
+                    base.etcdir('neutron.conf')
+                ]
+                with mock.patch.object(sys, 'argv', test_args):
                     cfg.CONF.register_opts(dhcp_config.DHCP_AGENT_OPTS)
                     config.register_interface_driver_opts_helper(cfg.CONF)
                     config.register_agent_state_opts_helper(cfg.CONF)
