@@ -11,8 +11,10 @@
 #    under the License.
 
 import netaddr
+from neutron_lib import constants as const
 
 from oslo_versionedobjects import fields as obj_fields
+from sqlalchemy import and_, or_
 
 from neutron.common import utils
 from neutron.db.models import subnet_service_type
@@ -153,6 +155,22 @@ class SubnetServiceType(base.NeutronDbObject):
         'subnet_id': common_types.UUIDField(),
         'service_type': obj_fields.StringField()
     }
+
+    @classmethod
+    def query_filter_service_subnets(cls, query, service_type):
+        # TODO(tuanvu): find OVO-like solution for handling "join queries"
+        Subnet = models_v2.Subnet
+        ServiceType = subnet_service_type.SubnetServiceType
+        query = query.add_entity(ServiceType)
+        query = query.outerjoin(ServiceType)
+        query = query.filter(or_(
+            ServiceType.service_type.is_(None),
+            ServiceType.service_type == service_type,
+            # Allow DHCP ports to be created on subnets of any
+            # service type when DHCP is enabled on the subnet.
+            and_(Subnet.enable_dhcp.is_(True),
+                 service_type == const.DEVICE_OWNER_DHCP)))
+        return query.from_self(Subnet)
 
 
 # RBAC metaclass is not applied here because 'shared' attribute of Subnet

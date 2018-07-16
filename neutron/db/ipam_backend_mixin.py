@@ -37,7 +37,6 @@ from neutron.db import _model_query as model_query
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db.models import segment as segment_model
-from neutron.db.models import subnet_service_type as sst_model
 from neutron.db import models_v2
 from neutron.extensions import segment
 from neutron.ipam import exceptions as ipam_exceptions
@@ -607,21 +606,6 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         query = model_query.get_collection_query(context, models_v2.Subnet)
         return query.filter(models_v2.Subnet.network_id == network_id)
 
-    def _query_filter_service_subnets(self, query, service_type):
-        # TODO(korzen) use SubnetServiceType OVO here
-        Subnet = models_v2.Subnet
-        ServiceType = sst_model.SubnetServiceType
-        query = query.add_entity(ServiceType)
-        query = query.outerjoin(ServiceType)
-        query = query.filter(or_(
-            ServiceType.service_type.is_(None),
-            ServiceType.service_type == service_type,
-            # Allow DHCP ports to be created on subnets of any
-            # service type when DHCP is enabled on the subnet.
-            and_(Subnet.enable_dhcp.is_(True),
-                 service_type == const.DEVICE_OWNER_DHCP)))
-        return query.from_self(Subnet)
-
     @staticmethod
     def _query_filter_by_segment_host_mapping(query, host):
         """Excludes subnets on segments not reachable by the host
@@ -703,7 +687,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             return []
 
         # Does filtering ineligible service subnets makes the list empty?
-        query = self._query_filter_service_subnets(query, service_type)
+        query = subnet_obj.SubnetServiceType.query_filter_service_subnets(
+            query, service_type)
         if query.limit(1).count():
             # No, must be a deferred IP port because there are matching
             # subnets. Happens on routed networks when host isn't known.
@@ -716,7 +701,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                                 fixed_configured):
         """Find canditate subnets for the network, host, and service_type"""
         query = self._query_subnets_on_network(context, network_id)
-        query = self._query_filter_service_subnets(query, service_type)
+        query = subnet_obj.SubnetServiceType.query_filter_service_subnets(
+            query, service_type)
 
         # Select candidate subnets and return them
         if not self.is_host_set(host):
