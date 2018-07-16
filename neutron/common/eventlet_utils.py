@@ -26,7 +26,13 @@ def monkey_patch():
     # https://github.com/eventlet/eventlet/commit/b756447bab51046dfc6f1e0e299cc997ab343701
     # For details please check https://bugs.launchpad.net/neutron/+bug/1745013
     eventlet.hubs.get_hub()
-    eventlet.monkey_patch()
     if os.name != 'nt':
+        eventlet.monkey_patch()
+
         p_c_e = importutils.import_module('pyroute2.config.asyncio')
         p_c_e.asyncio_config()
+    else:
+        # eventlet monkey patching the os module causes subprocess.Popen to
+        # fail on Windows when using pipes due to missing non-blocking IO
+        # support.
+        eventlet.monkey_patch(os=False)
