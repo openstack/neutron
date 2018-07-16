@@ -177,19 +177,15 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         """Check whether a router needs to be retained on a host.
 
         Check whether there are DVR serviceable ports owned by the host of
-        a l3 agent. If so, then the routers should be retained.
+        an l3 agent. If so, then the routers should be retained.
         """
-        if not host:
+        if not host or not router.get('distributed'):
             return False
 
-        retain_router = False
-        if router.get('distributed'):
-            plugin = directory.get_plugin(plugin_constants.L3)
-            subnet_ids = plugin.get_subnet_ids_on_router(context, router['id'])
-            if subnet_ids:
-                retain_router = plugin._check_dvr_serviceable_ports_on_host(
-                    context, host, subnet_ids)
-        return retain_router
+        plugin = directory.get_plugin(plugin_constants.L3)
+        subnet_ids = plugin.get_subnet_ids_on_router(context, router['id'])
+        return plugin._check_dvr_serviceable_ports_on_host(context, host,
+                                                           subnet_ids)
 
     def remove_router_from_l3_agent(self, context, agent_id, router_id):
         """Remove the router from l3 agent.
