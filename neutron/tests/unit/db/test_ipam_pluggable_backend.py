@@ -255,6 +255,34 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         self.assertIsInstance(request, ipam_req.AutomaticAddressRequest)
         self.assertEqual(eui64_ip, request.address)
 
+    def test_allocate_multiple_eui64_ips(self):
+        mocks = self._prepare_ipam()
+        ips = [{'subnet_id': self._gen_subnet_id(),
+                'subnet_cidr': '2001:470:abcd::/64',
+                'mac': '6c:62:6d:de:cf:49',
+                'eui64_address': True},
+               {'subnet_id': self._gen_subnet_id(),
+                'subnet_cidr': '2001:360:abcd::/64',
+                'mac': '6c:62:6d:de:cf:49',
+                'eui64_address': True}]
+        mocks['ipam']._ipam_allocate_ips(mock.ANY, mocks['driver'],
+                                         mock.ANY, ips)
+
+        eui64_ips = []
+        request_ips = []
+        i = 0
+        requests = mocks['subnets'].allocate.call_args_list
+        for ip in ips:
+            eui64_ip = netutils.get_ipv6_addr_by_EUI64(ip['subnet_cidr'],
+                                                       ip['mac'])
+            self.assertIsInstance(requests[i][0][0],
+                                  ipam_req.AutomaticAddressRequest)
+            self.assertEqual(eui64_ip, requests[i][0][0].address)
+            request_ips.append(requests[i][0][0].address)
+            eui64_ips.append(eui64_ip)
+            i += 1
+        self.assertEqual(request_ips, eui64_ips)
+
     def test_allocate_multiple_ips(self):
         mocks = self._prepare_ipam()
         subnet_id = self._gen_subnet_id()
