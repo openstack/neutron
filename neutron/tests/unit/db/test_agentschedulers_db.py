@@ -856,6 +856,58 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                 router['router']['id'])['agents']
             self.assertEqual(0, len(l3_agents))
 
+    def test_router_reschedule_no_remove_if_agent_has_dvr_service_ports(self):
+        l3_notifier = self.l3plugin.agent_notifiers[constants.AGENT_TYPE_L3]
+        agent_a = helpers.register_l3_agent(
+            host=L3_HOSTA, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
+        agent_b = helpers.register_l3_agent(
+            host=L3_HOSTB, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
+        with self.subnet() as s, \
+                mock.patch.object(l3_notifier.client, 'prepare',
+                    return_value=l3_notifier.client) as mock_prepare, \
+                mock.patch.object(l3_notifier.client, 'cast') as mock_cast, \
+                mock.patch.object(l3_notifier.client, 'call'):
+            net_id = s['subnet']['network_id']
+            self._set_net_external(net_id)
+            router = {'name': 'router1',
+                      'external_gateway_info': {'network_id': net_id},
+                      'tenant_id': 'tenant_id',
+                      'admin_state_up': True,
+                      'distributed': True}
+            r = self.l3plugin.create_router(self.adminContext,
+                                            {'router': router})
+
+            # schedule the dvr to one of the agents
+            self.l3plugin.schedule_router(self.adminContext, r['id'])
+            l3agents = self.l3plugin.list_l3_agents_hosting_router(
+                    self.adminContext, r['id'])
+            agent = l3agents['agents'][0]
+            # emulating dvr serviceable ports exist on the host
+            with mock.patch.object(
+                    self.l3plugin, '_check_dvr_serviceable_ports_on_host') \
+                    as ports_exist:
+                ports_exist.return_value = True
+                # reschedule the dvr to one of the other agent
+                candidate_agent = (agent_b if agent['host'] == L3_HOSTA
+                                   else agent_a)
+                self.l3plugin.reschedule_router(self.adminContext, r['id'],
+                        candidates=[candidate_agent])
+                # make sure dvr serviceable ports are checked when rescheduling
+                self.assertTrue(ports_exist.called)
+
+            # make sure sending update instead of removing for dvr
+            mock_prepare.assert_called_with(server=candidate_agent['host'])
+            mock_cast.assert_called_with(
+                    mock.ANY, 'routers_updated',
+                    routers=[r['id']])
+
+            # make sure the rescheduling completes
+            l3agents = self.l3plugin.list_l3_agents_hosting_router(
+                    self.adminContext, r['id'])
+            self.assertEqual(1, len(l3agents['agents']))
+            new_agent_host = l3agents['agents'][0]['host']
+            self.assertNotEqual(agent['host'], new_agent_host)
+
     def test_router_auto_schedule_with_invalid_router(self):
         with self.router() as router:
             l3_rpc_cb = l3_rpc.L3RpcCallback()

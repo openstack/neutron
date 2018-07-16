@@ -173,6 +173,24 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             l3_notifier.router_added_to_agent(
                 context, [router_id], agent.host)
 
+    def _check_router_retain_needed(self, context, router, host):
+        """Check whether a router needs to be retained on a host.
+
+        Check whether there are DVR serviceable ports owned by the host of
+        a l3 agent. If so, then the routers should be retained.
+        """
+        if not host:
+            return False
+
+        retain_router = False
+        if router.get('distributed'):
+            plugin = directory.get_plugin(plugin_constants.L3)
+            subnet_ids = plugin.get_subnet_ids_on_router(context, router['id'])
+            if subnet_ids:
+                retain_router = plugin._check_dvr_serviceable_ports_on_host(
+                    context, host, subnet_ids)
+        return retain_router
+
     def remove_router_from_l3_agent(self, context, agent_id, router_id):
         """Remove the router from l3 agent.
 
@@ -187,19 +205,15 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
         self._unbind_router(context, router_id, agent_id)
         router = self.get_router(context, router_id)
-        plugin = directory.get_plugin(plugin_constants.L3)
         if router.get('ha'):
+            plugin = directory.get_plugin(plugin_constants.L3)
             plugin.delete_ha_interfaces_on_host(context, router_id, agent.host)
         # NOTE(Swami): Need to verify if there are DVR serviceable
         # ports owned by this agent. If owned by this agent, then
         # the routers should be retained. This flag will be used
         # to check if there are valid routers in this agent.
-        retain_router = False
-        if router.get('distributed'):
-            subnet_ids = plugin.get_subnet_ids_on_router(context, router_id)
-            if subnet_ids and agent.host:
-                retain_router = plugin._check_dvr_serviceable_ports_on_host(
-                    context, agent.host, subnet_ids)
+        retain_router = self._check_router_retain_needed(context, router,
+            agent.host)
         l3_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_L3)
         if retain_router and l3_notifier:
             l3_notifier.routers_updated_on_host(
@@ -247,9 +261,16 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
         old_hosts = [agent['host'] for agent in old_agents]
         new_hosts = [agent['host'] for agent in new_agents]
+        router = self.get_router(context, router_id)
         for host in set(old_hosts) - set(new_hosts):
-            l3_notifier.router_removed_from_agent(
-                context, router_id, host)
+            retain_router = self._check_router_retain_needed(context,
+                router, host)
+            if retain_router:
+                l3_notifier.routers_updated_on_host(
+                    context, [router_id], host)
+            else:
+                l3_notifier.router_removed_from_agent(
+                    context, router_id, host)
 
         for agent in new_agents:
             try:
