@@ -20,6 +20,7 @@ import mock
 import netaddr
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.db import api as lib_db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.objects import utils as obj_utils
@@ -1706,7 +1707,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
 
     def test_get_objects_single_transaction(self):
         with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
-            with db_api.autonested_transaction(self.context.session):
+            with lib_db_api.autonested_transaction(self.context.session):
                 self._test_class.get_objects(self.context)
         self.assertEqual(1, mock_exit.call_count)
 
@@ -1721,7 +1722,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         obj.create()
 
         with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
-            with db_api.autonested_transaction(self.context.session):
+            with lib_db_api.autonested_transaction(self.context.session):
                 obj = self._test_class.get_object(self.context,
                                                   **obj._get_composite_keys())
         self.assertEqual(1, mock_exit.call_count)

@@ -6274,7 +6274,7 @@ class DbModelMixin(object):
             network = models_v2.Network(name="net_net", status="OK",
                                         admin_state_up=True)
             ctx.session.add(network)
-            with db_api.autonested_transaction(ctx.session):
+            with lib_db_api.autonested_transaction(ctx.session):
                 sg = sg_models.SecurityGroup(name='sg', description='sg')
                 ctx.session.add(sg)
             # ensure db rels aren't loaded until commit for network object

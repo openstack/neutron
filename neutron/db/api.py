@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
 import copy
 import weakref
 
@@ -134,17 +133,6 @@ def _is_nested_instance(e, etypes):
     if isinstance(e, db_exc.DBError):
         return _is_nested_instance(e.inner_exception, etypes)
     return False
-
-
-@contextlib.contextmanager
-def autonested_transaction(sess):
-    """This is a convenience method to not bother with 'nested' parameter."""
-    if sess.is_active:
-        session_context = sess.begin(nested=True)
-    else:
-        session_context = sess.begin(subtransactions=True)
-    with session_context as tx:
-        yield tx
 
 
 @event.listens_for(orm.session.Session, "after_flush")
