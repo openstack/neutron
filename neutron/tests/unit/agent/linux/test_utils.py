@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import signal
 import socket
 
@@ -483,14 +484,37 @@ class TestUnixDomainHttpConnection(base.BaseTestCase):
 
 
 class TestUnixDomainHttpProtocol(base.BaseTestCase):
+    def setUp(self):
+        super(TestUnixDomainHttpProtocol, self).setUp()
+        self.ewhi = mock.patch('eventlet.wsgi.HttpProtocol.__init__').start()
+
     def test_init_empty_client(self):
         for addr in ('', b''):
-            u = utils.UnixDomainHttpProtocol(mock.Mock(), addr, mock.Mock())
-            self.assertEqual(u.client_address, ('<local>', 0))
+            utils.UnixDomainHttpProtocol(mock.Mock(), addr, mock.Mock())
+            self.ewhi.assert_called_once_with(mock.ANY, mock.ANY,
+                                              ('<local>', 0), mock.ANY)
+            self.ewhi.reset_mock()
 
     def test_init_with_client(self):
-        u = utils.UnixDomainHttpProtocol(mock.Mock(), 'foo', mock.Mock())
-        self.assertEqual(u.client_address, 'foo')
+        utils.UnixDomainHttpProtocol(mock.Mock(), 'foo', mock.Mock())
+        self.ewhi.assert_called_once_with(mock.ANY, mock.ANY, 'foo', mock.ANY)
+
+    def test_init_new_style_empty_client(self):
+        conn_state = ['', mock.Mock(), mock.Mock()]
+        # have to make a copy since the init will modify what we pass
+        csc = copy.copy(conn_state)
+        csc[0] = ('<local>', 0)
+        utils.UnixDomainHttpProtocol(conn_state, mock.Mock())
+        self.ewhi.assert_called_once_with(mock.ANY, csc, mock.ANY)
+
+    def test_init_new_style_client(self):
+        conn_state = ['foo', mock.Mock(), mock.Mock()]
+        utils.UnixDomainHttpProtocol(conn_state, mock.Mock())
+        self.ewhi.assert_called_once_with(mock.ANY, conn_state, mock.ANY)
+
+    def test_init_unknown_client(self):
+        utils.UnixDomainHttpProtocol('foo')
+        self.ewhi.assert_called_once_with(mock.ANY, 'foo')
 
 
 class TestUnixDomainWSGIServer(base.BaseTestCase):
