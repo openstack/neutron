@@ -19,7 +19,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 
-from neutron.agent.linux import async_process
+from neutron.agent.common import async_process
 from neutron.agent.ovsdb import api as ovsdb
 from neutron.agent.ovsdb.native import helpers
 from neutron.common import utils

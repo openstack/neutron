@@ -44,10 +44,10 @@ from six import moves
 from neutron._i18n import _
 from neutron.agent.common import ip_lib
 from neutron.agent.common import ovs_lib
+from neutron.agent.common import ovsdb_monitor
 from neutron.agent.common import polling
 from neutron.agent.common import utils
 from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
-from neutron.agent.linux import ovsdb_monitor
 from neutron.agent.linux import xenapi_root_helper
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as agent_sg_rpc

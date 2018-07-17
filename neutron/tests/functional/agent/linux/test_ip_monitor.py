@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.agent.linux import async_process
+from neutron.agent.common import async_process
 from neutron.agent.linux import ip_monitor
 from neutron.tests.functional.agent.linux import test_ip_lib
 

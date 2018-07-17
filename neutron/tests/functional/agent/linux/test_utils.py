@@ -14,7 +14,7 @@
 
 import functools
 
-from neutron.agent.linux import async_process
+from neutron.agent.common import async_process
 from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
 from neutron.tests.functional.agent.linux import test_async_process

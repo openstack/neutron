@@ -19,8 +19,8 @@ import eventlet.queue
 import mock
 import testtools
 
+from neutron.agent.common import async_process
 from neutron.agent.common import utils
-from neutron.agent.linux import async_process
 from neutron.tests import base
 from neutron.tests.unit.agent.linux import failing_process
 

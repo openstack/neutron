@@ -18,7 +18,7 @@ import signal
 
 from oslo_log import log as logging
 
-from neutron.agent.linux import async_process
+from neutron.agent.common import async_process
 from neutron.agent.linux import iptables_manager
 from neutron.common import utils as common_utils
 
