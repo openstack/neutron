@@ -79,6 +79,15 @@ updated:
   port or network.
 
 
+Valid DSCP Marks
+----------------
+
+Valid DSCP mark values are even numbers between 0 and 56, except 2-6, 42, 44,
+and 50-54.  The full list of valid DSCP marks is:
+
+0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 46, 48, 56
+
+
 Configuration
 ~~~~~~~~~~~~~
 
