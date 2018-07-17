@@ -155,7 +155,7 @@ class TestLegacyL3Agent(TestL3Agent):
 
     def test_north_south_traffic(self):
         # This function creates an external network which is connected to
-        # central_external_bridge and spawns an external_vm on it.
+        # central_bridge and spawns an external_vm on it.
         # The external_vm is configured with the gateway_ip (both v4 & v6
         # addresses) of external subnet. Later, it creates a tenant router,
         # a tenant network and two tenant subnets (v4 and v6). The tenant
@@ -169,7 +169,7 @@ class TestLegacyL3Agent(TestL3Agent):
         ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
         external_vm = self.useFixture(
             machine_fixtures.FakeMachine(
-                self.environment.central_external_bridge,
+                self.environment.central_bridge,
                 common_utils.ip_to_cidr(ext_sub['gateway_ip'], 24)))
         # Create an IPv6 subnet in the external network
         v6network = self.useFixture(
@@ -213,7 +213,7 @@ class TestLegacyL3Agent(TestL3Agent):
         br_phys = self.environment.hosts[0].br_phys
         br_phys.destroy()
         br_phys.create()
-        self.environment.hosts[0].connect_to_internal_network_via_vlans(
+        self.environment.hosts[0].connect_to_central_network_via_vlans(
             br_phys)
 
         # ping floating ip from external vm
@@ -343,7 +343,7 @@ class TestHAL3Agent(TestL3Agent):
 
         external_vm = self.useFixture(
             machine_fixtures.FakeMachine(
-                self.environment.central_external_bridge,
+                self.environment.central_bridge,
                 common_utils.ip_to_cidr(ext_sub['gateway_ip'], 24)))
 
         common_utils.wait_until_true(

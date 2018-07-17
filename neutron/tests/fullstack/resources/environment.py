@@ -92,15 +92,13 @@ class Host(fixtures.Fixture):
     and disconnects the host from other hosts.
     """
 
-    def __init__(self, env_desc, host_desc,
-                 test_name, neutron_config,
-                 central_data_bridge, central_external_bridge):
+    def __init__(self, env_desc, host_desc, test_name,
+                 neutron_config, central_bridge):
         self.env_desc = env_desc
         self.host_desc = host_desc
         self.test_name = test_name
         self.neutron_config = neutron_config
-        self.central_data_bridge = central_data_bridge
-        self.central_external_bridge = central_external_bridge
+        self.central_bridge = central_bridge
         self.host_namespace = None
         self.agents = {}
         # we need to cache already created "per network" bridges if linuxbridge
@@ -141,12 +139,12 @@ class Host(fixtures.Fixture):
             self.useFixture(
                 net_helpers.OVSBridgeFixture(
                     agent_cfg_fixture.get_br_tun_name())).bridge
-            self.connect_to_internal_network_via_tunneling()
+            self.connect_to_central_network_via_tunneling()
         else:
             self.br_phys = self.useFixture(
                 net_helpers.OVSBridgeFixture(
                     agent_cfg_fixture.get_br_phys_name())).bridge
-            self.connect_to_internal_network_via_vlans(self.br_phys)
+            self.connect_to_central_network_via_vlans(self.br_phys)
 
         self.ovs_agent = self.useFixture(
             process.OVSAgentFixture(
@@ -162,7 +160,7 @@ class Host(fixtures.Fixture):
             br_ex = self.useFixture(
                 net_helpers.OVSBridgeFixture(
                     self.l3_agent_cfg_fixture.get_external_bridge())).bridge
-            self.connect_to_external_network(br_ex)
+            self.connect_to_central_network_via_vlans(br_ex)
 
         if self.host_desc.dhcp_agent:
             self.dhcp_agent_cfg_fixture = self.useFixture(
@@ -211,7 +209,7 @@ class Host(fixtures.Fixture):
     def _connect_ovs_port(self, cidr_address):
         ovs_device = self.useFixture(
             net_helpers.OVSPortFixture(
-                bridge=self.central_data_bridge,
+                bridge=self.central_bridge,
                 namespace=self.host_namespace)).port
         # NOTE: This sets an IP address on the host's root namespace
         # which is cleaned up when the device is deleted.
@@ -224,7 +222,7 @@ class Host(fixtures.Fixture):
         )
         self.host_port.link.set_up()
 
-    def connect_to_internal_network_via_tunneling(self):
+    def connect_to_central_network_via_tunneling(self):
         veth_1, veth_2 = self.useFixture(
             net_helpers.VethFixture()).ports
 
@@ -235,15 +233,11 @@ class Host(fixtures.Fixture):
         veth_1.link.set_up()
         veth_2.link.set_up()
 
-    def connect_to_internal_network_via_vlans(self, host_data_bridge):
+    def connect_to_central_network_via_vlans(self, host_data_bridge):
         # If using VLANs as a segmentation device, it's needed to connect
         # a provider bridge to a centralized, shared bridge.
         net_helpers.create_patch_ports(
-            self.central_data_bridge, host_data_bridge)
-
-    def connect_to_external_network(self, host_external_bridge):
-        net_helpers.create_patch_ports(
-            self.central_external_bridge, host_external_bridge)
+            self.central_bridge, host_data_bridge)
 
     def allocate_local_ip(self):
         if not self.env_desc.network_range:
@@ -361,17 +355,14 @@ class Environment(fixtures.Fixture):
                  host_desc,
                  self.test_name,
                  neutron_config,
-                 self.central_data_bridge,
-                 self.central_external_bridge))
+                 self.central_bridge))
 
     def _setUp(self):
         self.temp_dir = self.useFixture(fixtures.TempDir()).path
 
         # we need this bridge before rabbit and neutron service will start
-        self.central_data_bridge = self.useFixture(
+        self.central_bridge = self.useFixture(
             net_helpers.OVSBridgeFixture('cnt-data')).bridge
-        self.central_external_bridge = self.useFixture(
-            net_helpers.OVSBridgeFixture('cnt-ex')).bridge
 
         # Get rabbitmq address (and cnt-data network)
         rabbitmq_ip_address = self._configure_port_for_rabbitmq()
@@ -401,7 +392,7 @@ class Environment(fixtures.Fixture):
         if not self.env_desc.network_range:
             return "127.0.0.1"
         rabbitmq_ip = str(self.env_desc.network_range[1])
-        rabbitmq_port = ip_lib.IPDevice(self.central_data_bridge.br_name)
+        rabbitmq_port = ip_lib.IPDevice(self.central_bridge.br_name)
         rabbitmq_port.addr.add(common_utils.ip_to_cidr(rabbitmq_ip, 24))
         rabbitmq_port.link.set_up()
 
