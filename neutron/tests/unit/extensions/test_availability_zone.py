@@ -39,7 +39,8 @@ class AZExtensionManager(object):
 
 class AZTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                    agents_db.AgentDbMixin):
-    supported_extension_aliases = ["agent", "availability_zone"]
+    supported_extension_aliases = ["agent", "availability_zone",
+                                   "availability_zone_filter"]
 
 
 class AZTestCommon(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
@@ -70,16 +71,44 @@ class TestAZAgentCase(AZTestCommon):
         res = self._list('availability_zones')
         azs = res['availability_zones']
         self.assertItemsEqual(expected, azs)
-        # list with filters
-        res = self._list('availability_zones',
-                         query_params="availability_zone=nova1")
-        azs = res['availability_zones']
-        self.assertItemsEqual(expected[:1], azs)
         # not admin case
         ctx = context.Context('', 'noadmin')
         res = self._list('availability_zones', neutron_context=ctx)
         azs = res['availability_zones']
         self.assertItemsEqual(expected, azs)
+
+    def test_list_availability_zones_with_filter(self):
+        self._register_azs()
+        helpers.set_agent_admin_state(self.agent3['id'], admin_state_up=False)
+        helpers.set_agent_admin_state(self.agent4['id'], admin_state_up=False)
+        expected = [
+            {'name': 'nova1', 'resource': 'network', 'state': 'available'},
+            {'name': 'nova2', 'resource': 'network', 'state': 'available'},
+            {'name': 'nova2', 'resource': 'router', 'state': 'available'},
+            {'name': 'nova3', 'resource': 'router', 'state': 'unavailable'}]
+        res = self._list('availability_zones')
+        azs = res['availability_zones']
+        self.assertItemsEqual(expected, azs)
+        # list with filter of 'name'
+        res = self._list('availability_zones',
+                         query_params="name=nova1")
+        azs = res['availability_zones']
+        self.assertItemsEqual(expected[:1], azs)
+        # list with filter of 'resource'
+        res = self._list('availability_zones',
+                         query_params="resource=router")
+        azs = res['availability_zones']
+        self.assertItemsEqual(expected[-2:], azs)
+        # list with filter of 'state' as 'available'
+        res = self._list('availability_zones',
+                         query_params="state=available")
+        azs = res['availability_zones']
+        self.assertItemsEqual(expected[:3], azs)
+        # list with filter of 'state' as 'unavailable'
+        res = self._list('availability_zones',
+                         query_params="state=unavailable")
+        azs = res['availability_zones']
+        self.assertItemsEqual(expected[-1:], azs)
 
     def test_list_agent_with_az(self):
         helpers.register_dhcp_agent(host='host1', az='nova1')
