@@ -21,6 +21,7 @@ import random
 
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib import constants as lib_const
+from neutron_lib.db import api as lib_db_api
 from neutron_lib.exceptions import l3 as l3_exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -155,7 +156,7 @@ class L3Scheduler(object):
             else:
                 self.bind_router(plugin, context, router['id'], l3_agent.id)
 
-    @db_api.retry_db_errors
+    @lib_db_api.retry_db_errors
     def bind_router(self, plugin, context, router_id, agent_id,
                     is_manual_scheduling=False, is_ha=False):
         """Bind the router to the l3 agent which has been chosen.

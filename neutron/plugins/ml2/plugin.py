@@ -378,7 +378,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         binding.persist_state_to_session(plugin_context.session)
         return changes
 
-    @db_api.retry_db_errors
+    @lib_db_api.retry_db_errors
     def _bind_port_if_needed(self, context, allow_notify=False,
                              need_notify=False):
         if not context.network.network_segments:

@@ -22,6 +22,7 @@ from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import dvr as dvr_exc
+from neutron_lib import fixture
 from neutron_lib.plugins import directory
 from neutron_lib.utils import net
 
@@ -71,8 +72,8 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def test__create_dvr_mac_address_retries_exceeded_retry_logic(self):
         # limit retries so test doesn't take 40 seconds
-        mock.patch('neutron.db.api._retry_db_errors.max_retries',
-                   new=2).start()
+        retry_fixture = fixture.DBRetryErrorsFixture(max_retries=2)
+        retry_fixture.setUp()
 
         non_unique_mac = tools.get_random_EUI()
         self._create_dvr_mac_entry('foo_host_1', non_unique_mac)
@@ -81,6 +82,7 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
             self.assertRaises(lib_exc.HostMacAddressGenerationFailure,
                               self.mixin._create_dvr_mac_address,
                               self.ctx, "foo_host_2")
+        retry_fixture.cleanUp()
 
     def test_mac_not_cleared_on_agent_delete_event_with_remaining_agents(self):
         plugin = directory.get_plugin()

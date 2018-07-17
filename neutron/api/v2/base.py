@@ -20,6 +20,7 @@ from neutron_lib.api import attributes
 from neutron_lib.api import faults
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
 from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
@@ -32,7 +33,7 @@ from neutron.api.v2 import resource as wsgi_resource
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
-from neutron.db import api as db_api
+from neutron.db import api as ndb_api
 from neutron import policy
 from neutron import quota
 from neutron.quota import resource_registry
@@ -476,7 +477,7 @@ class Controller(object):
         def notify(create_result):
             # Ensure usage trackers for all resources affected by this API
             # operation are marked as dirty
-            with db_api.context_manager.writer.using(request.context):
+            with ndb_api.context_manager.writer.using(request.context):
                 # Commit the reservation(s)
                 for reservation in reservations:
                     quota.QUOTAS.commit_reservation(
