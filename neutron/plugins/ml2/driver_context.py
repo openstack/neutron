@@ -50,6 +50,11 @@ class InstanceSnapshot(object):
             session.add(self._model_class(**{col: getattr(self, col)
                                              for col in self._cols}))
 
+    def __getitem__(self, item):
+        if item not in self._cols:
+            raise KeyError(item)
+        return getattr(self, item)
+
 
 class MechanismDriverContext(object):
     """MechanismDriver context base class."""

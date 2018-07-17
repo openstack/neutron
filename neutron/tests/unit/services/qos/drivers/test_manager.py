@@ -86,7 +86,7 @@ class TestQoSDriversRulesValidations(TestQosDriversManagerBase):
         port_binding = ports_object.PortBinding(
             self.ctxt, port_id=port_id, vif_type=vif_type, vnic_type=vnic_type)
         return ports_object.Port(
-            self.ctxt, id=uuidutils.generate_uuid(), binding=port_binding)
+            self.ctxt, id=uuidutils.generate_uuid(), binding=[port_binding])
 
     def _test_validate_rule_for_port(self, port, expected_result):
         driver_manager = self._create_manager_with_drivers({

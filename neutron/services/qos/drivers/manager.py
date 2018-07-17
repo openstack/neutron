@@ -13,6 +13,7 @@
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib import constants as lib_constants
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log as logging
 
@@ -22,6 +23,7 @@ from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import constants
 from neutron.common import exceptions
+from neutron.common import utils
 from neutron.objects.qos import policy as policy_object
 
 
@@ -134,13 +136,16 @@ class QosServiceDriverManager(object):
         self.rpc_notifications_required |= driver.requires_rpc_notifications
 
     def validate_rule_for_port(self, rule, port):
+        port_binding = utils.get_port_binding_by_status_and_host(
+            port.binding, lib_constants.ACTIVE, raise_if_not_found=True,
+            port_id=port['id'])
         for driver in self._drivers:
-            vif_type = port.binding.vif_type
+            vif_type = port_binding.vif_type
             if vif_type not in SKIPPED_VIF_TYPES:
                 if not self._validate_vif_type(driver, vif_type, port['id']):
                     continue
             else:
-                vnic_type = port.binding.vnic_type
+                vnic_type = port_binding.vnic_type
                 if not self._validate_vnic_type(driver, vnic_type, port['id']):
                     continue
 

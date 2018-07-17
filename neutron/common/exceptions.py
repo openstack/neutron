@@ -334,3 +334,23 @@ class FilterIDForIPNotFound(e.NotFound):
 class FailedToAddQdiscToDevice(e.NeutronException):
     message = _("Failed to add %(direction)s qdisc "
                 "to device %(device)s.")
+
+
+class PortBindingNotFound(e.NotFound):
+    message = _("Binding for port %(port_id)s for host %(host)s could not be "
+                "found.")
+
+
+class PortBindingAlreadyActive(e.Conflict):
+    message = _("Binding for port %(port_id)s on host %(host)s is already "
+                "active.")
+
+
+class PortBindingAlreadyExists(e.Conflict):
+    message = _("Binding for port %(port_id)s on host %(host)s already "
+                "exists.")
+
+
+class PortBindingError(e.NeutronException):
+    message = _("Binding for port %(port_id)s on host %(host)s could not be "
+                "created or updated.")

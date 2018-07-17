@@ -23,6 +23,7 @@ from neutron_lib.api.definitions import network_mtu_writable as mtuw_apidef
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import portbindings_extended as pbe_ext
 from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api.definitions import vlantransparent as vlan_apidef
 from neutron_lib.api import extensions
@@ -64,6 +65,7 @@ from neutron.api.rpc.handlers import metadata_rpc
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.common import constants as n_const
+from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
 from neutron.common import utils
 from neutron.db import _model_query as model_query
@@ -87,6 +89,8 @@ from neutron.db import subnet_service_type_mixin
 from neutron.db import vlantransparent_db
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
+from neutron.objects import base as base_obj
+from neutron.objects import ports as ports_obj
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_context
@@ -113,7 +117,7 @@ def _ml2_port_result_filter_hook(query, filters):
     if not values:
         return query
     bind_criteria = models.PortBinding.host.in_(values)
-    return query.filter(models_v2.Port.port_binding.has(bind_criteria))
+    return query.filter(models_v2.Port.port_binding.any(bind_criteria))
 
 
 @resource_extend.has_resource_extenders
@@ -162,7 +166,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "ip-substring-filtering",
                                     "port-security-groups-filtering",
                                     "empty-string-filtering",
-                                    "port-mac-address-regenerate"]
+                                    "port-mac-address-regenerate",
+                                    "binding-extended"]
 
     @property
     def supported_extension_aliases(self):
@@ -242,12 +247,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                           **kwargs):
         port_id = object_id
         port = db.get_port(context, port_id)
-        if not port or not port.port_binding:
+        port_binding = utils.get_port_binding_by_status_and_host(
+            getattr(port, 'port_binding', []), const.ACTIVE)
+        if not port or not port_binding:
             LOG.debug("Port %s was deleted so its status cannot be updated.",
                       port_id)
             return
-        if port.port_binding.vif_type in (portbindings.VIF_TYPE_BINDING_FAILED,
-                                          portbindings.VIF_TYPE_UNBOUND):
+        if port_binding.vif_type in (portbindings.VIF_TYPE_BINDING_FAILED,
+                                     portbindings.VIF_TYPE_UNBOUND):
             # NOTE(kevinbenton): we hit here when a port is created without
             # a host ID and the dhcp agent notifies that its wiring is done
             LOG.debug("Port %s cannot update to ACTIVE because it "
@@ -321,13 +328,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                 new_mac=port['mac_address'])
         return mac_change
 
-    def _process_port_binding(self, mech_context, attrs):
-        plugin_context = mech_context._plugin_context
-        binding = mech_context._binding
-        port = mech_context.current
-        port_id = port['id']
-        changes = False
+    def _clear_port_binding(self, mech_context, binding, port, original_host):
+        binding.vif_type = portbindings.VIF_TYPE_UNBOUND
+        binding.vif_details = ''
+        db.clear_binding_levels(mech_context._plugin_context, port['id'],
+                                original_host)
+        mech_context._clear_binding_levels()
 
+    def _process_port_binding_attributes(self, binding, attrs):
+        changes = False
         host = const.ATTR_NOT_SPECIFIED
         if attrs and portbindings.HOST_ID in attrs:
             host = attrs.get(portbindings.HOST_ID) or ''
@@ -355,23 +364,28 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 msg = _("binding:profile value too large")
                 raise exc.InvalidInput(error_message=msg)
             changes = True
+        return changes, original_host
+
+    def _process_port_binding(self, mech_context, attrs):
+        plugin_context = mech_context._plugin_context
+        binding = mech_context._binding
+        port = mech_context.current
+        changes, original_host = self._process_port_binding_attributes(binding,
+                                                                       attrs)
 
         # Unbind the port if needed.
         if changes:
-            binding.vif_type = portbindings.VIF_TYPE_UNBOUND
-            binding.vif_details = ''
-            db.clear_binding_levels(plugin_context, port_id, original_host)
-            mech_context._clear_binding_levels()
+            self._clear_port_binding(mech_context, binding, port,
+                                     original_host)
             port['status'] = const.PORT_STATUS_DOWN
             super(Ml2Plugin, self).update_port(
-                mech_context._plugin_context, port_id,
-                {port_def.RESOURCE_NAME: {'status': const.PORT_STATUS_DOWN}})
+                mech_context._plugin_context, port['id'],
+                {port_def.RESOURCE_NAME:
+                    {'status': const.PORT_STATUS_DOWN}})
 
         if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
-            binding.vif_type = portbindings.VIF_TYPE_UNBOUND
-            binding.vif_details = ''
-            db.clear_binding_levels(plugin_context, port_id, original_host)
-            mech_context._clear_binding_levels()
+            self._clear_port_binding(mech_context, binding, port,
+                                     original_host)
             binding.host = ''
 
         self._update_port_dict_binding(port, binding)
@@ -380,7 +394,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     @lib_db_api.retry_db_errors
     def _bind_port_if_needed(self, context, allow_notify=False,
-                             need_notify=False):
+                             need_notify=False, allow_commit=True):
         if not context.network.network_segments:
             LOG.debug("Network %s has no segments, skipping binding",
                       context.network.current['id'])
@@ -400,7 +414,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 context, need_notify)
 
             if count == MAX_BIND_TRIES or not try_again:
-                if self._should_bind_port(context):
+                if self._should_bind_port(context) and allow_commit:
                     # At this point, we attempted to bind a port and reached
                     # its final binding state. Binding either succeeded or
                     # exhausted all attempts, thus no need to try again.
@@ -489,7 +503,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # mechanism driver update_port_*commit() calls.
             try:
                 port_db = self._get_port(plugin_context, port_id)
-                cur_binding = port_db.port_binding
+                cur_binding = utils.get_port_binding_by_status_and_host(
+                    port_db.port_binding, const.ACTIVE)
             except exc.PortNotFound:
                 port_db, cur_binding = None, None
             if not port_db or not cur_binding:
@@ -533,8 +548,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # to optimize this code to avoid fetching it.
                 cur_binding = db.get_distributed_port_binding_by_host(
                     plugin_context, port_id, orig_binding.host)
+            cur_context_binding = cur_binding
+            if new_binding.status == const.INACTIVE:
+                cur_context_binding = (
+                    utils.get_port_binding_by_status_and_host(
+                        port_db.port_binding, const.INACTIVE,
+                        host=new_binding.host))
             cur_context = driver_context.PortContext(
-                self, plugin_context, port, network, cur_binding, None,
+                self, plugin_context, port, network, cur_context_binding, None,
                 original_port=oport)
 
             # Commit our binding results only if port has not been
@@ -550,20 +571,24 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if commit:
                 # Update the port's binding state with our binding
                 # results.
-                cur_binding.vif_type = new_binding.vif_type
-                cur_binding.vif_details = new_binding.vif_details
+                if new_binding.status == const.INACTIVE:
+                    cur_context_binding.status = const.ACTIVE
+                    cur_binding.status = const.INACTIVE
+                else:
+                    cur_context_binding.vif_type = new_binding.vif_type
+                    cur_context_binding.vif_details = new_binding.vif_details
                 db.clear_binding_levels(plugin_context, port_id,
                                         cur_binding.host)
                 db.set_binding_levels(plugin_context,
                                       bind_context._binding_levels)
                 # refresh context with a snapshot of updated state
                 cur_context._binding = driver_context.InstanceSnapshot(
-                    cur_binding)
+                    cur_context_binding)
                 cur_context._binding_levels = bind_context._binding_levels
 
                 # Update PortContext's port dictionary to reflect the
                 # updated binding state.
-                self._update_port_dict_binding(port, cur_binding)
+                self._update_port_dict_binding(port, cur_context_binding)
 
                 # Update the port status if requested by the bound driver.
                 if (bind_context._binding_levels and
@@ -633,9 +658,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @resource_extend.extends([port_def.COLLECTION_NAME])
     def _ml2_extend_port_dict_binding(port_res, port_db):
         plugin = directory.get_plugin()
+        port_binding = utils.get_port_binding_by_status_and_host(
+            port_db.port_binding, const.ACTIVE)
         # None when called during unit tests for other plugins.
-        if port_db.port_binding:
-            plugin._update_port_dict_binding(port_res, port_db.port_binding)
+        if port_binding:
+            plugin._update_port_dict_binding(port_res, port_binding)
 
     # ML2's resource extend functions allow extension drivers that extend
     # attributes for the resources to add those attributes to the result.
@@ -1305,7 +1332,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         original_port=original_port)
         with db_api.context_manager.writer.using(context):
             port_db = self._get_port(context, id)
-            binding = port_db.port_binding
+            binding = utils.get_port_binding_by_status_and_host(
+                port_db.port_binding, const.ACTIVE)
             if not binding:
                 raise exc.PortNotFound(port_id=id)
             mac_address_updated = self._check_mac_update_allowed(
@@ -1523,7 +1551,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with db_api.context_manager.writer.using(context):
             try:
                 port_db = self._get_port(context, id)
-                binding = port_db.port_binding
+                binding = utils.get_port_binding_by_status_and_host(
+                    port_db.port_binding, const.ACTIVE,
+                    raise_if_not_found=True, port_id=id)
             except exc.PortNotFound:
                 LOG.debug("The port '%s' was deleted", id)
                 return
@@ -1641,14 +1671,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # related attribute port_binding could disappear in
                 # concurrent port deletion.
                 # It's not an error condition.
-                binding = port_db.port_binding
+                binding = utils.get_port_binding_by_status_and_host(
+                    port_db.port_binding, const.ACTIVE)
                 if not binding:
                     LOG.info("Binding info for port %s was not found, "
                              "it might have been deleted already.",
                              port_id)
                     return
                 levels = db.get_binding_levels(plugin_context, port_db.id,
-                                               port_db.port_binding.host)
+                                               binding.host)
                 port_context = driver_context.PortContext(
                     self, plugin_context, port, network, binding, levels)
 
@@ -1684,7 +1715,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         plugin_context, port['id'], host)
                     bindlevelhost_match = host
                 else:
-                    binding = port_db.port_binding
+                    binding = utils.get_port_binding_by_status_and_host(
+                        port_db.port_binding, const.ACTIVE)
                     bindlevelhost_match = binding.host if binding else None
                 if not binding:
                     LOG.info("Binding info for port %s was not found, "
@@ -1769,11 +1801,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # listening for db events can modify the port if necessary
                 context.session.flush()
                 updated_port = self._make_port_dict(port)
-                levels = db.get_binding_levels(context, port.id,
-                                               port.port_binding.host)
+                binding = utils.get_port_binding_by_status_and_host(
+                    port.port_binding, const.ACTIVE, raise_if_not_found=True,
+                    port_id=port_id)
+                levels = db.get_binding_levels(context, port.id, binding.host)
                 mech_context = driver_context.PortContext(
-                    self, context, updated_port, network, port.port_binding,
-                    levels, original_port=original_port)
+                    self, context, updated_port, network, binding, levels,
+                    original_port=original_port)
                 self.mechanism_manager.update_port_precommit(mech_context)
                 updated = True
             elif port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
@@ -1965,3 +1999,213 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.update_network_precommit(mech_context)
         elif event == events.AFTER_CREATE or event == events.AFTER_DELETE:
             self.mechanism_manager.update_network_postcommit(mech_context)
+
+    @staticmethod
+    def _validate_compute_port(port):
+        if not port['device_owner'].startswith(
+                const.DEVICE_OWNER_COMPUTE_PREFIX):
+            msg = _('Invalid port %s. Operation only valid on compute '
+                    'ports') % port['id']
+            raise exc.BadRequest(resource='port', msg=msg)
+
+    def _make_port_binding_dict(self, binding, fields=None):
+        res = {key: binding[key] for key in (
+                    pbe_ext.HOST, pbe_ext.VIF_TYPE, pbe_ext.VNIC_TYPE,
+                    pbe_ext.STATUS)}
+        if isinstance(binding, ports_obj.PortBinding):
+            res[pbe_ext.PROFILE] = binding.profile or {}
+            res[pbe_ext.VIF_DETAILS] = binding.vif_details or {}
+        else:
+            res[pbe_ext.PROFILE] = self._get_profile(binding)
+            res[pbe_ext.VIF_DETAILS] = self._get_vif_details(binding)
+        return db_utils.resource_fields(res, fields)
+
+    def _get_port_binding_attrs(self, binding, host=None):
+        return {portbindings.VNIC_TYPE: binding.get(pbe_ext.VNIC_TYPE),
+                portbindings.HOST_ID: binding.get(pbe_ext.HOST) or host,
+                portbindings.PROFILE: binding.get(pbe_ext.PROFILE, {})}
+
+    def _process_active_binding_change(self, changes, mech_context, port_dict,
+                                       original_host):
+        if changes:
+            self._clear_port_binding(mech_context,
+                                     mech_context._binding, port_dict,
+                                     original_host)
+            port_dict['status'] = const.PORT_STATUS_DOWN
+            super(Ml2Plugin, self).update_port(
+                mech_context._plugin_context, port_dict['id'],
+                {port_def.RESOURCE_NAME:
+                    {'status': const.PORT_STATUS_DOWN}})
+        self._update_port_dict_binding(port_dict,
+                                       mech_context._binding)
+        mech_context._binding.persist_state_to_session(
+            mech_context._plugin_context.session)
+
+    @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
+    def create_port_binding(self, context, port_id, binding):
+        attrs = binding[pbe_ext.RESOURCE_NAME]
+        with db_api.context_manager.writer.using(context):
+            port_db = self._get_port(context, port_id)
+            self._validate_compute_port(port_db)
+            if self._get_binding_for_host(port_db.port_binding,
+                                          attrs[pbe_ext.HOST]):
+                raise n_exc.PortBindingAlreadyExists(
+                    port_id=port_id, host=attrs[pbe_ext.HOST])
+            status = const.ACTIVE
+            is_active_binding = True
+            active_binding = utils.get_port_binding_by_status_and_host(
+                port_db.port_binding, const.ACTIVE)
+            if active_binding:
+                status = const.INACTIVE
+                is_active_binding = False
+            network = self.get_network(context, port_db['network_id'])
+            port_dict = self._make_port_dict(port_db)
+            new_binding = models.PortBinding(
+                port_id=port_id,
+                vif_type=portbindings.VIF_TYPE_UNBOUND,
+                status=status)
+            mech_context = driver_context.PortContext(self, context, port_dict,
+                                                      network, new_binding,
+                                                      None)
+            changes, original_host = self._process_port_binding_attributes(
+                mech_context._binding, self._get_port_binding_attrs(attrs))
+            if is_active_binding:
+                self._process_active_binding_change(changes, mech_context,
+                                                    port_dict, original_host)
+        bind_context = self._bind_port_if_needed(
+            mech_context, allow_commit=is_active_binding)
+        if (bind_context._binding.vif_type ==
+                portbindings.VIF_TYPE_BINDING_FAILED):
+            raise n_exc.PortBindingError(port_id=port_id,
+                                         host=attrs[pbe_ext.HOST])
+        bind_context._binding.port_id = port_id
+        bind_context._binding.status = status
+        if not is_active_binding:
+            with db_api.context_manager.writer.using(context):
+                bind_context._binding.persist_state_to_session(context.session)
+                db.set_binding_levels(context, bind_context._binding_levels)
+        return self._make_port_binding_dict(bind_context._binding)
+
+    @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
+    def get_port_bindings(self, context, port_id, filters=None, fields=None,
+                          sorts=None, limit=None, marker=None,
+                          page_reverse=False):
+        port = ports_obj.Port.get_object(context, id=port_id)
+        if not port:
+            raise exc.PortNotFound(port_id=port_id)
+        self._validate_compute_port(port)
+        filters = filters or {}
+        pager = base_obj.Pager(sorts, limit, page_reverse, marker)
+        bindings = ports_obj.PortBinding.get_objects(
+            context, _pager=pager, port_id=port_id, **filters)
+
+        return [self._make_port_binding_dict(binding, fields)
+                for binding in bindings]
+
+    @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
+    def get_port_binding(self, context, host, port_id, fields=None):
+        port = ports_obj.Port.get_object(context, id=port_id)
+        if not port:
+            raise exc.PortNotFound(port_id=port_id)
+        self._validate_compute_port(port)
+        binding = ports_obj.PortBinding.get_object(context, host=host,
+                                                   port_id=port_id)
+        if not binding:
+            raise n_exc.PortBindingNotFound(port_id=port_id, host=host)
+        return self._make_port_binding_dict(binding, fields)
+
+    def _get_binding_for_host(self, bindings, host):
+        for binding in bindings:
+            if binding.host == host:
+                return binding
+
+    @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
+    def update_port_binding(self, context, host, port_id, binding):
+        attrs = binding[pbe_ext.RESOURCE_NAME]
+        with db_api.context_manager.writer.using(context):
+            port_db = self._get_port(context, port_id)
+            self._validate_compute_port(port_db)
+            original_binding = self._get_binding_for_host(port_db.port_binding,
+                                                          host)
+            if not original_binding:
+                raise n_exc.PortBindingNotFound(port_id=port_id, host=host)
+            is_active_binding = (original_binding.status == const.ACTIVE)
+            network = self.get_network(context, port_db['network_id'])
+            port_dict = self._make_port_dict(port_db)
+            mech_context = driver_context.PortContext(self, context, port_dict,
+                                                      network,
+                                                      original_binding, None)
+            changes, original_host = self._process_port_binding_attributes(
+                mech_context._binding, self._get_port_binding_attrs(attrs,
+                                                                    host=host))
+            if is_active_binding:
+                self._process_active_binding_change(changes, mech_context,
+                                                    port_dict, original_host)
+        bind_context = self._bind_port_if_needed(
+            mech_context, allow_commit=is_active_binding)
+        if (bind_context._binding.vif_type ==
+                portbindings.VIF_TYPE_BINDING_FAILED):
+            raise n_exc.PortBindingError(port_id=port_id, host=host)
+        if not is_active_binding:
+            with db_api.context_manager.writer.using(context):
+                bind_context._binding.persist_state_to_session(context.session)
+                db.set_binding_levels(context, bind_context._binding_levels)
+        return self._make_port_binding_dict(bind_context._binding)
+
+    @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
+    def activate(self, context, host, port_id):
+        with db_api.context_manager.writer.using(context):
+            # TODO(mlavalle) Next two lines can be removed when bug #1770267 is
+            # fixed
+            if isinstance(port_id, dict):
+                port_id = port_id['port_id']
+            port_db = self._get_port(context, port_id)
+            self._validate_compute_port(port_db)
+            active_binding = utils.get_port_binding_by_status_and_host(
+                port_db.port_binding, const.ACTIVE)
+            if host == (active_binding and active_binding.host):
+                raise n_exc.PortBindingAlreadyActive(port_id=port_id,
+                                                     host=host)
+            inactive_binding = utils.get_port_binding_by_status_and_host(
+                port_db.port_binding, const.INACTIVE, host=host)
+            if not inactive_binding or inactive_binding.host != host:
+                raise n_exc.PortBindingNotFound(port_id=port_id, host=host)
+            network = self.get_network(context, port_db['network_id'])
+            port_dict = self._make_port_dict(port_db)
+            levels = db.get_binding_levels(context, port_id,
+                                           active_binding.host)
+            original_context = driver_context.PortContext(self, context,
+                                                          port_dict, network,
+                                                          active_binding,
+                                                          levels)
+            self._clear_port_binding(original_context, active_binding,
+                                     port_dict, active_binding.host)
+            port_dict['status'] = const.PORT_STATUS_DOWN
+            super(Ml2Plugin, self).update_port(
+                context, port_dict['id'],
+                {port_def.RESOURCE_NAME:
+                    {'status': const.PORT_STATUS_DOWN}})
+            levels = db.get_binding_levels(context, port_id,
+                                           inactive_binding.host)
+            bind_context = driver_context.PortContext(self, context, port_dict,
+                                                      network,
+                                                      inactive_binding, levels)
+        for count in range(MAX_BIND_TRIES):
+            cur_context, _, try_again = self._commit_port_binding(
+                original_context, bind_context, need_notify=True,
+                try_again=True)
+            if not try_again:
+                self.notifier.port_delete(context, port_id)
+                return self._make_port_binding_dict(cur_context._binding)
+        raise n_exc.PortBindingError(port_id=port_id, host=host)
+
+    @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
+    def delete_port_binding(self, context, host, port_id):
+        ports_obj.PortBinding.delete_objects(context, host=host,
+                                             port_id=port_id)

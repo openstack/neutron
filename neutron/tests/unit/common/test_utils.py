@@ -21,14 +21,18 @@ import ddt
 import eventlet
 import mock
 import netaddr
+from neutron_lib.api.definitions import portbindings_extended as pb_ext
 from neutron_lib import constants
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 import six
 import testscenarios
 import testtools
 
 from neutron.common import constants as common_constants
+from neutron.common import exceptions
 from neutron.common import utils
+from neutron.objects import ports
 from neutron.tests import base
 from neutron.tests.unit import tests
 
@@ -524,3 +528,31 @@ class TestIECUnitConversions(BaseUnitConversionTest, base.BaseTestCase):
                 expected_kilobits,
                 utils.bits_to_kilobits(input_bits, self.base_unit)
             )
+
+
+class TestGetPortBindingByStatusAndHost(base.BaseTestCase):
+
+    def test_get_port_binding_by_status_and_host(self):
+        bindings = []
+        self.assertIsNone(utils.get_port_binding_by_status_and_host(
+                              bindings, constants.INACTIVE))
+        bindings.extend([ports.PortBinding(
+                             port_id=uuidutils.generate_uuid(), host='host-1',
+                             status=constants.INACTIVE),
+                         ports.PortBinding(
+                             port_id=uuidutils.generate_uuid(), host='host-2',
+                             status=constants.INACTIVE)])
+        self.assertEqual(
+            'host-1', utils.get_port_binding_by_status_and_host(
+                          bindings,
+                          constants.INACTIVE)[pb_ext.HOST])
+        self.assertEqual(
+            'host-2', utils.get_port_binding_by_status_and_host(
+                          bindings,
+                          constants.INACTIVE,
+                          host='host-2')[pb_ext.HOST])
+        self.assertIsNone(utils.get_port_binding_by_status_and_host(
+                              bindings, constants.ACTIVE))
+        self.assertRaises(exceptions.PortBindingNotFound,
+                          utils.get_port_binding_by_status_and_host, bindings,
+                          constants.ACTIVE, 'host', True, 'port_id')

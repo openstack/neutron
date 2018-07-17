@@ -29,6 +29,7 @@ from neutron.agent import resource_cache
 from neutron.api.rpc.callbacks import resources
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
+from neutron.common import utils
 from neutron import objects
 
 LOG = logging.getLogger(__name__)
@@ -239,6 +240,9 @@ class CacheBackedPluginApi(PluginApi):
         # match format of old RPC interface
         mac_addr = str(netaddr.EUI(str(port_obj.mac_address),
                                    dialect=netaddr.mac_unix_expanded))
+        binding = utils.get_port_binding_by_status_and_host(
+            port_obj.binding, constants.ACTIVE, raise_if_not_found=True,
+            port_id=port_obj.id)
         entry = {
             'device': device,
             'network_id': port_obj.network_id,
@@ -259,7 +263,7 @@ class CacheBackedPluginApi(PluginApi):
                                              'port_security_enabled', True),
             'qos_policy_id': port_obj.qos_policy_id,
             'network_qos_policy_id': net_qos_policy_id,
-            'profile': port_obj.binding.profile,
+            'profile': binding.profile,
             'security_groups': list(port_obj.security_group_ids)
         }
         LOG.debug("Returning: %s", entry)

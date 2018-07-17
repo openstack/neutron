@@ -11,6 +11,7 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants
 from oslo_utils import uuidutils
 import testscenarios
 
@@ -418,3 +419,36 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         binding_data = (
             port_data['distributed_binding']['versioned_object.data'])
         self.assertEqual(binding.host, binding_data['host'])
+
+    def test_v1_4_to_v1_3_converts_binding_to_portbinding_object(self):
+        port_v1_4 = self._create_test_port()
+        port_v1_3 = port_v1_4.obj_to_primitive(target_version='1.3')
+
+        # Port has no bindings, so binding attribute should be None
+        self.assertIsNone(port_v1_3['versioned_object.data']['binding'])
+        active_binding = ports.PortBinding(self.context, port_id=port_v1_4.id,
+                                           host='host1', vif_type='type')
+        inactive_binding = ports.PortBinding(
+            self.context, port_id=port_v1_4.id, host='host2', vif_type='type',
+            status=constants.INACTIVE)
+        active_binding.create()
+        inactive_binding.create()
+        port_v1_4 = ports.Port.get_object(self.context, id=port_v1_4.id)
+        port_v1_3 = port_v1_4.obj_to_primitive(target_version='1.3')
+        binding = port_v1_3['versioned_object.data']['binding']
+
+        # Port has active binding, so the binding attribute should point to it
+        self.assertEqual('host1', binding['versioned_object.data']['host'])
+        active_binding.delete()
+        port_v1_4 = ports.Port.get_object(self.context, id=port_v1_4.id)
+        port_v1_3 = port_v1_4.obj_to_primitive(target_version='1.3')
+
+        # Port has no active bindings, so binding attribute should be None
+        self.assertIsNone(port_v1_3['versioned_object.data']['binding'])
+
+        # Port with no binding attribute should be handled without raising
+        # exception
+        primitive = port_v1_4.obj_to_primitive()
+        primitive['versioned_object.data'].pop('binding')
+        port_v1_4_no_binding = port_v1_4.obj_from_primitive(primitive)
+        port_v1_4_no_binding.obj_to_primitive(target_version='1.3')
