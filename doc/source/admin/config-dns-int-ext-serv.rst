@@ -127,27 +127,39 @@ Following is an example of these steps:
    $ neutron net-update 38c5e950-b450-4c30-83d4-ee181c28aad3 --dns_domain example.org.
    Updated network: 38c5e950-b450-4c30-83d4-ee181c28aad3
 
-   $ neutron net-show 38c5e950-b450-4c30-83d4-ee181c28aad3
-   +-------------------------+--------------------------------------+
-   | Field                   | Value                                |
-   +-------------------------+--------------------------------------+
-   | admin_state_up          | True                                 |
-   | availability_zone_hints |                                      |
-   | availability_zones      | nova                                 |
-   | dns_domain              | example.org.                         |
-   | id                      | 38c5e950-b450-4c30-83d4-ee181c28aad3 |
-   | mtu                     | 1450                                 |
-   | name                    | private                              |
-   | port_security_enabled   | True                                 |
-   | revision_number         | 1                                    |
-   | router:external         | False                                |
-   | shared                  | False                                |
-   | status                  | ACTIVE                               |
-   | subnets                 | 43414c53-62ae-49bc-aa6c-c9dd7705818a |
-   |                         | 5b9282a1-0be1-4ade-b478-7868ad2a16ff |
-   | tags                    | []                                   |
-   | tenant_id               | d5660cb1e6934612a01b4fb2fb630725     |
-   +-------------------------+--------------------------------------+
+   $ openstack network show 38c5e950-b450-4c30-83d4-ee181c28aad3
+   +---------------------------+--------------------------------------+
+   | Field                     | Value                                |
+   +---------------------------+--------------------------------------+
+   | admin_state_up            | UP                                   |
+   | availability_zone_hints   |                                      |
+   | availability_zones        | nova                                 |
+   | created_at                | 2016-05-04T19:27:34Z                 |
+   | description               |                                      |
+   | dns_domain                | example.org.                         |
+   | id                        | 38c5e950-b450-4c30-83d4-ee181c28aad3 |
+   | ipv4_address_scope        | None                                 |
+   | ipv6_address_scope        | None                                 |
+   | is_default                | None                                 |
+   | is_vlan_transparent       | None                                 |
+   | mtu                       | 1450                                 |
+   | name                      | private                              |
+   | port_security_enabled     | True                                 |
+   | project_id                | d5660cb1e6934612a01b4fb2fb630725     |
+   | provider:network_type     | vlan                                 |
+   | provider:physical_network | None                                 |
+   | provider:segmentation_id  | 24                                   |
+   | qos_policy_id             | None                                 |
+   | revision_number           | 1                                    |
+   | router:external           | Internal                             |
+   | segments                  | None                                 |
+   | shared                    | False                                |
+   | status                    | ACTIVE                               |
+   | subnets                   | 43414c53-62ae-49bc-aa6c-c9dd7705818a |
+   |                           | 5b9282a1-0be1-4ade-b478-7868ad2a16ff |
+   | tags                      |                                      |
+   | updated_at                | 2016-05-04T19:27:34Z                 |
+   +---------------------------+--------------------------------------+
 
    $ openstack server create --image cirros --flavor 42 \
      --nic net-id=38c5e950-b450-4c30-83d4-ee181c28aad3 my_vm
@@ -190,40 +202,51 @@ Following is an example of these steps:
    | 43f328bb-b2d1-4cf1-a36f-3b2593397cb1 | my_vm | ACTIVE | -          | Running     | private=fda4:653e:71b0:0:f816:3eff:fe16:b5f2, 192.0.2.15 | cirros     |
    +--------------------------------------+-------+--------+------------+-------------+----------------------------------------------------------+------------+
 
-   $ neutron port-list --device_id 43f328bb-b2d1-4cf1-a36f-3b2593397cb1
-   +--------------------------------------+------+-------------------+-------------------------------------------------------------------------------------------------------------+
-   | id                                   | name | mac_address       | fixed_ips                                                                                                   |
-   +--------------------------------------+------+-------------------+-------------------------------------------------------------------------------------------------------------+
-   | da0b1f75-c895-460f-9fc1-4d6ec84cf85f |      | fa:16:3e:16:b5:f2 | {"subnet_id": "5b9282a1-0be1-4ade-b478-7868ad2a16ff", "ip_address": "192.0.2.15"}                           |
-   |                                      |      |                   | {"subnet_id": "43414c53-62ae-49bc-aa6c-c9dd7705818a", "ip_address": "fda4:653e:71b0:0:f816:3eff:fe16:b5f2"} |
-   +--------------------------------------+------+-------------------+-------------------------------------------------------------------------------------------------------------+
+   $ openstack port list --device-id 43f328bb-b2d1-4cf1-a36f-3b2593397cb1
+   +--------------------------------------+------+-------------------+-------------------------------------------------------------------------------------------------------------+--------+
+   | ID                                   | Name | MAC Address       | Fixed IP Addresses                                                                                          | Status |
+   +--------------------------------------+------+-------------------+-------------------------------------------------------------------------------------------------------------+--------+
+   | da0b1f75-c895-460f-9fc1-4d6ec84cf85f |      | fa:16:3e:16:b5:f2 | ip_address='192.0.2.15', subnet_id='5b9282a1-0be1-4ade-b478-7868ad2a16ff'                                   | ACTIVE |
+   |                                      |      |                   | ip_address='fda4:653e:71b0:0:f816:3eff:fe16:b5f2', subnet_id='43414c53-62ae-49bc-aa6c-c9dd7705818a'         |        |
+   +--------------------------------------+------+-------------------+-------------------------------------------------------------------------------------------------------------+--------+
 
-   $ neutron port-show da0b1f75-c895-460f-9fc1-4d6ec84cf85f
-   +-----------------------+-------------------------------------------------------------------------------------------------------------+
-   | Field                 | Value                                                                                                       |
-   +-----------------------+-------------------------------------------------------------------------------------------------------------+
-   | admin_state_up        | True                                                                                                        |
-   | allowed_address_pairs |                                                                                                             |
-   | binding:vnic_type     | normal                                                                                                      |
-   | device_id             | 43f328bb-b2d1-4cf1-a36f-3b2593397cb1                                                                        |
-   | device_owner          | compute:None                                                                                                |
-   | dns_assignment        | {"hostname": "my-vm", "ip_address": "192.0.2.15", "fqdn": "my-vm.example.org."}                             |
-   |                       | {"hostname": "my-vm", "ip_address": "fda4:653e:71b0:0:f816:3eff:fe16:b5f2", "fqdn": "my-vm.example.org."}   |
-   | dns_name              | my-vm                                                                                                       |
-   | extra_dhcp_opts       |                                                                                                             |
-   | fixed_ips             | {"subnet_id": "5b9282a1-0be1-4ade-b478-7868ad2a16ff", "ip_address": "192.0.2.15"}                           |
-   |                       | {"subnet_id": "43414c53-62ae-49bc-aa6c-c9dd7705818a", "ip_address": "fda4:653e:71b0:0:f816:3eff:fe16:b5f2"} |
-   | id                    | da0b1f75-c895-460f-9fc1-4d6ec84cf85f                                                                        |
-   | mac_address           | fa:16:3e:16:b5:f2                                                                                           |
-   | name                  |                                                                                                             |
-   | network_id            | 38c5e950-b450-4c30-83d4-ee181c28aad3                                                                        |
-   | port_security_enabled | True                                                                                                        |
-   | revision_number       | 1                                                                                                           |
-   | security_groups       | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                                                        |
-   | status                | ACTIVE                                                                                                      |
-   | tags                  | []                                                                                                          |
-   | tenant_id             | d5660cb1e6934612a01b4fb2fb630725                                                                            |
-   +-----------------------+-------------------------------------------------------------------------------------------------------------+
+   $ openstack port show da0b1f75-c895-460f-9fc1-4d6ec84cf85f
+   +-----------------------+------------------------------------------------------------------------------------------------------------+
+   | Field                 | Value                                                                                                      |
+   +-----------------------+------------------------------------------------------------------------------------------------------------+
+   | admin_state_up        | UP                                                                                                         |
+   | allowed_address_pairs |                                                                                                            |
+   | binding_host_id       | vultr.guest                                                                                                |
+   | binding_profile       |                                                                                                            |
+   | binding_vif_details   | datapath_type='system', ovs_hybrid_plug='True', port_filter='True'                                         |
+   | binding_vif_type      | ovs                                                                                                        |
+   | binding_vnic_type     | normal                                                                                                     |
+   | created_at            | 2016-02-15T19:27:34Z                                                                                       |
+   | data_plane_status     | None                                                                                                       |
+   | description           |                                                                                                            |
+   | device_id             | 43f328bb-b2d1-4cf1-a36f-3b2593397cb1                                                                       |
+   | device_owner          | compute:None                                                                                               |
+   | dns_assignment        | fqdn='my-vm.example.org.', hostname='my-vm', ip_address='192.0.2.15'                                       |
+   |                       | fqdn='my-vm.example.org.', hostname='my-vm', ip_address='fda4:653e:71b0:0:f816:3eff:fe16:b5f2'             |
+   | dns_domain            | example.org.                                                                                               |
+   | dns_name              | my-vm                                                                                                      |
+   | extra_dhcp_opts       |                                                                                                            |
+   | fixed_ips             | ip_address='192.0.2.15', subnet_id='5b9282a1-0be1-4ade-b478-7868ad2a16ff'                                  |
+   |                       | ip_address='fda4:653e:71b0:0:f816:3eff:fe16:b5f2', subnet_id='43414c53-62ae-49bc-aa6c-c9dd7705818a'        |
+   | id                    | da0b1f75-c895-460f-9fc1-4d6ec84cf85f                                                                       |
+   | mac_address           | fa:16:3e:16:b5:f2                                                                                          |
+   | name                  |                                                                                                            |
+   | network_id            | 38c5e950-b450-4c30-83d4-ee181c28aad3                                                                       |
+   | port_security_enabled | True                                                                                                       |
+   | project_id            | d5660cb1e6934612a01b4fb2fb630725                                                                           |
+   | qos_policy_id         | None                                                                                                       |
+   | revision_number       | 1                                                                                                          |
+   | security_group_ids    | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                                                       |
+   | status                | ACTIVE                                                                                                     |
+   | tags                  |                                                                                                            |
+   | trunk_details         | None                                                                                                       |
+   | updated_at            | 2016-02-15T19:27:34Z                                                                                       |
+   +-----------------------+------------------------------------------------------------------------------------------------------------+
 
    $ openstack recordset list example.org.
    +--------------------------------------+--------------------+------+-----------------------------------------------------------------------+--------+--------+
@@ -233,24 +256,29 @@ Following is an example of these steps:
    | e7c05a5d-83a0-4fe5-8bd5-ab058a3326aa | example.org.       | SOA  | ns1.devstack.org. malavall.us.ibm.com. 1513767794 3532 600 86400 3600 | ACTIVE | NONE   |
    +--------------------------------------+--------------------+------+-----------------------------------------------------------------------+--------+--------+
 
-   $ neutron floatingip-create 41fa3995-9e4a-4cd9-bb51-3e5424f2ff2a \
-     --port_id da0b1f75-c895-460f-9fc1-4d6ec84cf85f
-   Created a new floatingip:
+   $ openstack floating ip create 41fa3995-9e4a-4cd9-bb51-3e5424f2ff2a \
+     --port da0b1f75-c895-460f-9fc1-4d6ec84cf85f
    +---------------------+--------------------------------------+
    | Field               | Value                                |
    +---------------------+--------------------------------------+
+   | created_at          | 2016-02-15T20:27:34Z                 |
+   | description         |                                      |
    | dns_domain          |                                      |
    | dns_name            |                                      |
    | fixed_ip_address    | 192.0.2.15                           |
    | floating_ip_address | 198.51.100.4                         |
    | floating_network_id | 41fa3995-9e4a-4cd9-bb51-3e5424f2ff2a |
    | id                  | e78f6eb1-a35f-4a90-941d-87c888d5fcc7 |
+   | name                | 198.51.100.4                         |
    | port_id             | da0b1f75-c895-460f-9fc1-4d6ec84cf85f |
+   | project_id          | d5660cb1e6934612a01b4fb2fb630725     |
+   | qos_policy_id       | None                                 |
    | revision_number     | 1                                    |
    | router_id           | 970ebe83-c4a3-4642-810e-43ab7b0c2b5f |
    | status              | DOWN                                 |
+   | subnet_id           | None                                 |
    | tags                | []                                   |
-   | tenant_id           | d5660cb1e6934612a01b4fb2fb630725     |
+   | updated_at          | 2016-02-15T20:27:34Z                 |
    +---------------------+--------------------------------------+
 
    $ openstack recordset list example.org.
@@ -295,27 +323,38 @@ allocated for the instance:
 
 .. code-block:: console
 
-   $ neutron net-show 38c5e950-b450-4c30-83d4-ee181c28aad3
-   +-------------------------+--------------------------------------+
-   | Field                   | Value                                |
-   +-------------------------+--------------------------------------+
-   | admin_state_up          | True                                 |
-   | availability_zone_hints |                                      |
-   | availability_zones      | nova                                 |
-   | dns_domain              | example.org.                         |
-   | id                      | 38c5e950-b450-4c30-83d4-ee181c28aad3 |
-   | mtu                     | 1450                                 |
-   | name                    | private                              |
-   | port_security_enabled   | True                                 |
-   | revision_number         | 1                                    |
-   | router:external         | False                                |
-   | shared                  | False                                |
-   | status                  | ACTIVE                               |
-   | subnets                 | 43414c53-62ae-49bc-aa6c-c9dd7705818a |
-   |                         | 5b9282a1-0be1-4ade-b478-7868ad2a16ff |
-   | tags                    | []                                   |
-   | tenant_id               | d5660cb1e6934612a01b4fb2fb630725     |
-   +-------------------------+--------------------------------------+
+   $ openstack network show 38c5e950-b450-4c30-83d4-ee181c28aad3
+   +---------------------------+----------------------------------------------------------------------------+
+   | Field                     | Value                                                                      |
+   +---------------------------+----------------------------------------------------------------------------+
+   | admin_state_up            | UP                                                                         |
+   | availability_zone_hints   |                                                                            |
+   | availability_zones        | nova                                                                       |
+   | created_at                | 2016-05-04T19:27:34Z                                                       |
+   | description               |                                                                            |
+   | dns_domain                | example.org.                                                               |
+   | id                        | 38c5e950-b450-4c30-83d4-ee181c28aad3                                       |
+   | ipv4_address_scope        | None                                                                       |
+   | ipv6_address_scope        | None                                                                       |
+   | is_default                | None                                                                       |
+   | is_vlan_transparent       | None                                                                       |
+   | mtu                       | 1450                                                                       |
+   | name                      | private                                                                    |
+   | port_security_enabled     | True                                                                       |
+   | project_id                | d5660cb1e6934612a01b4fb2fb630725                                           |
+   | provider:network_type     | vlan                                                                       |
+   | provider:physical_network | None                                                                       |
+   | provider:segmentation_id  | 24                                                                         |
+   | qos_policy_id             | None                                                                       |
+   | revision_number           | 1                                                                          |
+   | router:external           | Internal                                                                   |
+   | segments                  | None                                                                       |
+   | shared                    | False                                                                      |
+   | status                    | ACTIVE                                                                     |
+   | subnets                   | 43414c53-62ae-49bc-aa6c-c9dd7705818a, 5b9282a1-0be1-4ade-b478-7868ad2a16ff |
+   | tags                      |                                                                            |
+   | updated_at                | 2016-05-04T19:27:34Z                                                       |
+   +---------------------------+----------------------------------------------------------------------------+
 
    $ openstack server create --image cirros --flavor 42 \
      --nic net-id=38c5e950-b450-4c30-83d4-ee181c28aad3 my_vm
@@ -358,40 +397,51 @@ allocated for the instance:
    | 71fb4ac8-eed8-4644-8113-0641962bb125 | my_vm | ACTIVE | -          | Running     | private=fda4:653e:71b0:0:f816:3eff:fe24:8614, 192.0.2.16 | cirros     |
    +--------------------------------------+-------+--------+------------+-------------+----------------------------------------------------------+------------+
 
-   $ neutron port-list --device_id 71fb4ac8-eed8-4644-8113-0641962bb125
-   +--------------------------------------+------+-------------------+-------------------------------------------------------------------------------------------------------------+
-   | id                                   | name | mac_address       | fixed_ips                                                                                                   |
-   +--------------------------------------+------+-------------------+-------------------------------------------------------------------------------------------------------------+
-   | 1e7033fb-8e9d-458b-89ed-8312cafcfdcb |      | fa:16:3e:24:86:14 | {"subnet_id": "5b9282a1-0be1-4ade-b478-7868ad2a16ff", "ip_address": "192.0.2.16"}                           |
-   |                                      |      |                   | {"subnet_id": "43414c53-62ae-49bc-aa6c-c9dd7705818a", "ip_address": "fda4:653e:71b0:0:f816:3eff:fe24:8614"} |
-   +--------------------------------------+------+-------------------+-------------------------------------------------------------------------------------------------------------+
+   $ openstack port list --device-id 71fb4ac8-eed8-4644-8113-0641962bb125
+   +--------------------------------------+------+-------------------+-----------------------------------------------------------------------------------------------------+--------+
+   | ID                                   | Name | MAC Address       | Fixed IP Addresses                                                                                  | Status |
+   +--------------------------------------+------+-------------------+-----------------------------------------------------------------------------------------------------+--------+
+   | 1e7033fb-8e9d-458b-89ed-8312cafcfdcb |      | fa:16:3e:24:86:14 | ip_address='192.0.2.16', subnet_id='5b9282a1-0be1-4ade-b478-7868ad2a16ff'                           | ACTIVE |
+   |                                      |      |                   | ip_address='fda4:653e:71b0:0:f816:3eff:fe24:8614', subnet_id='43414c53-62ae-49bc-aa6c-c9dd7705818a' |        |   
+   +--------------------------------------+------+-------------------+-----------------------------------------------------------------------------------------------------+--------+
 
-   $ neutron port-show 1e7033fb-8e9d-458b-89ed-8312cafcfdcb
-   +-----------------------+-------------------------------------------------------------------------------------------------------------+
-   | Field                 | Value                                                                                                       |
-   +-----------------------+-------------------------------------------------------------------------------------------------------------+
-   | admin_state_up        | True                                                                                                        |
-   | allowed_address_pairs |                                                                                                             |
-   | binding:vnic_type     | normal                                                                                                      |
-   | device_id             | 71fb4ac8-eed8-4644-8113-0641962bb125                                                                        |
-   | device_owner          | compute:None                                                                                                |
-   | dns_assignment        | {"hostname": "my-vm", "ip_address": "192.0.2.16", "fqdn": "my-vm.example.org."}                             |
-   |                       | {"hostname": "my-vm", "ip_address": "fda4:653e:71b0:0:f816:3eff:fe24:8614", "fqdn": "my-vm.example.org."}   |
-   | dns_name              | my-vm                                                                                                       |
-   | extra_dhcp_opts       |                                                                                                             |
-   | fixed_ips             | {"subnet_id": "5b9282a1-0be1-4ade-b478-7868ad2a16ff", "ip_address": "192.0.2.16"}                           |
-   |                       | {"subnet_id": "43414c53-62ae-49bc-aa6c-c9dd7705818a", "ip_address": "fda4:653e:71b0:0:f816:3eff:fe24:8614"} |
-   | id                    | 1e7033fb-8e9d-458b-89ed-8312cafcfdcb                                                                        |
-   | mac_address           | fa:16:3e:24:86:14                                                                                           |
-   | name                  |                                                                                                             |
-   | network_id            | 38c5e950-b450-4c30-83d4-ee181c28aad3                                                                        |
-   | port_security_enabled | True                                                                                                        |
-   | revision_number       | 1                                                                                                           |
-   | security_groups       | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                                                        |
-   | status                | ACTIVE                                                                                                      |
-   | tags                  | []                                                                                                          |
-   | tenant_id             | d5660cb1e6934612a01b4fb2fb630725                                                                            |
-   +-----------------------+-------------------------------------------------------------------------------------------------------------+
+   $ openstack port show 1e7033fb-8e9d-458b-89ed-8312cafcfdcb
+   +-----------------------+------------------------------------------------------------------------------------------------------------+
+   | Field                 | Value                                                                                                      |
+   +-----------------------+------------------------------------------------------------------------------------------------------------+
+   | admin_state_up        | UP                                                                                                         |
+   | allowed_address_pairs |                                                                                                            |
+   | binding_host_id       | vultr.guest                                                                                                |
+   | binding_profile       |                                                                                                            |
+   | binding_vif_details   | datapath_type='system', ovs_hybrid_plug='True', port_filter='True'                                         |
+   | binding_vif_type      | ovs                                                                                                        |
+   | binding_vnic_type     | normal                                                                                                     |
+   | created_at            | 2016-02-15T19:42:44Z                                                                                       |
+   | data_plane_status     | None                                                                                                       |
+   | description           |                                                                                                            |
+   | device_id             | 71fb4ac8-eed8-4644-8113-0641962bb125                                                                       |
+   | device_owner          | compute:None                                                                                               |
+   | dns_assignment        | fqdn='my-vm.example.org.', hostname='my-vm', ip_address='192.0.2.16'                                       |
+   |                       | fqdn='my-vm.example.org.', hostname='my-vm', ip_address='fda4:653e:71b0:0:f816:3eff:fe24:8614'             |
+   | dns_domain            | example.org.                                                                                               |
+   | dns_name              | my-vm                                                                                                      |
+   | extra_dhcp_opts       |                                                                                                            |
+   | fixed_ips             | ip_address='192.0.2.16', subnet_id='5b9282a1-0be1-4ade-b478-7868ad2a16ff'                                  |
+   |                       | ip_address='fda4:653e:71b0:0:f816:3eff:fe24:8614', subnet_id='43414c53-62ae-49bc-aa6c-c9dd7705818a'        |
+   | id                    | 1e7033fb-8e9d-458b-89ed-8312cafcfdcb                                                                       |
+   | mac_address           | fa:16:3e:24:86:14                                                                                          |
+   | name                  |                                                                                                            |
+   | network_id            | 38c5e950-b450-4c30-83d4-ee181c28aad3                                                                       |
+   | port_security_enabled | True                                                                                                       |
+   | project_id            | d5660cb1e6934612a01b4fb2fb630725                                                                           |
+   | qos_policy_id         | None                                                                                                       |
+   | revision_number       | 1                                                                                                          |
+   | security_group_ids    | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                                                       |
+   | status                | ACTIVE                                                                                                     |
+   | tags                  |                                                                                                            |
+   | trunk_details         | None                                                                                                       |
+   | updated_at            | 2016-02-15T19:42:44Z                                                                                       |
+   +-----------------------+------------------------------------------------------------------------------------------------------------+
 
    $ openstack recordset list example.org.
    +--------------------------------------+--------------------+------+-----------------------------------------------------------------------+--------+--------+
@@ -483,46 +533,51 @@ external DNS service. This is an example:
 
 .. code-block:: console
 
-   $ neutron net-list
-   +--------------------------------------+----------+----------------------------------------------------------+
-   | id                                   | name     | subnets                                                  |
-   +--------------------------------------+----------+----------------------------------------------------------+
-   | 41fa3995-9e4a-4cd9-bb51-3e5424f2ff2a | public   | a67cfdf7-9d5d-406f-8a19-3f38e4fc3e74                     |
-   |                                      |          | cbd8c6dc-ca81-457e-9c5d-f8ece7ef67f8                     |
-   | 37aaff3a-6047-45ac-bf4f-a825e56fd2b3 | external | 277eca5d-9869-474b-960e-6da5951d09f7 203.0.113.0/24      |
-   |                                      |          | eab47748-3f0a-4775-a09f-b0c24bb64bc4 2001:db8:10::/64    |
-   | bf2802a0-99a0-4e8c-91e4-107d03f158ea | my-net   | 6141b474-56cd-430f-b731-71660bb79b79 192.0.2.64/26       |
-   | 38c5e950-b450-4c30-83d4-ee181c28aad3 | private  | 43414c53-62ae-49bc-aa6c-c9dd7705818a fda4:653e:71b0::/64 |
-   |                                      |          | 5b9282a1-0be1-4ade-b478-7868ad2a16ff 192.0.2.0/26        |
-   +--------------------------------------+----------+----------------------------------------------------------+
+   $ openstack network list
+   +--------------------------------------+----------+-----------------------------------------------------------------------------+
+   | ID                                   | Name     | Subnets                                                                     |
+   +--------------------------------------+----------+-----------------------------------------------------------------------------+
+   | 41fa3995-9e4a-4cd9-bb51-3e5424f2ff2a | public   | a67cfdf7-9d5d-406f-8a19-3f38e4fc3e74, cbd8c6dc-ca81-457e-9c5d-f8ece7ef67f8  |
+   | 37aaff3a-6047-45ac-bf4f-a825e56fd2b3 | external | 277eca5d-9869-474b-960e-6da5951d09f7, eab47748-3f0a-4775-a09f-b0c24bb64bc4  |
+   | bf2802a0-99a0-4e8c-91e4-107d03f158ea | my-net   | 6141b474-56cd-430f-b731-71660bb79b79                                        |
+   | 38c5e950-b450-4c30-83d4-ee181c28aad3 | private  | 43414c53-62ae-49bc-aa6c-c9dd7705818a, 5b9282a1-0be1-4ade-b478-7868ad2a16ff  |
+   +--------------------------------------+----------+-----------------------------------------------------------------------------+
 
    $ neutron net-update 37aaff3a-6047-45ac-bf4f-a825e56fd2b3 --dns_domain example.org.
    Updated network: 37aaff3a-6047-45ac-bf4f-a825e56fd2b3
 
-   $ neutron net-show 37aaff3a-6047-45ac-bf4f-a825e56fd2b3
-   +---------------------------+--------------------------------------+
-   | Field                     | Value                                |
-   +---------------------------+--------------------------------------+
-   | admin_state_up            | True                                 |
-   | availability_zone_hints   |                                      |
-   | availability_zones        | nova                                 |
-   | dns_domain                | example.org.                         |
-   | id                        | 37aaff3a-6047-45ac-bf4f-a825e56fd2b3 |
-   | mtu                       | 1450                                 |
-   | name                      | external                             |
-   | port_security_enabled     | True                                 |
-   | provider:network_type     | vlan                                 |
-   | provider:physical_network |                                      |
-   | provider:segmentation_id  | 2016                                 |
-   | revision_number           | 4                                    |
-   | router:external           | False                                |
-   | shared                    | True                                 |
-   | status                    | ACTIVE                               |
-   | subnets                   | eab47748-3f0a-4775-a09f-b0c24bb64bc4 |
-   |                           | 277eca5d-9869-474b-960e-6da5951d09f7 |
-   | tags                      | []                                   |
-   | tenant_id                 | 04fc2f83966245dba907efb783f8eab9     |
-   +---------------------------+--------------------------------------+
+   $ openstack network show 37aaff3a-6047-45ac-bf4f-a825e56fd2b3
+   +---------------------------+----------------------------------------------------------------------------+
+   | Field                     | Value                                                                      |
+   +---------------------------+----------------------------------------------------------------------------+
+   | admin_state_up            | UP                                                                         |
+   | availability_zone_hints   |                                                                            |
+   | availability_zones        | nova                                                                       |
+   | created_at                | 2016-02-14T19:42:44Z                                                       |
+   | description               |                                                                            |
+   | dns_domain                | example.org.                                                               |
+   | id                        | 37aaff3a-6047-45ac-bf4f-a825e56fd2b3                                       |
+   | ipv4_address_scope        | None                                                                       |
+   | ipv6_address_scope        | None                                                                       |
+   | is_default                | None                                                                       |
+   | is_vlan_transparent       | None                                                                       |
+   | mtu                       | 1450                                                                       |
+   | name                      | external                                                                   |
+   | port_security_enabled     | True                                                                       |
+   | project_id                | 04fc2f83966245dba907efb783f8eab9                                           |
+   | provider:network_type     | vlan                                                                       |
+   | provider:physical_network | None                                                                       |
+   | provider:segmentation_id  | 2016                                                                       |
+   | qos_policy_id             | None                                                                       |
+   | revision_number           | 4                                                                          |
+   | router:external           | Internal                                                                   |
+   | segments                  | None                                                                       |
+   | shared                    | True                                                                       |
+   | status                    | ACTIVE                                                                     |
+   | subnets                   | eab47748-3f0a-4775-a09f-b0c24bb64bc4, 277eca5d-9869-474b-960e-6da5951d09f7 |
+   | tags                      |                                                                            |
+   | updated_at                | 2016-02-15T13:42:44Z                                                       |
+   +---------------------------+----------------------------------------------------------------------------+
 
    $ openstack recordset list example.org.
    +--------------------------------------+--------------+------+-----------------------------------------------------------------------+--------+--------+
@@ -532,32 +587,43 @@ external DNS service. This is an example:
    | e7c05a5d-83a0-4fe5-8bd5-ab058a3326aa | example.org. | SOA  | ns1.devstack.org. malavall.us.ibm.com. 1513767619 3532 600 86400 3600 | ACTIVE | NONE   |
    +--------------------------------------+--------------+------+-----------------------------------------------------------------------+--------+--------+
 
-   $ neutron port-create 37aaff3a-6047-45ac-bf4f-a825e56fd2b3 --dns_name my-vm
-   Created a new port:
-   +-----------------------+---------------------------------------------------------------------------------------+
-   | Field                 | Value                                                                                 |
-   +-----------------------+---------------------------------------------------------------------------------------+
-   | admin_state_up        | True                                                                                  |
-   | allowed_address_pairs |                                                                                       |
-   | binding:vnic_type     | normal                                                                                |
-   | device_id             |                                                                                       |
-   | device_owner          |                                                                                       |
-   | dns_assignment        | {"hostname": "my-vm", "ip_address": "203.0.113.9", "fqdn": "my-vm.example.org."}      |
-   |                       | {"hostname": "my-vm", "ip_address": "2001:db8:10::9", "fqdn": "my-vm.example.org."}   |
-   | dns_name              | my-vm                                                                                 |
-   | fixed_ips             | {"subnet_id": "277eca5d-9869-474b-960e-6da5951d09f7", "ip_address": "203.0.113.9"}    |
-   |                       | {"subnet_id": "eab47748-3f0a-4775-a09f-b0c24bb64bc4", "ip_address": "2001:db8:10::9"} |
-   | id                    | 04be331b-dc5e-410a-9103-9c8983aeb186                                                  |
-   | mac_address           | fa:16:3e:0f:4b:e4                                                                     |
-   | name                  |                                                                                       |
-   | network_id            | 37aaff3a-6047-45ac-bf4f-a825e56fd2b3                                                  |
-   | port_security_enabled | True                                                                                  |
-   | revision_number       | 1                                                                                     |
-   | security_groups       | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                                  |
-   | status                | DOWN                                                                                  |
-   | tags                  | []                                                                                    |
-   | tenant_id             | d5660cb1e6934612a01b4fb2fb630725                                                      |
-   +-----------------------+---------------------------------------------------------------------------------------+
+   $ openstack port create --network 37aaff3a-6047-45ac-bf4f-a825e56fd2b3 --dns-name my-vm test
+   +-----------------------+-------------------------------------------------------------------------------+
+   | Field                 | Value                                                                         |
+   +-----------------------+-------------------------------------------------------------------------------+
+   | admin_state_up        | UP                                                                            |
+   | allowed_address_pairs |                                                                               |
+   | binding_host_id       |                                                                               |
+   | binding_profile       |                                                                               |
+   | binding_vif_details   |                                                                               |
+   | binding_vif_type      | unbound                                                                       |
+   | binding_vnic_type     | normal                                                                        |
+   | created_at            | 2016-02-15T16:42:44Z                                                          |
+   | data_plane_status     | None                                                                          |
+   | description           |                                                                               |
+   | device_id             |                                                                               |
+   | device_owner          |                                                                               |
+   | dns_assignment        | fqdn='my-vm.example.org.', hostname='my-vm', ip_address='203.0.113.9'         |
+   |                       | fqdn='my-vm.example.org.', hostname='my-vm', ip_address='2001:db8:10::9'      |
+   | dns_domain            | None                                                                          |
+   | dns_name              | my-vm                                                                         |
+   | extra_dhcp_opts       |                                                                               |
+   | fixed_ips             | ip_address='203.0.113.9', subnet_id='277eca5d-9869-474b-960e-6da5951d09f7'    |
+   |                       | ip_address='2001:db8:10::9', subnet_id=‘eab47748-3f0a-4775-a09f-b0c24bb64bc4’ |
+   | id                    | 04be331b-dc5e-410a-9103-9c8983aeb186                                          |
+   | mac_address           | fa:16:3e:0f:4b:e4                                                             |
+   | name                  | test                                                                          |
+   | network_id            | 37aaff3a-6047-45ac-bf4f-a825e56fd2b3                                          |
+   | port_security_enabled | True                                                                          |
+   | project_id            | d5660cb1e6934612a01b4fb2fb630725                                              |
+   | qos_policy_id         | None                                                                          |
+   | revision_number       | 1                                                                             |
+   | security_group_ids    | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                          |
+   | status                | DOWN                                                                          |
+   | tags                  |                                                                               |
+   | trunk_details         | None                                                                          |
+   | updated_at            | 2016-02-15T16:42:44Z                                                          |
+   +-----------------------+-------------------------------------------------------------------------------+
 
    $ openstack recordset list example.org.
    +--------------------------------------+--------------------+------+-----------------------------------------------------------------------+--------+--------+

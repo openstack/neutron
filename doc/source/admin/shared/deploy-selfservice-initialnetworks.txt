@@ -105,5 +105,4 @@ NAT for IPv4 network traffic and directly routes IPv6 network traffic.
 
    .. code-block:: console
 
-      $ neutron router-gateway-set router1 provider1
-      Set gateway for router router1
+      $ openstack router set --external-gateway provider1 router1

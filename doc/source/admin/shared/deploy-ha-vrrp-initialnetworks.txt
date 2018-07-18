@@ -92,5 +92,4 @@ on that router.
 
    .. code-block:: console
 
-      $ neutron router-gateway-set router2 provider1
-      Set gateway for router router2
+      $ openstack router set --external-gateway provider1 router2

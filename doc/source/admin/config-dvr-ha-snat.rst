@@ -72,13 +72,13 @@ Controller node configuration
    (DVR HA).
 
    The same can explicitly be accomplished by a user with administrative
-   credentials setting the flags in the :command:`neutron router-create`
+   credentials setting the flags in the :command:`openstack router create`
    command:
 
 
    .. code-block:: console
 
-      $ neutron router-create name-of-router --distributed=True --ha=True
+      $ openstack router create name-of-router --distributed --ha
 
    .. note::
 
