@@ -2200,7 +2200,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 original_context, bind_context, need_notify=True,
                 try_again=True)
             if not try_again:
-                self.notifier.port_delete(context, port_id)
+                self.notifier.binding_deactivate(context, port_id,
+                                                 active_binding.host,
+                                                 network['id'])
                 return self._make_port_binding_dict(cur_context._binding)
         raise n_exc.PortBindingError(port_id=port_id, host=host)
 

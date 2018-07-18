@@ -25,6 +25,7 @@ from oslo_log import log
 import oslo_messaging
 from sqlalchemy.orm import exc
 
+from neutron.agent import _topics as n_topics
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import rpc as n_rpc
@@ -383,6 +384,7 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
         1.1 - Added get_active_networks_info, create_dhcp_port,
               update_dhcp_port, and removed get_dhcp_port methods.
         1.4 - Added network_update
+        1.5 - Added binding_deactivate
     """
 
     def __init__(self, topic):
@@ -399,6 +401,8 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
         self.topic_network_update = topics.get_topic_name(topic,
                                                           topics.NETWORK,
                                                           topics.UPDATE)
+        self.topic_port_binding_deactivate = topics.get_topic_name(
+            topic, n_topics.PORT_BINDING, n_topics.DEACTIVATE)
 
         target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
@@ -425,3 +429,9 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
         cctxt = self.client.prepare(topic=self.topic_network_update,
                                     fanout=True, version='1.4')
         cctxt.cast(context, 'network_update', network=network)
+
+    def binding_deactivate(self, context, port_id, host, network_id):
+        cctxt = self.client.prepare(topic=self.topic_port_binding_deactivate,
+                                    fanout=True, version='1.5')
+        cctxt.cast(context, 'binding_deactivate', port_id=port_id, host=host,
+                   network_id=network_id)

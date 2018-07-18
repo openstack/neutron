@@ -975,6 +975,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
         segment.network_type = 'vxlan'
         segment.segmentation_id = 1
         self.lb_rpc.network_map['net_id'] = segment
+        cfg.CONF.set_default('host', 'host')
 
     def test_network_delete_mapped_net(self):
         mock_net = mock.Mock()
@@ -1021,6 +1022,34 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                 self.lb_rpc.network_delete("anycontext", network_id="123")
                 self.assertEqual(0, del_fn.call_count)
                 self.assertEqual(1, log.call_count)
+
+    def test_binding_deactivate(self):
+        with mock.patch.object(self.lb_rpc.agent.mgr,
+                               "get_bridge_name") as get_br_fn,\
+                mock.patch.object(self.lb_rpc.agent.mgr,
+                                  "get_tap_device_name") as get_tap_fn,\
+                mock.patch.object(self.lb_rpc.agent.mgr,
+                                  "remove_interface") as rem_intf:
+            get_br_fn.return_value = "br0"
+            get_tap_fn.return_value = "tap456"
+            self.lb_rpc.binding_deactivate(mock.ANY, host="host",
+                                           network_id="123", port_id="456")
+            get_br_fn.assert_called_once_with("123")
+            get_tap_fn.assert_called_once_with("456")
+            rem_intf.assert_called_once_with("br0", "tap456")
+
+    def test_binding_deactivate_not_for_host(self):
+        with mock.patch.object(self.lb_rpc.agent.mgr,
+                               "get_bridge_name") as get_br_fn,\
+                mock.patch.object(self.lb_rpc.agent.mgr,
+                                  "get_tap_device_name") as get_tap_fn,\
+                mock.patch.object(self.lb_rpc.agent.mgr,
+                                  "remove_interface") as rem_intf:
+            self.lb_rpc.binding_deactivate(mock.ANY, host="other_host",
+                                           network_id="123", port_id="456")
+            get_br_fn.assert_not_called()
+            get_tap_fn.assert_not_called()
+            rem_intf.assert_not_called()
 
     def _test_fdb_add(self, proxy_enabled=False):
         fdb_entries = {'net_id':
