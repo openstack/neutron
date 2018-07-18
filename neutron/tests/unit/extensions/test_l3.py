@@ -1298,8 +1298,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                         'ip_address':
                                             s2['subnet']['gateway_ip']}
                     with self.port(subnet=s1, fixed_ips=fixed_ips,
-                                   tenant_id=router_tenant_id,
-                                   set_context=True) as p:
+                                   tenant_id=router_tenant_id) as p:
                         kwargs = {'expected_code': expected_code}
                         if not router_action_as_admin:
                             kwargs['tenant_id'] = router_tenant_id
@@ -1800,7 +1799,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 gw_info = body['router']['external_gateway_info']
                 self.assertIsNone(gw_info)
 
-    def test_create_router_port_with_device_id_of_other_teants_router(self):
+    def test_create_router_port_with_device_id_of_other_tenants_router(self):
         with self.router() as admin_router:
             with self.network(tenant_id='tenant_a',
                               set_context=True) as n:
@@ -1814,7 +1813,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                             set_context=True,
                             expected_res_status=exc.HTTPConflict.code)
 
-    def test_create_non_router_port_device_id_of_other_teants_router_update(
+    def test_create_non_router_port_device_id_of_other_tenants_router_update(
         self):
         # This tests that HTTPConflict is raised if we create a non-router
         # port that matches the device_id of another tenants router and then
