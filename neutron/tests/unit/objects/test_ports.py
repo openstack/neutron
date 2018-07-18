@@ -446,9 +446,16 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         # Port has no active bindings, so binding attribute should be None
         self.assertIsNone(port_v1_3['versioned_object.data']['binding'])
 
+        # bindings attribute in V1.4 port should have one inactive binding
+        primitive = port_v1_4.obj_to_primitive()
+        self.assertEqual(1,
+                         len(primitive['versioned_object.data']['bindings']))
+        binding = primitive['versioned_object.data']['bindings'][0]
+        self.assertEqual(constants.INACTIVE,
+                         binding['versioned_object.data']['status'])
+
         # Port with no binding attribute should be handled without raising
         # exception
-        primitive = port_v1_4.obj_to_primitive()
-        primitive['versioned_object.data'].pop('binding')
+        primitive['versioned_object.data'].pop('bindings')
         port_v1_4_no_binding = port_v1_4.obj_from_primitive(primitive)
         port_v1_4_no_binding.obj_to_primitive(target_version='1.3')

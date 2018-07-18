@@ -58,9 +58,7 @@ class PortBinding(model_base.BASEV2):
     port = orm.relationship(
         models_v2.Port,
         load_on_pending=True,
-        # TODO(mlavalle) change name of the relationship to reflect that it is
-        # now an iterable
-        backref=orm.backref("port_binding",
+        backref=orm.backref("port_bindings",
                             lazy='joined',
                             cascade='delete'))
     revises_on_change = ('port', )

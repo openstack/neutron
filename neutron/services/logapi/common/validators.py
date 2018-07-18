@@ -96,7 +96,7 @@ def validate_log_type_for_port(log_type, port):
     log_plugin = directory.get_plugin(alias=plugin_const.LOG_API)
     drivers = log_plugin.driver_manager.drivers
     port_binding = utils.get_port_binding_by_status_and_host(
-        port.binding, constants.ACTIVE, raise_if_not_found=True,
+        port.bindings, constants.ACTIVE, raise_if_not_found=True,
         port_id=port['id'])
     for driver in drivers:
         vif_type = port_binding.vif_type

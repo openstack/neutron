@@ -284,7 +284,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         query = context.session.query(
             models_v2.IPAllocation.subnet_id).distinct()
         query = query.join(models_v2.IPAllocation.port)
-        query = query.join(models_v2.Port.port_binding)
+        query = query.join(models_v2.Port.port_bindings)
         query = query.filter(ml2_models.PortBinding.host == host)
         owner_filter = or_(
             models_v2.Port.device_owner.startswith(

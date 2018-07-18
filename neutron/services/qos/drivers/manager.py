@@ -137,7 +137,7 @@ class QosServiceDriverManager(object):
 
     def validate_rule_for_port(self, rule, port):
         port_binding = utils.get_port_binding_by_status_and_host(
-            port.binding, lib_constants.ACTIVE, raise_if_not_found=True,
+            port.bindings, lib_constants.ACTIVE, raise_if_not_found=True,
             port_id=port['id'])
         for driver in self._drivers:
             vif_type = port_binding.vif_type
