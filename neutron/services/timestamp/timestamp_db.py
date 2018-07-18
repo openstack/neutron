@@ -12,13 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from oslo_utils import timeutils
 from sqlalchemy.orm import session as se
 
 from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
-from neutron.db import api as db_api
 from neutron.db import standard_attr
 
 CHANGED_SINCE = 'changed_since'

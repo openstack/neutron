@@ -25,6 +25,7 @@ from neutron_lib.callbacks import exceptions
 from neutron_lib.callbacks import registry
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.db import api as lib_db_api
 from neutron_lib import exceptions as lib_exc
 from neutron_lib import fixture
 from neutron_lib.plugins import directory
@@ -6699,7 +6700,7 @@ class DbOperationBoundMixin(object):
             self._recorded_statements.append(str(clauseelement))
 
         engine = db_api.context_manager.writer.get_engine()
-        db_api.sqla_listen(engine, 'after_execute', _event_incrementer)
+        lib_db_api.sqla_listen(engine, 'after_execute', _event_incrementer)
 
     def _get_context(self):
         if self.admin:

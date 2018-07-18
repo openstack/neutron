@@ -15,6 +15,7 @@
 
 import netaddr
 from neutron_lib import context as nctx
+from neutron_lib.db import api as db_api
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -23,7 +24,6 @@ from oslo_utils import uuidutils
 from sqlalchemy.orm import session as se
 from webob import exc
 
-from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.objects import ports as port_obj
 from neutron.tests.unit.plugins.ml2 import test_plugin

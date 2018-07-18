@@ -27,6 +27,7 @@ import eventlet.timeout
 import fixtures
 import mock
 from neutron_lib.callbacks import manager as registry_manager
+from neutron_lib.db import api as db_api
 from neutron_lib import fixture
 from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
@@ -49,7 +50,6 @@ from neutron.conf.agent import common as agent_config
 from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import agentschedulers_db
-from neutron.db import api as db_api
 from neutron import manager
 from neutron import policy
 from neutron.quota import resource_registry

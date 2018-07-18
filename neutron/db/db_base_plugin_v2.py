@@ -162,12 +162,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # NOTE(arosen) These event listeners are here to hook into when
             # port status changes and notify nova about their change.
             self.nova_notifier = nova.Notifier.get_instance()
-            db_api.sqla_listen(models_v2.Port, 'after_insert',
-                               self.nova_notifier.send_port_status)
-            db_api.sqla_listen(models_v2.Port, 'after_update',
-                               self.nova_notifier.send_port_status)
-            db_api.sqla_listen(models_v2.Port.status, 'set',
-                               self.nova_notifier.record_port_status_changed)
+            lib_db_api.sqla_listen(models_v2.Port, 'after_insert',
+                                   self.nova_notifier.send_port_status)
+            lib_db_api.sqla_listen(models_v2.Port, 'after_update',
+                                   self.nova_notifier.send_port_status)
+            lib_db_api.sqla_listen(
+                models_v2.Port.status, 'set',
+                self.nova_notifier.record_port_status_changed)
 
     @registry.receives(resources.RBAC_POLICY, [events.BEFORE_CREATE,
                                                events.BEFORE_UPDATE,
