@@ -62,11 +62,13 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         port.create()
         return port
 
-    def _setup_neutron_portbinding(self, port_id, vif_type, host):
+    def _setup_neutron_portbinding(self, port_id, vif_type, host,
+                                   status=constants.ACTIVE):
         with db_api.context_manager.writer.using(self.ctx):
             self.ctx.session.add(models.PortBinding(port_id=port_id,
                                                     vif_type=vif_type,
-                                                    host=host))
+                                                    host=host,
+                                                    status=status))
 
     @staticmethod
     def _sort_segments(segments):
@@ -217,10 +219,13 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         network_id = uuidutils.generate_uuid()
         port_id = uuidutils.generate_uuid()
         host = 'fake_host'
+        other_host = 'other_fake_host'
         vif_type = portbindings.VIF_TYPE_UNBOUND
         self._setup_neutron_network(network_id)
         self._setup_neutron_port(network_id, port_id)
         self._setup_neutron_portbinding(port_id, vif_type, host)
+        self._setup_neutron_portbinding(port_id, vif_type, other_host,
+                                        status=constants.INACTIVE)
 
         port_host = ml2_db.get_port_binding_host(self.ctx, port_id)
         self.assertEqual(host, port_host)

@@ -215,10 +215,11 @@ def get_port_binding_host(context, port_id):
     try:
         with db_api.context_manager.reader.using(context):
             query = (context.session.query(models.PortBinding).
-                     filter(models.PortBinding.port_id.startswith(port_id)).
-                     one())
+                     filter(models.PortBinding.port_id.startswith(port_id)))
+            query = query.filter(
+                models.PortBinding.status == n_const.ACTIVE).one()
     except exc.NoResultFound:
-        LOG.debug("No binding found for port %(port_id)s",
+        LOG.debug("No active binding found for port %(port_id)s",
                   {'port_id': port_id})
         return
     except exc.MultipleResultsFound:
