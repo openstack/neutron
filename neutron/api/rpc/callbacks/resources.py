@@ -13,6 +13,7 @@
 from neutron._i18n import _
 from neutron.objects.logapi import logging_resource as log_object
 from neutron.objects import network
+from neutron.objects import port_forwarding
 from neutron.objects import ports
 from neutron.objects.qos import policy
 from neutron.objects import securitygroup
@@ -30,6 +31,7 @@ NETWORK = network.Network.obj_name()
 SUBNET = subnet.Subnet.obj_name()
 SECURITYGROUP = securitygroup.SecurityGroup.obj_name()
 SECURITYGROUPRULE = securitygroup.SecurityGroupRule.obj_name()
+PORTFORWARDING = port_forwarding.PortForwarding.obj_name()
 
 
 _VALID_CLS = (
@@ -42,6 +44,7 @@ _VALID_CLS = (
     securitygroup.SecurityGroup,
     securitygroup.SecurityGroupRule,
     log_object.Log,
+    port_forwarding.PortForwarding,
 )
 
 _TYPE_TO_CLS_MAP = {cls.obj_name(): cls for cls in _VALID_CLS}
