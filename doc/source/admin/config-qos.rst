@@ -500,7 +500,15 @@ fixed IP ``192.168.222.5``:
 
 .. note::
 
-   For now, the L3 agent floating IP QoS extension only uses
+   The QoS policy attached to a floating IP is not applied to a port,
+   it is applied to an associated floating IP only.
+   Thus the ID of QoS policy attached to a floating IP will not be visible
+   in a port's ``qos_policy_id`` field after asscoating a floating IP to
+   the port. It is only visible in the floating IP attributes.
+
+.. note::
+
+   For now, the L3 agent floating IP QoS extension only supports
    ``bandwidth_limit`` rules. Other rule types (like DSCP marking) will be
    silently ignored for floating IPs. A QoS policy that does not contain any
    ``bandwidth_limit`` rules will have no effect when attached to a
@@ -508,8 +516,8 @@ fixed IP ``192.168.222.5``:
 
    If floating IP is bound to a port, and both have binding QoS bandwidth
    rules, the L3 agent floating IP QoS extension ignores the behavior of
-   the port QoS, and installs the rules on the appropriate device in the
-   router namespace.
+   the port QoS, and installs the rules from the QoS policy associated to the
+   floating IP on the appropriate device in the router namespace.
 
 Each project can have at most one default QoS policy, although it is not
 mandatory. If a default QoS policy is defined, all new networks created within
