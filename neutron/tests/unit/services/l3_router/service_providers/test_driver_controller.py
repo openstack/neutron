@@ -111,6 +111,36 @@ class TestDriverController(testlib_api.SqlTestCase):
                             states=({'flavor_id': 'old_fid'},)))
                     mock_cb.assert_not_called()
 
+    def test__update_router_provider_with_flags(self):
+        test_dc = driver_controller.DriverController(self.fake_l3)
+        with mock.patch.object(registry, "publish"):
+            with mock.patch.object(test_dc, "get_provider_for_router"):
+                with mock.patch.object(
+                    driver_controller,
+                    "_ensure_driver_supports_request") as _ensure:
+                    _ensure.side_effect = lib_exc.InvalidInput(
+                        error_message='message')
+                    with mock.patch(
+                        "neutron.services.l3_router.service_providers."
+                            "driver_controller.LOG.debug") as mock_log:
+                        self.assertRaises(
+                            lib_exc.InvalidInput,
+                            test_dc._update_router_provider,
+                            None, None, None,
+                            payload=events.DBEventPayload(
+                                None, request_body={'name': 'testname',
+                                    'distributed': False},
+                                states=({'flavor_id': None,
+                                    'distributed': True, 'ha': False},)))
+                        # To validate that the 'ha' attribute of the router
+                        # stays unchanged from the previous state while
+                        # updating 'distributed' from True to False.
+                        mock_log.assert_any_call(
+                            "Get a provider driver handle based on the ha "
+                            "flag: %(ha_flag)s and distributed flag: "
+                            "%(distributed_flag)s",
+                            {'ha_flag': False, 'distributed_flag': False})
+
     @mock.patch('neutron_lib.callbacks.registry.notify')
     def test__set_router_provider_attr_lookups(self, mock_cb):
         # ensure correct drivers are looked up based on attrs
