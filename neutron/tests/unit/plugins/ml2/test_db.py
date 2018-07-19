@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 import warnings
 
 import mock
@@ -50,7 +51,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         network_obj.Network(self.ctx, id=network_id).create()
 
     def _setup_neutron_port(self, network_id, port_id):
-        mac_address = db_base_plugin_v2.NeutronDbPluginV2._generate_mac()
+        mac_address = db_base_plugin_v2.NeutronDbPluginV2._generate_macs()[0]
         port = port_obj.Port(self.ctx,
                              id=port_id,
                              network_id=network_id,
@@ -287,6 +288,18 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
                                                         port['mac_address'])
         self.assertEqual(port_id, observed_port.id)
 
+    def test_generating_multiple_mac_addresses(self):
+        mac_regex = "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
+
+        macs = db_base_plugin_v2.NeutronDbPluginV2._generate_macs()
+        self.assertEqual(1, len(macs))
+        self.assertIsNotNone(re.search(mac_regex, macs[0]))
+
+        macs = db_base_plugin_v2.NeutronDbPluginV2._generate_macs(5)
+        self.assertEqual(5, len(macs))
+        for mac in macs:
+            self.assertIsNotNone(re.search(mac_regex, mac))
+
 
 class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
 
@@ -301,7 +314,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             ports = []
             for port_id in port_ids:
                 mac_address = (db_base_plugin_v2.NeutronDbPluginV2.
-                               _generate_mac())
+                               _generate_macs()[0])
                 port = port_obj.Port(self.ctx,
                                      id=port_id,
                                      network_id=network_id,
