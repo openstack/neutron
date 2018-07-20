@@ -188,8 +188,13 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
                     rate['rate'], rate['burst'])
             else:
                 tc_wrapper = self._get_tc_wrapper(device)
-                tc_wrapper.set_ip_rate_limit(direction, fip,
-                                             rate['rate'], rate['burst'])
+                if (rate['rate'] == qos_base.IP_DEFAULT_RATE and
+                        rate['burst'] == qos_base.IP_DEFAULT_BURST):
+                    # Default value is no limit
+                    tc_wrapper.clear_ip_rate_limit(direction, fip)
+                else:
+                    tc_wrapper.set_ip_rate_limit(direction, fip,
+                                                 rate['rate'], rate['burst'])
 
     def _get_dvr_fip_device(self, router_info):
         is_distributed_router = router_info.router.get('distributed')
