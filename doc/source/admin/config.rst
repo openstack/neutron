@@ -35,6 +35,7 @@ Configuration
    config-subnet-pools
    config-service-subnets
    config-trunking
+   config-wsgi
 
 .. note::
 
