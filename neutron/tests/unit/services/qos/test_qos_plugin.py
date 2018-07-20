@@ -14,8 +14,10 @@ import copy
 
 import mock
 from neutron_lib.callbacks import events
+from neutron_lib import constants as lib_constants
 from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
+from neutron_lib.placement import constants as pl_constants
 from neutron_lib.plugins import constants as plugins_constants
 from neutron_lib.plugins import directory
 from neutron_lib.services.qos import constants as qos_consts
@@ -106,6 +108,112 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.assertEqual(call_args[0], method_name)
         self.assertEqual(call_args[1], ctxt)
         self.assertIsInstance(call_args[2], policy_object.QosPolicy)
+
+    def _create_and_extend_port(self, bw_rules, physical_network='public',
+                                has_qos_policy=True, network_qos=None):
+        network_id = uuidutils.generate_uuid()
+
+        if has_qos_policy or network_qos:
+            policy = self.policy
+            policy_id = self.policy.id
+            self.policy.rules = bw_rules
+            for rule in bw_rules:
+                rule.qos_policy_id = self.policy.id
+        else:
+            policy = None
+            policy_id = None
+
+        port_res = {
+            "id": uuidutils.generate_uuid(),
+            "qos_policy_id": policy_id,
+            "network_id": network_id,
+            "binding:vnic_type": "normal",
+        }
+        network_mock = mock.MagicMock(id=network_id, qos_policy_id=policy_id)
+        segment_mock = mock.MagicMock(network_id=network_id,
+                                      physical_network=physical_network)
+
+        with mock.patch(
+            'neutron.objects.network.Network.get_object',
+            return_value=network_mock
+        ), mock.patch(
+            'neutron.objects.network.NetworkSegment.get_objects',
+            return_value=[segment_mock]
+        ), mock.patch(
+            'neutron.objects.qos.policy.QosPolicy.get_port_policy',
+            return_value=policy
+        ):
+            return qos_plugin.QoSPlugin._extend_port_resource_request(
+                port_res, {})
+
+    def test__extend_port_resource_request_min_bw_rule(self):
+        self.min_rule.direction = lib_constants.EGRESS_DIRECTION
+        port = self._create_and_extend_port([self.min_rule])
+
+        self.assertEqual(
+            ['CUSTOM_PHYSNET_PUBLIC', 'CUSTOM_VNIC_TYPE_NORMAL'],
+            port['resource_request']['required']
+        )
+        self.assertEqual(
+            {pl_constants.CLASS_NET_BW_EGRESS_KBPS: 10},
+            port['resource_request']['resources'],
+        )
+
+    def test__extend_port_resource_request_mixed_rules(self):
+        self.min_rule.direction = lib_constants.EGRESS_DIRECTION
+
+        min_rule_ingress_data = {
+            'id': uuidutils.generate_uuid(),
+            'min_kbps': 20,
+            'direction': lib_constants.INGRESS_DIRECTION}
+        min_rule_ingress = rule_object.QosMinimumBandwidthRule(
+            self.ctxt, **min_rule_ingress_data)
+
+        port = self._create_and_extend_port([self.min_rule, min_rule_ingress])
+        self.assertEqual(
+            ['CUSTOM_PHYSNET_PUBLIC', 'CUSTOM_VNIC_TYPE_NORMAL'],
+            port['resource_request']['required']
+        )
+        self.assertEqual(
+            {
+                pl_constants.CLASS_NET_BW_EGRESS_KBPS: 10,
+                pl_constants.CLASS_NET_BW_INGRESS_KBPS: 20
+            },
+            port['resource_request']['resources'],
+        )
+
+    def test__extend_port_resource_request_non_min_bw_rule(self):
+        port = self._create_and_extend_port([self.rule])
+
+        self.assertIsNone(port.get('resource_request'))
+
+    def test__extend_port_resource_request_non_provider_net(self):
+        self.min_rule.direction = lib_constants.EGRESS_DIRECTION
+
+        port = self._create_and_extend_port([self.min_rule],
+                                            physical_network=None)
+        self.assertIsNone(port.get('resource_request'))
+
+    def test__extend_port_resource_request_no_qos_policy(self):
+        port = self._create_and_extend_port([], physical_network='public',
+                                            has_qos_policy=False)
+        self.assertIsNone(port.get('resource_request'))
+
+    def test__extend_port_resource_request_inherited_policy(self):
+        self.min_rule.direction = lib_constants.EGRESS_DIRECTION
+        self.policy.rules = [self.min_rule]
+        self.min_rule.qos_policy_id = self.policy.id
+
+        port = self._create_and_extend_port([self.min_rule],
+                                            network_qos=self.policy)
+        self.assertEqual(
+            ['CUSTOM_PHYSNET_PUBLIC', 'CUSTOM_VNIC_TYPE_NORMAL'],
+            port['resource_request']['required']
+        )
+        self.assertEqual(
+            {pl_constants.CLASS_NET_BW_EGRESS_KBPS: 10},
+            port['resource_request']['resources'],
+        )
 
     def test_get_ports_with_policy(self):
         network_ports = [

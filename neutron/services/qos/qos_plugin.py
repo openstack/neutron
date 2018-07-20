@@ -13,16 +13,24 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import port as port_def
+from neutron_lib.api.definitions import port_resource_request
+from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import qos as qos_apidef
 from neutron_lib.api.definitions import qos_bw_minimum_ingress
 from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
 from neutron_lib.callbacks import resources as callbacks_resources
+from neutron_lib import constants as nl_constants
+from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as lib_exc
+from neutron_lib.placement import constants as pl_constants
+from neutron_lib.placement import utils as pl_utils
 from neutron_lib.services.qos import constants as qos_consts
 
 from neutron.common import exceptions as n_exc
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import db_base_plugin_common
 from neutron.extensions import qos
 from neutron.objects import base as base_obj
@@ -34,6 +42,7 @@ from neutron.objects.qos import rule_type as rule_type_object
 from neutron.services.qos.drivers import manager
 
 
+@resource_extend.has_resource_extenders
 class QoSPlugin(qos.QoSPluginBase):
     """Implementation of the Neutron QoS Service Plugin.
 
@@ -45,6 +54,7 @@ class QoSPlugin(qos.QoSPluginBase):
                                    'qos-bw-limit-direction',
                                    'qos-default',
                                    'qos-rule-type-details',
+                                   port_resource_request.ALIAS,
                                    qos_bw_minimum_ingress.ALIAS]
 
     __native_pagination_support = True
@@ -67,6 +77,69 @@ class QoSPlugin(qos.QoSPluginBase):
             self._validate_update_network_callback,
             callbacks_resources.NETWORK,
             callbacks_events.PRECOMMIT_UPDATE)
+
+    @staticmethod
+    @resource_extend.extends([port_def.COLLECTION_NAME])
+    def _extend_port_resource_request(port_res, port_db):
+        """Add resource request to a port."""
+        port_res['resource_request'] = None
+        qos_policy = policy_object.QosPolicy.get_port_policy(
+            context.get_admin_context(), port_res['id'])
+        # Note(lajoskatona): QosPolicyPortBinding is not ready for some
+        # reasons, so let's try and fetch the QoS policy directly if there is a
+        # qos_policy_id in port_res.
+        if (not qos_policy and 'qos_policy_id' in port_res and
+                port_res['qos_policy_id']):
+            qos_policy = policy_object.QosPolicy.get_policy_obj(
+                context.get_admin_context(), port_res['qos_policy_id']
+            )
+
+        # Note(lajoskatona): handle the case when the port inherits qos-policy
+        # from the network.
+        if not qos_policy:
+            net = network_object.Network.get_object(
+                context.get_admin_context(), id=port_res['network_id'])
+            if net.qos_policy_id:
+                qos_policy = policy_object.QosPolicy.get_network_policy(
+                    context.get_admin_context(), net.id)
+
+        if not qos_policy:
+            return port_res
+
+        resources = {}
+        rule_direction_class = {
+            nl_constants.INGRESS_DIRECTION:
+                pl_constants.CLASS_NET_BW_INGRESS_KBPS,
+            nl_constants.EGRESS_DIRECTION:
+                pl_constants.CLASS_NET_BW_EGRESS_KBPS
+        }
+        for rule in qos_policy.rules:
+            if rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
+                resources[rule_direction_class[rule.direction]] = rule.min_kbps
+        if not resources:
+            return port_res
+
+        vnic_trait = pl_utils.vnic_type_trait(
+            port_res[portbindings.VNIC_TYPE])
+
+        # TODO(lajoskatona): Change to handle all segments when any traits
+        # support will be available. See Placement spec:
+        # https://review.openstack.org/565730
+        first_segment = network_object.NetworkSegment.get_objects(
+            context.get_admin_context(),
+            network_id=port_res['network_id'])[0]
+
+        if not first_segment or not first_segment.physical_network:
+            return port_res
+        physnet_trait = pl_utils.physnet_trait(
+            first_segment.physical_network)
+
+        resource_request = {
+            'required': [physnet_trait, vnic_trait],
+            'resources': resources
+        }
+        port_res['resource_request'] = resource_request
+        return port_res
 
     def _get_ports_with_policy(self, context, policy):
         networks_ids = policy.get_bound_networks()
