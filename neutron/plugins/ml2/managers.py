@@ -853,7 +853,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         # level to one of the segments we are currently trying to
         # bind. Note that it is OK for the same driver to bind at
         # multiple levels using different segments.
-        segment_ids_to_bind = {s[api.SEGMENTATION_ID]
+        segment_ids_to_bind = {s[api.ID]
                                for s in segments_to_bind}
         for level in binding_levels:
             if (level.driver == driver.name and

@@ -31,13 +31,13 @@ from neutron.tests.unit.plugins.ml2.drivers import mechanism_test
 class TestManagers(base.BaseTestCase):
     def setUp(self):
         super(TestManagers, self).setUp()
-        self.segment_id = 49
-        self.segments_to_bind = [{api.ID: "id1",
-                             'network_type': 'vlan',
-                             'physical_network': 'public',
-                             api.SEGMENTATION_ID: self.segment_id}]
+        self.segment_id = "11111111-2222-3333-4444-555555555555"
+        self.segments_to_bind = [{api.ID: self.segment_id,
+                                  'network_type': 'vlan',
+                                  'physical_network': 'public',
+                                  api.SEGMENTATION_ID: 49}]
         self.context = FakePortContext(None,
-                                  None,
+                                       None,
                                        self.segments_to_bind)
         self.context._binding = mock.Mock()
         self.context._binding_levels = []
