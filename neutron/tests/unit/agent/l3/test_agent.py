@@ -32,6 +32,7 @@ from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from testtools import matchers
 
+from neutron.agent.common import resource_processing_queue
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import dvr_edge_router as dvr_router
 from neutron.agent.l3 import dvr_router_base
@@ -42,7 +43,6 @@ from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_info as l3router
-from neutron.agent.l3 import router_processing_queue
 from neutron.agent.linux import dibbler
 from neutron.agent.linux import interface
 from neutron.agent.linux import iptables_manager
@@ -1976,10 +1976,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router = {'id': _uuid(),
                   'external_gateway_info': {'network_id': 'aaa'}}
         self.plugin_api.get_routers.return_value = [router]
-        update = router_processing_queue.RouterUpdate(
+        update = resource_processing_queue.ResourceUpdate(
             router['id'],
-            router_processing_queue.PRIORITY_SYNC_ROUTERS_TASK,
-            router=router,
+            l3_agent.PRIORITY_SYNC_ROUTERS_TASK,
+            resource=router,
             timestamp=timeutils.utcnow())
         agent._queue.add(update)
 
@@ -2449,8 +2449,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent._queue = mock.Mock()
         agent._resync_router = mock.Mock()
         update = mock.Mock()
-        update.router = None
-        agent._queue.each_update_to_next_router.side_effect = [
+        update.resource = None
+        agent._queue.each_update_to_next_resource.side_effect = [
             [(None, update)]]
         agent._process_router_update()
         self.assertFalse(agent.fullsync)
@@ -2471,10 +2471,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent._process_router_if_compatible.side_effect = RuntimeError()
 
         # Queue an update from a full sync
-        update = router_processing_queue.RouterUpdate(
+        update = resource_processing_queue.ResourceUpdate(
             42,
-            router_processing_queue.PRIORITY_SYNC_ROUTERS_TASK,
-            router=mock.Mock(),
+            l3_agent.PRIORITY_SYNC_ROUTERS_TASK,
+            resource=mock.Mock(),
             timestamp=timeutils.utcnow())
         agent._queue.add(update)
         agent._process_router_update()
@@ -2496,12 +2496,12 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent._queue = mock.Mock()
         update = mock.Mock()
-        update.router = None
+        update.resource = None
         update.action = 1  # ROUTER_DELETED
         router_info = mock.MagicMock()
         agent.router_info[update.id] = router_info
         router_processor = mock.Mock()
-        agent._queue.each_update_to_next_router.side_effect = [
+        agent._queue.each_update_to_next_resource.side_effect = [
             [(router_processor, update)]]
         agent._resync_router = mock.Mock()
         if error:
