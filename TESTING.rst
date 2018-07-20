@@ -597,9 +597,9 @@ For example, the following would run only a single test or test case::
       $ tox -e py27 neutron.tests.unit.test_manager.NeutronManagerTestCase
       $ tox -e py27 neutron.tests.unit.test_manager.NeutronManagerTestCase.test_service_plugin_is_loaded
 
-If you want to pass other arguments to ostestr, you can do the following::
+If you want to pass other arguments to stestr, you can do the following::
 
-      $ tox -e py27 -- --regex neutron.tests.unit.test_manager --serial
+      $ tox -e py27 -- neutron.tests.unit.test_manager --serial
 
 
 Coverage
