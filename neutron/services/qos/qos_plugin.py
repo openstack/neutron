@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib.api.definitions import qos as qos_apidef
+from neutron_lib.api.definitions import qos_bw_minimum_ingress
 from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
 from neutron_lib.callbacks import resources as callbacks_resources
@@ -44,7 +45,8 @@ class QoSPlugin(qos.QoSPluginBase):
     supported_extension_aliases = [qos_apidef.ALIAS,
                                    'qos-bw-limit-direction',
                                    'qos-default',
-                                   'qos-rule-type-details']
+                                   'qos-rule-type-details',
+                                   qos_bw_minimum_ingress.ALIAS]
 
     __native_pagination_support = True
     __native_sorting_support = True

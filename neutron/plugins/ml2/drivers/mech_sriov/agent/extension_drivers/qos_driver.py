@@ -79,6 +79,19 @@ class QosSRIOVAgentDriver(qos.QosLinuxAgentDriver):
             device = port['device']
             self._set_vf_min_tx_rate(device, pci_slot)
 
+    # Note(lajoskatona): As minimum bandwidth rule was allowed to be used by
+    # OVS and SRIOV even with ingress direction for the placement based
+    # enforcement, but the dataplane enforcement implementation is not yet
+    # ready this method is empty.
+    # For details see:
+    # RFE for placement based enforcement:
+    # https://bugs.launchpad.net/neutron/+bug/1578989
+    # RFE for dataplane based enforcement:
+    # https://bugs.launchpad.net/neutron/+bug/1560963
+    def delete_minimum_bandwidth_ingress(self, port):
+        LOG.debug("Minimum bandwidth rule for ingress direction was deleted "
+                  "for port %s", port['port_id'])
+
     def _set_vf_min_tx_rate(self, device, pci_slot, min_tx_kbps=0):
         if self.eswitch_mgr.device_exists(device, pci_slot):
             try:

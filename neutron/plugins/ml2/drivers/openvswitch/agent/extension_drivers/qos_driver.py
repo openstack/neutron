@@ -166,3 +166,28 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
             max_kbps,
             max_burst_kbps
         )
+
+    # Note(lajoskatona): As minimum bandwidth rule was allowed to be used by
+    # OVS and SRIOV even with ingress direction for the placement based
+    # enforcement, but the dataplane enforcement implementation is not yet
+    # ready these methods are empty.
+    # For details see:
+    # RFE for placement based enforcement:
+    # https://bugs.launchpad.net/neutron/+bug/1578989
+    # RFE for dataplane based enforcement:
+    # https://bugs.launchpad.net/neutron/+bug/1560963
+    def create_minimum_bandwidth(self, port, rule):
+        LOG.debug("Minimum bandwidth rule was created for port %s and "
+                  "rule %s.", port['port_id'], rule.id)
+
+    def update_minimum_bandwidth(self, port, rule):
+        LOG.debug("Minimum bandwidth rule was updated for port %s and "
+                  "rule %s.", port['port_id'], rule.id)
+
+    def delete_minimum_bandwidth(self, port):
+        LOG.debug("Minimum bandwidth rule was deleted for port: %s.",
+                  port['port_id'])
+
+    def delete_minimum_bandwidth_ingress(self, port):
+        LOG.debug("Minimum bandwidth rule for ingress direction was deleted "
+                  "for port %s", port['port_id'])
