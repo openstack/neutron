@@ -2601,11 +2601,11 @@ class TestDnsmasq(TestBase):
         self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(
             self.conf, FakeDualNetworkDualDHCP()))
 
-    def _test__generate_opts_per_subnet_helper(self, config_opts,
-                                               expected_mdt_ip):
+    def _test__generate_opts_per_subnet_helper(
+        self, config_opts, expected_mdt_ip, network_class=FakeNetworkDhcpPort):
         for key, value in config_opts.items():
             self.conf.set_override(key, value)
-        dm = self._get_dnsmasq(FakeNetworkDhcpPort())
+        dm = self._get_dnsmasq(network_class())
         with mock.patch('neutron.agent.linux.ip_lib.IPDevice') as ipdev_mock:
             list_addr = ipdev_mock.return_value.addr.list
             list_addr.return_value = [{'cidr': alloc.ip_address + '/24'}
@@ -2630,6 +2630,12 @@ class TestDnsmasq(TestBase):
         config = {'enable_isolated_metadata': False,
                   'force_metadata': True}
         self._test__generate_opts_per_subnet_helper(config, True)
+
+    def test__generate_opts_per_subnet_forced_metadata_non_local_subnet(self):
+        config = {'enable_isolated_metadata': False,
+                  'force_metadata': True}
+        self._test__generate_opts_per_subnet_helper(
+            config, True, network_class=FakeNonLocalSubnets)
 
     def test_client_id_num(self):
         dm = self._get_dnsmasq(FakeV4NetworkClientIdNum())
