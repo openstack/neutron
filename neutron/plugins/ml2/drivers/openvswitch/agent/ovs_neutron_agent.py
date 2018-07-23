@@ -124,7 +124,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
     #   1.2 Support DVR (Distributed Virtual Router) RPC
     #   1.3 Added param devices_to_update to security_groups_provider_updated
     #   1.4 Added support for network_update
-    target = oslo_messaging.Target(version='1.4')
+    #   1.5 Added binding_deactivate
+    target = oslo_messaging.Target(version='1.5')
 
     def __init__(self, bridge_classes, ext_manager, conf=None):
         '''Constructor.
@@ -174,6 +175,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.updated_ports = set()
         # Stores port delete notifications
         self.deleted_ports = set()
+        # Stores the port IDs whose binding has been deactivated
+        self.deactivated_bindings = set()
 
         self.network_ports = collections.defaultdict(set)
         # keeps association between ports and ofports to detect ofport change
@@ -414,6 +417,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                   {'network_id': network_id,
                    'ports': self.network_ports[network_id]})
 
+    def binding_deactivate(self, context, **kwargs):
+        if kwargs.get('host') != self.conf.host:
+            return
+        port_id = kwargs.get('port_id')
+        self.deactivated_bindings.add(port_id)
+
     def _clean_network_ports(self, port_id):
         for port_set in self.network_ports.values():
             if port_id in port_set:
@@ -443,6 +452,20 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # Flush firewall rules after ports are put on dead VLAN to be
         # more secure
         self.sg_agent.remove_devices_filter(deleted_ports)
+
+    def process_deactivated_bindings(self, port_info):
+        # don't try to deactivate bindings for removed ports since they are
+        # already gone
+        if 'removed' in port_info:
+            self.deactivated_bindings -= port_info['removed']
+        while self.deactivated_bindings:
+            port_id = self.deactivated_bindings.pop()
+            port = self.int_br.get_vif_port_by_id(port_id)
+            if not port:
+                continue
+            self.int_br.delete_port(port.port_name)
+            LOG.debug(("Port id %s unplugged from integration bridge because "
+                       "its binding was de-activated"), port_id)
 
     def tunnel_update(self, context, **kwargs):
         LOG.debug("tunnel_update received")
@@ -1786,6 +1809,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         return (polling_manager.is_polling_required or
                 self.updated_ports or
                 self.deleted_ports or
+                self.deactivated_bindings or
                 self.sg_agent.firewall_refresh_needed())
 
     def _port_info_has_changes(self, port_info):
@@ -2075,6 +2099,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                             failed_devices, failed_ancillary_devices))
                     sync = False
                     self.process_deleted_ports(port_info)
+                    self.process_deactivated_bindings(port_info)
                     ofport_changed_ports = self.update_stale_ofport_rules()
                     if ofport_changed_ports:
                         port_info.setdefault('updated', set()).update(

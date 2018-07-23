@@ -114,6 +114,7 @@ class TestOvsNeutronAgent(object):
                              group='SECURITYGROUP')
         cfg.CONF.set_default('quitting_rpc_timeout', 10, 'AGENT')
         cfg.CONF.set_default('local_ip', '127.0.0.1', 'OVS')
+        cfg.CONF.set_default('host', 'host')
         mock.patch(
             'neutron.agent.ovsdb.native.helpers.enable_connection_uri').start()
         mock.patch(
@@ -1217,6 +1218,34 @@ class TestOvsNeutronAgent(object):
             self.agent.process_deleted_ports(port_info={'removed': {'id', }})
             self.assertFalse(int_br.set_db_attribute.called)
             self.assertFalse(int_br.drop_port.called)
+
+    def test_binding_deactivate_not_for_host(self):
+        self.agent.binding_deactivate('unused_context', port_id='id',
+                                      host='other_host')
+        self.assertEqual(set(), self.agent.deactivated_bindings)
+
+    def test_binding_deactivate(self):
+        vif = FakeVif()
+        with mock.patch.object(self.agent, 'int_br') as int_br:
+            int_br.get_vif_port_by_id.return_value = vif
+            self.agent.binding_deactivate('unused_context', port_id='id',
+                                          host='host')
+            self.assertEqual(set(['id']), self.agent.deactivated_bindings)
+            self.agent.process_deactivated_bindings(port_info={})
+            int_br.get_vif_port_by_id.assert_called_once_with('id')
+            int_br.delete_port.assert_called_once_with(vif.port_name)
+            self.assertEqual(set(), self.agent.deactivated_bindings)
+
+    def test_binding_deactivate_removed_port(self):
+        with mock.patch.object(self.agent, 'int_br') as int_br:
+            self.agent.binding_deactivate('unused_context', port_id='id',
+                                          host='host')
+            self.assertEqual(set(['id']), self.agent.deactivated_bindings)
+            self.agent.process_deactivated_bindings(
+                port_info={'removed': {'id', }})
+            int_br.get_vif_port_by_id.assert_not_called()
+            int_br.delete_port.assert_not_called()
+            self.assertEqual(set(), self.agent.deactivated_bindings)
 
     def _test_setup_physical_bridges(self, port_exists=False):
         with mock.patch.object(ip_lib.IPDevice, "exists") as devex_fn,\
