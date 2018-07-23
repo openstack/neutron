@@ -14,7 +14,9 @@
 #    under the License.
 
 import collections
+import itertools
 import re
+import sys
 
 from neutron_lib.api import attributes
 from neutron_lib.api.definitions import network as net_apidef
@@ -28,6 +30,7 @@ from oslo_log import log as logging
 from oslo_policy import policy
 from oslo_utils import excutils
 import six
+import stevedore
 
 from neutron._i18n import _
 from neutron.common import cache_utils as cache
@@ -53,12 +56,23 @@ def reset():
         _ENFORCER = None
 
 
+def register_rules(enforcer):
+    extmgr = stevedore.extension.ExtensionManager('neutron.policies',
+                                                  invoke_on_load=True)
+    policies = [list(e.obj) for e in extmgr.extensions]
+    LOG.debug('Loaded default policies from %s '
+              'under neutron.policies entry points',
+              [e.name for e in extmgr.extensions])
+    enforcer.register_defaults(itertools.chain(*policies))
+
+
 def init(conf=cfg.CONF, policy_file=None):
     """Init an instance of the Enforcer class."""
 
     global _ENFORCER
     if not _ENFORCER:
         _ENFORCER = policy.Enforcer(conf, policy_file=policy_file)
+        register_rules(_ENFORCER)
         _ENFORCER.load_rules(True)
 
 
@@ -421,3 +435,24 @@ def enforce(context, action, target, plugin=None, pluralized=None):
             log_rule_list(rule)
             LOG.debug("Failed policy check for '%s'", action)
     return result
+
+
+def get_enforcer():
+    # NOTE(amotoki): This was borrowed from nova/policy.py.
+    # This method is for use by oslo.policy CLI scripts. Those scripts need the
+    # 'output-file' and 'namespace' options, but having those in sys.argv means
+    # loading the neutron config options will fail as those are not expected to
+    # be present. So we pass in an arg list with those stripped out.
+    conf_args = []
+    # Start at 1 because cfg.CONF expects the equivalent of sys.argv[1:]
+    i = 1
+    while i < len(sys.argv):
+        if sys.argv[i].strip('-') in ['namespace', 'output-file']:
+            i += 2
+            continue
+        conf_args.append(sys.argv[i])
+        i += 1
+
+    cfg.CONF(conf_args, project='neutron')
+    init()
+    return _ENFORCER
