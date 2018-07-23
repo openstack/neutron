@@ -61,6 +61,7 @@ from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.objects import subnetpool as subnetpool_obj
+from neutron.plugins.ml2.common import exceptions as ml2_exceptions
 
 
 LOG = logging.getLogger(__name__)
@@ -1266,6 +1267,24 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def create_port_bulk(self, context, ports):
         return self._create_bulk('port', context, ports)
 
+    def _create_db_port_obj_bulk(self, context, port_data):
+        db_ports = []
+        macs = self._generate_macs(len(port_data))
+        with db_api.CONTEXT_WRITER.using(context):
+            for port in port_data:
+                raw_mac_address = port.pop('mac_address',
+                    constants.ATTR_NOT_SPECIFIED)
+                if raw_mac_address is constants.ATTR_NOT_SPECIFIED:
+                    raw_mac_address = macs.pop()
+                eui_mac_address = netaddr.EUI(raw_mac_address, 48)
+                db_port_obj = port_obj.Port(context,
+                                            mac_address=eui_mac_address,
+                                            id=uuidutils.generate_uuid(),
+                                            **port)
+                db_port_obj.create()
+                db_ports.append(db_port_obj)
+        return db_ports
+
     def _create_db_port_obj(self, context, port_data):
         mac_address = port_data.pop('mac_address', None)
         if mac_address:
@@ -1283,6 +1302,50 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def create_port(self, context, port):
         db_port = self.create_port_db(context, port)
         return self._make_port_dict(db_port, process_extensions=False)
+
+    def create_port_obj_bulk(self, context, ports):
+        bulk_port_data = []
+        network_ids = set()
+        with db_api.CONTEXT_WRITER.using(context):
+            for port in ports:
+                fixed_ips = port['port'].get('fixed_ips')
+                if fixed_ips is not constants.ATTR_NOT_SPECIFIED:
+                    raise ml2_exceptions.BulkPortCannotHaveFixedIpError()
+                pdata = port['port']
+                if pdata.get('device_owner'):
+                    self._enforce_device_owner_not_router_intf_or_device_id(
+                        context, pdata.get('device_owner'),
+                        pdata.get('device_id'), pdata.get('tenant_id'))
+                bulk_port_data.append(dict(project_id=pdata.get('project_id'),
+                    name=pdata.get('name'),
+                    network_id=pdata.get('network_id'),
+                    admin_state_up=pdata.get('admin_state_up'),
+                    status=pdata.get('status',
+                        constants.PORT_STATUS_ACTIVE),
+                    mac_address=pdata.get('mac_address'),
+                    device_id=pdata.get('device_id'),
+                    device_owner=pdata.get('device_owner'),
+                    description=pdata.get('description')))
+
+            # Ensure that the networks exist.
+            network_id = pdata.get('network_id')
+            if network_id not in network_ids:
+                self._get_network(context, network_id)
+                network_ids.add(network_id)
+
+            db_ports = self._create_db_port_obj_bulk(context, bulk_port_data)
+
+            for db_port in db_ports:
+                try:
+                    self.ipam.allocate_ips_for_port_and_store(
+                        context, db_port, db_port['id'])
+                    db_port['ip_allocation'] = (ipalloc_apidef.
+                                                IP_ALLOCATION_IMMEDIATE)
+                except ipam_exc.DeferIpam:
+                    db_port['ip_allocation'] = (ipalloc_apidef.
+                                                IP_ALLOCATION_DEFERRED)
+
+        return db_ports
 
     def create_port_db(self, context, port):
         p = port['port']
