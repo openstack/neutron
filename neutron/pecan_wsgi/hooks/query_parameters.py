@@ -77,7 +77,8 @@ def _set_filters(state, controller):
         {k: _listify(v) for k, v in params.items()},
         controller.resource_info,
         skips=['fields', 'sort_key', 'sort_dir',
-               'limit', 'marker', 'page_reverse'])
+               'limit', 'marker', 'page_reverse'],
+        is_filter_validation_supported=controller.filter_validation)
     return filters
 
 

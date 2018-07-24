@@ -27,6 +27,8 @@ class NetworkIPAvailabilityPlugin(ip_availability_db.IpAvailabilityMixin,
 
     supported_extension_aliases = ["network-ip-availability"]
 
+    __filter_validation_support = True
+
     @classmethod
     def get_instance(cls):
         if cls._instance is None:

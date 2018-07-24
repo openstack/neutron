@@ -44,6 +44,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         'id': {'allow_post': False,
                'allow_put': False,
                'validate': {'type:uuid': None},
+               'is_filter': True,
                'is_visible': True,
                'primary_key': True},
         'tenant_id': {'allow_post': True,
@@ -54,17 +55,20 @@ RESOURCE_ATTRIBUTE_MAP = {
         'network_id': {'allow_post': True,
                        'allow_put': False,
                        'validate': {'type:uuid': None},
+                       'is_filter': True,
                        'is_visible': True},
         PHYSICAL_NETWORK: {'allow_post': True,
                            'allow_put': False,
                            'default': constants.ATTR_NOT_SPECIFIED,
                            'validate': {'type:string':
                                         providernet.PHYSICAL_NETWORK_MAX_LEN},
+                           'is_filter': True,
                            'is_visible': True},
         NETWORK_TYPE: {'allow_post': True,
                        'allow_put': False,
                        'validate': {'type:string':
                                     providernet.NETWORK_TYPE_MAX_LEN},
+                       'is_filter': True,
                        'is_visible': True},
         SEGMENTATION_ID: {'allow_post': True,
                           'allow_put': False,
@@ -75,6 +79,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                  'allow_put': True,
                  'default': constants.ATTR_NOT_SPECIFIED,
                  'validate': {'type:string_or_none': NAME_LEN},
+                 'is_filter': True,
                  'is_visible': True}
     },
     subnet_def.COLLECTION_NAME: {
@@ -82,6 +87,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                      'allow_put': False,
                      'default': None,
                      'validate': {'type:uuid_or_none': None},
+                     'is_filter': True,
                      'is_visible': True, },
     },
 }

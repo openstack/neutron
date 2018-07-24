@@ -33,6 +33,8 @@ class RevisionPlugin(service_base.ServicePluginBase):
     supported_extension_aliases = ['standard-attr-revisions',
                                    'revision-if-match']
 
+    __filter_validation_support = True
+
     def __init__(self):
         super(RevisionPlugin, self).__init__()
         db_api.sqla_listen(se.Session, 'before_flush', self.bump_revisions)

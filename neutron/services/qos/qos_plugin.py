@@ -47,6 +47,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
     __native_pagination_support = True
     __native_sorting_support = True
+    __filter_validation_support = True
 
     def __init__(self):
         super(QoSPlugin, self).__init__()

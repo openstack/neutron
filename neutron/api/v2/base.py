@@ -105,6 +105,7 @@ class Controller(object):
         self._native_bulk = self._is_native_bulk_supported()
         self._native_pagination = self._is_native_pagination_supported()
         self._native_sorting = self._is_native_sorting_supported()
+        self._filter_validation = self._is_filter_validation_supported()
         self._policy_attrs = self._init_policy_attrs()
         self._notifier = n_rpc.get_notifier('network')
         self._member_actions = member_actions
@@ -150,6 +151,9 @@ class Controller(object):
 
     def _is_native_sorting_supported(self):
         return api_common.is_native_sorting_supported(self._plugin)
+
+    def _is_filter_validation_supported(self):
+        return api_common.is_filter_validation_supported(self._plugin)
 
     def _exclude_attributes_by_policy(self, context, data):
         """Identifies attributes to exclude according to authZ policies.
@@ -282,9 +286,11 @@ class Controller(object):
         # plugin before returning.
         original_fields, fields_to_add = self._do_field_list(
             api_common.list_args(request, 'fields'))
-        filters = api_common.get_filters(request, self._attr_info,
-                                         ['fields', 'sort_key', 'sort_dir',
-                                          'limit', 'marker', 'page_reverse'])
+        filters = api_common.get_filters(
+            request, self._attr_info,
+            ['fields', 'sort_key', 'sort_dir',
+             'limit', 'marker', 'page_reverse'],
+            is_filter_validation_supported=self._filter_validation)
         kwargs = {'filters': filters,
                   'fields': original_fields}
         sorting_helper = self._get_sorting_helper(request)
