@@ -1051,6 +1051,18 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
             get_tap_fn.assert_not_called()
             rem_intf.assert_not_called()
 
+    def test_binding_activate(self):
+        with mock.patch.object(self.lb_rpc.agent.mgr,
+                               "get_tap_device_name") as get_tap_fun:
+            get_tap_fun.return_value = "tap456"
+            self.lb_rpc.binding_activate(mock.ANY, host="host", port_id="456")
+            self.assertIn("tap456", self.lb_rpc.updated_devices)
+
+    def test_binding_activate_not_for_host(self):
+            self.lb_rpc.binding_activate(mock.ANY, host="other-host",
+                                         port_id="456")
+            self.assertFalse(self.lb_rpc.updated_devices)
+
     def _test_fdb_add(self, proxy_enabled=False):
         fdb_entries = {'net_id':
                        {'ports':

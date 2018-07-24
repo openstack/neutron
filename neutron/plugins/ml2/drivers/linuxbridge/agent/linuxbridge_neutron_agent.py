@@ -835,7 +835,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                      [topics.NETWORK, topics.DELETE],
                      [topics.NETWORK, topics.UPDATE],
                      [topics.SECURITY_GROUP, topics.UPDATE],
-                     [n_topics.PORT_BINDING, n_topics.DEACTIVATE]]
+                     [n_topics.PORT_BINDING, n_topics.DEACTIVATE],
+                     [n_topics.PORT_BINDING, n_topics.ACTIVATE]]
         if cfg.CONF.VXLAN.l2_population:
             consumers.append([topics.L2POPULATION, topics.UPDATE])
         return consumers
@@ -871,7 +872,7 @@ class LinuxBridgeRpcCallbacks(
     #   1.1 Support Security Group RPC
     #   1.3 Added param devices_to_update to security_groups_provider_updated
     #   1.4 Added support for network_update
-    #   1.5 Added binding_deactivate
+    #   1.5 Added binding_activate and binding_deactivate
     target = oslo_messaging.Target(version='1.5')
 
     def network_delete(self, context, **kwargs):
@@ -913,6 +914,17 @@ class LinuxBridgeRpcCallbacks(
                   {'interface_name': interface_name,
                    'bridge_name': bridge_name})
         self.agent.mgr.remove_interface(bridge_name, interface_name)
+
+    def binding_activate(self, context, **kwargs):
+        if kwargs.get('host') != cfg.CONF.host:
+            return
+        # Since the common agent loop treats added and updated the same way,
+        # just add activated ports to the updated devices list. This way,
+        # adding binding activation is less disruptive to the existing code
+        port_id = kwargs.get('port_id')
+        device_name = self.agent.mgr.get_tap_device_name(port_id)
+        self.updated_devices.add(device_name)
+        LOG.debug("Binding activation received for port: %s", port_id)
 
     def network_update(self, context, **kwargs):
         network_id = kwargs['network']['id']

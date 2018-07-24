@@ -21,6 +21,7 @@ import collections
 
 import mock
 from neutron_lib.agent import topics
+from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.plugins import constants as plugin_constants
@@ -31,6 +32,7 @@ from oslo_context import context as oslo_context
 from sqlalchemy.orm import exc
 
 from neutron.agent import rpc as agent_rpc
+from neutron.common import constants as n_const
 from neutron.db import provisioning_blocks
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2.drivers import type_tunnel
@@ -153,6 +155,14 @@ class RpcCallbacksTestCase(base.BaseTestCase):
              qos_consts.QOS_POLICY_ID: 'test-policy-id'})
         res = self.callbacks.get_device_details(mock.Mock(), host='fake')
         self.assertEqual('test-policy-id', res['network_qos_policy_id'])
+
+    def test_get_device_details_port_no_active_in_host(self):
+        port = collections.defaultdict(lambda: 'fake_port')
+        self.plugin.get_bound_port_context().current = port
+        port['device_owner'] = constants.DEVICE_OWNER_COMPUTE_PREFIX
+        port[portbindings.HOST_ID] = 'other-host'
+        res = self.callbacks.get_device_details(mock.Mock(), host='host')
+        self.assertIn(n_const.NO_ACTIVE_BINDING, res)
 
     def test_get_device_details_qos_policy_id_from_port(self):
         port = collections.defaultdict(

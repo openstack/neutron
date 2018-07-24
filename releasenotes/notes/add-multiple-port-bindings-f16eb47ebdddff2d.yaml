@@ -1,0 +1,22 @@
+---
+prelude: >
+    Support multiple bindings for compute owned ports.
+features:
+    - |
+      In order to better support instance migration, multiple port
+      bindings can be associated to compute owned ports.
+
+      * Create, update, list, show and activate operations are supported
+        for port bindings by the ReST API.
+      * A compute owned port can have one active binding and many
+        inactive bindings.
+      * There can be only one binding (active or inactive) per compute
+        host.
+      * When the ``activate`` operation is executed, a previously
+        inactive binding is made active. The previously active binding
+        becomes inactive.
+      * As a consequence of the multiple port bindings implementation,
+        the ``port_binding`` relationship in the SQLAlchemy ``Port``
+        object has been renamed ``port_bindings``. Similarly, the
+        ``binding`` attribute of the ``Port`` OVO has been renamed
+        ``bindings``.

@@ -28,6 +28,7 @@ from sqlalchemy.orm import exc
 from neutron.agent import _topics as n_topics
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
+from neutron.common import constants as c_const
 from neutron.common import rpc as n_rpc
 from neutron.db import l3_hamode_db
 from neutron.db import provisioning_blocks
@@ -123,6 +124,15 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                          'network_id': port['network_id'],
                          'vif_type': port_context.vif_type})
             return {'device': device}
+
+        if (port['device_owner'].startswith(
+                n_const.DEVICE_OWNER_COMPUTE_PREFIX) and
+                port[portbindings.HOST_ID] != host):
+            LOG.debug("Device %(device)s has no active binding in host "
+                      "%(host)s", {'device': device,
+                                   'host': host})
+            return {'device': device,
+                    c_const.NO_ACTIVE_BINDING: True}
 
         network_qos_policy_id = port_context.network._network.get(
             qos_consts.QOS_POLICY_ID)
@@ -384,7 +394,7 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
         1.1 - Added get_active_networks_info, create_dhcp_port,
               update_dhcp_port, and removed get_dhcp_port methods.
         1.4 - Added network_update
-        1.5 - Added binding_deactivate
+        1.5 - Added binding_activate and binding_deactivate
     """
 
     def __init__(self, topic):
@@ -403,6 +413,8 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
                                                           topics.UPDATE)
         self.topic_port_binding_deactivate = topics.get_topic_name(
             topic, n_topics.PORT_BINDING, n_topics.DEACTIVATE)
+        self.topic_port_binding_activate = topics.get_topic_name(
+            topic, n_topics.PORT_BINDING, n_topics.ACTIVATE)
 
         target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
@@ -435,3 +447,8 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
                                     fanout=True, version='1.5')
         cctxt.cast(context, 'binding_deactivate', port_id=port_id, host=host,
                    network_id=network_id)
+
+    def binding_activate(self, context, port_id, host):
+        cctxt = self.client.prepare(topic=self.topic_port_binding_activate,
+                                    fanout=True, version='1.5')
+        cctxt.cast(context, 'binding_activate', port_id=port_id, host=host)

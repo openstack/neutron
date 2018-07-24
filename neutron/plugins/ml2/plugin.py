@@ -2203,6 +2203,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self.notifier.binding_deactivate(context, port_id,
                                                  active_binding.host,
                                                  network['id'])
+                self.notifier.binding_activate(context, port_id,
+                                               inactive_binding.host)
                 return self._make_port_binding_dict(cur_context._binding)
         raise n_exc.PortBindingError(port_id=port_id, host=host)
 
