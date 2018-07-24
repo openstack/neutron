@@ -24,6 +24,7 @@ from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron_lib.agent import l3_extension
 from neutron_lib import constants as lib_consts
@@ -32,10 +33,6 @@ LOG = logging.getLogger(__name__)
 DEFAULT_PORT_FORWARDING_CHAIN = 'fip-pf'
 PORT_FORWARDING_PREFIX = 'fip_portforwarding-'
 PORT_FORWARDING_CHAIN_PREFIX = 'pf-'
-# TODO(bzhao) If there are other files use this constant, and move it into
-# constants file. This line will be removed and get the value from constants
-# file.
-MAX_CHAIN_LEN_WRAP = 11
 
 
 class RouterFipPortForwardingMapping(object):
@@ -379,7 +376,7 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
 
     def _get_port_forwarding_chain_name(self, pf_id):
         chain_name = PORT_FORWARDING_CHAIN_PREFIX + pf_id
-        return chain_name[:MAX_CHAIN_LEN_WRAP]
+        return chain_name[:constants.MAX_IPTABLES_CHAIN_LEN_WRAP]
 
     def _install_default_rules(self, iptables_manager):
         default_rule = '-j %s-%s' % (iptables_manager.wrap_name,

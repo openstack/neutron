@@ -35,6 +35,7 @@ from neutron._i18n import _
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import utils as linux_utils
+from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.conf.agent import common as config
 
@@ -53,11 +54,6 @@ def get_binary_name():
 
 
 binary_name = get_binary_name()
-
-# A length of a chain name must be less than or equal to 11 characters.
-# <max length of iptables chain name> - (<binary_name> + '-') = 28-(16+1) = 11
-MAX_CHAIN_LEN_WRAP = 11
-MAX_CHAIN_LEN_NOWRAP = 28
 
 # Number of iptables rules to print before and after a rule that causes a
 # a failure during iptables-restore
@@ -88,9 +84,9 @@ def comment_rule(rule, comment):
 
 def get_chain_name(chain_name, wrap=True):
     if wrap:
-        return chain_name[:MAX_CHAIN_LEN_WRAP]
+        return chain_name[:constants.MAX_IPTABLES_CHAIN_LEN_WRAP]
     else:
-        return chain_name[:MAX_CHAIN_LEN_NOWRAP]
+        return chain_name[:constants.MAX_IPTABLES_CHAIN_LEN_NOWRAP]
 
 
 class IptablesRule(object):
