@@ -14,6 +14,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib import constants as lib_constants
+from neutron_lib.plugins import utils
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log as logging
 
@@ -23,7 +24,6 @@ from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import constants
 from neutron.common import exceptions
-from neutron.common import utils
 from neutron.objects.qos import policy as policy_object
 
 

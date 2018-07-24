@@ -23,6 +23,7 @@ from neutron_lib.callbacks import events as callback_events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources as callback_resources
 from neutron_lib import constants
+from neutron_lib.plugins import utils
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import uuidutils
@@ -31,7 +32,6 @@ from neutron.agent import resource_cache
 from neutron.api.rpc.callbacks import resources
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
-from neutron.common import utils
 from neutron import objects
 
 LOG = logging.getLogger(__name__)
