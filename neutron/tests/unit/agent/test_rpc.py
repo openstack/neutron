@@ -16,6 +16,7 @@
 import datetime
 
 import mock
+import netaddr
 from neutron_lib.agent import topics as lib_topics
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import resources
@@ -24,6 +25,8 @@ from oslo_context import context as oslo_context
 from oslo_utils import uuidutils
 
 from neutron.agent import rpc
+from neutron.common import constants as n_const
+from neutron.objects import network
 from neutron.objects import ports
 from neutron.tests import base
 
@@ -176,12 +179,28 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
         super(TestCacheBackedPluginApi, self).setUp()
         self._api = rpc.CacheBackedPluginApi(lib_topics.PLUGIN)
         self._api._legacy_interface = mock.Mock()
+        self._api.remote_resource_cache = mock.Mock()
+        self._network_id = uuidutils.generate_uuid()
+        self._segment_id = uuidutils.generate_uuid()
+        self._segment = network.NetworkSegment(
+            id=self._segment_id, network_id=self._network_id,
+            network_type=constants.TYPE_FLAT)
         self._port_id = uuidutils.generate_uuid()
+        self._network = network.Network(id=self._network_id,
+                                        segments=[self._segment])
         self._port = ports.Port(
-            id=self._port_id,
+            id=self._port_id, network_id=self._network_id,
+            mac_address=netaddr.EUI('fa:16:3e:ec:c7:d9'), admin_state_up=True,
+            security_group_ids=set([uuidutils.generate_uuid()]),
+            fixed_ips=[], allowed_address_pairs=[],
+            device_owner=constants.DEVICE_OWNER_COMPUTE_PREFIX,
             bindings=[ports.PortBinding(port_id=self._port_id,
                                         host='host1',
-                                        status=constants.ACTIVE)])
+                                        status=constants.ACTIVE,
+                                        profile={})],
+            binding_levels=[ports.PortBindingLevel(port_id=self._port_id,
+                                                   host='host1',
+                                                   segment=self._segment)])
 
     def test__legacy_notifier_resource_delete(self):
         self._api._legacy_notifier(resources.PORT, events.AFTER_DELETE, self,
@@ -189,8 +208,7 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
                                    existing=self._port)
         self._api._legacy_interface.port_update.assert_not_called()
         self._api._legacy_interface.port_delete.assert_called_once_with(
-            mock.ANY, port={'id': self._port_id}, port_id=self._port_id,
-            host=None)
+            mock.ANY, port={'id': self._port_id}, port_id=self._port_id)
         self._api._legacy_interface.binding_deactivate.assert_not_called()
 
     def test__legacy_notifier_resource_update(self):
@@ -201,8 +219,7 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
                                    existing=self._port, updated=updated_port)
         self._api._legacy_interface.port_delete.assert_not_called()
         self._api._legacy_interface.port_update.assert_called_once_with(
-            mock.ANY, port={'id': self._port_id}, port_id=self._port_id,
-            host=None)
+            mock.ANY, port={'id': self._port_id}, port_id=self._port_id)
         self._api._legacy_interface.binding_deactivate.assert_not_called()
 
     def _test__legacy_notifier_binding_activated(self):
@@ -225,8 +242,9 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
     def test__legacy_notifier_new_binding_activated(self):
         self._test__legacy_notifier_binding_activated()
         self._api._legacy_interface.binding_deactivate.assert_called_once_with(
-            mock.ANY, port={'id': self._port_id}, port_id=self._port_id,
-            host='host1')
+            mock.ANY, host='host1', port_id=self._port_id)
+        self._api._legacy_interface.binding_activate.assert_called_once_with(
+            mock.ANY, host='host2', port_id=self._port_id)
 
     def test__legacy_notifier_no_new_binding_activated(self):
         updated_port = ports.Port(
@@ -240,8 +258,7 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
                                    resource_id=self._port_id,
                                    existing=self._port, updated=updated_port)
         self._api._legacy_interface.port_update.assert_called_once_with(
-            mock.ANY, port={'id': self._port_id}, port_id=self._port_id,
-            host=None)
+            mock.ANY, port={'id': self._port_id}, port_id=self._port_id)
         self._api._legacy_interface.port_delete.assert_not_called()
         self._api._legacy_interface.binding_deactivate.assert_not_called()
 
@@ -257,7 +274,7 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
                                    resource_id=self._port_id,
                                    existing=self._port, updated=None)
         call = mock.call(mock.ANY, port={'id': self._port_id},
-                         port_id=self._port_id, host=None)
+                         port_id=self._port_id)
         self._api._legacy_interface.port_update.assert_has_calls([call, call])
         self._api._legacy_interface.port_delete.assert_not_called()
         self._api._legacy_interface.binding_deactivate.assert_not_called()
@@ -265,3 +282,23 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
     def test__legacy_notifier_binding_activated_not_supported(self):
         del self._api._legacy_interface.binding_deactivate
         self._test__legacy_notifier_binding_activated()
+
+    def test_get_device_details_binding_in_host(self):
+        self._api.remote_resource_cache.get_resource_by_id.side_effect = [
+            self._port, self._network]
+        entry = self._api.get_device_details(mock.ANY, self._port_id, mock.ANY,
+                                             'host1')
+        self.assertEqual(self._port_id, entry['device'])
+        self.assertEqual(self._port_id, entry['port_id'])
+        self.assertEqual(self._network_id, entry['network_id'])
+        self.assertNotIn(n_const.NO_ACTIVE_BINDING, entry)
+
+    def test_get_device_details_binding_not_in_host(self):
+        self._api.remote_resource_cache.get_resource_by_id.side_effect = [
+            self._port, self._network]
+        entry = self._api.get_device_details(mock.ANY, self._port_id, mock.ANY,
+                                             'host2')
+        self.assertEqual(self._port_id, entry['device'])
+        self.assertNotIn('port_id', entry)
+        self.assertNotIn('network_id', entry)
+        self.assertIn(n_const.NO_ACTIVE_BINDING, entry)

@@ -227,3 +227,6 @@ VALUES_TYPE_RANGE = "range"
 # Units base
 SI_BASE = 1000
 IEC_BASE = 1024
+
+# Port bindings handling
+NO_ACTIVE_BINDING = 'no_active_binding'

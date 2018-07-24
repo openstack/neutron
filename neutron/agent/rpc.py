@@ -35,6 +35,7 @@ from neutron.common import utils
 from neutron import objects
 
 LOG = logging.getLogger(__name__)
+BINDING_DEACTIVATE = 'binding_deactivate'
 
 
 def create_consumers(endpoints, prefix, topic_details, start_listening=True):
@@ -201,14 +202,23 @@ class CacheBackedPluginApi(PluginApi):
         the payloads the handlers are expecting (an ID).
         """
         rtype = rtype.lower()  # all legacy handlers don't camelcase
-        method, host = self._get_method_host(rtype, event, **kwargs)
+        method, host_with_activation, host_with_deactivation = (
+            self._get_method_host(rtype, event, **kwargs))
         if not hasattr(self._legacy_interface, method):
             # TODO(kevinbenton): once these notifications are stable, emit
             # a deprecation warning for legacy handlers
             return
-        payload = {rtype: {'id': resource_id}, '%s_id' % rtype: resource_id,
-                   'host': host}
-        getattr(self._legacy_interface, method)(context, **payload)
+        # If there is a binding deactivation, we must also notify the
+        # corresponding activation
+        if method == BINDING_DEACTIVATE:
+            self._legacy_interface.binding_deactivate(
+                context, port_id=resource_id, host=host_with_deactivation)
+            self._legacy_interface.binding_activate(
+                context, port_id=resource_id, host=host_with_activation)
+        else:
+            payload = {rtype: {'id': resource_id},
+                       '%s_id' % rtype: resource_id}
+            getattr(self._legacy_interface, method)(context, **payload)
 
     def _get_method_host(self, rtype, event, **kwargs):
         """Constructs the name of method to be called in the legacy interface.
@@ -222,9 +232,10 @@ class CacheBackedPluginApi(PluginApi):
         is_delete = event == callback_events.AFTER_DELETE
         suffix = 'delete' if is_delete else 'update'
         method = "%s_%s" % (rtype, suffix)
-        host = None
+        host_with_activation = None
+        host_with_deactivation = None
         if is_delete or rtype != callback_resources.PORT:
-            return method, host
+            return method, host_with_activation, host_with_deactivation
 
         # A port update was received. Find out if it is a binding activation
         # where a previous binding was deactivated
@@ -245,9 +256,10 @@ class CacheBackedPluginApi(PluginApi):
                         getattr(kwargs['updated'], 'bindings', []),
                         constants.INACTIVE,
                         host=existing_active_binding.host)):
-                    method = 'binding_deactivate'
-                    host = existing_active_binding.host
-        return method, host
+                    method = BINDING_DEACTIVATE
+                    host_with_activation = updated_active_binding.host
+                    host_with_deactivation = existing_active_binding.host
+        return method, host_with_activation, host_with_deactivation
 
     def get_devices_details_list_and_failed_devices(self, context, devices,
                                                     agent_id, host=None):
@@ -274,15 +286,22 @@ class CacheBackedPluginApi(PluginApi):
         if not segment:
             LOG.debug("Device %s is not bound to any segment.", port_obj)
             return {'device': device}
+        binding = utils.get_port_binding_by_status_and_host(
+            port_obj.bindings, constants.ACTIVE, raise_if_not_found=True,
+            port_id=port_obj.id)
+        if (port_obj.device_owner.startswith(
+                constants.DEVICE_OWNER_COMPUTE_PREFIX) and
+                binding[pb_ext.HOST] != host):
+            LOG.debug("Device %s has no active binding in this host",
+                      port_obj)
+            return {'device': device,
+                    n_const.NO_ACTIVE_BINDING: True}
         net = self.remote_resource_cache.get_resource_by_id(
             resources.NETWORK, port_obj.network_id)
         net_qos_policy_id = net.qos_policy_id
         # match format of old RPC interface
         mac_addr = str(netaddr.EUI(str(port_obj.mac_address),
                                    dialect=netaddr.mac_unix_expanded))
-        binding = utils.get_port_binding_by_status_and_host(
-            port_obj.bindings, constants.ACTIVE, raise_if_not_found=True,
-            port_id=port_obj.id)
         entry = {
             'device': device,
             'network_id': port_obj.network_id,

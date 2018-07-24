@@ -28,6 +28,7 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
 from neutron.agent.linux import async_process
 from neutron.agent.linux import ip_lib
+from neutron.common import constants as c_const
 from neutron.common import rpc as n_rpc
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
@@ -797,11 +798,29 @@ class TestOvsNeutronAgent(object):
                     'get_port_tag_dict',
                     return_value={}),\
                 mock.patch.object(self.agent, func_name) as func:
-            skip_devs, need_bound_devices, _ = (
+            skip_devs, _, need_bound_devices, _ = (
                 self.agent.treat_devices_added_or_updated([], False))
             # The function should not raise
             self.assertFalse(skip_devs)
             return func.called
+
+    def test_treat_devices_added_updated_no_active_binding(self):
+        details = {'device': 'id',
+                   c_const.NO_ACTIVE_BINDING: True}
+        port = mock.Mock()
+        with mock.patch.object(self.agent.plugin_rpc,
+                               'get_devices_details_list_and_failed_devices',
+                               return_value={'devices': [details],
+                                             'failed_devices': []}),\
+                mock.patch.object(self.agent.int_br,
+                                  'get_vifs_by_ids',
+                                  return_value={details['device']: port}),\
+                mock.patch.object(self.agent, 'port_dead') as func:
+            skip_devs, binding_no_activated_devices, _, _ = (
+                self.agent.treat_devices_added_or_updated([], False))
+            self.assertFalse(skip_devs)
+            self.assertTrue(func.called)
+            self.assertIn('id', binding_no_activated_devices)
 
     def test_treat_devices_added_updated_ignores_invalid_ofport(self):
         port = mock.Mock()
@@ -873,7 +892,8 @@ class TestOvsNeutronAgent(object):
             skip_devs = self.agent.treat_devices_added_or_updated([], False)
             # The function should return False for resync and no device
             # processed
-            self.assertEqual((['the_skipped_one'], [], set()), skip_devs)
+            self.assertEqual((['the_skipped_one'], set(), [], set()),
+                             skip_devs)
             ext_mgr_delete_port.assert_called_once_with(
                 self.agent.context, {'port_id': 'the_skipped_one'})
             self.assertFalse(treat_vif_port.called)
@@ -890,7 +910,7 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(self.agent,
                                   'treat_vif_port') as treat_vif_port:
             failed_devices = {'added': set(), 'removed': set()}
-            (_, _, failed_devices['added']) = (
+            (_, _, _, failed_devices['added']) = (
                 self.agent.treat_devices_added_or_updated([], False))
             # The function should return False for resync and no device
             # processed
@@ -921,7 +941,7 @@ class TestOvsNeutronAgent(object):
                                   return_value={}),\
                 mock.patch.object(self.agent,
                                   'treat_vif_port') as treat_vif_port:
-            skip_devs, need_bound_devices, _ = (
+            skip_devs, _, need_bound_devices, _ = (
                 self.agent.treat_devices_added_or_updated([], False))
             # The function should return False for resync
             self.assertFalse(skip_devs)
@@ -1008,16 +1028,18 @@ class TestOvsNeutronAgent(object):
         self.agent._bind_devices([{'network_id': 'non-existent',
                                    'vif_port': vif_port}])
 
-    def _test_process_network_ports(self, port_info, skipped_devices=None):
+    def _test_process_network_ports(self, port_info, skipped_devices=None,
+                                    binding_no_activated_devices=None):
         failed_devices = {'added': set(), 'removed': set()}
         skipped_devices = skipped_devices or []
+        binding_no_activated_devices = binding_no_activated_devices or set()
         added_devices = port_info.get('added', set())
         with mock.patch.object(self.agent.sg_agent,
                                "setup_port_filters") as setup_port_filters,\
                 mock.patch.object(
                     self.agent, "treat_devices_added_or_updated",
                     return_value=(
-                        skipped_devices, [],
+                        skipped_devices, binding_no_activated_devices, [],
                         failed_devices['added'])) as device_added_updated,\
                 mock.patch.object(self.agent.int_br, "get_ports_attributes",
                                   return_value=[]),\
@@ -1034,7 +1056,8 @@ class TestOvsNeutronAgent(object):
                 failed_devices,
                 self.agent.process_network_ports(port_info, False))
             setup_port_filters.assert_called_once_with(
-                added_devices - set(skipped_devices),
+                (added_devices - set(skipped_devices) -
+                    binding_no_activated_devices),
                 port_info.get('updated', set()))
             devices_added_updated = (added_devices |
                                      port_info.get('updated', set()))
@@ -1064,6 +1087,14 @@ class TestOvsNeutronAgent(object):
                      'removed': set(['eth0']),
                      'added': set(['eth1', 'eth2'])}
         self._test_process_network_ports(port_info, skipped_devices=['eth1'])
+
+    def test_process_network_port_with_binding_no_activated_devices(self):
+        port_info = {'current': set(['tap0', 'tap1']),
+                     'removed': set(['eth0']),
+                     'added': set(['eth1', 'eth2', 'eth3'])}
+        self._test_process_network_ports(
+            port_info, skipped_devices=['eth1'],
+            binding_no_activated_devices=set(['eth3']))
 
     def test_process_network_port_with_empty_port(self):
         self._test_process_network_ports({})
@@ -1246,6 +1277,32 @@ class TestOvsNeutronAgent(object):
             int_br.get_vif_port_by_id.assert_not_called()
             int_br.delete_port.assert_not_called()
             self.assertEqual(set(), self.agent.deactivated_bindings)
+
+    def test_binding_activate(self):
+        self.agent.binding_activate('context', port_id='id', host='host')
+        self.assertIn('id', self.agent.activated_bindings)
+
+    def test_binding_activate_not_for_host(self):
+        self.agent.binding_activate('context', port_id='id', host='other-host')
+        self.assertEqual(set(), self.agent.activated_bindings)
+
+    def test_process_activated_bindings(self):
+        port_info = {}
+        port_info['added'] = set(['added_port_id'])
+        port_info['current'] = set(['activated_port_id'])
+        self.agent.process_activated_bindings(port_info,
+                                              set(['activated_port_id']))
+        self.assertIn('added_port_id', port_info['added'])
+        self.assertIn('activated_port_id', port_info['added'])
+
+    def test_process_activated_bindings_activated_port_not_present(self):
+        port_info = {}
+        port_info['added'] = set(['added_port_id'])
+        port_info['current'] = set()
+        self.agent.process_activated_bindings(port_info,
+                                              set(['activated_port_id']))
+        self.assertIn('added_port_id', port_info['added'])
+        self.assertNotIn('activated_port_id', port_info['added'])
 
     def _test_setup_physical_bridges(self, port_exists=False):
         with mock.patch.object(ip_lib.IPDevice, "exists") as devex_fn,\
