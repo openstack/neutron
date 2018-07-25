@@ -52,10 +52,7 @@ def create_process(cmd, addl_env=None):
     return obj, cmd
 
 
-def execute(cmd, process_input=None, addl_env=None,
-            check_exit_code=True, return_stderr=False, log_fail_as_error=True,
-            extra_ok_codes=None, run_as_root=False, do_decode=True):
-
+def execute(cmd, process_input=None, addl_env=None, run_as_root=False):
     if process_input is not None:
         _process_input = encodeutils.to_utf8(process_input)
     else:
@@ -74,20 +71,14 @@ def execute(cmd, process_input=None, addl_env=None,
          'stdout': _stdout,
          'stderr': _stderr}
 
-    extra_ok_codes = extra_ok_codes or []
-    if obj.returncode and obj.returncode in extra_ok_codes:
-        obj.returncode = None
-
     log_msg = m.strip().replace('\n', '; ')
-    if obj.returncode and log_fail_as_error:
+    if obj.returncode:
         LOG.error(log_msg)
-    else:
-        LOG.debug(log_msg)
 
-    if obj.returncode and check_exit_code:
+    if obj.returncode:
         raise RuntimeError(m)
 
-    return (_stdout, _stderr) if return_stderr else _stdout
+    return (_stdout, _stderr)
 
 
 def avoid_blocking_call(f, *args, **kwargs):
