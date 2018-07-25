@@ -386,7 +386,9 @@ class TestOvsNeutronAgent(object):
     def test_scan_ports_returns_current_only_for_unchanged_ports(self):
         vif_port_set = set([1, 3])
         registered_ports = set([1, 3])
-        expected = {'current': vif_port_set}
+        expected = {'current': vif_port_set,
+                    'added': set(),
+                    'removed': set()}
         actual = self.mock_scan_ports(vif_port_set, registered_ports)
         self.assertEqual(expected, actual)
 
@@ -437,7 +439,8 @@ class TestOvsNeutronAgent(object):
         vif_port_set = set([1, 2, 3])
         registered_ports = set([1, 2, 3])
         updated_ports = set([2])
-        expected = dict(current=vif_port_set, updated=set([2]))
+        expected = dict(current=vif_port_set, updated=set([2]),
+                        added=set(), removed=set())
         actual = self.mock_scan_ports(vif_port_set, registered_ports,
                                       updated_ports)
         self.assertEqual(expected, actual)
@@ -2318,7 +2321,9 @@ class AncillaryBridgesTest(object):
     def test_scan_ancillary_ports_returns_cur_only_for_unchanged_ports(self):
         vif_port_set = set([1, 2])
         registered_ports = set([1, 2])
-        expected = dict(current=vif_port_set)
+        expected = dict(current=vif_port_set,
+                        added=set(),
+                        removed=set())
         actual = self.mock_scan_ancillary_ports(vif_port_set, registered_ports)
         self.assertEqual(expected, actual)
 
