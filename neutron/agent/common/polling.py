@@ -13,13 +13,63 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
+import contextlib
+
+import eventlet
+from oslo_config import cfg
+from oslo_log import log as logging
+
+from neutron.agent.common import async_process
+from neutron.agent.common import base_polling
+from neutron.agent.common import ovsdb_monitor
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
+
+LOG = logging.getLogger(__name__)
 
 
-if os.name == 'nt':
-    from neutron.agent.windows import polling
-else:
-    from neutron.agent.linux import polling
+@contextlib.contextmanager
+def get_polling_manager(minimize_polling=False,
+                        ovsdb_monitor_respawn_interval=(
+                            constants.DEFAULT_OVSDBMON_RESPAWN)):
+    if minimize_polling:
+        pm = InterfacePollingMinimizer(
+            ovsdb_monitor_respawn_interval=ovsdb_monitor_respawn_interval)
+        pm.start()
+    else:
+        pm = base_polling.AlwaysPoll()
+    try:
+        yield pm
+    finally:
+        if minimize_polling:
+            pm.stop()
 
-get_polling_manager = polling.get_polling_manager
-InterfacePollingMinimizer = polling.InterfacePollingMinimizer
+
+class InterfacePollingMinimizer(base_polling.BasePollingManager):
+    """Monitors ovsdb to determine when polling is required."""
+
+    def __init__(
+            self,
+            ovsdb_monitor_respawn_interval=constants.DEFAULT_OVSDBMON_RESPAWN):
+
+        super(InterfacePollingMinimizer, self).__init__()
+        self._monitor = ovsdb_monitor.SimpleInterfaceMonitor(
+            respawn_interval=ovsdb_monitor_respawn_interval,
+            ovsdb_connection=cfg.CONF.OVS.ovsdb_connection)
+
+    def start(self):
+        self._monitor.start(block=True)
+
+    def stop(self):
+        try:
+            self._monitor.stop()
+        except async_process.AsyncProcessException:
+            LOG.debug("InterfacePollingMinimizer was not running when stopped")
+
+    def _is_polling_required(self):
+        # Maximize the chances of update detection having a chance to
+        # collect output.
+        eventlet.sleep()
+        return self._monitor.has_updates
+
+    def get_events(self):
+        return self._monitor.get_events()
