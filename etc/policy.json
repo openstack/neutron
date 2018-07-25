@@ -13,6 +13,7 @@
     "shared_address_scopes": "field:address_scopes:shared=True",
     "external": "field:networks:router:external=True",
     "default": "rule:admin_or_owner",
+    "admin_or_ext_parent_owner": "rule:context_is_admin or tenant_id:%(ext_parent:tenant_id)s",
 
     "create_subnet": "rule:admin_or_network_owner",
     "create_subnet:segment_id": "rule:admin_only",
@@ -250,9 +251,9 @@
     "update_log": "rule:admin_only",
     "delete_log": "rule:admin_only",
 
-    "create_floatingip_port_forwarding": "rule:regular_user",
-    "get_floatingip_port_forwarding": "rule:regular_user",
-    "get_floatingip_port_forwardings": "rule:regular_user",
-    "update_floatingip_port_forwarding": "rule:regular_user",
-    "delete_floatingip_port_forwarding": "rule:regular_user"
+    "create_floatingip_port_forwarding": "rule:admin_or_ext_parent_owner",
+    "get_floatingip_port_forwarding": "rule:admin_or_ext_parent_owner",
+    "get_floatingip_port_forwardings": "rule:admin_or_ext_parent_owner",
+    "update_floatingip_port_forwarding": "rule:admin_or_ext_parent_owner",
+    "delete_floatingip_port_forwarding": "rule:admin_or_ext_parent_owner"
 }
