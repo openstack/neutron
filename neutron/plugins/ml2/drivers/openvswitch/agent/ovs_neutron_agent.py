@@ -1263,7 +1263,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     def _get_port_info(self, registered_ports, cur_ports,
                        readd_registered_ports):
-        port_info = {'current': cur_ports}
+        port_info = {'current': cur_ports,
+                     'added': set(),
+                     'removed': set()}
         # FIXME(salv-orlando): It's not really necessary to return early
         # if nothing has changed.
         if not readd_registered_ports and cur_ports == registered_ports:
