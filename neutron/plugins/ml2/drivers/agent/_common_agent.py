@@ -366,7 +366,7 @@ class CommonAgentLoop(service.Service):
         returned because this means it is new.
         """
         return {device for device, timestamp in timestamps.items()
-                if previous_timestamps.get(device) and
+                if device in previous_timestamps and
                 timestamp != previous_timestamps.get(device)}
 
     def scan_devices(self, previous, sync):

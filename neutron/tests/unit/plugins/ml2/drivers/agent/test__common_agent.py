@@ -233,6 +233,23 @@ class TestCommonAgentLoop(base.BaseTestCase):
         self._test_scan_devices(previous, updated, fake_current, expected,
                                 sync=False)
 
+    def test_scan_devices_timestamp_triggers_updated_None_to_something(self):
+        previous = {'current': set([1, 2]),
+                    'updated': set(),
+                    'added': set(),
+                    'removed': set(),
+                    'timestamps': {2: None}}
+        fake_current = set([1, 2])
+        updated = set()
+        expected = {'current': set([1, 2]),
+                    'updated': set([2]),
+                    'added': set(),
+                    'removed': set(),
+                    'timestamps': {2: 1000}}
+
+        self._test_scan_devices(previous, updated, fake_current, expected,
+                                sync=False, fake_ts_current={2: 1000})
+
     def test_scan_devices_timestamp_triggers_updated(self):
         previous = {'current': set([1, 2]),
                     'updated': set(),
