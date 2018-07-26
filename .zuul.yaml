@@ -15,6 +15,7 @@
         - neutron-tempest-iptables_hybrid
         - neutron-grenade
         - openstack-tox-lower-constraints
+        - neutron-fullstack-python35
     gate:
       jobs:
         - neutron-functional
@@ -34,7 +35,6 @@
     experimental:
       jobs:
         - neutron-functional-python35
-        - neutron-fullstack-python35
 
 - job:
     name: neutron-functional
