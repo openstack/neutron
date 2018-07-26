@@ -32,6 +32,7 @@ from sqlalchemy import orm
 import testscenarios
 import testtools
 
+from neutron.common import rpc as n_rpc
 from neutron.db import db_base_plugin_v2 as db_v2
 from neutron.db import l3_db
 from neutron.db import l3_dvr_db
@@ -1379,7 +1380,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
         super(L3HATestCaseMixin, self).setUp()
 
         self.adminContext = n_context.get_admin_context()
-        mock.patch('neutron.common.rpc.get_client').start()
+        mock.patch.object(n_rpc, 'get_client').start()
 
         self.setup_coreplugin('ml2', load_plugins=False)
         cfg.CONF.set_override('service_plugins',

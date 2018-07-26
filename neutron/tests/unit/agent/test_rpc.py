@@ -26,6 +26,7 @@ from oslo_utils import uuidutils
 
 from neutron.agent import rpc
 from neutron.common import constants as n_const
+from neutron.common import rpc as n_rpc
 from neutron.objects import network
 from neutron.objects import ports
 from neutron.tests import base
@@ -125,8 +126,7 @@ class AgentRPCMethods(base.BaseTestCase):
 
     def _test_create_consumers(
         self, endpoints, method, expected, topics, listen):
-        call_to_patch = 'neutron.common.rpc.Connection'
-        with mock.patch(call_to_patch) as create_connection:
+        with mock.patch.object(n_rpc, 'Connection') as create_connection:
             rpc.create_consumers(
                 endpoints, method, topics, start_listening=listen)
             create_connection.assert_has_calls(expected)
@@ -167,8 +167,7 @@ class AgentRPCMethods(base.BaseTestCase):
             mock.call().consume_in_threads()
         ]
 
-        call_to_patch = 'neutron.common.rpc.Connection'
-        with mock.patch(call_to_patch) as create_connection:
+        with mock.patch.object(n_rpc, 'Connection') as create_connection:
             rpc.create_consumers(endpoints, 'foo', [('topic', 'op', 'node1')])
             create_connection.assert_has_calls(expected)
 

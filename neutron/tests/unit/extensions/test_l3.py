@@ -32,6 +32,7 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from neutron_lib.tests.unit import fake_notifier
 from oslo_config import cfg
 from oslo_utils import importutils
 from oslo_utils import uuidutils
@@ -58,7 +59,6 @@ from neutron.extensions import l3
 from neutron.services.revisions import revision_plugin
 from neutron.tests import base
 from neutron.tests.common import helpers
-from neutron.tests import fake_notifier
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2

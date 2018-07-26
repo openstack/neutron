@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from neutron_lib import rpc
 from oslo_config import cfg
 import oslo_messaging
 
@@ -84,7 +85,7 @@ class TestRegisterValidateRPCMethods(base.BaseTestCase):
 
 class LoggingApiSkeletonTestCase(base.BaseTestCase):
 
-    @mock.patch("neutron.common.rpc.get_server")
+    @mock.patch.object(rpc, "get_server")
     def test___init__(self, mocked_get_server):
         test_obj = server_rpc.LoggingApiSkeleton()
         _target = oslo_messaging.Target(
