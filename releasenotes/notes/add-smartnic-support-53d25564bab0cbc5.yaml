@@ -1,0 +1,7 @@
+---
+prelude: >
+    Add Support for Smart NIC in ML2/OVS mechanism driver.
+features:
+  - |
+    Add Support for Smart NIC in ML2/OVS mechanism driver, by extending the Neutron OVS mechanism
+    driver and Neutron OVS Agent to bind the Neutron port for the baremetal host with Smart NIC.

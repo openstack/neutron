@@ -44,6 +44,11 @@ class AgentRPCPluginApi(base.BaseTestCase):
             func_obj = getattr(agent, method)
             if method == 'tunnel_sync':
                 actual_val = func_obj(ctxt, 'fake_tunnel_ip')
+            elif method == 'get_ports_by_vnic_type_and_host':
+                actual_val = func_obj(ctxt, 'fake_vnic_type', 'fake_host')
+                mock_call.assert_called_once_with(
+                    ctxt, 'get_ports_by_vnic_type_and_host',
+                    host='fake_host', vnic_type='fake_vnic_type')
             else:
                 actual_val = func_obj(ctxt, 'fake_device', 'fake_agent_id')
         self.assertEqual(actual_val, expect_val)
@@ -62,6 +67,9 @@ class AgentRPCPluginApi(base.BaseTestCase):
 
     def test_tunnel_sync(self):
         self._test_rpc_call('tunnel_sync')
+
+    def test_get_ports_by_vnic_type_and_host(self):
+        self._test_rpc_call('get_ports_by_vnic_type_and_host')
 
 
 class AgentPluginReportState(base.BaseTestCase):
@@ -191,6 +199,7 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
                                         segments=[self._segment])
         self._port = ports.Port(
             id=self._port_id, network_id=self._network_id,
+            device_id='vm_uuid',
             mac_address=netaddr.EUI('fa:16:3e:ec:c7:d9'), admin_state_up=True,
             security_group_ids=set([uuidutils.generate_uuid()]),
             fixed_ips=[], allowed_address_pairs=[],
@@ -198,7 +207,9 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
             bindings=[ports.PortBinding(port_id=self._port_id,
                                         host='host1',
                                         status=constants.ACTIVE,
-                                        profile={})],
+                                        profile={},
+                                        vif_type='vif_type',
+                                        vnic_type='vnic_type')],
             binding_levels=[ports.PortBindingLevel(port_id=self._port_id,
                                                    host='host1',
                                                    level=0,

@@ -320,19 +320,22 @@ class OpenvswitchMechanismSRIOVTestCase(OpenvswitchMechanismBaseTestCase):
 
 
 class OpenvswitchMechVnicTypesTestCase(OpenvswitchMechanismBaseTestCase):
+
+    supported_vnics = [portbindings.VNIC_NORMAL,
+                       portbindings.VNIC_DIRECT,
+                       portbindings.VNIC_SMARTNIC]
+
     def setUp(self):
         self.blacklist_cfg = {
             'OVS_DRIVER': {
                 'vnic_type_blacklist': []
             }
         }
-        self.default_supported_vnics = [portbindings.VNIC_NORMAL,
-                                        portbindings.VNIC_DIRECT]
+        self.default_supported_vnics = self.supported_vnics
         super(OpenvswitchMechVnicTypesTestCase, self).setUp()
 
     def test_default_vnic_types(self):
-        self.assertEqual([portbindings.VNIC_NORMAL,
-                          portbindings.VNIC_DIRECT],
+        self.assertEqual(self.default_supported_vnics,
                          self.driver.supported_vnic_types)
 
     def test_vnic_type_blacklist_valid_item(self):
@@ -366,7 +369,7 @@ class OpenvswitchMechVnicTypesTestCase(OpenvswitchMechanismBaseTestCase):
 
     def test_vnic_type_blacklist_all_items(self):
         self.blacklist_cfg['OVS_DRIVER']['vnic_type_blacklist'] = \
-            [portbindings.VNIC_NORMAL, portbindings.VNIC_DIRECT]
+            self.supported_vnics
         fake_conf = cfg.CONF
         fake_conf_fixture = base.MechDriverConfFixture(
             fake_conf, self.blacklist_cfg,

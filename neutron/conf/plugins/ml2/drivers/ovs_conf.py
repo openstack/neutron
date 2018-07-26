@@ -166,7 +166,9 @@ agent_opts = [
                        "outgoing IP packet carrying GRE/VXLAN tunnel.")),
     cfg.StrOpt('agent_type', default=n_const.AGENT_TYPE_OVS,
                deprecated_for_removal=True,
-               help=_("Selects the Agent Type reported"))
+               help=_("Selects the Agent Type reported.")),
+    cfg.BoolOpt('baremetal_smartnic', default=False,
+                help=_("Enable the agent to process Smart NIC ports.")),
 ]
 
 
