@@ -320,11 +320,11 @@ def after_router_updated(resource, event, l3_agent, **kwargs):
             router_id=router.router_id)
 
 
-def before_router_removed(resource, event, l3_agent, **kwargs):
-    router = kwargs['router']
+def before_router_removed(resource, event, l3_agent, payload=None):
+    router = payload.latest_state
     proxy = l3_agent.metadata_driver
 
     proxy.destroy_monitored_metadata_proxy(l3_agent.process_monitor,
-                                          router.router['id'],
-                                          l3_agent.conf,
-                                          router.ns_name)
+                                           router.router['id'],
+                                           l3_agent.conf,
+                                           router.ns_name)

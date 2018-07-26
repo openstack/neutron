@@ -67,7 +67,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
             mock.call('router', 'after_create', self.agent, router=router),
             mock.call('router', 'before_update', self.agent, router=router),
             mock.call('router', 'after_update', self.agent, router=router),
-            mock.call('router', 'before_delete', self.agent, router=router),
+            mock.call('router', 'before_delete', self.agent, payload=mock.ANY),
             mock.call('router', 'after_delete', self.agent, router=router)]
         event_handler.assert_has_calls(expected_calls)
 

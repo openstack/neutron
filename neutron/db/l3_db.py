@@ -457,10 +457,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             if router not in context.session:
                 context.session.add(router)
             try:
-                kwargs = {'context': context, 'router_id': router.id}
-                registry.notify(
-                    resources.ROUTER_GATEWAY, events.BEFORE_DELETE, self,
-                    **kwargs)
+                registry.publish(resources.ROUTER_GATEWAY,
+                                 events.BEFORE_DELETE, self,
+                                 payload=events.DBEventPayload(
+                                     context, states=(router,),
+                                     resource_id=router.id))
             except exceptions.CallbackFailure as e:
                 # NOTE(armax): preserve old check's behavior
                 if len(e.errors) == 1:
@@ -555,8 +556,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     @db_api.retry_if_session_inactive()
     def delete_router(self, context, id):
-        registry.notify(resources.ROUTER, events.BEFORE_DELETE,
-                        self, context=context, router_id=id)
+        registry.publish(resources.ROUTER, events.BEFORE_DELETE, self,
+                         payload=events.DBEventPayload(
+                             context, resource_id=id))
         # TODO(nati) Refactor here when we have router insertion model
         router = self._ensure_router_not_in_use(context, id)
         original = self._make_router_dict(router)
