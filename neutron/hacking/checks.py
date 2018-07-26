@@ -243,6 +243,7 @@ def check_python3_no_filter(logical_line):
         yield(0, msg)
 
 
+# TODO(boden): rehome this check to neutron-lib
 @flake8ext
 def check_no_sqlalchemy_event_import(logical_line, filename, noqa):
     """N346 - Use neutron.db.api.sqla_listen instead of sqlalchemy event."""
@@ -256,8 +257,8 @@ def check_no_sqlalchemy_event_import(logical_line, filename, noqa):
         if kw not in logical_line:
             return
     yield (0, "N346: Register sqlalchemy events through "
-              "neutron.db.api.sqla_listen so they can be cleaned up between "
-              "unit tests")
+              "neutron_lib.db.api.sqla_listen so they can be cleaned up "
+              "between unit tests")
 
 
 def factory(register):

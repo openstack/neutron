@@ -29,6 +29,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.db import api as lib_db_api
 from neutron_lib import exceptions as exc
 from neutron_lib import fixture
 from neutron_lib.plugins import constants as plugin_constants
@@ -1282,8 +1283,9 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
         listener = IPAllocationsGrenade()
         engine = db_api.context_manager.writer.get_engine()
-        db_api.sqla_listen(engine, 'before_cursor_execute', listener.execute)
-        db_api.sqla_listen(engine, 'commit', listener.commit)
+        lib_db_api.sqla_listen(engine, 'before_cursor_execute',
+                               listener.execute)
+        lib_db_api.sqla_listen(engine, 'commit', listener.commit)
         func()
         # make sure that the grenade went off during the commit
         self.assertTrue(listener.except_raised)

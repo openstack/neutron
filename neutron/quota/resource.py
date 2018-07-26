@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import api as lib_db_api
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -318,19 +319,19 @@ class TrackedResource(BaseResource):
                                self._model_class)
 
     def register_events(self):
-        listen = db_api.sqla_listen
+        listen = lib_db_api.sqla_listen
         listen(self._model_class, 'after_insert', self._db_event_handler)
         listen(self._model_class, 'after_delete', self._db_event_handler)
         listen(se.Session, 'after_bulk_delete', self._except_bulk_delete)
 
     def unregister_events(self):
         try:
-            db_api.sqla_remove(self._model_class, 'after_insert',
-                               self._db_event_handler)
-            db_api.sqla_remove(self._model_class, 'after_delete',
-                               self._db_event_handler)
-            db_api.sqla_remove(se.Session, 'after_bulk_delete',
-                               self._except_bulk_delete)
+            lib_db_api.sqla_remove(self._model_class, 'after_insert',
+                                   self._db_event_handler)
+            lib_db_api.sqla_remove(self._model_class, 'after_delete',
+                                   self._db_event_handler)
+            lib_db_api.sqla_remove(se.Session, 'after_bulk_delete',
+                                   self._except_bulk_delete)
         except sql_exc.InvalidRequestError:
             LOG.warning("No sqlalchemy event for resource %s found",
                         self.name)
