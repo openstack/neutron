@@ -18,8 +18,10 @@
 # If ../neutron/__init__.py exists, add ../ to Python search path, so that
 # it will override what happens to be installed in /usr/(local/)lib/python...
 
+from neutron_lib.api import attributes
 from oslo_log import log
 
+from neutron.api import extensions
 from neutron import manager
 from neutron import service
 
@@ -31,7 +33,9 @@ def eventlet_rpc_server():
 
     try:
         manager.init()
-        rpc_workers_launcher = service.start_all_workers()
+        ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
+        ext_mgr.extend_resources("2.0", attributes.RESOURCES)
+        rpc_workers_launcher = service.start_rpc_workers()
     except NotImplementedError:
         LOG.info("RPC was already started in parent process by "
                  "plugin.")

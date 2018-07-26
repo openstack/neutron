@@ -16,6 +16,7 @@
 # If ../neutron/__init__.py exists, add ../ to Python search path, so that
 # it will override what happens to be installed in /usr/(local/)lib/python...
 
+import os
 import sys
 
 from oslo_config import cfg
@@ -24,10 +25,35 @@ from neutron._i18n import _
 from neutron.common import config
 from neutron.common import profiler
 
+# NOTE(annp): These environment variables are required for deploying
+# neutron-api under mod_wsgi. Currently, these variables are set as DevStack's
+# default. If you intend to use other tools for deploying neutron-api under
+# mod_wsgi, you should export these variables with your values.
+
+NEUTRON_CONF = 'neutron.conf'
+NEUTRON_CONF_DIR = '/etc/neutron/'
+NEUTRON_PLUGIN_CONF = 'plugins/ml2/ml2_conf.ini'
+
+
+def _get_config_files(env=None):
+    if env is None:
+        env = os.environ
+    dirname = env.get('OS_NEUTRON_CONFIG_DIR', NEUTRON_CONF_DIR).strip()
+
+    files = [s.strip() for s in
+             env.get('OS_NEUTRON_CONFIG_FILES', '').split(';') if s.strip()]
+
+    if not files:
+        files = [NEUTRON_CONF, NEUTRON_PLUGIN_CONF]
+
+    return [os.path.join(dirname, fname) for fname in files]
+
 
 def _init_configuration():
     # the configuration will be read into the cfg.CONF global data structure
-    config.init(sys.argv[1:])
+    conf_files = _get_config_files()
+
+    config.init(sys.argv[1:], default_config_files=conf_files)
     config.setup_logging()
     config.set_config_defaults()
     if not cfg.CONF.config_file:
