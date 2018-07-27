@@ -248,5 +248,11 @@
     "get_log": "rule:admin_only",
     "get_logs": "rule:admin_only",
     "update_log": "rule:admin_only",
-    "delete_log": "rule:admin_only"
+    "delete_log": "rule:admin_only",
+
+    "create_floatingip_port_forwarding": "rule:regular_user",
+    "get_floatingip_port_forwarding": "rule:regular_user",
+    "get_floatingip_port_forwardings": "rule:regular_user",
+    "update_floatingip_port_forwarding": "rule:regular_user",
+    "delete_floatingip_port_forwarding": "rule:regular_user"
 }

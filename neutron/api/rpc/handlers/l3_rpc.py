@@ -122,6 +122,9 @@ class L3RpcCallback(object):
             self._ensure_host_set_on_ports(context, host, routers)
             # refresh the data structure after ports are bound
             routers = self._routers_to_sync(context, router_ids, host)
+        pf_plugin = directory.get_plugin(plugin_constants.PORTFORWARDING)
+        if pf_plugin:
+            pf_plugin.sync_port_forwarding_fip(context, routers)
         return routers
 
     def _routers_to_sync(self, context, router_ids, host=None):
