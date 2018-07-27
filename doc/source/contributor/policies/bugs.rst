@@ -122,6 +122,25 @@ steps you will need to follow in order to be prepared.
   can be present to discuss them.
 
 
+Bug Deputy routines in your week
+--------------------------------
+
+* Scan 'New' bugs to triage.
+  If it doesn't have enough info to triage, ask more info and
+  mark it 'Incomplete'.
+  If you could confirm it by yourself, mark it 'Confirmed'.
+  Otherwise, find someone familiar with the topic and ask his/her help.
+
+* Scan 'Incomplete' bugs to see if it got more info.
+  If it was, make it back to 'New'.
+
+* Repeat the above routines for bugs filed in your week at least.
+  If you can, do the same for older bugs.
+
+* Take a note of bugs you processed.
+  At the end of your week, post a report on openstack-dev mailing list.
+
+
 Plugin and Driver Repositories
 ------------------------------
 
