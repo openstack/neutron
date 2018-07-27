@@ -425,7 +425,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
         agent_state['admin_state_up'] = agent.admin_state_up
         registry.notify(resources.AGENT, event_type, self, context=context,
                         host=agent_state['host'], plugin=self,
-                        agent=agent_state)
+                        agent=agent_state, status=status)
         return status, agent_state
 
     def _get_agents_considered_for_versions(self):

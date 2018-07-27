@@ -252,7 +252,8 @@ def map_segment_to_hosts(context, segment_id, hosts):
 
 
 def _update_segment_host_mapping_for_agent(resource, event, trigger,
-                                           context, host, plugin, agent):
+                                           context, host, plugin, agent,
+                                           status):
     check_segment_for_agent = getattr(plugin, 'check_segment_for_agent', None)
     if not check_segment_for_agent:
         return
