@@ -1116,6 +1116,25 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.setup_physical_bridges(bridge_mappings)
         return sync
 
+    def _check_bridge_datapath_id(self, bridge, datapath_ids_set):
+        """Check for bridges with duplicate datapath-id
+
+        Bottom 48 bits auto-derived from MAC of NIC. Upper 12 bits free,
+        so we OR it with (bridge # << 48) to create a unique ID
+        It must be exactly 64 bits, else OVS will reject it - zfill
+
+        :param bridge: (OVSPhysicalBridge) bridge
+        :param datapath_ids_set: (set) used datapath ids in OVS
+        """
+        dpid = int(bridge.get_datapath_id(), 16)
+        dpid_hex = format(dpid, '0x').zfill(16)
+        if dpid_hex in datapath_ids_set:
+            dpid_hex = format(
+                dpid + (len(datapath_ids_set) << 48), '0x').zfill(16)
+            bridge.set_datapath_id(dpid_hex)
+        LOG.info('Bridge %s datapath-id = 0x%s', bridge.br_name, dpid_hex)
+        datapath_ids_set.add(dpid_hex)
+
     def setup_physical_bridges(self, bridge_mappings):
         '''Setup the physical network bridges.
 
@@ -1127,6 +1146,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.phys_brs = {}
         self.int_ofports = {}
         self.phys_ofports = {}
+        datapath_ids_set = set()
         ip_wrapper = ip_lib.IPWrapper()
         ovs = ovs_lib.BaseOVS()
         ovs_bridges = ovs.get_bridges()
@@ -1144,6 +1164,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                            'bridge': bridge})
                 sys.exit(1)
             br = self.br_phys_cls(bridge)
+            self._check_bridge_datapath_id(br, datapath_ids_set)
+
             # The bridge already exists, so create won't recreate it, but will
             # handle things like changing the datapath_type
             br.create()
