@@ -921,6 +921,11 @@ class OVSBridge(BaseOVS):
         self.set_controller_field(
             'controller_burst_limit', controller_burst_limit)
 
+    def set_datapath_id(self, datapath_id):
+        dpid_cfg = {'datapath-id': datapath_id}
+        self.set_db_attribute('Bridge', self.br_name, 'other_config', dpid_cfg,
+                              check_error=True)
+
     def __enter__(self):
         self.create()
         return self
