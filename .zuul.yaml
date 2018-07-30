@@ -35,6 +35,9 @@
     experimental:
       jobs:
         - neutron-functional-python35
+        - neutron-functional-with-uwsgi
+        - neutron-fullstack-with-uwsgi
+        - neutron-tempest-with-uwsgi
 
 - job:
     name: neutron-functional
@@ -317,3 +320,60 @@
       - openstack-infra/devstack-gate
       - openstack/neutron
       - openstack/tempest
+
+- job:
+    name: neutron-fullstack-with-uwsgi
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-fullstack-with-uwsgi/run.yaml
+    post-run: playbooks/legacy/neutron-fullstack-with-uwsgi/post.yaml
+    timeout: 7800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^releasenotes/.*$
+    voting: false
+
+- job:
+    name: neutron-functional-with-uwsgi
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-functional-with-uwsgi/run.yaml
+    post-run: playbooks/legacy/neutron-functional-with-uwsgi/post.yaml
+    timeout: 7800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^releasenotes/.*$
+    voting: false
+
+- job:
+    name: neutron-tempest-with-uwsgi
+    parent: devstack-tempest
+    description: Run neutron Tempest tests with uwsgi
+    timeout: 8400
+    required-projects:
+      - openstack/neutron
+      - openstack/tempest
+    vars:
+      tox_envlist: full
+      devstack_localrc:
+        NEUTRON_DEPLOY_MOD_WSGI: True
+    irrelevant-files:
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+    voting: false

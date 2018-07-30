@@ -1,0 +1,80 @@
+- hosts: primary
+  tasks:
+
+    - name: Copy files from {{ ansible_user_dir }}/workspace/ on node
+      synchronize:
+        src: '{{ ansible_user_dir }}/workspace/'
+        dest: '{{ zuul.executor.log_root }}'
+        mode: pull
+        copy_links: true
+        verify_host: true
+        rsync_opts:
+          - --include=**/*nose_results.html
+          - --include=*/
+          - --exclude=*
+          - --prune-empty-dirs
+
+    - name: Copy files from {{ ansible_user_dir }}/workspace/ on node
+      synchronize:
+        src: '{{ ansible_user_dir }}/workspace/'
+        dest: '{{ zuul.executor.log_root }}'
+        mode: pull
+        copy_links: true
+        verify_host: true
+        rsync_opts:
+          - --include=**/*testr_results.html.gz
+          - --include=*/
+          - --exclude=*
+          - --prune-empty-dirs
+
+    - name: Copy files from {{ ansible_user_dir }}/workspace/ on node
+      synchronize:
+        src: '{{ ansible_user_dir }}/workspace/'
+        dest: '{{ zuul.executor.log_root }}'
+        mode: pull
+        copy_links: true
+        verify_host: true
+        rsync_opts:
+          - --include=/.testrepository/tmp*
+          - --include=*/
+          - --exclude=*
+          - --prune-empty-dirs
+
+    - name: Copy files from {{ ansible_user_dir }}/workspace/ on node
+      synchronize:
+        src: '{{ ansible_user_dir }}/workspace/'
+        dest: '{{ zuul.executor.log_root }}'
+        mode: pull
+        copy_links: true
+        verify_host: true
+        rsync_opts:
+          - --include=**/*testrepository.subunit.gz
+          - --include=*/
+          - --exclude=*
+          - --prune-empty-dirs
+
+    - name: Copy files from {{ ansible_user_dir }}/workspace/ on node
+      synchronize:
+        src: '{{ ansible_user_dir }}/workspace/'
+        dest: '{{ zuul.executor.log_root }}/tox'
+        mode: pull
+        copy_links: true
+        verify_host: true
+        rsync_opts:
+          - --include=/.tox/*/log/*
+          - --include=*/
+          - --exclude=*
+          - --prune-empty-dirs
+
+    - name: Copy files from {{ ansible_user_dir }}/workspace/ on node
+      synchronize:
+        src: '{{ ansible_user_dir }}/workspace/'
+        dest: '{{ zuul.executor.log_root }}'
+        mode: pull
+        copy_links: true
+        verify_host: true
+        rsync_opts:
+          - --include=/logs/**
+          - --include=*/
+          - --exclude=*
+          - --prune-empty-dirs
