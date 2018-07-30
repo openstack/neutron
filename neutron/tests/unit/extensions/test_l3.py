@@ -1250,6 +1250,61 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                                   expected_code=err_code,
                                                   tenant_id='bad_tenant')
 
+    def test_router_add_interface_by_subnet_other_tenant_subnet_returns_400(
+            self):
+        router_tenant_id = _uuid()
+        with self.router(tenant_id=router_tenant_id, set_context=True) as r:
+            with self.network(shared=True) as n:
+                with self.subnet(network=n) as s:
+                    err_code = exc.HTTPBadRequest.code
+                    self._router_interface_action('add',
+                                                  r['router']['id'],
+                                                  s['subnet']['id'],
+                                                  None,
+                                                  expected_code=err_code,
+                                                  tenant_id=router_tenant_id)
+
+    def _test_router_add_interface_by_port_allocation_pool(
+            self, out_of_pool=False, router_action_as_admin=False,
+            expected_code=exc.HTTPOk.code):
+        router_tenant_id = _uuid()
+        with self.router(tenant_id=router_tenant_id, set_context=True) as r:
+            with self.network(shared=True) as n:
+                with self.subnet(network=n) as s1, (
+                     self.subnet(network=n, cidr='fd00::/64',
+                                 ip_version=6)) as s2, (
+                     self.subnet(network=n, cidr='fd01::/64',
+                                 ip_version=6)) as s3:
+                    fixed_ips = [{'subnet_id': s1['subnet']['id']},
+                                 {'subnet_id': s2['subnet']['id']},
+                                 {'subnet_id': s3['subnet']['id']}]
+                    if out_of_pool:
+                        fixed_ips[1] = {'subnet_id': s2['subnet']['id'],
+                                        'ip_address':
+                                            s2['subnet']['gateway_ip']}
+                    with self.port(subnet=s1, fixed_ips=fixed_ips,
+                                   tenant_id=router_tenant_id) as p:
+                        kwargs = {'expected_code': expected_code}
+                        if not router_action_as_admin:
+                            kwargs['tenant_id'] = router_tenant_id
+                        self._router_interface_action(
+                            'add', r['router']['id'], None, p['port']['id'],
+                            **kwargs)
+
+    def test_router_add_interface_by_port_other_tenant_address_in_pool(
+            self):
+        self._test_router_add_interface_by_port_allocation_pool()
+
+    def test_router_add_interface_by_port_other_tenant_address_out_of_pool(
+            self):
+        self._test_router_add_interface_by_port_allocation_pool(
+            out_of_pool=True, expected_code=exc.HTTPBadRequest.code)
+
+    def test_router_add_interface_by_port_admin_address_out_of_pool(
+            self):
+        self._test_router_add_interface_by_port_allocation_pool(
+            out_of_pool=True, router_action_as_admin=True)
+
     def test_router_add_interface_subnet_with_port_from_other_tenant(self):
         tenant_id = _uuid()
         other_tenant_id = _uuid()
