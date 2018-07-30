@@ -182,7 +182,9 @@ class TunnelTest(object):
             lambda bridge: bridge if bridge in self.ovs_bridges else None)
 
         self.execute = mock.patch('neutron.agent.common.utils.execute').start()
-
+        self.mock_check_bridge_datapath_id = mock.patch.object(
+            self.mod_agent.OVSNeutronAgent,
+            '_check_bridge_datapath_id').start()
         self._define_expected_calls()
 
     def _define_expected_calls(self, arp_responder=False):

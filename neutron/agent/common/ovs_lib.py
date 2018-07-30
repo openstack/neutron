@@ -645,6 +645,11 @@ class OVSBridge(BaseOVS):
         self._set_egress_bw_limit_for_port(
             port_name, 0, 0)
 
+    def set_datapath_id(self, datapath_id):
+        dpid_cfg = {'datapath-id': datapath_id}
+        self.set_db_attribute('Bridge', self.br_name, 'other_config', dpid_cfg,
+                              check_error=True)
+
     def __enter__(self):
         self.create()
         return self

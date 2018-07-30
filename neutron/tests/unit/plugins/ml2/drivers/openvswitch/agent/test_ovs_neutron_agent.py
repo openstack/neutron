@@ -1172,6 +1172,7 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(sys, "exit"),\
                 mock.patch.object(self.agent, 'br_phys_cls') as phys_br_cls,\
                 mock.patch.object(self.agent, 'int_br') as int_br,\
+                mock.patch.object(self.agent, '_check_bridge_datapath_id'),\
                 mock.patch.object(ovs_lib.BaseOVS, 'get_bridges'):
             devex_fn.return_value = True
             parent = mock.MagicMock()
@@ -1251,6 +1252,7 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(utils, "execute") as utilsexec_fn,\
                 mock.patch.object(self.agent, 'br_phys_cls') as phys_br_cls,\
                 mock.patch.object(self.agent, 'int_br') as int_br,\
+                mock.patch.object(self.agent, '_check_bridge_datapath_id'),\
                 mock.patch.object(ip_lib.IPWrapper, "add_veth") as addveth_fn,\
                 mock.patch.object(ip_lib.IpLinkCommand,
                                   "delete") as linkdel_fn,\
@@ -1289,7 +1291,8 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(self.agent, 'br_phys_cls') as phys_br_cls,\
                 mock.patch.object(self.agent, 'int_br') as int_br,\
                 mock.patch.object(self.agent.int_br, 'db_get_val',
-                                  return_value='veth'),\
+                                  return_value='veth'), \
+                mock.patch.object(self.agent, '_check_bridge_datapath_id'), \
                 mock.patch.object(ovs_lib.BaseOVS, 'get_bridges'):
             phys_br = phys_br_cls()
             parent = mock.MagicMock()
@@ -2110,6 +2113,22 @@ class TestOvsNeutronAgent(object):
         self.agent.setup_entry_for_arp_reply(
             br, 'add', mock.Mock(), mock.Mock(), ip)
         self.assertFalse(br.install_arp_responder.called)
+
+    def test__check_bridge_datapath_id(self):
+        datapath_id = u'0000622486fa3f42'
+        datapath_ids_set = set()
+        for i in range(5):
+            dpid = format((i << 48) + int(datapath_id, 16), '0x').zfill(16)
+            bridge = mock.Mock()
+            bridge.br_name = 'bridge_%s' % i
+            bridge.get_datapath_id = mock.Mock(return_value=datapath_id)
+            self.agent._check_bridge_datapath_id(bridge, datapath_ids_set)
+            self.assertEqual(i + 1, len(datapath_ids_set))
+            self.assertIn(dpid, datapath_ids_set)
+            if i == 0:
+                bridge.set_datapath_id.assert_not_called()
+            else:
+                bridge.set_datapath_id.assert_called_once_with(dpid)
 
 
 class TestOvsNeutronAgentOFCtl(TestOvsNeutronAgent,
