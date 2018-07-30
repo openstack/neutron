@@ -168,10 +168,11 @@ class NeutronDbSubnet(ipam_base.Subnet):
                 window = 1
             else:
                 # Compute a value for the selection window
-                window = min(av_set.size, 10)
+                window = min(av_set.size, 30)
             ip_index = random.randint(1, window)
             candidate_ips = list(itertools.islice(av_set, ip_index))
-            allocated_ip = candidate_ips[-1]
+            allocated_ip = candidate_ips[
+                random.randint(0, len(candidate_ips) - 1)]
             return str(allocated_ip), ip_pool.id
 
         raise ipam_exc.IpAddressGenerationFailure(
