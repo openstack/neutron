@@ -2963,6 +2963,32 @@ class TestOvsDvrNeutronAgent(object):
         ]
         self.assertEqual(expected_on_tun_br, tun_br.mock_calls)
 
+    def test_port_bound_for_dvr_with_csnat_port_without_passing_fixed_ip(self):
+        self._setup_for_dvr_test()
+        int_br = mock.create_autospec(self.agent.int_br)
+        tun_br = mock.create_autospec(self.agent.tun_br)
+        int_br.set_db_attribute.return_value = True
+        int_br.db_get_val.return_value = {}
+        with mock.patch.object(self.agent.dvr_agent.plugin_rpc,
+                               'get_subnet_for_dvr') as mock_getsub,\
+                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
+                                  'get_ports_on_host_by_subnet',
+                                  return_value=[]),\
+                mock.patch.object(self.agent.dvr_agent.int_br,
+                                  'get_vif_port_by_id',
+                                  return_value=self._port),\
+                mock.patch.object(self.agent, 'int_br', new=int_br),\
+                mock.patch.object(self.agent, 'tun_br', new=tun_br),\
+                mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br),\
+                mock.patch.object(self.agent.dvr_agent, 'tun_br', new=tun_br):
+            self.agent.port_bound(
+                self._port, self._net_uuid, 'vxlan',
+                None, None, self._fixed_ips,
+                n_const.DEVICE_OWNER_ROUTER_SNAT,
+                False)
+            mock_getsub.assert_called_with(
+                self.agent.context, mock.ANY, fixed_ips=None)
+
     def test_port_bound_for_dvr_with_csnat_ports_ofport_change(self):
         self._setup_for_dvr_test()
         self._port_bound_for_dvr_with_csnat_ports()
