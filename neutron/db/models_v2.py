@@ -56,7 +56,12 @@ class IPAllocation(model_base.BASEV2):
     network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id",
                                                         ondelete="CASCADE"),
                            nullable=False, primary_key=True)
-    revises_on_change = ('port', )
+    network_standard_attr = orm.relationship(
+        'StandardAttribute', lazy='subquery', viewonly=True,
+        secondary='networks', uselist=False,
+        load_on_pending=True)
+
+    revises_on_change = ('port', 'network_standard_attr',)
 
 
 class Route(object):
