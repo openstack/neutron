@@ -17,6 +17,7 @@ import collections
 
 from neutron_lib import constants as lib_const
 from oslo_config import cfg
+from oslo_log import formatters
 from oslo_log import handlers
 from oslo_log import log as logging
 from ryu.base import app_manager
@@ -50,7 +51,13 @@ def setup_logging():
     if log_file:
         from logging import handlers as watch_handler
         log_file_handler = watch_handler.WatchedFileHandler(log_file)
+        log_file_handler.setLevel(
+            logging.DEBUG if cfg.CONF.debug else logging.INFO)
         LOG.logger.addHandler(log_file_handler)
+        log_file_handler.setFormatter(
+            formatters.ContextFormatter(
+                fmt=cfg.CONF.logging_default_format_string,
+                datefmt=cfg.CONF.log_date_format))
     elif cfg.CONF.use_journal:
         journal_handler = handlers.OSJournalHandler()
         LOG.logger.addHandler(journal_handler)
@@ -164,12 +171,12 @@ class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
         pkt = packet.Packet(msg.data)
         try:
             cookie_entry = self._get_cookie_by_id(cookie_id)
-            LOG.debug("action=%s project_id=%s log_resource_ids=%s vm_port=%s "
-                      "pkt=%s", cookie_entry.action, cookie_entry.project,
-                      list(cookie_entry.log_object_refs),
-                      cookie_entry.port, pkt)
+            LOG.info("action=%s project_id=%s log_resource_ids=%s vm_port=%s "
+                     "pkt=%s", cookie_entry.action, cookie_entry.project,
+                     list(cookie_entry.log_object_refs),
+                     cookie_entry.port, pkt)
         except log_exc.CookieNotFound:
-            LOG.debug("Unknown cookie=%s packet_in pkt=%s", cookie_id, pkt)
+            LOG.warning("Unknown cookie=%s packet_in pkt=%s", cookie_id, pkt)
 
     def defer_apply_on(self):
         self._deferred = True
