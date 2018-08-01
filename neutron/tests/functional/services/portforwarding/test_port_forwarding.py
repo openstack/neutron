@@ -10,10 +10,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import threading
+
 import mock
+import netaddr
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
+from neutron_lib.callbacks import exceptions as c_exc
 from neutron_lib import exceptions as lib_exc
+from neutron_lib.exceptions import l3 as lib_l3_exc
 from oslo_utils import uuidutils
+from six.moves import queue
 
 from neutron.services.portforwarding.common import exceptions as pf_exc
 from neutron.services.portforwarding import pf_plugin
@@ -39,6 +45,20 @@ class PortForwardingTestCaseBase(ml2_test_base.ML2TestFramework):
 
     def _get_floatingip(self, floatingip_id):
         return self.l3_plugin.get_floatingip(self.context, floatingip_id)
+
+    def _update_floatingip(self, fip_id, update_info):
+        return self.l3_plugin.update_floatingip(
+            self.context, fip_id, {"floatingip": update_info})
+
+    def _delete_floatingip(self, fip_id):
+        return self.l3_plugin.delete_floatingip(self.context, fip_id)
+
+    def _update_port(self, port_id, update_info):
+        return self.core_plugin.update_port(
+            self.context, port_id, {'port': update_info})
+
+    def _delete_port(self, port_id):
+        return self.core_plugin.delete_port(self.context, port_id)
 
     def _add_router_interface(self, router_id, subnet_id):
         interface_info = {"subnet_id": subnet_id}
@@ -260,3 +280,108 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         self.assertRaises(pf_exc.PortForwardingNotFound,
                           self.pf_plugin.delete_floatingip_port_forwarding,
                           self.context, res['id'], uuidutils.generate_uuid())
+
+    def _simulate_concurrent_requests_process_and_raise(
+            self, funcs, args_list):
+
+        class SimpleThread(threading.Thread):
+            def __init__(self, q):
+                super(SimpleThread, self).__init__()
+                self.q = q
+                self.exception = None
+
+            def run(self):
+                try:
+                    while not self.q.empty():
+                        item = None
+                        try:
+                            item = self.q.get(False)
+                            func, func_args = item[0], item[1]
+                            func(*func_args)
+                        except queue.Empty:
+                            pass
+                        finally:
+                            if item:
+                                self.q.task_done()
+                except Exception as e:
+                    self.exception = e
+
+            def get_exception(self):
+                return self.exception
+
+        q = queue.Queue()
+        for func, func_args in zip(funcs, args_list):
+            q.put_nowait((func, func_args))
+        threads = []
+        for _ in range(len(funcs)):
+            t = SimpleThread(q)
+            threads.append(t)
+            t.start()
+        q.join()
+
+        for t in threads:
+            e = t.get_exception()
+            if e:
+                raise e
+
+    def test_concurrent_create_port_forwarding_delete_fip(self):
+
+        func1 = self.pf_plugin.create_floatingip_port_forwarding
+        func2 = self._delete_floatingip
+        funcs = [func1, func2]
+        args_list = [(self.context, self.fip['id'], self.port_forwarding),
+                     (self.fip['id'],)]
+        self.assertRaises(c_exc.CallbackFailure,
+                          self._simulate_concurrent_requests_process_and_raise,
+                          funcs, args_list)
+
+        port_forwardings = self.pf_plugin.get_floatingip_port_forwardings(
+            self.context, floatingip_id=self.fip['id'], fields=['id'])
+        self.pf_plugin.delete_floatingip_port_forwarding(
+            self.context, port_forwardings[0][apidef.ID],
+            floatingip_id=self.fip['id'])
+
+        funcs.reverse()
+        args_list.reverse()
+        self.assertRaises(lib_l3_exc.FloatingIPNotFound,
+                          self._simulate_concurrent_requests_process_and_raise,
+                          funcs, args_list)
+
+    def test_concurrent_create_port_forwarding_update_fip(self):
+        newport = self._create_port(self.fmt, self.net['id']).json['port']
+        func1 = self.pf_plugin.create_floatingip_port_forwarding
+        func2 = self._update_floatingip
+        funcs = [func1, func2]
+        args_list = [(self.context, self.fip['id'], self.port_forwarding),
+                     (self.fip['id'], {'port_id': newport['id']})]
+        self.assertRaises(c_exc.CallbackFailure,
+                          self._simulate_concurrent_requests_process_and_raise,
+                          funcs, args_list)
+
+        funcs.reverse()
+        args_list.reverse()
+        self.assertRaises(c_exc.CallbackFailure,
+                          self._simulate_concurrent_requests_process_and_raise,
+                          funcs, args_list)
+
+    def test_concurrent_create_port_forwarding_update_port(self):
+        new_ip = str(
+            netaddr.IPAddress(self.port['fixed_ips'][0]['ip_address']) + 2)
+        funcs = [self.pf_plugin.create_floatingip_port_forwarding,
+                 self._update_port]
+        args_list = [(self.context, self.fip['id'], self.port_forwarding),
+                     (self.port['id'], {
+                         'fixed_ips': [{'subnet_id': self.subnet['id'],
+                                        'ip_address': new_ip}]})]
+        self._simulate_concurrent_requests_process_and_raise(funcs, args_list)
+        self.assertEqual([], self.pf_plugin.get_floatingip_port_forwardings(
+            self.context, floatingip_id=self.fip['id']))
+
+    def test_concurrent_create_port_forwarding_delete_port(self):
+        funcs = [self.pf_plugin.create_floatingip_port_forwarding,
+                 self._delete_port]
+        args_list = [(self.context, self.fip['id'], self.port_forwarding),
+                     (self.port['id'],)]
+        self._simulate_concurrent_requests_process_and_raise(funcs, args_list)
+        self.assertEqual([], self.pf_plugin.get_floatingip_port_forwardings(
+            self.context, floatingip_id=self.fip['id']))

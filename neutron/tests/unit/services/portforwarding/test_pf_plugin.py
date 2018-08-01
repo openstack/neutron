@@ -31,6 +31,7 @@ from neutron.api.rpc.handlers import resources_rpc
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
 from neutron import manager
+from neutron.objects import base as obj_base
 from neutron.objects import port_forwarding
 from neutron.objects import router
 from neutron.services.portforwarding.common import exceptions as pf_exc
@@ -188,6 +189,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
             self.pf_plugin.update_floatingip_port_forwarding,
             self.ctxt, 'pf_id', **pf_input)
 
+    @mock.patch.object(obj_base.NeutronDbObject, 'update_objects')
     @mock.patch.object(resources_rpc.ResourcesPushRpcApi, 'push')
     @mock.patch.object(pf_plugin.PortForwardingPlugin, '_check_router_match')
     @mock.patch.object(pf_plugin.PortForwardingPlugin,
@@ -197,7 +199,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
     @mock.patch('neutron.objects.port_forwarding.PortForwarding')
     def test_create_floatingip_port_forwarding(
             self, mock_port_forwarding, mock_fip_get_object, mock_find_router,
-            mock_check_router_match, mock_push_api):
+            mock_check_router_match, mock_push_api, mock_update_objects):
         # Update fip
         pf_input = {
             'port_forwarding':
@@ -210,11 +212,12 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         mock_port_forwarding.return_value = pf_obj
         mock_fip_get_object.return_value = fip_obj
         fip_obj.router_id = ''
+        fip_obj.fixed_port_id = ''
         self.pf_plugin.create_floatingip_port_forwarding(
             self.ctxt, **pf_input)
         mock_port_forwarding.assert_called_once_with(
             self.ctxt, **pf_input['port_forwarding']['port_forwarding'])
-        self.assertTrue(fip_obj.update.called)
+        self.assertTrue(mock_update_objects.called)
         self.assertTrue(pf_obj.create.called)
         mock_push_api.assert_called_once_with(
             self.ctxt, mock.ANY, rpc_events.CREATED)
@@ -223,15 +226,17 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         pf_obj.reset_mock()
         fip_obj.reset_mock()
         mock_port_forwarding.reset_mock()
+        mock_update_objects.reset_mock()
         mock_push_api.reset_mock()
         mock_port_forwarding.return_value = pf_obj
         fip_obj.router_id = 'router_id'
+        fip_obj.fixed_port_id = ''
         self.pf_plugin.create_floatingip_port_forwarding(
             self.ctxt, **pf_input)
         mock_port_forwarding.assert_called_once_with(
             self.ctxt, **pf_input['port_forwarding']['port_forwarding'])
         self.assertTrue(pf_obj.create.called)
-        self.assertFalse(fip_obj.update.called)
+        self.assertFalse(mock_update_objects.called)
         mock_push_api.assert_called_once_with(
             self.ctxt, mock.ANY, rpc_events.CREATED)
 
@@ -256,6 +261,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         fip_obj = mock.Mock()
         mock_port_forwarding.return_value = pf_obj
         mock_fip_get_object.return_value = fip_obj
+        fip_obj.fixed_port_id = ''
 
         pf_obj.create.side_effect = obj_exc.NeutronDbObjectDuplicateEntry(
             mock.Mock(), mock.Mock())

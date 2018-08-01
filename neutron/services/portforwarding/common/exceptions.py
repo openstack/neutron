@@ -23,3 +23,7 @@ class PortForwardingNotFound(n_exc.NotFound):
 
 class PortForwardingNotSupportFilterField(n_exc.BadRequest):
     message = _("Port Forwarding filter %(filter)s is not supported.")
+
+
+class FipInUseByPortForwarding(n_exc.InUse):
+    message = _("Floating IP %(id)s in use by Port Forwarding resources.")

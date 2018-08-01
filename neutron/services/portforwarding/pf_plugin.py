@@ -19,7 +19,9 @@ import functools
 import netaddr
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
 from neutron_lib.api.definitions import l3
+from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_consts
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as lib_exc
@@ -27,6 +29,7 @@ from neutron_lib.exceptions import l3 as lib_l3_exc
 from neutron_lib.objects import exceptions as obj_exc
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
+from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.api.rpc.callbacks import events as rpc_events
@@ -40,6 +43,8 @@ from neutron.objects import base as base_obj
 from neutron.objects import port_forwarding as pf
 from neutron.objects import router
 from neutron.services.portforwarding.common import exceptions as pf_exc
+
+LOG = logging.getLogger(__name__)
 
 
 def make_result_with_fields(f):
@@ -96,6 +101,116 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 port_forwarding_result.append(pf_dict)
             result_dict[apidef.COLLECTION_NAME] = port_forwarding_result
         return result_dict
+
+    @registry.receives(resources.FLOATING_IP, [events.PRECOMMIT_UPDATE,
+                                               events.PRECOMMIT_DELETE])
+    def _check_floatingip_request(self, resource, event, trigger, context,
+                                  **kwargs):
+        # We only support the "free" floatingip to be associated with
+        # port forwarding resources. And in the PUT request of floatingip,
+        # the request body must contain a "port_id" field which is not
+        # allowed in port forwarding functionality.
+        floatingip_id = None
+        if event == events.PRECOMMIT_UPDATE:
+            fip_db = kwargs.get('floatingip_db')
+            floatingip_id = fip_db.id
+            # Here the key-value must contain a floatingip param, and the value
+            # must a dict with key 'floatingip'.
+            if not kwargs['floatingip']['floatingip'].get('port_id'):
+                # Only care about the associate floatingip cases.
+                # The port_id field is a must-option. But if a floatingip
+                # disassociate a internal port, the port_id should be null.
+                LOG.debug('Skip check for floatingip %s, as the update '
+                          'request does not contain port_id.', floatingip_id)
+                return
+        elif event == events.PRECOMMIT_DELETE:
+            floatingip_id = kwargs.get('port').get('device_id')
+        if not floatingip_id:
+            return
+
+        exist_pf_resources = pf.PortForwarding.get_objects(
+            context, floatingip_id=floatingip_id)
+        if exist_pf_resources:
+            raise pf_exc.FipInUseByPortForwarding(id=floatingip_id)
+
+    @registry.receives(resources.PORT, [events.AFTER_UPDATE,
+                                        events.PRECOMMIT_DELETE])
+    @db_api.retry_if_session_inactive()
+    def _process_port_request(self, resource, event, trigger, context,
+                              **kwargs):
+        # Deleting floatingip will receive port resource with precommit_delete
+        # event, so just return, then check the request in
+        # _check_floatingip_request callback.
+        if kwargs['port']['device_owner'].startswith(
+                lib_consts.DEVICE_OWNER_FLOATINGIP):
+            return
+
+        # This block is used for checking if there are some fixed ips updates.
+        # Whatever the event is AFTER_UPDATE/PRECOMMIT_DELETE,
+        # we will use the update_ip_set for checking if the possible associated
+        # port forwarding resources need to be deleted for port's AFTER_UPDATE
+        # event. Or get all affected ip addresses for port's PRECOMMIT_DELETE
+        # event.
+        port_id = kwargs['port']['id']
+        update_fixed_ips = kwargs['port']['fixed_ips']
+        update_ip_set = set()
+        for update_fixed_ip in update_fixed_ips:
+            if (netaddr.IPNetwork(update_fixed_ip.get('ip_address')).version ==
+                    lib_consts.IP_VERSION_4):
+                update_ip_set.add(update_fixed_ip.get('ip_address'))
+        if not update_ip_set:
+            return
+
+        # If the port owner wants to update or delete port, we must elevate the
+        # context to check if the floatingip or port forwarding resources
+        # are owned by other tenants.
+        if not context.is_admin:
+            context = context.elevated()
+        # If the logic arrives here, that means we have got update_ip_set and
+        # its value is not None. So we need to get all port forwarding
+        # resources based on the request port_id for preparing the next
+        # process, such as deleting them.
+        pf_resources = pf.PortForwarding.get_objects(
+            context, internal_port_id=port_id)
+        if not pf_resources:
+            return
+
+        # If the logic arrives here, that means we have got pf_resources and
+        # its value is not None either. Then we collect all ip addresses
+        # which are used by port forwarding resources to generate used_ip_set,
+        # and we default to set remove_ip_set as used_ip_set which means we
+        # want to delete all port forwarding resources when event is
+        # PRECOMMIT_DELETE. And when event is AFTER_UPDATE, we get the
+        # different part.
+        used_ip_set = set()
+        for pf_resource in pf_resources:
+            used_ip_set.add(str(pf_resource.internal_ip_address))
+        remove_ip_set = used_ip_set
+        if event == events.AFTER_UPDATE:
+            remove_ip_set = used_ip_set - update_ip_set
+            if not remove_ip_set:
+                return
+
+        # Here, we get the remove_ip_set, the following block will delete the
+        # port forwarding resources based on remove_ip_set. Just need to note
+        # here, if event is AFTER_UPDATE, and remove_ip_set is empty, the
+        # following block won't be processed.
+        remove_port_forwarding_list = []
+        with db_api.context_manager.writer.using(context):
+            for pf_resource in pf_resources:
+                if str(pf_resource.internal_ip_address) in remove_ip_set:
+                    pf_objs = pf.PortForwarding.get_objects(
+                        context, floatingip_id=pf_resource.floatingip_id)
+                    if len(pf_objs) == 1 and pf_objs[0].id == pf_resource.id:
+                        fip_obj = router.FloatingIP.get_object(
+                            context, id=pf_resource.floatingip_id)
+                        fip_obj.update_fields({'router_id': None})
+                        fip_obj.update()
+                    pf_resource.delete()
+                    remove_port_forwarding_list.append(pf_resource)
+
+        self.push_api.push(context, remove_port_forwarding_list,
+                           rpc_events.DELETED)
 
     def _get_internal_ip_subnet(self, request_ip, fixed_ips):
         request_ip = netaddr.IPNetwork(request_ip)
@@ -166,34 +281,45 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                                           port_forwarding):
         port_forwarding = port_forwarding.get(apidef.RESOURCE_NAME)
         port_forwarding['floatingip_id'] = floatingip_id
-        pf_obj = pf.PortForwarding(context, **port_forwarding)
 
-        try:
-            with db_api.context_manager.writer.using(context):
-                fip_obj = self._get_fip_obj(context, floatingip_id)
+        with db_api.context_manager.writer.using(context):
+            fip_obj = self._get_fip_obj(context, floatingip_id)
+            if fip_obj.fixed_port_id:
+                raise lib_l3_exc.FloatingIPPortAlreadyAssociated(
+                    port_id=port_forwarding['internal_port_id'],
+                    fip_id=fip_obj.id,
+                    floating_ip_address=fip_obj.floating_ip_address,
+                    fixed_ip=str(port_forwarding['internal_ip_address']),
+                    net_id=fip_obj.floating_network_id)
+            router_id = self._find_a_router_for_fip_port_forwarding(
+                context, port_forwarding, fip_obj)
+            pf_obj = pf.PortForwarding(context, **port_forwarding)
 
-                router_id = self._find_a_router_for_fip_port_forwarding(
-                    context, port_forwarding, fip_obj)
-                # If this func does not raise an exception, means the
-                # router_id matched.
-                # case1: fip_obj.router_id = None
-                # case2: fip_obj.router_id is the same with we selected.
-                self._check_router_match(context, fip_obj,
-                                         router_id, port_forwarding)
-                if not fip_obj.router_id:
-                    fip_obj.router_id = router_id
-                    fip_obj.update()
+            # If this func does not raise an exception, means the
+            # router_id matched.
+            # case1: fip_obj.router_id = None
+            # case2: fip_obj.router_id is the same with we selected.
+            self._check_router_match(context, fip_obj,
+                                     router_id, port_forwarding)
+
+            if not fip_obj.router_id:
+                values = {'router_id': router_id, 'fixed_port_id': None}
+                router.FloatingIP.update_objects(
+                    context, values, id=floatingip_id)
+            try:
                 pf_obj.create()
-        except obj_exc.NeutronDbObjectDuplicateEntry:
-            (__, conflict_params) = self._find_existing_port_forwarding(
-                context, floatingip_id, port_forwarding)
-            message = _("A duplicate port forwarding entry with same "
-                        "attributes already exists, conflicting values "
-                        "are %s") % conflict_params
-            raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
-                                     msg=message)
-        self.push_api.push(context, [pf_obj], rpc_events.CREATED)
-        return pf_obj
+            except obj_exc.NeutronDbObjectDuplicateEntry:
+                (__,
+                 conflict_params) = self._find_existing_port_forwarding(
+                    context, floatingip_id, port_forwarding)
+                message = _("A duplicate port forwarding entry with same "
+                            "attributes already exists, conflicting "
+                            "values are %s") % conflict_params
+                raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
+                                         msg=message)
+
+            self.push_api.push(context, [pf_obj], rpc_events.CREATED)
+            return pf_obj
 
     @db_base_plugin_common.convert_result_to_dict
     def update_floatingip_port_forwarding(self, context, id, floatingip_id,
