@@ -180,7 +180,13 @@ overrides the generic check performed by oslo_policy in this case.
 It uses for those cases where neutron needs to check whether the project
 submitting a request for a new resource owns the parent resource of the one
 being created. Current usages of ``OwnerCheck`` include, for instance,
-creating and updating a subnet.
+creating and updating a subnet. This class supports the extension parent
+resources owner check which the parent resource introduced by
+service plugins. Such as router and floatingip owner check for ``router``
+service plugin. Developers can register the extension resource name and service
+plugin name which were registered in neutron-lib into
+``EXT_PARENT_RESOURCE_MAPPING`` which is located in
+``neutron.common.constants``.
 
 The check, performed in the ``__call__`` method, works as follows:
 
@@ -192,7 +198,9 @@ The check, performed in the ``__call__`` method, works as follows:
   * if the previous check failed, extract a parent resource type and a
     parent field name from the target field. For instance
     ``networks:tenant_id`` identifies the ``tenant_id`` attribute of the
-    ``network`` resource;
+    ``network`` resource. For extension parent resource case,
+    ``ext_parent:tenant_id`` identifies the ``tenant_id`` attribute of the
+    registered extension resource in ``EXT_PARENT_RESOURCE_MAPPING``;
   * if no parent resource or target field could be identified raise a
     ``PolicyCheckError`` exception;
   * Retrieve a 'parent foreign key' from the ``_RESOURCE_FOREIGN_KEYS`` data

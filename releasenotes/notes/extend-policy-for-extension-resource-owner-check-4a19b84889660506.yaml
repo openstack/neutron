@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    Introduces extension parent resources owner check in
+    ``neutron.policy.OwnerCheck``. It can be used by registering an extension
+    parent resource and service plugin which introduced the corresponding
+    parent resource into ``EXT_PARENT_RESOURCE_MAPPING`` located in
+    ``neutron.common.constants``. And introduces a new policy role
+    ``admin_or_ext_parent_owner`` into ``policy.json`` for this function.

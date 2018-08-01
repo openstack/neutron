@@ -224,7 +224,11 @@ class OwnerCheck(policy.Check):
         # resource is handled by the core plugin. It might be worth
         # having a way to map resources to plugins so to make this
         # check more general
-        f = getattr(directory.get_plugin(), 'get_%s' % resource_type)
+        plugin = directory.get_plugin()
+        if resource_type in const.EXT_PARENT_RESOURCE_MAPPING:
+            plugin = directory.get_plugin(
+                const.EXT_PARENT_RESOURCE_MAPPING[resource_type])
+        f = getattr(plugin, 'get_%s' % resource_type)
         # f *must* exist, if not found it is better to let neutron
         # explode. Check will be performed with admin context
         try:
@@ -272,6 +276,13 @@ class OwnerCheck(policy.Check):
                     reason=err_reason)
             parent_foreign_key = _RESOURCE_FOREIGN_KEYS.get(
                 "%ss" % parent_res, None)
+            if parent_res == const.EXT_PARENT_PREFIX:
+                for resource in const.EXT_PARENT_RESOURCE_MAPPING:
+                    key = "%s_%s_id" % (const.EXT_PARENT_PREFIX, resource)
+                    if key in target:
+                        parent_foreign_key = key
+                        parent_res = resource
+                        break
             if not parent_foreign_key:
                 err_reason = (_("Unable to verify match:%(match)s as the "
                                 "parent resource: %(res)s was not found") %

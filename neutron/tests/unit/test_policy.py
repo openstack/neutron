@@ -599,3 +599,26 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         result = policy._is_attribute_explicitly_set(
             attr, resource, target, action)
         self.assertFalse(result)
+
+    @mock.patch("neutron.common.constants.EXT_PARENT_RESOURCE_MAPPING",
+                {'parentresource': 'registered_plugin_name'})
+    @mock.patch("neutron_lib.plugins.directory.get_plugin")
+    def test_enforce_tenant_id_check_parent_resource_owner(
+            self, mock_get_plugin):
+
+        def fakegetparent(*args, **kwargs):
+            return {'tenant_id': 'fake'}
+        mock_plugin = mock.Mock()
+        mock_plugin.get_parentresource = fakegetparent
+        mock_get_plugin.return_value = mock_plugin
+
+        self._set_rules(
+            admin_or_ext_parent_owner="rule:context_is_admin or "
+                                      "tenant_id:%(ext_parent:tenant_id)s",
+            create_parentresource_subresource="rule:admin_or_ext_parent_owner")
+        self.fakepolicyinit()
+        action = 'create_parentresource_subresource'
+        target = {'ext_parent_parentresource_id': 'whatever', 'foo': 'bar'}
+        result = policy.enforce(self.context, action, target)
+        mock_get_plugin.assert_called_with('registered_plugin_name')
+        self.assertTrue(result)
