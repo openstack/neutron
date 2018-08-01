@@ -201,9 +201,7 @@ def populate_flow_common(direction, flow_template, port):
     """Initialize common flow fields."""
     if direction == n_consts.INGRESS_DIRECTION:
         flow_template['table'] = ovs_consts.RULES_INGRESS_TABLE
-        flow_template['actions'] = "output:{:d},resubmit(,{:d})".format(
-            port.ofport,
-            ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE)
+        flow_template['actions'] = "output:{:d}".format(port.ofport)
     elif direction == n_consts.EGRESS_DIRECTION:
         flow_template['table'] = ovs_consts.RULES_EGRESS_TABLE
         # Traffic can be both ingress and egress, check that no ingress rules
@@ -332,8 +330,11 @@ def create_accept_flows(flow):
     flow['ct_state'] = CT_STATES[1]
     if flow['table'] == ovs_consts.RULES_INGRESS_TABLE:
         flow['actions'] = (
-            'ct(commit,zone=NXM_NX_REG{:d}[0..15]),{:s}'.format(
-                ovsfw_consts.REG_NET, flow['actions']))
+            'ct(commit,zone=NXM_NX_REG{:d}[0..15]),{:s},'
+            'resubmit(,{:d})'.format(
+                ovsfw_consts.REG_NET, flow['actions'],
+                ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE)
+        )
     result.append(flow)
     return result
 
