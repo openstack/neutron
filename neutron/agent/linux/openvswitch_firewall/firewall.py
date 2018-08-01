@@ -709,8 +709,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 dl_type=constants.ETHERTYPE_IPV6,
                 nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
                 icmp_type=icmp_type,
-                actions='resubmit(,%d)' % (
-                    ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE)
+                actions='normal'
             )
 
     def _initialize_egress_no_port_security(self, port_id):
@@ -744,9 +743,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
             priority=80,
             reg_port=ovs_port.ofport,
-            actions='resubmit(,%d)' % (
-                ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE)
-
+            actions='normal'
         )
 
     def _remove_egress_no_port_security(self, port_id):
@@ -781,8 +778,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 dl_src=mac_addr,
                 dl_type=constants.ETHERTYPE_ARP,
                 arp_spa=ip_addr,
-                actions='resubmit(,%d)' % (
-                    ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE)
+                actions='normal'
             )
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
@@ -897,8 +893,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
             priority=80,
             reg_port=port.ofport,
-            actions='resubmit(,%d)' % (
-                ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE)
+            actions='normal'
         )
 
     def _initialize_tracked_egress(self, port):
@@ -929,8 +924,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 ct_mark=ovsfw_consts.CT_MARK_NORMAL,
                 reg_port=port.ofport,
                 ct_zone=port.vlan_tag,
-                actions='resubmit(,%d)' % (
-                    ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE)
+                actions='normal'
             )
         self._add_flow(
             table=ovs_consts.RULES_EGRESS_TABLE,
@@ -961,9 +955,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 dl_type=constants.ETHERTYPE_IPV6,
                 nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
                 icmp_type=icmp_type,
-                actions='output:{:d},resubmit(,{:d})'.format(
-                    port.ofport,
-                    ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE),
+                actions='output:{:d}'.format(port.ofport)
             )
 
     def _initialize_ingress(self, port):
@@ -973,9 +965,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             priority=100,
             dl_type=constants.ETHERTYPE_ARP,
             reg_port=port.ofport,
-            actions='output:{:d},resubmit(,{:d})'.format(
-                port.ofport,
-                ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE),
+            actions='output:{:d}'.format(port.ofport)
         )
         self._initialize_ingress_ipv6_icmp(port)
 
@@ -991,9 +981,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 nw_proto=lib_const.PROTO_NUM_UDP,
                 tp_src=src_port,
                 tp_dst=dst_port,
-                actions='output:{:d},resubmit(,{:d})'.format(
-                    port.ofport,
-                    ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE),
+                actions='output:{:d}'.format(port.ofport)
             )
 
         # Track untracked
@@ -1043,9 +1031,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 ct_state=state,
                 ct_mark=ovsfw_consts.CT_MARK_NORMAL,
                 ct_zone=port.vlan_tag,
-                actions='output:{:d},resubmit(,{:d})'.format(
-                    port.ofport,
-                    ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE)
+                actions='output:{:d}'.format(port.ofport)
             )
         self._add_flow(
             table=ovs_consts.RULES_INGRESS_TABLE,
