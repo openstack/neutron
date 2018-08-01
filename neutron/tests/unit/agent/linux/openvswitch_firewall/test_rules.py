@@ -185,8 +185,7 @@ class TestCreateProtocolFlows(base.BaseTestCase):
         rule = {'protocol': constants.PROTO_NUM_TCP}
         expected_flows = [{
             'table': ovs_consts.RULES_INGRESS_TABLE,
-            'actions': 'output:1,resubmit(,%d)' % (
-                ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE),
+            'actions': 'output:1',
             'nw_proto': constants.PROTO_NUM_TCP,
         }]
         self._test_create_protocol_flows_helper(
@@ -392,12 +391,12 @@ class TestCreateConjFlows(base.BaseTestCase):
                          flows[0]['ct_state'])
         self.assertEqual(ovsfw_consts.OF_STATE_NEW_NOT_ESTABLISHED,
                          flows[1]['ct_state'])
-        self.assertEqual("output:{:d},resubmit(,{:d})".format(
-                             port.ofport,
-                             ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE),
+        self.assertEqual("output:{:d}".format(port.ofport),
                          flows[0]['actions'])
-        self.assertEqual("ct(commit,zone=NXM_NX_REG{:d}[0..15]),{:s}".format(
-            ovsfw_consts.REG_NET, flows[0]['actions']),
+        self.assertEqual("ct(commit,zone=NXM_NX_REG{:d}[0..15]),{:s},"
+                         "resubmit(,{:d})".format(
+                             ovsfw_consts.REG_NET, flows[0]['actions'],
+                             ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE),
                          flows[1]['actions'])
 
         for f in flows:
