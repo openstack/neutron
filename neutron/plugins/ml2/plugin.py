@@ -254,7 +254,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                           **kwargs):
         port_id = object_id
         port = db.get_port(context, port_id)
-        port_binding = utils.get_port_binding_by_status_and_host(
+        port_binding = p_utils.get_port_binding_by_status_and_host(
             getattr(port, 'port_bindings', []), const.ACTIVE)
         if not port or not port_binding:
             LOG.debug("Port %s was deleted so its status cannot be updated.",
@@ -510,7 +510,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # mechanism driver update_port_*commit() calls.
             try:
                 port_db = self._get_port(plugin_context, port_id)
-                cur_binding = utils.get_port_binding_by_status_and_host(
+                cur_binding = p_utils.get_port_binding_by_status_and_host(
                     port_db.port_bindings, const.ACTIVE)
             except exc.PortNotFound:
                 port_db, cur_binding = None, None
@@ -558,7 +558,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             cur_context_binding = cur_binding
             if new_binding.status == const.INACTIVE:
                 cur_context_binding = (
-                    utils.get_port_binding_by_status_and_host(
+                    p_utils.get_port_binding_by_status_and_host(
                         port_db.port_bindings, const.INACTIVE,
                         host=new_binding.host))
             cur_context = driver_context.PortContext(
@@ -665,7 +665,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @resource_extend.extends([port_def.COLLECTION_NAME])
     def _ml2_extend_port_dict_binding(port_res, port_db):
         plugin = directory.get_plugin()
-        port_binding = utils.get_port_binding_by_status_and_host(
+        port_binding = p_utils.get_port_binding_by_status_and_host(
             port_db.port_bindings, const.ACTIVE)
         # None when called during unit tests for other plugins.
         if port_binding:
@@ -1339,7 +1339,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         original_port=original_port)
         with db_api.context_manager.writer.using(context):
             port_db = self._get_port(context, id)
-            binding = utils.get_port_binding_by_status_and_host(
+            binding = p_utils.get_port_binding_by_status_and_host(
                 port_db.port_bindings, const.ACTIVE)
             if not binding:
                 raise exc.PortNotFound(port_id=id)
@@ -1558,7 +1558,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with db_api.context_manager.writer.using(context):
             try:
                 port_db = self._get_port(context, id)
-                binding = utils.get_port_binding_by_status_and_host(
+                binding = p_utils.get_port_binding_by_status_and_host(
                     port_db.port_bindings, const.ACTIVE,
                     raise_if_not_found=True, port_id=id)
             except exc.PortNotFound:
@@ -1678,7 +1678,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # related attribute port_binding could disappear in
                 # concurrent port deletion.
                 # It's not an error condition.
-                binding = utils.get_port_binding_by_status_and_host(
+                binding = p_utils.get_port_binding_by_status_and_host(
                     port_db.port_bindings, const.ACTIVE)
                 if not binding:
                     LOG.info("Binding info for port %s was not found, "
@@ -1722,7 +1722,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         plugin_context, port['id'], host)
                     bindlevelhost_match = host
                 else:
-                    binding = utils.get_port_binding_by_status_and_host(
+                    binding = p_utils.get_port_binding_by_status_and_host(
                         port_db.port_bindings, const.ACTIVE)
                     bindlevelhost_match = binding.host if binding else None
                 if not binding:
@@ -1808,7 +1808,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # listening for db events can modify the port if necessary
                 context.session.flush()
                 updated_port = self._make_port_dict(port)
-                binding = utils.get_port_binding_by_status_and_host(
+                binding = p_utils.get_port_binding_by_status_and_host(
                     port.port_bindings, const.ACTIVE, raise_if_not_found=True,
                     port_id=port_id)
                 levels = db.get_binding_levels(context, port.id, binding.host)
@@ -2061,7 +2061,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     port_id=port_id, host=attrs[pbe_ext.HOST])
             status = const.ACTIVE
             is_active_binding = True
-            active_binding = utils.get_port_binding_by_status_and_host(
+            active_binding = p_utils.get_port_binding_by_status_and_host(
                 port_db.port_bindings, const.ACTIVE)
             if active_binding:
                 status = const.INACTIVE
@@ -2173,12 +2173,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 port_id = port_id['port_id']
             port_db = self._get_port(context, port_id)
             self._validate_compute_port(port_db)
-            active_binding = utils.get_port_binding_by_status_and_host(
+            active_binding = p_utils.get_port_binding_by_status_and_host(
                 port_db.port_bindings, const.ACTIVE)
             if host == (active_binding and active_binding.host):
                 raise n_exc.PortBindingAlreadyActive(port_id=port_id,
                                                      host=host)
-            inactive_binding = utils.get_port_binding_by_status_and_host(
+            inactive_binding = p_utils.get_port_binding_by_status_and_host(
                 port_db.port_bindings, const.INACTIVE, host=host)
             if not inactive_binding or inactive_binding.host != host:
                 raise n_exc.PortBindingNotFound(port_id=port_id, host=host)

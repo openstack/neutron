@@ -18,6 +18,10 @@ from neutron_lib import exceptions as e
 from neutron._i18n import _
 
 
+# TODO(boden): remove rpc shims
+PortBindingNotFound = e.PortBindingNotFound
+
+
 class SubnetPoolNotFound(e.NotFound):
     message = _("Subnet pool %(subnetpool_id)s could not be found.")
 
@@ -334,11 +338,6 @@ class FilterIDForIPNotFound(e.NotFound):
 class FailedToAddQdiscToDevice(e.NeutronException):
     message = _("Failed to add %(direction)s qdisc "
                 "to device %(device)s.")
-
-
-class PortBindingNotFound(e.NotFound):
-    message = _("Binding for port %(port_id)s for host %(host)s could not be "
-                "found.")
 
 
 class PortBindingAlreadyActive(e.Conflict):

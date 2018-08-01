@@ -17,10 +17,10 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib.plugins import constants as plugin_const
 from neutron_lib.plugins import directory
+from neutron_lib.plugins import utils
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as orm_exc
 
-from neutron.common import utils
 from neutron.db import _utils as db_utils
 from neutron.db.models import securitygroup as sg_db
 from neutron.objects import ports

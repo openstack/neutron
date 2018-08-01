@@ -19,12 +19,12 @@ from neutron_lib.api.definitions import portbindings_extended as pbe_ext
 from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib.plugins import directory
+from neutron_lib.plugins import utils
 from oslo_config import cfg
 from oslo_serialization import jsonutils
 import webob.exc
 
 from neutron.common import exceptions
-from neutron.common import utils
 from neutron.conf.plugins.ml2 import config
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.plugins.ml2 import driver_context

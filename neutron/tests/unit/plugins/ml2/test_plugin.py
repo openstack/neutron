@@ -35,6 +35,7 @@ from neutron_lib import fixture
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api as driver_api
+from neutron_lib.plugins import utils as p_utils
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
@@ -1810,7 +1811,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         # create a port and delete it so we have an expired mechanism context
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = utils.get_port_binding_by_status_and_host(
+            binding = p_utils.get_port_binding_by_status_and_host(
                 plugin._get_port(self.context,
                                  port['port']['id']).port_bindings,
                 constants.ACTIVE)
@@ -1833,7 +1834,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def _create_port_and_bound_context(self, port_vif_type, bound_vif_type):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = utils.get_port_binding_by_status_and_host(
+            binding = p_utils.get_port_binding_by_status_and_host(
                 plugin._get_port(self.context,
                                  port['port']['id']).port_bindings,
                 constants.ACTIVE)
@@ -1950,7 +1951,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def test_update_port_binding_host_id_none(self):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = utils.get_port_binding_by_status_and_host(
+            binding = p_utils.get_port_binding_by_status_and_host(
                 plugin._get_port(self.context,
                                  port['port']['id']).port_bindings,
                 constants.ACTIVE)
@@ -1972,7 +1973,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def test_update_port_binding_host_id_not_changed(self):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = utils.get_port_binding_by_status_and_host(
+            binding = p_utils.get_port_binding_by_status_and_host(
                 plugin._get_port(self.context,
                                  port['port']['id']).port_bindings,
                 constants.ACTIVE)
@@ -2961,7 +2962,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
             # add writer here to make sure that the following operations are
             # performed in the same session
             with db_api.context_manager.writer.using(self.context):
-                binding = utils.get_port_binding_by_status_and_host(
+                binding = p_utils.get_port_binding_by_status_and_host(
                     plugin._get_port(self.context,
                                      port['port']['id']).port_bindings,
                     constants.ACTIVE)
