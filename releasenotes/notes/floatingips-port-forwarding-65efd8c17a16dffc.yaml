@@ -1,0 +1,26 @@
+---
+prelude: >
+    Added support for floating IPs port forwarding.
+features:
+    - |
+      Support for floating IPs port forwarding has been added.
+
+      * Users can now forward the traffic from a TCP/UDP/other protocol
+        port of a floating IP address to a TCP/UDP/other protocol port
+        associated to one of the fixed IP addresses of a Neutron port.
+      * This is accomplished by associating ``port_forwarding``
+        sub-resources to floating IPs.
+      * To create a ``port_forwarding``, the user specifies: a floating
+        IP ID, the floating IP's ``external_port`` number, the Neutron
+        port ID ``internal_port_id``, an ``internal_ip_address`` (one of
+        the Neutron port's fixed IPs),  the ``internal_port`` number and
+        the ``protocol`` to be used (TCP or UDP for example).
+      * CRUD operations for ``port_forwardings`` are implemented by a Neutron
+        API extension and a service plugin. Please refer to the Neutron API
+        reference documentation for details.
+      * A user cannot create ``port_forwardings`` for a floating IP
+        that is already associated with a Neutron port.
+      * A floating IP can have many ``port_forwardings``.
+      * Port forwardings can only be created for floating IPs that are
+        managed by centralized routers in the network node: legacy, HA,
+        DVR+HA.
