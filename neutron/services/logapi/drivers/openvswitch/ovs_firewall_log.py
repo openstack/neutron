@@ -274,10 +274,14 @@ class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
             # try to clean port flows log for port updated/create event
             self._cleanup_port_flows_log(port_id)
             logs_info = self.resource_rpc.get_sg_log_info_for_port(
-                context, port_id=port_id)
+                context,
+                resource_type=log_const.SECURITY_GROUP,
+                port_id=port_id)
         elif log_resources:
             logs_info = self.resource_rpc.get_sg_log_info_for_log_resources(
-                context, log_resources=log_resources)
+                context,
+                resource_type=log_const.SECURITY_GROUP,
+                log_resources=log_resources)
 
         for log_info in logs_info:
             log_id = log_info['id']
