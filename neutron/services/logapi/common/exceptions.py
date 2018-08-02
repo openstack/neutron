@@ -51,3 +51,9 @@ class LogapiDriverException(n_exc.NeutronException):
 
 class CookieNotFound(n_exc.NotFound):
     message = _("Cookie %(cookie_id)s could not be found.")
+
+
+class ValidatedMethodNotFound(n_exc.NeutronException):
+    """A validated method not found Exception"""
+    message = _('Validated method for %(resource_type)s log '
+                'could not be found.')
