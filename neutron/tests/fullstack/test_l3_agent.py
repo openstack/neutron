@@ -273,6 +273,19 @@ class TestHAL3Agent(TestL3Agent):
             if self._get_keepalived_state(keepalived_state_file) == "master":
                 return keepalived_state_file
 
+    def _get_l3_agents_with_ha_state(self, l3_agents, router_id, ha_state):
+        found_agents = []
+        agents_hosting_router = self.client.list_l3_agent_hosting_routers(
+            router_id)['agents']
+        for agent in l3_agents:
+            agent_host = agent.neutron_cfg_fixture.get_host()
+            for agent_hosting_router in agents_hosting_router:
+                if (agent_hosting_router['host'] == agent_host and
+                        agent_hosting_router['ha_state'] == ha_state):
+                    found_agents.append(agent)
+                    break
+        return found_agents
+
     def test_keepalived_multiple_sighups_does_not_forfeit_mastership(self):
         """Setup a complete "Neutron stack" - both an internal and an external
            network+subnet, and a router connected to both.
@@ -322,7 +335,7 @@ class TestHAL3Agent(TestL3Agent):
                 "master",
                 self._get_keepalived_state(keepalived_state_file))
 
-    def test_ha_router_restart_agents_no_packet_lost(self):
+    def test_ha_router_restart_standby_agents_no_packet_lost(self):
         tenant_id = uuidutils.generate_uuid()
         ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
         router = self.safe_client.create_router(tenant_id, ha=True,
@@ -348,6 +361,8 @@ class TestHAL3Agent(TestL3Agent):
         router_ip = router['external_gateway_info'][
             'external_fixed_ips'][0]['ip_address']
         l3_agents = [host.agents['l3'] for host in self.environment.hosts]
+        l3_standby_agents = self._get_l3_agents_with_ha_state(
+            l3_agents, router['id'], 'standby')
 
         self._assert_ping_during_agents_restart(
-            l3_agents, external_vm.namespace, [router_ip], count=60)
+            l3_standby_agents, external_vm.namespace, [router_ip], count=60)
