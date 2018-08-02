@@ -15,16 +15,22 @@
 
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
-from neutron_lib.callbacks import resources
 from oslo_log import log as logging
 
 from neutron.common import exceptions
 from neutron.services.logapi.common import constants as log_const
-from neutron.services.logapi.common import db_api
 from neutron.services.logapi.common import exceptions as log_exc
 from neutron.services.logapi.rpc import server as server_rpc
 
 LOG = logging.getLogger(__name__)
+
+RESOURCE_CB_CLASS_MAP = {}
+
+
+# This function should be called by log_driver
+def register(resource_type, obj_class):
+    if resource_type not in RESOURCE_CB_CLASS_MAP:
+        RESOURCE_CB_CLASS_MAP[resource_type] = obj_class
 
 
 def _get_param(args, kwargs, name, index):
@@ -38,7 +44,24 @@ def _get_param(args, kwargs, name, index):
             raise log_exc.LogapiDriverException(exception_msg=msg)
 
 
-@registry.has_registry_receivers
+class ResourceCallBackBase(object):
+
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, '_instance'):
+            cls._instance = super(ResourceCallBackBase, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self, resource, push_api):
+        self.resource_push_api = push_api
+        for event in (events.AFTER_CREATE, events.AFTER_UPDATE,
+                      events.AFTER_DELETE):
+            registry.subscribe(self.handle_event, resource, event)
+
+    def handle_event(self, resource, event, trigger, **kwargs):
+        """Handle resource callback event"""
+        pass
+
+
 class LoggingServiceDriverManager(object):
 
     def __init__(self):
@@ -61,6 +84,12 @@ class LoggingServiceDriverManager(object):
         """
         self._drivers.add(driver)
         self.rpc_required |= driver.requires_rpc
+
+        # Handle callback event AFTER_UPDATE, AFTER_DELETE, AFTER_CREATE of
+        # resources which related to log object. For example: when a sg_rule
+        # is added or deleted from security group, if this rule is bounded by a
+        # log_resources, then it should tell to agent to trigger log_drivers.
+        self._setup_resources_cb_handle()
 
     def _start_rpc_listeners(self):
         self._skeleton = server_rpc.LoggingApiSkeleton()
@@ -107,23 +136,6 @@ class LoggingServiceDriverManager(object):
                 return
             rpc_method(context, log_obj)
 
-    @registry.receives(resources.SECURITY_GROUP_RULE,
-                       [events.AFTER_CREATE, events.AFTER_DELETE])
-    def _handle_sg_rule_callback(self, resource, event, trigger, **kwargs):
-        """Handle sg_rule create/delete events
-
-        This method handles sg_rule events, if sg_rule bound by log_resources,
-        it should tell to agent to update log_drivers.
-
-        """
-        context = kwargs['context']
-        sg_rules = kwargs.get('security_group_rule')
-        if sg_rules:
-            sg_id = sg_rules.get('security_group_id')
-        else:
-            sg_id = kwargs.get('security_group_id')
-
-        log_resources = db_api.get_logs_bound_sg(context, sg_id)
-        if log_resources:
-            self.call(
-                log_const.RESOURCE_UPDATE, context, log_resources)
+    def _setup_resources_cb_handle(self):
+        for res, obj_class in RESOURCE_CB_CLASS_MAP.items():
+            obj_class(res, self.call)
