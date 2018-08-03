@@ -1760,6 +1760,23 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
     def test_delete_port_with_floatingip_notifies_l3_plugin(self):
         self.test_delete_port_notifies_l3_plugin(floating_ip=True)
 
+    def test_delete_port_with_floatingip_create_precommit_event(self):
+        fake_method = mock.Mock()
+        with self.port(device_owner='network:floatingip') as port:
+            try:
+                registry.subscribe(fake_method, resources.FLOATING_IP,
+                               events.PRECOMMIT_DELETE)
+                port_id = port['port']['id']
+                self.plugin.delete_port(self.context, port_id)
+                fake_method.assert_called_once_with(
+                    resources.FLOATING_IP, events.PRECOMMIT_DELETE, mock.ANY,
+                    bind=mock.ANY, bindings=mock.ANY, context=mock.ANY,
+                    id=mock.ANY, levels=mock.ANY, network=mock.ANY,
+                    port=mock.ANY, port_db=mock.ANY)
+            finally:
+                registry.unsubscribe(fake_method, resources.FLOATING_IP,
+                                     events.PRECOMMIT_DELETE)
+
     def test_concurrent_csnat_port_delete(self):
         plugin = directory.get_plugin(plugin_constants.L3)
         r = plugin.create_router(
