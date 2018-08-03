@@ -902,19 +902,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 self._notify_attaching_interface(context, router_db=router,
                                                  port=port,
                                                  interface_info=interface_info)
-                l3_obj.RouterPort(
-                    context,
-                    port_id=port['id'],
-                    router_id=router.id,
-                    port_type=device_owner
-                ).create()
-                # Update owner after actual process again in order to
-                # make sure the records in routerports table and ports
-                # table are consistent.
-                self._core_plugin.update_port(
-                    context, port['id'], {'port': {
-                                         'device_id': router.id,
-                                         'device_owner': device_owner}})
+                self._add_router_port(
+                    context, port['id'], router.id, device_owner)
 
         gw_ips = []
         gw_network_id = None
@@ -941,6 +930,21 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         return self._make_router_interface_info(
             router.id, port['tenant_id'], port['id'], port['network_id'],
             subnets[-1]['id'], [subnet['id'] for subnet in subnets])
+
+    @db_api.retry_if_session_inactive()
+    def _add_router_port(self, context, port_id, router_id, device_owner):
+        l3_obj.RouterPort(
+            context,
+            port_id=port_id,
+            router_id=router_id,
+            port_type=device_owner
+        ).create()
+        # Update owner after actual process again in order to
+        # make sure the records in routerports table and ports
+        # table are consistent.
+        self._core_plugin.update_port(
+            context, port_id, {'port': {'device_id': router_id,
+                                        'device_owner': device_owner}})
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
