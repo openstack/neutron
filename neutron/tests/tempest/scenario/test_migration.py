@@ -63,6 +63,19 @@ class NetworkMigrationTestBase(base.BaseTempestTestCase,
                 device_owner),
             timeout=300, sleep=5)
 
+    def _wait_until_router_ports_down(self, router_id):
+
+        def _is_port_down(port_id):
+            port = self.os_admin.network_client.show_port(port_id).get('port')
+            return port['status'] == const.DOWN
+
+        ports = self.os_admin.network_client.list_ports(
+            device_id=router_id).get('ports')
+        for port in ports:
+            common_utils.wait_until_true(
+                functools.partial(_is_port_down, port['id']),
+                timeout=300, sleep=5)
+
     def _is_port_active(self, router_id, device_owner):
         ports = self.os_admin.network_client.list_ports(
             device_id=router_id,
@@ -116,6 +129,8 @@ class NetworkMigrationTestBase(base.BaseTempestTestCase,
 
         self.os_admin.network_client.update_router(
             router_id=router['id'], admin_state_up=False)
+        self._wait_until_router_ports_down(router['id'])
+
         self.os_admin.network_client.update_router(
             router_id=router['id'], distributed=after_dvr, ha=after_ha)
         self._check_update(router, after_dvr, after_ha)
