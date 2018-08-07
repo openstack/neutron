@@ -134,6 +134,12 @@ IPTABLES_PROTOCOL_NAME_MAP = {lib_constants.PROTO_NAME_IPV6_ENCAP: 'ipv6',
                               '141': 'wesp',
                               '142': 'rohc'}
 
+# A length of a iptables chain name must be less than or equal to 11
+# characters.
+# <max length of iptables chain name> - (<binary_name> + '-') = 28-(16+1) = 11
+MAX_IPTABLES_CHAIN_LEN_WRAP = 11
+MAX_IPTABLES_CHAIN_LEN_NOWRAP = 28
+
 # Timeout in seconds for getting an IPv6 LLA
 LLA_TASK_TIMEOUT = 40
 

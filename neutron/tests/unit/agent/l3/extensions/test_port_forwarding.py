@@ -26,6 +26,7 @@ from neutron.agent.linux import iptables_manager
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import constants
 from neutron.objects import port_forwarding as pf_obj
 from neutron.objects import router
 from neutron.tests import base
@@ -144,7 +145,8 @@ class FipPortForwardingExtensionTestCase(PortForwardingExtensionBaseTestCase):
 
     def _get_chainrule_tag_from_pf_obj(self, target_obj):
         rule_tag = 'fip_portforwarding-' + target_obj.id
-        chain_name = ('pf-' + target_obj.id)[:pf.MAX_CHAIN_LEN_WRAP]
+        chain_name = (
+            'pf-' + target_obj.id)[:constants.MAX_IPTABLES_CHAIN_LEN_WRAP]
         chain_rule = (chain_name,
                       '-d %s/32 -p %s -m %s --dport %s '
                       '-j DNAT --to-destination %s:%s' % (
@@ -235,7 +237,7 @@ class FipPortForwardingExtensionTestCase(PortForwardingExtensionBaseTestCase):
         mock_ip_device.return_value = mock_delete
         self.fip_pf_ext.update_router(self.context, self.router)
         current_chain = ('pf-' + self.portforwarding1.id)[
-                        :pf.MAX_CHAIN_LEN_WRAP]
+                        :constants.MAX_IPTABLES_CHAIN_LEN_WRAP]
         mock_remove_chain.assert_called_once_with(current_chain)
         mock_delete.delete_socket_conntrack_state.assert_called_once_with(
             str(self.portforwarding1.floating_ip_address),
@@ -266,7 +268,7 @@ class FipPortForwardingExtensionTestCase(PortForwardingExtensionBaseTestCase):
         mock_ip_device.return_value = mock_device
         self.fip_pf_ext.update_router(self.context, self.router)
         current_chain = ('pf-' + self.portforwarding1.id)[
-                        :pf.MAX_CHAIN_LEN_WRAP]
+                        :constants.MAX_IPTABLES_CHAIN_LEN_WRAP]
         mock_remove_chain.assert_called_once_with(current_chain)
         mock_device.delete_socket_conntrack_state.assert_called_once_with(
             str(self.portforwarding1.floating_ip_address),
