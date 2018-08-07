@@ -19,6 +19,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
@@ -28,6 +29,7 @@ from neutron.common import utils as n_utils
 
 from neutron.db import agentschedulers_db
 from neutron.db import l3_agentschedulers_db as l3agent_sch_db
+from neutron.db import l3_dvr_db
 from neutron.db import models_v2
 from neutron.objects import l3agent as rb_obj
 from neutron.plugins.ml2 import db as ml2_db
@@ -453,13 +455,20 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
             fips = l3plugin._get_floatingips_by_port_id(
                 context, port_id=original_port['id'])
             fip = fips[0] if fips else None
-            removed_router_ids = [
-                info['router_id'] for info in removed_routers
-            ]
-            if (fip and
-                l3plugin.is_distributed_router(fip['router_id']) and
-                not (removed_routers and
-                     fip['router_id'] in removed_router_ids)):
+
+            def _should_notify_on_fip_update():
+                if not fip:
+                    return False
+                for info in removed_routers:
+                    if info['router_id'] == fip['router_id']:
+                        return False
+                try:
+                    router = l3plugin._get_router(context, fip['router_id'])
+                except l3_exc.RouterNotFound:
+                    return False
+                return l3_dvr_db.is_distributed_router(router)
+
+            if _should_notify_on_fip_update():
                 l3plugin.l3_rpc_notifier.routers_updated_on_host(
                     context, [fip['router_id']],
                     original_port[portbindings.HOST_ID])
