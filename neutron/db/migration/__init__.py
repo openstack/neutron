@@ -30,6 +30,7 @@ OCATA = 'ocata'
 PIKE = 'pike'
 QUEENS = 'queens'
 ROCKY = 'rocky'
+STEIN = 'stein'
 
 NEUTRON_MILESTONES = [
     # earlier milestones were not tagged
@@ -39,6 +40,7 @@ NEUTRON_MILESTONES = [
     OCATA,
     PIKE,
     QUEENS,
+    ROCKY,
     # Do not add the milestone until the end of the release
 ]
 
