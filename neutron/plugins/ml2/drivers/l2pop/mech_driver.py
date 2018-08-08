@@ -52,6 +52,14 @@ class L2populationMechanismDriver(api.MechanismDriver):
                                    ip_address=ip['ip_address'])
                 for ip in port['fixed_ips']]
 
+    def _remove_flooding(self, fdb_entries):
+        for network_fdb in fdb_entries.values():
+            for agent_fdb in network_fdb.get('ports', {}).values():
+                try:
+                    agent_fdb.remove(const.FLOODING_ENTRY)
+                except ValueError:
+                    pass
+
     def check_vlan_transparency(self, context):
         """L2population driver vlan transparency support."""
         return True
@@ -244,11 +252,15 @@ class L2populationMechanismDriver(api.MechanismDriver):
         if agent_host and l3plugin and getattr(
             l3plugin, "list_router_ids_on_host", None):
             admin_context = n_context.get_admin_context()
-            if l3plugin.list_router_ids_on_host(
-                admin_context, agent_host, [port['device_id']]):
-                return
             fdb_entries = self._get_agent_fdb(
-                context, context.bottom_bound_segment, port, agent_host)
+                context, context.bottom_bound_segment, port, agent_host,
+                include_ha_router_ports=True)
+            if (fdb_entries and
+                l3plugin.list_router_ids_on_host(
+                    admin_context, agent_host, [port['device_id']])):
+                # NOTE(slaweq): in case this is HA router, remove unicast
+                # entries to this port but don't remove flood entry
+                self._remove_flooding(fdb_entries)
             self.L2populationAgentNotify.remove_fdb_entries(
                 self.rpc_ctx, fdb_entries)
 
@@ -300,7 +312,8 @@ class L2populationMechanismDriver(api.MechanismDriver):
         self.L2populationAgentNotify.add_fdb_entries(self.rpc_ctx,
                                                      other_fdb_entries)
 
-    def _get_agent_fdb(self, context, segment, port, agent_host):
+    def _get_agent_fdb(self, context, segment, port, agent_host,
+                       include_ha_router_ports=False):
         if not agent_host:
             return
 
@@ -329,9 +342,10 @@ class L2populationMechanismDriver(api.MechanismDriver):
                 const.FLOODING_ENTRY)
         # Notify other agents to remove fdb rules for current port
         if (port['device_owner'] != const.DEVICE_OWNER_DVR_INTERFACE and
+           (include_ha_router_ports or
             not l3_hamode_db.is_ha_router_port(context,
                                                port['device_owner'],
-                                               port['device_id'])):
+                                               port['device_id']))):
             fdb_entries = self._get_port_fdb_entries(port)
             other_fdb_entries[network_id]['ports'][agent_ip] += fdb_entries
 
