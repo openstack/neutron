@@ -55,6 +55,7 @@ TEST_ROUTER_ID = 'router_id'
 
 NOTIFIER = 'neutron.plugins.ml2.rpc.AgentNotifierApi'
 DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
+DEVICE_OWNER_ROUTER_HA_INTF = constants.DEVICE_OWNER_ROUTER_HA_INTF + 'fake'
 
 
 class FakeL3PluginWithAgents(common_db_mixin.CommonDbMixin,
@@ -824,6 +825,45 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
 
                     self.mock_fanout.assert_called_with(
                         mock.ANY, 'remove_fdb_entries', expected)
+
+    def test_update_port_down_ha_router_port(self):
+        router = self._create_ha_router()
+        directory.add_plugin(plugin_constants.L3, self.plugin)
+        with self.subnet(network=self._network, enable_dhcp=False) as snet:
+            subnet = snet['subnet']
+            router_port = self._add_router_interface(subnet, router, HOST)
+            router_port_device = 'tap' + router_port['id']
+
+            host_arg = {portbindings.HOST_ID: HOST_4, 'admin_state_up': True}
+            with self.port(subnet=snet,
+                           device_owner=DEVICE_OWNER_COMPUTE,
+                           arg_list=(portbindings.HOST_ID,),
+                           **host_arg) as port1:
+                p1 = port1['port']
+                device1 = 'tap' + p1['id']
+
+                self.callbacks.update_device_up(self.adminContext,
+                                                agent_id=HOST,
+                                                device=device1)
+                self.mock_fanout.reset_mock()
+                self.callbacks.update_device_down(self.adminContext,
+                                                  agent_id=HOST,
+                                                  device=router_port_device,
+                                                  host=HOST)
+
+                router_port_ips = [
+                    p['ip_address'] for p in router_port['fixed_ips']]
+                expected = {
+                    router_port['network_id']: {
+                        'ports': {
+                            '20.0.0.1': [
+                                l2pop_rpc.PortInfo(router_port['mac_address'],
+                                                   router_port_ips[0])]},
+                        'network_type': 'vxlan',
+                        'segment_id': 1}}
+
+                self.mock_fanout.assert_called_with(
+                    mock.ANY, 'remove_fdb_entries', expected)
 
     def test_delete_port(self):
         self._register_ml2_agents()
