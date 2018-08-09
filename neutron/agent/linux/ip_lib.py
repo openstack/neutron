@@ -179,18 +179,16 @@ class IPWrapper(SubProcessBase):
         return IPDevice(name, namespace=self.namespace)
 
     def add_veth(self, name1, name2, namespace2=None):
-        # TODO(slaweq): switch to pyroute2 when issue
-        # https://github.com/svinota/pyroute2/issues/463
-        # will be closed
-        args = ['add', name1, 'type', 'veth', 'peer', 'name', name2]
+        peer = {'ifname': name2}
 
         if namespace2 is None:
             namespace2 = self.namespace
         else:
             self.ensure_namespace(namespace2)
-            args += ['netns', namespace2]
+            peer['net_ns_fd'] = namespace2
 
-        self._as_root([], 'link', tuple(args))
+        privileged.create_interface(
+            name1, self.namespace, 'veth', peer=peer)
 
         return (IPDevice(name1, namespace=self.namespace),
                 IPDevice(name2, namespace=namespace2))

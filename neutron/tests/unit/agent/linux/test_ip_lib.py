@@ -300,12 +300,11 @@ class TestIpWrapper(base.BaseTestCase):
         ip_lib.IPWrapper().add_tuntap('tap0')
         create.assert_called_once_with('tap0', None, 'tuntap', mode='tap')
 
-    def test_add_veth(self):
+    @mock.patch.object(priv_lib, 'create_interface')
+    def test_add_veth(self, create):
         ip_lib.IPWrapper().add_veth('tap0', 'tap1')
-        self.execute.assert_called_once_with([], 'link',
-                                             ('add', 'tap0', 'type', 'veth',
-                                              'peer', 'name', 'tap1'),
-                                             run_as_root=True, namespace=None)
+        create.assert_called_once_with(
+            'tap0', None, 'veth', peer={'ifname': 'tap1'})
 
     @mock.patch.object(priv_lib, 'create_interface')
     def test_add_macvtap(self, create):
@@ -319,16 +318,15 @@ class TestIpWrapper(base.BaseTestCase):
         ip_lib.IPWrapper().del_veth('fpr-1234')
         delete.assert_called_once_with('fpr-1234', None)
 
-    def test_add_veth_with_namespaces(self):
+    @mock.patch.object(priv_lib, 'create_interface')
+    def test_add_veth_with_namespaces(self, create):
         ns2 = 'ns2'
         with mock.patch.object(ip_lib.IPWrapper, 'ensure_namespace') as en:
             ip_lib.IPWrapper().add_veth('tap0', 'tap1', namespace2=ns2)
             en.assert_has_calls([mock.call(ns2)])
-        self.execute.assert_called_once_with([], 'link',
-                                             ('add', 'tap0', 'type', 'veth',
-                                              'peer', 'name', 'tap1',
-                                              'netns', ns2),
-                                             run_as_root=True, namespace=None)
+        create.assert_called_once_with(
+            'tap0', None, 'veth',
+            peer={'ifname': 'tap1', 'net_ns_fd': 'ns2'})
 
     @mock.patch.object(priv_lib, 'create_interface')
     def test_add_dummy(self, create):
