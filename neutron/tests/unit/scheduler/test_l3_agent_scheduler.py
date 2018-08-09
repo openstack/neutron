@@ -34,6 +34,7 @@ import testtools
 
 from neutron.db import db_base_plugin_v2 as db_v2
 from neutron.db import l3_db
+from neutron.db import l3_dvr_db
 from neutron.db import l3_dvr_ha_scheduler_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_hamode_db
@@ -1084,7 +1085,7 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
                                if routers_to_remove else []),\
                 mock.patch.object(l3plugin, '_get_floatingips_by_port_id',
                                   return_value=[fip] if fip else []),\
-                mock.patch.object(l3plugin, 'is_distributed_router',
+                mock.patch.object(l3_dvr_db, 'is_distributed_router',
                                   return_value=is_distributed):
             l3_dvrscheduler_db._notify_l3_agent_port_update(
                 'port', 'after_update', mock.ANY, **kwargs)
