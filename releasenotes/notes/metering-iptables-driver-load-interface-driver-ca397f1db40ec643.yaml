@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    The metering agent iptables driver can now load its interface driver by
+    using a stevedore alias in the ``metering_agent.ini`` file. For example,
+    ``interface_driver = openvswitch``  instead of
+    ``interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver``

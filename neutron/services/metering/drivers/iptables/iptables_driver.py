@@ -15,9 +15,8 @@
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
-from oslo_utils import importutils
 
-from neutron._i18n import _
+from neutron.agent.common import utils as common_utils
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import interface
@@ -109,11 +108,7 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
         self.conf = conf or cfg.CONF
         self.routers = {}
 
-        if not self.conf.interface_driver:
-            raise SystemExit(_('An interface driver must be specified'))
-        LOG.info("Loading interface driver %s", self.conf.interface_driver)
-        self.driver = importutils.import_object(self.conf.interface_driver,
-                                                self.conf)
+        self.driver = common_utils.load_interface_driver(self.conf)
 
     def _update_router(self, router):
         r = self.routers.get(router['id'],
