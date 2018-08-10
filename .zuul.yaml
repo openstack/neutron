@@ -37,7 +37,7 @@
         - neutron-tempest-dvr-ha-multinode-full
         - neutron-tempest-iptables_hybrid
         - neutron-grenade
-        - neutron-fullstack-python35
+        - neutron-fullstack-python36
         - ironic-tempest-dsvm-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             voting: false
             irrelevant-files: *tempest-irrelevant-files
@@ -56,6 +56,7 @@
         # NOTE(haleyb) revert this as soon as we fix bug 1791989
         # - neutron-grenade-dvr-multinode
         - neutron-grenade
+        - neutron-fullstack-python36
     periodic:
       jobs:
         - neutron-functional
@@ -134,20 +135,10 @@
 
 
 - job:
-    name: neutron-fullstack-python35
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-fullstack-python35/run.yaml
-    post-run: playbooks/legacy/neutron-fullstack-python35/post.yaml
-    timeout: 7800
-    required-projects:
-      - openstack-infra/devstack-gate
-      - openstack/neutron
-    irrelevant-files:
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^releasenotes/.*$
-    voting: false
+    name: neutron-fullstack-python36
+    parent: neutron-fullstack
+    run: playbooks/legacy/neutron-fullstack-python36/run.yaml
+    post-run: playbooks/legacy/neutron-fullstack-python36/post.yaml
 
 - job:
     name: neutron-rally-task
