@@ -13,6 +13,7 @@
 #    under the License.
 #
 
+from neutron_lib import constants
 from oslo_db.sqlalchemy import utils as db_utils
 from oslo_utils import uuidutils
 
@@ -39,7 +40,8 @@ class MigrationToPluggableIpamMixin(object):
         allocations = db_utils.get_table(engine, 'ipallocations')
 
         for cidr in data:
-            ip_version = 6 if ':' in cidr else 4
+            ip_version = (constants.IP_VERSION_6 if ':' in cidr else
+                          constants.IP_VERSION_4)
             # Save generated id in incoming dict to simplify validations
             network_id = uuidutils.generate_uuid()
             network_dict = dict(

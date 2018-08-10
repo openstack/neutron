@@ -13,6 +13,7 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants
 from oslo_config import cfg
 
 from neutron.agent.linux import dhcp
@@ -53,7 +54,8 @@ class TestDhcp(functional_base.BaseSudoTestCase):
                                                   'ipv6_address_mode': None,
                                                   'ipv6_ra_mode': None,
                                                   'cidr': '10.0.0.0/24',
-                                                  'ip_version': 4,
+                                                  'ip_version':
+                                                      constants.IP_VERSION_4,
                                                   'gateway_ip': '10.0.0.1'})]}
         dhcp_port = {
             'id': 'foo_port_id',

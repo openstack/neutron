@@ -302,10 +302,10 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
         ext_net = self._make_network(self.fmt, 'ext_net', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.0.0.1', '10.0.0.0/24',
-            ip_version=4, enable_dhcp=True)
+            ip_version=constants.IP_VERSION_4, enable_dhcp=True)
         self._make_subnet(
             self.fmt, ext_net, '2001:db8::1', '2001:db8::/64',
-            ip_version=6, enable_dhcp=True)
+            ip_version=constants.IP_VERSION_6, enable_dhcp=True)
         return ext_net
 
     def _set_external_gateway(self, router, ext_net):

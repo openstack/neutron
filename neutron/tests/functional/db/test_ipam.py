@@ -89,7 +89,7 @@ class IpamTestCase(testlib_api.SqlTestCase):
                   'id': self.subnet_id,
                   'name': 'test_sub',
                   'network_id': self.network_id,
-                  'ip_version': 4,
+                  'ip_version': constants.IP_VERSION_4,
                   'cidr': '10.10.10.0/29',
                   'enable_dhcp': False,
                   'gateway_ip': '10.10.10.1',

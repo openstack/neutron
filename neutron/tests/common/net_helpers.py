@@ -388,7 +388,7 @@ class Pinger(object):
         if self.proc and self.proc.is_running:
             raise RuntimeError("This pinger has already a running process")
         ip_version = common_utils.get_ip_version(self.address)
-        ping_exec = 'ping' if ip_version == 4 else 'ping6'
+        ping_exec = 'ping' if ip_version == n_const.IP_VERSION_4 else 'ping6'
         cmd = [ping_exec, self.address, '-W', str(self.timeout)]
         if self.count:
             cmd.extend(['-c', str(self.count)])
@@ -416,8 +416,8 @@ class NetcatTester(object):
     UDP = n_const.PROTO_NAME_UDP
     SCTP = n_const.PROTO_NAME_SCTP
     VERSION_TO_ALL_ADDRESS = {
-        4: '0.0.0.0',
-        6: '::',
+        n_const.IP_VERSION_4: '0.0.0.0',
+        n_const.IP_VERSION_6: '::',
     }
 
     def __init__(self, client_namespace, server_namespace, address,

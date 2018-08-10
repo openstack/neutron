@@ -103,12 +103,14 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
     def _get_agent_ovs_integration_bridge(self, agent):
         return get_ovs_bridge(agent.conf.ovs_integration_bridge)
 
-    def generate_router_info(self, enable_ha, ip_version=4, extra_routes=True,
+    def generate_router_info(self, enable_ha,
+                             ip_version=constants.IP_VERSION_4,
+                             extra_routes=True,
                              enable_fip=True, enable_snat=True,
                              num_internal_ports=1,
                              dual_stack=False, v6_ext_gw_with_sub=True,
                              qos_policy_id=None):
-        if ip_version == 6 and not dual_stack:
+        if ip_version == constants.IP_VERSION_6 and not dual_stack:
             enable_snat = False
             enable_fip = False
             extra_routes = False
@@ -239,7 +241,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             'net.ipv6.conf.%s.forwarding' % external_device_name])
         self.assertEqual(int(enabled), int(fwd_state))
 
-    def _router_lifecycle(self, enable_ha, ip_version=4,
+    def _router_lifecycle(self, enable_ha, ip_version=constants.IP_VERSION_4,
                           dual_stack=False, v6_ext_gw_with_sub=True,
                           router_info=None):
         router_info = router_info or self.generate_router_info(
@@ -253,9 +255,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         slaac_mode = {'ra_mode': slaac, 'address_mode': slaac}
         subnet_modes = [slaac_mode] * 2
         self._add_internal_interface_by_subnet(router.router,
-                                               count=2,
-                                               ip_version=6,
-                                               ipv6_subnet_modes=subnet_modes)
+            count=2, ip_version=constants.IP_VERSION_6,
+            ipv6_subnet_modes=subnet_modes)
         router.process()
 
         if enable_ha:
@@ -282,7 +283,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             lambda: self._metadata_proxy_exists(self.agent.conf, router))
         self._assert_internal_devices(router)
         self._assert_external_device(router)
-        if not (enable_ha and (ip_version == 6 or dual_stack)):
+        if not (enable_ha and
+                (ip_version == constants.IP_VERSION_6 or dual_stack)):
             # Note(SridharG): enable the assert_gateway for IPv6 once
             # keepalived on Ubuntu14.04 (i.e., check-neutron-dsvm-functional
             # platform) is updated to 1.2.10 (or above).
@@ -293,7 +295,10 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             self._assert_floating_ip_chains(router)
             self._assert_iptables_rules_converged(router)
             self._assert_extra_routes(router)
-            ip_versions = [4, 6] if (ip_version == 6 or dual_stack) else [4]
+            if (ip_version == constants.IP_VERSION_6 or dual_stack):
+                ip_versions = [constants.IP_VERSION_4, constants.IP_VERSION_6]
+            else:
+                ip_versions = [constants.IP_VERSION_4]
             self._assert_onlink_subnet_routes(router, ip_versions)
         self._assert_metadata_chains(router)
 
@@ -359,7 +364,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         router.router[constants.FLOATINGIP_KEY].append(fip)
 
     def _add_internal_interface_by_subnet(self, router, count=1,
-                                          ip_version=4,
+                                          ip_version=constants.IP_VERSION_4,
                                           ipv6_subnet_modes=None,
                                           interface_id=None):
         return l3_test_common.router_append_subnet(router, count,
