@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context
@@ -20,9 +21,9 @@ from oslo_utils import uuidutils
 
 from neutron.common import constants as n_const
 from neutron.db.models import l3 as l3_models
-from neutron.db import models_v2
 from neutron.objects import l3_hamode
 from neutron.objects import network as network_obj
+from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_objs
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
 from neutron.plugins.ml2 import models
@@ -101,17 +102,19 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
 
     def _setup_port_binding(self, **kwargs):
         with self.ctx.session.begin(subtransactions=True):
-            mac = net.get_random_mac('fa:16:3e:00:00:00'.split(':'))
+            mac = netaddr.EUI(
+                    net.get_random_mac('fa:16:3e:00:00:00'.split(':')),
+                    dialect=netaddr.mac_unix_expanded)
             port_id = uuidutils.generate_uuid()
             network_id = kwargs.get('network_id', TEST_NETWORK_ID)
             device_owner = kwargs.get('device_owner', '')
-            device_id = kwargs.get('device_id', '')
+            device_id = kwargs.get('device_id', uuidutils.generate_uuid())
             host = kwargs.get('host', helpers.HOST)
 
-            self.ctx.session.add(models_v2.Port(
+            port_obj.Port(self.ctx,
                 id=port_id, network_id=network_id, mac_address=mac,
                 admin_state_up=True, status=constants.PORT_STATUS_ACTIVE,
-                device_id=device_id, device_owner=device_owner))
+                device_id=device_id, device_owner=device_owner).create()
 
             port_binding_cls = models.PortBinding
             binding_kwarg = {'port_id': port_id,
