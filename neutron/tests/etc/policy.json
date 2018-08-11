@@ -223,6 +223,7 @@
     "delete_flavor_service_profile": "rule:admin_only",
 
     "get_auto_allocated_topology": "rule:admin_or_owner",
+    "delete_auto_allocated_topology": "rule:admin_or_owner",
 
     "create_trunk": "rule:regular_user",
     "get_trunk": "rule:admin_or_owner",
