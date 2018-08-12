@@ -30,7 +30,6 @@ import six
 
 from neutron.common import utils
 from neutron.conf.db import l3_hamode_db
-from neutron.db import api as db_api
 from neutron.db.models import l3agent as rb_model
 from neutron.objects import l3agent as rb_obj
 
@@ -287,7 +286,7 @@ class L3Scheduler(object):
             port_binding = utils.create_object_with_dependency(
                 creator, dep_getter, dep_creator,
                 dep_id_attr, dep_deleter)[0]
-            with db_api.autonested_transaction(context.session):
+            with lib_db_api.autonested_transaction(context.session):
                 port_binding.l3_agent_id = agent['id']
         except db_exc.DBDuplicateEntry:
             LOG.debug("Router %(router)s already scheduled for agent "

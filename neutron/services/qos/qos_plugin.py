@@ -17,6 +17,7 @@ from neutron_lib.api.definitions import qos as qos_apidef
 from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
 from neutron_lib.callbacks import resources as callbacks_resources
+from neutron_lib.db import api as lib_db_api
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.services.qos import constants as qos_consts
 
@@ -298,7 +299,7 @@ class QoSPlugin(qos.QoSPluginBase):
         rule_type = rule_cls.rule_type
         rule_data = rule_data[rule_type + '_rule']
 
-        with db_api.autonested_transaction(context.session):
+        with lib_db_api.autonested_transaction(context.session):
             # Ensure that we have access to the policy.
             policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
             checker.check_bandwidth_rule_conflict(policy, rule_data)
@@ -335,7 +336,7 @@ class QoSPlugin(qos.QoSPluginBase):
         rule_type = rule_cls.rule_type
         rule_data = rule_data[rule_type + '_rule']
 
-        with db_api.autonested_transaction(context.session):
+        with lib_db_api.autonested_transaction(context.session):
             # Ensure we have access to the policy.
             policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
             # Ensure the rule belongs to the policy.
@@ -368,7 +369,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
         :returns: None
         """
-        with db_api.autonested_transaction(context.session):
+        with lib_db_api.autonested_transaction(context.session):
             # Ensure we have access to the policy.
             policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
             rule = policy.get_rule_by_id(rule_id)
@@ -397,7 +398,7 @@ class QoSPlugin(qos.QoSPluginBase):
         :returns: a QoS policy rule object
         :raises: n_exc.QosRuleNotFound
         """
-        with db_api.autonested_transaction(context.session):
+        with lib_db_api.autonested_transaction(context.session):
             # Ensure we have access to the policy.
             policy_object.QosPolicy.get_policy_obj(context, policy_id)
             rule = rule_cls.get_object(context, id=rule_id)
@@ -422,7 +423,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
         :returns: QoS policy rule objects meeting the search criteria
         """
-        with db_api.autonested_transaction(context.session):
+        with lib_db_api.autonested_transaction(context.session):
             # Ensure we have access to the policy.
             policy_object.QosPolicy.get_policy_obj(context, policy_id)
             filters = filters or dict()
