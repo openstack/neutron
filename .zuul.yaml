@@ -41,6 +41,8 @@
         - openstack-tox-cover
         - tempest-full:
             irrelevant-files: *tempest-irrelevant-files
+        - tempest-slow:
+            irrelevant-files: *tempest-irrelevant-files
     gate:
       jobs:
         - neutron-functional
