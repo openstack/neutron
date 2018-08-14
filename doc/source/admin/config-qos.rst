@@ -296,8 +296,19 @@ First, create a QoS policy and its bandwidth limit rule:
 .. note::
 
    The QoS implementation requires a burst value to ensure proper behavior of
-   bandwidth limit rules in the Open vSwitch and Linux bridge agents. If you
-   do not provide a value, it defaults to 80% of the bandwidth limit which
+   bandwidth limit rules in the Open vSwitch and Linux bridge agents.
+   Configuring the proper burst value is very important. If the burst value is
+   set too low, bandwidth usage will be throttled even with a proper bandwidth
+   limit setting. This issue is discussed in various documentation sources, for
+   example in `Juniper's documentation
+   <http://www.juniper.net/documentation/en_US/junos12.3/topics/concept/policer-mx-m120-m320-burstsize-determining.html>`_.
+   For TCP traffic it is recommended to set burst value as 80% of desired bandwidth
+   limit value. For example, if the bandwidth limit is set to 1000kbps then enough
+   burst value will be 800kbit. If the configured burst value is too low,
+   achieved bandwidth limit will be lower than expected. If the configured burst
+   value is too high, too few packets could be limited and achieved bandwidth
+   limit would be higher than expected.
+   If you do not provide a value, it defaults to 80% of the bandwidth limit which
    works for typical TCP traffic.
 
 Second, associate the created policy with an existing neutron port.
@@ -383,20 +394,6 @@ network, or initially create the network attached to the policy.
 .. code-block:: console
 
     $ openstack network set --qos-policy bw-limiter private
-
-.. note::
-
-   Configuring the proper burst value is very important. If the burst value is
-   set too low, bandwidth usage will be throttled even with a proper bandwidth
-   limit setting. This issue is discussed in various documentation sources, for
-   example in `Juniper's documentation
-   <http://www.juniper.net/documentation/en_US/junos12.3/topics/concept/policer-mx-m120-m320-burstsize-determining.html>`_.
-   Burst value for TCP traffic can be set as 80% of desired bandwidth limit
-   value. For example, if the bandwidth limit is set to 1000kbps then enough
-   burst value will be 800kbit. If the configured burst value is too low,
-   achieved bandwidth limit will be lower than expected. If the configured burst
-   value is too high, too few packets could be limited and achieved bandwidth
-   limit would be higher than expected.
 
 The created policy can be associated with an existing floating IP.
 In order to do this, user extracts the floating IP id to be associated to
