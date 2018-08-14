@@ -331,16 +331,19 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         original_sg_dict = self.mixin.create_security_group(self.ctx,
                                                             FAKE_SECGROUP)
         sg_id = original_sg_dict['id']
-        with mock.patch.object(registry, "notify") as mock_notify:
+        with mock.patch.object(registry, "publish") as mock_notify:
             fake_secgroup = copy.deepcopy(FAKE_SECGROUP)
             fake_secgroup['security_group']['name'] = 'updated_fake'
             sg_dict = self.mixin.update_security_group(
                     self.ctx, sg_id, fake_secgroup)
-            mock_notify.assert_has_calls([mock.call('security_group',
-                'precommit_update', mock.ANY, context=mock.ANY,
-                original_security_group=original_sg_dict,
-                security_group=sg_dict,
-                security_group_id=sg_id)])
+
+            mock_notify.assert_has_calls(
+                [mock.call('security_group', 'precommit_update', mock.ANY,
+                           payload=mock.ANY)])
+            payload = mock_notify.call_args[1]['payload']
+            self.assertEqual(original_sg_dict, payload.states[0])
+            self.assertEqual(sg_id, payload.resource_id)
+            self.assertEqual(sg_dict, payload.desired_state)
 
     def test_security_group_precommit_and_after_delete_event(self):
         sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)

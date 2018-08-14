@@ -13,6 +13,7 @@
 import copy
 
 import mock
+from neutron_lib.callbacks import events
 from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.plugins import constants as plugins_constants
@@ -193,7 +194,6 @@ class TestQosPlugin(base.BaseQosTestCase):
                                             original_policy_id=None):
         port_id = uuidutils.generate_uuid()
         kwargs = {
-            "context": self.ctxt,
             "port": {
                 "id": port_id,
                 qos_consts.QOS_POLICY_ID: policy_id
@@ -218,7 +218,10 @@ class TestQosPlugin(base.BaseQosTestCase):
             self.ctxt, "elevated", return_value=admin_ctxt
         ):
             self.qos_plugin._validate_update_port_callback(
-                "PORT", "precommit_update", "test_plugin", **kwargs)
+                "PORT", "precommit_update", "test_plugin",
+                payload=events.DBEventPayload(
+                    self.ctxt, desired_state=kwargs['port'],
+                    states=(kwargs['original_port'],)))
             if policy_id is None or policy_id == original_policy_id:
                 get_port.assert_not_called()
                 get_policy.assert_not_called()
@@ -276,7 +279,10 @@ class TestQosPlugin(base.BaseQosTestCase):
             self.ctxt, "elevated", return_value=admin_ctxt
         ):
             self.qos_plugin._validate_update_network_callback(
-                "NETWORK", "precommit_update", "test_plugin", **kwargs)
+                "NETWORK", "precommit_update", "test_plugin",
+                payload=events.DBEventPayload(
+                    self.ctxt, desired_state=kwargs['network'],
+                    states=(kwargs['original_network'],)))
             if policy_id is None or policy_id == original_policy_id:
                 get_policy.assert_not_called()
                 get_ports.assert_not_called()

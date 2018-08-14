@@ -42,33 +42,50 @@ LOG = logging.getLogger(__name__)
 CHECK_REQUIREMENTS = 'dry-run'
 
 
-@db_api.retry_if_session_inactive()
 def _ensure_external_network_default_value_callback(
-    resource, event, trigger, context, request, network, **kwargs):
+        resource, event, trigger, **kwargs):
     """Ensure the is_default db field matches the create/update request."""
-    is_default = request.get(api_const.IS_DEFAULT)
-    if is_default is None:
-        return
-    if is_default:
-        # ensure there is only one default external network at any given time
-        pager = base_obj.Pager(limit=1)
-        objs = net_obj.ExternalNetwork.get_objects(context,
-            _pager=pager, is_default=True)
-        if objs:
-            if objs[0] and network['id'] != objs[0].network_id:
-                raise exceptions.DefaultExternalNetworkExists(
-                    net_id=objs[0].network_id)
 
-    orig = kwargs.get('original_network')
-    if orig and orig.get(api_const.IS_DEFAULT) == is_default:
-        return
-    network[api_const.IS_DEFAULT] = is_default
-    # Reflect the status of the is_default on the create/update request
-    obj = net_obj.ExternalNetwork.get_object(context,
-                                             network_id=network['id'])
-    if obj:
-        obj.is_default = is_default
-        obj.update()
+    # TODO(boden): remove shim once all callbacks use payloads
+    if 'payload' in kwargs:
+        _request = kwargs['payload'].request_body
+        _context = kwargs['payload'].context
+        _network = kwargs['payload'].desired_state
+        _orig = kwargs['payload'].states[0]
+    else:
+        _request = kwargs['request']
+        _context = kwargs['context']
+        _network = kwargs['network']
+        _orig = kwargs.get('original_network')
+
+    @db_api.retry_if_session_inactive()
+    def _do_ensure_external_network_default_value_callback(
+            context, request, orig, network):
+        is_default = request.get(api_const.IS_DEFAULT)
+        if is_default is None:
+            return
+        if is_default:
+            # ensure only one default external network at any given time
+            pager = base_obj.Pager(limit=1)
+            objs = net_obj.ExternalNetwork.get_objects(context,
+                _pager=pager, is_default=True)
+            if objs:
+                if objs[0] and network['id'] != objs[0].network_id:
+                    raise exceptions.DefaultExternalNetworkExists(
+                        net_id=objs[0].network_id)
+
+        if orig and orig.get(api_const.IS_DEFAULT) == is_default:
+            return
+        network[api_const.IS_DEFAULT] = is_default
+        # Reflect the status of the is_default on the create/update request
+        obj = net_obj.ExternalNetwork.get_object(context,
+                                                 network_id=network['id'])
+        if obj:
+            obj.is_default = is_default
+            obj.update()
+
+    _do_ensure_external_network_default_value_callback(
+        _context, _request, _orig, _network)
 
 
 @resource_extend.has_resource_extenders
