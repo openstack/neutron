@@ -86,10 +86,17 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
     def test_port_name_update_revises(self):
         with self.port() as port:
             rev = port['port']['revision_number']
+            network = directory.get_plugin().get_network(
+                self.ctx, port['port']['network_id'])
+            net_rev = network['revision_number']
             new = {'port': {'name': 'seaweed'}}
             response = self._update('ports', port['port']['id'], new)
             new_rev = response['port']['revision_number']
             self.assertGreater(new_rev, rev)
+            network = directory.get_plugin().get_network(
+                self.ctx, port['port']['network_id'])
+            net_ew_rev = network['revision_number']
+            self.assertEqual(net_ew_rev, net_rev)
 
     def test_constrained_port_update(self):
         with self.port() as port:
@@ -145,6 +152,9 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
     def test_port_ip_update_revises(self):
         with self.port() as port:
             rev = port['port']['revision_number']
+            network = directory.get_plugin().get_network(
+                self.ctx, port['port']['network_id'])
+            net_rev = network['revision_number']
             new = {'port': {'fixed_ips': port['port']['fixed_ips']}}
             # ensure adding an IP allocation updates the port
             next_ip = str(netaddr.IPAddress(
@@ -154,13 +164,23 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
             self.assertEqual(2, len(response['port']['fixed_ips']))
             new_rev = response['port']['revision_number']
             self.assertGreater(new_rev, rev)
+            network = directory.get_plugin().get_network(
+                self.ctx, port['port']['network_id'])
+            new_net_rev = network['revision_number']
+            self.assertGreater(new_net_rev, net_rev)
+
             # ensure deleting an IP allocation updates the port
             rev = new_rev
+            net_rev = new_net_rev
             new['port']['fixed_ips'].pop()
             response = self._update('ports', port['port']['id'], new)
             self.assertEqual(1, len(response['port']['fixed_ips']))
             new_rev = response['port']['revision_number']
             self.assertGreater(new_rev, rev)
+            network = directory.get_plugin().get_network(
+                self.ctx, port['port']['network_id'])
+            new_net_rev = network['revision_number']
+            self.assertGreater(new_net_rev, net_rev)
 
     def test_security_group_rule_ops_bump_security_group(self):
         s = {'security_group': {'tenant_id': 'some_tenant', 'name': '',
