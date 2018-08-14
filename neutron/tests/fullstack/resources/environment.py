@@ -38,7 +38,8 @@ class EnvironmentDescription(object):
                  mech_drivers='openvswitch,linuxbridge',
                  service_plugins='router', arp_responder=False,
                  agent_down_time=75, router_scheduler=None,
-                 global_mtu=common_const.DEFAULT_NETWORK_MTU):
+                 global_mtu=common_const.DEFAULT_NETWORK_MTU,
+                 debug_iptables=False):
         self.network_type = network_type
         self.l2_pop = l2_pop
         self.qos = qos
@@ -49,6 +50,7 @@ class EnvironmentDescription(object):
         self.router_scheduler = router_scheduler
         self.global_mtu = global_mtu
         self.service_plugins = service_plugins
+        self.debug_iptables = debug_iptables
         if self.qos:
             self.service_plugins += ',qos'
 

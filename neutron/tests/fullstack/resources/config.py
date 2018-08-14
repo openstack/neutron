@@ -172,6 +172,7 @@ class OVSConfigFixture(ConfigFixture):
             'agent': {
                 'l2_population': str(self.env_desc.l2_pop),
                 'arp_responder': str(self.env_desc.arp_responder),
+                'debug_iptables_rules': str(env_desc.debug_iptables)
             }
         })
 
@@ -239,6 +240,9 @@ class LinuxBridgeConfigFixture(ConfigFixture):
             },
             'securitygroup': {
                 'firewall_driver': host_desc.firewall_driver,
+            },
+            'AGENT': {
+                'debug_iptables_rules': str(env_desc.debug_iptables)
             }
         })
         if env_desc.qos:
