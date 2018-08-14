@@ -458,40 +458,7 @@ Floating IPs can be created with a policy attached to them too.
 The QoS bandwidth limit rules attached to a floating IP will become
 active when you associate the latter with a port. For example, to associate
 the previously created floating IP ``172.16.100.12`` to the instance port with
-fixed IP ``192.168.222.5``:
-
-.. code-block:: console
-
-   $ openstack port show a7f25e73-4288-4a16-93b9-b71e6fd00862
-   +-----------------------+--------------------------------------------------+
-   | Field                 | Value                                            |
-   +-----------------------+--------------------------------------------------+
-   | admin_state_up        | UP                                               |
-   |            ...        |                      ...                         |
-   | device_id             | 69c03d70-53e8-4030-9c02-675c47f0b06b             |
-   | device_owner          | compute:nova                                     |
-   | dns_assignment        | None                                             |
-   | dns_name              | None                                             |
-   | extra_dhcp_opts       |                                                  |
-   | fixed_ips             | ip_address='192.168.222.5', subnet_id='...'      |
-   | id                    | a7f25e73-4288-4a16-93b9-b71e6fd00862             |
-   | ip_address            | None                                             |
-   | mac_address           | fa:16:3e:b5:1a:cc                                |
-   | name                  |                                                  |
-   | network_id            | ea602456-3ea8-4989-8981-add6182b4ceb             |
-   | option_name           | None                                             |
-   | option_value          | None                                             |
-   | port_security_enabled | False                                            |
-   | project_id            | 916e39e8be52433ba040da3a3a6d0847                 |
-   | qos_policy_id         | None                                             |
-   | revision_number       | 6                                                |
-   | security_group_ids    | 77436c73-3a29-42a7-b544-d47f4ea96d54             |
-   | status                | ACTIVE                                           |
-   | subnet_id             | None                                             |
-   | tags                  |                                                  |
-   | trunk_details         | None                                             |
-   | updated_at            | 2017-12-05T15:48:54Z                             |
-   +-----------------------+--------------------------------------------------+
+uuid ``a7f25e73-4288-4a16-93b9-b71e6fd00862`` and fixed IP ``192.168.222.5``:
 
 .. code-block:: console
 
