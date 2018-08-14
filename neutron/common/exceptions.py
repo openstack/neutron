@@ -72,7 +72,6 @@ NetworkSubnetPoolAffinityError = exceptions.NetworkSubnetPoolAffinityError
 ObjectActionError = exceptions.ObjectActionError
 CTZoneExhaustedError = exceptions.CTZoneExhaustedError
 TenantQuotaNotFound = exceptions.TenantQuotaNotFound
-TenantIdProjectIdFilterConflict = exceptions.TenantIdProjectIdFilterConflict
 MultipleFilterIDForIPFound = exceptions.MultipleFilterIDForIPFound
 FilterIDForIPNotFound = exceptions.FilterIDForIPNotFound
 FailedToAddQdiscToDevice = exceptions.FailedToAddQdiscToDevice
