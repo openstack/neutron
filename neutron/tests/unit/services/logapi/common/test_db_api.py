@@ -50,6 +50,7 @@ class LoggingDBApiTestCase(test_sg.SecurityGroupDBTestCase):
         super(LoggingDBApiTestCase, self).setUp()
         self.context = context.get_admin_context()
         self.sg_id, self.port_id, self.tenant_id = self._create_sg_and_port()
+        self.context.tenant_id = self.tenant_id
 
     def _create_sg_and_port(self):
         with self.network() as network, \
@@ -72,6 +73,12 @@ class LoggingDBApiTestCase(test_sg.SecurityGroupDBTestCase):
             self.assertEqual(
                 [log], db_api.get_logs_bound_port(self.context, self.port_id))
 
+            # Test get log objects with required resource type
+            calls = [mock.call(self.context, project_id=self.tenant_id,
+                               resource_type=log_const.SECURITY_GROUP,
+                               enabled=True)]
+            log_object.Log.get_objects.assert_has_calls(calls)
+
     def test_get_logs_not_bound_port(self):
         fake_sg_id = uuidutils.generate_uuid()
         log = _create_log(resource_id=fake_sg_id, tenant_id=self.tenant_id)
@@ -80,12 +87,24 @@ class LoggingDBApiTestCase(test_sg.SecurityGroupDBTestCase):
             self.assertEqual(
                 [], db_api.get_logs_bound_port(self.context, self.port_id))
 
+            # Test get log objects with required resource type
+            calls = [mock.call(self.context, project_id=self.tenant_id,
+                               resource_type=log_const.SECURITY_GROUP,
+                               enabled=True)]
+            log_object.Log.get_objects.assert_has_calls(calls)
+
     def test_get_logs_bound_sg(self):
         log = _create_log(resource_id=self.sg_id, tenant_id=self.tenant_id)
         with mock.patch.object(log_object.Log, 'get_objects',
                                return_value=[log]):
             self.assertEqual(
                 [log], db_api.get_logs_bound_sg(self.context, self.sg_id))
+
+            # Test get log objects with required resource type
+            calls = [mock.call(self.context, project_id=self.tenant_id,
+                               resource_type=log_const.SECURITY_GROUP,
+                               enabled=True)]
+            log_object.Log.get_objects.assert_has_calls(calls)
 
     def test_get_logs_not_bound_sg(self):
         with self.network() as network, \
@@ -101,6 +120,12 @@ class LoggingDBApiTestCase(test_sg.SecurityGroupDBTestCase):
                                    return_value=[log]):
                 self.assertEqual(
                     [], db_api.get_logs_bound_sg(self.context, self.sg_id))
+
+                # Test get log objects with required resource type
+                calls = [mock.call(self.context, project_id=self.tenant_id,
+                                   resource_type=log_const.SECURITY_GROUP,
+                                   enabled=True)]
+                log_object.Log.get_objects.assert_has_calls(calls)
 
     def test__get_ports_being_logged(self):
         log1 = _create_log(target_id=self.port_id,
