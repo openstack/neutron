@@ -359,6 +359,28 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
                           ipam_subnet.allocate,
                           ipam_req.AnyAddressRequest)
 
+    def test_bulk_allocate_v4_address(self):
+        target_ip_count = 10
+        ipam_subnet = self._create_and_allocate_ipam_subnet(
+            '192.168.0.0/28', ip_version=constants.IP_VERSION_4)[0]
+        ip_addresses = ipam_subnet.bulk_allocate(
+                ipam_req.BulkAddressRequest(target_ip_count))
+        self.assertEqual(target_ip_count, len(ip_addresses))
+        self.assertRaises(ipam_exc.IpAddressGenerationFailure,
+                          ipam_subnet.bulk_allocate,
+                          ipam_req.BulkAddressRequest(target_ip_count))
+
+    def test_bulk_allocate_v6_address(self):
+        target_ip_count = 10
+        ipam_subnet = self._create_and_allocate_ipam_subnet(
+                'fd00::/124', ip_version=constants.IP_VERSION_6)[0]
+        ip_addresses = ipam_subnet.bulk_allocate(
+                ipam_req.BulkAddressRequest(target_ip_count))
+        self.assertEqual(target_ip_count, len(ip_addresses))
+        self.assertRaises(ipam_exc.IpAddressGenerationFailure,
+                          ipam_subnet.bulk_allocate,
+                          ipam_req.BulkAddressRequest(target_ip_count))
+
     def _test_deallocate_address(self, cidr, ip_version):
         ipam_subnet = self._create_and_allocate_ipam_subnet(
             cidr, ip_version=ip_version)[0]
