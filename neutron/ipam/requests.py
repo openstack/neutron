@@ -202,6 +202,21 @@ class SpecificAddressRequest(AddressRequest):
         return self._address
 
 
+class BulkAddressRequest(AddressRequest):
+    """For requesting a batch of available addresses from IPAM"""
+    def __init__(self, num_addresses):
+        """Initialize BulkAddressRequest
+        :param num_addresses: The quantity of IP addresses being requested
+        :type num_addresses: int
+        """
+        super(BulkAddressRequest, self).__init__()
+        self._num_addresses = num_addresses
+
+    @property
+    def num_addresses(self):
+        return self._num_addresses
+
+
 class AnyAddressRequest(AddressRequest):
     """Used to request any available address from the pool."""
 
