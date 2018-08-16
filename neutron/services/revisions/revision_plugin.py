@@ -47,8 +47,7 @@ class RevisionPlugin(service_base.ServicePluginBase):
         self._enforce_if_match_constraints(session)
         # bump revision number for any updated objects in the session
         for obj in session.dirty:
-            if (session.is_modified(obj) and
-                    isinstance(obj, standard_attr.HasStandardAttributes)):
+            if isinstance(obj, standard_attr.HasStandardAttributes):
                 self._bump_obj_revision(session, obj)
 
         # see if any created/updated/deleted objects bump the revision
