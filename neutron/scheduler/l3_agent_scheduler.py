@@ -55,7 +55,7 @@ class L3Scheduler(object):
     def _router_has_binding(self, context, router_id, l3_agent_id):
         router_binding_model = rb_model.RouterL3AgentBinding
 
-        query = context.session.query(router_binding_model)
+        query = context.session.query(router_binding_model.router_id)
         query = query.filter(router_binding_model.router_id == router_id,
                              router_binding_model.l3_agent_id == l3_agent_id)
 

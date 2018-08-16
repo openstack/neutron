@@ -75,7 +75,7 @@ class SubnetAllocator(driver.Pool):
 
     def _get_allocated_cidrs(self):
         with db_api.context_manager.reader.using(self._context):
-            query = self._context.session.query(models_v2.Subnet)
+            query = self._context.session.query(models_v2.Subnet.cidr)
             subnets = query.filter_by(subnetpool_id=self._subnetpool['id'])
             return (x.cidr for x in subnets)
 
@@ -97,7 +97,7 @@ class SubnetAllocator(driver.Pool):
         subnetpool_id = self._subnetpool['id']
         tenant_id = self._subnetpool['tenant_id']
         with db_api.context_manager.reader.using(self._context):
-            qry = self._context.session.query(models_v2.Subnet)
+            qry = self._context.session.query(models_v2.Subnet.cidr)
             allocations = qry.filter_by(subnetpool_id=subnetpool_id,
                                         tenant_id=tenant_id)
             value = 0
