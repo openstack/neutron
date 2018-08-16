@@ -240,7 +240,8 @@ class TrackedResource(BaseResource):
         LOG.debug(("Synchronizing usage tracker for tenant:%(tenant_id)s on "
                    "resource:%(resource)s"),
                   {'tenant_id': tenant_id, 'resource': self.name})
-        in_use = context.session.query(self._model_class).filter_by(
+        in_use = context.session.query(
+            self._model_class.tenant_id).filter_by(
             tenant_id=tenant_id).count()
         # Update quota usage
         return self._resync(context, tenant_id, in_use)
@@ -269,7 +270,8 @@ class TrackedResource(BaseResource):
                        "%(tenant_id)s is out of sync, need to count used "
                        "quota"), {'resource': self.name,
                                   'tenant_id': tenant_id})
-            in_use = context.session.query(self._model_class).filter_by(
+            in_use = context.session.query(
+                self._model_class.tenant_id).filter_by(
                 tenant_id=tenant_id).count()
 
             # Update quota usage, if requested (by default do not do that, as

@@ -127,10 +127,9 @@ class External_net_db_mixin(object):
             # must make sure we do not have any external gateway ports
             # (and thus, possible floating IPs) on this network before
             # allow it to be update to external=False
-            port = context.session.query(models_v2.Port).filter_by(
-                device_owner=DEVICE_OWNER_ROUTER_GW,
-                network_id=net_data['id']).first()
-            if port:
+            if context.session.query(models_v2.Port.id).filter_by(
+                device_owner=constants.DEVICE_OWNER_ROUTER_GW,
+                network_id=net_data['id']).first():
                 raise extnet_exc.ExternalNetworkInUse(net_id=net_id)
 
             net_obj.ExternalNetwork.delete_objects(
@@ -175,12 +174,11 @@ class External_net_db_mixin(object):
         if (object_type != 'network' or
                 policy['action'] != 'access_as_external'):
             return
-        net_as_external = context.session.query(rbac_db.NetworkRBAC).filter(
-            rbac_db.NetworkRBAC.object_id == policy['object_id'],
-            rbac_db.NetworkRBAC.action == 'access_as_external').count()
         # If the network still have rbac policies, we should not
         # update external attribute.
-        if net_as_external:
+        if context.session.query(rbac_db.NetworkRBAC.object_id).filter(
+            rbac_db.NetworkRBAC.object_id == policy['object_id'],
+            rbac_db.NetworkRBAC.action == 'access_as_external').count():
             return
         net = self.get_network(context, policy['object_id'])
         self._process_l3_update(context, net,
@@ -211,7 +209,7 @@ class External_net_db_mixin(object):
                 l3_models.Router.tenant_id == policy['target_tenant'])
             # if there is a wildcard entry we can safely proceed without the
             # router lookup because they will have access either way
-            if context.session.query(rbac_db.NetworkRBAC).filter(
+            if context.session.query(rbac_db.NetworkRBAC.object_id).filter(
                     rbac.object_id == policy['object_id'],
                     rbac.action == 'access_as_external',
                     rbac.target_tenant == '*').count():

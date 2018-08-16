@@ -214,9 +214,10 @@ def make_port_dict_with_security_groups(port, sec_groups):
 def get_port_binding_host(context, port_id):
     try:
         with db_api.context_manager.reader.using(context):
-            query = (context.session.query(models.PortBinding).
-                     filter(models.PortBinding.port_id.startswith(port_id)).
-                     one())
+            query = (context.session.query(models.PortBinding.host).
+                     filter(models.PortBinding.port_id.startswith(port_id)))
+            query = query.filter(
+                models.PortBinding.status == n_const.ACTIVE).one()
     except exc.NoResultFound:
         LOG.debug("No binding found for port %(port_id)s",
                   {'port_id': port_id})
@@ -232,7 +233,7 @@ def get_port_binding_host(context, port_id):
 def generate_distributed_port_status(context, port_id):
     # an OR'ed value of status assigned to parent port from the
     # distributedportbinding bucket
-    query = context.session.query(models.DistributedPortBinding)
+    query = context.session.query(models.DistributedPortBinding.status)
     final_status = n_const.PORT_STATUS_BUILD
     for bind in query.filter(models.DistributedPortBinding.port_id == port_id):
         if bind.status == n_const.PORT_STATUS_ACTIVE:
@@ -307,7 +308,7 @@ def get_port_db_objects(context, port_ids):
 def is_dhcp_active_on_any_subnet(context, subnet_ids):
     if not subnet_ids:
         return False
-    return bool(context.session.query(models_v2.Subnet).
+    return bool(context.session.query(models_v2.Subnet.id).
                 enable_eagerloads(False).filter_by(enable_dhcp=True).
                 filter(models_v2.Subnet.id.in_(subnet_ids)).count())
 
@@ -322,7 +323,7 @@ def _prevent_segment_delete_with_port_bound(resource, event, trigger,
 
     with db_api.context_manager.reader.using(context):
         segment_id = segment['id']
-        query = context.session.query(models_v2.Port)
+        query = context.session.query(models_v2.Port.id)
         query = query.join(
             models.PortBindingLevel,
             models.PortBindingLevel.port_id == models_v2.Port.id)
