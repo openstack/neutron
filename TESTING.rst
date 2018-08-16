@@ -574,16 +574,30 @@ namespace of the test machine is available for its usage.
 API & Scenario Tests
 ~~~~~~~~~~~~~~~~~~~~
 
-To run the api or scenario tests, deploy Tempest and Neutron with DevStack and
-then run the following command, from the tempest directory: ::
+To run the api or scenario tests, deploy Tempest, neutron-tempest-plugin
+and Neutron with DevStack and then run the following command,
+from the tempest directory: ::
 
-    tox -e all-plugin
+    $ export DEVSTACK_GATE_TEMPEST_REGEX="neutron"
+    $ tox -e all-plugin $DEVSTACK_GATE_TEMPEST_REGEX
 
-If you want to limit the amount of tests that you would like to run, you
-can do, for instance: ::
+If you want to limit the amount of tests, or run an individual test,
+you can do, for instance: ::
 
-    export DEVSTACK_GATE_TEMPEST_REGEX="<you-regex>" # e.g. "neutron"
-    tox -e all-plugin $DEVSTACK_GATE_TEMPEST_REGEX
+    $ tox -e all-plugin neutron_tempest_plugin.api.admin.test_routers_ha
+    $ tox -e all-plugin neutron_tempest_plugin.api.test_qos.QosTestJSON.test_create_policy
+
+If you want to use special config for Neutron, like use advanced images (Ubuntu
+or CentOS) testing advanced features, you may need to add config
+in tempest/etc/tempest.conf:
+
+.. code-block:: ini
+
+   [neutron_plugin_options]
+   image_is_advanced = True
+
+The Neutron tempest plugin configs are under ``neutron_plugin_options`` scope
+of ``tempest.conf``.
 
 Running Individual Tests
 ~~~~~~~~~~~~~~~~~~~~~~~~
