@@ -87,7 +87,7 @@ class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
     def get_port_host(self, context, port_id):
         with db_api.context_manager.reader.using(context):
             bind_port = (
-                context.session.query(pmodels.PortBindingPort).
+                context.session.query(pmodels.PortBindingPort.host).
                 filter_by(port_id=port_id).
                 first()
             )
