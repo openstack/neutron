@@ -510,9 +510,14 @@ class Port(base.NeutronDbObject):
         return [cls._load_object(context, db_obj) for db_obj in ports.all()]
 
     @classmethod
-    def get_ports_ids_by_security_groups(cls, context, security_group_ids):
+    def get_ports_ids_by_security_groups(cls, context, security_group_ids,
+            excluded_device_owners=None):
         query = context.session.query(sg_models.SecurityGroupPortBinding)
         query = query.filter(
             sg_models.SecurityGroupPortBinding.security_group_id.in_(
                 security_group_ids))
+        if excluded_device_owners:
+            query = query.join(models_v2.Port)
+            query = query.filter(
+                ~models_v2.Port.device_owner.in_(excluded_device_owners))
         return [port_binding['port_id'] for port_binding in query.all()]
