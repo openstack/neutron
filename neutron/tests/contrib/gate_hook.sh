@@ -82,6 +82,13 @@ case $VENV in
         # See commit 138df3e563de9da0e5a4155b3534a69621495742 (on the ovs repo).
         OVS_BRANCH="138df3e563de9da0e5a4155b3534a69621495742"
         compile_ovs_kernel_module
+    elif [[ "$VENV" =~ "dsvm-functional" ]]; then
+        # NOTE(slaweq): there is some bug in keepalived
+        # 1:1.2.24-1ubuntu0.16.04.1, and because of that we have to use older
+        # version for tests as workaround. For details check
+        # https://bugs.launchpad.net/neutron/+bug/1788185
+        # https://bugs.launchpad.net/ubuntu/+source/keepalived/+bug/1789045
+        sudo apt-get install -y --allow-downgrades keepalived=1:1.2.19-1
     fi
 
     # prepare base environment for ./stack.sh
