@@ -42,6 +42,7 @@ class BaseSecurityGroupsSameNetworkTest(base.BaseFullStackTestCase):
     of_interface = None
 
     def setUp(self):
+        debug_iptables = self.firewall_driver.startswith("iptables")
         host_descriptions = [
             environment.HostDescription(
                 of_interface=self.of_interface,
@@ -50,7 +51,8 @@ class BaseSecurityGroupsSameNetworkTest(base.BaseFullStackTestCase):
                 dhcp_agent=True) for _ in range(self.num_hosts)]
         env = environment.Environment(
             environment.EnvironmentDescription(
-                network_type=self.network_type),
+                network_type=self.network_type,
+                debug_iptables=debug_iptables),
             host_descriptions)
         super(BaseSecurityGroupsSameNetworkTest, self).setUp(env)
 
