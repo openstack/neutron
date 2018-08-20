@@ -339,37 +339,28 @@ class _TestMetadataProxyHandlerCacheMixin(object):
 
         req = mock.Mock(path_info='/the_path', query_string='', headers=hdrs,
                         method=method, body=body)
-        resp = mock.MagicMock(status=response_code)
+        resp = mock.MagicMock(status_code=response_code)
+        resp.content = 'content'
         req.response = resp
         with mock.patch.object(self.handler, '_sign_instance_id') as sign:
             sign.return_value = 'signed'
-            with mock.patch('httplib2.Http') as mock_http:
-                resp.__getitem__.return_value = "text/plain"
-                mock_http.return_value.request.return_value = (resp, 'content')
-
+            with mock.patch('requests.request') as mock_request:
+                resp.headers = {'content-type': 'text/plain'}
+                mock_request.return_value = resp
                 retval = self.handler._proxy_request('the_id', 'tenant_id',
                                                      req)
-                mock_http.assert_called_once_with(
-                    ca_certs=None, disable_ssl_certificate_validation=True)
-                mock_http.assert_has_calls([
-                    mock.call().add_certificate(
-                        self.fake_conf.nova_client_priv_key,
-                        self.fake_conf.nova_client_cert,
-                        "%s:%s" % (self.fake_conf.nova_metadata_host,
-                                   self.fake_conf.nova_metadata_port)
-                    ),
-                    mock.call().request(
-                        'http://9.9.9.9:8775/the_path',
-                        method=method,
-                        headers={
-                            'X-Forwarded-For': '8.8.8.8',
-                            'X-Instance-ID-Signature': 'signed',
-                            'X-Instance-ID': 'the_id',
-                            'X-Tenant-ID': 'tenant_id'
-                        },
-                        body=body
-                    )]
-                )
+                mock_request.assert_called_once_with(
+                    method=method, url='http://9.9.9.9:8775/the_path',
+                    headers={
+                        'X-Forwarded-For': '8.8.8.8',
+                        'X-Instance-ID-Signature': 'signed',
+                        'X-Instance-ID': 'the_id',
+                        'X-Tenant-ID': 'tenant_id'
+                    },
+                    data=body,
+                    cert=(self.fake_conf.nova_client_cert,
+                          self.fake_conf.nova_client_priv_key),
+                    verify=False)
 
                 return retval
 
