@@ -197,25 +197,3 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                                                          mock.ANY, mock.ANY)
             self.assertRaises(metadata_driver.InvalidUserOrGroupException,
                               config.create_config_file)
-
-    def test__migrate_python_ns_metadata_proxy_if_needed(self):
-        agent = l3_agent.L3NATAgent('localhost')
-        with mock.patch(
-            'neutron.agent.linux.external_process.ProcessManager')\
-            as mock_pm:
-            mock_pm.cmdline = (
-                'python neutron-ns-metadata-proxy')
-            (agent.metadata_driver
-                ._migrate_python_ns_metadata_proxy_if_needed(mock_pm))
-            mock_pm.disable.assert_called_once_with()
-
-    def test__migrate_python_ns_metadata_proxy_if_needed_not_called(self):
-        agent = l3_agent.L3NATAgent('localhost')
-        with mock.patch(
-            'neutron.agent.linux.external_process.ProcessManager')\
-            as mock_pm:
-            mock_pm.cmdline = (
-                'haproxy -f foo.cfg')
-            (agent.metadata_driver
-                ._migrate_python_ns_metadata_proxy_if_needed(mock_pm))
-            mock_pm.disable.assert_not_called()
