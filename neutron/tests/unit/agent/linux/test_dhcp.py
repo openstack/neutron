@@ -2257,7 +2257,7 @@ class TestDnsmasq(TestBase):
                               ("fdca:3ba5:a17a::1", "00:00:80:aa:bb:cc",
                               'client2')]), leases)
 
-    def _test_read_leases_file_leases(self, ip_version):
+    def _test_read_leases_file_leases(self, ip_version, add_bad_line=False):
         filename = '/path/to/file'
         lines = [
                 "1472673289 aa:bb:cc:00:00:02 192.168.1.2 host-192-168-1-2 *",
@@ -2271,11 +2271,16 @@ class TestDnsmasq(TestBase):
                 "1472599048 1044800003 [2001:DB8::c] host-2001-db8--c "
                 "00:04:4f:f0:cd:ca:5e:77:41:bc:9d:7f:5c:33:31:37:5d:80:77:b4"
                  ]
+        bad_line = '1472673289 aa:bb:cc:00:00:05 192.168.1.5 host-192.168-1-5'
+        if add_bad_line:
+            lines.append(bad_line)
+
         mock_open = self.useFixture(
             tools.OpenFixture(filename, '\n'.join(lines))).mock_open
 
         dnsmasq = self._get_dnsmasq(FakeDualNetwork())
-        with mock.patch('os.path.exists', return_value=True):
+        with mock.patch('os.path.exists', return_value=True), \
+                mock.patch.object(dhcp.LOG, 'warning') as mock_log_warn:
             leases = dnsmasq._read_leases_file_leases(filename, ip_version)
         server_id = '00:01:00:01:02:03:04:05:06:07:08:09:0a:0b'
         entry1 = {'iaid': '1044800001',
@@ -2324,6 +2329,8 @@ class TestDnsmasq(TestBase):
 
         mock_open.assert_called_once_with(filename)
         self.assertEqual(expected, leases)
+        if add_bad_line:
+            self.assertTrue(mock_log_warn.called)
 
     def test_read_v6_leases_file_leases(self):
         self._test_read_leases_file_leases(constants.IP_VERSION_6)
@@ -2333,6 +2340,9 @@ class TestDnsmasq(TestBase):
 
     def test_read_all_leases_file_leases(self):
         self._test_read_leases_file_leases(None)
+
+    def test_read_all_leases_file_leases_with_bad_line(self):
+        self._test_read_leases_file_leases(None, True)
 
     def test_make_subnet_interface_ip_map(self):
         with mock.patch('neutron.agent.linux.ip_lib.IPDevice') as ip_dev:
