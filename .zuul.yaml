@@ -1,5 +1,6 @@
 - project:
     templates:
+      - openstack-python36-jobs-nonvoting
       - neutron-tempest-plugin-jobs
     check:
       jobs:
