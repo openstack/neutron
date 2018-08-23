@@ -2487,33 +2487,29 @@ class TestOvsDvrNeutronAgent(object):
         return resp
 
     def _expected_install_dvr_process(self, lvid, port, ip_version,
-                                      gateway_ip, gateway_mac, shared=False):
-        if not shared:
-            if ip_version == 4:
-                ipvx_calls = [
-                    mock.call.install_dvr_process_ipv4(
-                        vlan_tag=lvid,
-                        gateway_ip=gateway_ip),
-                ]
-            else:
-                ipvx_calls = [
-                    mock.call.install_dvr_process_ipv6(
-                        vlan_tag=lvid,
-                        gateway_mac=gateway_mac),
-                ]
-            return ipvx_calls + [
-                mock.call.install_dvr_process(
+                                      gateway_ip, gateway_mac):
+        if ip_version == 4:
+            ipvx_calls = [
+                mock.call.install_dvr_process_ipv4(
                     vlan_tag=lvid,
-                    dvr_mac_address=self.agent.dvr_agent.dvr_mac_address,
-                    vif_mac=port.vif_mac,
-                ),
+                    gateway_ip=gateway_ip),
             ]
         else:
-            return []
+            ipvx_calls = [
+                mock.call.install_dvr_process_ipv6(
+                    vlan_tag=lvid,
+                    gateway_mac=gateway_mac),
+            ]
+        return ipvx_calls + [
+            mock.call.install_dvr_process(
+                vlan_tag=lvid,
+                dvr_mac_address=self.agent.dvr_agent.dvr_mac_address,
+                vif_mac=port.vif_mac,
+            ),
+        ]
 
     def _test_port_bound_for_dvr_on_vlan_network(self, device_owner,
-                                                 ip_version=4,
-                                                 shared=False):
+                                                 ip_version=4):
         self._setup_for_dvr_test()
         if ip_version == 4:
             gateway_ip = '1.1.1.1'
@@ -2536,12 +2532,7 @@ class TestOvsDvrNeutronAgent(object):
                                return_value={'gateway_ip': gateway_ip,
                                              'cidr': cidr,
                                              'ip_version': ip_version,
-                                             'gateway_mac': gateway_mac,
-                                             'network_id': 'fake-id'}),\
-                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
-                                  'get_network_info_for_id',
-                                  return_value=[{'shared': shared,
-                                                 'router:external': False}]),\
+                                             'gateway_mac': gateway_mac}),\
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_ports_on_host_by_subnet',
                                   return_value=[]),\
@@ -2575,8 +2566,7 @@ class TestOvsDvrNeutronAgent(object):
                 lvid=lvid,
                 ip_version=ip_version,
                 gateway_ip=gateway_ip,
-                gateway_mac=gateway_mac,
-                shared=shared)
+                gateway_mac=gateway_mac)
             expected_on_int_br = [
                 mock.call.provision_local_vlan(
                     port=int_ofp,
@@ -2609,8 +2599,7 @@ class TestOvsDvrNeutronAgent(object):
             self.assertFalse([], phys_br.mock_calls)
 
     def _test_port_bound_for_dvr_on_vxlan_network(self, device_owner,
-                                                  ip_version=4,
-                                                  shared=False):
+                                                  ip_version=4):
         self._setup_for_dvr_test()
         if ip_version == 4:
             gateway_ip = '1.1.1.1'
@@ -2633,12 +2622,7 @@ class TestOvsDvrNeutronAgent(object):
                                return_value={'gateway_ip': gateway_ip,
                                              'cidr': cidr,
                                              'ip_version': ip_version,
-                                             'gateway_mac': gateway_mac,
-                                             'network_id': 'fake-id'}),\
-                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
-                                  'get_network_info_for_id',
-                                  return_value=[{'shared': shared,
-                                                 'router:external': False}]),\
+                                             'gateway_mac': gateway_mac}),\
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_ports_on_host_by_subnet',
                                   return_value=[]),\
@@ -2671,8 +2655,7 @@ class TestOvsDvrNeutronAgent(object):
                 lvid=lvid,
                 ip_version=ip_version,
                 gateway_ip=gateway_ip,
-                gateway_mac=gateway_mac,
-                shared=shared)
+                gateway_mac=gateway_mac)
             self.assertEqual(expected_on_int_br, int_br.mock_calls)
             self.assertEqual(expected_on_tun_br, tun_br.mock_calls)
             self.assertEqual([], phys_br.mock_calls)
@@ -2706,16 +2689,6 @@ class TestOvsDvrNeutronAgent(object):
             device_owner=DEVICE_OWNER_COMPUTE)
         self._test_port_bound_for_dvr_on_vxlan_network(
             device_owner=DEVICE_OWNER_COMPUTE, ip_version=6)
-
-    def test_port_bound_for_dvr_with_compute_ports_on_shared_network(self):
-        self._test_port_bound_for_dvr_on_vlan_network(
-            device_owner=DEVICE_OWNER_COMPUTE, shared=True)
-        self._test_port_bound_for_dvr_on_vlan_network(
-            device_owner=DEVICE_OWNER_COMPUTE, ip_version=6, shared=True)
-        self._test_port_bound_for_dvr_on_vxlan_network(
-            device_owner=DEVICE_OWNER_COMPUTE, shared=True)
-        self._test_port_bound_for_dvr_on_vxlan_network(
-            device_owner=DEVICE_OWNER_COMPUTE, ip_version=6, shared=True)
 
     def test_port_bound_for_dvr_with_lbaas_vip_ports(self):
         self._test_port_bound_for_dvr_on_vlan_network(
@@ -2810,8 +2783,7 @@ class TestOvsDvrNeutronAgent(object):
                                return_value={'gateway_ip': '1.1.1.1',
                                'cidr': '1.1.1.0/24',
                                'ip_version': 4,
-                               'gateway_mac': 'aa:bb:cc:11:22:33',
-                               'network_id': 'faked-id'}),\
+                               'gateway_mac': 'aa:bb:cc:11:22:33'}),\
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_ports_on_host_by_subnet',
                                   return_value=[]),\
@@ -2875,12 +2847,7 @@ class TestOvsDvrNeutronAgent(object):
                                return_value={'gateway_ip': gateway_ip,
                                'cidr': cidr,
                                'ip_version': ip_version,
-                               'gateway_mac': gateway_mac,
-                               'network_id': 'fake-id'}),\
-                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
-                                  'get_network_info_for_id',
-                                  return_value=[{'shared': False,
-                                                 'router:external': False}]),\
+                               'gateway_mac': gateway_mac}),\
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_ports_on_host_by_subnet',
                                   return_value=[]),\
@@ -2985,12 +2952,7 @@ class TestOvsDvrNeutronAgent(object):
                                return_value={'gateway_ip': gateway_ip,
                                'cidr': cidr,
                                'ip_version': ip_version,
-                               'gateway_mac': gateway_mac,
-                               'network_id': 'faked-id'}),\
-                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
-                                  'get_network_info_for_id',
-                                  return_value=[{'shared': False,
-                                                 'router:external': False}]),\
+                               'gateway_mac': gateway_mac}),\
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_ports_on_host_by_subnet',
                                   return_value=[]),\
@@ -3105,12 +3067,7 @@ class TestOvsDvrNeutronAgent(object):
                                return_value={'gateway_ip': '1.1.1.1',
                                'cidr': '1.1.1.0/24',
                                'ip_version': 4,
-                               'gateway_mac': gateway_mac,
-                               'network_id': 'fake-id'}),\
-                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
-                                  'get_network_info_for_id',
-                                  return_value=[{'shared': False,
-                                                 'router:external': False}]),\
+                               'gateway_mac': gateway_mac}),\
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_ports_on_host_by_subnet',
                                   return_value=[]),\
