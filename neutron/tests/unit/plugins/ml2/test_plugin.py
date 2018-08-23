@@ -1790,25 +1790,23 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
         ns_to_delete = {'host': 'myhost', 'agent_id': 'vm_l3_agent',
                         'router_id': 'my_router'}
         router_ids = set()
-        call_count_total = 3
 
         if floating_ip:
             router_ids.add(ns_to_delete['router_id'])
 
         with self.port() as port,\
-                mock.patch.object(registry, 'notify') as notify,\
+                mock.patch.object(registry, 'notify') as notify, \
+                mock.patch.object(registry, 'publish') as publish, \
                 mock.patch.object(self.l3plugin,
                                   'disassociate_floatingips',
                                   return_value=router_ids):
             port_id = port['port']['id']
             self.plugin.delete_port(self.context, port_id)
-            self.assertEqual(call_count_total, notify.call_count)
+            self.assertEqual(2, notify.call_count)
+            self.assertEqual(1, publish.call_count)
             # needed for a full match in the assertion below
             port['port']['extra_dhcp_opts'] = []
-            expected = [mock.call(resources.PORT, events.BEFORE_DELETE,
-                                  mock.ANY, context=self.context,
-                                  port_id=port['port']['id'], port_check=True),
-                        mock.call(resources.PORT, events.PRECOMMIT_DELETE,
+            expected = [mock.call(resources.PORT, events.PRECOMMIT_DELETE,
                                   mock.ANY, network=mock.ANY, bind=mock.ANY,
                                   port=port['port'], port_db=mock.ANY,
                                   context=self.context, levels=mock.ANY,
@@ -1818,6 +1816,13 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
                                   port=port['port'],
                                   router_ids=router_ids)]
             notify.assert_has_calls(expected)
+
+            expected = [mock.call(resources.PORT, events.BEFORE_DELETE,
+                                  mock.ANY, payload=mock.ANY)]
+            publish.assert_has_calls(expected)
+            payload = publish.call_args[1]['payload']
+            self.assertEqual(port_id, payload.resource_id)
+            self.assertTrue(payload.metadata['port_check'])
 
     def test_delete_port_with_floatingip_notifies_l3_plugin(self):
         self.test_delete_port_notifies_l3_plugin(floating_ip=True)

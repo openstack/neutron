@@ -98,13 +98,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     @staticmethod
     @registry.receives(resources.PORT, [events.BEFORE_DELETE])
-    def _prevent_l3_port_delete_callback(resource, event, trigger, **kwargs):
-        context = kwargs['context']
-        port_id = kwargs['port_id']
-        port_check = kwargs['port_check']
+    def _prevent_l3_port_delete_callback(resource, event,
+                                         trigger, payload=None):
         l3plugin = directory.get_plugin(plugin_constants.L3)
-        if l3plugin and port_check:
-            l3plugin.prevent_l3_port_deletion(context, port_id)
+        if l3plugin and payload.metadata['port_check']:
+            l3plugin.prevent_l3_port_deletion(
+                payload.context, payload.resource_id)
 
     @property
     def _is_dns_integration_supported(self):

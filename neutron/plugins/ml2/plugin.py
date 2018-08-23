@@ -1583,13 +1583,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             # notify interested parties of imminent port deletion;
             # a failure here prevents the operation from happening
-            kwargs = {
-                'context': context,
-                'port_id': port_id,
-                'port_check': port_check
-            }
-            registry.notify(
-                resources.PORT, events.BEFORE_DELETE, self, **kwargs)
+            registry.publish(
+                resources.PORT, events.BEFORE_DELETE, self,
+                payload=events.DBEventPayload(
+                    context, metadata={'port_check': port_check},
+                    resource_id=port_id))
         except exceptions.CallbackFailure as e:
             # NOTE(armax): preserve old check's behavior
             if len(e.errors) == 1:
