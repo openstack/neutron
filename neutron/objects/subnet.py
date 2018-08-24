@@ -11,18 +11,23 @@
 #    under the License.
 
 import netaddr
+from neutron_lib.api import validators
 from neutron_lib import constants as const
 
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import and_, or_
 
 from neutron.common import utils
+from neutron.db import _model_query as model_query
+from neutron.db.models import segment as segment_model
 from neutron.db.models import subnet_service_type
 from neutron.db import models_v2
+from neutron.ipam import exceptions as ipam_exceptions
 from neutron.objects import base
 from neutron.objects import common_types
 from neutron.objects import network
 from neutron.objects import rbac_db
+from neutron.services.segments import exceptions as segment_exc
 
 
 @base.NeutronObjectRegistry.register
@@ -287,3 +292,119 @@ class Subnet(base.NeutronDbObject):
         if 'gateway_ip' in result and result['gateway_ip'] is not None:
             result['gateway_ip'] = cls.filter_to_str(result['gateway_ip'])
         return result
+
+    @classmethod
+    def find_candidate_subnets(cls, context, network_id, host, service_type,
+                               fixed_configured):
+        """Find canditate subnets for the network, host, and service_type"""
+        query = cls.query_subnets_on_network(context, network_id)
+        query = SubnetServiceType.query_filter_service_subnets(
+            query, service_type)
+
+        # Select candidate subnets and return them
+        if not cls.is_host_set(host):
+            if fixed_configured:
+                # If fixed_ips in request and host is not known all subnets on
+                # the network are candidates. Host/Segment will be validated
+                # on port update with binding:host_id set. Allocation _cannot_
+                # be deferred as requested fixed_ips would then be lost.
+                return query.all()
+            # If the host isn't known, we can't allocate on a routed network.
+            # So, exclude any subnets attached to segments.
+            return cls._query_exclude_subnets_on_segments(query).all()
+
+        # The host is known. Consider both routed and non-routed networks
+        results = cls._query_filter_by_segment_host_mapping(query, host).all()
+
+        # For now, we're using a simplifying assumption that a host will only
+        # touch one segment in a given routed network.  Raise exception
+        # otherwise.  This restriction may be relaxed as use cases for multiple
+        # mappings are understood.
+        segment_ids = {subnet.segment_id
+                       for subnet, mapping in results
+                       if mapping}
+        if 1 < len(segment_ids):
+            raise segment_exc.HostConnectedToMultipleSegments(
+                host=host, network_id=network_id)
+
+        return [subnet for subnet, _mapping in results]
+
+    @classmethod
+    def _query_filter_by_segment_host_mapping(cls, query, host):
+        # TODO(tuanvu): find OVO-like solution for handling "join queries" and
+        #               write unit test for this function
+        """Excludes subnets on segments not reachable by the host
+
+        The query gets two kinds of subnets: those that are on segments that
+        the host can reach and those that are not on segments at all (assumed
+        reachable by all hosts). Hence, subnets on segments that the host
+        *cannot* reach are excluded.
+        """
+        SegmentHostMapping = segment_model.SegmentHostMapping
+
+        # A host has been provided.  Consider these two scenarios
+        # 1. Not a routed network:  subnets are not on segments
+        # 2. Is a routed network:  only subnets on segments mapped to host
+        # The following join query returns results for either.  The two are
+        # guaranteed to be mutually exclusive when subnets are created.
+        query = query.add_entity(SegmentHostMapping)
+        query = query.outerjoin(
+            SegmentHostMapping,
+            and_(cls.db_model.segment_id == SegmentHostMapping.segment_id,
+                 SegmentHostMapping.host == host))
+
+        # Essentially "segment_id IS NULL XNOR host IS NULL"
+        query = query.filter(or_(and_(cls.db_model.segment_id.isnot(None),
+                                      SegmentHostMapping.host.isnot(None)),
+                                 and_(cls.db_model.segment_id.is_(None),
+                                      SegmentHostMapping.host.is_(None))))
+        return query
+
+    @classmethod
+    def query_subnets_on_network(cls, context, network_id):
+        query = model_query.get_collection_query(context, cls.db_model)
+        return query.filter(cls.db_model.network_id == network_id)
+
+    @classmethod
+    def _query_exclude_subnets_on_segments(cls, query):
+        """Excludes all subnets associated with segments
+
+        For the case where the host is not known, we don't consider any subnets
+        that are on segments. But, we still consider subnets that are not
+        associated with any segment (i.e. for non-routed networks).
+        """
+        return query.filter(cls.db_model.segment_id.is_(None))
+
+    @classmethod
+    def is_host_set(cls, host):
+        """Utility to tell if the host is set in the port binding"""
+        # This seems redundant, but its not. Host is unset if its None, '',
+        # or ATTR_NOT_SPECIFIED due to differences in host binding
+        # implementations.
+        return host and validators.is_attr_set(host)
+
+    @classmethod
+    def network_has_no_subnet(cls, context, network_id, host, service_type):
+        # Determine why we found no subnets to raise the right error
+        query = cls.query_subnets_on_network(context, network_id)
+
+        if cls.is_host_set(host):
+            # Empty because host isn't mapped to a segment with a subnet?
+            s_query = query.filter(cls.db_model.segment_id.isnot(None))
+            if s_query.limit(1).count() != 0:
+                # It is a routed network but no subnets found for host
+                raise segment_exc.HostNotConnectedToAnySegment(
+                    host=host, network_id=network_id)
+
+        if not query.limit(1).count():
+            # Network has *no* subnets of any kind. This isn't an error.
+            return True
+
+        # Does filtering ineligible service subnets makes the list empty?
+        query = SubnetServiceType.query_filter_service_subnets(
+            query, service_type)
+        if query.limit(1).count():
+            # No, must be a deferred IP port because there are matching
+            # subnets. Happens on routed networks when host isn't known.
+            raise ipam_exceptions.DeferIpam()
+        return False
