@@ -27,12 +27,12 @@ address of the sender in IP packets. SNAT is commonly used to enable
 hosts with *private addresses* to communicate with servers on the
 public Internet.
 
-`RFC 5737 <https://tools.ietf.org/rfc/rfc5737>`_
+`RFC 1918 <https://tools.ietf.org/rfc/rfc1918>`_
 reserves the following three subnets as private addresses:
 
-* ``192.0.2.0/24``
-* ``198.51.100.0/24``
-* ``203.0.113.0/24``
+* ``10.0.0.0/8``
+* ``172.16.0.0/12``
+* ``192.168.0.0/16``
 
 These IP addresses are not publicly routable, meaning that a host on the public
 Internet can not send an IP packet to any of these addresses. Private IP
