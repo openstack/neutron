@@ -142,7 +142,7 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
         if entry_id in self.object_type_cache:
             return self.object_type_cache[entry_id]
         for otype, model in models.get_type_model_map().items():
-            if (context.session.query(model).
+            if (context.session.query(model.id).
                     filter(model.id == entry_id).first()):
                 self.object_type_cache[entry_id] = otype
                 return otype
