@@ -20,7 +20,7 @@
         # We don't run the job on things like neutron docs-only changes
         - ironic-tempest-dsvm-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             voting: false
-            irrelevant-files:
+            irrelevant-files: &tempest-irrelevant-files
               - ^(test-|)requirements.txt$
               - ^.*\.rst$
               - ^doc/.*$
@@ -148,16 +148,7 @@
       - openstack-infra/devstack-gate
       - openstack/neutron
       - openstack/tempest
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
-      - ^tools/.*$
-      - ^tox.ini$
+    irrelevant-files: *tempest-irrelevant-files
 
 - job:
     name: neutron-tempest-linuxbridge
@@ -192,16 +183,7 @@
       - openstack-infra/devstack-gate
       - openstack/neutron
     nodeset: ubuntu-xenial-2-node
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
-      - ^tools/.*$
-      - ^tox.ini$
+    irrelevant-files: *tempest-irrelevant-files
 
 - job:
     name: neutron-grenade-dvr-multinode
@@ -214,16 +196,7 @@
       - openstack-infra/devstack-gate
       - openstack/neutron
     nodeset: ubuntu-xenial-2-node
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
-      - ^tools/.*$
-      - ^tox.ini$
+    irrelevant-files: *tempest-irrelevant-files
 
 - job:
     name: neutron-tempest-multinode-full
@@ -236,16 +209,7 @@
       - openstack/neutron
       - openstack/tempest
     nodeset: ubuntu-xenial-2-node
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
-      - ^tools/.*$
-      - ^tox.ini$
+    irrelevant-files: *tempest-irrelevant-files
     voting: false
 
 - job:
@@ -259,16 +223,7 @@
       - openstack/neutron
       - openstack/tempest
     nodeset: ubuntu-xenial-3-node
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
-      - ^tools/.*$
-      - ^tox.ini$
+    irrelevant-files: *tempest-irrelevant-files
     voting: false
 
 - job:
@@ -281,16 +236,7 @@
       - openstack-infra/devstack-gate
       - openstack/neutron
       - openstack/tempest
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
-      - ^tools/.*$
-      - ^tox.ini$
+    irrelevant-files: *tempest-irrelevant-files
 
 - job:
     name: neutron-grenade
@@ -302,16 +248,7 @@
       - openstack-dev/grenade
       - openstack-infra/devstack-gate
       - openstack/neutron
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
-      - ^tools/.*$
-      - ^tox.ini$
+    irrelevant-files: *tempest-irrelevant-files
 
 - job:
     name: neutron-tempest-postgres-full
@@ -379,15 +316,5 @@
       tox_envlist: full
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: True
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/.*$
-      - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
-      - ^tools/.*$
-      - ^tox.ini$
+    irrelevant-files: *tempest-irrelevant-files
     voting: false
