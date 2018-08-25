@@ -24,6 +24,7 @@ from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib import fixture
 from neutron_lib.plugins import directory
+from neutron_lib.tests.unit import fake_notifier
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_policy import policy as oslo_policy
@@ -42,7 +43,6 @@ from neutron import policy
 from neutron import quota
 from neutron.quota import resource_registry
 from neutron.tests import base
-from neutron.tests import fake_notifier
 from neutron.tests import tools
 from neutron.tests.unit import dummy_plugin
 from neutron.tests.unit import testlib_api

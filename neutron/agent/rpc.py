@@ -24,6 +24,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources as callback_resources
 from neutron_lib import constants
 from neutron_lib.plugins import utils
+from neutron_lib import rpc as lib_rpc
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import uuidutils
@@ -83,7 +84,7 @@ class PluginReportStateAPI(object):
 
     def report_state(self, context, agent_state, use_call=False):
         cctxt = self.client.prepare(
-            timeout=n_rpc.TRANSPORT.conf.rpc_response_timeout)
+            timeout=lib_rpc.TRANSPORT.conf.rpc_response_timeout)
         # add unique identifier to a report
         # that can be logged on server side.
         # This create visible correspondence between events on

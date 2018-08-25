@@ -14,19 +14,17 @@
 import mock
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.plugins import directory
-from oslo_config import cfg
-import oslo_messaging
 
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import rpc as n_rpc
 from neutron.objects import trunk as trunk_obj
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.services.trunk import constants
 from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import plugin as trunk_plugin
-from neutron.services.trunk.rpc import constants as rpc_consts
 from neutron.services.trunk.rpc import server
 from neutron.tests import base
 from neutron.tests.unit.plugins.ml2 import test_plugin
@@ -58,16 +56,16 @@ class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
 
     @mock.patch("neutron.api.rpc.callbacks.resource_manager."
                 "ResourceCallbacksManager.register")
-    @mock.patch("neutron.common.rpc.get_server")
-    def test___init__(self, mocked_get_server, mocked_registered):
-        test_obj = server.TrunkSkeleton()
-        self.mock_registry_provide.assert_called_with(
-            server.trunk_by_port_provider,
-            resources.TRUNK)
-        trunk_target = oslo_messaging.Target(topic=rpc_consts.TRUNK_BASE_TOPIC,
-                                             server=cfg.CONF.host,
-                                             fanout=False)
-        mocked_get_server.assert_called_with(trunk_target, [test_obj])
+    def test___init__(self, mocked_get_server):
+        mock_conn = mock.MagicMock()
+        with mock.patch.object(n_rpc.Connection, 'create_consumer',
+                               new_callable=mock_conn):
+            test_obj = server.TrunkSkeleton()
+            self.mock_registry_provide.assert_called_with(
+                server.trunk_by_port_provider,
+                resources.TRUNK)
+            self.assertItemsEqual(('trunk', [test_obj],),
+                                  mock_conn.mock_calls[1][1])
 
     def test_update_subport_bindings(self):
         with self.port() as _parent_port:

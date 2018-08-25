@@ -16,6 +16,7 @@
 import mock
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
+from neutron.common import rpc
 from neutron.tests import base
 
 
@@ -23,8 +24,8 @@ class TestL3AgentNotifyAPI(base.BaseTestCase):
 
     def setUp(self):
         super(TestL3AgentNotifyAPI, self).setUp()
-        self.rpc_client_mock = mock.patch(
-            'neutron.common.rpc.get_client').start().return_value
+        self.rpc_client_mock = mock.patch.object(
+            rpc, 'get_client').start().return_value
         self.l3_notifier = l3_rpc_agent_api.L3AgentNotifyAPI()
 
     def _test_arp_update(self, method):

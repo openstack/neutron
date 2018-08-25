@@ -13,6 +13,7 @@
 # under the License.
 
 import mock
+from neutron_lib.tests.unit import fake_notifier
 from oslo_config import cfg
 from oslo_utils import fixture as utils_fixture
 from oslo_utils import timeutils
@@ -21,7 +22,6 @@ from oslo_utils import uuidutils
 from neutron.conf.services import metering_agent as metering_agent_config
 from neutron.services.metering.agents import metering_agent
 from neutron.tests import base
-from neutron.tests import fake_notifier
 
 _uuid = uuidutils.generate_uuid
 

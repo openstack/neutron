@@ -21,6 +21,7 @@ from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from neutron_lib.tests.unit import fake_notifier
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 import oslo_messaging
@@ -31,6 +32,7 @@ from neutron.api import extensions
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
+from neutron.common import rpc as n_rpc
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db.models import agent as agent_model
@@ -38,7 +40,6 @@ from neutron.extensions import l3agentscheduler
 from neutron.objects import agent as ag_obj
 from neutron.objects import l3agent as rb_obj
 from neutron.tests.common import helpers
-from neutron.tests import fake_notifier
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 from neutron.tests.unit.extensions import test_agent
@@ -239,8 +240,8 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
         # NOTE(ivasilevskaya) mocking this way allows some control over mocked
         # client like further method mocking with asserting calls
         self.client_mock = mock.MagicMock(name="mocked client")
-        mock.patch('neutron.common.rpc.get_client'
-                   ).start().return_value = self.client_mock
+        mock.patch.object(
+            n_rpc, 'get_client').start().return_value = self.client_mock
         super(OvsAgentSchedulerTestCaseBase, self).setUp(
             'ml2', service_plugins=service_plugins)
         mock.patch.object(

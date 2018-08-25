@@ -26,6 +26,7 @@ from neutron.agent.l3 import router_info as l3router
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import rpc as n_rpc
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.tests import base
@@ -136,8 +137,7 @@ class FipQosExtensionInitializeTestCase(QosExtensionBaseTestCase):
     @mock.patch.object(registry, 'register')
     @mock.patch.object(resources_rpc, 'ResourcesPushRpcCallback')
     def test_initialize_subscribed_to_rpc(self, rpc_mock, subscribe_mock):
-        call_to_patch = 'neutron.common.rpc.Connection'
-        with mock.patch(call_to_patch,
+        with mock.patch.object(n_rpc, 'Connection',
                         return_value=self.connection) as create_connection:
             self.fip_qos_ext.initialize(
                 self.connection, lib_const.L3_AGENT_MODE)
