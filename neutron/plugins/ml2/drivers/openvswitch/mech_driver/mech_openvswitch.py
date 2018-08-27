@@ -111,16 +111,20 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def get_vif_details(self, context, agent, segment):
         vif_details = self._pre_get_vif_details(agent, context)
-        self._set_bridge_name(context.current, vif_details)
+        self._set_bridge_name(context.current, vif_details, agent)
         return vif_details
 
     @staticmethod
-    def _set_bridge_name(port, vif_details):
+    def _set_bridge_name(port, vif_details, agent):
         # REVISIT(rawlin): add BridgeName as a nullable column to the Port
         # model and simply check here if it's set and insert it into the
         # vif_details.
 
         def set_bridge_name_inner(bridge_name):
+            vif_details[portbindings.VIF_DETAILS_BRIDGE_NAME] = bridge_name
+
+        bridge_name = agent['configurations'].get('integration_bridge')
+        if bridge_name:
             vif_details[portbindings.VIF_DETAILS_BRIDGE_NAME] = bridge_name
 
         registry.publish(a_const.OVS_BRIDGE_NAME, events.BEFORE_READ,
