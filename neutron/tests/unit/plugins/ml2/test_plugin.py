@@ -3092,9 +3092,10 @@ class TestML2Segments(Ml2PluginV2TestCase):
                 segment = segments_db.get_network_segments(
                     self.context, port['port']['network_id'])[0]
                 segment['network_id'] = port['port']['network_id']
-            self.assertRaises(c_exc.CallbackFailure, registry.notify,
+            self.assertRaises(c_exc.CallbackFailure, registry.publish,
                               resources.SEGMENT, events.BEFORE_DELETE,
-                              mock.ANY,
-                              context=self.context, segment=segment)
+                              mock.ANY, payload=events.DBEventPayload(
+                                  self.context, states=(segment,),
+                                  resource_id=segment['id']))
             exist_port = self._show('ports', port['port']['id'])
             self.assertEqual(port['port']['id'], exist_port['port']['id'])

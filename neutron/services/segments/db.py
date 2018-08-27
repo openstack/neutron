@@ -165,9 +165,13 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
         """Delete an existing segment."""
         segment_dict = self.get_segment(context, uuid)
         # Do some preliminary operations before deleting the segment
-        registry.notify(resources.SEGMENT, events.BEFORE_DELETE,
-                        self.delete_segment, context=context,
-                        segment=segment_dict, for_net_delete=for_net_delete)
+        registry.publish(resources.SEGMENT, events.BEFORE_DELETE,
+                         self.delete_segment,
+                         payload=events.DBEventPayload(
+                             context, metadata={
+                                 'for_net_delete': for_net_delete},
+                             states=(segment_dict,),
+                             resource_id=uuid))
 
         # Delete segment in DB
         with db_api.CONTEXT_WRITER.using(context):

@@ -110,14 +110,13 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
 
     @registry.receives(resources.SEGMENT, [events.BEFORE_DELETE])
     def _prevent_segment_delete_with_subnet_associated(
-            self, resource, event, trigger, context, segment,
-            for_net_delete=False):
+            self, resource, event, trigger, payload=None):
         """Raise exception if there are any subnets associated with segment."""
-        if for_net_delete:
+        if payload.metadata.get('for_net_delete'):
             # don't check if this is a part of a network delete operation
             return
-        segment_id = segment['id']
-        subnets = subnet_obj.Subnet.get_objects(context,
+        segment_id = payload.resource_id
+        subnets = subnet_obj.Subnet.get_objects(payload.context,
                                                 segment_id=segment_id)
         subnet_ids = [s.id for s in subnets]
 

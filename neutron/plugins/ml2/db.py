@@ -333,23 +333,23 @@ def is_dhcp_active_on_any_subnet(context, subnet_ids):
 
 
 def _prevent_segment_delete_with_port_bound(resource, event, trigger,
-                                            context, segment,
-                                            for_net_delete=False):
+                                            payload=None):
     """Raise exception if there are any ports bound with segment_id."""
-    if for_net_delete:
+    if payload.metadata.get('for_net_delete'):
         # don't check for network deletes
         return
 
-    with db_api.CONTEXT_READER.using(context):
+    with db_api.CONTEXT_READER.using(payload.context):
         port_ids = port_obj.Port.get_port_ids_filter_by_segment_id(
-            context, segment_id=segment['id'])
+            payload.context, segment_id=payload.resource_id)
 
     # There are still some ports in the segment, segment should not be deleted
     # TODO(xiaohhui): Should we delete the dhcp port automatically here?
     if port_ids:
         reason = _("The segment is still bound with port(s) "
                    "%s") % ", ".join(port_ids)
-        raise seg_exc.SegmentInUse(segment_id=segment['id'], reason=reason)
+        raise seg_exc.SegmentInUse(segment_id=payload.resource_id,
+                                   reason=reason)
 
 
 def subscribe():
