@@ -114,3 +114,9 @@ class PortBindingAlreadyExists(exceptions.Conflict):
 class PortBindingError(exceptions.NeutronException):
     message = _("Binding for port %(port_id)s on host %(host)s could not be "
                 "created or updated.")
+
+
+class ProcessExecutionError(RuntimeError):
+    def __init__(self, message, returncode):
+        super(ProcessExecutionError, self).__init__(message)
+        self.returncode = returncode

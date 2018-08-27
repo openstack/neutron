@@ -27,3 +27,5 @@ else:
 
 IPWrapper = ip_lib.IPWrapper
 IPDevice = ip_lib.IPDevice
+
+add_namespace_to_cmd = ip_lib.add_namespace_to_cmd

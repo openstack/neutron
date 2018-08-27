@@ -79,3 +79,9 @@ class IPLink(object):
             return False
         return [eth_addr['addr'] for eth_addr in
                 device_addresses.get(netifaces.AF_LINK, [])]
+
+
+def add_namespace_to_cmd(cmd, namespace=None):
+    """Add an optional namespace to the command."""
+
+    return cmd
