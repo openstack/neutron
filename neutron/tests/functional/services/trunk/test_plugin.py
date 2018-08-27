@@ -42,7 +42,20 @@ class TestTrunkServicePlugin(ml2_test_base.ML2TestFramework):
                 utils.gen_trunk_br_name(trunk_res['id']),
                 bound_port[pb.VIF_DETAILS][pb.VIF_DETAILS_BRIDGE_NAME])
 
-    def test_ovs_bridge_name_not_set_when_not_trunk(self):
+    def test_ovs_bridge_name_set_to_integration_bridge_when_not_trunk(self):
+        helpers.register_ovs_agent(host=helpers.HOST,
+                                   integration_bridge='br-fake')
+        with self.port() as port:
+            port['port'][pb.HOST_ID] = helpers.HOST
+            bound_port = self.core_plugin.update_port(self.context,
+                                                      port['port']['id'], port)
+            self.assertEqual('br-fake',
+                bound_port[pb.VIF_DETAILS].get(pb.VIF_DETAILS_BRIDGE_NAME))
+
+    def test_ovs_bridge_name_not_set_if_integration_bridge_not_set(self):
+        """This will only happen if a stein or later ml2 driver is
+        binding an interface for a pre stein ml2 agent.
+        """
         helpers.register_ovs_agent(host=helpers.HOST)
         with self.port() as port:
             port['port'][pb.HOST_ID] = helpers.HOST

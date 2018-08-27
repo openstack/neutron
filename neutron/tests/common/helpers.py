@@ -142,7 +142,8 @@ def set_agent_admin_state(agent_id, admin_state_up=False):
 def _get_l2_agent_dict(host, agent_type, binary, tunnel_types=None,
                        tunneling_ip='20.0.0.1', interface_mappings=None,
                        bridge_mappings=None, l2pop_network_types=None,
-                       device_mappings=None, start_flag=True):
+                       device_mappings=None, start_flag=True,
+                       integration_bridge=None):
     agent = {
         'binary': binary,
         'host': host,
@@ -163,6 +164,8 @@ def _get_l2_agent_dict(host, agent_type, binary, tunnel_types=None,
         agent['configurations']['l2pop_network_types'] = l2pop_network_types
     if device_mappings is not None:
         agent['configurations']['device_mappings'] = device_mappings
+    if integration_bridge is not None:
+        agent['configurations']['integration_bridge'] = integration_bridge
     return agent
 
 
@@ -170,11 +173,13 @@ def register_ovs_agent(host=HOST, agent_type=constants.AGENT_TYPE_OVS,
                        binary='neutron-openvswitch-agent',
                        tunnel_types=['vxlan'], tunneling_ip='20.0.0.1',
                        interface_mappings=None, bridge_mappings=None,
-                       l2pop_network_types=None, plugin=None, start_flag=True):
+                       l2pop_network_types=None, plugin=None, start_flag=True,
+                       integration_bridge=None):
     agent = _get_l2_agent_dict(host, agent_type, binary, tunnel_types,
                                tunneling_ip, interface_mappings,
                                bridge_mappings, l2pop_network_types,
-                               start_flag=start_flag)
+                               start_flag=start_flag,
+                               integration_bridge=integration_bridge)
     return _register_agent(agent, plugin)
 
 
