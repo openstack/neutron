@@ -335,7 +335,7 @@ class TestHAL3Agent(TestL3Agent):
                 "master",
                 self._get_keepalived_state(keepalived_state_file))
 
-    def test_ha_router_restart_standby_agents_no_packet_lost(self):
+    def test_ha_router_restart_agents_no_packet_lost(self):
         tenant_id = uuidutils.generate_uuid()
         ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
         router = self.safe_client.create_router(tenant_id, ha=True,
@@ -367,6 +367,11 @@ class TestHAL3Agent(TestL3Agent):
         l3_agents = [host.agents['l3'] for host in self.environment.hosts]
         l3_standby_agents = self._get_l3_agents_with_ha_state(
             l3_agents, router['id'], 'standby')
+        l3_active_agents = self._get_l3_agents_with_ha_state(
+            l3_agents, router['id'], 'active')
 
         self._assert_ping_during_agents_restart(
             l3_standby_agents, external_vm.namespace, [router_ip], count=60)
+
+        self._assert_ping_during_agents_restart(
+            l3_active_agents, external_vm.namespace, [router_ip], count=60)
