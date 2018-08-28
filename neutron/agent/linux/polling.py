@@ -18,9 +18,9 @@ import eventlet
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron.agent.common import async_process
 from neutron.agent.common import base_polling
-from neutron.agent.linux import async_process
-from neutron.agent.linux import ovsdb_monitor
+from neutron.agent.common import ovsdb_monitor
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 
 LOG = logging.getLogger(__name__)

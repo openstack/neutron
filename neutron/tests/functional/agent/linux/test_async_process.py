@@ -16,7 +16,7 @@ import eventlet
 import six
 
 from neutron._i18n import _
-from neutron.agent.linux import async_process
+from neutron.agent.common import async_process
 from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
 from neutron.tests import base

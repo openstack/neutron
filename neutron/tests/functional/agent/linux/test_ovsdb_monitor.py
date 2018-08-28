@@ -25,7 +25,7 @@ Tests in this module will be skipped unless:
 from oslo_config import cfg
 
 from neutron.agent.common import ovs_lib
-from neutron.agent.linux import ovsdb_monitor
+from neutron.agent.common import ovsdb_monitor
 from neutron.common import utils
 from neutron.tests import base
 from neutron.tests.common import net_helpers

@@ -20,7 +20,7 @@ import netaddr
 from neutron_lib.api.definitions import portbindings as pbs
 from neutron_lib import constants
 
-from neutron.agent.linux import async_process
+from neutron.agent.common import async_process
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.tests.common import machine_fixtures

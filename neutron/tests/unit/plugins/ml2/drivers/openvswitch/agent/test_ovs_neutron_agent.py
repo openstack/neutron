@@ -24,9 +24,9 @@ import oslo_messaging
 import testtools
 
 from neutron._i18n import _
+from neutron.agent.common import async_process
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
-from neutron.agent.linux import async_process
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as c_const
 from neutron.common import rpc as n_rpc
@@ -1770,7 +1770,7 @@ class TestOvsNeutronAgent(object):
                         'physnet1': ex_br_mocks[1]},
         bm_mock = mock.Mock()
         with mock.patch(
-            'neutron.agent.linux.ovsdb_monitor.get_bridges_monitor',
+            'neutron.agent.common.ovsdb_monitor.get_bridges_monitor',
             return_value=bm_mock),\
                 mock.patch.object(
                     self.agent,
@@ -1801,7 +1801,7 @@ class TestOvsNeutronAgent(object):
         with mock.patch(
             'neutron.agent.common.polling.get_polling_manager'
         ) as mock_get_pm, mock.patch(
-            'neutron.agent.linux.ovsdb_monitor.get_bridges_monitor'
+            'neutron.agent.common.ovsdb_monitor.get_bridges_monitor'
         ) as mock_get_bm, mock.patch.object(
             self.agent, 'rpc_loop'
         ) as mock_loop, mock.patch.dict(

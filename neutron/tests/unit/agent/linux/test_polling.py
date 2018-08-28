@@ -59,7 +59,7 @@ class TestInterfacePollingMinimizer(base.BaseTestCase):
         mock_stop.assert_called_with()
 
     def mock_has_updates(self, return_value):
-        target = ('neutron.agent.linux.ovsdb_monitor.SimpleInterfaceMonitor'
+        target = ('neutron.agent.common.ovsdb_monitor.SimpleInterfaceMonitor'
                   '.has_updates')
         return mock.patch(
             target,

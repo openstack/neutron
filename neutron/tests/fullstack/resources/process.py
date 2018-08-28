@@ -24,7 +24,7 @@ from neutronclient.v2_0 import client
 from oslo_log import log as logging
 from oslo_utils import fileutils
 
-from neutron.agent.linux import async_process
+from neutron.agent.common import async_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
