@@ -328,8 +328,7 @@ class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
                 self.delete_port_flows_log(of_port_log, log_id)
 
     def _log_accept_flow(self, **flow):
-        # log first packet
-        flow['ct_state'] = ovsfw_consts.OF_STATE_NEW_NOT_ESTABLISHED
+        # log first accepted packet
         flow['table'] = OVS_FW_TO_LOG_TABLES[flow['table']]
         flow['actions'] = 'controller'
         self._add_flow(**flow)
