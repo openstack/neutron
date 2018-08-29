@@ -2,6 +2,14 @@
     templates:
       - openstack-python36-jobs-nonvoting
       - neutron-tempest-plugin-jobs
+      - openstack-python-jobs
+      - openstack-python35-jobs
+      - publish-openstack-sphinx-docs
+      - periodic-stable-jobs
+      - check-requirements
+      - integrated-gate
+      - integrated-gate-py35
+      - release-notes-jobs
     check:
       jobs:
         - neutron-functional
@@ -30,6 +38,18 @@
               - ^setup.cfg$
               - ^tools/.*$
               - ^tox.ini$
+        - openstack-tox-cover
+        - tempest-full:
+            irrelevant-files:
+              - ^(test-|)requirements.txt$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^neutron/locale/.*$
+              - ^neutron/tests/unit/.*$
+              - ^releasenotes/.*$
+              - ^setup.cfg$
+              - ^tools/.*$
+              - ^tox.ini$
     gate:
       jobs:
         - neutron-functional
@@ -41,6 +61,7 @@
         - neutron-grenade-dvr-multinode
         - neutron-grenade
         - openstack-tox-lower-constraints
+        - openstack-tox-cover
     periodic:
       jobs:
         - neutron-functional
@@ -53,6 +74,99 @@
         - neutron-fullstack-with-uwsgi
         - neutron-tempest-with-uwsgi
 
+        - legacy-grenade-dsvm-neutron-linuxbridge-multinode:
+            irrelevant-files:
+              - ^(test-|)requirements.txt$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^neutron/locale/.*$
+              - ^neutron/tests/unit/.*$
+              - ^releasenotes/.*$
+              - ^setup.cfg$
+              - ^tools/.*$
+              - ^tox.ini$
+        - legacy-grenade-dsvm-neutron-forward:
+            irrelevant-files:
+              - ^(test-|)requirements.txt$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^neutron/locale/.*$
+              - ^neutron/tests/unit/.*$
+              - ^releasenotes/.*$
+              - ^setup.cfg$
+              - ^tools/.*$
+              - ^tox.ini$
+        - legacy-neutron-dsvm-api-pecan
+        - legacy-tempest-dsvm-neutron-pg-full:
+            irrelevant-files:
+              - ^(test-|)requirements.txt$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^neutron/locale/.*$
+              - ^neutron/tests/unit/.*$
+              - ^releasenotes/.*$
+              - ^setup.cfg$
+              - ^tools/.*$
+              - ^tox.ini$
+        - legacy-tempest-dsvm-neutron-pecan:
+            irrelevant-files:
+              - ^(test-|)requirements.txt$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^neutron/locale/.*$
+              - ^neutron/tests/unit/.*$
+              - ^releasenotes/.*$
+              - ^setup.cfg$
+              - ^tools/.*$
+              - ^tox.ini$
+        - legacy-tempest-dsvm-neutron-full-centos-7:
+            irrelevant-files:
+              - ^(test-|)requirements.txt$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^neutron/locale/.*$
+              - ^neutron/tests/unit/.*$
+              - ^releasenotes/.*$
+              - ^setup.cfg$
+              - ^tools/.*$
+              - ^tox.ini$
+        - legacy-tempest-dsvm-neutron-dvr-multinode-full:
+            irrelevant-files:
+              - ^(test-|)requirements.txt$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^neutron/locale/.*$
+              - ^neutron/tests/unit/.*$
+              - ^releasenotes/.*$
+              - ^setup.cfg$
+              - ^tools/.*$
+              - ^tox.ini$
+        - legacy-tempest-dsvm-neutron-with-ryu-master:
+            irrelevant-files:
+              - ^(test-|)requirements.txt$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^neutron/locale/.*$
+              - ^neutron/tests/unit/.*$
+              - ^releasenotes/.*$
+              - ^setup.cfg$
+              - ^tools/.*$
+              - ^tox.ini$
+        - legacy-tempest-dsvm-neutron-full-opensuse-423:
+            irrelevant-files:
+              - ^(test-|)requirements.txt$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^neutron/locale/.*$
+              - ^neutron/tests/unit/.*$
+              - ^releasenotes/.*$
+              - ^setup.cfg$
+              - ^tools/.*$
+              - ^tox.ini$
+
+    post:
+      jobs:
+        - openstack-tox-cover
 - job:
     name: neutron-functional
     parent: legacy-dsvm-base
@@ -315,6 +429,6 @@
     vars:
       tox_envlist: full
       devstack_localrc:
-        NEUTRON_DEPLOY_MOD_WSGI: True
+        NEUTRON_DEPLOY_MOD_WSGI: true
     irrelevant-files: *tempest-irrelevant-files
     voting: false
