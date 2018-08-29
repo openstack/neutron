@@ -79,9 +79,9 @@ AUTO_DELETE_PORT_OWNERS = [constants.DEVICE_OWNER_DHCP]
 
 def _check_subnet_not_used(context, subnet_id):
     try:
-        kwargs = {'context': context, 'subnet_id': subnet_id}
-        registry.notify(
-            resources.SUBNET, events.BEFORE_DELETE, None, **kwargs)
+        registry.publish(
+            resources.SUBNET, events.BEFORE_DELETE, None,
+            payload=events.DBEventPayload(context, resource_id=subnet_id))
     except exceptions.CallbackFailure as e:
         raise exc.SubnetInUse(subnet_id=subnet_id, reason=e)
 

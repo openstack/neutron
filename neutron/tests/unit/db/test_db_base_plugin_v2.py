@@ -5499,13 +5499,13 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     def test_delete_subnet_with_callback(self):
         with self.subnet() as subnet,\
-                mock.patch.object(registry, 'notify') as notify:
+                mock.patch.object(registry, 'publish') as publish:
 
             errors = [
                 exceptions.NotificationError(
                     'fake_id', lib_exc.NeutronException()),
             ]
-            notify.side_effect = [
+            publish.side_effect = [
                 exceptions.CallbackFailure(errors=errors), None
             ]
 
