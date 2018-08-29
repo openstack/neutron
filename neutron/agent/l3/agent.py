@@ -435,7 +435,8 @@ class L3NATAgent(ha.AgentMixin,
             if isinstance(routers[0], dict):
                 routers = [router['id'] for router in routers]
             for id in routers:
-                update = queue.RouterUpdate(id, queue.PRIORITY_RPC)
+                update = queue.RouterUpdate(
+                    id, queue.PRIORITY_RPC, action=queue.ADD_UPDATE_ROUTER)
                 self._queue.add(update)
 
     def router_removed_from_agent(self, context, payload):
@@ -536,8 +537,14 @@ class L3NATAgent(ha.AgentMixin,
                 self.pd.process_prefix_update()
                 LOG.debug("Finished a router update for %s", update.id)
                 continue
-            router = update.router
-            if update.action != queue.DELETE_ROUTER and not router:
+
+            routers = [update.router] if update.router else []
+
+            not_delete_no_routers = (update.action != queue.DELETE_ROUTER and
+                                     not routers)
+            related_action = update.action in (queue.DELETE_RELATED_ROUTER,
+                                               queue.ADD_UPDATE_RELATED_ROUTER)
+            if not_delete_no_routers or related_action:
                 try:
                     update.timestamp = timeutils.utcnow()
                     routers = self.plugin_rpc.get_routers(self.context,
@@ -548,10 +555,13 @@ class L3NATAgent(ha.AgentMixin,
                     self._resync_router(update)
                     continue
 
-                if routers:
-                    router = routers[0]
+                # For a related action, verify the router is still hosted here,
+                # since it could have just been deleted and we don't want to
+                # add it back.
+                if related_action:
+                    routers = [r for r in routers if r['id'] == update.id]
 
-            if not router:
+            if not routers:
                 removed = self._safe_router_removed(update.id)
                 if not removed:
                     self._resync_router(update)
@@ -562,6 +572,41 @@ class L3NATAgent(ha.AgentMixin,
                     # prevent deleted router re-creation
                     rp.fetched_and_processed(update.timestamp)
                 LOG.debug("Finished a router update for %s", update.id)
+                continue
+
+            if not self._process_routers_if_compatible(routers, update):
+                self._resync_router(update)
+                continue
+
+            rp.fetched_and_processed(update.timestamp)
+            LOG.debug("Finished a router update for %s", update.id)
+
+    def _process_routers_if_compatible(self, routers, update):
+        process_result = True
+        for router in routers:
+            if router['id'] != update.id:
+                # Don't do the work here, instead create a new update and
+                # enqueue it, since there could be another thread working
+                # on it already and we don't want to race.
+                new_action = queue.RELATED_ACTION_MAP.get(
+                    update.action, queue.ADD_UPDATE_RELATED_ROUTER)
+                new_update = queue.RouterUpdate(
+                    router['id'],
+                    priority=queue.PRIORITY_RELATED_ROUTER,
+                    action=new_action)
+                self._queue.add(new_update)
+                LOG.debug('Queued a router update for %(router_id)s '
+                          '(related router %(related_router_id)s). '
+                          'Original event action %(action)s, '
+                          'priority %(priority)s. '
+                          'New event action %(new_action)s, '
+                          'priority %(new_priority)s',
+                          {'router_id': router['id'],
+                           'related_router_id': update.id,
+                           'action': update.action,
+                           'priority': update.priority,
+                           'new_action': new_update.action,
+                           'new_priority': new_update.priority})
                 continue
 
             try:
@@ -577,11 +622,8 @@ class L3NATAgent(ha.AgentMixin,
                 log_verbose_exc(
                     "Failed to process compatible router: %s" % update.id,
                     router)
-                self._resync_router(update)
-                continue
-
-            LOG.debug("Finished a router update for %s", update.id)
-            rp.fetched_and_processed(update.timestamp)
+                process_result = False
+        return process_result
 
     def _process_routers_loop(self):
         LOG.debug("Starting _process_routers_loop")
@@ -644,6 +686,7 @@ class L3NATAgent(ha.AgentMixin,
                         r['id'],
                         queue.PRIORITY_SYNC_ROUTERS_TASK,
                         router=r,
+                        action=queue.ADD_UPDATE_ROUTER,
                         timestamp=timestamp)
                     self._queue.add(update)
         except oslo_messaging.MessagingTimeout:

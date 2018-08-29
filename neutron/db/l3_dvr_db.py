@@ -70,6 +70,9 @@ class DVRResourceOperationHandler(object):
     necessary.
     """
 
+    related_dvr_router_hosts = {}
+    related_dvr_router_routers = {}
+
     @property
     def l3plugin(self):
         return directory.get_plugin(plugin_constants.L3)
@@ -515,6 +518,33 @@ class DVRResourceOperationHandler(object):
                     return True
         return False
 
+    @registry.receives(resources.ROUTER_INTERFACE, [events.BEFORE_DELETE])
+    def _cache_related_dvr_routers_info_before_interface_removal(
+            self, resource, event, trigger, context, **kwargs):
+        router_id = kwargs.get("router_id")
+        subnet_id = kwargs.get("subnet_id")
+
+        router = self.l3plugin._get_router(context, router_id)
+        if not router.extra_attributes.distributed:
+            return
+
+        cache_key = (router_id, subnet_id)
+        try:
+            existing_hosts = self.related_dvr_router_hosts[cache_key]
+        except KeyError:
+            existing_hosts = set()
+        other_hosts = set(self._get_other_dvr_hosts(context, router_id))
+        self.related_dvr_router_hosts[cache_key] = existing_hosts | other_hosts
+
+        try:
+            existing_routers = self.related_dvr_router_routers[cache_key]
+        except KeyError:
+            existing_routers = set()
+        other_routers = set(self._get_other_dvr_router_ids_connected_router(
+            context, router_id))
+        self.related_dvr_router_routers[cache_key] = (
+            existing_routers | other_routers)
+
     @registry.receives(resources.ROUTER_INTERFACE, [events.AFTER_DELETE])
     @db_api.retry_if_session_inactive()
     def _cleanup_after_interface_removal(self, resource, event, trigger,
@@ -536,8 +566,67 @@ class DVRResourceOperationHandler(object):
             context, router_id)
         removed_hosts = set(router_hosts_for_removed) - set(router_hosts_after)
         if removed_hosts:
-            agents = plugin.get_l3_agents(context,
-                                          filters={'host': removed_hosts})
+            # Get hosts where this router is placed as "related" to other dvr
+            # routers and don't remove it from such hosts
+            related_hosts = self._get_other_dvr_hosts(context, router_id)
+            agents = plugin.get_l3_agents(
+                context, filters={'host': removed_hosts})
+            bindings = rb_obj.RouterL3AgentBinding.get_objects(
+                context, router_id=router_id)
+            snat_binding = bindings.pop() if bindings else None
+            connected_dvr_routers = set(
+                self.l3plugin._get_other_dvr_router_ids_connected_router(
+                    context, router_id))
+            for agent in agents:
+                is_this_snat_agent = (
+                    snat_binding and snat_binding.l3_agent_id == agent['id'])
+                if (not is_this_snat_agent and
+                        agent['host'] not in related_hosts):
+                    self.l3plugin.l3_rpc_notifier.router_removed_from_agent(
+                        context, router_id, agent['host'])
+                    for connected_router_id in connected_dvr_routers:
+                        connected_router_hosts = set(
+                            self.l3plugin._get_dvr_hosts_for_router(
+                                context, connected_router_id))
+                        connected_router_hosts |= set(
+                            self._get_other_dvr_hosts(
+                                context, connected_router_id))
+                        if agent['host'] not in connected_router_hosts:
+                            self.l3plugin.l3_rpc_notifier.\
+                                router_removed_from_agent(
+                                    context, connected_router_id,
+                                    agent['host'])
+        # if subnet_id not in interface_info, request was to remove by port
+        sub_id = (interface_info.get('subnet_id') or
+                  port['fixed_ips'][0]['subnet_id'])
+        self._cleanup_related_hosts_after_interface_removal(
+            context, router_id, sub_id)
+        self._cleanup_related_routers_after_interface_removal(
+            context, router_id, sub_id)
+        is_multiple_prefix_csport = (
+            self._check_for_multiprefix_csnat_port_and_update(
+                context, router, port['network_id'], sub_id))
+        if not is_multiple_prefix_csport:
+            # Single prefix port - go ahead and delete the port
+            self.delete_csnat_router_interface_ports(
+                context.elevated(), router, subnet_id=sub_id)
+
+    def _cleanup_related_hosts_after_interface_removal(
+            self, context, router_id, subnet_id):
+        router_hosts = self.l3plugin._get_dvr_hosts_for_router(
+            context, router_id)
+
+        cache_key = (router_id, subnet_id)
+        related_dvr_router_hosts_before = self.related_dvr_router_hosts.pop(
+            cache_key, set())
+        related_dvr_router_hosts_after = set(self._get_other_dvr_hosts(
+            context, router_id))
+        related_dvr_router_hosts_before -= set(router_hosts)
+        related_removed_hosts = (
+            related_dvr_router_hosts_before - related_dvr_router_hosts_after)
+        if related_removed_hosts:
+            agents = self.l3plugin.get_l3_agents(
+                context, filters={'host': related_removed_hosts})
             bindings = rb_obj.RouterL3AgentBinding.get_objects(
                 context, router_id=router_id)
             snat_binding = bindings.pop() if bindings else None
@@ -547,16 +636,28 @@ class DVRResourceOperationHandler(object):
                 if not is_this_snat_agent:
                     self.l3plugin.l3_rpc_notifier.router_removed_from_agent(
                         context, router_id, agent['host'])
-        # if subnet_id not in interface_info, request was to remove by port
-        sub_id = (interface_info.get('subnet_id') or
-                  port['fixed_ips'][0]['subnet_id'])
-        is_multiple_prefix_csport = (
-            self._check_for_multiprefix_csnat_port_and_update(
-                context, router, port['network_id'], sub_id))
-        if not is_multiple_prefix_csport:
-            # Single prefix port - go ahead and delete the port
-            self.delete_csnat_router_interface_ports(
-                context.elevated(), router, subnet_id=sub_id)
+
+    def _cleanup_related_routers_after_interface_removal(
+            self, context, router_id, subnet_id):
+        router_hosts = self.l3plugin._get_dvr_hosts_for_router(
+            context, router_id)
+
+        cache_key = (router_id, subnet_id)
+        related_dvr_routers_before = self.related_dvr_router_routers.pop(
+            cache_key, set())
+        related_dvr_routers_after = set(
+            self._get_other_dvr_router_ids_connected_router(
+                context, router_id))
+        related_routers_to_remove = (
+            related_dvr_routers_before - related_dvr_routers_after)
+
+        for related_router in related_routers_to_remove:
+            related_router_hosts = self.l3plugin._get_dvr_hosts_for_router(
+                context, related_router)
+            hosts_to_remove = set(router_hosts) - set(related_router_hosts)
+            for host in hosts_to_remove:
+                self.l3plugin.l3_rpc_notifier.router_removed_from_agent(
+                    context, related_router, host)
 
     def delete_csnat_router_interface_ports(self, context,
                                             router, subnet_id=None):
