@@ -291,6 +291,28 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
              self.context, resources.QOS_POLICY,
              port['qos_policy_id'])
 
+    def test_handle_diff_ports_same_policy_id(self):
+        port_obj1 = self._create_test_port_dict()
+        port_obj2 = self._create_test_port_dict()
+
+        self.qos_ext.handle_port(self.context, port_obj1)
+        self.pull_mock.assert_called_once_with(
+            self.context, resources.QOS_POLICY,
+            port_obj1['qos_policy_id'])
+        self.assertIsNotNone(
+            self.qos_ext.policy_map.get_port_policy(port_obj1))
+        self.assertIsNone(
+            self.qos_ext.policy_map.get_port_policy(port_obj2))
+
+        self.qos_ext.resource_rpc.pull.reset_mock()
+        self.qos_ext.handle_port(self.context, port_obj2)
+        self.assertFalse(self.pull_mock.called)
+        self.assertIsNotNone(
+            self.qos_ext.policy_map.get_port_policy(port_obj2))
+        self.assertEqual(
+            self.qos_ext.policy_map.get_port_policy(port_obj1),
+            self.qos_ext.policy_map.get_port_policy(port_obj2))
+
     def test_delete_known_port(self):
         port = self._create_test_port_dict()
         self.qos_ext.handle_port(self.context, port)
