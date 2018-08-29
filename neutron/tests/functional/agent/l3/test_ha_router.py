@@ -335,6 +335,8 @@ class L3HATestCase(framework.L3AgentTestFramework):
             raise
         self.assertEqual(0, ip_nonlocal_bind_value)
 
+    @testtools.skipUnless(ipv6_utils.is_enabled_and_bind_by_default(),
+                          "IPv6 is not enabled")
     def test_ha_router_namespace_has_ipv6_forwarding_disabled(self):
         router_info = self.generate_router_info(enable_ha=True)
         router_info[constants.HA_INTERFACE_KEY]['status'] = (
