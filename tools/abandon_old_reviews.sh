@@ -28,12 +28,40 @@
 
 # first purge all the reviews that are more than 4w old and blocked by a core -2
 
-if [ "$1" = "--dry-run" ]; then
-    echo "Enabling dry run mode"
-    DRY_RUN=1
-else
-    DRY_RUN=0
-fi
+DRY_RUN=0
+CLEAN_PROJECT=""
+
+function print_help {
+    echo "Script to abandon patches without activity for more than 4 weeks."
+    echo "Usage:"
+    echo "      ./abandon_old_reviews.sh [--dry-run] [--project <project_name>] [--help]"
+    echo " --dry-run                    In dry-run mode it will only print what patches would be abandoned "
+    echo "                              but will not take any real actions in gerrit"
+    echo " --project <project_name>     Only check patches from <project_name> if passed."
+    echo "                              It must be one of the projects which are a part of the Neutron stadium."
+    echo "                              If project is not provided, all projects from the Neutron stadium will be checked"
+    echo " --help                       Print help message"
+}
+
+while [ $# -gt 0 ]; do
+    key="${1}"
+
+    case $key in
+        --dry-run)
+            echo "Enabling dry run mode"
+            DRY_RUN=1
+            shift # past argument
+        ;;
+        --project)
+            CLEAN_PROJECT="project:openstack/${2}"
+            shift # past argument
+            shift # past value
+        ;;
+        --help)
+            print_help
+            exit 2
+    esac
+done
 
 set -o errexit
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -71,14 +99,23 @@ python - <<EOF
 import urllib2
 import yaml
 
+project = "$CLEAN_PROJECT"
 data = urllib2.urlopen("https://raw.githubusercontent.com/openstack/"
                        "governance/master/reference/projects.yaml")
 governance = yaml.safe_load(data)
 stadium = governance["neutron"]["deliverables"].keys()
 query = ["project:openstack/%s" % p for p in stadium]
-print ' OR '.join(query)
+if project:
+    print project if project in query else ""
+else:
+    print ' OR '.join(query)
 EOF
 ))"
+
+if [ "$PROJECTS" = "()" ]; then
+    echo "Project $CLEAN_PROJECT not found. It is probably not part of the Neutron deliverables."
+    exit 1
+fi
 
 blocked_reviews=$(ssh review.openstack.org "gerrit query --current-patch-set --format json $PROJECTS status:open age:4w label:Code-Review<=-2" | jq .currentPatchSet.revision | grep -v null | sed 's/"//g')
 
