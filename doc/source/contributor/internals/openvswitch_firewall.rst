@@ -471,13 +471,6 @@ be dropped. Default action is ``drop`` in this table.
 In regard to the performance perspective, please note that only the first accepted
 packet of each connection session will go to ``table 91`` and ``table 92``.
 
-Future work
------------
-
- - Create fullstack tests with tunneling enabled
- - During the update of firewall rules, we can use bundles to make the changes
-   atomic
-
 
 Upgrade path from iptables hybrid driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
