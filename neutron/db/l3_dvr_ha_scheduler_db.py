@@ -20,15 +20,16 @@ import neutron.db.l3_hascheduler_db as l3_ha_sch_db
 class L3_DVR_HA_scheduler_db_mixin(l3agent_dvr_sch_db.L3_DVRsch_db_mixin,
                                    l3_ha_sch_db.L3_HA_scheduler_db_mixin):
 
-    def get_dvr_routers_to_remove(self, context, port_id):
+    def get_dvr_routers_to_remove(self, context, port_id,
+                                  get_related_hosts_info=True):
         """Returns info about which routers should be removed
 
         In case dvr serviceable port was deleted we need to check
         if any dvr routers should be removed from l3 agent on port's host
         """
-        remove_router_info = super(L3_DVR_HA_scheduler_db_mixin,
-                                   self).get_dvr_routers_to_remove(context,
-                                                                   port_id)
+        remove_router_info = super(
+            L3_DVR_HA_scheduler_db_mixin, self).get_dvr_routers_to_remove(
+                context, port_id, get_related_hosts_info)
         # Process the router information which was returned to make
         # sure we don't delete routers which have dvrhs snat bindings.
         processed_remove_router_info = []
