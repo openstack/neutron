@@ -743,6 +743,60 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 self.mock_fanout.assert_called_with(
                     mock.ANY, 'add_fdb_entries', expected)
 
+    def test_update_port_up_two_active_ports(self):
+        '''The test will check that even with 2 active ports on the host,
+        agent will be provided with the whole list of fdb entries. Bug 1789846
+        '''
+        self._register_ml2_agents()
+
+        with self.subnet(network=self._network) as subnet:
+            host_arg = {portbindings.HOST_ID: HOST}
+            # 2 ports on host 1
+            with self.port(subnet=subnet,
+                           device_owner=DEVICE_OWNER_COMPUTE,
+                           arg_list=(portbindings.HOST_ID,),
+                           **host_arg) as port1:
+                with self.port(subnet=subnet,
+                               device_owner=DEVICE_OWNER_COMPUTE,
+                               arg_list=(portbindings.HOST_ID,),
+                               **host_arg) as port2:
+                    # 1 port on another host to have fdb entree to update
+                    # agent on host 1
+                    host_arg = {portbindings.HOST_ID: HOST + '_2'}
+                    with self.port(subnet=subnet,
+                                   device_owner=DEVICE_OWNER_COMPUTE,
+                                   arg_list=(portbindings.HOST_ID,),
+                                   **host_arg) as port3:
+                        p1 = port1['port']
+                        p2 = port2['port']
+                        p3 = port3['port']
+
+                        # only ACTIVE ports count
+                        plugin = directory.get_plugin()
+                        p2['status'] = 'ACTIVE'
+                        plugin.update_port(self.adminContext, p2['id'], port2)
+                        p3['status'] = 'ACTIVE'
+                        plugin.update_port(self.adminContext, p3['id'], port3)
+
+                        self.mock_cast.reset_mock()
+                        p1['status'] = 'ACTIVE'
+                        plugin.update_port(self.adminContext, p1['id'], port1)
+
+                        # agent on host 1 should be updated with entry from
+                        # another host
+                        expected = {p3['network_id']:
+                            {'ports':
+                             {'20.0.0.2': [
+                                 constants.FLOODING_ENTRY,
+                                 l2pop_rpc.PortInfo(
+                                     p3['mac_address'],
+                                     p3['fixed_ips'][0]['ip_address'])]},
+                             'network_type': 'vxlan',
+                             'segment_id': 1}}
+
+                        self.mock_cast.assert_called_once_with(
+                            mock.ANY, 'add_fdb_entries', expected, HOST)
+
     def test_update_port_down(self):
         self._register_ml2_agents()
 
