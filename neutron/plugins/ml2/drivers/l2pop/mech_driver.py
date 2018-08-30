@@ -298,8 +298,11 @@ class L2populationMechanismDriver(api.MechanismDriver):
             segment, agent_ip, network_id)
         other_fdb_ports = other_fdb_entries[network_id]['ports']
 
-        if agent_active_ports == 1 or self.agent_restarted(context):
-            # First port activated on current agent in this network,
+        # with high concurrency more than 1 port may be activated on an agent
+        # at the same time (like VM port + a DVR port) so checking for 1 or 2
+        is_first_port = agent_active_ports in (1, 2)
+        if is_first_port or self.agent_restarted(context):
+            # First port(s) activated on current agent in this network,
             # we have to provide it with the whole list of fdb entries
             agent_fdb_entries = self._create_agent_fdb(port_context,
                                                        agent,
