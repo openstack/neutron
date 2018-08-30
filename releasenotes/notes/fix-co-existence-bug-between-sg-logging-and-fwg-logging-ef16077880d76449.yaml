@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    Add ``resource_type`` into log object query to distinguish between security
+    group and firewall group log objects.
+    For more information see bug
+    `1787119 <https://bugs.launchpad.net/neutron/+bug/1787119>`_.
