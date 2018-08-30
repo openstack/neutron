@@ -39,7 +39,7 @@ class EnvironmentDescription(object):
                  service_plugins='router', arp_responder=False,
                  agent_down_time=75, router_scheduler=None,
                  global_mtu=common_const.DEFAULT_NETWORK_MTU,
-                 debug_iptables=False, log=False):
+                 debug_iptables=False, log=False, report_bandwidths=False):
         self.network_type = network_type
         self.l2_pop = l2_pop
         self.qos = qos
@@ -52,6 +52,7 @@ class EnvironmentDescription(object):
         self.global_mtu = global_mtu
         self.service_plugins = service_plugins
         self.debug_iptables = debug_iptables
+        self.report_bandwidths = report_bandwidths
         if self.qos:
             self.service_plugins += ',qos'
         if self.log:
