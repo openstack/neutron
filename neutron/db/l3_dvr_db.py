@@ -521,9 +521,10 @@ class DVRResourceOperationHandler(object):
 
     @registry.receives(resources.ROUTER_INTERFACE, [events.BEFORE_DELETE])
     def _cache_related_dvr_routers_info_before_interface_removal(
-            self, resource, event, trigger, context, **kwargs):
-        router_id = kwargs.get("router_id")
-        subnet_id = kwargs.get("subnet_id")
+            self, resource, event, trigger, payload=None):
+        router_id = payload.resource_id
+        subnet_id = payload.metadata.get("subnet_id")
+        context = payload.context
 
         router = self.l3plugin._get_router(context, router_id)
         if not router.extra_attributes.distributed:

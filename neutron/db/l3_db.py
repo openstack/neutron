@@ -977,11 +977,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
         try:
-            kwargs = {'context': context, 'router_id': router_id,
-                      'subnet_id': subnet_id}
-            registry.notify(
+            registry.publish(
                 resources.ROUTER_INTERFACE,
-                events.BEFORE_DELETE, self, **kwargs)
+                events.BEFORE_DELETE, self,
+                payload=events.DBEventPayload(
+                    context, metadata={'subnet_id': subnet_id},
+                    resource_id=router_id))
         except exceptions.CallbackFailure as e:
             # NOTE(armax): preserve old check's behavior
             if len(e.errors) == 1:
