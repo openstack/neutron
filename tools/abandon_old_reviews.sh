@@ -142,7 +142,7 @@ done
 
 # then purge all the reviews that are > 4w with no changes and Jenkins has -1ed
 
-failing_reviews=$(ssh review.openstack.org "gerrit query  --current-patch-set --format json $PROJECTS status:open age:4w NOT label:Verified>=1,jenkins" | jq .currentPatchSet.revision | grep -v null | sed 's/"//g')
+failing_reviews=$(ssh review.openstack.org "gerrit query  --current-patch-set --format json $PROJECTS status:open age:4w NOT label:Verified>=1,Zuul" | jq .currentPatchSet.revision | grep -v null | sed 's/"//g')
 
 failing_msg=$(cat <<EOF
 
