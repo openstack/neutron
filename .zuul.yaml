@@ -40,16 +40,7 @@
               - ^tox.ini$
         - openstack-tox-cover
         - tempest-full:
-            irrelevant-files:
-              - ^(test-|)requirements.txt$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^neutron/tests/unit/.*$
-              - ^releasenotes/.*$
-              - ^setup.cfg$
-              - ^tools/.*$
-              - ^tox.ini$
+            irrelevant-files: *tempest-irrelevant-files
     gate:
       jobs:
         - neutron-functional
@@ -75,94 +66,22 @@
         - neutron-tempest-with-uwsgi
 
         - legacy-grenade-dsvm-neutron-linuxbridge-multinode:
-            irrelevant-files:
-              - ^(test-|)requirements.txt$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^neutron/tests/unit/.*$
-              - ^releasenotes/.*$
-              - ^setup.cfg$
-              - ^tools/.*$
-              - ^tox.ini$
+            irrelevant-files: *tempest-irrelevant-files
         - legacy-grenade-dsvm-neutron-forward:
-            irrelevant-files:
-              - ^(test-|)requirements.txt$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^neutron/tests/unit/.*$
-              - ^releasenotes/.*$
-              - ^setup.cfg$
-              - ^tools/.*$
-              - ^tox.ini$
+            irrelevant-files: *tempest-irrelevant-files
         - legacy-neutron-dsvm-api-pecan
         - legacy-tempest-dsvm-neutron-pg-full:
-            irrelevant-files:
-              - ^(test-|)requirements.txt$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^neutron/tests/unit/.*$
-              - ^releasenotes/.*$
-              - ^setup.cfg$
-              - ^tools/.*$
-              - ^tox.ini$
+            irrelevant-files: *tempest-irrelevant-files
         - legacy-tempest-dsvm-neutron-pecan:
-            irrelevant-files:
-              - ^(test-|)requirements.txt$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^neutron/tests/unit/.*$
-              - ^releasenotes/.*$
-              - ^setup.cfg$
-              - ^tools/.*$
-              - ^tox.ini$
+            irrelevant-files: *tempest-irrelevant-files
         - legacy-tempest-dsvm-neutron-full-centos-7:
-            irrelevant-files:
-              - ^(test-|)requirements.txt$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^neutron/tests/unit/.*$
-              - ^releasenotes/.*$
-              - ^setup.cfg$
-              - ^tools/.*$
-              - ^tox.ini$
+            irrelevant-files: *tempest-irrelevant-files
         - legacy-tempest-dsvm-neutron-dvr-multinode-full:
-            irrelevant-files:
-              - ^(test-|)requirements.txt$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^neutron/tests/unit/.*$
-              - ^releasenotes/.*$
-              - ^setup.cfg$
-              - ^tools/.*$
-              - ^tox.ini$
+            irrelevant-files: *tempest-irrelevant-files
         - legacy-tempest-dsvm-neutron-with-ryu-master:
-            irrelevant-files:
-              - ^(test-|)requirements.txt$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^neutron/tests/unit/.*$
-              - ^releasenotes/.*$
-              - ^setup.cfg$
-              - ^tools/.*$
-              - ^tox.ini$
+            irrelevant-files: *tempest-irrelevant-files
         - legacy-tempest-dsvm-neutron-full-opensuse-423:
-            irrelevant-files:
-              - ^(test-|)requirements.txt$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^neutron/tests/unit/.*$
-              - ^releasenotes/.*$
-              - ^setup.cfg$
-              - ^tools/.*$
-              - ^tox.ini$
+            irrelevant-files: *tempest-irrelevant-files
 
     post:
       jobs:
