@@ -3196,6 +3196,16 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = subnet_req.get_response(self.api)
             self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
 
+    def test_create_subnet_invalid_gw_V4_cidr(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                    'cidr': '10.0.0.0/4',
+                    'ip_version': '4',
+                    'tenant_id': network['network']['tenant_id']}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
+
     def test_create_subnet_with_cidr_and_default_subnetpool(self):
         """Expect subnet-create to keep semantic with default pools."""
         with self.network() as network:
@@ -4607,6 +4617,16 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                         ctx.session.delete(router)
                     res = req.get_response(self.api)
                     self.assertEqual(res.status_int, 200)
+
+    def test_update_subnet_invalid_gw_V4_cidr(self):
+        with self.network() as network:
+            with self.subnet(network=network) as subnet:
+                data = {'subnet': {'cidr': '10.0.0.0/4'}}
+                req = self.new_update_request('subnets', data,
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(webob.exc.HTTPClientError.code,
+                                 res.status_int)
 
     def test_update_subnet_inconsistent_ipv4_gatewayv6(self):
         with self.network() as network:

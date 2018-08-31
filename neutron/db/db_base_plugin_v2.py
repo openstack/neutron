@@ -588,6 +588,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 error_message = _("Loopback IP subnet is not supported "
                                   "if enable_dhcp is True")
                 raise exc.InvalidInput(error_message=error_message)
+            elif ip_ver == constants.IP_VERSION_4 and net.first is 0:
+                error_message = _("First IP '0.0.0.0' of network is not "
+                                  "supported if enable_dhcp is True.")
+                raise exc.InvalidInput(error_message=error_message)
 
         if validators.is_attr_set(s.get('gateway_ip')):
             self._validate_ip_version(ip_ver, s['gateway_ip'], 'gateway_ip')
