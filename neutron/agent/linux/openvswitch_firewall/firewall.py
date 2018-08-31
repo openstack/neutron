@@ -473,9 +473,15 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
     def _initialize_third_party_tables(self):
         self.int_br.br.add_flow(
-            table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE,
+            table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE,
             priority=1,
             actions='normal')
+        self.int_br.br.add_flow(
+            table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE,
+            priority=1,
+            actions='resubmit(,%d)' % (
+                ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
+        )
         for table in (ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE,
                       ovs_consts.DROPPED_TRAFFIC_TABLE):
             self.int_br.br.add_flow(
@@ -709,7 +715,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 dl_type=constants.ETHERTYPE_IPV6,
                 nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
                 icmp_type=icmp_type,
-                actions='normal'
+                actions='resubmit(,%d)' % (
+                    ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
             )
 
     def _initialize_egress_no_port_security(self, port_id):
@@ -743,7 +750,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
             priority=80,
             reg_port=ovs_port.ofport,
-            actions='normal'
+            actions='resubmit(,%d)' % (
+                ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
         )
 
     def _remove_egress_no_port_security(self, port_id):
@@ -778,7 +786,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 dl_src=mac_addr,
                 dl_type=constants.ETHERTYPE_ARP,
                 arp_spa=ip_addr,
-                actions='normal'
+                actions='resubmit(,%d)' % (
+                    ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
             )
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
@@ -893,7 +902,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
             priority=80,
             reg_port=port.ofport,
-            actions='normal'
+            actions='resubmit(,%d)' % (
+                ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
         )
 
     def _initialize_tracked_egress(self, port):
@@ -924,7 +934,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 ct_mark=ovsfw_consts.CT_MARK_NORMAL,
                 reg_port=port.ofport,
                 ct_zone=port.vlan_tag,
-                actions='normal'
+                actions='resubmit(,%d)' % (
+                    ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
             )
         self._add_flow(
             table=ovs_consts.RULES_EGRESS_TABLE,

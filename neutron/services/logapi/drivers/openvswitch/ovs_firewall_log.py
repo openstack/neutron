@@ -333,7 +333,8 @@ class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
         flow['actions'] = 'controller'
         # forward egress accepted packet and log
         if flow['table'] == ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE:
-            flow['actions'] = 'normal,controller'
+            flow['actions'] = 'resubmit(,%d),controller' % (
+                ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
         self._add_flow(**flow)
 
     def _add_flow(self, **kwargs):
