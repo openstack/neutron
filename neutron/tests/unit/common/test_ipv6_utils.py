@@ -67,7 +67,7 @@ class TestIsAutoAddressSubnet(base.BaseTestCase):
         self.subnet = {
             'cidr': '2001:200::/64',
             'gateway_ip': '2001:200::1',
-            'ip_version': 6,
+            'ip_version': constants.IP_VERSION_6,
             'ipv6_address_mode': None,
             'ipv6_ra_mode': None
         }

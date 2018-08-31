@@ -1096,7 +1096,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             with self.subnet(net,
                              gateway_ip=fake_gateway,
                              cidr=fake_prefix,
-                             ip_version=6) as snet_v6,\
+                             ip_version=constants.IP_VERSION_6) as snet_v6,\
                     mock.patch.object(
                         plugin.notifier,
                         'security_groups_member_updated') as m_upd:
@@ -1325,7 +1325,7 @@ fixed_ips=ip_address_substr%%3D%s&fixed_ips=subnet_id%%3D%s
                 tenant_id=tenant_id,
                 net_id=net_id,
                 cidr='2607:f0d0:1002:51::/124',
-                ip_version=6,
+                ip_version=constants.IP_VERSION_6,
                 gateway_ip=constants.ATTR_NOT_SPECIFIED)
             subnet2 = self.deserialize(self.fmt, res)
             kwargs = {"fixed_ips":
@@ -2569,7 +2569,7 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                 net_id = network['network']['id']
                 data = {'subnet': {'network_id': net_id,
                                    'cidr': '10.0.20.0/24',
-                                   'ip_version': '4',
+                                   'ip_version': constants.IP_VERSION_4,
                                    'name': 'subnet1',
                                    'tenant_id':
                                    network['network']['tenant_id'],
@@ -2598,7 +2598,7 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                     data = {'subnet': {'network_id':
                                        network['network']['id'],
                                        'cidr': '10.0.20.0/24',
-                                       'ip_version': '4',
+                                       'ip_version': constants.IP_VERSION_4,
                                        'name': 'subnet1',
                                        'tenant_id':
                                        network['network']['tenant_id'],
@@ -2631,7 +2631,7 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                     data = {'subnet': {'network_id':
                                        network['network']['id'],
                                        'cidr': '10.0.20.0/24',
-                                       'ip_version': '4',
+                                       'ip_version': constants.IP_VERSION_4,
                                        'name': 'subnet1',
                                        'tenant_id':
                                        network['network']['tenant_id'],
@@ -2797,7 +2797,7 @@ class TestML2PluggableIPAM(test_ipam.UseIpamMixin, TestMl2SubnetsV2):
         with self.network() as network:
             with self.subnet(network=network,
                              cidr='2001:100::0/64',
-                             ip_version=6,
+                             ip_version=constants.IP_VERSION_6,
                              ipv6_ra_mode=constants.IPV6_SLAAC) as subnet:
                 with self.port(subnet=subnet) as port:
                     with mock.patch(driver) as driver_mock:

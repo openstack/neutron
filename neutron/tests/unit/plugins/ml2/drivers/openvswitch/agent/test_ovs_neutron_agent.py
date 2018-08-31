@@ -2579,7 +2579,7 @@ class TestOvsDvrNeutronAgent(object):
 
     def _expected_install_dvr_process(self, lvid, port, ip_version,
                                       gateway_ip, gateway_mac):
-        if ip_version == 4:
+        if ip_version == n_const.IP_VERSION_4:
             ipvx_calls = [
                 mock.call.install_dvr_process_ipv4(
                     vlan_tag=lvid,
@@ -2599,10 +2599,10 @@ class TestOvsDvrNeutronAgent(object):
             ),
         ]
 
-    def _test_port_bound_for_dvr_on_vlan_network(self, device_owner,
-                                                 ip_version=4):
+    def _test_port_bound_for_dvr_on_vlan_network(
+            self, device_owner, ip_version=n_const.IP_VERSION_4):
         self._setup_for_dvr_test()
-        if ip_version == 4:
+        if ip_version == n_const.IP_VERSION_4:
             gateway_ip = '1.1.1.1'
             cidr = '1.1.1.0/24'
         else:
@@ -2689,10 +2689,10 @@ class TestOvsDvrNeutronAgent(object):
             self.assertFalse([], tun_br.mock_calls)
             self.assertFalse([], phys_br.mock_calls)
 
-    def _test_port_bound_for_dvr_on_vxlan_network(self, device_owner,
-                                                  ip_version=4):
+    def _test_port_bound_for_dvr_on_vxlan_network(
+            self, device_owner, ip_version=n_const.IP_VERSION_4):
         self._setup_for_dvr_test()
-        if ip_version == 4:
+        if ip_version == n_const.IP_VERSION_4:
             gateway_ip = '1.1.1.1'
             cidr = '1.1.1.0/24'
         else:
@@ -2775,41 +2775,49 @@ class TestOvsDvrNeutronAgent(object):
         self._test_port_bound_for_dvr_on_vlan_network(
             device_owner=DEVICE_OWNER_COMPUTE)
         self._test_port_bound_for_dvr_on_vlan_network(
-            device_owner=DEVICE_OWNER_COMPUTE, ip_version=6)
+            device_owner=DEVICE_OWNER_COMPUTE,
+            ip_version=n_const.IP_VERSION_6)
         self._test_port_bound_for_dvr_on_vxlan_network(
             device_owner=DEVICE_OWNER_COMPUTE)
         self._test_port_bound_for_dvr_on_vxlan_network(
-            device_owner=DEVICE_OWNER_COMPUTE, ip_version=6)
+            device_owner=DEVICE_OWNER_COMPUTE,
+            ip_version=n_const.IP_VERSION_6)
 
     def test_port_bound_for_dvr_with_lbaas_vip_ports(self):
         self._test_port_bound_for_dvr_on_vlan_network(
             device_owner=n_const.DEVICE_OWNER_LOADBALANCER)
         self._test_port_bound_for_dvr_on_vlan_network(
-            device_owner=n_const.DEVICE_OWNER_LOADBALANCER, ip_version=6)
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCER,
+            ip_version=n_const.IP_VERSION_6)
         self._test_port_bound_for_dvr_on_vxlan_network(
             device_owner=n_const.DEVICE_OWNER_LOADBALANCER)
         self._test_port_bound_for_dvr_on_vxlan_network(
-            device_owner=n_const.DEVICE_OWNER_LOADBALANCER, ip_version=6)
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCER,
+            ip_version=n_const.IP_VERSION_6)
 
     def test_port_bound_for_dvr_with_lbaasv2_vip_ports(self):
         self._test_port_bound_for_dvr_on_vlan_network(
             device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2)
         self._test_port_bound_for_dvr_on_vlan_network(
-            device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2, ip_version=6)
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2,
+            ip_version=n_const.IP_VERSION_6)
         self._test_port_bound_for_dvr_on_vxlan_network(
             device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2)
         self._test_port_bound_for_dvr_on_vxlan_network(
-            device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2, ip_version=6)
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2,
+            ip_version=n_const.IP_VERSION_6)
 
     def test_port_bound_for_dvr_with_dhcp_ports(self):
         self._test_port_bound_for_dvr_on_vlan_network(
             device_owner=n_const.DEVICE_OWNER_DHCP)
         self._test_port_bound_for_dvr_on_vlan_network(
-            device_owner=n_const.DEVICE_OWNER_DHCP, ip_version=6)
+            device_owner=n_const.DEVICE_OWNER_DHCP,
+            ip_version=n_const.IP_VERSION_6)
         self._test_port_bound_for_dvr_on_vxlan_network(
             device_owner=n_const.DEVICE_OWNER_DHCP)
         self._test_port_bound_for_dvr_on_vxlan_network(
-            device_owner=n_const.DEVICE_OWNER_DHCP, ip_version=6)
+            device_owner=n_const.DEVICE_OWNER_DHCP,
+            ip_version=n_const.IP_VERSION_6)
 
     def test_port_bound_for_dvr_with_csnat_ports(self):
         self._setup_for_dvr_test()
@@ -2899,7 +2907,7 @@ class TestOvsDvrNeutronAgent(object):
                                'get_subnet_for_dvr',
                                return_value={'gateway_ip': '1.1.1.1',
                                'cidr': '1.1.1.0/24',
-                               'ip_version': 4,
+                               'ip_version': n_const.IP_VERSION_4,
                                'gateway_mac': 'aa:bb:cc:11:22:33'}),\
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_ports_on_host_by_subnet',
@@ -2940,15 +2948,16 @@ class TestOvsDvrNeutronAgent(object):
 
     def test_treat_devices_removed_for_dvr_interface(self):
         self._test_treat_devices_removed_for_dvr_interface()
-        self._test_treat_devices_removed_for_dvr_interface(ip_version=6)
+        self._test_treat_devices_removed_for_dvr_interface(
+            ip_version=n_const.IP_VERSION_6)
         self._test_treat_devices_removed_for_dvr_interface(network_type='vlan')
-        self._test_treat_devices_removed_for_dvr_interface(ip_version=6,
-                                                           network_type='vlan')
+        self._test_treat_devices_removed_for_dvr_interface(
+            ip_version=n_const.IP_VERSION_6, network_type='vlan')
 
     def _test_treat_devices_removed_for_dvr_interface(
-            self, ip_version=4, network_type='vxlan'):
+            self, ip_version=n_const.IP_VERSION_4, network_type='vxlan'):
         self._setup_for_dvr_test()
-        if ip_version == 4:
+        if ip_version == n_const.IP_VERSION_4:
             gateway_ip = '1.1.1.1'
             cidr = '1.1.1.0/24'
         else:
@@ -3024,7 +3033,7 @@ class TestOvsDvrNeutronAgent(object):
             failed_devices['removed'] = self.agent.treat_devices_removed(
                 [self._port.vif_id])
             lvid = self.agent.vlan_manager.get(self._net_uuid).vlan
-            if ip_version == 4:
+            if ip_version == n_const.IP_VERSION_4:
                 expected = [
                     mock.call.delete_dvr_process_ipv4(
                         vlan_tag=lvid,
@@ -3051,9 +3060,10 @@ class TestOvsDvrNeutronAgent(object):
                 self.assertEqual(expected, tun_br.mock_calls)
                 self.assertEqual([], phys_br.mock_calls)
 
-    def _test_treat_devices_removed_for_dvr(self, device_owner, ip_version=4):
+    def _test_treat_devices_removed_for_dvr(self, device_owner,
+                                            ip_version=n_const.IP_VERSION_4):
         self._setup_for_dvr_test()
-        if ip_version == 4:
+        if ip_version == n_const.IP_VERSION_4:
             gateway_ip = '1.1.1.1'
             cidr = '1.1.1.0/24'
         else:
@@ -3152,25 +3162,28 @@ class TestOvsDvrNeutronAgent(object):
         self._test_treat_devices_removed_for_dvr(
             device_owner=DEVICE_OWNER_COMPUTE)
         self._test_treat_devices_removed_for_dvr(
-            device_owner=DEVICE_OWNER_COMPUTE, ip_version=6)
+            device_owner=DEVICE_OWNER_COMPUTE, ip_version=n_const.IP_VERSION_6)
 
     def test_treat_devices_removed_for_dvr_with_lbaas_vip_ports(self):
         self._test_treat_devices_removed_for_dvr(
             device_owner=n_const.DEVICE_OWNER_LOADBALANCER)
         self._test_treat_devices_removed_for_dvr(
-            device_owner=n_const.DEVICE_OWNER_LOADBALANCER, ip_version=6)
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCER,
+            ip_version=n_const.IP_VERSION_6)
 
     def test_treat_devices_removed_for_dvr_with_lbaasv2_vip_ports(self):
         self._test_treat_devices_removed_for_dvr(
             device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2)
         self._test_treat_devices_removed_for_dvr(
-            device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2, ip_version=6)
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2,
+            ip_version=n_const.IP_VERSION_6)
 
     def test_treat_devices_removed_for_dvr_with_dhcp_ports(self):
         self._test_treat_devices_removed_for_dvr(
             device_owner=n_const.DEVICE_OWNER_DHCP)
         self._test_treat_devices_removed_for_dvr(
-            device_owner=n_const.DEVICE_OWNER_DHCP, ip_version=6)
+            device_owner=n_const.DEVICE_OWNER_DHCP,
+            ip_version=n_const.IP_VERSION_6)
 
     def test_treat_devices_removed_for_dvr_csnat_port(self):
         self._setup_for_dvr_test()
@@ -3183,7 +3196,7 @@ class TestOvsDvrNeutronAgent(object):
                                'get_subnet_for_dvr',
                                return_value={'gateway_ip': '1.1.1.1',
                                'cidr': '1.1.1.0/24',
-                               'ip_version': 4,
+                               'ip_version': n_const.IP_VERSION_4,
                                'gateway_mac': gateway_mac}),\
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_ports_on_host_by_subnet',

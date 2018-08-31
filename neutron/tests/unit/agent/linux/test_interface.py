@@ -42,7 +42,7 @@ class FakeSubnet(object):
 class FakeAllocation(object):
     subnet = FakeSubnet()
     ip_address = '192.168.1.2'
-    ip_version = 4
+    ip_version = constants.IP_VERSION_4
 
 
 class FakePort(object):
@@ -177,9 +177,9 @@ class TestABCDriver(TestBase):
         self.ip_dev.assert_has_calls(expected_calls)
 
     def test_init_router_port_ext_gw_with_dual_stack(self):
-        old_addrs = [dict(ip_version=4, scope='global',
+        old_addrs = [dict(ip_version=constants.IP_VERSION_4, scope='global',
                           dynamic=False, cidr='172.16.77.240/24'),
-                     dict(ip_version=6, scope='global',
+                     dict(ip_version=constants.IP_VERSION_6, scope='global',
                           dynamic=False, cidr='2001:db8:a::123/64')]
         self.ip_dev().addr.list = mock.Mock(return_value=old_addrs)
         self.ip_dev().route.list_onlink_routes.return_value = []
@@ -359,7 +359,8 @@ class TestABCDriver(TestBase):
         self.assertEqual(addresses, llas)
         self.ip_dev.assert_has_calls(
             [mock.call(device_name, namespace=ns),
-             mock.call().addr.list(scope='link', ip_version=6)])
+             mock.call().addr.list(
+                scope='link', ip_version=constants.IP_VERSION_6)])
 
     def test_set_mtu_logs_once(self):
         bc = BaseChild(self.conf)

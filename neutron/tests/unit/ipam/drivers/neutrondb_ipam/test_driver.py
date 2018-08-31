@@ -44,7 +44,8 @@ class TestNeutronDbIpamMixin(object):
         created_network = plugin.create_network(ctx, network)
         return (created_network, created_network['id'])
 
-    def _create_subnet(self, plugin, ctx, network_id, cidr, ip_version=4,
+    def _create_subnet(self, plugin, ctx, network_id, cidr,
+                       ip_version=constants.IP_VERSION_4,
                        v6_address_mode=constants.ATTR_NOT_SPECIFIED,
                        allocation_pools=constants.ATTR_NOT_SPECIFIED):
         subnet = {'subnet': {'name': 'sub',
@@ -232,12 +233,13 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
 
     def _create_and_allocate_ipam_subnet(
         self, cidr, allocation_pools=constants.ATTR_NOT_SPECIFIED,
-        ip_version=4, v6_auto_address=False, tenant_id=None):
+        ip_version=constants.IP_VERSION_4, v6_auto_address=False,
+        tenant_id=None):
         v6_address_mode = constants.ATTR_NOT_SPECIFIED
         if v6_auto_address:
             # set ip version to 6 regardless of what's been passed to the
             # method
-            ip_version = 6
+            ip_version = constants.IP_VERSION_6
             v6_address_mode = n_const.IPV6_SLAAC
         subnet = self._create_subnet(
             self.plugin, self.ctx, self.net_id, cidr,
@@ -342,7 +344,7 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
 
     def test_allocate_specific_address_in_use_fails(self):
         ipam_subnet = self._create_and_allocate_ipam_subnet(
-            'fde3:abcd:4321:1::/64', ip_version=6)[0]
+            'fde3:abcd:4321:1::/64', ip_version=constants.IP_VERSION_6)[0]
         addr_req = ipam_req.SpecificAddressRequest('fde3:abcd:4321:1::33')
         ipam_subnet.allocate(addr_req)
         self.assertRaises(ipam_exc.IpAddressAlreadyAllocated,
@@ -352,7 +354,7 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
     def test_allocate_any_address_exhausted_pools_fails(self):
         # Same as above, the ranges will be recalculated always
         ipam_subnet = self._create_and_allocate_ipam_subnet(
-            '192.168.0.0/30', ip_version=4)[0]
+            '192.168.0.0/30', ip_version=constants.IP_VERSION_4)[0]
         ipam_subnet.allocate(ipam_req.AnyAddressRequest)
         # The second address generation request on a /30 for v4 net must fail
         self.assertRaises(ipam_exc.IpAddressGenerationFailure,
@@ -376,7 +378,7 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
 
     def test_allocate_unallocated_address_fails(self):
         ipam_subnet = self._create_and_allocate_ipam_subnet(
-            '10.0.0.0/24', ip_version=4)[0]
+            '10.0.0.0/24', ip_version=constants.IP_VERSION_4)[0]
         self.assertRaises(ipam_exc.IpAddressAllocationNotFound,
                           ipam_subnet.deallocate, '10.0.0.2')
 

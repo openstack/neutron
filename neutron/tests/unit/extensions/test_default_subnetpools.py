@@ -58,7 +58,8 @@ class DefaultSubnetpoolsExtensionTestCase(
               self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
     def _create_subnet_using_default_subnetpool(
-            self, network_id, tenant_id, ip_version=4, **kwargs):
+            self, network_id, tenant_id, ip_version=constants.IP_VERSION_4,
+            **kwargs):
         data = {'subnet': {
                     'network_id': network_id,
                     'ip_version': str(ip_version),
@@ -147,7 +148,8 @@ class DefaultSubnetpoolsExtensionTestCase(
                 subnetpool_id = subnetpool['subnetpool']['id']
                 cfg.CONF.set_override('ipv6_pd_enabled', False)
                 subnet = self._create_subnet_using_default_subnetpool(
-                    network['network']['id'], tenant_id, ip_version=6)
+                    network['network']['id'], tenant_id,
+                    ip_version=constants.IP_VERSION_6)
                 self.assertEqual(subnetpool_id, subnet['subnetpool_id'])
                 ip_net = netaddr.IPNetwork(subnet['cidr'])
                 self.assertIn(ip_net, netaddr.IPNetwork(subnetpool_prefix))
@@ -157,7 +159,7 @@ class DefaultSubnetpoolsExtensionTestCase(
         cfg.CONF.set_override('ipv6_pd_enabled', True)
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
-                    'ip_version': '6',
+                    'ip_version': constants.IP_VERSION_6,
                     'tenant_id': network['network']['tenant_id'],
                     'use_default_subnetpool': True}}
             if ra_addr_mode:

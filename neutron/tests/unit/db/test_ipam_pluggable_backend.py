@@ -370,7 +370,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         context = mock.Mock()
         pluggable_backend = ipam_pluggable_backend.IpamPluggableBackend()
         with self.subnet(cidr=constants.PROVISIONAL_IPV6_PD_PREFIX,
-                         ip_version=6) as subnet:
+                         ip_version=constants.IP_VERSION_6) as subnet:
             subnet = subnet['subnet']
             fixed_ips = [{'subnet_id': subnet['id'],
                          'ip_address': '::1'}]
@@ -406,7 +406,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         cfg.CONF.set_override('ipv6_pd_enabled', True)
         cidr = constants.PROVISIONAL_IPV6_PD_PREFIX
         allocation_pools = [netaddr.IPRange('::2', '::ffff:ffff:ffff:ffff')]
-        with self.subnet(cidr=None, ip_version=6,
+        with self.subnet(cidr=None, ip_version=constants.IP_VERSION_6,
                          subnetpool_id=constants.IPV6_PD_POOL_ID,
                          ipv6_ra_mode=constants.IPV6_SLAAC,
                          ipv6_address_mode=constants.IPV6_SLAAC):
@@ -504,7 +504,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet = self._make_subnet(self.fmt, network, gateway_ip,
-                                   cidr, ip_version=4)
+                                   cidr, ip_version=constants.IP_VERSION_4)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
         self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
@@ -524,7 +524,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet = self._make_subnet(self.fmt, network, gateway_ip,
-                                   cidr, ip_version=4)
+                                   cidr, ip_version=constants.IP_VERSION_4)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
         self.assertEqual(webob.exc.HTTPServerError.code, res.status_int)
@@ -711,7 +711,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         subnets = [{'id': ip_dict['subnet_id'],
                     'network_id': network_id,
                     'cidr': '192.1.1.0/24',
-                    'ip_version': 4,
+                    'ip_version': constants.IP_VERSION_4,
                     'ipv6_address_mode': None,
                     'ipv6_ra_mode': None}]
         get_subnets_mock = mock.Mock(return_value=subnets)

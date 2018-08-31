@@ -46,7 +46,7 @@ class TestL3RpcCallback(testlib_api.SqlTestCase):
         subnet = {'subnet': {'network_id': self.network['id'],
                              'tenant_id': 'tenant_id',
                              'cidr': None,
-                             'ip_version': 6,
+                             'ip_version': constants.IP_VERSION_6,
                              'use_default_subnetpool': True,
                              'name': 'ipv6_pd',
                              'enable_dhcp': True,

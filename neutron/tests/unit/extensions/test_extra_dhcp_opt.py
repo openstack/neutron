@@ -16,6 +16,7 @@
 import copy
 
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
+from neutron_lib import constants
 import webob.exc
 
 from neutron.db import db_base_plugin_v2
@@ -65,7 +66,7 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
             for exp in expected:
                 if (name == exp['opt_name'] and
                     opt['ip_version'] == exp.get(
-                        'ip_version', 4)):
+                        'ip_version', constants.IP_VERSION_4)):
                     val = exp['opt_value']
                     break
             self.assertEqual(val, opt['opt_value'])
@@ -122,13 +123,13 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
     def test_create_port_with_extradhcpopts_ipv4_opt_version(self):
         opt_list = [{'opt_name': 'bootfile-name',
                      'opt_value': 'pxelinux.0',
-                     'ip_version': 4},
+                     'ip_version': constants.IP_VERSION_4},
                     {'opt_name': 'server-ip-address',
                      'opt_value': '123.123.123.456',
-                     'ip_version': 4},
+                     'ip_version': constants.IP_VERSION_4},
                     {'opt_name': 'tftp-server',
                      'opt_value': '123.123.123.123',
-                     'ip_version': 4}]
+                     'ip_version': constants.IP_VERSION_4}]
 
         params = {edo_ext.EXTRADHCPOPTS: opt_list,
                   'arg_list': (edo_ext.EXTRADHCPOPTS,)}
@@ -140,10 +141,10 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
     def test_create_port_with_extradhcpopts_ipv6_opt_version(self):
         opt_list = [{'opt_name': 'bootfile-name',
                      'opt_value': 'pxelinux.0',
-                     'ip_version': 6},
+                     'ip_version': constants.IP_VERSION_6},
                     {'opt_name': 'tftp-server',
                      'opt_value': '2001:192:168::1',
-                     'ip_version': 6}]
+                     'ip_version': constants.IP_VERSION_6}]
 
         params = {edo_ext.EXTRADHCPOPTS: opt_list,
                   'arg_list': (edo_ext.EXTRADHCPOPTS,)}
@@ -282,16 +283,16 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
     def test_update_port_with_blank_router_extradhcpopt(self):
         opt_list = [{'opt_name': 'bootfile-name',
                      'opt_value': 'pxelinux.0',
-                     'ip_version': 4},
+                     'ip_version': constants.IP_VERSION_4},
                     {'opt_name': 'tftp-server',
                      'opt_value': '123.123.123.123',
-                     'ip_version': 4},
+                     'ip_version': constants.IP_VERSION_4},
                     {'opt_name': 'router',
                      'opt_value': '123.123.123.1',
-                     'ip_version': 4}]
+                     'ip_version': constants.IP_VERSION_4}]
         upd_opts = [{'opt_name': 'router',
                      'opt_value': '',
-                     'ip_version': 4}]
+                     'ip_version': constants.IP_VERSION_4}]
         expected_opts = copy.deepcopy(opt_list)
         for i in expected_opts:
             if i['opt_name'] == upd_opts[0]['opt_name']:
@@ -304,13 +305,13 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
     def test_update_port_with_extradhcpopts_ipv6_change_value(self):
         opt_list = [{'opt_name': 'bootfile-name',
                      'opt_value': 'pxelinux.0',
-                     'ip_version': 6},
+                     'ip_version': constants.IP_VERSION_6},
                     {'opt_name': 'tftp-server',
                      'opt_value': '2001:192:168::1',
-                     'ip_version': 6}]
+                     'ip_version': constants.IP_VERSION_6}]
         upd_opts = [{'opt_name': 'tftp-server',
                      'opt_value': '2001:192:168::2',
-                     'ip_version': 6}]
+                     'ip_version': constants.IP_VERSION_6}]
         expected_opts = copy.deepcopy(opt_list)
         for i in expected_opts:
             if i['opt_name'] == upd_opts[0]['opt_name']:
@@ -322,13 +323,13 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
     def test_update_port_with_extradhcpopts_add_another_ver_opt(self):
         opt_list = [{'opt_name': 'bootfile-name',
                      'opt_value': 'pxelinux.0',
-                     'ip_version': 6},
+                     'ip_version': constants.IP_VERSION_6},
                     {'opt_name': 'tftp-server',
                      'opt_value': '2001:192:168::1',
-                     'ip_version': 6}]
+                     'ip_version': constants.IP_VERSION_6}]
         upd_opts = [{'opt_name': 'tftp-server',
                      'opt_value': '123.123.123.123',
-                     'ip_version': 4}]
+                     'ip_version': constants.IP_VERSION_4}]
         expected_opts = copy.deepcopy(opt_list)
         expected_opts.extend(upd_opts)
         self._test_update_port_with_extradhcpopts(opt_list, upd_opts,

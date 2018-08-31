@@ -741,7 +741,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
             self.subnet(
                 self._network,
                 cidr='2001:db8::/64',
-                ip_version=6,
+                ip_version=constants.IP_VERSION_6,
                 gateway_ip='fe80::1',
                 ipv6_address_mode=constants.IPV6_SLAAC) as subnet2:
             with self.port(

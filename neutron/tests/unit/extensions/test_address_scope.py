@@ -382,7 +382,7 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                         'network_id': network['network']['id'],
                         'subnetpool_id': subnetpool_id,
                         'prefixlen': 24,
-                        'ip_version': 4,
+                        'ip_version': constants.IP_VERSION_4,
                         'tenant_id': network['network']['tenant_id']}}
                 req = self.new_create_request('subnets', data)
                 subnet = self.deserialize(self.fmt,
@@ -454,12 +454,12 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
             data = {'subnet': {
                     'network_id': network['network']['id'],
                     'subnetpool_id': v4_subnetpool_id,
-                    'ip_version': 4,
+                    'ip_version': constants.IP_VERSION_4,
                     'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
             self.deserialize(self.fmt, req.get_response(self.api))
             data['subnet']['subnetpool_id'] = v6_subnetpool_id
-            data['subnet']['ip_version'] = 6
+            data['subnet']['ip_version'] = constants.IP_VERSION_6
             req = self.new_create_request('subnets', data)
             self.deserialize(self.fmt, req.get_response(self.api))
             result = self._show('networks', network['network']['id'])

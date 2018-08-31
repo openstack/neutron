@@ -15,6 +15,7 @@ import mock
 import testtools
 
 from neutron_lib.api.definitions import constants as api_const
+from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
@@ -219,7 +220,8 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
         with mock.patch.object(self.mixin, "_get_supported_subnetpools") as f,\
                 mock.patch.object(self.mixin, "_cleanup") as g:
             f.return_value = (
-                [{'ip_version': 4, "id": uuidutils.generate_uuid()}])
+                [{'ip_version': constants.IP_VERSION_4,
+                  'id': uuidutils.generate_uuid()}])
             self.assertRaises(exceptions.AutoAllocationFailure,
                               self.mixin._provision_tenant_private_network,
                               self.ctx, 'foo_tenant')

@@ -17,6 +17,7 @@ import socket
 
 import mock
 from neutron_lib.api.definitions import portbindings
+from neutron_lib import constants
 from oslo_config import cfg
 
 from neutron.agent.linux import interface
@@ -90,7 +91,7 @@ class TestDebugCommands(base.BaseTestCase):
                           'cidr': '10.0.0.0/24',
                           'allocation_pools': allocation_pools,
                           'enable_dhcp': True,
-                          'ip_version': 4}}
+                          'ip_version': constants.IP_VERSION_4}}
 
         client_inst.list_ports.return_value = fake_ports
         client_inst.create_port.return_value = fake_port
@@ -324,7 +325,7 @@ class TestDebugCommands(base.BaseTestCase):
 
     def test_ping_all_v6(self):
         fake_subnet_v6 = {'subnet': {'name': 'fake_v6',
-                          'ip_version': 6}}
+                          'ip_version': constants.IP_VERSION_6}}
         self.client.show_subnet.return_value = fake_subnet_v6
         cmd = commands.PingAll(self.app, None)
         cmd_parser = cmd.get_parser('ping_all')
