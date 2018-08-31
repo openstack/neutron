@@ -1254,6 +1254,70 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 raise exc.SubnetPoolDeleteError(reason=reason)
             subnetpool.delete()
 
+    @db_api.retry_if_session_inactive()
+    def onboard_network_subnets(self, context, subnetpool_id, network_info):
+        network_id = network_info.get('network_id')
+        if not validators.is_attr_set(network_id):
+            msg = _("network_id must be specified.")
+            raise exc.InvalidInput(error_message=msg)
+        if not network_obj.Network.objects_exist(context, id=network_id):
+            raise exc.NetworkNotFound(net_id=network_id)
+
+        subnetpool = subnetpool_obj.SubnetPool.get_object(context,
+                                                          id=subnetpool_id)
+        if not subnetpool:
+            raise exc.SubnetPoolNotFound(subnetpool_id=id)
+
+        subnets_to_onboard = subnet_obj.Subnet.get_objects(
+                                             context,
+                                             network_id=network_id,
+                                             ip_version=subnetpool.ip_version)
+
+        self._onboard_network_subnets(context, subnets_to_onboard, subnetpool)
+
+        if subnetpool.address_scope_id:
+            # Notify all affected routers of any address scope changes
+            registry.notify(resources.SUBNETPOOL_ADDRESS_SCOPE,
+                            events.AFTER_UPDATE,
+                            self.onboard_network_subnets,
+                            payload=events.DBEventPayload(
+                                context, resource_id=subnetpool_id))
+
+        onboard_info = []
+        for subnet in subnets_to_onboard:
+            onboard_info.append({'id': subnet.id, 'cidr': subnet.cidr})
+
+        return onboard_info
+
+    def _onboard_network_subnets(self, context, subnets_to_onboard,
+                                 subnetpool):
+        allocated_prefix_set = netaddr.IPSet(
+            [x.cidr for x in subnet_obj.Subnet.get_objects(
+                                                context,
+                                                subnetpool_id=subnetpool.id)])
+        prefixes_to_add = []
+
+        for subnet in subnets_to_onboard:
+            to_onboard_ipset = netaddr.IPSet([subnet.cidr])
+            if to_onboard_ipset & allocated_prefix_set:
+                args = {'subnet_id': subnet.id,
+                        'cidr': subnet.cidr,
+                        'subnetpool_id': subnetpool.id}
+                msg = _('Onboarding subnet %(subnet_id)s: %(cidr)s conflicts '
+                        'with allocated prefixes in subnet pool '
+                        '%(subnetpool_id)s') % args
+                raise exc.IllegalSubnetPoolUpdate(reason=msg)
+            prefixes_to_add.append(subnet.cidr)
+
+        with db_api.CONTEXT_WRITER.using(context):
+            new_sp_prefixes = subnetpool.prefixes + prefixes_to_add
+            sp_update_req = {'subnetpool': {'prefixes': new_sp_prefixes}}
+
+            self.update_subnetpool(context, subnetpool.id, sp_update_req)
+            for subnet in subnets_to_onboard:
+                subnet.subnetpool_id = subnetpool.id
+                subnet.update()
+
     def _check_mac_addr_update(self, context, port, new_mac, device_owner):
         if (device_owner and
             device_owner.startswith(

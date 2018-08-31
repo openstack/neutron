@@ -17,6 +17,7 @@ from neutron.conf.policies import base
 
 COLLECTION_PATH = '/subnetpools'
 RESOURCE_PATH = '/subnetpools/{id}'
+ONBOARD_PATH = '/subnetpools/{id}/onboard_network_subnets'
 
 
 rules = [
@@ -106,7 +107,18 @@ rules = [
                 'path': RESOURCE_PATH,
             },
         ]
-    )
+    ),
+    policy.DocumentedRuleDefault(
+        'onboard_network_subnets',
+        base.RULE_ADMIN_OR_OWNER,
+        'Onboard existing subnet into a subnetpool',
+        [
+            {
+                'method': 'Put',
+                'path': ONBOARD_PATH,
+            },
+        ]
+    ),
 ]
 
 
