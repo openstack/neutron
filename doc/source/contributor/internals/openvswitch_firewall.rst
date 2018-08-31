@@ -207,25 +207,25 @@ solicitation and neighbour advertisement.
 
 ::
 
- table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=130 actions=NORMAL
- table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=131 actions=NORMAL
- table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=132 actions=NORMAL
- table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=135 actions=NORMAL
- table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=136 actions=NORMAL
- table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=130 actions=NORMAL
- table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=131 actions=NORMAL
- table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=132 actions=NORMAL
- table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=135 actions=NORMAL
- table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=136 actions=NORMAL
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=130 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=131 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=132 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=135 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=136 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=130 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=131 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=132 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=135 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=136 actions=resubmit(,94)
 
 Following rules implement arp spoofing protection
 
 ::
 
- table=71, priority=95,arp,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:10,arp_spa=192.168.0.1 actions=NORMAL
- table=71, priority=95,arp,reg5=0x1,in_port=1,dl_src=fa:16:3e:8c:84:13,arp_spa=10.0.0.1 actions=NORMAL
- table=71, priority=95,arp,reg5=0x2,in_port=2,dl_src=fa:16:3e:24:57:c7,arp_spa=192.168.0.2 actions=NORMAL
- table=71, priority=95,arp,reg5=0x2,in_port=2,dl_src=fa:16:3e:8c:84:14,arp_spa=10.1.0.0/24 actions=NORMAL
+ table=71, priority=95,arp,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:10,arp_spa=192.168.0.1 actions=resubmit(,94)
+ table=71, priority=95,arp,reg5=0x1,in_port=1,dl_src=fa:16:3e:8c:84:13,arp_spa=10.0.0.1 actions=resubmit(,94)
+ table=71, priority=95,arp,reg5=0x2,in_port=2,dl_src=fa:16:3e:24:57:c7,arp_spa=192.168.0.2 actions=resubmit(,94)
+ table=71, priority=95,arp,reg5=0x2,in_port=2,dl_src=fa:16:3e:8c:84:14,arp_spa=10.1.0.0/24 actions=resubmit(,94)
 
 DHCP and DHCPv6 traffic is allowed to instance but DHCP servers are blocked on
 instances.
@@ -288,10 +288,10 @@ allowed.
 
 ::
 
- table=72, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x1 actions=NORMAL
- table=72, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x2 actions=NORMAL
- table=72, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x1 actions=NORMAL
- table=72, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x2 actions=NORMAL
+ table=72, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x1 actions=resubmit(,94)
+ table=72, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x2 actions=resubmit(,94)
+ table=72, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x1 actions=resubmit(,94)
+ table=72, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x2 actions=resubmit(,94)
 
 In the following flows are marked established connections that weren't matched
 in the previous flows, which means they don't have accepting security group
@@ -307,7 +307,8 @@ rule anymore.
 
 In following ``table 73`` are all detected ingress connections sent to ingress
 pipeline. Since the connection was already accepted by egress pipeline, all
-remaining egress connections are sent to normal switching.
+remaining egress connections are sent to normal flood'n'learn switching
+(table 94).
 
 ::
 
@@ -317,8 +318,8 @@ remaining egress connections are sent to normal switching.
  table=73, priority=100,reg6=0x284,dl_dst=fa:16:3e:8c:84:14 actions=load:0x2->NXM_NX_REG5[],resubmit(,81)
  table=73, priority=90,ct_state=+new-est,reg5=0x1 actions=ct(commit,zone=NXM_NX_REG6[0..15]),resubmit(,91)
  table=73, priority=90,ct_state=+new-est,reg5=0x2 actions=ct(commit,zone=NXM_NX_REG6[0..15]),resubmit(,91)
- table=73, priority=80,reg5=0x1 actions=NORMAL
- table=73, priority=80,reg5=0x2 actions=NORMAL
+ table=73, priority=80,reg5=0x1 actions=resubmit(,94)
+ table=73, priority=80,reg5=0x2 actions=resubmit(,94)
  table=73, priority=0 actions=drop
 
 ``table 81`` is similar to ``table 71``, allows basic ingress traffic for
@@ -460,16 +461,24 @@ Using OpenFlow in conjunction with OVS firewall
 There are three tables where packets are sent once they get through the OVS
 firewall pipeline. The tables can be used by other mechanisms using OpenFlow
 that are supposed to work with the OVS firewall. Packets sent to ``table 91``
-are considered accepted by the egress pipeline and won't be processed further.
-``NORMAL`` action is used by default in this table. Packets sent to
-``table 92`` were processed by the ingress filtering pipeline. As packets from
-the ingress filtering pipeline were injected to its destination, ``table 92``
-receives copies of those packets and therefore default action is ``drop``.
-Finally, packets sent to ``table 93`` were filtered by the firewall and should
-be dropped. Default action is ``drop`` in this table.
+are considered accepted by the egress pipeline, and will be processed so that
+they are forwarded to their destination by being submitted to a NORMAL action
+that results in Ethernet flood/learn processing. Note that ``table 91`` merely
+resubmits to ``table 94``that contains the actual NORMAL action; this allows
+to have``table 91`` be a single places where the NORMAL action can be overriden
+by other components (currently used by ``networking-bagpipe`` driver for
+``networking-bgpvpn``).
 
-In regard to the performance perspective, please note that only the first accepted
-packet of each connection session will go to ``table 91`` and ``table 92``.
+Packets sent to ``table 92`` were processed by the ingress filtering pipeline.
+As packets from the ingress filtering pipeline were injected to its
+destination, ``table 92`` receives copies of those packets and therefore
+default action is ``drop``. Finally, packets sent to ``table 93`` were filtered
+by the firewall and should be dropped. Default action is ``drop`` in this
+table.
+
+In regard to the performance perspective, please note that only the first
+accepted packet of each connection session will go to ``table 91`` and
+``table 92``.
 
 
 Upgrade path from iptables hybrid driver
