@@ -100,11 +100,10 @@ class TestLoggingExtension(LoggingExtensionTestFramework):
 
     ip_cidr = '192.168.0.1/24'
 
-    def _is_log_flow_set(self, table):
+    def _is_log_flow_set(self, table, actions):
         flows = self.log_driver.int_br.br.dump_flows_for_table(table)
         pattern = re.compile(
-            r"^.* table=%s.* "
-            r"actions=(NORMAL,CONTROLLER:65535|CONTROLLER:65535)" % table
+            r"^.* table=%s.* actions=%s" % (table, actions)
         )
         for flow in flows.splitlines():
             if pattern.match(flow.strip()):
@@ -113,19 +112,27 @@ class TestLoggingExtension(LoggingExtensionTestFramework):
 
     def _assert_logging_flows_set(self):
         self.assertTrue(self._is_log_flow_set(
-            table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE))
+            table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE,
+            actions=r"resubmit\(,%d\),CONTROLLER:65535" % (
+                ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)))
         self.assertTrue(self._is_log_flow_set(
-            table=ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE))
+            table=ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE,
+            actions="CONTROLLER:65535"))
         self.assertTrue(self._is_log_flow_set(
-            table=ovs_consts.DROPPED_TRAFFIC_TABLE))
+            table=ovs_consts.DROPPED_TRAFFIC_TABLE,
+            actions="CONTROLLER:65535"))
 
     def _assert_logging_flows_not_set(self):
         self.assertFalse(self._is_log_flow_set(
-            table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE))
+            table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE,
+            actions=r"resubmit\(,%d\),CONTROLLER:65535" % (
+                ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)))
         self.assertFalse(self._is_log_flow_set(
-            table=ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE))
+            table=ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE,
+            actions="CONTROLLER:65535"))
         self.assertFalse(self._is_log_flow_set(
-            table=ovs_consts.DROPPED_TRAFFIC_TABLE))
+            table=ovs_consts.DROPPED_TRAFFIC_TABLE,
+            actions="CONTROLLER:65535"))
 
     def test_log_lifecycle(self):
         sg_rules = [{'ethertype': constants.IPv4,

@@ -181,7 +181,8 @@ class TestOVSFirewallLoggingDriver(base.BaseTestCase):
                 tcp_dst='0x007b'),
             # log egress tcp6
             mock.call(
-                actions='normal,controller',
+                actions='resubmit(,%d),controller' % (
+                    ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE),
                 cookie=accept_cookie.id,
                 reg5=self.port_ofport,
                 dl_type="0x{:04x}".format(n_const.ETHERTYPE_IPV6),
@@ -190,7 +191,8 @@ class TestOVSFirewallLoggingDriver(base.BaseTestCase):
                 table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE),
             # log egress udp
             mock.call(
-                actions='normal,controller',
+                actions='resubmit(,%d),controller' % (
+                    ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE),
                 cookie=accept_cookie.id,
                 reg5=self.port_ofport,
                 dl_type="0x{:04x}".format(n_const.ETHERTYPE_IP),
