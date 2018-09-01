@@ -12,12 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import security_groups_port_filtering
 from neutron_lib.api import extensions
-
-from neutron.extensions import security_groups_port_filtering_lib as apidef
 
 
 class Security_groups_port_filtering(extensions.APIExtensionDescriptor):
     """Extension class supporting filtering port depend on security group."""
 
-    api_definition = apidef
+    api_definition = security_groups_port_filtering
