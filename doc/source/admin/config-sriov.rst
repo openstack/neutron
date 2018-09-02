@@ -132,7 +132,7 @@ network and has access to the private networks of all machines.
       modify the interfaces configuration file adding an ``ifup`` script
       command.
 
-      In Ubuntu, modifying the ``/etc/network/interfaces`` file:
+      On Ubuntu, modify the ``/etc/network/interfaces`` file:
 
       .. code-block:: ini
 
@@ -140,8 +140,7 @@ network and has access to the private networks of all machines.
          iface eth3 inet dhcp
          pre-up echo '4' > /sys/class/net/eth3/device/sriov_numvfs
 
-
-      In Red Hat, modifying the ``/sbin/ifup-local`` file:
+      On Red Hat, modify the ``/sbin/ifup-local`` file:
 
       .. code-block:: bash
 
@@ -150,7 +149,6 @@ network and has access to the private networks of all machines.
          then
              echo '4' > /sys/class/net/eth3/device/sriov_numvfs
          fi
-
 
    .. warning::
 
@@ -166,7 +164,7 @@ network and has access to the private networks of all machines.
       # cat /sys/class/net/eth3/device/sriov_totalvfs
       63
 
-#. Verify that the VFs have been created and are in ``up`` state:
+#. Verify that the VFs have been created and are in ``up`` state. For example:
 
    .. code-block:: console
 
@@ -223,42 +221,46 @@ Whitelist PCI devices nova-compute (Compute)
 
    .. code-block:: ini
 
-      [default]
-      pci_passthrough_whitelist = { "devname": "eth3", "physical_network": "physnet2"}
+      [pci]
+      passthrough_whitelist = { "devname": "eth3", "physical_network": "physnet2"}
 
    This tells the Compute service that all VFs belonging to ``eth3`` are
    allowed to be passed through to instances and belong to the provider network
    ``physnet2``.
 
-   Alternatively the ``pci_passthrough_whitelist`` parameter also supports
+   Alternatively the ``[pci] passthrough_whitelist`` parameter also supports
    whitelisting by:
 
    - PCI address: The address uses the same syntax as in ``lspci`` and an
-     asterisk (*) can be used to match anything.
+     asterisk (``*``) can be used to match anything.
 
      .. code-block:: ini
 
-        pci_passthrough_whitelist = { "address": "[[[[<domain>]:]<bus>]:][<slot>][.[<function>]]", "physical_network": "physnet2" }
+        [pci]
+        passthrough_whitelist = { "address": "[[[[<domain>]:]<bus>]:][<slot>][.[<function>]]", "physical_network": "physnet2" }
 
-     For example, to match any domain, bus 0a, slot 00, and all functions:
+     For example, to match any domain, bus ``0a``, slot ``00``, and all
+     functions:
 
      .. code-block:: ini
 
-        pci_passthrough_whitelist = { "address": "*:0a:00.*", "physical_network": "physnet2" }
+        [pci]
+        passthrough_whitelist = { "address": "*:0a:00.*", "physical_network": "physnet2" }
 
    - PCI ``vendor_id`` and ``product_id`` as displayed by the Linux utility
      ``lspci``.
 
      .. code-block:: ini
 
-        pci_passthrough_whitelist = { "vendor_id": "<id>", "product_id": "<id>", "physical_network": "physnet2" }
+        [pci]
+        passthrough_whitelist = { "vendor_id": "<id>", "product_id": "<id>", "physical_network": "physnet2" }
 
    If the device defined by the PCI address or ``devname`` corresponds to an
    SR-IOV PF, all VFs under the PF will match the entry. Multiple
-   ``pci_passthrough_whitelist`` entries per host are supported.
+   ``[pci] passthrough_whitelist`` entries per host are supported.
 
    In order to enable SR-IOV to request "trusted mode", the
-   ``[pci]/pci_passthrough_whitelist`` parameter also supports a ``trusted``
+   ``[pci] passthrough_whitelist`` parameter also supports a ``trusted``
    tag.
 
    .. note::
@@ -297,7 +299,16 @@ Configure neutron-server (Controller)
 
    .. code-block:: ini
 
+      [ml2]
       mechanism_drivers = openvswitch,sriovnicswitch
+
+#. Ensure your physnet is configured for the chosen network type. Edit the
+   ``ml2_conf.ini`` file on each controller:
+
+   .. code-block:: ini
+
+      [ml2_type_vlan]
+      network_vlan_ranges = physnet2
 
 #. Add the ``plugin.ini`` file as a parameter to the ``neutron-server``
    service. Edit the appropriate initialization script to configure the
@@ -314,24 +325,22 @@ Configure nova-scheduler (Controller)
 -------------------------------------
 
 #. On every controller node running the ``nova-scheduler`` service, add
-   ``PciPassthroughFilter`` to ``scheduler_default_filters`` to enable
-   ``PciPassthroughFilter`` by default.
-   Also ensure ``scheduler_available_filters`` parameter under the
-   ``[DEFAULT]`` section in ``nova.conf`` is set to ``all_filters``
-   to enable all filters provided by the Compute service.
+   ``PciPassthroughFilter`` to ``[filter_scheduler] enabled_filters`` to enable
+   this filter. Ensure ``[filter_scheduler] available_filters`` is set to the
+   default of ``nova.scheduler.filters.all_filters``:
 
    .. code-block:: ini
 
-      [DEFAULT]
-      scheduler_default_filters = RetryFilter, AvailabilityZoneFilter, ComputeFilter, ComputeCapabilitiesFilter, ImagePropertiesFilter, ServerGroupAntiAffinityFilter, ServerGroupAffinityFilter, PciPassthroughFilter
-      scheduler_available_filters = nova.scheduler.filters.all_filters
+      [filter_scheduler]
+      enabled_filters = RetryFilter, AvailabilityZoneFilter, ComputeFilter, ComputeCapabilitiesFilter, ImagePropertiesFilter, ServerGroupAntiAffinityFilter, ServerGroupAffinityFilter, PciPassthroughFilter
+      available_filters = nova.scheduler.filters.all_filters
 
 #. Restart the ``nova-scheduler`` service.
 
-Enable neutron sriov-agent (Compute)
--------------------------------------
+Enable neutron-sriov-nic-agent (Compute)
+----------------------------------------
 
-#. Install the SR-IOV agent.
+#. Install the SR-IOV agent, if necessary.
 
 #. Edit the ``sriov_agent.ini`` file on each compute node. For example:
 
@@ -360,7 +369,7 @@ Enable neutron sriov-agent (Compute)
 
       exclude_devices = eth1:0000:07:00.2;0000:07:00.3,eth2:0000:05:00.1;0000:05:00.2
 
-#. Ensure the neutron sriov-agent runs successfully:
+#. Ensure the SR-IOV agent runs successfully:
 
    .. code-block:: console
 
@@ -368,7 +377,7 @@ Enable neutron sriov-agent (Compute)
         --config-file /etc/neutron/neutron.conf \
         --config-file /etc/neutron/plugins/ml2/sriov_agent.ini
 
-#. Enable the neutron sriov-agent service.
+#. Enable the neutron SR-IOV agent service.
 
    If installing from source, you must configure a daemon file for the init
    system manually.
@@ -412,39 +421,66 @@ Launching instances with SR-IOV ports
 
 Once configuration is complete, you can launch instances with SR-IOV ports.
 
+#. If it does not already exist, create a network and subnet for the chosen
+   physnet. This is the network to which SR-IOV ports will be attached. For
+   example:
+
+   .. code-block:: console
+
+      $ openstack network create --provider-physical-network physnet2 \
+          --provider-network-type vlan --provider-segment 1000 \
+          sriov-net
+
+      $ openstack subnet create --network sriov-net \
+          --subnet-pool shared-default-subnetpool-v4 \
+          sriov-subnet
+
 #. Get the ``id`` of the network where you want the SR-IOV port to be created:
 
    .. code-block:: console
 
-      $ net_id=`neutron net-show net04 | grep "\ id\ " | awk '{ print $4 }'`
+      $ net_id=$(openstack network show sriov-net -c id -f value)
 
-#. Create the SR-IOV port. ``vnic_type=direct`` is used here, but other options
+#. Create the SR-IOV port. ``vnic-type=direct`` is used here, but other options
    include ``normal``, ``direct-physical``, and ``macvtap``:
 
    .. code-block:: console
 
-      $ port_id=`neutron port-create $net_id --name sriov_port --binding:vnic_type direct | grep "\ id\ " | awk '{ print $4 }'`
+      $ openstack port create --network $net_id --vnic-type direct \
+          sriov-port
 
-   To request that the SR-IOV port accept trusted capabilities, the
-   binding profile should be enhanced with the ``trusted`` tag.
+   Alternatively, to request that the SR-IOV port accept trusted capabilities,
+   the binding profile should be enhanced with the ``trusted`` tag.
 
    .. code-block:: console
 
-      $ port_id=`neutron port-create $net_id --name sriov_port --binding:vnic_type direct --binding:profile type=dict trusted=true | grep "\ id\ " | awk '{ print $4 }'`
+      $ openstack port create --network $net_id --vnic-type direct \
+          --binding-profile trusted=true \
+          sriov-port
+
+#. Get the ``id`` of the created port:
+
+   .. code-block:: console
+
+      $ port_id=$(openstack port show sriov-port -c id -f value)
 
 #. Create the instance. Specify the SR-IOV port created in step two for the
    NIC:
 
    .. code-block:: console
 
-      $ openstack server create --flavor m1.large --image ubuntu_14.04 --nic port-id=$port_id test-sriov
+      $ openstack server create --flavor m1.large --image ubuntu_18.04 \
+          --nic port-id=$port_id \
+          test-sriov
 
    .. note::
 
       There are two ways to attach VFs to an instance. You can create an SR-IOV
       port or use the ``pci_alias`` in the Compute service. For more
-      information about using ``pci_alias``, refer to `nova-api configuration
-      <https://docs.openstack.org/nova/latest/admin/pci-passthrough.html#configure-nova-api-controller>`__.
+      information about using ``pci_alias``, refer to `nova-api
+      configuration`__.
+
+      __ https://docs.openstack.org/nova/latest/admin/pci-passthrough.html#configure-nova-api-controller
 
 SR-IOV with InfiniBand
 ~~~~~~~~~~~~~~~~~~~~~~
