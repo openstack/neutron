@@ -406,7 +406,9 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._validate_fips_for_external_network(router2, fip2_ns)
 
     def _dvr_router_lifecycle(self, enable_ha=False, enable_snat=False,
-                              custom_mtu=2000, ip_version=4, dual_stack=False):
+                              custom_mtu=2000,
+                              ip_version=lib_constants.IP_VERSION_4,
+                              dual_stack=False):
         '''Test dvr router lifecycle
 
         :param enable_ha: sets the ha value for the router.
@@ -484,7 +486,11 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._assert_metadata_chains(router)
         self._assert_rfp_fpr_mtu(router, custom_mtu)
         if enable_snat:
-            ip_versions = [4, 6] if (ip_version == 6 or dual_stack) else [4]
+            if (ip_version == lib_constants.IP_VERSION_6 or dual_stack):
+                ip_versions = [lib_constants.IP_VERSION_4,
+                               lib_constants.IP_VERSION_6]
+            else:
+                ip_versions = [lib_constants.IP_VERSION_4]
             snat_ns_name = dvr_snat_ns.SnatNamespace.get_snat_ns_name(
                 router.router_id)
             self._assert_onlink_subnet_routes(

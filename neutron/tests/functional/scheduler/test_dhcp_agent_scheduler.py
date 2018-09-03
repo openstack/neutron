@@ -605,7 +605,7 @@ class TestDHCPSchedulerWithNetworkAccessibility(
             admin_context,
             {'subnet':
                 {'name': 'name',
-                 'ip_version': 4,
+                 'ip_version': constants.IP_VERSION_4,
                  'network_id': net['id'],
                  'cidr': '10.0.0.0/24',
                  'gateway_ip': constants.ATTR_NOT_SPECIFIED,

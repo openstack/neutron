@@ -11,6 +11,7 @@
 #    under the License.
 
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib import constants
 
 from neutron.api import extensions
 from neutron.api.v2 import base
@@ -86,7 +87,7 @@ def create_subnet(context, plugin, network_id):
          {'tenant_id': 'tenid',
           'network_id': network_id,
           'name': 'pecansub',
-          'ip_version': 4,
+          'ip_version': constants.IP_VERSION_4,
           'cidr': '10.20.30.0/24',
           'gateway_ip': '10.20.30.1',
           'enable_dhcp': True,

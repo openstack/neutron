@@ -611,10 +611,10 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.0.0.1', '10.0.0.0/24',
-            ip_version=4, enable_dhcp=True)
+            ip_version=constants.IP_VERSION_4, enable_dhcp=True)
         self._make_subnet(
             self.fmt, ext_net, '2001:db8::1', '2001:db8::/64',
-            ip_version=6, enable_dhcp=True)
+            ip_version=constants.IP_VERSION_6, enable_dhcp=True)
         router1 = self._create_router()
         self.l3_plugin._update_router_gw_info(
             self.context, router1['id'],
@@ -625,12 +625,12 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         private_net1 = self._make_network(self.fmt, 'net1', True)
         private_ipv6_subnet1 = self._make_subnet(self.fmt,
             private_net1, 'fd00::1',
-            cidr='fd00::1/64', ip_version=6,
+            cidr='fd00::1/64', ip_version=constants.IP_VERSION_6,
             ipv6_ra_mode='slaac',
             ipv6_address_mode='slaac')
         private_ipv6_subnet2 = self._make_subnet(self.fmt,
             private_net1, 'fd01::1',
-            cidr='fd01::1/64', ip_version=6,
+            cidr='fd01::1/64', ip_version=constants.IP_VERSION_6,
             ipv6_ra_mode='slaac',
             ipv6_address_mode='slaac')
         # Add the first IPv6 subnet to the router
@@ -682,7 +682,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
-            ip_version=4, enable_dhcp=True)
+            ip_version=constants.IP_VERSION_4, enable_dhcp=True)
         self.l3_plugin.schedule_router(self.context,
                                        router['id'],
                                        candidates=[self.l3_agent])
@@ -696,7 +696,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             private_net1,
             '10.1.0.1',
             cidr='10.1.0.0/24',
-            ip_version=4,
+            ip_version=constants.IP_VERSION_4,
             allocation_pools=test_allocation_pools,
             enable_dhcp=True)
         vrrp_port = self._make_port(
@@ -789,7 +789,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
-            ip_version=4, enable_dhcp=True)
+            ip_version=constants.IP_VERSION_4, enable_dhcp=True)
         # Schedule the router to the dvr_snat node
         self.l3_plugin.schedule_router(self.context,
                                        router['id'],
@@ -804,7 +804,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             private_net1,
             '10.1.0.1',
             cidr='10.1.0.0/24',
-            ip_version=4,
+            ip_version=constants.IP_VERSION_4,
             enable_dhcp=True)
         with self.port(
                 subnet=private_subnet1,
@@ -870,7 +870,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
-            ip_version=4, enable_dhcp=True)
+            ip_version=constants.IP_VERSION_4, enable_dhcp=True)
         self.l3_plugin.schedule_router(self.context,
                                        router['id'],
                                        candidates=[self.l3_agent])
@@ -884,7 +884,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             private_net1,
             '10.1.0.1',
             cidr='10.1.0.0/24',
-            ip_version=4,
+            ip_version=constants.IP_VERSION_4,
             enable_dhcp=True)
         with self.port(
                 subnet=private_subnet1,
@@ -945,7 +945,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
-            ip_version=4, enable_dhcp=True)
+            ip_version=constants.IP_VERSION_4, enable_dhcp=True)
         self.l3_plugin.schedule_router(self.context,
                                        router['id'],
                                        candidates=[self.l3_agent])
@@ -959,7 +959,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             private_net1,
             '10.1.0.1',
             cidr='10.1.0.0/24',
-            ip_version=4,
+            ip_version=constants.IP_VERSION_4,
             enable_dhcp=True)
         with self.port(
                 subnet=private_subnet1,
@@ -1027,7 +1027,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
-            ip_version=4, enable_dhcp=True)
+            ip_version=constants.IP_VERSION_4, enable_dhcp=True)
         self.l3_plugin.schedule_router(self.context,
                                        router['id'],
                                        candidates=[self.l3_agent])
@@ -1041,7 +1041,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             private_net1,
             '10.1.0.1',
             cidr='10.1.0.0/24',
-            ip_version=4,
+            ip_version=constants.IP_VERSION_4,
             allocation_pools=test_allocation_pools,
             enable_dhcp=True)
         vrrp_port = self._make_port(
@@ -1157,7 +1157,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
-            ip_version=4, enable_dhcp=True)
+            ip_version=constants.IP_VERSION_4, enable_dhcp=True)
         self.l3_plugin.schedule_router(self.context,
                                        router['id'],
                                        candidates=[self.l3_agent])
@@ -1170,7 +1170,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             private_net1,
             '10.1.0.1',
             cidr='10.1.0.0/24',
-            ip_version=4,
+            ip_version=constants.IP_VERSION_4,
             enable_dhcp=True)
         self.l3_plugin.add_router_interface(
             self.context, router['id'],
@@ -1197,7 +1197,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
-            ip_version=4, enable_dhcp=True)
+            ip_version=constants.IP_VERSION_4, enable_dhcp=True)
         self.l3_plugin.schedule_router(self.context,
                                        router['id'],
                                        candidates=[self.l3_agent])
@@ -1210,7 +1210,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             private_net1,
             '10.1.0.1',
             cidr='10.1.0.0/24',
-            ip_version=4,
+            ip_version=constants.IP_VERSION_4,
             allocation_pools=test_allocation_pools,
             enable_dhcp=True)
         vrrp_port = self._make_port(

@@ -84,12 +84,14 @@ class L3HATestCase(framework.L3AgentTestFramework):
         self._test_conntrack_disassociate_fip(ha=True)
 
     def test_ipv6_ha_router_lifecycle(self):
-        self._router_lifecycle(enable_ha=True, ip_version=6)
+        self._router_lifecycle(enable_ha=True,
+                               ip_version=constants.IP_VERSION_6)
 
     def test_ipv6_ha_router_lifecycle_with_no_gw_subnet(self):
         self.agent.conf.set_override('ipv6_gateway',
                                      'fe80::f816:3eff:fe2e:1')
-        self._router_lifecycle(enable_ha=True, ip_version=6,
+        self._router_lifecycle(enable_ha=True,
+                               ip_version=constants.IP_VERSION_6,
                                v6_ext_gw_with_sub=False)
 
     def test_ipv6_ha_router_lifecycle_with_no_gw_subnet_for_router_advts(self):
@@ -209,7 +211,8 @@ class L3HATestCase(framework.L3AgentTestFramework):
                 router1.get_ha_device_name()))
 
     def test_ha_router_ipv6_radvd_status(self):
-        router_info = self.generate_router_info(ip_version=6, enable_ha=True)
+        router_info = self.generate_router_info(
+            ip_version=constants.IP_VERSION_6, enable_ha=True)
         router1 = self.manage_router(self.agent, router_info)
         common_utils.wait_until_true(lambda: router1.ha_state == 'master')
         common_utils.wait_until_true(lambda: router1.radvd.enabled)
@@ -235,7 +238,8 @@ class L3HATestCase(framework.L3AgentTestFramework):
         _check_lla_status(router1, False)
 
     def test_ha_router_process_ipv6_subnets_to_existing_port(self):
-        router_info = self.generate_router_info(enable_ha=True, ip_version=6)
+        router_info = self.generate_router_info(enable_ha=True,
+            ip_version=constants.IP_VERSION_6)
         router = self.manage_router(self.agent, router_info)
 
         def verify_ip_in_keepalived_config(router, iface):
@@ -250,7 +254,8 @@ class L3HATestCase(framework.L3AgentTestFramework):
 
         # Add a second IPv6 subnet to the router internal interface.
         self._add_internal_interface_by_subnet(router.router, count=1,
-                ip_version=6, ipv6_subnet_modes=[slaac_mode],
+                ip_version=constants.IP_VERSION_6,
+                ipv6_subnet_modes=[slaac_mode],
                 interface_id=interface_id)
         router.process()
         common_utils.wait_until_true(lambda: router.ha_state == 'master')

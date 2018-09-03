@@ -585,7 +585,7 @@ class L3DVRSchedulerBaseTest(L3SchedulerBaseTest):
                   'id': sub_id,
                   'name': name,
                   'network_id': network_id,
-                  'ip_version': 4,
+                  'ip_version': constants.IP_VERSION_4,
                   'cidr': cidr,
                   'enable_dhcp': False,
                   'gateway_ip': gw_ip,

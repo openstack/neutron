@@ -84,7 +84,8 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
 
         self.conf.set_override('check_child_processes_interval', 1, 'AGENT')
 
-    def network_dict_for_dhcp(self, dhcp_enabled=True, ip_version=4,
+    def network_dict_for_dhcp(self, dhcp_enabled=True,
+                              ip_version=lib_const.IP_VERSION_4,
                               prefix_override=None):
         net_id = uuidutils.generate_uuid()
         subnet_dict = self.create_subnet_dict(
@@ -99,7 +100,8 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
             net_id, [subnet_dict], [port_dict])
         return net_dict
 
-    def create_subnet_dict(self, net_id, dhcp_enabled=True, ip_version=4,
+    def create_subnet_dict(self, net_id, dhcp_enabled=True,
+                           ip_version=lib_const.IP_VERSION_4,
                            prefix_override=None):
         cidr = self._IP_ADDRS[ip_version]['cidr']
         if prefix_override is not None:
@@ -116,12 +118,12 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
             "host_routes": [],
             "ipv6_ra_mode": None,
             "ipv6_address_mode": None})
-        if ip_version == 6:
+        if ip_version == lib_const.IP_VERSION_6:
             sn_dict['ipv6_address_mode'] = lib_const.DHCPV6_STATEFUL
         return sn_dict
 
     def create_port_dict(self, network_id, subnet_id, mac_address,
-                         ip_version=4, ip_address=None):
+                         ip_version=lib_const.IP_VERSION_4, ip_address=None):
         ip_address = (self._IP_ADDRS[ip_version]['addr']
             if not ip_address else ip_address)
         port_dict = dhcp.DictModel({
@@ -198,7 +200,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
 
     def _ip_list_for_vif(self, vif_name, namespace):
         ip_device = ip_lib.IPDevice(vif_name, namespace)
-        return ip_device.addr.list(ip_version=4)
+        return ip_device.addr.list(ip_version=lib_const.IP_VERSION_4)
 
     def _get_network_port_for_allocation_test(self):
         network = self.network_dict_for_dhcp()
@@ -342,7 +344,7 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
             exception=RuntimeError("Stale metadata proxy didn't get killed"))
 
     def _test_metadata_proxy_spawn_kill_with_subnet_create_delete(self):
-        network = self.network_dict_for_dhcp(ip_version=6)
+        network = self.network_dict_for_dhcp(ip_version=lib_const.IP_VERSION_6)
         self.configure_dhcp_for_network(network=network)
         pm = self._get_metadata_proxy_process(network)
 
