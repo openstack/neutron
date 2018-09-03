@@ -53,7 +53,10 @@ function prepare_for_compilation {
 
     if is_fedora ; then
         # is_fedora covers Fedora, RHEL, CentOS, etc...
-        if [[ ${KERNEL_VERSION:0:2} != "3." ]]; then
+        if [[ "$os_VENDOR" == "Fedora" ]]; then
+            install_package elfutils-libelf-devel
+            KERNEL_VERSION=`echo $KERNEL_VERSION | cut --delimiter='-' --field 1`
+        elif [[ ${KERNEL_VERSION:0:2} != "3." ]]; then
             # dash is illegal character in rpm version so replace
             # them with underscore like it is done in the kernel
             # https://github.com/torvalds/linux/blob/master/scripts/package/mkspec#L25
