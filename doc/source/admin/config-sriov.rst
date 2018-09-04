@@ -140,7 +140,7 @@ network and has access to the private networks of all machines.
          iface eth3 inet dhcp
          pre-up echo '4' > /sys/class/net/eth3/device/sriov_numvfs
 
-      On Red Hat, modify the ``/sbin/ifup-local`` file:
+      On RHEL and derivatives, modify the ``/sbin/ifup-local`` file:
 
       .. code-block:: bash
 
