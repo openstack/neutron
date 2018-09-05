@@ -246,6 +246,33 @@ class OVSConfigFixture(ConfigFixture):
         return self.config.ovs.tunnel_bridge
 
 
+class SRIOVConfigFixture(ConfigFixture):
+    def __init__(self, env_desc, host_desc, temp_dir, local_ip):
+        super(SRIOVConfigFixture, self).__init__(
+            env_desc, host_desc, temp_dir,
+            base_filename='sriov_agent.ini')
+
+        device1 = utils.get_rand_device_name(prefix='ens5')
+        device2 = utils.get_rand_device_name(prefix='ens6')
+        phys_dev_mapping = '%s:%s,%s:%s' % (PHYSICAL_NETWORK_NAME, device1,
+                                            PHYSICAL_NETWORK_NAME, device2)
+        rp_bandwidths = '%s:%s:%s,%s:%s:%s' % (device1,
+                                               MINIMUM_BANDWIDTH_EGRESS_KBPS,
+                                               MINIMUM_BANDWIDTH_INGRESS_KBPS,
+                                               device2,
+                                               MINIMUM_BANDWIDTH_EGRESS_KBPS,
+                                               MINIMUM_BANDWIDTH_INGRESS_KBPS)
+        self.config.update({
+            'sriov_nic': {
+                'physical_device_mappings': phys_dev_mapping,
+                'resource_provider_bandwidths': rp_bandwidths,
+            }
+        })
+
+    def _setUp(self):
+        super(SRIOVConfigFixture, self)._setUp()
+
+
 class LinuxBridgeConfigFixture(ConfigFixture):
 
     def __init__(self, env_desc, host_desc, temp_dir, local_ip,

@@ -210,6 +210,32 @@ class OVSAgentFixture(ServiceFixture):
             kill_signal=signal.SIGTERM))
 
 
+class SRIOVAgentFixture(ServiceFixture):
+
+    NEUTRON_SRIOV_AGENT = "neutron-sriov-nic-agent"
+
+    def __init__(self, env_desc, host_desc,
+                 test_name, neutron_cfg_fixture, agent_cfg_fixture):
+        super(SRIOVAgentFixture, self).__init__()
+        self.env_desc = env_desc
+        self.host_desc = host_desc
+        self.test_name = test_name
+        self.neutron_cfg_fixture = neutron_cfg_fixture
+        self.neutron_config = self.neutron_cfg_fixture.config
+        self.agent_cfg_fixture = agent_cfg_fixture
+        self.agent_config = agent_cfg_fixture.config
+
+    def _setUp(self):
+        config_filenames = [self.neutron_cfg_fixture.filename,
+                            self.agent_cfg_fixture.filename]
+        self.process_fixture = self.useFixture(ProcessFixture(
+            test_name=self.test_name,
+            process_name=self.NEUTRON_SRIOV_AGENT,
+            exec_name=self.NEUTRON_SRIOV_AGENT,
+            config_filenames=config_filenames,
+            kill_signal=signal.SIGTERM))
+
+
 class LinuxBridgeAgentFixture(ServiceFixture):
 
     NEUTRON_LINUXBRIDGE_AGENT = "neutron-linuxbridge-agent"
