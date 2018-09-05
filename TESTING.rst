@@ -304,7 +304,7 @@ Example
 Neutron offers a Quality of Service API, initially offering bandwidth
 capping at the port level. In the reference implementation, it does this by
 utilizing an OVS feature.
-neutron.tests.fullstack.test_qos.TestQoSWithOvsAgent.test_qos_policy_rule_lifecycle
+neutron.tests.fullstack.test_qos.TestBwLimitQoSOvs.test_bw_limit_qos_policy_rule_lifecycle
 is a positive example of how the fullstack testing infrastructure should be used.
 It creates a network, subnet, QoS policy & rule and a port utilizing that policy.
 It then asserts that the expected bandwidth limitation is present on the OVS
@@ -560,9 +560,16 @@ running the configure script with the '-i' argument ::
 
 You can also run './stack.sh', and if successful, it will have also
 verified the package dependencies have been met.
+When running on a new VM it is suggested to set the following environment
+variable as well, to make sure that all requirements (including database and
+message bus) are installed and set ::
+
+    export IS_GATE=False
 
 Fullstack-based Neutron daemons produce logs to a sub-folder in the
-$OS_LOG_PATH directory (default: /opt/stack/logs) called 'dsvm-fullstack-logs'.
+$OS_LOG_PATH directory (default: /opt/stack/logs, note: if running fullstack
+tests on a newly created VM, make sure that $OS_LOG_PATH exists with the
+correct permissions) called 'dsvm-fullstack-logs'.
 For example, a test named "test_example" will produce logs in
 $OS_LOG_PATH/dsvm-fullstack-logs/test_example/, as well as create
 $OS_LOG_PATH/dsvm-fullstack-logs/test_example.txt, so that is a good place
