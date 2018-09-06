@@ -57,6 +57,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
     EUNAME = 'neutron'
     EGNAME = 'neutron'
+    METADATA_DEFAULT_IP = '169.254.169.254'
     METADATA_PORT = 8080
     METADATA_SOCKET = '/socket/path'
     PIDFILE = 'pidfile'
@@ -139,6 +140,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 router_ns,
                 self.METADATA_PORT,
                 agent.conf,
+                bind_address=self.METADATA_DEFAULT_IP,
                 router_id=router_id)
 
             netns_execute_args = [
@@ -150,6 +152,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
             cfg_contents = metadata_driver._HAPROXY_CONFIG_TEMPLATE % {
                 'user': self.EUNAME,
                 'group': self.EGNAME,
+                'host': self.METADATA_DEFAULT_IP,
                 'port': self.METADATA_PORT,
                 'unix_socket_path': self.METADATA_SOCKET,
                 'res_type': 'Router',
@@ -171,7 +174,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
     def test_create_config_file_wrong_user(self):
         with mock.patch('pwd.getpwnam', side_effect=KeyError):
-            config = metadata_driver.HaproxyConfigurator(_uuid(), mock.ANY,
+            config = metadata_driver.HaproxyConfigurator(_uuid(),
+                                                         mock.ANY, mock.ANY,
                                                          mock.ANY, mock.ANY,
                                                          self.EUNAME,
                                                          self.EGNAME,
@@ -183,7 +187,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         with mock.patch('grp.getgrnam', side_effect=KeyError),\
                 mock.patch('pwd.getpwnam',
                            return_value=test_utils.FakeUser(self.EUNAME)):
-            config = metadata_driver.HaproxyConfigurator(_uuid(), mock.ANY,
+            config = metadata_driver.HaproxyConfigurator(_uuid(),
+                                                         mock.ANY, mock.ANY,
                                                          mock.ANY, mock.ANY,
                                                          self.EUNAME,
                                                          self.EGNAME,

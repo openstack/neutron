@@ -1217,18 +1217,25 @@ def set_ip_nonlocal_bind(value, namespace=None, log_fail_as_error=True):
                   log_fail_as_error=log_fail_as_error)
 
 
-def set_ip_nonlocal_bind_for_namespace(namespace):
+def set_ip_nonlocal_bind_for_namespace(namespace, value, root_namespace=False):
     """Set ip_nonlocal_bind but don't raise exception on failure."""
-    failed = set_ip_nonlocal_bind(value=0, namespace=namespace,
+    failed = set_ip_nonlocal_bind(value, namespace=namespace,
                                   log_fail_as_error=False)
+    if failed and root_namespace:
+        # Somewhere in the 3.19 kernel timeframe ip_nonlocal_bind was
+        # changed to be a per-namespace attribute.  To be backwards
+        # compatible we need to try both if at first we fail.
+        LOG.debug('Namespace (%s) does not support setting %s, '
+                  'trying in root namespace', namespace, IP_NONLOCAL_BIND)
+        return set_ip_nonlocal_bind(value)
     if failed:
         LOG.warning(
-            "%s will not be set to 0 in the root namespace in order to "
+            "%s will not be set to %d in the root namespace in order to "
             "not break DVR, which requires this value be set to 1. This "
             "may introduce a race between moving a floating IP to a "
             "different network node, and the peer side getting a "
             "populated ARP cache for a given floating IP address.",
-            IP_NONLOCAL_BIND)
+            IP_NONLOCAL_BIND, value)
 
 
 def get_ipv6_forwarding(device, namespace=None):

@@ -1490,6 +1490,8 @@ class DeviceManager(object):
         # and added back statically in the call to init_l3() below.
         if network.namespace:
             ip_lib.IPWrapper().ensure_namespace(network.namespace)
+            ip_lib.set_ip_nonlocal_bind_for_namespace(network.namespace, 1,
+                                                      root_namespace=True)
         self.driver.configure_ipv6_ra(network.namespace, 'default',
                                       n_const.ACCEPT_RA_DISABLED)
 

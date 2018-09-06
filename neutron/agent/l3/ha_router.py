@@ -54,7 +54,7 @@ class HaRouterNamespace(namespaces.RouterNamespace):
     def create(self):
         super(HaRouterNamespace, self).create(ipv6_forwarding=False)
         # HA router namespaces should not have ip_nonlocal_bind enabled
-        ip_lib.set_ip_nonlocal_bind_for_namespace(self.name)
+        ip_lib.set_ip_nonlocal_bind_for_namespace(self.name, 0)
 
 
 class HaRouter(router.RouterInfo):

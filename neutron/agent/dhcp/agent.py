@@ -553,7 +553,7 @@ class DhcpAgent(manager.Manager):
 
         metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
             self._process_monitor, network.namespace, dhcp.METADATA_PORT,
-            self.conf, **kwargs)
+            self.conf, bind_address=dhcp.METADATA_DEFAULT_IP, **kwargs)
 
     def disable_isolated_metadata_proxy(self, network):
         if (self.conf.enable_metadata_network and

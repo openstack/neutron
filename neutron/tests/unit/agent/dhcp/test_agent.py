@@ -215,6 +215,9 @@ fake_down_network = dhcp.NetModel(
 
 
 class TestDhcpAgent(base.BaseTestCase):
+
+    METADATA_DEFAULT_IP = dhcp.METADATA_DEFAULT_IP
+
     def setUp(self):
         super(TestDhcpAgent, self).setUp()
         entry.register_options(cfg.CONF)
@@ -464,6 +467,7 @@ class TestDhcpAgent(base.BaseTestCase):
             dhcp.configure_dhcp_for_network(fake_network)
             md_cls.spawn_monitored_metadata_proxy.assert_called_once_with(
                 mock.ANY, mock.ANY, mock.ANY, mock.ANY,
+                bind_address=self.METADATA_DEFAULT_IP,
                 network_id=fake_network.id)
             dhcp.disable_dhcp_helper(fake_network.id)
             md_cls.destroy_monitored_metadata_proxy.assert_called_once_with(
@@ -847,10 +851,12 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                        '.spawn_monitored_metadata_proxy')
         with mock.patch(method_path) as spawn:
             self.dhcp.enable_isolated_metadata_proxy(network)
+            metadata_ip = dhcp.METADATA_DEFAULT_IP
             spawn.assert_called_once_with(self.dhcp._process_monitor,
                                           network.namespace,
                                           dhcp.METADATA_PORT,
                                           cfg.CONF,
+                                          bind_address=metadata_ip,
                                           router_id='forzanapoli')
 
     def test_enable_isolated_metadata_proxy_with_metadata_network(self):
