@@ -170,8 +170,10 @@ def get_logs_bound_port(context, port_id):
 
     port = port_objects.Port.get_object(context, id=port_id)
     project_id = port['project_id']
-    logs = log_object.Log.get_objects(
-        context, project_id=project_id, enabled=True)
+    logs = log_object.Log.get_objects(context,
+                                      project_id=project_id,
+                                      resource_type=constants.SECURITY_GROUP,
+                                      enabled=True)
     is_bound = lambda log: (log.resource_id in port.security_group_ids or
                             log.target_id == port.id or
                             (not log.target_id and not log.resource_id))
@@ -183,7 +185,11 @@ def get_logs_bound_sg(context, sg_id):
 
     project_id = context.tenant_id
     log_objs = log_object.Log.get_objects(
-        context, project_id=project_id, enabled=True)
+        context,
+        project_id=project_id,
+        resource_type=constants.SECURITY_GROUP,
+        enabled=True)
+
     log_resources = []
     for log_obj in log_objs:
         if log_obj.resource_id == sg_id:
