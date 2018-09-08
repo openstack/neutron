@@ -527,7 +527,7 @@ class OVSDVRNeutronAgent(object):
             # no csnat ports seen on this subnet - create csnat state
             # for this subnet
             subnet_info = self.plugin_rpc.get_subnet_for_dvr(
-                self.context, subnet_uuid, fixed_ips=fixed_ips)
+                self.context, subnet_uuid, fixed_ips=None)
             if not subnet_info:
                 LOG.warning(_LW("DVR: Unable to retrieve subnet information "
                                 "for subnet_id %s. The subnet or the gateway "
