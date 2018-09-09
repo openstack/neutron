@@ -12,6 +12,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import functools
 import subprocess
 
 import netaddr
@@ -30,6 +31,20 @@ from neutron.tests.tempest.scenario import constants
 CONF = config.CONF
 
 LOG = log.getLogger(__name__)
+
+
+def unstable_test(reason):
+    def decor(f):
+        @functools.wraps(f)
+        def inner(self, *args, **kwargs):
+            try:
+                return f(self, *args, **kwargs)
+            except Exception as e:
+                msg = ("%s was marked as unstable because of %s, "
+                       "failure was: %s") % (self.id(), reason, e)
+                raise self.skipTest(msg)
+        return inner
+    return decor
 
 
 class BaseTempestTestCase(base_api.BaseNetworkTest):
