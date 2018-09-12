@@ -29,11 +29,11 @@ CONF = config.CONF
 LOG = logging.getLogger(__name__)
 
 CONFIGURE_VLAN_INTERFACE_COMMANDS = (
-    'IFACE=$(ip l | grep "^[0-9]*: e" | cut -d \: -f 2) && '
-    'sudo su -c '
-    '"ip l a link $IFACE name $IFACE.%(tag)d type vlan id %(tag)d && '
-    'ip l s up dev $IFACE.%(tag)d && '
-    'dhclient $IFACE.%(tag)d"')
+    'IFACE=$(PATH=$PATH:/usr/sbin ip l | grep "^[0-9]*: e"|cut -d \: -f 2) &&'
+    'sudo ip l a link $IFACE name $IFACE.%(tag)d type vlan id %(tag)d &&'
+    'sudo ip l s up dev $IFACE.%(tag)d && '
+    'ps -ef | grep -q "[d]hclient .*$IFACE.%(tag)d" || '
+    'sudo dhclient $IFACE.%(tag)d;')
 
 
 def get_next_subnet(cidr):
