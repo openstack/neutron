@@ -434,7 +434,11 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             # This will throw HANotEnoughAvailableAgents if there aren't
             # enough l3 agents to handle this router.
             self.get_number_of_agents_for_scheduling(payload.context)
+            old_owner = constants.DEVICE_OWNER_ROUTER_INTF
+            new_owner = constants.DEVICE_OWNER_HA_REPLICATED_INT
         else:
+            old_owner = constants.DEVICE_OWNER_HA_REPLICATED_INT
+            new_owner = constants.DEVICE_OWNER_ROUTER_INTF
 
             ha_network = self.get_ha_network(payload.context,
                                              payload.desired_state.tenant_id)
@@ -447,16 +451,9 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             self.set_extra_attr_value(payload.context, payload.desired_state,
                                       'ha', requested_ha_state)
             return
-        if requested_ha_state:
-            self._migrate_router_ports(
-                payload.context, payload.desired_state,
-                old_owner=constants.DEVICE_OWNER_ROUTER_INTF,
-                new_owner=constants.DEVICE_OWNER_HA_REPLICATED_INT)
-        else:
-            self._migrate_router_ports(
-                payload.context, payload.desired_state,
-                old_owner=constants.DEVICE_OWNER_HA_REPLICATED_INT,
-                new_owner=constants.DEVICE_OWNER_ROUTER_INTF)
+        self._migrate_router_ports(
+             payload.context, payload.desired_state,
+             old_owner=old_owner, new_owner=new_owner)
         self.set_extra_attr_value(
             payload.context, payload.desired_state, 'ha', requested_ha_state)
 
