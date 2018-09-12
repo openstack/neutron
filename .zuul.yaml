@@ -49,7 +49,8 @@
         - neutron-tempest-linuxbridge
         - neutron-tempest-iptables_hybrid
         - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
+        # NOTE(haleyb) revert this as soon as we fix bug 1791989
+        # - neutron-grenade-dvr-multinode
         - neutron-grenade
         - openstack-tox-lower-constraints
         - openstack-tox-cover
@@ -230,6 +231,8 @@
       - openstack/neutron
     nodeset: ubuntu-xenial-2-node
     irrelevant-files: *tempest-irrelevant-files
+    # NOTE(haleyb) revert this as soon as we fix bug 1791989
+    voting: false
 
 - job:
     name: neutron-tempest-multinode-full

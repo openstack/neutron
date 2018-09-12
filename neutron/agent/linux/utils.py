@@ -405,6 +405,10 @@ class UnixDomainHttpProtocol(eventlet.wsgi.HttpProtocol):
             if not client_address:
                 client_address = ('<local>', 0)
             # base class is old-style, so super does not work properly
+            # NOTE: eventlet 0.22 or later changes the number of args to 2.
+            # If we install eventlet 0.22 or later into a venv for pylint,
+            # pylint complains this. Let's skip it. (bug 1791178)
+            # pylint: disable=too-many-function-args
             eventlet.wsgi.HttpProtocol.__init__(
                 self, request, client_address, server)
         else:
