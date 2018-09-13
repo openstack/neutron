@@ -44,7 +44,6 @@ from neutron.db import agents_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_hamode_db
-from neutron.db.models import l3ha as l3ha_model
 from neutron.objects import l3_hamode
 from neutron.scheduler import l3_agent_scheduler
 from neutron.services.revisions import revision_plugin
@@ -605,7 +604,7 @@ class L3HATestCase(L3HATestFramework):
         network = self.plugin.get_ha_network(self.admin_ctx,
                                              router['tenant_id'])
 
-        with mock.patch.object(l3ha_model, 'L3HARouterAgentPortBinding',
+        with mock.patch.object(l3_hamode, 'L3HARouterAgentPortBinding',
                                side_effect=ValueError):
             self.assertRaises(ValueError, self.plugin.add_ha_port,
                               self.admin_ctx, router['id'], network.network_id,
