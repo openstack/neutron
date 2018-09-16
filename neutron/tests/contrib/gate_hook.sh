@@ -106,9 +106,6 @@ case $VENV in
     load_conf_hook osprofiler
     load_conf_hook availability_zone
     if [[ "$VENV" =~ "dsvm-scenario" ]]; then
-        # Use nested_virt, if node don't support it, Devstack's will
-        # automatically switch it back to "qemu"
-        export DEVSTACK_GATE_LIBVIRT_TYPE=kvm
         load_rc_hook ubuntu_image
     fi
     if [[ "$VENV" =~ "dsvm-scenario-linuxbridge" ]]; then
