@@ -19,15 +19,9 @@
         - neutron-tempest-linuxbridge
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
-        - neutron-tempest-multinode-full
-        - neutron-tempest-dvr-ha-multinode-full
-        - neutron-tempest-iptables_hybrid
-        - neutron-grenade
-        - openstack-tox-lower-constraints
-        - neutron-fullstack-python35
-        # We don't run the job on things like neutron docs-only changes
-        - ironic-tempest-dsvm-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
+        - tempest-multinode-full:
             voting: false
+            # We don't run the job on things like neutron docs-only changes
             irrelevant-files: &tempest-irrelevant-files
               - ^(test-|)requirements.txt$
               - ^.*\.rst$
@@ -38,6 +32,14 @@
               - ^setup.cfg$
               - ^tools/.*$
               - ^tox.ini$
+        - neutron-tempest-dvr-ha-multinode-full
+        - neutron-tempest-iptables_hybrid
+        - neutron-grenade
+        - openstack-tox-lower-constraints
+        - neutron-fullstack-python35
+        - ironic-tempest-dsvm-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
+            voting: false
+            irrelevant-files: *tempest-irrelevant-files
         - openstack-tox-cover
         - tempest-full:
             irrelevant-files: *tempest-irrelevant-files
@@ -232,20 +234,6 @@
     nodeset: ubuntu-xenial-2-node
     irrelevant-files: *tempest-irrelevant-files
     # NOTE(haleyb) revert this as soon as we fix bug 1791989
-    voting: false
-
-- job:
-    name: neutron-tempest-multinode-full
-    parent: legacy-dsvm-base-multinode
-    run: playbooks/legacy/neutron-tempest-multinode-full/run.yaml
-    post-run: playbooks/legacy/neutron-tempest-multinode-full/post.yaml
-    timeout: 10800
-    required-projects:
-      - openstack-infra/devstack-gate
-      - openstack/neutron
-      - openstack/tempest
-    nodeset: ubuntu-xenial-2-node
-    irrelevant-files: *tempest-irrelevant-files
     voting: false
 
 - job:
