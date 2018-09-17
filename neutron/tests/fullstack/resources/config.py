@@ -20,6 +20,7 @@ from neutron_lib import constants
 
 from neutron.common import utils
 from neutron.plugins.ml2.extensions import qos as qos_ext
+from neutron.tests import base
 from neutron.tests.common import config_fixtures
 from neutron.tests.common.exclusive_resources import port
 from neutron.tests.common import helpers as c_helpers
@@ -193,6 +194,7 @@ class OVSConfigFixture(ConfigFixture):
         if env_desc.log:
             self.config['agent']['extensions'] = 'log'
             test_name = kwargs.get("test_name")
+            test_name = base.sanitize_log_path(test_name)
             self.config.update({
                 'network_log': {
                     'local_output_log_base':
@@ -224,7 +226,7 @@ class OVSConfigFixture(ConfigFixture):
         return utils.get_rand_device_name(prefix='patch-int')
 
     def _generate_temp_log_file(self, test_name):
-        log_dir_path = fullstack_base.DEFAULT_LOG_DIR + '/' + test_name
+        log_dir_path = os.path.join(fullstack_base.DEFAULT_LOG_DIR, test_name)
         if not os.path.exists(log_dir_path):
             os.mkdir(log_dir_path, 0o755)
         return '%s/%s.log' % (log_dir_path,

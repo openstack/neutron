@@ -24,9 +24,6 @@ from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
-from neutron.tests.unit import testlib_api
-
-load_tests = testlib_api.module_load_tests
 
 
 class BaseLoggingTestCase(base.BaseFullStackTestCase):
@@ -93,10 +90,7 @@ class BaseLoggingTestCase(base.BaseFullStackTestCase):
 
 
 class TestLogging(BaseLoggingTestCase):
-
-    scenarios = [
-        ('ovs-openflow-native', {
-            'of_interface': 'native'})]
+    of_interface = 'native'
 
     def _create_network_log(self, resource_type,
                             resource_id=None, target_id=None):
