@@ -126,7 +126,8 @@ def get_previous_link(request, items, id_key):
         marker = items[0][id_key]
         params['marker'] = marker
     params['page_reverse'] = True
-    return "%s?%s" % (prepare_url(request.path_url), parse.urlencode(params))
+    return "%s?%s" % (prepare_url(get_path_url(request)),
+                      parse.urlencode(params))
 
 
 def get_next_link(request, items, id_key):
@@ -136,7 +137,8 @@ def get_next_link(request, items, id_key):
         marker = items[-1][id_key]
         params['marker'] = marker
     params.pop('page_reverse', None)
-    return "%s?%s" % (prepare_url(request.path_url), parse.urlencode(params))
+    return "%s?%s" % (prepare_url(get_path_url(request)),
+                      parse.urlencode(params))
 
 
 def prepare_url(orig_url):
@@ -150,6 +152,21 @@ def prepare_url(orig_url):
     url_parts[0:2] = prefix_parts[0:2]
     url_parts[2] = prefix_parts[2] + url_parts[2]
     return parse.urlunsplit(url_parts).rstrip('/')
+
+
+def get_path_url(request):
+    """Return correct link if X-Forwarded-Proto exists in headers."""
+    protocol = request.headers.get('X-Forwarded-Proto')
+    parsed = parse.urlparse(request.path_url)
+
+    if protocol and parsed.scheme != protocol:
+        new_parsed = parse.ParseResult(
+            protocol, parsed.netloc,
+            parsed.path, parsed.params,
+            parsed.query, parsed.fragment)
+        return parse.urlunparse(new_parsed)
+    else:
+        return request.path_url
 
 
 def get_limit_and_marker(request):
