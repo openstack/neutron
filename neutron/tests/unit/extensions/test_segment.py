@@ -540,6 +540,27 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
         self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
         self.assertEqual(res['subnet']['segment_id'], segment['id'])
 
+    def test_update_subnet_with_current_segment_id(self):
+        with self.network() as network:
+            net = network['network']
+
+        segment1 = self._test_create_segment(network_id=net['id'],
+                                            physical_network='phys_net1',
+                                            segmentation_id=200)['segment']
+        self._test_create_segment(network_id=net['id'],
+                                  physical_network='phys_net2',
+                                  segmentation_id=200)['segment']
+        with self.subnet(network=network, segment_id=segment1['id']) as subnet:
+            subnet = subnet['subnet']
+
+        data = {'subnet': {'segment_id': segment1['id']}}
+        request = self.new_update_request('subnets', data, subnet['id'])
+        response = request.get_response(self.api)
+        res = self.deserialize(self.fmt, response)
+
+        self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
+        self.assertEqual(res['subnet']['segment_id'], segment1['id'])
+
     def test_associate_existing_subnet_fail_if_multiple_segments(self):
         with self.network() as network:
             net = network['network']
