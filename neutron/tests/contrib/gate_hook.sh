@@ -25,7 +25,7 @@ function load_rc_hook {
     local hook="$1"
     local tmpfile
     local config
-    tmpfile=$(tempfile)
+    tmpfile=$(mktemp)
     config=$(cat $GATE_HOOKS/$hook)
     echo "[[local|localrc]]" > $tmpfile
     $DSCONF setlc_raw $tmpfile "$config"
@@ -44,7 +44,7 @@ function load_conf_hook {
 # Tweak gate configuration for our rally scenarios
 function load_rc_for_rally {
     for file in $(ls $RALLY_EXTRA_DIR/*.setup); do
-        tmpfile=$(tempfile)
+        tmpfile=$(mktemp)
         config=$(cat $file)
         echo "[[local|localrc]]" > $tmpfile
         $DSCONF setlc_raw $tmpfile "$config"
