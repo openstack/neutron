@@ -19,7 +19,8 @@ infrastructure. For more information on provider networks, see
    for the best experience and support from Open vSwitch. See
    `<http://www.openvswitch.org>`__ for available releases and the
    `installation instructions
-   <https://github.com/openvswitch/ovs/blob/master/INSTALL.md>`__ for
+   <http://docs.openvswitch.org/en/latest/intro/install/general/>`__ for more
+   details.
 
 Prerequisites
 ~~~~~~~~~~~~~
