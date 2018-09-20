@@ -55,8 +55,10 @@ def get_ha_interface(ip='169.254.192.1', mac='12:34:56:78:2b:5d'):
 
 def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
                         enable_floating_ip=False, enable_ha=False,
-                        extra_routes=False, dual_stack=False,
-                        enable_gw=True, v6_ext_gw_with_sub=True, **kwargs):
+                        extra_routes=False, dual_stack=False, enable_gw=True,
+                        v6_ext_gw_with_sub=True,
+                        snat_bound_fip=False,
+                        **kwargs):
     fixed_ips = []
     subnets = []
     gateway_mac = kwargs.get('gateway_mac', 'ca:fe:de:ad:be:ee')
@@ -110,13 +112,23 @@ def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
         'routes': routes,
         'gw_port': ex_gw_port}
 
+    router_fips = router.get(lib_constants.FLOATINGIP_KEY, [])
     if enable_floating_ip:
-        router[lib_constants.FLOATINGIP_KEY] = [{
-            'id': _uuid(),
-            'port_id': _uuid(),
-            'status': 'DOWN',
-            'floating_ip_address': '19.4.4.2',
-            'fixed_ip_address': '10.0.0.1'}]
+        fip = {'id': _uuid(),
+               'port_id': _uuid(),
+               'status': 'DOWN',
+               'floating_ip_address': '19.4.4.2',
+               'fixed_ip_address': '10.0.0.1'}
+        router_fips.append(fip)
+
+    if snat_bound_fip:
+        fip = {'id': _uuid(),
+               'port_id': _uuid(),
+               'status': 'DOWN',
+               'floating_ip_address': '19.4.4.3',
+               'fixed_ip_address': '10.0.0.2'}
+        router_fips.append(fip)
+    router[lib_constants.FLOATINGIP_KEY] = router_fips
 
     router_append_interface(router, count=num_internal_ports,
                             ip_version=ip_version, dual_stack=dual_stack)

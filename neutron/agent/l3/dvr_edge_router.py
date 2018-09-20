@@ -353,3 +353,11 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         for fip in floating_ips:
             self._set_floating_ip_nat_rules_for_centralized_floatingip(fip)
         self.snat_iptables_manager.apply()
+
+    def process_floating_ip_nat_rules(self):
+        if self._is_this_snat_host():
+            self.process_floating_ip_nat_rules_for_centralized_floatingip()
+
+        # Cover mixed dvr_snat and compute node, aka a dvr_snat node has both
+        # centralized and distributed floating IPs.
+        super(DvrEdgeRouter, self).process_floating_ip_nat_rules()
