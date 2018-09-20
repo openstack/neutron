@@ -355,3 +355,21 @@ class OpenvswitchMechVnicTypesTestCase(OpenvswitchMechanismBaseTestCase):
 
         self.assertRaises(ValueError,
                           mech_openvswitch.OpenvswitchMechanismDriver)
+
+
+class OpenvswitchMechDeviceMappingsTestCase(OpenvswitchMechanismBaseTestCase):
+
+    def test_standard_device_mappings(self):
+        mappings = self.driver.get_standard_device_mappings(self.AGENTS[0])
+        self.assertEqual(
+            len(self.GOOD_CONFIGS['bridge_mappings']),
+            len(mappings))
+        for ph_orig, br_orig in self.GOOD_CONFIGS['bridge_mappings'].items():
+            self.assertIn(ph_orig, mappings)
+            self.assertEqual([br_orig], mappings[ph_orig])
+
+    def test_standard_device_mappings_negative(self):
+        fake_agent = {'agent_type': constants.AGENT_TYPE_OVS,
+                      'configurations': {}}
+        self.assertRaises(ValueError, self.driver.get_standard_device_mappings,
+                          fake_agent)

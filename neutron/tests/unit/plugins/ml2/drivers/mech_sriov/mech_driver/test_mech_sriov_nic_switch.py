@@ -270,3 +270,16 @@ class SriovSwitchMechVnicTypesTestCase(SriovNicSwitchMechanismBaseTestCase):
 
         self.assertRaises(ValueError,
                           mech_driver.SriovNicSwitchMechanismDriver)
+
+
+class SriovSwitchDeviceMappingsTestCase(SriovNicSwitchMechanismBaseTestCase):
+
+    def test_standard_device_mappings(self):
+        mappings = self.driver.get_standard_device_mappings(self.AGENTS[0])
+        self.assertDictEqual(self.GOOD_CONFIGS['device_mappings'], mappings)
+
+    def test_standard_device_mappings_negative(self):
+        fake_agent = {'agent_type': constants.AGENT_TYPE_NIC_SWITCH,
+                      'configurations': {}}
+        self.assertRaises(ValueError, self.driver.get_standard_device_mappings,
+                          fake_agent)
