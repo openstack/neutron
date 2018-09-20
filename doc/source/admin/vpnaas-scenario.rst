@@ -25,7 +25,7 @@ they provide their version of manuals.
       set suitable plugin for your own deployment.
 
 #. Configure the VPNaaS service provider by creating the
-   ``/etc/neutron/neutron_vpnaas.conf`` file as follows:
+   ``/etc/neutron/neutron_vpnaas.conf`` file as follows, ``strongswan`` used in Ubuntu distribution:
 
    .. code-block:: ini
 
@@ -34,11 +34,14 @@ they provide their version of manuals.
 
    .. note::
 
-      There are several kinds of service drivers like ``CiscoCsrIPsecVPNDriver``, ``VyattaIPsecDriver``...
+      There are several kinds of service drivers.
+      Depending upon the Linux distribution, you may need to override this value.
+      Select ``libreswan`` for RHEL/CentOS, the config will like this:
+      ``service_provider = VPN:openswan:neutron_vpnaas.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default``.
       Consider to use the appropriate one for your deployment.
 
 #. Configure the VPNaaS plugin for the L3 agent by adding to
-   ``/etc/neutron/l3_agent.ini`` the following section:
+   ``/etc/neutron/l3_agent.ini`` the following section, ``StrongSwanDriver`` used in Ubuntu distribution:
 
    .. code-block:: ini
 
@@ -50,7 +53,10 @@ they provide their version of manuals.
 
    .. note::
 
-      There are several kinds of device drivers like ``LibreSwanDriver``, ``CiscoCsrIPsecDriver``...
+      There are several kinds of device drivers.
+      Depending upon the Linux distribution, you may need to override this value.
+      Select ``LibreSwanDriver`` for RHEL/CentOS, the config will like this:
+      ``vpn_device_driver = neutron_vpnaas.services.vpn.device_drivers.libreswan_ipsec.LibreSwanDriver``.
       Consider to use the appropriate drivers for your deployment.
 
 #. Create the required tables in the database:
