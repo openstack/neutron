@@ -289,6 +289,7 @@ class SriovNicSwitchAgent(object):
 
         devices_up = set()
         devices_down = set()
+        resync = False
         for device_details in devices_details_list:
             device = device_details['device']
             LOG.debug("Port with MAC address %s is added", device)
@@ -307,6 +308,8 @@ class SriovNicSwitchAgent(object):
                         devices_up.add(device)
                     else:
                         devices_down.add(device)
+                else:
+                    resync = True
                 self._update_network_ports(device_details['network_id'],
                                            port_id,
                                            (device, profile.get('pci_slot')))
@@ -319,7 +322,7 @@ class SriovNicSwitchAgent(object):
                                            devices_down,
                                            self.agent_id,
                                            self.conf.host)
-        return False
+        return resync
 
     def treat_devices_removed(self, devices):
         resync = False

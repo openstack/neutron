@@ -428,6 +428,15 @@ class TestSriovAgent(base.BaseTestCase):
         self.assertFalse(agent.treat_device('aa:bb:cc:dd:ee:ff', '1:2:3:0',
                                            admin_state_up=True))
 
+    def test_treat_device_no_device_found(self):
+        agent = self.agent
+        agent.plugin_rpc = mock.Mock()
+        agent.eswitch_mgr = mock.Mock()
+        agent.eswitch_mgr.device_exists.return_value = False
+
+        self.assertFalse(agent.treat_device('aa:bb:cc:dd:ee:ff', '1:2:3:0',
+                                            admin_state_up=True))
+
     def test_treat_devices_added_updated_admin_state_up_false(self):
         agent = self.agent
         mock_details = {'device': 'aa:bb:cc:dd:ee:ff',
@@ -452,6 +461,26 @@ class TestSriovAgent(base.BaseTestCase):
                 set(['aa:bb:cc:dd:ee:ff']),
                 mock.ANY,
                 mock.ANY)
+
+    def test_treat_devices_added_updated_no_device_found(self):
+        agent = self.agent
+        mock_details = {'device': 'aa:bb:cc:dd:ee:ff',
+                        'port_id': 'port123',
+                        'network_id': 'net123',
+                        'admin_state_up': True,
+                        'network_type': 'vlan',
+                        'segmentation_id': 100,
+                        'profile': {'pci_slot': '1:2:3.0'},
+                        'physical_network': 'physnet1'}
+        agent.plugin_rpc = mock.Mock()
+        agent.plugin_rpc.get_devices_details_list.return_value = [mock_details]
+        agent.remove_port_binding = mock.Mock()
+        agent.eswitch_mgr = mock.Mock()
+        agent.eswitch_mgr.device_exists.return_value = False
+        resync_needed = agent.treat_devices_added_updated(
+                            set(['aa:bb:cc:dd:ee:ff']))
+        self.assertTrue(resync_needed)
+        self.assertFalse(agent.plugin_rpc.update_device_up.called)
 
     def test_update_and_clean_network_ports(self):
         network_id1 = 'network_id1'
