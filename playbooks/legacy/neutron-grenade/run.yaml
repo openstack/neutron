@@ -41,7 +41,9 @@
         cmd: |
           set -e
           set -x
-          export PROJECTS="openstack-dev/grenade $PROJECTS"
+          # Grenade needs to clone the placement repo on the Stein side since
+          # the repo did not exist in Rocky.
+          export PROJECTS="openstack-dev/grenade openstack/placement $PROJECTS"
           export PYTHONUNBUFFERED=true
           export DEVSTACK_GATE_TEMPEST=1
           export DEVSTACK_GATE_GRENADE=pullup
