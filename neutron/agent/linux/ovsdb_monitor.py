@@ -72,7 +72,7 @@ class OvsdbMonitor(async_process.AsyncProcess):
         super(OvsdbMonitor, self).__init__(cmd, run_as_root=run_as_root,
                                            respawn_interval=respawn_interval,
                                            log_output=True,
-                                           die_on_error=True)
+                                           die_on_error=False)
         self.new_events = {'added': [], 'removed': []}
 
     def get_events(self):
