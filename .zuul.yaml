@@ -37,7 +37,6 @@
         - neutron-tempest-dvr-ha-multinode-full
         - neutron-tempest-iptables_hybrid
         - neutron-grenade
-        - neutron-fullstack-python36
         - ironic-tempest-dsvm-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             voting: false
             irrelevant-files: *tempest-irrelevant-files
@@ -59,7 +58,6 @@
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
         - neutron-grenade
-        - neutron-fullstack-python36
         - tempest-full:
             timeout: 10800
         - tempest-full-py3:
@@ -140,12 +138,6 @@
       - ^neutron/locale/.*$
       - ^releasenotes/.*$
 
-
-- job:
-    name: neutron-fullstack-python36
-    parent: neutron-fullstack
-    run: playbooks/legacy/neutron-fullstack-python36/run.yaml
-    post-run: playbooks/legacy/neutron-fullstack-python36/post.yaml
 
 - job:
     name: neutron-rally-task

@@ -27,6 +27,7 @@
         cmd: |
           set -e
           set -x
+          export USE_PYTHON3=true
           export PYTHONUNBUFFERED=true
           export DEVSTACK_GATE_TEMPEST=0
           export DEVSTACK_GATE_EXERCISES=0
