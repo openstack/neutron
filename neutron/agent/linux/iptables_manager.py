@@ -649,7 +649,7 @@ class IptablesManager(object):
 
         # the unwrapped chains (e.g. neutron-filter-top) may already exist in
         # the new_filter since they aren't marked by the wrap_name so we only
-        # want to add them if they arent' already there
+        # want to add them if they aren't already there
         our_chains += [':%s' % name for name in unwrapped_chains
                        if not any(':%s' % name in s for s in new_filter)]
 
