@@ -18,12 +18,8 @@ import weakref
 
 from neutron_lib.db import api
 from neutron_lib.db import model_base
-from neutron_lib import exceptions
-from neutron_lib.objects import exceptions as obj_exc
 from oslo_config import cfg
-from oslo_db import exception as db_exc
 from oslo_log import log as logging
-from oslo_utils import excutils
 from osprofiler import opts as profiler_opts
 import osprofiler.sqlalchemy
 from pecan import util as p_util
@@ -31,7 +27,6 @@ import six
 import sqlalchemy
 from sqlalchemy import event  # noqa
 from sqlalchemy import orm
-from sqlalchemy.orm import exc
 
 
 def set_hook(engine):
@@ -52,35 +47,6 @@ context_manager.append_on_engine_create(set_hook)
 
 MAX_RETRIES = 10
 LOG = logging.getLogger(__name__)
-
-
-def is_retriable(e):
-    if getattr(e, '_RETRY_EXCEEDED', False):
-        return False
-    if _is_nested_instance(e, (db_exc.DBDeadlock, exc.StaleDataError,
-                               db_exc.DBConnectionError,
-                               db_exc.DBDuplicateEntry, db_exc.RetryRequest,
-                               obj_exc.NeutronDbObjectDuplicateEntry)):
-        return True
-    # looking savepoints mangled by deadlocks. see bug/1590298 for details.
-    return _is_nested_instance(e, db_exc.DBError) and '1305' in str(e)
-
-
-def _tag_retriables_as_unretriable(f):
-    """Puts a flag on retriable exceptions so is_retriable returns False.
-
-    This decorator can be used outside of a retry decorator to prevent
-    decorators higher up from retrying again.
-    """
-    @six.wraps(f)
-    def wrapped(*args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except Exception as e:
-            with excutils.save_and_reraise_exception():
-                if is_retriable(e):
-                    setattr(e, '_RETRY_EXCEEDED', True)
-    return wrapped
 
 
 def _copy_if_lds(item):
@@ -122,17 +88,6 @@ def retry_if_session_inactive(context_var_name='context'):
             return method(*args, **kwargs)
         return wrapped
     return decorator
-
-
-def _is_nested_instance(e, etypes):
-    """Check if exception or its inner excepts are an instance of etypes."""
-    if isinstance(e, etypes):
-        return True
-    if isinstance(e, exceptions.MultipleExceptions):
-        return any(_is_nested_instance(i, etypes) for i in e.inner_exceptions)
-    if isinstance(e, db_exc.DBError):
-        return _is_nested_instance(e.inner_exception, etypes)
-    return False
 
 
 @event.listens_for(orm.session.Session, "after_flush")

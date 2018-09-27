@@ -19,6 +19,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as provider
 from neutron_lib.api import validators
 from neutron_lib import constants
+from neutron_lib.db import api as lib_db_api
 from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import multiprovidernet as mpnet_exc
 from neutron_lib.exceptions import vlantransparent as vlan_exc
@@ -420,7 +421,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         that upper layer can handle it or error in ML2 player
         :raises: neutron.plugins.ml2.common.MechanismDriverError
         if any mechanism driver call fails. or DB retriable error when
-        raise_db_retriable=False. See neutron.db.api.is_retriable for
+        raise_db_retriable=False. See neutron_lib.db.api.is_retriable for
         what db exception is retriable
         """
         errors = []
@@ -428,7 +429,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
             try:
                 getattr(driver.obj, method_name)(context)
             except Exception as e:
-                if raise_db_retriable and db_api.is_retriable(e):
+                if raise_db_retriable and lib_db_api.is_retriable(e):
                     with excutils.save_and_reraise_exception():
                         LOG.debug("DB exception raised by Mechanism driver "
                                   "'%(name)s' in %(method)s",
@@ -451,7 +452,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         """Notify all mechanism drivers during network creation.
 
         :raises: DB retriable error if create_network_precommit raises them
-        See neutron.db.api.is_retriable for what db exception is retriable
+        See neutron_lib.db.api.is_retriable for what db exception is retriable
         or neutron.plugins.ml2.common.MechanismDriverError
         if any mechanism driver create_network_precommit call fails.
 
@@ -482,7 +483,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         """Notify all mechanism drivers during network update.
 
         :raises: DB retriable error if create_network_precommit raises them
-        See neutron.db.api.is_retriable for what db exception is retriable
+        See neutron_lib.db.api.is_retriable for what db exception is retriable
         or neutron.plugins.ml2.common.MechanismDriverError
         if any mechanism driver update_network_precommit call fails.
 
@@ -512,7 +513,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         """Notify all mechanism drivers during network deletion.
 
         :raises: DB retriable error if create_network_precommit raises them
-        See neutron.db.api.is_retriable for what db exception is retriable
+        See neutron_lib.db.api.is_retriable for what db exception is retriable
         or neutron.plugins.ml2.common.MechanismDriverError
         if any mechanism driver delete_network_precommit call fails.
 
@@ -546,7 +547,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         """Notify all mechanism drivers during subnet creation.
 
         :raises: DB retriable error if create_network_precommit raises them
-        See neutron.db.api.is_retriable for what db exception is retriable
+        See neutron_lib.db.api.is_retriable for what db exception is retriable
         or neutron.plugins.ml2.common.MechanismDriverError
         if any mechanism driver create_subnet_precommit call fails.
 
@@ -576,7 +577,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         """Notify all mechanism drivers during subnet update.
 
         :raises: DB retriable error if create_network_precommit raises them
-        See neutron.db.api.is_retriable for what db exception is retriable
+        See neutron_lib.db.api.is_retriable for what db exception is retriable
         or neutron.plugins.ml2.common.MechanismDriverError
         if any mechanism driver update_subnet_precommit call fails.
 
@@ -606,7 +607,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         """Notify all mechanism drivers during subnet deletion.
 
         :raises: DB retriable error if create_network_precommit raises them
-        See neutron.db.api.is_retriable for what db exception is retriable
+        See neutron_lib.db.api.is_retriable for what db exception is retriable
         or neutron.plugins.ml2.common.MechanismDriverError
         if any mechanism driver delete_subnet_precommit call fails.
 
@@ -640,7 +641,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         """Notify all mechanism drivers during port creation.
 
         :raises: DB retriable error if create_network_precommit raises them
-        See neutron.db.api.is_retriable for what db exception is retriable
+        See neutron_lib.db.api.is_retriable for what db exception is retriable
         or neutron.plugins.ml2.common.MechanismDriverError
         if any mechanism driver create_port_precommit call fails.
 
@@ -670,7 +671,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         """Notify all mechanism drivers during port update.
 
         :raises: DB retriable error if create_network_precommit raises them
-        See neutron.db.api.is_retriable for what db exception is retriable
+        See neutron_lib.db.api.is_retriable for what db exception is retriable
         or neutron.plugins.ml2.common.MechanismDriverError
         if any mechanism driver update_port_precommit call fails.
 
@@ -700,7 +701,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         """Notify all mechanism drivers during port deletion.
 
         :raises:DB retriable error if create_network_precommit raises them
-        See neutron.db.api.is_retriable for what db exception is retriable
+        See neutron_lib.db.api.is_retriable for what db exception is retriable
         or neutron.plugins.ml2.common.MechanismDriverError
         if any mechanism driver delete_port_precommit call fails.
 
