@@ -264,7 +264,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
             trunk = self._get_trunk(context, trunk_id)
             rules.trunk_can_be_managed(context, trunk)
             trunk_port_validator = rules.TrunkPortValidator(trunk.port_id)
-            if not trunk_port_validator.is_bound(context):
+            if trunk_port_validator.can_be_trunked_or_untrunked(context):
                 # NOTE(status_police): when a trunk is deleted, the logical
                 # object disappears from the datastore, therefore there is no
                 # status transition involved. If PRECOMMIT failures occur,
