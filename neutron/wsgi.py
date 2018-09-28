@@ -249,8 +249,10 @@ class Request(wsgi.Request):
         ctypes = ['application/json']
 
         # Finally search in Accept-* headers
-        bm = self.accept.best_match(ctypes)
-        return bm or 'application/json'
+        acceptable = self.accept.acceptable_offers(ctypes)
+        if acceptable:
+            return acceptable[0][0]
+        return 'application/json'
 
     def get_content_type(self):
         allowed_types = ("application/json",)
@@ -271,7 +273,11 @@ class Request(wsgi.Request):
         if not self.accept_language:
             return None
         all_languages = oslo_i18n.get_available_languages('neutron')
-        return self.accept_language.best_match(all_languages)
+        best_match = self.accept_language.lookup(all_languages,
+                                                 default='fake_LANG')
+        if best_match == 'fake_LANG':
+            best_match = None
+        return best_match
 
     @property
     def context(self):
