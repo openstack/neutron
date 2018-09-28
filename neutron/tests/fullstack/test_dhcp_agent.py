@@ -79,13 +79,6 @@ class BaseDhcpAgentTest(base.BaseFullStackTestCase):
 
         self.vm = self._spawn_vm()
 
-    def _wait_until_agent_down(self, agent_id):
-        def _agent_down():
-            agent = self.client.show_agent(agent_id)['agent']
-            return not agent.get('alive')
-
-        common_utils.wait_until_true(_agent_down)
-
 
 class TestDhcpAgentNoHA(BaseDhcpAgentTest):
 

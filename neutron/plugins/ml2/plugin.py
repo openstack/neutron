@@ -14,6 +14,7 @@
 #    under the License.
 
 from eventlet import greenthread
+from neutron_lib.agent import constants as agent_consts
 from neutron_lib.agent import topics
 from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
 from neutron_lib.api.definitions import availability_zone as az_def
@@ -175,6 +176,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "port-mac-address-regenerate",
                                     "binding-extended"]
 
+    # List of agent types for which all binding_failed ports should try to be
+    # rebound when agent revive
+    _rebind_on_revive_agent_types = [const.AGENT_TYPE_OVS]
+
     @property
     def supported_extension_aliases(self):
         if not hasattr(self, '_aliases'):
@@ -334,6 +339,49 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                 old_mac=orig_port['mac_address'],
                                 new_mac=port['mac_address'])
         return mac_change
+
+    @registry.receives(resources.AGENT, [events.AFTER_UPDATE])
+    def _retry_binding_revived_agents(self, resource, event, trigger,
+                                      **kwargs):
+        context = kwargs['context']
+        host = kwargs['host']
+        agent = kwargs.get('agent', {})
+        agent_status = agent.get('agent_status')
+
+        agent_type = agent.get('agent_type')
+
+        if (agent_status != agent_consts.AGENT_REVIVED or
+                not agent.get('admin_state_up') or
+                agent_type not in self._rebind_on_revive_agent_types):
+            return
+
+        ports = ports_obj.Port.get_ports_by_binding_type_and_host(
+            context, portbindings.VIF_TYPE_BINDING_FAILED, host)
+        for port in ports:
+            binding = self._get_binding_for_host(port.bindings, host)
+            if not binding:
+                LOG.debug('No bindings found for port %(port_id)s '
+                          'on host %(host)s',
+                          {'port_id': port.id, 'host': host})
+                continue
+            port_dict = self._make_port_dict(port.db_obj)
+            network = self.get_network(context, port.network_id)
+            try:
+                levels = db.get_binding_level_objs(
+                    context, port.id, binding.host)
+                # TODO(slaweq): use binding OVO instead of binding.db_obj when
+                # ML2 plugin will switch to use Port Binding OVO everywhere
+                mech_context = driver_context.PortContext(
+                    self, context, port_dict, network, binding.db_obj, levels)
+                self._bind_port_if_needed(mech_context)
+            except Exception as e:
+                LOG.warning('Attempt to bind port %(port_id)s after agent '
+                            '%(agent_type)s on host %(host)s revived failed. '
+                            'Error: %(error)s',
+                            {'port_id': port.id,
+                             'agent_type': agent_type,
+                             'host': host,
+                             'error': e})
 
     def _clear_port_binding(self, mech_context, binding, port, original_host):
         binding.vif_type = portbindings.VIF_TYPE_UNBOUND
