@@ -717,6 +717,41 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 # Take concurrently deleted interfaces in to account
                 pass
 
+    def _get_gateway_port_host(self, context, router, gw_ports):
+        if not router.get('ha'):
+            return super(L3_HA_NAT_db_mixin, self)._get_gateway_port_host(
+                context, router, gw_ports)
+
+        gw_port_id = router['gw_port_id']
+        gateway_port = gw_ports.get(gw_port_id)
+        if not gw_port_id or not gateway_port:
+            return
+        gateway_port_status = gateway_port['status']
+        gateway_port_binding_host = gateway_port[portbindings.HOST_ID]
+
+        admin_ctx = context.elevated()
+        router_id = router['id']
+        ha_bindings = self.get_l3_bindings_hosting_router_with_ha_states(
+            admin_ctx, router_id)
+        LOG.debug("HA router %(router_id)s gateway port %(gw_port_id)s "
+                  "binding host: %(host)s, status: %(status)s",
+                  {"router_id": router_id,
+                   "gw_port_id": gateway_port['id'],
+                   "host": gateway_port_binding_host,
+                   "status": gateway_port_status})
+        for ha_binding_agent, ha_binding_state in ha_bindings:
+            if ha_binding_state != n_const.HA_ROUTER_STATE_ACTIVE:
+                continue
+            # For create router gateway, the gateway port may not be ACTIVE
+            # yet, so we return 'master' host directly.
+            if gateway_port_status != constants.PORT_STATUS_ACTIVE:
+                return ha_binding_agent.host
+            # Do not let the original 'master' (current is backup) host,
+            # override the gateway port binding host.
+            if (gateway_port_status == constants.PORT_STATUS_ACTIVE and
+                    ha_binding_agent.host == gateway_port_binding_host):
+                return ha_binding_agent.host
+
 
 def is_ha_router(router):
     """Return True if router to be handled is ha."""
