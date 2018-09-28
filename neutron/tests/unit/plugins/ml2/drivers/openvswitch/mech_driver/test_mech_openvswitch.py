@@ -21,6 +21,7 @@ from neutron_lib import constants
 from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
 
+from neutron.conf.plugins.ml2.drivers.openvswitch import mech_ovs_conf
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
     constants as a_const)
 from neutron.plugins.ml2.drivers.openvswitch.mech_driver import (
@@ -296,3 +297,61 @@ class OpenvswitchMechanismSRIOVTestCase(OpenvswitchMechanismBaseTestCase):
         context = self._make_port_ctx(self.AGENTS, profile=profile)
         self.driver.bind_port(context)
         mocked_bind_port.assert_called()
+
+
+class OpenvswitchMechVnicTypesTestCase(OpenvswitchMechanismBaseTestCase):
+    def setUp(self):
+        self.blacklist_cfg = {
+            'OVS_DRIVER': {
+                'vnic_type_blacklist': []
+            }
+        }
+        self.default_supported_vnics = [portbindings.VNIC_NORMAL,
+                                        portbindings.VNIC_DIRECT]
+        super(OpenvswitchMechVnicTypesTestCase, self).setUp()
+
+    def test_default_vnic_types(self):
+        self.assertEqual([portbindings.VNIC_NORMAL,
+                          portbindings.VNIC_DIRECT],
+                         self.driver.supported_vnic_types)
+
+    def test_vnic_type_blacklist_valid_item(self):
+        self.blacklist_cfg['OVS_DRIVER']['vnic_type_blacklist'] = \
+            [portbindings.VNIC_DIRECT]
+
+        fake_conf = cfg.CONF
+        fake_conf_fixture = base.MechDriverConfFixture(
+            fake_conf, self.blacklist_cfg,
+            mech_ovs_conf.register_ovs_mech_driver_opts)
+        self.useFixture(fake_conf_fixture)
+
+        test_driver = mech_openvswitch.OpenvswitchMechanismDriver()
+
+        supported_vnic_types = test_driver.supported_vnic_types
+        self.assertNotIn(portbindings.VNIC_DIRECT, supported_vnic_types)
+        self.assertEqual(len(self.default_supported_vnics) - 1,
+                         len(supported_vnic_types))
+
+    def test_vnic_type_blacklist_not_valid_item(self):
+        self.blacklist_cfg['OVS_DRIVER']['vnic_type_blacklist'] = ['foo']
+
+        fake_conf = cfg.CONF
+        fake_conf_fixture = base.MechDriverConfFixture(
+            fake_conf, self.blacklist_cfg,
+            mech_ovs_conf.register_ovs_mech_driver_opts)
+        self.useFixture(fake_conf_fixture)
+
+        self.assertRaises(ValueError,
+                          mech_openvswitch.OpenvswitchMechanismDriver)
+
+    def test_vnic_type_blacklist_all_items(self):
+        self.blacklist_cfg['OVS_DRIVER']['vnic_type_blacklist'] = \
+            [portbindings.VNIC_NORMAL, portbindings.VNIC_DIRECT]
+        fake_conf = cfg.CONF
+        fake_conf_fixture = base.MechDriverConfFixture(
+            fake_conf, self.blacklist_cfg,
+            mech_ovs_conf.register_ovs_mech_driver_opts)
+        self.useFixture(fake_conf_fixture)
+
+        self.assertRaises(ValueError,
+                          mech_openvswitch.OpenvswitchMechanismDriver)
