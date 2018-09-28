@@ -16,8 +16,11 @@
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib.plugins.ml2 import api
+from oslo_config import cfg
+
 from oslo_log import log
 
+from neutron.conf.plugins.ml2.drivers.mech_sriov import mech_sriov_conf
 from neutron.plugins.ml2.drivers import mech_agent
 from neutron.plugins.ml2.drivers.mech_sriov.mech_driver \
     import exceptions as exc
@@ -26,6 +29,9 @@ from neutron.services.qos.drivers.sriov import driver as sriov_qos_driver
 
 LOG = log.getLogger(__name__)
 FLAT_VLAN = 0
+
+
+mech_sriov_conf.register_sriov_mech_driver_opts()
 
 
 class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
@@ -54,7 +60,15 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         :param supported_vnic_types: The binding:vnic_type values we can bind
         """
         self.agent_type = agent_type
-        self.supported_vnic_types = supported_vnic_types
+
+        # TODO(lajoskatona): move this blacklisting to
+        # SimpleAgentMechanismDriverBase. By that e blacklisting and validation
+        # of the vnic_types would be available for all mechanism drivers.
+        self.supported_vnic_types = self.blacklist_supported_vnic_types(
+            vnic_types=supported_vnic_types,
+            blacklist=cfg.CONF.SRIOV_DRIVER.vnic_type_blacklist
+        )
+
         # NOTE(ndipanov): PF passthrough requires a different vif type
         self.vnic_type_for_vif_type = (
             {vtype: portbindings.VIF_TYPE_HOSTDEV_PHY

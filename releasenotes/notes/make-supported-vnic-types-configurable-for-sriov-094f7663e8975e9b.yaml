@@ -1,0 +1,9 @@
+---
+other:
+  - |
+    Add new configuration group ``sriov_driver`` and new configuration option
+    under it ``vnic_type_blacklist``, to make the previously hardcoded
+    ``supported_vnic_types`` parameter of the SriovNicSwitchMechanismDriver
+    configurable.
+    The ``vnic_types`` listed in the blacklist will be removed from the
+    supported_vnic_types list.

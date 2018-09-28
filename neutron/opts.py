@@ -47,6 +47,7 @@ import neutron.conf.plugins.ml2.drivers.l2pop
 import neutron.conf.plugins.ml2.drivers.linuxbridge
 import neutron.conf.plugins.ml2.drivers.macvtap
 import neutron.conf.plugins.ml2.drivers.mech_sriov.agent_common
+import neutron.conf.plugins.ml2.drivers.mech_sriov.mech_sriov_conf
 import neutron.conf.plugins.ml2.drivers.openvswitch.mech_ovs_conf
 import neutron.conf.plugins.ml2.drivers.ovs_conf
 import neutron.conf.quota
@@ -259,7 +260,10 @@ def list_ml2_conf_opts():
          neutron.conf.plugins.ml2.drivers.l2pop.l2_population_options),
         ('ovs_driver',
          neutron.conf.plugins.ml2.drivers.openvswitch.mech_ovs_conf.
-         ovs_driver_opts)
+         ovs_driver_opts),
+        ('sriov_driver',
+         neutron.conf.plugins.ml2.drivers.mech_sriov.mech_sriov_conf.
+         sriov_driver_opts)
     ]
 
 
