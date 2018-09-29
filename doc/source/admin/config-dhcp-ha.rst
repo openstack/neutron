@@ -183,13 +183,13 @@ To experiment, you need VMs and a neutron network:
 .. code-block:: console
 
    $ openstack server list
-   +--------------------------------------+-----------+--------+----------------+------------+
-   | ID                                   | Name      | Status | Networks       | Image Name |
-   +--------------------------------------+-----------+--------+----------------+------------+
-   | c394fcd0-0baa-43ae-a793-201815c3e8ce | myserver1 | ACTIVE | net1=192.0.2.3 | cirros     |
-   | 2d604e05-9a6c-4ddb-9082-8a1fbdcc797d | myserver2 | ACTIVE | net1=192.0.2.4 | ubuntu     |
-   | c7c0481c-3db8-4d7a-a948-60ce8211d585 | myserver3 | ACTIVE | net1=192.0.2.5 | centos     |
-   +--------------------------------------+-----------+--------+----------------+------------+
+   +--------------------------------------+-----------+--------+----------------+--------+----------+
+   | ID                                   | Name      | Status | Networks       | Image  | Flavor   |
+   +--------------------------------------+-----------+--------+----------------+--------+----------+
+   | c394fcd0-0baa-43ae-a793-201815c3e8ce | myserver1 | ACTIVE | net1=192.0.2.3 | cirros | m1.tiny  |
+   | 2d604e05-9a6c-4ddb-9082-8a1fbdcc797d | myserver2 | ACTIVE | net1=192.0.2.4 | ubuntu | m1.small |
+   | c7c0481c-3db8-4d7a-a948-60ce8211d585 | myserver3 | ACTIVE | net1=192.0.2.5 | centos | m1.small |
+   +--------------------------------------+-----------+--------+----------------+--------+----------+
 
    $ openstack network list
    +--------------------------------------+------+--------------------------------------+
@@ -403,14 +403,14 @@ in turn to see if the VM can still get the desired IP.
         --nic net-id=9b96b14f-71b8-4918-90aa-c5d705606b1a
       ...
       $ openstack server list
-      +--------------------------------------+-----------+--------+-------------------+------------+
-      | ID                                   | Name      | Status | Networks          | Image Name |
-      +--------------------------------------+-----------+--------+-------------------+------------+
-      | c394fcd0-0baa-43ae-a793-201815c3e8ce | myserver1 | ACTIVE | net1=192.0.2.3    | cirros     |
-      | 2d604e05-9a6c-4ddb-9082-8a1fbdcc797d | myserver2 | ACTIVE | net1=192.0.2.4    | ubuntu     |
-      | c7c0481c-3db8-4d7a-a948-60ce8211d585 | myserver3 | ACTIVE | net1=192.0.2.5    | centos     |
-      | f62f4731-5591-46b1-9d74-f0c901de567f | myserver4 | ACTIVE | net2=198.51.100.2 | cirros1    |
-      +--------------------------------------+-----------+--------+-------------------+------------+
+      +--------------------------------------+-----------+--------+-------------------+---------+----------+
+      | ID                                   | Name      | Status | Networks          | Image   | Flavor   |
+      +--------------------------------------+-----------+--------+-------------------+---------+----------+
+      | c394fcd0-0baa-43ae-a793-201815c3e8ce | myserver1 | ACTIVE | net1=192.0.2.3    | cirros  | m1.tiny  |
+      | 2d604e05-9a6c-4ddb-9082-8a1fbdcc797d | myserver2 | ACTIVE | net1=192.0.2.4    | ubuntu  | m1.small |
+      | c7c0481c-3db8-4d7a-a948-60ce8211d585 | myserver3 | ACTIVE | net1=192.0.2.5    | centos  | m1.small |
+      | f62f4731-5591-46b1-9d74-f0c901de567f | myserver4 | ACTIVE | net2=198.51.100.2 | cirros1 | m1.tiny  |
+      +--------------------------------------+-----------+--------+-------------------+---------+----------+
 
 #. Make sure both DHCP agents hosting ``net2``:
 
