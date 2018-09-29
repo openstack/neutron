@@ -1875,12 +1875,12 @@ class L3RpcNotifierMixin(object):
             return
         network_id = updated['network_id']
         subnet_id = updated['id']
-        query = context.session.query(models_v2.Port).filter_by(
+        query = context.session.query(models_v2.Port.device_id).filter_by(
                     network_id=network_id,
                     device_owner=DEVICE_OWNER_ROUTER_GW)
         query = query.join(models_v2.Port.fixed_ips).filter(
                     models_v2.IPAllocation.subnet_id == subnet_id)
-        router_ids = set(port['device_id'] for port in query)
+        router_ids = set(port.device_id for port in query)
         for router_id in router_ids:
             l3plugin.notify_router_updated(context, router_id)
 
