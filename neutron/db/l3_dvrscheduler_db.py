@@ -527,6 +527,15 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
     new_port = kwargs.get('port')
     original_port = kwargs.get('original_port')
 
+    is_fixed_ips_changed = n_utils.port_ip_changed(new_port, original_port)
+
+    if (original_port['device_owner'] in
+            [n_const.DEVICE_OWNER_HA_REPLICATED_INT,
+             n_const.DEVICE_OWNER_ROUTER_SNAT,
+             n_const.DEVICE_OWNER_ROUTER_GW] and
+            not is_fixed_ips_changed):
+        return
+
     if new_port and original_port:
         l3plugin = directory.get_plugin(plugin_constants.L3)
         context = kwargs['context']
@@ -616,10 +625,6 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
                         l3plugin, context, original_port, address_pair)
                 return
 
-        is_fixed_ips_changed = (
-            'fixed_ips' in new_port and
-            'fixed_ips' in original_port and
-            new_port['fixed_ips'] != original_port['fixed_ips'])
         if kwargs.get('mac_address_updated') or is_fixed_ips_changed:
             l3plugin.update_arp_entry_for_dvr_service_port(
                 context, new_port)
