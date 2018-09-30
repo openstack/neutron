@@ -147,15 +147,15 @@ Verify service operation
       +--------------------------------------+--------------------+----------+-------------------+-------+-------+---------------------------+
       | ID                                   | Agent Type         | Host     | Availability Zone | Alive | State | Binary                    |
       +--------------------------------------+--------------------+----------+-------------------+-------+-------+---------------------------+
-      | 09de6af6-c5f1-4548-8b09-18801f068c57 | Linux bridge agent | compute2 |                   | True  | UP    | neutron-linuxbridge-agent |
-      | 188945d1-9e70-4803-a276-df924e0788a4 | Linux bridge agent | compute1 |                   | True  | UP    | neutron-linuxbridge-agent |
+      | 09de6af6-c5f1-4548-8b09-18801f068c57 | Linux bridge agent | compute2 | None              | True  | UP    | neutron-linuxbridge-agent |
+      | 188945d1-9e70-4803-a276-df924e0788a4 | Linux bridge agent | compute1 | None              | True  | UP    | neutron-linuxbridge-agent |
       | e76c440d-d5f6-4316-a674-d689630b629e | DHCP agent         | compute1 | nova              | True  | UP    | neutron-dhcp-agent        |
       | e67367de-6657-11e6-86a4-931cd04404bb | DHCP agent         | compute2 | nova              | True  | UP    | neutron-dhcp-agent        |
-      | e8174cae-6657-11e6-89f0-534ac6d0cb5c | Metadata agent     | compute1 |                   | True  | UP    | neutron-metadata-agent    |
-      | ece49ec6-6657-11e6-bafb-c7560f19197d | Metadata agent     | compute2 |                   | True  | UP    | neutron-metadata-agent    |
+      | e8174cae-6657-11e6-89f0-534ac6d0cb5c | Metadata agent     | compute1 | None              | True  | UP    | neutron-metadata-agent    |
+      | ece49ec6-6657-11e6-bafb-c7560f19197d | Metadata agent     | compute2 | None              | True  | UP    | neutron-metadata-agent    |
       | 598f6357-4331-4da5-a420-0f5be000bec9 | L3 agent           | network1 | nova              | True  | UP    | neutron-l3-agent          |
-      | f4734e0f-bcd5-4922-a19d-e31d56b0a7ae | Linux bridge agent | network1 |                   | True  | UP    | neutron-linuxbridge-agent |
-      | 670e5805-340b-4182-9825-fa8319c99f23 | Linux bridge agent | network2 |                   | True  | UP    | neutron-linuxbridge-agent |
+      | f4734e0f-bcd5-4922-a19d-e31d56b0a7ae | Linux bridge agent | network1 | None              | True  | UP    | neutron-linuxbridge-agent |
+      | 670e5805-340b-4182-9825-fa8319c99f23 | Linux bridge agent | network2 | None              | True  | UP    | neutron-linuxbridge-agent |
       | 96224e89-7c15-42e9-89c4-8caac7abdd54 | L3 agent           | network2 | nova              | True  | UP    | neutron-l3-agent          |
       +--------------------------------------+--------------------+----------+-------------------+-------+-------+---------------------------+
 
