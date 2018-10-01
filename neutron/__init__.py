@@ -20,7 +20,7 @@ import six
 
 
 if six.PY2:
-    gettext.install('neutron', unicode=1)
+    gettext.install('neutron', unicode=1)  # pylint: disable=unexpected-keyword-arg
 else:
     gettext.install('neutron')
 
