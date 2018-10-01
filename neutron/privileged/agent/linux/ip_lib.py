@@ -50,6 +50,13 @@ class NetworkInterfaceNotFound(RuntimeError):
     pass
 
 
+def _make_route_dict(destination, nexthop, device, scope):
+    return {'destination': destination,
+            'nexthop': nexthop,
+            'device': device,
+            'scope': scope}
+
+
 @privileged.default.entrypoint
 def get_routing_table(ip_version, namespace=None):
     """Return a list of dictionaries, each representing a route.
@@ -69,14 +76,32 @@ def get_routing_table(ip_version, namespace=None):
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
         raise
+    routes = []
     with pyroute2.IPDB(nl=netns) as ipdb:
         ipdb_routes = ipdb.routes
         ipdb_interfaces = ipdb.interfaces
-        routes = [{'destination': route['dst'],
-                   'nexthop': route.get('gateway'),
-                   'device': ipdb_interfaces[route['oif']]['ifname'],
-                   'scope': _get_scope_name(route['scope'])}
-                  for route in ipdb_routes if route['family'] == family]
+        for route in ipdb_routes:
+            if route['family'] != family:
+                continue
+            dst = route['dst']
+            nexthop = route.get('gateway')
+            oif = route.get('oif')
+            scope = _get_scope_name(route['scope'])
+
+            # If there is not a valid outgoing interface id, check if
+            # this is a multipath route (i.e. same destination with
+            # multiple outgoing interfaces)
+            if oif:
+                device = ipdb_interfaces[oif]['ifname']
+                rt = _make_route_dict(dst, nexthop, device, scope)
+                routes.append(rt)
+            elif route.get('multipath'):
+                for mpr in route['multipath']:
+                    oif = mpr['oif']
+                    device = ipdb_interfaces[oif]['ifname']
+                    rt = _make_route_dict(dst, nexthop, device, scope)
+                    routes.append(rt)
+
     return routes
 
 
@@ -305,7 +330,11 @@ def remove_netns(name, **kwargs):
 
     :param name: The name of the namespace to remove
     """
-    netns.remove(name, **kwargs)
+    try:
+        netns.remove(name, **kwargs)
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise
 
 
 @privileged.default.entrypoint

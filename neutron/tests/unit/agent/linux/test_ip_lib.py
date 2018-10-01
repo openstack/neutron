@@ -1607,6 +1607,55 @@ class TestGetRoutingTable(base.BaseTestCase):
         }
     ]
 
+    ip_db_multipath_routes = [
+        {
+            'dst_len': 24,
+            'family': socket.AF_INET,
+            'proto': 3,
+            'tos': 0,
+            'dst': '10.0.1.0/24',
+            'flags': 16,
+            'ipdb_priority': 0,
+            'metrics': {},
+            'scope': 0,
+            'encap': {},
+            'src_len': 0,
+            'table': 254,
+            'multipath': ({'oif': 1, 'family': socket.AF_INET},
+                          {'oif': 2, 'dst_len': 24, 'family': socket.AF_INET,
+                           'proto': 2, 'tos': 0, 'pref': '00',
+                           'priority': 256, 'flags': 0, 'encap': {},
+                           'src_len': 0, 'table': 254, 'type': 1,
+                           'scope': 0}),
+            'type': 1,
+            'gateway': '10.0.0.1',
+            'ipdb_scope': 'system'
+        }, {
+            'metrics': {},
+            'dst_len': 64,
+            'family': socket.AF_INET6,
+            'proto': 2,
+            'tos': 0,
+            'dst': '1111:1111:1111:1111::/64',
+            'pref': '00',
+            'ipdb_priority': 0,
+            'priority': 256,
+            'flags': 0,
+            'encap': {},
+            'src_len': 0,
+            'table': 254,
+            'multipath': ({'oif': 1, 'family': socket.AF_INET6},
+                          {'oif': 2, 'dst_len': 64, 'family': socket.AF_INET6,
+                           'proto': 2, 'tos': 0, 'pref': '00',
+                           'priority': 256, 'flags': 0, 'encap': {},
+                           'src_len': 0, 'table': 254, 'type': 1,
+                           'scope': 0}),
+            'type': 1,
+            'scope': 0,
+            'ipdb_scope': 'system'
+        }
+    ]
+
     def setUp(self):
         super(TestGetRoutingTable, self).setUp()
         self.addCleanup(privileged.default.set_client_mode, True)
@@ -1663,6 +1712,28 @@ class TestGetRoutingTable(base.BaseTestCase):
                      'device': 'tap-1',
                      'scope': 'universe'}]
         self._test_get_routing_table(6, self.ip_db_routes, expected)
+
+    def test_get_routing_table_multipath_4(self):
+        expected = [{'destination': '10.0.1.0/24',
+                     'nexthop': '10.0.0.1',
+                     'device': 'lo',
+                     'scope': 'universe'},
+                    {'destination': '10.0.1.0/24',
+                     'nexthop': '10.0.0.1',
+                     'device': 'tap-1',
+                     'scope': 'universe'}]
+        self._test_get_routing_table(4, self.ip_db_multipath_routes, expected)
+
+    def test_get_routing_table_multipath_6(self):
+        expected = [{'destination': '1111:1111:1111:1111::/64',
+                     'nexthop': None,
+                     'device': 'lo',
+                     'scope': 'universe'},
+                    {'destination': '1111:1111:1111:1111::/64',
+                     'nexthop': None,
+                     'device': 'tap-1',
+                     'scope': 'universe'}]
+        self._test_get_routing_table(6, self.ip_db_multipath_routes, expected)
 
 
 class TestIpNeighCommand(TestIPCmdBase):

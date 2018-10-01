@@ -1119,9 +1119,7 @@ class TestDhcpLocalProcess(TestBase):
         self.assertTrue(lp.process_monitor.unregister.called)
         self.assertTrue(self.external_process().disable.called)
 
-    @mock.patch('neutron.agent.linux.ip_lib.network_namespace_exists')
-    def test_disable_not_active(self, namespace_exists):
-        namespace_exists.return_value = False
+    def test_disable_not_active(self):
         attrs_to_mock = dict([(a, mock.DEFAULT) for a in
                               ['active', 'interface_name']])
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
@@ -1130,10 +1128,14 @@ class TestDhcpLocalProcess(TestBase):
             network = FakeDualNetwork()
             lp = LocalChild(self.conf, network)
             lp.device_manager = mock.Mock()
-            lp.disable()
+            with mock.patch('neutron.agent.linux.ip_lib.'
+                            'delete_network_namespace') as delete_ns:
+                lp.disable()
             lp.device_manager.destroy.assert_called_once_with(
                 network, 'tap0')
             self._assert_disabled(lp)
+
+        delete_ns.assert_called_with('qdhcp-ns')
 
     def test_disable_retain_port(self):
         attrs_to_mock = dict([(a, mock.DEFAULT) for a in
@@ -1146,9 +1148,7 @@ class TestDhcpLocalProcess(TestBase):
             lp.disable(retain_port=True)
             self._assert_disabled(lp)
 
-    @mock.patch('neutron.agent.linux.ip_lib.network_namespace_exists')
-    def test_disable(self, namespace_exists):
-        namespace_exists.return_value = True
+    def test_disable(self):
         attrs_to_mock = {'active': mock.DEFAULT}
 
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
@@ -1162,9 +1162,7 @@ class TestDhcpLocalProcess(TestBase):
 
         delete_ns.assert_called_with('qdhcp-ns')
 
-    @mock.patch('neutron.agent.linux.ip_lib.network_namespace_exists')
-    def test_disable_config_dir_removed_after_destroy(self, namespace_exists):
-        namespace_exists.return_value = True
+    def test_disable_config_dir_removed_after_destroy(self):
         parent = mock.MagicMock()
         parent.attach_mock(self.rmtree, 'rmtree')
         parent.attach_mock(self.mock_mgr, 'DeviceManager')
