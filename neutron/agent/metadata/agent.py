@@ -25,7 +25,7 @@ from oslo_service import loopingcall
 from oslo_utils import encodeutils
 import requests
 import six
-import six.moves.urllib.parse as urlparse
+from six.moves import urllib
 import webob
 
 from neutron._i18n import _
@@ -179,7 +179,7 @@ class MetadataProxyHandler(object):
 
         nova_host_port = '%s:%s' % (self.conf.nova_metadata_host,
                                     self.conf.nova_metadata_port)
-        url = urlparse.urlunsplit((
+        url = urllib.parse.urlunsplit((
             self.conf.nova_metadata_protocol,
             nova_host_port,
             req.path_info,

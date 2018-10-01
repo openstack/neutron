@@ -20,7 +20,7 @@ import ssl
 import mock
 from neutron_lib import exceptions as exception
 from oslo_config import cfg
-import six.moves.urllib.request as urlrequest
+from six.moves import urllib
 import testtools
 import webob
 import webob.exc
@@ -43,12 +43,13 @@ def open_no_proxy(*args, **kwargs):
     # introduced in python 2.7.9 under PEP-0476
     # https://github.com/python/peps/blob/master/pep-0476.txt
     if hasattr(ssl, "_create_unverified_context"):
-        opener = urlrequest.build_opener(
-            urlrequest.ProxyHandler({}),
-            urlrequest.HTTPSHandler(context=ssl._create_unverified_context())
+        opener = urllib.request.build_opener(
+            urllib.request.ProxyHandler({}),
+            urllib.request.HTTPSHandler(
+                context=ssl._create_unverified_context())
         )
     else:
-        opener = urlrequest.build_opener(urlrequest.ProxyHandler({}))
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
     return opener.open(*args, **kwargs)
 
 

@@ -22,7 +22,7 @@ from oslo_config import cfg
 from oslo_log import log
 import pecan
 from pecan import request
-import six.moves.urllib.parse as urlparse
+from six.moves import urllib
 
 from neutron.api.views import versions as versions_view
 from neutron import manager
@@ -99,7 +99,7 @@ class V2Controller(object):
 
         layout = []
         for name, collection in _CORE_RESOURCES.items():
-            href = urlparse.urljoin(pecan.request.path_url, collection)
+            href = urllib.parse.urljoin(pecan.request.path_url, collection)
             resource = {'name': name,
                         'collection': collection,
                         'links': [{'rel': 'self',

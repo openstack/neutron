@@ -22,7 +22,7 @@ from oslo_config import cfg
 import oslo_i18n
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
-from six.moves.urllib import parse
+from six.moves import urllib
 from webob import exc
 
 from neutron._i18n import _
@@ -127,7 +127,7 @@ def get_previous_link(request, items, id_key):
         params['marker'] = marker
     params['page_reverse'] = True
     return "%s?%s" % (prepare_url(get_path_url(request)),
-                      parse.urlencode(params))
+                      urllib.parse.urlencode(params))
 
 
 def get_next_link(request, items, id_key):
@@ -138,7 +138,7 @@ def get_next_link(request, items, id_key):
         params['marker'] = marker
     params.pop('page_reverse', None)
     return "%s?%s" % (prepare_url(get_path_url(request)),
-                      parse.urlencode(params))
+                      urllib.parse.urlencode(params))
 
 
 def prepare_url(orig_url):
@@ -147,24 +147,24 @@ def prepare_url(orig_url):
     # Copied directly from nova/api/openstack/common.py
     if not prefix:
         return orig_url
-    url_parts = list(parse.urlsplit(orig_url))
-    prefix_parts = list(parse.urlsplit(prefix))
+    url_parts = list(urllib.parse.urlsplit(orig_url))
+    prefix_parts = list(urllib.parse.urlsplit(prefix))
     url_parts[0:2] = prefix_parts[0:2]
     url_parts[2] = prefix_parts[2] + url_parts[2]
-    return parse.urlunsplit(url_parts).rstrip('/')
+    return urllib.parse.urlunsplit(url_parts).rstrip('/')
 
 
 def get_path_url(request):
     """Return correct link if X-Forwarded-Proto exists in headers."""
     protocol = request.headers.get('X-Forwarded-Proto')
-    parsed = parse.urlparse(request.path_url)
+    parsed = urllib.parse.urlparse(request.path_url)
 
     if protocol and parsed.scheme != protocol:
-        new_parsed = parse.ParseResult(
+        new_parsed = urllib.parse.ParseResult(
             protocol, parsed.netloc,
             parsed.path, parsed.params,
             parsed.query, parsed.fragment)
-        return parse.urlunparse(new_parsed)
+        return urllib.parse.urlunparse(new_parsed)
     else:
         return request.path_url
 
