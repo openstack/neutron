@@ -118,6 +118,10 @@ class ClientFixture(fixtures.Fixture):
 
         return self._create_resource(resource_type, spec)
 
+    def list_ports(self, retrieve_all=True, **kwargs):
+        resp = self.client.list_ports(retrieve_all=retrieve_all, **kwargs)
+        return resp['ports']
+
     def create_port(self, tenant_id, network_id, hostname=None,
                     qos_policy_id=None, security_groups=None, **kwargs):
         spec = {
