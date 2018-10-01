@@ -245,12 +245,12 @@ Verify service operation
       +--------------------------------------+--------------------+----------+-------------------+-------+-------+---------------------------+
       | ID                                   | Agent Type         | Host     | Availability Zone | Alive | State | Binary                    |
       +--------------------------------------+--------------------+----------+-------------------+-------+-------+---------------------------+
-      | 1236bbcb-e0ba-48a9-80fc-81202ca4fa51 | Metadata agent     | compute2 |                   | True  | UP    | neutron-metadata-agent    |
-      | 457d6898-b373-4bb3-b41f-59345dcfb5c5 | Open vSwitch agent | compute2 |                   | True  | UP    | neutron-openvswitch-agent |
+      | 1236bbcb-e0ba-48a9-80fc-81202ca4fa51 | Metadata agent     | compute2 | None              | True  | UP    | neutron-metadata-agent    |
+      | 457d6898-b373-4bb3-b41f-59345dcfb5c5 | Open vSwitch agent | compute2 | None              | True  | UP    | neutron-openvswitch-agent |
       | 71f15e84-bc47-4c2a-b9fb-317840b2d753 | DHCP agent         | compute2 | nova              | True  | UP    | neutron-dhcp-agent        |
-      | a6c69690-e7f7-4e56-9831-1282753e5007 | Metadata agent     | compute1 |                   | True  | UP    | neutron-metadata-agent    |
+      | a6c69690-e7f7-4e56-9831-1282753e5007 | Metadata agent     | compute1 | None              | True  | UP    | neutron-metadata-agent    |
       | af11f22f-a9f4-404f-9fd8-cd7ad55c0f68 | DHCP agent         | compute1 | nova              | True  | UP    | neutron-dhcp-agent        |
-      | bcfc977b-ec0e-4ba9-be62-9489b4b0e6f1 | Open vSwitch agent | compute1 |                   | True  | UP    | neutron-openvswitch-agent |
+      | bcfc977b-ec0e-4ba9-be62-9489b4b0e6f1 | Open vSwitch agent | compute1 | None              | True  | UP    | neutron-openvswitch-agent |
       +--------------------------------------+--------------------+----------+-------------------+-------+-------+---------------------------+
 
 Create initial networks
