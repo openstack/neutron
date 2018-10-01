@@ -29,8 +29,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from ryu.lib.packet import arp
-from ryu.lib.packet import ether_types
+from os_ken.lib.packet import arp
+from os_ken.lib.packet import ether_types
 
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \

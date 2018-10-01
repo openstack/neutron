@@ -18,7 +18,6 @@ netifaces>=0.10.4 # MIT
 neutron-lib>=1.21.0 # Apache-2.0
 python-neutronclient>=6.7.0 # Apache-2.0
 tenacity>=3.2.1 # Apache-2.0
-ryu>=4.24 # Apache-2.0
 SQLAlchemy!=1.1.5,!=1.1.6,!=1.1.7,!=1.1.8,>=1.2.0 # MIT
 WebOb>=1.8.2 # MIT
 keystoneauth1>=3.4.0 # Apache-2.0
@@ -44,6 +43,7 @@ oslo.upgradecheck>=0.1.0 # Apache-2.0
 oslo.utils>=3.33.0 # Apache-2.0
 oslo.versionedobjects>=1.31.2 # Apache-2.0
 osprofiler>=1.4.0 # Apache-2.0
+os-ken >= 0.3.0 # Apache-2.0
 ovs>=2.8.0 # Apache-2.0
 ovsdbapp>=0.9.1 # Apache-2.0
 psutil>=3.2.2 # BSD

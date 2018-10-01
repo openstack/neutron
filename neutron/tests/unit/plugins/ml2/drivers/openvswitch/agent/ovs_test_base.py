@@ -64,7 +64,7 @@ class OVSOFCtlTestBase(OVSAgentTestBase):
     _BR_PHYS_CLASS = _DRIVER_PACKAGE + '.br_phys.OVSPhysicalBridge'
 
 
-class OVSRyuTestBase(OVSAgentTestBase):
+class OVSOSKenTestBase(OVSAgentTestBase):
     _DRIVER_PACKAGE = _AGENT_PACKAGE + '.openflow.native'
     _BR_INT_CLASS = _DRIVER_PACKAGE + '.br_int.OVSIntegrationBridge'
     _BR_TUN_CLASS = _DRIVER_PACKAGE + '.br_tun.OVSTunnelBridge'
@@ -74,8 +74,11 @@ class OVSRyuTestBase(OVSAgentTestBase):
         self.fake_oflib_of = fake_oflib.patch_fake_oflib_of()
         self.fake_oflib_of.start()
         self.addCleanup(self.fake_oflib_of.stop)
-        super(OVSRyuTestBase, self).setUp()
-        ryu_app = mock.Mock()
-        self.br_int_cls = functools.partial(self.br_int_cls, ryu_app=ryu_app)
-        self.br_phys_cls = functools.partial(self.br_phys_cls, ryu_app=ryu_app)
-        self.br_tun_cls = functools.partial(self.br_tun_cls, ryu_app=ryu_app)
+        super(OVSOSKenTestBase, self).setUp()
+        os_ken_app = mock.Mock()
+        self.br_int_cls = functools.partial(self.br_int_cls,
+                                            os_ken_app=os_ken_app)
+        self.br_phys_cls = functools.partial(self.br_phys_cls,
+                                             os_ken_app=os_ken_app)
+        self.br_tun_cls = functools.partial(self.br_tun_cls,
+                                            os_ken_app=os_ken_app)

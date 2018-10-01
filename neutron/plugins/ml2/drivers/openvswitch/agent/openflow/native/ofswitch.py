@@ -20,14 +20,14 @@ import random
 import eventlet
 import netaddr
 from neutron_lib import exceptions
+import os_ken.app.ofctl.api as ofctl_api
+import os_ken.exception as os_ken_exc
+from os_ken.lib import ofctl_string
+from os_ken.ofproto import ofproto_parser
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import timeutils
-import ryu.app.ofctl.api as ofctl_api
-import ryu.exception as ryu_exc
-from ryu.lib import ofctl_string
-from ryu.ofproto import ofproto_parser
 import six
 
 from neutron._i18n import _
@@ -51,19 +51,19 @@ class OpenFlowSwitchMixin(object):
     """
 
     @staticmethod
-    def _cidr_to_ryu(ip):
+    def _cidr_to_os_ken(ip):
         n = netaddr.IPNetwork(ip)
         if n.hostmask:
             return (str(n.ip), str(n.netmask))
         return str(n.ip)
 
     def __init__(self, *args, **kwargs):
-        self._app = kwargs.pop('ryu_app')
+        self._app = kwargs.pop('os_ken_app')
         self.active_bundles = set()
         super(OpenFlowSwitchMixin, self).__init__(*args, **kwargs)
 
     def _get_dp_by_dpid(self, dpid_int):
-        """Get Ryu datapath object for the switch."""
+        """Get os-ken datapath object for the switch."""
         timeout_sec = cfg.CONF.OVS.of_connect_timeout
         start_time = timeutils.now()
         while True:
@@ -90,7 +90,7 @@ class OpenFlowSwitchMixin(object):
                                        active_bundle['bundle_flags'], msg, [])
         try:
             result = ofctl_api.send_msg(self._app, msg, reply_cls, reply_multi)
-        except ryu_exc.RyuException as e:
+        except os_ken_exc.OSKenException as e:
             m = _("ofctl request %(request)s error %(error)s") % {
                 "request": msg,
                 "error": e,

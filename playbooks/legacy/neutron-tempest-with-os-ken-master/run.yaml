@@ -1,5 +1,5 @@
 - hosts: all
-  name: Autoconverted job legacy-periodic-tempest-dsvm-neutron-with-ryu-master from
+  name: Autoconverted job legacy-periodic-tempest-dsvm-neutron-with-os-ken-master from
     old job periodic-tempest-dsvm-neutron-with-ryu-master-ubuntu-xenial
   tasks:
 
@@ -39,11 +39,11 @@
           fi
 
           function gate_hook {
-              local ryu_path=$BASE/new/ryu_master
-              if [ ! -d $ryu_path ]; then
-                  git clone https://github.com/osrg/ryu $ryu_path
+              local os_ken_path=$BASE/new/os_ken_master
+              if [ ! -d $os_ken_path ]; then
+                  git clone https://github.com/openstack/os-ken.git $os_ken_path
               fi
-              sudo pip install -e $ryu_path
+              sudo pip install -e $os_ken_path
               $BASE/new/devstack-gate/devstack-vm-gate.sh
           }
           export -f gate_hook

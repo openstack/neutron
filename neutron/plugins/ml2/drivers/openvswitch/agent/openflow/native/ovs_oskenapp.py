@@ -16,12 +16,12 @@
 
 import functools
 
+import os_ken.app.ofctl.api  # noqa
+from os_ken.base import app_manager
+from os_ken.lib import hub
+from os_ken.ofproto import ofproto_v1_3
 from oslo_log import log as logging
 from oslo_utils import excutils
-import ryu.app.ofctl.api  # noqa
-from ryu.base import app_manager
-from ryu.lib import hub
-from ryu.ofproto import ofproto_v1_3
 
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import br_int
@@ -42,22 +42,22 @@ def agent_main_wrapper(bridge_classes):
         with excutils.save_and_reraise_exception():
             LOG.exception("Agent main thread died of an exception")
     finally:
-        # The following call terminates Ryu's AppManager.run_apps(),
+        # The following call terminates os-ken's AppManager.run_apps(),
         # which is needed for clean shutdown of an agent process.
         # The close() call must be called in another thread, otherwise
         # it suicides and ends prematurely.
         hub.spawn(app_manager.AppManager.get_instance().close)
 
 
-class OVSNeutronAgentRyuApp(app_manager.RyuApp):
+class OVSNeutronAgentOSKenApp(app_manager.OSKenApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
     def start(self):
-        # Start Ryu event loop thread
-        super(OVSNeutronAgentRyuApp, self).start()
+        # Start os-ken event loop thread
+        super(OVSNeutronAgentOSKenApp, self).start()
 
         def _make_br_cls(br_cls):
-            return functools.partial(br_cls, ryu_app=self)
+            return functools.partial(br_cls, os_ken_app=self)
 
         # Start agent main loop thread
         bridge_classes = {

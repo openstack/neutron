@@ -62,7 +62,7 @@ class LoggingExtensionTestFramework(test_firewall.BaseFirewallTestCase):
         self.log_driver = self.initialize_ovs_fw_log()
 
     def initialize_ovs_fw_log(self):
-        mock.patch('ryu.base.app_manager.AppManager.get_instance').start()
+        mock.patch('os_ken.base.app_manager.AppManager.get_instance').start()
         agent_api = ovs_ext_api.OVSAgentExtensionAPI(
             ovs_bridge.OVSAgentBridge(self.tester.bridge.br_name),
             ovs_bridge.OVSAgentBridge('br-tun'))

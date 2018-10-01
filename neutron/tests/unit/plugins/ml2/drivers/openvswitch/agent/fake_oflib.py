@@ -96,63 +96,63 @@ class _Mod(object):
 
 
 def patch_fake_oflib_of():
-    ryu_mod = mock.Mock()
-    ryu_base_mod = ryu_mod.base
-    ryu_exc_mod = ryu_mod.exception
-    ryu_ctrl_mod = ryu_mod.controller
-    handler = _Mod('ryu.controller.handler')
+    os_ken_mod = mock.Mock()
+    os_ken_base_mod = os_ken_mod.base
+    os_ken_exc_mod = os_ken_mod.exception
+    os_ken_ctrl_mod = os_ken_mod.controller
+    handler = _Mod('os_ken.controller.handler')
     handler.set_ev_cls = mock.Mock()
-    ofp_event = _Mod('ryu.controller.ofp_event')
-    ryu_ctrl_mod.handler = handler
-    ryu_ctrl_mod.ofp_event = ofp_event
-    ryu_lib_mod = ryu_mod.lib
-    ryu_lib_hub = ryu_lib_mod.hub
-    ryu_packet_mod = ryu_lib_mod.packet
-    packet = _Mod('ryu.lib.packet.packet')
-    arp = _Mod('ryu.lib.packet.arp')
-    ethernet = _Mod('ryu.lib.packet.ethernet')
-    ether_types = _Mod('ryu.lib.packet.ether_types')
-    in_proto = _Mod('ryu.lib.packet.in_proto')
-    icmpv6 = _Mod('ryu.lib.packet.icmpv6')
-    vlan = _Mod('ryu.lib.packet.vlan')
-    ryu_packet_mod.packet = packet
+    ofp_event = _Mod('os_ken.controller.ofp_event')
+    os_ken_ctrl_mod.handler = handler
+    os_ken_ctrl_mod.ofp_event = ofp_event
+    os_ken_lib_mod = os_ken_mod.lib
+    os_ken_lib_hub = os_ken_lib_mod.hub
+    os_ken_packet_mod = os_ken_lib_mod.packet
+    packet = _Mod('os_ken.lib.packet.packet')
+    arp = _Mod('os_ken.lib.packet.arp')
+    ethernet = _Mod('os_ken.lib.packet.ethernet')
+    ether_types = _Mod('os_ken.lib.packet.ether_types')
+    in_proto = _Mod('os_ken.lib.packet.in_proto')
+    icmpv6 = _Mod('os_ken.lib.packet.icmpv6')
+    vlan = _Mod('os_ken.lib.packet.vlan')
+    os_ken_packet_mod.packet = packet
     packet.Packet = mock.Mock()
-    ryu_packet_mod.arp = arp
-    ryu_packet_mod.ethernet = ethernet
-    ryu_packet_mod.ether_types = ether_types
-    ryu_packet_mod.icmpv6 = icmpv6
-    ryu_packet_mod.in_proto = in_proto
-    ryu_packet_mod.vlan = vlan
-    ryu_ofproto_mod = ryu_mod.ofproto
-    ofp = _Mod('ryu.ofproto.ofproto_v1_3')
-    ofpp = _Mod('ryu.ofproto.ofproto_v1_3_parser')
-    ryu_ofproto_mod.ofproto_v1_3 = ofp
-    ryu_ofproto_mod.ofproto_v1_3_parser = ofpp
-    ryu_app_mod = ryu_mod.app
-    ryu_app_ofctl_mod = ryu_app_mod.ofctl
-    ryu_ofctl_api = ryu_app_ofctl_mod.api
-    modules = {'ryu': ryu_mod,
-               'ryu.base': ryu_base_mod,
-               'ryu.controller': ryu_ctrl_mod,
-               'ryu.controller.handler': handler,
-               'ryu.controller.handler.set_ev_cls': handler.set_ev_cls,
-               'ryu.controller.ofp_event': ofp_event,
-               'ryu.exception': ryu_exc_mod,
-               'ryu.lib': ryu_lib_mod,
-               'ryu.lib.hub': ryu_lib_hub,
-               'ryu.lib.packet': ryu_packet_mod,
-               'ryu.lib.packet.packet': packet,
-               'ryu.lib.packet.packet.Packet': packet.Packet,
-               'ryu.lib.packet.arp': arp,
-               'ryu.lib.packet.ethernet': ethernet,
-               'ryu.lib.packet.ether_types': ether_types,
-               'ryu.lib.packet.icmpv6': icmpv6,
-               'ryu.lib.packet.in_proto': in_proto,
-               'ryu.lib.packet.vlan': vlan,
-               'ryu.ofproto': ryu_ofproto_mod,
-               'ryu.ofproto.ofproto_v1_3': ofp,
-               'ryu.ofproto.ofproto_v1_3_parser': ofpp,
-               'ryu.app': ryu_app_mod,
-               'ryu.app.ofctl': ryu_app_ofctl_mod,
-               'ryu.app.ofctl.api': ryu_ofctl_api}
+    os_ken_packet_mod.arp = arp
+    os_ken_packet_mod.ethernet = ethernet
+    os_ken_packet_mod.ether_types = ether_types
+    os_ken_packet_mod.icmpv6 = icmpv6
+    os_ken_packet_mod.in_proto = in_proto
+    os_ken_packet_mod.vlan = vlan
+    os_ken_ofproto_mod = os_ken_mod.ofproto
+    ofp = _Mod('os_ken.ofproto.ofproto_v1_3')
+    ofpp = _Mod('os_ken.ofproto.ofproto_v1_3_parser')
+    os_ken_ofproto_mod.ofproto_v1_3 = ofp
+    os_ken_ofproto_mod.ofproto_v1_3_parser = ofpp
+    os_ken_app_mod = os_ken_mod.app
+    os_ken_app_ofctl_mod = os_ken_app_mod.ofctl
+    os_ken_ofctl_api = os_ken_app_ofctl_mod.api
+    modules = {'os_ken': os_ken_mod,
+               'os_ken.base': os_ken_base_mod,
+               'os_ken.controller': os_ken_ctrl_mod,
+               'os_ken.controller.handler': handler,
+               'os_ken.controller.handler.set_ev_cls': handler.set_ev_cls,
+               'os_ken.controller.ofp_event': ofp_event,
+               'os_ken.exception': os_ken_exc_mod,
+               'os_ken.lib': os_ken_lib_mod,
+               'os_ken.lib.hub': os_ken_lib_hub,
+               'os_ken.lib.packet': os_ken_packet_mod,
+               'os_ken.lib.packet.packet': packet,
+               'os_ken.lib.packet.packet.Packet': packet.Packet,
+               'os_ken.lib.packet.arp': arp,
+               'os_ken.lib.packet.ethernet': ethernet,
+               'os_ken.lib.packet.ether_types': ether_types,
+               'os_ken.lib.packet.icmpv6': icmpv6,
+               'os_ken.lib.packet.in_proto': in_proto,
+               'os_ken.lib.packet.vlan': vlan,
+               'os_ken.ofproto': os_ken_ofproto_mod,
+               'os_ken.ofproto.ofproto_v1_3': ofp,
+               'os_ken.ofproto.ofproto_v1_3_parser': ofpp,
+               'os_ken.app': os_ken_app_mod,
+               'os_ken.app.ofctl': os_ken_app_ofctl_mod,
+               'os_ken.app.ofctl.api': os_ken_ofctl_api}
     return mock.patch.dict('sys.modules', modules)

@@ -22,10 +22,10 @@
 import netaddr
 
 from neutron_lib import constants as p_const
+from os_ken.lib.packet import ether_types
+from os_ken.lib.packet import icmpv6
+from os_ken.lib.packet import in_proto
 from oslo_log import log as logging
-from ryu.lib.packet import ether_types
-from ryu.lib.packet import icmpv6
-from ryu.lib.packet import in_proto
 
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
@@ -176,7 +176,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
         # Allow neighbor advertisements as long as they match addresses
         # that actually belong to the port.
         for ip in ip_addresses:
-            masked_ip = self._cidr_to_ryu(ip)
+            masked_ip = self._cidr_to_os_ken(ip)
             self.install_goto(
                 table_id=constants.ARP_SPOOF_TABLE, priority=2,
                 eth_type=ether_types.ETH_TYPE_IPV6,
@@ -229,7 +229,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
         # allow ARP replies as long as they match addresses that actually
         # belong to the port.
         for ip in ip_addresses:
-            masked_ip = self._cidr_to_ryu(ip)
+            masked_ip = self._cidr_to_os_ken(ip)
             self.install_goto(table_id=constants.ARP_SPOOF_TABLE,
                               priority=2,
                               eth_type=ether_types.ETH_TYPE_ARP,

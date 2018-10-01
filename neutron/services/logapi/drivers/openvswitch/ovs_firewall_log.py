@@ -16,12 +16,12 @@
 import collections
 
 from neutron_lib import constants as lib_const
+from os_ken.base import app_manager
+from os_ken.lib.packet import packet
 from oslo_config import cfg
 from oslo_log import formatters
 from oslo_log import handlers
 from oslo_log import log as logging
-from ryu.base import app_manager
-from ryu.lib.packet import packet
 
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
@@ -31,7 +31,7 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
 from neutron.services.logapi.agent import log_extension as log_ext
 from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.common import exceptions as log_exc
-from neutron.services.logapi.drivers.openvswitch import log_ryuapp
+from neutron.services.logapi.drivers.openvswitch import log_oskenapp
 
 LOG = logging.getLogger(__name__)
 
@@ -161,7 +161,7 @@ class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
 
     def start_logapp(self):
         app_mgr = app_manager.AppManager.get_instance()
-        self.log_app = app_mgr.instantiate(log_ryuapp.OVSLogRyuApp)
+        self.log_app = app_mgr.instantiate(log_oskenapp.OVSLogOSKenApp)
         self.log_app.start()
         self.log_app.register_packet_in_handler(self.packet_in_handler)
 

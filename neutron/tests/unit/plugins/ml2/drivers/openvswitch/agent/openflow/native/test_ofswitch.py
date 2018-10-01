@@ -11,8 +11,8 @@
 #    under the License.
 
 import mock
-from ryu.ofproto import ofproto_v1_3
-from ryu.ofproto import ofproto_v1_3_parser
+from os_ken.ofproto import ofproto_v1_3
+from os_ken.ofproto import ofproto_v1_3_parser
 
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import ofswitch

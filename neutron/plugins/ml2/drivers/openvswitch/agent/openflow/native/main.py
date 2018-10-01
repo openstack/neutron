@@ -14,9 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from os_ken.base import app_manager
+from os_ken import cfg as os_ken_cfg
 from oslo_config import cfg
-from ryu.base import app_manager
-from ryu import cfg as ryu_cfg
 
 
 cfg.CONF.import_group(
@@ -25,13 +25,13 @@ cfg.CONF.import_group(
 
 
 def init_config():
-    ryu_cfg.CONF(project='ryu', args=[])
-    ryu_cfg.CONF.ofp_listen_host = cfg.CONF.OVS.of_listen_address
-    ryu_cfg.CONF.ofp_tcp_listen_port = cfg.CONF.OVS.of_listen_port
+    os_ken_cfg.CONF(project='os_ken', args=[])
+    os_ken_cfg.CONF.ofp_listen_host = cfg.CONF.OVS.of_listen_address
+    os_ken_cfg.CONF.ofp_tcp_listen_port = cfg.CONF.OVS.of_listen_port
 
 
 def main():
     app_manager.AppManager.run_apps([
         'neutron.plugins.ml2.drivers.openvswitch.agent.'
-        'openflow.native.ovs_ryuapp',
+        'openflow.native.ovs_oskenapp',
     ])

@@ -77,7 +77,7 @@
       jobs:
         - neutron-functional
         - neutron-tempest-postgres-full
-        - neutron-tempest-with-ryu-master
+        - neutron-tempest-with-os-ken-master
     experimental:
       jobs:
         - neutron-functional-python35
@@ -276,10 +276,10 @@
       - openstack/tempest
 
 - job:
-    name: neutron-tempest-with-ryu-master
+    name: neutron-tempest-with-os-ken-master
     parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-tempest-with-ryu-master/run.yaml
-    post-run: playbooks/legacy/neutron-tempest-with-ryu-master/post.yaml
+    run: playbooks/legacy/neutron-tempest-with-os-ken-master/run.yaml
+    post-run: playbooks/legacy/neutron-tempest-with-os-ken-master/post.yaml
     timeout: 7800
     required-projects:
       - openstack-infra/devstack-gate

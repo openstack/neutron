@@ -14,9 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from ryu.lib.packet import ether_types
-from ryu.lib.packet import icmpv6
-from ryu.lib.packet import in_proto
+from os_ken.lib.packet import ether_types
+from os_ken.lib.packet import icmpv6
+from os_ken.lib.packet import in_proto
 
 
 class OVSDVRProcessMixin(object):

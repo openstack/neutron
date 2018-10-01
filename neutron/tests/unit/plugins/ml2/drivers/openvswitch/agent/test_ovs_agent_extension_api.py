@@ -174,10 +174,10 @@ class TestOVSCookieBridgeOFCtl(ovs_test_base.OVSOFCtlTestBase):
         )
 
 
-class TestOVSCookieBridgeRyu(native_ovs_bridge_test_base.OVSBridgeTestBase):
+class TestOVSCookieBridgeOSKen(native_ovs_bridge_test_base.OVSBridgeTestBase):
 
     def setUp(self):
-        super(TestOVSCookieBridgeRyu, self).setUp()
+        super(TestOVSCookieBridgeOSKen, self).setUp()
         self.setup_bridge_mock('br-int', self.br_int_cls)
         self.tested_bridge = ovs_ext_agt.OVSCookieBridge(self.br)
 

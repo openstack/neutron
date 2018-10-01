@@ -24,13 +24,13 @@ from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
 call = mock.call  # short hand
 
 
-class OVSBridgeTestBase(ovs_test_base.OVSRyuTestBase):
-    _ARP_MODULE = 'ryu.lib.packet.arp'
-    _ETHER_TYPES_MODULE = 'ryu.lib.packet.ether_types'
-    _ICMPV6_MODULE = 'ryu.lib.packet.icmpv6'
-    _IN_PROTO_MODULE = 'ryu.lib.packet.in_proto'
-    _OFP_MODULE = 'ryu.ofproto.ofproto_v1_3'
-    _OFPP_MODULE = 'ryu.ofproto.ofproto_v1_3_parser'
+class OVSBridgeTestBase(ovs_test_base.OVSOSKenTestBase):
+    _ARP_MODULE = 'os_ken.lib.packet.arp'
+    _ETHER_TYPES_MODULE = 'os_ken.lib.packet.ether_types'
+    _ICMPV6_MODULE = 'os_ken.lib.packet.icmpv6'
+    _IN_PROTO_MODULE = 'os_ken.lib.packet.in_proto'
+    _OFP_MODULE = 'os_ken.ofproto.ofproto_v1_3'
+    _OFPP_MODULE = 'os_ken.ofproto.ofproto_v1_3_parser'
 
     def setup_bridge_mock(self, name, cls):
         self.br = cls(name)
@@ -129,8 +129,8 @@ class OVSBridgeTestBase(ovs_test_base.OVSRyuTestBase):
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
-    def test__cidr_to_ryu(self):
-        f = self.br._cidr_to_ryu
+    def test__cidr_to_os_ken(self):
+        f = self.br._cidr_to_os_ken
         self.assertEqual('192.168.0.1', f('192.168.0.1'))
         self.assertEqual('192.168.0.1', f('192.168.0.1/32'))
         self.assertEqual(('192.168.0.0', '255.255.255.0'), f('192.168.0.0/24'))

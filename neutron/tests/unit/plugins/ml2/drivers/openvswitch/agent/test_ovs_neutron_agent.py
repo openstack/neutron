@@ -2362,8 +2362,8 @@ class TestOvsNeutronAgentOFCtl(TestOvsNeutronAgent,
             self.assertEqual(expected, del_flow.mock_calls)
 
 
-class TestOvsNeutronAgentRyu(TestOvsNeutronAgent,
-                             ovs_test_base.OVSRyuTestBase):
+class TestOvsNeutronAgentOSKen(TestOvsNeutronAgent,
+                             ovs_test_base.OVSOSKenTestBase):
     def test_cleanup_stale_flows(self):
         uint64_max = (1 << 64) - 1
         with mock.patch.object(self.agent.int_br,
@@ -2372,7 +2372,7 @@ class TestOvsNeutronAgentRyu(TestOvsNeutronAgent,
                                   'uninstall_flows') as uninstall_flows:
             self.agent.int_br.set_agent_uuid_stamp(1234)
             dump_flows.return_value = [
-                # mock ryu.ofproto.ofproto_v1_3_parser.OFPFlowStats
+                # mock os_ken.ofproto.ofproto_v1_3_parser.OFPFlowStats
                 mock.Mock(cookie=1234, table_id=0),
                 mock.Mock(cookie=17185, table_id=2),
                 mock.Mock(cookie=9029, table_id=2),
@@ -2515,8 +2515,8 @@ class AncillaryBridgesTestOFCtl(AncillaryBridgesTest,
     pass
 
 
-class AncillaryBridgesTestRyu(AncillaryBridgesTest,
-                              ovs_test_base.OVSRyuTestBase):
+class AncillaryBridgesTestOSKen(AncillaryBridgesTest,
+                              ovs_test_base.OVSOSKenTestBase):
     pass
 
 
@@ -3529,8 +3529,8 @@ class TestOvsDvrNeutronAgentOFCtl(TestOvsDvrNeutronAgent,
     pass
 
 
-class TestOvsDvrNeutronAgentRyu(TestOvsDvrNeutronAgent,
-                                ovs_test_base.OVSRyuTestBase):
+class TestOvsDvrNeutronAgentOSKen(TestOvsDvrNeutronAgent,
+                                ovs_test_base.OVSOSKenTestBase):
     pass
 
 

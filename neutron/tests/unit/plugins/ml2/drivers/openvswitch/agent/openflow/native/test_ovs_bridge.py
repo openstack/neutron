@@ -24,7 +24,7 @@ from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
 DPID = "0003e9"
 
 
-class OVSAgentBridgeTestCase(ovs_test_base.OVSRyuTestBase):
+class OVSAgentBridgeTestCase(ovs_test_base.OVSOSKenTestBase):
     def test__get_dp(self):
         mock.patch.object(
             ovs_lib.OVSBridge, 'get_datapath_id', return_value=DPID).start()

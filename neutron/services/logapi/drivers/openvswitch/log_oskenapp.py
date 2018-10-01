@@ -13,16 +13,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from os_ken.base import app_manager
+from os_ken.controller import handler
+from os_ken.controller import ofp_event
+from os_ken.ofproto import ofproto_v1_3
 from oslo_log import log as logging
-from ryu.base import app_manager
-from ryu.controller import handler
-from ryu.controller import ofp_event
-from ryu.ofproto import ofproto_v1_3
 
 LOG = logging.getLogger(__name__)
 
 
-class OVSLogRyuApp(app_manager.RyuApp):
+class OVSLogOSKenApp(app_manager.OSKenApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
     packet_in_handlers = []
 

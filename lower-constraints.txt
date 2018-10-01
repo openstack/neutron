@@ -60,6 +60,7 @@ neutron-lib==1.21.0
 openstackdocstheme==1.18.1
 openstacksdk==0.11.2
 os-client-config==1.28.0
+os-ken==0.3.0
 os-service-types==1.2.0
 os-xenapi==0.3.1
 osc-lib==1.8.0
@@ -123,7 +124,6 @@ requests==2.14.2
 requestsexceptions==1.2.0
 rfc3986==0.3.1
 Routes==2.3.1
-ryu==4.24
 simplejson==3.5.1
 six==1.10.0
 smmap==0.9.0

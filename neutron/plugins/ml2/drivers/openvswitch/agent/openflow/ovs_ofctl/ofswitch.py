@@ -20,7 +20,7 @@ from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 
-# Field name mappings (from Ryu to ovs-ofctl)
+# Field name mappings (from os-ken to ovs-ofctl)
 _keywords = {
     'eth_src': 'dl_src',
     'eth_dst': 'dl_dst',

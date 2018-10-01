@@ -41,8 +41,8 @@ LOG = logging.getLogger(__name__)
 EXTRA_LOG_LEVEL_DEFAULTS = [
     'OFPHandler=INFO',
     'OfctlService=INFO',
-    'ryu.base.app_manager=INFO',
-    'ryu.controller.controller=INFO',
+    'os_ken.base.app_manager=INFO',
+    'os_ken.controller.controller=INFO',
     'ovsdbapp.backend.ovs_idl.vlog=INFO'
 ]
 
