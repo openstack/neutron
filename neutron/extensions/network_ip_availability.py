@@ -30,9 +30,6 @@ class Network_ip_availability(api_extensions.APIExtensionDescriptor):
         """Returns Extended Resource for service type management."""
         resource_attributes = apidef.RESOURCE_ATTRIBUTE_MAP[
             apidef.RESOURCE_PLURAL]
-        # TODO(hongbin): Delete _populate_is_filter_keyword once neutron-lib
-        # containing https://review.openstack.org/#/c/583838/ is released.
-        cls._populate_is_filter_keyword(resource_attributes)
         controller = base.create_resource(
             apidef.RESOURCE_PLURAL,
             apidef.RESOURCE_NAME,
@@ -41,13 +38,3 @@ class Network_ip_availability(api_extensions.APIExtensionDescriptor):
         return [extensions.ResourceExtension(apidef.COLLECTION_NAME,
                                              controller,
                                              attr_map=resource_attributes)]
-
-    @classmethod
-    def _populate_is_filter_keyword(cls, params):
-        filter_keys = ['network_id', 'network_name', 'tenant_id',
-                       'project_id']
-        for name in params:
-            if name in filter_keys:
-                params[name]['is_filter'] = True
-        params['ip_version'] = {'allow_post': False, 'allow_put': False,
-                                'is_visible': False, 'is_filter': True}
