@@ -295,10 +295,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                                     router_id)
         deletion = functools.partial(self._core_plugin.delete_port, context,
                                      l3_port_check=False)
-        port, bindings = db_utils.safe_creation(context, creation,
-                                                deletion, content,
-                                                transaction=False)
-        return bindings
+        port, binding = db_utils.safe_creation(context, creation,
+                                               deletion, content,
+                                               transaction=False)
+        return binding
 
     def _delete_ha_interfaces(self, context, router_id):
         admin_ctx = context.elevated()
