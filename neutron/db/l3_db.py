@@ -53,6 +53,7 @@ from neutron.db import standardattrdescription_db as st_attr
 from neutron.extensions import l3
 from neutron.extensions import qos_fip
 from neutron.objects import base as base_obj
+from neutron.objects import port_forwarding
 from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
 from neutron import worker as neutron_worker
@@ -947,10 +948,31 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             context, port_id, {'port': {'device_id': router_id,
                                         'device_owner': device_owner}})
 
-    def _confirm_router_interface_not_in_use(self, context, router_id,
-                                             subnet_id):
+    def _check_router_interface_not_in_use(self, router_id, subnet_id):
+        context = n_ctx.get_admin_context()
         subnet = self._core_plugin.get_subnet(context, subnet_id)
         subnet_cidr = netaddr.IPNetwork(subnet['cidr'])
+
+        fip_objs = l3_obj.FloatingIP.get_objects(context, router_id=router_id)
+        pf_plugin = directory.get_plugin(plugin_constants.PORTFORWARDING)
+        if pf_plugin:
+            fip_ids = [fip_obj.id for fip_obj in fip_objs]
+            pf_objs = port_forwarding.PortForwarding.get_objects(
+                context, floatingip_id=fip_ids)
+            for pf_obj in pf_objs:
+                if (pf_obj.internal_ip_address and
+                        pf_obj.internal_ip_address in subnet_cidr):
+                    raise l3_exc.RouterInterfaceInUseByFloatingIP(
+                        router_id=router_id, subnet_id=subnet_id)
+
+        for fip_obj in fip_objs:
+            if (fip_obj.fixed_ip_address and
+                    fip_obj.fixed_ip_address in subnet_cidr):
+                raise l3_exc.RouterInterfaceInUseByFloatingIP(
+                    router_id=router_id, subnet_id=subnet_id)
+
+    def _confirm_router_interface_not_in_use(self, context, router_id,
+                                             subnet_id):
         try:
             kwargs = {'context': context, 'router_id': router_id,
                       'subnet_id': subnet_id}
@@ -962,11 +984,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             if len(e.errors) == 1:
                 raise e.errors[0].error
             raise l3_exc.RouterInUse(router_id=router_id, reason=e)
-        fip_objs = l3_obj.FloatingIP.get_objects(context, router_id=router_id)
-        for fip_obj in fip_objs:
-            if fip_obj.fixed_ip_address in subnet_cidr:
-                raise l3_exc.RouterInterfaceInUseByFloatingIP(
-                    router_id=router_id, subnet_id=subnet_id)
+
+        self._check_router_interface_not_in_use(router_id, subnet_id)
 
     def _remove_interface_by_port(self, context, router_id,
                                   port_id, subnet_id, owner):
