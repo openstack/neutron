@@ -59,6 +59,27 @@ In addition to that, the following rules are to follow:
      that would help interested parties to identify their platform limitation
      in timely manner.
 
+* Special attention should also be paid to changes in Neutron that can impact
+  the Stadium and the wider family of networking-related projects
+  (referred to as sub-projects below). These changes include:
+
+  #. Renaming or removal of methods.
+  #. Addition or removal of positional arguments.
+  #. Renaming or removal of constants.
+
+  To mitigate the risk of impacting the sub-projects with these changes, the
+  following measures are suggested:
+
+  #. Use of the online tool `codesearch <http://codesearch.openstack.org>`_ to
+     ascertain how the proposed changes will affect the code of the
+     sub-projects.
+  #. Review the results of the non-voting check and 3rd party CI
+     jobs executed by the sub-projects against the proposed change, which are
+     returned by Zuul in the change's Gerrit page.
+
+  When impacts are identified as a result of the above steps, every effort must
+  be made to work with the affected sub-projects to resolve the issues.
+
 .. _spec-review-practices:
 
 Neutron Spec Review Practices
