@@ -15,9 +15,9 @@
 
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib.db import api as db_api
 from oslo_log import log as logging
 
-from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.objects import provisioning_blocks as pb_obj
 

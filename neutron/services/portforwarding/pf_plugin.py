@@ -23,6 +23,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_consts
+from neutron_lib.db import api as lib_db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import l3 as lib_l3_exc
@@ -136,7 +137,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
 
     @registry.receives(resources.PORT, [events.AFTER_UPDATE,
                                         events.PRECOMMIT_DELETE])
-    @db_api.retry_if_session_inactive()
+    @lib_db_api.retry_if_session_inactive()
     def _process_port_request(self, resource, event, trigger, context,
                               **kwargs):
         # Deleting floatingip will receive port resource with precommit_delete

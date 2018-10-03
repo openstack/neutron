@@ -22,8 +22,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import opts as profiler_opts
 import osprofiler.sqlalchemy
-from pecan import util as p_util
-import six
 import sqlalchemy
 from sqlalchemy import event  # noqa
 from sqlalchemy import orm
@@ -52,42 +50,6 @@ LOG = logging.getLogger(__name__)
 def _copy_if_lds(item):
     """Deepcopy lists/dicts/sets, leave everything else alone."""
     return copy.deepcopy(item) if isinstance(item, (list, dict, set)) else item
-
-
-def retry_if_session_inactive(context_var_name='context'):
-    """Retries only if the session in the context is inactive.
-
-    Calls a retry_db_errors wrapped version of the function if the context's
-    session passed in is inactive, otherwise it just calls the function
-    directly. This is useful to avoid retrying things inside of a transaction
-    which is ineffective for DB races/errors.
-
-    This should be used in all cases where retries are desired and the method
-    accepts a context.
-    """
-    def decorator(f):
-        try:
-            # NOTE(kevinbenton): we use pecan's util function here because it
-            # deals with the horrors of finding args of already decorated
-            # functions
-            ctx_arg_index = p_util.getargspec(f).args.index(context_var_name)
-        except ValueError:
-            raise RuntimeError("Could not find position of var %s" %
-                               context_var_name)
-        f_with_retry = api.retry_db_errors(f)
-
-        @six.wraps(f)
-        def wrapped(*args, **kwargs):
-            # only use retry wrapper if we aren't nested in an active
-            # transaction
-            if context_var_name in kwargs:
-                context = kwargs[context_var_name]
-            else:
-                context = args[ctx_arg_index]
-            method = f if context.session.is_active else f_with_retry
-            return method(*args, **kwargs)
-        return wrapped
-    return decorator
 
 
 @event.listens_for(orm.session.Session, "after_flush")

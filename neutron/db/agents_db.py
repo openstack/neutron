@@ -25,7 +25,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.exceptions import availability_zone as az_exc
@@ -43,7 +43,6 @@ from neutron.api.rpc.callbacks import version_manager
 from neutron.common import constants as n_const
 from neutron.conf.agent.database import agents_db
 from neutron.db import _model_query as model_query
-from neutron.db import api as db_api
 from neutron.db.models import agent as agent_model
 from neutron.extensions import _availability_zone_filter_lib as azfil_ext
 from neutron.extensions import agent as ext_agent
@@ -305,7 +304,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
         return [self._make_agent_dict(agent, fields=fields)
                 for agent in agents]
 
-    @lib_db_api.retry_db_errors
+    @db_api.retry_db_errors
     def agent_health_check(self):
         """Scan agents and log if some are considered dead."""
         agents = self.get_agents(context.get_admin_context(),

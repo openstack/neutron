@@ -18,6 +18,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
+from neutron_lib.db import api as lib_db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
@@ -183,7 +184,7 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
                         segment=segment_dict)
 
 
-@db_api.retry_if_session_inactive()
+@lib_db_api.retry_if_session_inactive()
 @lockutils.synchronized('update_segment_host_mapping')
 def update_segment_host_mapping(context, host, current_segment_ids):
     with db_api.context_manager.writer.using(context):
