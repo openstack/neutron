@@ -28,8 +28,11 @@ class ExceptionTranslationHook(hooks.PecanHook):
     def on_error(self, state, e):
         language = None
         if state.request.accept_language:
-            language = state.request.accept_language.best_match(
-                oslo_i18n.get_available_languages('neutron'))
+            all_languages = oslo_i18n.get_available_languages('neutron')
+            language = state.request.accept_language.lookup(all_languages,
+                default='fake_LANG')
+            if language == 'fake_LANG':
+                language = None
         exc = api_common.convert_exception_to_http_exc(e, faults.FAULT_MAP,
                                                        language)
         if hasattr(exc, 'code') and 400 <= exc.code < 500:
