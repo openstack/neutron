@@ -32,7 +32,9 @@
           export DEVSTACK_GATE_CONFIGDRIVE=0
           export DEVSTACK_GATE_GRENADE=pullup
           # Test DVR upgrade on multinode
-          export PROJECTS="openstack-dev/grenade $PROJECTS"
+          # Grenade needs to clone the placement repo on the Stein side since
+          # the repo did not exist in Rocky.
+          export PROJECTS="openstack-dev/grenade openstack/placement $PROJECTS"
           export DEVSTACK_GATE_NEUTRON_DVR=1
           export BRANCH_OVERRIDE=default
           if [ "$BRANCH_OVERRIDE" != "default" ] ; then
