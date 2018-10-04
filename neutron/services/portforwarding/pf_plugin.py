@@ -41,7 +41,7 @@ from neutron.db import db_base_plugin_common
 from neutron.extensions import floating_ip_port_forwarding as fip_pf
 from neutron.objects import base as base_obj
 from neutron.objects import port_forwarding as pf
-from neutron.objects import router
+from neutron.objects import router as l3_obj
 from neutron.services.portforwarding.common import exceptions as pf_exc
 
 LOG = logging.getLogger(__name__)
@@ -203,7 +203,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                     pf_objs = pf.PortForwarding.get_objects(
                         context, floatingip_id=pf_resource.floatingip_id)
                     if len(pf_objs) == 1 and pf_objs[0].id == pf_resource.id:
-                        fip_obj = router.FloatingIP.get_object(
+                        fip_obj = l3_obj.FloatingIP.get_object(
                             context, id=pf_resource.floatingip_id)
                         fip_obj.update_fields({'router_id': None})
                         fip_obj.update()
@@ -305,7 +305,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
 
             if not fip_obj.router_id:
                 values = {'router_id': router_id, 'fixed_port_id': None}
-                router.FloatingIP.update_objects(
+                l3_obj.FloatingIP.update_objects(
                     context, values, id=floatingip_id)
             try:
                 pf_obj.create()
@@ -413,7 +413,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 return (objs[0], param)
 
     def _get_fip_obj(self, context, fip_id):
-        fip_obj = router.FloatingIP.get_object(context, id=fip_id)
+        fip_obj = l3_obj.FloatingIP.get_object(context, id=fip_id)
         if not fip_obj:
             raise lib_l3_exc.FloatingIPNotFound(floatingip_id=fip_id)
         return fip_obj
