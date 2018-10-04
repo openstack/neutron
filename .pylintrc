@@ -12,6 +12,7 @@ disable=
 # "F" Fatal errors that prevent further processing
  import-error,
 # "I" Informational noise
+ c-extension-no-member,
  locally-disabled,
 # "E" Error for important programming issues (likely bugs)
  access-member-before-definition,
@@ -31,6 +32,7 @@ disable=
  expression-not-assigned,
  fixme,
  global-statement,
+ keyword-arg-before-vararg,
  literal-comparison,
  no-init,
  non-parent-init-called,
@@ -67,6 +69,7 @@ disable=
  consider-merging-isinstance,
  consider-using-ternary,
  duplicate-code,
+ inconsistent-return-statements,
  interface-not-implemented,
  no-else-return,
  no-self-use,
