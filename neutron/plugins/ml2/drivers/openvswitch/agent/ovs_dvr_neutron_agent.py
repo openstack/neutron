@@ -483,25 +483,25 @@ class OVSDVRNeutronAgent(object):
 
     def _bind_centralized_snat_port_on_dvr_subnet(self, port, lvm,
                                                   fixed_ips, device_owner):
-        # since centralized-SNAT (CSNAT) port must have only one fixed
-        # IP, directly use fixed_ips[0]
-        fixed_ip = fixed_ips[0]
+        # We only pass the subnet uuid so the server code will correctly
+        # use the gateway_ip value from the subnet when looking up the
+        # centralized-SNAT (CSNAT) port, get it early from the first fixed_ip.
+        subnet_uuid = fixed_ips[0]['subnet_id']
         if port.vif_id in self.local_ports:
             # throw an error if CSNAT port is already on a different
             # dvr routed subnet
             ovsport = self.local_ports[port.vif_id]
             subs = list(ovsport.get_subnets())
-            if subs[0] == fixed_ip['subnet_id']:
+            if subs[0] == subnet_uuid:
                 return
             LOG.error("Centralized-SNAT port %(port)s on subnet "
                       "%(port_subnet)s already seen on a different "
                       "subnet %(orig_subnet)s", {
                           "port": port.vif_id,
-                          "port_subnet": fixed_ip['subnet_id'],
+                          "port_subnet": subnet_uuid,
                           "orig_subnet": subs[0],
                       })
             return
-        subnet_uuid = fixed_ip['subnet_id']
         ldm = None
         subnet_info = None
         if subnet_uuid not in self.local_dvr_map:
