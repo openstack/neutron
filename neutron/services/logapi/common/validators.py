@@ -101,7 +101,8 @@ class ResourceValidateRequest(object):
         return self.validate_methods
 
     def validate_request(self, context, log_data):
-        """
+        """Validate request
+
         This method will get validated method according to resource_type. An
         InvalidLogResourceType exception will be raised if there is no logging
         driver that supports resource_type as logging resource. In addition,

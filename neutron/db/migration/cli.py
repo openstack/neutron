@@ -494,7 +494,8 @@ def _get_head_file_path(config):
 
 
 def _get_heads_file_path(config):
-    '''
+    '''Get heads file path
+
     Return the path of the file that was once used to maintain the list of
     latest heads.
     '''
@@ -504,18 +505,14 @@ def _get_heads_file_path(config):
 
 
 def _get_contract_head_file_path(config):
-    '''
-    Return the path of the file that is used to maintain contract head
-    '''
+    '''Return the path of the file that is used to maintain contract head'''
     return os.path.join(
         _get_root_versions_dir(config),
         CONTRACT_HEAD_FILENAME)
 
 
 def _get_expand_head_file_path(config):
-    '''
-    Return the path of the file that is used to maintain expand head
-    '''
+    '''Return the path of the file that is used to maintain expand head'''
     return os.path.join(
         _get_root_versions_dir(config),
         EXPAND_HEAD_FILENAME)

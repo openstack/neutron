@@ -87,8 +87,7 @@ class NetnsCleanupTest(base.BaseSudoTestCase):
 
     @staticmethod
     def _launch_processes(namespaces):
-        """
-        Launch processes in the specified namespaces.
+        """Launch processes in the specified namespaces.
 
         This function will spawn processes inside the given namespaces:
                 - 6 processes listening on tcp ports (parent + 5 children)

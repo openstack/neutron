@@ -48,8 +48,7 @@ def get_inspector():
 
 
 def get_tables():
-    """
-    Returns hardcoded list of tables which have ``tenant_id`` column.
+    """Returns hardcoded list of tables which have ``tenant_id`` column.
 
     DB head can be changed. To prevent possible problems, when models will be
     updated, return hardcoded list of tables, up-to-date for this day.

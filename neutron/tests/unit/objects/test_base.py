@@ -282,8 +282,8 @@ class FakeNeutronObjectUniqueKey(base.NeutronDbObject):
 
 @base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObjectRenamedField(base.NeutronDbObject):
-    """
-    Testing renaming the parameter from DB to NeutronDbObject
+    """Testing renaming the parameter from DB to NeutronDbObject
+
     For tests:
         - db fields: id, field_db, field2
         - object: id, field_ovo, field2

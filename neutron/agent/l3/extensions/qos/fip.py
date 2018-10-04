@@ -30,7 +30,8 @@ LOG = logging.getLogger(__name__)
 
 class RouterFipRateLimitMaps(qos_base.RateLimitMaps):
     def __init__(self):
-        """
+        """Initialize RouterFipRateLimitMaps
+
         The router_floating_ips will be:
             router_floating_ips = {
                 router_id_1: set(fip1, fip2),

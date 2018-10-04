@@ -1744,7 +1744,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def update_port_status(self, context, port_id, status, host=None,
                            network=None):
-        """
+        """Update port status
+
         Returns port_id (non-truncated uuid) if the port exists.
         Otherwise returns None.
         'network' is deprecated and has no effect

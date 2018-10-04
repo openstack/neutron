@@ -2282,7 +2282,8 @@ class TestOvsNeutronAgent(object):
         self.assertEqual([], ofport_changed_ports)
 
     def test__setup_tunnel_port_while_new_mapping_is_added(self):
-        """
+        """Test setup_tunnel_port while adding a new mapping
+
         Test that _setup_tunnel_port doesn't fail if new vlan mapping is
         added in a different coroutine while iterating over existing mappings.
         See bug 1449944 for more info.

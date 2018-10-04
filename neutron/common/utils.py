@@ -295,7 +295,8 @@ def _hex_format(port, mask=0):
 
 
 def _gen_rules_port_min(port_min, top_bit):
-    """
+    """Generate rules for port_min
+
     Encode a port range range(port_min, (port_min | (top_bit - 1)) + 1) into
     a set of bit value/masks.
     """
@@ -376,7 +377,8 @@ def _gen_rules_port_min(port_min, top_bit):
 
 
 def _gen_rules_port_max(port_max, top_bit):
-    """
+    """Generate rules for port_max
+
     Encode a port range range(port_max & ~(top_bit - 1), port_max + 1) into
     a set of bit value/masks.
     """
@@ -624,8 +626,7 @@ def transaction_guard(f):
 
 
 def wait_until_true(predicate, timeout=60, sleep=1, exception=None):
-    """
-    Wait until callable predicate is evaluated as True
+    """Wait until callable predicate is evaluated as True
 
     :param predicate: Callable deciding whether waiting should continue.
     Best practice is to instantiate predicate with functools.partial()
@@ -662,7 +663,8 @@ class _AuthenticBase(object):
 
 
 class AuthenticEUI(_AuthenticBase, netaddr.EUI):
-    '''
+    '''AuthenticEUI class
+
     This class retains the format of the MAC address string passed during
     initialization.
 
@@ -672,7 +674,8 @@ class AuthenticEUI(_AuthenticBase, netaddr.EUI):
 
 
 class AuthenticIPNetwork(_AuthenticBase, netaddr.IPNetwork):
-    '''
+    '''AuthenticIPNetwork class
+
     This class retains the format of the IP network string passed during
     initialization.
 

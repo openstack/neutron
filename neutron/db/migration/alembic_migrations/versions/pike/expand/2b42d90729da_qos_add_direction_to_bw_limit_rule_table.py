@@ -58,7 +58,8 @@ def upgrade():
 
 
 def expand_drop_exceptions():
-    """
+    """Drop and replace the QoS policy foreign key contraint
+
     Drop the existing QoS policy foreign key uniq constraint and then replace
     it with new unique constraint for pair (policy_id, direction).
 

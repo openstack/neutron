@@ -46,8 +46,7 @@ def upgrade():
 
 
 def contract_creation_exceptions():
-    """
-    Return create exceptions.
+    """Return create exceptions.
 
     These elements depend on the networksegments table which was renamed
     in the contract branch.

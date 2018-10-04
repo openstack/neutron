@@ -119,9 +119,7 @@ def get_rootwrap_daemon_cmd():
 
 class AttributeDict(dict):
 
-    """
-    Provide attribute access (dict.key) to dictionary values.
-    """
+    """Provide attribute access (dict.key) to dictionary values."""
 
     def __getattr__(self, name):
         """Allow attribute access for all keys in the dict."""

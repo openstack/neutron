@@ -287,8 +287,7 @@ class DVRResourceOperationHandler(object):
     def _delete_dvr_internal_ports(self, event, trigger, resource,
                                    context, router, network_id,
                                    new_network_id, **kwargs):
-        """
-        GW port AFTER_DELETE event handler to cleanup DVR ports.
+        """GW port AFTER_DELETE event handler to cleanup DVR ports.
 
         This event is emitted when a router gateway port is being deleted,
         so go ahead and delete the csnat ports and the floatingip

@@ -110,9 +110,7 @@ class OVSPort(object):
 
 @profiler.trace_cls("ovs_dvr_agent")
 class OVSDVRNeutronAgent(object):
-    '''
-    Implements OVS-based DVR(Distributed Virtual Router), for overlay networks.
-    '''
+    '''Implements OVS-based DVR (Distributed Virtual Router) agent'''
     # history
     #   1.0 Initial version
 

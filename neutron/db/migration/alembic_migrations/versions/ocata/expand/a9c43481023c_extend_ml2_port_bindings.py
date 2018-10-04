@@ -60,7 +60,8 @@ def upgrade():
 
 
 def expand_drop_exceptions():
-    """
+    """Drop and extend the ML2 port bindings key contraint
+
     Drop the existing primary key constraint and then extend it to include
     host as the primary key to support multiple bindings for the same port.
     This is needed to use drop in expand migration to pass test_branches.

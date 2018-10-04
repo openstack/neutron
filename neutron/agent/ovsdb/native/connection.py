@@ -31,8 +31,8 @@ Connection = moves.moved_class(_connection.Connection, 'Connection', __name__)
 
 
 def configure_ssl_conn():
-    """
-    Configures required settings for an SSL based OVSDB client connection
+    """Configures required settings for an SSL based OVSDB client connection
+
     :return: None
     """
 

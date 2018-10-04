@@ -780,9 +780,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         self.assertEqual(expected_res, [n['id'] for n in item_res])
 
     def _compare_resource(self, observed_res, expected_res, res_name):
-        '''
-           Compare the observed and expected resources (ie compare subnets)
-        '''
+        '''Compare the observed and expected resources (ie compare subnets)'''
         for k in expected_res:
             self.assertIn(k, observed_res[res_name])
             if isinstance(expected_res[k], list):

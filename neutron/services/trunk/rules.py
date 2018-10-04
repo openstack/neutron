@@ -228,7 +228,8 @@ class SubPortsValidator(object):
         return subport_mtus
 
     def _get_port_mtu(self, context, port_id):
-        """
+        """Get port MTU
+
         Return MTU for the network where the given port belongs to.
         If the network or port cannot be obtained, or if MTU is not defined,
         returns None.

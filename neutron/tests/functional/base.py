@@ -36,8 +36,7 @@ class BaseLoggingTestCase(base.BaseTestCase):
 
 
 class BaseSudoTestCase(BaseLoggingTestCase):
-    """
-    Base class for tests requiring invocation of commands via a root helper.
+    """Base class for tests requiring invocation of commands via a root helper.
 
     This class skips (during setUp) its tests unless sudo is enabled, ie:
     OS_SUDO_TESTING is set to '1' or 'True' in the test execution environment.

@@ -48,7 +48,8 @@ def setup_conf():
 
 
 def get_bridge_deletable_ports(br):
-    """
+    """Get bridge deletable ports
+
     Return a list of OVS Bridge ports, excluding the ports who should not be
     cleaned. such ports are tagged with the 'skip_cleanup' key in external_ids.
     """
