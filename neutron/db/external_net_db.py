@@ -31,7 +31,6 @@ from neutron._i18n import _
 from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import models_v2
-from neutron.db import rbac_db_models as rbac_db
 from neutron.extensions import rbac as rbac_ext
 from neutron.objects import network as net_obj
 from neutron.objects import router as l3_obj
@@ -98,9 +97,11 @@ class External_net_db_mixin(object):
         if external:
             net_obj.ExternalNetwork(
                 context, network_id=net_data['id']).create()
-            context.session.add(rbac_db.NetworkRBAC(
-                  object_id=net_data['id'], action='access_as_external',
-                  target_tenant='*', tenant_id=net_data['tenant_id']))
+            net_rbac_args = {'project_id': net_data['tenant_id'],
+                             'object_id': net_data['id'],
+                             'action': 'access_as_external',
+                             'target_tenant': '*'}
+            net_obj.NetworkRBAC(context, **net_rbac_args).create()
         net_data[extnet_apidef.EXTERNAL] = external
 
     def _process_l3_update(self, context, net_data, req_data, allow_all=True):
@@ -117,9 +118,11 @@ class External_net_db_mixin(object):
                 context, network_id=net_id).create()
             net_data[extnet_apidef.EXTERNAL] = True
             if allow_all:
-                context.session.add(rbac_db.NetworkRBAC(
-                      object_id=net_id, action='access_as_external',
-                      target_tenant='*', tenant_id=net_data['tenant_id']))
+                net_rbac_args = {'project_id': net_data['tenant_id'],
+                                 'object_id': net_id,
+                                 'action': 'access_as_external',
+                                 'target_tenant': '*'}
+                net_obj.NetworkRBAC(context, **net_rbac_args).create()
         else:
             # must make sure we do not have any external gateway ports
             # (and thus, possible floating IPs) on this network before
@@ -131,9 +134,8 @@ class External_net_db_mixin(object):
 
             net_obj.ExternalNetwork.delete_objects(
                 context, network_id=net_id)
-            for rbdb in (context.session.query(rbac_db.NetworkRBAC).filter_by(
-                         object_id=net_id, action='access_as_external')):
-                context.session.delete(rbdb)
+            net_obj.NetworkRBAC.delete_objects(
+                    context, object_id=net_id, action='access_as_external')
             net_data[extnet_apidef.EXTERNAL] = False
 
     def _process_l3_delete(self, context, network_id):
@@ -173,9 +175,8 @@ class External_net_db_mixin(object):
             return
         # If the network still have rbac policies, we should not
         # update external attribute.
-        if context.session.query(rbac_db.NetworkRBAC.object_id).filter(
-            rbac_db.NetworkRBAC.object_id == policy['object_id'],
-            rbac_db.NetworkRBAC.action == 'access_as_external').count():
+        if net_obj.NetworkRBAC.count(context, object_id=policy['object_id'],
+                                     action='access_as_external'):
             return
         net = self.get_network(context, policy['object_id'])
         self._process_l3_update(context, net,
@@ -199,7 +200,6 @@ class External_net_db_mixin(object):
             device_owner=constants.DEVICE_OWNER_ROUTER_GW,
             network_id=policy['object_id'])
         gw_ports = [gw_port[0] for gw_port in gw_ports]
-        rbac = rbac_db.NetworkRBAC
         if policy['target_tenant'] != '*':
             filters = {
                 'gw_port_id': gw_ports,
@@ -207,10 +207,9 @@ class External_net_db_mixin(object):
             }
             # if there is a wildcard entry we can safely proceed without the
             # router lookup because they will have access either way
-            if context.session.query(rbac_db.NetworkRBAC.object_id).filter(
-                    rbac.object_id == policy['object_id'],
-                    rbac.action == 'access_as_external',
-                    rbac.target_tenant == '*').count():
+            if net_obj.NetworkRBAC.count(
+                    context, object_id=policy['object_id'],
+                    action='access_as_external', target_tenant='*'):
                 return
             router_exist = l3_obj.Router.objects_exist(context, **filters)
         else:
@@ -223,14 +222,11 @@ class External_net_db_mixin(object):
                         "everyone.")
                 raise rbac_ext.RbacPolicyInUse(object_id=policy['object_id'],
                                                details=msg)
-            projects_with_entries = (
-                context.session.query(rbac.target_tenant).
-                filter(rbac.object_id == policy['object_id'],
-                       rbac.action == 'access_as_external',
-                       rbac.target_tenant != '*'))
-            projects_with_entries = [projects_with_entry[0]
-                                     for projects_with_entry
-                                     in projects_with_entries]
+            projects = net_obj.NetworkRBAC.get_projects(
+                context, object_id=policy['object_id'],
+                action='access_as_external')
+            projects_with_entries = [project for project in projects
+                                     if project != '*']
             if new_project:
                 projects_with_entries.append(new_project)
             router_exist = l3_obj.Router.check_routers_not_owned_by_projects(
