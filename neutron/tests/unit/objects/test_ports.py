@@ -235,6 +235,7 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             {'network_id': network_id,
              'fixed_ips': {'subnet_id': subnet_id,
                            'network_id': network_id},
+             'device_owner': 'not_a_router',
              'binding_levels': {'segment_id': segment_id}})
 
     def test_security_group_ids(self):
@@ -459,3 +460,21 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         primitive['versioned_object.data'].pop('bindings')
         port_v1_4_no_binding = port_v1_4.obj_from_primitive(primitive)
         port_v1_4_no_binding.obj_to_primitive(target_version='1.3')
+
+    def test_get_ports_ids_by_security_groups_except_router(self):
+        sg_id = self._create_test_security_group_id()
+        filter_owner = constants.ROUTER_INTERFACE_OWNERS_SNAT
+        obj = self._make_object(self.obj_fields[0])
+        obj.create()
+        obj.security_group_ids = {sg_id}
+        obj.update()
+        self.assertEqual(1, len(
+            ports.Port.get_ports_ids_by_security_groups(
+                self.context, security_group_ids=(sg_id, ),
+                excluded_device_owners=filter_owner)))
+        obj.device_owner = constants.DEVICE_OWNER_ROUTER_SNAT
+        obj.update()
+        self.assertEqual(0, len(
+            ports.Port.get_ports_ids_by_security_groups(
+                self.context, security_group_ids=(sg_id, ),
+                excluded_device_owners=filter_owner)))
