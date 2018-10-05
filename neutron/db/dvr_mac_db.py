@@ -59,10 +59,8 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         return self._plugin
 
     @staticmethod
-    @registry.receives(resources.AGENT, [events.BEFORE_DELETE])
     @db_api.retry_if_session_inactive()
-    def _delete_mac_associated_with_agent(resource, event, trigger, context,
-                                          agent, **kwargs):
+    def _db_delete_mac_associated_with_agent(context, agent):
         host = agent['host']
         plugin = directory.get_plugin()
         if [a for a in plugin.get_agents(context, filters={'host': [host]})
@@ -77,6 +75,14 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         # notify remaining agents so they cleanup flows
         dvr_macs = plugin.get_dvr_mac_address_list(context)
         plugin.notifier.dvr_mac_address_update(context, dvr_macs)
+
+    @staticmethod
+    @registry.receives(resources.AGENT, [events.BEFORE_DELETE])
+    def _delete_mac_associated_with_agent(resource, event,
+                                          trigger, payload=None):
+
+        DVRDbMixin._db_delete_mac_associated_with_agent(
+            payload.context, payload.latest_state)
 
     @db_api.context_manager.reader
     def _get_dvr_mac_address_by_host(self, context, host):

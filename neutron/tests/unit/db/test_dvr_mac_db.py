@@ -94,8 +94,9 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
         agent2 = {'host': 'host_1', 'id': 'a2'}
         with mock.patch.object(plugin, 'get_agents', return_value=[agent2]):
             with mock.patch.object(plugin, 'notifier') as notifier:
-                registry.notify(resources.AGENT, events.BEFORE_DELETE, self,
-                                context=self.ctx, agent=agent1)
+                registry.publish(resources.AGENT, events.BEFORE_DELETE, self,
+                                 payload=events.DBEventPayload(
+                                     self.ctx, states=(agent1,)))
         mac_list = self.mixin.get_dvr_mac_address_list(self.ctx)
         for mac in mac_list:
             self.assertIsInstance(mac, dict)
@@ -110,8 +111,9 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
         self._create_dvr_mac_entry('host_2', mac_2)
         agent = {'host': 'host_1', 'id': 'a1'}
         with mock.patch.object(plugin, 'notifier') as notifier:
-            registry.notify(resources.AGENT, events.BEFORE_DELETE, self,
-                            context=self.ctx, agent=agent)
+            registry.publish(resources.AGENT, events.BEFORE_DELETE, self,
+                             payload=events.DBEventPayload(
+                                 self.ctx, states=(agent,)))
         mac_list = self.mixin.get_dvr_mac_address_list(self.ctx)
         self.assertEqual(1, len(mac_list))
         for mac in mac_list:
