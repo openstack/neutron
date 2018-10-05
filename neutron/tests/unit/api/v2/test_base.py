@@ -30,7 +30,7 @@ from oslo_db import exception as db_exc
 from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
 import six
-import six.moves.urllib.parse as urlparse
+from six.moves import urllib
 import webob
 from webob import exc
 import webtest
@@ -592,16 +592,16 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         self.assertEqual(1, len(next_links))
         self.assertEqual(1, len(previous_links))
 
-        url = urlparse.urlparse(next_links[0]['href'])
+        url = urllib.parse.urlparse(next_links[0]['href'])
         self.assertEqual(url.path, _get_path('networks'))
         params['marker'] = [id2]
-        self.assertEqual(params, urlparse.parse_qs(url.query))
+        self.assertEqual(params, urllib.parse.parse_qs(url.query))
 
-        url = urlparse.urlparse(previous_links[0]['href'])
+        url = urllib.parse.urlparse(previous_links[0]['href'])
         self.assertEqual(url.path, _get_path('networks'))
         params['marker'] = [id1]
         params['page_reverse'] = ['True']
-        self.assertEqual(params, urlparse.parse_qs(url.query))
+        self.assertEqual(params, urllib.parse.parse_qs(url.query))
 
     def test_list_pagination_with_last_page(self):
         id = str(_uuid())
@@ -631,12 +631,12 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                 previous_links.append(r)
         self.assertEqual(1, len(previous_links))
 
-        url = urlparse.urlparse(previous_links[0]['href'])
+        url = urllib.parse.urlparse(previous_links[0]['href'])
         self.assertEqual(url.path, _get_path('networks'))
         expect_params = params.copy()
         expect_params['marker'] = [id]
         expect_params['page_reverse'] = ['True']
-        self.assertEqual(expect_params, urlparse.parse_qs(url.query))
+        self.assertEqual(expect_params, urllib.parse.parse_qs(url.query))
 
     def test_list_pagination_with_empty_page(self):
         return_value = []
@@ -657,12 +657,12 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                     previous_links.append(r)
         self.assertEqual(1, len(previous_links))
 
-        url = urlparse.urlparse(previous_links[0]['href'])
+        url = urllib.parse.urlparse(previous_links[0]['href'])
         self.assertEqual(url.path, _get_path('networks'))
         expect_params = params.copy()
         del expect_params['marker']
         expect_params['page_reverse'] = ['True']
-        self.assertEqual(expect_params, urlparse.parse_qs(url.query))
+        self.assertEqual(expect_params, urllib.parse.parse_qs(url.query))
 
     def test_list_pagination_reverse_with_last_page(self):
         id = str(_uuid())
@@ -693,13 +693,13 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                 next_links.append(r)
         self.assertEqual(1, len(next_links))
 
-        url = urlparse.urlparse(next_links[0]['href'])
+        url = urllib.parse.urlparse(next_links[0]['href'])
         self.assertEqual(url.path, _get_path('networks'))
         expected_params = params.copy()
         del expected_params['page_reverse']
         expected_params['marker'] = [id]
         self.assertEqual(expected_params,
-                         urlparse.parse_qs(url.query))
+                         urllib.parse.parse_qs(url.query))
 
     def test_list_pagination_reverse_with_empty_page(self):
         return_value = []
@@ -720,12 +720,12 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                     next_links.append(r)
         self.assertEqual(1, len(next_links))
 
-        url = urlparse.urlparse(next_links[0]['href'])
+        url = urllib.parse.urlparse(next_links[0]['href'])
         self.assertEqual(url.path, _get_path('networks'))
         expect_params = params.copy()
         del expect_params['marker']
         del expect_params['page_reverse']
-        self.assertEqual(expect_params, urlparse.parse_qs(url.query))
+        self.assertEqual(expect_params, urllib.parse.parse_qs(url.query))
 
     def test_create(self):
         net_id = _uuid()
