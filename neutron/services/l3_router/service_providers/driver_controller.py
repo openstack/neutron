@@ -173,7 +173,7 @@ class DriverController(object):
                 registry.publish(
                     resources.ROUTER_CONTROLLER,
                     events.PRECOMMIT_ADD_ASSOCIATION,
-                    trigger, payload=payload),
+                    trigger, payload=payload)
 
     def get_provider_for_router(self, context, router_id):
         """Return the provider driver handle for a router id."""
