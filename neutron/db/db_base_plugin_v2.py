@@ -37,7 +37,6 @@ from oslo_db import exception as os_db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import uuidutils
-from sqlalchemy import and_
 from sqlalchemy import exc as sql_exc
 from sqlalchemy import not_
 
@@ -53,13 +52,13 @@ from neutron.db import db_base_plugin_common
 from neutron.db import ipam_pluggable_backend
 from neutron.db import models_v2
 from neutron.db import rbac_db_mixin as rbac_mixin
-from neutron.db import rbac_db_models as rbac_db
 from neutron.db import standardattrdescription_db as stattr_db
 from neutron import ipam
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import subnet_alloc
 from neutron import neutron_plugin_base_v2
 from neutron.objects import base as base_obj
+from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.objects import subnetpool as subnetpool_obj
@@ -222,30 +221,27 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def ensure_no_tenant_ports_on_network(self, network_id, net_tenant_id,
                                           tenant_id):
         ctx_admin = ctx.get_admin_context()
-        rb_model = rbac_db.NetworkRBAC
-        other_rbac_entries = model_query.query_with_hooks(
-            ctx_admin, rb_model).filter(
-                and_(rb_model.object_id == network_id,
-                     rb_model.action == 'access_as_shared'))
         ports = model_query.query_with_hooks(ctx_admin, models_v2.Port).filter(
             models_v2.Port.network_id == network_id)
         if tenant_id == '*':
             # for the wildcard we need to get all of the rbac entries to
             # see if any allow the remaining ports on the network.
-            other_rbac_entries = other_rbac_entries.filter(
-                rb_model.target_tenant != tenant_id)
             # any port with another RBAC entry covering it or one belonging to
             # the same tenant as the network owner is ok
-            allowed_tenants = [entry['target_tenant']
-                               for entry in other_rbac_entries]
+            other_rbac_objs = network_obj.NetworkRBAC.get_objects(
+                ctx_admin, object_id=network_id, action='access_as_shared')
+            allowed_tenants = [rbac['target_tenant'] for rbac
+                               in other_rbac_objs
+                               if rbac.target_tenant != tenant_id]
             allowed_tenants.append(net_tenant_id)
             ports = ports.filter(
                 ~models_v2.Port.tenant_id.in_(allowed_tenants))
         else:
             # if there is a wildcard rule, we can return early because it
             # allows any ports
-            query = other_rbac_entries.filter(rb_model.target_tenant == '*')
-            if query.count():
+            if network_obj.NetworkRBAC.get_object(
+                    ctx_admin, object_id=network_id, action='access_as_shared',
+                    target_tenant='*'):
                 return
             ports = ports.filter(models_v2.Port.tenant_id == tenant_id)
         if ports.count():
@@ -290,14 +286,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     def _validate_projects_have_access_to_network(self, network, project_ids):
         ctx_admin = ctx.get_admin_context()
-        rb_model = rbac_db.NetworkRBAC
-        other_rbac_entries = model_query.query_with_hooks(
-            ctx_admin, rb_model).filter(
-                and_(rb_model.object_id == network.id,
-                     rb_model.action == 'access_as_shared',
-                     rb_model.target_tenant != "*"))
-        allowed_projects = {entry['target_tenant']
-                            for entry in other_rbac_entries}
+        other_rbac_objs = network_obj.NetworkRBAC.get_objects(
+            ctx_admin, object_id=network.id, action='access_as_shared')
+        allowed_projects = {rbac['target_tenant'] for rbac in other_rbac_objs
+                            if rbac.target_tenant != '*'}
         allowed_projects.add(network.project_id)
         if project_ids - allowed_projects:
             raise n_exc.InvalidSharedSetting(network=network.name)
@@ -403,12 +395,14 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     'status': n.get('status', constants.NET_STATUS_ACTIVE),
                     'description': n.get('description')}
             network = models_v2.Network(**args)
-            if n['shared']:
-                entry = rbac_db.NetworkRBAC(
-                    network=network, action='access_as_shared',
-                    target_tenant='*', tenant_id=network['tenant_id'])
-                context.session.add(entry)
             context.session.add(network)
+            if n['shared']:
+                np_rbac_args = {'project_id': network.project_id,
+                                'object_id': network.id,
+                                'action': 'access_as_shared',
+                                'target_tenant': '*'}
+                np_rbac_obj = network_obj.NetworkRBAC(context, **np_rbac_args)
+                np_rbac_obj.create()
         return network
 
     @lib_db_api.retry_if_session_inactive()
@@ -428,12 +422,17 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 self._validate_shared_update(context, id, network, n)
                 update_shared = n.pop('shared')
                 if update_shared and not entry:
-                    entry = rbac_db.NetworkRBAC(
-                        network=network, action='access_as_shared',
-                        target_tenant='*', tenant_id=network['tenant_id'])
-                    context.session.add(entry)
+                    np_rbac_args = {'project_id': network.project_id,
+                                    'object_id': network.id,
+                                    'action': 'access_as_shared',
+                                    'target_tenant': '*'}
+                    np_rbac_obj = network_obj.NetworkRBAC(context,
+                                                          **np_rbac_args)
+                    np_rbac_obj.create()
                 elif not update_shared and entry:
-                    network.rbac_entries.remove(entry)
+                    network_obj.NetworkRBAC.delete_objects(
+                        context, object_id=network.id,
+                        action='access_as_shared', target_tenant='*')
 
                 # TODO(ihrachys) Below can be removed when we make sqlalchemy
                 # event listeners in neutron/db/api.py to refresh expired

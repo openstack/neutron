@@ -60,7 +60,7 @@ object_data = {
     'NetworkDhcpAgentBinding': '1.0-6eeceb5fb4335cd65a305016deb41c68',
     'NetworkDNSDomain': '1.0-420db7910294608534c1e2e30d6d8319',
     'NetworkPortSecurity': '1.0-b30802391a87945ee9c07582b4ff95e3',
-    'NetworkRBAC': '1.0-c8a67f39809c5a3c8c7f26f2f2c620b2',
+    'NetworkRBAC': '1.1-7f8baaf9ea4257a26408454ad0065adb',
     'NetworkSegment': '1.0-57b7f2960971e3b95ded20cbc59244a8',
     'Port': '1.4-1b6183bccfc2cd210919a1a72faefce1',
     'PortBinding': '1.0-3306deeaa6deb01e33af06777d48d578',
