@@ -10,3 +10,4 @@ Command-Line Interface Reference
 
    neutron-debug
    neutron-sanity-check
+   neutron-status
