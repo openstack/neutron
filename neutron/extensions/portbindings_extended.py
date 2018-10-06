@@ -52,9 +52,6 @@ class Portbindings_extended(api_extensions.ExtensionDescriptor):
 
         params = pbe_ext.SUB_RESOURCE_ATTRIBUTE_MAP[
             pbe_ext.COLLECTION_NAME]['parameters']
-        # TODO(hongbin): Delete _populate_is_filter_keyword once neutron-lib
-        # containing https://review.openstack.org/#/c/583437/ is released.
-        cls._populate_is_filter_keyword(params)
         parent = pbe_ext.SUB_RESOURCE_ATTRIBUTE_MAP[
             pbe_ext.COLLECTION_NAME]['parent']
         controller = base.create_resource(
@@ -78,11 +75,3 @@ class Portbindings_extended(api_extensions.ExtensionDescriptor):
         ]
 
         return exts
-
-    @classmethod
-    def _populate_is_filter_keyword(cls, params):
-        filter_keys = [pbe_ext.HOST, pbe_ext.VIF_TYPE, pbe_ext.VNIC_TYPE,
-                       pbe_ext.STATUS]
-        for name in params:
-            if name in filter_keys:
-                params[name]['is_filter'] = True
