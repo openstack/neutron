@@ -32,6 +32,7 @@ from neutron.agent.linux import utils as agent_utils
 from neutron.agent import rpc as agent_rpc
 from neutron.common import cache_utils as cache
 from neutron.common import constants as n_const
+from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.conf.agent.metadata import config
@@ -172,8 +173,10 @@ class MetadataProxyHandler(object):
             'X-Instance-ID-Signature': self._sign_instance_id(instance_id)
         }
 
-        nova_host_port = '%s:%s' % (self.conf.nova_metadata_host,
-                                    self.conf.nova_metadata_port)
+        nova_host_port = ipv6_utils.valid_ipv6_url(
+            self.conf.nova_metadata_host,
+            self.conf.nova_metadata_port)
+
         url = urlparse.urlunsplit((
             self.conf.nova_metadata_protocol,
             nova_host_port,
