@@ -86,7 +86,7 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         self._prepare_env()
 
     def _prepare_env(self):
-        self.router = self._create_router()
+        self.router = self._create_router(distributed=True)
         self.ext_net = self._create_network(
             self.fmt, 'ext-net', True, arg_list=("router:external",),
             **{"router:external": True}).json['network']
@@ -461,3 +461,24 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         self._simulate_concurrent_requests_process_and_raise(funcs, args_list)
         self.assertEqual([], self.pf_plugin.get_floatingip_port_forwardings(
             self.context, floatingip_id=self.fip['id']))
+
+    def test_create_floatingip_port_forwarding_port_in_use(self):
+        res = self.pf_plugin.create_floatingip_port_forwarding(
+            self.context, self.fip['id'], self.port_forwarding)
+        expected = {
+            "external_port": 2225,
+            "internal_port": 25,
+            "internal_port_id": self.port['id'],
+            "protocol": "tcp",
+            "internal_ip_address": self.port['fixed_ips'][0]['ip_address'],
+            'id': mock.ANY,
+            'router_id': self.router['id'],
+            'floating_ip_address': self.fip['floating_ip_address'],
+            'floatingip_id': self.fip['id']}
+        self.assertEqual(expected, res)
+
+        fip_2 = self._create_floatingip(self.ext_net['id'])
+        self.assertRaises(
+            pf_exc.PortHasPortForwarding,
+            self._update_floatingip,
+            fip_2['id'], {'port_id': self.port['id']})

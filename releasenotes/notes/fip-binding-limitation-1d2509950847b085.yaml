@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    If an instance port is under a dvr router, and the port already has
+    binding port forwarding(s). Neutron will no longer allow binding a
+    floating IP to that port again, because dvr floating IP traffic rules
+    will break the existing port forwarding functionality.

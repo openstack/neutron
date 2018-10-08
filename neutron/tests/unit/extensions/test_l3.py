@@ -388,6 +388,8 @@ class L3NatTestCaseMixin(object):
             # Arg must be present and not empty
             if arg in kwargs:
                 data['router'][arg] = kwargs[arg]
+        if 'distributed' in kwargs:
+            data['router']['distributed'] = bool(kwargs['distributed'])
         router_req = self.new_create_request('routers', data, fmt)
         if set_context and tenant_id:
             # create a specific auth context for this request

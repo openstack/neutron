@@ -38,6 +38,7 @@ from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import utils
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import db_base_plugin_common
+from neutron.db import l3_dvr_db
 from neutron.extensions import floating_ip_port_forwarding as fip_pf
 from neutron.objects import base as base_obj
 from neutron.objects import port_forwarding as pf
@@ -102,6 +103,27 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 port_forwarding_result.append(pf_dict)
             result_dict[apidef.COLLECTION_NAME] = port_forwarding_result
         return result_dict
+
+    @registry.receives(resources.FLOATING_IP, [events.BEFORE_CREATE,
+                                               events.BEFORE_UPDATE])
+    def _check_port_has_port_forwarding(self, resource, event,
+                                        trigger, payload=None):
+        port_id = payload.request_body['floatingip'].get('port_id')
+        if not port_id:
+            return
+
+        pf_objs = pf.PortForwarding.get_objects(
+            payload.context, internal_port_id=port_id)
+        if not pf_objs:
+            return
+        # Port may not bind to host yet, or port may migrate from one
+        # dvr_no_external host to one dvr host. So we just do not allow
+        # all dvr router's floating IP to be binded to a port which
+        # already has port forwarding.
+        router = self.l3_plugin.get_router(payload.context.elevated(),
+                                           pf_objs[0].router_id)
+        if l3_dvr_db.is_distributed_router(router):
+            raise pf_exc.PortHasPortForwarding(port_id=port_id)
 
     @registry.receives(resources.FLOATING_IP, [events.PRECOMMIT_UPDATE,
                                                events.PRECOMMIT_DELETE])
