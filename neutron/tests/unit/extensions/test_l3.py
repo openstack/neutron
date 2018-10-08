@@ -1930,19 +1930,30 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_add_gateway_notifications(self):
         call_count_total = 3
+
         with self.router() as r:
             with self.network() as n:
-                self._set_net_external(n['network']['id'])
-                with mock.patch.object(registry, 'notify') as notify:
-                    self._add_external_gateway_to_router(
-                        r['router']['id'], n['network']['id'])
-                    self.assertEqual(call_count_total, notify.call_count)
-                    expected = [mock.call(
-                                    resources.ROUTER_GATEWAY,
-                                    events.AFTER_CREATE, mock.ANY,
-                                    context=mock.ANY, gw_ips=mock.ANY,
-                                    network_id=mock.ANY, router_id=mock.ANY)]
-                    notify.assert_has_calls(expected)
+                with self.subnet(network=n) as s:
+                    self._set_net_external(n['network']['id'])
+                    with mock.patch.object(registry, 'notify') as notify:
+                        res = self._add_external_gateway_to_router(
+                            r['router']['id'], n['network']['id'],
+                            ext_ips=[{'subnet_id': s['subnet']['id'],
+                                      'ip_address': '10.0.0.4'}])
+                        self.assertEqual(call_count_total,
+                                         notify.call_count)
+
+                        gw_info = res['router']['external_gateway_info']
+                        ext_ips = gw_info['external_fixed_ips'][0]
+                        expected_gw_ips = [ext_ips['ip_address']]
+                        expected = [mock.call(
+                                        resources.ROUTER_GATEWAY,
+                                        events.AFTER_CREATE, mock.ANY,
+                                        context=mock.ANY,
+                                        gw_ips=expected_gw_ips,
+                                        network_id=n['network']['id'],
+                                        router_id=r['router']['id'])]
+                        notify.assert_has_calls(expected)
 
     def test_router_remove_interface_inuse_returns_409(self):
         with self.router() as r:
