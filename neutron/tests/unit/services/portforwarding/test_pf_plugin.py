@@ -189,6 +189,8 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
             self.pf_plugin.update_floatingip_port_forwarding,
             self.ctxt, 'pf_id', **pf_input)
 
+    @mock.patch.object(pf_plugin.PortForwardingPlugin,
+                       '_check_port_has_binding_floating_ip')
     @mock.patch.object(obj_base.NeutronDbObject, 'update_objects')
     @mock.patch.object(resources_rpc.ResourcesPushRpcApi, 'push')
     @mock.patch.object(pf_plugin.PortForwardingPlugin, '_check_router_match')
@@ -199,7 +201,8 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
     @mock.patch('neutron.objects.port_forwarding.PortForwarding')
     def test_create_floatingip_port_forwarding(
             self, mock_port_forwarding, mock_fip_get_object, mock_find_router,
-            mock_check_router_match, mock_push_api, mock_update_objects):
+            mock_check_router_match, mock_push_api, mock_update_objects,
+            mock_check_bind_fip):
         # Update fip
         pf_input = {
             'port_forwarding':
@@ -241,6 +244,8 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
             self.ctxt, mock.ANY, rpc_events.CREATED)
 
     @mock.patch.object(pf_plugin.PortForwardingPlugin,
+                       '_check_port_has_binding_floating_ip')
+    @mock.patch.object(pf_plugin.PortForwardingPlugin,
                        '_find_existing_port_forwarding')
     @mock.patch.object(pf_plugin.PortForwardingPlugin,
                        '_check_router_match')
@@ -252,7 +257,8 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
     def test_negative_create_floatingip_port_forwarding(
             self, mock_port_forwarding, mock_fip_get_object,
             mock_find_router,
-            mock_check_router_match, mock_try_find_exist):
+            mock_check_router_match, mock_try_find_exist,
+            mock_check_bind_fip):
         pf_input = {
             'port_forwarding': {
                 'internal_ip_address': '1.1.1.1',
@@ -330,3 +336,34 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         self.assertRaises(lib_exc.BadRequest,
                           self.pf_plugin._check_router_match,
                           self.ctxt, fip_obj, router_id, pf_dict)
+
+    @mock.patch.object(router.FloatingIP, 'get_objects')
+    def test_create_floatingip_port_forwarding_port_in_use(
+            self, mock_fip_get_objects):
+        pf_input = {
+            'port_forwarding':
+                {'port_forwarding': {
+                    'internal_ip_address': '1.1.1.1',
+                    'internal_port_id': 'internal_neutron_port',
+                    'floatingip_id': 'fip_id_1'}},
+            'floatingip_id': 'fip_id_1'}
+        fip_obj = mock.Mock(floating_ip_address="10.10.10.10")
+        mock_fip_get_objects.return_value = [fip_obj]
+        self.assertRaises(pf_exc.PortHasBindingFloatingIP,
+                          self.pf_plugin.create_floatingip_port_forwarding,
+                          self.ctxt, **pf_input)
+
+    @mock.patch.object(router.FloatingIP, 'get_objects')
+    def test_update_floatingip_port_forwarding_port_in_use(
+            self, mock_fip_get_objects):
+        pf_input = {
+            'port_forwarding':
+                {'port_forwarding': {
+                    'internal_ip_address': '1.1.1.1',
+                    'internal_port_id': 'internal_neutron_port',
+                    'floatingip_id': 'fip_id_2'}}}
+        fip_obj = mock.Mock(floating_ip_address="10.10.10.11")
+        mock_fip_get_objects.return_value = [fip_obj]
+        self.assertRaises(pf_exc.PortHasBindingFloatingIP,
+                          self.pf_plugin.update_floatingip_port_forwarding,
+                          self.ctxt, 'fake-pf-id', 'fip_id_2', **pf_input)
