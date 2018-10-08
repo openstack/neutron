@@ -1340,6 +1340,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _create_floatingip(self, context, floatingip,
             initial_status=constants.FLOATINGIP_STATUS_ACTIVE):
+        try:
+            registry.publish(resources.FLOATING_IP, events.BEFORE_CREATE,
+                             self, payload=events.DBEventPayload(
+                                 context, request_body=floatingip))
+        except exceptions.CallbackFailure as e:
+            # raise the underlying exception
+            raise e.errors[0].error
+
         fip = floatingip['floatingip']
         fip_id = uuidutils.generate_uuid()
 
@@ -1445,6 +1453,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         return self._create_floatingip(context, floatingip, initial_status)
 
     def _update_floatingip(self, context, id, floatingip):
+        try:
+            registry.publish(resources.FLOATING_IP, events.BEFORE_UPDATE,
+                             self, payload=events.DBEventPayload(
+                                 context, request_body=floatingip,
+                                 resource_id=id))
+        except exceptions.CallbackFailure as e:
+            # raise the underlying exception
+            raise e.errors[0].error
+
         fip = floatingip['floatingip']
         with context.session.begin(subtransactions=True):
             floatingip_obj = self._get_floatingip(context, id)
