@@ -54,6 +54,10 @@ class InvalidSubnetRequest(exceptions.BadRequest):
                 "%(reason)s")
 
 
+class IPAddressChangeNotAllowed(exceptions.BadRequest):
+    message = _("IP updates for port %(port_id)s are not allowed")
+
+
 class AllocationOnAutoAddressSubnet(exceptions.InvalidInput):
     message = _("IPv6 address %(ip)s cannot be directly "
                 "assigned to a port on subnet %(subnet_id)s as the "

@@ -1439,6 +1439,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 # conflict, bubble up a retry instead that should bring things
                 # back to sanity.
                 raise os_db_exc.RetryRequest(e)
+            except ipam_exc.IPAddressChangeNotAllowed as e:
+                raise exc.BadRequest(resource='ports', msg=e)
         return self._make_port_dict(db_port)
 
     @db_api.retry_if_session_inactive()

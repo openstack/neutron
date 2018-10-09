@@ -87,11 +87,19 @@ class L3RouterPlugin(service_base.ServicePluginBase,
                                     "l3-ha", "router_availability_zone",
                                     "l3-flavors", "qos-fip",
                                     "fip-port-details", "floatingip-pools",
-                                    "qos-gateway-ip"]
+                                    "qos-gateway-ip",
+                                    "l3-port-ip-change-not-allowed"]
 
     __native_pagination_support = True
     __native_sorting_support = True
     __filter_validation_support = True
+
+    IP_UPDATE_NOT_ALLOWED_LIST = [
+        n_const.DEVICE_OWNER_ROUTER_INTF,
+        n_const.DEVICE_OWNER_ROUTER_HA_INTF,
+        n_const.DEVICE_OWNER_HA_REPLICATED_INT,
+        n_const.DEVICE_OWNER_ROUTER_SNAT,
+        n_const.DEVICE_OWNER_DVR_INTERFACE]
 
     @resource_registry.tracked_resources(router=l3_models.Router,
                                          floatingip=l3_models.FloatingIP)

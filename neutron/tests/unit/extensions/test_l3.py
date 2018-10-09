@@ -237,8 +237,22 @@ class L3NatExtensionTestCase(test_extensions_base.ExtensionTestCase):
         instance.add_router_interface.assert_called_with(mock.ANY, router_id)
 
 
+class TestL3PluginBaseAttributes(object):
+
+    IP_UPDATE_NOT_ALLOWED_LIST = [
+        lib_constants.DEVICE_OWNER_ROUTER_INTF,
+        lib_constants.DEVICE_OWNER_ROUTER_HA_INTF,
+        lib_constants.DEVICE_OWNER_HA_REPLICATED_INT,
+        lib_constants.DEVICE_OWNER_ROUTER_SNAT,
+        lib_constants.DEVICE_OWNER_DVR_INTERFACE]
+
+    def router_supports_scheduling(self, context, router_id):
+        return True
+
+
 # This base plugin class is for tests.
-class TestL3NatBasePlugin(db_base_plugin_v2.NeutronDbPluginV2,
+class TestL3NatBasePlugin(TestL3PluginBaseAttributes,
+                          db_base_plugin_v2.NeutronDbPluginV2,
                           external_net_db.External_net_db_mixin):
 
     __native_pagination_support = True
@@ -319,7 +333,8 @@ class TestNoL3NatPlugin(TestL3NatBasePlugin):
 
 # A L3 routing service plugin class for tests with plugins that
 # delegate away L3 routing functionality
-class TestL3NatServicePlugin(common_db_mixin.CommonDbMixin,
+class TestL3NatServicePlugin(TestL3PluginBaseAttributes,
+                             common_db_mixin.CommonDbMixin,
                              l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                              l3_db.L3_NAT_db_mixin, dns_db.DNSDbMixin):
 
@@ -1397,6 +1412,30 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self.assertEqual(r['router']['id'], body['port']['device_id'])
 
             # clean-up
+            self._router_interface_action('remove',
+                                          r['router']['id'],
+                                          None,
+                                          p['port']['id'])
+
+    def test_update_router_interface_port_ip_not_allowed(self):
+        with self.router() as r, (
+            self.port()) as p:
+            body = self._router_interface_action('add',
+                                                 r['router']['id'],
+                                                 None,
+                                                 p['port']['id'])
+            self.assertIn('port_id', body)
+            self.assertEqual(p['port']['id'], body['port_id'])
+            body = self._show('ports', p['port']['id'])
+            self.assertEqual(r['router']['id'], body['port']['device_id'])
+
+            data = {'port': {'fixed_ips': [
+                {'ip_address': '1.1.1.1'},
+                {'ip_address': '2.2.2.2'}]}}
+            self._update('ports', p['port']['id'], data,
+                         neutron_context=context.get_admin_context(),
+                         expected_code=exc.HTTPBadRequest.code)
+
             self._router_interface_action('remove',
                                           r['router']['id'],
                                           None,
@@ -3739,26 +3778,44 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                 self.assertEqual(0, len(ifaces))
 
     def test_l3_agent_routers_query_ignore_interfaces_with_moreThanOneIp(self):
-        with self.router() as r:
-            with self.subnet(cidr='9.0.1.0/24') as subnet:
-                with self.port(subnet=subnet,
-                               fixed_ips=[{'ip_address': '9.0.1.3'}]) as p:
-                    self._router_interface_action('add',
-                                                  r['router']['id'],
-                                                  None,
-                                                  p['port']['id'])
-                    port = {'port': {'fixed_ips':
-                                     [{'ip_address': '9.0.1.4',
-                                       'subnet_id': subnet['subnet']['id']},
-                                      {'ip_address': '9.0.1.5',
-                                       'subnet_id': subnet['subnet']['id']}]}}
-                    ctx = context.get_admin_context()
-                    self.core_plugin.update_port(ctx, p['port']['id'], port)
-                    routers = self.plugin.get_sync_data(ctx, None)
-                    self.assertEqual(1, len(routers))
-                    interfaces = routers[0].get(lib_constants.INTERFACE_KEY,
-                                                [])
-                    self.assertEqual(1, len(interfaces))
+        with self.router() as r, self.subnet(
+            cidr='9.0.1.0/24') as subnet, self.port(
+                subnet=subnet,
+                fixed_ips=[{'ip_address': '9.0.1.3'}]) as p1, self.port(
+                    subnet=subnet,
+                    fixed_ips=[{'ip_address': '9.0.1.100'},
+                               {'ip_address': '9.0.1.101'}]) as p2:
+                # Cannot have multiple IPv4 subnets on router port,
+                # see neutron.db.l3_db line L752-L754.
+                self._router_interface_action(
+                    'add', r['router']['id'],
+                    None, p2['port']['id'],
+                    expected_code=exc.HTTPBadRequest.code)
+
+                self._router_interface_action('add',
+                                              r['router']['id'],
+                                              None,
+                                              p1['port']['id'])
+                port = {'port': {'fixed_ips':
+                    [{'ip_address': '9.0.1.4',
+                      'subnet_id': subnet['subnet']['id']},
+                     {'ip_address': '9.0.1.5',
+                      'subnet_id': subnet['subnet']['id']}]}}
+                ctx = context.get_admin_context()
+                self.assertRaises(
+                    n_exc.BadRequest,
+                    self.core_plugin.update_port,
+                    ctx, p1['port']['id'], port)
+
+                routers = self.plugin.get_sync_data(ctx, None)
+                self.assertEqual(1, len(routers))
+                interfaces = routers[0].get(lib_constants.INTERFACE_KEY,
+                                            [])
+                self.assertEqual(1, len(interfaces))
+                self._router_interface_action('remove',
+                                              r['router']['id'],
+                                              None,
+                                              p1['port']['id'])
 
     def test_l3_agent_routers_query_gateway(self):
         with self.router() as r:
