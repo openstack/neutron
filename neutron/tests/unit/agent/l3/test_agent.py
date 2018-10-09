@@ -823,8 +823,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def _test_ext_gw_updated_dvr_edge_router(self, host_match,
                                              snat_hosted_before=True):
-        """
-        Helper to test external gw update for edge router on dvr_snat agent
+        """Helper to test external gw update for edge router on dvr_snat agent
 
         :param host_match: True if new gw host should be the same as agent host
         :param snat_hosted_before: True if agent has already been hosting

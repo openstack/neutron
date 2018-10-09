@@ -324,7 +324,8 @@ class Environment(fixtures.Fixture):
     """
 
     def __init__(self, env_desc, hosts_desc):
-        """
+        """Initialize Environment
+
         :param env_desc: An EnvironmentDescription instance.
         :param hosts_desc: A list of HostDescription instances.
         """

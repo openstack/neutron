@@ -257,8 +257,7 @@ def remove_conf_files(cfg_root, uuid):
 
 
 def get_root_helper_child_pid(pid, expected_cmd, run_as_root=False):
-    """
-    Get the first non root_helper child pid in the process hierarchy.
+    """Get the first non root_helper child pid in the process hierarchy.
 
     If root helper was used, two or more processes would be created:
 

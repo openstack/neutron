@@ -36,9 +36,7 @@ load_tests = testlib_api.module_load_tests
 
 
 class IpamTestCase(testlib_api.SqlTestCase):
-    """
-    Base class for tests that aim to test ip allocation.
-    """
+    """Base class for tests that aim to test ip allocation."""
     def setUp(self):
         super(IpamTestCase, self).setUp()
         cfg.CONF.set_override('notify_nova_on_port_status_changes', False)

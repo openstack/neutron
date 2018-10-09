@@ -25,7 +25,8 @@ __all__ = ['FunctionalTest']
 
 
 class FunctionalTest(unittest2.TestCase):
-    """
+    """Pecan wsgi functional test base class
+
     Used for functional tests where you need to test your
     literal application and its integration with the framework.
     """

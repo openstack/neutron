@@ -127,7 +127,8 @@ class AnySubnetRequest(SubnetRequest):
 
     def __init__(self, tenant_id, subnet_id, version, prefixlen,
                  gateway_ip=None, allocation_pools=None):
-        """
+        """Initialize AnySubnetRequest
+
         :param version: Either constants.IPv4 or constants.IPv6
         :param prefixlen: The prefix len requested.  Must be within the min and
             max allowed.
@@ -158,7 +159,8 @@ class SpecificSubnetRequest(SubnetRequest):
     """
     def __init__(self, tenant_id, subnet_id, subnet_cidr,
                  gateway_ip=None, allocation_pools=None):
-        """
+        """Initialize SpecificSubnetRequest
+
         :param subnet: The subnet requested.  Can be IPv4 or IPv6.  However,
             when IPAM tries to fulfill this request, the IP version must match
             the version of the address scope being used.
@@ -190,7 +192,8 @@ class AddressRequest(object):
 class SpecificAddressRequest(AddressRequest):
     """For requesting a specified address from IPAM"""
     def __init__(self, address):
-        """
+        """Initialize SpecificAddressRequest
+
         :param address: The address being requested
         :type address: A netaddr.IPAddress or convertible to one.
         """
@@ -226,7 +229,8 @@ class AutomaticAddressRequest(SpecificAddressRequest):
     _address_generators = {EUI64: _generate_eui64_address}
 
     def __init__(self, address_type=EUI64, **kwargs):
-        """
+        """Initialize AutomaticAddressRequest
+
         This constructor builds an automatic IP address. Parameter needed for
         generating it can be passed as optional keyword arguments.
 
@@ -256,7 +260,8 @@ class AddressRequestFactory(object):
 
     @classmethod
     def get_request(cls, context, port, ip_dict):
-        """
+        """Initialize AddressRequestFactory
+
         :param context: context (not used here, but can be used in sub-classes)
         :param port: port dict (not used here, but can be used in sub-classes)
         :param ip_dict: dict that can contain 'ip_address', 'mac' and

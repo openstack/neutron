@@ -67,8 +67,7 @@ OPTS = [
 
 
 class ProcessSpawn(daemon.Daemon):
-    """
-    This class is part of the functional test of the netns_cleanup module.
+    """This class is part of the functional test of the netns_cleanup module.
 
     It allows spawning processes that listen on random ports either on
     tcp(6), udp(6) or unix sockets. Also it allows handling or ignoring

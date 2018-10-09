@@ -760,7 +760,8 @@ class Dnsmasq(DhcpLocalProcess):
         return leases
 
     def _read_leases_file_leases(self, filename, ip_version=None):
-        """
+        """Read dnsmasq dhcp leases file
+
         Read information from leases file, which is needed to pass to
         dhcp_release6 command line utility if some of these leases are not
         needed anymore

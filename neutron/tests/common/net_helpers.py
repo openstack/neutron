@@ -423,7 +423,8 @@ class NetcatTester(object):
     def __init__(self, client_namespace, server_namespace, address,
                  dst_port, protocol, server_address=None, src_port=None):
 
-        """
+        """Initialize NetcatTester
+
         Tool for testing connectivity on transport layer using netcat
         executable.
 

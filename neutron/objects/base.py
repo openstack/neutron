@@ -65,12 +65,14 @@ def register_filter_hook_on_model(model, filter_name):
 
 
 class Pager(object):
-    '''
+    '''Pager class
+
     This class represents a pager object. It is consumed by get_objects to
     specify sorting and pagination criteria.
     '''
     def __init__(self, sorts=None, limit=None, page_reverse=None, marker=None):
-        '''
+        '''Initialize
+
         :param sorts: A list of (key, direction) tuples.
                       direction: True == ASC, False == DESC
         :param limit: maximum number of items to return
@@ -447,7 +449,8 @@ class NeutronDbObject(NeutronObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        """
+        """Modify the fields before data is inserted into DB.
+
         This method enables to modify the fields and its
         content before data is inserted into DB.
 
@@ -537,7 +540,8 @@ class NeutronDbObject(NeutronObject):
 
     @classmethod
     def get_object(cls, context, **kwargs):
-        """
+        """Fetch a single object
+
         Return the first result of given context or None if the result doesn't
         contain any row. Next, convert it to a versioned object.
 
@@ -561,7 +565,8 @@ class NeutronDbObject(NeutronObject):
     @classmethod
     def get_objects(cls, context, _pager=None, validate_filters=True,
                     **kwargs):
-        """
+        """Fetch a list of objects
+
         Fetch all results from DB and convert them to versioned objects.
 
         :param context:
@@ -581,8 +586,7 @@ class NeutronDbObject(NeutronObject):
 
     @classmethod
     def update_object(cls, context, values, validate_filters=True, **kwargs):
-        """
-        Update an object that match filtering criteria from DB.
+        """Update an object that match filtering criteria from DB.
 
         :param context:
         :param values: multiple keys to update in matching objects
@@ -610,8 +614,7 @@ class NeutronDbObject(NeutronObject):
 
     @classmethod
     def update_objects(cls, context, values, validate_filters=True, **kwargs):
-        """
-        Update objects that match filtering criteria from DB.
+        """Update objects that match filtering criteria from DB.
 
         :param context:
         :param values: multiple keys to update in matching objects
@@ -636,8 +639,7 @@ class NeutronDbObject(NeutronObject):
 
     @classmethod
     def delete_objects(cls, context, validate_filters=True, **kwargs):
-        """
-        Delete objects that match filtering criteria from DB.
+        """Delete objects that match filtering criteria from DB.
 
         :param context:
         :param validate_filters: Raises an error in case of passing an unknown
@@ -701,7 +703,8 @@ class NeutronDbObject(NeutronObject):
         return fields
 
     def load_synthetic_db_fields(self, db_obj=None):
-        """
+        """Load synthetic DB fields
+
         Load the synthetic fields that are stored in a different table from the
         main object.
 
@@ -816,8 +819,7 @@ class NeutronDbObject(NeutronObject):
 
     @classmethod
     def count(cls, context, validate_filters=True, **kwargs):
-        """
-        Count the number of objects matching filtering criteria.
+        """Count the number of objects matching filtering criteria.
 
         :param context:
         :param validate_filters: Raises an error in case of passing an unknown
@@ -833,8 +835,7 @@ class NeutronDbObject(NeutronObject):
 
     @classmethod
     def objects_exist(cls, context, validate_filters=True, **kwargs):
-        """
-        Check if objects are present in DB.
+        """Check if objects are present in DB.
 
         :param context:
         :param validate_filters: Raises an error in case of passing an unknown

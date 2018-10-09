@@ -61,9 +61,7 @@ class AdminDirFixture(fixtures.Fixture):
 
 
 class SleepyProcessFixture(fixtures.Fixture):
-    """
-    Process fixture that performs time.sleep for the given number of seconds.
-    """
+    """Process fixture to perform time.sleep for a given number of seconds."""
 
     def __init__(self, timeout=60):
         super(SleepyProcessFixture, self).__init__()

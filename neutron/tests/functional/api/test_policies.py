@@ -27,7 +27,8 @@ TEST_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 class APIPolicyTestCase(base.BaseTestCase):
-    """
+    """Base class for API policy tests
+
     Tests for REST API policy checks. Ideally this would be done against an
     environment with an instantiated plugin, but there appears to be problems
     with instantiating a plugin against an sqlite environment and as yet, there
@@ -59,7 +60,8 @@ class APIPolicyTestCase(base.BaseTestCase):
         return policy.check(context, 'get_network', self._network_definition())
 
     def test_premature_loading(self):
-        """
+        """Test premature policy loading
+
         Verifies that loading policies by way of admin context before
         populating extensions and extending the resource map results in
         networks with router:external is true being invisible to regular
@@ -74,7 +76,8 @@ class APIPolicyTestCase(base.BaseTestCase):
         self.assertFalse(self._check_external_router_policy(tenant_context))
 
     def test_proper_load_order(self):
-        """
+        """Test proper policy load order
+
         Verifies that loading policies by way of admin context after
         populating extensions and extending the resource map results in
         networks with router:external are visible to regular tenants.
