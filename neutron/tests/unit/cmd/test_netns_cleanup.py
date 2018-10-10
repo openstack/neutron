@@ -145,16 +145,12 @@ class TestNetnsCleanup(base.BaseTestCase):
             ip_wrap.assert_has_calls(expected_calls)
 
     def test_unplug_device_regular_device(self):
-        conf = mock.Mock()
         device = mock.Mock()
 
-        util.unplug_device(conf, device)
+        util.unplug_device(device)
         device.assert_has_calls([mock.call.link.delete()])
 
     def test_unplug_device_ovs_port(self):
-        conf = mock.Mock()
-        conf.ovs_integration_bridge = 'br-int'
-
         device = mock.Mock()
         device.name = 'tap1'
         device.link.delete.side_effect = RuntimeError
@@ -168,7 +164,7 @@ class TestNetnsCleanup(base.BaseTestCase):
                 ovs_bridge = mock.Mock()
                 ovs_br_cls.return_value = ovs_bridge
 
-                util.unplug_device(conf, device)
+                util.unplug_device(device)
 
                 mock_get_bridge_for_iface.assert_called_once_with('tap1')
                 ovs_br_cls.assert_called_once_with('br-int')
@@ -176,9 +172,6 @@ class TestNetnsCleanup(base.BaseTestCase):
                     [mock.call.delete_port(device.name)])
 
     def test_unplug_device_cannot_determine_bridge_port(self):
-        conf = mock.Mock()
-        conf.ovs_integration_bridge = 'br-int'
-
         device = mock.Mock()
         device.name = 'tap1'
         device.link.delete.side_effect = RuntimeError
@@ -193,7 +186,7 @@ class TestNetnsCleanup(base.BaseTestCase):
                     ovs_bridge = mock.Mock()
                     ovs_br_cls.return_value = ovs_bridge
 
-                    util.unplug_device(conf, device)
+                    util.unplug_device(device)
 
                     mock_get_bridge_for_iface.assert_called_once_with('tap1')
                     self.assertEqual([], ovs_br_cls.mock_calls)
@@ -338,8 +331,7 @@ class TestNetnsCleanup(base.BaseTestCase):
                                 mock.call().get_devices()])
                             self.assertTrue(kill_dhcp.called)
                             unplug.assert_has_calls(
-                                [mock.call(conf, d) for d in
-                                 devices[1:]])
+                                [mock.call(d) for d in devices[1:]])
 
                         expected.append(
                             mock.call().garbage_collect_namespace())

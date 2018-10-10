@@ -117,7 +117,7 @@ def eligible_for_deletion(conf, namespace, force=False):
     return force or ip.namespace_is_empty()
 
 
-def unplug_device(conf, device):
+def unplug_device(device):
     orig_log_fail_as_error = device.get_log_fail_as_error()
     device.set_log_fail_as_error(False)
     try:
@@ -246,7 +246,7 @@ def destroy_namespace(conf, namespace, force=False):
                     LOG.error('Not all processes were killed in %s',
                               namespace)
                 for device in ip.get_devices():
-                    unplug_device(conf, device)
+                    unplug_device(device)
 
         ip.garbage_collect_namespace()
     except Exception:
