@@ -84,7 +84,7 @@
             irrelevant-files: *tempest-irrelevant-files
         - legacy-tempest-dsvm-neutron-with-ryu-master:
             irrelevant-files: *tempest-irrelevant-files
-        - legacy-tempest-dsvm-neutron-full-opensuse-423:
+        - tempest-full-py3-opensuse150:
             irrelevant-files: *tempest-irrelevant-files
 
 - job:
