@@ -308,9 +308,9 @@ class TestIpWrapper(base.BaseTestCase):
     @mock.patch('neutron.agent.common.utils.execute')
     def test_get_devices_exclude_loopback_and_gre(self, mocked_execute):
         device_name = 'somedevice'
-        mocked_execute.return_value = 'lo gre0 gretap0 ' + device_name
+        mocked_execute.return_value = 'lo gre0 sit0 ip6gre0 ' + device_name
         devices = ip_lib.IPWrapper(namespace='foo').get_devices(
-            exclude_loopback=True, exclude_gre_devices=True)
+            exclude_loopback=True, exclude_fb_tun_devices=True)
         somedevice = devices.pop()
         self.assertEqual(device_name, somedevice.name)
         self.assertFalse(devices)

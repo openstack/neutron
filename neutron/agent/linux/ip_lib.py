@@ -41,7 +41,8 @@ LOG = logging.getLogger(__name__)
 IP_NONLOCAL_BIND = 'net.ipv4.ip_nonlocal_bind'
 
 LOOPBACK_DEVNAME = 'lo'
-GRE_TUNNEL_DEVICE_NAMES = ['gre0', 'gretap0']
+FB_TUNNEL_DEVICE_NAMES = ['gre0', 'gretap0', 'tunl0', 'erspan0', 'sit0',
+                          'ip6tnl0', 'ip6gre0']
 
 SYS_NET_PATH = '/sys/class/net'
 DEFAULT_GW_PATTERN = re.compile(r"via (\S+)")
@@ -116,7 +117,7 @@ class IPWrapper(SubProcessBase):
     def device(self, name):
         return IPDevice(name, namespace=self.namespace)
 
-    def get_devices(self, exclude_loopback=True, exclude_gre_devices=True):
+    def get_devices(self, exclude_loopback=True, exclude_fb_tun_devices=True):
         retval = []
         if self.namespace:
             # we call out manually because in order to avoid screen scraping
@@ -145,7 +146,7 @@ class IPWrapper(SubProcessBase):
 
         for name in output:
             if (exclude_loopback and name == LOOPBACK_DEVNAME or
-                    exclude_gre_devices and name in GRE_TUNNEL_DEVICE_NAMES):
+                    exclude_fb_tun_devices and name in FB_TUNNEL_DEVICE_NAMES):
                 continue
             retval.append(IPDevice(name, namespace=self.namespace))
 
