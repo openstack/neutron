@@ -1899,7 +1899,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     self.mechanism_manager.delete_port_precommit(mech_context)
                     bound_mech_contexts.append(mech_context)
             else:
-                levels = db.get_binding_level_objs(context, id, binding.host)
+                # SAPCC: Workaround for f5 lbaasv2 bug, that sometime creates
+                # ports without portbinding levels
+                if hasattr(binding, 'host'):
+                    levels = db.get_binding_level_objs(context, id,
+                                                       binding.host)
+                else:
+                    levels = None
+
                 kwargs['bind'] = None
                 kwargs['levels'] = levels
                 registry.notify(resources.PORT, events.PRECOMMIT_DELETE,
