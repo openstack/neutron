@@ -1497,10 +1497,12 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertFalse(r2_chsfr.called)
 
     def _setup_dvr_router_static_routes(
-        self, router_namespace=True, check_fpr_int_rule_delete=False):
+        self, router_namespace=True,
+        check_fpr_int_rule_delete=False, enable_ha=False):
         """Test to validate the extra routes on dvr routers."""
         self.agent.conf.agent_mode = 'dvr_snat'
-        router_info = self.generate_dvr_router_info(enable_snat=True)
+        router_info = self.generate_dvr_router_info(
+            enable_snat=True, enable_ha=enable_ha)
         router1 = self.manage_router(self.agent, router_info)
         self.assertTrue(self._namespace_exists(router1.ns_name))
         self._assert_snat_namespace_exists(router1)
@@ -1519,7 +1521,9 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         router_updated = self.agent.router_info[router_info['id']]
         if router_namespace:
             self._assert_extra_routes(router_updated)
-            self._assert_extra_routes(router_updated, namespace=snat_ns_name)
+            if not enable_ha:
+                self._assert_extra_routes(router_updated,
+                                          namespace=snat_ns_name)
         else:
             rtr_2_fip, fip_2_rtr = router_updated.rtr_fip_subnet.get_pair()
             # Now get the table index based on the fpr-interface ip.
@@ -1608,6 +1612,9 @@ class TestDvrRouter(framework.L3AgentTestFramework):
     def test_dvr_router_static_routes_in_snat_namespace_and_router_namespace(
         self):
         self._setup_dvr_router_static_routes()
+
+    def test_dvr_ha_rtr_static_routes_in_rtr_namespace(self):
+        self._setup_dvr_router_static_routes(enable_ha=True)
 
     def test_dvr_router_rule_and_route_table_cleared_when_fip_removed(
         self):
