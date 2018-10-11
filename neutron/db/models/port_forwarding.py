@@ -25,12 +25,13 @@ from neutron_lib.db import constants as db_const
 class PortForwarding(model_base.BASEV2, model_base.HasId):
 
     __table_args__ = (
-        sa.UniqueConstraint('floatingip_id', 'external_port',
+        sa.UniqueConstraint('floatingip_id', 'external_port', 'protocol',
                             name='uniq_port_forwardings0floatingip_id0'
-                                 'external_port'),
-        sa.UniqueConstraint('internal_neutron_port_id', 'socket',
+                                 'external_port0protocol'),
+        sa.UniqueConstraint('internal_neutron_port_id', 'socket', 'protocol',
                             name='uniq_port_forwardings0'
-                                 'internal_neutron_port_id0socket'),
+                                 'internal_neutron_port_id0socket0'
+                                 'protocol')
     )
 
     floatingip_id = sa.Column(sa.String(db_const.UUID_FIELD_SIZE),

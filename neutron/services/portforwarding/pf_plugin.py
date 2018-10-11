@@ -403,10 +403,12 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         if not specify_params:
             specify_params = [
                 {'floatingip_id': floatingip_id,
-                 'external_port': port_forwarding['external_port']},
+                 'external_port': port_forwarding['external_port'],
+                 'protocol': port_forwarding['protocol']},
                 {'internal_port_id': port_forwarding['internal_port_id'],
                  'internal_ip_address': port_forwarding['internal_ip_address'],
-                 'internal_port': port_forwarding['internal_port']}]
+                 'internal_port': port_forwarding['internal_port'],
+                 'protocol': port_forwarding['protocol']}]
         for param in specify_params:
             objs = pf.PortForwarding.get_objects(context, **param)
             if objs:

@@ -14,6 +14,7 @@
 import mock
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
+from neutron_lib import constants
 from neutron_lib import context
 
 from neutron.extensions import floating_ip_port_forwarding as pf_ext
@@ -64,6 +65,42 @@ class TestExtendFipPortForwardingExtension(
         super(TestExtendFipPortForwardingExtension, self).setUp(
             plugin=CORE_PLUGIN, ext_mgr=ext_mgr, service_plugins=svc_plugins)
         self.pf_plugin = pf_plugin.PortForwardingPlugin()
+
+    def test_create_floatingip_port_forwarding_same_port_diff_protocol(self):
+        port_forwarding = {
+            apidef.RESOURCE_NAME:
+                {apidef.EXTERNAL_PORT: 2225,
+                 apidef.INTERNAL_PORT: 25,
+                 apidef.INTERNAL_PORT_ID: None,
+                 apidef.PROTOCOL: constants.PROTO_NAME_TCP,
+                 apidef.INTERNAL_IP_ADDRESS: None}}
+        ctx = context.get_admin_context()
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
+        with self.network(**kwargs) as extnet, self.network() as innet:
+            with self.subnet(network=extnet, cidr='200.0.0.0/22'), \
+                 self.subnet(network=innet, cidr='10.0.0.0/24') as insub, \
+                    self.router() as router:
+                fip = self._make_floatingip(self.fmt, extnet['network']['id'])
+                self._add_external_gateway_to_router(router['router']['id'],
+                                                     extnet['network']['id'])
+                self._router_interface_action('add', router['router']['id'],
+                                              insub['subnet']['id'], None)
+                with self.port(subnet=insub) as port1:
+                    update_dict1 = {
+                        apidef.INTERNAL_PORT_ID: port1['port']['id'],
+                        apidef.INTERNAL_IP_ADDRESS:
+                            port1['port']['fixed_ips'][0]['ip_address']}
+                    port_forwarding[apidef.RESOURCE_NAME].update(update_dict1)
+                    self.pf_plugin.create_floatingip_port_forwarding(
+                        ctx, fip['floatingip']['id'], port_forwarding)
+
+                    update_dict2 = {
+                        apidef.PROTOCOL: constants.PROTO_NAME_UDP
+                    }
+                    port_forwarding[apidef.RESOURCE_NAME].update(update_dict2)
+                    self.pf_plugin.create_floatingip_port_forwarding(
+                        ctx, fip['floatingip']['id'], port_forwarding)
 
     def test_get_fip_after_port_forwarding_create(self):
         port_forwarding = {

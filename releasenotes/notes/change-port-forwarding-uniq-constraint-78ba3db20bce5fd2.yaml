@@ -1,0 +1,12 @@
+---
+upgrade:
+  - |
+    Adds Floating IP port forwarding table column ``protocol`` to the uniq
+    constraints. In one expand script, we drop the original uniq constraints
+    first, then create the new uniq constraints with column ``protocol``.
+fixes:
+  - |
+    Floating IP port forwardings with different protocols could not have the
+    same internal or external port number to the same VM port. After this
+    fix we will allow creating port forwardings with same internal or
+    external port number in different protocols.

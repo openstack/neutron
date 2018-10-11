@@ -30,7 +30,8 @@ FIELDS_NOT_SUPPORT_FILTER = ['internal_ip_address', 'internal_port']
 @base.NeutronObjectRegistry.register
 class PortForwarding(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Change unique constraint
+    VERSION = '1.1'
 
     db_model = models.PortForwarding
 
