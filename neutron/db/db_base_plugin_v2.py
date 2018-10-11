@@ -589,16 +589,16 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 with db_api.context_manager.reader.using(context):
                     # TODO(electrocucaracha): Look a solution for Join in OVO
                     ipal = models_v2.IPAllocation
-                    alloc_qry = context.session.query(ipal)
+                    alloc_qry = context.session.query(ipal.port_id)
                     alloc_qry = alloc_qry.join("port", "routerport")
                     gateway_ip = str(cur_subnet['gateway_ip'])
                     allocated = alloc_qry.filter(
                         ipal.ip_address == gateway_ip,
                         ipal.subnet_id == cur_subnet['id']).first()
-                if allocated and allocated['port_id']:
+                if allocated and allocated.port_id:
                     raise n_exc.GatewayIpInUse(
                         ip_address=gateway_ip,
-                        port_id=allocated['port_id'])
+                        port_id=allocated.port_id)
 
         if validators.is_attr_set(s.get('dns_nameservers')):
             if len(s['dns_nameservers']) > cfg.CONF.max_dns_nameservers:
