@@ -20,17 +20,16 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
+from neutron_lib.objects import utils as obj_utils
 from neutron_lib.plugins import constants as plugin_consts
 from neutron_lib.plugins import directory
 
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
-from sqlalchemy import and_
 
 from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
-from neutron.db import models_v2
 from neutron.ipam import driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.objects import ports as port_obj
@@ -506,11 +505,10 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         # will be available for neutron
         with context.session.begin(subtransactions=True):
             network_id = subnet['network_id']
-            port_qry = context.session.query(models_v2.Port)
-            ports = port_qry.filter(
-                and_(models_v2.Port.network_id == network_id,
-                     ~models_v2.Port.device_owner.in_(
-                         constants.ROUTER_INTERFACE_OWNERS_SNAT)))
+            ports = port_obj.Port.get_objects(
+                context, network_id=network_id,
+                device_owner=obj_utils.NotIn(
+                    constants.ROUTER_INTERFACE_OWNERS_SNAT))
             updated_ports = []
             ipam_driver = driver.Pool.get_instance(None, context)
             factory = ipam_driver.get_address_request_factory()
@@ -518,12 +516,12 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 ip = {'subnet_id': subnet['id'],
                       'subnet_cidr': subnet['cidr'],
                       'eui64_address': True,
-                      'mac': port['mac_address']}
+                      'mac': port.mac_address}
                 ip_request = factory.get_request(context, port, ip)
                 try:
                     ip_address = ipam_subnet.allocate(ip_request)
                     allocated = port_obj.IPAllocation(
-                        context, network_id=network_id, port_id=port['id'],
+                        context, network_id=network_id, port_id=port.id,
                         ip_address=ip_address, subnet_id=subnet['id'])
                     # Do the insertion of each IP allocation entry within
                     # the context of a nested transaction, so that the entry
@@ -532,10 +530,10 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     # already opens a nested transaction, we don't need to do
                     # it explicitly here.
                     allocated.create()
-                    updated_ports.append(port['id'])
+                    updated_ports.append(port.id)
                 except db_exc.DBReferenceError:
                     LOG.debug("Port %s was deleted while updating it with an "
-                              "IPv6 auto-address. Ignoring.", port['id'])
+                              "IPv6 auto-address. Ignoring.", port.id)
                     LOG.debug("Reverting IP allocation for %s", ip_address)
                     # Do not fail if reverting allocation was unsuccessful
                     try:
@@ -546,7 +544,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 except ipam_exc.IpAddressAlreadyAllocated:
                     LOG.debug("Port %s got IPv6 auto-address in a concurrent "
                               "create or update port request. Ignoring.",
-                              port['id'])
+                              port.id)
             return updated_ports
 
     def allocate_subnet(self, context, network, subnet, subnetpool_id):
