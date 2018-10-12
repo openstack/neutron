@@ -98,6 +98,22 @@ def sanitize_log_path(path):
     return path
 
 
+def set_timeout(timeout):
+    """Timeout decorator for test methods.
+
+    Use this decorator for tests that are expected to pass in very specific
+    amount of time, not common for all other tests.
+    It can have either big or small value.
+    """
+    def decor(f):
+        @functools.wraps(f)
+        def inner(self, *args, **kwargs):
+            self.useFixture(fixtures.Timeout(timeout, gentle=True))
+            return f(self, *args, **kwargs)
+        return inner
+    return decor
+
+
 class AttributeDict(dict):
 
     """
