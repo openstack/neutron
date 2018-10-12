@@ -268,10 +268,13 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         long_name = router.EXTERNAL_DEV_PREFIX + ex_gw_port['id']
         return long_name[:self.driver.DEV_NAME_LEN]
 
-    def _get_centralized_fip_cidr_set(self):
+    def get_centralized_fip_cidr_set(self):
         """Returns the fip_cidr set for centralized floatingips."""
+        ex_gw_port = self.get_ex_gw_port()
+        if not ex_gw_port:
+            return set()
         interface_name = self.get_snat_external_device_interface_name(
-                self.get_ex_gw_port())
+                ex_gw_port)
         device = ip_lib.IPDevice(
             interface_name, namespace=self.snat_namespace.name)
         return set([addr['cidr'] for addr in device.addr.list()])
@@ -286,11 +289,10 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         """
         fip_cidrs = super(DvrEdgeRouter, self).get_router_cidrs(device)
         centralized_cidrs = set()
-        # Call _get_centralized_fip_cidr only when snat_namespace exists
+        # Call get_centralized_fip_cidr_set only when snat_namespace exists
         if self.get_ex_gw_port() and self.snat_namespace.exists():
-            centralized_cidrs = self._get_centralized_fip_cidr_set()
-        existing_centralized_cidrs = self.centralized_floatingips_set
-        return fip_cidrs | centralized_cidrs | existing_centralized_cidrs
+            centralized_cidrs = self.get_centralized_fip_cidr_set()
+        return fip_cidrs | centralized_cidrs
 
     def remove_centralized_floatingip(self, fip_cidr):
         """Function to handle the centralized Floatingip remove."""
