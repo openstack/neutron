@@ -53,8 +53,7 @@
         - neutron-tempest-linuxbridge
         - neutron-tempest-iptables_hybrid
         - neutron-grenade-multinode
-        # NOTE(haleyb) revert this as soon as we fix bug 1791989
-        # - neutron-grenade-dvr-multinode
+        - neutron-grenade-dvr-multinode
         - neutron-grenade
         - neutron-fullstack-python36
     periodic:
@@ -229,8 +228,6 @@
       - openstack/placement
     nodeset: ubuntu-xenial-2-node
     irrelevant-files: *tempest-irrelevant-files
-    # NOTE(haleyb) revert this as soon as we fix bug 1791989
-    voting: false
 
 - job:
     name: neutron-tempest-dvr-ha-multinode-full
