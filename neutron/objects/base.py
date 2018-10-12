@@ -260,6 +260,10 @@ class NeutronObject(obj_base.VersionedObject,
         raise NotImplementedError()
 
     @classmethod
+    def get_values(cls, context, field, validate_filters=True, **kwargs):
+        raise NotImplementedError()
+
+    @classmethod
     def _update_objects(cls, objects, values):
         if not isinstance(objects, collections.Sequence):
             objects = (objects, )
@@ -582,6 +586,43 @@ class NeutronDbObject(NeutronObject):
             db_objs = obj_db_api.get_objects(
                 cls, context, _pager=_pager, **cls.modify_fields_to_db(kwargs))
             return [cls._load_object(context, db_obj) for db_obj in db_objs]
+
+    @classmethod
+    def get_values(cls, context, field, validate_filters=True, **kwargs):
+        """Fetch a list of values of a specific object's field
+
+        Fetch a specific column from DB.
+
+        :param context:
+        :param field: a specific field of the object
+        :param validate_filters: Raises an error in case of passing an unknown
+                                 filter
+        :param kwargs: multiple keys defined by key=value pairs
+        :return: list of objects of NeutronDbObject class or empty list
+        """
+        cls._validate_field(field)
+        db_field = cls.fields_need_translation.get(field, field)
+        if validate_filters:
+            cls.validate_filters(**kwargs)
+        with cls.db_context_reader(context):
+            db_values = obj_db_api.get_values(
+                cls, context, db_field, **cls.modify_fields_to_db(kwargs))
+            obj = cls(context)
+            values = []
+            for db_value in db_values:
+                value = cls.modify_fields_from_db({
+                    db_field: db_value}).get(field)
+                value = cls.fields[field].coerce(obj, field, value)
+                values.append(value)
+
+            return values
+
+    @classmethod
+    def _validate_field(cls, field):
+        if field not in cls.fields or cls.is_synthetic(field):
+            msg = _("Get value of field '%(field)s' is not supported by "
+                    "object '%(object)s'.") % {'field': field, 'object': cls}
+            raise n_exc.InvalidInput(error_message=msg)
 
     @classmethod
     def update_object(cls, context, values, validate_filters=True, **kwargs):

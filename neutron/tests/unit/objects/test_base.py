@@ -411,6 +411,13 @@ class FakeNeutronObject(base.NeutronObject):
             for i in range(count)
         ]
 
+    @classmethod
+    def get_values(cls, context, field, **kwargs):
+        return [
+            getattr(obj, field)
+            for obj in cls.get_objects(**kwargs)
+        ]
+
 
 @base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObjectDictOfMiscValues(base.NeutronDbObject):
@@ -585,10 +592,10 @@ class _BaseObjectTestCase(object):
         invalid_fields = (
             set(self._test_class.synthetic_fields).union(set(TIMESTAMP_FIELDS))
         )
-        valid_field = [f for f in self._test_class.fields
-                       if f not in invalid_fields][0]
-        self.valid_field_filter = {valid_field:
-                                   self.obj_fields[-1][valid_field]}
+        self.valid_field = [f for f in self._test_class.fields
+                            if f not in invalid_fields][0]
+        self.valid_field_filter = {self.valid_field:
+                                   self.obj_fields[-1][self.valid_field]}
         self.obj_registry = self.useFixture(
             NeutronObjectRegistryFixture())
         self.obj_registry.register(FakeSmallNeutronObject)
@@ -688,6 +695,10 @@ class _BaseObjectTestCase(object):
 
     def fake_get_objects(self, obj_cls, context, **kwargs):
         return self.model_map[obj_cls.db_model]
+
+    def fake_get_values(self, obj_cls, context, field, **kwargs):
+        return [model.get(field)
+                for model in self.model_map[obj_cls.db_model]]
 
     def _get_object_synthetic_fields(self, objclass):
         return [field for field in objclass.synthetic_fields
@@ -887,6 +898,60 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             self.assertItemsEqual(
                 [get_obj_persistent_fields(obj) for obj in self.objs],
                 [get_obj_persistent_fields(obj) for obj in objs])
+
+    def test_get_values(self):
+        field = self.valid_field
+        db_field = self._test_class.fields_need_translation.get(field, field)
+        with mock.patch.object(
+                obj_db_api, 'get_values',
+                side_effect=self.fake_get_values) as get_values_mock:
+            values = self._test_class.get_values(self.context, field)
+            self.assertItemsEqual(
+                [getattr(obj, field) for obj in self.objs], values)
+        get_values_mock.assert_any_call(
+            self._test_class, self.context, db_field
+        )
+
+    def test_get_values_with_validate_filters(self):
+        field = self.valid_field
+        with mock.patch.object(
+                obj_db_api, 'get_values', side_effect=self.fake_get_values):
+            self._test_class.get_values(self.context, field,
+                                        **self.valid_field_filter)
+
+    def test_get_values_without_validate_filters(self):
+        field = self.valid_field
+        with mock.patch.object(
+                obj_db_api, 'get_values',
+                side_effect=self.fake_get_values):
+            values = self._test_class.get_values(self.context, field,
+                                                 validate_filters=False,
+                                                 unknown_filter='value')
+            self.assertItemsEqual(
+                [getattr(obj, field) for obj in self.objs], values)
+
+    def test_get_values_mixed_field(self):
+        synthetic_fields = (
+            set(self._test_class.synthetic_fields) -
+            self._test_class.extra_filter_names
+        )
+        if not synthetic_fields:
+            self.skipTest('No synthetic fields that are not extra filters '
+                          'found in test class %r' %
+                          self._test_class)
+
+        field = synthetic_fields.pop()
+        with mock.patch.object(obj_db_api, 'get_values',
+                               side_effect=self.fake_get_values):
+            self.assertRaises(n_exc.InvalidInput,
+                              self._test_class.get_values, self.context, field)
+
+    def test_get_values_invalid_field(self):
+        field = 'fake_field'
+        with mock.patch.object(obj_db_api, 'get_values',
+                               side_effect=self.fake_get_values):
+            self.assertRaises(n_exc.InvalidInput,
+                              self._test_class.get_values, self.context, field)
 
     @mock.patch.object(obj_db_api, 'update_object', return_value={})
     @mock.patch.object(obj_db_api, 'update_objects', return_value=0)

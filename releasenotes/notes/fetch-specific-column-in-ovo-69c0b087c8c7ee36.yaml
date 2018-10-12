@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    Support fetching specific db column in OVO.
+    A new method ``get_values`` is added to neutron object classes.
+    This method can be leveraged to fetch specific field of the object.

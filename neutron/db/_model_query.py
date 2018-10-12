@@ -19,11 +19,14 @@ NOTE: This module shall not be used by external projects. It will be moved
 from neutron_lib.api import attributes
 from neutron_lib.db import model_query
 from neutron_lib.db import utils as db_utils
+from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import utils as obj_utils
 from neutron_lib.utils import helpers
 from oslo_db.sqlalchemy import utils as sa_utils
 from sqlalchemy import sql, or_, and_
 from sqlalchemy.ext import associationproxy
+
+from neutron._i18n import _
 
 
 # TODO(boden): remove shims
@@ -32,8 +35,16 @@ register_hook = model_query.register_hook
 get_hooks = model_query.get_hooks
 
 
-def query_with_hooks(context, model):
-    query = context.session.query(model)
+def query_with_hooks(context, model, field=None):
+    if field:
+        if hasattr(model, field):
+            field = getattr(model, field)
+        else:
+            msg = _("'%s' is not supported as field") % field
+            raise n_exc.InvalidInput(error_message=msg)
+        query = context.session.query(field)
+    else:
+        query = context.session.query(model)
     # define basic filter condition for model query
     query_filter = None
     if db_utils.model_query_scope_is_project(context, model):
@@ -199,6 +210,12 @@ def get_collection(context, model, dict_func,
     if limit and page_reverse:
         items.reverse()
     return items
+
+
+def get_values(context, model, field, filters=None):
+    query = query_with_hooks(context, model, field=field)
+    query = apply_filters(query, model, filters, context)
+    return [c[0] for c in query]
 
 
 def get_collection_count(context, model, filters=None):
