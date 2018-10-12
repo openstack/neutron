@@ -496,12 +496,11 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
         # If dest_host is set, then the port profile has changed
         # and this port is in migration. The call below will
         # pre-create the router on the new host
-        # No need to check for device_owner since we are scheduling
-        # the routers without checking for device_owner.
         # If the original_port is None, then it is a migration
         # from unbound to bound.
         if (is_new_port_binding_changed or dest_host):
-            if original_port[portbindings.HOST_ID] is None:
+            if (not original_port[portbindings.HOST_ID] and
+                    not original_port['device_owner']):
                 l3plugin.dvr_handle_new_service_port(context, new_port,
                                                      unbound_migrate=True)
             else:

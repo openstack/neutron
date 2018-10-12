@@ -326,7 +326,7 @@ class RouterInfo(object):
     def get_router_cidrs(self, device):
         return set([addr['cidr'] for addr in device.addr.list()])
 
-    def get_centralized_router_cidrs(self):
+    def get_centralized_fip_cidr_set(self):
         return set()
 
     def process_floating_ip_addresses(self, interface_name):
@@ -346,7 +346,7 @@ class RouterInfo(object):
         existing_cidrs = self.get_router_cidrs(device)
         new_cidrs = set()
         gw_cidrs = self._get_gw_ips_cidr()
-
+        centralized_fip_cidrs = self.get_centralized_fip_cidr_set()
         floating_ips = self.get_floating_ips()
         # Loop once to ensure that floating ips are configured.
         for fip in floating_ips:
@@ -354,7 +354,6 @@ class RouterInfo(object):
             ip_cidr = common_utils.ip_to_cidr(fip_ip)
             new_cidrs.add(ip_cidr)
             fip_statuses[fip['id']] = lib_constants.FLOATINGIP_STATUS_ACTIVE
-            cent_router_cidrs = self.get_centralized_router_cidrs()
 
             if ip_cidr not in existing_cidrs:
                 fip_statuses[fip['id']] = self.add_floating_ip(
@@ -369,7 +368,7 @@ class RouterInfo(object):
                           {'old': self.fip_map[fip_ip],
                            'new': fip['fixed_ip_address']})
                 fip_statuses[fip['id']] = self.move_floating_ip(fip)
-            elif (ip_cidr in cent_router_cidrs and
+            elif (ip_cidr in centralized_fip_cidrs and
                 fip.get('host') == self.host):
                 LOG.debug("Floating IP is migrating from centralized "
                           "to distributed: %s", fip)
