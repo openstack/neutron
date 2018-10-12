@@ -112,6 +112,22 @@ def unstable_test(reason):
     return decor
 
 
+def set_timeout(timeout):
+    """Timeout decorator for test methods.
+
+    Use this decorator for tests that are expected to pass in very specific
+    amount of time, not common for all other tests.
+    It can have either big or small value.
+    """
+    def decor(f):
+        @functools.wraps(f)
+        def inner(self, *args, **kwargs):
+            self.useFixture(fixtures.Timeout(timeout, gentle=True))
+            return f(self, *args, **kwargs)
+        return inner
+    return decor
+
+
 def get_rootwrap_cmd():
     return os.environ.get('OS_ROOTWRAP_CMD', SUDO_CMD)
 
