@@ -76,9 +76,12 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
             super(DvrEdgeHaRouter, self).remove_centralized_floatingip(
                 fip_cidr)
 
-    def _get_centralized_fip_cidr_set(self):
+    def get_centralized_fip_cidr_set(self):
+        ex_gw_port = self.get_ex_gw_port()
+        if not ex_gw_port:
+            return set()
         interface_name = self.get_snat_external_device_interface_name(
-                self.get_ex_gw_port())
+            ex_gw_port)
         return set(self._get_cidrs_from_keepalived(interface_name))
 
     def external_gateway_added(self, ex_gw_port, interface_name):

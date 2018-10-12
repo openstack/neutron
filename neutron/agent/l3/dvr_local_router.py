@@ -42,15 +42,11 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         super(DvrLocalRouter, self).__init__(host, *args, **kwargs)
 
         self.floating_ips_dict = {}
-        self.centralized_floatingips_set = set()
         # Linklocal subnet for router and floating IP namespace link
         self.rtr_fip_subnet = None
         self.rtr_fip_connect = False
         self.fip_ns = None
         self._pending_arp_set = set()
-
-    def get_centralized_router_cidrs(self):
-        return self.centralized_floatingips_set
 
     def migrate_centralized_floating_ip(self, fip, interface_name, device):
         # Remove the centralized fip first and then add fip to the host
@@ -113,8 +109,6 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         """Add floating IP to respective namespace based on agent mode."""
         if fip.get(lib_constants.DVR_SNAT_BOUND):
             floating_ip_status = self.add_centralized_floatingip(fip, fip_cidr)
-            if floating_ip_status == lib_constants.FLOATINGIP_STATUS_ACTIVE:
-                self.centralized_floatingips_set.add(fip_cidr)
             return floating_ip_status
         if not self._check_if_floatingip_bound_to_host(fip):
             # TODO(Swami): Need to figure out what status
@@ -172,9 +166,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
     def floating_ip_removed_dist(self, fip_cidr):
         """Remove floating IP from FIP namespace."""
-        if fip_cidr in self.centralized_floatingips_set:
+        centralized_fip_cidrs = self.get_centralized_fip_cidr_set()
+        if fip_cidr in centralized_fip_cidrs:
             self.remove_centralized_floatingip(fip_cidr)
-            self.centralized_floatingips_set.remove(fip_cidr)
             return
         floating_ip = fip_cidr.split('/')[0]
         fip_2_rtr_name = self.fip_ns.get_int_device_name(self.router_id)
