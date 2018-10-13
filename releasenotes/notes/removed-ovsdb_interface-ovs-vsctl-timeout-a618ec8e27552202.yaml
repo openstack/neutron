@@ -1,0 +1,7 @@
+---
+upgrade:
+  - |
+    The deprecated ``ovsdb_interface`` configuration option has been removed,
+    the default ``native`` driver is now always used.  In addition, the
+    deprecated ``ovs_vsctl_timeout`` option, which was renamed to
+    ``ovsdb_timeout`` in Queens, has also been removed.

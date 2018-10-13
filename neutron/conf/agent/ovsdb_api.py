@@ -17,18 +17,7 @@ from neutron._i18n import _
 from oslo_config import cfg
 
 
-interface_map = {
-    'vsctl': 'neutron.agent.ovsdb.impl_vsctl',
-    'native': 'neutron.agent.ovsdb.impl_idl',
-}
-
-
 API_OPTS = [
-    cfg.StrOpt('ovsdb_interface',
-               deprecated_for_removal=True,
-               choices=interface_map.keys(),
-               default='native',
-               help=_('The interface for interacting with the OVSDB')),
     cfg.StrOpt('ovsdb_connection',
                default='tcp:127.0.0.1:6640',
                help=_('The connection string for the OVSDB backend. '

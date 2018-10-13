@@ -24,10 +24,14 @@ import tenacity
 
 from neutron.agent.ovsdb.native import exceptions as ovsdb_exc
 from neutron.agent.ovsdb.native import helpers
+from neutron.conf.agent import ovsdb_api
 
 TransactionQueue = moves.moved_class(_connection.TransactionQueue,
                                      'TransactionQueue', __name__)
 Connection = moves.moved_class(_connection.Connection, 'Connection', __name__)
+
+
+ovsdb_api.register_ovsdb_api_opts()
 
 
 def configure_ssl_conn():

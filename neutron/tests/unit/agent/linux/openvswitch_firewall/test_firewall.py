@@ -734,7 +734,7 @@ class TestCookieContext(base.BaseTestCase):
     def setUp(self):
         super(TestCookieContext, self).setUp()
         # Don't attempt to connect to ovsdb
-        mock.patch('neutron.agent.ovsdb.api.from_config').start()
+        mock.patch('neutron.agent.ovsdb.impl_idl.api_factory').start()
         # Don't trigger iptables -> ovsfw migration
         mock.patch(
             'neutron.agent.linux.openvswitch_firewall.iptables.Helper').start()

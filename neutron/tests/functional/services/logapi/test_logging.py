@@ -63,8 +63,6 @@ class LoggingExtensionTestFramework(test_firewall.BaseFirewallTestCase):
 
     def initialize_ovs_fw_log(self):
         mock.patch('ryu.base.app_manager.AppManager.get_instance').start()
-        mock.patch(
-            'neutron.agent.ovsdb.impl_vsctl.OvsdbVsctl.transaction').start()
         agent_api = ovs_ext_api.OVSAgentExtensionAPI(
             ovs_bridge.OVSAgentBridge(self.tester.bridge.br_name),
             ovs_bridge.OVSAgentBridge('br-tun'))

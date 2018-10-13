@@ -15,21 +15,6 @@
 import collections
 import uuid
 
-from oslo_config import cfg
-from oslo_utils import importutils
-
-from neutron.conf.agent import ovsdb_api
-
-
-ovsdb_api.register_ovsdb_api_opts()
-
-
-def from_config(context, iface_name=None):
-    """Return the configured OVSDB API implementation"""
-    iface = importutils.import_module(
-        ovsdb_api.interface_map[iface_name or cfg.CONF.OVS.ovsdb_interface])
-    return iface.api_factory(context)
-
 
 def val_to_py(val):
     """Convert a json ovsdb return value to native python object"""
@@ -41,14 +26,3 @@ def val_to_py(val):
         elif val[0] == "map":
             return {val_to_py(x): val_to_py(y) for x, y in val[1]}
     return val
-
-
-def py_to_val(pyval):
-    """Convert python value to ovs-vsctl value argument"""
-    if isinstance(pyval, bool):
-        return 'true' if pyval is True else 'false'
-    elif pyval == '':
-        return '""'
-    else:
-        # NOTE(twilson) If a Command object, return its record_id as a value
-        return getattr(pyval, "record_id", pyval)

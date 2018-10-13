@@ -30,7 +30,7 @@ import tenacity
 from neutron._i18n import _
 from neutron.agent.common import ip_lib
 from neutron.agent.common import utils
-from neutron.agent.ovsdb import api as ovsdb_api
+from neutron.agent.ovsdb import impl_idl
 from neutron.common import constants as common_constants
 from neutron.common import utils as common_utils
 from neutron.conf.agent import ovs_conf
@@ -70,15 +70,15 @@ CTRL_BURST_LIMIT_MIN = 25
 
 
 def _ovsdb_result_pending(result):
-    """Return True if ovs-vsctl indicates the result is still pending."""
-    # ovs-vsctl can return '[]' for an ofport that has not yet been assigned
+    """Return True if ovsdb indicates the result is still pending."""
+    # ovsdb can return '[]' for an ofport that has not yet been assigned
     return result == []
 
 
 def _ovsdb_retry(fn):
     """Decorator for retrying when OVS has yet to assign an ofport.
 
-    The instance's vsctl_timeout is used as the max waiting time. This relies
+    The instance's ovsdb_timeout is used as the max waiting time. This relies
     on the fact that instance methods receive self as the first argument.
     """
     @six.wraps(fn)
@@ -89,7 +89,7 @@ def _ovsdb_retry(fn):
             retry=tenacity.retry_if_result(_ovsdb_result_pending),
             wait=tenacity.wait_exponential(multiplier=0.01, max=1),
             stop=tenacity.stop_after_delay(
-                self.vsctl_timeout))(fn)
+                self.ovsdb_timeout))(fn)
         return new_fn(*args, **kwargs)
     return wrapped
 
@@ -113,8 +113,8 @@ class VifPort(object):
 class BaseOVS(object):
 
     def __init__(self):
-        self.vsctl_timeout = cfg.CONF.OVS.ovsdb_timeout
-        self.ovsdb = ovsdb_api.from_config(self)
+        self.ovsdb_timeout = cfg.CONF.OVS.ovsdb_timeout
+        self.ovsdb = impl_idl.api_factory()
 
     def add_manager(self, connection_uri, timeout=_SENTINEL):
         """Have ovsdb-server listen for manager connections

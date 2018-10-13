@@ -193,7 +193,6 @@ def check_vf_extended_management():
 
 
 def check_ovsdb_native():
-    cfg.CONF.set_override('ovsdb_interface', 'native', group='OVS')
     result = checks.ovsdb_native_supported()
     if not result:
         LOG.error('Check for native OVSDB support failed.')
@@ -365,8 +364,6 @@ def enable_tests_from_config():
         cfg.CONF.set_default('arp_responder', True)
     if not cfg.CONF.AGENT.use_helper_for_ns_read:
         cfg.CONF.set_default('read_netns', True)
-    if cfg.CONF.OVS.ovsdb_interface == 'native':
-        cfg.CONF.set_default('ovsdb_native', True)
     if cfg.CONF.l3_ha:
         cfg.CONF.set_default('keepalived_ipv6_support', True)
         cfg.CONF.set_default('ip_nonlocal_bind', True)

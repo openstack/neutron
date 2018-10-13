@@ -27,7 +27,6 @@ from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.tests.common.agents import l2_extensions
 from neutron.tests.functional.agent.l2 import base
-from neutron.tests.functional.agent.linux import base as linux_base
 
 
 load_tests = testscenarios.load_tests_apply_scenarios
@@ -179,15 +178,10 @@ class OVSAgentQoSExtensionTestFramework(base.OVSAgentTestFramework):
 
 class TestOVSAgentQosExtension(OVSAgentQoSExtensionTestFramework):
 
-    interface_scenarios = linux_base.BaseOVSLinuxTestCase.scenarios
-
-    direction_scenarios = [
+    scenarios = [
         ('ingress', {'direction': constants.INGRESS_DIRECTION}),
         ('egress', {'direction': constants.EGRESS_DIRECTION})
     ]
-
-    scenarios = testscenarios.multiply_scenarios(
-        interface_scenarios, direction_scenarios)
 
     def setUp(self):
         super(TestOVSAgentQosExtension, self).setUp()
