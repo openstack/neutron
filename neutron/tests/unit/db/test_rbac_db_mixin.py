@@ -18,9 +18,13 @@ import mock
 from neutron_lib.callbacks import events
 from neutron_lib import constants
 from neutron_lib import context
+from oslo_utils import uuidutils
 
 from neutron.db.db_base_plugin_v2 import NeutronDbPluginV2 as db_plugin_v2
+from neutron.db import rbac_db_models
 from neutron.extensions import rbac as ext_rbac
+from neutron.objects import network as network_obj
+from neutron.objects.qos import policy as qos_policy_obj
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 
 
@@ -30,11 +34,12 @@ class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
         super(NetworkRbacTestcase, self).setUp(plugin='ml2')
 
     def _make_networkrbac(self, network, target, action='access_as_shared'):
-        policy = {'rbac_policy': {'tenant_id': network['network']['tenant_id'],
-                                  'object_id': network['network']['id'],
-                                  'object_type': 'network',
-                                  'action': action,
-                                  'target_tenant': target}}
+        policy = {
+            'rbac_policy': {'project_id': network['network']['project_id'],
+                            'object_id': network['network']['id'],
+                            'object_type': 'network',
+                            'action': action,
+                            'target_tenant': target}}
         return policy
 
     def _setup_networkrbac_and_port(self, network, target_tenant):
@@ -197,7 +202,11 @@ class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
     def test_delete_networkrbac_self_share(self):
         net_id = 'my-network'
         net_owner = 'my-tenant-id'
-        net = {'network': {'id': net_id, 'tenant_id': net_owner}}
+        # NOTE(ralonsoh): keep "tenant_id" for compatibility purposes in
+        # NeutronDbPluginV2.validate_network_rbac_policy_change()
+        net = {'network': {'id': net_id,
+                           'tenant_id': net_owner,
+                           'project_id': net_owner}}
         policy = self._make_networkrbac(net, net_owner)['rbac_policy']
         kwargs = {}
 
@@ -213,7 +222,11 @@ class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
     def test_update_self_share_networkrbac(self):
         net_id = 'my-network'
         net_owner = 'my-tenant-id'
-        net = {'network': {'id': net_id, 'tenant_id': net_owner}}
+        # NOTE(ralonsoh): keep "tenant_id" for compatibility purposes in
+        # NeutronDbPluginV2.validate_network_rbac_policy_change()
+        net = {'network': {'id': net_id,
+                           'tenant_id': net_owner,
+                           'project_id': net_owner}}
         policy = self._make_networkrbac(net, net_owner)['rbac_policy']
         kwargs = {'policy_update': {'target_tenant': 'new-target-tenant'}}
 
@@ -225,3 +238,46 @@ class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
                 None, events.BEFORE_UPDATE, None,
                 self.context, 'network', policy, **kwargs)
             self.assertEqual(0, ensure.call_count)
+
+    def _create_rbac_obj(self, _class):
+        return _class(id=uuidutils.generate_uuid(),
+                      project_id='project_id',
+                      object_id=uuidutils.generate_uuid(),
+                      target_tenant='target_tenant',
+                      action=rbac_db_models.ACCESS_SHARED)
+
+    @mock.patch.object(qos_policy_obj.QosPolicyRBAC, 'get_objects')
+    def test_get_rbac_policies_qos_policy(self, mock_qos_get_objects):
+        qos_policy_rbac = self._create_rbac_obj(qos_policy_obj.QosPolicyRBAC)
+        mock_qos_get_objects.return_value = [qos_policy_rbac]
+        filters = {'object_type': ['qos_policy']}
+        rbac_policies = self.plugin.get_rbac_policies(self.context, filters)
+        self.assertEqual(1, len(rbac_policies))
+        self.assertEqual(self.plugin._make_rbac_policy_dict(qos_policy_rbac),
+                         rbac_policies[0])
+
+    @mock.patch.object(network_obj.NetworkRBAC, 'get_objects')
+    def test_get_rbac_policies_network(self, mock_net_get_objects):
+        net_rbac = self._create_rbac_obj(network_obj.NetworkRBAC)
+        mock_net_get_objects.return_value = [net_rbac]
+        filters = {'object_type': ['network']}
+        rbac_policies = self.plugin.get_rbac_policies(self.context, filters)
+        self.assertEqual(1, len(rbac_policies))
+        self.assertEqual(self.plugin._make_rbac_policy_dict(net_rbac),
+                         rbac_policies[0])
+
+    @mock.patch.object(qos_policy_obj.QosPolicyRBAC, 'get_objects')
+    @mock.patch.object(network_obj.NetworkRBAC, 'get_objects')
+    def test_get_rbac_policies_all_classes(self, mock_net_get_objects,
+                                           mock_qos_get_objects):
+        net_rbac = self._create_rbac_obj(network_obj.NetworkRBAC)
+        qos_policy_rbac = self._create_rbac_obj(qos_policy_obj.QosPolicyRBAC)
+        mock_net_get_objects.return_value = [net_rbac]
+        mock_qos_get_objects.return_value = [qos_policy_rbac]
+        rbac_policies = self.plugin.get_rbac_policies(self.context)
+        self.assertEqual(2, len(rbac_policies))
+        rbac_policies = sorted(rbac_policies, key=lambda k: k['object_type'])
+        self.assertEqual(self.plugin._make_rbac_policy_dict(net_rbac),
+                         rbac_policies[0])
+        self.assertEqual(self.plugin._make_rbac_policy_dict(qos_policy_rbac),
+                         rbac_policies[1])

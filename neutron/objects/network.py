@@ -30,25 +30,20 @@ from neutron.objects import base
 from neutron.objects import common_types
 from neutron.objects.extensions import port_security as base_ps
 from neutron.objects.qos import binding
+from neutron.objects import rbac
 from neutron.objects import rbac_db
 
 
 @base.NeutronObjectRegistry.register
-class NetworkRBAC(base.NeutronDbObject):
+class NetworkRBAC(rbac.RBACBaseObject):
     # Version 1.0: Initial version
     # Version 1.1: Added 'id' and 'project_id'
+    # Version 1.2: Inherit from rbac.RBACBaseObject; changed 'object_id' from
+    #              StringField to UUIDField
 
-    VERSION = '1.1'
+    VERSION = '1.2'
 
     db_model = rbac_db_models.NetworkRBAC
-
-    fields = {
-        'id': common_types.UUIDField(),
-        'project_id': obj_fields.StringField(),
-        'object_id': obj_fields.StringField(),
-        'target_tenant': obj_fields.StringField(),
-        'action': obj_fields.StringField(),
-    }
 
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
