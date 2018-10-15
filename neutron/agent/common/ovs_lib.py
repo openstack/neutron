@@ -207,9 +207,10 @@ OF_PROTOCOL_TO_VERSION = {
 
 def version_from_protocol(protocol):
     if protocol not in OF_PROTOCOL_TO_VERSION:
-        raise Exception("unknown OVS protocol string, cannot compare: %s, "
-                        "(known: %s)" % (protocol,
-                                         list(OF_PROTOCOL_TO_VERSION)))
+        raise Exception(_("unknown OVS protocol string, cannot compare: "
+                          "%(protocol)s, (known: %(known)s)") %
+                        {'protocol': protocol,
+                         'known': list(OF_PROTOCOL_TO_VERSION)})
     return OF_PROTOCOL_TO_VERSION[protocol]
 
 
@@ -395,7 +396,7 @@ class OVSBridge(BaseOVS):
             # broken here
             LOG.exception("Timed out retrieving datapath_id on bridge %s.",
                           self.br_name)
-            raise RuntimeError('No datapath_id on bridge %s' % self.br_name)
+            raise RuntimeError(_('No datapath_id on bridge %s') % self.br_name)
 
     def do_action_flows(self, action, kwargs_list, use_bundle=False):
         # we can't mix strict and non-strict, so we'll use the first kw
@@ -409,8 +410,8 @@ class OVSBridge(BaseOVS):
                     # cookie to match flows whatever their cookie is
                     kw.pop('cookie')
                     if kw.get('cookie_mask'):  # non-zero cookie mask
-                        raise Exception("cookie=COOKIE_ANY but cookie_mask "
-                                        "set to %s" % kw.get('cookie_mask'))
+                        raise Exception(_("cookie=COOKIE_ANY but cookie_mask "
+                                          "set to %s") % kw.get('cookie_mask'))
                 elif 'cookie' in kw:
                     # a cookie was specified, use it
                     kw['cookie'] = check_cookie_mask(kw['cookie'])

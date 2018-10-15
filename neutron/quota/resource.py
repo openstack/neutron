@@ -21,6 +21,7 @@ from oslo_utils import excutils
 from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import session as se
 
+from neutron._i18n import _
 from neutron.db import api as db_api
 from neutron.db.quota import api as quota_api
 
@@ -52,7 +53,7 @@ def _count_resource(context, collection_name, tenant_id):
             except (NotImplementedError, AttributeError):
                 pass
     raise NotImplementedError(
-        'No plugins that support counting %s found.' % collection_name)
+        _('No plugins that support counting %s found.') % collection_name)
 
 
 class BaseResource(object):
@@ -314,10 +315,10 @@ class TrackedResource(BaseResource):
 
     def _except_bulk_delete(self, delete_context):
         if delete_context.mapper.class_ == self._model_class:
-            raise RuntimeError("%s may not be deleted in bulk because "
-                               "it is tracked by the quota engine via "
-                               "SQLAlchemy event handlers, which are not "
-                               "compatible with bulk deletes." %
+            raise RuntimeError(_("%s may not be deleted in bulk because "
+                                 "it is tracked by the quota engine via "
+                                 "SQLAlchemy event handlers, which are not "
+                                 "compatible with bulk deletes.") %
                                self._model_class)
 
     def register_events(self):

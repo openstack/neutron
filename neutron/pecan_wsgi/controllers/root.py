@@ -24,6 +24,7 @@ import pecan
 from pecan import request
 from six.moves import urllib
 
+from neutron._i18n import _
 from neutron.api.views import versions as versions_view
 from neutron import manager
 from neutron.pecan_wsgi.controllers import extensions as ext_ctrl
@@ -43,8 +44,8 @@ _CORE_RESOURCES = {net_def.RESOURCE_NAME: net_def.COLLECTION_NAME,
 
 def _load_version_info(version_info):
     if version_info['id'] in _VERSION_INFO:
-        raise AssertionError("ID %s must not be in "
-                             "VERSION_INFO" % version_info['id'])
+        raise AssertionError(_("ID %s must not be in "
+                               "VERSION_INFO") % version_info['id'])
     _VERSION_INFO[version_info['id']] = version_info
 
 

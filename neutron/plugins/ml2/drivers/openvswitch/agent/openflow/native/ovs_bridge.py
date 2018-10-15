@@ -17,6 +17,7 @@
 from oslo_log import log as logging
 from oslo_utils import excutils
 
+from neutron._i18n import _
 from neutron.agent.common import ovs_lib
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
@@ -46,7 +47,7 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
                 LOG.info("Bridge %(br_name)s has datapath-ID %(dpid)s",
                          {"br_name": self.br_name, "dpid": dpid})
                 if dpid is None:
-                    raise RuntimeError("Unknown datapath id.")
+                    raise RuntimeError(_("Unknown datapath id."))
                 self._cached_dpid = int(dpid, 16)
             try:
                 dp = self._get_dp_by_dpid(self._cached_dpid)

@@ -23,6 +23,7 @@ from neutron_lib import context as n_ctx
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 
+from neutron._i18n import _
 from neutron.api.rpc.callbacks import events as rpc_events
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.db import api as db_api
@@ -123,7 +124,7 @@ class _ObjectChangeHandler(object):
             return callback_kwargs[id_kwarg]
         if self._resource in callback_kwargs:
             return callback_kwargs[self._resource]['id']
-        raise RuntimeError("Couldn't find resource ID in callback event")
+        raise RuntimeError(_("Couldn't find resource ID in callback event"))
 
 
 class OVOServerRpcInterface(object):

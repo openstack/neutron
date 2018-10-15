@@ -130,7 +130,8 @@ class OpenFlowSwitchMixin(object):
         if cookie == ovs_lib.COOKIE_ANY:
             cookie = 0
             if cookie_mask != 0:
-                raise Exception("cookie=COOKIE_ANY but cookie_mask set to %s" %
+                raise Exception(_("cookie=COOKIE_ANY but cookie_mask set to "
+                                  "%s") %
                                 cookie_mask)
         elif cookie == COOKIE_DEFAULT:
             cookie = self._default_cookie
@@ -266,8 +267,8 @@ class BundledOpenFlowBridge(object):
                 return under
             return functools.partial(under, active_bundle=dict(
                 id=self.active_bundle, bundle_flags=self.bundle_flags))
-        raise AttributeError("Only install_* or uninstall_* methods "
-            "can be used")
+        raise AttributeError(_("Only install_* or uninstall_* methods "
+                               "can be used"))
 
     def __enter__(self):
         if self.active_bundle is not None:
@@ -285,7 +286,7 @@ class BundledOpenFlowBridge(object):
             reply = self.br._send_msg(msg, reply_cls=ofpp.ONFBundleCtrlMsg)
             if reply.type != ofp.ONF_BCT_OPEN_REPLY:
                 raise RuntimeError(
-                    "Unexpected reply type %d != ONF_BCT_OPEN_REPLY" %
+                    _("Unexpected reply type %d != ONF_BCT_OPEN_REPLY") %
                     reply.type)
             return self
         except Exception:
@@ -313,7 +314,7 @@ class BundledOpenFlowBridge(object):
             if reply.type != expected_reply:
                 # The bundle ID may be in a bad state.  Let's leave it
                 # in active_bundles so that we will never use it again.
-                raise RuntimeError("Unexpected reply type %d" % reply.type)
+                raise RuntimeError(_("Unexpected reply type %d") % reply.type)
             self.br.active_bundles.remove(self.active_bundle)
         finally:
             # It is possible the bundle is kept open, but this must be

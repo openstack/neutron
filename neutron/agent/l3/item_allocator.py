@@ -16,6 +16,7 @@ import os
 
 from oslo_log import log as logging
 
+from neutron._i18n import _
 
 LOG = logging.getLogger(__name__)
 
@@ -104,9 +105,10 @@ class ItemAllocator(object):
                 # The number of address pairs allocated from the
                 # pool depends upon the prefix length specified
                 # in DVR_FIP_LL_CIDR
-                raise RuntimeError("Cannot allocate item of type:"
-                                   " %s from pool using file %s"
-                                   % (self.ItemClass, self.state_file))
+                raise RuntimeError(_("Cannot allocate item of type: "
+                                     "%(class)s from pool using file %(file)s")
+                                   % {'class': self.ItemClass,
+                                      'file': self.state_file})
 
         self.allocations[key] = self.pool.pop()
         self._write_allocations()
