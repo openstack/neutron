@@ -73,7 +73,7 @@
         - legacy-grenade-dsvm-neutron-forward:
             irrelevant-files: *tempest-irrelevant-files
         - legacy-neutron-dsvm-api-pecan
-        - legacy-tempest-dsvm-neutron-pg-full:
+        - tempest-pg-full:
             irrelevant-files: *tempest-irrelevant-files
         - legacy-tempest-dsvm-neutron-pecan:
             irrelevant-files: *tempest-irrelevant-files
