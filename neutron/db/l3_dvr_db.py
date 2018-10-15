@@ -527,19 +527,17 @@ class DVRResourceOperationHandler(object):
         if not router.extra_attributes.distributed:
             return
 
-        plugin = directory.get_plugin(plugin_constants.L3)
-
         # we calculate which hosts to notify by checking the hosts for
         # the removed port's subnets and then subtract out any hosts still
         # hosting the router for the remaining interfaces
-        router_hosts_for_removed = plugin._get_dvr_hosts_for_subnets(
+        router_hosts_for_removed = self.l3plugin._get_dvr_hosts_for_subnets(
             context, subnet_ids={ip['subnet_id'] for ip in port['fixed_ips']})
-        router_hosts_after = plugin._get_dvr_hosts_for_router(
+        router_hosts_after = self.l3plugin._get_dvr_hosts_for_router(
             context, router_id)
         removed_hosts = set(router_hosts_for_removed) - set(router_hosts_after)
         if removed_hosts:
-            agents = plugin.get_l3_agents(context,
-                                          filters={'host': removed_hosts})
+            agents = self.l3plugin.get_l3_agents(
+                context, filters={'host': removed_hosts})
             bindings = rb_obj.RouterL3AgentBinding.get_objects(
                 context, router_id=router_id)
             snat_binding = bindings.pop() if bindings else None
