@@ -439,6 +439,22 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
+    def test_filter_ipv4_ingress_protocol_999_local(self):
+        # There is no protocol 999, so let's return a mapping
+        # that says there is and make sure the rule is created
+        # using the name and not the number.
+        rule = {'ethertype': 'IPv4',
+                'direction': 'ingress',
+                'protocol': '999'}
+        ingress = mock.call.add_rule('ifake_dev',
+                                     '-p fooproto -j RETURN',
+                                     top=False, comment=None)
+        egress = None
+        with mock.patch.object(self.firewall,
+                               '_local_protocol_name_map') as lpnm:
+            lpnm.return_value = {'999': 'fooproto'}
+            self._test_prepare_port_filter(rule, ingress, egress)
+
     def test_filter_ipv4_egress(self):
         rule = {'ethertype': 'IPv4',
                 'direction': 'egress'}
