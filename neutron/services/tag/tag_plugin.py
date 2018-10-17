@@ -12,6 +12,7 @@
 #    under the License.
 #
 
+from neutron_lib.db import api as lib_db_api
 from neutron_lib.objects import exceptions as obj_exc
 from neutron_lib.plugins import directory
 from oslo_log import helpers as log_helpers
@@ -72,7 +73,7 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tagging.TagPluginBase):
             raise tagging.TagNotFound(tag=tag)
 
     @log_helpers.log_method_call
-    @db_api.retry_if_session_inactive()
+    @lib_db_api.retry_if_session_inactive()
     def update_tags(self, context, resource, resource_id, body):
         with db_api.context_manager.writer.using(context):
             # We get and do all operations with objects in one session

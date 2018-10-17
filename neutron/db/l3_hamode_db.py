@@ -28,6 +28,7 @@ from neutron_lib.callbacks import priority_group
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.exceptions import l3_ext_ha_mode as l3ha_exc
@@ -48,7 +49,6 @@ from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
 from neutron.conf.db import l3_hamode_db
 from neutron.db import _utils as db_utils
-from neutron.db import api as db_api
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import l3_dvr_db
 from neutron.db.models import l3ha as l3ha_model

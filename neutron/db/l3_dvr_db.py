@@ -23,7 +23,7 @@ from neutron_lib.callbacks import priority_group
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.exceptions import l3 as l3_exc
@@ -40,7 +40,6 @@ from neutron._i18n import _
 from neutron.common import constants as l3_const
 from neutron.common import utils as n_utils
 from neutron.conf.db import l3_dvr_db
-from neutron.db import api as db_api
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db.models import allowed_address_pair as aap_models
@@ -452,7 +451,7 @@ class DVRResourceOperationHandler(object):
                 # with the csnat port.
                 # TODO(kevinbenton): switch to taskflow to manage
                 # these rollbacks.
-                @lib_db_api.retry_db_errors
+                @db_api.retry_db_errors
                 def revert():
                     # TODO(kevinbenton): even though we get the
                     # port each time, there is a potential race
