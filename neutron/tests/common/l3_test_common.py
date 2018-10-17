@@ -284,7 +284,9 @@ def router_append_subnet(router, count=1, ip_version=4,
     router[lib_constants.INTERFACE_KEY] = interfaces
 
 
-def router_append_pd_enabled_subnet(router, count=1):
+def router_append_pd_enabled_subnet(router, count=1, prefix=None):
+    if not prefix:
+        prefix = lib_constants.PROVISIONAL_IPV6_PD_PREFIX
     interfaces = router[lib_constants.INTERFACE_KEY]
     current = sum(netaddr.IPNetwork(subnet['cidr']).version == 6
                   for p in interfaces for subnet in p['subnets'])
@@ -303,7 +305,7 @@ def router_append_pd_enabled_subnet(router, count=1):
                                'subnet_id': subnet_id}],
                 'mac_address': str(mac_address),
                 'subnets': [{'id': subnet_id,
-                             'cidr': lib_constants.PROVISIONAL_IPV6_PD_PREFIX,
+                             'cidr': prefix,
                              'gateway_ip': '::1',
                              'ipv6_ra_mode': lib_constants.IPV6_SLAAC,
                              'subnetpool_id': lib_constants.IPV6_PD_POOL_ID}]}
@@ -318,6 +320,17 @@ def get_unassigned_pd_interfaces(router):
         for subnet in intf['subnets']:
             if (ipv6_utils.is_ipv6_pd_enabled(subnet) and
                     subnet['cidr'] ==
+                    lib_constants.PROVISIONAL_IPV6_PD_PREFIX):
+                pd_intfs.append(intf)
+    return pd_intfs
+
+
+def get_assigned_pd_interfaces(router):
+    pd_intfs = []
+    for intf in router[lib_constants.INTERFACE_KEY]:
+        for subnet in intf['subnets']:
+            if (ipv6_utils.is_ipv6_pd_enabled(subnet) and
+                    subnet['cidr'] !=
                     lib_constants.PROVISIONAL_IPV6_PD_PREFIX):
                 pd_intfs.append(intf)
     return pd_intfs
