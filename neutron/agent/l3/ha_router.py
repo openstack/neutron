@@ -240,6 +240,7 @@ class HaRouter(router.RouterInfo):
             keepalived.KeepalivedVirtualRoute(
                 route['destination'], route['nexthop'])
             for route in new_routes]
+        super(HaRouter, self).routes_updated(old_routes, new_routes)
 
     def _add_default_gw_virtual_route(self, ex_gw_port, interface_name):
         gateway_ips = self._get_external_gw_ips(ex_gw_port)
