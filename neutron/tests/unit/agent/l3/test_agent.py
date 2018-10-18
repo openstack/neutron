@@ -3180,6 +3180,36 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     @mock.patch.object(dibbler.os, 'chmod')
     @mock.patch.object(dibbler.shutil, 'rmtree')
     @mock.patch.object(pd.PrefixDelegation, '_get_sync_data')
+    def test_pd_have_subnet(self, mock1, mock2, mock3, mock4,
+                            mock_getpid, mock_get_prefix,
+                            mock_pd_update_subnet):
+        '''Add one pd-enabled subnet that has already been assigned
+        '''
+        prefix = '2001:db8:10::/64'
+
+        # Initial setup
+        agent, router, ri = self._pd_setup_agent_router()
+
+        # Create one pd-enabled subnet and add router interface
+        l3_test_common.router_append_pd_enabled_subnet(router, prefix=prefix)
+        ri.process()
+
+        pd_intfs = l3_test_common.get_assigned_pd_interfaces(router)
+        subnet_id = pd_intfs[0]['subnets'][0]['id']
+
+        # Check that _process_pd_iptables_rules() is called correctly
+        self.assertEqual({subnet_id: prefix}, ri.pd_subnets)
+        ri._process_pd_iptables_rules.assert_called_once_with(prefix,
+                                                              subnet_id)
+
+    @mock.patch.object(pd.PrefixDelegation, 'update_subnet')
+    @mock.patch.object(dibbler.PDDibbler, 'get_prefix', autospec=True)
+    @mock.patch.object(dibbler.os, 'getpid', return_value=1234)
+    @mock.patch.object(pd.PrefixDelegation, '_is_lla_active',
+                       return_value=True)
+    @mock.patch.object(dibbler.os, 'chmod')
+    @mock.patch.object(dibbler.shutil, 'rmtree')
+    @mock.patch.object(pd.PrefixDelegation, '_get_sync_data')
     def test_pd_add_remove_subnet(self, mock1, mock2, mock3, mock4,
                                   mock_getpid, mock_get_prefix,
                                   mock_pd_update_subnet):
@@ -3192,6 +3222,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # Create one pd-enabled subnet and add router interface
         l3_test_common.router_append_pd_enabled_subnet(router)
         ri.process()
+
+        # Provisional PD prefix on startup, so nothing cached
+        self.assertEqual({}, ri.pd_subnets)
 
         # No client should be started since there is no gateway port
         self.assertFalse(self.external_process.call_count)

@@ -563,6 +563,9 @@ class RouterInfo(object):
                     self.agent.pd.enable_subnet(self.router_id, subnet['id'],
                                      subnet['cidr'],
                                      interface_name, p['mac_address'])
+                    if (subnet['cidr'] !=
+                            lib_constants.PROVISIONAL_IPV6_PD_PREFIX):
+                        self.pd_subnets[subnet['id']] = subnet['cidr']
 
         for p in old_ports:
             self.internal_network_removed(p)
