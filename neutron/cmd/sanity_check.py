@@ -118,6 +118,16 @@ def check_dnsmasq_version():
     return result
 
 
+def check_ovs_qos_direct_ports_supported():
+    result = checks.ovs_qos_direct_port_supported()
+    if not result:
+        LOG.error('The installed version of OVS does not support '
+                  'QoS rules for direct ports. '
+                  'Please update to version %s or newer.',
+                  checks.get_ovs_version_for_qos_direct_port_support())
+    return result
+
+
 def check_dnsmasq_local_service_supported():
     result = checks.dnsmasq_local_service_supported()
     if not result:
@@ -324,6 +334,9 @@ OPTS = [
     BoolOptCallback('dnsmasq_local_service_supported',
                     check_dnsmasq_local_service_supported,
                     help=_('Check for local-service support in dnsmasq')),
+    BoolOptCallback('ovs_qos_direct_port_supported',
+                    check_ovs_qos_direct_ports_supported,
+                    help=_('Check if the ovs supports QoS for direct ports')),
     BoolOptCallback('dnsmasq_version', check_dnsmasq_version,
                     help=_('Check minimal dnsmasq version'),
                     deprecated_for_removal=True,

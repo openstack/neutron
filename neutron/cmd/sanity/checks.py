@@ -23,6 +23,7 @@ from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
+from oslo_utils import versionutils
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import ha_router
@@ -42,6 +43,7 @@ LOG = logging.getLogger(__name__)
 
 MINIMUM_DNSMASQ_VERSION = 2.67
 DNSMASQ_VERSION_DHCP_RELEASE6 = 2.76
+DIRECT_PORT_QOS_MIN_OVS_VERSION = '2.11'
 MINIMUM_DIBBLER_VERSION = '1.0.1'
 CONNTRACK_GRE_MODULE = 'nf_conntrack_proto_gre'
 
@@ -199,6 +201,10 @@ def get_dnsmasq_version_with_dhcp_release6():
     return DNSMASQ_VERSION_DHCP_RELEASE6
 
 
+def get_ovs_version_for_qos_direct_port_support():
+    return DIRECT_PORT_QOS_MIN_OVS_VERSION
+
+
 def dnsmasq_local_service_supported():
     cmd = ['dnsmasq', '--test', '--local-service']
     env = {'LC_ALL': 'C'}
@@ -225,6 +231,26 @@ def dnsmasq_version_supported():
             return False
     except (OSError, RuntimeError, IndexError, ValueError) as e:
         LOG.debug("Exception while checking minimal dnsmasq version. "
+                  "Exception: %s", e)
+        return False
+    return True
+
+
+def ovs_qos_direct_port_supported():
+    try:
+        cmd = ['ovs-vsctl', '-V']
+        out = agent_utils.execute(cmd)
+        matched_line = re.search(r"ovs-vsctl.*", out)
+        matched_version = re.search(r"(\d+\.\d+)", matched_line.group(0))
+        ver = versionutils.convert_version_to_tuple(matched_version.group(1) if
+                                                    matched_version else '0.0')
+        minver = versionutils.convert_version_to_tuple(
+                 DIRECT_PORT_QOS_MIN_OVS_VERSION)
+        if ver < minver:
+            return False
+    except (OSError, RuntimeError, ValueError) as e:
+        LOG.debug("Exception while checking minimal ovs version "
+                  "required for supporting direct ports QoS rules. "
                   "Exception: %s", e)
         return False
     return True

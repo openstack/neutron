@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    Added QoS support for direct ports in neutron.
+    The support requires Open vSwitch 2.11.0 or newer and is based on Linux kernel 5.4.0 or newer.
+    [`bug 1843165 <https://bugs.launchpad.net/neutron/+bug/1843165>`_].
+

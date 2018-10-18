@@ -53,7 +53,7 @@ class OVSDriver(base.DriverBase):
             name='openvswitch',
             vif_types=[portbindings.VIF_TYPE_OVS,
                        portbindings.VIF_TYPE_VHOST_USER],
-            vnic_types=[portbindings.VNIC_NORMAL],
+            vnic_types=[portbindings.VNIC_NORMAL, portbindings.VNIC_DIRECT],
             supported_rules=SUPPORTED_RULES,
             requires_rpc_notifications=True)
 
