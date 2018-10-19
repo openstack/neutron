@@ -14,16 +14,20 @@
 #    under the License.
 
 import collections
+import ctypes
+from ctypes import util
+import sys
 
 import netaddr
 from neutron_lib import constants
+from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_log import versionutils
 from oslo_utils import netutils
 import six
 
-from neutron._i18n import _, _LI, _LW
+from neutron._i18n import _, _LE, _LI, _LW
 from neutron.agent import firewall
 from neutron.agent.linux import ip_conntrack
 from neutron.agent.linux import ipset_manager
@@ -44,6 +48,7 @@ CHAIN_NAME_PREFIX = {firewall.INGRESS_DIRECTION: 'i',
 IPSET_DIRECTION = {firewall.INGRESS_DIRECTION: 'src',
                    firewall.EGRESS_DIRECTION: 'dst'}
 comment_rule = iptables_manager.comment_rule
+libc = ctypes.CDLL(util.find_library('libc.so.6'))
 
 
 def get_hybrid_port_name(port_name):
@@ -91,6 +96,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.updated_rule_sg_ids = set()
         self.updated_sg_members = set()
         self.devices_with_updated_sg_members = collections.defaultdict(list)
+        self._iptables_protocol_name_map = {}
 
     def _enable_netfilter_for_bridges(self):
         # we only need to set these values once, but it has to be when
@@ -688,10 +694,44 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             comment=ic.ALLOW_ASSOC)]
         return iptables_rules
 
+    def _local_protocol_name_map(self):
+        local_protocol_name_map = {}
+        try:
+            class protoent(ctypes.Structure):
+                _fields_ = [("p_name", ctypes.c_char_p),
+                            ("p_aliases", ctypes.POINTER(ctypes.c_char_p)),
+                            ("p_proto", ctypes.c_int)]
+            libc.getprotoent.restype = ctypes.POINTER(protoent)
+            libc.setprotoent(0)
+            while True:
+                pr = libc.getprotoent()
+                if not pr:
+                    break
+                r = pr[0]
+                p_name = helpers.safe_decode_utf8(r.p_name)
+                local_protocol_name_map[str(r.p_proto)] = p_name
+        except Exception:
+            LOG.exception(_LE("Unable to create local protocol name map: %s"),
+                          sys.exc_info()[0])
+        finally:
+            libc.endprotoent()
+        return local_protocol_name_map
+
+    def _protocol_name_map(self):
+        if not self._iptables_protocol_name_map:
+            tmp_map = n_const.IPTABLES_PROTOCOL_NAME_MAP.copy()
+            tmp_map.update(self._local_protocol_name_map())
+            self._iptables_protocol_name_map = tmp_map
+        return self._iptables_protocol_name_map
+
+    def _iptables_protocol_name(self, protocol):
+        # protocol zero is a special case and requires no '-p'
+        if protocol and protocol != '0':
+            return self._protocol_name_map().get(protocol, protocol)
+
     def _protocol_arg(self, protocol, is_port):
         iptables_rule = []
-        rule_protocol = n_const.IPTABLES_PROTOCOL_NAME_MAP.get(protocol,
-                                                               protocol)
+        rule_protocol = self._iptables_protocol_name(protocol)
         # protocol zero is a special case and requires no '-p'
         if rule_protocol:
             iptables_rule = ['-p', rule_protocol]
@@ -707,7 +747,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         if port_range_min is None:
             return args
 
-        protocol = n_const.IPTABLES_PROTOCOL_NAME_MAP.get(protocol, protocol)
+        protocol = self._iptables_protocol_name(protocol)
         if protocol in ['icmp', 'ipv6-icmp']:
             protocol_type = 'icmpv6' if protocol == 'ipv6-icmp' else 'icmp'
             # Note(xuhanp): port_range_min/port_range_max represent
