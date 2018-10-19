@@ -564,7 +564,18 @@ class _TestWalkMigrations(object):
 class TestWalkMigrationsMysql(testlib_api.MySQLTestCaseMixin,
                               _TestWalkMigrations,
                               testlib_api.SqlTestCaseLight):
-    pass
+
+    # NOTE(slaweq): this workaround is taken from Manila patch:
+    # https://review.openstack.org/#/c/291397/
+    # Set 5 minutes timeout for case of running it on
+    # very slow nodes/VMs. Note, that this test becomes slower with each
+    # addition of new DB migration. On fast nodes it can take about 5-10
+    # secs having Mitaka set of migrations. 'pymysql' works much slower
+    # on slow nodes than 'psycopg2' and because of that this increased
+    # timeout is required only when for testing with 'mysql' backend.
+    @test_base.set_timeout(300)
+    def test_walk_versions(self):
+        super(TestWalkMigrationsMysql, self).test_walk_versions()
 
 
 class TestWalkMigrationsPsql(testlib_api.PostgreSQLTestCaseMixin,
