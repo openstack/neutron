@@ -51,7 +51,6 @@ from neutron.conf.db import l3_hamode_db
 from neutron.db import _utils as db_utils
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import l3_dvr_db
-from neutron.db.models import l3ha as l3ha_model
 from neutron.objects import base
 from neutron.objects import l3_hamode
 from neutron.objects import router as l3_obj
@@ -258,9 +257,9 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                     port_id=port_id,
                     router_id=router_id,
                     port_type=constants.DEVICE_OWNER_ROUTER_HA_INTF).create()
-                portbinding = l3ha_model.L3HARouterAgentPortBinding(
+                portbinding = l3_hamode.L3HARouterAgentPortBinding(context,
                     port_id=port_id, router_id=router_id)
-                context.session.add(portbinding)
+                portbinding.create()
 
             return portbinding
         except db_exc.DBReferenceError as e:
@@ -298,7 +297,9 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         port, binding = db_utils.safe_creation(context, creation,
                                                deletion, content,
                                                transaction=False)
-        return binding
+        # _create_ha_port_binding returns the binding object now and
+        # to populate agent relation db_obj is used.
+        return binding.db_obj
 
     def _delete_ha_interfaces(self, context, router_id):
         admin_ctx = context.elevated()
