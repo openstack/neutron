@@ -69,3 +69,15 @@ def is_ipv6_pd_enabled(subnet):
        constants.IPV6_PD_POOL_ID
     """
     return subnet.get('subnetpool_id') == const.IPV6_PD_POOL_ID
+
+
+def valid_ipv6_url(host, port):
+    """Given a host and a port returns a valid URL
+       RFC2732 https://tools.ietf.org/html/rfc2732
+       square brackets always required in ipv6 URI.
+    """
+    if netaddr.valid_ipv6(host):
+        uri = '[%s]:%s' % (host, port)
+    else:
+        uri = '%s:%s' % (host, port)
+    return uri
