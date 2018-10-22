@@ -243,5 +243,5 @@ class External_net_db_mixin(object):
 
     @registry.receives(resources.NETWORK, [events.BEFORE_DELETE])
     def _before_network_delete_handler(self, resource, event, trigger,
-                                       context, network_id, **kwargs):
-        self._process_l3_delete(context, network_id)
+                                       payload=None):
+        self._process_l3_delete(payload.context, payload.resource_id)
