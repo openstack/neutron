@@ -299,17 +299,33 @@ Table of Neutron backends, supported rules and traffic direction (from the VM
 point of view)
 ::
 
-    +----------------------+----------------+----------------+----------------+
-    | Rule \ Backend       | Open vSwitch   | SR-IOV         | Linux Bridge   |
-    +----------------------+----------------+----------------+----------------+
-    | Bandwidth Limit      | Egress/Ingress | Egress (1)     | Egress/Ingress |
-    +----------------------+----------------+----------------+----------------+
-    | Minimum Bandwidth    | -              | Egress         | -              |
-    +----------------------+----------------+----------------+----------------+
-    | DSCP Marking         | Egress         | -              | Egress         |
-    +----------------------+----------------+----------------+----------------+
+    +----------------------+--------------------+--------------------+--------------------+
+    | Rule \ Backend       | Open vSwitch       | SR-IOV             | Linux Bridge       |
+    +----------------------+--------------------+--------------------+--------------------+
+    | Bandwidth Limit      | Egress/Ingress     | Egress (1)         | Egress/Ingress     |
+    +----------------------+--------------------+--------------------+--------------------+
+    | Minimum Bandwidth    | Egress/Ingress (2) | Egress/Ingress (2) | -                  |
+    +----------------------+--------------------+--------------------+--------------------+
+    | DSCP Marking         | Egress             | -                  | Egress             |
+    +----------------------+--------------------+--------------------+--------------------+
 
     (1) Max burst parameter is skipped because it's not supported by ip tool.
+    (2) Placement based enforcement works for both egress and ingress directions,
+        but dataplane enforcement depends on the backend.
+
+Table of Neutron backends, supported directions and enforcement types for
+Minimum Bandwidth rule
+::
+
+    +----------------------------+----------------+----------------+----------------+
+    | Enforcement type \ Backend | Open vSwitch   | SR-IOV         | Linux Bridge   |
+    +----------------------------+----------------+----------------+----------------+
+    | Dataplane                  | -              | Egress         | -              |
+    |                            |                | (Newton+)      |                |
+    +----------------------------+----------------+----------------+----------------+
+    | Placement                  | Egress/Ingress | Egress/Ingress | -              |
+    |                            | (Stein+)       | (Stein+)       |                |
+    +----------------------------+----------------+----------------+----------------+
 
 
 Open vSwitch
