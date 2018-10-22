@@ -34,6 +34,7 @@ from neutron.conf.plugins.ml2.drivers import linuxbridge as \
     linuxbridge_agent_config
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as linuxbridge_agent
+from neutron.services.qos.drivers.linuxbridge import driver as lb_drv
 from neutron.services.qos.drivers.openvswitch import driver as ovs_drv
 
 
@@ -392,17 +393,26 @@ class TestDscpMarkingQoSLinuxbridge(_TestDscpMarkingQoS,
 
 
 class TestQoSWithL2Population(base.BaseFullStackTestCase):
+    scenarios = [
+        (constants.AGENT_TYPE_OVS,
+         {'mech_drivers': 'openvswitch',
+          'supported_rules': ovs_drv.SUPPORTED_RULES}),
+        (constants.AGENT_TYPE_LINUXBRIDGE,
+         {'mech_drivers': 'linuxbridge',
+          'supported_rules': lb_drv.SUPPORTED_RULES})
+    ]
 
     def setUp(self):
         host_desc = []  # No need to register agents for this test case
-        env_desc = environment.EnvironmentDescription(qos=True, l2_pop=True)
+        env_desc = environment.EnvironmentDescription(
+            qos=True, l2_pop=True, mech_drivers=self.mech_drivers)
         env = environment.Environment(env_desc, host_desc)
         super(TestQoSWithL2Population, self).setUp(env)
 
     def test_supported_qos_rule_types(self):
         res = self.client.list_qos_rule_types()
         rule_types = {t['type'] for t in res['rule_types']}
-        expected_rules = set(ovs_drv.SUPPORTED_RULES)
+        expected_rules = set(self.supported_rules)
         self.assertEqual(expected_rules, rule_types)
 
 
