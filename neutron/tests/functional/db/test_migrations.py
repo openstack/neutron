@@ -563,7 +563,7 @@ class TestWalkMigrationsMysql(testlib_api.MySQLTestCaseMixin,
     # secs having Mitaka set of migrations. 'pymysql' works much slower
     # on slow nodes than 'psycopg2' and because of that this increased
     # timeout is required only when for testing with 'mysql' backend.
-    @test_base.set_timeout(300)
+    @test_base.set_timeout(600)
     def test_walk_versions(self):
         super(TestWalkMigrationsMysql, self).test_walk_versions()
 
