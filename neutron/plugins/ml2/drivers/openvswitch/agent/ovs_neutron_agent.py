@@ -30,6 +30,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources as callback_resources
 from neutron_lib import constants as n_const
 from neutron_lib import context
+from neutron_lib.placement import utils as place_utils
 from neutron_lib.plugins import utils as plugin_utils
 from neutron_lib.utils import helpers
 from oslo_config import cfg
@@ -39,7 +40,7 @@ from oslo_service import loopingcall
 from oslo_service import systemd
 from oslo_utils import netutils
 from osprofiler import profiler
-from six import moves
+import six
 
 from neutron._i18n import _
 from neutron.agent.common import ip_lib
@@ -150,8 +151,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
         self.use_veth_interconnection = ovs_conf.use_veth_interconnection
         self.veth_mtu = agent_conf.veth_mtu
-        self.available_local_vlans = set(moves.range(n_const.MIN_VLAN_TAG,
-                                                     n_const.MAX_VLAN_TAG + 1))
+        self.available_local_vlans = set(six.moves.range(
+            n_const.MIN_VLAN_TAG, n_const.MAX_VLAN_TAG + 1))
         self.tunnel_types = agent_conf.tunnel_types or []
         self.l2_pop = agent_conf.l2_population
         # TODO(ethuleau): Change ARP responder so it's not dependent on the
@@ -187,6 +188,15 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.setup_rpc()
         self.bridge_mappings = self._parse_bridge_mappings(
             ovs_conf.bridge_mappings)
+        self.rp_bandwidths = place_utils.parse_rp_bandwidths(
+            ovs_conf.resource_provider_bandwidths)
+
+        br_set = set(six.itervalues(self.bridge_mappings))
+        n_utils.validate_rp_bandwidth(self.rp_bandwidths,
+                                      br_set)
+        self.rp_inventory_defaults = place_utils.parse_rp_inventory_defaults(
+            ovs_conf.resource_provider_inventory_defaults)
+
         self.setup_physical_bridges(self.bridge_mappings)
         self.vlan_manager = vlanmanager.LocalVlanManager()
 
@@ -270,6 +280,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             'host': host,
             'topic': n_const.L2_AGENT_TOPIC,
             'configurations': {'bridge_mappings': self.bridge_mappings,
+                               c_const.RP_BANDWIDTHS: self.rp_bandwidths,
+                               c_const.RP_INVENTORY_DEFAULTS:
+                                   self.rp_inventory_defaults,
                                'integration_bridge':
                                ovs_conf.integration_bridge,
                                'tunnel_types': self.tunnel_types,

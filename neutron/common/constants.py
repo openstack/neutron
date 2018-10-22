@@ -250,3 +250,6 @@ EXT_PARENT_RESOURCE_MAPPING = {
     l3.FLOATINGIP: plugin_consts.L3
 }
 EXT_PARENT_PREFIX = 'ext_parent'
+
+RP_BANDWIDTHS = 'resource_provider_bandwidths'
+RP_INVENTORY_DEFAULTS = 'resource_provider_inventory_defaults'

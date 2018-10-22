@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    New configuration options for neutron-ovs-agent under section ``[ovs]``:
+    ``resource_provider_bandwidths`` and
+    ``resource_provider_inventory_defaults``.
+    The former controls the ``total`` (available bandwidth) field of the
+    physical network interface resource provider inventories. It defaults
+    to not creating resource providers in Placement. The latter can be used
+    to tune the other fields (``allocation_ratio``, ``min_unit``,
+    ``max_unit``, ``reserved``, ``step_size``) of resource provider
+    inventories.

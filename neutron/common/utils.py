@@ -817,3 +817,24 @@ def port_ip_changed(new_port, original_port):
         return True
 
     return False
+
+
+def validate_rp_bandwidth(rp_bandwidths, device_names):
+    """Validate resource provider bandwidths against device names.
+
+    :param rp_bandwidths: Dict containing resource provider bandwidths,
+                          in the form:
+                          {'phy1': {'ingress': 100, 'egress': 100}}
+    :param device_names: A set of the device names given in bridge_mappings
+                         in case of ovs-agent or in physical_device_mappings
+                         in case of sriov-agent
+    :raises ValueError: In case of the devices (keys) in the rp_bandwidths dict
+                        are not in the device_names set.
+    """
+
+    for dev_name in rp_bandwidths:
+        if dev_name not in device_names:
+            raise ValueError(_(
+                "Invalid resource_provider_bandwidths: "
+                "Device name %(dev_name)s is missing from "
+                "device mappings") % {'dev_name': dev_name})
