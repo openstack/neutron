@@ -33,6 +33,7 @@ from neutron.db import l3_dvrscheduler_db
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.objects import agent as agent_obj
+from neutron.objects import l3agent as rb_obj
 from neutron.objects import router as router_obj
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -1007,3 +1008,36 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self.assertEqual(port_dict['device_id'], port_info['device_id'])
             self.assertEqual(port_dict['device_owner'],
                              port_info['device_owner'])
+
+    def test__get_sync_routers_check_gw_port_host(self):
+        router_dict = {'name': 'test_router', 'admin_state_up': True,
+                       'distributed': True}
+        router = self._create_router(router_dict)
+        with self.network() as public,\
+                self.subnet() as subnet:
+            ext_net_1_id = public['network']['id']
+            self.core_plugin.update_network(
+                self.ctx, ext_net_1_id,
+                {'network': {'router:external': True}})
+            self.mixin.update_router(
+                self.ctx, router['id'],
+                {'router': {'external_gateway_info':
+                            {'network_id': ext_net_1_id}}})
+            self.mixin.add_router_interface(self.ctx, router['id'],
+                {'subnet_id': subnet['subnet']['id']})
+            routers = self.mixin._get_sync_routers(self.ctx,
+                                                   router_ids=[router['id']])
+            self.assertIsNone(routers[0]['gw_port_host'])
+
+            agent = mock.Mock()
+            agent.host = "fake-host"
+            bind = mock.Mock()
+            bind.l3_agent_id = "fake-id"
+            with mock.patch.object(
+                rb_obj.RouterL3AgentBinding, 'get_objects',
+                return_value=[bind]), mock.patch.object(
+                    agent_obj.Agent, 'get_object',
+                    return_value=agent):
+                routers = self.mixin._get_sync_routers(
+                    self.ctx, router_ids=[router['id']])
+                self.assertEqual("fake-host", routers[0]['gw_port_host'])
