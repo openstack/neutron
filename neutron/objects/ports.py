@@ -521,3 +521,13 @@ class Port(base.NeutronDbObject):
             query = query.filter(
                 ~models_v2.Port.device_owner.in_(excluded_device_owners))
         return [port_binding['port_id'] for port_binding in query.all()]
+
+    @classmethod
+    def get_ports_by_binding_type_and_host(cls, context,
+                                           binding_type, host):
+        query = context.session.query(models_v2.Port).join(
+            ml2_models.PortBinding)
+        query = query.filter(
+            ml2_models.PortBinding.vif_type == binding_type,
+            ml2_models.PortBinding.host == host)
+        return [cls._load_object(context, db_obj) for db_obj in query.all()]
