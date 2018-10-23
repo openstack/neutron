@@ -473,7 +473,7 @@ The following steps involve compute node 1:
 #. The OVS integration bridge adds an internal VLAN tag to the packet.
 #. The OVS integration bridge port for self-service network 1 (6) removes the
    internal VLAN tag and forwards the packet to the self-service network 1
-   interface in the distributed router namespace (6).
+   interface in the distributed router namespace (7).
 #. The distributed router namespace routes the packet to self-service network
    2.
 #. The self-service network 2 interface in the distributed router namespace
