@@ -18,6 +18,7 @@ import functools
 import fixtures
 import mock
 import netaddr
+from neutron_lib.agent import constants as agent_consts
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import portbindings
@@ -689,6 +690,104 @@ class TestMl2DbOperationBoundsTenantRbac(TestMl2DbOperationBoundsTenant):
     def test_port_list_in_shared_network_queries_constant(self):
         self._assert_object_list_queries_constant(
             self.make_port_in_shared_network, 'ports')
+
+
+class TestMl2RevivedAgentsBindPorts(Ml2PluginV2TestCase):
+
+    _mechanism_drivers = ['openvswitch', 'logger']
+
+    def _test__retry_binding_revived_agents(self, event, agent_status,
+                                            admin_state_up, agent_type,
+                                            ports, should_bind_ports):
+        plugin = directory.get_plugin()
+        context = mock.Mock()
+        agent = {
+            'agent_status': agent_status,
+            'admin_state_up': admin_state_up,
+            'agent_type': agent_type}
+        host = "test_host"
+
+        for port in ports:
+            port.binding = mock.MagicMock(
+                vif_type=portbindings.VIF_TYPE_BINDING_FAILED, host=host)
+
+        with mock.patch(
+            'neutron.objects.ports.Port.get_ports_by_binding_type_and_host',
+            return_value=ports
+        ) as get_ports_by_binding_type_and_host, mock.patch.object(
+            plugin, 'get_network', return_value=mock.Mock()
+        ) as get_network, mock.patch(
+            'neutron.plugins.ml2.db.get_binding_levels',
+            return_value=None
+        ) as get_binding_levels, mock.patch(
+            'neutron.plugins.ml2.driver_context.PortContext'
+        ) as port_context, mock.patch.object(
+            plugin, '_bind_port_if_needed'
+        ) as bind_port_if_needed:
+
+            plugin._retry_binding_revived_agents(
+                resources.AGENT, event, plugin,
+                **{'context': context, 'host': host, 'agent': agent})
+
+            if (agent_status == agent_consts.AGENT_ALIVE or
+                    not admin_state_up or
+                    agent_type not in plugin._rebind_on_revive_agent_types):
+                get_ports_by_binding_type_and_host.assert_not_called()
+            else:
+                get_ports_by_binding_type_and_host.assert_called_once_with(
+                    context, portbindings.VIF_TYPE_BINDING_FAILED, host)
+
+            if should_bind_ports:
+                get_network_expected_calls = [
+                    mock.call(context, port.network_id) for port in ports]
+                get_network.assert_has_calls(get_network_expected_calls)
+                get_binding_levels_expected_calls = [
+                    mock.call(context, port.id, host) for port in ports]
+                get_binding_levels.assert_has_calls(
+                    get_binding_levels_expected_calls)
+                bind_port_if_needed.assert_called_once_with(port_context())
+            else:
+                get_network.assert_not_called()
+                get_binding_levels.assert_not_called()
+                bind_port_if_needed.assert_not_called()
+
+    def test__retry_binding_revived_agents(self):
+        port = mock.MagicMock(
+            id=uuidutils.generate_uuid())
+        self._test__retry_binding_revived_agents(
+            events.AFTER_UPDATE, agent_consts.AGENT_REVIVED, True,
+            constants.AGENT_TYPE_OVS, [port],
+            should_bind_ports=True)
+
+    def test__retry_binding_revived_agents_no_binding_failed_ports(self):
+        self._test__retry_binding_revived_agents(
+            events.AFTER_UPDATE, agent_consts.AGENT_REVIVED, True,
+            constants.AGENT_TYPE_OVS, [],
+            should_bind_ports=False)
+
+    def test__retry_binding_revived_agents_alive_agent(self):
+        port = mock.MagicMock(
+            id=uuidutils.generate_uuid())
+        self._test__retry_binding_revived_agents(
+            events.AFTER_UPDATE, agent_consts.AGENT_ALIVE, True,
+            constants.AGENT_TYPE_OVS, [port],
+            should_bind_ports=False)
+
+    def test__retry_binding_revived_agents_not_binding_agent(self):
+        port = mock.MagicMock(
+            id=uuidutils.generate_uuid())
+        self._test__retry_binding_revived_agents(
+            events.AFTER_UPDATE, agent_consts.AGENT_REVIVED, True,
+            "Other agent which don't support binding", [port],
+            should_bind_ports=False)
+
+    def test__retry_binding_revived_agents_agent_admin_state_down(self):
+        port = mock.MagicMock(
+            id=uuidutils.generate_uuid())
+        self._test__retry_binding_revived_agents(
+            events.AFTER_UPDATE, agent_consts.AGENT_REVIVED, False,
+            constants.AGENT_TYPE_OVS, [port],
+            should_bind_ports=False)
 
 
 class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):

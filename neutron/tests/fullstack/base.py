@@ -80,6 +80,20 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
         class_name, test_name = self.id().split(".")[-2:]
         return "%s.%s" % (class_name, test_name)
 
+    def _wait_until_agent_up(self, agent_id):
+        def _agent_up():
+            agent = self.client.show_agent(agent_id)['agent']
+            return agent.get('alive')
+
+        common_utils.wait_until_true(_agent_up)
+
+    def _wait_until_agent_down(self, agent_id):
+        def _agent_down():
+            agent = self.client.show_agent(agent_id)['agent']
+            return not agent.get('alive')
+
+        common_utils.wait_until_true(_agent_down)
+
     def _assert_ping_during_agents_restart(
             self, agents, src_namespace, ips, restart_timeout=10,
             ping_timeout=1, count=10):
