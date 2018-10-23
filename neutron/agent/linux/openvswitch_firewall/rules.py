@@ -18,6 +18,7 @@ import collections
 import netaddr
 from neutron_lib import constants as n_consts
 
+from neutron._i18n import _
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.common import utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
@@ -59,8 +60,8 @@ def _assert_mergeable_rules(rule_conj_list):
         rule1.pop('port_range_max', None)
         if rule_tmpl != rule1:
             raise RuntimeError(
-                "Incompatible SG rules detected: %(rule1)s and %(rule2)s. "
-                "They cannot be merged. This should not happen." %
+                _("Incompatible SG rules detected: %(rule1)s and %(rule2)s. "
+                  "They cannot be merged. This should not happen.") %
                 {'rule1': rule_tmpl, 'rule2': rule})
 
 

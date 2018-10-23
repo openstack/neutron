@@ -16,6 +16,7 @@ from alembic.operations import ops
 from alembic.util import Dispatcher
 from alembic.util import rev_id as new_rev_id
 
+from neutron._i18n import _
 from neutron.db.migration import cli
 
 _ec_dispatcher = Dispatcher()
@@ -107,8 +108,8 @@ def _alter_column(context, directive, phase):
         return directive
     else:
         raise NotImplementedError(
-            "Don't know if operation is an expand or "
-            "contract at the moment: %s" % directive)
+            _("Don't know if operation is an expand or "
+              "contract at the moment: %s") % directive)
 
 
 @_ec_dispatcher.dispatch_for(ops.ModifyTableOps)

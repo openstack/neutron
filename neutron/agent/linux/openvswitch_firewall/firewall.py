@@ -22,6 +22,7 @@ from neutron_lib import constants as lib_const
 from oslo_log import log as logging
 from oslo_utils import netutils
 
+from neutron._i18n import _
 from neutron.agent import firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
@@ -239,9 +240,9 @@ class ConjIdMap(object):
         """
         if direction not in [lib_const.EGRESS_DIRECTION,
                              lib_const.INGRESS_DIRECTION]:
-            raise ValueError("Invalid direction '%s'" % direction)
+            raise ValueError(_("Invalid direction '%s'") % direction)
         if ethertype not in [lib_const.IPv4, lib_const.IPv6]:
-            raise ValueError("Invalid ethertype '%s'" % ethertype)
+            raise ValueError(_("Invalid ethertype '%s'") % ethertype)
 
         return self.id_map[(sg_id, remote_sg_id, direction, ethertype)]
 

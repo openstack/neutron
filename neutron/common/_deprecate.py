@@ -158,8 +158,8 @@ def _moved_global(old_name, new_module=None, new_name=None):
 
     """
     if not (new_module or new_name):
-        raise AssertionError("'new_module' and 'new_name' "
-                             "must not be both None")
+        raise AssertionError(_("'new_module' and 'new_name' "
+                               "must not be both None"))
     if isinstance(new_module, _MovedGlobals):
         # The new module has been shimmed, get the original
         new_module = new_module._mg__old_ref

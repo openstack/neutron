@@ -17,6 +17,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib import context as n_ctx
 from oslo_log import log as logging
 
+from neutron._i18n import _
 from neutron.api.rpc.callbacks.consumer import registry as registry_rpc
 from neutron.api.rpc.callbacks import events as events_rpc
 from neutron.api.rpc.handlers import resources_rpc
@@ -42,7 +43,7 @@ class RemoteResourceCache(object):
 
     def _type_cache(self, rtype):
         if rtype not in self.resource_types:
-            raise RuntimeError("Resource cache not tracking %s" % rtype)
+            raise RuntimeError(_("Resource cache not tracking %s") % rtype)
         return self._cache_by_type_and_id[rtype]
 
     def start_watcher(self):
