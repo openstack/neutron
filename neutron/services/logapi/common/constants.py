@@ -21,6 +21,8 @@ LOGGING_PLUGIN = 'logging-plugin'
 
 # supported logging types
 SECURITY_GROUP = 'security_group'
+# TODO(annp): Moving to neutron-lib
+SNAT = 'snat'
 
 # target resource types
 PORT = 'port'
