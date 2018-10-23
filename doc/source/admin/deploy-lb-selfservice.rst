@@ -315,7 +315,7 @@ The following steps involve the network node:
 #. The self-service bridge forwards the packet to the VXLAN interface (8)
    which wraps the packet using VNI 101.
 #. The underlying physical interface (9) for the VXLAN interface forwards
-   the packet to the network node via the overlay network (10).
+   the packet to the compute node via the overlay network (10).
 
 The following steps involve the compute node:
 
