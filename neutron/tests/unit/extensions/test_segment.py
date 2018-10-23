@@ -84,6 +84,7 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         if not plugin:
             plugin = TEST_PLUGIN_KLASS
         service_plugins = {'segments_plugin_name': SERVICE_PLUGIN_KLASS}
+        cfg.CONF.set_override('service_plugins', [SERVICE_PLUGIN_KLASS])
         ext_mgr = SegmentTestExtensionManager()
         super(SegmentTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
                                            service_plugins=service_plugins)
@@ -2661,3 +2662,40 @@ class TestSegmentHostRoutes(TestSegmentML2):
             self.assertIn(sub_res['gateway_ip'], gateway_ips)
             self.assertEqual(len(sub_res['host_routes']), 1)
             self.assertIn(sub_res['host_routes'][0], host_routes)
+
+
+class TestSegmentHostMappingNoStore(
+        test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
+
+    def setUp(self):
+        driver_type.register_ml2_drivers_vlan_opts()
+        cfg.CONF.set_override('network_vlan_ranges', ['phys_net1'],
+                              group='ml2_type_vlan')
+        cfg.CONF.set_override('service_plugins', [])
+        super(TestSegmentHostMappingNoStore, self).setUp(
+            plugin='neutron.plugins.ml2.plugin.Ml2Plugin')
+        # set to None for simulating server start
+        db._USER_CONFIGURED_SEGMENT_PLUGIN = None
+        db.subscribe()
+
+    @mock.patch('neutron.services.segments.db.update_segment_host_mapping')
+    @mock.patch('neutron.services.segments.db.map_segment_to_hosts')
+    def test_no_segmenthostmapping_when_disable_segment(
+            self, mock_map_segment_to_hosts, mock_update_segment_mapping):
+        with self.network(
+                arg_list=('provider:network_type',
+                          'provider:physical_network',
+                          'provider:segmentation_id'),
+                **{'provider:network_type': 'vlan',
+                   'provider:physical_network': 'phys_net1',
+                   'provider:segmentation_id': '400'}) as network:
+            network['network']
+        mock_map_segment_to_hosts.assert_not_called()
+
+        host1 = 'test_host'
+        physical_network = 'phys_net1'
+        helpers.register_ovs_agent(
+            host=host1,
+            bridge_mappings={physical_network: 'br-eth-1'},
+            plugin=self.plugin)
+        mock_update_segment_mapping.assert_not_called()
