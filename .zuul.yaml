@@ -166,7 +166,7 @@
     parent: legacy-dsvm-base
     run: playbooks/legacy/neutron-tempest-dvr/run.yaml
     post-run: playbooks/legacy/neutron-tempest-dvr/post.yaml
-    timeout: 7800
+    timeout: 10800
     required-projects:
       - openstack-infra/devstack-gate
       - openstack/neutron
@@ -178,7 +178,7 @@
     parent: legacy-dsvm-base
     run: playbooks/legacy/neutron-tempest-linuxbridge/run.yaml
     post-run: playbooks/legacy/neutron-tempest-linuxbridge/post.yaml
-    timeout: 8400
+    timeout: 10800
     required-projects:
       - openstack-infra/devstack-gate
       - openstack/neutron
@@ -248,7 +248,7 @@
     parent: legacy-dsvm-base
     run: playbooks/legacy/neutron-tempest-iptables_hybrid/run.yaml
     post-run: playbooks/legacy/neutron-tempest-iptables_hybrid/post.yaml
-    timeout: 7800
+    timeout: 10800
     required-projects:
       - openstack-infra/devstack-gate
       - openstack/neutron
