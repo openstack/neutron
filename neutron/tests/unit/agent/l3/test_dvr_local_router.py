@@ -854,11 +854,13 @@ class TestDvrRouterOperations(base.BaseTestCase):
 
     @mock.patch.object(dvr_edge_rtr.DvrEdgeRouter,
                        'add_centralized_floatingip')
-    def test_add_centralized_floatingip(self,
-                                        super_add_centralized_floatingip):
+    def test_add_centralized_floatingip_dvr_ha(
+            self,
+            super_add_centralized_floatingip):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.conf.agent_mode = lib_constants.L3_AGENT_MODE_DVR_SNAT
-        router = l3_test_common.prepare_router_data(num_internal_ports=2)
+        router = l3_test_common.prepare_router_data(
+            num_internal_ports=2, enable_ha=True)
         router['gw_port_host'] = HOSTNAME
         self.mock_driver.unplug.reset_mock()
         self._set_ri_kwargs(agent, router['id'], router)
@@ -874,13 +876,26 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri._add_vip.assert_called_once_with(fip_cidr, interface_name)
         super_add_centralized_floatingip.assert_not_called()
 
-        ri1 = dvr_edge_ha_rtr.DvrEdgeHaRouter(HOSTNAME, [], **self.ri_kwargs)
-        ri1.is_router_master = mock.Mock(return_value=True)
-        ri1._add_vip = mock.Mock()
-        interface_name = ri1.get_snat_external_device_interface_name(
-            ri1.get_ex_gw_port())
-        ri1.add_centralized_floatingip(fip, fip_cidr)
-        ri1._add_vip.assert_called_once_with(fip_cidr, interface_name)
+        router[lib_constants.HA_INTERFACE_KEY]['status'] = 'DOWN'
+        self._set_ri_kwargs(agent, router['id'], router)
+        ri_1 = dvr_edge_ha_rtr.DvrEdgeHaRouter(HOSTNAME, [], **self.ri_kwargs)
+        ri_1.is_router_master = mock.Mock(return_value=True)
+        ri_1._add_vip = mock.Mock()
+        interface_name = ri_1.get_snat_external_device_interface_name(
+            ri_1.get_ex_gw_port())
+        ri_1.add_centralized_floatingip(fip, fip_cidr)
+        ri_1._add_vip.assert_called_once_with(fip_cidr, interface_name)
+        super_add_centralized_floatingip.assert_not_called()
+
+        router[lib_constants.HA_INTERFACE_KEY]['status'] = 'ACTIVE'
+        self._set_ri_kwargs(agent, router['id'], router)
+        ri_2 = dvr_edge_ha_rtr.DvrEdgeHaRouter(HOSTNAME, [], **self.ri_kwargs)
+        ri_2.is_router_master = mock.Mock(return_value=True)
+        ri_2._add_vip = mock.Mock()
+        interface_name = ri_2.get_snat_external_device_interface_name(
+            ri_2.get_ex_gw_port())
+        ri_2.add_centralized_floatingip(fip, fip_cidr)
+        ri_2._add_vip.assert_called_once_with(fip_cidr, interface_name)
         super_add_centralized_floatingip.assert_called_once_with(fip,
                                                                  fip_cidr)
 
