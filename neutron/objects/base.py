@@ -16,7 +16,7 @@ import copy
 import functools
 import itertools
 
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import exceptions as o_exc
 from oslo_db import exception as obj_exc
@@ -32,7 +32,6 @@ import six
 from sqlalchemy import orm
 
 from neutron._i18n import _
-from neutron.db import api as db_api
 from neutron.db import standard_attr
 from neutron.objects.db import api as obj_db_api
 from neutron.objects.extensions import standardattributes
@@ -528,15 +527,15 @@ class NeutronDbObject(NeutronObject):
     def db_context_writer(cls, context):
         """Return read-write session activation decorator."""
         if cls.new_facade or cls._use_db_facade(context):
-            return db_api.context_manager.writer.using(context)
-        return lib_db_api.autonested_transaction(context.session)
+            return db_api.CONTEXT_WRITER.using(context)
+        return db_api.autonested_transaction(context.session)
 
     @classmethod
     def db_context_reader(cls, context):
         """Return read-only session activation decorator."""
         if cls.new_facade or cls._use_db_facade(context):
-            return db_api.context_manager.reader.using(context)
-        return lib_db_api.autonested_transaction(context.session)
+            return db_api.CONTEXT_READER.using(context)
+        return db_api.autonested_transaction(context.session)
 
     @classmethod
     def get_object(cls, context, **kwargs):

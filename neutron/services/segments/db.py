@@ -18,7 +18,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
@@ -28,7 +28,6 @@ from oslo_log import helpers as log_helpers
 from oslo_utils import uuidutils
 
 from neutron.db import _resource_extend as resource_extend
-from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import segments_db as db
 from neutron.extensions import segment as extension
@@ -75,7 +74,7 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
         return self._make_segment_dict(new_segment)
 
     def _create_segment_db(self, context, segment_id, segment):
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             network_id = segment['network_id']
             physical_network = segment[extension.PHYSICAL_NETWORK]
             if physical_network == constants.ATTR_NOT_SPECIFIED:
@@ -127,7 +126,7 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
     def update_segment(self, context, uuid, segment):
         """Update an existing segment."""
         segment = segment['segment']
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             curr_segment = self._get_segment(context, uuid)
             curr_segment.update_fields(segment)
             curr_segment.update()
@@ -171,7 +170,7 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
                         segment=segment_dict, for_net_delete=for_net_delete)
 
         # Delete segment in DB
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             if not network.NetworkSegment.delete_objects(context, id=uuid):
                 raise exceptions.SegmentNotFound(segment_id=uuid)
             # Do some preliminary operations before deleting segment in db
@@ -184,10 +183,10 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
                         segment=segment_dict)
 
 
-@lib_db_api.retry_if_session_inactive()
+@db_api.retry_if_session_inactive()
 @lockutils.synchronized('update_segment_host_mapping')
 def update_segment_host_mapping(context, host, current_segment_ids):
-    with db_api.context_manager.writer.using(context):
+    with db_api.CONTEXT_WRITER.using(context):
         segment_host_mapping = network.SegmentHostMapping.get_objects(
             context, host=host)
         previous_segment_ids = {
@@ -238,14 +237,14 @@ def get_segments_with_phys_nets(context, phys_nets):
     if not phys_nets:
         return []
 
-    with db_api.context_manager.reader.using(context):
+    with db_api.CONTEXT_READER.using(context):
         return network.NetworkSegment.get_objects(
             context, physical_network=phys_nets)
 
 
 def map_segment_to_hosts(context, segment_id, hosts):
     """Map segment to a collection of hosts."""
-    with db_api.context_manager.writer.using(context):
+    with db_api.CONTEXT_WRITER.using(context):
         for host in hosts:
             network.SegmentHostMapping(
                 context, segment_id=segment_id, host=host).create()

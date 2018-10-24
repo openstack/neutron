@@ -23,6 +23,7 @@ import time
 
 import eventlet.wsgi
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exception
 from neutron_lib import worker as neutron_worker
 from oslo_config import cfg
@@ -43,7 +44,6 @@ from neutron._i18n import _
 from neutron.common import config
 from neutron.common import exceptions as n_exc
 from neutron.conf import wsgi as wsgi_config
-from neutron.db import api
 
 CONF = cfg.CONF
 wsgi_config.register_socket_opts()
@@ -188,7 +188,7 @@ class Server(object):
             # dispose the whole pool before os.fork, otherwise there will
             # be shared DB connections in child processes which may cause
             # DB errors.
-            api.context_manager.dispose_pool()
+            db_api.get_context_manager().dispose_pool()
             # The API service runs in a number of child processes.
             # Minimize the cost of checking for child exit by extending the
             # wait interval past the default of 0.01s.

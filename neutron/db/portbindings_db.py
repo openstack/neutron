@@ -16,11 +16,11 @@
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api import validators
+from neutron_lib.db import api as db_api
 from neutron_lib.plugins import directory
 
 from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
-from neutron.db import api as db_api
 from neutron.db.models import portbinding as pmodels
 from neutron.db import models_v2
 from neutron.db import portbindings_base
@@ -71,7 +71,7 @@ class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
 
         host = port_data.get(portbindings.HOST_ID)
         host_set = validators.is_attr_set(host)
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             bind_port = context.session.query(
                 pmodels.PortBindingPort).filter_by(port_id=port['id']).first()
             if host_set:
@@ -85,7 +85,7 @@ class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
         self._extend_port_dict_binding_host(port, host)
 
     def get_port_host(self, context, port_id):
-        with db_api.context_manager.reader.using(context):
+        with db_api.CONTEXT_READER.using(context):
             bind_port = (
                 context.session.query(pmodels.PortBindingPort.host).
                 filter_by(port_id=port_id).

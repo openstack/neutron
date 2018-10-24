@@ -23,7 +23,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_consts
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import l3 as lib_l3_exc
@@ -37,7 +37,6 @@ from neutron.api.rpc.callbacks import events as rpc_events
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import utils
 from neutron.db import _resource_extend as resource_extend
-from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.extensions import floating_ip_port_forwarding as fip_pf
 from neutron.objects import base as base_obj
@@ -137,7 +136,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
 
     @registry.receives(resources.PORT, [events.AFTER_UPDATE,
                                         events.PRECOMMIT_DELETE])
-    @lib_db_api.retry_if_session_inactive()
+    @db_api.retry_if_session_inactive()
     def _process_port_request(self, resource, event, trigger, context,
                               **kwargs):
         # Deleting floatingip will receive port resource with precommit_delete
@@ -198,7 +197,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         # here, if event is AFTER_UPDATE, and remove_ip_set is empty, the
         # following block won't be processed.
         remove_port_forwarding_list = []
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             for pf_resource in pf_resources:
                 if str(pf_resource.internal_ip_address) in remove_ip_set:
                     pf_objs = pf.PortForwarding.get_objects(
@@ -284,7 +283,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         port_forwarding = port_forwarding.get(apidef.RESOURCE_NAME)
         port_forwarding['floatingip_id'] = floatingip_id
 
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             fip_obj = self._get_fip_obj(context, floatingip_id)
             if fip_obj.fixed_port_id:
                 raise lib_l3_exc.FloatingIPPortAlreadyAssociated(
@@ -331,7 +330,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         if port_forwarding and port_forwarding.get('internal_port_id'):
             new_internal_port_id = port_forwarding.get('internal_port_id')
         try:
-            with db_api.context_manager.writer.using(context):
+            with db_api.CONTEXT_WRITER.using(context):
                 fip_obj = self._get_fip_obj(context, floatingip_id)
                 pf_obj = pf.PortForwarding.get_object(context, id=id)
                 if not pf_obj:
@@ -455,7 +454,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
 
         if not pf_obj or pf_obj.floatingip_id != floatingip_id:
             raise pf_exc.PortForwardingNotFound(id=id)
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             fip_obj = self._get_fip_obj(context, pf_obj.floatingip_id)
             pf_objs = pf.PortForwarding.get_objects(
                 context, floatingip_id=pf_obj.floatingip_id)

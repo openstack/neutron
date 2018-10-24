@@ -14,14 +14,13 @@
 #    under the License.
 
 from neutron_lib.api import attributes
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_log import log
 
 from neutron.common import exceptions as n_exc
-from neutron.db import api as db_api
 from neutron.db.quota import api as quota_api
 from neutron.objects import quota as quota_obj
 from neutron.quota import resource as res
@@ -53,7 +52,7 @@ class DbQuotaDriver(object):
                     for key, resource in resources.items())
 
     @staticmethod
-    @lib_db_api.retry_if_session_inactive()
+    @db_api.retry_if_session_inactive()
     def get_tenant_quotas(context, resources, tenant_id):
         """Given a list of resources, retrieve the quotas for the given
         tenant. If no limits are found for the specified tenant, the operation
@@ -77,7 +76,7 @@ class DbQuotaDriver(object):
         return tenant_quota
 
     @staticmethod
-    @lib_db_api.retry_if_session_inactive()
+    @db_api.retry_if_session_inactive()
     def get_detailed_tenant_quotas(context, resources, tenant_id):
         """Given a list of resources and a sepecific tenant, retrieve
         the detailed quotas (limit, used, reserved).
@@ -112,7 +111,7 @@ class DbQuotaDriver(object):
         return tenant_quota_ext
 
     @staticmethod
-    @lib_db_api.retry_if_session_inactive()
+    @db_api.retry_if_session_inactive()
     def delete_tenant_quota(context, tenant_id):
         """Delete the quota entries for a given tenant_id.
 
@@ -126,7 +125,7 @@ class DbQuotaDriver(object):
             raise n_exc.TenantQuotaNotFound(tenant_id=tenant_id)
 
     @staticmethod
-    @lib_db_api.retry_if_session_inactive()
+    @db_api.retry_if_session_inactive()
     def get_all_quotas(context, resources):
         """Given a list of resources, retrieve the quotas for the all tenants.
 
@@ -159,7 +158,7 @@ class DbQuotaDriver(object):
         return list(all_tenant_quotas.values())
 
     @staticmethod
-    @lib_db_api.retry_if_session_inactive()
+    @db_api.retry_if_session_inactive()
     def update_quota_limit(context, tenant_id, resource, limit):
         tenant_quotas = quota_obj.Quota.get_objects(
             context, project_id=tenant_id, resource=resource)
@@ -194,7 +193,7 @@ class DbQuotaDriver(object):
         quota_api.remove_expired_reservations(
             context, tenant_id=tenant_id)
 
-    @lib_db_api.retry_if_session_inactive()
+    @db_api.retry_if_session_inactive()
     def make_reservation(self, context, tenant_id, resources, deltas, plugin):
         # Lock current reservation table
         # NOTE(salv-orlando): This routine uses DB write locks.
@@ -209,7 +208,7 @@ class DbQuotaDriver(object):
         # locks should be ok to use when support for sending "hotspot" writes
         # to a single node will be available.
         requested_resources = deltas.keys()
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             # get_tenant_quotes needs in input a dictionary mapping resource
             # name to BaseResosurce instances so that the default quota can be
             # retrieved

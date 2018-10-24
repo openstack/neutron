@@ -20,7 +20,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import dvr as dvr_exc
 from neutron_lib.objects import exceptions
@@ -33,7 +33,6 @@ from sqlalchemy import or_
 
 from neutron.common import utils
 from neutron.conf.db import dvr_mac_db
-from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.extensions import dvr as ext_dvr
 from neutron.objects import router
@@ -60,7 +59,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         return self._plugin
 
     @staticmethod
-    @lib_db_api.retry_if_session_inactive()
+    @db_api.retry_if_session_inactive()
     def _db_delete_mac_associated_with_agent(context, agent):
         host = agent['host']
         plugin = directory.get_plugin()
@@ -85,7 +84,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         DVRDbMixin._db_delete_mac_associated_with_agent(
             payload.context, payload.latest_state)
 
-    @db_api.context_manager.reader
+    @db_api.CONTEXT_READER
     def _get_dvr_mac_address_by_host(self, context, host):
         dvr_obj = router.DVRMacAddress.get_object(context, host=host)
         if not dvr_obj:
@@ -93,9 +92,9 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         return self._make_dvr_mac_address_dict(dvr_obj)
 
     @utils.transaction_guard
-    @lib_db_api.retry_if_session_inactive()
+    @db_api.retry_if_session_inactive()
     def _create_dvr_mac_address_retry(self, context, host, base_mac):
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             mac_address = net.get_random_mac(base_mac)
             dvr_mac_binding = router.DVRMacAddress(
                 context, host=host, mac_address=netaddr.EUI(mac_address))
@@ -120,7 +119,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
                       db_api.MAX_RETRIES)
         raise n_exc.HostMacAddressGenerationFailure(host=host)
 
-    @db_api.context_manager.reader
+    @db_api.CONTEXT_READER
     def get_dvr_mac_address_list(self, context):
         return [
             dvr_mac.to_dict()
@@ -142,7 +141,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
                 'mac_address': str(dvr_mac_entry['mac_address'])}
 
     @log_helpers.log_method_call
-    @lib_db_api.retry_if_session_inactive()
+    @db_api.retry_if_session_inactive()
     def get_ports_on_host_by_subnet(self, context, host, subnet):
         """Returns DVR serviced ports on a given subnet in the input host
 
@@ -172,7 +171,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         return ports
 
     @log_helpers.log_method_call
-    @lib_db_api.retry_if_session_inactive()
+    @db_api.retry_if_session_inactive()
     def get_subnet_for_dvr(self, context, subnet, fixed_ips=None):
         if fixed_ips:
             subnet_data = fixed_ips[0]['subnet_id']

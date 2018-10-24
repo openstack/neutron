@@ -17,7 +17,7 @@ import sys
 
 from neutron_lib import constants as p_const
 from neutron_lib import context
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exc
 from neutron_lib.plugins.ml2 import api
 from neutron_lib.plugins import utils as plugin_utils
@@ -27,7 +27,6 @@ from six import moves
 
 from neutron._i18n import _
 from neutron.conf.plugins.ml2.drivers import driver_type
-from neutron.db import api as db_api
 from neutron.objects.plugins.ml2 import vlanallocation as vlanalloc
 from neutron.plugins.ml2.drivers import helpers
 
@@ -61,10 +60,10 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
             sys.exit(1)
         LOG.info("Network VLAN ranges: %s", self.network_vlan_ranges)
 
-    @lib_db_api.retry_db_errors
+    @db_api.retry_db_errors
     def _sync_vlan_allocations(self):
         ctx = context.get_admin_context()
-        with db_api.context_manager.writer.using(ctx):
+        with db_api.CONTEXT_WRITER.using(ctx):
             # get existing allocations for all physical networks
             allocations = dict()
             allocs = vlanalloc.VlanAllocation.get_objects(ctx)
@@ -222,7 +221,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
         inside = any(lo <= vlan_id <= hi for lo, hi in ranges)
         count = False
 
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             alloc = vlanalloc.VlanAllocation.get_object(
                 context, physical_network=physical_network, vlan_id=vlan_id)
             if alloc:

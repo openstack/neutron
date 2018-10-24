@@ -16,6 +16,7 @@
 import random
 
 from neutron_lib import context as neutron_ctx
+from neutron_lib.db import api as db_api
 from neutron_lib.plugins.ml2 import api
 from neutron_lib.plugins import utils as p_utils
 from neutron_lib.utils import helpers
@@ -24,7 +25,6 @@ from oslo_db import exception as db_exc
 from oslo_log import log
 
 from neutron.common import exceptions as exc
-from neutron.db import api as db_api
 from neutron.objects import base as base_obj
 
 
@@ -68,7 +68,7 @@ class SegmentTypeDriver(BaseTypeDriver):
     # TODO(ataraday): get rid of this method when old TypeDriver won't be used
     def _get_session(self, arg):
         if isinstance(arg, neutron_ctx.Context):
-            return arg.session, db_api.context_manager.writer.using(arg)
+            return arg.session, db_api.CONTEXT_WRITER.using(arg)
         return arg, arg.session.begin(subtransactions=True)
 
     def allocate_fully_specified_segment(self, context, **raw_segment):

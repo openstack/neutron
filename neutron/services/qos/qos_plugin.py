@@ -18,12 +18,11 @@ from neutron_lib.api.definitions import qos_bw_minimum_ingress
 from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
 from neutron_lib.callbacks import resources as callbacks_resources
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.services.qos import constants as qos_consts
 
 from neutron.common import exceptions as n_exc
-from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.extensions import qos
 from neutron.objects import base as base_obj
@@ -172,7 +171,7 @@ class QoSPlugin(qos.QoSPluginBase):
         # needs to be backward compatible.
         policy['policy'].pop('tenant_id', None)
         policy_obj = policy_object.QosPolicy(context, **policy['policy'])
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             policy_obj.create()
             self.driver_manager.call(qos_consts.CREATE_POLICY_PRECOMMIT,
                                      context, policy_obj)
@@ -195,7 +194,7 @@ class QoSPlugin(qos.QoSPluginBase):
         :returns: a QosPolicy object
         """
         policy_data = policy['policy']
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             policy_obj = policy_object.QosPolicy.get_policy_obj(
                 context, policy_id)
             policy_obj.update_fields(policy_data, reset_changes=True)
@@ -218,7 +217,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
         :returns: None
         """
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             policy = policy_object.QosPolicy(context)
             policy.id = policy_id
             policy.delete()
@@ -301,7 +300,7 @@ class QoSPlugin(qos.QoSPluginBase):
         rule_type = rule_cls.rule_type
         rule_data = rule_data[rule_type + '_rule']
 
-        with lib_db_api.autonested_transaction(context.session):
+        with db_api.autonested_transaction(context.session):
             # Ensure that we have access to the policy.
             policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
             checker.check_bandwidth_rule_conflict(policy, rule_data)
@@ -338,7 +337,7 @@ class QoSPlugin(qos.QoSPluginBase):
         rule_type = rule_cls.rule_type
         rule_data = rule_data[rule_type + '_rule']
 
-        with lib_db_api.autonested_transaction(context.session):
+        with db_api.autonested_transaction(context.session):
             # Ensure we have access to the policy.
             policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
             # Ensure the rule belongs to the policy.
@@ -371,7 +370,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
         :returns: None
         """
-        with lib_db_api.autonested_transaction(context.session):
+        with db_api.autonested_transaction(context.session):
             # Ensure we have access to the policy.
             policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
             rule = policy.get_rule_by_id(rule_id)
@@ -400,7 +399,7 @@ class QoSPlugin(qos.QoSPluginBase):
         :returns: a QoS policy rule object
         :raises: n_exc.QosRuleNotFound
         """
-        with lib_db_api.autonested_transaction(context.session):
+        with db_api.autonested_transaction(context.session):
             # Ensure we have access to the policy.
             policy_object.QosPolicy.get_policy_obj(context, policy_id)
             rule = rule_cls.get_object(context, id=rule_id)
@@ -425,7 +424,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
         :returns: QoS policy rule objects meeting the search criteria
         """
-        with lib_db_api.autonested_transaction(context.session):
+        with db_api.autonested_transaction(context.session):
             # Ensure we have access to the policy.
             policy_object.QosPolicy.get_policy_obj(context, policy_id)
             filters = filters or dict()

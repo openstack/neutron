@@ -21,6 +21,7 @@ from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from neutron_lib.api import validators
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
 from neutron_lib.utils import net
@@ -32,7 +33,6 @@ from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
-from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
 from neutron.objects import base as base_obj
@@ -91,7 +91,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
     def _generate_mac():
         return net.get_random_mac(cfg.CONF.base_mac.split(':'))
 
-    @db_api.context_manager.reader
+    @db_api.CONTEXT_READER
     def _is_mac_in_use(self, context, network_id, mac_address):
         return port_obj.Port.objects_exist(context, network_id=network_id,
                                            mac_address=mac_address)
@@ -110,7 +110,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
             subnet_id=subnet_id)
 
     @staticmethod
-    @db_api.context_manager.writer
+    @db_api.CONTEXT_WRITER
     def _store_ip_allocation(context, ip_address, network_id, subnet_id,
                              port_id):
         LOG.debug("Allocated IP %(ip_address)s "
@@ -263,11 +263,11 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
             context, network_id=network_id,
             device_owner=constants.DEVICE_OWNER_ROUTER_GW)
 
-    @db_api.context_manager.reader
+    @db_api.CONTEXT_READER
     def _get_subnets_by_network(self, context, network_id):
         return subnet_obj.Subnet.get_objects(context, network_id=network_id)
 
-    @db_api.context_manager.reader
+    @db_api.CONTEXT_READER
     def _get_subnets_by_subnetpool(self, context, subnetpool_id):
         return subnet_obj.Subnet.get_objects(context,
                                              subnetpool_id=subnetpool_id)
@@ -279,7 +279,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         filters = filters or {}
         # TODO(ihrachys) remove explicit reader usage when subnet OVO switches
         # to engine facade by default
-        with db_api.context_manager.reader.using(context):
+        with db_api.CONTEXT_READER.using(context):
             return subnet_obj.Subnet.get_objects(context, _pager=pager,
                                                  validate_filters=False,
                                                  **filters)

@@ -22,6 +22,7 @@ from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api import validators
 from neutron_lib import constants as const
+from neutron_lib.db import api as db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
@@ -32,7 +33,6 @@ from neutron._i18n import _
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
-from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db import models_v2
 from neutron.extensions import segment
@@ -159,7 +159,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         del s["dns_nameservers"]
         return new_dns_addr_list
 
-    @db_api.context_manager.writer
+    @db_api.CONTEXT_WRITER
     def _update_subnet_allocation_pools(self, context, subnet_id, s):
         subnet_obj.IPAllocationPool.delete_objects(context,
                                                    subnet_id=subnet_id)

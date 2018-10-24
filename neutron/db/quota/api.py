@@ -15,9 +15,8 @@
 import collections
 import datetime
 
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 
-from neutron.db import api as db_api
 from neutron.objects import quota as quota_obj
 
 
@@ -37,7 +36,7 @@ class ReservationInfo(collections.namedtuple(
     """Information about a resource reservation."""
 
 
-@lib_db_api.retry_if_session_inactive()
+@db_api.retry_if_session_inactive()
 def get_quota_usage_by_resource_and_tenant(context, resource, tenant_id):
     """Return usage info for a given resource and tenant.
 
@@ -55,7 +54,7 @@ def get_quota_usage_by_resource_and_tenant(context, resource, tenant_id):
                           result.dirty)
 
 
-@lib_db_api.retry_if_session_inactive()
+@db_api.retry_if_session_inactive()
 def get_quota_usage_by_resource(context, resource):
     objs = quota_obj.QuotaUsage.get_objects(context, resource=resource)
     return [QuotaUsageInfo(item.resource,
@@ -64,7 +63,7 @@ def get_quota_usage_by_resource(context, resource):
                            item.dirty) for item in objs]
 
 
-@lib_db_api.retry_if_session_inactive()
+@db_api.retry_if_session_inactive()
 def get_quota_usage_by_tenant_id(context, tenant_id):
     objs = quota_obj.QuotaUsage.get_objects(context, project_id=tenant_id)
     return [QuotaUsageInfo(item.resource,
@@ -73,7 +72,7 @@ def get_quota_usage_by_tenant_id(context, tenant_id):
                            item.dirty) for item in objs]
 
 
-@lib_db_api.retry_if_session_inactive()
+@db_api.retry_if_session_inactive()
 def set_quota_usage(context, resource, tenant_id,
                     in_use=None, delta=False):
     """Set resource quota usage.
@@ -87,7 +86,7 @@ def set_quota_usage(context, resource, tenant_id,
     :param delta: Specifies whether in_use is an absolute number
                   or a delta (default to False)
     """
-    with db_api.context_manager.writer.using(context):
+    with db_api.CONTEXT_WRITER.using(context):
         usage_data = quota_obj.QuotaUsage.get_object(
             context, resource=resource, project_id=tenant_id)
         if not usage_data:
@@ -107,8 +106,8 @@ def set_quota_usage(context, resource, tenant_id,
                           usage_data.in_use, usage_data.dirty)
 
 
-@lib_db_api.retry_if_session_inactive()
-@db_api.context_manager.writer
+@db_api.retry_if_session_inactive()
+@db_api.CONTEXT_WRITER
 def set_quota_usage_dirty(context, resource, tenant_id, dirty=True):
     """Set quota usage dirty bit for a given resource and tenant.
 
@@ -126,8 +125,8 @@ def set_quota_usage_dirty(context, resource, tenant_id, dirty=True):
     return 0
 
 
-@lib_db_api.retry_if_session_inactive()
-@db_api.context_manager.writer
+@db_api.retry_if_session_inactive()
+@db_api.CONTEXT_WRITER
 def set_resources_quota_usage_dirty(context, resources, tenant_id, dirty=True):
     """Set quota usage dirty bit for a given tenant and multiple resources.
 
@@ -147,8 +146,8 @@ def set_resources_quota_usage_dirty(context, resources, tenant_id, dirty=True):
     return len(objs)
 
 
-@lib_db_api.retry_if_session_inactive()
-@db_api.context_manager.writer
+@db_api.retry_if_session_inactive()
+@db_api.CONTEXT_WRITER
 def set_all_quota_usage_dirty(context, resource, dirty=True):
     """Set the dirty bit on quota usage for all tenants.
 
@@ -165,7 +164,7 @@ def set_all_quota_usage_dirty(context, resource, dirty=True):
     return len(objs)
 
 
-@lib_db_api.retry_if_session_inactive()
+@db_api.retry_if_session_inactive()
 def create_reservation(context, tenant_id, deltas, expiration=None):
     # This method is usually called from within another transaction.
     # Consider using begin_nested
@@ -185,7 +184,7 @@ def create_reservation(context, tenant_id, deltas, expiration=None):
                                 for delta in reserv_obj.resource_deltas))
 
 
-@lib_db_api.retry_if_session_inactive()
+@db_api.retry_if_session_inactive()
 def get_reservation(context, reservation_id):
     reserv_obj = quota_obj.Reservation.get_object(context, id=reservation_id)
     if not reserv_obj:
@@ -197,8 +196,8 @@ def get_reservation(context, reservation_id):
                                 for delta in reserv_obj.resource_deltas))
 
 
-@lib_db_api.retry_if_session_inactive()
-@db_api.context_manager.writer
+@db_api.retry_if_session_inactive()
+@db_api.CONTEXT_WRITER
 def remove_reservation(context, reservation_id, set_dirty=False):
     reservation = quota_obj.Reservation.get_object(context, id=reservation_id)
     if not reservation:
@@ -214,7 +213,7 @@ def remove_reservation(context, reservation_id, set_dirty=False):
     return 1
 
 
-@lib_db_api.retry_if_session_inactive()
+@db_api.retry_if_session_inactive()
 def get_reservations_for_resources(context, tenant_id, resources,
                                    expired=False):
     """Retrieve total amount of reservations for specified resources.
@@ -233,7 +232,7 @@ def get_reservations_for_resources(context, tenant_id, resources,
         context, utcnow(), tenant_id, resources, expired)
 
 
-@lib_db_api.retry_if_session_inactive()
-@db_api.context_manager.writer
+@db_api.retry_if_session_inactive()
+@db_api.CONTEXT_WRITER
 def remove_expired_reservations(context, tenant_id=None):
     return quota_obj.Reservation.delete_expired(context, utcnow(), tenant_id)
