@@ -205,10 +205,6 @@
       - openstack-dev/grenade
       - openstack-infra/devstack-gate
       - openstack/neutron
-      # openstack/placement is not part of legacy-dsvm-base because that is
-      # branchless and openstack/placement only has a master branch (it is
-      # new as of Stein)
-      - openstack/placement
     nodeset: ubuntu-xenial-2-node
     irrelevant-files: *tempest-irrelevant-files
 
@@ -222,10 +218,6 @@
       - openstack-dev/grenade
       - openstack-infra/devstack-gate
       - openstack/neutron
-      # openstack/placement is not part of legacy-dsvm-base because that is
-      # branchless and openstack/placement only has a master branch (it is
-      # new as of Stein)
-      - openstack/placement
     nodeset: ubuntu-xenial-2-node
     irrelevant-files: *tempest-irrelevant-files
 
@@ -265,10 +257,6 @@
       - openstack-dev/grenade
       - openstack-infra/devstack-gate
       - openstack/neutron
-      # openstack/placement is not part of legacy-dsvm-base because that is
-      # branchless and openstack/placement only has a master branch (it is
-      # new as of Stein)
-      - openstack/placement
     irrelevant-files: *tempest-irrelevant-files
 
 - job:

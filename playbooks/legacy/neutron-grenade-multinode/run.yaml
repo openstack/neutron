@@ -31,9 +31,7 @@
           export DEVSTACK_GATE_NEUTRON=1
           export DEVSTACK_GATE_CONFIGDRIVE=0
           export DEVSTACK_GATE_GRENADE=pullup
-          # Grenade needs to clone the placement repo on the Stein side since
-          # the repo did not exist in Rocky.
-          export PROJECTS="openstack-dev/grenade openstack/placement $PROJECTS"
+          export PROJECTS="openstack-dev/grenade $PROJECTS"
           # Default to non DVR
           export DEVSTACK_GATE_NEUTRON_DVR=0
           export BRANCH_OVERRIDE=default
