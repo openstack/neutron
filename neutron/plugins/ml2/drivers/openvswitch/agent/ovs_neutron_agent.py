@@ -2070,11 +2070,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             polling_manager.stop()
             polling_manager.start()
 
-    def rpc_loop(self, polling_manager=None, bridges_monitor=None):
-        if not polling_manager:
-            polling_manager = polling.get_polling_manager(
-                minimize_polling=False)
-
+    def rpc_loop(self, polling_manager, bridges_monitor=None):
         sync = False
         ports = set()
         updated_ports_copy = set()
