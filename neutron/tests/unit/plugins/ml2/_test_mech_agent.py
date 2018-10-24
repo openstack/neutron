@@ -13,6 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_config import cfg
+from oslo_config import fixture as config_fixture
+
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.plugins.ml2 import api
 
@@ -169,6 +172,31 @@ class FakePortContext(api.PortContext):
 
     def release_dynamic_segment(self, segment_id):
         pass
+
+
+class MechDriverConfFixture(config_fixture.Config):
+
+    def __init__(self, conf=cfg.CONF, blacklist_cfg=None,
+                 registration_func=None):
+        """ConfigFixture for vnic_type_blacklist
+
+        :param conf: The driver configuration object
+        :param blacklist_cfg: A dictionary in the form
+                              {'group': {'opt': 'value'}}, i.e.:
+                              {'OVS_DRIVER': {'vnic_type_blacklist':
+                                              ['foo']}}
+        :param registration_func: The method which do the config group's
+                                  registration.
+        """
+        super(MechDriverConfFixture, self).__init__(conf)
+        self.blacklist_cfg = blacklist_cfg
+        self.registration_func = registration_func
+
+    def setUp(self):
+        super(MechDriverConfFixture, self).setUp()
+        self.registration_func(self.conf)
+        for group, option in self.blacklist_cfg.items():
+            self.config(group=group, **option)
 
 
 class AgentMechanismBaseTestCase(base.BaseTestCase):

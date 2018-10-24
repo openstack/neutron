@@ -260,6 +260,31 @@ For more details, see the
 
     Configuration of those drivers is not part of this document.
 
+Supported VNIC types
+^^^^^^^^^^^^^^^^^^^^
+
+The ``vnic_type_blacklist`` option is used to remove values from the mechanism driver's
+``supported_vnic_types`` list.
+
+.. list-table:: Mechanism drivers and supported VNIC types
+   :header-rows: 1
+
+   * - mech driver / supported_vnic_types
+     - supported VNIC types
+     - blacklisting available
+   * - Linux bridge
+     - normal
+     - no
+   * - MacVTap
+     - macvtap
+     - no
+   * - Open vSwitch
+     - normal, direct
+     - yes (ovs_driver vnic_type_blacklist, see: `Configuration Reference <../configuration/ml2-conf.html#ovs_driver>`__)
+   * - SRIOV
+     - direct, macvtap, direct_physical
+     - no
+
 
 Extension Drivers
 -----------------

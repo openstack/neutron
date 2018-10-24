@@ -23,6 +23,7 @@ from oslo_config import cfg
 from oslo_log import log
 
 from neutron.agent import securitygroups_rpc
+from neutron.conf.plugins.ml2.drivers.openvswitch import mech_ovs_conf
 from neutron.plugins.ml2.drivers import mech_agent
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as a_const
@@ -33,6 +34,8 @@ LOG = log.getLogger(__name__)
 
 IPTABLES_FW_DRIVER_FULL = ("neutron.agent.linux.iptables_firewall."
                            "OVSHybridIptablesFirewallDriver")
+
+mech_ovs_conf.register_ovs_mech_driver_opts()
 
 
 class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
@@ -60,8 +63,18 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         super(OpenvswitchMechanismDriver, self).__init__(
             constants.AGENT_TYPE_OVS,
             portbindings.VIF_TYPE_OVS,
-            vif_details, supported_vnic_types=[portbindings.VNIC_NORMAL,
-                                               portbindings.VNIC_DIRECT])
+            vif_details)
+
+        # TODO(lajoskatona): move this blacklisting to
+        # SimpleAgentMechanismDriverBase. By that e blacklisting and validation
+        # of the vnic_types would be available for all mechanism drivers.
+        self.supported_vnic_types = self.blacklist_supported_vnic_types(
+            vnic_types=[portbindings.VNIC_NORMAL, portbindings.VNIC_DIRECT],
+            blacklist=cfg.CONF.OVS_DRIVER.vnic_type_blacklist
+        )
+        LOG.info("%s's supported_vnic_types: %s",
+                 self.agent_type, self.supported_vnic_types)
+
         ovs_qos_driver.register()
         log_driver.register()
 

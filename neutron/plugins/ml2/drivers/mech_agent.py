@@ -22,6 +22,7 @@ from neutron_lib.plugins.ml2 import api
 from oslo_log import log
 import six
 
+from neutron._i18n import _
 from neutron.db import provisioning_blocks
 
 LOG = log.getLogger(__name__)
@@ -131,6 +132,34 @@ class AgentMechanismDriverBase(api.MechanismDriver):
         call context.set_binding() with appropriate values and then
         return True. Otherwise, it must return False.
         """
+
+    def blacklist_supported_vnic_types(self, vnic_types, blacklist):
+        """Validate the blacklist and blacklist the supported_vnic_types
+
+        :param vnic_types: The supported_vnic_types list
+        :param blacklist: The blacklist as in vnic_type_blacklist
+        :return The blacklisted vnic_types
+        """
+        if not blacklist:
+            return vnic_types
+
+        # Not valid values in the blacklist:
+        if not all(bl in vnic_types for bl in blacklist):
+            raise ValueError(_("Not all of the items from vnic_type_blacklist "
+                               "are valid vnic_types for %(agent)s mechanism "
+                               "driver. The valid values are: "
+                               "%(valid_vnics)s.") %
+                             {'agent': self.agent_type,
+                              'valid_vnics': vnic_types})
+
+        supported_vnic_types = [vnic_t for vnic_t in vnic_types if
+                                vnic_t not in blacklist]
+
+        # Nothing left in the supported vnict types list:
+        if len(supported_vnic_types) < 1:
+            raise ValueError(_("All possible vnic_types were blacklisted for "
+                               "%s mechanism driver!") % self.agent_type)
+        return supported_vnic_types
 
 
 @six.add_metaclass(abc.ABCMeta)
