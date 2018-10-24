@@ -24,6 +24,7 @@ from neutron_lib.agent import topics
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_constants
 from neutron_lib import context
+from neutron_lib.placement import utils as place_utils
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -39,7 +40,9 @@ from neutron.agent import securitygroups_rpc as agent_sg_rpc
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
+from neutron.common import constants as c_const
 from neutron.common import profiler as setup_profiler
+from neutron.common import utils as n_utils
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
@@ -109,7 +112,7 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 @profiler.trace_cls("rpc")
 class SriovNicSwitchAgent(object):
     def __init__(self, physical_devices_mappings, exclude_devices,
-                 polling_interval):
+                 polling_interval, rp_bandwidths, rp_inventory_defaults):
 
         self.polling_interval = polling_interval
         self.network_ports = collections.defaultdict(list)
@@ -132,6 +135,8 @@ class SriovNicSwitchAgent(object):
             self.connection)
 
         configurations = {'device_mappings': physical_devices_mappings,
+                          c_const.RP_BANDWIDTHS: rp_bandwidths,
+                          c_const.RP_INVENTORY_DEFAULTS: rp_inventory_defaults,
                           'extensions': self.ext_manager.names()}
 
         # TODO(mangelajo): optimize resource_versions (see ovs agent)
@@ -427,21 +432,29 @@ class SriovNicAgentConfigParser(object):
             cfg.CONF.SRIOV_NIC.physical_device_mappings, unique_keys=False)
         self.exclude_devices = config.parse_exclude_devices(
             cfg.CONF.SRIOV_NIC.exclude_devices)
+        self.rp_bandwidths = place_utils.parse_rp_bandwidths(
+            cfg.CONF.SRIOV_NIC.resource_provider_bandwidths)
+        self.rp_inventory_defaults = place_utils.parse_rp_inventory_defaults(
+            cfg.CONF.SRIOV_NIC.resource_provider_inventory_defaults)
         self._validate()
 
     def _validate(self):
         """Validate configuration.
 
         Validate that network_device in excluded_device
-        exists in device mappings
+        exists in device mappings.
+        Validate that network_device in resource_provider_bandwidths
+        exists in device mappings.
         """
         dev_net_set = set(itertools.chain.from_iterable(
                           six.itervalues(self.device_mappings)))
         for dev_name in self.exclude_devices.keys():
             if dev_name not in dev_net_set:
-                raise ValueError(_("Device name %(dev_name)s is missing from "
-                                   "physical_device_mappings") % {'dev_name':
-                                                                  dev_name})
+                raise ValueError(_(
+                    "Invalid exclude_devices: "
+                    "Device name %(dev_name)s is missing from "
+                    "physical_device_mappings") % {'dev_name': dev_name})
+        n_utils.validate_rp_bandwidth(self.rp_bandwidths, dev_net_set)
 
 
 def main():
@@ -453,6 +466,8 @@ def main():
         config_parser.parse()
         device_mappings = config_parser.device_mappings
         exclude_devices = config_parser.exclude_devices
+        rp_bandwidths = config_parser.rp_bandwidths
+        rp_inventory_defaults = config_parser.rp_inventory_defaults
 
     except ValueError:
         LOG.exception("Failed on Agent configuration parse. "
@@ -465,7 +480,9 @@ def main():
     try:
         agent = SriovNicSwitchAgent(device_mappings,
                                     exclude_devices,
-                                    polling_interval)
+                                    polling_interval,
+                                    rp_bandwidths,
+                                    rp_inventory_defaults)
     except exc.SriovNicError:
         LOG.exception("Agent Initialization Failed")
         raise SystemExit(1)
