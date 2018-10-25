@@ -304,24 +304,28 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         port = ml2_db.get_port(rpc_context, port_id)
         if not port:
             return
-        # NOTE: DVR ports are already handled and updated through l2pop
-        # and so we don't need to update it again here
-        if port['device_owner'] == n_const.DEVICE_OWNER_DVR_INTERFACE:
-            return
         port_context = plugin.get_bound_port_context(
-                rpc_context, port_id)
+                rpc_context, port_id, host)
         if not port_context:
             # port deleted
             return
+        # NOTE: DVR ports are already handled and updated through l2pop
+        # and so we don't need to update it again here. But, l2pop did not
+        # handle DVR ports while restart neutron-*-agent, we need to handle
+        # it here.
+        if (port['device_owner'] == n_const.DEVICE_OWNER_DVR_INTERFACE and
+                not l2pop_driver.obj.agent_restarted(port_context)):
+            return
         port = port_context.current
-        if (status == n_const.PORT_STATUS_ACTIVE and
+        if (port['device_owner'] != n_const.DEVICE_OWNER_DVR_INTERFACE and
+            status == n_const.PORT_STATUS_ACTIVE and
             port[portbindings.HOST_ID] != host and
             not l3_hamode_db.is_ha_router_port(rpc_context,
                                                port['device_owner'],
                                                port['device_id'])):
                 # don't setup ACTIVE forwarding entries unless bound to this
-                # host or if it's an HA port (which is special-cased in the
-                # mech driver)
+                # host or if it's an HA or DVR port (which is special-cased in
+                # the mech driver)
                 return
         port_context.current['status'] = status
         port_context.current[portbindings.HOST_ID] = host
