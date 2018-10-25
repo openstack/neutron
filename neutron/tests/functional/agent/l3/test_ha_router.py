@@ -116,7 +116,8 @@ class L3HATestCase(framework.L3AgentTestFramework):
         router_info['gw_port'] = ex_port
         router.process()
         self._assert_ipv6_accept_ra(router, expected_ra)
-        self._assert_ipv6_forwarding(router, expected_forwarding)
+        self._assert_ipv6_forwarding(router, expected_forwarding,
+                                     expected_forwarding)
 
     @testtools.skipUnless(ipv6_utils.is_enabled_and_bind_by_default(),
                           "IPv6 is not enabled")
@@ -335,14 +336,8 @@ class L3HATestCase(framework.L3AgentTestFramework):
             raise
         self.assertEqual(0, ip_nonlocal_bind_value)
 
-    def _wait_until_ipv6_forwarding_has_state(self, ns_name, dev_name, state):
-
-        def _ipv6_forwarding_has_state():
-            return ip_lib.get_ipv6_forwarding(
-                device=dev_name, namespace=ns_name) == state
-
-        common_utils.wait_until_true(_ipv6_forwarding_has_state)
-
+    @testtools.skipUnless(ipv6_utils.is_enabled_and_bind_by_default(),
+                          "IPv6 is not enabled")
     def test_ha_router_namespace_has_ipv6_forwarding_disabled(self):
         router_info = self.generate_router_info(enable_ha=True)
         router_info[constants.HA_INTERFACE_KEY]['status'] = (
@@ -387,6 +382,11 @@ class L3HATestFailover(framework.L3AgentTestFramework):
         master_router, slave_router = self._get_master_and_slave_routers(
             router1, router2)
 
+        self._assert_ipv6_accept_ra(master_router, True)
+        self._assert_ipv6_forwarding(master_router, True, True)
+        self._assert_ipv6_accept_ra(slave_router, False)
+        self._assert_ipv6_forwarding(slave_router, False, False)
+
         self.fail_ha_router(router1)
 
         # NOTE: passing slave_router as first argument, because we expect
@@ -396,6 +396,12 @@ class L3HATestFailover(framework.L3AgentTestFramework):
 
         self.assertEqual(master_router, new_slave)
         self.assertEqual(slave_router, new_master)
+        self._assert_ipv6_accept_ra(new_master, True)
+        self._assert_ipv6_forwarding(new_master, True, True)
+        self._assert_ipv6_accept_ra(new_slave, False)
+        # after transition from master -> slave, 'all' IPv6 forwarding should
+        # still be enabled
+        self._assert_ipv6_forwarding(new_slave, False, True)
 
     def test_ha_router_lost_gw_connection(self):
         self.agent.conf.set_override(

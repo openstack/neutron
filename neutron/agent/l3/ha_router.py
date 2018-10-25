@@ -27,6 +27,7 @@ from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
+from neutron.common import constants as const
 from neutron.common import utils as common_utils
 
 LOG = logging.getLogger(__name__)
@@ -289,7 +290,12 @@ class HaRouter(router.RouterInfo):
         ipv6_lladdr = ip_lib.get_ipv6_lladdr(device.link.address)
 
         if self._should_delete_ipv6_lladdr(ipv6_lladdr):
+            self.driver.configure_ipv6_ra(self.ha_namespace, interface_name,
+                                          const.ACCEPT_RA_DISABLED)
             device.addr.flush(n_consts.IP_VERSION_6)
+        else:
+            self.driver.configure_ipv6_ra(self.ha_namespace, interface_name,
+                                          const.ACCEPT_RA_WITHOUT_FORWARDING)
 
         self._remove_vip(ipv6_lladdr)
         self._add_vip(ipv6_lladdr, interface_name, scope='link')

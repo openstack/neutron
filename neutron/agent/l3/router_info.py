@@ -698,6 +698,11 @@ class RouterInfo(object):
             self.driver.configure_ipv6_ra(ns_name, interface_name,
                                           n_const.ACCEPT_RA_DISABLED)
         self.driver.configure_ipv6_forwarding(ns_name, interface_name, enabled)
+        # This will make sure the 'all' setting is the same as the interface,
+        # which is needed for forwarding to work.  Don't disable once it's
+        # been enabled so as to not send spurious MLDv2 packets out.
+        if enabled:
+            self.driver.configure_ipv6_forwarding(ns_name, 'all', enabled)
 
     def _external_gateway_added(self, ex_gw_port, interface_name,
                                 ns_name, preserve_ips):
