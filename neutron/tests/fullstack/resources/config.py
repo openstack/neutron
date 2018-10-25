@@ -18,6 +18,7 @@ import tempfile
 
 from neutron_lib import constants
 
+from neutron.common import constants as c_const
 from neutron.common import utils
 from neutron.plugins.ml2.extensions import qos as qos_ext
 from neutron.tests import base
@@ -27,6 +28,8 @@ from neutron.tests.common import helpers as c_helpers
 from neutron.tests.fullstack import base as fullstack_base
 
 PHYSICAL_NETWORK_NAME = "physnet1"
+MINIMUM_BANDWIDTH_INGRESS_KBPS = 1000
+MINIMUM_BANDWIDTH_EGRESS_KBPS = 1000
 
 
 class ConfigFixture(config_fixtures.ConfigFileFixture):
@@ -186,8 +189,13 @@ class OVSConfigFixture(ConfigFixture):
                 'int_peer_patch_port': self._generate_int_peer(),
                 'tun_peer_patch_port': self._generate_tun_peer()})
         else:
-            self.config['ovs']['bridge_mappings'] = (
-                self._generate_bridge_mappings())
+            device = utils.get_rand_device_name(prefix='br-eth')
+            self.config['ovs']['bridge_mappings'] = '%s:%s' % (
+                    PHYSICAL_NETWORK_NAME, device)
+            if env_desc.report_bandwidths:
+                self.config['ovs'][c_const.RP_BANDWIDTHS] = \
+                    '%s:%s:%s' % (device, MINIMUM_BANDWIDTH_EGRESS_KBPS,
+                                  MINIMUM_BANDWIDTH_INGRESS_KBPS)
 
         if env_desc.qos:
             self.config['agent']['extensions'] = 'qos'
@@ -208,10 +216,6 @@ class OVSConfigFixture(ConfigFixture):
                     port.ExclusivePort(constants.PROTO_NAME_TCP)).port
             })
         super(OVSConfigFixture, self)._setUp()
-
-    def _generate_bridge_mappings(self):
-        return '%s:%s' % (PHYSICAL_NETWORK_NAME,
-                          utils.get_rand_device_name(prefix='br-eth'))
 
     def _generate_integration_bridge(self):
         return utils.get_rand_device_name(prefix='br-int')
