@@ -1,6 +1,6 @@
 - project:
     templates:
-      - neutron-tempest-plugin-jobs
+      - neutron-tempest-plugin-jobs-rocky
       - openstack-python-jobs
       - openstack-python35-jobs
       - publish-openstack-sphinx-docs
