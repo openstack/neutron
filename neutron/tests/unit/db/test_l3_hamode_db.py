@@ -1309,6 +1309,42 @@ class L3HAModeDbTestCase(L3HATestFramework):
             self.assertEqual(constants.DEVICE_OWNER_ROUTER_INTF,
                              routerport.port.device_owner)
 
+    def test__get_sync_routers_with_state_change_and_check_gw_port_host(self):
+        ext_net = self._create_network(self.core_plugin, self.admin_ctx,
+                                       external=True)
+        network_id = self._create_network(self.core_plugin, self.admin_ctx)
+        subnet = self._create_subnet(self.core_plugin, self.admin_ctx,
+                                     network_id)
+        interface_info = {'subnet_id': subnet['id']}
+
+        router = self._create_router()
+        self.plugin._update_router_gw_info(self.admin_ctx, router['id'],
+                                           {'network_id': ext_net})
+        self.plugin.add_router_interface(self.admin_ctx,
+                                         router['id'],
+                                         interface_info)
+
+        self.plugin.update_routers_states(
+            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.agent1['host'])
+        self.plugin.update_routers_states(
+            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_STANDBY},
+            self.agent2['host'])
+
+        routers = self.plugin._get_sync_routers(self.admin_ctx,
+                                                router_ids=[router['id']])
+        self.assertEqual(self.agent1['host'], routers[0]['gw_port_host'])
+
+        self.plugin.update_routers_states(
+            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_STANDBY},
+            self.agent1['host'])
+        self.plugin.update_routers_states(
+            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.agent2['host'])
+        routers = self.plugin._get_sync_routers(self.admin_ctx,
+                                                router_ids=[router['id']])
+        self.assertEqual(self.agent2['host'], routers[0]['gw_port_host'])
+
 
 class L3HAUserTestCase(L3HATestFramework):
 
