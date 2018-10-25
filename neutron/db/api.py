@@ -13,13 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
 import weakref
 
 from neutron_lib.db import api
 from neutron_lib.db import model_base
 from oslo_config import cfg
-from oslo_log import log as logging
 from osprofiler import opts as profiler_opts
 import osprofiler.sqlalchemy
 import sqlalchemy
@@ -44,65 +42,6 @@ context_manager.append_on_engine_create(set_hook)
 
 
 MAX_RETRIES = 10
-LOG = logging.getLogger(__name__)
-
-
-def _copy_if_lds(item):
-    """Deepcopy lists/dicts/sets, leave everything else alone."""
-    return copy.deepcopy(item) if isinstance(item, (list, dict, set)) else item
-
-
-@event.listens_for(orm.session.Session, "after_flush")
-def add_to_rel_load_list(session, flush_context=None):
-    # keep track of new items to load relationships on during commit
-    session.info.setdefault('_load_rels', weakref.WeakSet()).update(
-        session.new)
-
-
-@event.listens_for(orm.session.Session, "before_commit")
-def load_one_to_manys(session):
-    # TODO(kevinbenton): we should be able to remove this after we
-    # have eliminated all places where related objects are constructed
-    # using a key rather than a relationship.
-
-    # capture any new objects
-    if session.new:
-        session.flush()
-
-    if session.transaction.nested:
-        # wait until final commit
-        return
-
-    for new_object in session.info.pop('_load_rels', []):
-        if new_object not in session:
-            # don't load detached objects because that brings them back into
-            # session
-            continue
-        state = sqlalchemy.inspect(new_object)
-
-        # set up relationship loading so that we can call lazy
-        # loaders on the object even though the ".key" is not set up yet
-        # (normally happens by in after_flush_postexec, but we're trying
-        # to do this more succinctly).  in this context this is only
-        # setting a simple flag on the object's state.
-        session.enable_relationship_loading(new_object)
-
-        # look for eager relationships and do normal load.
-        # For relationships where the related object is also
-        # in the session these lazy loads will pull from the
-        # identity map and not emit SELECT.  Otherwise, we are still
-        # local in the transaction so a normal SELECT load will work fine.
-        for relationship_attr in state.mapper.relationships:
-            if relationship_attr.lazy not in ('joined', 'subquery'):
-                # we only want to automatically load relationships that would
-                # automatically load during a lookup operation
-                continue
-            if relationship_attr.key not in state.dict:
-                getattr(new_object, relationship_attr.key)
-                if relationship_attr.key not in state.dict:
-                    msg = ("Relationship %s attributes must be loaded in db"
-                           " object %s" % (relationship_attr.key, state.dict))
-                    raise AssertionError(msg)
 
 
 # Expire relationships when foreign key changes.
@@ -124,7 +63,7 @@ def load_one_to_manys(session):
 #
 # TODO(ihrachys) at some point these event handlers should be extended to also
 # automatically refresh values for expired attributes
-def expire_for_fk_change(target, fk_value, relationship_prop, column_attr):
+def _expire_for_fk_change(target, fk_value, relationship_prop, column_attr):
     """Expire relationship attributes when a many-to-one column changes."""
 
     sess = orm.object_session(target)
@@ -181,7 +120,7 @@ def _pending_callables(session, obj):
     args = _emit_on_pending.pop(obj, [])
     for a in args:
         if a is not None:
-            expire_for_fk_change(obj, *a)
+            _expire_for_fk_change(obj, *a)
 
 
 @event.listens_for(orm.session.Session, "persistent_to_deleted")
@@ -192,7 +131,7 @@ def _persistent_to_deleted(session, obj):
         if prop.direction is orm.interfaces.MANYTOONE:
             for col in prop.local_columns:
                 colkey = mapper.get_property_by_column(col).key
-                expire_for_fk_change(obj, None, prop, colkey)
+                _expire_for_fk_change(obj, None, prop, colkey)
 
 
 @event.listens_for(model_base.BASEV2, "attribute_instrument", propagate=True)
@@ -226,4 +165,4 @@ def _expire_prop_on_col(cls, prop, colkey):
         """Expire relationships when the foreign key attribute on
         an object changes
         """
-        expire_for_fk_change(target, value, prop, colkey)
+        _expire_for_fk_change(target, value, prop, colkey)
