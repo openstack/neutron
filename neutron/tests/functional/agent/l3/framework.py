@@ -228,14 +228,22 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             'net.ipv6.conf.%s.accept_ra' % external_device_name])
         self.assertEqual(enabled, int(ra_state) != n_const.ACCEPT_RA_DISABLED)
 
-    def _assert_ipv6_forwarding(self, router, enabled=True):
+    def _wait_until_ipv6_forwarding_has_state(self, ns_name, dev_name, state):
+
+        def _ipv6_forwarding_has_state():
+            return ip_lib.get_ipv6_forwarding(
+                device=dev_name, namespace=ns_name) == state
+
+        common_utils.wait_until_true(_ipv6_forwarding_has_state)
+
+    def _assert_ipv6_forwarding(self, router, enabled=True, all_enabled=True):
         external_port = router.get_ex_gw_port()
         external_device_name = router.get_external_device_name(
             external_port['id'])
-        ip_wrapper = ip_lib.IPWrapper(namespace=router.ns_name)
-        fwd_state = ip_wrapper.netns.execute(['sysctl', '-b',
-            'net.ipv6.conf.%s.forwarding' % external_device_name])
-        self.assertEqual(int(enabled), int(fwd_state))
+        self._wait_until_ipv6_forwarding_has_state(
+            router.ns_name, external_device_name, int(enabled))
+        self._wait_until_ipv6_forwarding_has_state(
+            router.ns_name, 'all', int(all_enabled))
 
     def _router_lifecycle(self, enable_ha, ip_version=4,
                           dual_stack=False, v6_ext_gw_with_sub=True,
