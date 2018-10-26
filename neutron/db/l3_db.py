@@ -1291,6 +1291,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             port_id, internal_ip_address, router_id = self._get_assoc_data(
                 context, fip, floatingip_obj)
 
+        # Condition for floating IP with binding port forwarding
+        if not floatingip_obj.fixed_port_id and floatingip_obj.router_id:
+            router_id = floatingip_obj.router_id
+
         # After all upper conditions, if updating API dict is submitted with
         # {'port_id': null}, then the floating IP cloud also be dissociated.
         return port_id, internal_ip_address, router_id
