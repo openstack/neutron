@@ -22,5 +22,8 @@ default = priv_context.PrivContext(
     # TODO(gus): CAP_SYS_ADMIN is required (only?) for manipulating
     # network namespaces.  SYS_ADMIN is a lot of scary powers, so
     # consider breaking this out into a separate minimal context.
-    capabilities=[caps.CAP_SYS_ADMIN, caps.CAP_NET_ADMIN],
+    capabilities=[caps.CAP_SYS_ADMIN,
+                  caps.CAP_NET_ADMIN,
+                  caps.CAP_DAC_OVERRIDE,
+                  2],  # CAP_DAC_READ_SEARCH
 )
