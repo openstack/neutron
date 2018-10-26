@@ -242,6 +242,26 @@ class TestDhcpAgent(base.BaseTestCase):
                                             "IPWrapper")
         self.mock_ip_wrapper = self.mock_ip_wrapper_p.start()
 
+    def test_init_resync_throttle_conf(self):
+        try:
+            dhcp_agent.DhcpAgent(HOSTNAME)
+        except exceptions.InvalidConfigurationOption:
+            self.fail("DHCP agent initialization unexpectedly raised an "
+                      "InvalidConfigurationOption exception. No exception is "
+                      "expected with the default configurations.")
+
+        # default resync_interval = 5; default resync_throttle = 1
+        cfg.CONF.set_override('resync_throttle', 10)
+        # resync_throttle must be <= resync_interval, otherwise an
+        # InvalidConfigurationOption exception would be raised with log
+        # message.
+        with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
+            with testtools.ExpectedException(
+                exceptions.InvalidConfigurationOption):
+                dhcp_agent.DhcpAgent(HOSTNAME)
+            log.assert_any_call("DHCP agent must have resync_throttle <= "
+                                "resync_interval")
+
     def test_init_host(self):
         dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         with mock.patch.object(dhcp, 'sync_state') as sync_state:
@@ -489,18 +509,30 @@ class TestDhcpAgent(base.BaseTestCase):
                              ['Agent has just been revived'])
 
     def test_periodic_resync_helper(self):
-        with mock.patch.object(dhcp_agent.eventlet, 'sleep') as sleep:
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        resync_reasons = collections.OrderedDict(
+            (('a', 'reason1'), ('b', 'reason2')))
+        dhcp.needs_resync_reasons = resync_reasons
+        with mock.patch.object(dhcp, 'sync_state') as sync_state:
+            sync_state.side_effect = RuntimeError
+            with testtools.ExpectedException(RuntimeError):
+                dhcp._periodic_resync_helper()
+            sync_state.assert_called_once_with(resync_reasons.keys())
+            self.assertEqual(0, len(dhcp.needs_resync_reasons))
+
+    def test_periodic_resync_helper_with_event(self):
+        with mock.patch.object(dhcp_agent.LOG, 'debug') as log:
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-            resync_reasons = collections.OrderedDict(
-                (('a', 'reason1'), ('b', 'reason2')))
-            dhcp.needs_resync_reasons = resync_reasons
+            dhcp.schedule_resync('reason1', 'a')
+            dhcp.schedule_resync('reason1', 'b')
+            reasons = dhcp.needs_resync_reasons.keys()
             with mock.patch.object(dhcp, 'sync_state') as sync_state:
                 sync_state.side_effect = RuntimeError
                 with testtools.ExpectedException(RuntimeError):
                     dhcp._periodic_resync_helper()
-                sync_state.assert_called_once_with(resync_reasons.keys())
-                sleep.assert_called_once_with(dhcp.conf.resync_interval)
-                self.assertEqual(0, len(dhcp.needs_resync_reasons))
+            log.assert_any_call("Resync event has been scheduled")
+            sync_state.assert_called_once_with(reasons)
+            self.assertEqual(0, len(dhcp.needs_resync_reasons))
 
     def test_populate_cache_on_start_without_active_networks_support(self):
         # emul dhcp driver that doesn't support retrieving of active networks

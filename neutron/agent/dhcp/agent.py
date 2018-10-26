@@ -15,6 +15,7 @@
 
 import collections
 import os
+import threading
 
 import eventlet
 from neutron_lib.agent import constants as agent_consts
@@ -86,6 +87,15 @@ class DhcpAgent(manager.Manager):
         self.needs_resync_reasons = collections.defaultdict(list)
         self.dhcp_ready_ports = set()
         self.conf = conf or cfg.CONF
+        # If 'resync_throttle' is configured more than 'resync_interval' by
+        # mistake, raise exception and log with message.
+        if self.conf.resync_throttle > self.conf.resync_interval:
+            msg = _("DHCP agent must have resync_throttle <= resync_interval")
+            LOG.exception(msg)
+            raise exceptions.InvalidConfigurationOption(
+                opt_name='resync_throttle',
+                opt_value=self.conf.resync_throttle)
+        self._periodic_resync_event = threading.Event()
         self.cache = NetworkCache()
         self.dhcp_driver_cls = importutils.import_class(self.conf.dhcp_driver)
         self.plugin_rpc = DhcpPluginApi(topics.PLUGIN, self.conf.host)
@@ -174,6 +184,12 @@ class DhcpAgent(manager.Manager):
         specified, resync all networks.
         """
         self.needs_resync_reasons[network_id].append(reason)
+        self._periodic_resync_event.set()
+        # Yield to allow other threads that may be ready to run.
+        # This helps prevent one thread from acquiring the same lock over and
+        # over again, in which case no other threads waiting on the
+        # "dhcp-agent" lock would make any progress.
+        eventlet.greenthread.sleep(0)
 
     @_sync_lock
     def sync_state(self, networks=None):
@@ -243,9 +259,20 @@ class DhcpAgent(manager.Manager):
 
     @utils.exception_logger()
     def _periodic_resync_helper(self):
-        """Resync the dhcp state at the configured interval."""
+        """Resync the dhcp state at the configured interval and throttle."""
         while True:
-            eventlet.sleep(self.conf.resync_interval)
+            # threading.Event.wait blocks until the internal flag is true. It
+            # returns the internal flag on exit, so it will always return True
+            # except if a timeout is given and the operation times out.
+            if self._periodic_resync_event.wait(self.conf.resync_interval):
+                LOG.debug("Resync event has been scheduled")
+                clear_periodic_resync_event = self._periodic_resync_event.clear
+                # configure throttler for clear_periodic_resync_event to
+                # introduce delays between resync state events.
+                throttled_clear_periodic_resync_event = utils.throttler(
+                    self.conf.resync_throttle)(clear_periodic_resync_event)
+                throttled_clear_periodic_resync_event()
+
             if self.needs_resync_reasons:
                 # be careful to avoid a race with additions to list
                 # from other threads
