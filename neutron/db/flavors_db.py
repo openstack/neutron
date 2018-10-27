@@ -12,12 +12,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import api as db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import flavors as flav_exc
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 
-from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import servicetype_db as sdb
 from neutron.objects import base as base_obj
@@ -101,7 +101,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         return self._make_flavor_dict(obj)
 
     def update_flavor(self, context, flavor_id, flavor):
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             self._ensure_flavor_not_in_use(context, flavor_id)
             fl_obj = self._get_flavor(context, flavor_id)
             fl_obj.update_fields(flavor['flavor'])
@@ -118,7 +118,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         # flavors so for now we just capture the foreign key violation
         # to detect if it's in use.
         try:
-            with db_api.context_manager.writer.using(context):
+            with db_api.CONTEXT_WRITER.using(context):
                 self._ensure_flavor_not_in_use(context, flavor_id)
                 self._get_flavor(context, flavor_id).delete()
         except db_exc.DBReferenceError:
@@ -136,7 +136,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
     def create_flavor_service_profile(self, context,
                                       service_profile, flavor_id):
         sp = service_profile['service_profile']
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             if obj_flavor.FlavorServiceProfileBinding.objects_exist(
                     context, service_profile_id=sp['id'], flavor_id=flavor_id):
                 raise flav_exc.FlavorServiceProfileBindingExists(
@@ -189,7 +189,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         if sp.get('driver'):
             self._validate_driver(context, sp['driver'])
 
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             self._ensure_service_profile_not_in_use(context,
                                                     service_profile_id)
             sp_obj = self._get_service_profile(context, service_profile_id)
@@ -202,7 +202,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         return self._make_service_profile_dict(sp_db, fields)
 
     def delete_service_profile(self, context, sp_id):
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             self._ensure_service_profile_not_in_use(context, sp_id)
             self._get_service_profile(context, sp_id).delete()
 

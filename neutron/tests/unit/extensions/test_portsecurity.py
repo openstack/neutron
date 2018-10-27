@@ -18,12 +18,12 @@ import copy
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import port_security as psec_exc
 from neutron_lib.plugins import directory
 from webob import exc
 
-from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
 from neutron.db import securitygroups_db
@@ -68,7 +68,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     def create_network(self, context, network):
         tenant_id = network['network'].get('tenant_id')
         self._ensure_default_security_group(context, tenant_id)
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             neutron_db = super(PortSecurityTestPlugin, self).create_network(
                 context, network)
             neutron_db.update(network['network'])
@@ -77,7 +77,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         return neutron_db
 
     def update_network(self, context, id, network):
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             neutron_db = super(PortSecurityTestPlugin, self).update_network(
                 context, id, network)
             if psec.PORTSECURITY in network['network']:
@@ -86,7 +86,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         return neutron_db
 
     def get_network(self, context, id, fields=None):
-        with db_api.context_manager.reader.using(context):
+        with db_api.CONTEXT_READER.using(context):
             net = super(PortSecurityTestPlugin, self).get_network(
                 context, id)
         return db_utils.resource_fields(net, fields)
@@ -122,7 +122,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         delete_security_groups = self._check_update_deletes_security_groups(
             port)
         has_security_groups = self._check_update_has_security_groups(port)
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             ret_port = super(PortSecurityTestPlugin, self).update_port(
                 context, id, port)
             # copy values over - but not fixed_ips

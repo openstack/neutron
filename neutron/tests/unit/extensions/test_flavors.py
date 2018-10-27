@@ -18,6 +18,7 @@ import copy
 import fixtures
 import mock
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib.db import constants as db_const
 from neutron_lib.exceptions import flavors as flav_exc
 from neutron_lib.plugins import constants
@@ -25,7 +26,6 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 from webob import exc
 
-from neutron.db import api as dbapi
 from neutron.db.models import l3 as l3_models
 from neutron.db import servicetype_db
 from neutron.extensions import flavors
@@ -460,7 +460,7 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             self.service_manager.add_provider_configuration(
                 provider.split(':')[0], provconf.ProviderConfiguration())
 
-        dbapi.context_manager.writer.get_engine()
+        db_api.CONTEXT_WRITER.get_engine()
 
     def _create_flavor(self, description=None):
         flavor = {'flavor': {'name': 'GOLD',

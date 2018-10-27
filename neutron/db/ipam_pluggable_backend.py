@@ -18,6 +18,7 @@ import copy
 import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -25,7 +26,6 @@ from oslo_utils import excutils
 from sqlalchemy import and_
 
 from neutron.common import ipv6_utils
-from neutron.db import api as db_api
 from neutron.db import ipam_backend_mixin
 from neutron.db import models_v2
 from neutron.ipam import driver
@@ -322,7 +322,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                             original=changes.original,
                             remove=removed)
 
-    @db_api.context_manager.writer
+    @db_api.CONTEXT_WRITER
     def save_allocation_pools(self, context, subnet, allocation_pools):
         for pool in allocation_pools:
             first_ip = str(netaddr.IPAddress(pool.first, pool.version))

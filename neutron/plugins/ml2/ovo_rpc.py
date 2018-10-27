@@ -20,13 +20,13 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import context as n_ctx
+from neutron_lib.db import api as db_api
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.api.rpc.callbacks import events as rpc_events
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.db import api as db_api
 from neutron.objects import network
 from neutron.objects import ports
 from neutron.objects import securitygroup
@@ -105,7 +105,8 @@ class _ObjectChangeHandler(object):
             context = n_ctx.Context.from_dict(context_dict)
             # attempt to get regardless of event type so concurrent delete
             # after create/update is the same code-path as a delete event
-            with db_api.context_manager.independent.reader.using(context):
+            with db_api.get_context_manager().independent.reader.using(
+                    context):
                 obj = self._obj_class.get_object(context, id=resource_id)
             # CREATE events are always treated as UPDATE events to ensure
             # listeners are written to handle out-of-order messages

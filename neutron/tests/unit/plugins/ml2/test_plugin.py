@@ -30,7 +30,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exc
 from neutron_lib import fixture
 from neutron_lib.plugins import constants as plugin_constants
@@ -46,7 +46,6 @@ import webob
 from neutron._i18n import _
 from neutron.common import utils
 from neutron.db import agents_db
-from neutron.db import api as db_api
 from neutron.db import provisioning_blocks
 from neutron.db import securitygroups_db as sg_db
 from neutron.db import segments_db
@@ -1383,10 +1382,10 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                     raise db_exc.DBDuplicateEntry()
 
         listener = IPAllocationsGrenade()
-        engine = db_api.context_manager.writer.get_engine()
-        lib_db_api.sqla_listen(engine, 'before_cursor_execute',
-                               listener.execute)
-        lib_db_api.sqla_listen(engine, 'commit', listener.commit)
+        engine = db_api.CONTEXT_WRITER.get_engine()
+        db_api.sqla_listen(engine, 'before_cursor_execute',
+                           listener.execute)
+        db_api.sqla_listen(engine, 'commit', listener.commit)
         func()
         # make sure that the grenade went off during the commit
         self.assertTrue(listener.except_raised)
@@ -1847,7 +1846,7 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
                                             {'subnet_id': s['subnet']['id']})
 
         # lie to turn the port into an SNAT interface
-        with db_api.context_manager.writer.using(self.context):
+        with db_api.CONTEXT_WRITER.using(self.context):
             pager = base_obj.Pager(limit=1)
             rp = l3_obj.RouterPort.get_objects(
                 self.context, _pager=pager, port_id=p['port_id'])
@@ -2933,14 +2932,14 @@ class TestTransactionGuard(Ml2PluginV2TestCase):
     def test_delete_network_guard(self):
         plugin = directory.get_plugin()
         ctx = context.get_admin_context()
-        with db_api.context_manager.writer.using(ctx):
+        with db_api.CONTEXT_WRITER.using(ctx):
             with testtools.ExpectedException(RuntimeError):
                 plugin.delete_network(ctx, 'id')
 
     def test_delete_subnet_guard(self):
         plugin = directory.get_plugin()
         ctx = context.get_admin_context()
-        with db_api.context_manager.writer.using(ctx):
+        with db_api.CONTEXT_WRITER.using(ctx):
             with testtools.ExpectedException(RuntimeError):
                 plugin.delete_subnet(ctx, 'id')
 
@@ -3078,7 +3077,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
         with self.port(device_owner=fake_owner_compute) as port:
             # add writer here to make sure that the following operations are
             # performed in the same session
-            with db_api.context_manager.writer.using(self.context):
+            with db_api.CONTEXT_WRITER.using(self.context):
                 binding = p_utils.get_port_binding_by_status_and_host(
                     plugin._get_port(self.context,
                                      port['port']['id']).port_bindings,

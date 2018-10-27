@@ -16,13 +16,13 @@
 from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api import validators
+from neutron_lib.db import api as db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import allowedaddresspairs as addr_exc
 from neutron_lib.objects import exceptions
 
 from neutron.common import utils
 from neutron.db import _resource_extend as resource_extend
-from neutron.db import api as db_api
 from neutron.objects.port.extensions import (allowedaddresspairs
     as obj_addr_pair)
 
@@ -36,7 +36,7 @@ class AllowedAddressPairsMixin(object):
         if not validators.is_attr_set(allowed_address_pairs):
             return []
         try:
-            with db_api.context_manager.writer.using(context):
+            with db_api.CONTEXT_WRITER.using(context):
                 for address_pair in allowed_address_pairs:
                     # use port.mac_address if no mac address in address pair
                     if 'mac_address' not in address_pair:

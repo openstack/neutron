@@ -25,7 +25,7 @@ from neutron_lib.callbacks import exceptions
 from neutron_lib.callbacks import registry
 from neutron_lib import constants
 from neutron_lib import context
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as lib_exc
 from neutron_lib import fixture
 from neutron_lib.plugins import directory
@@ -49,7 +49,6 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import test_lib
 from neutron.common import utils
-from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_backend_mixin
 from neutron.db.models import l3 as l3_models
@@ -2703,7 +2702,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
     def test_update_network_set_not_shared_other_tenant_access_via_rbac(self):
         with self.network(shared=True) as network:
             ctx = context.get_admin_context()
-            with db_api.context_manager.writer.using(ctx):
+            with db_api.CONTEXT_WRITER.using(ctx):
                 ctx.session.add(
                     rbac_db_models.NetworkRBAC(
                         object_id=network['network']['id'],
@@ -4617,7 +4616,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     # this protection only applies to router ports so we need
                     # to make this port belong to a router
                     ctx = context.get_admin_context()
-                    with db_api.context_manager.writer.using(ctx):
+                    with db_api.CONTEXT_WRITER.using(ctx):
                         router = l3_models.Router()
                         ctx.session.add(router)
                     rp = l3_obj.RouterPort(ctx, router_id=router.id,
@@ -4631,7 +4630,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     self.assertEqual(409, res.status_int)
                     # should work fine if it's not a router port
                     rp.delete()
-                    with db_api.context_manager.writer.using(ctx):
+                    with db_api.CONTEXT_WRITER.using(ctx):
                         ctx.session.delete(router)
                     res = req.get_response(self.api)
                     self.assertEqual(res.status_int, 200)
@@ -6312,11 +6311,11 @@ class DbModelMixin(object):
     def test_make_network_dict_outside_engine_facade_manager(self):
         mock.patch.object(directory, 'get_plugin').start()
         ctx = context.get_admin_context()
-        with db_api.context_manager.writer.using(ctx):
+        with db_api.CONTEXT_WRITER.using(ctx):
             network = models_v2.Network(name="net_net", status="OK",
                                         admin_state_up=True)
             ctx.session.add(network)
-            with lib_db_api.autonested_transaction(ctx.session):
+            with db_api.autonested_transaction(ctx.session):
                 sg = sg_models.SecurityGroup(name='sg', description='sg')
                 ctx.session.add(sg)
             # ensure db rels aren't loaded until commit for network object
@@ -6352,7 +6351,7 @@ class DbModelMixin(object):
         self.assertEqual(final_exp, actual_repr_output)
 
     def _make_security_group_and_rule(self, ctx):
-        with db_api.context_manager.writer.using(ctx):
+        with db_api.CONTEXT_WRITER.using(ctx):
             sg = sg_models.SecurityGroup(name='sg', description='sg')
             rule = sg_models.SecurityGroupRule(
                 security_group=sg, port_range_min=1,
@@ -6372,7 +6371,7 @@ class DbModelMixin(object):
         return flip
 
     def _make_router(self, ctx):
-        with db_api.context_manager.writer.using(ctx):
+        with db_api.CONTEXT_WRITER.using(ctx):
             router = l3_models.Router()
             ctx.session.add(router)
         return router
@@ -6455,7 +6454,7 @@ class DbModelMixin(object):
 
         def _lock_blocked_name_update():
             ctx = context.get_admin_context()
-            with db_api.context_manager.writer.using(ctx):
+            with db_api.CONTEXT_WRITER.using(ctx):
                 thing = ctx.session.query(model).filter_by(id=dbid).one()
                 thing.bump_revision()
                 thing.name = 'newname'
@@ -6470,7 +6469,7 @@ class DbModelMixin(object):
             while not self._blocked_on_lock:
                 eventlet.sleep(0)
             ctx = context.get_admin_context()
-            with db_api.context_manager.writer.using(ctx):
+            with db_api.CONTEXT_WRITER.using(ctx):
                 thing = ctx.session.query(model).filter_by(id=dbid).one()
                 thing.bump_revision()
                 thing.description = 'a description'
@@ -6545,7 +6544,7 @@ class DbModelMixin(object):
 
 class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
     def _make_network(self, ctx):
-        with db_api.context_manager.writer.using(ctx):
+        with db_api.CONTEXT_WRITER.using(ctx):
             network = models_v2.Network(name="net_net", status="OK",
                                         tenant_id='dbcheck',
                                         admin_state_up=True)
@@ -6553,7 +6552,7 @@ class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
         return network
 
     def _make_subnet(self, ctx, network_id):
-        with db_api.context_manager.writer.using(ctx):
+        with db_api.CONTEXT_WRITER.using(ctx):
             subnet = models_v2.Subnet(name="subsub",
                                       ip_version=constants.IP_VERSION_4,
                                       tenant_id='dbcheck',
@@ -6572,7 +6571,7 @@ class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
         return port
 
     def _make_subnetpool(self, ctx):
-        with db_api.context_manager.writer.using(ctx):
+        with db_api.CONTEXT_WRITER.using(ctx):
             subnetpool = models_v2.SubnetPool(
                 ip_version=constants.IP_VERSION_4, default_prefixlen=4,
                 min_prefixlen=4, max_prefixlen=4, shared=False,
@@ -6585,7 +6584,7 @@ class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
 
 class DbModelProjectTestCase(DbModelMixin, testlib_api.SqlTestCase):
     def _make_network(self, ctx):
-        with db_api.context_manager.writer.using(ctx):
+        with db_api.CONTEXT_WRITER.using(ctx):
             network = models_v2.Network(name="net_net", status="OK",
                                         project_id='dbcheck',
                                         admin_state_up=True)
@@ -6593,7 +6592,7 @@ class DbModelProjectTestCase(DbModelMixin, testlib_api.SqlTestCase):
         return network
 
     def _make_subnet(self, ctx, network_id):
-        with db_api.context_manager.writer.using(ctx):
+        with db_api.CONTEXT_WRITER.using(ctx):
             subnet = models_v2.Subnet(name="subsub",
                                       ip_version=constants.IP_VERSION_4,
                                       project_id='dbcheck',
@@ -6612,7 +6611,7 @@ class DbModelProjectTestCase(DbModelMixin, testlib_api.SqlTestCase):
         return port
 
     def _make_subnetpool(self, ctx):
-        with db_api.context_manager.writer.using(ctx):
+        with db_api.CONTEXT_WRITER.using(ctx):
             subnetpool = models_v2.SubnetPool(
                 ip_version=constants.IP_VERSION_4, default_prefixlen=4,
                 min_prefixlen=4, max_prefixlen=4, shared=False,
@@ -6756,8 +6755,8 @@ class DbOperationBoundMixin(object):
         def _event_incrementer(conn, clauseelement, *args, **kwargs):
             self._recorded_statements.append(str(clauseelement))
 
-        engine = db_api.context_manager.writer.get_engine()
-        lib_db_api.sqla_listen(engine, 'after_execute', _event_incrementer)
+        engine = db_api.CONTEXT_WRITER.get_engine()
+        db_api.sqla_listen(engine, 'after_execute', _event_incrementer)
 
     def _get_context(self):
         if self.admin:

@@ -12,7 +12,7 @@
 #    under the License.
 #
 
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import exceptions as obj_exc
 from neutron_lib.plugins import directory
 from oslo_log import helpers as log_helpers
@@ -20,7 +20,6 @@ from sqlalchemy.orm import exc
 
 from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
-from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import standard_attr
 from neutron.extensions import tagging
@@ -73,9 +72,9 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tagging.TagPluginBase):
             raise tagging.TagNotFound(tag=tag)
 
     @log_helpers.log_method_call
-    @lib_db_api.retry_if_session_inactive()
+    @db_api.retry_if_session_inactive()
     def update_tags(self, context, resource, resource_id, body):
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             # We get and do all operations with objects in one session
             res = self._get_resource(context, resource, resource_id)
             new_tags = set(body['tags'])

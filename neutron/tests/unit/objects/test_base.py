@@ -20,7 +20,7 @@ import mock
 import netaddr
 from neutron_lib import constants
 from neutron_lib import context
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.objects import utils as obj_utils
@@ -34,7 +34,6 @@ from oslo_versionedobjects import fields as obj_fields
 import testtools
 
 from neutron.db import _model_query as model_query
-from neutron.db import api as db_api
 from neutron import objects
 from neutron.objects import agent
 from neutron.objects import base
@@ -1707,13 +1706,13 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
 
     def test_get_objects_single_transaction(self):
         with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
-            with lib_db_api.autonested_transaction(self.context.session):
+            with db_api.autonested_transaction(self.context.session):
                 self._test_class.get_objects(self.context)
         self.assertEqual(1, mock_exit.call_count)
 
     def test_get_objects_single_transaction_enginefacade(self):
         with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
-            with db_api.context_manager.reader.using(self.context):
+            with db_api.CONTEXT_READER.using(self.context):
                 self._test_class.get_objects(self.context)
         self.assertEqual(1, mock_exit.call_count)
 
@@ -1722,7 +1721,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         obj.create()
 
         with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
-            with lib_db_api.autonested_transaction(self.context.session):
+            with db_api.autonested_transaction(self.context.session):
                 obj = self._test_class.get_object(self.context,
                                                   **obj._get_composite_keys())
         self.assertEqual(1, mock_exit.call_count)
@@ -1732,7 +1731,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         obj.create()
 
         with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
-            with db_api.context_manager.reader.using(self.context):
+            with db_api.CONTEXT_READER.using(self.context):
                 obj = self._test_class.get_object(self.context,
                                                   **obj._get_composite_keys())
         self.assertEqual(1, mock_exit.call_count)

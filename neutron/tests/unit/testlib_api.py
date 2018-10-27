@@ -19,6 +19,7 @@ import testresources
 import testscenarios
 import testtools
 
+from neutron_lib.db import api as db_api
 from neutron_lib.db import model_base
 from oslo_config import cfg
 from oslo_db import exception as oslodb_exception
@@ -26,7 +27,6 @@ from oslo_db.sqlalchemy import enginefacade
 from oslo_db.sqlalchemy import provision
 from oslo_db.sqlalchemy import session
 
-from neutron.db import api as db_api
 from neutron.db.migration import cli as migration
 # Import all data models
 from neutron.db.migration.models import head  # noqa
@@ -101,19 +101,19 @@ class SqlFixture(fixtures.Fixture):
 
         self.sessionmaker = session.get_maker(engine)
 
-        _restore_factory = db_api.context_manager._root_factory
+        _restore_factory = db_api.get_context_manager()._root_factory
 
         self.enginefacade_factory = enginefacade._TestTransactionFactory(
             self.engine, self.sessionmaker, from_factory=_restore_factory,
             apply_global=False)
 
-        db_api.context_manager._root_factory = self.enginefacade_factory
+        db_api.get_context_manager()._root_factory = self.enginefacade_factory
 
-        engine = db_api.context_manager.writer.get_engine()
+        engine = db_api.CONTEXT_WRITER.get_engine()
 
         self.addCleanup(
             lambda: setattr(
-                db_api.context_manager,
+                db_api.get_context_manager(),
                 "_root_factory", _restore_factory))
 
         self.useFixture(EnableSQLiteFKsFixture(engine))
@@ -163,7 +163,8 @@ class StaticSqlFixture(SqlFixture):
         else:
             cls._GLOBAL_RESOURCES = True
             cls.schema_resource = provision.SchemaResource(
-                provision.DatabaseResource("sqlite", db_api.context_manager),
+                provision.DatabaseResource(
+                    "sqlite", db_api.get_context_manager()),
                 cls._generate_schema, teardown=False)
             dependency_resources = {}
             for name, resource in cls.schema_resource.resources:
@@ -187,7 +188,7 @@ class StaticSqlFixtureNoSchema(SqlFixture):
         else:
             cls._GLOBAL_RESOURCES = True
             cls.database_resource = provision.DatabaseResource(
-                "sqlite", db_api.context_manager)
+                "sqlite", db_api.get_context_manager())
             dependency_resources = {}
             for name, resource in cls.database_resource.resources:
                 dependency_resources[name] = resource.getResource()

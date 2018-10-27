@@ -14,10 +14,10 @@
 #    under the License.
 
 from neutron_lib import constants as const
+from neutron_lib.db import api as db_api
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as orm_exc
 
-from neutron.db import api as db_api
 from neutron.db.models import securitygroup as sg_db
 from neutron.objects.logapi import logging_resource as log_object
 from neutron.objects import ports as port_objects
@@ -31,7 +31,7 @@ LOG = logging.getLogger(__name__)
 def _get_ports_attached_to_sg(context, sg_id):
     """Return a list of ports attached to a security group"""
 
-    with db_api.context_manager.reader.using(context):
+    with db_api.CONTEXT_READER.using(context):
         ports = context.session.query(
             sg_db.SecurityGroupPortBinding.port_id).filter(
             sg_db.SecurityGroupPortBinding.security_group_id ==
@@ -44,7 +44,7 @@ def _get_ports_filter_in_tenant(context, tenant_id):
 
     try:
         sg_id = sg_db.SecurityGroupPortBinding.security_group_id
-        with db_api.context_manager.reader.using(context):
+        with db_api.CONTEXT_READER.using(context):
             ports = context.session.query(
                 sg_db.SecurityGroupPortBinding.port_id).join(
                 sg_db.SecurityGroup, sg_db.SecurityGroup.id == sg_id).filter(
@@ -57,7 +57,7 @@ def _get_ports_filter_in_tenant(context, tenant_id):
 def _get_sgs_attached_to_port(context, port_id):
     """Return a list of security groups are associated to a port"""
 
-    with db_api.context_manager.reader.using(context):
+    with db_api.CONTEXT_READER.using(context):
         sg_ids = context.session.query(
             sg_db.SecurityGroupPortBinding.security_group_id).filter(
             sg_db.SecurityGroupPortBinding.port_id == port_id).all()

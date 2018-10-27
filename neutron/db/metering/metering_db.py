@@ -13,6 +13,7 @@
 # under the License.
 
 import netaddr
+from neutron_lib.db import api as db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import metering as metering_exc
 from oslo_db import exception as db_exc
@@ -20,7 +21,6 @@ from oslo_utils import uuidutils
 
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
 from neutron.common import constants
-from neutron.db import api as db_api
 from neutron.db import common_db_mixin as base_db
 from neutron.db import l3_dvr_db
 from neutron.extensions import metering
@@ -131,7 +131,7 @@ class MeteringDbMixin(metering.MeteringPluginBase,
     def create_metering_label_rule(self, context, metering_label_rule):
         m = metering_label_rule['metering_label_rule']
         try:
-            with db_api.context_manager.writer.using(context):
+            with db_api.CONTEXT_WRITER.using(context):
                 label_id = m['metering_label_id']
                 ip_prefix = m['remote_ip_prefix']
                 direction = m['direction']
@@ -151,7 +151,7 @@ class MeteringDbMixin(metering.MeteringPluginBase,
         return self._make_metering_label_rule_dict(rule)
 
     def delete_metering_label_rule(self, context, rule_id):
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             rule = self._get_metering_label_rule(context, rule_id)
             rule.delete()
 

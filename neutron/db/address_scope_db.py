@@ -15,13 +15,13 @@
 from neutron_lib.api.definitions import address_scope as apidef
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import address_scope as api_err
 from oslo_utils import uuidutils
 
 from neutron._i18n import _
 from neutron.db import _resource_extend as resource_extend
-from neutron.db import api as db_api
 from neutron.extensions import address_scope as ext_address_scope
 from neutron.objects import address_scope as obj_addr_scope
 from neutron.objects import base as base_obj
@@ -113,7 +113,7 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
         return obj_addr_scope.AddressScope.count(context, **filters)
 
     def delete_address_scope(self, context, id):
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             if subnetpool_obj.SubnetPool.get_objects(context,
                                                      address_scope_id=id):
                 raise api_err.AddressScopeInUse(address_scope_id=id)

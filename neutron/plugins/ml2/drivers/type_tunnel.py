@@ -20,7 +20,7 @@ import netaddr
 from neutron_lib.agent import topics
 from neutron_lib import constants as p_const
 from neutron_lib import context
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exc
 from neutron_lib.plugins.ml2 import api
 from neutron_lib.plugins import utils as plugin_utils
@@ -32,7 +32,6 @@ from six import moves
 from sqlalchemy import or_
 
 from neutron._i18n import _
-from neutron.db import api as db_api
 from neutron.objects import base as base_obj
 from neutron.plugins.ml2.drivers import helpers
 
@@ -137,7 +136,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver):
         LOG.info("%(type)s ID ranges: %(range)s",
                  {'type': self.get_type(), 'range': current_range})
 
-    @lib_db_api.retry_db_errors
+    @db_api.retry_db_errors
     def sync_allocations(self):
         # determine current configured allocatable tunnel ids
         tunnel_ids = set()
@@ -147,7 +146,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver):
         tunnel_id_getter = operator.attrgetter(self.segmentation_key)
         tunnel_col = getattr(self.model, self.segmentation_key)
         ctx = context.get_admin_context()
-        with db_api.context_manager.writer.using(ctx):
+        with db_api.CONTEXT_WRITER.using(ctx):
             # remove from table unallocated tunnels not currently allocatable
             # fetch results as list via all() because we'll be iterating
             # through them twice
@@ -313,7 +312,7 @@ class ML2TunnelTypeDriver(_TunnelTypeDriverBase):
         inside = any(lo <= tunnel_id <= hi for lo, hi in self.tunnel_ranges)
 
         info = {'type': self.get_type(), 'id': tunnel_id}
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             query = (context.session.query(self.model).
                      filter_by(**{self.segmentation_key: tunnel_id}))
             if inside:
@@ -330,7 +329,7 @@ class ML2TunnelTypeDriver(_TunnelTypeDriverBase):
         if not count:
             LOG.warning("%(type)s tunnel %(id)s not found", info)
 
-    @db_api.context_manager.reader
+    @db_api.CONTEXT_READER
     def get_allocation(self, context, tunnel_id):
         return (context.session.query(self.model).
                 filter_by(**{self.segmentation_key: tunnel_id}).
@@ -349,37 +348,37 @@ class EndpointTunnelTypeDriver(ML2TunnelTypeDriver):
 
     def get_endpoint_by_host(self, host):
         LOG.debug("get_endpoint_by_host() called for host %s", host)
-        session = lib_db_api.get_reader_session()
+        session = db_api.get_reader_session()
         return (session.query(self.endpoint_model).
                 filter_by(host=host).first())
 
     def get_endpoint_by_ip(self, ip):
         LOG.debug("get_endpoint_by_ip() called for ip %s", ip)
-        session = lib_db_api.get_reader_session()
+        session = db_api.get_reader_session()
         return (session.query(self.endpoint_model).
                 filter_by(ip_address=ip).first())
 
     def delete_endpoint(self, ip):
         LOG.debug("delete_endpoint() called for ip %s", ip)
-        session = lib_db_api.get_writer_session()
+        session = db_api.get_writer_session()
         session.query(self.endpoint_model).filter_by(ip_address=ip).delete()
 
     def delete_endpoint_by_host_or_ip(self, host, ip):
         LOG.debug("delete_endpoint_by_host_or_ip() called for "
                   "host %(host)s or %(ip)s", {'host': host, 'ip': ip})
-        session = lib_db_api.get_writer_session()
+        session = db_api.get_writer_session()
         session.query(self.endpoint_model).filter(
             or_(self.endpoint_model.host == host,
                 self.endpoint_model.ip_address == ip)).delete()
 
     def _get_endpoints(self):
         LOG.debug("_get_endpoints() called")
-        session = lib_db_api.get_reader_session()
+        session = db_api.get_reader_session()
         return session.query(self.endpoint_model)
 
     def _add_endpoint(self, ip, host, **kwargs):
         LOG.debug("_add_endpoint() called for ip %s", ip)
-        session = lib_db_api.get_writer_session()
+        session = db_api.get_writer_session()
         try:
             endpoint = self.endpoint_model(ip_address=ip, host=host, **kwargs)
             endpoint.save(session)

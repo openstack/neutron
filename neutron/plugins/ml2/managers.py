@@ -19,7 +19,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as provider
 from neutron_lib.api import validators
 from neutron_lib import constants
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import multiprovidernet as mpnet_exc
 from neutron_lib.exceptions import vlantransparent as vlan_exc
@@ -31,7 +31,6 @@ import stevedore
 
 from neutron._i18n import _
 from neutron.conf.plugins.ml2 import config
-from neutron.db import api as db_api
 from neutron.db import segments_db
 from neutron.objects import ports
 from neutron.plugins.ml2.common import exceptions as ml2_exc
@@ -196,7 +195,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def create_network_segments(self, context, network, tenant_id):
         """Call type drivers to create network segments."""
         segments = self._process_provider_create(network)
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             network_id = network['id']
             if segments:
                 for segment_index, segment in enumerate(segments):
@@ -229,7 +228,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         self.validate_provider_segment(segment)
 
         # Reserve segment in type driver
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             return self.reserve_provider_segment(context, segment)
 
     def is_partial_segment(self, segment):
@@ -429,7 +428,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
             try:
                 getattr(driver.obj, method_name)(context)
             except Exception as e:
-                if raise_db_retriable and lib_db_api.is_retriable(e):
+                if raise_db_retriable and db_api.is_retriable(e):
                     with excutils.save_and_reraise_exception():
                         LOG.debug("DB exception raised by Mechanism driver "
                                   "'%(name)s' in %(method)s",

@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib.db import api as lib_db_api
+from neutron_lib.db import api as db_api
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -22,7 +22,6 @@ from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import session as se
 
 from neutron._i18n import _
-from neutron.db import api as db_api
 from neutron.db.quota import api as quota_api
 
 LOG = log.getLogger(__name__)
@@ -193,7 +192,7 @@ class TrackedResource(BaseResource):
     def mark_dirty(self, context):
         if not self._dirty_tenants:
             return
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             # It is not necessary to protect this operation with a lock.
             # Indeed when this method is called the request has been processed
             # and therefore all resources created or deleted.
@@ -220,7 +219,7 @@ class TrackedResource(BaseResource):
     # can happen is two or more workers are trying to create a resource of a
     # give kind for the same tenant concurrently. Retrying the operation will
     # ensure that an UPDATE statement is emitted rather than an INSERT one
-    @lib_db_api.retry_if_session_inactive()
+    @db_api.retry_if_session_inactive()
     def _set_quota_usage(self, context, tenant_id, in_use):
         return quota_api.set_quota_usage(
             context, self.name, tenant_id, in_use=in_use)
@@ -322,19 +321,19 @@ class TrackedResource(BaseResource):
                                self._model_class)
 
     def register_events(self):
-        listen = lib_db_api.sqla_listen
+        listen = db_api.sqla_listen
         listen(self._model_class, 'after_insert', self._db_event_handler)
         listen(self._model_class, 'after_delete', self._db_event_handler)
         listen(se.Session, 'after_bulk_delete', self._except_bulk_delete)
 
     def unregister_events(self):
         try:
-            lib_db_api.sqla_remove(self._model_class, 'after_insert',
-                                   self._db_event_handler)
-            lib_db_api.sqla_remove(self._model_class, 'after_delete',
-                                   self._db_event_handler)
-            lib_db_api.sqla_remove(se.Session, 'after_bulk_delete',
-                                   self._except_bulk_delete)
+            db_api.sqla_remove(self._model_class, 'after_insert',
+                               self._db_event_handler)
+            db_api.sqla_remove(self._model_class, 'after_delete',
+                               self._db_event_handler)
+            db_api.sqla_remove(se.Session, 'after_bulk_delete',
+                               self._except_bulk_delete)
         except sql_exc.InvalidRequestError:
             LOG.warning("No sqlalchemy event for resource %s found",
                         self.name)

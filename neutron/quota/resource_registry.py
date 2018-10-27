@@ -10,12 +10,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import api as db_api
 from oslo_config import cfg
 from oslo_log import log
 import six
 
 from neutron._i18n import _
-from neutron.db import api as db_api
 from neutron.quota import resource
 
 LOG = log.getLogger(__name__)
@@ -72,7 +72,7 @@ def set_resources_dirty(context):
         return
 
     for res in get_all_resources().values():
-        with db_api.context_manager.writer.using(context):
+        with db_api.CONTEXT_WRITER.using(context):
             if is_tracked(res.name) and res.dirty:
                 res.mark_dirty(context)
 
