@@ -25,6 +25,7 @@ from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import exceptions as n_exc
+from neutron.common import utils as n_utils
 from neutron.tests import base
 
 _uuid = uuidutils.generate_uuid
@@ -300,6 +301,11 @@ class TestDvrFipNs(base.BaseTestCase):
                         mock.call(str(addr_pair[1]), add_broadcast=False)]
             device.addr.add.assert_has_calls(expected)
             self.assertEqual(2, device.addr.add.call_count)
+
+        expected = [mock.call(n_utils.cidr_to_ip(addr_pair[1]), mock.ANY),
+                    mock.call(n_utils.cidr_to_ip(addr_pair[0]), mock.ANY)]
+        device.neigh.add.assert_has_calls(expected)
+        self.assertEqual(2, device.neigh.add.call_count)
 
         device.route.add_gateway.assert_called_once_with(
             '169.254.31.29', table=16)

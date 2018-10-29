@@ -448,6 +448,13 @@ class FipNamespace(namespaces.Namespace):
 
         self._add_cidr_to_device(rtr_2_fip_dev, str(rtr_2_fip))
         self._add_cidr_to_device(fip_2_rtr_dev, str(fip_2_rtr))
+
+        # Add permanant ARP entries on each side of veth pair
+        rtr_2_fip_dev.neigh.add(common_utils.cidr_to_ip(fip_2_rtr),
+                                fip_2_rtr_dev.link.address)
+        fip_2_rtr_dev.neigh.add(common_utils.cidr_to_ip(rtr_2_fip),
+                                rtr_2_fip_dev.link.address)
+
         self._add_rtr_ext_route_rule_to_route_table(ri, fip_2_rtr,
                                                     fip_2_rtr_name)
 
