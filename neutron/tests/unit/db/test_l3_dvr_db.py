@@ -565,6 +565,72 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 self.ctx, filters=csnat_filters)
             self.assertEqual(0, len(csnat_ports))
 
+    def test_update_router_gw_info_csnat_ports_add(self):
+        router_dict = {'name': 'test_router',
+                       'admin_state_up': True,
+                       'distributed': True}
+        router = self._create_router(router_dict)
+        with self.network() as net_ext,\
+                self.network() as net_int,\
+                self.subnet(
+                    network=net_int,
+                    cidr='2001:db8:1::/64',
+                    gateway_ip='2001:db8:1::1',
+                    ip_version=const.IP_VERSION_6) as v6_subnet1,\
+                self.subnet(
+                    network=net_int,
+                    cidr='2001:db8:2::/64',
+                    gateway_ip='2001:db8:2::1',
+                    ip_version=const.IP_VERSION_6) as v6_subnet2,\
+                self.subnet(
+                    network=net_int,
+                    cidr='10.10.10.0/24') as v4_subnet:
+
+            self.core_plugin.update_network(
+                self.ctx, net_ext['network']['id'],
+                {'network': {'router:external': True}})
+
+            # Add router interface, then set router gateway
+            self.mixin.add_router_interface(self.ctx, router['id'],
+                {'subnet_id': v6_subnet1['subnet']['id']})
+            self.mixin.add_router_interface(self.ctx, router['id'],
+                {'subnet_id': v6_subnet2['subnet']['id']})
+            self.mixin.add_router_interface(self.ctx, router['id'],
+                {'subnet_id': v4_subnet['subnet']['id']})
+
+            dvr_filters = {'device_owner':
+                           [const.DEVICE_OWNER_DVR_INTERFACE]}
+            dvr_ports = self.core_plugin.get_ports(
+                self.ctx, filters=dvr_filters)
+            # One for IPv4, one for two IPv6 subnets
+            self.assertEqual(2, len(dvr_ports))
+
+            self.mixin.update_router(
+                self.ctx, router['id'],
+                {'router': {'external_gateway_info':
+                            {'network_id': net_ext['network']['id']}}})
+
+            csnat_filters = {'device_owner':
+                             [const.DEVICE_OWNER_ROUTER_SNAT]}
+            csnat_ports = self.core_plugin.get_ports(
+                self.ctx, filters=csnat_filters)
+            # One for IPv4, one for two IPv6 subnets
+            self.assertEqual(2, len(csnat_ports))
+
+            # Remove v4 subnet interface from router
+            self.mixin.remove_router_interface(
+                self.ctx, router['id'],
+                {'subnet_id': v4_subnet['subnet']['id']})
+
+            dvr_ports = self.core_plugin.get_ports(
+                self.ctx, filters=dvr_filters)
+            self.assertEqual(1, len(dvr_ports))
+
+            csnat_ports = self.core_plugin.get_ports(
+                self.ctx, filters=csnat_filters)
+            self.assertEqual(1, len(csnat_ports))
+            self.assertEqual(2, len(csnat_ports[0]['fixed_ips']))
+
     def test_remove_router_interface_csnat_ports_removal(self):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
                        'distributed': True}

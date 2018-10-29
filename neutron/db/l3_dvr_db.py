@@ -198,11 +198,11 @@ class DVRResourceOperationHandler(object):
         return ports
 
     def _add_csnat_router_interface_port(
-            self, context, router, network_id, subnet_id, do_pop=True):
+            self, context, router, network_id, subnets, do_pop=True):
         """Add SNAT interface to the specified router and subnet."""
         port_data = {'tenant_id': '',
                      'network_id': network_id,
-                     'fixed_ips': [{'subnet_id': subnet_id}],
+                     'fixed_ips': subnets,
                      'device_id': router.id,
                      'device_owner': const.DEVICE_OWNER_ROUTER_SNAT,
                      'admin_state_up': True,
@@ -249,15 +249,31 @@ class DVRResourceOperationHandler(object):
         )
         LOG.info('SNAT interface port list does not exist,'
                  ' so create one: %s', port_list)
+        v6_subnets = []
+        network = None
         for intf in int_ports:
             if intf.fixed_ips:
                 # Passing the subnet for the port to make sure the IP's
                 # are assigned on the right subnet if multiple subnet
                 # exists
-                snat_port = self._add_csnat_router_interface_port(
-                    context, router, intf['network_id'],
-                    intf['fixed_ips'][0]['subnet_id'], do_pop=False)
-                port_list.append(snat_port)
+                for fixed_ip in intf['fixed_ips']:
+                    ip_version = n_utils.get_ip_version(
+                        fixed_ip.get('ip_address'))
+                    if ip_version == const.IP_VERSION_4:
+                        snat_port = self._add_csnat_router_interface_port(
+                            context, router, intf['network_id'],
+                            [{'subnet_id': fixed_ip['subnet_id']}],
+                            do_pop=False)
+                        port_list.append(snat_port)
+                    else:
+                        v6_subnets.append(
+                            {"subnet_id": fixed_ip['subnet_id']})
+                        network = intf['network_id']
+        if v6_subnets:
+            snat_port = self._add_csnat_router_interface_port(
+                context, router, network,
+                v6_subnets, do_pop=False)
+            port_list.append(snat_port)
         if port_list:
             self.l3plugin._populate_mtu_and_subnets_for_ports(
                 context, port_list)
@@ -394,7 +410,7 @@ class DVRResourceOperationHandler(object):
         admin_context = context.elevated()
         self._add_csnat_router_interface_port(
             admin_context, router_db, port['network_id'],
-            port['fixed_ips'][-1]['subnet_id'])
+            [{'subnet_id': port['fixed_ips'][-1]['subnet_id']}])
 
     @registry.receives(resources.ROUTER_INTERFACE, [events.AFTER_CREATE])
     @db_api.retry_if_session_inactive()
