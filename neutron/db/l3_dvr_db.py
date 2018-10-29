@@ -591,29 +591,31 @@ class _DVRAgentInterfaceMixin(object):
         LOG.debug("Return the SNAT ports: %s", interfaces)
         return interfaces
 
+    def _get_gateway_port_host(self, context, router, gw_ports):
+        binding_objs = rb_obj.RouterL3AgentBinding.get_objects(
+            context, router_id=[router['id']])
+        if not binding_objs:
+            return
+
+        gw_port_id = router['gw_port_id']
+        # Collect gw ports only if available
+        if gw_port_id and gw_ports.get(gw_port_id):
+            l3_agent = ag_obj.Agent.get_object(context,
+                id=binding_objs[0].l3_agent_id)
+            return l3_agent.host
+
     def _build_routers_list(self, context, routers, gw_ports):
         # Perform a single query up front for all routers
         routers = super(_DVRAgentInterfaceMixin, self)._build_routers_list(
             context, routers, gw_ports)
         if not routers:
             return []
-        router_ids = [r['id'] for r in routers]
-        binding_objs = rb_obj.RouterL3AgentBinding.get_objects(
-            context, router_id=router_ids)
-        bindings = dict((b.router_id, b) for b in binding_objs)
-        for rtr in routers:
-            gw_port_id = rtr['gw_port_id']
-            # Collect gw ports only if available
-            if gw_port_id and gw_ports.get(gw_port_id):
-                binding = bindings.get(rtr['id'])
-                if not binding:
-                    rtr['gw_port_host'] = None
-                    LOG.debug('No snat is bound to router %s', rtr['id'])
-                    continue
-
-                l3_agent = ag_obj.Agent.get_object(context,
-                        id=binding.l3_agent_id)
-                rtr['gw_port_host'] = l3_agent.host
+        for router in routers:
+            gw_port_host = self._get_gateway_port_host(
+                context, router, gw_ports)
+            LOG.debug("Set router %s gateway port host: %s",
+                      router['id'], gw_port_host)
+            router['gw_port_host'] = gw_port_host
 
         return routers
 
