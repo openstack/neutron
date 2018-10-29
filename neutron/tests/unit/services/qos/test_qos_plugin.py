@@ -13,6 +13,7 @@
 import copy
 
 import mock
+from neutron_lib.api.definitions import qos
 from neutron_lib.callbacks import events
 from neutron_lib import constants as lib_constants
 from neutron_lib import context
@@ -25,16 +26,20 @@ from neutron_lib.plugins import directory
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_config import cfg
 from oslo_utils import uuidutils
+import webob.exc
 
 from neutron.common import constants
+from neutron.extensions import qos_rules_alias
 from neutron import manager
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule as rule_object
 from neutron.services.qos import qos_plugin
+from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.services.qos import base
 
 
 DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+SERVICE_PLUGIN_KLASS = 'neutron.services.qos.qos_plugin.QoSPlugin'
 
 
 class TestQosPlugin(base.BaseQosTestCase):
@@ -1054,3 +1059,140 @@ class TestQosPlugin(base.BaseQosTestCase):
 
             self.assertLess(
                 action_index, mock_manager.mock_calls.index(driver_mock_call))
+
+
+class QoSRuleAliasTestExtensionManager(object):
+
+    def get_resources(self):
+        return qos_rules_alias.Qos_rules_alias.get_resources()
+
+    def get_actions(self):
+        return []
+
+    def get_request_extensions(self):
+        return []
+
+
+class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
+
+    def setUp(self):
+        # Remove MissingAuthPlugin exception from logs
+        self.patch_notifier = mock.patch(
+            'neutron.notifiers.batch_notifier.BatchNotifier._notify')
+        self.patch_notifier.start()
+        plugin = 'ml2'
+        service_plugins = {'qos_plugin_name': SERVICE_PLUGIN_KLASS}
+        ext_mgr = QoSRuleAliasTestExtensionManager()
+        super(TestQoSRuleAlias, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
+                                            service_plugins=service_plugins)
+        self.qos_plugin = directory.get_plugin(plugins_constants.QOS)
+
+        self.ctxt = context.Context('fake_user', 'fake_tenant')
+        self.rule_objects = {
+            'bandwidth_limit': rule_object.QosBandwidthLimitRule,
+            'dscp_marking': rule_object.QosDscpMarkingRule,
+            'minimum_bandwidth': rule_object.QosMinimumBandwidthRule
+        }
+
+        self.qos_policy_id = uuidutils.generate_uuid()
+        self.rule_data = {
+            'bandwidth_limit_rule': {'max_kbps': 100,
+                                     'max_burst_kbps': 150},
+            'dscp_marking_rule': {'dscp_mark': 16},
+            'minimum_bandwidth_rule': {'min_kbps': 10}
+        }
+
+    def _update_rule(self, rule_type, rule_id, **kwargs):
+        data = {'alias_%s_rule' % rule_type: kwargs}
+        resource = '%s/alias-%s-rules' % (qos.ALIAS,
+                                          rule_type.replace('_', '-'))
+        request = self.new_update_request(resource, data, rule_id, self.fmt)
+        res = request.get_response(self.ext_api)
+        if res.status_int >= webob.exc.HTTPClientError.code:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        return self.deserialize(self.fmt, res)
+
+    def _show_rule(self, rule_type, rule_id):
+        resource = '%s/alias-%s-rules' % (qos.ALIAS,
+                                          rule_type.replace('_', '-'))
+        request = self.new_show_request(resource, rule_id, self.fmt)
+        res = request.get_response(self.ext_api)
+        if res.status_int >= webob.exc.HTTPClientError.code:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        return self.deserialize(self.fmt, res)
+
+    def _delete_rule(self, rule_type, rule_id):
+        resource = '%s/alias-%s-rules' % (qos.ALIAS,
+                                          rule_type.replace('_', '-'))
+        request = self.new_delete_request(resource, rule_id, self.fmt)
+        res = request.get_response(self.ext_api)
+        if res.status_int >= webob.exc.HTTPClientError.code:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+
+    @mock.patch.object(qos_plugin.QoSPlugin, "update_policy_rule")
+    def test_update_rule(self, update_policy_rule_mock):
+        calls = []
+        for rule_type, rule_object_class in self.rule_objects.items():
+            rule_id = uuidutils.generate_uuid()
+            rule_data_name = '%s_rule' % rule_type
+            data = self.rule_data[rule_data_name]
+            rule = rule_object_class(self.ctxt, id=rule_id,
+                                     qos_policy_id=self.qos_policy_id,
+                                     **data)
+            with mock.patch(
+                'neutron.objects.qos.rule.QosRule.get_object',
+                return_value=rule
+            ), mock.patch.object(self.qos_plugin, 'get_policy_rule',
+                                 return_value=rule.to_dict()):
+                self._update_rule(rule_type, rule_id, **data)
+            calls.append(mock.call(mock.ANY, rule_object_class, rule_id,
+                                   self.qos_policy_id, {rule_data_name: data}))
+        update_policy_rule_mock.assert_has_calls(calls, any_order=True)
+
+    @mock.patch.object(qos_plugin.QoSPlugin, "get_policy_rule")
+    def test_show_rule(self, get_policy_rule_mock):
+        calls = []
+        for rule_type, rule_object_class in self.rule_objects.items():
+            rule_id = uuidutils.generate_uuid()
+            rule_data_name = '%s_rule' % rule_type
+            data = self.rule_data[rule_data_name]
+            rule = rule_object_class(self.ctxt, id=rule_id,
+                                     qos_policy_id=self.qos_policy_id,
+                                     **data)
+            with mock.patch('neutron.objects.qos.rule.QosRule.get_object',
+                            return_value=rule):
+                self._show_rule(rule_type, rule_id)
+            calls.append(mock.call(mock.ANY, rule_object_class, rule_id,
+                                   self.qos_policy_id))
+        get_policy_rule_mock.assert_has_calls(calls, any_order=True)
+
+    @mock.patch.object(qos_plugin.QoSPlugin, "delete_policy_rule")
+    def test_delete_rule(self, delete_policy_rule_mock):
+        calls = []
+        for rule_type, rule_object_class in self.rule_objects.items():
+            rule_id = uuidutils.generate_uuid()
+            rule_data_name = '%s_rule' % rule_type
+            data = self.rule_data[rule_data_name]
+            rule = rule_object_class(self.ctxt, id=rule_id,
+                                     qos_policy_id=self.qos_policy_id,
+                                     **data)
+            with mock.patch(
+                'neutron.objects.qos.rule.QosRule.get_object',
+                return_value=rule
+            ), mock.patch.object(self.qos_plugin, 'get_policy_rule',
+                                 return_value=rule.to_dict()):
+                self._delete_rule(rule_type, rule_id)
+            calls.append(mock.call(mock.ANY, rule_object_class, rule_id,
+                                   self.qos_policy_id))
+        delete_policy_rule_mock.assert_has_calls(calls, any_order=True)
+
+    def test_show_non_existing_rule(self):
+        for rule_type, rule_object_class in self.rule_objects.items():
+            rule_id = uuidutils.generate_uuid()
+            with mock.patch('neutron.objects.qos.rule.QosRule.get_object',
+                            return_value=None):
+                resource = '%s/alias-%s-rules' % (qos.ALIAS,
+                                                  rule_type.replace('_', '-'))
+                request = self.new_show_request(resource, rule_id, self.fmt)
+                res = request.get_response(self.ext_api)
+                self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)

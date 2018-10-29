@@ -97,6 +97,9 @@ class QoSPluginBase(service_base.ServicePluginBase):
                 r"^((create|update|delete)_policy_(?P<rule_type>.*)_rule)$"),
             re.compile(
                 r"^(get_policy_(?P<rule_type>.*)_(rules|rule))$"),
+            # The following entry handles rule alias calls
+            re.compile(
+                r"^((update|delete|get)_alias_(?P<rule_type>.*)_rule)$"),
                                ]
 
     def __getattr__(self, attrib):
@@ -105,6 +108,10 @@ class QoSPluginBase(service_base.ServicePluginBase):
         handle requests for all rule types.  For example, the
         update_policy_rule method will handle requests for both
         update_policy_dscp_marking_rule and update_policy_bandwidth_limit_rule.
+
+        In the case of rule alias calls, the update_rule method will handle
+        requests for both update_dscp_marking_rule and
+        update_bandwidth_limit_rule.
 
         :param attrib: the requested method; in the normal case, this will be,
                        for example, "update_policy_dscp_marking_rule"
@@ -121,6 +128,7 @@ class QoSPluginBase(service_base.ServicePluginBase):
                     # from "delete_policy_dscp_marking_rule" we'll get
                     # "delete_policy_rule".
                     proxy_method = attrib.replace(rule_type + '_', '')
+                    proxy_method = proxy_method.replace('alias_', '')
 
                     rule_cls = self.rule_objects[rule_type]
                     return self._call_proxy_method(proxy_method, rule_cls)
@@ -163,8 +171,11 @@ class QoSPluginBase(service_base.ServicePluginBase):
             args_list = list(args[1:])
             params = kwargs
             rule_data_name = rule_cls.rule_type + "_rule"
+            alias_rule_data_name = 'alias_' + rule_data_name
             if rule_data_name in params:
                 params['rule_data'] = params.pop(rule_data_name)
+            elif alias_rule_data_name in params:
+                params['rule_data'] = params.pop(alias_rule_data_name)
 
             return getattr(self, method_name)(
                 context, rule_cls, *args_list, **params
@@ -232,4 +243,16 @@ class QoSPluginBase(service_base.ServicePluginBase):
     def get_policy_rules(self, context, rule_cls, policy_id,
                          filters=None, fields=None, sorts=None, limit=None,
                          marker=None, page_reverse=False):
+        pass
+
+    @abc.abstractmethod
+    def update_rule(self, context, rule_cls, rule_id, rule_data):
+        pass
+
+    @abc.abstractmethod
+    def delete_rule(self, context, rule_cls, rule_id):
+        pass
+
+    @abc.abstractmethod
+    def get_rule(self, context, rule_cls, rule_id, fields=None):
         pass

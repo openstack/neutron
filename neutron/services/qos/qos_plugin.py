@@ -18,6 +18,7 @@ from neutron_lib.api.definitions import port_resource_request
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import qos as qos_apidef
 from neutron_lib.api.definitions import qos_bw_minimum_ingress
+from neutron_lib.api.definitions import qos_rules_alias
 from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
 from neutron_lib.callbacks import resources as callbacks_resources
@@ -56,7 +57,8 @@ class QoSPlugin(qos.QoSPluginBase):
                                    'qos-default',
                                    'qos-rule-type-details',
                                    port_resource_request.ALIAS,
-                                   qos_bw_minimum_ingress.ALIAS]
+                                   qos_bw_minimum_ingress.ALIAS,
+                                   qos_rules_alias.ALIAS]
 
     __native_pagination_support = True
     __native_sorting_support = True
@@ -453,6 +455,37 @@ class QoSPlugin(qos.QoSPluginBase):
 
         return rule
 
+    def _get_policy_id(self, context, rule_cls, rule_id):
+        with db_api.autonested_transaction(context.session):
+            rule_object = rule_cls.get_object(context, id=rule_id)
+            if not rule_object:
+                raise qos_exc.QosRuleNotFound(policy_id="", rule_id=rule_id)
+        return rule_object.qos_policy_id
+
+    def update_rule(self, context, rule_cls, rule_id, rule_data):
+        """Update a QoS policy rule alias. This method processes a QoS policy
+        rule update, where the rule is an API first level resource instead of a
+        subresource of a policy.
+
+        :param context: neutron api request context
+        :type context: neutron.context.Context
+        :param rule_cls: the rule object class
+        :type rule_cls: a class from the rule_object (qos.objects.rule) module
+        :param rule_id: the id of the QoS policy rule to update
+        :type rule_id: str uuid
+        :param rule_data: the new rule data to update
+        :type rule_data: dict
+
+        :returns: a QoS policy rule object
+        :raises: qos_exc.QosRuleNotFound
+        """
+        policy_id = self._get_policy_id(context, rule_cls, rule_id)
+        rule_data_name = rule_cls.rule_type + '_rule'
+        alias_rule_data_name = 'alias_' + rule_data_name
+        rule_data[rule_data_name] = rule_data.pop(alias_rule_data_name)
+        return self.update_policy_rule(context, rule_cls, rule_id, policy_id,
+                                       rule_data)
+
     def delete_policy_rule(self, context, rule_cls, rule_id, policy_id):
         """Delete a QoS policy rule.
 
@@ -480,6 +513,24 @@ class QoSPlugin(qos.QoSPluginBase):
 
         self.driver_manager.call(qos_consts.UPDATE_POLICY, context, policy)
 
+    def delete_rule(self, context, rule_cls, rule_id):
+        """Delete a QoS policy rule alias. This method processes a QoS policy
+        rule delete, where the rule is an API first level resource instead of a
+        subresource of a policy.
+
+        :param context: neutron api request context
+        :type context: neutron.context.Context
+        :param rule_cls: the rule object class
+        :type rule_cls: a class from the rule_object (qos.objects.rule) module
+        :param rule_id: the id of the QosPolicy Rule to delete
+        :type rule_id: str uuid
+
+        :returns: None
+        :raises: qos_exc.QosRuleNotFound
+        """
+        policy_id = self._get_policy_id(context, rule_cls, rule_id)
+        return self.delete_policy_rule(context, rule_cls, rule_id, policy_id)
+
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
     def get_policy_rule(self, context, rule_cls, rule_id, policy_id,
@@ -505,6 +556,24 @@ class QoSPlugin(qos.QoSPluginBase):
         if not rule:
             raise qos_exc.QosRuleNotFound(policy_id=policy_id, rule_id=rule_id)
         return rule
+
+    def get_rule(self, context, rule_cls, rule_id, fields=None):
+        """Get a QoS policy rule alias. This method processes a QoS policy
+        rule get, where the rule is an API first level resource instead of a
+        subresource of a policy
+
+        :param context: neutron api request context
+        :type context: neutron.context.Context
+        :param rule_cls: the rule object class
+        :type rule_cls: a class from the rule_object (qos.objects.rule) module
+        :param rule_id: the id of the QoS policy rule to get
+        :type rule_id: str uuid
+
+        :returns: a QoS policy rule object
+        :raises: qos_exc.QosRuleNotFound
+        """
+        policy_id = self._get_policy_id(context, rule_cls, rule_id)
+        return self.get_policy_rule(context, rule_cls, rule_id, policy_id)
 
     # TODO(QoS): enforce rule types when accessing rule objects
     @db_base_plugin_common.filter_fields
