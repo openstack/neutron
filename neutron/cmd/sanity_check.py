@@ -118,6 +118,15 @@ def check_dnsmasq_version():
     return result
 
 
+def check_dnsmasq_local_service_supported():
+    result = checks.dnsmasq_local_service_supported()
+    if not result:
+        LOG.error('The installed version of dnsmasq is too old. '
+                  'Please update to a version supporting the '
+                  '--local-service option.')
+    return result
+
+
 def check_keepalived_ipv6_support():
     result = checks.keepalived_ipv6_supported()
     if not result:
@@ -304,6 +313,9 @@ OPTS = [
                     help=_('Check for VF extended management support')),
     BoolOptCallback('read_netns', check_read_netns,
                     help=_('Check netns permission settings')),
+    BoolOptCallback('dnsmasq_local_service_supported',
+                    check_dnsmasq_local_service_supported,
+                    help=_('Check for local-service support in dnsmasq')),
     BoolOptCallback('dnsmasq_version', check_dnsmasq_version,
                     help=_('Check minimal dnsmasq version'),
                     deprecated_for_removal=True,
@@ -367,6 +379,9 @@ def enable_tests_from_config():
         cfg.CONF.set_default('read_netns', True)
     if cfg.CONF.OVS.ovsdb_interface == 'native':
         cfg.CONF.set_default('ovsdb_native', True)
+    if cfg.CONF.dhcp_driver == 'neutron.agent.linux.dhcp.Dnsmasq':
+        cfg.CONF.set_default('dnsmasq_local_service_supported', True)
+        cfg.CONF.set_default('dnsmasq_version', True)
     if cfg.CONF.l3_ha:
         cfg.CONF.set_default('keepalived_ipv6_support', True)
         cfg.CONF.set_default('ip_nonlocal_bind', True)

@@ -333,24 +333,21 @@ class Dnsmasq(DhcpLocalProcess):
             'dnsmasq',
             '--no-hosts',
             _no_resolv,
-            '--except-interface=lo',
             '--pid-file=%s' % pid_file,
             '--dhcp-hostsfile=%s' % self.get_conf_file_name('host'),
             '--addn-hosts=%s' % self.get_conf_file_name('addn_hosts'),
             '--dhcp-optsfile=%s' % self.get_conf_file_name('opts'),
             '--dhcp-leasefile=%s' % self.get_conf_file_name('leases'),
             '--dhcp-match=set:ipxe,175',
+            '--local-service',
         ]
         if self.device_manager.driver.bridged:
             cmd += [
                 '--bind-interfaces',
-                '--interface=%s' % self.interface_name,
             ]
         else:
             cmd += [
                 '--bind-dynamic',
-                '--interface=%s' % self.interface_name,
-                '--interface=tap*',
                 '--bridge-interface=%s,tap*' % self.interface_name,
             ]
 
