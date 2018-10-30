@@ -1,0 +1,13 @@
+---
+prelude: >
+    Add new tool ``neutron-status upgrade check``.
+features:
+  - |
+    New framework for ``neutron-status upgrade check`` command is added.
+    This framework allows adding various checks which can be run before a
+    Neutron upgrade to ensure if the upgrade can be performed safely.
+upgrade:
+  - |
+    Operator can now use new CLI tool ``neutron-status upgrade check``
+    to check if Neutron deployment can be safely upgraded from
+    N-1 to N release.
