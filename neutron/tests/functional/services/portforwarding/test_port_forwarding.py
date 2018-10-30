@@ -138,6 +138,20 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         self._remove_router_interface(self.router['id'], subnet_2['id'])
         self._remove_router_interface(self.router['id'], subnet_3['id'])
 
+    def test_create_floatingip_port_forwarding_external_port_0(self):
+        self.port_forwarding[apidef.RESOURCE_NAME][apidef.EXTERNAL_PORT] = 0
+
+        self.assertRaises(ValueError,
+                          self.pf_plugin.create_floatingip_port_forwarding,
+                          self.context, self.fip['id'], self.port_forwarding)
+
+    def test_create_floatingip_port_forwarding_internal_port_0(self):
+        self.port_forwarding[apidef.RESOURCE_NAME][apidef.INTERNAL_PORT] = 0
+
+        self.assertRaises(ValueError,
+                          self.pf_plugin.create_floatingip_port_forwarding,
+                          self.context, self.fip['id'], self.port_forwarding)
+
     def test_negative_create_floatingip_port_forwarding(self):
         self.pf_plugin.create_floatingip_port_forwarding(
             self.context, self.fip['id'], self.port_forwarding)
