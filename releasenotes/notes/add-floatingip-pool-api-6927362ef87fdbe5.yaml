@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Add support for listing floating ip pools (subnets) in L3 plugin.
+    A new API resource ``floatingip-pools`` is introduced.
+    This API endpoint can return a list of floating ip pools which are
+    essentially mappings between network UUIDs and subnet CIDRs.
+    Users can use this API to find out the pool to create the floating IPs.

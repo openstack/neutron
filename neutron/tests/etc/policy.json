@@ -150,6 +150,7 @@
     "create_floatingip": "rule:regular_user",
     "create_floatingip:floating_ip_address": "rule:admin_only",
     "get_floatingip": "rule:admin_or_owner",
+    "get_floatingip_pool": "rule:regular_user",
     "update_floatingip": "rule:admin_or_owner",
     "delete_floatingip": "rule:admin_or_owner",
 
