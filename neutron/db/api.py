@@ -41,9 +41,6 @@ profiler_opts.set_defaults(cfg.CONF)
 context_manager.append_on_engine_create(set_hook)
 
 
-MAX_RETRIES = 10
-
-
 # Expire relationships when foreign key changes.
 #
 # NOTE(ihrachys) Arguably, it's a sqlalchemy anti-pattern to access child

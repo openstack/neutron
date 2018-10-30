@@ -34,6 +34,7 @@ import eventlet
 from eventlet.green import subprocess
 import netaddr
 from neutron_lib import constants as n_const
+from neutron_lib.db import api as db_api
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -44,7 +45,6 @@ import six
 import neutron
 from neutron._i18n import _
 from neutron.api import api_common
-from neutron.db import api as db_api
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
@@ -552,7 +552,7 @@ def create_object_with_dependency(creator, dep_getter, dep_creator,
     This function protects against all of the cases where the dependency can
     be concurrently removed by catching exceptions and restarting the
     process of creating the dependency if one no longer exists. It will
-    give up after neutron.db.api.MAX_RETRIES and raise the exception it
+    give up after neutron_lib.db.api.MAX_RETRIES and raise the exception it
     encounters after that.
     """
     result, dependency, dep_id, made_locally = None, None, None, False
