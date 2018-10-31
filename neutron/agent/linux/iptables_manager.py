@@ -478,7 +478,7 @@ class IptablesManager(object):
     @property
     def xlock_wait_time(self):
         # give agent some time to report back to server
-        return str(int(cfg.CONF.AGENT.report_interval / 3.0))
+        return str(max(int(cfg.CONF.AGENT.report_interval / 3.0), 1))
 
     def _do_run_restore(self, args, commands, lock=False):
         args = args[:]
