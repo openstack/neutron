@@ -42,6 +42,10 @@
             voting: false
             irrelevant-files: *tempest-irrelevant-files
         - tempest-full:
+            timeout: 10800
+            irrelevant-files: *tempest-irrelevant-files
+        - tempest-full-py3:
+            timeout: 10800
             irrelevant-files: *tempest-irrelevant-files
         - tempest-slow:
             irrelevant-files: *tempest-irrelevant-files
