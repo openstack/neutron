@@ -164,7 +164,7 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._local_vlan_match(ofp, ofpp, segmentation_id)
         table_id = constants.TUN_TABLE[network_type]
-        self.delete_flows(table_id=table_id, match=match)
+        self.uninstall_flows(table_id=table_id, match=match)
 
     @staticmethod
     def _flood_to_tun_match(ofp, ofpp, vlan):
@@ -185,7 +185,7 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
     def delete_flood_to_tun(self, vlan):
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._flood_to_tun_match(ofp, ofpp, vlan)
-        self.delete_flows(table_id=constants.FLOOD_TO_TUN, match=match)
+        self.uninstall_flows(table_id=constants.FLOOD_TO_TUN, match=match)
 
     @staticmethod
     def _unicast_to_tun_match(ofp, ofpp, vlan, mac):
@@ -208,7 +208,7 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
             match = ofpp.OFPMatch(vlan_vid=vlan | ofp.OFPVID_PRESENT)
         else:
             match = self._unicast_to_tun_match(ofp, ofpp, vlan, mac)
-        self.delete_flows(table_id=constants.UCAST_TO_TUN, match=match)
+        self.uninstall_flows(table_id=constants.UCAST_TO_TUN, match=match)
 
     @staticmethod
     def _arp_responder_match(ofp, ofpp, vlan, ip):
@@ -247,7 +247,8 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
                                   eth_type=ether_types.ETH_TYPE_ARP)
         else:
             match = self._arp_responder_match(ofp, ofpp, vlan, ip)
-        self.delete_flows(table_id=constants.ARP_RESPONDER, match=match)
+        self.uninstall_flows(table_id=constants.ARP_RESPONDER,
+                             match=match)
 
     def setup_tunnel_port(self, network_type, port):
         self.install_goto(dest_table_id=constants.TUN_TABLE[network_type],
@@ -255,7 +256,7 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
                           in_port=port)
 
     def cleanup_tunnel_port(self, port):
-        self.delete_flows(in_port=port)
+        self.uninstall_flows(in_port=port)
 
     def add_dvr_mac_tun(self, mac, port):
         self.install_output(table_id=constants.DVR_NOT_LEARN,
@@ -265,8 +266,8 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
 
     def remove_dvr_mac_tun(self, mac):
         # REVISIT(yamamoto): match in_port as well?
-        self.delete_flows(table_id=constants.DVR_NOT_LEARN,
-                          eth_src=mac)
+        self.uninstall_flows(table_id=constants.DVR_NOT_LEARN,
+                             eth_src=mac)
 
     def deferred(self):
         # REVISIT(yamamoto): This is for API compat with "ovs-ofctl"

@@ -54,7 +54,7 @@ class OVSPhysicalBridge(ovs_bridge.OVSAgentBridge,
     def reclaim_local_vlan(self, port, lvid):
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._local_vlan_match(ofp, ofpp, port, lvid)
-        self.delete_flows(match=match)
+        self.uninstall_flows(match=match)
 
     def add_dvr_mac_vlan(self, mac, port):
         self.install_output(table_id=constants.DVR_NOT_LEARN_VLAN,
@@ -62,5 +62,5 @@ class OVSPhysicalBridge(ovs_bridge.OVSAgentBridge,
 
     def remove_dvr_mac_vlan(self, mac):
         # REVISIT(yamamoto): match in_port as well?
-        self.delete_flows(table_id=constants.DVR_NOT_LEARN_VLAN,
+        self.uninstall_flows(table_id=constants.DVR_NOT_LEARN_VLAN,
             eth_src=mac)

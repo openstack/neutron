@@ -264,7 +264,7 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         mac = '00:02:b3:13:fe:3d'
         self.br.remove_dvr_mac_tun(mac=mac)
         expected = [
-            call.delete_flows(eth_src=mac, table_id=9),
+            call.delete_flows(dl_src=mac, table=9),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 

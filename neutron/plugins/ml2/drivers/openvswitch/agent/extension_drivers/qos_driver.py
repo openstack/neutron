@@ -123,7 +123,7 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
                                                     RULE_TYPE_DSCP_MARKING, 0)
         if dscp_port:
             port_num = dscp_port['vif_port'].ofport
-            self.br_int.delete_flows(in_port=port_num, table=0, reg2=0)
+            self.br_int.uninstall_flows(in_port=port_num, table=0, reg2=0)
         else:
             LOG.debug("delete_dscp_marking was received for port %s but "
                       "no port information was stored to be deleted",
