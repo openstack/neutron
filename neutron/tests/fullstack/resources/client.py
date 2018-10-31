@@ -213,6 +213,23 @@ class ClientFixture(fixtures.Fixture):
 
         return rule['dscp_marking_rule']
 
+    def create_minimum_bandwidth_rule(self, tenant_id, policy_id,
+                                      direction=None, min_kbps=None):
+        rule = {'tenant_id': tenant_id}
+        if direction:
+            rule['direction'] = direction
+        if min_kbps:
+            rule['min_kbps'] = min_kbps
+        rule = self.client.create_minimum_bandwidth_rule(
+            policy=policy_id,
+            body={'minimum_bandwidth_rule': rule})
+
+        self.addCleanup(_safe_method(
+            self.client.delete_minimum_bandwidth_rule),
+            rule['minimum_bandwidth_rule']['id'], policy_id)
+
+        return rule['minimum_bandwidth_rule']
+
     def create_trunk(self, tenant_id, port_id, name=None,
                      admin_state_up=None, sub_ports=None):
         """Create a trunk via API.

@@ -391,6 +391,23 @@ class TestDscpMarkingQoSLinuxbridge(_TestDscpMarkingQoS,
             vm.host.host_namespace, vm.port.name, dscp_mark)
 
 
+class TestMinimumBandwidthRule(BaseQoSRuleTestCase,
+                               base.BaseFullStackTestCase):
+
+    l2_agent_type = constants.AGENT_TYPE_NIC_SWITCH
+
+    def test_rule_create_fail_for_direction_ingress(self):
+        policy = self._create_qos_policy()
+        self.assertRaises(
+            exceptions.BadRequest,
+            self.safe_client.create_minimum_bandwidth_rule,
+            tenant_id=self.tenant_id,
+            policy_id=policy['id'],
+            direction=constants.INGRESS_DIRECTION,
+            min_kbps=201
+        )
+
+
 class TestQoSWithL2Population(base.BaseFullStackTestCase):
 
     def setUp(self):
