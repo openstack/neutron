@@ -492,11 +492,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                                include_gateway=True)
             self._create_router_gw_port(context, router,
                                         new_network_id, ext_ips)
+
+            gw_ips = [x['ip_address'] for x in router.gw_port['fixed_ips']]
+
             registry.notify(resources.ROUTER_GATEWAY,
                             events.AFTER_CREATE,
                             self._create_gw_port,
                             context=context,
-                            gw_ips=ext_ips,
+                            gw_ips=gw_ips,
                             network_id=new_network_id,
                             router_id=router_id)
 

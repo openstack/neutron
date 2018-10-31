@@ -23,11 +23,13 @@ from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import directory
+from neutron_lib.plugins import utils as plugin_utils
 from oslo_utils import uuidutils
 import testtools
 
 from neutron.db import l3_db
 from neutron.db.models import l3 as l3_models
+from neutron.objects import base as base_obj
 from neutron.objects import router as l3_obj
 from neutron.tests import base
 
@@ -280,6 +282,44 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
             mock_notify.assert_called_once_with(
                 resources.ROUTER_INTERFACE, events.BEFORE_CREATE, self.db,
                 **kwargs)
+
+    def test__create_gw_port(self):
+        router_id = '2afb8434-7380-43a2-913f-ba3a5ad5f349'
+        router = l3_models.Router(id=router_id)
+        new_network_id = 'net-id'
+        ext_ips = [{'subnet_id': 'subnet-id', 'ip_address': '1.1.1.1'}]
+        gw_port = {'fixed_ips': [{'subnet_id': 'subnet-id',
+                                  'ip_address': '1.1.1.1'}],
+                   'id': '8742d007-6f05-4b7e-abdb-11818f608959'}
+        ctx = context.get_admin_context()
+
+        with mock.patch.object(directory, 'get_plugin') as get_p, \
+                mock.patch.object(get_p(), 'get_subnets_by_network',
+                                  return_value=mock.ANY), \
+                mock.patch.object(get_p(), '_get_port',
+                                  return_value=gw_port), \
+                mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
+                                  '_check_for_dup_router_subnets') as cfdrs,\
+                mock.patch.object(plugin_utils, 'create_port',
+                                  return_value=gw_port), \
+                mock.patch.object(ctx.session, 'add'), \
+                mock.patch.object(base_obj.NeutronDbObject, 'create'), \
+                mock.patch.object(l3_db.registry, 'notify') as mock_notify:
+
+            self.db._create_gw_port(ctx, router_id=router_id,
+                                    router=router,
+                                    new_network_id=new_network_id,
+                                    ext_ips=ext_ips)
+
+            expected_gw_ips = ['1.1.1.1']
+
+            self.assertTrue(cfdrs.called)
+            mock_notify.assert_called_with(
+                resources.ROUTER_GATEWAY, events.AFTER_CREATE,
+                self.db._create_gw_port, context=ctx,
+                gw_ips=expected_gw_ips, network_id=new_network_id,
+                router_id=router_id
+            )
 
 
 class L3_NAT_db_mixin(base.BaseTestCase):
