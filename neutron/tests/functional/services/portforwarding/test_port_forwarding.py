@@ -18,6 +18,8 @@ from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
 from neutron_lib.callbacks import exceptions as c_exc
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import l3 as lib_l3_exc
+from neutron_lib.plugins import constants as plugin_constants
+from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 from six.moves import queue
 
@@ -30,6 +32,7 @@ class PortForwardingTestCaseBase(ml2_test_base.ML2TestFramework):
     def setUp(self):
         super(PortForwardingTestCaseBase, self).setUp()
         self.pf_plugin = pf_plugin.PortForwardingPlugin()
+        directory.add_plugin(plugin_constants.PORTFORWARDING, self.pf_plugin)
 
     def _create_floatingip(self, network_id, port_id=None,
                            fixed_ip_address=None):
@@ -63,6 +66,11 @@ class PortForwardingTestCaseBase(ml2_test_base.ML2TestFramework):
     def _add_router_interface(self, router_id, subnet_id):
         interface_info = {"subnet_id": subnet_id}
         self.l3_plugin.add_router_interface(
+            self.context, router_id, interface_info=interface_info)
+
+    def _remove_router_interface(self, router_id, subnet_id):
+        interface_info = {"subnet_id": subnet_id}
+        self.l3_plugin.remove_router_interface(
             self.context, router_id, interface_info=interface_info)
 
     def _set_router_gw(self, router_id, ext_net_id):
@@ -101,7 +109,14 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
                  apidef.INTERNAL_IP_ADDRESS:
                      self.port['fixed_ips'][0]['ip_address']}}
 
-    def test_create_floatingip_port_forwarding(self):
+    def test_create_floatingip_port_forwarding_and_remove_subnets(self):
+        subnet_2 = self._create_subnet(self.fmt, self.net['id'],
+                                       '10.0.2.0/24').json['subnet']
+        self._add_router_interface(self.router['id'], subnet_2['id'])
+        subnet_3 = self._create_subnet(self.fmt, self.net['id'],
+                                       '10.0.3.0/24').json['subnet']
+        self._add_router_interface(self.router['id'], subnet_3['id'])
+
         res = self.pf_plugin.create_floatingip_port_forwarding(
             self.context, self.fip['id'], self.port_forwarding)
         expect = {
@@ -115,6 +130,13 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
             'floating_ip_address': self.fip['floating_ip_address'],
             'floatingip_id': self.fip['id']}
         self.assertEqual(expect, res)
+
+        self.assertRaises(lib_l3_exc.RouterInterfaceInUseByFloatingIP,
+                          self._remove_router_interface,
+                          self.router['id'], self.subnet['id'])
+
+        self._remove_router_interface(self.router['id'], subnet_2['id'])
+        self._remove_router_interface(self.router['id'], subnet_3['id'])
 
     def test_negative_create_floatingip_port_forwarding(self):
         self.pf_plugin.create_floatingip_port_forwarding(
