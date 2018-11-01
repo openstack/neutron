@@ -146,6 +146,17 @@ class TestMacvtapManager(base.BaseTestCase):
             self.mgr.get_agent_id()
             mock_exit.assert_called_once_with(1)
 
+    def test_get_agent_id_no_mac(self):
+        mock_devices = [ip_lib.IPDevice('macvtap0'),
+                        ip_lib.IPDevice('macvtap1')]
+        with mock.patch.object(ip_lib.IPWrapper, 'get_devices',
+                               return_value=mock_devices),\
+            mock.patch.object(ip_lib, 'get_device_mac',
+                              side_effect=[None, 'foo:bar:1']) as mock_gdm:
+            self.assertEqual('macvtapfoobar1', self.mgr.get_agent_id())
+            mock_gdm.assert_has_calls([mock.call('macvtap0'),
+                                       mock.call('macvtap1')])
+
     def test_get_extension_driver_type(self):
         self.assertEqual('macvtap', self.mgr.get_extension_driver_type())
 
