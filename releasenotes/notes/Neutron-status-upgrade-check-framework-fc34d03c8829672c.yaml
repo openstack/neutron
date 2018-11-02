@@ -6,6 +6,9 @@ features:
     New framework for ``neutron-status upgrade check`` command is added.
     This framework allows adding various checks which can be run before a
     Neutron upgrade to ensure if the upgrade can be performed safely.
+    Stadium and 3rd party projects can register their own checks to this new
+    neutron-status CLI tool using entrypoints in
+    ``neutron.status.upgrade.checks`` namespace.
 upgrade:
   - |
     Operator can now use new CLI tool ``neutron-status upgrade check``

@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from oslo_upgradecheck.upgradecheck import Code
+import mock
 
 from neutron.cmd import status
 from neutron.tests import base
@@ -20,10 +20,19 @@ from neutron.tests import base
 
 class TestUpgradeChecks(base.BaseTestCase):
 
-    def setUp(self):
-        super(TestUpgradeChecks, self).setUp()
-        self.cmd = status.Checks()
-
-    def test__check_nothing(self):
-        check_result = self.cmd._check_nothing()
-        self.assertEqual(Code.SUCCESS, check_result.code)
+    def test_load_checks(self):
+        expected_checks = tuple(
+            ("test check", "test_check_method"))
+        checks_class_1 = mock.MagicMock()
+        checks_class_1.entry_point.load()().get_checks.return_value = (
+            expected_checks)
+        checks_class_2 = mock.MagicMock()
+        checks_class_2.entry_point.load()().get_checks.return_value = None
+        with mock.patch(
+            "neutron_lib.utils.runtime.NamespacedPlugins"
+        ) as namespace_plugins_mock:
+            namespace_plugins = namespace_plugins_mock.return_value
+            namespace_plugins._extensions = {
+                "tests": checks_class_1,
+                "no-checks-class": checks_class_2}
+            self.assertEqual((expected_checks,), status.load_checks())
