@@ -1251,6 +1251,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             context, internal_port,
             internal_subnet_id, floatingip_obj.floating_network_id)
 
+        if self.is_router_distributed(context, router_id):
+            if not plugin_utils.can_port_be_bound_to_virtual_bridge(
+                    internal_port):
+                msg = _('Port VNIC type is not valid to associate a FIP in '
+                        'DVR mode')
+                raise n_exc.BadRequest(resource='floatingip', msg=msg)
+
         return (fip['port_id'], internal_ip_address, router_id)
 
     def _check_and_get_fip_assoc(self, context, fip, floatingip_obj):
@@ -1872,6 +1879,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         self._process_floating_ips(context, routers_dict, floating_ips)
         self._process_interfaces(routers_dict, interfaces)
         return list(routers_dict.values())
+
+    def is_router_distributed(self, context, router_id):
+        """Returns if a router is distributed or not
+
+        If DVR extension is not enabled, no router will be distributed. This
+        function is overridden in L3_NAT_with_dvr_db_mixin in case the DVR
+        extension is loaded.
+        """
+        return False
 
 
 @registry.has_registry_receivers
