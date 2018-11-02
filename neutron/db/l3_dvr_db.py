@@ -1223,6 +1223,13 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
         floating_ip = self._delete_floatingip(context, id)
         self._notify_floating_ip_change(context, floating_ip)
 
+    @db_api.retry_if_session_inactive()
+    def is_router_distributed(self, context, router_id):
+        if router_id:
+            return is_distributed_router(
+                self.get_router(context.elevated(), router_id))
+        return False
+
 
 def is_distributed_router(router):
     """Return True if router to be handled is distributed."""
