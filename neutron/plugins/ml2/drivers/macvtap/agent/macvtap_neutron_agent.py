@@ -112,13 +112,13 @@ class MacvtapManager(amb.CommonAgentManagerBase):
 
     def get_agent_id(self):
         devices = ip_lib.IPWrapper().get_devices(True)
-        if devices:
-            mac = ip_lib.get_device_mac(devices[0].name)
-            return 'macvtap%s' % mac.replace(":", "")
-        else:
-            LOG.error("Unable to obtain MAC address for unique ID. "
-                      "Agent terminated!")
-            sys.exit(1)
+        for device in devices:
+            mac = ip_lib.get_device_mac(device.name)
+            if mac:
+                return 'macvtap%s' % mac.replace(":", "")
+        LOG.error("Unable to obtain MAC address for unique ID. "
+                  "Agent terminated!")
+        sys.exit(1)
 
     def get_devices_modified_timestamps(self, devices):
         # TODO(kevinbenton): this should be implemented to detect
