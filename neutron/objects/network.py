@@ -14,6 +14,7 @@
 
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.validators import availability_zone as az_validator
+from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import dns as dns_models
@@ -34,15 +35,26 @@ from neutron.objects import rbac_db
 @base.NeutronObjectRegistry.register
 class NetworkRBAC(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Added 'id' and 'project_id'
+
+    VERSION = '1.1'
 
     db_model = rbac_db_models.NetworkRBAC
 
     fields = {
+        'id': common_types.UUIDField(),
+        'project_id': obj_fields.StringField(),
         'object_id': obj_fields.StringField(),
         'target_tenant': obj_fields.StringField(),
         'action': obj_fields.StringField(),
     }
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):
+            standard_fields = ['id', 'project_id']
+            for f in standard_fields:
+                primitive.pop(f, None)
 
 
 @base.NeutronObjectRegistry.register
