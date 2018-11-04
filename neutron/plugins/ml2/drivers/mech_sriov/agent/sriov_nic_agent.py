@@ -61,8 +61,9 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     #   1.3 Added param devices_to_update to security_groups_provider_updated
     #       (works with NoopFirewallDriver)
     #   1.4 Added support for network_update
+    #   1.5 Added support for binding_activate and binding_deactivate
 
-    target = oslo_messaging.Target(version='1.4')
+    target = oslo_messaging.Target(version='1.5')
 
     def __init__(self, context, agent, sg_agent):
         super(SriovNicSwitchRpcCallbacks, self).__init__()
@@ -108,6 +109,27 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         for port_data in self.agent.network_ports[network_id]:
             self.agent.updated_devices.add(port_data['device'])
 
+    def binding_activate(self, context, **kwargs):
+        if kwargs.get('host') != self.agent.conf.host:
+            return
+        LOG.debug("binding activate for port %s", kwargs.get('port_id'))
+        device_details = self.agent.get_device_details_from_port_id(
+            kwargs.get('port_id'))
+        mac = device_details.get('mac_address')
+        binding_profile = device_details.get('profile')
+        if binding_profile:
+            pci_slot = binding_profile.get('pci_slot')
+            self.agent.activated_bindings.add((mac, pci_slot))
+        else:
+            LOG.warning("binding_profile not found for port %s.",
+                        kwargs.get('port_id'))
+
+    def binding_deactivate(self, context, **kwargs):
+        if kwargs.get('host') != self.agent.conf.host:
+            return
+        LOG.debug("binding deactivate for port %s. NOOP.",
+                  kwargs.get('port_id'))
+
 
 @profiler.trace_cls("rpc")
 class SriovNicSwitchAgent(object):
@@ -124,6 +146,9 @@ class SriovNicSwitchAgent(object):
 
         # Stores port update notifications for processing in the main loop
         self.updated_devices = set()
+        # Stores <mac, pci_slot> pairs for ports whose binding has been
+        # activated.
+        self.activated_bindings = set()
 
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
@@ -157,7 +182,6 @@ class SriovNicSwitchAgent(object):
     def _setup_rpc(self):
         self.agent_id = 'nic-switch-agent.%s' % socket.gethostname()
         LOG.info("RPC agent_id: %s", self.agent_id)
-
         self.topic = topics.AGENT
         self.failed_report_state = False
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
@@ -168,7 +192,9 @@ class SriovNicSwitchAgent(object):
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.NETWORK, topics.UPDATE],
-                     [topics.SECURITY_GROUP, topics.UPDATE]]
+                     [topics.SECURITY_GROUP, topics.UPDATE],
+                     [topics.PORT_BINDING, topics.DEACTIVATE],
+                     [topics.PORT_BINDING, topics.ACTIVATE]]
         self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
                                                      consumers,
@@ -329,6 +355,12 @@ class SriovNicSwitchAgent(object):
                                            port_id,
                                            (device, profile.get('pci_slot')))
                 self.ext_manager.handle_port(self.context, device_details)
+            elif c_const.NO_ACTIVE_BINDING in device_details:
+                # Port was added but its binding in this agent
+                # hasn't been activated yet. It will be treated as
+                # added when binding is activated
+                LOG.info("Device with MAC %s has no active binding in host",
+                         device)
             else:
                 LOG.info("Device with MAC %s not defined on plugin",
                          device)
@@ -377,6 +409,36 @@ class SriovNicSwitchAgent(object):
                           {'mac': mac, 'pci_slot': pci_slot})
         return resync
 
+    def process_activated_bindings(self, device_info, activated_bindings_copy):
+        """Process activated bindings.
+
+        Add activated bindings to the 'added' set in device info.
+
+        :param device_info: A dict that contains the set of 'current', 'added',
+                            'removed' and 'updated' ports.
+        :param activated_bindings_copy: A set of activated port bindings.
+        :return: None
+        """
+        LOG.debug("Processing activated bindings: %s", activated_bindings_copy)
+        # Compute which ports for activated bindings are already present
+        activated_bindings_copy &= device_info['current']
+        # Treat them as just added
+        device_info['added'] |= activated_bindings_copy
+
+    def get_device_details_from_port_id(self, port_id):
+        """Get device details from server
+
+        :param port_id: Port identifier (UUID).
+        :return: A dict containing various port attributes if the port is
+                 bound to the host. In case the port is not bound to the host
+                 then the method will return A dict with a minimal set of
+                 attributes e.g  {'device': port_id}.
+        """
+        return self.plugin_rpc.get_device_details(self.context,
+                                                  port_id,
+                                                  self.agent_id,
+                                                  host=cfg.CONF.host)
+
     def daemon_loop(self):
         sync = True
         devices = set()
@@ -398,10 +460,15 @@ class SriovNicSwitchAgent(object):
             # two statements, this will should be thread-safe.
             updated_devices_copy = self.updated_devices
             self.updated_devices = set()
+            activated_bindings_copy = self.activated_bindings
+            self.activated_bindings = set()
             try:
                 self.eswitch_mgr.discover_devices(self.device_mappings,
                                                   self.exclude_devices)
                 device_info = self.scan_devices(devices, updated_devices_copy)
+                if activated_bindings_copy:
+                    self.process_activated_bindings(device_info,
+                                                    activated_bindings_copy)
                 if self._device_info_has_changes(device_info):
                     LOG.debug("Agent loop found changes! %s", device_info)
                     # If treat devices fails - indicates must resync with
@@ -415,6 +482,7 @@ class SriovNicSwitchAgent(object):
                 # Restore devices that were removed from this set earlier
                 # without overwriting ones that may have arrived since.
                 self.updated_devices |= updated_devices_copy
+                self.activated_bindings |= activated_bindings_copy
 
             # sleep till end of polling interval
             elapsed = (time.time() - start)
