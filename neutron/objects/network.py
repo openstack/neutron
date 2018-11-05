@@ -16,6 +16,7 @@ from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.validators import availability_zone as az_validator
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
+import sqlalchemy as sa
 
 from neutron.db.models import dns as dns_models
 from neutron.db.models import external_net as ext_net_model
@@ -55,6 +56,22 @@ class NetworkRBAC(base.NeutronDbObject):
             standard_fields = ['id', 'project_id']
             for f in standard_fields:
                 primitive.pop(f, None)
+
+    @classmethod
+    def get_projects(cls, context, object_id=None, action=None,
+                     target_tenant=None):
+        clauses = []
+        if object_id:
+            clauses.append(rbac_db_models.NetworkRBAC.object_id == object_id)
+        if action:
+            clauses.append(rbac_db_models.NetworkRBAC.action == action)
+        if target_tenant:
+            clauses.append(rbac_db_models.NetworkRBAC.target_tenant ==
+                           target_tenant)
+        query = context.session.query(rbac_db_models.NetworkRBAC.target_tenant)
+        if clauses:
+            query = query.filter(sa.and_(*clauses))
+        return [data[0] for data in query]
 
 
 @base.NeutronObjectRegistry.register
