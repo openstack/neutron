@@ -1,0 +1,12 @@
+---
+deprecations:
+  - |
+    The signature of notifications for resource ``agent`` for events
+    ``after_create`` and ``after_update`` was extended. A new keyword
+    argument was added: ``status``. This is to make the same status
+    information available to notification consumers as it was available
+    already where the notification is sent in class ``AgentDbMixin``.
+    Valid status values are defined in ``neutron_lib.agent.constants``.
+    Consuming notifications by the old signature is deprecated. Unless
+    processing arguments as ``**kwargs``, out-of-tree notification
+    consumers need to adapt.
