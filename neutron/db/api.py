@@ -17,28 +17,12 @@ import weakref
 
 from neutron_lib.db import api
 from neutron_lib.db import model_base
-from oslo_config import cfg
-from osprofiler import opts as profiler_opts
-import osprofiler.sqlalchemy
 import sqlalchemy
 from sqlalchemy import event  # noqa
 from sqlalchemy import orm
 
 
-def set_hook(engine):
-    if (profiler_opts.is_trace_enabled() and
-            profiler_opts.is_db_trace_enabled()):
-        osprofiler.sqlalchemy.add_tracing(sqlalchemy, engine, 'neutron.db')
-
-
 context_manager = api.get_context_manager()
-
-# TODO(ihrachys) the hook assumes options defined by osprofiler, and the only
-# public function that is provided by osprofiler that will register them is
-# set_defaults, that's why we call it here even though we don't need to change
-# defaults
-profiler_opts.set_defaults(cfg.CONF)
-context_manager.append_on_engine_create(set_hook)
 
 
 # Expire relationships when foreign key changes.
