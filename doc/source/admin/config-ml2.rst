@@ -283,7 +283,7 @@ The ``vnic_type_blacklist`` option is used to remove values from the mechanism d
      - yes (ovs_driver vnic_type_blacklist, see: `Configuration Reference <../configuration/ml2-conf.html#ovs_driver>`__)
    * - SRIOV
      - direct, macvtap, direct_physical
-     - no
+     - yes (sriov_driver vnic_type_blacklist, see: `Configuration Reference <../configuration/ml2-conf.html#sriov_driver>`__)
 
 
 Extension Drivers
