@@ -336,6 +336,14 @@ class L3HATestCase(framework.L3AgentTestFramework):
             raise
         self.assertEqual(0, ip_nonlocal_bind_value)
 
+    def _wait_until_ipv6_forwarding_has_state(self, ns_name, dev_name, state):
+
+        def _ipv6_forwarding_has_state():
+            return ip_lib.get_ipv6_forwarding(
+                device=dev_name, namespace=ns_name) == state
+
+        common_utils.wait_until_true(_ipv6_forwarding_has_state)
+
     def test_ha_router_namespace_has_ipv6_forwarding_disabled(self):
         router_info = self.generate_router_info(enable_ha=True)
         router_info[constants.HA_INTERFACE_KEY]['status'] = (
@@ -346,17 +354,15 @@ class L3HATestCase(framework.L3AgentTestFramework):
             external_port['id'])
 
         common_utils.wait_until_true(lambda: router.ha_state == 'backup')
-        self.assertEqual(
-            0, ip_lib.get_ipv6_forwarding(device=external_device_name,
-                                          namespace=router.ns_name))
+        self._wait_until_ipv6_forwarding_has_state(
+            router.ns_name, external_device_name, 0)
 
         router.router[constants.HA_INTERFACE_KEY]['status'] = (
             constants.PORT_STATUS_ACTIVE)
         self.agent._process_updated_router(router.router)
         common_utils.wait_until_true(lambda: router.ha_state == 'master')
-        self.assertEqual(
-            1, ip_lib.get_ipv6_forwarding(device=external_device_name,
-                                          namespace=router.ns_name))
+        self._wait_until_ipv6_forwarding_has_state(
+            router.ns_name, external_device_name, 1)
 
 
 class L3HATestFailover(framework.L3AgentTestFramework):
