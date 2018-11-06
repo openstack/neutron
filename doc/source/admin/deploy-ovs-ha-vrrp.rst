@@ -85,6 +85,16 @@ Network node 2
 
       $ ovs-vsctl add-br br-provider
 
+#. Add the provider network interface as a port on the OVS provider
+   bridge ``br-provider``:
+
+   .. code-block:: console
+
+      $ ovs-vsctl add-port br-provider PROVIDER_INTERFACE
+
+   Replace ``PROVIDER_INTERFACE`` with the name of the underlying interface
+   that handles provider networks. For example, ``eth1``.
+
 #. In the ``openvswitch_agent.ini`` file, configure the layer-2 agent.
 
    .. code-block:: ini
