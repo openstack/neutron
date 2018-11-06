@@ -27,7 +27,9 @@ class TestAgentBandwidthReport(base.BaseFullStackTestCase):
 
     scenarios = [
         (constants.AGENT_TYPE_OVS,
-         {'l2_agent_type': constants.AGENT_TYPE_OVS})
+         {'l2_agent_type': constants.AGENT_TYPE_OVS}),
+        (constants.AGENT_TYPE_NIC_SWITCH,
+         {'l2_agent_type': constants.AGENT_TYPE_NIC_SWITCH})
     ]
 
     def setUp(self):
@@ -51,6 +53,8 @@ class TestAgentBandwidthReport(base.BaseFullStackTestCase):
         agent_configurations = agents['agents'][0]['configurations']
         if 'bridge_mappings' in agent_configurations:
             mapping_key = 'bridge_mappings'
+        elif 'device_mappings' in agent_configurations:
+            mapping_key = 'device_mappings'
         else:
             self.fail('No mapping information is found in agent '
                       'configurations')
@@ -60,8 +64,13 @@ class TestAgentBandwidthReport(base.BaseFullStackTestCase):
 
         self.assertIn(c_const.RP_BANDWIDTHS, agent_configurations)
         self.assertIn(c_const.RP_INVENTORY_DEFAULTS, agent_configurations)
-        self.assertIn(bridge_or_devices,
-                      agent_configurations[c_const.RP_BANDWIDTHS])
+        if mapping_key == 'bridge_mappings':
+            self.assertIn(bridge_or_devices,
+                          agent_configurations[c_const.RP_BANDWIDTHS])
+        else:
+            for device in bridge_or_devices:
+                self.assertIn(device, agent_configurations[
+                    c_const.RP_BANDWIDTHS])
 
         for device in agent_configurations[c_const.RP_BANDWIDTHS]:
             self.assertEqual(
