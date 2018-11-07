@@ -34,7 +34,9 @@ function load_module {
 # prepare_for_compilation() - Fetch ovs git repository and install packages needed for
 #                             compilation.
 function prepare_for_compilation {
+    local build_modules=${1:-True}
     OVS_DIR=$DEST/$OVS_REPO_NAME
+
     if [ ! -d $OVS_DIR ] ; then
         # We can't use git_clone here because we want to ignore ERROR_ON_CLONE
         git_timed clone $OVS_REPO $OVS_DIR
@@ -49,8 +51,14 @@ function prepare_for_compilation {
 
     # TODO: Can you create package list files like you can inside devstack?
     install_package autoconf automake libtool gcc patch make
-    KERNEL_VERSION=`uname -r`
 
+    # If build_modules is False, we don't need to install the kernel-*
+    # packages. Just return.
+    if [[ "$build_modules" == "False" ]]; then
+        return
+    fi
+
+    KERNEL_VERSION=`uname -r`
     if is_fedora ; then
         # is_fedora covers Fedora, RHEL, CentOS, etc...
         if [[ "$os_VENDOR" == "Fedora" ]]; then
@@ -107,7 +115,7 @@ function compile_ovs {
         localstatedir="--localstatedir=$localstatedir"
     fi
 
-    prepare_for_compilation
+    prepare_for_compilation $build_modules
 
     if [ ! -f configure ] ; then
         ./boot.sh
