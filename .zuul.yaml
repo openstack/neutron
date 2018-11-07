@@ -60,6 +60,10 @@
         - neutron-grenade-dvr-multinode
         - neutron-grenade
         - neutron-fullstack-python36
+        - tempest-full:
+            timeout: 10800
+        - tempest-full-py3:
+            timeout: 10800
     periodic:
       jobs:
         - neutron-functional
