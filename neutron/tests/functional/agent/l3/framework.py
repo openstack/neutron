@@ -472,7 +472,11 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         self.assertFalse(router.iptables_manager.is_chain_empty(
             'nat', 'POSTROUTING'))
 
-    def _assert_floating_ip_chains(self, router):
+    def _assert_floating_ip_chains(self, router, snat_bound_fip=False):
+        if snat_bound_fip:
+            self.assertFalse(router.snat_iptables_manager.is_chain_empty(
+                'nat', 'float-snat'))
+
         self.assertFalse(router.iptables_manager.is_chain_empty(
             'nat', 'float-snat'))
 

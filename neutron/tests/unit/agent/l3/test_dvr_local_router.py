@@ -726,6 +726,9 @@ class TestDvrRouterOperations(base.BaseTestCase):
         agent._fetch_external_net_id = mock.Mock(return_value=external_net_id)
         ri.ex_gw_port = ri.router['gw_port']
         del ri.router['gw_port']
+        ri.external_gateway_added(
+            ri.ex_gw_port,
+            ri.get_external_device_name(ri.ex_gw_port['id']))
         ri.fip_ns = None
         nat = ri.iptables_manager.ipv4['nat']
         nat.clear_rules_by_tag = mock.Mock()
