@@ -54,10 +54,10 @@ from neutron.db import ipam_backend_mixin
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
-from neutron.db import rbac_db_models
 from neutron.db import standard_attr
 from neutron.ipam.drivers.neutrondb_ipam import driver as ipam_driver
 from neutron.ipam import exceptions as ipam_exc
+from neutron.objects import network as network_obj
 from neutron.objects import router as l3_obj
 from neutron.tests import base
 from neutron.tests import tools
@@ -2703,20 +2703,16 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         with self.network(shared=True) as network:
             ctx = context.get_admin_context()
             with db_api.CONTEXT_WRITER.using(ctx):
-                ctx.session.add(
-                    rbac_db_models.NetworkRBAC(
-                        object_id=network['network']['id'],
-                        action='access_as_shared',
-                        tenant_id=network['network']['tenant_id'],
-                        target_tenant='somebody_else')
-                )
-                ctx.session.add(
-                    rbac_db_models.NetworkRBAC(
-                        object_id=network['network']['id'],
-                        action='access_as_shared',
-                        tenant_id=network['network']['tenant_id'],
-                        target_tenant='one_more_somebody_else')
-                )
+                network_obj.NetworkRBAC(
+                    ctx, object_id=network['network']['id'],
+                    action='access_as_shared',
+                    project_id=network['network']['tenant_id'],
+                    target_tenant='somebody_else').create()
+                network_obj.NetworkRBAC(
+                    ctx, object_id=network['network']['id'],
+                    action='access_as_shared',
+                    project_id=network['network']['tenant_id'],
+                    target_tenant='one_more_somebody_else').create()
             res1 = self._create_port(self.fmt,
                                      network['network']['id'],
                                      webob.exc.HTTPCreated.code,
@@ -6313,19 +6309,19 @@ class DbModelMixin(object):
         ctx = context.get_admin_context()
         with db_api.CONTEXT_WRITER.using(ctx):
             network = models_v2.Network(name="net_net", status="OK",
-                                        admin_state_up=True)
+                                        admin_state_up=True,
+                                        project_id='fake_project')
             ctx.session.add(network)
             with db_api.autonested_transaction(ctx.session):
                 sg = sg_models.SecurityGroup(name='sg', description='sg')
                 ctx.session.add(sg)
             # ensure db rels aren't loaded until commit for network object
             # by sharing after a nested transaction
-            ctx.session.add(
-                rbac_db_models.NetworkRBAC(object_id=network.id,
-                                           action='access_as_shared',
-                                           tenant_id=network.tenant_id,
-                                           target_tenant='*')
-            )
+            network_obj.NetworkRBAC(
+                ctx, object_id=network.id,
+                action='access_as_shared',
+                project_id=network.project_id,
+                target_tenant='*').create()
             net2 = models_v2.Network(name="net_net2", status="OK",
                                      admin_state_up=True)
             ctx.session.add(net2)
