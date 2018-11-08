@@ -37,6 +37,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
             call.add_flow(priority=0, table=0, actions='resubmit(,60)'),
             call.add_flow(priority=3, table=60, actions='normal'),
             call.add_flow(priority=0, table=24, actions='drop'),
+            call.add_flow(actions='drop', dl_vlan=4095,
+                          priority=65535, table=0)
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
