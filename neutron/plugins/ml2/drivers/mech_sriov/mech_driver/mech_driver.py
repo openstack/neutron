@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import uuid
+
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib.plugins.ml2 import api
@@ -46,6 +48,9 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     VIF Driver via libvirt domain XML.
     L2 Agent presents in  order to manage port update events.
     """
+
+    resource_provider_uuid5_namespace = uuid.UUID(
+        '87f1895c-73bb-11e8-9008-c4d987b2a692')
 
     def __init__(self,
                  agent_type=constants.AGENT_TYPE_NIC_SWITCH,

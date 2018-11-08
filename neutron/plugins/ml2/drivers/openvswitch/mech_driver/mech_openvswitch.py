@@ -14,6 +14,7 @@
 #    under the License.
 
 import os
+import uuid
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
@@ -47,6 +48,9 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     to have connectivity to at least one segment of the port's
     network.
     """
+
+    resource_provider_uuid5_namespace = uuid.UUID(
+        '87ee7d5c-73bb-11e8-9008-c4d987b2a692')
 
     def __init__(self):
         sg_enabled = securitygroups_rpc.is_firewall_enabled()
