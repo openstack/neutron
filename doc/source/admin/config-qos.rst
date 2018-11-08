@@ -53,7 +53,7 @@ traffic directions (from the VM point of view).
      Rule \\ back end      Open vSwitch         SR-IOV            Linux bridge
     ====================  ===================  ================  ===================
      Bandwidth limit       Egress \\ Ingress    Egress (1)        Egress \\ Ingress
-     Minimum bandwidth     -                    Egress            -
+     Minimum bandwidth     Egress (2)           Egress            -
      DSCP marking          Egress               -                 Egress
     ====================  ===================  ================  ===================
 
@@ -61,6 +61,8 @@ traffic directions (from the VM point of view).
 
    (1) Max burst parameter is skipped because it is not supported by the
        IP tool.
+   (2) Only for physical bridges (tenant networks, provider networks), tunneled
+       traffic is not shaped yet.
 
 In the most simple case, the property can be represented by a simple Python
 list defined on the class.

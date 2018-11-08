@@ -65,7 +65,8 @@ class LoggingExtensionTestFramework(test_firewall.BaseFirewallTestCase):
         mock.patch('os_ken.base.app_manager.AppManager.get_instance').start()
         agent_api = ovs_ext_api.OVSAgentExtensionAPI(
             ovs_bridge.OVSAgentBridge(self.tester.bridge.br_name),
-            ovs_bridge.OVSAgentBridge('br-tun'))
+            ovs_bridge.OVSAgentBridge('br-tun'),
+            {'physnet1': ovs_bridge.OVSAgentBridge('br-physnet1')})
         log_driver = ovs_fw_log.OVSFirewallLoggingDriver(agent_api)
         log_driver.initialize(self.resource_rpc)
         return log_driver

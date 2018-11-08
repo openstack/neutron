@@ -226,7 +226,8 @@ class QosExtensionBaseTestCase(base.BaseTestCase):
         self.connection = mock.Mock()
         self.agent_api = ovs_ext_api.OVSAgentExtensionAPI(
                          ovs_bridge.OVSAgentBridge('br-int'),
-                         ovs_bridge.OVSAgentBridge('br-tun'))
+                         ovs_bridge.OVSAgentBridge('br-tun'),
+                         {'phynet1': ovs_bridge.OVSAgentBridge('br-phynet1')})
         self.qos_ext.consume_api(self.agent_api)
 
         # Don't rely on used driver

@@ -32,6 +32,8 @@ class TestOVSAgentExtensionAPI(ovs_test_base.OVSOFCtlTestBase):
         super(TestOVSAgentExtensionAPI, self).setUp()
         self.br_int = self.br_int_cls("br-int")
         self.br_tun = self.br_tun_cls("br-tun")
+        self.br_phys = {'br-phys1': self.br_phys_cls('br-phys1'),
+                        'br-phys2': self.br_phys_cls('br-phys2')}
 
     def _test_bridge(self, orig_bridge, new_bridge):
         self.assertIsNotNone(new_bridge)
@@ -42,21 +44,29 @@ class TestOVSAgentExtensionAPI(ovs_test_base.OVSOFCtlTestBase):
                             new_bridge._default_cookie)
 
     def test_request_int_br(self):
-        agent_extension_api = ovs_ext_agt.OVSAgentExtensionAPI(self.br_int,
-                                                               self.br_tun)
+        agent_extension_api = ovs_ext_agt.OVSAgentExtensionAPI(
+            self.br_int, self.br_tun, {'phys': self.br_phys['br-phys1']})
         new_int_br = agent_extension_api.request_int_br()
         self._test_bridge(self.br_int, new_int_br)
 
     def test_request_tun_br(self):
-        agent_extension_api = ovs_ext_agt.OVSAgentExtensionAPI(self.br_int,
-                                                               self.br_tun)
+        agent_extension_api = ovs_ext_agt.OVSAgentExtensionAPI(
+            self.br_int, self.br_tun, {'phys': self.br_phys['br-phys1']})
         new_tun_br = agent_extension_api.request_tun_br()
         self._test_bridge(self.br_tun, new_tun_br)
 
     def test_request_tun_br_tunneling_disabled(self):
-        agent_extension_api = ovs_ext_agt.OVSAgentExtensionAPI(self.br_int,
-                                                               None)
+        agent_extension_api = ovs_ext_agt.OVSAgentExtensionAPI(
+            self.br_int, None, {'phys': self.br_phys['br-phys1']})
         self.assertIsNone(agent_extension_api.request_tun_br())
+
+    def test_request_phys_brs(self):
+        agent_extension_api = ovs_ext_agt.OVSAgentExtensionAPI(
+            self.br_int, self.br_tun,
+            {'phys1': self.br_phys['br-phys1'],
+             'phys2': self.br_phys['br-phys2']})
+        for phys_br in agent_extension_api.request_phy_brs():
+            self._test_bridge(self.br_phys[phys_br.br_name], phys_br)
 
 
 class TestOVSCookieBridgeOFCtl(ovs_test_base.OVSOFCtlTestBase):

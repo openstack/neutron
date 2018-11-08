@@ -39,9 +39,12 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.addCleanup(conn_patcher.stop)
         self.context = context.get_admin_context()
         self.qos_driver = qos_driver.QosOVSAgentDriver()
+        self.mock_clear_minimum_bandwidth_qos = mock.patch.object(
+            self.qos_driver, '_minimum_bandwidth_initialize').start()
         self.agent_api = ovs_ext_api.OVSAgentExtensionAPI(
                          ovs_bridge.OVSAgentBridge('br-int'),
-                         ovs_bridge.OVSAgentBridge('br-tun'))
+                         ovs_bridge.OVSAgentBridge('br-tun'),
+                         {'phys1': ovs_bridge.OVSAgentBridge('br-phys1')})
         self.qos_driver.consume_api(self.agent_api)
         self.qos_driver.initialize()
         self.qos_driver.br_int = mock.Mock()
@@ -189,3 +192,58 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.qos_driver.br_int.add_flow.assert_called_once_with(
             actions='mod_nw_tos:128,load:55->NXM_NX_REG2[0..5],resubmit(,0)',
             in_port=mock.ANY, priority=65535, reg2=0, table=0)
+
+    def test_create_minimum_bandwidth(self):
+        with mock.patch.object(self.qos_driver, 'update_minimum_bandwidth') \
+                as mock_update_minimum_bandwidth:
+            self.qos_driver.create_minimum_bandwidth('port_name', 'rule')
+            mock_update_minimum_bandwidth.assert_called_once_with('port_name',
+                                                                  'rule')
+
+    def test_delete_minimum_bandwidth(self):
+        with mock.patch.object(self.qos_driver.br_int,
+                               'delete_minimum_bandwidth_queue') \
+                as mock_delete_minimum_bandwidth_queue:
+            self.qos_driver.delete_minimum_bandwidth({'port_id': 'port_id'})
+            mock_delete_minimum_bandwidth_queue.assert_called_once_with(
+                'port_id')
+
+    def test_update_minimum_bandwidth_no_vif_port(self):
+        with mock.patch.object(self.qos_driver.br_int,
+                               'update_minimum_bandwidth_queue') \
+                as mock_delete_minimum_bandwidth_queue:
+            self.qos_driver.update_minimum_bandwidth({}, mock.ANY)
+            mock_delete_minimum_bandwidth_queue.assert_not_called()
+
+    def test_update_minimum_bandwidth_no_phy_brs(self):
+        vif_port = mock.Mock()
+        vif_port.ofport = 'ofport'
+        rule = mock.Mock()
+        rule.min_kbps = 1500
+        port = {'port_id': 'port_id', 'vif_port': vif_port}
+        with mock.patch.object(self.qos_driver.br_int,
+                               'update_minimum_bandwidth_queue') \
+                as mock_delete_minimum_bandwidth_queue, \
+                mock.patch.object(self.qos_driver.agent_api,
+                                  'request_phy_brs'):
+            self.qos_driver.update_minimum_bandwidth(port, rule)
+            mock_delete_minimum_bandwidth_queue.assert_called_once_with(
+                'port_id', [], 'ofport', 1500)
+
+    def test_update_minimum_bandwidth(self):
+        vif_port = mock.Mock()
+        vif_port.ofport = 'ofport'
+        rule = mock.Mock()
+        rule.min_kbps = 1500
+        port = {'port_id': 'port_id', 'vif_port': vif_port}
+        with mock.patch.object(self.qos_driver.br_int,
+                               'update_minimum_bandwidth_queue') \
+                as mock_delete_minimum_bandwidth_queue, \
+                mock.patch.object(self.qos_driver.agent_api,
+                                  'request_phy_brs') as mock_request_phy_brs:
+            phy_br = mock.Mock()
+            phy_br.get_bridge_ports.return_value = ['port1', 'port2']
+            mock_request_phy_brs.return_value = [phy_br]
+            self.qos_driver.update_minimum_bandwidth(port, rule)
+            mock_delete_minimum_bandwidth_queue.assert_called_once_with(
+                'port_id', ['port1', 'port2'], 'ofport', 1500)
