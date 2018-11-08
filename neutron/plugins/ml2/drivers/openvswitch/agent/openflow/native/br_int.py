@@ -43,6 +43,9 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
         self.install_goto(dest_table_id=constants.TRANSIENT_TABLE)
         self.install_normal(table_id=constants.TRANSIENT_TABLE, priority=3)
         self.install_drop(table_id=constants.ARP_SPOOF_TABLE)
+        self.install_drop(table_id=constants.LOCAL_SWITCHING,
+                          priority=constants.OPENFLOW_MAX_PRIORITY,
+                          vlan_vid=constants.DEAD_VLAN_TAG)
 
     def setup_canary_table(self):
         self.install_drop(constants.CANARY_TABLE)
