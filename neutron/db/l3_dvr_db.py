@@ -530,17 +530,12 @@ class DVRResourceOperationHandler(object):
             return
 
         cache_key = (router_id, subnet_id)
-        try:
-            existing_hosts = self.related_dvr_router_hosts[cache_key]
-        except KeyError:
-            existing_hosts = set()
+        existing_hosts = self.related_dvr_router_hosts.pop(cache_key, set())
         other_hosts = set(self._get_other_dvr_hosts(context, router_id))
         self.related_dvr_router_hosts[cache_key] = existing_hosts | other_hosts
 
-        try:
-            existing_routers = self.related_dvr_router_routers[cache_key]
-        except KeyError:
-            existing_routers = set()
+        existing_routers = self.related_dvr_router_routers.pop(cache_key,
+                                                               set())
         other_routers = set(self._get_other_dvr_router_ids_connected_router(
             context, router_id))
         self.related_dvr_router_routers[cache_key] = (
