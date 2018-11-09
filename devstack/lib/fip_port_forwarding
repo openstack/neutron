@@ -1,0 +1,4 @@
+function configure_port_forwarding {
+    neutron_service_plugin_class_add "port_forwarding"
+    plugin_agent_add_l3_agent_extension "port_forwarding"
+}
