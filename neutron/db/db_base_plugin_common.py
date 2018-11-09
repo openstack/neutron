@@ -15,6 +15,8 @@
 
 import functools
 
+import six
+
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import subnet as subnet_def
@@ -88,8 +90,9 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
     """
 
     @staticmethod
-    def _generate_mac():
-        return net.get_random_mac(cfg.CONF.base_mac.split(':'))
+    def _generate_macs(mac_count=1):
+        mac_maker = net.random_mac_generator(cfg.CONF.base_mac.split(':'))
+        return [six.next(mac_maker) for x in range(mac_count)]
 
     @db_api.CONTEXT_READER
     def _is_mac_in_use(self, context, network_id, mac_address):

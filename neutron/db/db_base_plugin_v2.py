@@ -1274,7 +1274,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 raise exc.MacAddressInUse(net_id=port_data['network_id'],
                                           mac=mac_address)
         else:
-            mac_address = self._generate_mac()
+            mac_address = self._generate_macs()[0]
         db_port = models_v2.Port(mac_address=mac_address, **port_data)
         context.session.add(db_port)
         return db_port

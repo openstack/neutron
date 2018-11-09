@@ -41,7 +41,7 @@ from neutron.agent.linux import iptables_firewall
 from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as config
-from neutron.db import db_base_plugin_common
+from neutron.db import db_base_plugin_common as db_base
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as linuxbridge_agent
 from neutron.tests.common import base as common_base
@@ -687,8 +687,8 @@ class PortFixture(fixtures.Fixture):
         super(PortFixture, self).__init__()
         self.bridge = bridge
         self.namespace = namespace
-        self.mac = (
-            mac or db_base_plugin_common.DbBasePluginCommon._generate_mac())
+        self.mac = (mac or
+                    db_base.DbBasePluginCommon._generate_macs()[0])
         self.port_id = port_id or uuidutils.generate_uuid()
 
     @abc.abstractmethod
