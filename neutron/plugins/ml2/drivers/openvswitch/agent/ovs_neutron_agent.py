@@ -45,7 +45,6 @@ import six
 from neutron._i18n import _
 from neutron.agent.common import ip_lib
 from neutron.agent.common import ovs_lib
-from neutron.agent.common import ovsdb_monitor
 from neutron.agent.common import polling
 from neutron.agent.common import utils
 from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
@@ -2070,7 +2069,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             polling_manager.stop()
             polling_manager.start()
 
-    def rpc_loop(self, polling_manager, bridges_monitor=None):
+    def rpc_loop(self, polling_manager):
+        idl_monitor = self.ovs.ovsdb.idl_monitor
         sync = False
         ports = set()
         updated_ports_copy = set()
@@ -2089,7 +2089,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 LOG.info("rpc_loop doing a full sync.")
                 sync = True
                 self.fullsync = False
-            bridges_recreated = False
             port_info = {}
             ancillary_port_info = {}
             start = time.time()
@@ -2107,10 +2106,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 self.loop_count_and_wait(start, port_stats)
                 continue
             # Check if any physical bridge wasn't recreated recently
-            if bridges_monitor:
-                bridges_recreated = self._reconfigure_physical_bridges(
-                    bridges_monitor.bridges_added)
-                sync |= bridges_recreated
+            bridges_recreated = self._reconfigure_physical_bridges(
+                idl_monitor.bridges_added)
+            sync |= bridges_recreated
             # Notify the plugin of tunnel IP
             if self.enable_tunneling and tunnel_sync:
                 try:
@@ -2214,14 +2212,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         if hasattr(signal, 'SIGHUP'):
             signal.signal(signal.SIGHUP, self._handle_sighup)
         br_names = [br.br_name for br in self.phys_brs.values()]
+
+        self.ovs.ovsdb.idl_monitor.start_bridge_monitor(br_names)
         with polling.get_polling_manager(
                 self.minimize_polling,
-                self.ovsdb_monitor_respawn_interval) as pm,\
-            ovsdb_monitor.get_bridges_monitor(
-                br_names,
-                self.ovsdb_monitor_respawn_interval) as bm:
-
-            self.rpc_loop(polling_manager=pm, bridges_monitor=bm)
+                self.ovsdb_monitor_respawn_interval) as pm:
+            self.rpc_loop(polling_manager=pm)
 
     def _handle_sigterm(self, signum, frame):
         self.catch_sigterm = True

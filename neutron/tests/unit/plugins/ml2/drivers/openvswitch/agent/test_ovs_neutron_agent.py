@@ -26,6 +26,7 @@ import testtools
 from neutron._i18n import _
 from neutron.agent.common import async_process
 from neutron.agent.common import ovs_lib
+from neutron.agent.common import polling
 from neutron.agent.common import utils
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as c_const
@@ -1768,52 +1769,39 @@ class TestOvsNeutronAgent(object):
                        mock.Mock(br_name='br-ex1')]
         phys_bridges = {'physnet0': ex_br_mocks[0],
                         'physnet1': ex_br_mocks[1]},
-        bm_mock = mock.Mock()
-        with mock.patch(
-            'neutron.agent.common.ovsdb_monitor.get_bridges_monitor',
-            return_value=bm_mock),\
-                mock.patch.object(
-                    self.agent,
-                    'check_ovs_status',
-                    return_value=constants.OVS_NORMAL),\
-                mock.patch.object(
-                    self.agent,
-                    '_agent_has_updates',
-                    side_effect=TypeError('loop exit')),\
-                mock.patch.dict(
-                    self.agent.bridge_mappings, bridge_mappings, clear=True),\
-                mock.patch.dict(
-                    self.agent.phys_brs, phys_bridges, clear=True),\
-                mock.patch.object(
-                    self.agent,
-                    'setup_physical_bridges') as setup_physical_bridges:
-            bm_mock.bridges_added = ['br-ex0']
+        with mock.patch.object(self.agent, 'check_ovs_status',
+                               return_value=constants.OVS_NORMAL), \
+                mock.patch.object(self.agent, '_agent_has_updates',
+                                  side_effect=TypeError('loop exit')), \
+                mock.patch.dict(self.agent.bridge_mappings, bridge_mappings,
+                                clear=True), \
+                mock.patch.dict(self.agent.phys_brs, phys_bridges,
+                                clear=True), \
+                mock.patch.object(self.agent, 'setup_physical_bridges') as \
+                setup_physical_bridges, \
+                mock.patch.object(self.agent.ovs.ovsdb, 'idl_monitor') as \
+                mock_idl_monitor:
+            mock_idl_monitor.bridges_added = ['br-ex0']
             try:
-                self.agent.rpc_loop(polling_manager=mock.Mock(),
-                                    bridges_monitor=bm_mock)
+                self.agent.rpc_loop(polling_manager=mock.Mock())
             except TypeError:
                 pass
-        setup_physical_bridges.assert_called_once_with(
-            {'physnet0': 'br-ex0'})
+        setup_physical_bridges.assert_called_once_with({'physnet0': 'br-ex0'})
 
     def test_daemon_loop_uses_polling_manager(self):
         ex_br_mock = mock.Mock(br_name="br-ex0")
-        with mock.patch(
-            'neutron.agent.common.polling.get_polling_manager'
-        ) as mock_get_pm, mock.patch(
-            'neutron.agent.common.ovsdb_monitor.get_bridges_monitor'
-        ) as mock_get_bm, mock.patch.object(
-            self.agent, 'rpc_loop'
-        ) as mock_loop, mock.patch.dict(
-            self.agent.phys_brs, {'physnet0': ex_br_mock}, clear=True):
-
+        with mock.patch.object(polling, 'get_polling_manager') as \
+                mock_get_pm, \
+                mock.patch.object(self.agent, 'rpc_loop') as mock_loop, \
+                mock.patch.dict(self.agent.phys_brs, {'physnet0': ex_br_mock},
+                                clear=True), \
+                mock.patch.object(self.agent.ovs.ovsdb, 'idl_monitor') as \
+                mock_idl_monitor:
             self.agent.daemon_loop()
         mock_get_pm.assert_called_with(True,
                                        constants.DEFAULT_OVSDBMON_RESPAWN)
-        mock_get_bm.assert_called_once_with(
-            ['br-ex0'], constants.DEFAULT_OVSDBMON_RESPAWN)
-        mock_loop.assert_called_once_with(
-            polling_manager=mock.ANY, bridges_monitor=mock.ANY)
+        mock_loop.assert_called_once_with(polling_manager=mock.ANY)
+        mock_idl_monitor.start_bridge_monitor.assert_called()
 
     def test_setup_tunnel_port_invalid_ofport(self):
         remote_ip = '1.2.3.4'
@@ -2054,7 +2042,8 @@ class TestOvsNeutronAgent(object):
                     'setup_tunnel_br_flows') as setup_tunnel_br_flows,\
                 mock.patch.object(
                     self.mod_agent.OVSNeutronAgent,
-                    '_reset_tunnel_ofports') as reset_tunnel_ofports:
+                    '_reset_tunnel_ofports') as reset_tunnel_ofports, \
+                mock.patch.object(self.agent.ovs.ovsdb, 'idl_monitor'):
             log_exception.side_effect = Exception(
                 'Fake exception to get out of the loop')
             devices_not_ready = set()
@@ -2125,7 +2114,8 @@ class TestOvsNeutronAgent(object):
                                   'cleanup_stale_flows') as cleanup,\
                 mock.patch.object(
                     self.mod_agent.OVSNeutronAgent,
-                    '_check_and_handle_signal') as check_and_handle_signal:
+                    '_check_and_handle_signal') as check_and_handle_signal, \
+                mock.patch.object(self.agent.ovs.ovsdb, 'idl_monitor'):
             process_network_ports.side_effect = Exception("Trigger resync")
             check_ovs_status.return_value = constants.OVS_NORMAL
             check_and_handle_signal.side_effect = [True, False]
@@ -3473,7 +3463,8 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch.object(self.agent, 'setup_physical_bridges'),\
                 mock.patch.object(self.agent, 'setup_integration_br'),\
                 mock.patch.object(self.agent, 'setup_tunnel_br'),\
-                mock.patch.object(self.agent, 'state_rpc'):
+                mock.patch.object(self.agent, 'state_rpc'), \
+                mock.patch.object(self.agent.ovs.ovsdb, 'idl_monitor'):
             try:
                 self.agent.rpc_loop(polling_manager=mock.Mock())
             except TypeError:
@@ -3500,7 +3491,8 @@ class TestOvsDvrNeutronAgent(object):
                                   side_effect=[True, False]),\
                 mock.patch.object(self.agent, 'setup_physical_bridges'),\
                 mock.patch.object(self.agent, 'setup_integration_br'),\
-                mock.patch.object(self.agent, 'state_rpc'):
+                mock.patch.object(self.agent, 'state_rpc'), \
+                mock.patch.object(self.agent.ovs.ovsdb, 'idl_monitor'):
             # block RPC calls and bridge calls
             self.agent.rpc_loop(polling_manager=mock.Mock())
 
