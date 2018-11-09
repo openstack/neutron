@@ -24,13 +24,6 @@ class CommonDbMixin(object):
     """Deprecated."""
 
     @staticmethod
-    def register_model_query_hook(model, name, query_hook, filter_hook,
-                                  result_filters=None):
-        _model_query.register_hook(
-            model, name, query_hook, filter_hook,
-            result_filters=result_filters)
-
-    @staticmethod
     def register_dict_extend_funcs(resource, funcs):
         _resource_extend.register_funcs(resource, funcs)
 
@@ -49,10 +42,6 @@ class CommonDbMixin(object):
     @staticmethod
     def _apply_filters_to_query(query, model, filters, context=None):
         return _model_query.apply_filters(query, model, filters, context)
-
-    @staticmethod
-    def _apply_dict_extend_functions(resource_type, response, db_object):
-        _resource_extend.apply_funcs(resource_type, response, db_object)
 
     @staticmethod
     def _get_collection_query(context, model,
