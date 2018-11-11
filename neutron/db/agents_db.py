@@ -273,7 +273,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
     @db_api.retry_if_session_inactive()
     def update_agent(self, context, id, agent):
         agent_data = agent['agent']
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             agent = self._get_agent(context, id)
             agent.update_fields(agent_data)
             agent.update()
@@ -374,7 +374,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
         It could be used by agent to do some sync with the server if needed.
         """
         status = agent_consts.AGENT_ALIVE
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             res_keys = ['agent_type', 'binary', 'host', 'topic']
             res = dict((k, agent_state[k]) for k in res_keys)
             if 'availability_zone' in agent_state:
