@@ -25,6 +25,7 @@ import os.path
 import random
 import re
 import signal
+import socket
 import sys
 import threading
 import time
@@ -232,6 +233,14 @@ def cidr_to_ip(ip_cidr):
     return str(net.ip)
 
 
+def cidr_mask(ip_cidr):
+    """Returns the subnet mask length from a cidr
+
+    :param: An ipv4 or ipv6 cidr mask length
+    """
+    return netaddr.IPNetwork(ip_cidr).netmask.netmask_bits()
+
+
 def fixed_ip_cidrs(fixed_ips):
     """Create a list of a port's fixed IPs in cidr notation.
 
@@ -267,6 +276,18 @@ def ip_version_from_int(ip_version_int):
     if ip_version_int == 6:
         return n_const.IPv6
     raise ValueError(_('Illegal IP version number'))
+
+
+def get_network_length(ip_version):
+    """Returns the network length depeding on the IP version"""
+    return (n_const.IPv4_BITS if ip_version == n_const.IP_VERSION_4
+            else n_const.IPv6_BITS)
+
+
+def get_socket_address_family(ip_version):
+    """Returns the address family depending on the IP version"""
+    return (int(socket.AF_INET if ip_version == n_const.IP_VERSION_4
+                else socket.AF_INET6))
 
 
 class DelayedStringRenderer(object):

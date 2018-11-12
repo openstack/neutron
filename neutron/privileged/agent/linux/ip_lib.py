@@ -15,6 +15,7 @@ import socket
 
 from neutron_lib import constants
 import pyroute2
+from pyroute2.netlink import exceptions as netlink_exceptions
 from pyroute2.netlink import rtnl
 from pyroute2.netlink.rtnl import ifinfmsg
 from pyroute2.netlink.rtnl import ndmsg
@@ -484,6 +485,22 @@ def list_ip_rules(namespace, ip_version, match=None, **kwargs):
                     in ((item[0], item[1]) for item in rule['attrs'])}
             return rules
 
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+
+
+@privileged.default.entrypoint
+def add_ip_rule(namespace, **kwargs):
+    """Add a new IP rule"""
+    try:
+        with _get_iproute(namespace) as ip:
+            ip.rule('add', **kwargs)
+    except netlink_exceptions.NetlinkError as e:
+        if e.code == errno.EEXIST:
+            return
+        raise
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)

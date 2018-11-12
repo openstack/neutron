@@ -162,7 +162,8 @@ class IpLibTestCase(IpLibTestFramework):
         ip_rule = ip_lib.IPRule(namespace=device.namespace)
         for ip_version, test_case in test_cases.items():
             for rule in test_case:
-                ip_rule.rule.add(table=TABLE, priority=PRIORITY, **rule)
+                ip_lib.add_ip_rule(namespace=device.namespace, table=TABLE,
+                                   priority=PRIORITY, **rule)
 
             rules = ip_lib.list_ip_rules(ip_rule.namespace, ip_version)
             for expected_rule in expected_rules[ip_version]:

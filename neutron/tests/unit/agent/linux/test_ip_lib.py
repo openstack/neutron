@@ -31,7 +31,7 @@ import testtools
 from neutron.agent.common import utils  # noqa
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions as n_exc
-from neutron.common import utils as n_utils
+from neutron.common import utils as common_utils
 from neutron import privileged
 from neutron.privileged.agent.linux import ip_lib as priv_lib
 from neutron.tests import base
@@ -149,20 +149,6 @@ SUBNET_SAMPLE1 = ("10.0.0.0/24 dev qr-23380d11-d2  scope link  src 10.0.0.1\n"
                   "10.0.0.0/24 dev tap1d7888a7-10  scope link  src 10.0.0.2")
 SUBNET_SAMPLE2 = ("10.0.0.0/24 dev tap1d7888a7-10  scope link  src 10.0.0.2\n"
                   "10.0.0.0/24 dev qr-23380d11-d2  scope link  src 10.0.0.1")
-
-RULE_V4_SAMPLE = ("""
-0:      from all lookup local
-32766:  from all lookup main
-32767:  from all lookup default
-101:    from 192.168.45.100 lookup 2
-""")
-
-RULE_V6_SAMPLE = ("""
-0:      from all lookup local
-32766:  from all lookup main
-32767:  from all lookup default
-201:    from 2001:db8::1 lookup 3
-""")
 
 
 class TestSubProcessBase(base.BaseTestCase):
@@ -631,16 +617,22 @@ class TestIpRuleCommand(TestIPCmdBase):
     def _stop_mock(self):
         self._mock_priv_list_ip_rules.stop()
 
-    def _test_add_rule(self, ip, table, priority):
+    def _test_add_rule(self, ip, iif, table, priority):
         ip_version = netaddr.IPNetwork(ip).version
-        with mock.patch.object(ip_lib, '_parse_ip_rule'):
-            self.rule_cmd.add(ip, table=table, priority=priority)
-        self.mock_priv_list_ip_rules.assert_called_once_with(
-            self.parent.namespace, n_utils.get_ip_version(ip))
-        self._assert_sudo([ip_version], ('add', 'from', ip,
-                                         'priority', str(priority),
-                                         'table', str(table),
-                                         'type', 'unicast'))
+        ip_family = common_utils.get_socket_address_family(ip_version)
+        cmd_args = {'table': table,
+                    'priority': priority,
+                    'family': ip_family}
+        if iif:
+            cmd_args['iifname'] = iif
+        else:
+            cmd_args['src'] = ip
+            cmd_args['src_len'] = common_utils.get_network_length(ip_version)
+
+        with mock.patch.object(priv_lib, 'add_ip_rule') as mock_add_ip_rule:
+            ip_lib.add_ip_rule('namespace', ip, iif=iif, table=table,
+                               priority=priority)
+            mock_add_ip_rule.assert_called_once_with('namespace', **cmd_args)
 
     def _test_add_rule_exists(self, ip, table, priority, output):
         self.parent._as_root.return_value = output
@@ -649,8 +641,8 @@ class TestIpRuleCommand(TestIPCmdBase):
             self.rule_cmd.add(ip, table=table, priority=priority)
             kwargs = {'from': ip, 'priority': str(priority),
                       'table': str(table), 'type': 'unicast'}
-            mock_exists.assert_called_once_with(n_utils.get_ip_version(ip),
-                                                **kwargs)
+            mock_exists.assert_called_once_with(
+                common_utils.get_ip_version(ip), **kwargs)
 
     def _test_delete_rule(self, ip, table, priority):
         ip_version = netaddr.IPNetwork(ip).version
@@ -694,16 +686,13 @@ class TestIpRuleCommand(TestIPCmdBase):
         self.assertEqual({'fwmark': '0x400/0xffff', 'type': 'unicast'}, actual)
 
     def test_add_rule_v4(self):
-        self._test_add_rule('192.168.45.100', 2, 100)
+        self._test_add_rule('192.168.45.100', None, 2, 100)
 
-    def test_add_rule_v4_exists(self):
-        self._test_add_rule_exists('192.168.45.100', 2, 101, RULE_V4_SAMPLE)
+    def test_add_rule_v4_iif(self):
+        self._test_add_rule('192.168.45.100', 'iif_name', 2, 100)
 
     def test_add_rule_v6(self):
-        self._test_add_rule('2001:db8::1', 3, 200)
-
-    def test_add_rule_v6_exists(self):
-        self._test_add_rule_exists('2001:db8::1', 3, 201, RULE_V6_SAMPLE)
+        self._test_add_rule('2001:db8::1', None, 3, 200)
 
     def test_delete_rule_v4(self):
         self._test_delete_rule('192.168.45.100', 2, 100)

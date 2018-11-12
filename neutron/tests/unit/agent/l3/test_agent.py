@@ -45,6 +45,7 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_info as l3router
 from neutron.agent.linux import dibbler
 from neutron.agent.linux import interface
+from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import pd
 from neutron.agent.linux import ra
@@ -136,6 +137,9 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         ip_rule = mock.patch('neutron.agent.linux.ip_lib.IPRule').start()
         self.mock_rule = mock.MagicMock()
         ip_rule.return_value = self.mock_rule
+
+        self.mock_add_ip_rule = mock.patch.object(ip_lib,
+                                                  'add_ip_rule').start()
 
         ip_dev = mock.patch('neutron.agent.linux.ip_lib.IPDevice').start()
         self.mock_ip_dev = mock.MagicMock()
