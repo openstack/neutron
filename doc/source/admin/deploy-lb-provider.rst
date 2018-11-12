@@ -6,7 +6,7 @@ Linux bridge: Provider networks
 
 The provider networks architecture example provides layer-2 connectivity
 between instances and the physical network infrastructure using VLAN
-(802.1q) tagging. It supports one untagged (flat) network and and up to
+(802.1q) tagging. It supports one untagged (flat) network and up to
 4095 tagged (VLAN) networks. The actual quantity of VLAN networks depends
 on the physical network infrastructure. For more information on provider
 networks, see :ref:`intro-os-networking-provider`.
