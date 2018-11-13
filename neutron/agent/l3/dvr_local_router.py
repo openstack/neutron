@@ -326,7 +326,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             pass
 
     def _stale_ip_rule_cleanup(self, ns_ipr, ns_ipd, ip_version):
-        ip_rules_list = ns_ipr.rule.list_rules(ip_version)
+        ip_rules_list = ip_lib.list_ip_rules(ns_ipr.namespace, ip_version)
         snat_table_list = []
         for ip_rule in ip_rules_list:
             snat_table = ip_rule['table']

@@ -104,8 +104,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.agent._process_updated_router(router1.router)
         router_updated = self.agent.router_info[router1.router['id']]
         self.assertTrue(self._namespace_exists(router_updated.ns_name))
-        ns_ipr = ip_lib.IPRule(namespace=router1.ns_name)
-        ip4_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_4)
+        ip4_rules_list = ip_lib.list_ip_rules(router1.ns_name,
+                                              lib_constants.IP_VERSION_4)
         self.assertEqual(6, len(ip4_rules_list))
         # IPRule list should have 6 entries.
         # Three entries from 'default', 'main' and 'local' table.
@@ -364,9 +364,10 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         router1.router['external_gateway_info'] = ""
         restarted_router = self.manage_router(restarted_agent, router1.router)
         self.assertTrue(self._namespace_exists(restarted_router.ns_name))
-        ns_ipr = ip_lib.IPRule(namespace=router1.ns_name)
-        ip4_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_4)
-        ip6_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_6)
+        ip4_rules_list = ip_lib.list_ip_rules(router1.ns_name,
+                                              lib_constants.IP_VERSION_4)
+        ip6_rules_list = ip_lib.list_ip_rules(router1.ns_name,
+                                              lib_constants.IP_VERSION_6)
         # Just make sure the basic set of rules are there in the router
         # namespace
         self.assertEqual(3, len(ip4_rules_list))
@@ -808,9 +809,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertTrue(self._namespace_exists(router1.ns_name))
         self.assertTrue(self._namespace_exists(fip_ns_name))
         self._assert_snat_namespace_exists(router1)
-        ns_ipr = ip_lib.IPRule(namespace=router1.ns_name)
-        ip4_rules_list_with_fip = ns_ipr.rule.list_rules(
-            lib_constants.IP_VERSION_4)
+        ip4_rules_list_with_fip = ip_lib.list_ip_rules(
+            router1.ns_name, lib_constants.IP_VERSION_4)
         # The rules_list should have 6 entries:
         # 3 default rules (local, main and default)
         # 1 Fip forward rule
@@ -829,7 +829,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         router_updated = self.agent.router_info[router1.router['id']]
         self.assertTrue(self._namespace_exists(router_updated.ns_name))
         self._assert_snat_namespace_exists(router1)
-        ip4_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_4)
+        ip4_rules_list = ip_lib.list_ip_rules(router1.ns_name,
+                                              lib_constants.IP_VERSION_4)
         self.assertEqual(5, len(ip4_rules_list))
         interface_rules_list_count = 0
         fip_rule_count = 0
@@ -946,22 +947,16 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             restarted_router.iptables_manager, 'nat', [prevent_snat_rule])
 
     def _get_fixed_ip_rule_priority(self, namespace, fip):
-        iprule = ip_lib.IPRule(namespace)
-        lines = iprule.rule._as_root([4], ['show']).splitlines()
-        for line in lines:
-            if fip in line:
-                info = iprule.rule._parse_line(4, line)
-                return info['priority']
+        ipv4_rules = ip_lib.list_ip_rules(namespace, 4)
+        for rule in (rule for rule in ipv4_rules
+                     if utils.cidr_to_ip(rule['from']) == fip):
+            return rule['priority']
 
     def _fixed_ip_rule_exists(self, namespace, ip):
-        iprule = ip_lib.IPRule(namespace)
-        lines = iprule.rule._as_root([4], ['show']).splitlines()
-        for line in lines:
-            if ip in line:
-                info = iprule.rule._parse_line(4, line)
-                if info['from'] == ip:
-                    return True
-
+        ipv4_rules = ip_lib.list_ip_rules(namespace, 4)
+        for _ in (rule for rule in ipv4_rules
+                  if utils.cidr_to_ip(rule['from']) == ip):
+            return True
         return False
 
     def test_dvr_router_add_internal_network_set_arp_cache(self):
@@ -1582,9 +1577,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         else:
             self.assertIsNone(fg_device.route.get_gateway(filters=tbl_filter))
 
-        ip_rule = ip_lib.IPRule(namespace=fip_ns_name)
-        ext_net_fw_rules_list = ip_rule.rule.list_rules(
-            lib_constants.IP_VERSION_4)
+        ext_net_fw_rules_list = ip_lib.list_ip_rules(
+            fip_ns_name, lib_constants.IP_VERSION_4)
         if not check_fpr_int_rule_delete:
             # When floatingip are associated, make sure that the
             # corresponding rules and routes in route table are created
@@ -1699,9 +1693,10 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             self._assert_fip_namespace_deleted(
                 agent_gw_port, assert_ovs_interface=False)
         if not address_scopes or no_external:
-            ns_ipr = ip_lib.IPRule(namespace=router_updated.ns_name)
-            ip4_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_4)
-            ip6_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_6)
+            ip4_rules_list = ip_lib.list_ip_rules(router_updated.ns_name,
+                                                  lib_constants.IP_VERSION_4)
+            ip6_rules_list = ip_lib.list_ip_rules(router_updated.ns_name,
+                                                  lib_constants.IP_VERSION_6)
             self.assertEqual(3, len(ip4_rules_list))
             self.assertEqual(2, len(ip6_rules_list))
 
@@ -1759,9 +1754,10 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             fip_2_rtr, rfp_device, rfp_device_name)
 
         # Check if any snat redirect rules in the router namespace exist.
-        ns_ipr = ip_lib.IPRule(namespace=router1.ns_name)
-        ip4_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_4)
-        ip6_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_6)
+        ip4_rules_list = ip_lib.list_ip_rules(router1.ns_name,
+                                              lib_constants.IP_VERSION_4)
+        ip6_rules_list = ip_lib.list_ip_rules(router1.ns_name,
+                                              lib_constants.IP_VERSION_6)
         # Just make sure the basic set of rules are there in the router
         # namespace
         self.assertEqual(5, len(ip4_rules_list))
@@ -1822,9 +1818,10 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertFalse(mock_add_interface_route_rule.called)
         self.assertFalse(mock_add_fip_interface_route_rule.called)
         # Check if any snat redirect rules in the router namespace exist.
-        ns_ipr = ip_lib.IPRule(namespace=router1.ns_name)
-        ip4_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_4)
-        ip6_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_6)
+        ip4_rules_list = ip_lib.list_ip_rules(router1.ns_name,
+                                              lib_constants.IP_VERSION_4)
+        ip6_rules_list = ip_lib.list_ip_rules(router1.ns_name,
+                                              lib_constants.IP_VERSION_6)
         # Just make sure the basic set of rules are there in the router
         # namespace
         self.assertEqual(5, len(ip4_rules_list))

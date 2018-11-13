@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import errno
 import socket
 
@@ -20,6 +21,7 @@ import mock
 import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions
+from oslo_utils import uuidutils
 import pyroute2
 from pyroute2.netlink.rtnl import ifinfmsg
 from pyroute2.netlink.rtnl import ndmsg
@@ -29,6 +31,7 @@ import testtools
 from neutron.agent.common import utils  # noqa
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions as n_exc
+from neutron.common import utils as n_utils
 from neutron import privileged
 from neutron.privileged.agent.linux import ip_lib as priv_lib
 from neutron.tests import base
@@ -617,13 +620,23 @@ class TestIpRuleCommand(TestIPCmdBase):
     def setUp(self):
         super(TestIpRuleCommand, self).setUp()
         self.parent._as_root.return_value = ''
+        self.parent.namespace = uuidutils.generate_uuid()
         self.command = 'rule'
         self.rule_cmd = ip_lib.IpRuleCommand(self.parent)
+        self._mock_priv_list_ip_rules = mock.patch.object(priv_lib,
+                                                          'list_ip_rules')
+        self.mock_priv_list_ip_rules = self._mock_priv_list_ip_rules.start()
+        self.addCleanup(self._stop_mock)
+
+    def _stop_mock(self):
+        self._mock_priv_list_ip_rules.stop()
 
     def _test_add_rule(self, ip, table, priority):
         ip_version = netaddr.IPNetwork(ip).version
-        self.rule_cmd.add(ip, table=table, priority=priority)
-        self._assert_sudo([ip_version], (['show']))
+        with mock.patch.object(ip_lib, '_parse_ip_rule'):
+            self.rule_cmd.add(ip, table=table, priority=priority)
+        self.mock_priv_list_ip_rules.assert_called_once_with(
+            self.parent.namespace, n_utils.get_ip_version(ip))
         self._assert_sudo([ip_version], ('add', 'from', ip,
                                          'priority', str(priority),
                                          'table', str(table),
@@ -631,9 +644,13 @@ class TestIpRuleCommand(TestIPCmdBase):
 
     def _test_add_rule_exists(self, ip, table, priority, output):
         self.parent._as_root.return_value = output
-        ip_version = netaddr.IPNetwork(ip).version
-        self.rule_cmd.add(ip, table=table, priority=priority)
-        self._assert_sudo([ip_version], (['show']))
+        with mock.patch.object(self.rule_cmd, '_exists', return_value=True) \
+                as mock_exists:
+            self.rule_cmd.add(ip, table=table, priority=priority)
+            kwargs = {'from': ip, 'priority': str(priority),
+                      'table': str(table), 'type': 'unicast'}
+            mock_exists.assert_called_once_with(n_utils.get_ip_version(ip),
+                                                **kwargs)
 
     def _test_delete_rule(self, ip, table, priority):
         ip_version = netaddr.IPNetwork(ip).version
@@ -641,23 +658,6 @@ class TestIpRuleCommand(TestIPCmdBase):
         self._assert_sudo([ip_version],
                           ('del', 'from', ip, 'priority', str(priority),
                            'table', str(table), 'type', 'unicast'))
-
-    def test__parse_line(self):
-        def test(ip_version, line, expected):
-            actual = self.rule_cmd._parse_line(ip_version, line)
-            self.assertEqual(expected, actual)
-
-        test(4, "4030201:\tfrom 1.2.3.4/24 lookup 10203040",
-             {'from': '1.2.3.4/24',
-              'table': '10203040',
-              'type': 'unicast',
-              'priority': '4030201'})
-        test(6, "1024:    from all iif qg-c43b1928-48 lookup noscope",
-             {'priority': '1024',
-              'from': '::/0',
-              'type': 'unicast',
-              'iif': 'qg-c43b1928-48',
-              'table': 'noscope'})
 
     def test__make_canonical_all_v4(self):
         actual = self.rule_cmd._make_canonical(4, {'from': 'all'})
@@ -1863,3 +1863,120 @@ class TestConntrack(base.BaseTestCase):
         device.delete_socket_conntrack_state(ip_str, dport, protocol)
         self.execute.assert_called_once_with(expect_cmd, check_exit_code=True,
                                              extra_ok_codes=[1])
+
+
+class ParseIpRuleTestCase(base.BaseTestCase):
+
+    BASE_RULE = {
+        'family': 2, 'dst_len': 0, 'res2': 0, 'tos': 0, 'res1': 0, 'flags': 0,
+        'header': {
+            'pid': 18152, 'length': 44, 'flags': 2, 'error': None, 'type': 32,
+            'sequence_number': 281},
+        'attrs': {'FRA_TABLE': 255, 'FRA_SUPPRESS_PREFIXLEN': 4294967295},
+        'table': 255, 'action': 1, 'src_len': 0, 'event': 'RTM_NEWRULE'}
+
+    def setUp(self):
+        super(ParseIpRuleTestCase, self).setUp()
+        self.rule = copy.deepcopy(self.BASE_RULE)
+
+    def test_parse_priority(self):
+        self.rule['attrs']['FRA_PRIORITY'] = 1000
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertEqual('1000', parsed_rule['priority'])
+
+    def test_parse_from_ipv4(self):
+        self.rule['attrs']['FRA_SRC'] = '192.168.0.1'
+        self.rule['src_len'] = 24
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertEqual('192.168.0.1/24', parsed_rule['from'])
+
+    def test_parse_from_ipv6(self):
+        self.rule['attrs']['FRA_SRC'] = '2001:db8::1'
+        self.rule['src_len'] = 64
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 6)
+        self.assertEqual('2001:db8::1/64', parsed_rule['from'])
+
+    def test_parse_from_any_ipv4(self):
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertEqual('0.0.0.0/0', parsed_rule['from'])
+
+    def test_parse_from_any_ipv6(self):
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 6)
+        self.assertEqual('::/0', parsed_rule['from'])
+
+    def test_parse_to_ipv4(self):
+        self.rule['attrs']['FRA_DST'] = '192.168.10.1'
+        self.rule['dst_len'] = 24
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertEqual('192.168.10.1/24', parsed_rule['to'])
+
+    def test_parse_to_ipv6(self):
+        self.rule['attrs']['FRA_DST'] = '2001:db8::1'
+        self.rule['dst_len'] = 64
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 6)
+        self.assertEqual('2001:db8::1/64', parsed_rule['to'])
+
+    def test_parse_to_none(self):
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertIsNone(parsed_rule.get('to'))
+
+    def test_parse_table(self):
+        self.rule['attrs']['FRA_TABLE'] = 255
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertEqual('local', parsed_rule['table'])
+        self.rule['attrs']['FRA_TABLE'] = 254
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertEqual('main', parsed_rule['table'])
+        self.rule['attrs']['FRA_TABLE'] = 253
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertEqual('default', parsed_rule['table'])
+        self.rule['attrs']['FRA_TABLE'] = 1000
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertEqual('1000', parsed_rule['table'])
+
+    def test_parse_fwmark(self):
+        self.rule['attrs']['FRA_FWMARK'] = 1000
+        self.rule['attrs']['FRA_FWMASK'] = 10
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertEqual('0x3e8/0xa', parsed_rule['fwmark'])
+
+    def test_parse_fwmark_none(self):
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertIsNone(parsed_rule.get('fwmark'))
+
+    def test_parse_iif(self):
+        self.rule['attrs']['FRA_IIFNAME'] = 'input_interface_name'
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertEqual('input_interface_name', parsed_rule['iif'])
+
+    def test_parse_iif_none(self):
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertIsNone(parsed_rule.get('iif'))
+
+    def test_parse_oif(self):
+        self.rule['attrs']['FRA_OIFNAME'] = 'output_interface_name'
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertEqual('output_interface_name', parsed_rule['oif'])
+
+    def test_parse_oif_none(self):
+        parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
+        self.assertIsNone(parsed_rule.get('oif'))
+
+
+class ListIpRulesTestCase(base.BaseTestCase):
+
+    def test_list_ip_rules(self):
+        rule1 = {'family': 2, 'src_len': 24, 'action': 1,
+                 'attrs': {'FRA_SRC': '10.0.0.1', 'FRA_TABLE': 100}}
+        rule2 = {'family': 2, 'src_len': 0, 'action': 6,
+                 'attrs': {'FRA_TABLE': 255}}
+        rules = [rule1, rule2]
+        with mock.patch.object(priv_lib, 'list_ip_rules') as mock_list_rules:
+            mock_list_rules.return_value = rules
+            retval = ip_lib.list_ip_rules(mock.ANY, 4)
+        reference = [
+            {'type': 'unicast', 'from': '10.0.0.1/24', 'priority': '0',
+             'table': '100'},
+            {'type': 'blackhole', 'from': '0.0.0.0/0', 'priority': '0',
+             'table': 'local'}]
+        self.assertEqual(reference, retval)

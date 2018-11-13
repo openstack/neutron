@@ -469,3 +469,22 @@ def get_devices(namespace, **kwargs):
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
         raise
+
+
+@privileged.default.entrypoint
+def list_ip_rules(namespace, ip_version, match=None, **kwargs):
+    """List all IP rules"""
+    try:
+        with _get_iproute(namespace) as ip:
+            rules = ip.get_rules(family=_IP_VERSION_FAMILY_MAP[ip_version],
+                                 match=match, **kwargs)
+            for rule in rules:
+                rule['attrs'] = {
+                    key: value for key, value
+                    in ((item[0], item[1]) for item in rule['attrs'])}
+            return rules
+
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise

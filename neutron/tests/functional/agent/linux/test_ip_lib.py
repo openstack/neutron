@@ -26,6 +26,7 @@ import testtools
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.conf.agent import common as config
+from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base
 
@@ -163,14 +164,14 @@ class IpLibTestCase(IpLibTestFramework):
             for rule in test_case:
                 ip_rule.rule.add(table=TABLE, priority=PRIORITY, **rule)
 
-            rules = ip_rule.rule.list_rules(ip_version)
+            rules = ip_lib.list_ip_rules(ip_rule.namespace, ip_version)
             for expected_rule in expected_rules[ip_version]:
                 self.assertIn(expected_rule, rules)
 
             for rule in test_case:
                 ip_rule.rule.delete(table=TABLE, priority=PRIORITY, **rule)
 
-            rules = ip_rule.rule.list_rules(ip_version)
+            rules = priv_ip_lib.list_ip_rules(ip_rule.namespace, ip_version)
             for expected_rule in expected_rules[ip_version]:
                 self.assertNotIn(expected_rule, rules)
 
