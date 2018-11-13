@@ -1908,6 +1908,22 @@ class L3RpcNotifierMixin(object):
             l3plugin.notify_router_updated(context, router_id)
 
     @staticmethod
+    @registry.receives(resources.PORT, [events.AFTER_UPDATE])
+    def _notify_gateway_port_ip_changed(resource, event, trigger, **kwargs):
+        l3plugin = directory.get_plugin(plugin_constants.L3)
+        if not l3plugin:
+            return
+        new_port = kwargs.get('port')
+        original_port = kwargs.get('original_port')
+
+        if original_port['device_owner'] != constants.DEVICE_OWNER_ROUTER_GW:
+            return
+
+        if utils.port_ip_changed(new_port, original_port):
+            l3plugin.notify_router_updated(kwargs['context'],
+                                           new_port['device_id'])
+
+    @staticmethod
     @registry.receives(resources.SUBNETPOOL_ADDRESS_SCOPE,
                        [events.AFTER_UPDATE])
     def _notify_subnetpool_address_scope_update(resource, event,

@@ -17,6 +17,7 @@ import os
 import time
 
 import netaddr
+from neutron_lib import constants
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import ha_router
@@ -75,6 +76,50 @@ class TestL3Agent(base.BaseFullStackTestCase):
                 tenant_id, cidr, network['id'], router['id'])
 
         return self._boot_fake_vm_in_network(host, tenant_id, network['id'])
+
+    def _test_gateway_ip_changed(self):
+        tenant_id = uuidutils.generate_uuid()
+        ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
+        external_vm = self.useFixture(
+            machine_fixtures.FakeMachine(
+                self.environment.central_bridge,
+                common_utils.ip_to_cidr(ext_sub['gateway_ip'], 24)))
+
+        router = self.safe_client.create_router(tenant_id,
+                                                external_network=ext_net['id'])
+
+        vm = self._create_net_subnet_and_vm(
+            tenant_id, ['20.0.0.0/24', '2001:db8:aaaa::/64'],
+            self.environment.hosts[1], router)
+        # ping external vm to test snat
+        vm.block_until_ping(external_vm.ip)
+
+        fip = self.safe_client.create_floatingip(
+            tenant_id, ext_net['id'], vm.ip, vm.neutron_port['id'])
+        # ping floating ip from external vm
+        external_vm.block_until_ping(fip['floating_ip_address'])
+
+        # ping router gateway IP
+        old_gw_ip = router['external_gateway_info'][
+            'external_fixed_ips'][0]['ip_address']
+        external_vm.block_until_ping(old_gw_ip)
+
+        gateway_port = self.safe_client.list_ports(
+            device_id=router['id'],
+            device_owner=constants.DEVICE_OWNER_ROUTER_GW)[0]
+        ip_1 = str(netaddr.IPNetwork(
+            ext_sub['gateway_ip']).next(100)).split('/')[0]
+        ip_2 = str(netaddr.IPNetwork(
+            ext_sub['gateway_ip']).next(101)).split('/')[0]
+        self.safe_client.update_port(gateway_port['id'], fixed_ips=[
+            {'ip_address': ip_1},
+            {'ip_address': ip_2}])
+        # ping router gateway new IPs
+        external_vm.block_until_ping(ip_1)
+        external_vm.block_until_ping(ip_2)
+
+        # ping router old gateway IP, should fail now
+        external_vm.block_until_no_ping(old_gw_ip)
 
 
 class TestLegacyL3Agent(TestL3Agent):
@@ -223,6 +268,9 @@ class TestLegacyL3Agent(TestL3Agent):
         vm.block_until_ping(vm.gateway_ipv6)
         # Verify north-south connectivity using ping6 to external_vm.
         vm.block_until_ping(external_vm.ipv6)
+
+    def test_gateway_ip_changed(self):
+        self._test_gateway_ip_changed()
 
 
 class TestHAL3Agent(TestL3Agent):
@@ -375,3 +423,6 @@ class TestHAL3Agent(TestL3Agent):
 
         self._assert_ping_during_agents_restart(
             l3_active_agents, external_vm.namespace, [router_ip], count=60)
+
+    def test_gateway_ip_changed(self):
+        self._test_gateway_ip_changed()

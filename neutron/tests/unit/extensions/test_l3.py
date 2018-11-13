@@ -269,6 +269,21 @@ class TestL3NatBasePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             plugin.disassociate_floatingips(context, id)
         return super(TestL3NatBasePlugin, self).delete_port(context, id)
 
+    def update_port(self, context, id, port):
+        original_port = self.get_port(context, id)
+        session = context.session
+        with session.begin(subtransactions=True):
+            new_port = super(TestL3NatBasePlugin, self).update_port(
+                context, id, port)
+        # Notifications must be sent after the above transaction is complete
+        kwargs = {
+            'context': context,
+            'port': new_port,
+            'original_port': original_port,
+        }
+        registry.notify(resources.PORT, events.AFTER_UPDATE, self, **kwargs)
+        return new_port
+
 
 # This plugin class is for tests with plugin that integrates L3.
 class TestL3NatIntPlugin(TestL3NatBasePlugin,
@@ -3433,6 +3448,73 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     body = self._show('ports', port['port']['id'])
                     self.assertEqual('', body['port']['device_owner'])
                     self.assertEqual('', body['port']['device_id'])
+
+    def _test__notify_gateway_port_ip_changed_helper(self, gw_ip_change=True):
+        plugin = directory.get_plugin(plugin_constants.L3)
+        if not hasattr(plugin, 'l3_rpc_notifier'):
+            self.skipTest("Plugin does not support l3_rpc_notifier")
+        # make sure the callback is registered.
+        registry.subscribe(
+            l3_db.L3RpcNotifierMixin._notify_gateway_port_ip_changed,
+            resources.PORT,
+            events.AFTER_UPDATE)
+        with mock.patch.object(plugin.l3_rpc_notifier,
+                               'routers_updated') as chk_method:
+            with self.router() as router:
+                with self.subnet(cidr='1.1.1.0/24') as subnet:
+                    self._set_net_external(subnet['subnet']['network_id'])
+                    router_id = router['router']['id']
+                    self._add_external_gateway_to_router(
+                        router_id,
+                        subnet['subnet']['network_id'])
+                    body = self._show('routers', router_id)
+                    gateway_ips = body['router']['external_gateway_info'][
+                        'external_fixed_ips']
+                    gateway_ip_len = len(gateway_ips)
+                    self.assertEqual(1, gateway_ip_len)
+                    gw_port_id = None
+                    for p in self._list('ports')['ports']:
+                        if (p['device_owner'] ==
+                                lib_constants.DEVICE_OWNER_ROUTER_GW and
+                                p['device_id'] == router_id):
+                            gw_port_id = p['id']
+                    self.assertIsNotNone(gw_port_id)
+                    gw_ip_len = 1
+                    if gw_ip_change:
+                        gw_ip_len += 1
+                        data = {'port': {'fixed_ips': [
+                            {'ip_address': '1.1.1.101'},
+                            {'ip_address': '1.1.1.100'}]}}
+                    else:
+                        gw_ip = gateway_ips[0]['ip_address']
+                        data = {'port': {'fixed_ips': [
+                            {'ip_address': gw_ip}]}}
+                    req = self.new_update_request('ports', data,
+                                                  gw_port_id)
+                    res = self.deserialize(self.fmt,
+                                           req.get_response(self.api))
+                    self.assertEqual(gw_ip_len, len(res['port']['fixed_ips']))
+
+                    body = self._show('routers', router_id)
+                    gateway_ip_len = len(
+                        body['router']['external_gateway_info'][
+                            'external_fixed_ips'])
+                    self.assertEqual(gw_ip_len, gateway_ip_len)
+                    chk_method.assert_called_with(mock.ANY,
+                                                  [router_id], None)
+                    self.assertEqual(gw_ip_len, chk_method.call_count)
+
+    def test__notify_gateway_port_ip_changed(self):
+        """Test to make sure notification to routers occurs when the gateway
+            ip address changed.
+        """
+        self._test__notify_gateway_port_ip_changed_helper()
+
+    def test__notify_gateway_port_ip_not_changed(self):
+        """Test to make sure no notification to routers occurs when the gateway
+            ip address is not changed.
+        """
+        self._test__notify_gateway_port_ip_changed_helper(gw_ip_change=False)
 
     def test_update_subnet_gateway_for_external_net(self):
         """Test to make sure notification to routers occurs when the gateway
