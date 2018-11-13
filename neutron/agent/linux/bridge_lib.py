@@ -52,16 +52,16 @@ def get_bridge_names():
 
 
 class BridgeDevice(ip_lib.IPDevice):
-    def _brctl(self, cmd):
-        cmd = ['brctl'] + cmd
+    def _ip_link(self, cmd):
+        cmd = ['ip', 'link'] + cmd
         ip_wrapper = ip_lib.IPWrapper(self.namespace)
         return ip_wrapper.netns.execute(cmd, run_as_root=True)
 
     @classmethod
     def addbr(cls, name, namespace=None):
-        bridge = cls(name, namespace)
+        bridge = cls(name, namespace, 'bridge')
         try:
-            bridge._brctl(['addbr', bridge.name])
+            bridge.link.create()
         except RuntimeError:
             with excutils.save_and_reraise_exception() as ectx:
                 ectx.reraise = not bridge.exists()
@@ -78,19 +78,21 @@ class BridgeDevice(ip_lib.IPDevice):
             return cls(name)
 
     def delbr(self):
-        return self._brctl(['delbr', self.name])
+        return self.link.delete()
 
     def addif(self, interface):
-        return self._brctl(['addif', self.name, interface])
+        return self._ip_link(['set', 'dev', interface, 'master', self.name])
 
     def delif(self, interface):
-        return self._brctl(['delif', self.name, interface])
+        return self._ip_link(['set', 'dev', interface, 'nomaster'])
 
     def setfd(self, fd):
-        return self._brctl(['setfd', self.name, str(fd)])
+        return self._ip_link(['set', 'dev', self.name, 'type', 'bridge',
+                              'forward_delay', str(fd)])
 
     def disable_stp(self):
-        return self._brctl(['stp', self.name, 'off'])
+        return self._ip_link(['set', 'dev', self.name, 'type', 'bridge',
+                              'stp_state', 0])
 
     def owns_interface(self, interface):
         return os.path.exists(

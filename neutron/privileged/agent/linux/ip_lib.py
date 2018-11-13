@@ -90,6 +90,19 @@ class IpAddressAlreadyExists(RuntimeError):
         super(IpAddressAlreadyExists, self).__init__(message)
 
 
+class InterfaceAlreadyExists(RuntimeError):
+    message = _("Interface %(device)s already exists.")
+
+    def __init__(self, message=None, device=None):
+        # NOTE(slaweq): 'message' can be passed as an optional argument
+        # because of how privsep daemon works. If exception is raised in
+        # function called by privsep daemon, it will then try to reraise it
+        # and will call it always with passing only message from originally
+        # raised exception.
+        message = message or self.message % {'device': device}
+        super(InterfaceAlreadyExists, self).__init__(message)
+
+
 def _make_route_dict(destination, nexthop, device, scope):
     return {'destination': destination,
             'nexthop': nexthop,
@@ -276,6 +289,10 @@ def create_interface(ifname, namespace, kind, **kwargs):
                 link_key = "vxlan_link" if kind == "vxlan" else "link"
                 kwargs[link_key] = _get_link_id(physical_interface, namespace)
             return ip.link("add", ifname=ifname, kind=kind, **kwargs)
+    except NetlinkError as e:
+        if e.code == errno.EEXIST:
+            raise InterfaceAlreadyExists(device=ifname)
+        raise
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)

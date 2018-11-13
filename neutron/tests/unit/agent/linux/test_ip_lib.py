@@ -793,6 +793,12 @@ class TestIpLinkCommand(TestIPCmdBase):
         set_link_attribute.assert_called_once_with(
             self.parent.name, self.parent.namespace, ifalias='openvswitch')
 
+    @mock.patch.object(priv_lib, 'create_interface')
+    def test_create(self, create):
+        self.link_cmd.create()
+        create.assert_called_once_with(self.parent.name, self.parent.namespace,
+                                       self.parent.kind)
+
     @mock.patch.object(priv_lib, 'delete_interface')
     def test_delete(self, delete):
         self.link_cmd.delete()

@@ -271,9 +271,10 @@ class IPWrapper(SubProcessBase):
 
 
 class IPDevice(SubProcessBase):
-    def __init__(self, name, namespace=None):
+    def __init__(self, name, namespace=None, kind='link'):
         super(IPDevice, self).__init__(namespace=namespace)
         self._name = name
+        self.kind = kind
         self.link = IpLinkCommand(self)
         self.addr = IpAddrCommand(self)
         self.route = IpRouteCommand(self)
@@ -515,6 +516,10 @@ class IpDeviceCommandBase(IpCommandBase):
     def name(self):
         return self._parent.name
 
+    @property
+    def kind(self):
+        return self._parent.kind
+
 
 class IpLinkCommand(IpDeviceCommandBase):
     COMMAND = 'link'
@@ -557,6 +562,10 @@ class IpLinkCommand(IpDeviceCommandBase):
     def set_alias(self, alias_name):
         privileged.set_link_attribute(
             self.name, self._parent.namespace, ifalias=alias_name)
+
+    def create(self):
+        privileged.create_interface(self.name, self._parent.namespace,
+                                    self.kind)
 
     def delete(self):
         privileged.delete_interface(self.name, self._parent.namespace)
