@@ -110,7 +110,7 @@ Rationale
 
 At the time the first design for the OVS agent came up, trunking
 in OpenStack was merely a pipe dream. Since then, lots has happened
-in the OpenStack platform, and many many deployments have gone into
+in the OpenStack platform, and many deployments have gone into
 production since early 2012.
 
 In order to address the `vlan-aware-vms <http://specs.openstack.org/openstack/neutron-specs/specs/newton/vlan-aware-vms.html>`_
