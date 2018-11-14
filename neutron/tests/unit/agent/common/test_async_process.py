@@ -15,6 +15,7 @@
 import signal
 
 import eventlet.event
+from eventlet.green import subprocess
 import eventlet.queue
 import mock
 import testtools
@@ -197,8 +198,8 @@ class TestAsyncProcess(base.BaseTestCase):
                                ) as mock_kill_event,\
                 mock.patch.object(utils, 'get_root_helper_child_pid',
                                   return_value=pid),\
-                mock.patch.object(self.proc, '_kill_process'
-                                  ) as mock_kill_process,\
+                mock.patch.object(self.proc, '_kill_process_and_wait'
+                                  ) as mock_kill_process_and_wait,\
                 mock.patch.object(self.proc, '_process'):
             self.proc._kill(signal.SIGKILL)
 
@@ -208,10 +209,12 @@ class TestAsyncProcess(base.BaseTestCase):
 
         mock_kill_event.send.assert_called_once_with()
         if pid:
-            mock_kill_process.assert_called_once_with(pid, signal.SIGKILL)
+            mock_kill_process_and_wait.assert_called_once_with(
+                pid, signal.SIGKILL, None)
 
-    def _test__kill_process(self, pid, expected, exception_message=None,
-                            kill_signal=signal.SIGKILL):
+    def _test__kill_process_and_wait(self, pid, expected,
+                                     exception_message=None,
+                                     kill_signal=signal.SIGKILL):
         self.proc.run_as_root = True
         if exception_message:
             exc = RuntimeError(exception_message)
@@ -226,20 +229,38 @@ class TestAsyncProcess(base.BaseTestCase):
                                              kill_signal,
                                              self.proc.run_as_root)
 
-    def test__kill_process_returns_true_for_valid_pid(self):
-        self._test__kill_process('1', True)
+    def test__kill_process_and_wait_returns_true_for_valid_pid(self):
+        self._test__kill_process_and_wait('1', True)
 
-    def test__kill_process_returns_false_for_execute_exception(self):
-        self._test__kill_process('1', False, 'Invalid')
+    def test__kill_process_and_wait_returns_false_for_execute_exception(self):
+        self._test__kill_process_and_wait('1', False, 'Invalid')
 
-    def test_kill_process_with_different_signal(self):
-        self._test__kill_process('1', True, kill_signal=signal.SIGTERM)
+    def test_kill_process_and_wait_with_different_signal(self):
+        self._test__kill_process_and_wait(
+            '1', True, kill_signal=signal.SIGTERM)
+
+    def test__kill_process_timeout_reached(self):
+        self.proc.run_as_root = True
+        kill_timeout = 5
+        pid = '1'
+        with mock.patch.object(utils, 'kill_process') as mock_kill_process, \
+                mock.patch.object(self.proc, '_process') as process_mock:
+            process_mock.wait.side_effect = subprocess.TimeoutExpired(
+                self.proc.cmd, kill_timeout)
+            self.assertTrue(
+                self.proc._kill_process_and_wait(
+                    pid, signal.SIGTERM, kill_timeout))
+
+        process_mock.wait.assert_called_once_with(kill_timeout)
+        mock_kill_process.assert_has_calls([
+            mock.call(pid, signal.SIGTERM, self.proc.run_as_root),
+            mock.call(pid, signal.SIGKILL, self.proc.run_as_root)])
 
     def test_stop_calls_kill_with_provided_signal_number(self):
         self.proc._is_running = True
         with mock.patch.object(self.proc, '_kill') as mock_kill:
             self.proc.stop(kill_signal=signal.SIGTERM)
-        mock_kill.assert_called_once_with(signal.SIGTERM)
+        mock_kill.assert_called_once_with(signal.SIGTERM, None)
 
     def test_stop_raises_exception_if_already_started(self):
         with testtools.ExpectedException(async_process.AsyncProcessException):
