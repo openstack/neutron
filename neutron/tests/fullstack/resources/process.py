@@ -75,7 +75,9 @@ class ProcessFixture(fixtures.Fixture):
     def stop(self, kill_signal=None):
         kill_signal = kill_signal or self.kill_signal
         try:
-            self.process.stop(block=True, kill_signal=kill_signal)
+            self.process.stop(
+                block=True, kill_signal=kill_signal,
+                kill_timeout=15)
         except async_process.AsyncProcessException as e:
             if "Process is not running" not in str(e):
                 raise

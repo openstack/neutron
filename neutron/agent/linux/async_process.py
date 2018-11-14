@@ -16,6 +16,7 @@ import signal
 
 import eventlet
 import eventlet.event
+from eventlet.green import subprocess
 import eventlet.queue
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
@@ -117,18 +118,21 @@ class AsyncProcess(object):
         if block:
             common_utils.wait_until_true(self.is_active)
 
-    def stop(self, block=False, kill_signal=signal.SIGKILL):
+    def stop(self, block=False, kill_signal=signal.SIGKILL, kill_timeout=None):
         """Halt the process and watcher threads.
 
         :param block: Block until the process has stopped.
         :param kill_signal: Number of signal that will be sent to the process
                             when terminating the process
+        :param kill_timeout: If given, process will be killed with SIGKILL
+                             if timeout will be reached and process will
+                             still be running
         :raises utils.WaitTimeout if blocking is True and the process
                 did not stop in time.
         """
         if self._is_running:
             LOG.debug('Halting async process [%s].', self.cmd)
-            self._kill(kill_signal)
+            self._kill(kill_signal, kill_timeout)
         else:
             raise AsyncProcessException(_('Process is not running.'))
 
@@ -163,18 +167,37 @@ class AsyncProcess(object):
                     run_as_root=self.run_as_root)
             return self._pid
 
-    def _kill(self, kill_signal):
+    def _kill(self, kill_signal, kill_timeout=None):
         """Kill the process and the associated watcher greenthreads."""
         pid = self.pid
         if pid:
             self._is_running = False
             self._pid = None
-            self._kill_process(pid, kill_signal)
+            self._kill_process_and_wait(pid, kill_signal, kill_timeout)
 
         # Halt the greenthreads if they weren't already.
         if self._kill_event:
             self._kill_event.send()
             self._kill_event = None
+
+    def _kill_process_and_wait(self, pid, kill_signal, kill_timeout=None):
+        kill_result = self._kill_process(pid, kill_signal)
+        if kill_result is False:
+            return kill_result
+
+        if self._process:
+            try:
+                self._process.wait(kill_timeout)
+            except subprocess.TimeoutExpired:
+                LOG.warning("Process %(pid)s [%(cmd)s] still running after "
+                            "%(timeout)d seconds. Sending %(signal)d to kill "
+                            "it.",
+                            {'pid': pid,
+                             'cmd': self.cmd,
+                             'timeout': kill_timeout,
+                             'signal': signal.SIGKILL})
+                return self._kill_process(pid, signal.SIGKILL)
+        return True
 
     def _kill_process(self, pid, kill_signal):
         try:
@@ -185,9 +208,6 @@ class AsyncProcess(object):
             LOG.exception('An error occurred while killing [%s].',
                           self.cmd)
             return False
-
-        if self._process:
-            self._process.wait()
         return True
 
     def _handle_process_error(self):
