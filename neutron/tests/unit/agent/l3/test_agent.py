@@ -2469,12 +2469,17 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.fullsync = False
         agent._process_router_if_compatible = mock.Mock()
+        router_id = _uuid()
+        router = {'id': router_id,
+                  'external_gateway_info': {'network_id': 'aaa'}}
+        self.plugin_api.get_routers.return_value = [router]
         if ext_net_call_failed:
             agent._process_router_if_compatible.side_effect = (
                 oslo_messaging.MessagingTimeout)
         agent._queue = mock.Mock()
         agent._resync_router = mock.Mock()
         update = mock.Mock()
+        update.id = router_id
         update.router = None
         agent._queue.each_update_to_next_router.side_effect = [
             [(None, update)]]
@@ -2491,6 +2496,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_routers_update_resyncs_failed_router(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_id = _uuid()
+        router = {'id': router_id}
 
         # Attempting to configure the router will fail
         agent._process_router_if_compatible = mock.MagicMock()
@@ -2498,9 +2505,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         # Queue an update from a full sync
         update = router_processing_queue.RouterUpdate(
-            42,
-            router_processing_queue.PRIORITY_SYNC_ROUTERS_TASK,
-            router=mock.Mock(),
+            router_id,
+            l3_agent.PRIORITY_SYNC_ROUTERS_TASK,
+            router=router,
             timestamp=timeutils.utcnow())
         agent._queue.add(update)
         agent._process_router_update()
@@ -2551,6 +2558,79 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_routers_update_router_deleted_error(self):
         self._test_process_routers_update_router_deleted(error=True)
+
+    def test_process_routers_if_compatible(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = {'id': _uuid()}
+        related_router = {'id': _uuid()}
+        routers = [router, related_router]
+        self.plugin_api.get_routers.return_value = routers
+        update = router_processing_queue.RouterUpdate(
+            router['id'], l3_agent.PRIORITY_RPC, router=router)
+
+        events_queue = []
+
+        def add_mock(update):
+            events_queue.append(update)
+
+        agent._queue = mock.Mock()
+        agent._queue.add.side_effect = add_mock
+
+        with mock.patch.object(
+            agent, "_process_router_if_compatible"
+        ) as process_router_if_compatible, mock.patch.object(
+            agent, "_safe_router_removed"
+        ) as safe_router_removed:
+            self.assertTrue(
+                agent._process_routers_if_compatible(routers, update))
+            process_router_if_compatible.assert_called_once_with(
+                router)
+            safe_router_removed.assert_not_called()
+            self.assertEqual(1, len(events_queue))
+            self.assertEqual(related_router['id'], events_queue[0].id)
+            self.assertEqual(l3_agent.PRIORITY_RELATED_ROUTER,
+                             events_queue[0].priority)
+
+    def test_process_routers_if_compatible_router_not_compatible(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = {'id': _uuid()}
+        agent.router_info = [router['id']]
+        self.plugin_api.get_routers.return_value = [router]
+        update = router_processing_queue.RouterUpdate(
+            router['id'], l3_agent.PRIORITY_RPC, router=router)
+
+        with mock.patch.object(
+            agent, "_process_router_if_compatible",
+            side_effect=n_exc.RouterNotCompatibleWithAgent(
+                router_id=router['id'])
+        ) as process_router_if_compatible, mock.patch.object(
+            agent, "_safe_router_removed"
+        ) as safe_router_removed:
+            self.assertTrue(
+                agent._process_routers_if_compatible([router], update))
+            process_router_if_compatible.assert_called_once_with(
+                router)
+            safe_router_removed.assert_called_once_with(router['id'])
+
+    def test_process_routers_if_compatible_error(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = {'id': _uuid()}
+        self.plugin_api.get_routers.return_value = [router]
+        update = router_processing_queue.RouterUpdate(
+            router['id'], l3_agent.PRIORITY_RPC, router=router)
+
+        with mock.patch.object(
+            agent, "_process_router_if_compatible",
+            side_effect=Exception(
+                "Test failure during _process_routers_if_compatible")
+        ) as process_router_if_compatible, mock.patch.object(
+            agent, "_safe_router_removed"
+        ) as safe_router_removed:
+            self.assertFalse(
+                agent._process_routers_if_compatible([router], update))
+            process_router_if_compatible.assert_called_once_with(
+                router)
+            safe_router_removed.assert_not_called()
 
     def test_process_ha_dvr_router_if_compatible_no_ha_interface(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
