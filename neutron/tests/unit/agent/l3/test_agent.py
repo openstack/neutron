@@ -2700,18 +2700,16 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             'qrouter-bar', self.conf, agent.driver, agent.use_ipv6)
         ns.create()
 
-        calls = [mock.call(['sysctl', '-w', 'net.ipv4.ip_forward=1'],
-                           privsep_exec=True),
-                 mock.call(['sysctl', '-w', 'net.ipv4.conf.all.arp_ignore=1'],
-                           privsep_exec=True),
-                 mock.call(
-                     ['sysctl', '-w', 'net.ipv4.conf.all.arp_announce=2'],
-                     privsep_exec=True)]
+        sysctl_settings = ['net.netfilter.nf_conntrack_tcp_be_liberal=1',
+                           'net.ipv4.ip_forward=1',
+                           'net.ipv4.conf.all.arp_ignore=1',
+                           'net.ipv4.conf.all.arp_announce=2']
         if agent.use_ipv6:
-            calls.append(mock.call(
-                ['sysctl', '-w', 'net.ipv6.conf.all.forwarding=1'],
-                privsep_exec=True))
+            sysctl_settings.append('net.ipv6.conf.all.forwarding=1')
 
+        calls = [mock.call(
+            ['sysctl', '-w'] + sysctl_settings,
+            run_as_root=True, log_fail_as_error=True, privsep_exec=True)]
         self.mock_ip.netns.execute.assert_has_calls(calls)
 
     def test_destroy_namespace(self):

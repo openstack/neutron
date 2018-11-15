@@ -1,0 +1,18 @@
+---
+fixes:
+  - |
+    Liberal TCP connection tracking is now enabled in SNAT namespaces,
+    (``sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1``).
+
+    In some cases, when a TCP connection that is NAT-ed ends up
+    re-transmitting, a packet could be outside what the Linux kernel
+    connection tracking considers part of the valid TCP window. When
+    this happens, a TCP Reset (RST) is triggered, terminating the connection
+    on the sender side, while leaving the receiver side (the Neutron
+    port attached VM) hanging.
+
+    Since a number of firewall vendors typically turn this on by default
+    to avoid unnecessary resets, we now do it in the Neutron router as well.
+
+    See bug `1804327 <https://bugs.launchpad.net/neutron/+bug/1804327>`_
+    for more information.
