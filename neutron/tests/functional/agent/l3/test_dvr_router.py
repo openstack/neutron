@@ -918,6 +918,14 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                 str(iptables_manager.IptablesRule(rule[0], rule[1])), rules)
         return True
 
+    def _assert_iptables_rules_not_exist(
+        self, router_iptables_manager, table_name, expected_rules):
+        rules = router_iptables_manager.get_rules_for_table(table_name)
+        for rule in expected_rules:
+            self.assertNotIn(
+                str(iptables_manager.IptablesRule(rule[0], rule[1])), rules)
+        return True
+
     def test_prevent_snat_rule_exist_on_restarted_agent(self):
         self.agent.conf.agent_mode = 'dvr_snat'
         router_info = self.generate_dvr_router_info()
@@ -1112,8 +1120,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                 self._assert_iptables_rules_exist(
                     router1.snat_iptables_manager, 'nat', expected_rules)
 
-    def test_floating_ip_migration_from_unbound_to_bound(self):
-        """Test to check floating ips migrate from unboun to bound host."""
+    def test_floating_ip_migrate_when_unbound_port_is_bound_to_a_host(self):
+        """Test to check floating ips migrate from unbound to bound host."""
         self.agent.conf.agent_mode = lib_constants.L3_AGENT_MODE_DVR_SNAT
         router_info = self.generate_dvr_router_info(
             enable_floating_ip=True, enable_centralized_fip=True,
@@ -1158,8 +1166,18 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
         qrouter_ns = router_updated.ns_name
         fixed_ip_dist = distributed_fip['fixed_ip_address']
+        self._assert_snat_namespace_exists(router_updated)
         snat_ns = router_updated.snat_namespace.name
         fixed_ip_cent = centralized_floatingip['fixed_ip_address']
+        router_updated.get_centralized_fip_cidr_set = mock.Mock(
+            return_value=set(["19.4.4.3/32"]))
+        self.assertTrue(self._assert_iptables_rules_not_exist(
+            router_updated.snat_iptables_manager, 'nat', expected_rules))
+        port = router_updated.get_ex_gw_port()
+        interface_name = router_updated.get_external_device_name(port['id'])
+        self._assert_ip_address_not_on_interface(
+            snat_ns, interface_name,
+            centralized_floatingip['floating_ip_address'])
         self.assertTrue(self._fixed_ip_rule_exists(qrouter_ns, fixed_ip_dist))
         self.assertFalse(self._fixed_ip_rule_exists(snat_ns, fixed_ip_dist))
         self.assertTrue(self._fixed_ip_rule_exists(qrouter_ns, fixed_ip_cent))
@@ -1390,7 +1408,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
     @mock.patch.object(dvr_local_router.DvrLocalRouter, 'connect_rtr_2_fip')
     @mock.patch.object(
-        dvr_ha_router.DvrEdgeHaRouter, '_get_centralized_fip_cidr_set')
+        dvr_ha_router.DvrEdgeHaRouter, 'get_centralized_fip_cidr_set')
     def test_dvr_ha_router_with_centralized_fip_calls_keepalived_cidr(
         self, connect_rtr_2_fip_mock, fip_cidr_centralized_mock):
 
@@ -1409,7 +1427,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
     @mock.patch.object(dvr_local_router.DvrLocalRouter, 'connect_rtr_2_fip')
     @mock.patch.object(
-        dvr_edge_router.DvrEdgeRouter, '_get_centralized_fip_cidr_set')
+        dvr_edge_router.DvrEdgeRouter, 'get_centralized_fip_cidr_set')
     def test_dvr_router_with_centralized_fip_calls_keepalived_cidr(
         self, connect_rtr_2_fip_mock, fip_cidr_centralized_mock):
 

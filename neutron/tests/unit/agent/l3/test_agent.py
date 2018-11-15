@@ -1145,8 +1145,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.iptables_manager.ipv4['nat'] = mock.MagicMock()
         ex_gw_port = {'id': _uuid(), 'network_id': mock.sentinel.ext_net_id}
 
-        ri.get_centralized_router_cidrs = mock.Mock(
-            return_value=set())
         ri.add_floating_ip = mock.Mock(
             return_value=lib_constants.FLOATINGIP_STATUS_ACTIVE)
         with mock.patch.object(lla.LinkLocalAllocator, '_write'):
@@ -1331,6 +1329,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         with mock.patch.object(ri, 'get_floating_ips') as fips, \
                 mock.patch.object(ri,
                                   'add_centralized_floatingip') as add_fip, \
+                mock.patch.object(ri, 'get_centralized_fip_cidr_set'
+                                  ) as get_fip_cidrs, \
                 mock.patch.object(ri, 'get_floating_agent_gw_interface'
                                   ) as fip_gw_port, \
                 mock.patch.object(ri.fip_ns,
@@ -1351,22 +1351,20 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             status = ri.floating_ip_added_dist(fips, "192.168.0.1/32")
             add_fip.assert_called_once_with(fips, "192.168.0.1/32")
             self.assertEqual(lib_constants.FLOATINGIP_STATUS_ACTIVE, status)
-            self.assertEqual(set(["192.168.0.1/32"]),
-                             ri.centralized_floatingips_set)
             # Now let us add the second fip
             status = ri.floating_ip_added_dist(fips, "192.168.0.2/32")
             self.assertEqual(lib_constants.FLOATINGIP_STATUS_ACTIVE, status)
-            self.assertEqual(set(["192.168.0.2/32", "192.168.0.1/32"]),
-                             ri.centralized_floatingips_set)
             device = mock.Mock()
+            get_fip_cidrs.return_value = set(
+                ["192.168.0.2/32", "192.168.0.1/32"])
             self.assertEqual(set(["192.168.0.2/32", "192.168.0.1/32"]),
                              ri.get_router_cidrs(device))
             ri.floating_ip_removed_dist("192.168.0.1/32")
             rem_fip.assert_called_once_with("192.168.0.1/32")
+            self.assertTrue(get_fip_cidrs.called)
+            get_fip_cidrs.return_value = set(["192.168.0.2/32"])
             self.assertEqual(set(["192.168.0.2/32"]),
                              ri.get_router_cidrs(device))
-            self.assertEqual(set(["192.168.0.2/32"]),
-                             ri.centralized_floatingips_set)
 
     @mock.patch.object(lla.LinkLocalAllocator, '_write')
     def test_create_dvr_fip_interfaces_for_late_binding(self, lla_write):
@@ -1987,7 +1985,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             agent.plugin_rpc, 'update_floatingip_statuses'
         ) as mock_update_fip_status,\
                 mock.patch.object(
-                    ri, 'get_centralized_router_cidrs') as cent_cidrs,\
+                    ri, 'get_centralized_fip_cidr_set') as cent_cidrs,\
                 mock.patch.object(ri, 'get_router_cidrs') as mock_get_cidrs:
             cent_cidrs.return_value = set()
             mock_get_cidrs.return_value = set(
@@ -2063,7 +2061,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             agent.plugin_rpc, 'update_floatingip_statuses'
         ) as mock_update_fip_status,\
                 mock.patch.object(
-                    ri, 'get_centralized_router_cidrs') as cent_cidrs,\
+                    ri, 'get_centralized_fip_cidr_set') as cent_cidrs,\
                 mock.patch.object(ri, 'get_router_cidrs') as mock_get_cidrs:
             mock_get_cidrs.return_value = set()
             cent_cidrs.return_value = set()
@@ -2091,8 +2089,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                             router,
                                             **self.ri_kwargs)
             ri.external_gateway_added = mock.Mock()
-            ri.get_centralized_router_cidrs = mock.Mock(
-                return_value=set())
             ri.process()
             # Assess the call for putting the floating IP up was performed
             mock_update_fip_status.assert_called_once_with(
@@ -3773,8 +3769,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 pf_used_fip + need_to_remove_fip + [gw_cidr])
         ri.iptables_manager.ipv4['nat'] = mock.MagicMock()
         mock_get_gw_cidr.return_value = set([gw_cidr['cidr']])
-        ri.get_centralized_router_cidrs = mock.Mock(
-            return_value=set())
         ri.add_floating_ip = mock.Mock(
             return_value=lib_constants.FLOATINGIP_STATUS_ACTIVE)
         ri.remove_floating_ip = mock.Mock()
