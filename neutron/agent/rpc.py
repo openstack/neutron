@@ -78,9 +78,13 @@ class PluginReportStateAPI(object):
     doc/source/contributor/internals/rpc_api.rst.
     """
     def __init__(self, topic):
-        target = oslo_messaging.Target(topic=topic, version='1.0',
+        target = oslo_messaging.Target(topic=topic, version='1.2',
                                        namespace=n_const.RPC_NAMESPACE_STATE)
         self.client = n_rpc.get_client(target)
+
+    def has_alive_neutron_server(self, context, **kwargs):
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'has_alive_neutron_server', **kwargs)
 
     def report_state(self, context, agent_state, use_call=False):
         cctxt = self.client.prepare(

@@ -143,7 +143,9 @@ class TestOvsNeutronAgent(object):
                            new=MockFixedIntervalLoopingCall),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
-                    return_value=[]):
+                    return_value=[]),\
+                mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
+                           'has_alive_neutron_server'):
             ext_manager = mock.Mock()
             agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
                                                    ext_manager, cfg.CONF)
@@ -200,7 +202,9 @@ class TestOvsNeutronAgent(object):
                 return_value=[]), \
             mock.patch('neutron.agent.common.ovs_lib.BaseOVS.config',
                        new_callable=mock.PropertyMock,
-                       return_value={'datapath_types': ['netdev']}):
+                       return_value={'datapath_types': ['netdev']}),\
+            mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
+                       'has_alive_neutron_server'):
             # validate setting non default datapath
             expected = constants.OVS_DATAPATH_NETDEV
             cfg.CONF.set_override('datapath_type',
@@ -245,7 +249,9 @@ class TestOvsNeutronAgent(object):
                        new=MockFixedIntervalLoopingCall), \
             mock.patch(
                 'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
-                return_value=[]):
+                return_value=[]),\
+            mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
+                       'has_alive_neutron_server'):
             # validate setting non default agent_type
             expected = 'alt agent type'
             cfg.CONF.set_override('agent_type',
@@ -2434,7 +2440,9 @@ class AncillaryBridgesTest(object):
                     return_value=[]),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
-                    return_value=[]):
+                    return_value=[]),\
+                mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
+                           'has_alive_neutron_server'):
             ext_manager = mock.Mock()
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
                                                         ext_manager, cfg.CONF)
@@ -2472,7 +2480,9 @@ class AncillaryBridgesTest(object):
                            side_effect=ancillary), \
                 mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
                            'get_vif_port_set',
-                           return_value=vif_port_set):
+                           return_value=vif_port_set),\
+                mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
+                           'has_alive_neutron_server'):
             ext_manager = mock.Mock()
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
                                                         ext_manager, cfg.CONF)
@@ -2549,7 +2559,9 @@ class TestOvsDvrNeutronAgent(object):
                     return_value=[]),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
-                    return_value=[]):
+                    return_value=[]),\
+                mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
+                           'has_alive_neutron_server'):
             ext_manager = mock.Mock()
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
                                                        ext_manager, cfg.CONF)

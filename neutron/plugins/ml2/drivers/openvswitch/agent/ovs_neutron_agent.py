@@ -399,6 +399,18 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
         # RPC network init
         self.context = context.get_admin_context_without_session()
+        # Made a simple RPC call to Neutron Server.
+        while True:
+            try:
+                self.state_rpc.has_alive_neutron_server(self.context)
+            except oslo_messaging.MessagingTimeout as e:
+                LOG.warning('l2-agent cannot contact neutron server. '
+                            'Check connectivity to neutron server. '
+                            'Retrying... '
+                            'Detailed message: %(msg)s.', {'msg': e})
+                continue
+            break
+
         # Define the listening consumers for the agent
         consumers = [[constants.TUNNEL, topics.UPDATE],
                      [constants.TUNNEL, topics.DELETE],
@@ -1221,6 +1233,17 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.int_ofports[physical_network] = int_ofport
             self.phys_ofports[physical_network] = phys_ofport
 
+            # These two drop flows are the root cause for the bug #1803919.
+            # And now we add a rpc check during agent start procedure. If
+            # ovs agent can not reach any neutron server, or all neutron
+            # servers are down, these flows will not be installed anymore.
+            # Bug #1803919 was fixed in that way.
+            # And as a reminder, we can not do much work on this. Because
+            # the bridge mappings can be varied. Provider (external) network
+            # can be implicitly set on any physical bridge due to the basic
+            # NORMAL flow. Different vlan range networks can also have many
+            # bridge map settings, these tenant network traffic can also be
+            # blocked by the following drop flows.
             # block all untranslated traffic between bridges
             self.int_br.drop_port(in_port=int_ofport)
             br.drop_port(in_port=phys_ofport)
