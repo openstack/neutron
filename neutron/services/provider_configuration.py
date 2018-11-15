@@ -156,7 +156,7 @@ def get_provider_driver_class(driver, namespace=SERVICE_PROVIDERS):
     return new_driver
 
 
-def parse_service_provider_opt(service_module='neutron'):
+def parse_service_provider_opt(service_module='neutron', service_type=None):
 
     """Parse service definition opts and returns result."""
     def validate_name(name):
@@ -175,6 +175,8 @@ def parse_service_provider_opt(service_module='neutron'):
         split = prov_def.split(':')
         try:
             svc_type, name, driver = split[:3]
+            if service_type and service_type != svc_type:
+                continue
         except ValueError:
             raise n_exc.Invalid(_("Invalid service provider format"))
         validate_name(name)
@@ -215,9 +217,9 @@ class ServiceProviderAlreadyAssociated(n_exc.Conflict):
 
 class ProviderConfiguration(object):
 
-    def __init__(self, svc_module='neutron'):
+    def __init__(self, svc_module='neutron', svc_type=None):
         self.providers = {}
-        for prov in parse_service_provider_opt(svc_module):
+        for prov in parse_service_provider_opt(svc_module, svc_type):
             self.add_provider(prov)
 
     def _ensure_driver_unique(self, driver):
