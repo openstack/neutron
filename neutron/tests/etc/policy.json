@@ -56,6 +56,7 @@
     "get_network:queue_id": "rule:admin_only",
     "get_network_ip_availabilities": "rule:admin_only",
     "get_network_ip_availability": "rule:admin_only",
+    "get_availability_zone": "",
     "update_network": "rule:admin_or_owner",
     "update_network:segments": "rule:admin_only",
     "update_network:shared": "rule:admin_only",
