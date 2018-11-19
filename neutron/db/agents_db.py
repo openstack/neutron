@@ -542,5 +542,5 @@ class AgentExtRpcCallback(object):
                           "a timestamp: %(agent_time)s. This differs from "
                           "the current server timestamp: %(serv_time)s by "
                           "%(diff)s seconds, which is more than the "
-                          "threshold agent down"
+                          "threshold agent down "
                           "time: %(threshold)s.", log_dict)
