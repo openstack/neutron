@@ -1180,6 +1180,38 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertFalse(self._fixed_ip_rule_exists(snat_ns, fixed_ip_cent))
         self.assertTrue(self._namespace_exists(fip_ns))
 
+    def _test_get_centralized_fip_cidr_set(self, router_info,
+                                           expected_result_empty):
+        self.agent.conf.agent_mode = lib_constants.L3_AGENT_MODE_DVR_SNAT
+        self.manage_router(self.agent, router_info)
+        router = self.agent.router_info[router_info['id']]
+        centralized_fips = router.get_centralized_fip_cidr_set()
+        if expected_result_empty:
+            self.assertEqual(set([]), centralized_fips)
+        else:
+            self.assertNotEqual(set([]), centralized_fips)
+
+    def test_get_centralized_fip_cidr_set(self):
+        router_info = self.generate_dvr_router_info(
+            enable_floating_ip=True, enable_centralized_fip=True,
+            enable_snat=True, snat_bound_fip=True)
+        self._test_get_centralized_fip_cidr_set(router_info, False)
+
+    def test_get_centralized_fip_cidr_set_not_snat_host(self):
+        router_info = self.generate_dvr_router_info(
+            enable_floating_ip=True, enable_centralized_fip=True,
+            enable_snat=True, snat_bound_fip=True)
+        router_info['gw_port_host'] = 'some-other-host'
+        self._test_get_centralized_fip_cidr_set(router_info, True)
+
+    def test_get_centralized_fip_cidr_set_no_ex_gw_port(self):
+        self.agent.conf.agent_mode = lib_constants.L3_AGENT_MODE_DVR_SNAT
+        router_info = self.generate_dvr_router_info(
+            enable_floating_ip=True, enable_centralized_fip=True,
+            enable_snat=True, snat_bound_fip=True)
+        router_info['gw_port'] = {}
+        self._test_get_centralized_fip_cidr_set(router_info, True)
+
     def test_floating_ip_not_deployed_on_dvr_no_external_agent(self):
         """Test to check floating ips not configured for dvr_no_external."""
         self.agent.conf.agent_mode = (
