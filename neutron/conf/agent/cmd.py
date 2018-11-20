@@ -13,7 +13,6 @@
 from oslo_config import cfg
 
 from neutron._i18n import _
-from neutron.agent.linux import ipset_manager
 
 
 ip_opts = [
@@ -25,7 +24,7 @@ ip_opts = [
                 help=_('Destroy IPsets even if there is an iptables '
                        'reference.')),
     cfg.StrOpt('prefix',
-               default=ipset_manager.NET_PREFIX,
+               default='N',  # ipset_manager.NET_PREFIX
                help=_('String prefix used to match IPset names.')),
 ]
 
