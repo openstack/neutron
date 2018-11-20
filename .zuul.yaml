@@ -48,6 +48,9 @@
             irrelevant-files: *tempest-irrelevant-files
         - tempest-slow:
             irrelevant-files: *tempest-irrelevant-files
+        - networking-ovn-tempest-dsvm-ovs-release:
+            voting: false
+            irrelevant-files: *tempest-irrelevant-files
     gate:
       jobs:
         - neutron-functional
