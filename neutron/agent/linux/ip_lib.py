@@ -14,7 +14,6 @@
 #    under the License.
 
 import errno
-import os
 import re
 import time
 
@@ -126,37 +125,16 @@ class IPWrapper(SubProcessBase):
 
     def get_devices(self, exclude_loopback=True, exclude_fb_tun_devices=True):
         retval = []
-        if self.namespace:
-            # we call out manually because in order to avoid screen scraping
-            # iproute2 we use find to see what is in the sysfs directory, as
-            # suggested by Stephen Hemminger (iproute2 dev).
-            try:
-                cmd = ['ip', 'netns', 'exec', self.namespace,
-                       'find', SYS_NET_PATH, '-maxdepth', '1',
-                       '-type', 'l', '-printf', '%f ']
-                output = utils.execute(
-                    cmd,
-                    run_as_root=True,
-                    log_fail_as_error=self.log_fail_as_error).split()
-            except RuntimeError:
-                # We could be racing with a cron job deleting namespaces.
-                # Just return a empty list if the namespace is deleted.
-                with excutils.save_and_reraise_exception() as ctx:
-                    if not self.netns.exists(self.namespace):
-                        ctx.reraise = False
-                        return []
-        else:
-            output = (
-                i for i in os.listdir(SYS_NET_PATH)
-                if os.path.islink(os.path.join(SYS_NET_PATH, i))
-            )
+        try:
+            devices = privileged.get_devices(self.namespace)
+        except privileged.NetworkNamespaceNotFound:
+            return retval
 
-        for name in output:
+        for name in devices:
             if (exclude_loopback and name == LOOPBACK_DEVNAME or
                     exclude_fb_tun_devices and name in FB_TUNNEL_DEVICE_NAMES):
                 continue
             retval.append(IPDevice(name, namespace=self.namespace))
-
         return retval
 
     def get_device_by_ip(self, ip):

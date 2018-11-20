@@ -222,53 +222,31 @@ class TestIpWrapper(base.BaseTestCase):
         self.execute_p = mock.patch.object(ip_lib.IPWrapper, '_execute')
         self.execute = self.execute_p.start()
 
-    @mock.patch('os.path.islink')
-    @mock.patch('os.listdir', return_value=['lo'])
-    def test_get_devices(self, mocked_listdir, mocked_islink):
-        retval = ip_lib.IPWrapper().get_devices()
-        mocked_islink.assert_called_once_with('/sys/class/net/lo')
-        self.assertEqual([], retval)
+    @mock.patch.object(priv_lib, 'get_devices')
+    def test_get_devices(self, mock_get_devices):
+        interfaces = ['br01', 'lo', 'gre0']
+        mock_get_devices.return_value = interfaces
+        devices = ip_lib.IPWrapper(namespace='foo').get_devices()
+        for device in devices:
+            self.assertEqual('br01', device.name)
+            interfaces.remove(device.name)
 
-    @mock.patch('neutron.agent.common.utils.execute')
-    def test_get_devices_namespaces(self, mocked_execute):
-        fake_str = mock.Mock()
-        fake_str.split.return_value = ['lo']
-        mocked_execute.return_value = fake_str
-        retval = ip_lib.IPWrapper(namespace='foo').get_devices()
-        mocked_execute.assert_called_once_with(
-                ['ip', 'netns', 'exec', 'foo', 'find', '/sys/class/net',
-                 '-maxdepth', '1', '-type', 'l', '-printf', '%f '],
-                run_as_root=True, log_fail_as_error=True)
-        self.assertTrue(fake_str.split.called)
-        self.assertEqual([], retval)
-
-    @mock.patch('neutron.agent.common.utils.execute')
-    def test_get_devices_namespaces_ns_not_exists(self, mocked_execute):
-        mocked_execute.side_effect = RuntimeError(
-            "Cannot open network namespace")
-        with mock.patch.object(ip_lib.IpNetnsCommand, 'exists',
-                               return_value=False):
-            retval = ip_lib.IPWrapper(namespace='foo').get_devices()
-            self.assertEqual([], retval)
-
-    @mock.patch('neutron.agent.common.utils.execute')
-    def test_get_devices_namespaces_ns_exists(self, mocked_execute):
-        mocked_execute.side_effect = RuntimeError(
-            "Cannot open network namespace")
-        with mock.patch.object(ip_lib.IpNetnsCommand, 'exists',
-                               return_value=True):
-            self.assertRaises(RuntimeError,
-                              ip_lib.IPWrapper(namespace='foo').get_devices)
-
-    @mock.patch('neutron.agent.common.utils.execute')
-    def test_get_devices_exclude_loopback_and_gre(self, mocked_execute):
-        device_name = 'somedevice'
-        mocked_execute.return_value = 'lo gre0 sit0 ip6gre0 ' + device_name
+    @mock.patch.object(priv_lib, 'get_devices')
+    def test_get_devices_include_loopback_and_gre(self, mock_get_devices):
+        interfaces = ['br01', 'lo', 'gre0']
+        mock_get_devices.return_value = interfaces
         devices = ip_lib.IPWrapper(namespace='foo').get_devices(
-            exclude_loopback=True, exclude_fb_tun_devices=True)
-        somedevice = devices.pop()
-        self.assertEqual(device_name, somedevice.name)
-        self.assertFalse(devices)
+            exclude_loopback=False, exclude_fb_tun_devices=False)
+        for device in devices:
+            self.assertIn(device.name, interfaces)
+            interfaces.remove(device.name)
+        self.assertEqual(0, len(interfaces))
+
+    @mock.patch.object(priv_lib, 'get_devices')
+    def test_get_devices_no_netspace(self, mock_get_devices):
+        mock_get_devices.side_effect = priv_lib.NetworkNamespaceNotFound(
+            netns_name='foo')
+        self.assertEqual([], ip_lib.IPWrapper(namespace='foo').get_devices())
 
     @mock.patch.object(pyroute2.netns, 'listnetns')
     @mock.patch.object(priv_lib, 'list_netns')

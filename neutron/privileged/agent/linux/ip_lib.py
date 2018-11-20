@@ -436,3 +436,19 @@ def list_netns(**kwargs):
     Caller requires raised priveleges to list namespaces
     """
     return netns.listnetns(**kwargs)
+
+
+@privileged.default.entrypoint
+def get_devices(namespace, **kwargs):
+    """List all interfaces in a namespace
+
+    :return: a list of strings with the names of the interfaces in a namespace
+    """
+    try:
+        with _get_iproute(namespace) as ip:
+            return [link.get_attr('IFLA_IFNAME')
+                    for link in ip.get_links(**kwargs)]
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise
