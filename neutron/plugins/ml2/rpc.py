@@ -66,11 +66,16 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             if port['status'] != new_status:
                 return new_status
 
+    @staticmethod
+    def _get_request_details(kwargs):
+        return (kwargs.get('agent_id'),
+                kwargs.get('host'),
+                kwargs.get('device'))
+
     def get_device_details(self, rpc_context, **kwargs):
         """Agent requests device details."""
-        agent_id = kwargs.get('agent_id')
-        device = kwargs.get('device')
-        host = kwargs.get('host')
+        agent_id, host, device = self._get_request_details(kwargs)
+
         # cached networks used for reducing number of network db calls
         # for server internal usage only
         cached_networks = kwargs.get('cached_networks')
@@ -216,9 +221,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
     def update_device_down(self, rpc_context, **kwargs):
         """Device no longer exists on agent."""
         # TODO(garyk) - live migration and port status
-        agent_id = kwargs.get('agent_id')
-        device = kwargs.get('device')
-        host = kwargs.get('host')
+        agent_id, host, device = self._get_request_details(kwargs)
         LOG.debug("Device %(device)s no longer exists at agent "
                   "%(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
@@ -248,9 +251,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
     def update_device_up(self, rpc_context, **kwargs):
         """Device is up on agent."""
-        agent_id = kwargs.get('agent_id')
-        device = kwargs.get('device')
-        host = kwargs.get('host')
+        agent_id, host, device = self._get_request_details(kwargs)
         LOG.debug("Device %(device)s up at agent %(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
         plugin = directory.get_plugin()
