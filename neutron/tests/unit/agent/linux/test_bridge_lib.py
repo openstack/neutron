@@ -18,6 +18,7 @@
 import mock
 
 from neutron.agent.linux import bridge_lib
+from neutron.privileged.agent.linux import ip_lib as priv_lib
 from neutron.tests import base
 
 
@@ -34,6 +35,10 @@ class BridgeLibTest(base.BaseTestCase):
             return_value=True).start()
         ip_wrapper = mock.patch('neutron.agent.linux.ip_lib.IPWrapper').start()
         self.execute = ip_wrapper.return_value.netns.execute
+        self.create_p = mock.patch.object(priv_lib, 'create_interface')
+        self.create = self.create_p.start()
+        self.delete_p = mock.patch.object(priv_lib, 'delete_interface')
+        self.delete = self.delete_p.start()
 
     def _verify_bridge_mock(self, cmd):
         self.execute.assert_called_once_with(cmd, run_as_root=True)
@@ -62,13 +67,16 @@ class BridgeLibTest(base.BaseTestCase):
     def _test_br(self, namespace=None):
         br = bridge_lib.BridgeDevice.addbr(self._BR_NAME, namespace)
         self.assertEqual(namespace, br.namespace)
-        self._verify_bridge_mock(['brctl', 'addbr', self._BR_NAME])
+        self.create.assert_called_once_with(self._BR_NAME, br.namespace,
+                                            'bridge')
 
         br.setfd(0)
-        self._verify_bridge_mock(['brctl', 'setfd', self._BR_NAME, '0'])
+        self._verify_bridge_mock(['ip', 'link', 'set', 'dev', self._BR_NAME,
+                                  'type', 'bridge', 'forward_delay', '0'])
 
         br.disable_stp()
-        self._verify_bridge_mock(['brctl', 'stp', self._BR_NAME, 'off'])
+        self._verify_bridge_mock(['ip', 'link', 'set', 'dev', self._BR_NAME,
+                                  'type', 'bridge', 'stp_state', 0])
 
         br.disable_ipv6()
         cmd = 'net.ipv6.conf.%s.disable_ipv6=1' % self._BR_NAME
@@ -76,14 +84,15 @@ class BridgeLibTest(base.BaseTestCase):
 
         br.addif(self._IF_NAME)
         self._verify_bridge_mock(
-            ['brctl', 'addif', self._BR_NAME, self._IF_NAME])
+            ['ip', 'link', 'set', 'dev', self._IF_NAME,
+             'master', self._BR_NAME])
 
         br.delif(self._IF_NAME)
         self._verify_bridge_mock(
-            ['brctl', 'delif', self._BR_NAME, self._IF_NAME])
+            ['ip', 'link', 'set', 'dev', self._IF_NAME, 'nomaster'])
 
         br.delbr()
-        self._verify_bridge_mock(['brctl', 'delbr', self._BR_NAME])
+        self.delete.assert_called_once_with(self._BR_NAME, br.namespace)
 
     def test_addbr_with_namespace(self):
         self._test_br(self._NAMESPACE)
@@ -92,7 +101,7 @@ class BridgeLibTest(base.BaseTestCase):
         self._test_br()
 
     def test_addbr_exists(self):
-        self.execute.side_effect = RuntimeError()
+        self.create.side_effect = RuntimeError()
         with mock.patch.object(bridge_lib.BridgeDevice, 'exists',
                                return_value=True):
             bridge_lib.BridgeDevice.addbr(self._BR_NAME)
