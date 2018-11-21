@@ -109,9 +109,9 @@ and filter it out at DB layer. This can be used by out of tree extensions.
 
 :code:`register_filter_hook_on_model()` is a complementary implementation in
 the :code:`NeutronDbObject` layer to DB layer's
-:code:`register_model_query_hook()`, which adds support for extra filtering
-during construction of SQL query. When extension defines extra query hook, it
-needs to be registered using the objects
+:code:`neutron_lib.db.model_query.register_hook()`, which adds support for
+extra filtering during construction of SQL query. When extension defines
+extra query hook, it needs to be registered using the objects
 :code:`register_filter_hook_on_model()`, if it is not already included in the
 objects :code:`fields`.
 
