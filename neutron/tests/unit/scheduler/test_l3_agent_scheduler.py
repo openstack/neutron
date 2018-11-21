@@ -885,6 +885,36 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
         self.assertTrue(
             l3plugin.update_arp_entry_for_dvr_service_port.called)
 
+    def test__notify_l3_agent_when_unbound_port_migrates_to_bound_host(self):
+        port_id = 'fake-port'
+        kwargs = {
+            'context': self.adminContext,
+            'original_port': {
+                'id': port_id,
+                portbindings.HOST_ID: '',
+                'device_owner': '',
+                'admin_state_up': True,
+            },
+            'port': {
+                'id': port_id,
+                portbindings.HOST_ID: 'vm-host',
+                'device_owner': DEVICE_OWNER_COMPUTE,
+                'mac_address': '02:04:05:17:18:19'
+            },
+        }
+        port = kwargs.get('port')
+        plugin = directory.get_plugin()
+        l3plugin = mock.Mock()
+        l3plugin.supported_extension_aliases = [
+            'router', constants.L3_AGENT_SCHEDULER_EXT_ALIAS,
+            constants.L3_DISTRIBUTED_EXT_ALIAS
+        ]
+        directory.add_plugin(plugin_constants.L3, l3plugin)
+        l3_dvrscheduler_db._notify_l3_agent_port_update(
+            'port', 'after_update', plugin, **kwargs)
+        l3plugin.dvr_handle_new_service_port.assert_called_once_with(
+            self.adminContext, port, unbound_migrate=True)
+
     def test__notify_l3_agent_update_port_no_removing_routers(self):
         port_id = 'fake-port'
         kwargs = {
