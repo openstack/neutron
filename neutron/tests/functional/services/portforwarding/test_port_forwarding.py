@@ -161,6 +161,46 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
                           self.pf_plugin.create_floatingip_port_forwarding,
                           self.context, self.fip['id'], self.port_forwarding)
 
+    def test_create_port_forwarding_port_in_used_by_fip(self):
+        normal_fip = self._create_floatingip(self.ext_net['id'])
+        self._update_floatingip(normal_fip['id'], {'port_id': self.port['id']})
+        self.assertRaises(
+            pf_exc.PortHasBindingFloatingIP,
+            self.pf_plugin.create_floatingip_port_forwarding,
+            self.context, self.fip['id'], self.port_forwarding)
+
+    def test_update_port_forwarding_port_in_used_by_fip(self):
+        normal_fip = self._create_floatingip(self.ext_net['id'])
+        normal_port = self._create_port(
+            self.fmt, self.net['id']).json['port']
+        self._update_floatingip(
+            normal_fip['id'], {'port_id': normal_port['id']})
+
+        res = self.pf_plugin.create_floatingip_port_forwarding(
+            self.context, self.fip['id'], self.port_forwarding)
+        expect = {
+            "external_port": 2225,
+            "internal_port": 25,
+            "internal_port_id": self.port['id'],
+            "protocol": "tcp",
+            "internal_ip_address": self.port['fixed_ips'][0]['ip_address'],
+            'id': mock.ANY,
+            'router_id': self.router['id'],
+            'floating_ip_address': self.fip['floating_ip_address'],
+            'floatingip_id': self.fip['id']}
+        self.assertEqual(expect, res)
+
+        # Directly update port forwarding to a port which already has
+        # bound floating IP.
+        self.port_forwarding[apidef.RESOURCE_NAME].update(
+            {apidef.INTERNAL_PORT_ID: normal_port['id'],
+             apidef.INTERNAL_IP_ADDRESS:
+                 normal_port['fixed_ips'][0]['ip_address']})
+        self.assertRaises(
+            pf_exc.PortHasBindingFloatingIP,
+            self.pf_plugin.update_floatingip_port_forwarding,
+            self.context, res['id'], self.fip['id'], self.port_forwarding)
+
     def test_update_floatingip_port_forwarding(self):
         # create a test port forwarding
         res = self.pf_plugin.create_floatingip_port_forwarding(

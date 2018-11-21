@@ -27,3 +27,10 @@ class PortForwardingNotSupportFilterField(n_exc.BadRequest):
 
 class FipInUseByPortForwarding(n_exc.InUse):
     message = _("Floating IP %(id)s in use by Port Forwarding resources.")
+
+
+class PortHasBindingFloatingIP(n_exc.InUse):
+    message = _("Cannot create port forwarding to floating IP "
+                "%(floating_ip_address)s (%(fip_id)s) with port %(port_id)s "
+                "using fixed IP %(fixed_ip)s, as that port already "
+                "has a binding floating IP.")
