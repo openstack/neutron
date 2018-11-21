@@ -983,8 +983,7 @@ class _DVRAgentInterfaceMixin(object):
         try:
             l3_agent_db = self._get_agent_by_type_and_host(
                 context, const.AGENT_TYPE_L3, host)
-        except agent_exc.AgentNotFoundByTypeHost(
-            agent_type=const.AGENT_TYPE_L3, host=host):
+        except agent_exc.AgentNotFoundByTypeHost:
             LOG.warning("%(ag)s agent not found for the given host: %(host)s",
                         {'ag': const.AGENT_TYPE_L3,
                          'host': host})

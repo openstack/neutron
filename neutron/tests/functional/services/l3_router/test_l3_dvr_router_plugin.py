@@ -20,7 +20,6 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
-from neutron_lib.exceptions import agent as agent_exc
 
 from neutron_lib import constants
 from neutron_lib import context
@@ -338,12 +337,9 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 self.context, router['id'],
                 {'subnet_id': int_subnet['subnet']['id']})
             if test_agent_mode is None:
-                self.assertRaises(
-                    agent_exc.AgentNotFoundByTypeHost,
-                    self.l3_plugin.create_fip_agent_gw_port_if_not_exists,
-                    self.context,
-                    ext_net_id,
-                    'host1')
+                self.assertIsNone(
+                    self.l3_plugin.create_fip_agent_gw_port_if_not_exists(
+                        self.context, ext_net_id, 'host1'))
                 return
             floating_ip = {'floating_network_id': ext_net_id,
                            'router_id': router['id'],
