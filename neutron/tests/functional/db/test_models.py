@@ -15,10 +15,10 @@
 
 import sqlalchemy
 
-from neutron.tests import base
+from neutron.tests.functional import base
 
 
-class TestDBCreation(base.BaseTestCase):
+class TestDBCreation(base.BaseLoggingTestCase):
     """Check database schema can be created without conflicts.
 
     For each test case is created a SQLite memory database.

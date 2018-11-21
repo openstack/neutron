@@ -13,10 +13,10 @@
 from neutron.agent.linux import ipset_manager
 from neutron.cmd import ipset_cleanup
 from neutron.conf.agent import cmd
-from neutron.tests import base
+from neutron.tests.functional import base
 
 
-class TestIPSetCLIConfig(base.BaseTestCase):
+class TestIPSetCLIConfig(base.BaseLoggingTestCase):
 
     def setup_config(self, args=None):
         self.conf = ipset_cleanup.setup_conf()

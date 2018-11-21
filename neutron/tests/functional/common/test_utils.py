@@ -13,10 +13,10 @@
 import testtools
 
 from neutron.common import utils
-from neutron.tests import base
+from neutron.tests.functional import base
 
 
-class TestWaitUntilTrue(base.BaseTestCase):
+class TestWaitUntilTrue(base.BaseLoggingTestCase):
     def test_wait_until_true_predicate_succeeds(self):
         utils.wait_until_true(lambda: True)
 

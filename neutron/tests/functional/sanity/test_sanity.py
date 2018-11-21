@@ -14,11 +14,10 @@
 #    under the License.
 
 from neutron.cmd.sanity import checks
-from neutron.tests import base
-from neutron.tests.functional import base as functional_base
+from neutron.tests.functional import base
 
 
-class SanityTestCase(base.BaseTestCase):
+class SanityTestCase(base.BaseLoggingTestCase):
     """Sanity checks that do not require root access.
 
     Tests that just call checks.some_function() are to ensure that
@@ -42,7 +41,7 @@ class SanityTestCase(base.BaseTestCase):
         checks.ip6tables_supported()
 
 
-class SanityTestCaseRoot(functional_base.BaseSudoTestCase):
+class SanityTestCaseRoot(base.BaseSudoTestCase):
     """Sanity checks that require root access.
 
     Tests that just call checks.some_function() are to ensure that

@@ -14,14 +14,14 @@
 #    under the License.
 
 from neutron.agent.windows import ip_lib
-from neutron.tests import base
+from neutron.tests.functional import base
 
 WRONG_IP = '0.0.0.0'
 TEST_IP = '127.0.0.1'
 TEST_MAC = '00:00:00:00:00:00'
 
 
-class IpLibTestCase(base.BaseTestCase):
+class IpLibTestCase(base.BaseLoggingTestCase):
 
     def test_ipwrapper_get_device_by_ip_None(self):
         self.assertIsNone(ip_lib.IPWrapper().get_device_by_ip(WRONG_IP))

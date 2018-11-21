@@ -19,15 +19,15 @@ from six import moves
 
 from neutron.agent.linux import external_process
 from neutron.common import utils
-from neutron.tests import base
 from neutron.tests.functional.agent.linux import simple_daemon
+from neutron.tests.functional import base
 
 
 UUID_FORMAT = "test-uuid-%d"
 SERVICE_NAME = "service"
 
 
-class BaseTestProcessMonitor(base.BaseTestCase):
+class BaseTestProcessMonitor(base.BaseLoggingTestCase):
 
     def setUp(self):
         super(BaseTestProcessMonitor, self).setUp()
