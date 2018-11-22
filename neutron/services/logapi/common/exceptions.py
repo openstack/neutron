@@ -68,7 +68,7 @@ class RouterNotEnabledSnat(n_exc.NeutronException):
 
 
 class EventsDisabled(n_exc.InvalidInput):
-    message = _('List of events %(events)s were disabled for'
+    message = _('List of events %(events)s were disabled for '
                 '%(resource_type)s.')
 
 

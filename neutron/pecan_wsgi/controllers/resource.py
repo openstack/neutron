@@ -88,7 +88,7 @@ class ItemController(utils.NeutronPecanController):
             collection_path)
         if not controller:
             if collection not in self._member_actions:
-                LOG.warning("No controller found for: %s - returning"
+                LOG.warning("No controller found for: %s - returning "
                             "response code 404", collection)
                 pecan.abort(404)
             # collection is a member action, so we create a new controller

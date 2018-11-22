@@ -120,7 +120,7 @@ core_opts = [
     cfg.BoolOpt('filter_validation', default=True,
                 help=_('If True, then allow plugins to decide '
                        'whether to perform validations on filter parameters. '
-                       'Filter validation is enabled if this config'
+                       'Filter validation is enabled if this config '
                        'is turned on and it is supported by all plugins')),
     cfg.IntOpt('global_physnet_mtu', default=constants.DEFAULT_NETWORK_MTU,
                deprecated_name='segment_mtu', deprecated_group='ml2',
