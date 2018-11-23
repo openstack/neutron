@@ -1,0 +1,5 @@
+- hosts: all
+  roles:
+    - fetch_journal_log
+    - fetch-tox-output
+    - fetch-subunit-output

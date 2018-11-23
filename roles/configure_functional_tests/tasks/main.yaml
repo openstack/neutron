@@ -1,0 +1,19 @@
+- shell:
+    cmd: |
+        set -e
+        set -x
+        GATE_STACK_USER={{ ansible_user }}
+        IS_GATE=True
+
+        BASE_DIR={{ base_dir }}
+        GATE_DEST={{ gate_dest_dir }}
+        NEUTRON_PATH={{ neutron_dir }}
+        DEVSTACK_PATH={{ devstack_dir }}
+        VENV={{ tests_venv }}
+
+        source $DEVSTACK_PATH/functions
+        source $NEUTRON_PATH/devstack/lib/ovs
+        source $NEUTRON_PATH/tools/configure_for_func_testing.sh
+
+        configure_host_for_func_testing
+    executable: /bin/bash

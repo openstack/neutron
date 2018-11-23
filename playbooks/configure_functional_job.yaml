@@ -1,0 +1,4 @@
+- hosts: all
+  roles:
+    - setup_logdir
+    - configure_functional_tests

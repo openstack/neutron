@@ -102,24 +102,46 @@
 
 - job:
     name: neutron-functional
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-functional/run.yaml
-    post-run: playbooks/legacy/neutron-functional/post.yaml
+    parent: devstack-minimal
+    description: Run neutron functional tests
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - git.openstack.org/openstack-dev/devstack
       - openstack/neutron
+    roles:
+      - zuul: openstack-dev/devstack
+    pre-run: playbooks/configure_functional_job.yaml
+    run: playbooks/run_functional_job.yaml
+    post-run: playbooks/post_functional_job.yaml
     irrelevant-files:
       - ^.*\.rst$
       - ^doc/.*$
       - ^neutron/locale/.*$
       - ^releasenotes/.*$
+    vars:
+      devstack_services:
+        # Ignore any default set by devstack. Emit a "disable_all_services".
+        base: false
+      devstack_localrc:
+        USE_PYTHON3: true
+        INSTALL_TESTONLY_PACKAGES: true
+        DATABASE_PASSWORD: stackdb
+      tox_envlist: dsvm-functional
+      tox_install_siblings: false
+      zuul_copy_output:
+        # We need to copy directory with logs to have it in job artifacts also,
+        # /opt/stack/logs is default logs directory defined in neutron's
+        # tox.ini file
+        '{{ devstack_base_dir }}/logs/dsvm-functional-logs': logs
 
 - job:
     name: neutron-functional-python27
     parent: neutron-functional
-    run: playbooks/legacy/neutron-functional-python27/run.yaml
-    post-run: playbooks/legacy/neutron-functional-python27/post.yaml
+    description: Run neutron functional tests with Python 2.7
+    vars:
+      devstack_localrc:
+        USE_PYTHON3: false
+      tox_envlist: dsvm-functional-python27
 
 - job:
     name: neutron-fullstack

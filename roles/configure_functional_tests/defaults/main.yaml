@@ -1,0 +1,5 @@
+tests_venv: "{{ tox_envlist }}"
+base_dir: "{{ ansible_user_dir }}/src/git.openstack.org"
+gate_dest_dir: "{{ base_dir }}/openstack"
+devstack_dir: "{{ base_dir }}/openstack-dev/devstack"
+neutron_dir: "{{ gate_dest_dir }}/neutron"
