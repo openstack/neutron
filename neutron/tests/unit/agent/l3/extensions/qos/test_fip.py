@@ -128,7 +128,7 @@ class QosExtensionBaseTestCase(test_agent.BasicRouterOperationsFramework):
             'L3AgentExtensionAPI.get_router_info').start()
         self.get_router_info.side_effect = _mock_get_router_info
 
-        self.agent_api = l3_ext_api.L3AgentExtensionAPI(None)
+        self.agent_api = l3_ext_api.L3AgentExtensionAPI(None, None)
         self.fip_qos_ext.consume_api(self.agent_api)
 
 

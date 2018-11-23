@@ -34,7 +34,9 @@ from testtools import matchers
 
 from neutron.agent.common import resource_processing_queue
 from neutron.agent.l3 import agent as l3_agent
+from neutron.agent.l3 import dvr_edge_ha_router
 from neutron.agent.l3 import dvr_edge_router as dvr_router
+from neutron.agent.l3 import dvr_local_router
 from neutron.agent.l3 import dvr_router_base
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import ha_router
@@ -427,6 +429,67 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 for r_id in stale_router_ids]
             self.assertEqual(len(stale_router_ids), destroy_proxy.call_count)
             destroy_proxy.assert_has_calls(expected_calls, any_order=True)
+
+    def test__create_router_legacy_agent(self):
+        router = {'distributed': False, 'ha': False}
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_info = agent._create_router(_uuid(), router)
+
+        self.assertEqual(legacy_router.LegacyRouter, type(router_info))
+
+    def test__create_router_ha_agent(self):
+        router = {'distributed': False, 'ha': True}
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_info = agent._create_router(_uuid(), router)
+
+        self.assertEqual(ha_router.HaRouter, type(router_info))
+
+    def test__create_router_dvr_agent(self):
+        router = {'distributed': True, 'ha': False}
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_info = agent._create_router(_uuid(), router)
+
+        self.assertEqual(dvr_local_router.DvrLocalRouter, type(router_info))
+
+    def test__create_router_dvr_agent_with_dvr_snat_mode(self):
+        router = {'distributed': True, 'ha': False}
+
+        self.conf.set_override('agent_mode',
+                               lib_constants.L3_AGENT_MODE_DVR_SNAT)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_info = agent._create_router(_uuid(), router)
+
+        self.assertEqual(dvr_router.DvrEdgeRouter, type(router_info))
+
+    def test__create_router_dvr_ha_agent(self):
+        router = {'distributed': True, 'ha': True}
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_info = agent._create_router(_uuid(), router)
+
+        self.assertEqual(dvr_local_router.DvrLocalRouter, type(router_info))
+
+    def test__create_router_dvr_ha_agent_with_dvr_snat_mode(self):
+        router = {'distributed': True, 'ha': True,
+                  lib_constants.HA_INTERFACE_KEY: None}
+
+        self.conf.set_override('agent_mode',
+                               lib_constants.L3_AGENT_MODE_DVR_SNAT)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_info = agent._create_router(_uuid(), router)
+
+        self.assertEqual(dvr_router.DvrEdgeRouter, type(router_info))
+
+        router = {'distributed': True, 'ha': True,
+                  lib_constants.HA_INTERFACE_KEY: True}
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_info = agent._create_router(_uuid(), router)
+
+        self.assertEqual(dvr_edge_ha_router.DvrEdgeHaRouter, type(router_info))
 
     def test_router_info_create(self):
         id = _uuid()

@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    A new parameter ``router_factory`` has been added to
+    ``neutron.agent.l3.L3AgentExtensionAPI``. Developers can register
+    ``neutron.agent.l3.agent.RouterInfo`` class and delegate it for
+    ``RouterInfo`` creation.
+
+    Extensions can extend ``RouterInfo`` itself which correspond to each
+    features (ha, distribtued, ha + distributed).

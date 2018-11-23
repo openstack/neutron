@@ -75,7 +75,7 @@ class L3LoggingExtBaseTestCase(test_agent.BasicRouterOperationsFramework):
             'neutron.agent.l3.l3_agent_extension_api.'
             'L3AgentExtensionAPI.get_router_info').start()
         self.get_router_info.side_effect = _mock_get_router_info
-        self.agent_api = l3_ext_api.L3AgentExtensionAPI(None)
+        self.agent_api = l3_ext_api.L3AgentExtensionAPI(None, None)
         mock.patch(
             'neutron.manager.NeutronManager.load_class_for_provider').start()
 

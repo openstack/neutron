@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
 import collections
 
 import netaddr
@@ -19,6 +20,7 @@ from neutron_lib import constants as lib_constants
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
+import six
 
 from neutron._i18n import _
 from neutron.agent.l3 import namespaces
@@ -41,7 +43,8 @@ ADDRESS_SCOPE_MARK_ID_MAX = 2048
 DEFAULT_ADDRESS_SCOPE = "noscope"
 
 
-class RouterInfo(object):
+@six.add_metaclass(abc.ABCMeta)
+class BaseRouterInfo(object):
 
     def __init__(self,
                  agent,
@@ -52,16 +55,88 @@ class RouterInfo(object):
                  use_ipv6=False):
         self.agent = agent
         self.router_id = router_id
-        self.agent_conf = agent_conf
-        self.ex_gw_port = None
+        # Invoke the setter for establishing initial SNAT action
         self._snat_enabled = None
-        self.fip_map = {}
+        self.router = router
+        self.agent_conf = agent_conf
+        self.driver = interface_driver
+        self.use_ipv6 = use_ipv6
+
         self.internal_ports = []
+        self.ns_name = None
+        self.process_monitor = None
+
+    def initialize(self, process_monitor):
+        """Initialize the router on the system.
+
+        This differs from __init__ in that this method actually affects the
+        system creating namespaces, starting processes, etc.  The other merely
+        initializes the python object.  This separates in-memory object
+        initialization from methods that actually go do stuff to the system.
+
+        :param process_monitor: The agent's process monitor instance.
+        """
+        self.process_monitor = process_monitor
+
+    @property
+    def router(self):
+        return self._router
+
+    @router.setter
+    def router(self, value):
+        self._router = value
+        if not self._router:
+            return
+        # enable_snat by default if it wasn't specified by plugin
+        self._snat_enabled = self._router.get('enable_snat', True)
+
+    @abc.abstractmethod
+    def delete(self, agent):
+        pass
+
+    @abc.abstractmethod
+    def process(self, agent):
+        """Process updates to this router
+
+        This method is the point where the agent requests that updates be
+        applied to this router.
+
+        :param agent: Passes the agent in order to send RPC messages.
+        """
+        pass
+
+    def get_ex_gw_port(self):
+        return self.router.get('gw_port')
+
+    def get_gw_ns_name(self):
+        return self.ns_name
+
+    def get_internal_device_name(self, port_id):
+        return (INTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
+
+    def get_external_device_name(self, port_id):
+        return (EXTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
+
+    def get_external_device_interface_name(self, ex_gw_port):
+        return self.get_external_device_name(ex_gw_port['id'])
+
+
+class RouterInfo(BaseRouterInfo):
+
+    def __init__(self,
+                 agent,
+                 router_id,
+                 router,
+                 agent_conf,
+                 interface_driver,
+                 use_ipv6=False):
+        super(RouterInfo, self).__init__(agent, router_id, router, agent_conf,
+                                         interface_driver, use_ipv6)
+
+        self.ex_gw_port = None
+        self.fip_map = {}
         self.pd_subnets = {}
         self.floating_ips = set()
-        # Invoke the setter for establishing initial SNAT action
-        self.router = router
-        self.use_ipv6 = use_ipv6
         ns = self.create_router_namespace_object(
             router_id, agent_conf, interface_driver, use_ipv6)
         self.router_namespace = ns
@@ -76,8 +151,6 @@ class RouterInfo(object):
         self.initialize_address_scope_iptables()
         self.initialize_metadata_iptables()
         self.routes = []
-        self.driver = interface_driver
-        self.process_monitor = None
         # radvd is a neutron.agent.linux.ra.DaemonMonitor
         self.radvd = None
         self.centralized_port_forwarding_fip_set = set()
@@ -85,16 +158,7 @@ class RouterInfo(object):
         self.qos_gateway_ips = set()
 
     def initialize(self, process_monitor):
-        """Initialize the router on the system.
-
-        This differs from __init__ in that this method actually affects the
-        system creating namespaces, starting processes, etc.  The other merely
-        initializes the python object.  This separates in-memory object
-        initialization from methods that actually go do stuff to the system.
-
-        :param process_monitor: The agent's process monitor instance.
-        """
-        self.process_monitor = process_monitor
+        super(RouterInfo, self).initialize(process_monitor)
         self.radvd = ra.DaemonMonitor(self.router_id,
                                       self.ns_name,
                                       process_monitor,
@@ -108,32 +172,8 @@ class RouterInfo(object):
         return namespaces.RouterNamespace(
             router_id, agent_conf, iface_driver, use_ipv6)
 
-    @property
-    def router(self):
-        return self._router
-
-    @router.setter
-    def router(self, value):
-        self._router = value
-        if not self._router:
-            return
-        # enable_snat by default if it wasn't specified by plugin
-        self._snat_enabled = self._router.get('enable_snat', True)
-
     def is_router_master(self):
         return True
-
-    def get_internal_device_name(self, port_id):
-        return (INTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
-
-    def get_external_device_name(self, port_id):
-        return (EXTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
-
-    def get_external_device_interface_name(self, ex_gw_port):
-        return self.get_external_device_name(ex_gw_port['id'])
-
-    def get_gw_ns_name(self):
-        return self.ns_name
 
     def _update_routing_table(self, operation, route, namespace):
         cmd = ['ip', 'route', operation, 'to', route['destination'],
@@ -158,9 +198,6 @@ class RouterInfo(object):
         for route in removes:
             LOG.debug("Removed route entry is '%s'", route)
             self.update_routing_table('delete', route)
-
-    def get_ex_gw_port(self):
-        return self.router.get('gw_port')
 
     def get_floating_ips(self):
         """Filter Floating IPs to be hosted on this agent."""
@@ -1170,13 +1207,6 @@ class RouterInfo(object):
 
     @common_utils.exception_logger()
     def process(self):
-        """Process updates to this router
-
-        This method is the point where the agent requests that updates be
-        applied to this router.
-
-        :param agent: Passes the agent in order to send RPC messages.
-        """
         LOG.debug("Process updates, router %s", self.router['id'])
         self.centralized_port_forwarding_fip_set = set(self.router.get(
             'port_forwardings_fip_set', set()))
