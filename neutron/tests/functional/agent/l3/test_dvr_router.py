@@ -107,7 +107,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         ip4_rules_list = ip_lib.list_ip_rules(router1.ns_name,
                                               lib_constants.IP_VERSION_4)
         self.assertEqual(6, len(ip4_rules_list))
-        # IPRule list should have 6 entries.
+        # list_ip_rules list should have 6 entries.
         # Three entries from 'default', 'main' and 'local' table.
         # One rule for the floatingip.
         # The remaining 2 is for the two router interfaces(csnat ports).

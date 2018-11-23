@@ -404,7 +404,6 @@ class FipNamespace(namespaces.Namespace):
                     # Remove the fip namespace rules and routes associated to
                     # fpr interface route table.
                     tbl_index = ri._get_snat_idx(fip_2_rtr)
-                    fip_rt_rule = ip_lib.IPRule(namespace=fip_ns_name)
                     # Flush the table
                     fg_device.route.flush(lib_constants.IP_VERSION_4,
                                           table=tbl_index)
@@ -416,10 +415,9 @@ class FipNamespace(namespaces.Namespace):
                     # link-local address IP version. Using any of those
                     # is equivalent to using 'from all' for iproute2.
                     rule_ip = lib_constants.IP_ANY[fip_2_rtr.ip.version]
-                    fip_rt_rule.rule.delete(ip=rule_ip,
-                                            iif=fip_2_rtr_name,
-                                            table=tbl_index,
-                                            priority=tbl_index)
+                    ip_lib.delete_ip_rule(fip_ns_name, ip=rule_ip,
+                                          iif=fip_2_rtr_name, table=tbl_index,
+                                          priority=tbl_index)
             self.local_subnets.release(ri.router_id)
             ri.rtr_fip_subnet = None
 

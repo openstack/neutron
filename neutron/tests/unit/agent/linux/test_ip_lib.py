@@ -606,9 +606,9 @@ class TestIpRuleCommand(TestIPCmdBase):
     def setUp(self):
         super(TestIpRuleCommand, self).setUp()
         self.parent._as_root.return_value = ''
-        self.parent.namespace = uuidutils.generate_uuid()
+        self.ns = uuidutils.generate_uuid()
+        self.parent.namespace = self.ns
         self.command = 'rule'
-        self.rule_cmd = ip_lib.IpRuleCommand(self.parent)
         self._mock_priv_list_ip_rules = mock.patch.object(priv_lib,
                                                           'list_ip_rules')
         self.mock_priv_list_ip_rules = self._mock_priv_list_ip_rules.start()
@@ -637,54 +637,19 @@ class TestIpRuleCommand(TestIPCmdBase):
 
     def _test_add_rule_exists(self, ip, table, priority, output):
         self.parent._as_root.return_value = output
-        with mock.patch.object(self.rule_cmd, '_exists', return_value=True) \
+        with mock.patch.object(ip_lib, '_exist_ip_rule', return_value=True) \
                 as mock_exists:
-            self.rule_cmd.add(ip, table=table, priority=priority)
+            ip_lib.add_ip_rule(self.ns, ip, table=table, priority=priority)
             kwargs = {'from': ip, 'priority': str(priority),
                       'table': str(table), 'type': 'unicast'}
             mock_exists.assert_called_once_with(
                 common_utils.get_ip_version(ip), **kwargs)
 
     def _test_delete_rule(self, ip, table, priority):
-        ip_version = netaddr.IPNetwork(ip).version
-        self.rule_cmd.delete(ip, table=table, priority=priority)
-        self._assert_sudo([ip_version],
-                          ('del', 'from', ip, 'priority', str(priority),
-                           'table', str(table), 'type', 'unicast'))
-
-    def test__make_canonical_all_v4(self):
-        actual = self.rule_cmd._make_canonical(4, {'from': 'all'})
-        self.assertEqual({'from': '0.0.0.0/0', 'type': 'unicast'}, actual)
-
-    def test__make_canonical_all_v6(self):
-        actual = self.rule_cmd._make_canonical(6, {'from': 'all'})
-        self.assertEqual({'from': '::/0', 'type': 'unicast'}, actual)
-
-    def test__make_canonical_lookup(self):
-        actual = self.rule_cmd._make_canonical(6, {'lookup': 'table'})
-        self.assertEqual({'table': 'table', 'type': 'unicast'}, actual)
-
-    def test__make_canonical_iif(self):
-        actual = self.rule_cmd._make_canonical(6, {'iif': 'iface_name'})
-        self.assertEqual({'iif': 'iface_name', 'type': 'unicast'}, actual)
-
-    def test__make_canonical_fwmark(self):
-        actual = self.rule_cmd._make_canonical(6, {'fwmark': '0x400'})
-        self.assertEqual({'fwmark': '0x400/0xffffffff',
-                          'type': 'unicast'}, actual)
-
-    def test__make_canonical_fwmark_with_mask(self):
-        actual = self.rule_cmd._make_canonical(6, {'fwmark': '0x400/0x00ff'})
-        self.assertEqual({'fwmark': '0x400/0xff', 'type': 'unicast'}, actual)
-
-    def test__make_canonical_fwmark_integer(self):
-        actual = self.rule_cmd._make_canonical(6, {'fwmark': 0x400})
-        self.assertEqual({'fwmark': '0x400/0xffffffff',
-                          'type': 'unicast'}, actual)
-
-    def test__make_canonical_fwmark_iterable(self):
-        actual = self.rule_cmd._make_canonical(6, {'fwmark': (0x400, 0xffff)})
-        self.assertEqual({'fwmark': '0x400/0xffff', 'type': 'unicast'}, actual)
+        with mock.patch.object(priv_lib, 'delete_ip_rule') as mock_delete:
+            ip_lib.delete_ip_rule(self.ns, ip, table=table, priority=priority)
+            args = ip_lib._make_pyroute2_args(ip, None, table, priority, None)
+            mock_delete.assert_called_with(self.ns, **args)
 
     def test_add_rule_v4(self):
         self._test_add_rule('192.168.45.100', None, 2, 100)
