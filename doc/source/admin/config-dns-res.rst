@@ -73,6 +73,10 @@ one DNS resolver, repeat the option multiple times.
      You can use this option in combination with the previous one in order
      to replace all existing DNS resolver addresses with new ones.
 
+You can also set the DNS resolver address to ``0.0.0.0`` for IPv4 subnets,
+or ``::`` for IPv6 subnets, which are special values that indicate to the
+DHCP agent that it should not announce any DNS resolver at all on the subnet.
+
 .. note::
    When DNS resolvers are explicitly specified for a subnet this way, that
    setting will take precedence over the options presented in case 2.
