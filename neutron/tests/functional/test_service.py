@@ -17,11 +17,11 @@ from oslo_config import cfg
 from oslo_service import service
 
 from neutron import service as neutron_service
-from neutron.tests import base
+from neutron.tests.functional import base
 from neutron.tests.functional import test_server
 
 
-class TestService(base.BaseTestCase):
+class TestService(base.BaseLoggingTestCase):
 
     def test_api_workers_default(self):
         self.assertEqual(processutils.get_worker_count(),

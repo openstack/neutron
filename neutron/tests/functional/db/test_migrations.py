@@ -32,6 +32,7 @@ from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import cli as migration
 from neutron.db.migration.models import head as head_models
 from neutron.tests import base as test_base
+from neutron.tests.functional import base as functional_base
 from neutron.tests.unit import testlib_api
 
 cfg.CONF.import_opt('core_plugin', 'neutron.conf.common')
@@ -348,7 +349,8 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
 
 class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
                                 _TestModelsMigrations,
-                                testlib_api.SqlTestCaseLight):
+                                testlib_api.SqlTestCaseLight,
+                                functional_base.BaseLoggingTestCase):
 
     def test_check_mysql_engine(self):
         engine = self.get_engine()

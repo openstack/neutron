@@ -19,10 +19,10 @@ from neutron._i18n import _
 from neutron.agent.common import async_process
 from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
-from neutron.tests import base
+from neutron.tests.functional import base
 
 
-class AsyncProcessTestFramework(base.BaseTestCase):
+class AsyncProcessTestFramework(base.BaseLoggingTestCase):
 
     def setUp(self):
         super(AsyncProcessTestFramework, self).setUp()

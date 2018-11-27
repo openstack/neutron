@@ -21,12 +21,12 @@ from neutron_lib import fixture
 
 from neutron.api import extensions
 from neutron import policy
-from neutron.tests import base
+from neutron.tests.functional import base
 
 TEST_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-class APIPolicyTestCase(base.BaseTestCase):
+class APIPolicyTestCase(base.BaseLoggingTestCase):
     """Base class for API policy tests
 
     Tests for REST API policy checks. Ideally this would be done against an

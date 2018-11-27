@@ -28,7 +28,7 @@ import psutil
 from neutron.common import utils
 from neutron import manager
 from neutron import service
-from neutron.tests import base
+from neutron.tests.functional import base
 from neutron import wsgi
 
 
@@ -41,7 +41,7 @@ FAKE_START_MSG = b"start"
 TARGET_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
 
-class TestNeutronServer(base.BaseTestCase):
+class TestNeutronServer(base.BaseLoggingTestCase):
     def setUp(self):
         super(TestNeutronServer, self).setUp()
         self.service_pid = None

@@ -16,10 +16,10 @@ from oslo_utils import uuidutils
 
 from neutron.agent.linux import ip_lib
 from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
-from neutron.tests import base
+from neutron.tests.functional import base
 
 
-class GetDevicesTestCase(base.BaseTestCase):
+class GetDevicesTestCase(base.BaseLoggingTestCase):
 
     def _remove_ns(self, namespace):
         priv_ip_lib.remove_netns(namespace)
