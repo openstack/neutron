@@ -90,16 +90,8 @@ def apply_filters(query, model, filters, context=None):
                     # do multiple equals matches
                     query = query.filter(
                         or_(*[column == v for v in value]))
-                elif isinstance(value, obj_utils.StringMatchingFilterObj):
-                    if value.is_contains:
-                        query = query.filter(
-                            column.contains(value.contains))
-                    elif value.is_starts:
-                        query = query.filter(
-                            column.startswith(value.starts))
-                    elif value.is_ends:
-                        query = query.filter(
-                            column.endswith(value.ends))
+                elif isinstance(value, obj_utils.FilterObj):
+                    query = query.filter(value.filter(column))
                 elif None in value:
                     # in_() operator does not support NULL element so we have
                     # to do multiple equals matches
