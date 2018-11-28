@@ -1982,6 +1982,10 @@ class TestOvsNeutronAgent(object):
                 failed_devices,
                 Exception('Fake exception to get out of the loop')]
             check_ovs_status.side_effect = args
+
+            if self.agent.enable_tunneling:
+                self.agent.agent_state.pop("start_flag")
+
             try:
                 self.agent.daemon_loop()
             except Exception:
@@ -2011,6 +2015,8 @@ class TestOvsNeutronAgent(object):
             self.assertTrue(reset_tunnel_ofports.called)
             self.assertTrue(setup_tunnel_br_flows.called)
             self.assertTrue(setup_tunnel_br.called)
+            if self.agent.enable_tunneling:
+                self.assertTrue(self.agent.agent_state.get('start_flag'))
 
     def test_ovs_status(self):
         self._test_ovs_status(constants.OVS_NORMAL,
