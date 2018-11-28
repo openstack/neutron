@@ -300,3 +300,38 @@
           neutron:
             network: -1
             port: 1000
+    -
+      title: Floating IP related workloads
+      workloads:
+        -
+          scenario:
+            NeutronNetworks.create_and_delete_floating_ips:
+              floating_network: "public"
+              floating_ip_args: {}
+          runner:
+            constant:
+              times: 10
+              concurrency: 5
+          contexts:
+            users:
+              tenants: 2
+              users_per_tenant: 3
+            quotas:
+              neutron:
+                floatingip: -1
+        -
+          scenario:
+            NeutronNetworks.create_and_list_floating_ips:
+              floating_network: "public"
+              floating_ip_args: {}
+          runner:
+            constant:
+              times: 10
+              concurrency: 5
+          contexts:
+            users:
+              tenants: 2
+              users_per_tenant: 3
+            quotas:
+              neutron:
+                floatingip: -1
