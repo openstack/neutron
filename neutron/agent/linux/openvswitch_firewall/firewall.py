@@ -18,6 +18,9 @@ import contextlib
 import copy
 
 import netaddr
+from neutron_lib.callbacks import events as callbacks_events
+from neutron_lib.callbacks import registry as callbacks_registry
+from neutron_lib.callbacks import resources as callbacks_resources
 from neutron_lib import constants as lib_const
 from oslo_log import log as logging
 from oslo_utils import netutils
@@ -392,17 +395,28 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         """
         self.int_br = self.initialize_bridge(integration_bridge)
-        self._update_cookie = None
         self.sg_port_map = SGPortMap()
+        self.conj_ip_manager = ConjIPFlowManager(self)
         self.sg_to_delete = set()
+        self._update_cookie = None
         self._deferred = False
+        self.iptables_helper = iptables.Helper(self.int_br.br)
+        self.iptables_helper.load_driver_if_needed()
+        self._initialize_firewall()
+
+        callbacks_registry.subscribe(
+            self._init_firewall_callback,
+            callbacks_resources.AGENT,
+            callbacks_events.OVS_RESTARTED)
+
+    def _init_firewall_callback(self, resource, event, trigger, **kwargs):
+        LOG.info("Reinitialize Openvswitch firewall after OVS restart.")
+        self._initialize_firewall()
+
+    def _initialize_firewall(self):
         self._drop_all_unmatched_flows()
         self._initialize_common_flows()
         self._initialize_third_party_tables()
-        self.conj_ip_manager = ConjIPFlowManager(self)
-
-        self.iptables_helper = iptables.Helper(self.int_br.br)
-        self.iptables_helper.load_driver_if_needed()
 
     @contextlib.contextmanager
     def update_cookie_context(self):

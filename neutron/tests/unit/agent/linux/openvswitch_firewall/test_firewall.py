@@ -13,6 +13,9 @@
 #    under the License.
 
 import mock
+from neutron_lib.callbacks import events as callbacks_events
+from neutron_lib.callbacks import registry as callbacks_registry
+from neutron_lib.callbacks import resources as callbacks_resources
 from neutron_lib import constants
 import testtools
 
@@ -390,6 +393,14 @@ class TestOVSFirewallDriver(base.BaseTestCase):
     @property
     def port_mac(self):
         return self.mock_bridge.br.get_vif_port_by_id.return_value.vif_mac
+
+    def test_callbacks_registered(self):
+        with mock.patch.object(callbacks_registry, "subscribe") as subscribe:
+            firewall = ovsfw.OVSFirewallDriver(mock.MagicMock())
+            subscribe.assert_called_once_with(
+                firewall._init_firewall_callback,
+                callbacks_resources.AGENT,
+                callbacks_events.OVS_RESTARTED)
 
     def test_initialize_bridge(self):
         br = self.firewall.initialize_bridge(self.mock_bridge)
