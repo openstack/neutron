@@ -33,6 +33,7 @@ from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base as fullstack_base
 
 LOG = logging.getLogger(__name__)
+CMD_FOLDER = 'agents'
 
 
 class ProcessFixture(fixtures.Fixture):
@@ -207,7 +208,7 @@ class OVSAgentFixture(ServiceFixture):
             process_name=self.NEUTRON_OVS_AGENT,
             exec_name=spawn.find_executable(
                 'ovs_agent.py',
-                path=os.path.join(fullstack_base.ROOTDIR, 'cmd')),
+                path=os.path.join(fullstack_base.ROOTDIR, CMD_FOLDER)),
             config_filenames=config_filenames,
             kill_signal=signal.SIGTERM))
 
@@ -298,7 +299,7 @@ class L3AgentFixture(ServiceFixture):
         else:
             exec_name = spawn.find_executable(
                 'l3_agent.py',
-                path=os.path.join(fullstack_base.ROOTDIR, 'cmd'))
+                path=os.path.join(fullstack_base.ROOTDIR, CMD_FOLDER))
 
         self.process_fixture = self.useFixture(
             ProcessFixture(
@@ -341,7 +342,7 @@ class DhcpAgentFixture(fixtures.Fixture):
         else:
             exec_name = spawn.find_executable(
                 'dhcp_agent.py',
-                path=os.path.join(fullstack_base.ROOTDIR, 'cmd'))
+                path=os.path.join(fullstack_base.ROOTDIR, CMD_FOLDER))
 
         self.process_fixture = self.useFixture(
             ProcessFixture(
