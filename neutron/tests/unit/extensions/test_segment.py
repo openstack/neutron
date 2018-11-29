@@ -14,7 +14,6 @@
 
 import copy
 
-from keystoneauth1 import exceptions as ks_exc
 import mock
 import netaddr
 from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
@@ -46,9 +45,7 @@ from neutron.extensions import standardattrdescription as ext_stddesc
 from neutron.objects import network
 from neutron.services.segments import db
 from neutron.services.segments import exceptions as segment_exc
-from neutron.services.segments import placement_client
 from neutron.services.segments import plugin as seg_plugin
-from neutron.tests import base
 from neutron.tests.common import helpers
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -1678,7 +1675,8 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         self.batch_notifier._notify()
         self.mock_p_client.get_inventory.assert_called_with(
             segment_id, seg_plugin.IPV4_RESOURCE_CLASS)
-        self.mock_p_client.update_inventory.assert_not_called()
+        self.mock_p_client.update_resource_provider_inventory.\
+            assert_not_called()
         name = seg_plugin.SEGMENT_NAME_STUB % segment_id
         resource_provider = {'name': name, 'uuid': segment_id}
         self.mock_p_client.create_resource_provider.assert_called_with(
@@ -1691,14 +1689,16 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         total, reserved = self._calculate_inventory_total_and_reserved(
             subnet['subnet'])
         inventory, _ = self._get_inventory(total, reserved)
-        self.mock_p_client.create_inventory.assert_called_with(
-            segment_id, inventory)
+        self.mock_p_client.update_resource_provider_inventories.\
+            assert_called_with(segment_id, inventory)
         self.assertEqual(
             inventory['total'],
-            self.mock_p_client.create_inventory.call_args[0][1]['total'])
+            self.mock_p_client.update_resource_provider_inventories.
+            call_args[0][1]['total'])
         self.assertEqual(
             inventory['reserved'],
-            self.mock_p_client.create_inventory.call_args[0][1]['reserved'])
+            self.mock_p_client.update_resource_provider_inventories.
+            call_args[0][1]['reserved'])
         self.mock_p_client.reset_mock()
         self.mock_p_client.get_inventory.side_effect = None
         self.mock_n_client.reset_mock()
@@ -1765,14 +1765,17 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
                 subnet)
         inventory['total'] += total - original_total
         inventory['reserved'] += reserved - original_reserved
-        self.mock_p_client.update_inventory.assert_called_with(segment_id,
-            inventory, seg_plugin.IPV4_RESOURCE_CLASS)
+        self.mock_p_client.update_resource_provider_inventory.\
+            assert_called_with(segment_id, inventory,
+                               seg_plugin.IPV4_RESOURCE_CLASS)
         self.assertEqual(
             inventory['total'],
-            self.mock_p_client.update_inventory.call_args[0][1]['total'])
+            self.mock_p_client.update_resource_provider_inventory.
+            call_args[0][1]['total'])
         self.assertEqual(
             inventory['reserved'],
-            self.mock_p_client.update_inventory.call_args[0][1]['reserved'])
+            self.mock_p_client.update_resource_provider_inventory.
+            call_args[0][1]['reserved'])
         self.mock_p_client.reset_mock()
         self.mock_n_client.reset_mock()
 
@@ -2021,14 +2024,17 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         inventory['reserved'] += num_fixed_ips
         self.mock_p_client.get_inventory.assert_called_with(
             segment_id, seg_plugin.IPV4_RESOURCE_CLASS)
-        self.mock_p_client.update_inventory.assert_called_with(segment_id,
-            inventory, seg_plugin.IPV4_RESOURCE_CLASS)
+        self.mock_p_client.update_resource_provider_inventory.\
+            assert_called_with(segment_id, inventory,
+                               seg_plugin.IPV4_RESOURCE_CLASS)
         self.assertEqual(
             inventory['total'],
-            self.mock_p_client.update_inventory.call_args[0][1]['total'])
+            self.mock_p_client.update_resource_provider_inventory.
+            call_args[0][1]['total'])
         self.assertEqual(
             inventory['reserved'],
-            self.mock_p_client.update_inventory.call_args[0][1]['reserved'])
+            self.mock_p_client.update_resource_provider_inventory.
+            call_args[0][1]['reserved'])
         self.mock_p_client.reset_mock()
         self.mock_n_client.reset_mock()
 
@@ -2060,19 +2066,22 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
                   'device_owner': constants.DEVICE_OWNER_COMPUTE_PREFIX}
         self._test_create_port(**kwargs)
         self.mock_p_client.get_inventory.assert_not_called()
-        self.mock_p_client.update_inventory.assert_not_called()
+        self.mock_p_client.update_resource_provider_inventory.\
+            assert_not_called()
 
     def test_create_bound_port_dhcp_owned(self):
         kwargs = {portbindings.HOST_ID: 'fakehost',
                   'device_owner': constants.DEVICE_OWNER_DHCP}
         self._test_create_port(**kwargs)
         self.mock_p_client.get_inventory.assert_not_called()
-        self.mock_p_client.update_inventory.assert_not_called()
+        self.mock_p_client.update_resource_provider_inventory.\
+            assert_not_called()
 
     def test_create_unbound_port(self):
         self._test_create_port()
         self.mock_p_client.get_inventory.assert_not_called()
-        self.mock_p_client.update_inventory.assert_not_called()
+        self.mock_p_client.update_resource_provider_inventory.\
+            assert_not_called()
 
     def test_delete_bound_port(self):
         kwargs = {portbindings.HOST_ID: 'fakehost'}
@@ -2115,7 +2124,8 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
                                       first_subnet, **kwargs)
         if dhcp_owned or compute_owned:
             self.mock_p_client.get_inventory.assert_not_called()
-            self.mock_p_client.update_inventory.assert_not_called()
+            self.mock_p_client.update_resource_provider_inventory.\
+                assert_not_called()
         else:
             self._assert_inventory_update_port(segment_id, original_inventory,
                                                created_fixed_ips)
@@ -2195,16 +2205,18 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
                                          reserved=0)
                 inventory, original_inventory = self._get_inventory(100, 2)
                 self.mock_p_client.get_inventory.return_value = inventory
-                self.mock_p_client.update_inventory.side_effect = (
-                    placement_exc.PlacementInventoryUpdateConflict(
-                        resource_provider=mock.ANY,
-                        resource_class=seg_plugin.IPV4_RESOURCE_CLASS))
+                self.mock_p_client.update_resource_provider_inventory.\
+                    side_effect = (
+                        placement_exc.PlacementInventoryUpdateConflict(
+                            resource_provider=mock.ANY,
+                            resource_class=seg_plugin.IPV4_RESOURCE_CLASS))
                 self.segments_plugin.nova_updater._update_nova_inventory(event)
                 self.assertEqual(seg_plugin.MAX_INVENTORY_UPDATE_RETRIES,
                                  self.mock_p_client.get_inventory.call_count)
                 self.assertEqual(
                     seg_plugin.MAX_INVENTORY_UPDATE_RETRIES,
-                    self.mock_p_client.update_inventory.call_count)
+                    self.mock_p_client.update_resource_provider_inventory.
+                    call_count)
                 self.assertEqual(
                     seg_plugin.MAX_INVENTORY_UPDATE_RETRIES,
                     log_debug.call_count)
@@ -2309,148 +2321,6 @@ class TestDhcpAgentSegmentScheduling(HostSegmentMappingTestCase):
         agent_hosts = [agent['host'] for agent in dhcp_agents]
         self.assertIn(DHCP_HOSTA, agent_hosts)
         self.assertIn(DHCP_HOSTB, agent_hosts)
-
-
-class PlacementAPIClientTestCase(base.DietTestCase):
-    """Test the Placement API client."""
-
-    def setUp(self):
-        super(PlacementAPIClientTestCase, self).setUp()
-        self.mock_load_auth_p = mock.patch(
-            'keystoneauth1.loading.load_auth_from_conf_options')
-        self.mock_load_auth = self.mock_load_auth_p.start()
-        self.mock_request_p = mock.patch(
-            'keystoneauth1.session.Session.request')
-        self.mock_request = self.mock_request_p.start()
-        self.client = placement_client.PlacementAPIClient()
-
-    @mock.patch('keystoneauth1.loading.load_session_from_conf_options')
-    @mock.patch('keystoneauth1.loading.load_auth_from_conf_options')
-    def test_constructor(self, load_auth_mock, load_sess_mock):
-        mock_auth = mock.Mock()
-        load_auth_mock.return_value = mock_auth
-
-        placement_client.PlacementAPIClient()
-
-        load_auth_mock.assert_called_once_with(cfg.CONF, 'placement')
-        load_sess_mock.assert_called_once_with(
-            cfg.CONF, 'placement', auth=mock_auth)
-
-    def test_create_resource_provider(self):
-        expected_payload = 'fake_resource_provider'
-        self.client.create_resource_provider(expected_payload)
-        expected_url = '/resource_providers'
-        self.mock_request.assert_called_once_with(
-                expected_url, 'POST',
-                endpoint_filter={'region_name': mock.ANY,
-                                 'service_type': 'placement'},
-                json=expected_payload)
-
-    def test_delete_resource_provider(self):
-        rp_uuid = uuidutils.generate_uuid()
-        self.client.delete_resource_provider(rp_uuid)
-        expected_url = '/resource_providers/%s' % rp_uuid
-        self.mock_request.assert_called_once_with(
-                expected_url, 'DELETE',
-                endpoint_filter={'region_name': mock.ANY,
-                                 'service_type': 'placement'})
-
-    def test_create_inventory(self):
-        expected_payload = 'fake_inventory'
-        rp_uuid = uuidutils.generate_uuid()
-        self.client.create_inventory(rp_uuid, expected_payload)
-        expected_url = '/resource_providers/%s/inventories' % rp_uuid
-        self.mock_request.assert_called_once_with(
-                expected_url, 'POST',
-                endpoint_filter={'region_name': mock.ANY,
-                                 'service_type': 'placement'},
-                json=expected_payload)
-
-    def test_get_inventory(self):
-        rp_uuid = uuidutils.generate_uuid()
-        resource_class = 'fake_resource_class'
-        self.client.get_inventory(rp_uuid, resource_class)
-        expected_url = '/resource_providers/%s/inventories/%s' % (
-            rp_uuid, resource_class)
-        self.mock_request.assert_called_once_with(
-                expected_url, 'GET',
-                endpoint_filter={'region_name': mock.ANY,
-                                 'service_type': 'placement'})
-
-    def _test_get_inventory_not_found(self, details, expected_exception):
-        rp_uuid = uuidutils.generate_uuid()
-        resource_class = 'fake_resource_class'
-        self.mock_request.side_effect = ks_exc.NotFound(details=details)
-        self.assertRaises(expected_exception, self.client.get_inventory,
-                          rp_uuid, resource_class)
-
-    def test_get_inventory_not_found_no_resource_provider(self):
-        self._test_get_inventory_not_found(
-            "No resource provider with uuid",
-            placement_exc.PlacementResourceProviderNotFound)
-
-    def test_get_inventory_not_found_no_inventory(self):
-        self._test_get_inventory_not_found(
-            "No inventory of class", placement_exc.PlacementInventoryNotFound)
-
-    def test_get_inventory_not_found_unknown_cause(self):
-        self._test_get_inventory_not_found("Unknown cause", ks_exc.NotFound)
-
-    def test_update_inventory(self):
-        expected_payload = 'fake_inventory'
-        rp_uuid = uuidutils.generate_uuid()
-        resource_class = 'fake_resource_class'
-        self.client.update_inventory(rp_uuid, expected_payload, resource_class)
-        expected_url = '/resource_providers/%s/inventories/%s' % (
-            rp_uuid, resource_class)
-        self.mock_request.assert_called_once_with(
-                expected_url, 'PUT',
-                endpoint_filter={'region_name': mock.ANY,
-                                 'service_type': 'placement'},
-                json=expected_payload)
-
-    def test_update_inventory_conflict(self):
-        rp_uuid = uuidutils.generate_uuid()
-        expected_payload = 'fake_inventory'
-        resource_class = 'fake_resource_class'
-        self.mock_request.side_effect = ks_exc.Conflict
-        self.assertRaises(placement_exc.PlacementInventoryUpdateConflict,
-                          self.client.update_inventory, rp_uuid,
-                          expected_payload, resource_class)
-
-    def test_associate_aggregates(self):
-        expected_payload = 'fake_aggregates'
-        rp_uuid = uuidutils.generate_uuid()
-        self.client.associate_aggregates(rp_uuid, expected_payload)
-        expected_url = '/resource_providers/%s/aggregates' % rp_uuid
-        self.mock_request.assert_called_once_with(
-                expected_url, 'PUT',
-                endpoint_filter={'region_name': mock.ANY,
-                                 'service_type': 'placement'},
-                json=expected_payload,
-                headers={'openstack-api-version': 'placement 1.1'})
-
-    def test_list_aggregates(self):
-        rp_uuid = uuidutils.generate_uuid()
-        self.client.list_aggregates(rp_uuid)
-        expected_url = '/resource_providers/%s/aggregates' % rp_uuid
-        self.mock_request.assert_called_once_with(
-                expected_url, 'GET',
-                endpoint_filter={'region_name': mock.ANY,
-                                 'service_type': 'placement'},
-                headers={'openstack-api-version': 'placement 1.1'})
-
-    def test_list_aggregates_not_found(self):
-        rp_uuid = uuidutils.generate_uuid()
-        self.mock_request.side_effect = ks_exc.NotFound
-        self.assertRaises(placement_exc.PlacementAggregateNotFound,
-                          self.client.list_aggregates, rp_uuid)
-
-    def test_placement_api_not_found(self):
-        rp_uuid = uuidutils.generate_uuid()
-        self.mock_request.side_effect = ks_exc.EndpointNotFound
-        self.assertRaises(placement_exc.PlacementEndpointNotFound,
-                          self.client.list_aggregates, rp_uuid)
 
 
 class TestSegmentHostRoutes(TestSegmentML2):

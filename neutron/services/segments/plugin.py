@@ -29,6 +29,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.exceptions import placement as placement_exc
+from neutron_lib.placement import client as placement_client
 from neutron_lib.plugins import directory
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exc
@@ -44,7 +45,7 @@ from neutron.objects import network as net_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.services.segments import db
 from neutron.services.segments import exceptions
-from neutron.services.segments import placement_client
+
 
 LOG = log.getLogger(__name__)
 
@@ -151,7 +152,7 @@ class NovaSegmentNotifier(object):
             cfg.CONF.send_events_interval, self._send_notifications)
 
     def _get_clients(self):
-        p_client = placement_client.PlacementAPIClient()
+        p_client = placement_client.PlacementAPIClient(cfg.CONF)
 
         n_auth = ks_loading.load_auth_from_conf_options(cfg.CONF, 'nova')
         n_session = ks_loading.load_session_from_conf_options(
@@ -214,9 +215,8 @@ class NovaSegmentNotifier(object):
             if event.reserved:
                 ipv4_inventory['reserved'] += event.reserved
             try:
-                self.p_client.update_inventory(event.segment_id,
-                                               ipv4_inventory,
-                                               IPV4_RESOURCE_CLASS)
+                self.p_client.update_resource_provider_inventory(
+                    event.segment_id, ipv4_inventory, IPV4_RESOURCE_CLASS)
                 return
             except placement_exc.PlacementInventoryUpdateConflict:
                 LOG.debug('Re-trying to update Nova IPv4 inventory for '
@@ -249,7 +249,8 @@ class NovaSegmentNotifier(object):
                           'min_unit': 1, 'max_unit': 1, 'step_size': 1,
                           'allocation_ratio': 1.0,
                           'resource_class': IPV4_RESOURCE_CLASS}
-        self.p_client.create_inventory(segment_id, ipv4_inventory)
+        self.p_client.update_resource_provider_inventories(
+            segment_id, ipv4_inventory)
 
     def _calculate_inventory_total_and_reserved(self, subnet):
         total = 0
