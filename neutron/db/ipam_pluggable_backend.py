@@ -165,7 +165,14 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         # Deepcopy doesn't work correctly in this case, because copy of
         # ATTR_NOT_SPECIFIED object happens. Address of copied object doesn't
         # match original object, so 'is' check fails
-        port_copy = {'port': port['port'].copy()}
+        # TODO(njohnston): Different behavior is required depending on whether
+        # a Port object is used or not; once conversion to OVO is complete only
+        # the 'else' will be needed.
+        if isinstance(port, dict):
+            port_copy = {'port': port['port'].copy()}
+        else:
+            port_copy = {'port': port.to_dict()}
+
         port_copy['port']['id'] = port_id
         network_id = port_copy['port']['network_id']
         ips = []

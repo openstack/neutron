@@ -21,6 +21,7 @@ import itertools
 import eventlet
 import mock
 import netaddr
+from neutron_lib.api import validators
 from neutron_lib.callbacks import exceptions
 from neutron_lib.callbacks import registry
 from neutron_lib import constants
@@ -59,6 +60,7 @@ from neutron.ipam.drivers.neutrondb_ipam import driver as ipam_driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.objects import network as network_obj
 from neutron.objects import router as l3_obj
+from neutron.plugins.ml2.common import exceptions as ml2_exceptions
 from neutron.tests import base
 from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
@@ -2578,6 +2580,58 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_delete_ports_ignores_port_not_found(self):
         plugin = directory.get_plugin()
         self._test_delete_ports_ignores_port_not_found(plugin)
+
+    def test_create_port_obj_bulk(self):
+        cfg.CONF.set_override('base_mac', "12:34:56:00")
+        test_mac = "00-12-34-56-78-90"
+        num_ports = 4
+        plugin = directory.get_plugin()
+        tenant_id = 'some_tenant'
+        device_owner = "me"
+        ctx = context.Context('', tenant_id)
+        with self.network(tenant_id=tenant_id) as network_to_use:
+            net_id = network_to_use['network']['id']
+            port = {'port': {'name': 'port',
+                             'network_id': net_id,
+                             'mac_address': constants.ATTR_NOT_SPECIFIED,
+                             'fixed_ips': constants.ATTR_NOT_SPECIFIED,
+                             'admin_state_up': True,
+                             'device_id': 'device_id',
+                             'device_owner': device_owner,
+                             'tenant_id': tenant_id}}
+            ports = [copy.deepcopy(port) for x in range(num_ports)]
+            ports[1]['port']['mac_address'] = test_mac
+            port_data = plugin.create_port_obj_bulk(ctx, ports)
+            self.assertEqual(num_ports, len(port_data))
+            result_macs = []
+            for port in port_data:
+                port_mac = str(port.get('mac_address'))
+                self.assertIsNone(validators.validate_mac_address(port_mac))
+                result_macs.append(port_mac)
+                for ip_addr in port.get('fixed_ips'):
+                    self.assertIsNone(validators.validate_ip_address(ip_addr))
+            self.assertTrue(test_mac in result_macs)
+
+    def test_create_port_obj_bulk_with_fixed_ips(self):
+        num_ports = 4
+        plugin = directory.get_plugin()
+        tenant_id = 'some_tenant'
+        device_owner = "me"
+        ctx = context.Context('', tenant_id)
+        with self.network(tenant_id=tenant_id) as network_to_use:
+            net_id = network_to_use['network']['id']
+            fixed_ip = [dict(ip_address='10.0.0.5')]
+            port = {'port': {'name': 'port',
+                             'network_id': net_id,
+                             'mac_address': constants.ATTR_NOT_SPECIFIED,
+                             'fixed_ips': fixed_ip,
+                             'admin_state_up': True,
+                             'device_id': 'device_id',
+                             'device_owner': device_owner,
+                             'tenant_id': tenant_id}}
+            ports = [port for x in range(num_ports)]
+            self.assertRaises(ml2_exceptions.BulkPortCannotHaveFixedIpError,
+                    plugin.create_port_obj_bulk, ctx, ports)
 
 
 class TestNetworksV2(NeutronDbPluginV2TestCase):

@@ -42,6 +42,12 @@ class ExtensionDriverNotFound(exceptions.InvalidConfigurationOption):
                 "service plugin %(service_plugin)s not found.")
 
 
+class BulkPortCannotHaveFixedIpError(exceptions.InvalidInput):
+    """You cannot request fixed IP addresses in a bulk port request."""
+    message = _("Fixed IP addresses cannot be requested from a bulk port "
+                "allocation.")
+
+
 class UnknownNetworkType(exceptions.NeutronException):
     """Network with unknown type."""
     message = _("Unknown network type %(network_type)s.")
