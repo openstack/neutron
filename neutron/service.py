@@ -21,6 +21,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import context
+from neutron_lib.db import api as session
 from neutron_lib.plugins import directory
 from neutron_lib import worker as neutron_worker
 from oslo_concurrency import processutils
@@ -36,7 +37,6 @@ from neutron.common import config
 from neutron.common import profiler
 from neutron.common import rpc as n_rpc
 from neutron.conf import service
-from neutron.db import api as session
 from neutron import wsgi
 
 
@@ -244,7 +244,7 @@ def _start_workers(workers):
             # dispose the whole pool before os.fork, otherwise there will
             # be shared DB connections in child processes which may cause
             # DB errors.
-            session.context_manager.dispose_pool()
+            session.get_context_manager().dispose_pool()
 
             for worker in process_workers:
                 worker_launcher.launch_service(worker,
