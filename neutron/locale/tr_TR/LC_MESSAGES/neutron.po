@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2018-03-02 16:32+0000\n"
+"POT-Creation-Date: 2018-11-30 03:49+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -40,10 +40,6 @@ msgstr ""
 "Stderr: %(stderr)s"
 
 #, python-format
-msgid "%(id)s is not a valid %(type)s identifier"
-msgstr "%(id)s geçerli bir %(type)s tanımlayıcı değil"
-
-#, python-format
 msgid ""
 "%(invalid_dirs)s is invalid value for sort_dirs, valid value is '%(asc)s' "
 "and '%(desc)s'"
@@ -66,10 +62,6 @@ msgstr "%s çevrim dışı kipte çağrılamaz"
 #, python-format
 msgid "%s is invalid attribute for sort_keys"
 msgstr "%s sort_keys için geçersiz öznitelik"
-
-#, python-format
-msgid "%s is not a valid VLAN tag"
-msgstr "%s geçerli bir VLAN etiketi değil"
 
 #, python-format
 msgid "%s must implement get_port_from_device or get_ports_from_devices."
@@ -96,9 +88,6 @@ msgstr "Alt ağ havuzu olmadığında bir cidr belirtilmelidir"
 msgid "A metering driver must be specified"
 msgstr "Bir ölçme sürücüsü belirtilmeli"
 
-msgid "API for retrieving service providers for Neutron advanced services"
-msgstr "Neutron gelişmiş servisleri için servis sağlayıcıları alma API'si"
-
 msgid "Access to this resource was denied."
 msgstr "Bu kaynağa erişime izin verilmiyor."
 
@@ -114,10 +103,6 @@ msgstr "Çekirdek kaynaklara test özniteliklerini ekler."
 #, python-format
 msgid "Agent %(id)s is not a L3 Agent or has been disabled"
 msgstr "Ajan %(id)s bir L3 Ajanı değil ya da kapalı"
-
-#, python-format
-msgid "Agent %(id)s is not a valid DHCP Agent or has been disabled"
-msgstr "Ajan %(id)s geçerli bir DHCP Ajanı değil veya kapalı"
 
 #, python-format
 msgid "Agent updated: %(payload)s"
@@ -140,9 +125,6 @@ msgstr "Toplu API'nin kullanımına izin ver"
 
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr "Nova metadata'ya güvensiz SSL (https) istekleri yapmaya izin ver"
-
-msgid "An interface driver must be specified"
-msgstr "Bir arayüz sürücüsü belirtmeniz gerekmektedir"
 
 msgid ""
 "An ordered list of networking mechanism driver entrypoints to be loaded from "
@@ -415,9 +397,6 @@ msgstr "Yönlendiriciyi bir L3 ajanına zamanlamak için gerekli sürücü"
 msgid "Duplicate Security Group Rule in POST."
 msgstr "POST'da Kopya Güvenlik Grubu Kuralı."
 
-msgid "Duplicate segment entry in request."
-msgstr "İstekte kopya dilim girdisi."
-
 #, python-format
 msgid "ERROR: %s"
 msgstr "HATA: %s"
@@ -438,9 +417,6 @@ msgstr ""
 
 msgid "Either subnet_id or port_id must be specified"
 msgstr "subnet_id veya port_id belirtilmeli"
-
-msgid "Empty physical network name."
-msgstr "Boş fiziksel ağ ismi."
 
 msgid "Enable HA mode for virtual routers."
 msgstr "Sanal yönlendiriciler için HA kipini etkinleştir."
@@ -478,12 +454,6 @@ msgstr ""
 "üzerindeki servisler kapatılacaktır. admin_state_up False olan ajanlar bu "
 "seçeneğe bakılmaksızın otomatik zamanlama için seçilmezler. Ama bu seçenek "
 "True ise bu tür ajanlara elle zamanlama yapılabilir."
-
-msgid "End of VLAN range is less than start of VLAN range"
-msgstr "VLAN aralığı sonu VLAN aralığı başından daha küçük"
-
-msgid "End of tunnel range is less than start of tunnel range"
-msgstr "Tünel aralığı sonu tünel aralığı başından daha küçük"
 
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
@@ -861,12 +831,6 @@ msgstr "Ağ türü değeri '%s' desteklenmiyor"
 msgid "Network type value needed by the ML2 plugin"
 msgstr "ML2 eklentisi ağ türü değerine ihtiyaç duyuyor"
 
-msgid "Network types supported by the agent (gre and/or vxlan)."
-msgstr "Ajan tarafından desteklenen ağ türleri (gre ve/veya vxlan)."
-
-msgid "Neutron Service Type Management"
-msgstr "Neutron Servis Türü Yönetimi"
-
 msgid "Neutron core_plugin not configured!"
 msgstr "Neutron core_plugin yapılandırılmamış!"
 
@@ -1135,9 +1099,6 @@ msgstr ""
 "iletişim kuralı değerleri %(values)s ve tam sayı temsilleri [0 dan 255 e]  "
 "destekleniyor."
 
-msgid "Segments and provider values cannot both be set."
-msgstr "Dilimler ve sağlayıcı değerleri aynı anda ayarlanamaz."
-
 msgid ""
 "Send notification to nova when port data (fixed_ips/floatingip) changes so "
 "nova can update its cache."
@@ -1211,9 +1172,6 @@ msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr ""
 "Kiracı %(tenant_id)s'in bu ağda %(resource)s oluşturmasına izin verilmiyor"
 
-msgid "Tenant network creation is not enabled."
-msgstr "Kiracı ağ oluşturma etkin değil."
-
 msgid ""
 "The 'gateway_external_network_id' option must be configured for this agent "
 "as Neutron has more than one external network."
@@ -1268,17 +1226,6 @@ msgid ""
 msgstr ""
 "Tek bir yanıtta döndürülecek azami öğe sayısı, 'infinite' değeri ya da "
 "negatif tam sayı sınır yok demektir"
-
-#, python-format
-msgid ""
-"The network %(network_id)s has been already hosted by the DHCP Agent "
-"%(agent_id)s."
-msgstr "Ağ %(network_id)s zaten %(agent_id)s DHCP Ajanı tarafından sunuluyor."
-
-#, python-format
-msgid ""
-"The network %(network_id)s is not hosted by the DHCP agent %(agent_id)s."
-msgstr "Ağ %(network_id)s %(agent_id)s DHCP ajanı tarafından sunulmuyor."
 
 msgid ""
 "The number of seconds the agent will wait between polling for local device "
@@ -1416,10 +1363,6 @@ msgid "Unable to find resource name in %s"
 msgstr "%s içinde kaynak ismi bulunamadı"
 
 #, python-format
-msgid "Unable to generate unique mac on network %(net_id)s."
-msgstr "%(net_id)s ağı üzerinde benzersiz mac üretilemedi."
-
-#, python-format
 msgid ""
 "Unable to identify a target field from:%s. Match should be in the form "
 "%%(<field_name>)s"
@@ -1462,10 +1405,6 @@ msgstr "Unmapped hata"
 
 msgid "Unrecognized action"
 msgstr "Tanınmayan eylem"
-
-#, python-format
-msgid "Unrecognized attribute(s) '%s'"
-msgstr "Tanınmayan öznitelik(ler) '%s'"
 
 msgid "Unsupported Content-Type"
 msgstr "Desteklenmeyen içerik türü"

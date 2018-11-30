@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2018-03-02 16:32+0000\n"
+"POT-Creation-Date: 2018-11-30 03:49+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -49,10 +49,6 @@ msgstr ""
 "de migration, attendu : %(head)s"
 
 #, python-format
-msgid "%(id)s is not a valid %(type)s identifier"
-msgstr "%(id)s n'est pas un identificateur %(type)s valide"
-
-#, python-format
 msgid ""
 "%(invalid_dirs)s is invalid value for sort_dirs, valid value is '%(asc)s' "
 "and '%(desc)s'"
@@ -75,10 +71,6 @@ msgstr "%s ne peut pas être appelé en mode hors ligne"
 #, python-format
 msgid "%s is invalid attribute for sort_keys"
 msgstr "%s est un attribut non valide pour sort_keys"
-
-#, python-format
-msgid "%s is not a valid VLAN tag"
-msgstr "%s n'est pas une balise VLAN (réseau local virtuel) valide"
 
 #, python-format
 msgid "%s must implement get_port_from_device or get_ports_from_devices."
@@ -139,11 +131,6 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr "Un pilote de mesure doit être spécifié."
 
-msgid "API for retrieving service providers for Neutron advanced services"
-msgstr ""
-"API d'extraction des fournisseurs de service pour les services avancés de "
-"Neutron"
-
 msgid "Aborting periodic_sync_routers_task due to an error."
 msgstr "Interruption de periodic_sync_routers_task en raison d'une erreur."
 
@@ -178,10 +165,6 @@ msgstr "Ajoute les attributs de test aux ressources principales."
 #, python-format
 msgid "Agent %(id)s is not a L3 Agent or has been disabled"
 msgstr "L'agent %(id)s n'est pas un agent L3 ou a été désactivé"
-
-#, python-format
-msgid "Agent %(id)s is not a valid DHCP Agent or has been disabled"
-msgstr "L'agent %(id)s n'est pas un agent DHCP valide ou a été désactivé"
 
 msgid ""
 "Agent starts with admin_state_up=False when enable_new_agents=False. In the "
@@ -252,9 +235,6 @@ msgstr "Une stratégie RBAC existe déjà avec ces valeurs."
 msgid "An identifier must be specified when updating a subnet"
 msgstr ""
 "Un identificateur doit être spécifié lors de la mise à jour d'un sous-réseau"
-
-msgid "An interface driver must be specified"
-msgstr "Un pilote d'interface doit être spécifié."
 
 msgid ""
 "An ordered list of extension driver entrypoints to be loaded from the "
@@ -760,9 +740,6 @@ msgstr ""
 msgid "Duplicate address detected"
 msgstr "Adresse en double détectée"
 
-msgid "Duplicate segment entry in request."
-msgstr "Entrée de segment en double dans la demande."
-
 #, python-format
 msgid "ERROR: %s"
 msgstr "ERREUR : %s"
@@ -784,9 +761,6 @@ msgstr ""
 
 msgid "Either subnet_id or port_id must be specified"
 msgstr "L'ID sous-réseau ou l'ID port doit être spécifié."
-
-msgid "Empty physical network name."
-msgstr "Nom du Réseau Physique vide."
 
 msgid "Empty subnet pool prefix list."
 msgstr "Liste de préfixes de pool de sous-réseau vide."
@@ -858,12 +832,6 @@ msgstr ""
 "Supprime l'option '--no-resolv' des arguments de processus dnsmasq. L'ajout "
 "de programmes de résolution DNS personnalisés à l'option "
 "'dnsmasq_dns_servers' désactive cette fonction."
-
-msgid "End of VLAN range is less than start of VLAN range"
-msgstr "La fin de la plage de réseaux locaux virtuels est inférieure au début"
-
-msgid "End of tunnel range is less than start of tunnel range"
-msgstr "La fin de la plage de tunnels est inférieure au début"
 
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
@@ -1289,10 +1257,6 @@ msgid "Invalid mapping: '%s'"
 msgstr "Mappage non valide : '%s'"
 
 #, python-format
-msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'."
-msgstr "Plage VLAN de réseau non valide : '%(vlan_range)s' - '%(error)s'."
-
-#, python-format
 msgid "Invalid network VXLAN port range: '%(vxlan_range)s'."
 msgstr "Réseau non valide pour le range port VXLAN: '%(vxlan_range)s'."
 
@@ -1611,12 +1575,6 @@ msgstr "Valeur de type de réseau '%s' non prise en charge"
 
 msgid "Network type value needed by the ML2 plugin"
 msgstr "Valeur de type de réseau requise par le plug-in ML2"
-
-msgid "Network types supported by the agent (gre and/or vxlan)."
-msgstr "Types de réseau pris en charge par l'agent (gre et/ou vxlan)."
-
-msgid "Neutron Service Type Management"
-msgstr "Gestion du type de service Neutron"
 
 msgid "Neutron core_plugin not configured!"
 msgstr "Neutron core_plugin n'est pas configuré ! "
@@ -2179,11 +2137,6 @@ msgstr ""
 "en charge. Seules les valeurs de protocole Les valeurs %(values)s et les "
 "représentations sous forme d'entier [0 à 255] sont prises en charge."
 
-msgid "Segments and provider values cannot both be set."
-msgstr ""
-"Il n'est pas possible de définir à la fois des segments et des valeurs de "
-"fournisseur."
-
 msgid "Selects the Agent Type reported"
 msgstr "Sélectionne le type d'agent signalé"
 
@@ -2303,9 +2256,6 @@ msgid "Tenant name for connecting to designate in admin context"
 msgstr ""
 "Nom de locataire pour la connexion au réseau désigné dans un contexte admin"
 
-msgid "Tenant network creation is not enabled."
-msgstr "La création de réseau titulaire n'est pas activée."
-
 msgid "Tenant-id was missing from quota request."
 msgstr "ID titulaire manquant dans la demande de quota."
 
@@ -2423,19 +2373,6 @@ msgstr ""
 "Nombre maximal d'éléments renvoyés dans une seule réponse, valeur définie "
 "sur 'infinite' ou sur un entier négatif qui signifie illimité"
 
-#, python-format
-msgid ""
-"The network %(network_id)s has been already hosted by the DHCP Agent "
-"%(agent_id)s."
-msgstr ""
-"Le réseau %(network_id)s est déjà hébergé par l'agent DHCP %(agent_id)s."
-
-#, python-format
-msgid ""
-"The network %(network_id)s is not hosted by the DHCP agent %(agent_id)s."
-msgstr ""
-"Le réseau %(network_id)s n'est pas hébergé par l'agent DHCP %(agent_id)s."
-
 msgid ""
 "The network type to use when creating the HA network for an HA router. By "
 "default or if empty, the first 'tenant_network_types' is used. This is "
@@ -2547,13 +2484,6 @@ msgid ""
 msgstr ""
 "Délai d'attente en secondes pour la connexion du commutateur local au "
 "contrôleur. Utilisé uniquement pour le pilote 'natif'. "
-
-msgid ""
-"Too long prefix provided. New name would exceed given length for an "
-"interface name."
-msgstr ""
-"Le préfixe fourni est trop long. Un nouveau nom dépasserait la longueur "
-"indiquée pour un nom d'interface."
 
 msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
@@ -2672,10 +2602,6 @@ msgid "Unable to find resource name in %s"
 msgstr "Impossible de trouver le nom de la ressource dans %s"
 
 #, python-format
-msgid "Unable to generate unique mac on network %(net_id)s."
-msgstr "Impossible de générer une adresse MAC unique sur le réseau %(net_id)s."
-
-#, python-format
 msgid ""
 "Unable to identify a target field from:%s. Match should be in the form "
 "%%(<field_name>)s"
@@ -2750,10 +2676,6 @@ msgstr "Erreur de non-correspondance"
 
 msgid "Unrecognized action"
 msgstr "Action inconnu"
-
-#, python-format
-msgid "Unrecognized attribute(s) '%s'"
-msgstr "Attribut(s) non reconnu(s) '%s'"
 
 msgid "Unrecognized field"
 msgstr "Champ non reconnu"

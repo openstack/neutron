@@ -12,16 +12,17 @@
 # HYUNGBAI PARK <openstack.make@gmail.com>, 2016. #zanata
 # jtjang <jang.jitae@gmail.com>, 2016. #zanata
 # Heetae Ahn <heetae82.ahn@samsung.com>, 2017. #zanata
+# SEEUNG KANG <seeung0305@naver.com>, 2018. #zanata
 msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2018-03-02 16:32+0000\n"
+"POT-Creation-Date: 2018-11-30 03:49+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2017-07-18 04:28+0000\n"
-"Last-Translator: Heetae Ahn <heetae82.ahn@samsung.com>\n"
+"PO-Revision-Date: 2018-10-31 10:45+0000\n"
+"Last-Translator: SEEUNG KANG <seeung0305@naver.com>\n"
 "Language: ko_KR\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
@@ -53,10 +54,6 @@ msgstr ""
 "%(head)s"
 
 #, python-format
-msgid "%(id)s is not a valid %(type)s identifier"
-msgstr "%(id)s이(가) 올바른 %(type)s ID가 아님"
-
-#, python-format
 msgid ""
 "%(invalid_dirs)s is invalid value for sort_dirs, valid value is '%(asc)s' "
 "and '%(desc)s'"
@@ -80,10 +77,6 @@ msgstr "%s은(는) 오프라인 모드 중 호출할 수 없습니다. "
 #, python-format
 msgid "%s is invalid attribute for sort_keys"
 msgstr "%s이(는) sort_keys에 대해 올바르지 않은 속성입니다. "
-
-#, python-format
-msgid "%s is not a valid VLAN tag"
-msgstr "%s이(가) 올바른 VLAN 태그가 아님"
 
 #, python-format
 msgid "%s must implement get_port_from_device or get_ports_from_devices."
@@ -144,9 +137,6 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr "측정 드라이버를 지정해야 함"
 
-msgid "API for retrieving service providers for Neutron advanced services"
-msgstr "Neutron 고급 서비스에 대한 서비스 제공자를 검색하기 위한 API"
-
 msgid "Aborting periodic_sync_routers_task due to an error."
 msgstr "오류로 인해 periodic_sync_routers_task를 중단합니다."
 
@@ -179,10 +169,6 @@ msgstr "코어 자원에 테스트 속성을 추가합니다."
 #, python-format
 msgid "Agent %(id)s is not a L3 Agent or has been disabled"
 msgstr "%(id)s 에이전트가 L3 에이전트가 아니거나 사용 안함 상태임"
-
-#, python-format
-msgid "Agent %(id)s is not a valid DHCP Agent or has been disabled"
-msgstr "%(id)s 에이전트가 올바른 DHCP 에이전트가 아니거나 사용 안함 상태임"
 
 msgid ""
 "Agent starts with admin_state_up=False when enable_new_agents=False. In the "
@@ -245,9 +231,6 @@ msgstr "해당 값의 RBAC 정책이 이미 있습니다."
 
 msgid "An identifier must be specified when updating a subnet"
 msgstr "서브넷을 업데이트할 때 ID를 지정해야 함"
-
-msgid "An interface driver must be specified"
-msgstr "인터페이스 드라이버가 지정되어야 함"
 
 msgid ""
 "An ordered list of extension driver entrypoints to be loaded from the "
@@ -709,9 +692,6 @@ msgstr "POST에 중복 보안 그룹 규칙이 있습니다. "
 msgid "Duplicate address detected"
 msgstr "중복 주소 발견"
 
-msgid "Duplicate segment entry in request."
-msgstr "요청에 중복되는 세그먼트 항목이 있음."
-
 #, python-format
 msgid "ERROR: %s"
 msgstr "오류: %s"
@@ -732,9 +712,6 @@ msgstr ""
 
 msgid "Either subnet_id or port_id must be specified"
 msgstr "subnet_id 또는 port_id 중 하나를 지정해야 함"
-
-msgid "Empty physical network name."
-msgstr "실제 네트워크 이름이 비어 있습니다."
 
 msgid "Empty subnet pool prefix list."
 msgstr "서브넷 풀 접두부 목록이 비어 있습니다."
@@ -800,12 +777,6 @@ msgstr ""
 "을 제공하는 dnsmasq 서비스를 사용합니다. dnsmasq 프로세스 인수에서 '--no-"
 "resolv' 옵션을 효과적으로 제거합니다. 사용자 정의 DNS 분석기를 "
 "'dnsmasq_dns_servers' 옵션에 추가하면 이 기능이 사용되지 않습니다."
-
-msgid "End of VLAN range is less than start of VLAN range"
-msgstr "VLAN 범위의 끝이 VLAN 범위의 시작보다 작습니다. "
-
-msgid "End of tunnel range is less than start of tunnel range"
-msgstr "터널 범위의 끝이 터널 범위의 시작보다 작음"
 
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
@@ -881,6 +852,14 @@ msgid "Failed scheduling router %(router_id)s to the L3 Agent %(agent_id)s."
 msgstr ""
 "L3 에이전트 %(agent_id)s에 대한 %(router_id)s 라우터를 스케줄링하지 못했습니"
 "다. "
+
+#, python-format
+msgid ""
+"Failed sending gratuitous ARP to %(addr)s on %(iface)s in namespace %(ns)s: "
+"%(err)s"
+msgstr ""
+"네임스페이스 %(ns)s의 %(iface)s에 있는 %(addr)s로 GARP 보내기가 실패함: "
+"%(err)s"
 
 #, python-format
 msgid "Failed to allocate subnet: %(reason)s."
@@ -1032,6 +1011,10 @@ msgstr "IP 할당은 subnet_id 또는 ip_address가 필요함"
 
 msgid "IP allocation requires subnets for network"
 msgstr "IP 할당은 네트워크의 서브넷을 필요로 합니다."
+
+#, python-format
+msgid "IPTables Rules did not converge. Diff: %s"
+msgstr "IPTables 규칙이 모아지지 않았습니다. Diff: %s"
 
 #, python-format
 msgid ""
@@ -1207,6 +1190,10 @@ msgid "Invalid format: %s"
 msgstr "올바르지 않은 형식: %s"
 
 #, python-format
+msgid "Invalid group/gid: '%s'"
+msgstr "그룹 '%s'이(가) 올바르지 않음"
+
+#, python-format
 msgid "Invalid instance state: %(state)s, valid states are: %(valid_states)s"
 msgstr ""
 "올바르지 않은 인스턴스 상태: %(state)s, 올바른 상태는 %(valid_states)s임"
@@ -1214,10 +1201,6 @@ msgstr ""
 #, python-format
 msgid "Invalid mapping: '%s'"
 msgstr "올바르지 않은 맵핑: '%s'"
-
-#, python-format
-msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'."
-msgstr "올바르지 않은 네트워크 VLAN 범위: '%(vlan_range)s' - '%(error)s'."
 
 #, python-format
 msgid "Invalid network VXLAN port range: '%(vxlan_range)s'."
@@ -1242,6 +1225,10 @@ msgstr "올바르지 않은 라우트: %s"
 
 msgid "Invalid service provider format"
 msgstr "올바르지 않은 서비스 제공자 형식"
+
+#, python-format
+msgid "Invalid user/uid: '%s'"
+msgstr "사용자 '%s'이(가) 올바르지 않음 "
 
 #, python-format
 msgid ""
@@ -1520,12 +1507,6 @@ msgstr "네트워크 유형 값 '%s'이(가) 지원되지 않음"
 msgid "Network type value needed by the ML2 plugin"
 msgstr "ML2 플러그인에 네트워크 유형 값이 필요함"
 
-msgid "Network types supported by the agent (gre and/or vxlan)."
-msgstr "에이전트에서 지원하는 네트워크 유형(gre 및/또는 vxlan)입니다."
-
-msgid "Neutron Service Type Management"
-msgstr "Neutron 서비스 유형 관리"
-
 msgid "Neutron core_plugin not configured!"
 msgstr "Neutron core_plugin이 구성되지 않았습니다"
 
@@ -1758,6 +1739,10 @@ msgstr "%(id)s 포트가 고정 IP %(address)s을(를) 갖지 않음"
 #, python-format
 msgid "Port %(port_id)s is already acquired by another DHCP agent"
 msgstr "다른 DHCP 에이전트에가 이미 포트 %(port_id)s을(를) 확보했습니다."
+
+#, python-format
+msgid "Port %(port_id)s is not managed by this agent."
+msgstr "포트 %(port_id)s는 이 에이전트가 관리하지 않습니다."
 
 #, python-format
 msgid ""
@@ -2034,9 +2019,6 @@ msgstr ""
 "보안 그룹 규칙 프로토콜 %(protocol)s이(가) 지원되지 않습니다. 프로토콜 값 "
 "%(values)s 및 정수 표시 [0 - 255]만 지원됩니다. "
 
-msgid "Segments and provider values cannot both be set."
-msgstr "세그먼트 및 제공자 값을 모두 설정할 수 없습니다."
-
 msgid "Selects the Agent Type reported"
 msgstr "보고된 에이전트 유형을 선택함"
 
@@ -2146,9 +2128,6 @@ msgstr "관리 컨텍스트에서 지정하기 위해 연결할 테넌트 ID"
 
 msgid "Tenant name for connecting to designate in admin context"
 msgstr "관리 컨텍스트에서 지정하기 위해 연결할 테넌트 이름"
-
-msgid "Tenant network creation is not enabled."
-msgstr "테넌트 네트워크 작성은 사용되지 않습니다. "
 
 msgid "Tenant-id was missing from quota request."
 msgstr "테넌트 ID가 할당량 요청에서 누락되었습니다. "
@@ -2261,21 +2240,6 @@ msgstr ""
 "단일 응답으로 최대 항목 수가 리턴되었습니다. 값이 'infinite' 또는 음수인 경"
 "우 제한이 없다는 의미입니다. "
 
-#, python-format
-msgid ""
-"The network %(network_id)s has been already hosted by the DHCP Agent "
-"%(agent_id)s."
-msgstr ""
-"DHCP 에이전트 %(agent_id)s에서 %(network_id)s 네트워크를 이미 호스트하고 있습"
-"니다. "
-
-#, python-format
-msgid ""
-"The network %(network_id)s is not hosted by the DHCP agent %(agent_id)s."
-msgstr ""
-"DHCP 에이전트 %(agent_id)s에서 %(network_id)s 네트워크를 호스트하지 않습니"
-"다. "
-
 msgid ""
 "The network type to use when creating the HA network for an HA router. By "
 "default or if empty, the first 'tenant_network_types' is used. This is "
@@ -2375,13 +2339,6 @@ msgid ""
 msgstr ""
 "제어기에 연결되는 로컬 스위치를 기다리는 제한시간(초)입니다. '네이티브' 드라"
 "이버에만 사용됩니다. "
-
-msgid ""
-"Too long prefix provided. New name would exceed given length for an "
-"interface name."
-msgstr ""
-"너무 긴 접두어가 제공되었습니다. 새 이름이 인터페이스 이름에 지정된 길이를 초"
-"과합니다."
 
 msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
@@ -2495,10 +2452,6 @@ msgid "Unable to find resource name in %s"
 msgstr "%s에서 자원 이름을 찾을 수 없음"
 
 #, python-format
-msgid "Unable to generate unique mac on network %(net_id)s."
-msgstr "%(net_id)s 네트워크에 고유 MAC을 생성할 수 없습니다. "
-
-#, python-format
 msgid ""
 "Unable to identify a target field from:%s. Match should be in the form "
 "%%(<field_name>)s"
@@ -2572,10 +2525,6 @@ msgstr "맵핑되지 않은 오류"
 
 msgid "Unrecognized action"
 msgstr "인식되지 않는 조치"
-
-#, python-format
-msgid "Unrecognized attribute(s) '%s'"
-msgstr "인식되지 않는 속성 '%s'"
 
 msgid "Unrecognized field"
 msgstr "인식되지 않는 필드"

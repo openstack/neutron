@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2018-03-02 16:32+0000\n"
+"POT-Creation-Date: 2018-11-30 03:49+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -47,10 +47,6 @@ msgstr ""
 "Erwartet: %(head)s"
 
 #, python-format
-msgid "%(id)s is not a valid %(type)s identifier"
-msgstr "%(id)s ist keine gültige ID für %(type)s"
-
-#, python-format
 msgid ""
 "%(invalid_dirs)s is invalid value for sort_dirs, valid value is '%(asc)s' "
 "and '%(desc)s'"
@@ -74,10 +70,6 @@ msgstr "%s kann nicht im Offlinemodus aufgerufen werden"
 #, python-format
 msgid "%s is invalid attribute for sort_keys"
 msgstr "%s ist ein ungültiges Attribut für 'sort_keys'"
-
-#, python-format
-msgid "%s is not a valid VLAN tag"
-msgstr "%s ist kein gültiger VLAN-Tag"
 
 #, python-format
 msgid "%s must implement get_port_from_device or get_ports_from_devices."
@@ -148,9 +140,6 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr "Ein Messungstreiber muss angegeben sein"
 
-msgid "API for retrieving service providers for Neutron advanced services"
-msgstr "API zum Abrufen von Diensteanbietern für erweiterte Neutron-Dienste"
-
 msgid "Aborting periodic_sync_routers_task due to an error."
 msgstr "periodic_sync_routers_task wird aufgrund eines Fehlers abgebrochen."
 
@@ -188,10 +177,6 @@ msgstr "Fügt Testattribute zu Kernressourcen hinzu."
 #, python-format
 msgid "Agent %(id)s is not a L3 Agent or has been disabled"
 msgstr "Agent %(id)s ist kein L3-Agent oder wurde inaktiviert"
-
-#, python-format
-msgid "Agent %(id)s is not a valid DHCP Agent or has been disabled"
-msgstr "Agent %(id)s ist kein gültiger DHCP-Agent oder wurde inaktiviert"
 
 msgid ""
 "Agent starts with admin_state_up=False when enable_new_agents=False. In the "
@@ -261,9 +246,6 @@ msgstr "Es ist bereits eine RBAC-Richtlinie mit diesen Werten vorhanden."
 msgid "An identifier must be specified when updating a subnet"
 msgstr ""
 "Bei der Aktualisierung eines Subnetzes muss ein Bezeichner angegeben werden."
-
-msgid "An interface driver must be specified"
-msgstr "Ein Schnittstellentreiber muss angegeben sein"
 
 msgid ""
 "An ordered list of extension driver entrypoints to be loaded from the "
@@ -794,9 +776,6 @@ msgstr "Doppelte Sicherheitsgruppenregel in POST."
 msgid "Duplicate address detected"
 msgstr "Doppelte Adresse erkannt."
 
-msgid "Duplicate segment entry in request."
-msgstr "Doppelter Segmenteintrag in Anforderung."
-
 #, python-format
 msgid "ERROR: %s"
 msgstr "FEHLER: %s"
@@ -818,9 +797,6 @@ msgstr ""
 
 msgid "Either subnet_id or port_id must be specified"
 msgstr "Entweder 'subnet_id' oder 'port_id' muss angegeben sein"
-
-msgid "Empty physical network name."
-msgstr "Leerer Name für physisches Netz."
 
 msgid "Empty subnet pool prefix list."
 msgstr "Leere Präfixliste für Subnetzpool"
@@ -903,12 +879,6 @@ msgstr ""
 "ausgeführt wird. Entfernt die Option '--no-resolv' aus den dnsmasq-"
 "Verarbeitungsargumenten. Dieses Feature wird deaktiviert, wenn angepasste "
 "DNS-Resolver zur Option 'dnsmasq_dns_servers' hinzugefügt werden."
-
-msgid "End of VLAN range is less than start of VLAN range"
-msgstr "Ende des VLAN-Bereichs ist kleiner als Anfang des VLAN-Bereichs"
-
-msgid "End of tunnel range is less than start of tunnel range"
-msgstr "Ende des Tunnelbereichs ist kleiner als Anfang des Tunnelbereichs"
 
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
@@ -1331,10 +1301,6 @@ msgid "Invalid mapping: '%s'"
 msgstr "Ungültige Zuordnung: '%s'"
 
 #, python-format
-msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'."
-msgstr "Ungültiger Bereich für Netz-VLAN: '%(vlan_range)s' - '%(error)s'."
-
-#, python-format
 msgid "Invalid network VXLAN port range: '%(vxlan_range)s'."
 msgstr "Ungültiger Netz-VXLAN-Portbereich: '%(vxlan_range)s'."
 
@@ -1657,13 +1623,6 @@ msgstr "Netztypwert '%s' wird nicht unterstützt"
 
 msgid "Network type value needed by the ML2 plugin"
 msgstr "Netztypwert für ML2-Plug-in erforderlich"
-
-msgid "Network types supported by the agent (gre and/or vxlan)."
-msgstr ""
-"Netztypen, die vom Agenten unterstützt werden ('gre' und/oder 'vxlan')."
-
-msgid "Neutron Service Type Management"
-msgstr "Neutron-Dienstetypverwaltung"
 
 msgid "Neutron core_plugin not configured!"
 msgstr "Neutron-'core_plugin' nicht konfiguriert!"
@@ -2246,10 +2205,6 @@ msgstr ""
 "Protokollwerte %(values)s und ganzzahlige Darstellungen [0 bis 255] werden "
 "unterstützt."
 
-msgid "Segments and provider values cannot both be set."
-msgstr ""
-"Es können nicht Segment- und Providerwerte gleichzeitig festgelegt werden."
-
 msgid "Selects the Agent Type reported"
 msgstr "Wählt den gemeldeten Agententyp aus"
 
@@ -2367,9 +2322,6 @@ msgid "Tenant name for connecting to designate in admin context"
 msgstr ""
 "Mandantenname zum Herstellen einer Verbindung zu Designate im "
 "Administratorkontext."
-
-msgid "Tenant network creation is not enabled."
-msgstr "Erstellung von Mandantennetzwerken ist nicht aktiviert."
 
 msgid "Tenant-id was missing from quota request."
 msgstr "Fehlende Mandanten-ID in der Kontigentanforderung."
@@ -2491,19 +2443,6 @@ msgstr ""
 "Wert 'infinite' oder eine negative Ganzzahl bedeuten, dass es keine "
 "Begrenzung gibt."
 
-#, python-format
-msgid ""
-"The network %(network_id)s has been already hosted by the DHCP Agent "
-"%(agent_id)s."
-msgstr ""
-"Das Netz %(network_id)s wurde bereits vom DHCP-Agenten %(agent_id)s gehostet."
-
-#, python-format
-msgid ""
-"The network %(network_id)s is not hosted by the DHCP agent %(agent_id)s."
-msgstr ""
-"Das Netz %(network_id)s wird nicht vom DHCP-Agenten %(agent_id)s gehostet."
-
 msgid ""
 "The network type to use when creating the HA network for an HA router. By "
 "default or if empty, the first 'tenant_network_types' is used. This is "
@@ -2614,13 +2553,6 @@ msgstr ""
 "Zeitlimit in Sekunden für die Wartezeit, in der der lokale Switch die "
 "Verbindung mit dem Controller hergestellt haben muss. Wird nur für 'native' "
 "Treiber verwendet."
-
-msgid ""
-"Too long prefix provided. New name would exceed given length for an "
-"interface name."
-msgstr ""
-"Es wurde ein Präfix angegeben, das zu lang ist. Der neue Name überschreitet "
-"damit die für einen Schnittstellennamen vorgegebene Länge."
 
 msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
@@ -2736,11 +2668,6 @@ msgid "Unable to find resource name in %s"
 msgstr "Ressourcenname kann nicht in %s gefunden werden"
 
 #, python-format
-msgid "Unable to generate unique mac on network %(net_id)s."
-msgstr ""
-"Eindeutige MAC-Adresse kann auf Netz %(net_id)s nicht generiert werden."
-
-#, python-format
 msgid ""
 "Unable to identify a target field from:%s. Match should be in the form "
 "%%(<field_name>)s"
@@ -2815,10 +2742,6 @@ msgstr "Nicht zugeordneter Fehler"
 
 msgid "Unrecognized action"
 msgstr "Nicht erkannte Aktion"
-
-#, python-format
-msgid "Unrecognized attribute(s) '%s'"
-msgstr "Nicht erkannte(s) Attribut(e) '%s'"
 
 msgid "Unrecognized field"
 msgstr "Nicht erkanntes Feld"

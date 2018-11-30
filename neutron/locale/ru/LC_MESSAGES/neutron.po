@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2018-03-02 16:32+0000\n"
+"POT-Creation-Date: 2018-11-30 03:49+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -46,10 +46,6 @@ msgstr ""
 "Файл HEAD %(branch)s отличается от ожидаемого для графика миграции: %(head)s"
 
 #, python-format
-msgid "%(id)s is not a valid %(type)s identifier"
-msgstr "%(id)s не является допустимым идентификатором %(type)s"
-
-#, python-format
 msgid ""
 "%(invalid_dirs)s is invalid value for sort_dirs, valid value is '%(asc)s' "
 "and '%(desc)s'"
@@ -72,10 +68,6 @@ msgstr "%s нельзя вызывать в режиме без подключе
 #, python-format
 msgid "%s is invalid attribute for sort_keys"
 msgstr "Атрибут %s недопустим для sort_keys"
-
-#, python-format
-msgid "%s is not a valid VLAN tag"
-msgstr "%s не является допустимым тегом VLAN"
 
 #, python-format
 msgid "%s must implement get_port_from_device or get_ports_from_devices."
@@ -135,9 +127,6 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr "Необходимо указать драйвер измерений"
 
-msgid "API for retrieving service providers for Neutron advanced services"
-msgstr "API для получения поставщиков служб для расширенных служб Neutron"
-
 msgid "Aborting periodic_sync_routers_task due to an error."
 msgstr "Задача periodic_sync_routers_task прервана из-за ошибки."
 
@@ -172,10 +161,6 @@ msgstr "Добавляет атрибуты теста в базовые рес�
 #, python-format
 msgid "Agent %(id)s is not a L3 Agent or has been disabled"
 msgstr "Агент %(id)s выключен или не является агентом L3"
-
-#, python-format
-msgid "Agent %(id)s is not a valid DHCP Agent or has been disabled"
-msgstr "Агент %(id)s выключен или не является допустимым агентом DHCP"
 
 msgid ""
 "Agent starts with admin_state_up=False when enable_new_agents=False. In the "
@@ -241,9 +226,6 @@ msgstr "Стратегия RBAC с такими параметрами уже с
 
 msgid "An identifier must be specified when updating a subnet"
 msgstr "При обновлении подсети необходимо указать идентификатор"
-
-msgid "An interface driver must be specified"
-msgstr "Не указан драйвер интерфейса"
 
 msgid ""
 "An ordered list of extension driver entrypoints to be loaded from the "
@@ -734,9 +716,6 @@ msgstr "Совпадающие правила группы защиты в POST.
 msgid "Duplicate address detected"
 msgstr "Повторяющийся адрес"
 
-msgid "Duplicate segment entry in request."
-msgstr "Дубликат записи сегмента в запросе."
-
 #, python-format
 msgid "ERROR: %s"
 msgstr "Ошибка: %s"
@@ -757,9 +736,6 @@ msgstr ""
 
 msgid "Either subnet_id or port_id must be specified"
 msgstr "Необходимо указать или subnet_id, или port_id"
-
-msgid "Empty physical network name."
-msgstr "Пустое имя физической сети."
 
 msgid "Empty subnet pool prefix list."
 msgstr "Пустой список префиксов пула подсетей."
@@ -827,12 +803,6 @@ msgstr ""
 "работает агент DHCP. Аннулирует действие опции '--no-resolv' в аргументах "
 "процесса dnsmasq. Эта функция выключается, если в опцию "
 "'dnsmasq_dns_servers' добавляются пользовательские обработчики запросов DNS."
-
-msgid "End of VLAN range is less than start of VLAN range"
-msgstr "Конечное значение диапазона VLAN меньше его начального значения"
-
-msgid "End of tunnel range is less than start of tunnel range"
-msgstr "Конечное значение диапазона туннелей меньше его начального значения"
 
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
@@ -1247,10 +1217,6 @@ msgid "Invalid mapping: '%s'"
 msgstr "Недопустимое отображение: '%s'"
 
 #, python-format
-msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'."
-msgstr "Недопустимый диапазон VLAN сети: '%(vlan_range)s' - '%(error)s'."
-
-#, python-format
 msgid "Invalid network VXLAN port range: '%(vxlan_range)s'."
 msgstr "Недопустимый диапазон портов сети VXLAN: '%(vxlan_range)s'."
 
@@ -1563,12 +1529,6 @@ msgstr "Значение типа сети '%s' не поддерживаетс�
 
 msgid "Network type value needed by the ML2 plugin"
 msgstr "Для модуля ML2 требуется значение типа сети"
-
-msgid "Network types supported by the agent (gre and/or vxlan)."
-msgstr "Типы сетей, поддерживаемые агентом (gre или vxlan)."
-
-msgid "Neutron Service Type Management"
-msgstr "Управление типами служб Neutron"
 
 msgid "Neutron core_plugin not configured!"
 msgstr "Не настроен core_plugin Neutron!"
@@ -2108,9 +2068,6 @@ msgstr ""
 "Протокол правил группы защиты %(protocol)s не поддерживается. Поддерживаются "
 "значения %(values)s и целочисленные представления [0 - 255]."
 
-msgid "Segments and provider values cannot both be set."
-msgstr "Нельзя одновременно задавать значения сегментов и поставщика."
-
 msgid "Selects the Agent Type reported"
 msgstr "Выбирает указанный Тип агента"
 
@@ -2226,9 +2183,6 @@ msgstr ""
 "Имя арендатора для подключения к назначенному объекту в административном "
 "контексте"
 
-msgid "Tenant network creation is not enabled."
-msgstr "Создание сети арендатора не разрешено."
-
 msgid "Tenant-id was missing from quota request."
 msgstr "В запросе квоты отсутствует ИД арендатора."
 
@@ -2342,17 +2296,6 @@ msgstr ""
 "Максимальное количество элементов, возвращаемых в одном ответе; значение "
 "было 'infinite' или отрицательным целым, что означает бесконечное число"
 
-#, python-format
-msgid ""
-"The network %(network_id)s has been already hosted by the DHCP Agent "
-"%(agent_id)s."
-msgstr "Сеть %(network_id)s уже была размещена агентом DHCP %(agent_id)s."
-
-#, python-format
-msgid ""
-"The network %(network_id)s is not hosted by the DHCP agent %(agent_id)s."
-msgstr "Сеть %(network_id)s не размещена агентом DHCP %(agent_id)s."
-
 msgid ""
 "The network type to use when creating the HA network for an HA router. By "
 "default or if empty, the first 'tenant_network_types' is used. This is "
@@ -2454,13 +2397,6 @@ msgid ""
 msgstr ""
 "Тайм-аут (в секундах) ожидания соединения локального переключателя с "
 "контроллером. Используется только для 'встроенного' драйвера."
-
-msgid ""
-"Too long prefix provided. New name would exceed given length for an "
-"interface name."
-msgstr ""
-"Слишком длинный префикс. Новое имя превысило бы заданную длину для имени "
-"интерфейса."
 
 msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
@@ -2575,10 +2511,6 @@ msgid "Unable to find resource name in %s"
 msgstr "В %s не найдено имя ресурса"
 
 #, python-format
-msgid "Unable to generate unique mac on network %(net_id)s."
-msgstr "Невозможно сгенерировать уникальный mac в сети %(net_id)s."
-
-#, python-format
 msgid ""
 "Unable to identify a target field from:%s. Match should be in the form "
 "%%(<field_name>)s"
@@ -2653,10 +2585,6 @@ msgstr "Ошибка без преобразования"
 
 msgid "Unrecognized action"
 msgstr "Неизвестное действие"
-
-#, python-format
-msgid "Unrecognized attribute(s) '%s'"
-msgstr "Нераспознаваемые атрибуты '%s'"
 
 msgid "Unrecognized field"
 msgstr "Неизвестное поле"

@@ -17,7 +17,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2018-03-02 16:32+0000\n"
+"POT-Creation-Date: 2018-11-30 03:49+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -52,10 +52,6 @@ msgid ""
 msgstr "%(branch)s HEAD 文件与迁移时间线头不匹配，需要：%(head)s"
 
 #, python-format
-msgid "%(id)s is not a valid %(type)s identifier"
-msgstr "%(id)s 不是有效的 %(type)s 标识"
-
-#, python-format
 msgid ""
 "%(invalid_dirs)s is invalid value for sort_dirs, valid value is '%(asc)s' "
 "and '%(desc)s'"
@@ -77,10 +73,6 @@ msgstr "在 %s 处于脱机方式时，无法对其进行调用"
 #, python-format
 msgid "%s is invalid attribute for sort_keys"
 msgstr "%s 对于 sort_keys 是无效属性"
-
-#, python-format
-msgid "%s is not a valid VLAN tag"
-msgstr "%s 不是一个有效的标签"
 
 #, python-format
 msgid "%s must implement get_port_from_device or get_ports_from_devices."
@@ -136,9 +128,6 @@ msgstr "已对此 IP 系列设置缺省子网池。对于每个 IP 系列，只�
 msgid "A metering driver must be specified"
 msgstr "必须指定测量驱动程序"
 
-msgid "API for retrieving service providers for Neutron advanced services"
-msgstr "用于为 Neutron 高级服务检索服务提供程序的 API"
-
 msgid "Aborting periodic_sync_routers_task due to an error."
 msgstr "正在异常中止 periodic_sync_routers_task，因为发生了错误。"
 
@@ -169,10 +158,6 @@ msgstr "将测试属性添加至核心资源。"
 #, python-format
 msgid "Agent %(id)s is not a L3 Agent or has been disabled"
 msgstr "代理 %(id)s 不是 L3 代理或已禁用"
-
-#, python-format
-msgid "Agent %(id)s is not a valid DHCP Agent or has been disabled"
-msgstr "代理 %(id)s 是无效 DHCP 代理或已禁用"
 
 msgid ""
 "Agent starts with admin_state_up=False when enable_new_agents=False. In the "
@@ -234,9 +219,6 @@ msgstr "已存在带有这些值的 RBAC 策略。"
 
 msgid "An identifier must be specified when updating a subnet"
 msgstr "更新子网时，必须指定标识"
-
-msgid "An interface driver must be specified"
-msgstr "必须指定接口驱动程序"
 
 msgid ""
 "An ordered list of extension driver entrypoints to be loaded from the "
@@ -678,9 +660,6 @@ msgstr "POST 中的安全组规则重复。"
 msgid "Duplicate address detected"
 msgstr "检测到重复地址。"
 
-msgid "Duplicate segment entry in request."
-msgstr "请求中的段条目重复。"
-
 #, python-format
 msgid "ERROR: %s"
 msgstr "错误：%s"
@@ -699,9 +678,6 @@ msgstr "参数 network_id 或 router_id 的其中之一必须传递至_get_ports
 
 msgid "Either subnet_id or port_id must be specified"
 msgstr "必须指定 subnet_id 或 port_id"
-
-msgid "Empty physical network name."
-msgstr "空的物理网络名。"
 
 msgid "Empty subnet pool prefix list."
 msgstr "子网池前缀列表为空。"
@@ -763,12 +739,6 @@ msgstr ""
 "启用 dnsmasq 服务以在运行 DHCP 代理程序的主机上通过 DNS 解析器提供实例的名称"
 "解析。实际上会从 dnsmasq 进程自变量中移除“--no-resolv”选项。将定制 DNS 解析器"
 "添加至“dnsmasq_dns_servers”选项会禁用此功能部件。"
-
-msgid "End of VLAN range is less than start of VLAN range"
-msgstr "VLAN范围结束值比开始值小"
-
-msgid "End of tunnel range is less than start of tunnel range"
-msgstr "隧道范围的结束小于隧道范围的起始"
 
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
@@ -1144,10 +1114,6 @@ msgid "Invalid mapping: '%s'"
 msgstr "映射无效：“%s”"
 
 #, python-format
-msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'."
-msgstr "无效网络 VLAN 范围：“%(vlan_range)s”-“%(error)s”。"
-
-#, python-format
 msgid "Invalid network VXLAN port range: '%(vxlan_range)s'."
 msgstr "无效网络 VXLAN 端口范围：“%(vxlan_range)s”。"
 
@@ -1434,12 +1400,6 @@ msgstr "网络类型值“%s”不受支持"
 
 msgid "Network type value needed by the ML2 plugin"
 msgstr "ML2 插件需要网络类型值"
-
-msgid "Network types supported by the agent (gre and/or vxlan)."
-msgstr "代理支持的网络类型（gre 和/或 vxlan）。"
-
-msgid "Neutron Service Type Management"
-msgstr "Neutron 服务类型管理"
 
 msgid "Neutron core_plugin not configured!"
 msgstr "未配置 Neutron core_plugin!"
@@ -1918,9 +1878,6 @@ msgstr ""
 "安全组规则协议 %(protocol)s 不受支持。只有协议值 %(values)s 和整数表示 [0 到 "
 "255] 受支持。"
 
-msgid "Segments and provider values cannot both be set."
-msgstr "无法同时设置段和提供程序值。"
-
 msgid "Selects the Agent Type reported"
 msgstr "选择所报告的代理类型"
 
@@ -2019,9 +1976,6 @@ msgstr "管理员上下文中要指定的连接租户标识"
 
 msgid "Tenant name for connecting to designate in admin context"
 msgstr "管理员上下文中要指定的连接租户名"
-
-msgid "Tenant network creation is not enabled."
-msgstr "未启用租户网络创建。"
 
 msgid "Tenant-id was missing from quota request."
 msgstr "配额请求中缺少 tenant-id。"
@@ -2125,17 +2079,6 @@ msgid ""
 "'infinite' or negative integer means no limit"
 msgstr "在单个响应中返回的最大项数，值为“无限”或负整数表示无限制"
 
-#, python-format
-msgid ""
-"The network %(network_id)s has been already hosted by the DHCP Agent "
-"%(agent_id)s."
-msgstr "网络 %(network_id)s 已由 DHCP 代理 %(agent_id)s 主管。"
-
-#, python-format
-msgid ""
-"The network %(network_id)s is not hosted by the DHCP agent %(agent_id)s."
-msgstr "网络 %(network_id)s 未由 DHCP 代理 %(agent_id)s 主管。"
-
 msgid ""
 "The network type to use when creating the HA network for an HA router. By "
 "default or if empty, the first 'tenant_network_types' is used. This is "
@@ -2226,11 +2169,6 @@ msgid ""
 "Timeout in seconds to wait for the local switch connecting the controller. "
 "Used only for 'native' driver."
 msgstr "等待用于连接控制器的本地交换机时的超时（秒）。仅用于“本机”驱动程序。"
-
-msgid ""
-"Too long prefix provided. New name would exceed given length for an "
-"interface name."
-msgstr "提供的前缀太长。新名称将超出接口名称的给定长度。"
 
 msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
@@ -2336,10 +2274,6 @@ msgid "Unable to find resource name in %s"
 msgstr "在%s中找不到源的名称"
 
 #, python-format
-msgid "Unable to generate unique mac on network %(net_id)s."
-msgstr "无法在网络 %(net_id)s 上生成唯一 MAC。"
-
-#, python-format
 msgid ""
 "Unable to identify a target field from:%s. Match should be in the form "
 "%%(<field_name>)s"
@@ -2408,10 +2342,6 @@ msgstr "已取消映射错误"
 
 msgid "Unrecognized action"
 msgstr "无法识别动作"
-
-#, python-format
-msgid "Unrecognized attribute(s) '%s'"
-msgstr "无法识别属性“%s”"
 
 msgid "Unrecognized field"
 msgstr "无法识别字段"
