@@ -82,13 +82,14 @@ class NeutronConfigFixture(ConfigFixture):
             'oslo_concurrency': {
                 'lock_path': '$state_path/lock',
             },
-            'oslo_policy': {
-                'policy_file': self._generate_policy_json(),
-            },
             'agent': {
                 'report_interval': str(env_desc.agent_down_time / 2.0)
             },
         })
+        policy_file = self._generate_policy_json()
+        if policy_file:
+            self.config['oslo_policy'] = {'policy_file': policy_file}
+
         # Set root_helper/root_helper_daemon only when env var is set
         root_helper = os.environ.get('OS_ROOTWRAP_CMD')
         if root_helper:
