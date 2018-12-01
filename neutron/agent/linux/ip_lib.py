@@ -44,6 +44,18 @@ IP_NONLOCAL_BIND = 'net.ipv4.ip_nonlocal_bind'
 LOOPBACK_DEVNAME = 'lo'
 FB_TUNNEL_DEVICE_NAMES = ['gre0', 'gretap0', 'tunl0', 'erspan0', 'sit0',
                           'ip6tnl0', 'ip6gre0']
+RULE_TABLES = {'default': 253,
+               'main': 254,
+               'local': 255}
+
+# Rule indexes: pyroute2.netlink.rtnl
+# Rule names: https://www.systutorials.com/docs/linux/man/8-ip-rule/
+# NOTE(ralonsoh): 'masquerade' type is printed as 'nat' in 'ip rule' command
+RULE_TYPES = {1: 'unicast',
+              6: 'blackhole',
+              7: 'unreachable',
+              8: 'prohibit',
+              10: 'nat'}
 
 SYS_NET_PATH = '/sys/class/net'
 DEFAULT_GW_PATTERN = re.compile(r"via (\S+)")
@@ -427,30 +439,8 @@ class IpRuleCommand(IpCommandBase):
 
         return {k: str(v) for k, v in map(canonicalize, settings.items())}
 
-    def _parse_line(self, ip_version, line):
-        # Typical rules from 'ip rule show':
-        # 4030201:  from 1.2.3.4/24 lookup 10203040
-        # 1024:     from all iif qg-c43b1928-48 lookup noscope
-
-        parts = line.split()
-        if not parts:
-            return {}
-
-        # Format of line is: "priority: <key> <value> ... [<type>]"
-        settings = {k: v for k, v in zip(parts[1::2], parts[2::2])}
-        settings['priority'] = parts[0][:-1]
-        if len(parts) % 2 == 0:
-            # When line has an even number of columns, last one is the type.
-            settings['type'] = parts[-1]
-
-        return self._make_canonical(ip_version, settings)
-
-    def list_rules(self, ip_version):
-        lines = self._as_root([ip_version], ['show']).splitlines()
-        return [self._parse_line(ip_version, line) for line in lines]
-
     def _exists(self, ip_version, **kwargs):
-        return kwargs in self.list_rules(ip_version)
+        return kwargs in list_ip_rules(self._parent.namespace, ip_version)
 
     def _make__flat_args_tuple(self, *args, **kwargs):
         for kwargs_item in sorted(kwargs.items(), key=lambda i: i[0]):
@@ -1309,3 +1299,68 @@ def get_ipv6_forwarding(device, namespace=None):
     cmd = ['sysctl', '-b', "net.ipv6.conf.%s.forwarding" % device]
     ip_wrapper = IPWrapper(namespace)
     return int(ip_wrapper.netns.execute(cmd, run_as_root=True))
+
+
+def _parse_ip_rule(rule, ip_version):
+    """Parse a pyroute2 rule and returns a dictionary
+
+    Parameters contained in the returned dictionary:
+    - priority: rule priority
+    - from: source IP address
+    - to: (optional) destination IP address
+    - type: rule type (see RULE_TYPES)
+    - table: table name or number (see RULE_TABLES)
+    - fwmark: (optional) FW mark
+    - iif: (optional) input interface name
+    - oif: (optional) output interface name
+
+     :param rule: pyroute2 rule dictionary
+     :param ip_version: IP version (4, 6)
+     :return: dictionary with IP rule information
+    """
+    parsed_rule = {'priority': str(rule['attrs'].get('FRA_PRIORITY', 0))}
+    from_ip = rule['attrs'].get('FRA_SRC')
+    if from_ip:
+        parsed_rule['from'] = common_utils.ip_to_cidr(
+            from_ip, prefix=rule['src_len'])
+        if common_utils.is_cidr_host(parsed_rule['from']):
+            parsed_rule['from'] = common_utils.cidr_to_ip(parsed_rule['from'])
+    else:
+        parsed_rule['from'] = constants.IP_ANY[ip_version]
+    to_ip = rule['attrs'].get('FRA_DST')
+    if to_ip:
+        parsed_rule['to'] = common_utils.ip_to_cidr(
+            to_ip, prefix=rule['dst_len'])
+        if common_utils.is_cidr_host(parsed_rule['to']):
+            parsed_rule['to'] = common_utils.cidr_to_ip(parsed_rule['to'])
+    parsed_rule['type'] = RULE_TYPES[rule['action']]
+    table_num = rule['attrs']['FRA_TABLE']
+    for table_name in (name for (name, index) in
+                       RULE_TABLES.items() if index == table_num):
+        parsed_rule['table'] = table_name
+        break
+    else:
+        parsed_rule['table'] = str(table_num)
+    fwmark = rule['attrs'].get('FRA_FWMARK')
+    if fwmark:
+        fwmask = rule['attrs'].get('FRA_FWMASK')
+        parsed_rule['fwmark'] = '{0:#x}/{1:#x}'.format(fwmark, fwmask)
+    iifname = rule['attrs'].get('FRA_IIFNAME')
+    if iifname:
+        parsed_rule['iif'] = iifname
+    oifname = rule['attrs'].get('FRA_OIFNAME')
+    if oifname:
+        parsed_rule['oif'] = oifname
+
+    return parsed_rule
+
+
+def list_ip_rules(namespace, ip_version):
+    """List all IP rules in a namespace
+
+    :param namespace: namespace name
+    :param ip_version: IP version (4, 6)
+    :return: list of dictionaries with the rules information
+    """
+    rules = privileged.list_ip_rules(namespace, ip_version)
+    return [_parse_ip_rule(rule, ip_version) for rule in rules]

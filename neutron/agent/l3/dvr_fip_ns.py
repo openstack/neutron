@@ -262,8 +262,7 @@ class FipNamespace(namespaces.Namespace):
         return new_gw_ips != old_gw_ips
 
     def get_fip_table_indexes(self, ip_version):
-        ns_ipr = ip_lib.IPRule(namespace=self.get_name())
-        ip_rules_list = ns_ipr.rule.list_rules(ip_version)
+        ip_rules_list = ip_lib.list_ip_rules(self.get_name(), ip_version)
         tbl_index_list = []
         for ip_rule in ip_rules_list:
             tbl_index = ip_rule['table']
