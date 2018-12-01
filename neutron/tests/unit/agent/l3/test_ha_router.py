@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import signal
 
 import mock
@@ -20,12 +21,18 @@ from oslo_utils import uuidutils
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import router_info
 from neutron.tests import base
+from neutron.tests.common import l3_test_common
 from neutron.tests import tools
 
 _uuid = uuidutils.generate_uuid
 
 
 class TestBasicRouterOperations(base.BaseTestCase):
+    def setUp(self):
+        super(TestBasicRouterOperations, self).setUp()
+        self.device_exists_p = mock.patch(
+            'neutron.agent.linux.ip_lib.device_exists')
+        self.device_exists = self.device_exists_p.start()
 
     def _create_router(self, router=None, **kwargs):
         if not router:
@@ -141,3 +148,25 @@ class TestBasicRouterOperations(base.BaseTestCase):
             'ha_state')
         self.mock_open = IOError
         self.assertEqual('unknown', ri.ha_state)
+
+    def test_gateway_ports_equal(self):
+        ri = self._create_router(mock.MagicMock())
+        ri.driver = mock.MagicMock()
+        subnet_id, qos_policy_id = _uuid(), _uuid()
+        _, old_gw_port = l3_test_common.prepare_ext_gw_test(
+            self, ri, True)
+        old_gw_port['qos_policy_id'] = qos_policy_id
+        new_gw_port = copy.deepcopy(old_gw_port)
+        new_gw_port.update({'binding:host_id': 'node02',
+                            'updated_at': '2018-11-02T14:07:00',
+                            'revision_number': 101,
+                            'qos_policy_id': qos_policy_id})
+        self.assertTrue(ri._gateway_ports_equal(old_gw_port, new_gw_port))
+
+        fixed_ip = {'ip_address': '10.10.10.3', 'subnet_id': subnet_id}
+        new_gw_port['fixed_ips'].append(fixed_ip)
+        self.assertFalse(ri._gateway_ports_equal(old_gw_port, new_gw_port))
+
+        new_gw_port['fixed_ips'].remove(fixed_ip)
+        new_gw_port['qos_policy_id'] = _uuid()
+        self.assertFalse(ri._gateway_ports_equal(old_gw_port, new_gw_port))
