@@ -10,9 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import empty_string_filtering as apidef
 from neutron_lib.api import extensions
-
-from neutron.extensions import _empty_string_filtering_lib as apidef
 
 
 class Empty_string_filtering(extensions.APIExtensionDescriptor):
