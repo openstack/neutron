@@ -1,0 +1,15 @@
+---
+features:
+  - |
+    Introduce the attribute ``propagate_uplink_status`` to ports.
+    Right now, the SRIOV mechanism driver leverages this attribute to decide
+    if the VF link should follow the state of the PF.
+    For example, if the PF is down, the VF link state is automatically
+    set to down as well.
+    Operators can turn on this feature via the configuration option::
+
+      [ml2]
+      extension_drivers = uplink_status_propagation
+
+    The API extension ``uplink_status_propagation`` is introduced to indicate
+    if this feature is turned on.

@@ -24,6 +24,12 @@ from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
 LOG = logging.getLogger(__name__)
 
 
+class LinkState(object):
+    ENABLE = "enable"
+    DISABLE = "disable"
+    AUTO = "auto"
+
+
 class PciDeviceIPWrapper(ip_lib.IPWrapper):
     """Wrapper class for ip link commands.
 
@@ -40,10 +46,6 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
     MACVTAP_REG_EX = re.compile(MACVTAP_PATTERN)
 
     IP_LINK_OP_NOT_SUPPORTED = 'RTNETLINK answers: Operation not supported'
-
-    class LinkState(object):
-        ENABLE = "enable"
-        DISABLE = "disable"
 
     def __init__(self, dev_name):
         super(PciDeviceIPWrapper, self).__init__()
@@ -96,10 +98,9 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         return vf_to_mac_mapping
 
     def get_vf_state(self, vf_index):
-        """Get vf state {True/False}
+        """Get vf state {enable/disable/auto}
 
         @param vf_index: vf index
-        @todo: Handle "auto" state
         """
         try:
             out = self._as_root([], "link", ("show", self.dev_name))
@@ -112,19 +113,22 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
             vf_details = self._parse_vf_link_show(vf_lines[0])
             if vf_details:
                 state = vf_details.get("link-state",
-                                       self.LinkState.DISABLE)
-            if state != self.LinkState.DISABLE:
-                return True
-        return False
+                                       LinkState.DISABLE)
+            if state in (LinkState.AUTO, LinkState.ENABLE):
+                return state
+        return LinkState.DISABLE
 
-    def set_vf_state(self, vf_index, state):
+    def set_vf_state(self, vf_index, state, auto=False):
         """sets vf state.
 
         @param vf_index: vf index
         @param state: required state {True/False}
         """
-        status_str = self.LinkState.ENABLE if state else \
-            self.LinkState.DISABLE
+        if auto:
+            status_str = LinkState.AUTO
+        else:
+            status_str = LinkState.ENABLE if state else \
+                LinkState.DISABLE
         self._set_feature(vf_index, "state", status_str)
 
     def set_vf_spoofcheck(self, vf_index, enabled):

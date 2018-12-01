@@ -240,7 +240,8 @@ class SriovNicSwitchAgent(object):
         # If one of the above operations fails => resync with plugin
         return (resync_a | resync_b)
 
-    def treat_device(self, device, pci_slot, admin_state_up, spoofcheck=True):
+    def treat_device(self, device, pci_slot, admin_state_up, spoofcheck=True,
+                     propagate_uplink_state=False):
         if self.eswitch_mgr.device_exists(device, pci_slot):
             try:
                 self.eswitch_mgr.set_device_spoofcheck(device, pci_slot,
@@ -253,7 +254,8 @@ class SriovNicSwitchAgent(object):
 
             try:
                 self.eswitch_mgr.set_device_state(device, pci_slot,
-                                                  admin_state_up)
+                                                  admin_state_up,
+                                                  propagate_uplink_state)
             except exc.IpCommandOperationNotSupportedError:
                 LOG.warning("Device %s does not support state change",
                             device)
@@ -305,10 +307,12 @@ class SriovNicSwitchAgent(object):
                 port_id = device_details['port_id']
                 profile = device_details['profile']
                 spoofcheck = device_details.get('port_security_enabled', True)
-                if self.treat_device(device,
-                                     profile.get('pci_slot'),
-                                     device_details['admin_state_up'],
-                                     spoofcheck):
+                if self.treat_device(
+                        device,
+                        profile.get('pci_slot'),
+                        device_details['admin_state_up'],
+                        spoofcheck,
+                        device_details['propagate_uplink_status']):
                     if device_details['admin_state_up']:
                         devices_up.add(device)
                     else:

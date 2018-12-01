@@ -402,7 +402,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
         for arg in (('admin_state_up', 'device_id',
                     'mac_address', 'name', 'fixed_ips',
-                    'tenant_id', 'device_owner', 'security_groups') +
+                    'tenant_id', 'device_owner', 'security_groups',
+                    'propagate_uplink_status') +
                     (arg_list or ())):
             # Arg must be present
             if arg in kwargs:
