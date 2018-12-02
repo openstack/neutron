@@ -1095,11 +1095,15 @@ class Dnsmasq(DhcpLocalProcess):
         if isinstance(tag, int):
             tag = self._TAG_PREFIX % tag
 
-        if not option.isdigit():
-            if ip_version == 4:
-                option = 'option:%s' % option
-            else:
-                option = 'option6:%s' % option
+        # NOTE(TheJulia): prepending option6 to any DHCPv6 option is
+        # indicated as required in the dnsmasq man page for version 2.79.
+        # Testing reveals that the man page is correct, option is not
+        # honored if not in the format "option6:$NUM".  For IPv4 we
+        # only apply if the option is non-numeric.
+        if ip_version == constants.IP_VERSION_6:
+            option = 'option6:%s' % option
+        elif not option.isdigit():
+            option = 'option:%s' % option
         if extra_tag:
             tags = ('tag:' + tag, extra_tag[:-1], '%s' % option)
         else:

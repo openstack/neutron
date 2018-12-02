@@ -901,6 +901,25 @@ class FakeV4NetworkPxe3Ports(FakeNetworkBase):
                 DhcpOpt(opt_name='bootfile-name', opt_value='pxelinux3.0')]
 
 
+class FakeV4NetworkPxePort(FakeNetworkBase):
+    def __init__(self):
+        self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+        self.subnets = [FakeV4Subnet()]
+        self.ports = [FakePort1()]
+        self.namespace = 'qdhcp-ns'
+        self.ports[0].extra_dhcp_opts = [
+            DhcpOpt(opt_name='tftp-server', opt_value='192.168.0.3',
+                    ip_version=constants.IP_VERSION_4),
+            DhcpOpt(opt_name='server-ip-address', opt_value='192.168.0.2',
+                    ip_version=constants.IP_VERSION_4),
+            DhcpOpt(opt_name='nd98', opt_value='option-nondigit-98',
+                    ip_version=constants.IP_VERSION_4),
+            DhcpOpt(opt_name='99', opt_value='option-99',
+                    ip_version=constants.IP_VERSION_4),
+            DhcpOpt(opt_name='bootfile-name', opt_value='pxelinux.0',
+                    ip_version=constants.IP_VERSION_4)]
+
+
 class FakeV6NetworkPxePort(FakeNetworkBase):
     def __init__(self):
         self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
@@ -909,6 +928,10 @@ class FakeV6NetworkPxePort(FakeNetworkBase):
         self.namespace = 'qdhcp-ns'
         self.ports[0].extra_dhcp_opts = [
             DhcpOpt(opt_name='tftp-server', opt_value='2001:192:168::1',
+                    ip_version=constants.IP_VERSION_6),
+            DhcpOpt(opt_name='nd98', opt_value='option-nondigit-98',
+                    ip_version=constants.IP_VERSION_6),
+            DhcpOpt(opt_name='99', opt_value='option-99',
                     ip_version=constants.IP_VERSION_6),
             DhcpOpt(opt_name='bootfile-name', opt_value='pxelinux.0',
                     ip_version=constants.IP_VERSION_6)]
@@ -1775,6 +1798,27 @@ class TestDnsmasq(TestBase):
 
         self._test_output_opts_file(expected, FakeDualV4Pxe3Ports())
 
+    def test_output_opts_file_pxe_port(self):
+        expected = (
+            'tag:tag0,option:dns-server,8.8.8.8\n'
+            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            '0.0.0.0/0,192.168.0.1\n'
+            'tag:tag0,249,20.0.0.1/24,20.0.0.1,'
+            '0.0.0.0/0,192.168.0.1\n'
+            'tag:tag0,option:router,192.168.0.1\n'
+            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'option:tftp-server,192.168.0.3\n'
+            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'option:server-ip-address,192.168.0.2\n'
+            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'option:nd98,option-nondigit-98\n'
+            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            '99,option-99\n'
+            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'option:bootfile-name,pxelinux.0').lstrip()
+
+        self._test_output_opts_file(expected, FakeV4NetworkPxePort())
+
     def test_output_opts_file_multiple_tags(self):
         expected = (
             'tag:tag0,option:dns-server,8.8.8.8\n'
@@ -1803,6 +1847,10 @@ class TestDnsmasq(TestBase):
             'tag:tag0,option6:domain-search,openstacklocal\n'
             'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
             'option6:tftp-server,2001:192:168::1\n'
+            'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
+            'option6:nd98,option-nondigit-98\n'
+            'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
+            'option6:99,option-99\n'
             'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
             'option6:bootfile-name,pxelinux.0')
         expected = expected.lstrip()
