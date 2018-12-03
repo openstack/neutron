@@ -498,8 +498,8 @@ class IptablesManager(object):
             return self._do_run_restore(args, commands, lock=True)
 
         err = self._do_run_restore(args, commands)
-        if (isinstance(err, linux_utils.ProcessExecutionError) and
-            err.returncode == XTABLES_RESOURCE_PROBLEM_CODE):
+        if (isinstance(err, n_exc.ProcessExecutionError) and
+                err.returncode == XTABLES_RESOURCE_PROBLEM_CODE):
             # maybe we run on a platform that includes iptables commit
             # 999eaa241212d3952ddff39a99d0d55a74e3639e (for example, latest
             # RHEL) and failed because of xlock acquired by another

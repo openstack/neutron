@@ -21,8 +21,8 @@ from neutron_lib.utils import helpers
 from oslo_log import log as logging
 
 from neutron._i18n import _
-from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
+from neutron.agent.common import ip_lib
+from neutron.agent.common import utils
 from neutron.common import utils as common_utils
 
 
@@ -117,7 +117,7 @@ class AsyncProcess(object):
         if block:
             common_utils.wait_until_true(self.is_active)
 
-    def stop(self, block=False, kill_signal=signal.SIGKILL):
+    def stop(self, block=False, kill_signal=None):
         """Halt the process and watcher threads.
 
         :param block: Block until the process has stopped.
@@ -126,6 +126,7 @@ class AsyncProcess(object):
         :raises utils.WaitTimeout if blocking is True and the process
                 did not stop in time.
         """
+        kill_signal = kill_signal or getattr(signal, 'SIGKILL', signal.SIGTERM)
         if self._is_running:
             LOG.debug('Halting async process [%s].', self.cmd)
             self._kill(kill_signal)
@@ -194,7 +195,7 @@ class AsyncProcess(object):
         """Kill the async process and respawn if necessary."""
         LOG.debug('Halting async process [%s] in response to an error.',
                   self.cmd)
-        self._kill(signal.SIGKILL)
+        self._kill(getattr(signal, 'SIGKILL', signal.SIGTERM))
         if self.respawn_interval is not None and self.respawn_interval >= 0:
             eventlet.sleep(self.respawn_interval)
             LOG.debug('Respawning async process [%s].', self.cmd)
