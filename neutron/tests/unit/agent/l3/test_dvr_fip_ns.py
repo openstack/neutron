@@ -102,13 +102,21 @@ class TestDvrFipNs(base.BaseTestCase):
         agent_gw_port = self._get_agent_gw_port()
 
         device_exists.return_value = False
-        self.fip_ns.create_or_update_gateway_port(agent_gw_port)
+        with mock.patch.object(self.fip_ns.driver, 'set_onlink_routes') as \
+                mock_set_onlink_routes:
+            self.fip_ns.create_or_update_gateway_port(agent_gw_port)
         self.assertTrue(fip_create.called)
         self.assertEqual(1, self.driver.plug.call_count)
         ext_net_bridge = self.conf.external_network_bridge
         if ext_net_bridge:
             self.assertEqual(1, self.driver.remove_vlan_tag.call_count)
         self.assertEqual(1, self.driver.init_l3.call_count)
+        interface_name = self.fip_ns.get_ext_device_name(agent_gw_port['id'])
+        gw_cidrs = [sn['cidr'] for sn in agent_gw_port['subnets']
+                    if sn.get('cidr')]
+        mock_set_onlink_routes.assert_called_once_with(
+            interface_name, self.fip_ns.name, [], preserve_ips=gw_cidrs,
+            is_ipv6=False)
 
     @mock.patch.object(ip_lib, 'IPDevice')
     @mock.patch.object(ip_lib, 'send_ip_addr_adv_notif')
@@ -121,7 +129,8 @@ class TestDvrFipNs(base.BaseTestCase):
         agent_gw_port = self._get_agent_gw_port()
         interface_name = self.fip_ns.get_ext_device_name(agent_gw_port['id'])
         self.fip_ns.agent_gateway_port = agent_gw_port
-        self.fip_ns.create_or_update_gateway_port(agent_gw_port)
+        with mock.patch.object(self.fip_ns.driver, 'set_onlink_routes'):
+            self.fip_ns.create_or_update_gateway_port(agent_gw_port)
         expected = [
             mock.call(self.fip_ns.get_name(),
                       interface_name,
@@ -164,7 +173,8 @@ class TestDvrFipNs(base.BaseTestCase):
         agent_gw_port['subnets'][0]['gateway_ip'] = '20.0.1.1'
         self.fip_ns._check_for_gateway_ip_change = mock.Mock(return_value=True)
         self.fip_ns.agent_gateway_port = agent_gw_port
-        self.fip_ns.create_or_update_gateway_port(agent_gw_port)
+        with mock.patch.object(self.fip_ns.driver, 'set_onlink_routes'):
+            self.fip_ns.create_or_update_gateway_port(agent_gw_port)
 
         IPDevice().route.add_route.assert_called_once_with('20.0.1.1',
                                                            scope='link')
