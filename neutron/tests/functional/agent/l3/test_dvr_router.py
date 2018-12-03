@@ -596,6 +596,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                     {'cidr': float_subnet['cidr'],
                      'gateway_ip': float_subnet['gateway_ip'],
                      'id': fixed_ip['subnet_id']}],
+                'extra_subnets': external_gw_port['extra_subnets'],
                 'network_id': external_gw_port['network_id'],
                 'device_owner': lib_constants.DEVICE_OWNER_AGENT_GW,
                 'mac_address': 'fa:16:3e:80:8d:89',
@@ -626,6 +627,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                     {'cidr': float_subnet['cidr'],
                      'gateway_ip': float_subnet['gateway_ip'],
                      'id': fixed_ip['subnet_id']}],
+                 'extra_subnets': external_gw_port['extra_subnets'],
                  'network_id': external_gw_port['network_id'],
                  'device_owner': lib_constants.DEVICE_OWNER_AGENT_GW,
                  'mac_address': 'fa:16:3e:80:8d:89',
@@ -2036,3 +2038,29 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                         ip_lib.IP_NONLOCAL_BIND))
             raise
         self.assertEqual(0, ip_nonlocal_bind_value)
+
+    def test_dvr_router_fip_namespace_routes(self):
+        """Test to validate the floatingip namespace subnets routes."""
+        self.agent.conf.agent_mode = 'dvr'
+        router_info = self.generate_dvr_router_info(enable_floating_ip=False)
+        fip_agent_gw_port = self._get_fip_agent_gw_port_for_router(
+            router_info['gw_port'])
+        self.mock_plugin_api.get_agent_gateway_port.return_value = (
+            fip_agent_gw_port)
+        router1 = self.manage_router(self.agent, router_info)
+
+        fip_namespace = router1.fip_ns.get_name()
+        ip_wrapper = ip_lib.IPWrapper(namespace=fip_namespace)
+        interfaces = ip_wrapper.get_devices()
+        fg_interface_name = next(
+            interface.name for interface in interfaces
+            if interface.name.startswith(dvr_fip_ns.FIP_EXT_DEV_PREFIX))
+
+        ip_device = ip_lib.IPDevice(fg_interface_name, namespace=fip_namespace)
+        routes = ip_device.route.list_onlink_routes(lib_constants.IP_VERSION_4)
+        self.assertGreater(len(routes), 0)
+        self.assertEqual(len(fip_agent_gw_port['extra_subnets']), len(routes))
+        extra_subnet_cidr = set(extra_subnet['cidr'] for extra_subnet
+                                in fip_agent_gw_port['extra_subnets'])
+        routes_cidr = set(route['cidr'] for route in routes)
+        self.assertEqual(extra_subnet_cidr, routes_cidr)
