@@ -337,6 +337,7 @@ class Dnsmasq(DhcpLocalProcess):
             '--dhcp-optsfile=%s' % self.get_conf_file_name('opts'),
             '--dhcp-leasefile=%s' % self.get_conf_file_name('leases'),
             '--dhcp-match=set:ipxe,175',
+            '--dhcp-userclass=set:ipxe6,iPXE',
             '--local-service',
         ]
         if self.device_manager.driver.bridged:

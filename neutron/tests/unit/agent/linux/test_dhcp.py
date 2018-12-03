@@ -1260,6 +1260,7 @@ class TestDnsmasq(TestBase):
             '--dhcp-optsfile=/dhcp/%s/opts' % network.id,
             '--dhcp-leasefile=/dhcp/%s/leases' % network.id,
             '--dhcp-match=set:ipxe,175',
+            '--dhcp-userclass=set:ipxe6,iPXE',
             '--local-service',
             '--bind-interfaces',
         ]
