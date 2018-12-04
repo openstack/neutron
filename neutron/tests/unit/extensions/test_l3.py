@@ -395,13 +395,17 @@ class L3NatTestCaseMixin(object):
 
     def _add_external_gateway_to_router(self, router_id, network_id,
                                         expected_code=exc.HTTPOk.code,
-                                        neutron_context=None, ext_ips=None):
+                                        neutron_context=None, ext_ips=None,
+                                        **kwargs):
         ext_ips = ext_ips or []
         body = {'router':
                 {'external_gateway_info': {'network_id': network_id}}}
         if ext_ips:
             body['router']['external_gateway_info'][
                 'external_fixed_ips'] = ext_ips
+        if 'policy_id' in kwargs:
+            body['router']['external_gateway_info'][
+                'qos_policy_id'] = kwargs.get('policy_id')
         return self._update('routers', router_id, body,
                             expected_code=expected_code,
                             neutron_context=neutron_context)

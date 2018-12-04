@@ -119,3 +119,13 @@ class ProcessExecutionError(RuntimeError):
     def __init__(self, message, returncode):
         super(ProcessExecutionError, self).__init__(message)
         self.returncode = returncode
+
+
+class RouterQosBindingNotFound(exceptions.NotFound):
+    message = _("QoS binding for router %(router_id)s gateway and policy "
+                "%(policy_id)s could not be found.")
+
+
+class RouterQosBindingError(exceptions.NeutronException):
+    message = _("QoS binding for router %(router_id)s gateway and policy "
+                "%(policy_id)s could not be created: %(db_error)s.")

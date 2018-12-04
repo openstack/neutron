@@ -65,3 +65,19 @@ class QosPolicyFloatingIPBinding(base.NeutronDbObject):
 
     primary_keys = ['policy_id', 'fip_id']
     fields_no_update = ['policy_id', 'fip_id']
+
+
+@base.NeutronObjectRegistry.register
+class QosPolicyRouterGatewayIPBinding(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = qos_db_model.QosRouterGatewayIPPolicyBinding
+
+    fields = {
+        'policy_id': common_types.UUIDField(),
+        'router_id': common_types.UUIDField()
+    }
+
+    primary_keys = ['policy_id', 'router_id']
+    fields_no_update = ['policy_id', 'router_id']
