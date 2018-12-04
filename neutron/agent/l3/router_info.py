@@ -82,6 +82,7 @@ class RouterInfo(object):
         self.radvd = None
         self.centralized_port_forwarding_fip_set = set()
         self.fip_managed_by_port_forwardings = None
+        self.qos_gateway_ips = set()
 
     def initialize(self, process_monitor):
         """Initialize the router on the system.

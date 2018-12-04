@@ -22,3 +22,7 @@ function configure_qos {
 function configure_l3_agent_extension_fip_qos {
     plugin_agent_add_l3_agent_extension "fip_qos"
 }
+
+function configure_l3_agent_extension_gateway_ip_qos {
+    plugin_agent_add_l3_agent_extension "gateway_ip_qos"
+}
