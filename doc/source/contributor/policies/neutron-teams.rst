@@ -259,7 +259,7 @@ have.
 Adding or Removing Core Reviewers
 ---------------------------------
 
-A new Neutron core reviewer may be proposed at anytime on the openstack-dev
+A new Neutron core reviewer may be proposed at anytime on the openstack-discuss
 mailing list. Typically, the Lieutenant for a given area will propose a new
 core reviewer for their specific area of coverage, though the Neutron PTL may
 propose new core reviewers as well. The proposal is typically made after
