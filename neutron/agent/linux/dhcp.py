@@ -851,6 +851,19 @@ class Dnsmasq(DhcpLocalProcess):
         if not entries_to_release:
             return
 
+        # If the VM advertises a client ID in its lease, but its not set in
+        # the port's Extra DHCP Opts, the lease will not be filtered above.
+        # Release the lease only if client ID is set in port DB and a mismatch
+        # Otherwise the lease is released when other ports are deleted/updated
+        entries_with_no_client_id = set()
+        for ip, mac, client_id in entries_to_release:
+            if client_id:
+                entry_no_client_id = (ip, mac, None)
+                if (entry_no_client_id in old_leases and
+                        entry_no_client_id in new_leases):
+                    entries_with_no_client_id.add((ip, mac, client_id))
+        entries_to_release -= entries_with_no_client_id
+
         # Try DHCP_RELEASE_TRIES times to release a lease, re-reading the
         # file each time to see if it's still there.  We loop +1 times to
         # check the lease file one last time before logging any remaining
