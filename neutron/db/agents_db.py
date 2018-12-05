@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import datetime
 
 from eventlet import greenthread
@@ -390,6 +391,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
             try:
                 agent = self._get_agent_by_type_and_host(
                     context, agent_state['agent_type'], agent_state['host'])
+                agent_state_orig = copy.deepcopy(agent_state)
                 if not agent.is_active:
                     status = agent_consts.AGENT_REVIVED
                     if 'resource_versions' not in agent_state:
@@ -408,6 +410,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                 agent.update()
                 event_type = events.AFTER_UPDATE
             except agent_exc.AgentNotFoundByTypeHost:
+                agent_state_orig = None
                 greenthread.sleep(0)
                 res['created_at'] = current_time
                 res['started_at'] = current_time
@@ -423,9 +426,17 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
 
         agent_state['agent_status'] = status
         agent_state['admin_state_up'] = agent.admin_state_up
-        registry.notify(resources.AGENT, event_type, self, context=context,
-                        host=agent_state['host'], plugin=self,
-                        agent=agent_state, status=status)
+        registry.publish(resources.AGENT, event_type, self,
+                         payload=events.DBEventPayload(
+                             context=context, metadata={
+                                 'host': agent_state['host'],
+                                 'plugin': self,
+                                 'status': status
+                             },
+                             states=(agent_state_orig, ),
+                             desired_state=agent_state,
+                             resource_id=agent.id
+                         ))
         return status, agent_state
 
     def _get_agents_considered_for_versions(self):

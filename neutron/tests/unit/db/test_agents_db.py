@@ -24,6 +24,7 @@ from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_db import exception as exc
 from oslo_utils import timeutils
+from oslo_utils import uuidutils
 import testscenarios
 
 from neutron.db import agents_db
@@ -160,11 +161,16 @@ class TestAgentsDbMixin(TestAgentsDbBase):
             'neutron.objects.base.NeutronDbObject.modify_fields_from_db'
         ).start()
 
+        counter = {'value': 0}
+
+        def create_obj_side_effect(obj_cls, context, values, populate_id=True):
+            if counter['value'] < 1:
+                counter['value'] += 1
+                raise exc.DBDuplicateEntry()
+            obj_cls.id = uuidutils.generate_uuid()
+
         with mock.patch('neutron.objects.db.api.create_object') as add_mock:
-            add_mock.side_effect = [
-                exc.DBDuplicateEntry(),
-                mock.Mock()
-            ]
+            add_mock.side_effect = create_obj_side_effect
             self.plugin.create_or_update_agent(self.context, self.agent_status)
 
             self.assertEqual(add_mock.call_count, 2,

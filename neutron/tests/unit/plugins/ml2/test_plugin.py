@@ -746,7 +746,11 @@ class TestMl2RevivedAgentsBindPorts(Ml2PluginV2TestCase):
 
             plugin._retry_binding_revived_agents(
                 resources.AGENT, event, plugin,
-                **{'context': context, 'host': host, 'agent': agent})
+                events.DBEventPayload(
+                    context=context, metadata={'host': host}, states=(agent,),
+                    desired_state=agent
+                )
+            )
 
             if (agent_status == agent_consts.AGENT_ALIVE or
                     not admin_state_up or

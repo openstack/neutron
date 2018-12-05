@@ -255,8 +255,12 @@ def map_segment_to_hosts(context, segment_id, hosts):
 
 
 def _update_segment_host_mapping_for_agent(resource, event, trigger,
-                                           context, host, plugin, agent,
-                                           status):
+                                           payload=None):
+    plugin = payload.metadata.get('plugin')
+    agent = payload.desired_state
+    host = payload.metadata.get('host')
+    context = payload.context
+
     check_segment_for_agent = getattr(plugin, 'check_segment_for_agent', None)
     if not check_segment_for_agent:
         return
