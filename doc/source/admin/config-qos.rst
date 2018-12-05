@@ -163,6 +163,28 @@ On the network and compute nodes:
       [agent]
       extensions = fip_qos
 
+
+#. Optionally, in order to enable QoS for router gateway IPs, set the
+   ``extensions`` option in the ``[agent]`` section of
+   ``/etc/neutron/l3_agent.ini`` to include ``gateway_ip_qos``. Set this
+   to all the ``dvr_snat`` or ``legacy`` L3 agents. For example:
+
+   .. code-block:: ini
+
+      [agent]
+      extensions = gateway_ip_qos
+
+
+   And ``gateway_ip_qos`` should work together with the ``fip_qos`` in L3
+   agent for centralized routers, then all L3 IPs with binding QoS policy
+   can be limited under the QoS bandwidth limit rules:
+
+   .. code-block:: ini
+
+      [agent]
+      extensions = fip_qos, gateway_ip_qos
+
+
 #. As rate limit doesn't work on Open vSwitch's ``internal`` ports,
    optionally, as a workaround, to make QoS bandwidth limit work on
    router's gateway ports, set ``ovs_use_veth`` to ``True`` in ``DEFAULT``
