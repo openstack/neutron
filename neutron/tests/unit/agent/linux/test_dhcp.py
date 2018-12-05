@@ -2258,6 +2258,49 @@ class TestDnsmasq(TestBase):
         dnsmasq._release_lease.assert_called_once_with(
             mac1, ip1, constants.IP_VERSION_4, client_id1, 'server_id', mac1)
 
+    def test_release_unused_leases_one_lease_with_client_id_none(self):
+        dnsmasq = self._get_dnsmasq(FakeDualNetwork())
+
+        ip1 = '192.168.0.2'
+        mac1 = '00:00:80:aa:bb:cc'
+        client_id1 = 'client1'
+        ip2 = '192.168.0.4'
+        mac2 = '00:16:3E:C2:77:1D'
+        client_id2 = 'test4'
+        ip6 = '2001:0db8:11a3:09d7:1f34:8a2e:07a0:765d'
+
+        old_leases = set([(ip1, mac1, client_id1), (ip2, mac2, None)])
+        dnsmasq._read_hosts_file_leases = mock.Mock(return_value=old_leases)
+        dnsmasq._output_hosts_file = mock.Mock()
+        # Because the lease release code could fire multiple times, the
+        # second read of the lease file must not have the entries that
+        # would have been released.
+        dnsmasq._read_leases_file_leases = mock.Mock(
+            side_effect=[{ip6: {'iaid': 0xff,
+                                'client_id': 'client_id',
+                                'server_id': 'server_id'},
+                          ip1: {'iaid': mac1,
+                                'client_id': client_id1,
+                                'server_id': 'server_id'},
+                          ip2: {'iaid': mac2,
+                                'client_id': client_id2,
+                                'server_id': 'server_id'}
+                          },
+                         {ip6: {'iaid': 0xff,
+                                'client_id': 'client_id',
+                                'server_id': 'server_id'},
+                          ip2: {'iaid': mac2,
+                                'client_id': client_id2,
+                                'server_id': 'server_id'}
+                          }])
+        dnsmasq._release_lease = mock.Mock()
+        dnsmasq.network.ports = [FakePort4()]
+
+        dnsmasq._release_unused_leases()
+
+        dnsmasq._release_lease.assert_called_once_with(
+            mac1, ip1, constants.IP_VERSION_4, client_id1, 'server_id', mac1)
+
     def test_release_unused_leases_one_lease_from_leases_file(self):
         # leases file has a stale entry that is not in the host file
         dnsmasq = self._get_dnsmasq(FakeDualNetwork())
