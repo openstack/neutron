@@ -19,8 +19,8 @@ from oslo_utils import uuidutils
 
 from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
+from neutron.tests.fullstack.agents import dhcp_agent
 from neutron.tests.fullstack import base
-from neutron.tests.fullstack.cmd import dhcp_agent as cmd
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
 from neutron.tests.unit import testlib_api
@@ -104,7 +104,7 @@ class TestDhcpAgentNoHA(BaseDhcpAgentTest):
 
         self.vm.block_until_dhcp_config_done()
 
-        namespace = cmd._get_namespace_name(
+        namespace = dhcp_agent._get_namespace_name(
             self.network['id'],
             suffix=self.environment.hosts[0].dhcp_agent.get_namespace_suffix())
         ip = ip_lib.IPWrapper(namespace)

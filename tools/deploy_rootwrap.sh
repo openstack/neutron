@@ -32,7 +32,7 @@ neutron_path=$1
 target_etc_path=$2
 target_bin_path=$3
 
-fullstack_path=$neutron_path/neutron/tests/fullstack/cmd
+fullstack_path=$neutron_path/neutron/tests/fullstack/agents
 
 src_conf_path=${neutron_path}/etc
 src_conf=${src_conf_path}/rootwrap.conf

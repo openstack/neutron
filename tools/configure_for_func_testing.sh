@@ -202,7 +202,7 @@ function _install_rootwrap_sudoers {
 
     SECURE_PATH="$PROJECT_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
     if [[ "$VENV" =~ "dsvm-fullstack" ]]; then
-        SECURE_PATH="$REPO_BASE/$PROJECT_NAME/neutron/tests/fullstack/cmd:$SECURE_PATH"
+        SECURE_PATH="$REPO_BASE/$PROJECT_NAME/neutron/tests/fullstack/agents:$SECURE_PATH"
     fi
 
     cat << EOF > $TEMPFILE
