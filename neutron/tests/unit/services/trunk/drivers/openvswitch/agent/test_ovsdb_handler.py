@@ -182,7 +182,9 @@ class TestOVSDBHandler(base.BaseTestCase):
     def test_handle_trunk_remove_trunk_manager_failure(self):
         with mock.patch.object(self.ovsdb_handler, '_get_trunk_metadata',
                 side_effect=trunk_manager.TrunkManagerError(error='error')):
-            self.ovsdb_handler.handle_trunk_remove('foo', self.fake_port)
+            with mock.patch.object(ovsdb_handler, 'bridge_has_instance_port',
+                    return_value=True):
+                self.ovsdb_handler.handle_trunk_remove('foo', self.fake_port)
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
     def test_handle_trunk_remove_rpc_failure(self, br):
