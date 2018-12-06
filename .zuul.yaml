@@ -65,6 +65,8 @@
             timeout: 10800
         - tempest-full-py3:
             timeout: 10800
+        - tempest-slow:
+            irrelevant-files: *tempest-irrelevant-files
     periodic:
       jobs:
         - neutron-functional
