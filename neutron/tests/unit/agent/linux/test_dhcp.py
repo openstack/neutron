@@ -25,6 +25,7 @@ from oslo_utils import fileutils
 import testtools
 
 from neutron.agent.linux import dhcp
+from neutron.agent.linux import ip_lib
 from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_config
 from neutron.conf import common as base_config
@@ -1232,6 +1233,16 @@ class TestDhcpLocalProcess(TestBase):
 
 
 class TestDnsmasq(TestBase):
+
+    def setUp(self):
+        super(TestDnsmasq, self).setUp()
+        self._mock_get_devices_with_ip = mock.patch.object(
+            ip_lib, 'get_devices_with_ip')
+        self.mock_get_devices_with_ip = self._mock_get_devices_with_ip.start()
+        self.addCleanup(self._stop_mocks)
+
+    def _stop_mocks(self):
+        self._mock_get_devices_with_ip.stop()
 
     def _get_dnsmasq(self, network, process_monitor=None):
         process_monitor = process_monitor or mock.Mock()

@@ -21,12 +21,19 @@ from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 from neutron.tests.functional import base as functional_base
 
 
-class GetDevicesTestCase(functional_base.BaseLoggingTestCase):
+def _get_attr(pyroute2_obj, attr_name):
+    rule_attrs = pyroute2_obj.get('attrs', [])
+    for attr in (attr for attr in rule_attrs if attr[0] == attr_name):
+        return attr[1]
+    return
+
+
+class GetDeviceNamesTestCase(functional_base.BaseSudoTestCase):
 
     def _remove_ns(self, namespace):
         priv_ip_lib.remove_netns(namespace)
 
-    def test_get_devices(self):
+    def test_get_device_names(self):
         namespace = 'ns_test-' + uuidutils.generate_uuid()
         priv_ip_lib.create_netns(namespace)
         self.addCleanup(self._remove_ns, namespace)
@@ -36,14 +43,16 @@ class GetDevicesTestCase(functional_base.BaseLoggingTestCase):
         for interface in interfaces:
             priv_ip_lib.create_interface(interface, namespace, 'dummy')
 
-        device_names = priv_ip_lib.get_devices(namespace)
+        device_names = priv_ip_lib.get_device_names(namespace)
+        self.assertGreater(len(device_names), 0)
         for name in device_names:
             self.assertIn(name, interfaces_to_check)
 
         for interface in interfaces:
             priv_ip_lib.delete_interface(interface, namespace)
 
-        device_names = priv_ip_lib.get_devices(namespace)
+        device_names = priv_ip_lib.get_device_names(namespace)
+        self.assertGreater(len(device_names), 0)
         for name in device_names:
             self.assertNotIn(name, interfaces)
 
@@ -240,3 +249,36 @@ class RuleTestCase(functional_base.BaseSudoTestCase):
         rules = ip_lib.list_ip_rules(self.namespace, 4)
         self._check_rules(rules, ['iif'], [iif], 'iif name %s' % iif)
         self.assertEqual(4, len(rules))
+
+
+class GetIpAddressesTestCase(functional_base.BaseSudoTestCase):
+
+    def _remove_ns(self, namespace):
+        priv_ip_lib.remove_netns(namespace)
+
+    def test_get_ip_addresses(self):
+        namespace = 'ns_test-' + uuidutils.generate_uuid()
+        priv_ip_lib.create_netns(namespace)
+        self.addCleanup(self._remove_ns, namespace)
+        interfaces = {
+            '20': {'cidr': '192.168.10.20/24', 'scope': 'link',
+                   'add_broadcast': True},
+            '30': {'cidr': '2001::1/64', 'scope': 'global',
+                   'add_broadcast': False}}
+
+        for int_name, int_parameters in interfaces.items():
+            priv_ip_lib.create_interface(int_name, namespace, 'dummy',
+                                         index=int(int_name))
+            ip_lib.add_ip_address(
+                int_parameters['cidr'], int_name, namespace,
+                int_parameters['scope'], int_parameters['add_broadcast'])
+
+        ip_addresses = priv_ip_lib.get_ip_addresses(namespace)
+        for ip_address in ip_addresses:
+            int_name = str(ip_address['index'])
+            ip = _get_attr(ip_address, 'IFA_ADDRESS')
+            mask = ip_address['prefixlen']
+            cidr = common_utils.ip_to_cidr(ip, mask)
+            self.assertEqual(interfaces[int_name]['cidr'], cidr)
+            self.assertEqual(interfaces[int_name]['scope'],
+                             ip_lib.IP_ADDRESS_SCOPE[ip_address['scope']])

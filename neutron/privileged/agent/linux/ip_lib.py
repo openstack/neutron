@@ -15,6 +15,7 @@ import socket
 
 from neutron_lib import constants
 import pyroute2
+from pyroute2 import netlink
 from pyroute2.netlink import exceptions as netlink_exceptions
 from pyroute2.netlink import rtnl
 from pyroute2.netlink.rtnl import ifinfmsg
@@ -456,16 +457,62 @@ def list_netns(**kwargs):
     return netns.listnetns(**kwargs)
 
 
-@privileged.default.entrypoint
-def get_devices(namespace, **kwargs):
-    """List all interfaces in a namespace
+def _make_serializable(value):
+    """Make a pyroute2 object serializable
 
-    :return: a list of strings with the names of the interfaces in a namespace
+    This function converts 'netlink.nla_slot' object (key, value) in a list
+    of two elements.
+    """
+    if isinstance(value, list):
+        return [_make_serializable(item) for item in value]
+    elif isinstance(value, dict):
+        return {key: _make_serializable(data) for key, data in value.items()}
+    elif isinstance(value, netlink.nla_slot):
+        return [value[0], _make_serializable(value[1])]
+    elif isinstance(value, tuple):
+        return tuple(_make_serializable(item) for item in value)
+    return value
+
+
+@privileged.default.entrypoint
+def get_link_devices(namespace, **kwargs):
+    """List interfaces in a namespace
+
+    :return: (list) interfaces in a namespace
     """
     try:
         with _get_iproute(namespace) as ip:
-            return [link.get_attr('IFLA_IFNAME')
-                    for link in ip.get_links(**kwargs)]
+            return _make_serializable(ip.get_links(**kwargs))
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+
+
+def get_device_names(namespace, **kwargs):
+    """List interface names in a namespace
+
+    :return: a list of strings with the names of the interfaces in a namespace
+    """
+    devices_attrs = [link['attrs'] for link
+                     in get_link_devices(namespace, **kwargs)]
+    device_names = []
+    for device_attrs in devices_attrs:
+        for link_name in (link_attr[1] for link_attr in device_attrs
+                          if link_attr[0] == 'IFLA_IFNAME'):
+            device_names.append(link_name)
+    return device_names
+
+
+@privileged.default.entrypoint
+def get_ip_addresses(namespace, **kwargs):
+    """List of IP addresses in a namespace
+
+    :return: (tuple) IP addresses in a namespace
+    """
+    try:
+        with _get_iproute(namespace) as ip:
+            return _make_serializable(ip.get_addr(**kwargs))
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
