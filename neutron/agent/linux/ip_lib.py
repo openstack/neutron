@@ -51,7 +51,8 @@ RULE_TABLES = {'default': 253,
 # Rule indexes: pyroute2.netlink.rtnl
 # Rule names: https://www.systutorials.com/docs/linux/man/8-ip-rule/
 # NOTE(ralonsoh): 'masquerade' type is printed as 'nat' in 'ip rule' command
-RULE_TYPES = {1: 'unicast',
+RULE_TYPES = {0: 'unspecified',
+              1: 'unicast',
               6: 'blackhole',
               7: 'unreachable',
               8: 'prohibit',
@@ -439,29 +440,10 @@ class IpRuleCommand(IpCommandBase):
 
         return {k: str(v) for k, v in map(canonicalize, settings.items())}
 
-    def _exists(self, ip_version, **kwargs):
-        return kwargs in list_ip_rules(self._parent.namespace, ip_version)
-
     def _make__flat_args_tuple(self, *args, **kwargs):
         for kwargs_item in sorted(kwargs.items(), key=lambda i: i[0]):
             args += kwargs_item
         return tuple(args)
-
-    def add(self, ip, **kwargs):
-        ip_version = common_utils.get_ip_version(ip)
-
-        # In case we need to add a rule based on an incoming
-        # interface, pass the "any" IP address, for example, 0.0.0.0/0,
-        # else pass the given IP.
-        if kwargs.get('iif'):
-            kwargs.update({'from': constants.IP_ANY[ip_version]})
-        else:
-            kwargs.update({'from': ip})
-        canonical_kwargs = self._make_canonical(ip_version, kwargs)
-
-        if not self._exists(ip_version, **canonical_kwargs):
-            args_tuple = self._make__flat_args_tuple('add', **canonical_kwargs)
-            self._as_root([ip_version], args_tuple)
 
     def delete(self, ip, **kwargs):
         ip_version = common_utils.get_ip_version(ip)
@@ -1364,3 +1346,70 @@ def list_ip_rules(namespace, ip_version):
     """
     rules = privileged.list_ip_rules(namespace, ip_version)
     return [_parse_ip_rule(rule, ip_version) for rule in rules]
+
+
+def _make_pyroute2_args(ip, iif, table, priority, to):
+    """Returns a dictionary of arguments to be used in pyroute rule commands
+
+    :param ip: (string) source IP or CIDR address (IPv4, IPv6)
+    :param iif: (string) input interface name
+    :param table: (string, int) table number
+    :param priority: (string, int) rule priority
+    :param to: (string) destination IP or CIDR address (IPv4, IPv6)
+    :return: a dictionary with the kwargs needed in pyroute rule commands
+    """
+    ip_version = common_utils.get_ip_version(ip)
+    # In case we need to add a rule based on an incoming interface, no
+    # IP address is given; the rule default source ("from") address is
+    # "all".
+    cmd_args = {'family': common_utils.get_socket_address_family(ip_version)}
+    if iif:
+        cmd_args['iifname'] = iif
+    else:
+        cmd_args['src'] = common_utils.cidr_to_ip(ip)
+        cmd_args['src_len'] = common_utils.cidr_mask(ip)
+    if to:
+        cmd_args['dst'] = common_utils.cidr_to_ip(to)
+        cmd_args['dst_len'] = common_utils.cidr_mask(to)
+    if table:
+        cmd_args['table'] = RULE_TABLES.get(int(table), int(table))
+    if priority:
+        cmd_args['priority'] = int(priority)
+    return cmd_args
+
+
+def _exist_ip_rule(rules, ip, iif, table, priority, to):
+    """Check if any rule matches the conditions"""
+    for rule in rules:
+        if iif and rule.get('iif') != iif:
+            continue
+        if not iif and rule['from'] != ip:
+            continue
+        if table and rule.get('table') != str(table):
+            continue
+        if priority and rule['priority'] != str(priority):
+            continue
+        if to and rule.get('to') != to:
+            continue
+        break
+    else:
+        return False
+    return True
+
+
+def add_ip_rule(namespace, ip, iif=None, table=None, priority=None, to=None):
+    """Create an IP rule in a namespace
+
+    :param namespace: (string) namespace name
+    :param ip: (string) source IP or CIDR address (IPv4, IPv6)
+    :param iif: (Optional) (string) input interface name
+    :param table: (Optional) (string, int) table number
+    :param priority: (Optional) (string, int) rule priority
+    :param to: (Optional) (string) destination IP or CIDR address (IPv4, IPv6)
+    """
+    ip_version = common_utils.get_ip_version(ip)
+    rules = list_ip_rules(namespace, ip_version)
+    if _exist_ip_rule(rules, ip, iif, table, priority, to):
+        return
+    cmd_args = _make_pyroute2_args(ip, iif, table, priority, to)
+    privileged.add_ip_rule(namespace, **cmd_args)

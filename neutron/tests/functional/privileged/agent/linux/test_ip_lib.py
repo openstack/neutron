@@ -13,8 +13,10 @@
 #    under the License.
 
 from oslo_utils import uuidutils
+import testtools
 
 from neutron.agent.linux import ip_lib
+from neutron.common import utils as common_utils
 from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 from neutron.tests.functional import base as functional_base
 
@@ -69,7 +71,7 @@ class ListIpRulesTestCase(functional_base.BaseSudoTestCase):
         self.assertEqual(0, len(rule_tables))
 
     def test_list_rules_ipv4(self):
-        self.ip_rule.rule.add('192.168.0.1/24', table=10)
+        ip_lib.add_ip_rule(self.namespace, '192.168.0.1/24', table=10)
         rules_ipv4 = priv_ip_lib.list_ip_rules(self.namespace, 4)
         for rule in rules_ipv4:
             if rule['table'] == 10:
@@ -88,7 +90,7 @@ class ListIpRulesTestCase(functional_base.BaseSudoTestCase):
         self.assertEqual(0, len(rule_tables))
 
     def test_list_rules_ipv6(self):
-        self.ip_rule.rule.add('2001:db8::1/64', table=20)
+        ip_lib.add_ip_rule(self.namespace, '2001:db8::1/64', table=20)
         rules_ipv6 = priv_ip_lib.list_ip_rules(self.namespace, 6)
         for rule in rules_ipv6:
             if rule['table'] == 20:
@@ -97,3 +99,103 @@ class ListIpRulesTestCase(functional_base.BaseSudoTestCase):
                 break
         else:
             self.fail('Rule added (2001:db8::1/64, table 20) not found')
+
+
+class RuleTestCase(functional_base.BaseSudoTestCase):
+
+    def setUp(self):
+        super(RuleTestCase, self).setUp()
+        self.namespace = 'ns_test-' + uuidutils.generate_uuid()
+        self.ns = priv_ip_lib.create_netns(self.namespace)
+        self.addCleanup(self._remove_ns)
+
+    def _remove_ns(self):
+        priv_ip_lib.remove_netns(self.namespace)
+
+    def _check_rules(self, rules, parameters, values, exception_string):
+        for rule in rules:
+            if all(rule.get(parameter) == value
+                   for parameter, value in zip(parameters, values)):
+                break
+        else:
+            self.fail('Rule with %s was expected' % exception_string)
+
+    def test_add_rule_ip(self):
+        ip_addresses = ['192.168.200.250', '2001::250']
+        for ip_address in ip_addresses:
+            ip_version = common_utils.get_ip_version(ip_address)
+            ip_lenght = common_utils.get_network_length(ip_version)
+            ip_family = common_utils.get_socket_address_family(ip_version)
+            priv_ip_lib.add_ip_rule(self.namespace, src=ip_address,
+                                    src_len=ip_lenght, family=ip_family)
+            rules = ip_lib.list_ip_rules(self.namespace, ip_version)
+            self._check_rules(rules, ['from'], [ip_address],
+                              '"from" IP address %s' % ip_address)
+
+    def test_add_rule_iif(self):
+        iif = 'iif_device_1'
+        priv_ip_lib.create_interface(iif, self.namespace, 'dummy')
+        priv_ip_lib.add_ip_rule(self.namespace, iifname=iif)
+        rules = ip_lib.list_ip_rules(self.namespace, 4)
+        self._check_rules(rules, ['iif'], [iif], 'iif name %s' % iif)
+
+    def test_add_rule_table(self):
+        table = 212
+        ip_addresses = ['192.168.200.251', '2001::251']
+        for ip_address in ip_addresses:
+            ip_version = common_utils.get_ip_version(ip_address)
+            ip_lenght = common_utils.get_network_length(ip_version)
+            ip_family = common_utils.get_socket_address_family(ip_version)
+            priv_ip_lib.add_ip_rule(self.namespace, table=table,
+                                    src=ip_address, src_len=ip_lenght,
+                                    family=ip_family)
+            rules = ip_lib.list_ip_rules(self.namespace, ip_version)
+            self._check_rules(
+                rules, ['table', 'from'], [str(table), ip_address],
+                'table %s and "from" IP address %s' % (table, ip_address))
+
+    def test_add_rule_priority(self):
+        priority = 12345
+        ip_addresses = ['192.168.200.252', '2001::252']
+        for ip_address in ip_addresses:
+            ip_version = common_utils.get_ip_version(ip_address)
+            ip_lenght = common_utils.get_network_length(ip_version)
+            ip_family = common_utils.get_socket_address_family(ip_version)
+            priv_ip_lib.add_ip_rule(self.namespace, priority=priority,
+                                    src=ip_address, src_len=ip_lenght,
+                                    family=ip_family)
+            rules = ip_lib.list_ip_rules(self.namespace, ip_version)
+            self._check_rules(
+                rules, ['priority', 'from'], [str(priority), ip_address],
+                'priority %s and "from" IP address %s' %
+                (priority, ip_address))
+
+    def test_add_rule_priority_table_iif(self):
+        table = 213
+        priority = 12346
+        iif = 'iif_device_2'
+        priv_ip_lib.create_interface(iif, self.namespace, 'dummy')
+        priv_ip_lib.add_ip_rule(self.namespace, priority=priority, iifname=iif,
+                                table=table)
+
+        rules = ip_lib.list_ip_rules(self.namespace, 4)
+        self._check_rules(
+            rules, ['priority', 'iif', 'table'],
+            [str(priority), iif, str(table)],
+            'priority %s, table %s and iif name %s' % (priority, table, iif))
+
+    @testtools.skip('https://github.com/svinota/pyroute2/issues/566')
+    def test_add_rule_exists(self):
+        iif = 'iif_device_1'
+        priv_ip_lib.create_interface(iif, self.namespace, 'dummy')
+        priv_ip_lib.add_ip_rule(self.namespace, iifname=iif)
+        rules = ip_lib.list_ip_rules(self.namespace, 4)
+        self._check_rules(rules, ['iif'], [iif], 'iif name %s' % iif)
+        self.assertEqual(4, len(rules))
+
+        # pyroute2.netlink.exceptions.NetlinkError(17, 'File exists')
+        # exception is catch.
+        priv_ip_lib.add_ip_rule(self.namespace, iifname=iif)
+        rules = ip_lib.list_ip_rules(self.namespace, 4)
+        self._check_rules(rules, ['iif'], [iif], 'iif name %s' % iif)
+        self.assertEqual(4, len(rules))

@@ -149,10 +149,10 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
     def _add_floating_ip_rule(self, floating_ip, fixed_ip):
         rule_pr = self.fip_ns.allocate_rule_priority(floating_ip)
         self.floating_ips_dict[floating_ip] = (fixed_ip, rule_pr)
-        ip_rule = ip_lib.IPRule(namespace=self.ns_name)
-        ip_rule.rule.add(ip=fixed_ip,
-                         table=dvr_fip_ns.FIP_RT_TBL,
-                         priority=rule_pr)
+
+        ip_lib.add_ip_rule(namespace=self.ns_name, ip=fixed_ip,
+                           table=dvr_fip_ns.FIP_RT_TBL,
+                           priority=int(str(rule_pr)))
 
     def _remove_floating_ip_rule(self, floating_ip):
         if floating_ip in self.floating_ips_dict:
@@ -160,7 +160,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             ip_rule = ip_lib.IPRule(namespace=self.ns_name)
             ip_rule.rule.delete(ip=fixed_ip,
                                 table=dvr_fip_ns.FIP_RT_TBL,
-                                priority=rule_pr)
+                                priority=int(str(rule_pr)))
             self.fip_ns.deallocate_rule_priority(floating_ip)
             # TODO(rajeev): Handle else case - exception/log?
 
@@ -371,9 +371,10 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                         if is_add:
                             ns_ipd.route.add_gateway(gw_ip_addr,
                                                      table=snat_idx)
-                            ns_ipr.rule.add(ip=sn_port_cidr,
-                                            table=snat_idx,
-                                            priority=snat_idx)
+                            ip_lib.add_ip_rule(namespace=self.ns_name,
+                                               ip=sn_port_cidr,
+                                               table=snat_idx,
+                                               priority=snat_idx)
                             ip_lib.sysctl(cmd, namespace=self.ns_name)
                         else:
                             self._delete_gateway_device_if_exists(ns_ipd,
@@ -688,12 +689,11 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 device.route.add_route(rtr_port_cidr, str(rtr_2_fip_ip))
 
     def _add_interface_routing_rule_to_router_ns(self, router_port):
-        ip_rule = ip_lib.IPRule(namespace=self.ns_name)
         for subnet in router_port['subnets']:
             rtr_port_cidr = subnet['cidr']
-            ip_rule.rule.add(ip=rtr_port_cidr,
-                             table=dvr_fip_ns.FIP_RT_TBL,
-                             priority=dvr_fip_ns.FAST_PATH_EXIT_PR)
+            ip_lib.add_ip_rule(namespace=self.ns_name, ip=rtr_port_cidr,
+                               table=dvr_fip_ns.FIP_RT_TBL,
+                               priority=dvr_fip_ns.FAST_PATH_EXIT_PR)
 
     def _delete_interface_routing_rule_in_router_ns(self, router_port):
         ip_rule = ip_lib.IPRule(namespace=self.ns_name)
