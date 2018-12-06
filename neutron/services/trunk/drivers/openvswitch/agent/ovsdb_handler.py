@@ -205,6 +205,20 @@ class OVSDBHandler(object):
         :param bridge_name: Name of the bridge used for locking purposes.
         :param port: Parent port dict.
         """
+        # TODO(njohnston): In the case of DPDK with trunk ports, if nova
+        # deletes an interface and then re-adds it we can get a race
+        # condition where the port is re-added and then the bridge is
+        # deleted because we did not properly catch the re-addition.  To
+        # solve this would require transitioning to ordered event
+        # resolution, like the L3 agent does with the
+        # ResourceProcessingQueue class.  Until we can make that happen, we
+        # try to mitigate the issue by checking if there is a port on the
+        # bridge and if so then do not remove it.
+        bridge = ovs_lib.OVSBridge(bridge_name)
+        if bridge_has_instance_port(bridge):
+            LOG.debug("The bridge %s has instances attached so it will not "
+                      "be deleted.", bridge_name)
+            return
         try:
             # TODO(jlibosva): Investigate how to proceed during removal of
             # trunk bridge that doesn't have metadata stored.
