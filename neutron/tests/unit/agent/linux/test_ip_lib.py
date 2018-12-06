@@ -620,7 +620,8 @@ class TestIpRuleCommand(TestIPCmdBase):
     def _test_add_rule(self, ip, iif, table, priority):
         ip_version = netaddr.IPNetwork(ip).version
         ip_family = common_utils.get_socket_address_family(ip_version)
-        cmd_args = {'table': table,
+        table_num = ip_lib.RULE_TABLES.get(table) or int(table)
+        cmd_args = {'table': table_num,
                     'priority': priority,
                     'family': ip_family}
         if iif:
@@ -693,6 +694,12 @@ class TestIpRuleCommand(TestIPCmdBase):
 
     def test_add_rule_v6(self):
         self._test_add_rule('2001:db8::1', None, 3, 200)
+
+    def test_add_rule_table_string(self):
+        self._test_add_rule('2001:db8::1', None, 'default', 200)
+        self._test_add_rule('2001:db8::1', None, 'main', 200)
+        self._test_add_rule('2001:db8::1', None, 'local', 200)
+        self._test_add_rule('2001:db8::1', None, '100', 200)
 
     def test_delete_rule_v4(self):
         self._test_delete_rule('192.168.45.100', 2, 100)
