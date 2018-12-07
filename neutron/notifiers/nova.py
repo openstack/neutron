@@ -25,6 +25,7 @@ from novaclient import api_versions
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
+from oslo_context import context as common_context
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 from sqlalchemy.orm import attributes as sql_attr
@@ -56,23 +57,25 @@ class Notifier(object):
 
     def __init__(self):
         auth = ks_loading.load_auth_from_conf_options(cfg.CONF, 'nova')
-
-        session = ks_loading.load_session_from_conf_options(
+        self.session = ks_loading.load_session_from_conf_options(
             cfg.CONF,
             'nova',
             auth=auth)
-
-        extensions = [
+        self.extensions = [
             ext for ext in nova_client.discover_extensions(NOVA_API_VERSION)
             if ext.name == "server_external_events"]
-        self.nclient = nova_client.Client(
-            api_versions.APIVersion(NOVA_API_VERSION),
-            session=session,
-            region_name=cfg.CONF.nova.region_name,
-            endpoint_type=cfg.CONF.nova.endpoint_type,
-            extensions=extensions)
         self.batch_notifier = batch_notifier.BatchNotifier(
             cfg.CONF.send_events_interval, self.send_events)
+
+    def _get_nova_client(self):
+        global_id = common_context.generate_request_id()
+        return nova_client.Client(
+            api_versions.APIVersion(NOVA_API_VERSION),
+            session=self.session,
+            region_name=cfg.CONF.nova.region_name,
+            endpoint_type=cfg.CONF.nova.endpoint_type,
+            extensions=self.extensions,
+            global_request_id=global_id)
 
     def _is_compute_port(self, port):
         try:
@@ -240,8 +243,9 @@ class Notifier(object):
 
     def send_events(self, batched_events):
         LOG.debug("Sending events: %s", batched_events)
+        novaclient = self._get_nova_client()
         try:
-            response = self.nclient.server_external_events.create(
+            response = novaclient.server_external_events.create(
                 batched_events)
         except nova_exceptions.NotFound:
             LOG.debug("Nova returned NotFound for event: %s",

@@ -235,63 +235,56 @@ class TestNovaNotify(base.BaseTestCase):
                                                    {}, {})
             self.assertFalse(send_events.called, False)
 
-    def test_nova_send_events_returns_bad_list(self):
-        with mock.patch.object(
-            self.nova_notifier.nclient.server_external_events,
-                'create') as nclient_create:
-            nclient_create.return_value = 'i am a string!'
-            self.nova_notifier.send_events([])
+    @mock.patch('novaclient.client.Client')
+    def test_nova_send_events_returns_bad_list(self, mock_client):
+        mock_client.server_external_events.create.return_value = (
+            'i am a string!')
+        self.nova_notifier.send_events([])
 
-    def test_nova_send_event_rasies_404(self):
-        with mock.patch.object(
-            self.nova_notifier.nclient.server_external_events,
-                'create') as nclient_create:
-            nclient_create.side_effect = nova_exceptions.NotFound
-            self.nova_notifier.send_events([])
+    @mock.patch('novaclient.client.Client')
+    def test_nova_send_event_rasies_404(self, mock_client):
+        mock_client.server_external_events.create.return_value = (
+            nova_exceptions.NotFound)
+        self.nova_notifier.send_events([])
 
-    def test_nova_send_events_raises(self):
-        with mock.patch.object(
-            self.nova_notifier.nclient.server_external_events,
-                'create') as nclient_create:
-            nclient_create.side_effect = Exception
-            self.nova_notifier.send_events([])
+    @mock.patch('novaclient.client.Client')
+    def test_nova_send_events_raises(self, mock_client):
+        mock_client.server_external_events.create.return_value = Exception
+        self.nova_notifier.send_events([])
 
-    def test_nova_send_events_returns_non_200(self):
+    @mock.patch('novaclient.client.Client')
+    def test_nova_send_events_returns_non_200(self, mock_client):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
-        with mock.patch.object(
-            self.nova_notifier.nclient.server_external_events,
-                'create') as nclient_create:
-            nclient_create.return_value = [{'code': 404,
-                                            'name': 'network-changed',
-                                            'server_uuid': device_id}]
-            self.nova_notifier.send_events(
-                [{'name': 'network-changed', 'server_uuid': device_id}])
+        mock_client.server_external_events.create.return_value = [
+            {'code': 404,
+             'name': 'network-changed',
+             'server_uuid': device_id}]
+        self.nova_notifier.send_events([{'name': 'network-changed',
+                                         'server_uuid': device_id}])
 
-    def test_nova_send_events_return_200(self):
+    @mock.patch('novaclient.client.Client')
+    def test_nova_send_events_return_200(self, mock_client):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
-        with mock.patch.object(
-            self.nova_notifier.nclient.server_external_events,
-                'create') as nclient_create:
-            nclient_create.return_value = [{'code': 200,
-                                            'name': 'network-changed',
-                                            'server_uuid': device_id}]
-            self.nova_notifier.send_events(
-                [{'name': 'network-changed', 'server_uuid': device_id}])
+        mock_client.server_external_events.create.return_value = [
+            {'code': 200,
+             'name': 'network-changed',
+             'server_uuid': device_id}]
+        self.nova_notifier.send_events([{'name': 'network-changed',
+                                         'server_uuid': device_id}])
 
-    def test_nova_send_events_multiple(self):
+    @mock.patch('novaclient.client.Client')
+    def test_nova_send_events_multiple(self, mock_create):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
-        with mock.patch.object(
-            self.nova_notifier.nclient.server_external_events,
-                'create') as nclient_create:
-            nclient_create.return_value = [{'code': 200,
-                                            'name': 'network-changed',
-                                            'server_uuid': device_id},
-                                           {'code': 200,
-                                            'name': 'network-changed',
-                                            'server_uuid': device_id}]
-            self.nova_notifier.send_events([
-                {'name': 'network-changed', 'server_uuid': device_id},
-                {'name': 'network-changed', 'server_uuid': device_id}])
+        mock_create.server_external_events.create.return_value = [
+            {'code': 200,
+             'name': 'network-changed',
+             'server_uuid': device_id},
+            {'code': 200,
+             'name': 'network-changed',
+             'server_uuid': device_id}]
+        self.nova_notifier.send_events([
+            {'name': 'network-changed', 'server_uuid': device_id},
+            {'name': 'network-changed', 'server_uuid': device_id}])
 
     def test_reassociate_floatingip_without_disassociate_event(self):
         returned_obj = {'floatingip':
@@ -330,23 +323,35 @@ class TestNovaNotify(base.BaseTestCase):
 
     @mock.patch('novaclient.client.Client')
     def test_endpoint_types(self, mock_client):
-        nova.Notifier()
+        device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
+        batched_events = [{'code': 200,
+                           'name': 'network-changed',
+                           'server_uuid': device_id}]
+        response = [{'name': 'network-changed',
+                     'server_uuid': device_id}]
+        mock_client.server_external_events.create.return_value = (
+            batched_events)
+        self.nova_notifier.send_events(response)
         mock_client.assert_called_once_with(
-                                api_versions.APIVersion(nova.NOVA_API_VERSION),
-                                session=mock.ANY,
-                                region_name=cfg.CONF.nova.region_name,
-                                endpoint_type='public',
-                                extensions=mock.ANY)
+            api_versions.APIVersion(nova.NOVA_API_VERSION),
+            session=mock.ANY,
+            region_name=cfg.CONF.nova.region_name,
+            endpoint_type='public',
+            extensions=mock.ANY,
+            global_request_id=mock.ANY)
 
         mock_client.reset_mock()
         cfg.CONF.set_override('endpoint_type', 'internal', 'nova')
-        nova.Notifier()
+        mock_client.server_external_events.create.return_value = (
+            batched_events)
+        self.nova_notifier.send_events(response)
         mock_client.assert_called_once_with(
-                                api_versions.APIVersion(nova.NOVA_API_VERSION),
-                                session=mock.ANY,
-                                region_name=cfg.CONF.nova.region_name,
-                                endpoint_type='internal',
-                                extensions=mock.ANY)
+            api_versions.APIVersion(nova.NOVA_API_VERSION),
+            session=mock.ANY,
+            region_name=cfg.CONF.nova.region_name,
+            endpoint_type='internal',
+            extensions=mock.ANY,
+            global_request_id=mock.ANY)
 
     def test_notify_port_active_direct(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
