@@ -198,11 +198,11 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
             return callback_map[event](resource, event, trigger, context,
                                        object_type, policy, **kwargs)
 
-    def attach_rbac(self, obj_id, tenant_id, target_tenant='*'):
+    def attach_rbac(self, obj_id, project_id, target_tenant='*'):
         obj_type = self.rbac_db_cls.db_model.object_type
         rbac_policy = {'rbac_policy': {'object_id': obj_id,
                                        'target_tenant': target_tenant,
-                                       'tenant_id': tenant_id,
+                                       'project_id': project_id,
                                        'object_type': obj_type,
                                        'action': models.ACCESS_SHARED}}
         return self.create_rbac_policy(self.obj_context, rbac_policy)
@@ -244,7 +244,7 @@ def _update_hook(self, update_orig):
 
 def _create_post(self):
     if self.shared:
-        self.attach_rbac(self.id, self.obj_context.tenant_id)
+        self.attach_rbac(self.id, self.project_id)
 
 
 def _create_hook(self, orig_create):

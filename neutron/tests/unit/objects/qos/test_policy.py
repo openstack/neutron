@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import random
+
 import mock
 from neutron_lib import constants as n_const
 from neutron_lib.services.qos import constants as qos_consts
@@ -35,7 +37,46 @@ RULE_OBJ_CLS = {
 }
 
 
-# TODO(ihrachys): add tests for QosPolicyRBAC
+class _QosPolicyRBACBase(object):
+
+    def get_random_object_fields(self, obj_cls=None):
+        fields = (super(_QosPolicyRBACBase, self).
+                  get_random_object_fields(obj_cls))
+        rnd_actions = self._test_class.db_model.get_valid_actions()
+        idx = random.randint(0, len(rnd_actions) - 1)
+        fields['action'] = rnd_actions[idx]
+        return fields
+
+
+class QosPolicyRBACDbObjectTestCase(_QosPolicyRBACBase,
+                                    test_base.BaseDbObjectTestCase,
+                                    testlib_api.SqlTestCase):
+
+    _test_class = policy.QosPolicyRBAC
+
+    def setUp(self):
+        super(QosPolicyRBACDbObjectTestCase, self).setUp()
+        for obj in self.db_objs:
+            policy_obj = policy.QosPolicy(self.context,
+                                          id=obj['object_id'],
+                                          project_id=obj['project_id'])
+            policy_obj.create()
+
+    def _create_test_qos_policy_rbac(self):
+        self.objs[0].create()
+        return self.objs[0]
+
+    def test_object_version_degradation_1_1_to_1_0_no_id_no_project_id(self):
+        qos_policy_rbac_obj = self._create_test_qos_policy_rbac()
+        qos_policy_rbac_dict = qos_policy_rbac_obj.obj_to_primitive('1.0')
+        self.assertNotIn('project_id',
+                         qos_policy_rbac_dict['versioned_object.data'])
+        self.assertNotIn('id', qos_policy_rbac_dict['versioned_object.data'])
+
+
+class QosPolicyRBACIfaceObjectTestCase(_QosPolicyRBACBase,
+                                       test_base.BaseObjectIfaceTestCase):
+    _test_class = policy.QosPolicyRBAC
 
 
 class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):

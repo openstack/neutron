@@ -10,8 +10,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import random
+
 import mock
 
+from neutron.db import rbac_db_models
 from neutron.objects import base as obj_base
 from neutron.objects import network
 from neutron.objects.qos import binding
@@ -20,7 +23,59 @@ from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
 
 
-# TODO(ihrachys): add tests for NetworkRBAC
+class _NetworkRBACBase(object):
+
+    def get_random_object_fields(self, obj_cls=None):
+        fields = (super(_NetworkRBACBase, self).
+                  get_random_object_fields(obj_cls))
+        rnd_actions = self._test_class.db_model.get_valid_actions()
+        idx = random.randint(0, len(rnd_actions) - 1)
+        fields['action'] = rnd_actions[idx]
+        return fields
+
+
+class NetworkRBACDbObjectTestCase(_NetworkRBACBase,
+                                  obj_test_base.BaseDbObjectTestCase,
+                                  testlib_api.SqlTestCase):
+
+    _test_class = network.NetworkRBAC
+
+    def setUp(self):
+        self._mock_get_valid_actions = mock.patch.object(
+            rbac_db_models.NetworkRBAC, 'get_valid_actions',
+            return_value=(rbac_db_models.ACCESS_EXTERNAL,
+                          rbac_db_models.ACCESS_SHARED))
+        self.mock_get_valid_actions = self._mock_get_valid_actions.start()
+        super(NetworkRBACDbObjectTestCase, self).setUp()
+        for obj in self.db_objs:
+            net_obj = network.Network(self.context, id=obj['object_id'])
+            net_obj.create()
+
+    def _create_test_network_rbac(self):
+        self.objs[0].create()
+        return self.objs[0]
+
+    def test_object_version_degradation_1_1_to_1_0_no_id_no_project_id(self):
+        network_rbac_obj = self._create_test_network_rbac()
+        network_rbac_obj = network_rbac_obj.obj_to_primitive('1.0')
+        self.assertNotIn('project_id',
+                         network_rbac_obj['versioned_object.data'])
+        self.assertNotIn('id', network_rbac_obj['versioned_object.data'])
+
+
+class NetworkRBACIfaceOjectTestCase(_NetworkRBACBase,
+                                    obj_test_base.BaseObjectIfaceTestCase):
+
+    _test_class = network.NetworkRBAC
+
+    def setUp(self):
+        self._mock_get_valid_actions = mock.patch.object(
+            rbac_db_models.NetworkRBAC, 'get_valid_actions',
+            return_value=(rbac_db_models.ACCESS_EXTERNAL,
+                          rbac_db_models.ACCESS_SHARED))
+        self.mock_get_valid_actions = self._mock_get_valid_actions.start()
+        super(NetworkRBACIfaceOjectTestCase, self).setUp()
+
 
 class NetworkDhcpAgentBindingObjectIfaceTestCase(
     obj_test_base.BaseObjectIfaceTestCase):

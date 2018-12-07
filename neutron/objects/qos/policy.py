@@ -31,21 +31,27 @@ from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.objects.qos import binding
 from neutron.objects.qos import rule as rule_obj_impl
+from neutron.objects import rbac
 from neutron.objects import rbac_db
 
 
 @base_db.NeutronObjectRegistry.register
-class QosPolicyRBAC(base_db.NeutronDbObject):
+class QosPolicyRBAC(rbac.RBACBaseObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Inherit from rbac_db.RBACBaseObject; added 'id' and
+    #              'project_id'; changed 'object_id' from StringField to
+    #              UUIDField
+
+    VERSION = '1.1'
 
     db_model = rbac_db_models.QosPolicyRBAC
 
-    fields = {
-        'object_id': obj_fields.StringField(),
-        'target_tenant': obj_fields.StringField(),
-        'action': obj_fields.StringField(),
-    }
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):
+            standard_fields = ['id', 'project_id']
+            for f in standard_fields:
+                primitive.pop(f)
 
 
 @base_db.NeutronObjectRegistry.register

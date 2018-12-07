@@ -169,7 +169,9 @@ class QoSPlugin(qos.QoSPluginBase):
         # We need to remove redundant keyword.
         # This cannot be done in other place of stacktrace, because neutron
         # needs to be backward compatible.
-        policy['policy'].pop('tenant_id', None)
+        tenant_id = policy['policy'].pop('tenant_id', None)
+        if not policy['policy'].get('project_id'):
+            policy['policy']['project_id'] = tenant_id
         policy_obj = policy_object.QosPolicy(context, **policy['policy'])
         with db_api.CONTEXT_WRITER.using(context):
             policy_obj.create()

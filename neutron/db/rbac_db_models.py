@@ -72,8 +72,9 @@ class RBACColumns(model_base.HasId, model_base.HasProject):
                 valid_actions=self.get_valid_actions())
         return action
 
+    @staticmethod
     @abc.abstractmethod
-    def get_valid_actions(self):
+    def get_valid_actions():
         # object table needs to override this to return an interable
         # with the valid actions rbac entries
         pass
@@ -96,7 +97,8 @@ class NetworkRBAC(RBACColumns, model_base.BASEV2):
     object_type = 'network'
     revises_on_change = ('network', )
 
-    def get_valid_actions(self):
+    @staticmethod
+    def get_valid_actions():
         actions = (ACCESS_SHARED,)
         pl = directory.get_plugin()
         if 'external-net' in pl.supported_extension_aliases:
@@ -110,5 +112,6 @@ class QosPolicyRBAC(RBACColumns, model_base.BASEV2):
     object_id = _object_id_column('qos_policies.id')
     object_type = 'qos_policy'
 
-    def get_valid_actions(self):
+    @staticmethod
+    def get_valid_actions():
         return (ACCESS_SHARED,)
