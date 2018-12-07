@@ -377,6 +377,14 @@ class ExtraRouteDBTestCaseBase(object):
                                              routes}},
                                  expected_code=exc.HTTPBadRequest.code)
 
+                    routes = [{'destination': '1.1.1.1/24',
+                               'nexthop': '10.0.1.3'}]
+
+                    self._update('routers', r['router']['id'],
+                                 {'router': {'routes':
+                                             routes}},
+                                 expected_code=exc.HTTPBadRequest.code)
+
                     # clean-up
                     self._router_interface_action('remove',
                                                   r['router']['id'],
