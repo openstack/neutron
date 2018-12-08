@@ -129,6 +129,9 @@ class TunnelTest(object):
             'int-%s' % self.MAP_TUN_BRIDGE: self.MAP_TUN_INT_OFPORT
         }
 
+        mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
+                   'has_alive_neutron_server').start()
+
         def lookup_br(br_name, *args, **kwargs):
             return self.ovs_bridges[br_name]
 

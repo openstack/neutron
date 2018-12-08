@@ -461,9 +461,10 @@ class AgentExtRpcCallback(object):
     API version history:
         1.0 - Initial version.
         1.1 - report_state now returns agent state.
+        1.2 - add method has_alive_neutron_server.
     """
 
-    target = oslo_messaging.Target(version='1.1',
+    target = oslo_messaging.Target(version='1.2',
                                    namespace=n_const.RPC_NAMESPACE_STATE)
     START_TIME = timeutils.utcnow()
 
@@ -476,6 +477,9 @@ class AgentExtRpcCallback(object):
             'neutron.api.rpc.handlers.resources_rpc')
         # Initialize RPC api directed to other neutron-servers
         self.server_versions_rpc = resources_rpc.ResourcesPushToServersRpcApi()
+
+    def has_alive_neutron_server(self, context, **kwargs):
+        return True
 
     @db_api.retry_if_session_inactive()
     def report_state(self, context, **kwargs):
