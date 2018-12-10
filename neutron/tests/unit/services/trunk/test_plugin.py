@@ -27,6 +27,7 @@ from neutron.services.trunk import constants
 from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import plugin as trunk_plugin
+from neutron.services.trunk import rules
 from neutron.services.trunk.seg_types import validators
 from neutron.tests.unit.plugins.ml2 import test_plugin
 from neutron.tests.unit.services.trunk import fakes
@@ -93,11 +94,19 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def test_delete_trunk_raise_in_use(self):
         with self.port() as port:
+            fakes.FakeDriverCanTrunkBoundPort.create()
+            self.trunk_plugin = trunk_plugin.TrunkPlugin()
+            directory.add_plugin('trunk', self.trunk_plugin)
+
             trunk = self._create_test_trunk(port)
             core_plugin = directory.get_plugin()
             port['port']['binding:host_id'] = 'host'
             core_plugin.update_port(self.context, port['port']['id'], port)
-            self.assertRaises(trunk_exc.TrunkInUse,
+
+            trunk_port_validator = rules.TrunkPortValidator(trunk['port_id'])
+            if not trunk_port_validator.can_be_trunked_or_untrunked(
+                self.context):
+                self.assertRaises(trunk_exc.TrunkInUse,
                               self.trunk_plugin.delete_trunk,
                               self.context, trunk['id'])
 

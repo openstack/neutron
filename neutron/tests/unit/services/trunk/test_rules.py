@@ -280,12 +280,13 @@ class TrunkPortValidatorTestCase(test_plugin.Ml2PluginV2TestCase):
     def test_validate_port_cannot_be_trunked_raises(self):
         with self.port() as port, \
              mock.patch.object(rules.TrunkPortValidator,
-                               "can_be_trunked", return_value=False), \
+                               "can_be_trunked_or_untrunked",
+                               return_value=False), \
              testtools.ExpectedException(trunk_exc.ParentPortInUse):
             validator = rules.TrunkPortValidator(port['port']['id'])
             validator.validate(self.context)
 
-    def test_can_be_trunked_returns_false(self):
+    def test_can_be_trunked_or_untrunked_returns_false(self):
         # need to trigger a driver registration
         fakes.FakeDriverCanTrunkBoundPort.create()
         self.trunk_plugin = trunk_plugin.TrunkPlugin()
@@ -296,9 +297,10 @@ class TrunkPortValidatorTestCase(test_plugin.Ml2PluginV2TestCase):
             core_plugin.update_port(self.context, port['port']['id'], port)
             validator = rules.TrunkPortValidator(port['port']['id'])
             # port cannot be trunked because of binding mismatch
-            self.assertFalse(validator.can_be_trunked(self.context))
+            self.assertFalse(
+                validator.can_be_trunked_or_untrunked(self.context))
 
-    def test_can_be_trunked_returns_true(self):
+    def test_can_be_trunked_or_untrunked_returns_true(self):
         # need to trigger a driver registration
         fakes.FakeDriverCanTrunkBoundPort.create()
         self.trunk_plugin = trunk_plugin.TrunkPlugin()
@@ -310,15 +312,17 @@ class TrunkPortValidatorTestCase(test_plugin.Ml2PluginV2TestCase):
             port['port']['binding:host_id'] = 'host'
             core_plugin.update_port(self.context, port['port']['id'], port)
             validator = rules.TrunkPortValidator(port['port']['id'])
-            self.assertTrue(validator.can_be_trunked(self.context))
+            self.assertTrue(
+                validator.can_be_trunked_or_untrunked(self.context))
             self.assertTrue(g.call_count)
 
-    def test_can_be_trunked_unbound_port(self):
+    def test_can_be_trunked_or_untrunked_unbound_port(self):
         with self.port() as port:
             validator = rules.TrunkPortValidator(port['port']['id'])
-            self.assertTrue(validator.can_be_trunked(self.context))
+            self.assertTrue(
+                validator.can_be_trunked_or_untrunked(self.context))
 
-    def test_can_be_trunked_raises_conflict(self):
+    def test_can_be_trunked_or_untrunked_raises_conflict(self):
         d1 = fakes.FakeDriver.create()
         d2 = fakes.FakeDriverWithAgent.create()
         self.trunk_plugin = trunk_plugin.TrunkPlugin()
@@ -333,7 +337,7 @@ class TrunkPortValidatorTestCase(test_plugin.Ml2PluginV2TestCase):
             validator = rules.TrunkPortValidator(port['port']['id'])
             self.assertRaises(
                 trunk_exc.TrunkPluginDriverConflict,
-                validator.can_be_trunked, self.context)
+                validator.can_be_trunked_or_untrunked, self.context)
 
     def test_check_not_in_use_pass(self):
         with self.port() as port:
