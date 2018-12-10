@@ -13,13 +13,16 @@
 #    under the License.
 
 import os
+import threading
 
 from debtcollector import moves
 from oslo_config import cfg
 from ovs.db import idl
 from ovs.stream import Stream
 from ovsdbapp.backend.ovs_idl import connection as _connection
+from ovsdbapp.backend.ovs_idl import event as idl_event
 from ovsdbapp.backend.ovs_idl import idlutils
+from ovsdbapp import event as ovsdb_event
 import tenacity
 
 from neutron.agent.ovsdb.native import exceptions as ovsdb_exc
@@ -54,24 +57,72 @@ def configure_ssl_conn():
     Stream.ssl_set_ca_cert_file(req_ssl_opts['ssl_ca_cert_file'])
 
 
-def idl_factory():
-    conn = cfg.CONF.OVS.ovsdb_connection
-    schema_name = 'Open_vSwitch'
-    if conn.startswith('ssl:'):
-        configure_ssl_conn()
-    try:
-        helper = idlutils.get_schema_helper(conn, schema_name)
-    except Exception:
-        helpers.enable_connection_uri(conn)
+class BridgeCreateEvent(idl_event.RowEvent):
 
-        @tenacity.retry(wait=tenacity.wait_exponential(multiplier=0.01),
-                        stop=tenacity.stop_after_delay(1),
-                        reraise=True)
-        def do_get_schema_helper():
-            return idlutils.get_schema_helper(conn, schema_name)
+    def __init__(self, metadata_agent):
+        self.agent = metadata_agent
+        table = 'Bridge'
+        super(BridgeCreateEvent, self).__init__((self.ROW_CREATE, ),
+                                                table, None)
+        self.event_name = 'BridgeCreateEvent'
 
-        helper = do_get_schema_helper()
+    def run(self, event, row, old):
+        self.agent.add_bridge(str(row.name))
 
-    # TODO(twilson) We should still select only the tables/columns we use
-    helper.register_all()
-    return idl.Idl(conn, helper)
+
+class OvsIdl(idl.Idl):
+
+    SCHEMA = 'Open_vSwitch'
+
+    def __init__(self):
+        self._ovsdb_connection = cfg.CONF.OVS.ovsdb_connection
+        if self._ovsdb_connection.startswith('ssl:'):
+            configure_ssl_conn()
+        helper = self._get_ovsdb_helper(self._ovsdb_connection)
+        helper.register_all()
+        super(OvsIdl, self).__init__(self._ovsdb_connection, helper)
+        self.notify_handler = ovsdb_event.RowEventHandler()
+
+    @tenacity.retry(wait=tenacity.wait_exponential(multiplier=0.01),
+                    stop=tenacity.stop_after_delay(1),
+                    reraise=True)
+    def _do_get_schema_helper(self, connection):
+        return idlutils.get_schema_helper(connection, self.SCHEMA)
+
+    def _get_ovsdb_helper(self, connection):
+        try:
+            return idlutils.get_schema_helper(connection, self.SCHEMA)
+        except Exception:
+            helpers.enable_connection_uri(connection)
+            return self._do_get_schema_helper(connection)
+
+    def notify(self, event, row, updates=None):
+        self.notify_handler.notify(event, row, updates)
+
+
+class OvsIdlMonitor(OvsIdl):
+
+    def __init__(self):
+        super(OvsIdlMonitor, self).__init__()
+        self._lock = threading.Lock()
+        self._bridges_to_monitor = []
+        self._bridges_added_list = []
+
+    def start_bridge_monitor(self, bridge_names):
+        if not bridge_names:
+            return
+        self._bridges_to_monitor = bridge_names
+        event = BridgeCreateEvent(self)
+        self.notify_handler.watch_event(event)
+
+    def add_bridge(self, bridge_name):
+        with self._lock:
+            if bridge_name in self._bridges_to_monitor:
+                self._bridges_added_list.append(bridge_name)
+
+    @property
+    def bridges_added(self):
+        with self._lock:
+            bridges = self._bridges_added_list
+            self._bridges_added_list = []
+        return bridges

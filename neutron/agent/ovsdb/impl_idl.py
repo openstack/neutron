@@ -40,15 +40,18 @@ Transaction = moves.moved_class(transaction.Transaction,
 
 ovs_conf.register_ovs_agent_opts()
 _connection = None
+_idl_monitor = None
 
 
 def api_factory():
     global _connection
+    global _idl_monitor
     if _connection is None:
+        _idl_monitor = n_connection.OvsIdlMonitor()
         _connection = connection.Connection(
-            idl=n_connection.idl_factory(),
+            idl=_idl_monitor,
             timeout=cfg.CONF.OVS.ovsdb_timeout)
-    return NeutronOvsdbIdl(_connection)
+    return NeutronOvsdbIdl(_connection, _idl_monitor)
 
 
 class OvsCleanup(command.BaseCommand):
@@ -81,9 +84,10 @@ class OvsCleanup(command.BaseCommand):
 
 
 class NeutronOvsdbIdl(impl_idl.OvsdbIdl):
-    def __init__(self, connection):
+    def __init__(self, connection, idl_monitor):
         max_level = None if cfg.CONF.OVS.ovsdb_debug else vlog.INFO
         vlog.use_python_logger(max_level=max_level)
+        self.idl_monitor = idl_monitor
         super(NeutronOvsdbIdl, self).__init__(connection)
 
     def ovs_cleanup(self, bridges, all_ports=False):

@@ -305,8 +305,10 @@ class TunnelTest(object):
             cfg.CONF.set_override(k, v, 'AGENT')
 
         ext_mgr = mock.Mock()
-        return self.mod_agent.OVSNeutronAgent(
+        agent = self.mod_agent.OVSNeutronAgent(
             bridge_classes, ext_mgr, cfg.CONF)
+        mock.patch.object(agent.ovs.ovsdb, 'idl_monitor').start()
+        return agent
 
     def _verify_mock_call(self, mock_obj, expected):
         mock_obj.assert_has_calls(expected)

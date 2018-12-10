@@ -12,10 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
-
-import eventlet
-from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 
@@ -23,7 +19,6 @@ from neutron.agent.common import async_process
 from neutron.agent.ovsdb import api as ovsdb
 from neutron.agent.ovsdb.native import helpers
 from neutron.common import utils
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 
 
 LOG = logging.getLogger(__name__)
@@ -32,22 +27,6 @@ OVSDB_ACTION_INITIAL = 'initial'
 OVSDB_ACTION_INSERT = 'insert'
 OVSDB_ACTION_DELETE = 'delete'
 OVSDB_ACTION_NEW = 'new'
-
-
-@contextlib.contextmanager
-def get_bridges_monitor(
-        bridges, ovsdb_monitor_respawn_interval=(
-            constants.DEFAULT_OVSDBMON_RESPAWN)):
-
-    mon = SimpleBridgesMonitor(
-        bridges,
-        respawn_interval=ovsdb_monitor_respawn_interval,
-        ovsdb_connection=cfg.CONF.OVS.ovsdb_connection)
-    mon.start()
-    try:
-        yield mon
-    finally:
-        mon.stop()
 
 
 class OvsdbMonitor(async_process.AsyncProcess):
@@ -144,36 +123,3 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
         # update any events with ofports received from 'new' action
         for event in self.new_events['added']:
             event['ofport'] = dev_to_ofport.get(event['name'], event['ofport'])
-
-
-class SimpleBridgesMonitor(OvsdbMonitor):
-    """Monitors the Bridge table of the local host's ovsdb for changes.
-
-    The bridges_added() method returns all newly created bridges in ovsdb
-    since the monitor started or since the previous access.
-    """
-
-    def __init__(self, bridges, respawn_interval=None, ovsdb_connection=None):
-        super(SimpleBridgesMonitor, self).__init__(
-            'Bridge',
-            columns=['name'],
-            format='json',
-            respawn_interval=respawn_interval,
-            ovsdb_connection=ovsdb_connection
-        )
-        self.bridges = bridges
-
-    @property
-    def bridges_added(self):
-        eventlet.sleep()
-        return self.get_events()['added']
-
-    def process_events(self):
-        bridges_added = []
-        for row in self.iter_stdout():
-            json = jsonutils.loads(row).get('data')
-            for ovs_id, action, name in json:
-                if name in self.bridges and action == OVSDB_ACTION_INSERT:
-                    bridges_added.append(name)
-
-        self.new_events['added'].extend(bridges_added)
