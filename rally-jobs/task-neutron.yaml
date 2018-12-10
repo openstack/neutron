@@ -337,6 +337,21 @@
             quotas:
               neutron:
                 floatingip: -1
+        -
+          scenario:
+            NeutronNetworks.associate_and_dissociate_floating_ips:
+              floating_network: {{ floating_network }}
+          runner:
+            constant:
+              times: 10
+              concurrency: 5
+          contexts:
+            users:
+              tenants: 2
+              users_per_tenant: 3
+            quotas:
+              neutron:
+                floatingip: -1
     -
       title: Security Group Related Scenarios
       workloads:
