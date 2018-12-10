@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import logging
 import os
 import threading
 
@@ -32,6 +33,7 @@ from neutron.conf.agent import ovsdb_api
 TransactionQueue = moves.moved_class(_connection.TransactionQueue,
                                      'TransactionQueue', __name__)
 Connection = moves.moved_class(_connection.Connection, 'Connection', __name__)
+LOG = logging.getLogger(__name__)
 
 
 ovsdb_api.register_ovsdb_api_opts()
@@ -59,14 +61,15 @@ def configure_ssl_conn():
 
 class BridgeCreateEvent(idl_event.RowEvent):
 
-    def __init__(self, metadata_agent):
-        self.agent = metadata_agent
+    def __init__(self, agent):
+        self.agent = agent
         table = 'Bridge'
         super(BridgeCreateEvent, self).__init__((self.ROW_CREATE, ),
                                                 table, None)
         self.event_name = 'BridgeCreateEvent'
 
     def run(self, event, row, old):
+        LOG.debug('%s, bridge name: %s', self.event_name, row.name)
         self.agent.add_bridge(str(row.name))
 
 
