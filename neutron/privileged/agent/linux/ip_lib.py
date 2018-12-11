@@ -165,7 +165,7 @@ def get_routing_table(ip_version, namespace=None):
     return routes
 
 
-def _get_iproute(namespace):
+def get_iproute(namespace):
     # From iproute.py:
     # `IPRoute` -- RTNL API to the current network namespace
     # `NetNS` -- RTNL API to another network namespace
@@ -184,9 +184,9 @@ def _translate_ip_device_exception(e, device=None, namespace=None):
                                              namespace=namespace)
 
 
-def _get_link_id(device, namespace):
+def get_link_id(device, namespace):
     try:
-        with _get_iproute(namespace) as ip:
+        with get_iproute(namespace) as ip:
             return ip.link_lookup(ifname=device)[0]
     except IndexError:
         raise NetworkInterfaceNotFound(device=device, namespace=namespace)
@@ -194,8 +194,8 @@ def _get_link_id(device, namespace):
 
 def _run_iproute_link(command, device, namespace=None, **kwargs):
     try:
-        with _get_iproute(namespace) as ip:
-            idx = _get_link_id(device, namespace)
+        with get_iproute(namespace) as ip:
+            idx = get_link_id(device, namespace)
             return ip.link(command, index=idx, **kwargs)
     except NetlinkError as e:
         _translate_ip_device_exception(e, device, namespace)
@@ -208,8 +208,8 @@ def _run_iproute_link(command, device, namespace=None, **kwargs):
 
 def _run_iproute_neigh(command, device, namespace, **kwargs):
     try:
-        with _get_iproute(namespace) as ip:
-            idx = _get_link_id(device, namespace)
+        with get_iproute(namespace) as ip:
+            idx = get_link_id(device, namespace)
             return ip.neigh(command, ifindex=idx, **kwargs)
     except NetlinkError as e:
         _translate_ip_device_exception(e, device, namespace)
@@ -222,8 +222,8 @@ def _run_iproute_neigh(command, device, namespace, **kwargs):
 
 def _run_iproute_addr(command, device, namespace, **kwargs):
     try:
-        with _get_iproute(namespace) as ip:
-            idx = _get_link_id(device, namespace)
+        with get_iproute(namespace) as ip:
+            idx = get_link_id(device, namespace)
             return ip.addr(command, index=idx, **kwargs)
     except NetlinkError as e:
         _translate_ip_device_exception(e, device, namespace)
@@ -289,8 +289,8 @@ def delete_ip_address(ip_version, ip, prefixlen, device, namespace):
 def flush_ip_addresses(ip_version, device, namespace):
     family = _IP_VERSION_FAMILY_MAP[ip_version]
     try:
-        with _get_iproute(namespace) as ip:
-            idx = _get_link_id(device, namespace)
+        with get_iproute(namespace) as ip:
+            idx = get_link_id(device, namespace)
             ip.flush_addr(index=idx, family=family)
     except OSError as e:
         if e.errno == errno.ENOENT:
@@ -306,11 +306,11 @@ def flush_ip_addresses(ip_version, device, namespace):
 def create_interface(ifname, namespace, kind, **kwargs):
     ifname = ifname[:constants.DEVICE_NAME_MAX_LEN]
     try:
-        with _get_iproute(namespace) as ip:
+        with get_iproute(namespace) as ip:
             physical_interface = kwargs.pop("physical_interface", None)
             if physical_interface:
                 link_key = "vxlan_link" if kind == "vxlan" else "link"
-                kwargs[link_key] = _get_link_id(physical_interface, namespace)
+                kwargs[link_key] = get_link_id(physical_interface, namespace)
             return ip.link("add", ifname=ifname, kind=kind, **kwargs)
     except NetlinkError as e:
         if e.code == errno.EEXIST:
@@ -338,7 +338,7 @@ def delete_interface(ifname, namespace, **kwargs):
 @lockutils.synchronized("privileged-ip-lib")
 def interface_exists(ifname, namespace):
     try:
-        idx = _get_link_id(ifname, namespace)
+        idx = get_link_id(ifname, namespace)
         return bool(idx)
     except NetworkInterfaceNotFound:
         return False
@@ -522,20 +522,20 @@ def list_netns(**kwargs):
     return netns.listnetns(**kwargs)
 
 
-def _make_serializable(value):
+def make_serializable(value):
     """Make a pyroute2 object serializable
 
     This function converts 'netlink.nla_slot' object (key, value) in a list
     of two elements.
     """
     if isinstance(value, list):
-        return [_make_serializable(item) for item in value]
+        return [make_serializable(item) for item in value]
     elif isinstance(value, dict):
-        return {key: _make_serializable(data) for key, data in value.items()}
+        return {key: make_serializable(data) for key, data in value.items()}
     elif isinstance(value, netlink.nla_slot):
-        return [value[0], _make_serializable(value[1])]
+        return [value[0], make_serializable(value[1])]
     elif isinstance(value, tuple):
-        return tuple(_make_serializable(item) for item in value)
+        return tuple(make_serializable(item) for item in value)
     return value
 
 
@@ -550,8 +550,8 @@ def get_link_devices(namespace, **kwargs):
     :return: (list) interfaces in a namespace
     """
     try:
-        with _get_iproute(namespace) as ip:
-            return _make_serializable(ip.get_links(**kwargs))
+        with get_iproute(namespace) as ip:
+            return make_serializable(ip.get_links(**kwargs))
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -584,8 +584,8 @@ def get_ip_addresses(namespace, **kwargs):
     :return: (tuple) IP addresses in a namespace
     """
     try:
-        with _get_iproute(namespace) as ip:
-            return _make_serializable(ip.get_addr(**kwargs))
+        with get_iproute(namespace) as ip:
+            return make_serializable(ip.get_addr(**kwargs))
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -600,7 +600,7 @@ def get_ip_addresses(namespace, **kwargs):
 def list_ip_rules(namespace, ip_version, match=None, **kwargs):
     """List all IP rules"""
     try:
-        with _get_iproute(namespace) as ip:
+        with get_iproute(namespace) as ip:
             rules = ip.get_rules(family=_IP_VERSION_FAMILY_MAP[ip_version],
                                  match=match, **kwargs)
             for rule in rules:
@@ -623,7 +623,7 @@ def list_ip_rules(namespace, ip_version, match=None, **kwargs):
 def add_ip_rule(namespace, **kwargs):
     """Add a new IP rule"""
     try:
-        with _get_iproute(namespace) as ip:
+        with get_iproute(namespace) as ip:
             ip.rule('add', **kwargs)
     except netlink_exceptions.NetlinkError as e:
         if e.code == errno.EEXIST:
@@ -643,7 +643,7 @@ def add_ip_rule(namespace, **kwargs):
 def delete_ip_rule(namespace, **kwargs):
     """Delete an IP rule"""
     try:
-        with _get_iproute(namespace) as ip:
+        with get_iproute(namespace) as ip:
             ip.rule('del', **kwargs)
     except OSError as e:
         if e.errno == errno.ENOENT:
