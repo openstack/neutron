@@ -24,5 +24,3 @@ fi
 for file in `ls etc/oslo-config-generator/*`; do
     $GEN_CMD --config-file=$file
 done
-
-set -x
