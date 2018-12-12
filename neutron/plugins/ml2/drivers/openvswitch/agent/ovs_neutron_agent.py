@@ -2027,6 +2027,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     self.setup_tunnel_br_flows()
                     self.agent_state['start_flag'] = True
                     tunnel_sync = True
+                    # Force state report to avoid race condition
+                    # with l2pop fdb entries update
+                    self._report_state()
                 if self.enable_distributed_routing:
                     self.dvr_agent.reset_ovs_parameters(self.int_br,
                                                  self.tun_br,
