@@ -183,11 +183,14 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         # match original object, so 'is' check fails
         # TODO(njohnston): Different behavior is required depending on whether
         # a Port object is used or not; once conversion to OVO is complete only
-        # the 'else' will be needed.
-        if isinstance(port, dict):
+        # the first 'if' will be needed
+        if isinstance(port, port_obj.Port):
+            port_copy = {"port": self._make_port_dict(
+                port, process_extensions=False)}
+        elif 'port' in port:
             port_copy = {'port': port['port'].copy()}
         else:
-            port_copy = {'port': port.to_dict()}
+            port_copy = {'port': port.copy()}
 
         port_copy['port']['id'] = port_id
         network_id = port_copy['port']['network_id']

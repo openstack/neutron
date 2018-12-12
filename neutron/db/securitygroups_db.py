@@ -38,6 +38,7 @@ from neutron.db.models import securitygroup as sg_models
 from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.extensions import securitygroup as ext_sg
 from neutron.objects import base as base_obj
+from neutron.objects import ports as port_obj
 from neutron.objects import securitygroup as sg_obj
 
 
@@ -732,9 +733,12 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         # Security group bindings will be retrieved from the SQLAlchemy
         # model. As they're loaded eagerly with ports because of the
         # joined load they will not cause an extra query.
-        security_group_ids = [sec_group_mapping['security_group_id'] for
-                              sec_group_mapping in port_db.security_groups]
-        port_res[ext_sg.SECURITYGROUPS] = security_group_ids
+        if isinstance(port_db, port_obj.Port):
+            port_res[ext_sg.SECURITYGROUPS] = port_db.security_group_ids
+        else:
+            security_group_ids = [sec_group_mapping['security_group_id'] for
+                                  sec_group_mapping in port_db.security_groups]
+            port_res[ext_sg.SECURITYGROUPS] = security_group_ids
         return port_res
 
     def _process_port_create_security_group(self, context, port,
@@ -820,9 +824,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         port = port['port']
         if port.get('device_owner') and net.is_port_trusted(port):
             return
-        if not validators.is_attr_set(port.get(ext_sg.SECURITYGROUPS)):
+        port_sg = port.get(ext_sg.SECURITYGROUPS)
+        if port_sg is None or not validators.is_attr_set(port_sg):
+            port_project = port.get('tenant_id')
             default_sg = self._ensure_default_security_group(context,
-                                                             port['tenant_id'])
+                                                             port_project)
             port[ext_sg.SECURITYGROUPS] = [default_sg]
 
     def _check_update_deletes_security_groups(self, port):
