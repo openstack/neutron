@@ -95,6 +95,18 @@ def convert_to_kilobits(value, base):
 
 
 def _get_attr(pyroute2_obj, attr_name):
+    """Get an attribute in a pyroute object
+
+    pyroute2 object attributes are stored under a key called 'attrs'. This key
+    contains a tuple of tuples. E.g.:
+      pyroute2_obj = {'attrs': (('TCA_KIND': 'htb'),
+                                ('TCA_OPTIONS': {...}))}
+
+    :param pyroute2_obj: (dict) pyroute2 object
+    :param attr_name: (string) first value of the tuple we are looking for
+    :return: (object) second value of the tuple, None if the tuple doesn't
+             exist
+    """
     rule_attrs = pyroute2_obj.get('attrs', [])
     for attr in (attr for attr in rule_attrs if attr[0] == attr_name):
         return attr[1]
@@ -230,19 +242,14 @@ class TcCommand(ip_lib.IPDevice):
     def delete_filters_bw_limit(self):
         # NOTE(slaweq): For limit traffic egress from instance we need to use
         # qdisc "ingress" because it is ingress traffic from interface POV:
-        self._delete_qdisc("ingress")
+        delete_tc_qdisc(self.name, is_ingress=True,
+                        raise_interface_not_found=False,
+                        raise_qdisc_not_found=False, namespace=self.namespace)
 
     def delete_tbf_bw_limit(self):
-        self._delete_qdisc("root")
-
-    def _delete_qdisc(self, qdisc_name):
-        cmd = ['qdisc', 'del', 'dev', self.name, qdisc_name]
-        # Return_code=2 is fine because it means
-        # "RTNETLINK answers: No such file or directory" what is fine when we
-        # are trying to delete qdisc
-        # Return_code=1 means "RTNETLINK answers: Cannot find device <device>".
-        # If the device doesn't exist, the qdisc is already deleted.
-        return self._execute_tc_cmd(cmd, extra_ok_codes=[1, 2])
+        delete_tc_qdisc(self.name, parent='root',
+                        raise_interface_not_found=False,
+                        raise_qdisc_not_found=False, namespace=self.namespace)
 
     def _add_policy_filter(self, bw_limit, burst_limit,
                            qdisc_id=INGRESS_QDISC_ID):
@@ -339,3 +346,26 @@ def list_tc_qdiscs(device, namespace=None):
         retval.append(qdisc_attrs)
 
     return retval
+
+
+def delete_tc_qdisc(device, parent=None, is_ingress=False,
+                    raise_interface_not_found=True, raise_qdisc_not_found=True,
+                    namespace=None):
+    """Delete a TC qdisc of a device
+
+    :param device: (string) device name
+    :param parent: (string) (optional) qdisc parent class ('root', '2:10')
+    :param is_ingress: (bool) (optional) if qdisc type is 'ingress'
+    :param raise_interface_not_found: (bool) (optional) raise exception if the
+                                      interface doesn't exist
+    :param raise_qdisc_not_found: (bool) (optional) raise exception if the
+                                  qdisc doesn't exist
+    :param namespace: (string) (optional) namespace name
+    """
+    qdisc_type = 'ingress' if is_ingress else None
+    if parent:
+        parent = rtnl.TC_H_ROOT if parent == 'root' else parent
+    priv_tc_lib.delete_tc_qdisc(
+        device, parent=parent, kind=qdisc_type,
+        raise_interface_not_found=raise_interface_not_found,
+        raise_qdisc_not_found=raise_qdisc_not_found, namespace=namespace)

@@ -113,6 +113,8 @@ class TestTcCommand(base.BaseTestCase):
                                                      'list_tc_qdiscs').start()
         self.mock_add_tc_qdisc = mock.patch.object(tc_lib,
                                                    'add_tc_qdisc').start()
+        self.mock_delete_tc_qdisc = mock.patch.object(
+            tc_lib, 'delete_tc_qdisc').start()
 
     def test_check_kernel_hz_lower_then_zero(self):
         self.assertRaises(
@@ -164,50 +166,29 @@ class TestTcCommand(base.BaseTestCase):
 
     def test_update_filters_bw_limit(self):
         self.tc.update_filters_bw_limit(BW_LIMIT, BURST)
-        self.execute.assert_has_calls([
-            mock.call(
-                ["tc", "qdisc", "del", "dev", DEVICE_NAME, "ingress"],
-                run_as_root=True,
-                check_exit_code=True,
-                log_fail_as_error=True,
-                extra_ok_codes=[1, 2]
-            ),
-            mock.call(
-                ['tc', 'filter', 'add', 'dev', DEVICE_NAME,
-                 'parent', tc_lib.INGRESS_QDISC_ID, 'protocol', 'all',
-                 'prio', '49', 'basic', 'police',
-                 'rate', self.bw_limit,
-                 'burst', self.burst,
-                 'mtu', tc_lib.MAX_MTU_VALUE,
-                 'drop'],
-                run_as_root=True,
-                check_exit_code=True,
-                log_fail_as_error=True,
-                extra_ok_codes=None
-            )]
-        )
+        self.execute.assert_called_once_with(
+            ['tc', 'filter', 'add', 'dev', DEVICE_NAME, 'parent',
+             tc_lib.INGRESS_QDISC_ID, 'protocol', 'all', 'prio', '49',
+             'basic', 'police', 'rate', self.bw_limit, 'burst', self.burst,
+             'mtu', tc_lib.MAX_MTU_VALUE, 'drop'], run_as_root=True,
+            check_exit_code=True, log_fail_as_error=True, extra_ok_codes=None)
         self.mock_add_tc_qdisc.assert_called_once_with(
             self.tc.name, 'ingress', namespace=self.tc.namespace)
+        self.mock_delete_tc_qdisc.assert_called_once_with(
+            self.tc.name, is_ingress=True, raise_interface_not_found=False,
+            raise_qdisc_not_found=False, namespace=self.tc.namespace)
 
     def test_delete_filters_bw_limit(self):
         self.tc.delete_filters_bw_limit()
-        self.execute.assert_called_once_with(
-            ["tc", "qdisc", "del", "dev", DEVICE_NAME, "ingress"],
-            run_as_root=True,
-            check_exit_code=True,
-            log_fail_as_error=True,
-            extra_ok_codes=[1, 2]
-        )
+        self.mock_delete_tc_qdisc.assert_called_once_with(
+            DEVICE_NAME, is_ingress=True, raise_interface_not_found=False,
+            raise_qdisc_not_found=False, namespace=self.tc.namespace)
 
     def test_delete_tbf_bw_limit(self):
         self.tc.delete_tbf_bw_limit()
-        self.execute.assert_called_once_with(
-            ["tc", "qdisc", "del", "dev", DEVICE_NAME, "root"],
-            run_as_root=True,
-            check_exit_code=True,
-            log_fail_as_error=True,
-            extra_ok_codes=[1, 2]
-        )
+        self.mock_delete_tc_qdisc.assert_called_once_with(
+            DEVICE_NAME, parent='root', raise_interface_not_found=False,
+            raise_qdisc_not_found=False, namespace=self.tc.namespace)
 
     def test_get_ingress_qdisc_burst_value_burst_not_none(self):
         self.assertEqual(

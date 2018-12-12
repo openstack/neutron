@@ -12,7 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import errno
+
 from oslo_utils import uuidutils
+import pyroute2
 from pyroute2.netlink import rtnl
 
 from neutron.agent.linux import tc_lib
@@ -45,6 +48,12 @@ class TcQdiscTestCase(functional_base.BaseSudoTestCase):
         self.assertEqual(0x50000, qdiscs[0]['handle'])
         self.assertEqual('htb', tc_lib._get_attr(qdiscs[0], 'TCA_KIND'))
 
+        priv_tc_lib.delete_tc_qdisc(self.device, rtnl.TC_H_ROOT,
+                                    namespace=self.namespace)
+        qdiscs = priv_tc_lib.list_tc_qdiscs(self.device,
+                                            namespace=self.namespace)
+        self.assertEqual(0, len(qdiscs))
+
     def test_add_tc_qdisc_htb_no_handle(self):
         priv_tc_lib.add_tc_qdisc(
             self.device, parent=rtnl.TC_H_ROOT, kind='htb',
@@ -55,6 +64,12 @@ class TcQdiscTestCase(functional_base.BaseSudoTestCase):
         self.assertEqual(rtnl.TC_H_ROOT, qdiscs[0]['parent'])
         self.assertEqual(0, qdiscs[0]['handle'] & 0xFFFF)
         self.assertEqual('htb', tc_lib._get_attr(qdiscs[0], 'TCA_KIND'))
+
+        priv_tc_lib.delete_tc_qdisc(self.device, parent=rtnl.TC_H_ROOT,
+                                    namespace=self.namespace)
+        qdiscs = priv_tc_lib.list_tc_qdiscs(self.device,
+                                            namespace=self.namespace)
+        self.assertEqual(0, len(qdiscs))
 
     def test_add_tc_qdisc_tbf(self):
         burst = 192000
@@ -76,6 +91,12 @@ class TcQdiscTestCase(functional_base.BaseSudoTestCase):
         self.assertEqual(latency, tc_lib._calc_latency_ms(
             tca_tbf_parms['limit'], burst, tca_tbf_parms['rate']) * 1000)
 
+        priv_tc_lib.delete_tc_qdisc(self.device, parent=rtnl.TC_H_ROOT,
+                                    namespace=self.namespace)
+        qdiscs = priv_tc_lib.list_tc_qdiscs(self.device,
+                                            namespace=self.namespace)
+        self.assertEqual(0, len(qdiscs))
+
     def test_add_tc_qdisc_ingress(self):
         priv_tc_lib.add_tc_qdisc(self.device, kind='ingress',
                                  namespace=self.namespace)
@@ -85,3 +106,48 @@ class TcQdiscTestCase(functional_base.BaseSudoTestCase):
         self.assertEqual('ingress', tc_lib._get_attr(qdiscs[0], 'TCA_KIND'))
         self.assertEqual(rtnl.TC_H_INGRESS, qdiscs[0]['parent'])
         self.assertEqual(0xffff0000, qdiscs[0]['handle'])
+
+        priv_tc_lib.delete_tc_qdisc(self.device, kind='ingress',
+                                    namespace=self.namespace)
+        qdiscs = priv_tc_lib.list_tc_qdiscs(self.device,
+                                            namespace=self.namespace)
+        self.assertEqual(0, len(qdiscs))
+
+    def test_delete_tc_qdisc_no_device(self):
+        self.assertRaises(
+            priv_ip_lib.NetworkInterfaceNotFound, priv_tc_lib.delete_tc_qdisc,
+            'other_device', rtnl.TC_H_ROOT, namespace=self.namespace)
+
+    def test_delete_tc_qdisc_no_device_no_exception(self):
+        self.assertIsNone(priv_tc_lib.delete_tc_qdisc(
+            'other_device', rtnl.TC_H_ROOT, namespace=self.namespace,
+            raise_interface_not_found=False))
+
+    def test_delete_tc_qdisc_no_qdisc(self):
+        self.assertRaises(
+            pyroute2.NetlinkError, priv_tc_lib.delete_tc_qdisc,
+            self.device, rtnl.TC_H_ROOT, namespace=self.namespace)
+
+    def test_delete_tc_qdisc_no_qdisc_no_exception(self):
+        self.assertEqual(2, priv_tc_lib.delete_tc_qdisc(
+            self.device, rtnl.TC_H_ROOT, namespace=self.namespace,
+            raise_qdisc_not_found=False))
+
+    def test_delete_tc_qdisc_ingress_twice(self):
+        priv_tc_lib.add_tc_qdisc(self.device, kind='ingress',
+                                 namespace=self.namespace)
+        qdiscs = priv_tc_lib.list_tc_qdiscs(self.device,
+                                            namespace=self.namespace)
+        self.assertEqual(1, len(qdiscs))
+        self.assertEqual('ingress', tc_lib._get_attr(qdiscs[0], 'TCA_KIND'))
+        self.assertIsNone(
+            priv_tc_lib.delete_tc_qdisc(self.device, kind='ingress',
+                                        namespace=self.namespace))
+        qdiscs = priv_tc_lib.list_tc_qdiscs(self.device,
+                                            namespace=self.namespace)
+        self.assertEqual(0, len(qdiscs))
+        self.assertEqual(
+            errno.EINVAL,
+            priv_tc_lib.delete_tc_qdisc(self.device, kind='ingress',
+                                        namespace=self.namespace,
+                                        raise_qdisc_not_found=False))
