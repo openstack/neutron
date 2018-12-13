@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    [`bug 1811166 <https://bugs.launchpad.net/neutron/+bug/1811166>`_]
+    Changes the API behavior to enforce that a router's administrative state
+    must be down (``router.admin_state_up==False`` ) before modifying its
+    distributed attribute. If the router ``admin_state_up==True`` when trying
+    to change the ``distributed`` attribute, a BadRequest exception will be
+    thrown.
+

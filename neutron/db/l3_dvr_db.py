@@ -37,12 +37,14 @@ from oslo_utils import excutils
 import six
 
 from neutron._i18n import _
+from neutron.api import extensions
 from neutron.common import utils as n_utils
 from neutron.conf.db import l3_dvr_db
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db.models import allowed_address_pair as aap_models
 from neutron.db import models_v2
+from neutron.extensions import _admin_state_down_before_update_lib
 from neutron.ipam import utils as ipam_utils
 from neutron.objects import agent as ag_obj
 from neutron.objects import base as base_obj
@@ -52,6 +54,16 @@ from neutron.objects import router as l3_obj
 
 LOG = logging.getLogger(__name__)
 l3_dvr_db.register_db_l3_dvr_opts()
+_IS_ADMIN_STATE_DOWN_NECESSARY = None
+
+
+def is_admin_state_down_necessary():
+    global _IS_ADMIN_STATE_DOWN_NECESSARY
+    if _IS_ADMIN_STATE_DOWN_NECESSARY is None:
+        _IS_ADMIN_STATE_DOWN_NECESSARY = \
+            _admin_state_down_before_update_lib.ALIAS in (extensions.
+                    PluginAwareExtensionManager.get_instance().extensions)
+    return _IS_ADMIN_STATE_DOWN_NECESSARY
 
 
 @registry.has_registry_receivers
@@ -81,9 +93,18 @@ class DVRResourceOperationHandler(object):
         self.l3plugin.set_extra_attr_value(context, router_db, 'distributed',
                                            dist)
 
-    def _validate_router_migration(self, context, router_db, router_res):
+    def _validate_router_migration(self, context, router_db, router_res,
+                                   old_router=None):
         """Allow transition only when admin_state_up=False"""
-        original_distributed_state = router_db.extra_attributes.distributed
+        admin_state_down_extension_loaded = is_admin_state_down_necessary()
+        # to preserve extant API behavior, only check the distributed attribute
+        # of old_router when the "router-admin-state-down-before-update" shim
+        # API extension is loaded. Don't bother checking if old_router is
+        # "None"
+        if old_router and admin_state_down_extension_loaded:
+            original_distributed_state = old_router.get('distributed')
+        else:
+            original_distributed_state = router_db.extra_attributes.distributed
         requested_distributed_state = router_res.get('distributed', None)
 
         distributed_changed = (
@@ -91,7 +112,18 @@ class DVRResourceOperationHandler(object):
             requested_distributed_state != original_distributed_state)
         if not distributed_changed:
             return False
-        if router_db.admin_state_up:
+
+        # to preserve old API behavior, only check old_router if shim API
+        # extension has been loaded
+        if admin_state_down_extension_loaded and old_router:
+            # if one OR both routers is still up, the *collective*
+            # "admin_state_up" should be True and we should throw the
+            # BadRequest exception below.
+            admin_state_up = (old_router.get('admin_state_up') or
+                              router_db.get('admin_state_up'))
+        else:
+            admin_state_up = router_db.get('admin_state_up')
+        if admin_state_up:
             msg = _("Cannot change the 'distributed' attribute of active "
                     "routers. Please set router admin_state_up to False "
                     "prior to upgrade")
@@ -117,7 +149,7 @@ class DVRResourceOperationHandler(object):
         """Event handler for router update migration to distributed."""
         if not self._validate_router_migration(
                 payload.context, payload.desired_state,
-                payload.request_body):
+                payload.request_body, payload.states[0]):
             return
 
         migrating_to_distributed = (
