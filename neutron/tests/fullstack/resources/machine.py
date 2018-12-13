@@ -16,6 +16,7 @@ from distutils import spawn
 import itertools
 
 import netaddr
+from oslo_log import log as logging
 
 from neutron_lib.api.definitions import portbindings as pbs
 from neutron_lib import constants
@@ -27,6 +28,7 @@ from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 
 FULLSTACK_DHCLIENT_SCRIPT = 'fullstack-dhclient-script'
+LOG = logging.getLogger(__name__)
 
 
 class FakeFullstackMachinesList(list):
@@ -146,6 +148,12 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
             return
         try:
             self.dhclient_async.stop()
+            cmd = self.dhclient_async.cmd
+            stdout = list(self.dhclient_async.iter_stdout())
+            stderr = list(self.dhclient_async.iter_stderr())
+            LOG.debug('Stopping async dhclient [%(cmd)s]. stdout: '
+                      '[%(stdout)s] - stderr: [%(stderr)s]',
+                      {'cmd': cmd, 'stdout': stdout, 'stderr': stderr})
         except async_process.AsyncProcessException:
             # If it was already stopped than we don't care about it
             pass
