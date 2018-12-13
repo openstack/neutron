@@ -62,6 +62,7 @@ The following manufacturers are known to work:
 - Intel
 - Mellanox
 - QLogic
+- Broadcom
 
 For information on **Mellanox SR-IOV Ethernet ConnectX-3/ConnectX-3 Pro cards**, see
 `Mellanox: How To Configure SR-IOV VFs
@@ -70,6 +71,14 @@ For information on **Mellanox SR-IOV Ethernet ConnectX-3/ConnectX-3 Pro cards**,
 For information on **QLogic SR-IOV Ethernet cards**, see
 `User's Guide OpenStack Deployment with SR-IOV Configuration
 <http://www.qlogic.com/solutions/Documents/UsersGuide_OpenStack_SR-IOV.pdf>`_.
+
+For information on **Broadcom NetXtreme-E Series Ethernet cards**, see the
+`Broadcom NetXtreme-C/NetXtreme-E User Guide
+<https://docs.broadcom.com/docs/NetXtreme-UG>`_.
+
+For information on **Broadcom NetXtreme-S Series Ethernet cards**, see the
+`Broadcom NetXtreme-S Product Page
+<https://www.broadcom.com/products/ethernet-connectivity/smartnic/bcm58800>`_.
 
 Using SR-IOV interfaces
 ~~~~~~~~~~~~~~~~~~~~~~~
