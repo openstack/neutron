@@ -16,16 +16,17 @@
 import math
 import re
 
+import netaddr
 from neutron_lib import exceptions
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log as logging
+from pyroute2.iproute import linux as iproute_linux
 from pyroute2.netlink import rtnl
 from pyroute2.netlink.rtnl.tcmsg import common as rtnl_common
 
 from neutron._i18n import _
 from neutron.agent.linux import ip_lib
-from neutron.common import constants
 from neutron.common import utils
 from neutron.privileged.agent.linux import tc_lib as priv_tc_lib
 
@@ -156,6 +157,37 @@ def _handle_from_hex_to_string(handle):
     return ':'.join([major, minor])
 
 
+def _mac_to_pyroute2_keys(mac, offset):
+    """Convert a MAC address to a list of filter keys
+
+    For example:
+      MAC: '01:23:45:67:89:0a', offset: 8
+      keys: ['0x01234567/0xffffffff+8', '0x890a0000/0xffff0000+12']
+
+    :param mac: (string) MAC address
+    :param offset: (int) natural number, offset bytes number from the IP header
+    """
+    int_mac = int(netaddr.EUI(mac))
+    high_value = int_mac >> 16
+    high_mask = 0xffffffff
+    high_offset = offset
+    high = {'value': high_value,
+            'mask': high_mask,
+            'offset': high_offset,
+            'key': (hex(high_value) + '/' + hex(high_mask) + '+' +
+                    str(high_offset))}
+
+    low_value = (int_mac & 0xffff) << 16
+    low_mask = 0xffff0000
+    low_offset = offset + 4
+    low = {'value': low_value,
+           'mask': low_mask,
+           'offset': low_offset,
+           'key': hex(low_value) + '/' + hex(low_mask) + '+' + str(low_offset)}
+
+    return [high, low]
+
+
 class TcCommand(ip_lib.IPDevice):
 
     def __init__(self, name, kernel_hz, namespace=None):
@@ -163,11 +195,6 @@ class TcCommand(ip_lib.IPDevice):
             raise InvalidKernelHzValue(value=kernel_hz)
         super(TcCommand, self).__init__(name, namespace=namespace)
         self.kernel_hz = kernel_hz
-
-    def _execute_tc_cmd(self, cmd, **kwargs):
-        cmd = ['tc'] + cmd
-        ip_wrapper = ip_lib.IPWrapper(self.namespace)
-        return ip_wrapper.netns.execute(cmd, run_as_root=True, **kwargs)
 
     @staticmethod
     def get_ingress_qdisc_burst_value(bw_limit, burst_limit):
@@ -181,21 +208,11 @@ class TcCommand(ip_lib.IPDevice):
         return burst_limit
 
     def get_filters_bw_limits(self, qdisc_id=INGRESS_QDISC_ID):
-        cmd = ['filter', 'show', 'dev', self.name, 'parent', qdisc_id]
-        cmd_result = self._execute_tc_cmd(cmd)
-        if not cmd_result:
-            return None, None
-        for line in cmd_result.split("\n"):
-            m = filters_pattern.match(line.strip())
-            if m:
-                # NOTE(slaweq): because tc is giving bw limit in SI units
-                # we need to calculate it as 1000bit = 1kbit:
-                bw_limit = convert_to_kilobits(m.group(1), constants.SI_BASE)
-                # NOTE(slaweq): because tc is giving burst limit in IEC units
-                # we need to calculate it as 1024bit = 1kbit:
-                burst_limit = convert_to_kilobits(
-                    m.group(2), constants.IEC_BASE)
-                return bw_limit, burst_limit
+        filters = list_tc_filters(self.name, qdisc_id,
+                                  namespace=self.namespace)
+        if filters:
+            return filters[0].get('rate_kbps'), filters[0].get('burst_kb')
+
         return None, None
 
     def get_tbf_bw_limits(self):
@@ -253,23 +270,11 @@ class TcCommand(ip_lib.IPDevice):
 
     def _add_policy_filter(self, bw_limit, burst_limit,
                            qdisc_id=INGRESS_QDISC_ID):
-        rate_limit = "%s%s" % (bw_limit, BW_LIMIT_UNIT)
-        burst = "%s%s" % (
-            self.get_ingress_qdisc_burst_value(bw_limit, burst_limit),
-            BURST_UNIT
-        )
         # NOTE(slaweq): it is made in exactly same way how openvswitch is doing
         # it when configuing ingress traffic limit on port. It can be found in
         # lib/netdev-linux.c#L4698 in openvswitch sources:
-        cmd = [
-            'filter', 'add', 'dev', self.name,
-            'parent', qdisc_id, 'protocol', 'all',
-            'prio', '49', 'basic', 'police',
-            'rate', rate_limit,
-            'burst', burst,
-            'mtu', MAX_MTU_VALUE,
-            'drop']
-        return self._execute_tc_cmd(cmd)
+        add_tc_filter_policy(self.name, qdisc_id, bw_limit, burst_limit,
+                             MAX_MTU_VALUE, 'drop', priority=49)
 
 
 def add_tc_qdisc(device, qdisc_type, parent=None, handle=None, latency_ms=None,
@@ -456,3 +461,95 @@ def delete_tc_policy_class(device, parent, classid, namespace=None):
     """
     priv_tc_lib.delete_tc_policy_class(device, parent, classid,
                                        namespace=namespace)
+
+
+def add_tc_filter_match_mac(device, parent, classid, mac, offset=0, priority=0,
+                            protocol=None, namespace=None):
+    """Add a TC filter in a device to match a MAC address.
+
+    :param device: (string) device name
+    :param parent: (string) qdisc parent class ('root', 'ingress', '2:10')
+    :param classid: (string) major:minor handler identifier ('10:20')
+    :param mac: (string) MAC address to match
+    :param offset: (int) (optional) match offset, starting from the outer
+                   packet IP header
+    :param priority: (int) (optional) filter priority (lower priority, higher
+                     preference)
+    :param protocol: (int) (optional) traffic filter protocol; if None, all
+                     will be matched.
+    :param namespace: (string) (optional) namespace name
+
+    """
+    keys = [key['key'] for key in _mac_to_pyroute2_keys(mac, offset)]
+    priv_tc_lib.add_tc_filter_match32(device, parent, priority, classid, keys,
+                                      protocol=protocol, namespace=namespace)
+
+
+def add_tc_filter_policy(device, parent, rate_kbps, burst_kb, mtu, action,
+                         priority=0, protocol=None, namespace=None):
+    """Add a TC filter in a device to set a policy.
+
+    :param device: (string) device name
+    :param parent: (string) qdisc parent class ('root', 'ingress', '2:10')
+    :param rate_kbps: (int) rate in kbits/second
+    :param burst_kb: (int) burst in kbits
+    :param mtu: (int) MTU size (bytes)
+    :param action: (string) filter policy action
+    :param priority: (int) (optional) filter priority (lower priority, higher
+                     preference)
+    :param protocol: (int) (optional) traffic filter protocol; if None, all
+                     will be matched.
+    :param namespace: (string) (optional) namespace name
+
+    """
+    rate = int(rate_kbps * 1024 / 8)
+    burst = int(burst_kb * 1024 / 8)
+    priv_tc_lib.add_tc_filter_policy(device, parent, priority, rate, burst,
+                                     mtu, action, protocol=protocol,
+                                     namespace=namespace)
+
+
+def list_tc_filters(device, parent, namespace=None):
+    """List TC filter in a device
+
+    :param device: (string) device name
+    :param parent: (string) qdisc parent class ('root', 'ingress', '2:10')
+    :param namespace: (string) (optional) namespace name
+
+    """
+    parent = iproute_linux.transform_handle(parent)
+    filters = priv_tc_lib.list_tc_filters(device, parent, namespace=namespace)
+    retval = []
+    for filter in filters:
+        tca_options = _get_attr(filter, 'TCA_OPTIONS')
+        if not tca_options:
+            continue
+        tca_u32_sel = _get_attr(tca_options, 'TCA_U32_SEL')
+        if not tca_u32_sel:
+            continue
+        keys = []
+        for key in tca_u32_sel['keys']:
+            key_off = key['key_off']
+            value = 0
+            for i in range(4):
+                value = (value << 8) + (key_off & 0xff)
+                key_off = key_off >> 8
+            keys.append({'value': value,
+                         'mask': key['key_val'],
+                         'offset': key['key_offmask']})
+
+        value = {'keys': keys}
+
+        tca_u32_police = _get_attr(tca_options, 'TCA_U32_POLICE')
+        if tca_u32_police:
+            tca_police_tbf = _get_attr(tca_u32_police, 'TCA_POLICE_TBF')
+            if tca_police_tbf:
+                value['rate_kbps'] = int(tca_police_tbf['rate'] * 8 / 1024)
+                value['burst_kb'] = int(
+                    _calc_burst(tca_police_tbf['rate'],
+                                tca_police_tbf['burst']) * 8 / 1024)
+                value['mtu'] = tca_police_tbf['mtu']
+
+        retval.append(value)
+
+    return retval

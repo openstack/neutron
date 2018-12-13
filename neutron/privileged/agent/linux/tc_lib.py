@@ -17,6 +17,7 @@ import socket
 
 from neutron_lib import constants as n_constants
 import pyroute2
+from pyroute2 import protocols as pyroute2_protocols
 
 from neutron._i18n import _
 from neutron import privileged
@@ -141,4 +142,62 @@ def delete_tc_policy_class(device, parent, classid, namespace=None,
         if e.code == errno.ENOENT:
             raise TrafficControlClassNotFound(classid=classid,
                                               namespace=namespace)
+
+
+@privileged.default.entrypoint
+def add_tc_filter_match32(device, parent, priority, class_id, keys,
+                          protocol=None, namespace=None, **kwargs):
+    """Add TC filter, type: match u32"""
+    # NOTE(ralonsoh): by default (protocol=None), every packet is filtered.
+    protocol = protocol or pyroute2_protocols.ETH_P_ALL
+    try:
+        index = ip_lib.get_link_id(device, namespace)
+        with ip_lib.get_iproute(namespace) as ip:
+            ip.tc('add-filter', kind='u32', index=index,
+                  parent=parent, priority=priority, target=class_id,
+                  protocol=protocol, keys=keys, **kwargs)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise ip_lib.NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+
+
+@privileged.default.entrypoint
+def add_tc_filter_policy(device, parent, priority, rate, burst, mtu, action,
+                         protocol=None, keys=None, flowid=1, namespace=None,
+                         **kwargs):
+    """Add TC filter, type: policy filter
+
+    By default (protocol=None), that means every packet is shaped. "keys"
+    and "target" (flowid) parameters are mandatory. If the filter is
+    applied on a classless qdisc, "target" is irrelevant and a default value
+    can be passed. If all packets must be shaped, an empty filter ("keys")
+    can be passed.
+    """
+    keys = keys if keys else ['0x0/0x0']
+    protocol = protocol or pyroute2_protocols.ETH_P_ALL
+    try:
+        index = ip_lib.get_link_id(device, namespace)
+        with ip_lib.get_iproute(namespace) as ip:
+            ip.tc('add-filter', kind='u32', index=index,
+                  parent=parent, priority=priority, protocol=protocol,
+                  rate=rate, burst=burst, mtu=mtu, action=action,
+                  keys=keys, target=flowid, **kwargs)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise ip_lib.NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+
+
+@privileged.default.entrypoint
+def list_tc_filters(device, parent, namespace=None, **kwargs):
+    """List TC filters"""
+    try:
+        index = ip_lib.get_link_id(device, namespace)
+        with ip_lib.get_iproute(namespace) as ip:
+            return ip_lib.make_serializable(
+                ip.get_filters(index=index, parent=parent, **kwargs))
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise ip_lib.NetworkNamespaceNotFound(netns_name=namespace)
         raise
