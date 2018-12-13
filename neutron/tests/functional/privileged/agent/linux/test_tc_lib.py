@@ -155,39 +155,80 @@ class TcQdiscTestCase(functional_base.BaseSudoTestCase):
 
 class TcPolicyClassTestCase(functional_base.BaseSudoTestCase):
 
+    CLASSES = {'1:1': {'rate': 10000, 'ceil': 20000, 'burst': 1500},
+               '1:3': {'rate': 20000, 'ceil': 50000, 'burst': 1600},
+               '1:5': {'rate': 30000, 'ceil': 90000, 'burst': 1700},
+               '1:7': {'rate': 35001, 'ceil': 90000, 'burst': 1701}}
+
     def setUp(self):
         super(TcPolicyClassTestCase, self).setUp()
         self.namespace = 'ns_test-' + uuidutils.generate_uuid()
         priv_ip_lib.create_netns(self.namespace)
         self.addCleanup(self._remove_ns, self.namespace)
         self.device = 'int_dummy'
-        priv_ip_lib.create_interface(self.device, self.namespace, 'dummy')
+        priv_ip_lib.create_interface('int_dummy', self.namespace, 'dummy')
 
     def _remove_ns(self, namespace):
         priv_ip_lib.remove_netns(namespace)
 
     def test_add_tc_policy_class_htb(self):
         priv_tc_lib.add_tc_qdisc(
-            self.device, kind='htb', parent=rtnl.TC_H_ROOT, handle='1:',
+            self.device, parent=rtnl.TC_H_ROOT, kind='htb', handle='1:',
             namespace=self.namespace)
-        classes = {'1:1': {'rate': 10000, 'ceil': 20000, 'burst': 1500},
-                   '1:3': {'rate': 20000, 'ceil': 50000, 'burst': 1600},
-                   '1:5': {'rate': 30000, 'ceil': 90000, 'burst': 1700},
-                   '1:7': {'rate': 35001, 'ceil': 90000, 'burst': 1701}}
-        for classid, rates in classes.items():
+        for classid, rates in self.CLASSES.items():
             priv_tc_lib.add_tc_policy_class(
                 self.device, '1:', classid, 'htb', namespace=self.namespace,
                 **rates)
 
         tc_classes = priv_tc_lib.list_tc_policy_classes(
             self.device, namespace=self.namespace)
-        self.assertEqual(len(classes), len(tc_classes))
+        self.assertEqual(len(self.CLASSES), len(tc_classes))
         for tc_class in tc_classes:
             handle = tc_lib._handle_from_hex_to_string(tc_class['handle'])
             tca_options = tc_lib._get_attr(tc_class, 'TCA_OPTIONS')
             tca_htb_params = tc_lib._get_attr(tca_options, 'TCA_HTB_PARMS')
-            self.assertEqual(classes[handle]['rate'], tca_htb_params['rate'])
-            self.assertEqual(classes[handle]['ceil'], tca_htb_params['ceil'])
-            burst = tc_lib._calc_burst(classes[handle]['rate'],
+            self.assertEqual(self.CLASSES[handle]['rate'],
+                             tca_htb_params['rate'])
+            self.assertEqual(self.CLASSES[handle]['ceil'],
+                             tca_htb_params['ceil'])
+            burst = tc_lib._calc_burst(self.CLASSES[handle]['rate'],
                                        tca_htb_params['buffer'])
-            self.assertEqual(classes[handle]['burst'], burst)
+            self.assertEqual(self.CLASSES[handle]['burst'], burst)
+
+    def test_delete_tc_policy_class_htb(self):
+        priv_tc_lib.add_tc_qdisc(
+            self.device, parent=rtnl.TC_H_ROOT, kind='htb', handle='1:',
+            namespace=self.namespace)
+        for classid, rates in self.CLASSES.items():
+            priv_tc_lib.add_tc_policy_class(
+                self.device, '1:', classid, 'htb', namespace=self.namespace,
+                **rates)
+
+        tc_classes = priv_tc_lib.list_tc_policy_classes(
+            self.device, namespace=self.namespace)
+        self.assertEqual(len(self.CLASSES), len(tc_classes))
+
+        for classid in self.CLASSES:
+            priv_tc_lib.delete_tc_policy_class(
+                self.device, '1:', classid, namespace=self.namespace)
+            tc_classes = priv_tc_lib.list_tc_policy_classes(
+                self.device, namespace=self.namespace)
+            for tc_class in tc_classes:
+                handle = tc_lib._handle_from_hex_to_string(tc_class['handle'])
+                self.assertIsNot(classid, handle)
+
+        tc_classes = priv_tc_lib.list_tc_policy_classes(
+            self.device, namespace=self.namespace)
+        self.assertEqual(0, len(tc_classes))
+
+    def test_delete_tc_policy_class_no_namespace(self):
+        self.assertRaises(
+            priv_ip_lib.NetworkNamespaceNotFound,
+            priv_tc_lib.delete_tc_policy_class, 'device', 'parent', 'classid',
+            namespace='non_existing_namespace')
+
+    def test_delete_tc_policy_class_no_class(self):
+        self.assertRaises(
+            priv_tc_lib.TrafficControlClassNotFound,
+            priv_tc_lib.delete_tc_policy_class, self.device, '1:',
+            '1:1000', namespace=self.namespace)

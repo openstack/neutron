@@ -444,3 +444,15 @@ def list_tc_policy_class(device, namespace=None):
                         'burst_kb': burst_kb})
 
     return classes
+
+
+def delete_tc_policy_class(device, parent, classid, namespace=None):
+    """Delete a TC policy class of a device.
+
+    :param device: (string) device name
+    :param parent: (string) qdisc parent class ('root', 'ingress', '2:10')
+    :param classid: (string) major:minor handler identifier ('10:20')
+    :param namespace: (string) (optional) namespace name
+    """
+    priv_tc_lib.delete_tc_policy_class(device, parent, classid,
+                                       namespace=namespace)
