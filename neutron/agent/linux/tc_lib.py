@@ -54,7 +54,7 @@ tbf_pattern = re.compile(
 TC_QDISC_TYPES = ['htb', 'tbf', 'ingress']
 
 TC_QDISC_PARENT = {'root': rtnl.TC_H_ROOT,
-                  'ingress': rtnl.TC_H_INGRESS}
+                   'ingress': rtnl.TC_H_INGRESS}
 TC_QDISC_PARENT_NAME = {v: k for k, v in TC_QDISC_PARENT.items()}
 
 
@@ -369,3 +369,78 @@ def delete_tc_qdisc(device, parent=None, is_ingress=False,
         device, parent=parent, kind=qdisc_type,
         raise_interface_not_found=raise_interface_not_found,
         raise_qdisc_not_found=raise_qdisc_not_found, namespace=namespace)
+
+
+def add_tc_policy_class(device, parent, classid, qdisc_type,
+                        min_kbps=None, max_kbps=None, burst_kb=None,
+                        namespace=None):
+    """Add a TC policy class
+
+    :param device: (string) device name
+    :param parent: (string) qdisc parent class ('root', 'ingress', '2:10')
+    :param classid: (string) major:minor handler identifier ('10:20')
+    :param qdisc_type: (string) qdisc type ("sfq", "htb", "u32", etc)
+    :param min_kbps: (int) (optional) minimum bandwidth in kbps
+    :param max_kbps: (int) (optional) maximum bandwidth in kbps
+    :param burst_kb: (int) (optional) burst size in kb
+    :param namespace: (string) (optional) namespace name
+    :return:
+    """
+    parent = TC_QDISC_PARENT.get(parent, parent)
+    args = {}
+    # NOTE(ralonsoh): pyroute2 input parameters and units [1]:
+    #   - rate (min bw): bytes/second
+    #   - ceil (max bw): bytes/second
+    #   - burst: bytes
+    # [1] https://www.systutorials.com/docs/linux/man/8-tc/
+    if min_kbps:
+        args['rate'] = int(min_kbps * 1024 / 8)
+    if max_kbps:
+        args['ceil'] = int(max_kbps * 1024 / 8)
+    if burst_kb:
+        args['burst'] = int(burst_kb * 1024 / 8)
+    priv_tc_lib.add_tc_policy_class(device, parent, classid, qdisc_type,
+                                    namespace=namespace, **args)
+
+
+def list_tc_policy_class(device, namespace=None):
+    """List all TC policy classes of a device
+
+    :param device: (string) device name
+    :param namespace: (string) (optional) namespace name
+    :return: (list) TC policy classes
+    """
+    def get_params(tca_options, qdisc_type):
+        if qdisc_type not in TC_QDISC_TYPES:
+            return None, None, None
+
+        tca_params = _get_attr(tca_options,
+                               'TCA_' + qdisc_type.upper() + '_PARMS')
+        burst_kb = int(
+            _calc_burst(tca_params['rate'], tca_params['buffer']) * 8 / 1024)
+        max_kbps = int(tca_params['ceil'] * 8 / 1024)
+        min_kbps = int(tca_params['rate'] * 8 / 1024)
+        return max_kbps, min_kbps, burst_kb
+
+    tc_classes = priv_tc_lib.list_tc_policy_classes(device,
+                                                    namespace=namespace)
+    classes = []
+    for tc_class in tc_classes:
+        index = tc_class['index']
+        parent = TC_QDISC_PARENT_NAME.get(
+            tc_class['parent'], _handle_from_hex_to_string(tc_class['parent']))
+        classid = _handle_from_hex_to_string(tc_class['handle'])
+        qdisc_type = _get_attr(tc_class, 'TCA_KIND')
+        tca_options = _get_attr(tc_class, 'TCA_OPTIONS')
+        max_kbps, min_kbps, burst_kb = get_params(tca_options, qdisc_type)
+        classes.append({'device': device,
+                        'index': index,
+                        'namespace': namespace,
+                        'parent': parent,
+                        'classid': classid,
+                        'qdisc_type': qdisc_type,
+                        'min_kbps': min_kbps,
+                        'max_kbps': max_kbps,
+                        'burst_kb': burst_kb})
+
+    return classes
