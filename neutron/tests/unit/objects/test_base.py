@@ -687,7 +687,7 @@ class _BaseObjectTestCase(object):
         return keys
 
     def get_updatable_fields(self, fields):
-        return base.get_updatable_fields(self._test_class, fields)
+        return obj_utils.get_updatable_fields(self._test_class, fields)
 
     @classmethod
     def _is_test_class(cls, obj):

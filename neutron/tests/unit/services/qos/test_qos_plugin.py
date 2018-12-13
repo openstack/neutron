@@ -17,6 +17,7 @@ from neutron_lib.callbacks import events
 from neutron_lib import constants as lib_constants
 from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
+from neutron_lib.objects import utils as obj_utils
 from neutron_lib.placement import constants as pl_constants
 from neutron_lib.plugins import constants as plugins_constants
 from neutron_lib.plugins import directory
@@ -27,7 +28,6 @@ from oslo_utils import uuidutils
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron import manager
-from neutron.objects import base as base_object
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule as rule_object
 from neutron.services.qos import qos_plugin
@@ -495,7 +495,7 @@ class TestQosPlugin(base.BaseQosTestCase):
         mock_manager.attach_mock(self.qos_plugin.driver_manager, 'driver')
         mock_manager.reset_mock()
 
-        fields = base_object.get_updatable_fields(
+        fields = obj_utils.get_updatable_fields(
             policy_object.QosPolicy, self.policy_data['policy'])
         self.qos_plugin.update_policy(
             self.ctxt, self.policy.id, {'policy': fields})
