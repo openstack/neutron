@@ -83,11 +83,6 @@ rules = [
         'rule:admin_only',
         description=('Access rule for getting provider '
                      'segmentation_id of network')),
-    # TODO(amotoki): Move queue_id to vmware-nsx plugin
-    policy.RuleDefault(
-        'get_network:queue_id',
-        'rule:admin_only',
-        description='Access rule for getting queue_id of network'),
 
     policy.RuleDefault(
         'update_network',

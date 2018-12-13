@@ -20,7 +20,6 @@ from neutron.conf.policies import agent
 from neutron.conf.policies import auto_allocated_topology
 from neutron.conf.policies import availability_zone
 from neutron.conf.policies import base
-from neutron.conf.policies import cisco_plugin
 from neutron.conf.policies import flavor
 from neutron.conf.policies import floatingip
 from neutron.conf.policies import floatingip_pools
@@ -39,7 +38,6 @@ from neutron.conf.policies import service_type
 from neutron.conf.policies import subnet
 from neutron.conf.policies import subnetpool
 from neutron.conf.policies import trunk
-from neutron.conf.policies import vmware_plugin
 
 
 def list_rules():
@@ -49,7 +47,6 @@ def list_rules():
         agent.list_rules(),
         auto_allocated_topology.list_rules(),
         availability_zone.list_rules(),
-        cisco_plugin.list_rules(),
         flavor.list_rules(),
         floatingip.list_rules(),
         floatingip_pools.list_rules(),
@@ -68,7 +65,6 @@ def list_rules():
         subnet.list_rules(),
         subnetpool.list_rules(),
         trunk.list_rules(),
-        vmware_plugin.list_rules(),
     )
 
 
