@@ -505,3 +505,15 @@ def add_ip_rule(namespace, **kwargs):
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
         raise
+
+
+@privileged.default.entrypoint
+def delete_ip_rule(namespace, **kwargs):
+    """Delete an IP rule"""
+    try:
+        with _get_iproute(namespace) as ip:
+            ip.rule('del', **kwargs)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise

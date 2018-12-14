@@ -27,7 +27,6 @@ from oslo_utils import excutils
 from pyroute2.netlink.rtnl import ifinfmsg
 from pyroute2 import NetlinkError
 from pyroute2 import netns
-import six
 
 from neutron._i18n import _
 from neutron.agent.common import utils
@@ -368,97 +367,6 @@ class IpCommandBase(object):
                                      self.COMMAND,
                                      args,
                                      use_root_namespace=use_root_namespace)
-
-
-class IPRule(SubProcessBase):
-    def __init__(self, namespace=None):
-        super(IPRule, self).__init__(namespace=namespace)
-        self.rule = IpRuleCommand(self)
-
-
-class IpRuleCommand(IpCommandBase):
-    COMMAND = 'rule'
-
-    @staticmethod
-    def _make_canonical(ip_version, settings):
-        """Converts settings to a canonical representation to compare easily"""
-        def canonicalize_fwmark_string(fwmark_mask):
-            """Reformats fwmark/mask in to a canonical form
-
-            Examples, these are all equivalent:
-                "0x1"
-                0x1
-                "0x1/0xfffffffff"
-                (0x1, 0xfffffffff)
-
-            :param fwmark_mask: The firewall and mask (default 0xffffffff)
-            :type fwmark_mask: A string with / as delimiter, an iterable, or a
-                single value.
-            """
-            # Turn the value we were passed in to an iterable: fwmark[, mask]
-            if isinstance(fwmark_mask, six.string_types):
-                # A / separates the optional mask in a string
-                iterable = fwmark_mask.split('/')
-            else:
-                try:
-                    iterable = iter(fwmark_mask)
-                except TypeError:
-                    # At this point, it must be a single integer
-                    iterable = [fwmark_mask]
-
-            def to_i(s):
-                if isinstance(s, six.string_types):
-                    # Passing 0 as "base" arg to "int" causes it to determine
-                    # the base automatically.
-                    return int(s, 0)
-                # s isn't a string, can't specify base argument
-                return int(s)
-
-            integers = [to_i(x) for x in iterable]
-
-            # The default mask is all ones, the mask is 32 bits.
-            if len(integers) == 1:
-                integers.append(0xffffffff)
-
-            # We now have two integers in a list.  Convert to canonical string.
-            return '{0:#x}/{1:#x}'.format(*integers)
-
-        def canonicalize(item):
-            k, v = item
-            # ip rule shows these as 'any'
-            if k == 'from' and v == 'all':
-                return k, constants.IP_ANY[ip_version]
-            # lookup and table are interchangeable.  Use table every time.
-            if k == 'lookup':
-                return 'table', v
-            if k == 'fwmark':
-                return k, canonicalize_fwmark_string(v)
-            return k, v
-
-        if 'type' not in settings:
-            settings['type'] = 'unicast'
-
-        return {k: str(v) for k, v in map(canonicalize, settings.items())}
-
-    def _make__flat_args_tuple(self, *args, **kwargs):
-        for kwargs_item in sorted(kwargs.items(), key=lambda i: i[0]):
-            args += kwargs_item
-        return tuple(args)
-
-    def delete(self, ip, **kwargs):
-        ip_version = common_utils.get_ip_version(ip)
-
-        # In case we need to delete a rule based on an incoming
-        # interface, pass the "any" IP address, for example, 0.0.0.0/0,
-        # else pass the given IP.
-        if kwargs.get('iif'):
-            kwargs.update({'from': constants.IP_ANY[ip_version]})
-        else:
-            kwargs.update({'from': ip})
-        canonical_kwargs = self._make_canonical(ip_version, kwargs)
-
-        args_tuple = self._make__flat_args_tuple('del', **canonical_kwargs)
-        self._as_root([ip_version], args_tuple)
 
 
 class IpDeviceCommandBase(IpCommandBase):
@@ -1414,3 +1322,18 @@ def add_ip_rule(namespace, ip, iif=None, table=None, priority=None, to=None):
         return
     cmd_args = _make_pyroute2_args(ip, iif, table, priority, to)
     privileged.add_ip_rule(namespace, **cmd_args)
+
+
+def delete_ip_rule(namespace, ip, iif=None, table=None, priority=None,
+                   to=None):
+    """Delete an IP rule in a namespace
+
+    :param namespace: (string) namespace name
+    :param ip: (string) source IP or CIDR address (IPv4, IPv6)
+    :param iif: (Optional) (string) input interface name
+    :param table: (Optional) (string, int) table number
+    :param priority: (Optional) (string, int) rule priority
+    :param to: (Optional) (string) destination IP or CIDR address (IPv4, IPv6)
+    """
+    cmd_args = _make_pyroute2_args(ip, iif, table, priority, to)
+    privileged.delete_ip_rule(namespace, **cmd_args)

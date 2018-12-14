@@ -56,7 +56,6 @@ class ListIpRulesTestCase(functional_base.BaseSudoTestCase):
         super(ListIpRulesTestCase, self).setUp()
         self.namespace = 'ns_test-' + uuidutils.generate_uuid()
         self.ns = priv_ip_lib.create_netns(self.namespace)
-        self.ip_rule = ip_lib.IPRule(namespace=self.namespace)
         self.addCleanup(self._remove_ns)
 
     def _remove_ns(self):
@@ -112,13 +111,17 @@ class RuleTestCase(functional_base.BaseSudoTestCase):
     def _remove_ns(self):
         priv_ip_lib.remove_netns(self.namespace)
 
-    def _check_rules(self, rules, parameters, values, exception_string):
+    def _check_rules(self, rules, parameters, values, exception_string=None,
+                     raise_exception=True):
         for rule in rules:
             if all(rule.get(parameter) == value
                    for parameter, value in zip(parameters, values)):
-                break
+                return True
         else:
-            self.fail('Rule with %s was expected' % exception_string)
+            if raise_exception:
+                self.fail('Rule with %s was expected' % exception_string)
+            else:
+                return False
 
     def test_add_rule_ip(self):
         ip_addresses = ['192.168.200.250', '2001::250']
@@ -132,12 +135,24 @@ class RuleTestCase(functional_base.BaseSudoTestCase):
             self._check_rules(rules, ['from'], [ip_address],
                               '"from" IP address %s' % ip_address)
 
+            priv_ip_lib.delete_ip_rule(self.namespace, family=ip_family,
+                                       src=ip_address, src_len=ip_lenght)
+            rules = ip_lib.list_ip_rules(self.namespace, ip_version)
+            self.assertFalse(
+                self._check_rules(rules, ['from'], [ip_address],
+                                  raise_exception=False))
+
     def test_add_rule_iif(self):
         iif = 'iif_device_1'
         priv_ip_lib.create_interface(iif, self.namespace, 'dummy')
         priv_ip_lib.add_ip_rule(self.namespace, iifname=iif)
         rules = ip_lib.list_ip_rules(self.namespace, 4)
         self._check_rules(rules, ['iif'], [iif], 'iif name %s' % iif)
+
+        priv_ip_lib.delete_ip_rule(self.namespace, iifname=iif)
+        rules = ip_lib.list_ip_rules(self.namespace, 4)
+        self.assertFalse(
+            self._check_rules(rules, ['iif'], [iif], raise_exception=False))
 
     def test_add_rule_table(self):
         table = 212
@@ -153,6 +168,15 @@ class RuleTestCase(functional_base.BaseSudoTestCase):
             self._check_rules(
                 rules, ['table', 'from'], [str(table), ip_address],
                 'table %s and "from" IP address %s' % (table, ip_address))
+
+            priv_ip_lib.delete_ip_rule(self.namespace, table=table,
+                                       src=ip_address, src_len=ip_lenght,
+                                       family=ip_family)
+            rules = ip_lib.list_ip_rules(self.namespace, ip_version)
+            self.assertFalse(
+                self._check_rules(rules, ['table', 'from'],
+                                  [str(table), ip_address],
+                                  raise_exception=False))
 
     def test_add_rule_priority(self):
         priority = 12345
@@ -170,6 +194,15 @@ class RuleTestCase(functional_base.BaseSudoTestCase):
                 'priority %s and "from" IP address %s' %
                 (priority, ip_address))
 
+            priv_ip_lib.delete_ip_rule(self.namespace, priority=priority,
+                                       src=ip_address, src_len=ip_lenght,
+                                       family=ip_family)
+            rules = ip_lib.list_ip_rules(self.namespace, ip_version)
+            self.assertFalse(
+                self._check_rules(rules, ['priority', 'from'],
+                                  [str(priority), ip_address],
+                                  raise_exception=False))
+
     def test_add_rule_priority_table_iif(self):
         table = 213
         priority = 12346
@@ -183,6 +216,14 @@ class RuleTestCase(functional_base.BaseSudoTestCase):
             rules, ['priority', 'iif', 'table'],
             [str(priority), iif, str(table)],
             'priority %s, table %s and iif name %s' % (priority, table, iif))
+
+        priv_ip_lib.delete_ip_rule(self.namespace, priority=priority,
+                                   iifname=iif, table=table)
+        rules = ip_lib.list_ip_rules(self.namespace, 4)
+        self.assertFalse(
+            self._check_rules(rules, ['priority', 'iif', 'table'],
+                              [str(priority), iif, str(table)],
+                              raise_exception=False))
 
     @testtools.skip('https://github.com/svinota/pyroute2/issues/566')
     def test_add_rule_exists(self):
