@@ -170,22 +170,34 @@ class LinuxInterfaceDriver(object):
                      namespace=namespace,
                      preserve_ips=preserve_ips or [],
                      clean_connections=clean_connections)
+        self.set_onlink_routes(device_name, namespace, extra_subnets,
+                               preserve_ips)
 
+    def set_onlink_routes(self, device_name, namespace, extra_subnets,
+                          preserve_ips=None, is_ipv6=True):
+        """Manage on-link routes (routes without an associate address)
+
+        :param device_name: interface name
+        :param namespace: namespace name
+        :param extra_subnets: subnets attached to this interface without an IP
+                              address set in this interface
+        :param preserve_ips: IPs or CIDRs not to be deleted from the device
+                             on-link route list
+        """
         device = ip_lib.IPDevice(device_name, namespace=namespace)
-
-        # Manage on-link routes (routes without an associated address)
         new_onlink_cidrs = set(s['cidr'] for s in extra_subnets or [])
+        preserve_ips = set(preserve_ips if preserve_ips else [])
 
-        v4_onlink = device.route.list_onlink_routes(constants.IP_VERSION_4)
-        v6_onlink = device.route.list_onlink_routes(constants.IP_VERSION_6)
-        existing_onlink_cidrs = set(r['cidr'] for r in v4_onlink + v6_onlink)
+        onlink = device.route.list_onlink_routes(constants.IP_VERSION_4)
+        if is_ipv6:
+            onlink += device.route.list_onlink_routes(constants.IP_VERSION_6)
+        existing_onlink_cidrs = set(r['cidr'] for r in onlink)
 
         for route in new_onlink_cidrs - existing_onlink_cidrs:
-            LOG.debug("adding onlink route(%s)", route)
+            LOG.debug('Adding onlink route (%s)', route)
             device.route.add_onlink_route(route)
-        for route in (existing_onlink_cidrs - new_onlink_cidrs -
-                      set(preserve_ips or [])):
-            LOG.debug("deleting onlink route(%s)", route)
+        for route in existing_onlink_cidrs - new_onlink_cidrs - preserve_ips:
+            LOG.debug('Deleting onlink route (%s)', route)
             device.route.delete_onlink_route(route)
 
     def add_ipv6_addr(self, device_name, v6addr, namespace, scope='global'):

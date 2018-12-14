@@ -193,6 +193,12 @@ class FipNamespace(namespaces.Namespace):
         self.driver.init_l3(interface_name, ip_cidrs, namespace=ns_name,
                             clean_connections=True)
 
+        gw_cidrs = [sn['cidr'] for sn in ex_gw_port['subnets']
+                    if sn.get('cidr')]
+        self.driver.set_onlink_routes(
+            interface_name, ns_name, ex_gw_port.get('extra_subnets', []),
+            preserve_ips=gw_cidrs, is_ipv6=False)
+
         self.agent_gateway_port = ex_gw_port
 
         cmd = ['sysctl', '-w', 'net.ipv4.conf.%s.proxy_arp=1' % interface_name]
@@ -313,17 +319,23 @@ class FipNamespace(namespaces.Namespace):
                            priority=rt_tbl_index)
 
     def _update_gateway_port(self, agent_gateway_port, interface_name):
-        if (self.agent_gateway_port and
-                not self._check_for_gateway_ip_change(agent_gateway_port)):
-            return
-        # Caller already holding lock
-        self._update_gateway_route(
-            agent_gateway_port, interface_name, tbl_index=None)
+        if (not self.agent_gateway_port or
+                self._check_for_gateway_ip_change(agent_gateway_port)):
+            # Caller already holding lock
+            self._update_gateway_route(
+                agent_gateway_port, interface_name, tbl_index=None)
 
-        # Cache the agent gateway port after successfully updating
-        # the gateway route, so that checking on self.agent_gateway_port
-        # will be a valid check
-        self.agent_gateway_port = agent_gateway_port
+            # Cache the agent gateway port after successfully updating
+            # the gateway route, so that checking on self.agent_gateway_port
+            # will be a valid check
+            self.agent_gateway_port = agent_gateway_port
+
+        gw_cidrs = [sn['cidr'] for sn in agent_gateway_port['subnets']
+                    if sn.get('cidr')]
+        self.driver.set_onlink_routes(
+            interface_name, self.get_name(),
+            agent_gateway_port.get('extra_subnets', []), preserve_ips=gw_cidrs,
+            is_ipv6=False)
 
     def _update_gateway_route(self, agent_gateway_port,
                              interface_name, tbl_index):
