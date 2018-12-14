@@ -979,7 +979,9 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.assertTrue(log.called)
             self.assertTrue(self.dhcp.schedule_resync.called)
 
-    def test_subnet_create_restarts_with_dhcp_disabled(self):
+    def test_subnet_create_end(self):
+        # We should call reload_allocations when subnet's enable_dhcp
+        # attribute isn't True.
         payload = dict(subnet=dhcp.DictModel(
               dict(network_id=fake_network.id, enable_dhcp=False,
                    cidr='99.99.99.0/24', ip_version=const.IP_VERSION_4)))
@@ -990,6 +992,18 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
         self.dhcp.subnet_create_end(None, payload)
 
+        self.cache.assert_has_calls([mock.call.put(new_net)])
+        self.call_driver.assert_called_once_with('reload_allocations', new_net)
+
+        # We should call restart when subnet's enable_dhcp attribute is True.
+        self.call_driver.reset_mock()
+        payload = dict(subnet=dhcp.DictModel(
+              dict(network_id=fake_network.id, enable_dhcp=True,
+                   cidr='99.99.88.0/24', ip_version=const.IP_VERSION_4)))
+        new_net = copy.deepcopy(fake_network)
+        new_net.subnets.append(payload['subnet'])
+        self.plugin.get_network_info.return_value = new_net
+        self.dhcp.subnet_create_end(None, payload)
         self.cache.assert_has_calls([mock.call.put(new_net)])
         self.call_driver.assert_called_once_with('restart', new_net)
 
@@ -1006,6 +1020,29 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         # ensure all ports flagged as ready
         self.assertEqual({p.id for p in fake_network.ports},
                          self.dhcp.dhcp_ready_ports)
+
+    def test_subnet_update_dhcp(self):
+        payload = dict(subnet=dict(network_id=fake_network.id))
+        self.cache.get_network_by_id.return_value = fake_network
+        new_net = copy.deepcopy(fake_network)
+        new_subnet1 = copy.deepcopy(fake_subnet1)
+        new_subnet2 = copy.deepcopy(fake_subnet2)
+        new_subnet2.enable_dhcp = True
+        new_net.subnets = [new_subnet1, new_subnet2]
+        self.plugin.get_network_info.return_value = new_net
+        self.dhcp.subnet_update_end(None, payload)
+        self.call_driver.assert_called_once_with('restart', new_net)
+
+        self.call_driver.reset_mock()
+        self.cache.get_network_by_id.return_value = new_net
+        new_net2 = copy.deepcopy(new_net)
+        new_subnet1 = copy.deepcopy(new_subnet1)
+        new_subnet1.enable_dhcp = False
+        new_subnet2 = copy.deepcopy(new_subnet2)
+        new_net2.subnets = [new_subnet1, new_subnet2]
+        self.plugin.get_network_info.return_value = new_net2
+        self.dhcp.subnet_update_end(None, payload)
+        self.call_driver.assert_called_once_with('restart', new_net2)
 
     def test_subnet_update_end_restart(self):
         new_state = dhcp.NetModel(dict(id=fake_network.id,

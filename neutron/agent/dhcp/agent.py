@@ -363,14 +363,12 @@ class DhcpAgent(manager.Manager):
         if not any(s for s in network.subnets if s.enable_dhcp):
             self.disable_dhcp_helper(network.id)
             return
-        # NOTE(kevinbenton): we don't exclude dhcp disabled subnets because
-        # they still change the indexes used for tags
         old_non_local_subnets = getattr(old_network, 'non_local_subnets', [])
         new_non_local_subnets = getattr(network, 'non_local_subnets', [])
         old_cidrs = [s.cidr for s in (old_network.subnets +
-                                      old_non_local_subnets)]
+                                      old_non_local_subnets) if s.enable_dhcp]
         new_cidrs = [s.cidr for s in (network.subnets +
-                                      new_non_local_subnets)]
+                                      new_non_local_subnets) if s.enable_dhcp]
         if old_cidrs == new_cidrs:
             self.call_driver('reload_allocations', network)
             self.cache.put(network)
