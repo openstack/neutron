@@ -48,12 +48,14 @@ from neutron.objects import l3_hamode
 from neutron.scheduler import l3_agent_scheduler
 from neutron.services.revisions import revision_plugin
 from neutron.tests.common import helpers
+from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit import testlib_api
 
 _uuid = uuidutils.generate_uuid
 
 
-class FakeL3PluginWithAgents(common_db_mixin.CommonDbMixin,
+class FakeL3PluginWithAgents(test_l3.TestL3PluginBaseAttributes,
+                             common_db_mixin.CommonDbMixin,
                              l3_hamode_db.L3_HA_NAT_db_mixin,
                              l3_agentschedulers_db.L3AgentSchedulerDbMixin,
                              agents_db.AgentDbMixin):
@@ -637,6 +639,28 @@ class L3HATestCase(L3HATestFramework):
         networks_after = self.core_plugin.get_networks(self.admin_ctx)
         self.assertEqual(networks_before, networks_after)
 
+    def test_update_router_ha_interface_port_ip_not_allow(self):
+        router = self._create_router()
+        network = self.plugin.get_ha_network(self.admin_ctx,
+                                             router['tenant_id'])
+        self.plugin.add_ha_port(
+            self.admin_ctx, router['id'], network.network_id,
+            router['tenant_id'])
+
+        device_filter = {
+            'device_id': [router['id']],
+            'device_owner': [constants.DEVICE_OWNER_ROUTER_HA_INTF]}
+        ports = self.core_plugin.get_ports(
+            self.admin_ctx, filters=device_filter)
+
+        port = {"port": {"fixed_ips": [
+            {"ip_address": "169.254.192.100"},
+            {"ip_address": "169.254.192.200"}]}}
+        self.assertRaises(n_exc.BadRequest,
+                          self.core_plugin.update_port,
+                          self.admin_ctx, ports[0]['id'],
+                          port)
+
     def test_ensure_vr_id_and_network_net_exists(self):
         router = self._create_router()
         router_db = self.plugin._get_router(self.admin_ctx, router['id'])
@@ -1085,6 +1109,26 @@ class L3HAModeDbTestCase(L3HATestFramework):
         bindings = self.plugin.get_ha_router_port_bindings(
             self.admin_ctx, [router['id']])
         self.assertEqual(2, len(bindings))
+
+    def test_update_ha_router_replicated_interface_port_ip_not_allowed(self):
+        router = self._create_router()
+        network_id = self._create_network(self.core_plugin, self.admin_ctx)
+        subnet = self._create_subnet(self.core_plugin, self.admin_ctx,
+                                     network_id)
+        interface_info = {'subnet_id': subnet['id']}
+        self.plugin.add_router_interface(self.admin_ctx,
+                                         router['id'],
+                                         interface_info)
+        filters = {'device_id': [router['id']],
+                   'device_owner': [constants.DEVICE_OWNER_HA_REPLICATED_INT]}
+        ports = self.core_plugin.get_ports(self.admin_ctx, filters=filters)
+        port = {'port': {'fixed_ips': [
+            {'ip_address': '10.0.0.100'},
+            {'ip_address': '10.0.0.101'}]}}
+        self.assertRaises(n_exc.BadRequest,
+                          self.core_plugin.update_port,
+                          self.admin_ctx, ports[0]['id'],
+                          port)
 
     def test_update_router_port_bindings_no_ports(self):
         self.plugin._update_router_port_bindings(

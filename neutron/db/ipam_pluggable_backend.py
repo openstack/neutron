@@ -20,6 +20,9 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import constants as plugin_consts
+from neutron_lib.plugins import directory
+
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -35,6 +38,20 @@ from neutron.objects import subnet as obj_subnet
 
 
 LOG = logging.getLogger(__name__)
+
+
+def get_ip_update_not_allowed_device_owner_list():
+    l3plugin = directory.get_plugin(plugin_consts.L3)
+    # The following list is for IPAM to prevent direct update of port
+    # IP address. Currently it only has some L3 related types.
+    # L2 plugin can add the same list here, but for now it is not required.
+    return getattr(l3plugin, 'IP_UPDATE_NOT_ALLOWED_LIST', [])
+
+
+def is_neutron_built_in_router(context, router_id):
+    l3plugin = directory.get_plugin(plugin_consts.L3)
+    return bool(l3plugin and
+        l3plugin.router_supports_scheduling(context, router_id))
 
 
 class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
@@ -287,6 +304,20 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
 
         return fixed_ip_list
 
+    def _check_ip_changed_by_version(self, context, ip_list, version):
+        for ip in ip_list:
+            ip_address = ip.get('ip_address')
+            subnet_id = ip.get('subnet_id')
+            if ip_address:
+                ip_addr = netaddr.IPAddress(ip_address)
+                if ip_addr.version == version:
+                    return True
+            elif subnet_id:
+                subnet = obj_subnet.Subnet.get_object(context, id=subnet_id)
+                if subnet and subnet.ip_version == version:
+                    return True
+        return False
+
     def _update_ips_for_port(self, context, port, host,
                              original_ips, new_ips, mac):
         """Add or remove IPs from the port. IPAM version"""
@@ -294,6 +325,16 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         removed = []
         changes = self._get_changed_ips_for_port(
             context, original_ips, new_ips, port['device_owner'])
+
+        not_allowed_list = get_ip_update_not_allowed_device_owner_list()
+        if (port['device_owner'] in not_allowed_list and
+                is_neutron_built_in_router(context, port['device_id'])):
+            ip_v4_changed = self._check_ip_changed_by_version(
+                context, changes.remove + changes.add,
+                constants.IP_VERSION_4)
+            if ip_v4_changed:
+                raise ipam_exc.IPAddressChangeNotAllowed(port_id=port['id'])
+
         try:
             subnets = self._ipam_get_subnets(
                 context, network_id=port['network_id'], host=host,
