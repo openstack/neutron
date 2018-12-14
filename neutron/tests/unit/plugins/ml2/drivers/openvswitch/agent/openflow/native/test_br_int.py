@@ -68,6 +68,13 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 priority=0,
                 table_id=24),
                            active_bundle=None),
+            call._send_msg(ofpp.OFPFlowMod(dp,
+                cookie=self.stamp,
+                instructions=[],
+                match=ofpp.OFPMatch(vlan_vid=4095),
+                priority=65535,
+                table_id=0),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 

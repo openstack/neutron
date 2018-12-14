@@ -153,6 +153,8 @@ OPENFLOW13 = "OpenFlow13"
 OPENFLOW14 = "OpenFlow14"
 OPENFLOW15 = "OpenFlow15"
 
+OPENFLOW_MAX_PRIORITY = 65535
+
 # A placeholder for dead vlans.
 DEAD_VLAN_TAG = p_const.MAX_VLAN_TAG + 1
 
