@@ -1353,7 +1353,8 @@ def _make_pyroute2_args(ip, iif, table, priority, to):
 
     :param ip: (string) source IP or CIDR address (IPv4, IPv6)
     :param iif: (string) input interface name
-    :param table: (string, int) table number
+    :param table: (string, int) table number (as an int or a string) or table
+                  name ('default', 'main', 'local')
     :param priority: (string, int) rule priority
     :param to: (string) destination IP or CIDR address (IPv4, IPv6)
     :return: a dictionary with the kwargs needed in pyroute rule commands
@@ -1372,7 +1373,7 @@ def _make_pyroute2_args(ip, iif, table, priority, to):
         cmd_args['dst'] = common_utils.cidr_to_ip(to)
         cmd_args['dst_len'] = common_utils.cidr_mask(to)
     if table:
-        cmd_args['table'] = RULE_TABLES.get(int(table), int(table))
+        cmd_args['table'] = RULE_TABLES.get(table) or int(table)
     if priority:
         cmd_args['priority'] = int(priority)
     return cmd_args
