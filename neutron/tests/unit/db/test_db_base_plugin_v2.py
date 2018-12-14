@@ -50,6 +50,7 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import test_lib
 from neutron.common import utils
+from neutron.conf import policies
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_backend_mixin
 from neutron.db.models import l3 as l3_models
@@ -61,6 +62,7 @@ from neutron.ipam import exceptions as ipam_exc
 from neutron.objects import network as network_obj
 from neutron.objects import router as l3_obj
 from neutron.plugins.ml2.common import exceptions as ml2_exceptions
+from neutron import policy
 from neutron.tests import base
 from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
@@ -177,6 +179,21 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         self._skip_native_sorting = not _is_native_sorting_support()
         if ext_mgr:
             self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
+            # NOTE(amotoki): policy._ENFORCER is initialized in
+            # neutron.tests.base.BaseTestCase.setUp() but this is too early
+            # and neutron.policy.FieldCheck conv_func does not work
+            # because extended resources are not populated to
+            # attributes.RESOURCES yet.
+            # Thus we need to refresh the default policy rules after loading
+            # extensions. Especially it is important to re-instantiate
+            # DefaultRule() under neutron.conf.policies. To do this,
+            # we need to reload the default policy modules.
+            policy.reset()
+            # TODO(amotoki): Consider this should be part of
+            # neutron.policy.reset (or refresh), but as of now
+            # this is only required for unit testing.
+            policies.reload_default_policies()
+            policy.init()
 
     def setup_config(self):
         # Create the default configurations
