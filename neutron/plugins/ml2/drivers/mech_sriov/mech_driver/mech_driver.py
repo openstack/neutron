@@ -22,6 +22,7 @@ from oslo_config import cfg
 
 from oslo_log import log
 
+from neutron._i18n import _
 from neutron.conf.plugins.ml2.drivers.mech_sriov import mech_sriov_conf
 from neutron.plugins.ml2.drivers import mech_agent
 from neutron.plugins.ml2.drivers.mech_sriov.mech_driver \
@@ -88,6 +89,23 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def get_mappings(self, agent):
         return agent['configurations'].get('device_mappings', {})
+
+    def get_standard_device_mappings(self, agent):
+        """Return the agent's device mappings in a standard way.
+
+        The common format for OVS and SRIOv mechanism drivers:
+        {'physnet_name': ['device_or_bridge_1', 'device_or_bridge_2']}
+
+        :param agent: The agent
+        :returns A dict in the format: {'physnet_name': ['bridge_or_device']}
+        :raises ValueError: if there is no device_mappings key in
+                            agent['configurations']
+        """
+        if 'device_mappings' in agent['configurations']:
+            return agent['configurations']['device_mappings']
+        else:
+            raise ValueError(_('Cannot standardize device mappings of agent '
+                               'type: %s'), agent['agent_type'])
 
     def bind_port(self, context):
         LOG.debug("Attempting to bind port %(port)s on "

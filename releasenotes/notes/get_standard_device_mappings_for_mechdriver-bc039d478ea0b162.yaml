@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Add get_standard_device_mappings to SriovNicSwitchMechanismDriver and
+    OpenvswitchMechanismDriver so they can return the interface or bridge
+    mappings in a standard way. The common format is a dict like:
+    {'physnet_name': ['device_or_bridge_1', 'device_or_bridge_2']}.

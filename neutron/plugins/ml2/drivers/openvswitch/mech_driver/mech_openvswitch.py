@@ -23,6 +23,7 @@ from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log
 
+from neutron._i18n import _
 from neutron.agent import securitygroups_rpc
 from neutron.conf.plugins.ml2.drivers.openvswitch import mech_ovs_conf
 from neutron.plugins.ml2.drivers import mech_agent
@@ -89,6 +90,24 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def get_mappings(self, agent):
         return agent['configurations'].get('bridge_mappings', {})
+
+    def get_standard_device_mappings(self, agent):
+        """Return the agent's bridge mappings in a standard way.
+
+        The common format for OVS and SRIOv mechanism drivers:
+        {'physnet_name': ['device_or_bridge_1', 'device_or_bridge_2']}
+
+        :param agent: The agent
+        :returns A dict in the format: {'physnet_name': ['bridge_or_device']}
+        :raises ValueError: if there is no bridge_mappings key in
+                            agent['configurations']
+        """
+        if 'bridge_mappings' in agent['configurations']:
+            return {k: [v] for k, v in
+                    agent['configurations']['bridge_mappings'].items()}
+        else:
+            raise ValueError(_('Cannot standardize bridge mappings of agent '
+                               'type: %s'), agent['agent_type'])
 
     def check_vlan_transparency(self, context):
         """Currently Openvswitch driver doesn't support vlan transparency."""
