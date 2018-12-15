@@ -19,10 +19,6 @@ rules = [
         'rule:admin_only',
         description='Access rule for creating flavor'),
     policy.RuleDefault(
-        'get_flavors',
-        'rule:regular_user',
-        description='Access rule for listing flavors'),
-    policy.RuleDefault(
         'get_flavor',
         'rule:regular_user',
         description='Access rule for getting flavor'),
@@ -39,10 +35,6 @@ rules = [
         'create_service_profile',
         'rule:admin_only',
         description='Access rule for creating service profile'),
-    policy.RuleDefault(
-        'get_service_profiles',
-        'rule:admin_only',
-        description='Access rule for listing service profiles'),
     policy.RuleDefault(
         'get_service_profile',
         'rule:admin_only',

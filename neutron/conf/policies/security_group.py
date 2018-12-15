@@ -25,10 +25,6 @@ rules = [
         'rule:admin_or_owner',
         description='Access rule for getting security group'),
     policy.RuleDefault(
-        'get_security_groups',
-        'rule:admin_or_owner',
-        description='Access rule for getting security groups'),
-    policy.RuleDefault(
         'update_security_group',
         'rule:admin_or_owner',
         description='Access rule for updating security group'),
@@ -47,10 +43,6 @@ rules = [
         'get_security_group_rule',
         'rule:admin_or_owner',
         description='Access rule for getting security group rule'),
-    policy.RuleDefault(
-        'get_security_group_rules',
-        'rule:admin_or_owner',
-        description='Access rule for getting security groups rules'),
     policy.RuleDefault(
         'delete_security_group_rule',
         'rule:admin_or_owner',
