@@ -193,3 +193,11 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
             # Check no resources are left behind.
             self.assertFalse(self.trunk_br.exists())
             self.assertFalse(ovsdb_handler.bridge_has_service_port(br_int))
+
+    def test_do_not_delete_trunk_bridge_with_instance_ports(self):
+        ports = self._fill_trunk_dict()
+        self.setup_agent_and_ports(port_dicts=ports)
+        self.wait_until_ports_state(self.ports, up=True)
+        self.ovsdb_handler.handle_trunk_remove(self.trunk_br.br_name,
+                ports.pop())
+        self.assertTrue(self.trunk_br.exists())
