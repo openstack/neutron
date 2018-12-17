@@ -30,6 +30,7 @@ import webtest
 from neutron.api import extensions as exts
 from neutron import manager
 from neutron import tests
+from neutron.tests.functional import base as functional_base
 from neutron.tests.unit import testlib_api
 
 
@@ -67,7 +68,8 @@ def create_test_app():
     return webtest.TestApp(app)
 
 
-class PecanFunctionalTest(testlib_api.SqlTestCase):
+class PecanFunctionalTest(testlib_api.SqlTestCase,
+                          functional_base.BaseLoggingTestCase):
 
     def setUp(self, service_plugins=None, extensions=None):
         self.setup_coreplugin('ml2', load_plugins=False)

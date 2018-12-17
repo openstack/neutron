@@ -27,13 +27,15 @@ from neutron_lib import context
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import constants as n_const
 from neutron.tests.common import helpers
+from neutron.tests.functional import base as functional_base
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
 
 
 DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 
 
-class L3DvrTestCaseBase(ml2_test_base.ML2TestFramework):
+class L3DvrTestCaseBase(ml2_test_base.ML2TestFramework,
+                        functional_base.BaseLoggingTestCase):
     def setUp(self):
         super(L3DvrTestCaseBase, self).setUp()
         self.l3_agent = helpers.register_l3_agent(
