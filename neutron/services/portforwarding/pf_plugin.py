@@ -71,6 +71,8 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
     This class implements a Port Forwarding plugin.
     """
 
+    required_service_plugins = ['router']
+
     supported_extension_aliases = ['floating-ip-port-forwarding',
                                    'expose-port-forwarding-in-fip']
 
