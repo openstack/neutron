@@ -24,9 +24,6 @@ from neutron.tests.unit.extensions import test_l3
 
 _uuid = uuidutils.generate_uuid
 
-PLUGIN_NAME = (
-    'neutron.services.portforwarding.pf_plugin.PortForwardingPlugin')
-
 
 class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
                                       test_l3.L3NatTestCaseMixin):
@@ -35,7 +32,8 @@ class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
     def setUp(self):
         mock.patch('neutron.api.rpc.handlers.resources_rpc.'
                    'ResourcesPushRpcApi').start()
-        svc_plugins = {'port_forwarding': PLUGIN_NAME}
+        svc_plugins = (test_fip_pf.PF_PLUGIN_NAME, test_fip_pf.L3_PLUGIN,
+                       'neutron.services.qos.qos_plugin.QoSPlugin')
         ext_mgr = test_fip_pf.ExtendFipPortForwardingExtensionManager()
         super(FloatingIPPorForwardingTestCase, self).setUp(
             ext_mgr=ext_mgr, service_plugins=svc_plugins)

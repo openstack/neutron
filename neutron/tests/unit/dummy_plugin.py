@@ -28,6 +28,7 @@ from neutron import neutron_plugin_base_v2
 RESOURCE_NAME = "dummy"
 COLLECTION_NAME = "%ss" % RESOURCE_NAME
 DUMMY_SERVICE_TYPE = "DUMMY"
+DUMMY_SERVICE_WITH_REQUIRE_TYPE = "DUMMY_REQIURE"
 
 # Attribute Map for dummy resource
 RESOURCE_ATTRIBUTE_MAP = {
@@ -130,6 +131,17 @@ class DummyServicePlugin(service_base.ServicePluginBase):
                                                             svc_type_id)
         except KeyError:
             raise exceptions.NotFound()
+
+
+class DummyWithRequireServicePlugin(DummyServicePlugin):
+    required_service_plugins = ['dummy']
+
+    @classmethod
+    def get_plugin_type(cls):
+        return DUMMY_SERVICE_WITH_REQUIRE_TYPE
+
+    def get_plugin_description(self):
+        return "Neutron Dummy Service Plugin with requirements"
 
 
 class DummyCorePluginWithoutDatastore(
