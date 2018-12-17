@@ -373,29 +373,29 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
 
     @test_base.unstable_test("bug 1687027")
     def test_upgrade_expand_branch(self):
-        super(TestWalkMigrationsMysql, self).test_upgrade_expand_branch()
+        super(TestModelsMigrationsMysql, self).test_upgrade_expand_branch()
 
     @test_base.unstable_test("bug 1687027")
     def test_upgrade_contract_branch(self):
-        super(TestWalkMigrationsMysql, self).test_upgrade_contract_branch()
+        super(TestModelsMigrationsMysql, self).test_upgrade_contract_branch()
 
     @test_base.unstable_test("bug 1687027")
     def test_branches(self):
-        super(TestWalkMigrationsMysql, self).test_branches()
+        super(TestModelsMigrationsMysql, self).test_branches()
 
     @test_base.unstable_test("bug 1687027")
     def test_has_offline_migrations_pending_contract_scripts(self):
-        super(TestWalkMigrationsMysql,
+        super(TestModelsMigrationsMysql,
               self).test_has_offline_migrations_pending_contract_scripts()
 
     @test_base.unstable_test("bug 1687027")
     def test_has_offline_migrations_all_heads_upgraded(self):
-        super(TestWalkMigrationsMysql,
+        super(TestModelsMigrationsMysql,
               self).test_has_offline_migrations_all_heads_upgraded()
 
     @test_base.unstable_test("bug 1687027")
     def test_models_sync(self):
-        super(TestWalkMigrationsMysql, self).test_models_sync()
+        super(TestModelsMigrationsMysql, self).test_models_sync()
 
 
 class TestModelsMigrationsPsql(testlib_api.PostgreSQLTestCaseMixin,
