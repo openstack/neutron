@@ -6,7 +6,7 @@ For new contributors, the following are useful onboarding information.
 Contributing to Neutron
 -----------------------
 
-Work within Neutron is discussed on the openstack-dev mailing list, as well as in the
+Work within Neutron is discussed on the openstack-discuss mailing list, as well as in the
 #openstack-neutron IRC channel. While these are great channels for engaging Neutron,
 the bulk of discussion of patches and code happens in gerrit itself.
 

@@ -80,7 +80,7 @@ Finally, the PTL will work with the deputy to produce a brief summary of the
 issues of the week to be shared with the larger team during the weekly IRC
 meeting and tracked in the meeting notes. If for some reason the deputy is not
 going to attend the team meeting to report, the deputy should consider sending
-a brief report to the openstack-dev@ mailing list in advance of the meeting.
+a brief report to the openstack-discuss@ mailing list in advance of the meeting.
 
 
 Getting Ready to Serve as the Neutron Bug Deputy
@@ -138,7 +138,7 @@ Bug Deputy routines in your week
   If you can, do the same for older bugs.
 
 * Take a note of bugs you processed.
-  At the end of your week, post a report on openstack-dev mailing list.
+  At the end of your week, post a report on openstack-discuss mailing list.
 
 
 Plugin and Driver Repositories

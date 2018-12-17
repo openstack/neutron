@@ -11,7 +11,7 @@ external plugins and drivers at any time.
 Neutron expects any Third Party CI system that interacts with gerrit to
 follow the requirements set by the Infrastructure team [1]_ as well as the
 Neutron Third Party CI guidelines below. Please ping the PTL in
-#openstack-neutron or send an email to the openstack-dev ML (with subject
+#openstack-neutron or send an email to the openstack-discuss ML (with subject
 [neutron]) with any questions. Be aware that the Infrastructure documentation
 as well as this document are living documents and undergo changes. Track
 changes to the infrastructure documentation using this url [2]_ (and please
@@ -85,7 +85,7 @@ systems.
 A third party system can have it's voting rights removed as well. If the
 system becomes unstable (stops running, voting, or start providing inaccurate
 results), the Neutron PTL or any core reviewer will make an attempt to contact
-the owner and copy the openstack-dev mailing list. If no response is received
+the owner and copy the openstack-discuss mailing list. If no response is received
 within 2 days, the Neutron PTL will remove voting rights for the third party
 CI system. If a response is received, the owner will work to correct the
 issue. If the issue cannot be addressed in a reasonable amount of time, the

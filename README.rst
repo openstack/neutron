@@ -17,7 +17,7 @@ To learn more about neutron:
   * Defects: https://launchpad.net/neutron
   * Release notes: https://docs.openstack.org/releasenotes/neutron/index.html
 
-Get in touch via `email <mailto:openstack-dev@lists.openstack.org>`_. Use
+Get in touch via `email <mailto:openstack-discuss@lists.openstack.org>`_. Use
 [Neutron] in your subject.
 
 To learn how to contribute:
