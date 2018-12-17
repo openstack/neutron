@@ -23,6 +23,7 @@ from alembic import migration as alembic_migration
 from alembic import script as alembic_script
 from alembic import util as alembic_util
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import fileutils
 from oslo_utils import importutils
 import six
@@ -32,6 +33,7 @@ from neutron.conf.db import migration_cli
 from neutron.db import migration
 from neutron.db.migration.connection import DBConnection
 
+LOG = logging.getLogger(__name__)
 
 HEAD_FILENAME = 'HEAD'
 HEADS_FILENAME = 'HEADS'
@@ -67,16 +69,16 @@ def do_alembic_command(config, cmd, revision=None, desc=None, **kwargs):
 
     project = config.get_main_option('neutron_project')
     if desc:
-        alembic_util.msg(_('Running %(cmd)s (%(desc)s) for %(project)s ...') %
-                         {'cmd': cmd, 'desc': desc, 'project': project})
+        LOG.info('Running %(cmd)s (%(desc)s) for %(project)s ...',
+                 {'cmd': cmd, 'desc': desc, 'project': project})
     else:
-        alembic_util.msg(_('Running %(cmd)s for %(project)s ...') %
-                         {'cmd': cmd, 'project': project})
+        LOG.info('Running %(cmd)s for %(project)s ...',
+                 {'cmd': cmd, 'project': project})
     try:
         getattr(alembic_command, cmd)(config, *args, **kwargs)
     except alembic_util.CommandError as e:
         alembic_util.err(six.text_type(e))
-    alembic_util.msg(_('OK'))
+    LOG.info('OK')
 
 
 def _get_alembic_entrypoint(project):
@@ -248,10 +250,10 @@ def _compare_labels(revision, expected_labels):
         bad_labels_with_release = (revision.branch_labels -
                                    _get_release_labels(expected_labels))
         if not bad_labels_with_release:
-            alembic_util.warn(
-                _('Release aware branch labels (%s) are deprecated. '
-                  'Please switch to expand@ and contract@ '
-                  'labels.') % bad_labels)
+            LOG.warning(
+                'Release aware branch labels (%s) are deprecated. '
+                'Please switch to expand@ and contract@ '
+                'labels.', bad_labels)
             return
 
         script_name = os.path.basename(revision.path)
@@ -346,8 +348,8 @@ def validate_head_files(config):
     contract_head = _get_contract_head_file_path(config)
     expand_head = _get_expand_head_file_path(config)
     if not os.path.exists(contract_head) or not os.path.exists(expand_head):
-        alembic_util.warn(_("Repository does not contain HEAD files for "
-                            "contract and expand branches."))
+        LOG.warning("Repository does not contain HEAD files for "
+                    "contract and expand branches.")
         return
     head_map = _get_heads_map(config)
     _check_head(CONTRACT_BRANCH, contract_head, head_map[CONTRACT_BRANCH])
@@ -387,11 +389,11 @@ def has_offline_migrations(config, cmd):
         # it means we should shut down all neutron-server instances before
         # proceeding with upgrade.
         project = config.get_main_option('neutron_project')
-        alembic_util.msg(_('Need to apply migrations from %(project)s '
-                           'contract branch. This will require all Neutron '
-                           'server instances to be shutdown before '
-                           'proceeding with the upgrade.') %
-            {"project": project})
+        LOG.info('Need to apply migrations from %(project)s '
+                 'contract branch. This will require all Neutron '
+                 'server instances to be shutdown before '
+                 'proceeding with the upgrade.',
+                 {"project": project})
         return True
     return False
 
@@ -651,6 +653,6 @@ def main():
         return_val |= bool(CONF.command.func(config, CONF.command.name))
 
     if CONF.command.name == 'has_offline_migrations' and not return_val:
-        alembic_util.msg(_('No offline migrations pending.'))
+        LOG.info('No offline migrations pending.')
 
     return return_val

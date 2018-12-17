@@ -123,7 +123,7 @@ class TestCli(base.BaseTestCase):
         self.do_alembic_cmd_p = mock.patch.object(cli, 'do_alembic_command')
         self.do_alembic_cmd = self.do_alembic_cmd_p.start()
         self.mock_alembic_err = mock.patch('alembic.util.err').start()
-        self.mock_alembic_warn = mock.patch('alembic.util.warn').start()
+        self.mock_log_warn = mock.patch.object(cli.LOG, "warning").start()
         self.mock_alembic_err.side_effect = SystemExit
 
         def mocked_root_dir(cfg):
@@ -419,7 +419,7 @@ class TestCli(base.BaseTestCase):
                 cli.validate_head_files(fake_config)
             elif head_files_not_exist:
                 cli.validate_head_files(fake_config)
-                self.assertTrue(self.mock_alembic_warn.called)
+                self.assertTrue(self.mock_log_warn.called)
             else:
                 self.assertRaises(
                     SystemExit,
