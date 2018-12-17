@@ -131,11 +131,15 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                        'DhcpAgentNotifyAPI').start()
         # Update the plugin
         self.setup_coreplugin(plugin, load_plugins=False)
-        cfg.CONF.set_override(
-            'service_plugins',
-            [test_lib.test_config.get(key, default)
-             for key, default in (service_plugins or {}).items()]
-        )
+        if isinstance(service_plugins, (list, tuple)):
+            # Sometimes we needs these test service_plugins to be ordered.
+            cfg.CONF.set_override('service_plugins', service_plugins)
+        else:
+            cfg.CONF.set_override(
+                'service_plugins',
+                [test_lib.test_config.get(key, default)
+                 for key, default in (service_plugins or {}).items()]
+            )
 
         cfg.CONF.set_override('base_mac', "12:34:56:78:00:00")
         cfg.CONF.set_override('max_dns_nameservers', 2)
