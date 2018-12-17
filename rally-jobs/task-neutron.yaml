@@ -1,3 +1,5 @@
+{% set floating_network = floating_network or "public" %}
+
 ---
   version: 2
   title: Rally Task for OpenStack Neutron CI
@@ -306,7 +308,7 @@
         -
           scenario:
             NeutronNetworks.create_and_delete_floating_ips:
-              floating_network: "public"
+              floating_network: {{ floating_network }}
               floating_ip_args: {}
           runner:
             constant:
@@ -322,7 +324,7 @@
         -
           scenario:
             NeutronNetworks.create_and_list_floating_ips:
-              floating_network: "public"
+              floating_network: {{ floating_network }}
               floating_ip_args: {}
           runner:
             constant:
