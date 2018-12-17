@@ -14,6 +14,7 @@
 #    under the License.
 
 import os
+import warnings
 
 from oslo_config import cfg
 
@@ -31,6 +32,10 @@ DEFAULT_LOG_DIR = os.path.join(helpers.get_test_log_path(),
 class BaseLoggingTestCase(base.BaseTestCase):
     def setUp(self):
         super(BaseLoggingTestCase, self).setUp()
+        # NOTE(slaweq): Because of issue with stestr and Python3, we need
+        # to avoid too much output to be produced during tests, so we will
+        # ignore python warnings here
+        warnings.simplefilter("ignore")
         base.setup_test_logging(
             cfg.CONF, DEFAULT_LOG_DIR, "%s.txt" % self.id())
 
