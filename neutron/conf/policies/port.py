@@ -69,12 +69,6 @@ rules = [
         description=('Access rule for creating '
                      'port with binding profile')),
     # TODO(amotoki): Add create_port:binding:vnic_type
-    # TODO(amotoki): Move mac_learning_enabled to vmware-nsx plugin
-    policy.RuleDefault(
-        'create_port:mac_learning_enabled',
-        'rule:context_is_advsvc or rule:admin_or_network_owner',
-        description=('Access rule for creating port '
-                     'with mac_learning_enabled attribute')),
     policy.RuleDefault(
         'create_port:allowed_address_pairs',
         'rule:admin_or_network_owner',
@@ -85,11 +79,6 @@ rules = [
         'get_port',
         'rule:context_is_advsvc or rule:admin_owner_or_network_owner',
         description='Access rule for getting port'),
-    # TODO(amotoki): Move queue_id to vmware-nsx plugin
-    policy.RuleDefault(
-        'get_port:queue_id',
-        'rule:admin_only',
-        description='Access rule for getting queue_id of port'),
     policy.RuleDefault(
         'get_port:binding:vif_type',
         'rule:admin_only',
@@ -150,11 +139,6 @@ rules = [
         'update_port:binding:profile',
         'rule:admin_only',
         description='Access rule for updating binding profile of port'),
-    # TODO(amotoki): Move mac_learning_enabled to vmware-nsx plugin
-    policy.RuleDefault(
-        'update_port:mac_learning_enabled',
-        'rule:context_is_advsvc or rule:admin_or_network_owner',
-        description='Access rule for updating mac_learning_enabled of port'),
     # TODO(amotoki): Add update_port:binding:vnic_type
     policy.RuleDefault(
         'update_port:allowed_address_pairs',
