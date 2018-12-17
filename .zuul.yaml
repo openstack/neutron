@@ -35,11 +35,7 @@
               - ^tools/.*$
               - ^tox.ini$
         - neutron-tempest-dvr-ha-multinode-full
-        # NOTE(slaweq): Temporary make this non-voting until bug
-        # https://bugs.launchpad.net/os-vif/+bug/1807949
-        # will be fixed
-        - neutron-tempest-iptables_hybrid:
-            voting: false
+        - neutron-tempest-iptables_hybrid
         - neutron-grenade
         - ironic-tempest-dsvm-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             voting: false
@@ -61,9 +57,7 @@
         - neutron-fullstack
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
-        # NOTE(slaweq): Temporary remove this job from gate queue until
-        # https://bugs.launchpad.net/os-vif/+bug/1807949 will be fixed
-        #- neutron-tempest-iptables_hybrid
+        - neutron-tempest-iptables_hybrid
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
         - neutron-grenade
