@@ -12,27 +12,29 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault('create_metering_label',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description='Access rule for creating metering label'),
     policy.RuleDefault('get_metering_label',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description='Access rule for getting metering label'),
     policy.RuleDefault('delete_metering_label',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description='Access rule for deleting metering label'),
     policy.RuleDefault('create_metering_label_rule',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description=('Access rule for creating '
                                     'metering label rule')),
     policy.RuleDefault('get_metering_label_rule',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description=('Access rule for getting '
                                     'metering label rule')),
     policy.RuleDefault('delete_metering_label_rule',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description=('Access rule for deleting '
                                     'metering label rule'))
 ]

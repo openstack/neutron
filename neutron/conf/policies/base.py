@@ -13,6 +13,19 @@
 from oslo_policy import policy
 
 
+# TODO(amotoki): Define these in neutron-lib once what constants are required
+# from stadium and 3rd party projects.
+# As of now, the following are candidates.
+RULE_ADMIN_OR_OWNER = 'rule:admin_or_owner'
+RULE_ADMIN_ONLY = 'rule:admin_only'
+RULE_ANY = 'rule:regular_user'
+RULE_ADVSVC = 'rule:context_is_advsvc'
+RULE_ADMIN_OR_NET_OWNER = 'rule:admin_or_network_owner'
+RULE_ADMIN_OR_NET_OWNER_OR_ADVSVC = ' or '.join([RULE_ADMIN_OR_NET_OWNER,
+                                                 RULE_ADVSVC])
+RULE_ADMIN_OR_PARENT_OWNER = 'rule:admin_or_ext_parent_owner'
+
+
 rules = [
     policy.RuleDefault(
         'context_is_admin',

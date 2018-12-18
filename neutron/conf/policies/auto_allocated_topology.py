@@ -12,16 +12,18 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault(
         'get_auto_allocated_topology',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description=("Access rule for getting a project's "
                      "auto-allocated topology")),
     policy.RuleDefault(
         'delete_auto_allocated_topology',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description=("Access rule for deleting a project's "
                      "auto-allocated topology")),
 ]

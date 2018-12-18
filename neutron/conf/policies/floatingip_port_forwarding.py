@@ -12,23 +12,25 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault(
         'create_floatingip_port_forwarding',
-        'rule:admin_or_ext_parent_owner',
+        base.RULE_ADMIN_OR_PARENT_OWNER,
         description='Access rule for creating floating IP port forwarding'),
     policy.RuleDefault(
         'get_floatingip_port_forwarding',
-        'rule:admin_or_ext_parent_owner',
+        base.RULE_ADMIN_OR_PARENT_OWNER,
         description='Access rule for getting floating IP port forwarding'),
     policy.RuleDefault(
         'update_floatingip_port_forwarding',
-        'rule:admin_or_ext_parent_owner',
+        base.RULE_ADMIN_OR_PARENT_OWNER,
         description='Access rule for updating floating IP port forwarding'),
     policy.RuleDefault(
         'delete_floatingip_port_forwarding',
-        'rule:admin_or_ext_parent_owner',
+        base.RULE_ADMIN_OR_PARENT_OWNER,
         description='Access rule for deleting floating IP port forwarding'),
 ]
 

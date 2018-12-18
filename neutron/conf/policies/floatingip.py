@@ -12,23 +12,25 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault('create_floatingip',
-                       'rule:regular_user',
+                       base.RULE_ANY,
                        description='Access rule for creating floating IP'),
     policy.RuleDefault('create_floatingip:floating_ip_address',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description=('Access rule for creating floating IP '
                                     'with a specific IP address')),
     policy.RuleDefault('get_floatingip',
-                       'rule:admin_or_owner',
+                       base.RULE_ADMIN_OR_OWNER,
                        description='Access rule for getting floating IP'),
     policy.RuleDefault('update_floatingip',
-                       'rule:admin_or_owner',
+                       base.RULE_ADMIN_OR_OWNER,
                        description='Access rule for updating floating IP'),
     policy.RuleDefault('delete_floatingip',
-                       'rule:admin_or_owner',
+                       base.RULE_ADMIN_OR_OWNER,
                        description='Access rule for deleting floating IP'),
 ]
 

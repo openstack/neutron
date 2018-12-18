@@ -12,105 +12,107 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault(
         'create_router',
-        'rule:regular_user',
+        base.RULE_ANY,
         description='Access rule for creating router'),
     policy.RuleDefault(
         'create_router:distributed',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for creating '
                      'router with distributed attribute')),
     policy.RuleDefault(
         'create_router:ha',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for creating '
                      'router with ha attribute')),
     policy.RuleDefault(
         'create_router:external_gateway_info',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description=('Access rule for creating router with '
                      'external_gateway_info information')),
     policy.RuleDefault(
         'create_router:external_gateway_info:network_id',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description=('Access rule for creating router with network_id '
                      'attribute of external_gateway_info information')),
     policy.RuleDefault(
         'create_router:external_gateway_info:enable_snat',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for creating router with enable_snat '
                      'attribute of external_gateway_info information')),
     policy.RuleDefault(
         'create_router:external_gateway_info:external_fixed_ips',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for creating router with '
                      'external_fixed_ips attribute of '
                      'external_gateway_info information')),
 
     policy.RuleDefault(
         'get_router',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for getting router'),
     policy.RuleDefault(
         'get_router:distributed',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for getting distributed attribute of '
                      'router')),
     policy.RuleDefault(
         'get_router:ha',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for getting ha attribute of router'),
 
     policy.RuleDefault(
         'update_router',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for updating router'),
     policy.RuleDefault(
         'update_router:distributed',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for updating distributed attribute '
                      'of router')),
     policy.RuleDefault(
         'update_router:ha',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for updating ha attribute of router'),
     policy.RuleDefault(
         'update_router:external_gateway_info',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description=('Access rule for updating external_gateway_info '
                      'information of router')),
     policy.RuleDefault(
         'update_router:external_gateway_info:network_id',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description=('Access rule for updating network_id attribute of '
                      'external_gateway_info information of router')),
     policy.RuleDefault(
         'update_router:external_gateway_info:enable_snat',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for updating enable_snat attribute of '
                      'external_gateway_info information of router')),
     policy.RuleDefault(
         'update_router:external_gateway_info:external_fixed_ips',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for updating external_fixed_ips '
                      'attribute of external_gateway_info information '
                      'of router')),
 
     policy.RuleDefault(
         'delete_router',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for deleting router'),
 
     policy.RuleDefault(
         'add_router_interface',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for adding router interface'),
     policy.RuleDefault(
         'remove_router_interface',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for removing router interface'),
 ]
 

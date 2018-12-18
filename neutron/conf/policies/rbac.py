@@ -12,6 +12,8 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault(
@@ -21,7 +23,7 @@ rules = [
 
     policy.RuleDefault(
         'create_rbac_policy',
-        '',
+        base.RULE_ANY,
         description='Access rule for creating RBAC policy'),
     policy.RuleDefault(
         'create_rbac_policy:target_tenant',
@@ -30,7 +32,7 @@ rules = [
                      'policy with a specific target tenant')),
     policy.RuleDefault(
         'update_rbac_policy',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for updating RBAC policy'),
     policy.RuleDefault(
         'update_rbac_policy:target_tenant',
@@ -39,11 +41,11 @@ rules = [
                      'attribute of RBAC policy')),
     policy.RuleDefault(
         'get_rbac_policy',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for getting RBAC policy'),
     policy.RuleDefault(
         'delete_rbac_policy',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for deleting RBAC policy'),
 ]
 

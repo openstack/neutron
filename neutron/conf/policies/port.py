@@ -12,6 +12,8 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault(
@@ -25,7 +27,7 @@ rules = [
 
     policy.RuleDefault(
         'create_port',
-        '',
+        base.RULE_ANY,
         description='Access rule for creating port'),
     policy.RuleDefault(
         'create_port:device_owner',
@@ -60,18 +62,18 @@ rules = [
                      'port with port_security_enabled')),
     policy.RuleDefault(
         'create_port:binding:host_id',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for creating '
                      'port with binging host_id')),
     policy.RuleDefault(
         'create_port:binding:profile',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for creating '
                      'port with binding profile')),
     # TODO(amotoki): Add create_port:binding:vnic_type
     policy.RuleDefault(
         'create_port:allowed_address_pairs',
-        'rule:admin_or_network_owner',
+        base.RULE_ADMIN_OR_NET_OWNER,
         description=('Access rule for creating port '
                      'with allowed_address_pairs attribute')),
 
@@ -81,19 +83,19 @@ rules = [
         description='Access rule for getting port'),
     policy.RuleDefault(
         'get_port:binding:vif_type',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for getting binding vif_type of port'),
     policy.RuleDefault(
         'get_port:binding:vif_details',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for getting binding vif_details of port'),
     policy.RuleDefault(
         'get_port:binding:host_id',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for getting binding host_id of port'),
     policy.RuleDefault(
         'get_port:binding:profile',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for getting binding profile of port'),
     # TODO(amotoki): Add get_port:binding:vnic_type
     # TODO(amotoki): Add get_port:binding:data_plane_status
@@ -133,16 +135,16 @@ rules = [
         description='Access rule for updating port_security_enabled of port'),
     policy.RuleDefault(
         'update_port:binding:host_id',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for updating binding host_id of port'),
     policy.RuleDefault(
         'update_port:binding:profile',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for updating binding profile of port'),
     # TODO(amotoki): Add update_port:binding:vnic_type
     policy.RuleDefault(
         'update_port:allowed_address_pairs',
-        'rule:admin_or_network_owner',
+        base.RULE_ADMIN_OR_NET_OWNER,
         description='Access rule for updating allowed_address_pairs of port'),
     policy.RuleDefault(
         'update_port:data_plane_status',

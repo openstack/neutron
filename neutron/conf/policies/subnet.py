@@ -12,35 +12,37 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault('create_subnet',
-                       'rule:admin_or_network_owner',
+                       base.RULE_ADMIN_OR_NET_OWNER,
                        description='Access rule for creating subnet'),
     policy.RuleDefault('create_subnet:segment_id',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description=('Access rule for creating '
                                     'subnet with segment_id')),
     policy.RuleDefault('create_subnet:service_types',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description=('Access rule for creating '
                                     'subnet with service_type')),
     policy.RuleDefault('get_subnet',
                        'rule:admin_or_owner or rule:shared',
                        description='Access rule for getting subnet'),
     policy.RuleDefault('get_subnet:segment_id',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description=('Access rule for getting '
                                     'segment_id of subnet')),
     policy.RuleDefault('update_subnet',
-                       'rule:admin_or_network_owner',
+                       base.RULE_ADMIN_OR_NET_OWNER,
                        description='Access rule for updating subnet'),
     policy.RuleDefault('update_subnet:service_types',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description=('Access rule for updating '
                                     'service_types of subnet')),
     policy.RuleDefault('delete_subnet',
-                       'rule:admin_or_network_owner',
+                       base.RULE_ADMIN_OR_NET_OWNER,
                        description='Access rule for deleting subnet')
 ]
 

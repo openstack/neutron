@@ -12,27 +12,29 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault(
         'get_loggable_resource',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for getting loggable resource'),
     policy.RuleDefault(
         'create_log',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for creating network log'),
     policy.RuleDefault(
         'get_log',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for getting network log'),
     policy.RuleDefault(
         'update_log',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for updating network log'),
     policy.RuleDefault(
         'delete_log',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for deleting network log'),
 ]
 
