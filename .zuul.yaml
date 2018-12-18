@@ -153,6 +153,8 @@
     parent: rally-task-neutron
     timeout: 7800
     vars:
+      devstack_localrc:
+        USE_PYTHON3: true
       devstack_plugins:
         rally-openstack: https://git.openstack.org/openstack/rally-openstack
         neutron: https://git.openstack.org/openstack/neutron
