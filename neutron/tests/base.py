@@ -46,7 +46,6 @@ from neutron.api.rpc.callbacks.consumer import registry as rpc_consumer_reg
 from neutron.api.rpc.callbacks.producer import registry as rpc_producer_reg
 from neutron.common import config
 from neutron.conf.agent import common as agent_config
-from neutron.db import _resource_extend as resource_extend
 from neutron.db import agentschedulers_db
 from neutron import manager
 from neutron import policy
@@ -205,16 +204,12 @@ class DietTestCase(base.BaseTestCase):
         # six before removing the cleanup callback from here.
         self.addCleanup(mock.patch.stopall)
 
-        self.addCleanup(self.reset_resource_extend_functions)
+        self.useFixture(fixture.DBResourceExtendFixture())
 
         self.addOnException(self.check_for_systemexit)
         self.orig_pid = os.getpid()
 
         tools.reset_random_seed()
-
-    @staticmethod
-    def reset_resource_extend_functions():
-        resource_extend._resource_extend_functions = {}
 
     def addOnException(self, handler):
 
