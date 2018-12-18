@@ -28,7 +28,8 @@ rules = [
                        description=('Access rule for creating '
                                     'subnet with service_type')),
     policy.RuleDefault('get_subnet',
-                       'rule:admin_or_owner or rule:shared',
+                       base.policy_or(base.RULE_ADMIN_OR_OWNER,
+                                      'rule:shared'),
                        description='Access rule for getting subnet'),
     policy.RuleDefault('get_subnet:segment_id',
                        base.RULE_ADMIN_ONLY,

@@ -59,8 +59,10 @@ rules = [
 
     policy.RuleDefault(
         'get_network',
-        ('rule:admin_or_owner or rule:shared or '
-         'rule:external or rule:context_is_advsvc'),
+        base.policy_or(base.RULE_ADMIN_OR_OWNER,
+                       'rule:shared',
+                       'rule:external',
+                       base.RULE_ADVSVC),
         description='Access rule for getting shared network'),
     policy.RuleDefault(
         'get_network:router:external',
