@@ -24,6 +24,8 @@ from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
+from pyroute2.netlink import rtnl
+from pyroute2.netlink.rtnl import ifaddrmsg
 from pyroute2.netlink.rtnl import ifinfmsg
 from pyroute2 import NetlinkError
 from pyroute2 import netns
@@ -43,19 +45,26 @@ IP_NONLOCAL_BIND = 'net.ipv4.ip_nonlocal_bind'
 LOOPBACK_DEVNAME = 'lo'
 FB_TUNNEL_DEVICE_NAMES = ['gre0', 'gretap0', 'tunl0', 'erspan0', 'sit0',
                           'ip6tnl0', 'ip6gre0']
-RULE_TABLES = {'default': 253,
-               'main': 254,
-               'local': 255}
+IP_RULE_TABLES = {'default': 253,
+                  'main': 254,
+                  'local': 255}
 
 # Rule indexes: pyroute2.netlink.rtnl
 # Rule names: https://www.systutorials.com/docs/linux/man/8-ip-rule/
 # NOTE(ralonsoh): 'masquerade' type is printed as 'nat' in 'ip rule' command
-RULE_TYPES = {0: 'unspecified',
-              1: 'unicast',
-              6: 'blackhole',
-              7: 'unreachable',
-              8: 'prohibit',
-              10: 'nat'}
+IP_RULE_TYPES = {0: 'unspecified',
+                 1: 'unicast',
+                 6: 'blackhole',
+                 7: 'unreachable',
+                 8: 'prohibit',
+                 10: 'nat'}
+
+IP_ADDRESS_SCOPE = {rtnl.rtscopes['RT_SCOPE_UNIVERSE']: 'global',
+                    rtnl.rtscopes['RT_SCOPE_SITE']: 'site',
+                    rtnl.rtscopes['RT_SCOPE_LINK']: 'link',
+                    rtnl.rtscopes['RT_SCOPE_HOST']: 'host'}
+
+IP_ADDRESS_SCOPE_NAME = {v: k for k, v in IP_ADDRESS_SCOPE.items()}
 
 SYS_NET_PATH = '/sys/class/net'
 DEFAULT_GW_PATTERN = re.compile(r"via (\S+)")
@@ -138,7 +147,7 @@ class IPWrapper(SubProcessBase):
     def get_devices(self, exclude_loopback=True, exclude_fb_tun_devices=True):
         retval = []
         try:
-            devices = privileged.get_devices(self.namespace)
+            devices = privileged.get_device_names(self.namespace)
         except privileged.NetworkNamespaceNotFound:
             return retval
 
@@ -159,8 +168,18 @@ class IPWrapper(SubProcessBase):
         if not ip:
             return None
 
-        addr = IpAddrCommand(self)
-        devices = addr.get_devices_with_ip(to=ip)
+        cidr = common_utils.ip_to_cidr(ip)
+        kwargs = {'address': common_utils.cidr_to_ip(cidr)}
+        if not common_utils.is_cidr_host(cidr):
+            kwargs['mask'] = common_utils.cidr_mask_length(cidr)
+        devices = get_devices_with_ip(self.namespace, **kwargs)
+        if not devices:
+            # Search by broadcast address.
+            broadcast = common_utils.cidr_broadcast_address(cidr)
+            if broadcast:
+                devices = get_devices_with_ip(self.namespace,
+                                              broadcast=broadcast)
+
         if devices:
             return IPDevice(devices[0]['name'], namespace=self.namespace)
 
@@ -475,68 +494,40 @@ class IpAddrCommand(IpDeviceCommandBase):
     def flush(self, ip_version):
         flush_ip_addresses(ip_version, self.name, self._parent.namespace)
 
-    def get_devices_with_ip(self, name=None, scope=None, to=None,
-                            filters=None, ip_version=None):
-        """Get a list of all the devices with an IP attached in the namespace.
-
-        :param name: if it's not None, only a device with that matching name
-                     will be returned.
-        :param scope: address scope, for example, global, link, or host
-        :param to: IP address or cidr to match. If cidr then it will match
-                   any IP within the specified subnet
-        :param filters: list of any other filters supported by /sbin/ip
-        :param ip_version: 4 or 6
-        """
-        options = [ip_version] if ip_version else []
-
-        args = ['show']
-        if name:
-            args += [name]
-        if filters:
-            args += filters
-        if scope:
-            args += ['scope', scope]
-        if to:
-            args += ['to', to]
-
-        retval = []
-
-        for line in self._run(options, tuple(args)).split('\n'):
-            line = line.strip()
-
-            match = DEVICE_NAME_PATTERN.search(line)
-            if match:
-                # Found a match for a device name, but its' addresses will
-                # only appear in following lines, so we may as well continue.
-                device_name = remove_interface_suffix(match.group(2))
-                continue
-            elif not line.startswith('inet'):
-                continue
-
-            parts = line.split(" ")
-            broadcast = None
-            if parts[0] == 'inet6':
-                scope = parts[3]
-            else:
-                if parts[2] == 'brd':
-                    broadcast = parts[3]
-                    scope = parts[5]
-                else:
-                    scope = parts[3]
-
-            retval.append(dict(name=device_name,
-                               cidr=parts[1],
-                               scope=scope,
-                               broadcast=broadcast,
-                               dynamic=('dynamic' == parts[-1]),
-                               tentative=('tentative' in line),
-                               dadfailed=('dadfailed' == parts[-1])))
-        return retval
-
     def list(self, scope=None, to=None, filters=None, ip_version=None):
         """Get device details of a device named <self.name>."""
-        return self.get_devices_with_ip(
-            self.name, scope, to, filters, ip_version)
+        def filter_device(device, filters):
+            # Accepted filters: dynamic, permanent, tentative, dadfailed.
+            for filter in filters:
+                if filter == 'permanent' and device['dynamic']:
+                    return False
+                elif not device[filter]:
+                    return False
+            return True
+
+        kwargs = {}
+        if to:
+            cidr = common_utils.ip_to_cidr(to)
+            kwargs = {'address': common_utils.cidr_to_ip(cidr)}
+            if not common_utils.is_cidr_host(cidr):
+                kwargs['mask'] = common_utils.cidr_mask_length(cidr)
+        if scope:
+            kwargs['scope'] = IP_ADDRESS_SCOPE_NAME[scope]
+        if ip_version:
+            kwargs['family'] = common_utils.get_socket_address_family(
+                ip_version)
+
+        devices = get_devices_with_ip(self._parent.namespace, name=self.name,
+                                      **kwargs)
+        if not filters:
+            return devices
+
+        filtered_devices = []
+        for device in (device for device in devices
+                       if filter_device(device, filters)):
+            filtered_devices.append(device)
+
+        return filtered_devices
 
     def wait_until_address_ready(self, address, wait_time=30):
         """Wait until an address is no longer marked 'tentative'
@@ -1223,10 +1214,10 @@ def _parse_ip_rule(rule, ip_version):
             to_ip, prefix=rule['dst_len'])
         if common_utils.is_cidr_host(parsed_rule['to']):
             parsed_rule['to'] = common_utils.cidr_to_ip(parsed_rule['to'])
-    parsed_rule['type'] = RULE_TYPES[rule['action']]
+    parsed_rule['type'] = IP_RULE_TYPES[rule['action']]
     table_num = rule['attrs']['FRA_TABLE']
     for table_name in (name for (name, index) in
-                       RULE_TABLES.items() if index == table_num):
+                       IP_RULE_TABLES.items() if index == table_num):
         parsed_rule['table'] = table_name
         break
     else:
@@ -1281,7 +1272,7 @@ def _make_pyroute2_args(ip, iif, table, priority, to):
         cmd_args['dst'] = common_utils.cidr_to_ip(to)
         cmd_args['dst_len'] = common_utils.cidr_mask(to)
     if table:
-        cmd_args['table'] = RULE_TABLES.get(table) or int(table)
+        cmd_args['table'] = IP_RULE_TABLES.get(table) or int(table)
     if priority:
         cmd_args['priority'] = int(priority)
     return cmd_args
@@ -1337,3 +1328,52 @@ def delete_ip_rule(namespace, ip, iif=None, table=None, priority=None,
     """
     cmd_args = _make_pyroute2_args(ip, iif, table, priority, to)
     privileged.delete_ip_rule(namespace, **cmd_args)
+
+
+def _parse_link_device(namespace, device, **kwargs):
+    """Parse pytoute2 link device information
+
+    For each link device, the IP address information is retrieved and returned
+    in a dictionary.
+    IP address scope: http://linux-ip.net/html/tools-ip-address.html
+    """
+    def get_attr(pyroute2_obj, attr_name):
+        rule_attrs = pyroute2_obj.get('attrs', [])
+        for attr in (attr for attr in rule_attrs if attr[0] == attr_name):
+            return attr[1]
+        return
+
+    retval = []
+    name = get_attr(device, 'IFLA_IFNAME')
+    ip_addresses = privileged.get_ip_addresses(namespace,
+                                               index=device['index'],
+                                               **kwargs)
+    for ip_address in ip_addresses:
+        ip = get_attr(ip_address, 'IFA_ADDRESS')
+        ip_length = ip_address['prefixlen']
+        cidr = common_utils.ip_to_cidr(ip, prefix=ip_length)
+        flags = get_attr(ip_address, 'IFA_FLAGS')
+        dynamic = not bool(flags & ifaddrmsg.IFA_F_PERMANENT)
+        tentative = bool(flags & ifaddrmsg.IFA_F_TENTATIVE)
+        dadfailed = bool(flags & ifaddrmsg.IFA_F_DADFAILED)
+        scope = IP_ADDRESS_SCOPE[ip_address['scope']]
+        retval.append({'name': name,
+                       'cidr': cidr,
+                       'scope': scope,
+                       'broadcast': get_attr(ip_address, 'IFA_BROADCAST'),
+                       'dynamic': dynamic,
+                       'tentative': tentative,
+                       'dadfailed': dadfailed})
+    return retval
+
+
+def get_devices_with_ip(namespace, name=None, **kwargs):
+    link_args = {}
+    if name:
+        link_args['ifname'] = name
+    devices = privileged.get_link_devices(namespace, **link_args)
+    retval = []
+    for parsed_ips in (_parse_link_device(namespace, device, **kwargs)
+                       for device in devices):
+        retval += parsed_ips
+    return retval
