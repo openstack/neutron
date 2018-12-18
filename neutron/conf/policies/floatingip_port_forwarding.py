@@ -22,11 +22,6 @@ rules = [
         'get_floatingip_port_forwarding',
         'rule:admin_or_ext_parent_owner',
         description='Access rule for getting floating IP port forwarding'),
-    # TOOD(amotoki): get_floatingip_port_forwardings looks unnecessary.
-    policy.RuleDefault(
-        'get_floatingip_port_forwardings',
-        'rule:admin_or_ext_parent_owner',
-        description='Access rule for listing floating IP port forwardings'),
     policy.RuleDefault(
         'update_floatingip_port_forwarding',
         'rule:admin_or_ext_parent_owner',

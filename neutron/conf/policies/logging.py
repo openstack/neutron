@@ -15,9 +15,9 @@ from oslo_policy import policy
 
 rules = [
     policy.RuleDefault(
-        'get_loggable_resources',
+        'get_loggable_resource',
         'rule:admin_only',
-        description='Access rule for getting loggable resources'),
+        description='Access rule for getting loggable resource'),
     policy.RuleDefault(
         'create_log',
         'rule:admin_only',
@@ -26,10 +26,6 @@ rules = [
         'get_log',
         'rule:admin_only',
         description='Access rule for getting network log'),
-    policy.RuleDefault(
-        'get_logs',
-        'rule:admin_only',
-        description='Access rule for listing network logs'),
     policy.RuleDefault(
         'update_log',
         'rule:admin_only',

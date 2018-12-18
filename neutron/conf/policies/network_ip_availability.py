@@ -15,10 +15,6 @@ from oslo_policy import policy
 
 rules = [
     policy.RuleDefault(
-        'get_network_ip_availabilities',
-        'rule:admin_only',
-        description='Access rule for getting network IP availabilities'),
-    policy.RuleDefault(
         'get_network_ip_availability',
         'rule:admin_only',
         description='Access rule for getting network IP availability'),
