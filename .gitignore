@@ -7,6 +7,7 @@ covhtml/
 dist/
 doc/build
 doc/source/_static/config-samples/*.sample
+doc/source/_static/*.policy.yaml.sample
 etc/*.sample
 etc/neutron/plugins/ml2/*.sample
 *.DS_Store
