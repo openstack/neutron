@@ -359,7 +359,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         return agent.router_info[router['id']]
 
     def _delete_router(self, agent, router_id):
-        agent._router_removed(router_id)
+        agent._safe_router_removed(router_id)
 
     def _add_fip(self, router, fip_address, fixed_address='10.0.0.2',
                  host=None, fixed_ip_address_scope=None):

@@ -392,18 +392,20 @@ class L3NATAgent(ha.AgentMixin,
 
     def _safe_router_removed(self, router_id):
         """Try to delete a router and return True if successful."""
+        # The l3_ext_manager API expects a router dict, look it up
+        ri = self.router_info.get(router_id)
 
         try:
-            self._router_removed(router_id)
-            self.l3_ext_manager.delete_router(self.context, router_id)
+            self._router_removed(ri, router_id)
+            if ri:
+                self.l3_ext_manager.delete_router(self.context, ri.router)
         except Exception:
             LOG.exception('Error while deleting router %s', router_id)
             return False
         else:
             return True
 
-    def _router_removed(self, router_id):
-        ri = self.router_info.get(router_id)
+    def _router_removed(self, ri, router_id):
         if ri is None:
             LOG.warning("Info for router %s was not found. "
                         "Performing router cleanup", router_id)

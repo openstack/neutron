@@ -2450,7 +2450,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                     )
                 else:
                     self.assertFalse(spawn_proxy.call_count)
-                agent._router_removed(router_id)
+                agent._safe_router_removed(router_id)
                 if enableflag:
                     destroy_proxy.assert_called_with(mock.ANY,
                                                      router_id,
