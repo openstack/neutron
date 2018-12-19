@@ -12,13 +12,35 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from neutron_lib.utils import runtime
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_upgradecheck import upgradecheck
 
-from neutron._i18n import _
+CHECKS_ENTRYPOINTS = 'neutron.status.upgrade.checks'
+LOG = logging.getLogger(__name__)
 
 
-class Checks(upgradecheck.UpgradeCommands):
+def load_checks():
+    checks = []
+    ns_plugin = runtime.NamespacedPlugins(CHECKS_ENTRYPOINTS)
+    # TODO(slaweq): stop using private attribute of runtime.NamespacedPlugins
+    # class when it will provide some better way to access extensions
+    for module_name, module in ns_plugin._extensions.items():
+        try:
+            project_checks_class = module.entry_point.load()
+            project_checks = project_checks_class().get_checks()
+            if project_checks:
+                checks.append(project_checks)
+        except Exception as e:
+            LOG.exception("Checks class %(entrypoint)s failed to load. "
+                          "Error: %(err)s",
+                          {'entrypoint': module_name, 'err': e})
+            continue
+    return tuple(checks)
+
+
+class Checker(upgradecheck.UpgradeCommands):
 
     """Various upgrade checks should be added as separate methods in this class
     and added to _upgrade_checks tuple.
@@ -29,11 +51,6 @@ class Checks(upgradecheck.UpgradeCommands):
     like the database schema migrations.
     """
 
-    def _check_nothing(self):
-        # NOTE(slaweq) This is only example Noop check, it can be removed when
-        # some real check methods will be added
-        return upgradecheck.Result(upgradecheck.Code.SUCCESS)
-
     # The format of the check functions is to return an
     # oslo_upgradecheck.upgradecheck.Result
     # object with the appropriate
@@ -41,13 +58,9 @@ class Checks(upgradecheck.UpgradeCommands):
     # If the check hits warnings or failures then those should be stored
     # in the returned Result's "details" attribute. The
     # summary will be rolled up at the end of the check() method.
-    _upgrade_checks = (
-        # Check nothing
-        # In the future there should be some real checks added here
-        (_('Check nothing'), _check_nothing),
-    )
+    _upgrade_checks = load_checks()
 
 
 def main():
     return upgradecheck.main(
-        cfg.CONF, project='neutron', upgrade_command=Checks())
+        cfg.CONF, project='neutron', upgrade_command=Checker())

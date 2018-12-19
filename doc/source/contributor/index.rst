@@ -65,6 +65,7 @@ the developer guide includes information about Neutron testing infrastructure.
    neutron_api
    client_command_extensions
    alembic_migrations
+   upgrade_checks
    testing/index
 
 Neutron Internals
