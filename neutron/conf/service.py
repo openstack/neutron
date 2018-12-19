@@ -39,6 +39,9 @@ service_opts = [
                help=_('Range of seconds to randomly delay when starting the '
                       'periodic task scheduler to reduce stampeding. '
                       '(Disable by setting to 0)')),
+    cfg.IntOpt('rpc_response_max_timeout',
+               default=600,
+               help=_('Maximum seconds to wait for a response from a call.')),
 ]
 
 
