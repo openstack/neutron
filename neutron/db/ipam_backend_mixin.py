@@ -314,9 +314,9 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
     def _validate_segment(self, context, network_id, segment_id, action=None,
                           old_segment_id=None):
-        query = context.session.query(models_v2.Subnet.segment_id)
-        query = query.filter(models_v2.Subnet.network_id == network_id)
-        associated_segments = set(row.segment_id for row in query)
+        segments = subnet_obj.Subnet.get_values(
+            context, 'segment_id', network_id=network_id)
+        associated_segments = set(segments)
         if None in associated_segments and len(associated_segments) > 1:
             raise segment_exc.SubnetsNotAllAssociatedWithSegments(
                 network_id=network_id)
@@ -324,7 +324,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         if action == 'update' and old_segment_id != segment_id:
             # Check the current state of segments and subnets on the network
             # before allowing migration from non-routed to routed network.
-            if query.count() > 1:
+            if len(segments) > 1:
                 raise segment_exc.SubnetsNotAllAssociatedWithSegments(
                     network_id=network_id)
             if (None not in associated_segments and
