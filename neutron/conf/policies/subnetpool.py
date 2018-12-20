@@ -12,34 +12,36 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault('shared_subnetpools',
                        'field:subnetpools:shared=True',
                        description='Rule of shared subnetpool'),
     policy.RuleDefault('create_subnetpool',
-                       '',
+                       base.RULE_ANY,
                        description='Access rule for creating subnetpool'),
     policy.RuleDefault('create_subnetpool:shared',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description=('Access rule for creating '
                                     'shared subnetpool')),
     policy.RuleDefault('create_subnetpool:is_default',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description=('Access rule for creating '
                                     'subnetpool with is_default')),
     policy.RuleDefault('get_subnetpool',
                        'rule:admin_or_owner or rule:shared_subnetpools',
                        description='Access rule for getting subnetpool'),
     policy.RuleDefault('update_subnetpool',
-                       'rule:admin_or_owner',
+                       base.RULE_ADMIN_OR_OWNER,
                        description='Access rule for updating subnetpool'),
     policy.RuleDefault('update_subnetpool:is_default',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description=('Access rule for updating '
                                     'is_default of subnetpool')),
     policy.RuleDefault('delete_subnetpool',
-                       'rule:admin_or_owner',
+                       base.RULE_ADMIN_OR_OWNER,
                        description='Access rule for deleting subnetpool')
 ]
 

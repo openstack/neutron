@@ -12,11 +12,13 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault(
         'get_network_ip_availability',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for getting network IP availability'),
 ]
 

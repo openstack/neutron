@@ -12,6 +12,8 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault(
@@ -21,37 +23,37 @@ rules = [
 
     policy.RuleDefault(
         'create_network',
-        '',
+        base.RULE_ANY,
         description='Access rule for creating network'),
     policy.RuleDefault(
         'create_network:shared',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for creating shared network'),
     policy.RuleDefault(
         'create_network:router:external',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for creating external network'),
     policy.RuleDefault(
         'create_network:is_default',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for creating network with is_default'),
     policy.RuleDefault(
         'create_network:segments',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for creating network with segments'),
     policy.RuleDefault(
         'create_network:provider:network_type',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for creating network '
                      'with provider network_type')),
     policy.RuleDefault(
         'create_network:provider:physical_network',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for creating network '
                      'with provider physical_network')),
     policy.RuleDefault(
         'create_network:provider:segmentation_id',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for creating network '
                      'with provider segmentation_id')),
 
@@ -62,64 +64,64 @@ rules = [
         description='Access rule for getting shared network'),
     policy.RuleDefault(
         'get_network:router:external',
-        'rule:regular_user',
+        base.RULE_ANY,
         description='Access rule for getting external network'),
     policy.RuleDefault(
         'get_network:segments',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for getting segments of network'),
     policy.RuleDefault(
         'get_network:provider:network_type',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for getting provider '
                      'network_type of network')),
     policy.RuleDefault(
         'get_network:provider:physical_network',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for getting provider '
                      'physical_network of network')),
     policy.RuleDefault(
         'get_network:provider:segmentation_id',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for getting provider '
                      'segmentation_id of network')),
 
     policy.RuleDefault(
         'update_network',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for updating network'),
     policy.RuleDefault(
         'update_network:segments',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for updating segments of network'),
     policy.RuleDefault(
         'update_network:shared',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for updating shared attribute of network'),
     policy.RuleDefault(
         'update_network:provider:network_type',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for updating provider '
                      'network_type of network')),
     policy.RuleDefault(
         'update_network:provider:physical_network',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for updating provider '
                      'physical_network of network')),
     policy.RuleDefault(
         'update_network:provider:segmentation_id',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for updating provider '
                      'segmentation_id of network')),
     policy.RuleDefault(
         'update_network:router:external',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description=('Access rule for updating router:external attribute '
                      'of network')),
 
     policy.RuleDefault(
         'delete_network',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for deleting network'),
 ]
 

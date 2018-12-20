@@ -12,19 +12,21 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault('create_segment',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description='Access rule for creating segment'),
     policy.RuleDefault('get_segment',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description='Access rule for getting segment'),
     policy.RuleDefault('update_segment',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description='Access rule for updating segment'),
     policy.RuleDefault('delete_segment',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description='Access rule for deleting segment'),
 ]
 

@@ -12,11 +12,13 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault(
         'get_floatingip_pool',
-        'rule:regular_user',
+        base.RULE_ANY,
         description='Access rule for getting floating IP pools'),
 ]
 

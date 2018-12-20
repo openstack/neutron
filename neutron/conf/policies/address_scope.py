@@ -12,30 +12,32 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault('shared_address_scopes',
                        'field:address_scopes:shared=True',
                        description='Rule of shared address scope'),
     policy.RuleDefault('create_address_scope',
-                       '',
+                       base.RULE_ANY,
                        description='Access rule for creating address scope'),
     policy.RuleDefault('create_address_scope:shared',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description=('Access rule for creating '
                                     'shared address scope')),
     policy.RuleDefault('get_address_scope',
                        'rule:admin_or_owner or rule:shared_address_scopes',
                        description='Access rule for getting address scope'),
     policy.RuleDefault('update_address_scope',
-                       'rule:admin_or_owner',
+                       base.RULE_ADMIN_OR_OWNER,
                        description='Access rule for updating address scope'),
     policy.RuleDefault('update_address_scope:shared',
-                       'rule:admin_only',
+                       base.RULE_ADMIN_ONLY,
                        description=('Access rule for updating '
                                     'shared attribute of address scope')),
     policy.RuleDefault('delete_address_scope',
-                       'rule:admin_or_owner',
+                       base.RULE_ADMIN_OR_OWNER,
                        description='Access rule for deleting address scope')
 ]
 

@@ -12,31 +12,33 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault(
         'create_trunk',
-        'rule:regular_user',
+        base.RULE_ANY,
         description='Access rule for creating trunk'),
     policy.RuleDefault(
         'get_trunk',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for getting trunk'),
     policy.RuleDefault(
         'delete_trunk',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for deleting trunk'),
     policy.RuleDefault(
         'get_subports',
-        '',
+        base.RULE_ANY,
         description='Access rule for listing subports attached to a trunk'),
     policy.RuleDefault(
         'add_subports',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for adding subports to a trunk'),
     policy.RuleDefault(
         'remove_subports',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for deleting subports from a trunk'),
 ]
 

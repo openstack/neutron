@@ -12,11 +12,13 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     policy.RuleDefault(
         'get_service_provider',
-        'rule:regular_user',
+        base.RULE_ANY,
         description='Access rule for listing all service providers'),
 ]
 

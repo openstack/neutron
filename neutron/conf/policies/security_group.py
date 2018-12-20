@@ -12,40 +12,42 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
+
 
 rules = [
     # TODO(amotoki): admin_or_owner is the right rule?
     # Does an empty string make more sense for create_security_group?
     policy.RuleDefault(
         'create_security_group',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for creating security group'),
     policy.RuleDefault(
         'get_security_group',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for getting security group'),
     policy.RuleDefault(
         'update_security_group',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for updating security group'),
     policy.RuleDefault(
         'delete_security_group',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for deleting security group'),
 
     # TODO(amotoki): admin_or_owner is the right rule?
     # Does an empty string make more sense for create_security_group_rule?
     policy.RuleDefault(
         'create_security_group_rule',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for creating security group rule'),
     policy.RuleDefault(
         'get_security_group_rule',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for getting security group rule'),
     policy.RuleDefault(
         'delete_security_group_rule',
-        'rule:admin_or_owner',
+        base.RULE_ADMIN_OR_OWNER,
         description='Access rule for deleting security group rule'),
 ]
 
