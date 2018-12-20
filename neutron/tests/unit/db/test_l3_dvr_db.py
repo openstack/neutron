@@ -24,6 +24,7 @@ from neutron_lib import exceptions
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from neutron_lib.plugins import utils as plugin_utils
 from oslo_utils import uuidutils
 
 from neutron.db import agents_db
@@ -1047,3 +1048,44 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 routers = self.mixin._get_sync_routers(
                     self.ctx, router_ids=[router['id']])
                 self.assertEqual("fake-host", routers[0]['gw_port_host'])
+
+    def test_is_router_distributed(self):
+        router_id = 'router_id'
+        with mock.patch.object(self.mixin, 'get_router') as \
+                mock_get_router:
+            mock_get_router.return_value = {'distributed': True}
+            self.assertTrue(
+                self.mixin.is_router_distributed(self.ctx, router_id))
+
+    @mock.patch.object(plugin_utils, 'can_port_be_bound_to_virtual_bridge',
+                       return_value=True)
+    def test__get_assoc_data_valid_vnic_type(self, *args):
+        with mock.patch.object(self.mixin, '_internal_fip_assoc_data') as \
+                mock_fip_assoc_data, \
+                mock.patch.object(self.mixin, '_get_router_for_floatingip') \
+                as mock_router_fip, \
+                mock.patch.object(self.mixin, 'is_router_distributed',
+                                  return_value=True):
+            port = {portbindings.VNIC_TYPE: portbindings.VNIC_NORMAL}
+            mock_fip_assoc_data.return_value = (port, 'subnet_id', 'ip_addr')
+            mock_router_fip.return_value = 'router_id'
+            fip = {'port_id': 'port_id'}
+            self.assertEqual(
+                ('port_id', 'ip_addr', 'router_id'),
+                self.mixin._get_assoc_data(self.ctx, fip, mock.Mock()))
+
+    @mock.patch.object(plugin_utils, 'can_port_be_bound_to_virtual_bridge',
+                       return_value=False)
+    def test__get_assoc_data_invalid_vnic_type(self, *args):
+        with mock.patch.object(self.mixin, '_internal_fip_assoc_data') as \
+                mock_fip_assoc_data, \
+                mock.patch.object(self.mixin, '_get_router_for_floatingip') \
+                as mock_router_fip, \
+                mock.patch.object(self.mixin, 'is_router_distributed',
+                                  return_value=True):
+            port = {portbindings.VNIC_TYPE: portbindings.VNIC_NORMAL}
+            mock_fip_assoc_data.return_value = (port, 'subnet_id', 'ip_addr')
+            mock_router_fip.return_value = 'router_id'
+            self.assertRaises(
+                exceptions.BadRequest,
+                self.mixin._get_assoc_data, self.ctx, mock.ANY, mock.Mock())
