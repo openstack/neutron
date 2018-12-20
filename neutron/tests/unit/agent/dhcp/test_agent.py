@@ -1109,18 +1109,34 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                                                  fake_network)
 
     def test_port_update_end(self):
-        payload = dict(port=fake_port2)
+        self.reload_allocations_p = mock.patch.object(self.dhcp,
+                                                      'reload_allocations')
+        self.reload_allocations = self.reload_allocations_p.start()
+        payload = dict(port=copy.deepcopy(fake_port2))
         self.cache.get_network_by_id.return_value = fake_network
+        self.dhcp.port_update_end(None, payload)
+        self.reload_allocations.assert_called_once_with(fake_port2,
+                                                        fake_network)
+
+    def test_reload_allocations(self):
         self.cache.get_port_by_id.return_value = fake_port2
         with mock.patch.object(
                 self.dhcp, 'update_isolated_metadata_proxy') as ump:
-            self.dhcp.port_update_end(None, payload)
-            self.cache.assert_has_calls(
-                [mock.call.get_network_by_id(fake_port2.network_id),
-                 mock.call.put_port(mock.ANY)])
+            self.dhcp.reload_allocations(fake_port2, fake_network)
+            self.cache.assert_has_calls([mock.call.put_port(mock.ANY)])
             self.call_driver.assert_called_once_with('reload_allocations',
                                                      fake_network)
             self.assertTrue(ump.called)
+
+    def test_port_create_end(self):
+        self.reload_allocations_p = mock.patch.object(self.dhcp,
+                                                      'reload_allocations')
+        self.reload_allocations = self.reload_allocations_p.start()
+        payload = dict(port=copy.deepcopy(fake_port2))
+        self.cache.get_network_by_id.return_value = fake_network
+        self.dhcp.port_create_end(None, payload)
+        self.reload_allocations.assert_called_once_with(fake_port2,
+                                                        fake_network)
 
     def test_port_update_end_grabs_lock(self):
         payload = dict(port=fake_port2)
@@ -1180,6 +1196,15 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.dhcp.port_update_end(None, payload)
         self.schedule_resync.assert_called_once_with(mock.ANY,
                                                      fake_port1.network_id)
+
+    def test_port_create_duplicate_ip_on_dhcp_agents_same_network(self):
+        self.cache.get_network_by_id.return_value = fake_network
+        payload = dict(port=copy.deepcopy(fake_port2))
+        duplicate_ip = fake_port1['fixed_ips'][0]['ip_address']
+        payload['port']['fixed_ips'][0]['ip_address'] = duplicate_ip
+        self.dhcp.port_create_end(None, payload)
+        self.schedule_resync.assert_called_once_with(mock.ANY,
+                                                     fake_port2.network_id)
 
     def test_port_update_on_dhcp_agents_port_no_ip_change(self):
         self.cache.get_network_by_id.return_value = fake_network
