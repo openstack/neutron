@@ -432,41 +432,61 @@ class DhcpAgent(manager.Manager):
             network = self.cache.get_network_by_id(updated_port.network_id)
             if not network:
                 return
-            LOG.info(_LI("Trigger reload_allocations for port %s"),
-                     updated_port)
-            driver_action = 'reload_allocations'
-            if self._is_port_on_this_agent(updated_port):
-                orig = self.cache.get_port_by_id(updated_port['id'])
-                # assume IP change if not in cache
-                orig = orig or {'fixed_ips': []}
-                old_ips = {i['ip_address'] for i in orig['fixed_ips'] or []}
-                new_ips = {i['ip_address'] for i in updated_port['fixed_ips']}
-                old_subs = {i['subnet_id'] for i in orig['fixed_ips'] or []}
-                new_subs = {i['subnet_id'] for i in updated_port['fixed_ips']}
-                if new_subs != old_subs:
-                    # subnets being serviced by port have changed, this could
-                    # indicate a subnet_delete is in progress. schedule a
-                    # resync rather than an immediate restart so we don't
-                    # attempt to re-allocate IPs at the same time the server
-                    # is deleting them.
-                    self.schedule_resync("Agent port was modified",
-                                         updated_port.network_id)
-                    return
-                elif old_ips != new_ips:
-                    LOG.debug("Agent IPs on network %s changed from %s to %s",
-                              network.id, old_ips, new_ips)
-                    driver_action = 'restart'
-            self.cache.put_port(updated_port)
-            self.call_driver(driver_action, network)
-            self.dhcp_ready_ports.add(updated_port.id)
+            self.reload_allocations(updated_port, network)
+
+    def reload_allocations(self, port, network):
+        LOG.info(_LI("Trigger reload_allocations for port %s"), port)
+        driver_action = 'reload_allocations'
+        if self._is_port_on_this_agent(port):
+            orig = self.cache.get_port_by_id(port['id'])
+            # assume IP change if not in cache
+            orig = orig or {'fixed_ips': []}
+            old_ips = {i['ip_address'] for i in orig['fixed_ips'] or []}
+            new_ips = {i['ip_address'] for i in port['fixed_ips']}
+            old_subs = {i['subnet_id'] for i in orig['fixed_ips'] or []}
+            new_subs = {i['subnet_id'] for i in port['fixed_ips']}
+            if new_subs != old_subs:
+                # subnets being serviced by port have changed, this could
+                # indicate a subnet_delete is in progress. schedule a
+                # resync rather than an immediate restart so we don't
+                # attempt to re-allocate IPs at the same time the server
+                # is deleting them.
+                self.schedule_resync("Agent port was modified",
+                                     port.network_id)
+                return
+            elif old_ips != new_ips:
+                LOG.debug("Agent IPs on network %s changed from %s to %s",
+                          network.id, old_ips, new_ips)
+                driver_action = 'restart'
+        self.cache.put_port(port)
+        self.call_driver(driver_action, network)
+        self.dhcp_ready_ports.add(port.id)
 
     def _is_port_on_this_agent(self, port):
         thishost = utils.get_dhcp_agent_device_id(
             port['network_id'], self.conf.host)
         return port['device_id'] == thishost
 
-    # Use the update handler for the port create event.
-    port_create_end = port_update_end
+    @_wait_if_syncing
+    def port_create_end(self, context, payload):
+        """Handle the port.create.end notification event."""
+        created_port = dhcp.DictModel(payload['port'])
+        with _net_lock(created_port.network_id):
+            network = self.cache.get_network_by_id(created_port.network_id)
+            if not network:
+                return
+            new_ips = {i['ip_address'] for i in created_port['fixed_ips']}
+            for port_cached in network.ports:
+                # if there are other ports cached with the same ip address in
+                # the same network this indicate that the cache is out of sync
+                cached_ips = {i['ip_address']
+                              for i in port_cached['fixed_ips']}
+                if new_ips.intersection(cached_ips):
+                    self.schedule_resync("Duplicate IP addresses found, "
+                                         "DHCP cache is out of sync",
+                                         created_port.network_id)
+                    return
+            self.reload_allocations(created_port, network)
 
     @_wait_if_syncing
     def port_delete_end(self, context, payload):
