@@ -31,6 +31,17 @@ class PortForwardingObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
         super(PortForwardingObjectTestCase, self).setUp()
         self.fip_db_fields = self.get_random_db_fields(router.FloatingIP)
         del self.fip_db_fields['floating_ip_address']
+        # 'portforwardings' table will store the 'internal_ip_address' and
+        # 'internal_port' as a single 'socket' column.
+        # Port forwarding object accepts 'internal_ip_address' and
+        # 'internal_port', but can not filter the records in db, so the
+        # valid filters can not contain them.
+        not_supported_filter_fields = ['internal_ip_address', 'internal_port']
+        invalid_fields = set(
+            self._test_class.synthetic_fields).union(
+            set(not_supported_filter_fields))
+        self.valid_field = [f for f in self._test_class.fields
+                            if f not in invalid_fields][0]
 
         def random_generate_fip_obj(db_fields, **floatingip):
             if db_fields.get(
@@ -67,10 +78,10 @@ class PortForwardingDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         invalid_fields = set(
             self._test_class.synthetic_fields).union(
             set(not_supported_filter_fields))
-        valid_field = [f for f in self._test_class.fields
-                       if f not in invalid_fields][0]
-        self.valid_field_filter = {valid_field:
-                                   self.obj_fields[-1][valid_field]}
+        self.valid_field = [f for f in self._test_class.fields
+                            if f not in invalid_fields][0]
+        self.valid_field_filter = {self.valid_field:
+                                   self.obj_fields[-1][self.valid_field]}
 
     def _create_test_fip_id_for_port_forwarding(self):
         fake_fip = '172.23.3.0'

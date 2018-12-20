@@ -68,6 +68,11 @@ class QosRuleType(base.NeutronObject):
         # TODO(ihrachys): apply filters to returned result
         return [cls(type=type_) for type_ in rule_types]
 
+    # we don't receive context because we don't need db access at all
+    @classmethod
+    def get_values(cls, field, **kwargs):
+        return [getattr(obj, field) for obj in cls.get_objects(**kwargs)]
+
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
 

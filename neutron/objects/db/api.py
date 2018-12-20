@@ -53,6 +53,13 @@ def get_objects(obj_cls, context, _pager=None, **kwargs):
             **(_pager.to_kwargs(context, obj_cls) if _pager else {}))
 
 
+def get_values(obj_cls, context, field, **kwargs):
+    with obj_cls.db_context_reader(context):
+        filters = _kwargs_to_filters(**kwargs)
+        return model_query.get_values(
+            context, obj_cls.db_model, field, filters=filters)
+
+
 def create_object(obj_cls, context, values, populate_id=True):
     with obj_cls.db_context_writer(context):
         if (populate_id and
