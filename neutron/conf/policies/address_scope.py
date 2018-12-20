@@ -27,7 +27,8 @@ rules = [
                        description=('Access rule for creating '
                                     'shared address scope')),
     policy.RuleDefault('get_address_scope',
-                       'rule:admin_or_owner or rule:shared_address_scopes',
+                       base.policy_or(base.RULE_ADMIN_OR_OWNER,
+                                      'rule:shared_address_scopes'),
                        description='Access rule for getting address scope'),
     policy.RuleDefault('update_address_scope',
                        base.RULE_ADMIN_OR_OWNER,

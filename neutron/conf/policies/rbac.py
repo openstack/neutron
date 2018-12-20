@@ -18,7 +18,8 @@ from neutron.conf.policies import base
 rules = [
     policy.RuleDefault(
         'restrict_wildcard',
-        '(not field:rbac_policy:target_tenant=*) or rule:admin_only',
+        base.policy_or('(not field:rbac_policy:target_tenant=*)',
+                       base.RULE_ADMIN_ONLY),
         description='Rule of restrict wildcard'),
 
     policy.RuleDefault(
@@ -36,7 +37,8 @@ rules = [
         description='Access rule for updating RBAC policy'),
     policy.RuleDefault(
         'update_rbac_policy:target_tenant',
-        'rule:restrict_wildcard and rule:admin_or_owner',
+        base.policy_and('rule:restrict_wildcard',
+                        base.RULE_ADMIN_OR_OWNER),
         description=('Access rule for updating target_tenant '
                      'attribute of RBAC policy')),
     policy.RuleDefault(

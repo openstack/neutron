@@ -31,7 +31,8 @@ rules = [
                        description=('Access rule for creating '
                                     'subnetpool with is_default')),
     policy.RuleDefault('get_subnetpool',
-                       'rule:admin_or_owner or rule:shared_subnetpools',
+                       base.policy_or(base.RULE_ADMIN_OR_OWNER,
+                                      'rule:shared_subnetpools'),
                        description='Access rule for getting subnetpool'),
     policy.RuleDefault('update_subnetpool',
                        base.RULE_ADMIN_OR_OWNER,
