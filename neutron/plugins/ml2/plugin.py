@@ -341,10 +341,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     @registry.receives(resources.AGENT, [events.AFTER_UPDATE])
     def _retry_binding_revived_agents(self, resource, event, trigger,
-                                      **kwargs):
-        context = kwargs['context']
-        host = kwargs['host']
-        agent = kwargs.get('agent', {})
+                                      payload=None):
+        context = payload.context
+        host = payload.metadata.get('host')
+        agent = payload.desired_state
         agent_status = agent.get('agent_status')
 
         agent_type = agent.get('agent_type')

@@ -1,0 +1,5 @@
+---
+other:
+  - |
+    Use ``publish`` for ``AGENT's`` ``AFTER_CREATE`` and ``AFTER_UPDATE`` events
+    with ``DBEventPayload`` instead of the deprecated notify callback.
