@@ -122,8 +122,8 @@ class TestCli(base.BaseTestCase):
         super(TestCli, self).setUp()
         self.do_alembic_cmd_p = mock.patch.object(cli, 'do_alembic_command')
         self.do_alembic_cmd = self.do_alembic_cmd_p.start()
-        self.mock_alembic_err = mock.patch('alembic.util.err').start()
-        self.mock_alembic_warn = mock.patch('alembic.util.warn').start()
+        self.mock_alembic_err = mock.patch.object(cli, "log_error").start()
+        self.mock_alembic_warn = mock.patch.object(cli, "log_warning").start()
         self.mock_alembic_err.side_effect = SystemExit
 
         def mocked_root_dir(cfg):

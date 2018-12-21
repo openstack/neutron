@@ -21,6 +21,7 @@ from alembic import script as alembic_script
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
 from oslo_db.sqlalchemy import test_migrations
+from oslo_log import log as logging
 from oslotest import base as oslotest_base
 import six
 import sqlalchemy
@@ -54,6 +55,14 @@ DROP_OPERATIONS = {
     'alembic': (alembic_ddl.DropColumn,
                 )
 }
+
+LOG = logging.getLogger(__name__)
+
+# NOTE(slaweq): replace alembic_util logging functions used normally with
+# olso_log logger to limit output on stdout
+migration.log_error = LOG.error
+migration.log_warning = LOG.warning
+migration.log_info = LOG.info
 
 
 def upgrade(engine, alembic_config, branch_name='heads'):
