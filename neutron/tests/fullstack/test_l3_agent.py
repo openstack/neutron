@@ -107,10 +107,7 @@ class TestL3Agent(base.BaseFullStackTestCase):
         gateway_port = self.safe_client.list_ports(
             device_id=router['id'],
             device_owner=constants.DEVICE_OWNER_ROUTER_GW)[0]
-        ip_1 = str(netaddr.IPNetwork(
-            ext_sub['gateway_ip']).next(100)).split('/')[0]
-        ip_2 = str(netaddr.IPNetwork(
-            ext_sub['gateway_ip']).next(101)).split('/')[0]
+        ip_1, ip_2 = self._find_available_ips(ext_net, ext_sub, 2)
         self.safe_client.update_port(gateway_port['id'], fixed_ips=[
             {'ip_address': ip_1},
             {'ip_address': ip_2}])

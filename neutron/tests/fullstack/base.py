@@ -15,6 +15,7 @@
 from concurrent import futures
 import os
 
+import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -121,3 +122,18 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
                 exception=RuntimeError("Could not ping the other VM, "
                                        "re-starting %s leads to network "
                                        "disruption" % agent_names))
+
+    def _find_available_ips(self, network, subnet, num):
+        ports = self.safe_client.list_ports(network_id=network['id'])
+        used_ips = [ip['ip_address']
+                    for port in ports for ip in port['fixed_ips']]
+        used_ips.append(subnet['gateway_ip'])
+        available_ips = []
+        for ip in netaddr.IPNetwork(subnet['cidr']).iter_hosts():
+            ip = str(ip)
+            if ip not in used_ips:
+                available_ips.append(ip)
+                if len(available_ips) >= num:
+                    return available_ips
+
+        self.fail("Cannot find enough free IP addresses.")
