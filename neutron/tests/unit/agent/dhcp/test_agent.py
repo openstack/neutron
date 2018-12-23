@@ -691,14 +691,15 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                                  is_isolated_network=False)
 
     def test_enable_dhcp_helper_enable_metadata_nonisolated_dist_network(self):
-        nonisolated_dist_network.ports[0].device_owner = (
+        nonisolated_dvr_network = copy.deepcopy(nonisolated_dist_network)
+        nonisolated_dvr_network.ports[0].device_owner = (
             const.DEVICE_OWNER_ROUTER_INTF)
-        nonisolated_dist_network.ports[0].fixed_ips[0].ip_address = '172.9.9.1'
-        nonisolated_dist_network.ports[1].device_owner = (
+        nonisolated_dvr_network.ports[0].fixed_ips[0].ip_address = '172.9.9.1'
+        nonisolated_dvr_network.ports[1].device_owner = (
             const.DEVICE_OWNER_DVR_INTERFACE)
-        nonisolated_dist_network.ports[1].fixed_ips[0].ip_address = '172.9.9.1'
+        nonisolated_dvr_network.ports[1].fixed_ips[0].ip_address = '172.9.9.1'
 
-        self._enable_dhcp_helper(nonisolated_dist_network,
+        self._enable_dhcp_helper(nonisolated_dvr_network,
                                  enable_isolated_metadata=True,
                                  is_isolated_network=False)
 
