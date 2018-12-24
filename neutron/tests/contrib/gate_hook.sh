@@ -91,7 +91,7 @@ case $VENV in
     load_rc_hook dstat
     ;;
 
-"api"|"api-pecan"|"full-iptables_hybrid"|"full-pecan"|"dsvm-scenario-ovs"|"dsvm-scenario-linuxbridge")
+"api"|"api-pecan"|"full-pecan"|"dsvm-scenario-ovs"|"dsvm-scenario-linuxbridge")
     # TODO(ihrachys) consider feeding result of ext-list into tempest.conf
     load_rc_hook api_all_extensions
     if [ "${FLAVOR}" = "dvrskip" ]; then
@@ -114,9 +114,6 @@ case $VENV in
     fi
     if [[ "$VENV" =~ "pecan" ]]; then
         load_conf_hook pecan
-    fi
-    if [[ "$VENV" =~ "iptables_hybrid" ]]; then
-        load_conf_hook iptables_hybrid
     fi
     if [[ "$VENV" != "dsvm-scenario-linuxbridge" ]]; then
         load_conf_hook tunnel_types
