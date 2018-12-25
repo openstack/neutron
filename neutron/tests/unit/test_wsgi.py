@@ -18,6 +18,7 @@ import socket
 import ssl
 
 import mock
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exception
 from oslo_config import cfg
 from six.moves import urllib
@@ -68,7 +69,7 @@ class TestServiceBase(base.BaseTestCase):
 class TestWorkerService(TestServiceBase):
     """WorkerService tests."""
 
-    @mock.patch('neutron.db.api.context_manager.get_legacy_facade')
+    @mock.patch.object(db_api, 'get_context_manager')
     def test_start_withoutdb_call(self, apimock):
         _service = mock.Mock()
         _service.pool.spawn.return_value = None

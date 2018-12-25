@@ -15,14 +15,10 @@
 
 import weakref
 
-from neutron_lib.db import api
 from neutron_lib.db import model_base
 import sqlalchemy
 from sqlalchemy import event  # noqa
 from sqlalchemy import orm
-
-
-context_manager = api.get_context_manager()
 
 
 # Expire relationships when foreign key changes.
