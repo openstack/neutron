@@ -1192,7 +1192,7 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
                         context, [router_id], dest_host)
             else:
                 centralized_agent_list = self.list_l3_agents_hosting_router(
-                    context, router_id)['agents']
+                    context.elevated(), router_id)['agents']
                 for agent in centralized_agent_list:
                     self.l3_rpc_notifier.routers_updated_on_host(
                         context, [router_id], agent['host'])
