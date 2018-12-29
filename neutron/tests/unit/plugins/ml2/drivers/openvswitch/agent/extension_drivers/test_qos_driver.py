@@ -156,8 +156,8 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
             return_value=(self.rules[1].max_kbps,
                           self.rules[1].max_burst_kbps))
         self.qos_driver.delete(self.port)
-        self.delete_egress.assert_not_called()
-        self.delete_ingress.assert_not_called()
+        self.delete_egress.assert_called_once_with(self.port_name)
+        self.delete_ingress.assert_called_once_with(self.port_name)
 
     def test_delete_rules(self):
         self._test_delete_rules(self.qos_policy)
