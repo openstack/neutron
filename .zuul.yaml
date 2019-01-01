@@ -242,14 +242,60 @@
 
 - job:
     name: neutron-tempest-iptables_hybrid
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-tempest-iptables_hybrid/run.yaml
-    post-run: playbooks/legacy/neutron-tempest-iptables_hybrid/post.yaml
+    parent: devstack-tempest
     timeout: 10800
     required-projects:
       - openstack-infra/devstack-gate
       - openstack/neutron
       - openstack/tempest
+    vars:
+      tempest_concurrency: 4
+      tox_envlist: full
+      devstack_localrc:
+        USE_PYTHON3: true
+      devstack_plugins:
+        neutron: git://git.openstack.org/openstack/neutron.git
+      devstack_services:
+        tls-proxy: false
+        tempest: true
+        neutron-dns: true
+        neutron-qos: true
+        neutron-segments: true
+        neutron-trunk: true
+        neutron-uplink-status-propagation: true
+      devstack_local_conf:
+        post-config:
+          $NEUTRON_CONF:
+            QUOTAS:
+              quota_router: 100
+              quota_floatingip: 500
+              quota_security_group: 100
+              quota_security_group_rule: 1000
+          # NOTE(slaweq): We can get rid of this hardcoded absolute path when
+          # devstack-tempest job will be switched to use lib/neutron instead of
+          # lib/neutron-legacy
+          "/$NEUTRON_CORE_PLUGIN_CONF":
+            ml2_type_vlan:
+              network_vlan_ranges: foo:1:10
+            agent:
+              enable_distributed_routing: True
+              l2_population: True
+              tunnel_types: vxlan,gre
+            securitygroup:
+              firewall_driver: iptables_hybrid
+          $NEUTRON_L3_CONF:
+            agent:
+              availability_zone: nova
+          $NEUTRON_DHCP_CONF:
+            agent:
+              availability_zone: nova
+        test-config:
+          $TEMPEST_CONFIG:
+            neutron_plugin_options:
+              provider_vlans: foo,
+              agent_availability_zone: nova
+              image_is_advanced: true
+              available_type_drivers: flat,geneve,vlan,gre,local,vxlan
     irrelevant-files: *tempest-irrelevant-files
 
 - job:
