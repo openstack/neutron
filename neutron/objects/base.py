@@ -42,14 +42,6 @@ LOG = logging.getLogger(__name__)
 _NO_DB_MODEL = object()
 
 
-def get_updatable_fields(cls, fields):
-    fields = fields.copy()
-    for field in cls.fields_no_update:
-        if field in fields:
-            del fields[field]
-    return fields
-
-
 def get_object_class_by_model(model):
     for obj_class in NeutronObjectRegistry.obj_classes().values():
         obj_class = obj_class[0]
