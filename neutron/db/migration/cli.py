@@ -60,6 +60,11 @@ CONF = cfg.ConfigOpts()
 migration_cli.register_db_cli_opts(CONF)
 
 
+log_error = alembic_util.err
+log_warning = alembic_util.warn
+log_info = alembic_util.msg
+
+
 def do_alembic_command(config, cmd, revision=None, desc=None, **kwargs):
     args = []
     if revision:
@@ -67,21 +72,21 @@ def do_alembic_command(config, cmd, revision=None, desc=None, **kwargs):
 
     project = config.get_main_option('neutron_project')
     if desc:
-        alembic_util.msg(_('Running %(cmd)s (%(desc)s) for %(project)s ...') %
-                         {'cmd': cmd, 'desc': desc, 'project': project})
+        log_info(_('Running %(cmd)s (%(desc)s) for %(project)s ...') %
+                 {'cmd': cmd, 'desc': desc, 'project': project})
     else:
-        alembic_util.msg(_('Running %(cmd)s for %(project)s ...') %
-                         {'cmd': cmd, 'project': project})
+        log_info(_('Running %(cmd)s for %(project)s ...') %
+                 {'cmd': cmd, 'project': project})
     try:
         getattr(alembic_command, cmd)(config, *args, **kwargs)
     except alembic_util.CommandError as e:
-        alembic_util.err(six.text_type(e))
-    alembic_util.msg(_('OK'))
+        log_error(six.text_type(e))
+    log_info(_('OK'))
 
 
 def _get_alembic_entrypoint(project):
     if project not in migration_cli.migration_entrypoints:
-        alembic_util.err(_('Sub-project %s not installed.') % project)
+        log_error(_('Sub-project %s not installed.') % project)
     return migration_cli.migration_entrypoints[project]
 
 
@@ -248,14 +253,14 @@ def _compare_labels(revision, expected_labels):
         bad_labels_with_release = (revision.branch_labels -
                                    _get_release_labels(expected_labels))
         if not bad_labels_with_release:
-            alembic_util.warn(
+            log_warning(
                 _('Release aware branch labels (%s) are deprecated. '
                   'Please switch to expand@ and contract@ '
                   'labels.') % bad_labels)
             return
 
         script_name = os.path.basename(revision.path)
-        alembic_util.err(
+        log_error(
             _('Unexpected label for script %(script_name)s: %(labels)s') %
             {'script_name': script_name,
              'labels': bad_labels}
@@ -297,7 +302,7 @@ def validate_revisions(config):
     branchpoints = _get_branch_points(script_dir)
     if len(branchpoints) > 1:
         branchpoints = ', '.join(p.revision for p in branchpoints)
-        alembic_util.err(
+        log_error(
             _('Unexpected number of alembic branch points: %(branchpoints)s') %
             {'branchpoints': branchpoints}
         )
@@ -335,7 +340,7 @@ def _check_head(branch_name, head_file, head):
         pass
     else:
         if observed_head != head:
-            alembic_util.err(
+            log_error(
                 _('%(branch)s HEAD file does not match migration timeline '
                   'head, expected: %(head)s') % {'branch': branch_name.title(),
                                                  'head': head})
@@ -346,8 +351,8 @@ def validate_head_files(config):
     contract_head = _get_contract_head_file_path(config)
     expand_head = _get_expand_head_file_path(config)
     if not os.path.exists(contract_head) or not os.path.exists(expand_head):
-        alembic_util.warn(_("Repository does not contain HEAD files for "
-                            "contract and expand branches."))
+        log_warning(_("Repository does not contain HEAD files for "
+                      "contract and expand branches."))
         return
     head_map = _get_heads_map(config)
     _check_head(CONTRACT_BRANCH, contract_head, head_map[CONTRACT_BRANCH])
@@ -387,11 +392,11 @@ def has_offline_migrations(config, cmd):
         # it means we should shut down all neutron-server instances before
         # proceeding with upgrade.
         project = config.get_main_option('neutron_project')
-        alembic_util.msg(_('Need to apply migrations from %(project)s '
-                           'contract branch. This will require all Neutron '
-                           'server instances to be shutdown before '
-                           'proceeding with the upgrade.') %
-            {"project": project})
+        log_info(_('Need to apply migrations from %(project)s '
+                   'contract branch. This will require all Neutron '
+                   'server instances to be shutdown before '
+                   'proceeding with the upgrade.') %
+                 {"project": project})
         return True
     return False
 
@@ -464,7 +469,7 @@ def _get_package_root_dir(config):
     root_module = importutils.try_import(_get_project_base(config))
     if not root_module:
         project = config.get_main_option('neutron_project')
-        alembic_util.err(_("Failed to locate source for %s.") % project)
+        log_error(_("Failed to locate source for %s.") % project)
     # The root_module.__file__ property is a path like
     #    '/opt/stack/networking-foo/networking_foo/__init__.py'
     # We return just
@@ -542,7 +547,7 @@ def _set_version_locations(config):
 def _get_installed_entrypoint(subproject):
     '''Get the entrypoint for the subproject, which must be installed.'''
     if subproject not in migration_cli.migration_entrypoints:
-        alembic_util.err(_('Package %s not installed') % subproject)
+        log_error(_('Package %s not installed') % subproject)
     return migration_cli.migration_entrypoints[subproject]
 
 
@@ -651,6 +656,6 @@ def main():
         return_val |= bool(CONF.command.func(config, CONF.command.name))
 
     if CONF.command.name == 'has_offline_migrations' and not return_val:
-        alembic_util.msg(_('No offline migrations pending.'))
+        log_info(_('No offline migrations pending.'))
 
     return return_val
