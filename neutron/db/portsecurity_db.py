@@ -16,10 +16,10 @@ from neutron_lib.api.definitions import network as net_def
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
+from neutron_lib.db import resource_extend
 from neutron_lib.plugins import directory
 from neutron_lib.utils import net
 
-from neutron.db import _resource_extend as resource_extend
 from neutron.db import portsecurity_db_common
 
 

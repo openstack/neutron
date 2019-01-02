@@ -17,13 +17,13 @@ from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api import extensions
 from neutron_lib.api import validators
+from neutron_lib.db import resource_extend
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import dns as dns_exc
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _
-from neutron.db import _resource_extend as resource_extend
 from neutron.objects import floatingip as fip_obj
 from neutron.objects import network
 from neutron.objects import ports as port_obj

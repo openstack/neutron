@@ -14,10 +14,10 @@
 
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.validators import availability_zone as az_validator
+from neutron_lib.db import resource_extend
 from oslo_config import cfg
 
 from neutron._i18n import _
-from neutron.db import _resource_extend as resource_extend
 from neutron.db.models import l3_attrs
 
 

@@ -17,12 +17,12 @@ from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api import validators
 from neutron_lib.db import api as db_api
+from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import allowedaddresspairs as addr_exc
 from neutron_lib.objects import exceptions
 
 from neutron.common import utils
-from neutron.db import _resource_extend as resource_extend
 from neutron.objects.port.extensions import (allowedaddresspairs
     as obj_addr_pair)
 

@@ -24,13 +24,13 @@ from neutron_lib.callbacks import resources as callbacks_resources
 from neutron_lib import constants as nl_constants
 from neutron_lib import context
 from neutron_lib.db import api as db_api
+from neutron_lib.db import resource_extend
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.placement import constants as pl_constants
 from neutron_lib.placement import utils as pl_utils
 from neutron_lib.services.qos import constants as qos_consts
 
 from neutron.common import exceptions as n_exc
-from neutron.db import _resource_extend as resource_extend
 from neutron.db import db_base_plugin_common
 from neutron.extensions import qos
 from neutron.objects import base as base_obj

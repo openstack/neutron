@@ -16,12 +16,12 @@ from neutron_lib.api.definitions import address_scope as apidef
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
+from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import address_scope as api_err
 from oslo_utils import uuidutils
 
 from neutron._i18n import _
-from neutron.db import _resource_extend as resource_extend
 from neutron.extensions import address_scope as ext_address_scope
 from neutron.objects import address_scope as obj_addr_scope
 from neutron.objects import base as base_obj
