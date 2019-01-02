@@ -20,6 +20,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
+from neutron_lib.db import model_query
 from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
@@ -29,7 +30,6 @@ from neutron_lib.plugins import directory
 from sqlalchemy.sql import expression as expr
 
 from neutron._i18n import _
-from neutron.db import _model_query as model_query
 from neutron.db import models_v2
 from neutron.extensions import rbac as rbac_ext
 from neutron.objects import network as net_obj

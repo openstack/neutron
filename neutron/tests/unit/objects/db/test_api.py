@@ -14,10 +14,10 @@ import copy
 
 import mock
 from neutron_lib import context
+from neutron_lib.db import model_query
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import utils as obj_utils
 
-from neutron.db import _model_query as model_query
 from neutron.objects import base
 from neutron.objects.db import api
 from neutron.objects import network

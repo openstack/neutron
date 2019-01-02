@@ -13,11 +13,10 @@
 # TODO(ihrachys): cover the module with functional tests targeting supported
 # backends
 
+from neutron_lib.db import model_query
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import utils as obj_utils
 from oslo_utils import uuidutils
-
-from neutron.db import _model_query as model_query
 
 
 # Common database operation implementations

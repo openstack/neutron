@@ -27,6 +27,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import api as db_api
+from neutron_lib.db import model_query
 from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.exceptions import availability_zone as az_exc
@@ -43,7 +44,6 @@ from neutron.agent.common import utils
 from neutron.api.rpc.callbacks import version_manager
 from neutron.common import constants as n_const
 from neutron.conf.agent.database import agents_db
-from neutron.db import _model_query as model_query
 from neutron.db.models import agent as agent_model
 from neutron.extensions import _availability_zone_filter_lib as azfil_ext
 from neutron.extensions import agent as ext_agent
