@@ -1949,7 +1949,9 @@ class TestOvsNeutronAgent(object):
                     'setup_tunnel_br_flows') as setup_tunnel_br_flows,\
                 mock.patch.object(
                     self.mod_agent.OVSNeutronAgent,
-                    '_reset_tunnel_ofports') as reset_tunnel_ofports:
+                    '_reset_tunnel_ofports') as reset_tunnel_ofports,\
+                mock.patch.object(self.agent.state_rpc,
+                                  'report_state') as report_st:
             log_exception.side_effect = Exception(
                 'Fake exception to get out of the loop')
             devices_not_ready = set()
@@ -1997,7 +1999,9 @@ class TestOvsNeutronAgent(object):
             self.assertTrue(setup_tunnel_br_flows.called)
             self.assertTrue(setup_tunnel_br.called)
             if self.agent.enable_tunneling:
-                self.assertTrue(self.agent.agent_state.get('start_flag'))
+                self.agent.agent_state['start_flag'] = True
+                report_st.assert_called_once_with(
+                    self.agent.context, self.agent.agent_state, True)
 
     def test_ovs_status(self):
         self._test_ovs_status(constants.OVS_NORMAL,
