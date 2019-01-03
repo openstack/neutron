@@ -105,7 +105,7 @@ rules = [
         description='Access rule for getting binding profile of port'),
     policy.RuleDefault(
         'get_port:resource_request',
-        'rule:admin_only',
+        base.RULE_ADMIN_ONLY,
         description='Access rule for getting resource request of port'),
     # TODO(amotoki): Add get_port:binding:vnic_type
     # TODO(amotoki): Add get_port:binding:data_plane_status
