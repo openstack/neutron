@@ -965,12 +965,8 @@ class _DVRAgentInterfaceMixin(object):
             return
         fip = fips[0]
         network_id = fip.get('floating_network_id')
-        agent_gw_port = self.create_fip_agent_gw_port_if_not_exists(
+        self.create_fip_agent_gw_port_if_not_exists(
             context.elevated(), network_id, host)
-        LOG.debug("Port-in-Migration: Floatingip Agent Gateway port "
-                  "%(gw)s created for the future host: %(dest_host)s",
-                  {'gw': agent_gw_port,
-                   'dest_host': host})
 
     def create_fip_agent_gw_port_if_not_exists(
         self, context, network_id, host):
@@ -994,11 +990,11 @@ class _DVRAgentInterfaceMixin(object):
             return
         if l3_agent_db:
             LOG.debug("Agent ID exists: %s", l3_agent_db['id'])
-            f_port = self._get_agent_gw_ports_exist_for_network(
+            agent_port = self._get_agent_gw_ports_exist_for_network(
                 context, network_id, host, l3_agent_db['id'])
-            if not f_port:
-                LOG.info('Agent Gateway port does not exist,'
-                         ' so create one: %s', f_port)
+            if not agent_port:
+                LOG.info("Floating IP Agent Gateway port does not exist, "
+                         "creating one")
                 port_data = {'tenant_id': '',
                              'network_id': network_id,
                              'device_id': l3_agent_db['id'],
@@ -1008,15 +1004,16 @@ class _DVRAgentInterfaceMixin(object):
                              'name': ''}
                 agent_port = plugin_utils.create_port(
                     self._core_plugin, context, {'port': port_data})
-                if agent_port:
-                    self._populate_mtu_and_subnets_for_ports(context,
-                                                             [agent_port])
-                    return agent_port
-                msg = _("Unable to create the Agent Gateway Port")
-                raise n_exc.BadRequest(resource='router', msg=msg)
-            else:
-                self._populate_mtu_and_subnets_for_ports(context, [f_port])
-                return f_port
+                if not agent_port:
+                    msg = _("Unable to create Floating IP Agent Gateway port")
+                    raise n_exc.BadRequest(resource='router', msg=msg)
+                LOG.debug("Floating IP Agent Gateway port %(gw)s created "
+                          "for the destination host: %(dest_host)s",
+                          {'gw': agent_port,
+                           'dest_host': host})
+
+            self._populate_mtu_and_subnets_for_ports(context, [agent_port])
+            return agent_port
 
     def _generate_arp_table_and_notify_agent(
         self, context, fixed_ip, mac_address, notifier):
