@@ -80,9 +80,12 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             'security_group': s,
             'is_default': default_sg,
         }
-
         self._registry_notify(resources.SECURITY_GROUP, events.BEFORE_CREATE,
-                              exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
+                              exc_cls=ext_sg.SecurityGroupConflict,
+                              payload=events.DBEventPayload(
+                                  context, metadata={'is_default': default_sg},
+                                  request_body=security_group,
+                                  desired_state=s))
 
         tenant_id = s['tenant_id']
 
