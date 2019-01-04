@@ -77,8 +77,7 @@ class TestCommonAgentLoop(base.BaseTestCase):
         devices = [DEVICE_1]
         self.agent.treat_devices_removed(devices)
         handler.assert_called_once_with(mock.ANY, mock.ANY, self.agent,
-                                        context=mock.ANY, device=DEVICE_1,
-                                        port_id=mock.ANY)
+                                        payload=mock.ANY)
 
     def test_treat_devices_added_updated_notify(self):
         handler = mock.Mock()
@@ -98,8 +97,11 @@ class TestCommonAgentLoop(base.BaseTestCase):
         agent.mgr.plug_interface.return_value = True
         agent.treat_devices_added_updated(set(['dev123']))
         handler.assert_called_once_with(mock.ANY, mock.ANY, self.agent,
-                                        context=mock.ANY,
-                                        device_details=mock_details)
+                                        payload=mock.ANY)
+
+        payload = handler.mock_calls[0][2]['payload']
+        self.assertDictEqual(mock_details, payload.latest_state)
+        self.assertEqual(mock_details['device'], payload.resource_id)
 
     def test_treat_devices_removed_with_existed_device(self):
         agent = self.agent

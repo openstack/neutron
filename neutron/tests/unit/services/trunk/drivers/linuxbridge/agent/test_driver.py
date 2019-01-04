@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import mock
+from neutron_lib.callbacks import events as cb_events
 import oslo_messaging
 from oslo_utils import uuidutils
 import testtools
@@ -85,8 +86,10 @@ class LinuxBridgeTrunkDriverTestCase(base.BaseTestCase):
 
     def test_agent_port_change_is_trunk(self):
         self.tapi.get_trunk.return_value = self.trunk
-        self.lbd.agent_port_change('resource', 'event', 'trigger', 'context',
-                                   {'port_id': self.trunk.port_id})
+        self.lbd.agent_port_change(
+            'resource', 'event', 'trigger', payload=cb_events.DBEventPayload(
+                'context', states=({'port_id': self.trunk.port_id},),
+                resource_id=self.trunk.port_id))
         # should have tried to wire trunk
         self.plumber.trunk_on_host.assert_called_once_with(self.trunk)
 
@@ -94,17 +97,22 @@ class LinuxBridgeTrunkDriverTestCase(base.BaseTestCase):
         self.tapi.get_trunk.return_value = None
         self.tapi.get_trunk_for_subport.return_value = None
         other_port_id = uuidutils.generate_uuid()
-        self.lbd.agent_port_change('resource', 'event', 'trigger', 'context',
-                                   {'port_id': other_port_id})
+        self.lbd.agent_port_change(
+            'resource', 'event', 'trigger', payload=cb_events.DBEventPayload(
+                'context', states=({'port_id': other_port_id},),
+                resource_id=other_port_id))
         self.plumber.delete_subports_by_port_id.assert_called_once_with(
             other_port_id)
 
     def test_agent_port_change_is_subport(self):
         self.tapi.get_trunk.return_value = None
         self.tapi.get_trunk_for_subport.return_value = self.trunk
-        self.lbd.agent_port_change('resource', 'event', 'trigger', 'context',
-                                   {'port_id': self.trunk.sub_ports[0].port_id,
-                                    'mac_address': 'mac_addr'})
+        port_dev = {'port_id': self.trunk.sub_ports[0].port_id,
+                    'mac_address': 'mac_addr'}
+        self.lbd.agent_port_change(
+            'resource', 'event', 'trigger', payload=cb_events.DBEventPayload(
+                'context', states=(port_dev,),
+                resource_id=port_dev['port_id']))
         self.plumber.delete_subports_by_port_id.assert_called_once_with(
             self.trunk.sub_ports[0].port_id)
 
