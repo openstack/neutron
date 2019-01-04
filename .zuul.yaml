@@ -242,7 +242,7 @@
 
 - job:
     name: neutron-tempest-iptables_hybrid
-    parent: devstack-tempest
+    parent: tempest-full-py3
     timeout: 10800
     required-projects:
       - openstack-infra/devstack-gate
@@ -250,9 +250,6 @@
       - openstack/tempest
     vars:
       tempest_concurrency: 4
-      tox_envlist: full
-      devstack_localrc:
-        USE_PYTHON3: true
       devstack_plugins:
         neutron: git://git.openstack.org/openstack/neutron.git
       devstack_services:
