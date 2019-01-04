@@ -2002,10 +2002,17 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     return True
         return False
 
+    @registry.receives(resources.SEGMENT, [events.AFTER_DELETE])
+    def _handle_after_delete_segment_change(
+            self, rtype, event, trigger, payload=None):
+        # TODO(boden); refactor into _handle_segment_change once all
+        # event types use payloads
+        return self._handle_segment_change(
+            rtype, event, trigger, payload.context, payload.latest_state)
+
     @registry.receives(resources.SEGMENT, (events.PRECOMMIT_CREATE,
                                            events.PRECOMMIT_DELETE,
-                                           events.AFTER_CREATE,
-                                           events.AFTER_DELETE))
+                                           events.AFTER_CREATE))
     def _handle_segment_change(self, rtype, event, trigger, context, segment):
         if (event == events.PRECOMMIT_CREATE and
                 not isinstance(trigger, segments_plugin.Plugin)):
