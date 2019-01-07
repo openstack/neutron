@@ -91,7 +91,7 @@ case $VENV in
     load_rc_hook dstat
     ;;
 
-"api"|"api-pecan"|"full-pecan"|"dsvm-scenario-ovs"|"dsvm-scenario-linuxbridge")
+"api"|"api-pecan"|"full-pecan"|"dsvm-scenario-ovs")
     # TODO(ihrachys) consider feeding result of ext-list into tempest.conf
     load_rc_hook api_all_extensions
     if [ "${FLAVOR}" = "dvrskip" ]; then
@@ -106,24 +106,14 @@ case $VENV in
     load_conf_hook vlan_provider
     load_conf_hook osprofiler
     load_conf_hook availability_zone
+    load_conf_hook tunnel_types
+    load_rc_hook log  # bug 1743463
+    load_conf_hook openvswitch_type_drivers
     if [[ "$VENV" =~ "dsvm-scenario" ]]; then
         load_rc_hook ubuntu_image
     fi
-    if [[ "$VENV" =~ "dsvm-scenario-linuxbridge" ]]; then
-        load_conf_hook iptables_verify
-    fi
     if [[ "$VENV" =~ "pecan" ]]; then
         load_conf_hook pecan
-    fi
-    if [[ "$VENV" != "dsvm-scenario-linuxbridge" ]]; then
-        load_conf_hook tunnel_types
-        load_rc_hook log  # bug 1743463
-    fi
-    if [[ "$VENV" =~ "dsvm-scenario-linuxbridge" ]]; then
-        # linuxbridge doesn't support gre
-        load_conf_hook linuxbridge_type_drivers
-    else
-        load_conf_hook openvswitch_type_drivers
     fi
     if [[ "$FLAVOR" = "dvrskip" ]]; then
         load_conf_hook disable_dvr
