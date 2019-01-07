@@ -38,6 +38,11 @@ rules = [
         base.RULE_ADMIN_ONLY,
         description='Access rule for creating network with is_default'),
     policy.RuleDefault(
+        'create_network:port_security_enabled',
+        base.RULE_ANY,
+        description=('Access rule for creating network '
+                     'with port_security_enabled')),
+    policy.RuleDefault(
         'create_network:segments',
         base.RULE_ADMIN_ONLY,
         description='Access rule for creating network with segments'),
@@ -120,6 +125,16 @@ rules = [
         base.RULE_ADMIN_ONLY,
         description=('Access rule for updating router:external attribute '
                      'of network')),
+    policy.RuleDefault(
+        'update_network:is_default',
+        base.RULE_ADMIN_ONLY,
+        description=('Access rule for updating is_default attribute '
+                     'of network')),
+    policy.RuleDefault(
+        'update_network:port_security_enabled',
+        base.RULE_ADMIN_OR_OWNER,
+        description=('Access rule for updating port_security_enabled '
+                     'attribute of network')),
 
     policy.RuleDefault(
         'delete_network',
