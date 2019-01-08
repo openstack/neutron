@@ -63,13 +63,14 @@ The following manufacturers are known to work:
 - Mellanox
 - QLogic
 
-For information on **Mellanox SR-IOV Ethernet ConnectX-3/ConnectX-3 Pro cards**, see
-`Mellanox: How To Configure SR-IOV VFs
-<https://community.mellanox.com/docs/DOC-1484>`_.
+For information on **Mellanox SR-IOV Ethernet ConnectX cards**, see:
 
-For information on **QLogic SR-IOV Ethernet cards**, see
-`User's Guide OpenStack Deployment with SR-IOV Configuration
-<http://www.qlogic.com/solutions/Documents/UsersGuide_OpenStack_SR-IOV.pdf>`_.
+- `Mellanox: How To Configure SR-IOV VFs on ConnectX-4 or newer <https://community.mellanox.com/s/article/howto-configure-sr-iov-for-connectx-4-connectx-5-with-kvm--ethernet-x>`_.
+- `Mellanox: How To Configure SR-IOV VFs on ConnectX-3/ConnectX-3 Pro <https://community.mellanox.com/docs/DOC-1484>`_.
+
+For information on **QLogic SR-IOV Ethernet cards**, see:
+
+- `User's Guide OpenStack Deployment with SR-IOV Configuration <http://www.qlogic.com/solutions/Documents/UsersGuide_OpenStack_SR-IOV.pdf>`_.
 
 Using SR-IOV interfaces
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -482,6 +483,101 @@ Once configuration is complete, you can launch instances with SR-IOV ports.
 
       __ https://docs.openstack.org/nova/latest/admin/pci-passthrough.html#configure-nova-api-controller
 
+SR-IOV with ConnectX-3/ConnectX-3 Pro Dual Port Ethernet
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In contrast to Mellanox newer generation NICs, ConnectX-3 family network adapters expose a single
+PCI device (PF) in the system regardless of the number of physical ports.
+When the device is **dual port** and SR-IOV is enabled and configured we can observe some inconsistencies
+in linux networking subsystem.
+
+.. note::
+    In the example below ``enp4s0`` represents PF net device associated with physical port 1 and
+    ``enp4s0d1`` represents PF net device associated with physical port 2.
+
+**Example:** A system with ConnectX-3 dual port device and a total of four VFs configured,
+two VFs assigned to port one and two VFs assigned to port two.
+
+.. code-block:: console
+
+    $ lspci | grep Mellanox
+    04:00.0 Network controller: Mellanox Technologies MT27520 Family [ConnectX-3 Pro]
+    04:00.1 Network controller: Mellanox Technologies MT27500/MT27520 Family [ConnectX-3/ConnectX-3 Pro Virtual Function]
+    04:00.2 Network controller: Mellanox Technologies MT27500/MT27520 Family [ConnectX-3/ConnectX-3 Pro Virtual Function]
+    04:00.3 Network controller: Mellanox Technologies MT27500/MT27520 Family [ConnectX-3/ConnectX-3 Pro Virtual Function]
+    04:00.4 Network controller: Mellanox Technologies MT27500/MT27520 Family [ConnectX-3/ConnectX-3 Pro Virtual Function]
+
+Four VFs are available in the system, however,
+
+.. code-block:: console
+
+    $ ip link show
+    31: enp4s0: <BROADCAST,MULTICAST> mtu 1500 qdisc noop master ovs-system state DOWN mode DEFAULT group default qlen 1000
+        link/ether f4:52:14:01:d9:e1 brd ff:ff:ff:ff:ff:ff
+        vf 0 MAC 00:00:00:00:00:00, vlan 4095, spoof checking off, link-state auto
+        vf 1 MAC 00:00:00:00:00:00, vlan 4095, spoof checking off, link-state auto
+        vf 2 MAC 00:00:00:00:00:00, vlan 4095, spoof checking off, link-state auto
+        vf 3 MAC 00:00:00:00:00:00, vlan 4095, spoof checking off, link-state auto
+    32: enp4s0d1: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+        link/ether f4:52:14:01:d9:e2 brd ff:ff:ff:ff:ff:ff
+        vf 0 MAC 00:00:00:00:00:00, vlan 4095, spoof checking off, link-state auto
+        vf 1 MAC 00:00:00:00:00:00, vlan 4095, spoof checking off, link-state auto
+        vf 2 MAC 00:00:00:00:00:00, vlan 4095, spoof checking off, link-state auto
+        vf 3 MAC 00:00:00:00:00:00, vlan 4095, spoof checking off, link-state auto
+
+**ip** command identifies each PF associated net device as having four VFs *each*.
+
+.. note::
+
+     Mellanox ``mlx4`` driver allows *ip* commands to perform configuration of *all*
+     VFs from either PF associated network devices.
+
+To allow neutron SR-IOV agent to properly identify the VFs that belong to the correct PF network device
+(thus to the correct network port) Admin is required to provide the ``exclude_devices`` configuration option
+in ``sriov_agent.ini``
+
+**Step 1**: derive the VF to Port mapping from mlx4 driver configuration file: ``/etc/modprobe.d/mlnx.conf``  or ``/etc/modprobe.d/mlx4.conf``
+
+.. code-block:: console
+
+    $ cat /etc/modprobe.d/mlnx.conf | grep "options mlx4_core"
+    options mlx4_core port_type_array=2,2 num_vfs=2,2,0 probe_vf=2,2,0 log_num_mgm_entry_size=-1
+
+Where:
+
+``num_vfs=n1,n2,n3`` - The driver will enable ``n1`` VFs on physical port 1,
+``n2`` VFs on physical port 2 and
+``n3`` dual port VFs (applies only to dual port HCA when all ports are Ethernet ports).
+
+
+``probe_vfs=m1,m2,m3`` - the driver probes ``m1`` single port VFs on physical port 1,
+``m2`` single port VFs on physical port 2 (applies only if such a port exist)
+``m3`` dual port VFs. Those VFs are attached to the hypervisor. (applies only if all ports are configured as Ethernet).
+
+The VFs will be enumerated in the following order:
+
+1. port 1 VFs
+2. port 2 VFs
+3. dual port VFs
+
+In our example:
+
+| 04:00.0 : PF associated to **both** ports.
+| 04:00.1 : VF associated to port **1**
+| 04:00.2 : VF associated to port **1**
+| 04:00.3 : VF associated to port **2**
+| 04:00.4 : VF associated to port **2**
+
+**Step 2:** Update ``exclude_devices`` configuration option in ``sriov_agent.ini`` with the correct mapping
+
+Each PF associated net device shall exclude the **other** port's VFs
+
+.. code-block:: ini
+
+    [sriov_nic]
+    physical_device_mappings = physnet1:enp4s0,physnet2:enp4s0d
+    exclude_devices = enp4s0:0000:04:00.3;0000:04:00.4,enp4s0d1:0000:04:00.1;0000:04:00.2
+
 SR-IOV with InfiniBand
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -513,7 +609,7 @@ you must:
    If ``ebrctl`` does not appear in any of the rootwrap files, add this to the
    ``/etc/nova/rootwrap.d/compute.filters`` file in the ``[Filters]`` section.
 
-   .. code-block:: none
+   .. code-block:: ini
 
       [Filters]
       ebrctl: CommandFilter, ebrctl, root
