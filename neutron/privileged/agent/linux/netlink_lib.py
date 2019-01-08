@@ -49,8 +49,43 @@ from neutron.privileged.agent.linux import netlink_constants as nl_constants
 
 LOG = logging.getLogger(__name__)
 
-nfct = ctypes.CDLL(util.find_library('netfilter_conntrack'))
+nfct_lib = util.find_library('netfilter_conntrack')
+nfct = ctypes.CDLL(nfct_lib)
 libc = ctypes.CDLL(util.find_library('libc.so.6'))
+
+# In unit tests the actual nfct library may not be installed, and since we
+# don't make actual calls to it we don't want to add a hard dependency.
+if nfct_lib:
+    # It's important that the types be defined properly on all of the functions
+    # we call from nfct, otherwise pointers can be truncated and cause
+    # segfaults.
+    nfct.nfct_set_attr.argtypes = [ctypes.c_void_p,
+                                ctypes.c_int,
+                                ctypes.c_void_p]
+    nfct.nfct_set_attr_u8.argtypes = [ctypes.c_void_p,
+                                    ctypes.c_int,
+                                    ctypes.c_uint8]
+    nfct.nfct_set_attr_u16.argtypes = [ctypes.c_void_p,
+                                    ctypes.c_int,
+                                    ctypes.c_uint16]
+    nfct.nfct_snprintf.argtypes = [ctypes.c_char_p,
+                                ctypes.c_uint,
+                                ctypes.c_void_p,
+                                ctypes.c_uint,
+                                ctypes.c_uint,
+                                ctypes.c_uint]
+    nfct.nfct_new.restype = ctypes.c_void_p
+    nfct.nfct_destroy.argtypes = [ctypes.c_void_p]
+    nfct.nfct_query.argtypes = [ctypes.c_void_p,
+                                ctypes.c_int,
+                                ctypes.c_void_p]
+    nfct.nfct_callback_register.argtypes = [ctypes.c_void_p,
+                                            ctypes.c_int,
+                                            ctypes.c_void_p,
+                                            ctypes.c_void_p]
+    nfct.nfct_open.restype = ctypes.c_void_p
+    nfct.nfct_close.argtypes = [ctypes.c_void_p]
+
 
 IP_VERSIONS = [constants.IP_VERSION_4, constants.IP_VERSION_6]
 DATA_CALLBACK = None
