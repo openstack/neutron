@@ -17,12 +17,12 @@ from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib.db import resource_extend
 from oslo_config import cfg
 import sqlalchemy as sa
 from sqlalchemy import sql
 
 from neutron.conf.db import l3_gwmode_db
-from neutron.db import _resource_extend as resource_extend
 from neutron.db import l3_db
 from neutron.db.models import l3 as l3_models
 

@@ -18,10 +18,10 @@
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import qos_gateway_ip
 from neutron_lib.api import extensions
+from neutron_lib.db import resource_extend
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log as logging
 
-from neutron.db import _resource_extend as resource_extend
 from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
 from neutron.objects.qos import policy as policy_object

@@ -20,6 +20,7 @@ from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib.db import resource_extend
 from neutron_lib.exceptions import extraroute as xroute_exc
 from neutron_lib.utils import helpers
 from oslo_config import cfg
@@ -28,7 +29,6 @@ from oslo_log import log as logging
 from neutron._i18n import _
 from neutron.common import utils
 from neutron.conf.db import extraroute_db
-from neutron.db import _resource_extend as resource_extend
 from neutron.db import l3_db
 from neutron.objects import router as l3_obj
 

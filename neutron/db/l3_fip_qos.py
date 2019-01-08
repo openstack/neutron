@@ -13,9 +13,9 @@
 #
 
 from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.db import resource_extend
 from neutron_lib.services.qos import constants as qos_consts
 
-from neutron.db import _resource_extend as resource_extend
 from neutron.objects.qos import policy as policy_object
 
 

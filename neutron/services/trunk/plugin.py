@@ -21,12 +21,12 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import context
 from neutron_lib.db import api as db_api
+from neutron_lib.db import resource_extend
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
-from neutron.db import _resource_extend as resource_extend
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_common
 from neutron.objects import base as objects_base

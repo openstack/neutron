@@ -16,6 +16,7 @@
 from neutron_lib.agent import topics
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib import constants as n_const
+from neutron_lib.db import resource_extend
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.services import base as service_base
 from oslo_config import cfg
@@ -26,7 +27,6 @@ from oslo_utils import importutils
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import rpc as n_rpc
-from neutron.db import _resource_extend as resource_extend
 from neutron.db import common_db_mixin
 from neutron.db import dns_db
 from neutron.db import extraroute_db

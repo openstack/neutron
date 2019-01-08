@@ -21,6 +21,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
+from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
 from neutron_lib.utils import helpers
@@ -33,7 +34,6 @@ from neutron._i18n import _
 from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.db import _model_query as model_query
-from neutron.db import _resource_extend as resource_extend
 from neutron.db.models import securitygroup as sg_models
 from neutron.extensions import securitygroup as ext_sg
 from neutron.objects import base as base_obj

@@ -12,7 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.db import _resource_extend as resource_extend
+from neutron_lib.db import resource_extend
+
 from neutron.db import standard_attr
 
 

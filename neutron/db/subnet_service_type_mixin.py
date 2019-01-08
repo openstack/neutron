@@ -14,8 +14,7 @@
 #    under the License.
 
 from neutron_lib.api.definitions import subnet as subnet_def
-
-from neutron.db import _resource_extend as resource_extend
+from neutron_lib.db import resource_extend
 
 
 @resource_extend.has_resource_extenders

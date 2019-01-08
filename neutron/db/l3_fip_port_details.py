@@ -13,8 +13,7 @@
 #
 
 from neutron_lib.api.definitions import l3 as l3_apidef
-
-from neutron.db import _resource_extend as resource_extend
+from neutron_lib.db import resource_extend
 
 
 def _make_port_details_dict(port):

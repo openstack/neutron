@@ -14,11 +14,11 @@ import mock
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.db import resource_extend
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
-from neutron.db import _resource_extend as resource_extend
 from neutron.objects import network as network_obj
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.tests.unit import testlib_api

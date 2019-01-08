@@ -28,6 +28,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
+from neutron_lib.db import resource_extend
 from neutron_lib.exceptions import placement as placement_exc
 from neutron_lib.placement import client as placement_client
 from neutron_lib.plugins import directory
@@ -38,7 +39,6 @@ from oslo_log import log
 from oslo_utils import excutils
 
 from neutron._i18n import _
-from neutron.db import _resource_extend as resource_extend
 from neutron.extensions import segment
 from neutron.notifiers import batch_notifier
 from neutron.objects import network as net_obj

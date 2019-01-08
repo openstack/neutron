@@ -16,8 +16,8 @@
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.db import api as db_api
+from neutron_lib.db import resource_extend
 
-from neutron.db import _resource_extend as resource_extend
 from neutron.objects.port.extensions import extra_dhcp_opt as obj_extra_dhcp
 
 

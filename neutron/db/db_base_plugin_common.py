@@ -24,6 +24,7 @@ from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
+from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
 from neutron_lib.utils import net
@@ -34,7 +35,6 @@ from sqlalchemy.orm import exc
 from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.db import _model_query as model_query
-from neutron.db import _resource_extend as resource_extend
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
 from neutron.objects import base as base_obj

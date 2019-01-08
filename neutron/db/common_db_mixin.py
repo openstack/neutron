@@ -13,10 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
 
 from neutron.db import _model_query
-from neutron.db import _resource_extend
 
 
 # TODO(HenryG): Deprecate and schedule for removal
@@ -25,7 +25,7 @@ class CommonDbMixin(object):
 
     @staticmethod
     def register_dict_extend_funcs(resource, funcs):
-        _resource_extend.register_funcs(resource, funcs)
+        resource_extend.register_funcs(resource, funcs)
 
     @staticmethod
     def _model_query(context, model):

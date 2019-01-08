@@ -17,10 +17,10 @@ from neutron_lib.api import extensions
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib.db import resource_extend
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 
-from neutron.db import _resource_extend as resource_extend
 from neutron.db import l3_attrs_db
 
 

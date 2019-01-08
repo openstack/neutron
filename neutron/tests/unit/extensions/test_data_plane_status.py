@@ -17,9 +17,9 @@ from webob import exc as web_exc
 from neutron_lib.api.definitions import data_plane_status as dps_lib
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib import constants
+from neutron_lib.db import resource_extend
 from neutron_lib.tests.unit import fake_notifier
 
-from neutron.db import _resource_extend as resource_extend
 from neutron.db import data_plane_status_db as dps_db
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import data_plane_status as dps_ext

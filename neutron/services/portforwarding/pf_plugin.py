@@ -24,6 +24,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_consts
 from neutron_lib.db import api as db_api
+from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import l3 as lib_l3_exc
@@ -36,7 +37,6 @@ from neutron._i18n import _
 from neutron.api.rpc.callbacks import events as rpc_events
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import utils
-from neutron.db import _resource_extend as resource_extend
 from neutron.db import db_base_plugin_common
 from neutron.db import l3_dvr_db
 from neutron.extensions import floating_ip_port_forwarding as fip_pf

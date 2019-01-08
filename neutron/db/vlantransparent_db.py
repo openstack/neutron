@@ -14,8 +14,7 @@
 
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib.api.definitions import vlantransparent as vlan_apidef
-
-from neutron.db import _resource_extend as resource_extend
+from neutron_lib.db import resource_extend
 
 
 @resource_extend.has_resource_extenders

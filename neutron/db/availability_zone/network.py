@@ -14,9 +14,9 @@
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib.api.validators import availability_zone as az_validator
+from neutron_lib.db import resource_extend
 from neutron_lib.plugins import directory
 
-from neutron.db import _resource_extend as resource_extend
 from neutron.extensions import network_availability_zone as net_az
 
 
