@@ -203,9 +203,11 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
                             self.delete_segment, context=context,
                             segment=segment_dict)
 
-        registry.notify(resources.SEGMENT, events.AFTER_DELETE,
-                        self.delete_segment, context=context,
-                        segment=segment_dict)
+        registry.publish(resources.SEGMENT, events.AFTER_DELETE,
+                         self.delete_segment,
+                         payload=events.DBEventPayload(
+                             context, states=(segment_dict,),
+                             resource_id=uuid))
 
 
 @db_api.retry_if_session_inactive()
