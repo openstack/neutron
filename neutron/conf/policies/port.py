@@ -75,7 +75,11 @@ rules = [
         base.RULE_ADMIN_ONLY,
         description=('Access rule for creating '
                      'port with binding profile')),
-    # TODO(amotoki): Add create_port:binding:vnic_type
+    policy.RuleDefault(
+        'create_port:binding:vnic_type',
+        base.RULE_ANY,
+        description=('Access rule for creating '
+                     'port with binding vnic_type')),
     policy.RuleDefault(
         'create_port:allowed_address_pairs',
         base.RULE_ADMIN_OR_NET_OWNER,
@@ -157,7 +161,11 @@ rules = [
         'update_port:binding:profile',
         base.RULE_ADMIN_ONLY,
         description='Access rule for updating binding profile of port'),
-    # TODO(amotoki): Add update_port:binding:vnic_type
+    policy.RuleDefault(
+        'update_port:binding:vnic_type',
+        base.policy_or(base.RULE_ADMIN_OR_OWNER,
+                       base.RULE_ADVSVC),
+        description='Access rule for updating binding vnic_type of port'),
     policy.RuleDefault(
         'update_port:allowed_address_pairs',
         base.RULE_ADMIN_OR_NET_OWNER,

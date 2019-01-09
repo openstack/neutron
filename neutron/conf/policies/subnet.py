@@ -38,6 +38,10 @@ rules = [
     policy.RuleDefault('update_subnet',
                        base.RULE_ADMIN_OR_NET_OWNER,
                        description='Access rule for updating subnet'),
+    policy.RuleDefault('update_subnet:segment_id',
+                       base.RULE_ADMIN_ONLY,
+                       description=('Access rule for updating segment_id '
+                                    'attribute of subnet')),
     policy.RuleDefault('update_subnet:service_types',
                        base.RULE_ADMIN_ONLY,
                        description=('Access rule for updating '
