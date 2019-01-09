@@ -231,8 +231,8 @@ class ConntrackManager(object):
 
     def __enter__(self):
         self.conntrack_handler = nfct.nfct_open(
-            nl_constants.CONNTRACK,
-            nl_constants.NFNL_SUBSYS_CTNETLINK)
+            nl_constants.NFNL_SUBSYS_CTNETLINK,
+            nl_constants.CONNTRACK)
         if not self.conntrack_handler:
             msg = _("Failed to open new conntrack handler")
             LOG.critical(msg)

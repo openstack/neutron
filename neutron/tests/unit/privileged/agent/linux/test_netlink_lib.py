@@ -50,15 +50,15 @@ class NetlinkLibTestCase(base.BaseTestCase):
     def test_open_new_conntrack_handler_pass(self):
         with nl_lib.ConntrackManager():
             nl_lib.nfct.nfct_open.assert_called_once_with(
-                nl_constants.CONNTRACK, nl_constants.NFNL_SUBSYS_CTNETLINK)
+                nl_constants.NFNL_SUBSYS_CTNETLINK, nl_constants.CONNTRACK)
         nl_lib.nfct.nfct_close.assert_called_once_with(nl_lib.nfct.nfct_open(
-            nl_constants.CONNTRACK, nl_constants.NFNL_SUBSYS_CTNETLINK))
+            nl_constants.NFNL_SUBSYS_CTNETLINK, nl_constants.CONNTRACK))
 
     def test_conntrack_list_entries(self):
         with nl_lib.ConntrackManager() as conntrack:
 
             nl_lib.nfct.nfct_open.assert_called_once_with(
-                nl_constants.CONNTRACK, nl_constants.NFNL_SUBSYS_CTNETLINK)
+                nl_constants.NFNL_SUBSYS_CTNETLINK, nl_constants.CONNTRACK)
 
             conntrack.list_entries()
 
@@ -67,33 +67,33 @@ class NetlinkLibTestCase(base.BaseTestCase):
                  mock.ANY, None)])
             nl_lib.nfct.nfct_query.assert_called_once_with(
                 nl_lib.nfct.nfct_open(
-                    nl_constants.CONNTRACK,
-                    nl_constants.NFNL_SUBSYS_CTNETLINK),
+                    nl_constants.NFNL_SUBSYS_CTNETLINK,
+                    nl_constants.CONNTRACK),
                 nl_constants.NFCT_Q_DUMP,
                 mock.ANY)
         nl_lib.nfct.nfct_close.assert_called_once_with(nl_lib.nfct.nfct_open(
-            nl_constants.CONNTRACK, nl_constants.NFNL_SUBSYS_CTNETLINK))
+            nl_constants.NFNL_SUBSYS_CTNETLINK, nl_constants.CONNTRACK))
 
     def test_conntrack_new_failed(self):
         nl_lib.nfct.nfct_new.return_value = None
         with nl_lib.ConntrackManager() as conntrack:
             nl_lib.nfct.nfct_open.assert_called_once_with(
-                nl_constants.CONNTRACK,
-                nl_constants.NFNL_SUBSYS_CTNETLINK)
+                nl_constants.NFNL_SUBSYS_CTNETLINK,
+                nl_constants.CONNTRACK)
             conntrack.delete_entries([FAKE_ICMP_ENTRY])
             nl_lib.nfct.nfct_new.assert_called_once_with()
         nl_lib.nfct.nfct_destroy.assert_called_once_with(None)
         nl_lib.nfct.nfct_close.assert_called_once_with(nl_lib.nfct.nfct_open(
-            nl_constants.CONNTRACK,
-            nl_constants.NFNL_SUBSYS_CTNETLINK))
+            nl_constants.NFNL_SUBSYS_CTNETLINK,
+            nl_constants.CONNTRACK))
 
     def test_conntrack_delete_icmp_entry(self):
         conntrack_filter = mock.Mock()
         nl_lib.nfct.nfct_new.return_value = conntrack_filter
         with nl_lib.ConntrackManager() as conntrack:
             nl_lib.nfct.nfct_open.assert_called_once_with(
-                nl_constants.CONNTRACK,
-                nl_constants.NFNL_SUBSYS_CTNETLINK)
+                nl_constants.NFNL_SUBSYS_CTNETLINK,
+                nl_constants.CONNTRACK)
             conntrack.delete_entries([FAKE_ICMP_ENTRY])
             calls = [
                 mock.call(conntrack_filter,
@@ -136,16 +136,16 @@ class NetlinkLibTestCase(base.BaseTestCase):
             nl_lib.nfct.nfct_set_attr.assert_has_calls(calls, any_order=True)
             nl_lib.nfct.nfct_destroy.assert_called_once_with(conntrack_filter)
         nl_lib.nfct.nfct_close.assert_called_once_with(nl_lib.nfct.nfct_open(
-            nl_constants.CONNTRACK,
-            nl_constants.NFNL_SUBSYS_CTNETLINK))
+            nl_constants.NFNL_SUBSYS_CTNETLINK,
+            nl_constants.CONNTRACK))
 
     def test_conntrack_delete_udp_entry(self):
         conntrack_filter = mock.Mock()
         nl_lib.nfct.nfct_new.return_value = conntrack_filter
         with nl_lib.ConntrackManager() as conntrack:
             nl_lib.nfct.nfct_open.assert_called_once_with(
-                nl_constants.CONNTRACK,
-                nl_constants.NFNL_SUBSYS_CTNETLINK)
+                nl_constants.NFNL_SUBSYS_CTNETLINK,
+                nl_constants.CONNTRACK)
             conntrack.delete_entries([FAKE_UDP_ENTRY])
             calls = [
                 mock.call(conntrack_filter,
@@ -185,16 +185,16 @@ class NetlinkLibTestCase(base.BaseTestCase):
             nl_lib.nfct.nfct_set_attr.assert_has_calls(calls, any_order=True)
             nl_lib.nfct.nfct_destroy.assert_called_once_with(conntrack_filter)
         nl_lib.nfct.nfct_close.assert_called_once_with(nl_lib.nfct.nfct_open(
-            nl_constants.CONNTRACK,
-            nl_constants.NFNL_SUBSYS_CTNETLINK))
+            nl_constants.NFNL_SUBSYS_CTNETLINK,
+            nl_constants.CONNTRACK))
 
     def test_conntrack_delete_tcp_entry(self):
         conntrack_filter = mock.Mock()
         nl_lib.nfct.nfct_new.return_value = conntrack_filter
         with nl_lib.ConntrackManager() as conntrack:
             nl_lib.nfct.nfct_open.assert_called_once_with(
-                nl_constants.CONNTRACK,
-                nl_constants.NFNL_SUBSYS_CTNETLINK)
+                nl_constants.NFNL_SUBSYS_CTNETLINK,
+                nl_constants.CONNTRACK)
             conntrack.delete_entries([FAKE_TCP_ENTRY])
             calls = [
                 mock.call(conntrack_filter,
@@ -235,16 +235,16 @@ class NetlinkLibTestCase(base.BaseTestCase):
             nl_lib.nfct.nfct_set_attr.assert_has_calls(calls, any_order=True)
             nl_lib.nfct.nfct_destroy.assert_called_once_with(conntrack_filter)
         nl_lib.nfct.nfct_close.assert_called_once_with(nl_lib.nfct.nfct_open(
-            nl_constants.CONNTRACK,
-            nl_constants.NFNL_SUBSYS_CTNETLINK))
+            nl_constants.NFNL_SUBSYS_CTNETLINK,
+            nl_constants.CONNTRACK))
 
     def test_conntrack_delete_entries(self):
         conntrack_filter = mock.Mock()
         nl_lib.nfct.nfct_new.return_value = conntrack_filter
         with nl_lib.ConntrackManager() as conntrack:
             nl_lib.nfct.nfct_open.assert_called_once_with(
-                nl_constants.CONNTRACK,
-                nl_constants.NFNL_SUBSYS_CTNETLINK)
+                nl_constants.NFNL_SUBSYS_CTNETLINK,
+                nl_constants.CONNTRACK)
             conntrack.delete_entries([FAKE_ICMP_ENTRY,
                                       FAKE_TCP_ENTRY,
                                       FAKE_UDP_ENTRY])
@@ -338,5 +338,5 @@ class NetlinkLibTestCase(base.BaseTestCase):
             nl_lib.nfct.nfct_set_attr.assert_has_calls(calls, any_order=True)
             nl_lib.nfct.nfct_destroy.assert_called_once_with(conntrack_filter)
         nl_lib.nfct.nfct_close.assert_called_once_with(nl_lib.nfct.nfct_open(
-            nl_constants.CONNTRACK,
-            nl_constants.NFNL_SUBSYS_CTNETLINK))
+            nl_constants.NFNL_SUBSYS_CTNETLINK,
+            nl_constants.CONNTRACK))
