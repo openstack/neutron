@@ -575,7 +575,7 @@ Each PF associated net device shall exclude the **other** port's VFs
 .. code-block:: ini
 
     [sriov_nic]
-    physical_device_mappings = physnet1:enp4s0,physnet2:enp4s0d
+    physical_device_mappings = physnet1:enp4s0,physnet2:enp4s0d1
     exclude_devices = enp4s0:0000:04:00.3;0000:04:00.4,enp4s0d1:0000:04:00.1;0000:04:00.2
 
 SR-IOV with InfiniBand
