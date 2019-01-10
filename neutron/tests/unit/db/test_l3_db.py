@@ -241,10 +241,10 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
     @mock.patch.object(directory, 'get_plugin')
     def test_subscribe_address_scope_of_subnetpool(self, gp):
         l3_db.L3RpcNotifierMixin()
-        registry.notify(resources.SUBNETPOOL_ADDRESS_SCOPE,
-                        events.AFTER_UPDATE, mock.ANY,
-                        context=mock.MagicMock(),
-                        subnetpool_id='fake_id')
+        registry.publish(resources.SUBNETPOOL_ADDRESS_SCOPE,
+                         events.AFTER_UPDATE, mock.ANY,
+                         payload=events.DBEventPayload(
+                             mock.MagicMock(), resource_id='fake_id'))
         self.assertTrue(gp.return_value.notify_routers_updated.called)
 
     def test__check_and_get_fip_assoc_with_extra_association_no_change(self):

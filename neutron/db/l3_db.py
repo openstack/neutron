@@ -1965,9 +1965,9 @@ class L3RpcNotifierMixin(object):
     @registry.receives(resources.SUBNETPOOL_ADDRESS_SCOPE,
                        [events.AFTER_UPDATE])
     def _notify_subnetpool_address_scope_update(resource, event,
-                                                trigger, **kwargs):
-        context = kwargs['context']
-        subnetpool_id = kwargs['subnetpool_id']
+                                                trigger, payload=None):
+        context = payload.context
+        subnetpool_id = payload.resource_id
 
         router_ids = l3_obj.RouterPort.get_router_ids_by_subnetpool(
             context, subnetpool_id)

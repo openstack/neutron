@@ -3623,7 +3623,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 router['router']['id'], {'subnet_id': subnet['subnet']['id']})
             l3_db.L3RpcNotifierMixin._notify_subnetpool_address_scope_update(
                 mock.ANY, mock.ANY, mock.ANY,
-                context=admin_ctx, subnetpool_id=subnetpool_id)
+                payload=events.DBEventPayload(
+                    admin_ctx, resource_id=subnetpool_id))
             chk_method.assert_called_with(admin_ctx, [router['router']['id']])
 
     def test_janitor_clears_orphaned_floatingip_port(self):
