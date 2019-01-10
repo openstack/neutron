@@ -49,6 +49,8 @@ The following manufacturers are known to work:
 
 - Mellanox ConnectX-4 NIC (VLAN Offload)
 - Mellanox ConnectX-4 Lx/ConnectX-5 NICs (VLAN/VXLAN Offload)
+- Broadcom NetXtreme-S series NICs
+- Broadcom NetXtreme-E series NICs
 
 For information on **Mellanox Ethernet Cards**, see
 `Mellanox: Ethernet Cards - Overview
@@ -60,7 +62,7 @@ Prerequisites
 - Linux Kernel >= 4.13
 - Open vSwitch >= 2.8
 - iproute >= 4.12
-- Mellanox NIC
+- Mellanox or Broadcom NIC
 
     .. note:: Mellanox NIC FW that supports Open vSwitch hardware offloading:
 
