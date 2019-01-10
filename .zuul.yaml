@@ -168,14 +168,16 @@
 
 - job:
     name: neutron-tempest-dvr
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-tempest-dvr/run.yaml
-    post-run: playbooks/legacy/neutron-tempest-dvr/post.yaml
+    parent: tempest-full-py3
     timeout: 10800
     required-projects:
       - openstack-infra/devstack-gate
       - openstack/neutron
       - openstack/tempest
+    vars:
+      tempest_concurrency: 4
+      devstack_localrc:
+        Q_DVR_MODE: dvr_snat
     irrelevant-files: *tempest-irrelevant-files
 
 - job:
