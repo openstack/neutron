@@ -1906,3 +1906,115 @@ class ParseLinkDeviceTestCase(base.BaseTestCase):
                      'dynamic': False, 'dadfailed': False, 'name': 'int_name',
                      'broadcast': None, 'tentative': False}]
         self.assertEqual(expected, retval)
+
+
+class GetDevicesInfoTestCase(base.BaseTestCase):
+
+    DEVICE_LO = {
+        'index': 2,
+        'attrs': (('IFLA_IFNAME', 'lo'), ('IFLA_OPERSTATE', 'UP'),
+                  ('IFLA_LINKMODE', 0), ('IFLA_MTU', 1000),
+                  ('IFLA_PROMISCUITY', 0),
+                  ('IFLA_ADDRESS', '5a:76:ed:cc:ce:90'),
+                  ('IFLA_BROADCAST', 'ff:ff:ff:ff:ff:f0'), )
+    }
+
+    DEVICE_DUMMY = {
+        'index': 2,
+        'attrs': (('IFLA_IFNAME', 'int_01'), ('IFLA_OPERSTATE', 'DOWN'),
+                  ('IFLA_LINKMODE', 0), ('IFLA_MTU', 1500),
+                  ('IFLA_PROMISCUITY', 0),
+                  ('IFLA_ADDRESS', '5a:76:ed:cc:ce:90'),
+                  ('IFLA_BROADCAST', 'ff:ff:ff:ff:ff:f0'),
+                  ('IFLA_LINKINFO', {
+                      'attrs': (('IFLA_INFO_KIND', 'dummy'), )}))
+    }
+    DEVICE_VLAN = {
+        'index': 5,
+        'attrs': (('IFLA_IFNAME', 'int_02'), ('IFLA_OPERSTATE', 'DOWN'),
+                  ('IFLA_LINKMODE', 0), ('IFLA_MTU', 1400),
+                  ('IFLA_PROMISCUITY', 0),
+                  ('IFLA_ADDRESS', '5a:76:ed:cc:ce:91'),
+                  ('IFLA_BROADCAST', 'ff:ff:ff:ff:ff:f1'),
+                  ('IFLA_LINKINFO', {'attrs': (
+                      ('IFLA_INFO_KIND', 'vlan'),
+                      ('IFLA_INFO_DATA', {'attrs': (('IFLA_VLAN_ID', 1000), )})
+                  )}))
+    }
+    DEVICE_VXLAN = {
+        'index': 9,
+        'attrs': (('IFLA_IFNAME', 'int_03'), ('IFLA_OPERSTATE', 'UP'),
+                  ('IFLA_LINKMODE', 0), ('IFLA_MTU', 1300),
+                  ('IFLA_PROMISCUITY', 0),
+                  ('IFLA_ADDRESS', '5a:76:ed:cc:ce:92'),
+                  ('IFLA_BROADCAST', 'ff:ff:ff:ff:ff:f2'),
+                  ('IFLA_LINKINFO', {'attrs': (
+                      ('IFLA_INFO_KIND', 'vxlan'),
+                      ('IFLA_INFO_DATA', {'attrs': (
+                          ('IFLA_VXLAN_ID', 1001),
+                          ('IFLA_VXLAN_GROUP', '239.1.1.1'))})
+                  )}))
+    }
+
+    def setUp(self):
+        super(GetDevicesInfoTestCase, self).setUp()
+        self.mock_getdevs = mock.patch.object(priv_lib,
+                                              'get_link_devices').start()
+
+    def test_get_devices_info_lo(self):
+        self.mock_getdevs.return_value = (self.DEVICE_LO, )
+        ret = ip_lib.get_devices_info('namespace')
+        expected = {'index': 2,
+                    'name': 'lo',
+                    'operstate': 'UP',
+                    'linkmode': 0,
+                    'mtu': 1000,
+                    'promiscuity': 0,
+                    'mac': '5a:76:ed:cc:ce:90',
+                    'broadcast': 'ff:ff:ff:ff:ff:f0'}
+        self.assertEqual(expected, ret[0])
+
+    def test_get_devices_info_dummy(self):
+        self.mock_getdevs.return_value = (self.DEVICE_DUMMY, )
+        ret = ip_lib.get_devices_info('namespace')
+        expected = {'index': 2,
+                    'name': 'int_01',
+                    'operstate': 'DOWN',
+                    'linkmode': 0,
+                    'mtu': 1500,
+                    'promiscuity': 0,
+                    'mac': '5a:76:ed:cc:ce:90',
+                    'broadcast': 'ff:ff:ff:ff:ff:f0',
+                    'kind': 'dummy'}
+        self.assertEqual(expected, ret[0])
+
+    def test_get_devices_info_vlan(self):
+        self.mock_getdevs.return_value = (self.DEVICE_VLAN, )
+        ret = ip_lib.get_devices_info('namespace')
+        expected = {'index': 5,
+                    'name': 'int_02',
+                    'operstate': 'DOWN',
+                    'linkmode': 0,
+                    'mtu': 1400,
+                    'promiscuity': 0,
+                    'mac': '5a:76:ed:cc:ce:91',
+                    'broadcast': 'ff:ff:ff:ff:ff:f1',
+                    'kind': 'vlan',
+                    'vlan_id': 1000}
+        self.assertEqual(expected, ret[0])
+
+    def test_get_devices_info_vxlan(self):
+        self.mock_getdevs.return_value = (self.DEVICE_VXLAN, )
+        ret = ip_lib.get_devices_info('namespace')
+        expected = {'index': 9,
+                    'name': 'int_03',
+                    'operstate': 'UP',
+                    'linkmode': 0,
+                    'mtu': 1300,
+                    'promiscuity': 0,
+                    'mac': '5a:76:ed:cc:ce:92',
+                    'broadcast': 'ff:ff:ff:ff:ff:f2',
+                    'kind': 'vxlan',
+                    'vxlan_id': 1001,
+                    'vxlan_group': '239.1.1.1'}
+        self.assertEqual(expected, ret[0])

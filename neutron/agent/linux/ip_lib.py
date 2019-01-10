@@ -144,6 +144,19 @@ class IPWrapper(SubProcessBase):
     def device(self, name):
         return IPDevice(name, namespace=self.namespace)
 
+    def get_devices_info(self, exclude_loopback=True,
+                         exclude_fb_tun_devices=True):
+        devices = get_devices_info(self.namespace)
+
+        retval = []
+        for device in devices:
+            if (exclude_loopback and device['name'] == LOOPBACK_DEVNAME or
+                    exclude_fb_tun_devices and
+                    device['name'] in FB_TUNNEL_DEVICE_NAMES):
+                continue
+            retval.append(device)
+        return retval
+
     def get_devices(self, exclude_loopback=True, exclude_fb_tun_devices=True):
         retval = []
         try:
@@ -1330,6 +1343,13 @@ def delete_ip_rule(namespace, ip, iif=None, table=None, priority=None,
     privileged.delete_ip_rule(namespace, **cmd_args)
 
 
+def get_attr(pyroute2_obj, attr_name):
+    """Get an attribute from a PyRoute2 object"""
+    rule_attrs = pyroute2_obj.get('attrs', [])
+    for attr in (attr for attr in rule_attrs if attr[0] == attr_name):
+        return attr[1]
+
+
 def _parse_link_device(namespace, device, **kwargs):
     """Parse pytoute2 link device information
 
@@ -1337,12 +1357,6 @@ def _parse_link_device(namespace, device, **kwargs):
     in a dictionary.
     IP address scope: http://linux-ip.net/html/tools-ip-address.html
     """
-    def get_attr(pyroute2_obj, attr_name):
-        rule_attrs = pyroute2_obj.get('attrs', [])
-        for attr in (attr for attr in rule_attrs if attr[0] == attr_name):
-            return attr[1]
-        return
-
     retval = []
     name = get_attr(device, 'IFLA_IFNAME')
     ip_addresses = privileged.get_ip_addresses(namespace,
@@ -1376,4 +1390,30 @@ def get_devices_with_ip(namespace, name=None, **kwargs):
     for parsed_ips in (_parse_link_device(namespace, device, **kwargs)
                        for device in devices):
         retval += parsed_ips
+    return retval
+
+
+def get_devices_info(namespace, **kwargs):
+    devices = privileged.get_link_devices(namespace, **kwargs)
+    retval = []
+    for device in devices:
+        ret = {'index': device['index'],
+               'name': get_attr(device, 'IFLA_IFNAME'),
+               'operstate': get_attr(device, 'IFLA_OPERSTATE'),
+               'linkmode': get_attr(device, 'IFLA_LINKMODE'),
+               'mtu': get_attr(device, 'IFLA_MTU'),
+               'promiscuity': get_attr(device, 'IFLA_PROMISCUITY'),
+               'mac': get_attr(device, 'IFLA_ADDRESS'),
+               'broadcast': get_attr(device, 'IFLA_BROADCAST')}
+        ifla_linkinfo = get_attr(device, 'IFLA_LINKINFO')
+        if ifla_linkinfo:
+            ret['kind'] = get_attr(ifla_linkinfo, 'IFLA_INFO_KIND')
+            ifla_data = get_attr(ifla_linkinfo, 'IFLA_INFO_DATA')
+            if ret['kind'] == 'vxlan':
+                ret['vxlan_id'] = get_attr(ifla_data, 'IFLA_VXLAN_ID')
+                ret['vxlan_group'] = get_attr(ifla_data, 'IFLA_VXLAN_GROUP')
+            elif ret['kind'] == 'vlan':
+                ret['vlan_id'] = get_attr(ifla_data, 'IFLA_VLAN_ID')
+        retval.append(ret)
+
     return retval
