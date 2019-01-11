@@ -97,6 +97,38 @@ class SecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
         # follow-up patch.
         pass
 
+    def test_get_object_no_synth(self):
+        fields = self.obj_fields[0].copy()
+        sg_obj = self._make_object(fields)
+        sg_obj.is_default = True
+        sg_obj.create()
+
+        listed_obj = securitygroup.SecurityGroup.get_object(
+            self.context,
+            fields=['id', 'name'],
+            id=sg_obj.id,
+            project_id=sg_obj.project_id
+        )
+        self.assertIsNotNone(listed_obj)
+        self.assertEqual(len(sg_obj.rules), 0)
+        self.assertIsNone(listed_obj.rules)
+
+    def test_get_objects_no_synth(self):
+        fields = self.obj_fields[0].copy()
+        sg_obj = self._make_object(fields)
+        sg_obj.is_default = True
+        sg_obj.create()
+
+        listed_objs = securitygroup.SecurityGroup.get_objects(
+            self.context,
+            fields=['id', 'name'],
+            id=sg_obj.id,
+            project_id=sg_obj.project_id
+        )
+        self.assertEqual(len(listed_objs), 1)
+        self.assertEqual(len(sg_obj.rules), 0)
+        self.assertIsNone(listed_objs[0].rules)
+
 
 class DefaultSecurityGroupIfaceObjTestCase(test_base.BaseObjectIfaceTestCase):
 

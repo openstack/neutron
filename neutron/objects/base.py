@@ -133,6 +133,7 @@ class NeutronObject(obj_base.VersionedObject,
 
     def __init__(self, context=None, **kwargs):
         super(NeutronObject, self).__init__(context, **kwargs)
+        self._load_synthetic_fields = True
         self.obj_set_defaults()
 
     def _synthetic_fields_items(self):
@@ -219,7 +220,7 @@ class NeutronObject(obj_base.VersionedObject,
         return obj
 
     @classmethod
-    def get_object(cls, context, **kwargs):
+    def get_object(cls, context, fields=None, **kwargs):
         raise NotImplementedError()
 
     @classmethod
@@ -248,7 +249,7 @@ class NeutronObject(obj_base.VersionedObject,
     @classmethod
     @abc.abstractmethod
     def get_objects(cls, context, _pager=None, validate_filters=True,
-                    **kwargs):
+                    fields=None, **kwargs):
         raise NotImplementedError()
 
     @classmethod
@@ -432,7 +433,8 @@ class NeutronDbObject(NeutronObject):
         for field in self.fields:
             if field in fields and not self.is_synthetic(field):
                 setattr(self, field, fields[field])
-        self.load_synthetic_db_fields(db_obj)
+        if self._load_synthetic_fields:
+            self.load_synthetic_db_fields(db_obj)
         self._captured_db_model = db_obj
         self.obj_reset_changes()
 
@@ -491,8 +493,13 @@ class NeutronDbObject(NeutronObject):
         return result
 
     @classmethod
-    def _load_object(cls, context, db_obj):
+    def _load_object(cls, context, db_obj, fields=None):
         obj = cls(context)
+
+        if fields is not None and len(fields) != 0:
+            if len(set(fields).intersection(set(cls.synthetic_fields))) == 0:
+                obj._load_synthetic_fields = False
+
         obj.from_db_object(db_obj)
         return obj
 
@@ -534,13 +541,18 @@ class NeutronDbObject(NeutronObject):
         return db_api.autonested_transaction(context.session)
 
     @classmethod
-    def get_object(cls, context, **kwargs):
+    def get_object(cls, context, fields=None, **kwargs):
         """Fetch a single object
 
         Return the first result of given context or None if the result doesn't
         contain any row. Next, convert it to a versioned object.
 
         :param context:
+        :param fields: indicate which fields the caller is interested in
+                       using. Note that currently this is limited to
+                       avoid loading synthetic fields when possible, and
+                       does not affect db queries. Default is None, which
+                       is the same as []. Example: ['id', 'name']
         :param kwargs: multiple keys defined by key=value pairs
         :return: single object of NeutronDbObject class or None
         """
@@ -555,11 +567,11 @@ class NeutronDbObject(NeutronObject):
             db_obj = obj_db_api.get_object(
                 cls, context, **cls.modify_fields_to_db(kwargs))
             if db_obj:
-                return cls._load_object(context, db_obj)
+                return cls._load_object(context, db_obj, fields=fields)
 
     @classmethod
     def get_objects(cls, context, _pager=None, validate_filters=True,
-                    **kwargs):
+                    fields=None, **kwargs):
         """Fetch a list of objects
 
         Fetch all results from DB and convert them to versioned objects.
@@ -569,6 +581,11 @@ class NeutronDbObject(NeutronObject):
                        criteria
         :param validate_filters: Raises an error in case of passing an unknown
                                  filter
+        :param fields: indicate which fields the caller is interested in
+                       using. Note that currently this is limited to
+                       avoid loading synthetic fields when possible, and
+                       does not affect db queries. Default is None, which
+                       is the same as []. Example: ['id', 'name']
         :param kwargs: multiple keys defined by key=value pairs
         :return: list of objects of NeutronDbObject class or empty list
         """
@@ -577,7 +594,9 @@ class NeutronDbObject(NeutronObject):
         with cls.db_context_reader(context):
             db_objs = obj_db_api.get_objects(
                 cls, context, _pager=_pager, **cls.modify_fields_to_db(kwargs))
-            return [cls._load_object(context, db_obj) for db_obj in db_objs]
+
+            return [cls._load_object(context, db_obj, fields=fields)
+                    for db_obj in db_objs]
 
     @classmethod
     def get_values(cls, context, field, validate_filters=True, **kwargs):

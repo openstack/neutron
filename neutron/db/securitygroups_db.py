@@ -155,7 +155,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             sorts=sorts, limit=limit, marker=marker, page_reverse=page_reverse)
 
         sg_objs = sg_obj.SecurityGroup.get_objects(
-            context, _pager=pager, validate_filters=False, **filters)
+            context, _pager=pager, validate_filters=False,
+            fields=fields, **filters)
 
         return [self._make_security_group_dict(obj, fields) for obj in sg_objs]
 
@@ -170,7 +171,6 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         """Tenant id is given to handle the case when creating a security
         group rule on behalf of another use.
         """
-
         if tenant_id:
             tmp_context_tenant_id = context.tenant_id
             context.tenant_id = tenant_id
@@ -178,16 +178,22 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         try:
             with db_api.CONTEXT_READER.using(context):
                 ret = self._make_security_group_dict(self._get_security_group(
-                                                     context, id), fields)
-                ret['security_group_rules'] = self.get_security_group_rules(
-                    context, {'security_group_id': [id]})
+                                                     context, id,
+                                                     fields=fields),
+                                                     fields)
+                if (fields is None or len(fields) == 0 or
+                   'security_group_rules' in fields):
+                    rules = self.get_security_group_rules(context,
+                        {'security_group_id': [id]})
+                    ret['security_group_rules'] = rules
+
         finally:
             if tenant_id:
                 context.tenant_id = tmp_context_tenant_id
         return ret
 
-    def _get_security_group(self, context, id):
-        sg = sg_obj.SecurityGroup.get_object(context, id=id)
+    def _get_security_group(self, context, id, fields=None):
+        sg = sg_obj.SecurityGroup.get_object(context, fields=fields, id=id)
         if sg is None:
             raise ext_sg.SecurityGroupNotFound(id=id)
         return sg
@@ -212,7 +218,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             if ports:
                 raise ext_sg.SecurityGroupInUse(id=id)
             # confirm security group exists
-            sg = self._get_security_group(context, id)
+            sg = self._get_security_group(context, id, fields=['id', 'name'])
 
             if sg['name'] == 'default' and not context.is_admin:
                 raise ext_sg.SecurityGroupCannotRemoveDefault()
@@ -286,10 +292,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                'name': security_group['name'],
                'tenant_id': security_group['tenant_id'],
                'description': security_group['description']}
-        res['security_group_rules'] = [
-            self._make_security_group_rule_dict(r.db_obj)
-            for r in security_group.rules
-        ]
+        if security_group.rules:
+            res['security_group_rules'] = [
+                self._make_security_group_rule_dict(r.db_obj)
+                for r in security_group.rules
+            ]
         resource_extend.apply_funcs(ext_sg.SECURITYGROUPS, res,
                                     security_group.db_obj)
         return db_utils.resource_fields(res, fields)
