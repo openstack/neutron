@@ -1561,9 +1561,12 @@ class DeviceManager(object):
 
     def fill_dhcp_udp_checksums(self, namespace):
         """Ensure DHCP reply packets always have correct UDP checksums."""
-        iptables_mgr = iptables_manager.IptablesManager(use_ipv6=False,
+        iptables_mgr = iptables_manager.IptablesManager(use_ipv6=True,
                                                         namespace=namespace)
         ipv4_rule = ('-p udp -m udp --dport %d -j CHECKSUM --checksum-fill'
                      % constants.DHCP_RESPONSE_PORT)
+        ipv6_rule = ('-p udp -m udp --dport %d -j CHECKSUM --checksum-fill'
+                     % n_const.DHCPV6_CLIENT_PORT)
         iptables_mgr.ipv4['mangle'].add_rule('POSTROUTING', ipv4_rule)
+        iptables_mgr.ipv6['mangle'].add_rule('POSTROUTING', ipv6_rule)
         iptables_mgr.apply()
