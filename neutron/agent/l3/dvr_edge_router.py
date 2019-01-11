@@ -317,6 +317,8 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         try:
             ip_lib.add_ip_address(fip_cidr, interface_name,
                                   namespace=self.snat_namespace.name)
+        except ip_lib.IpAddressAlreadyExists:
+            pass
         except RuntimeError:
             LOG.warning("Unable to configure IP address for centralized "
                         "floating IP: %s", fip['id'])
