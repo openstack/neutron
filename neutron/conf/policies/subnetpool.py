@@ -15,35 +15,98 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+COLLECTION_PATH = '/subnetpools'
+RESOURCE_PATH = '/subnetpools/{id}'
+
+
 rules = [
-    policy.RuleDefault('shared_subnetpools',
-                       'field:subnetpools:shared=True',
-                       description='Rule of shared subnetpool'),
-    policy.RuleDefault('create_subnetpool',
-                       base.RULE_ANY,
-                       description='Access rule for creating subnetpool'),
-    policy.RuleDefault('create_subnetpool:shared',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for creating '
-                                    'shared subnetpool')),
-    policy.RuleDefault('create_subnetpool:is_default',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for creating '
-                                    'subnetpool with is_default')),
-    policy.RuleDefault('get_subnetpool',
-                       base.policy_or(base.RULE_ADMIN_OR_OWNER,
-                                      'rule:shared_subnetpools'),
-                       description='Access rule for getting subnetpool'),
-    policy.RuleDefault('update_subnetpool',
-                       base.RULE_ADMIN_OR_OWNER,
-                       description='Access rule for updating subnetpool'),
-    policy.RuleDefault('update_subnetpool:is_default',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for updating '
-                                    'is_default of subnetpool')),
-    policy.RuleDefault('delete_subnetpool',
-                       base.RULE_ADMIN_OR_OWNER,
-                       description='Access rule for deleting subnetpool')
+    policy.RuleDefault(
+        'shared_subnetpools',
+        'field:subnetpools:shared=True',
+        'Definition of a shared subnetpool'
+    ),
+    policy.DocumentedRuleDefault(
+        'create_subnetpool',
+        base.RULE_ANY,
+        'Create a subnetpool',
+        [
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'create_subnetpool:shared',
+        base.RULE_ADMIN_ONLY,
+        'Create a shared subnetpool',
+        [
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'create_subnetpool:is_default',
+        base.RULE_ADMIN_ONLY,
+        'Specify ``is_default`` attribute when creating a subnetpool',
+        [
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'get_subnetpool',
+        base.policy_or(base.RULE_ADMIN_OR_OWNER,
+                       'rule:shared_subnetpools'),
+        'Get a subnetpool',
+        [
+            {
+                'method': 'GET',
+                'path': COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_subnetpool',
+        base.RULE_ADMIN_OR_OWNER,
+        'Update a subnetpool',
+        [
+            {
+                'method': 'PUT',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_subnetpool:is_default',
+        base.RULE_ADMIN_ONLY,
+        'Update ``is_default`` attribute of a subnetpool',
+        [
+            {
+                'method': 'PUT',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_subnetpool',
+        base.RULE_ADMIN_OR_OWNER,
+        'Delete a subnetpool',
+        [
+            {
+                'method': 'DELETE',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    )
 ]
 
 

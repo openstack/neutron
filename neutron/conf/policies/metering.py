@@ -15,28 +15,88 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+LABEL_COLLECTION_PATH = '/metering/metering-labels'
+LABEL_RESOURCE_PATH = '/metering/metering-labels/{id}'
+
+RULE_COLLECTION_PATH = '/metering/metering-label-rules'
+RULE_RESOURCE_PATH = '/metering/metering-label-rules/{id}'
+
+
 rules = [
-    policy.RuleDefault('create_metering_label',
-                       base.RULE_ADMIN_ONLY,
-                       description='Access rule for creating metering label'),
-    policy.RuleDefault('get_metering_label',
-                       base.RULE_ADMIN_ONLY,
-                       description='Access rule for getting metering label'),
-    policy.RuleDefault('delete_metering_label',
-                       base.RULE_ADMIN_ONLY,
-                       description='Access rule for deleting metering label'),
-    policy.RuleDefault('create_metering_label_rule',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for creating '
-                                    'metering label rule')),
-    policy.RuleDefault('get_metering_label_rule',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for getting '
-                                    'metering label rule')),
-    policy.RuleDefault('delete_metering_label_rule',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for deleting '
-                                    'metering label rule'))
+    policy.DocumentedRuleDefault(
+        'create_metering_label',
+        base.RULE_ADMIN_ONLY,
+        'Create a metering label',
+        [
+            {
+                'method': 'POST',
+                'path': LABEL_COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'get_metering_label',
+        base.RULE_ADMIN_ONLY,
+        'Get a metering label',
+        [
+            {
+                'method': 'GET',
+                'path': LABEL_COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': LABEL_RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_metering_label',
+        base.RULE_ADMIN_ONLY,
+        'Delete a metering label',
+        [
+            {
+                'method': 'DELETE',
+                'path': LABEL_RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'create_metering_label_rule',
+        base.RULE_ADMIN_ONLY,
+        'Create a metering label rule',
+        [
+            {
+                'method': 'POST',
+                'path': RULE_COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'get_metering_label_rule',
+        base.RULE_ADMIN_ONLY,
+        'Get a metering label rule',
+        [
+            {
+                'method': 'GET',
+                'path': RULE_COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': RULE_RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_metering_label_rule',
+        base.RULE_ADMIN_ONLY,
+        'Delete a metering label rule',
+        [
+            {
+                'method': 'DELETE',
+                'path': RULE_RESOURCE_PATH,
+            },
+        ]
+    )
 ]
 
 

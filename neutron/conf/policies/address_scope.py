@@ -15,31 +15,87 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+COLLECTION_PATH = '/address-scopes'
+RESOURCE_PATH = '/address-scopes/{id}'
+
+
 rules = [
-    policy.RuleDefault('shared_address_scopes',
-                       'field:address_scopes:shared=True',
-                       description='Rule of shared address scope'),
-    policy.RuleDefault('create_address_scope',
-                       base.RULE_ANY,
-                       description='Access rule for creating address scope'),
-    policy.RuleDefault('create_address_scope:shared',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for creating '
-                                    'shared address scope')),
-    policy.RuleDefault('get_address_scope',
-                       base.policy_or(base.RULE_ADMIN_OR_OWNER,
-                                      'rule:shared_address_scopes'),
-                       description='Access rule for getting address scope'),
-    policy.RuleDefault('update_address_scope',
-                       base.RULE_ADMIN_OR_OWNER,
-                       description='Access rule for updating address scope'),
-    policy.RuleDefault('update_address_scope:shared',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for updating '
-                                    'shared attribute of address scope')),
-    policy.RuleDefault('delete_address_scope',
-                       base.RULE_ADMIN_OR_OWNER,
-                       description='Access rule for deleting address scope')
+    policy.RuleDefault(
+        'shared_address_scopes',
+        'field:address_scopes:shared=True',
+        'Definition of a shared address scope'
+    ),
+    policy.DocumentedRuleDefault(
+        'create_address_scope',
+        base.RULE_ANY,
+        'Create an address scope',
+        [
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'create_address_scope:shared',
+        base.RULE_ADMIN_ONLY,
+        'Create a shared address scope',
+        [
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'get_address_scope',
+        base.policy_or(base.RULE_ADMIN_OR_OWNER,
+                       'rule:shared_address_scopes'),
+        'Get an address scope',
+        [
+            {
+                'method': 'GET',
+                'path': COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_address_scope',
+        base.RULE_ADMIN_OR_OWNER,
+        'Update an address scope',
+        [
+            {
+                'method': 'PUT',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_address_scope:shared',
+        base.RULE_ADMIN_ONLY,
+        'Update ``shared`` attribute of an address scope',
+        [
+            {
+                'method': 'PUT',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_address_scope',
+        base.RULE_ADMIN_OR_OWNER,
+        'Delete an address scope',
+        [
+            {
+                'method': 'DELETE',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
 ]
 
 

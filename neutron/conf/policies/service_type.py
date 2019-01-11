@@ -16,10 +16,17 @@ from neutron.conf.policies import base
 
 
 rules = [
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'get_service_provider',
         base.RULE_ANY,
-        description='Access rule for listing all service providers'),
+        'Get service providers',
+        [
+            {
+                'method': 'GET',
+                'path': '/service-providers',
+            },
+        ]
+    ),
 ]
 
 

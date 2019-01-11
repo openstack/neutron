@@ -16,10 +16,21 @@ from neutron.conf.policies import base
 
 
 rules = [
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'get_network_ip_availability',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for getting network IP availability'),
+        'Get network IP availability',
+        [
+            {
+                'method': 'GET',
+                'path': '/network-ip-availabilities',
+            },
+            {
+                'method': 'GET',
+                'path': '/network-ip-availabilities/{network_id}',
+            },
+        ]
+    ),
 ]
 
 

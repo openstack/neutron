@@ -15,23 +15,60 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+COLLECTION_PATH = '/floatingips/{floatingip_id}/port_forwardings'
+RESOURCE_PATH = ('/floatingips/{floatingip_id}'
+                 '/port_forwardings/{port_forwarding_id}')
+
+
 rules = [
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'create_floatingip_port_forwarding',
         base.RULE_ADMIN_OR_PARENT_OWNER,
-        description='Access rule for creating floating IP port forwarding'),
-    policy.RuleDefault(
+        'Create a floating IP port forwarding',
+        [
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'get_floatingip_port_forwarding',
         base.RULE_ADMIN_OR_PARENT_OWNER,
-        description='Access rule for getting floating IP port forwarding'),
-    policy.RuleDefault(
+        'Get a floating IP port forwarding',
+        [
+            {
+                'method': 'GET',
+                'path': COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'update_floatingip_port_forwarding',
         base.RULE_ADMIN_OR_PARENT_OWNER,
-        description='Access rule for updating floating IP port forwarding'),
-    policy.RuleDefault(
+        'Update a floating IP port forwarding',
+        [
+            {
+                'method': 'PUT',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'delete_floatingip_port_forwarding',
         base.RULE_ADMIN_OR_PARENT_OWNER,
-        description='Access rule for deleting floating IP port forwarding'),
+        'Delete a floating IP port forwarding',
+        [
+            {
+                'method': 'DELETE',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
 ]
 
 

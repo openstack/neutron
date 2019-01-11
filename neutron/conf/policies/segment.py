@@ -15,19 +15,59 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+COLLECTION_PATH = '/segments'
+RESOURCE_PATH = '/segments/{id}'
+
+
 rules = [
-    policy.RuleDefault('create_segment',
-                       base.RULE_ADMIN_ONLY,
-                       description='Access rule for creating segment'),
-    policy.RuleDefault('get_segment',
-                       base.RULE_ADMIN_ONLY,
-                       description='Access rule for getting segment'),
-    policy.RuleDefault('update_segment',
-                       base.RULE_ADMIN_ONLY,
-                       description='Access rule for updating segment'),
-    policy.RuleDefault('delete_segment',
-                       base.RULE_ADMIN_ONLY,
-                       description='Access rule for deleting segment'),
+    policy.DocumentedRuleDefault(
+        'create_segment',
+        base.RULE_ADMIN_ONLY,
+        'Create a segment',
+        [
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'get_segment',
+        base.RULE_ADMIN_ONLY,
+        'Get a segment',
+        [
+            {
+                'method': 'GET',
+                'path': COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_segment',
+        base.RULE_ADMIN_ONLY,
+        'Update a segment',
+        [
+            {
+                'method': 'PUT',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_segment',
+        base.RULE_ADMIN_ONLY,
+        'Delete a segment',
+        [
+            {
+                'method': 'DELETE',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
 ]
 
 

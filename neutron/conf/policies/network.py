@@ -15,131 +15,186 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+COLLECTION_PATH = '/networks'
+RESOURCE_PATH = '/networks/{id}'
+
+ACTION_POST = [
+    {'method': 'POST', 'path': COLLECTION_PATH},
+]
+ACTION_PUT = [
+    {'method': 'PUT', 'path': RESOURCE_PATH},
+]
+ACTION_DELETE = [
+    {'method': 'DELETE', 'path': RESOURCE_PATH},
+]
+ACTION_GET = [
+    {'method': 'GET', 'path': COLLECTION_PATH},
+    {'method': 'GET', 'path': RESOURCE_PATH},
+]
+
+
 rules = [
     policy.RuleDefault(
         'external',
         'field:networks:router:external=True',
-        description='Rule of external network'),
+        'Definition of an external network'),
 
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'create_network',
         base.RULE_ANY,
-        description='Access rule for creating network'),
-    policy.RuleDefault(
+        'Create a network',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_network:shared',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for creating shared network'),
-    policy.RuleDefault(
+        'Create a shared network',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_network:router:external',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for creating external network'),
-    policy.RuleDefault(
+        'Create an external network',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_network:is_default',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for creating network with is_default'),
-    policy.RuleDefault(
+        'Specify ``is_default`` attribute when creating a network',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_network:port_security_enabled',
         base.RULE_ANY,
-        description=('Access rule for creating network '
-                     'with port_security_enabled')),
-    policy.RuleDefault(
+        'Specify ``port_security_enabled`` attribute when creating a network',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_network:segments',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for creating network with segments'),
-    policy.RuleDefault(
+        'Specify ``segments`` attribute when creating a network',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_network:provider:network_type',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for creating network '
-                     'with provider network_type')),
-    policy.RuleDefault(
+        'Specify ``provider:network_type`` when creating a network',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_network:provider:physical_network',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for creating network '
-                     'with provider physical_network')),
-    policy.RuleDefault(
+        'Specify ``provider:physical_network`` when creating a network',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_network:provider:segmentation_id',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for creating network '
-                     'with provider segmentation_id')),
+        'Specify ``provider:segmentation_id`` when creating a network',
+        ACTION_POST
+    ),
 
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'get_network',
         base.policy_or(base.RULE_ADMIN_OR_OWNER,
                        'rule:shared',
                        'rule:external',
                        base.RULE_ADVSVC),
-        description='Access rule for getting shared network'),
-    policy.RuleDefault(
+        'Get a network',
+        ACTION_GET
+    ),
+    policy.DocumentedRuleDefault(
         'get_network:router:external',
         base.RULE_ANY,
-        description='Access rule for getting external network'),
-    policy.RuleDefault(
+        'Get ``router:external`` attribute of a network',
+        ACTION_GET
+    ),
+    policy.DocumentedRuleDefault(
         'get_network:segments',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for getting segments of network'),
-    policy.RuleDefault(
+        'Get ``segments`` attribute of a network',
+        ACTION_GET
+    ),
+    policy.DocumentedRuleDefault(
         'get_network:provider:network_type',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for getting provider '
-                     'network_type of network')),
-    policy.RuleDefault(
+        'Get ``provider:network_type`` attribute of a network',
+        ACTION_GET
+    ),
+    policy.DocumentedRuleDefault(
         'get_network:provider:physical_network',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for getting provider '
-                     'physical_network of network')),
-    policy.RuleDefault(
+        'Get ``provider:physical_network`` attribute of a network',
+        ACTION_GET
+    ),
+    policy.DocumentedRuleDefault(
         'get_network:provider:segmentation_id',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for getting provider '
-                     'segmentation_id of network')),
+        'Get ``provider:segmentation_id`` attribute of a network',
+        ACTION_GET
+    ),
 
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'update_network',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for updating network'),
-    policy.RuleDefault(
+        'Update a network',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_network:segments',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for updating segments of network'),
-    policy.RuleDefault(
+        'Update ``segments`` attribute of a network',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_network:shared',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for updating shared attribute of network'),
-    policy.RuleDefault(
+        'Update ``shared`` attribute of a network',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_network:provider:network_type',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for updating provider '
-                     'network_type of network')),
-    policy.RuleDefault(
+        'Update ``provider:network_type`` attribute of a network',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_network:provider:physical_network',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for updating provider '
-                     'physical_network of network')),
-    policy.RuleDefault(
+        'Update ``provider:physical_network`` attribute of a network',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_network:provider:segmentation_id',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for updating provider '
-                     'segmentation_id of network')),
-    policy.RuleDefault(
+        'Update ``provider:segmentation_id`` attribute of a network',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_network:router:external',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for updating router:external attribute '
-                     'of network')),
-    policy.RuleDefault(
+        'Update ``router:external`` attribute of a network',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_network:is_default',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for updating is_default attribute '
-                     'of network')),
-    policy.RuleDefault(
+        'Update ``is_default`` attribute of a network',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_network:port_security_enabled',
         base.RULE_ADMIN_OR_OWNER,
-        description=('Access rule for updating port_security_enabled '
-                     'attribute of network')),
+        'Update ``port_security_enabled`` attribute of a network',
+        ACTION_PUT
+    ),
 
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'delete_network',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for deleting network'),
+        'Delete a network',
+        ACTION_DELETE
+    ),
 ]
 
 

@@ -15,23 +15,70 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+COLLECTION_PATH = '/floatingips'
+RESOURCE_PATH = '/floatingips/{id}'
+
+
 rules = [
-    policy.RuleDefault('create_floatingip',
-                       base.RULE_ANY,
-                       description='Access rule for creating floating IP'),
-    policy.RuleDefault('create_floatingip:floating_ip_address',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for creating floating IP '
-                                    'with a specific IP address')),
-    policy.RuleDefault('get_floatingip',
-                       base.RULE_ADMIN_OR_OWNER,
-                       description='Access rule for getting floating IP'),
-    policy.RuleDefault('update_floatingip',
-                       base.RULE_ADMIN_OR_OWNER,
-                       description='Access rule for updating floating IP'),
-    policy.RuleDefault('delete_floatingip',
-                       base.RULE_ADMIN_OR_OWNER,
-                       description='Access rule for deleting floating IP'),
+    policy.DocumentedRuleDefault(
+        'create_floatingip',
+        base.RULE_ANY,
+        'Create a floating IP',
+        [
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'create_floatingip:floating_ip_address',
+        base.RULE_ADMIN_ONLY,
+        'Create a floating IP with a specific IP address',
+        [
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'get_floatingip',
+        base.RULE_ADMIN_OR_OWNER,
+        'Get a floating IP',
+        [
+            {
+                'method': 'GET',
+                'path': COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_floatingip',
+        base.RULE_ADMIN_OR_OWNER,
+        'Update a floating IP',
+        [
+            {
+                'method': 'PUT',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_floatingip',
+        base.RULE_ADMIN_OR_OWNER,
+        'Delete a floating IP',
+        [
+            {
+                'method': 'DELETE',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
 ]
 
 

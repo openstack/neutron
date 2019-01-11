@@ -16,10 +16,17 @@ from neutron.conf.policies import base
 
 
 rules = [
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'get_availability_zone',
         base.RULE_ANY,
-        description='Access rule for getting availability zone'),
+        'List availability zones',
+        [
+            {
+                'method': 'GET',
+                'path': '/availability_zones',
+            },
+        ]
+    ),
 ]
 
 
