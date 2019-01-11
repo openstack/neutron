@@ -1570,8 +1570,10 @@ class TestDeviceManager(base.BaseTestCase):
         iptables_cls = iptables_cls_p.start()
         self.iptables_inst = mock.Mock()
         iptables_cls.return_value = self.iptables_inst
-        self.mangle_inst = mock.Mock()
-        self.iptables_inst.ipv4 = {'mangle': self.mangle_inst}
+        self.mangle_inst_v4 = mock.Mock()
+        self.iptables_inst.ipv4 = {'mangle': self.mangle_inst_v4}
+        self.mangle_inst_v6 = mock.Mock()
+        self.iptables_inst.ipv6 = {'mangle': self.mangle_inst_v6}
 
         self.mock_ip_wrapper_p = mock.patch("neutron.agent.linux.ip_lib."
                                             "IPWrapper")
@@ -1631,12 +1633,19 @@ class TestDeviceManager(base.BaseTestCase):
         cfg.CONF.set_override('enable_metadata_network', True)
         self._test_setup_helper(False)
 
-    def test_setup_calls_fill_dhcp_udp_checksums(self):
+    def test_setup_calls_fill_dhcp_udp_checksums_v4(self):
         self._test_setup_helper(False)
         rule = ('-p udp -m udp --dport %d -j CHECKSUM --checksum-fill'
                 % const.DHCP_RESPONSE_PORT)
         expected = [mock.call.add_rule('POSTROUTING', rule)]
-        self.mangle_inst.assert_has_calls(expected)
+        self.mangle_inst_v4.assert_has_calls(expected)
+
+    def test_setup_calls_fill_dhcp_udp_checksums_v6(self):
+        self._test_setup_helper(False)
+        rule = ('-p udp -m udp --dport %d -j CHECKSUM --checksum-fill'
+                % n_const.DHCPV6_CLIENT_PORT)
+        expected = [mock.call.add_rule('POSTROUTING', rule)]
+        self.mangle_inst_v6.assert_has_calls(expected)
 
     def test_setup_dhcp_port_doesnt_orphan_devices(self):
         with mock.patch.object(dhcp.ip_lib, 'IPDevice') as mock_IPDevice:
