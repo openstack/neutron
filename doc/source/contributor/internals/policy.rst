@@ -93,18 +93,20 @@ built in the following way:
   create a rule matching policy names in the form
   ``<operation>_<resource>:<attribute>`` rule, and link it with the
   previous rule with an 'And' relationship (using ``oslo_policy.AndCheck``);
-  this step will be performed only if the enforce_policy flag is set to
-  True in the resource attribute descriptor (usually found in a data
+  this step will be performed only if the ``enforce_policy`` flag is set to
+  ``True`` in the resource attribute descriptor (usually found in a data
   structure called ``RESOURCE_ATTRIBUTE_MAP``);
 * If the attribute is a composite one then further rules will be created;
-  These will match policy names in the form ``<operation>_<resource>:
-  <attribute>:<sub_attribute>``. An 'And' relationship will be used in this
-  case too.
+  These will match policy names in the form
+  ``<operation>_<resource>:<attribute>:<sub_attribute>``.
+  An 'And' relationship will be used in this case too.
 
 As all the rules to verify are linked by 'And' relationships, all the policy
 checks should succeed in order for a request to be authorized. Rule
 verification is performed by ``oslo_policy`` with no "customization" from the
 Neutron side.
+
+.. _response_filtering:
 
 Response Filtering
 ~~~~~~~~~~~~~~~~~~
@@ -193,7 +195,7 @@ The check, performed in the ``__call__`` method, works as follows:
 * verify if the target field is already in the target data. If yes, then
   simply verify whether the value for the target field in target data
   is equal to value for the same field in credentials, just like
-  ``oslo_policy.GeneriCheck`` would do. This is also the most frequent case
+  ``oslo_policy.GenericCheck`` would do. This is also the most frequent case
   as the target field is usually ``tenant_id``;
 * if the previous check failed, extract a parent resource type and a
   parent field name from the target field. For instance
@@ -234,8 +236,8 @@ to ``<value>`` or return ``False`` is the ``<field>`` either is not equal to
 ``<value>`` or does not exist at all.
 
 
-Guidance for API developers
----------------------------
+Guidance for Neutron API developers
+-----------------------------------
 
 When developing REST APIs for Neutron it is important to be aware of how the
 policy engine will authorize these requests. This is true both for APIs
@@ -274,9 +276,8 @@ served by Neutron "core" and for the APIs served by the various Neutron
   inconsistent state if a request is not authorized after it has already
   been dispatched to the backend.
 
-
 Notes
------
+~~~~~
 
 * No authorization checks are performed for requests coming from the RPC over
   AMQP channel. For all these requests a neutron admin context is built, and
@@ -302,6 +303,56 @@ Notes
 
 Policy-in-Code support
 ----------------------
+
+Guideline on defining in-code policies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following is the guideline of policy definitions.
+
+Ideally we should define all available policies, but in the neutron policy
+enforcement it is not practical to define all policies because we check
+all attributes of a target resource in the :ref:`response_filtering`.
+Considering this, we have the special guidelines for "get" operation.
+
+* All policies of ``<action>_<resource>`` must be defined
+  for all types of operations.
+  Valid actions are ``create``, ``update``, ``delete`` and ``get``.
+
+* ``get_<resourceS>`` (get plural) is unnecessary.
+  The neutron API layer use a single form policy ``get_<resource>``
+  when listing resources [#]_ [#]_.
+
+* Member actions for individual resources must be defined.
+  For example, ``add_router_interface`` of ``router`` resource.
+
+* All policies with attributes on "create", "update" and "delete" actions must
+  be defined. ``<action>_<resource>:<attribute>(:<sub_attribute>)`` policy is
+  required for attributes with ``enforce_policy`` in the API definitions.
+  Note that it is recommended to define even if a rule is same as for
+  ``<action>_<resource>`` from the documentation perspective.
+
+* For a policy with attributes of "get" actions like
+  ``get_<resource>:<attribute>(:<sub_attribute>)``,
+  the following guideline is applied:
+
+  * A policy with an attribute must be defined if the policy is different from
+    the policy for ``get_<resource>`` (without attributes).
+  * If a policy with an attribute is same as for ``get_<resource>``, there is
+    no need to define it explicitly.
+    This is for simplicity. We check all attributes of a target resource
+    in the process of :ref:`response_filtering` so it leads to a long long
+    policy definitions for "get" actions in our documentation.
+    It is not happy for operators either.
+  * If an attribute is marked as ``enforce_policy``, it is recommended to
+    define the corresponding policy with the attribute.
+    This is for clarification. If an attribute is marked as ``enforce_policy``
+    in the API definitions, for example, the neutron API limits to set such
+    attribute only to admin users but allows to retrieve a value for regular
+    users. If policies for the attribute are different across the types of
+    operations, it is better to define all of them explicitly.
+
+Registering policies in neutron related projects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Policy-in-code support in neutron is a bit different from other projects
 because the neutron server needs to load policies in code from multiple
@@ -361,6 +412,9 @@ References
 .. [#] Policy reset_ in neutron.api.v2.router
 
 .. _reset: http://git.openstack.org/cgit/openstack/neutron/tree/neutron/api/v2/router.py?id=2015.1.1#n122
+
+.. [#] https://github.com/openstack/neutron/blob/051b6b40f3921b9db4f152a54f402c402cbf138c/neutron/pecan_wsgi/hooks/policy_enforcement.py#L173
+.. [#] https://github.com/openstack/neutron/blob/051b6b40f3921b9db4f152a54f402c402cbf138c/neutron/pecan_wsgi/hooks/policy_enforcement.py#L143
 
 .. [#] https://docs.openstack.org/oslo.policy/latest/user/usage.html#sample-file-generation
 .. [#] https://docs.openstack.org/oslo.policy/latest/cli/index.html#oslopolicy-sample-generator
