@@ -187,6 +187,9 @@ IP_ALLOWED_VERSIONS = [lib_constants.IP_VERSION_4, lib_constants.IP_VERSION_6]
 PORT_RANGE_MIN = 1
 PORT_RANGE_MAX = 65535
 
+# TODO(bence romsics): move this to neutron_lib.constants
+DHCPV6_CLIENT_PORT = 546
+
 # Configuration values for accept_ra sysctl, copied from linux kernel
 # networking (netdev) tree, file Documentation/networking/ip-sysctl.txt
 #
