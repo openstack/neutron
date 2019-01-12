@@ -60,20 +60,20 @@ if nfct_lib:
     # we call from nfct, otherwise pointers can be truncated and cause
     # segfaults.
     nfct.nfct_set_attr.argtypes = [ctypes.c_void_p,
-                                ctypes.c_int,
-                                ctypes.c_void_p]
+                                   ctypes.c_int,
+                                   ctypes.c_void_p]
     nfct.nfct_set_attr_u8.argtypes = [ctypes.c_void_p,
-                                    ctypes.c_int,
-                                    ctypes.c_uint8]
+                                      ctypes.c_int,
+                                      ctypes.c_uint8]
     nfct.nfct_set_attr_u16.argtypes = [ctypes.c_void_p,
-                                    ctypes.c_int,
-                                    ctypes.c_uint16]
+                                       ctypes.c_int,
+                                       ctypes.c_uint16]
     nfct.nfct_snprintf.argtypes = [ctypes.c_char_p,
-                                ctypes.c_uint,
-                                ctypes.c_void_p,
-                                ctypes.c_uint,
-                                ctypes.c_uint,
-                                ctypes.c_uint]
+                                   ctypes.c_uint,
+                                   ctypes.c_void_p,
+                                   ctypes.c_uint,
+                                   ctypes.c_uint,
+                                   ctypes.c_uint]
     nfct.nfct_new.restype = ctypes.c_void_p
     nfct.nfct_destroy.argtypes = [ctypes.c_void_p]
     nfct.nfct_query.argtypes = [ctypes.c_void_p,
