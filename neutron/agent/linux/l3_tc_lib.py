@@ -23,7 +23,10 @@ LOG = logging.getLogger(__name__)
 
 QDISC_IN_REGEX = re.compile(r"qdisc ingress (\w+:) *")
 QDISC_OUT_REGEX = re.compile(r"qdisc htb (\w+:) *")
-FILTER_ID_REGEX = re.compile(r"filter protocol ip u32 fh (\w+::\w+) *")
+# NOTE(slaweq): in iproute 4.15 chain value was added to filter output and this
+# needs to be included in REGEX
+FILTER_ID_REGEX = re.compile(
+    r"filter protocol ip u32 (fh|chain \d+ fh) (\w+::\w+) *")
 FILTER_STATS_REGEX = re.compile(r"Sent (\w+) bytes (\w+) pkts *")
 
 
@@ -72,7 +75,7 @@ class FloatingIPTcCommandBase(ip_lib.IPDevice):
             line = line.strip()
             m = FILTER_ID_REGEX.match(line)
             if m:
-                filter_id = m.group(1)
+                filter_id = m.group(2)
                 # It matched, so ip/32 is not here. continue
                 continue
             elif not line.startswith('match'):
@@ -102,7 +105,7 @@ class FloatingIPTcCommandBase(ip_lib.IPDevice):
             line = line.strip()
             m = FILTER_ID_REGEX.match(line)
             if m:
-                filter_id = m.group(1)
+                filter_id = m.group(2)
                 filterids.append(filter_id)
         return filterids
 
