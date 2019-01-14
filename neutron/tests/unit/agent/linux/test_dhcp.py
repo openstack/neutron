@@ -1433,9 +1433,7 @@ class TestDnsmasq(TestBase):
     def _test_output_init_lease_file(self, timestamp):
         expected = [
             '00:00:80:aa:bb:cc 192.168.0.2 * *',
-            '00:00:f3:aa:bb:cc [fdca:3ba5:a17a:4ba3::2] * *',
             '00:00:0f:aa:bb:cc 192.168.0.3 * *',
-            '00:00:0f:aa:bb:cc [fdca:3ba5:a17a:4ba3::3] * *',
             '00:00:0f:rr:rr:rr 192.168.0.1 * *\n']
         expected = "\n".join(['%s %s' % (timestamp, l) for l in expected])
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
