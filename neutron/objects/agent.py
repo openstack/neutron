@@ -96,7 +96,7 @@ class Agent(base.NeutronDbObject):
                     rb_model.RouterL3AgentBinding.router_id
                 ).label('count')).outerjoin(
                     rb_model.RouterL3AgentBinding).group_by(
-                    agent_model.Agent.id,
+                    agent_model.Agent,
                     rb_model.RouterL3AgentBinding
                     .l3_agent_id).order_by('count')
             res = query.filter(agent_model.Agent.id.in_(agent_ids)).first()
@@ -110,7 +110,7 @@ class Agent(base.NeutronDbObject):
                 rb_model.RouterL3AgentBinding.router_id)
                 .label('count')).
                 outerjoin(rb_model.RouterL3AgentBinding).
-                group_by(agent_model.Agent.id).
+                group_by(agent_model.Agent).
                 filter(agent_model.Agent.id.in_(agent_ids)).
                 order_by('count'))
         agents = [cls._load_object(context, record[0]) for record in query]
