@@ -12,9 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
+
 from neutron_lib import constants
 
 from neutron.common import constants as c_const
+from neutron.common import utils
+from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import config as f_const
 from neutron.tests.fullstack.resources import environment
@@ -32,6 +36,9 @@ class TestAgentBandwidthReport(base.BaseFullStackTestCase):
          {'l2_agent_type': constants.AGENT_TYPE_NIC_SWITCH})
     ]
 
+    BR_MAPPINGS = 'bridge_mappings'
+    DEV_MAPPINGS = 'device_mappings'
+
     def setUp(self):
         host_desc = [environment.HostDescription(
             l3_agent=False,
@@ -39,43 +46,135 @@ class TestAgentBandwidthReport(base.BaseFullStackTestCase):
         env_desc = environment.EnvironmentDescription(
             network_type='vlan',
             l2_pop=False,
-            report_bandwidths=True
+            report_bandwidths=True,
         )
         env = environment.Environment(env_desc, host_desc)
 
         super(TestAgentBandwidthReport, self).setUp(env)
 
+    def _check_agent_configurations(self, agent_id, expected_physnets):
+        agent = self.client.show_agent(agent_id)['agent']
+        agent_configurations = agent['configurations']
+        if 'Open vSwitch' in agent['agent_type']:
+            mapping_key = self.BR_MAPPINGS
+        elif 'NIC Switch' in agent['agent_type']:
+            mapping_key = self.DEV_MAPPINGS
+        else:
+            return False
+
+        for physnet in expected_physnets:
+            if physnet not in agent_configurations[mapping_key]:
+                return False
+            bridge_or_devices = agent_configurations[mapping_key][physnet]
+
+            if (c_const.RP_BANDWIDTHS not in agent_configurations or
+                    c_const.RP_INVENTORY_DEFAULTS not in agent_configurations):
+                return False
+
+            if mapping_key == self.BR_MAPPINGS:
+                if (bridge_or_devices not in
+                        agent_configurations[c_const.RP_BANDWIDTHS]):
+                    return False
+            else:
+                for device in bridge_or_devices:
+                    if (device not in
+                            agent_configurations[c_const.RP_BANDWIDTHS]):
+                        return False
+
+        for device in agent_configurations[c_const.RP_BANDWIDTHS]:
+            conf_device = agent_configurations[c_const.RP_BANDWIDTHS][device]
+            if (f_const.MINIMUM_BANDWIDTH_INGRESS_KBPS !=
+                    conf_device['ingress'] and
+                    f_const.MINIMUM_BANDWIDTH_EGRESS_KBPS !=
+                    conf_device[device]['egress']):
+                return False
+        return True
+
+    def _get_physnet_names_from_mapping(self, mapping):
+        physnets = []
+        for pair in mapping.split(','):
+            physnets.append(pair.split(':')[0])
+        return physnets
+
+    def _add_new_device_to_agent_config(self, l2_agent_config,
+                                        mapping_key_name, new_dev):
+        old_bw = l2_agent_config[c_const.RP_BANDWIDTHS]
+        old_mappings = l2_agent_config[mapping_key_name]
+        if new_dev in old_bw or new_dev in old_mappings:
+            return
+
+        new_mappings = 'physnetnew:%s' % new_dev
+        new_bw = '%s:%s:%s' % (new_dev,
+                               f_const.MINIMUM_BANDWIDTH_EGRESS_KBPS,
+                               f_const.MINIMUM_BANDWIDTH_INGRESS_KBPS)
+        l2_agent_config[mapping_key_name] = '%s,%s' % (
+            old_mappings, new_mappings)
+        l2_agent_config[c_const.RP_BANDWIDTHS] = '%s,%s' % (
+            old_bw, new_bw)
+
+    def _change_agent_conf_and_restart_agent(self, l2_agent_config, l2_agent,
+                                            mapping_key_name, new_dev):
+        self._add_new_device_to_agent_config(
+            l2_agent_config, mapping_key_name, new_dev)
+        l2_agent.agent_cfg_fixture.write_config_to_configfile()
+
+    def _add_new_bridge_and_restart_agent(self, host):
+        l2_agent = host.l2_agent
+        l2_agent_config = l2_agent.agent_cfg_fixture.config
+
+        if 'ovs' in host.agents:
+            new_dev = utils.get_rand_device_name(prefix='br-new')
+            self._change_agent_conf_and_restart_agent(
+                l2_agent_config['ovs'], l2_agent, self.BR_MAPPINGS, new_dev)
+            physnets = self._get_physnet_names_from_mapping(
+                l2_agent_config['ovs'][self.BR_MAPPINGS])
+            br_phys_new = host.useFixture(
+                net_helpers.OVSBridgeFixture(new_dev)).bridge
+            host.connect_to_central_network_via_vlans(br_phys_new)
+        elif 'sriov' in host.agents:
+            new_dev = utils.get_rand_device_name(prefix='ens7')
+            self._change_agent_conf_and_restart_agent(
+                l2_agent_config['sriov_nic'], l2_agent,
+                'physical_device_mappings', new_dev)
+            physnets = self._get_physnet_names_from_mapping(
+                l2_agent_config['sriov_nic']['physical_device_mappings'])
+
+        l2_agent.restart()
+        return physnets
+
     def test_agent_configurations(self):
         agents = self.client.list_agents()
 
         self.assertEqual(1, len(agents['agents']))
+        self.assertTrue(agents['agents'][0]['alive'])
 
-        agent_configurations = agents['agents'][0]['configurations']
-        if 'bridge_mappings' in agent_configurations:
-            mapping_key = 'bridge_mappings'
-        elif 'device_mappings' in agent_configurations:
-            mapping_key = 'device_mappings'
-        else:
-            self.fail('No mapping information is found in agent '
-                      'configurations')
+        agent_config = self.environment.hosts[0].l2_agent.agent_config
+        if 'ovs' in self.environment.hosts[0].agents:
+            physnets = self._get_physnet_names_from_mapping(
+                agent_config['ovs'][self.BR_MAPPINGS])
+        elif 'sriov' in self.environment.hosts[0].agents:
+            physnets = self._get_physnet_names_from_mapping(
+                agent_config['sriov_nic']['physical_device_mappings'])
 
-        physnet = list(agent_configurations[mapping_key])[0]
-        bridge_or_devices = agent_configurations[mapping_key][physnet]
+        self.assertTrue(
+            self._check_agent_configurations(agents['agents'][0]['id'],
+                                             physnets))
 
-        self.assertIn(c_const.RP_BANDWIDTHS, agent_configurations)
-        self.assertIn(c_const.RP_INVENTORY_DEFAULTS, agent_configurations)
-        if mapping_key == 'bridge_mappings':
-            self.assertIn(bridge_or_devices,
-                          agent_configurations[c_const.RP_BANDWIDTHS])
-        else:
-            for device in bridge_or_devices:
-                self.assertIn(device, agent_configurations[
-                    c_const.RP_BANDWIDTHS])
+        # Add new physnet with bandwidth value to agent config and check
+        # if after agent restart and report_interval wait it is visible in
+        # the configurations field.
+        physnets = self._add_new_bridge_and_restart_agent(
+            self.environment.hosts[0])
 
-        for device in agent_configurations[c_const.RP_BANDWIDTHS]:
-            self.assertEqual(
-                f_const.MINIMUM_BANDWIDTH_INGRESS_KBPS,
-                agent_configurations[c_const.RP_BANDWIDTHS][device]['ingress'])
-            self.assertEqual(
-                f_const.MINIMUM_BANDWIDTH_EGRESS_KBPS,
-                agent_configurations[c_const.RP_BANDWIDTHS][device]['egress'])
+        agents = self.client.list_agents()
+        l2_agent = agents['agents'][0]
+        neutron_config = self.environment.hosts[0].l2_agent.neutron_config
+        report_interval = neutron_config['agent']['report_interval']
+
+        check_agent_alive = functools.partial(self._check_agent_configurations,
+                                              l2_agent['id'],
+                                              physnets)
+        utils.wait_until_true(
+            predicate=check_agent_alive,
+            timeout=float(report_interval) + 10,
+            sleep=5)
