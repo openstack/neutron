@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    Fixes an issue causing IP allocation on port update to fail when the
+    initial IP allocation was deferred due to lack of binding info. If both the
+    port mac_address and binding info (binding_host_id) were updated in the
+    same request, the fixed_ips field was added to the request internally. The
+    code to complete the deferred allocation failed to execute in that case.
+    (For more information see bug `1811905
+    <https://bugs.launchpad.net/neutron/+bug/1811905>`_.)
