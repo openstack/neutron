@@ -59,6 +59,7 @@ def prepare_router_data(ip_version=lib_constants.IP_VERSION_4,
                         extra_routes=False, dual_stack=False, enable_gw=True,
                         v6_ext_gw_with_sub=True,
                         snat_bound_fip=False,
+                        enable_pf_floating_ip=False,
                         **kwargs):
     fixed_ips = []
     subnets = []
@@ -142,6 +143,19 @@ def prepare_router_data(ip_version=lib_constants.IP_VERSION_4,
             fip[qos_consts.QOS_POLICY_ID] = qos_policy_id
         router_fips.append(fip)
     router[lib_constants.FLOATINGIP_KEY] = router_fips
+
+    pf_fips = []
+    if enable_pf_floating_ip:
+        fip = {'id': _uuid(),
+               'port_id': _uuid(),
+               'status': 'DOWN',
+               'floating_ip_address': '19.4.4.4',
+               'fixed_ip_address': '10.0.0.3'}
+        qos_policy_id = kwargs.get(qos_consts.QOS_POLICY_ID)
+        if qos_policy_id:
+            fip[qos_consts.QOS_POLICY_ID] = qos_policy_id
+        pf_fips.append(fip)
+    router['_pf_floatingips'] = pf_fips
 
     router_append_interface(router, count=num_internal_ports,
                             ip_version=ip_version, dual_stack=dual_stack)

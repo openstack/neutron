@@ -248,7 +248,8 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
                       "for router: %s", router_info.router_id)
             return
 
-        floating_ips = router_info.get_floating_ips()
+        floating_ips = (router_info.get_floating_ips() +
+                        router_info.get_port_forwarding_fips())
         current_fips = self.fip_qos_map.router_floating_ips.get(
             router_info.router_id, set())
         new_fips = set()

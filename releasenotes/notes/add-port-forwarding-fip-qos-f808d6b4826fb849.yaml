@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    L3 agent supports QoS bandwidth limit functionality for port
+    forwarding floating IPs now. If floating IP has binding QoS
+    policy (with bandwidth limit rules), the traffic bandwidth
+    will be limited.
