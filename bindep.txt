@@ -21,3 +21,6 @@ postgresql [test]
 postgresql-client [platform:dpkg test]
 postgresql-devel [platform:rpm test]
 postgresql-server [platform:rpm test]
+
+# for twisted / nsx-t
+python-dev [platform:dpkg]
