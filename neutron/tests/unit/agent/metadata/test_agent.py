@@ -340,6 +340,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
         req = mock.Mock(path_info='/the_path', query_string='', headers=hdrs,
                         method=method, body=body)
         resp = mock.MagicMock(status_code=response_code)
+        resp.status.__str__.side_effect = AttributeError
         resp.content = 'content'
         req.response = resp
         with mock.patch.object(self.handler, '_sign_instance_id') as sign:

@@ -231,7 +231,8 @@ class MetadataProxyHandler(object):
             explanation = six.text_type(msg)
             return webob.exc.HTTPInternalServerError(explanation=explanation)
         else:
-            raise Exception(_('Unexpected response code: %s') % resp.status)
+            raise Exception(_('Unexpected response code: %s') %
+                            resp.status_code)
 
     def _sign_instance_id(self, instance_id):
         secret = self.conf.metadata_proxy_shared_secret
