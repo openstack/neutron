@@ -99,7 +99,7 @@ class QoSPlugin(qos.QoSPluginBase):
         if not qos_policy:
             net = network_object.Network.get_object(
                 context.get_admin_context(), id=port_res['network_id'])
-            if net.qos_policy_id:
+            if net and net.qos_policy_id:
                 qos_policy = policy_object.QosPolicy.get_network_policy(
                     context.get_admin_context(), net.id)
 
