@@ -36,6 +36,7 @@
               - ^tox.ini$
         - neutron-tempest-dvr-ha-multinode-full
         - neutron-tempest-iptables_hybrid
+        - neutron-tempest-iptables_hybrid-fedora
         - neutron-grenade
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             voting: false
@@ -298,6 +299,13 @@
               image_is_advanced: true
               available_type_drivers: flat,geneve,vlan,gre,local,vxlan
     irrelevant-files: *tempest-irrelevant-files
+
+- job:
+    name: neutron-tempest-iptables_hybrid-fedora
+    parent: neutron-tempest-iptables_hybrid
+    nodeset: devstack-single-node-fedora-latest
+    irrelevant-files: *tempest-irrelevant-files
+    voting: false
 
 - job:
     name: neutron-grenade
