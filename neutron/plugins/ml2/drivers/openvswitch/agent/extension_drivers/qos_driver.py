@@ -64,30 +64,33 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
 
     def delete_bandwidth_limit(self, port):
         port_id = port.get('port_id')
+        vif_port = port.get('vif_port')
         port = self.ports[port_id].pop((qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
                                         constants.EGRESS_DIRECTION),
                                        None)
-        if not port:
+
+        if not port and not vif_port:
             LOG.debug("delete_bandwidth_limit was received "
                       "for port %s but port was not found. "
                       "It seems that bandwidth_limit is already deleted",
                       port_id)
             return
-        vif_port = port.get('vif_port')
+        vif_port = vif_port or port.get('vif_port')
         self.br_int.delete_egress_bw_limit_for_port(vif_port.port_name)
 
     def delete_bandwidth_limit_ingress(self, port):
         port_id = port.get('port_id')
+        vif_port = port.get('vif_port')
         port = self.ports[port_id].pop((qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
                                         constants.INGRESS_DIRECTION),
                                        None)
-        if not port:
+        if not port and not vif_port:
             LOG.debug("delete_bandwidth_limit_ingress was received "
                       "for port %s but port was not found. "
                       "It seems that bandwidth_limit is already deleted",
                       port_id)
             return
-        vif_port = port.get('vif_port')
+        vif_port = vif_port or port.get('vif_port')
         self.br_int.delete_ingress_bw_limit_for_port(vif_port.port_name)
 
     def create_dscp_marking(self, port, rule):
@@ -135,15 +138,19 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
                                      actions=actions)
 
     def delete_dscp_marking(self, port):
+        vif_port = port.get('vif_port')
         dscp_port = self.ports[port['port_id']].pop(qos_consts.
                                                     RULE_TYPE_DSCP_MARKING, 0)
-        if dscp_port:
-            port_num = dscp_port['vif_port'].ofport
-            self.br_int.uninstall_flows(in_port=port_num, table_id=0, reg2=0)
-        else:
+
+        if not dscp_port and not vif_port:
             LOG.debug("delete_dscp_marking was received for port %s but "
                       "no port information was stored to be deleted",
                       port['port_id'])
+            return
+
+        vif_port = vif_port or dscp_port.get('vif_port')
+        port_num = vif_port.ofport
+        self.br_int.uninstall_flows(in_port=port_num, table_id=0, reg2=0)
 
     def _update_egress_bandwidth_limit(self, vif_port, rule):
         max_kbps = rule.max_kbps
