@@ -337,3 +337,118 @@
             quotas:
               neutron:
                 floatingip: -1
+    -
+      title: Security Group Related Scenarios
+      workloads:
+        -
+          scenario:
+            NeutronSecurityGroup.create_and_delete_security_group_rule:
+              security_group_args: {}
+              security_group_rule_args: {}
+          runner:
+            constant:
+              times: 50
+              concurrency: 10
+          contexts:
+            users:
+              tenants: 2
+              users_per_tenant: 3
+            quotas:
+              neutron:
+                security_group: -1
+                security_group_rule: -1
+        -
+          scenario:
+            NeutronSecurityGroup.create_and_delete_security_groups:
+              security_group_create_args: {}
+          runner:
+            constant:
+              times: 50
+              concurrency: 10
+          contexts:
+            users:
+              tenants: 2
+              users_per_tenant: 3
+            quotas:
+              neutron:
+                security_group: -1
+        -
+          scenario:
+            NeutronSecurityGroup.create_and_list_security_group_rules:
+              security_group_args: {}
+              security_group_rule_args: {}
+          runner:
+            constant:
+              times: 50
+              concurrency: 10
+          contexts:
+            users:
+              tenants: 2
+              users_per_tenant: 3
+            quotas:
+              neutron:
+                security_group: -1
+                security_group_rule: -1
+        -
+          scenario:
+            NeutronSecurityGroup.create_and_list_security_groups:
+              security_group_create_args: {}
+          runner:
+            constant:
+              times: 50
+              concurrency: 10
+          contexts:
+            users:
+              tenants: 2
+              users_per_tenant: 3
+            quotas:
+              neutron:
+                security_group: -1
+        -
+          scenario:
+            NeutronSecurityGroup.create_and_show_security_group_rule:
+              security_group_args: {}
+              security_group_rule_args: {}
+          runner:
+            constant:
+              times: 50
+              concurrency: 10
+          contexts:
+            users:
+              tenants: 2
+              users_per_tenant: 3
+            quotas:
+              neutron:
+                security_group: -1
+                security_group_rule: -1
+        -
+          scenario:
+            NeutronSecurityGroup.create_and_show_security_group:
+              security_group_create_args: {}
+          runner:
+            constant:
+              times: 50
+              concurrency: 10
+          contexts:
+            users:
+              tenants: 2
+              users_per_tenant: 3
+            quotas:
+              neutron:
+                security_group: -1
+        -
+          scenario:
+            NeutronSecurityGroup.create_and_update_security_groups:
+              security_group_create_args: {}
+              security_group_update_args: {}
+          runner:
+            constant:
+              times: 50
+              concurrency: 10
+          contexts:
+            users:
+              tenants: 2
+              users_per_tenant: 3
+            quotas:
+              neutron:
+                security_group: -1
