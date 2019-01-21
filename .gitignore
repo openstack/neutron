@@ -1,35 +1,67 @@
-AUTHORS
-build/*
-build-stamp
-ChangeLog
+# Add patterns in here to exclude files created by tools integrated with this
+# repository, such as test frameworks from the project's recommended workflow,
+# rendered documentation and package builds.
+#
+# Don't add patterns to exclude files created by preferred personal tools
+# (editors, IDEs, your operating system itself even). These should instead be
+# maintained outside the repository, for example in a ~/.gitignore file added
+# with:
+#
+# git config --global core.excludesfile '~/.gitignore'
+
+# Bytecompiled Python
+*.py[cod]
+
+# C extensions
+*.so
+
+# Packages
+*.egg*
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
 cover/
-covhtml/
-dist/
-doc/build
-doc/source/_static/config-samples/*.sample
-doc/source/_static/*.policy.yaml.sample
+.coverage*
+!.coveragerc
+.tox
+nosetests.xml
+.testrepository
+.stestr
+.venv
+
+# Translations
+*.mo
+
 etc/*.sample
 etc/neutron/plugins/ml2/*.sample
-*.DS_Store
-*.pyc
-neutron.egg-info/
-neutron/vcsversion.py
-neutron/versioninfo
-pbr*.egg/
-setuptools*.egg/
-*.log
-*.mo
-*.sw?
-*~
-/.*
-!/.coveragerc
-!/.gitignore
-!/.gitreview
-!/.mailmap
-!/.pylintrc
-!/.stestr.conf
-!/.zuul.yaml
-.stestr/
+
+# Complexity
+output/*.html
+output/*/index.html
+
+# Sphinx
+doc/build
+doc/source/_static/nova.conf.sample
+doc/source/_static/nova.policy.yaml.sample
+doc/source/_static/placement.policy.yaml.sample
+
+# pbr generates these
+AUTHORS
+ChangeLog
 
 # Files created by releasenotes build
 releasenotes/build
