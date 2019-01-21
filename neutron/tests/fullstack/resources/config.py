@@ -92,7 +92,7 @@ class NeutronConfigFixture(ConfigFixture):
                 'lock_path': '$state_path/lock',
             },
             'agent': {
-                'report_interval': str(env_desc.agent_down_time / 2.0)
+                'report_interval': str(env_desc.agent_down_time // 2)
             },
         })
         policy_file = self._generate_policy_json()
@@ -109,6 +109,18 @@ class NeutronConfigFixture(ConfigFixture):
         if env_desc.router_scheduler:
             self.config['DEFAULT']['router_scheduler_driver'] = (
                 env_desc.router_scheduler)
+        if env_desc.has_placement:
+            service_plugins = self.config['DEFAULT']['service_plugins']
+            self.config['DEFAULT']['service_plugins'] = (
+                '%s,%s' % (service_plugins, 'placement')
+            )
+            self.config.update({
+                'placement': {
+                    'auth_type': 'noauth',
+                    'auth_section': 'http://127.0.0.1:%s/placement' %
+                    env_desc.placement_port
+                }
+            })
 
         net_helpers.set_local_port_range(CLIENT_CONN_PORT_START,
                                          CLIENT_CONN_PORT_END)
@@ -287,6 +299,22 @@ class SRIOVConfigFixture(ConfigFixture):
 
     def _setUp(self):
         super(SRIOVConfigFixture, self)._setUp()
+
+
+class PlacementConfigFixture(ConfigFixture):
+
+    def __init__(self, env_desc, host_desc, temp_dir):
+        super(PlacementConfigFixture, self).__init__(
+            env_desc, host_desc, temp_dir, base_filename='placement.ini')
+        self.config.update({
+            'DEFAULT': {
+                'debug': 'True',
+                'placement_port': self.env_desc.placement_port
+            }
+        })
+
+    def _setUp(self):
+        super(PlacementConfigFixture, self)._setUp()
 
 
 class LinuxBridgeConfigFixture(ConfigFixture):
