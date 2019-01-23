@@ -214,6 +214,17 @@ class RpcCallbacksTestCase(base.BaseTestCase):
             self.callbacks.get_devices_details_list_and_failed_devices)
         self._test_get_devices_list(callback, devices, expected)
 
+    def test_get_network_details(self):
+        kwargs = {'agent_id': 'agent_id',
+                  'host': 'host_id',
+                  'network': 'network'}
+        with mock.patch.object(self.plugin, 'get_network') as mock_get_network:
+            mock_get_network.return_value = 'net_details'
+            self.assertEqual(
+                'net_details',
+                self.callbacks.get_network_details('fake_context', **kwargs))
+            mock_get_network.assert_called_once_with('fake_context', 'network')
+
     def test_get_devices_details_list_and_failed_devices_empty_dev(self):
         with mock.patch.object(self.callbacks, 'get_device_details') as f:
             res = self.callbacks.get_devices_details_list_and_failed_devices(

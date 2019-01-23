@@ -54,6 +54,9 @@ class AgentRPCPluginApi(base.BaseTestCase):
     def test_get_devices_details_list(self):
         self._test_rpc_call('get_devices_details_list')
 
+    def test_get_network_details(self):
+        self._test_rpc_call('get_network_details')
+
     def test_update_device_down(self):
         self._test_rpc_call('update_device_down')
 

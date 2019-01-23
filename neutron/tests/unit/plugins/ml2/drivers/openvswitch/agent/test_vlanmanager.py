@@ -118,3 +118,10 @@ class TestLocalVlanManager(base.BaseTestCase):
     def test_pop_non_existing_raises_exception(self):
         with testtools.ExpectedException(vlanmanager.MappingNotFound):
             self.vlan_manager.pop(1)
+
+    def test_update_segmentation_id(self):
+        self.vlan_manager.add('net_id', 'vlan_id', 'vlan', 'phys_net',
+                              1001, None)
+        self.assertEqual(1001, self.vlan_manager.get('net_id').segmentation_id)
+        self.vlan_manager.update_segmentation_id('net_id', 1002)
+        self.assertEqual(1002, self.vlan_manager.get('net_id').segmentation_id)

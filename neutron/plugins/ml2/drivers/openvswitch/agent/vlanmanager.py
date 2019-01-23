@@ -108,3 +108,9 @@ class LocalVlanManager(object):
             return self.mapping.pop(net_id)
         except KeyError:
             raise MappingNotFound(net_id=net_id)
+
+    def update_segmentation_id(self, net_id, segmentation_id):
+        try:
+            self.mapping[net_id].segmentation_id = segmentation_id
+        except KeyError:
+            raise MappingNotFound(net_id=net_id)

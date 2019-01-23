@@ -17,6 +17,7 @@ import time
 
 import mock
 from neutron_lib.agent import constants as agent_consts
+from neutron_lib.api.definitions import provider_net
 from neutron_lib import constants as n_const
 from neutron_lib import rpc as n_rpc
 from oslo_config import cfg
@@ -1208,7 +1209,10 @@ class TestOvsNeutronAgent(object):
         port = {'id': TEST_PORT_ID1, 'network_id': network['id']}
 
         self.agent._update_port_network(port['id'], port['network_id'])
-        self.agent.network_update(context=None, network=network)
+        with mock.patch.object(self.agent.plugin_rpc, 'get_network_details'), \
+                mock.patch.object(self.agent,
+                                  '_update_network_segmentation_id'):
+            self.agent.network_update(context=None, network=network)
         self.assertEqual(set([port['id']]), self.agent.updated_ports)
 
     def test_network_update_outoforder(self):
@@ -1222,7 +1226,10 @@ class TestOvsNeutronAgent(object):
 
         self.agent._update_port_network(port['id'], port['network_id'])
         self.agent.port_delete(context=None, port_id=port['id'])
-        self.agent.network_update(context=None, network=network)
+        with mock.patch.object(self.agent.plugin_rpc, 'get_network_details'), \
+                mock.patch.object(self.agent,
+                                  '_update_network_segmentation_id'):
+            self.agent.network_update(context=None, network=network)
         self.assertEqual(set(), self.agent.updated_ports)
 
     def test_update_port_network(self):
@@ -2361,6 +2368,58 @@ class TestOvsNeutronAgent(object):
                 bridge.set_datapath_id.assert_not_called()
             else:
                 bridge.set_datapath_id.assert_called_once_with(dpid)
+
+    def test__update_network_segmentation_id(self):
+        network = {'id': 'my-net-uuid',
+                   provider_net.SEGMENTATION_ID: 1005,
+                   provider_net.PHYSICAL_NETWORK: 'provider_net',
+                   provider_net.NETWORK_TYPE: n_const.TYPE_VLAN}
+        self.agent.vlan_manager.add('my-net-uuid', 5, n_const.TYPE_VLAN,
+                                    'provider_net', 1004, None)
+        mock_phys_br = mock.Mock()
+        self.agent.phys_brs['provider_net'] = mock_phys_br
+        self.agent.phys_ofports['provider_net'] = 'phy_ofport'
+        self.agent.int_ofports['provider_net'] = 'int_ofport'
+
+        with mock.patch.object(self.agent.int_br, 'reclaim_local_vlan') \
+                as mock_reclaim_local_vlan, \
+                mock.patch.object(self.agent.int_br, 'provision_local_vlan') \
+                as mock_provision_local_vlan:
+            self.agent._update_network_segmentation_id(network)
+            mock_reclaim_local_vlan.assert_called_once_with(
+                port='int_ofport', segmentation_id=1004)
+            mock_provision_local_vlan.assert_called_once_with(
+                port='int_ofport', lvid=5, segmentation_id=1005)
+        mock_phys_br.reclaim_local_vlan.assert_called_once_with(
+            port='phy_ofport', lvid=5)
+
+    def test__update_network_segmentation_id_not_vlan(self):
+        network = {provider_net.NETWORK_TYPE: 'not_vlan'}
+        with mock.patch.object(self.agent.vlan_manager, 'get') as mock_get:
+            self.agent._update_network_segmentation_id(network)
+            mock_get.assert_not_called()
+
+    def test__update_network_segmentation_id_vlan_not_found(self):
+        network = {'id': 'my-net-uuid',
+                   provider_net.SEGMENTATION_ID: 1005,
+                   provider_net.NETWORK_TYPE: n_const.TYPE_VLAN,
+                   provider_net.PHYSICAL_NETWORK: 'default_network'}
+        with mock.patch.object(self.agent.vlan_manager,
+                               'update_segmentation_id') as mock_update_segid:
+            self.agent._update_network_segmentation_id(network)
+            mock_update_segid.assert_not_called()
+
+    def test__update_network_segmentation_id_segmentation_id_not_updated(self):
+        network = {'id': 'my-net-uuid',
+                   provider_net.SEGMENTATION_ID: 1005,
+                   provider_net.NETWORK_TYPE: n_const.TYPE_VLAN,
+                   provider_net.PHYSICAL_NETWORK: 'default_network'}
+        self.agent.vlan_manager.add('my-net-uuid', 5, n_const.TYPE_VLAN,
+                                    'provider_net', 1005, None)
+        with mock.patch.object(self.agent.vlan_manager,
+                               'update_segmentation_id') as mock_update_segid:
+            self.agent._update_network_segmentation_id(network)
+            mock_update_segid.assert_not_called()
 
 
 class TestOvsNeutronAgentOFCtl(TestOvsNeutronAgent,

@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    The segmentation ID of a provider network can be now modified, even with
+    OVS ports bound. Note that, during this process, the traffic of the bound
+    ports tagged with the former segmentation ID (external VLAN) will be mapped
+    to the new one. This can provoke a traffic disruption while the external
+    network VLAN is migrated to the new tag.
