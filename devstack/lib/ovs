@@ -88,6 +88,10 @@ function prepare_for_compilation {
 
 # reload_kernel_modules() - reload openvswitch kernel module
 function reload_kernel_modules {
+    local ovs_system=$(sudo ovs-dpctl dump-dps | grep ovs-system)
+    if [ -n "$ovs_system" ]; then
+        sudo ovs-dpctl del-dp ovs-system
+    fi
     sudo modprobe -r vport_geneve
     sudo modprobe -r openvswitch
     load_module openvswitch
