@@ -18,6 +18,7 @@ import random
 
 from debtcollector import removals
 import netaddr
+from neutron_lib.api.definitions import portbindings as pb
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
@@ -70,6 +71,15 @@ EXTERNAL_GW_INFO = l3.EXTERNAL_GW_INFO
 # Useful to keep the filtering between API and Database.
 API_TO_DB_COLUMN_MAP = {'port_id': 'fixed_port_id'}
 CORE_ROUTER_ATTRS = ('id', 'name', 'tenant_id', 'admin_state_up', 'status')
+
+
+def can_port_be_bound_to_virtual_bridge(port):
+    """Returns if port can be bound to a virtual bridge (e.g.: LB, OVS)
+
+    :param port: (dict) A port dictionary.
+    :returns: True if the port VNIC type is 'normal'; False in any other case.
+    """
+    return port[pb.VNIC_TYPE] == pb.VNIC_NORMAL
 
 
 @registry.has_registry_receivers
@@ -1194,6 +1204,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             context, internal_port,
             internal_subnet_id, floatingip_db['floating_network_id'])
 
+        if self.is_router_distributed(context, router_id):
+            if not can_port_be_bound_to_virtual_bridge(internal_port):
+                msg = _('Port VNIC type is not valid to associate a FIP in '
+                        'DVR mode')
+                raise n_exc.BadRequest(resource='floatingip', msg=msg)
+
         return (fip['port_id'], internal_ip_address, router_id)
 
     def _check_and_get_fip_assoc(self, context, fip, floatingip_db):
@@ -1775,6 +1791,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         self._process_floating_ips(context, routers_dict, floating_ips)
         self._process_interfaces(routers_dict, interfaces)
         return list(routers_dict.values())
+
+    def is_router_distributed(self, context, router_id):
+        """Returns if a router is distributed or not
+
+        If DVR extension is not enabled, no router will be distributed. This
+        function is overridden in L3_NAT_with_dvr_db_mixin in case the DVR
+        extension is loaded.
+        """
+        return False
 
 
 @registry.has_registry_receivers
