@@ -781,6 +781,7 @@ class DhcpAgentWithStateReport(DhcpAgent):
     def __init__(self, host=None, conf=None):
         super(DhcpAgentWithStateReport, self).__init__(host=host, conf=conf)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
+        self.failed_report_state = False
         self.agent_state = {
             'binary': 'neutron-dhcp-agent',
             'host': host,
@@ -817,8 +818,12 @@ class DhcpAgentWithStateReport(DhcpAgent):
             self.run()
             return
         except Exception:
+            self.failed_report_state = True
             LOG.exception("Failed reporting state!")
             return
+        if self.failed_report_state:
+            self.failed_report_state = False
+            LOG.info("Successfully reported state after a previous failure.")
         if self.agent_state.pop('start_flag', None):
             self.run()
 
