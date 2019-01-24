@@ -89,6 +89,7 @@ class CommonAgentLoop(service.Service):
         configurations = {'extensions': self.ext_manager.names()}
         configurations.update(self.mgr.get_agent_configurations())
 
+        self.failed_report_state = False
         # TODO(mangelajo): optimize resource_versions (see ovs agent)
         self.agent_state = {
             'binary': self.agent_binary,
@@ -136,7 +137,12 @@ class CommonAgentLoop(service.Service):
             self.agent_state.pop('resource_versions', None)
             self.agent_state.pop('start_flag', None)
         except Exception:
+            self.failed_report_state = True
             LOG.exception("Failed reporting state!")
+            return
+        if self.failed_report_state:
+            self.failed_report_state = False
+            LOG.info("Successfully reported state after a previous failure.")
 
     def _validate_rpc_endpoints(self):
         if not isinstance(self.endpoints[0],
