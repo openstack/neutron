@@ -247,6 +247,7 @@ class MeteringAgentWithStateReport(MeteringAgent):
         super(MeteringAgentWithStateReport, self).__init__(host=host,
                                                            conf=conf)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
+        self.failed_report_state = False
         self.agent_state = {
             'binary': 'neutron-metering-agent',
             'host': host,
@@ -278,7 +279,12 @@ class MeteringAgentWithStateReport(MeteringAgent):
                         "State report for this agent will be disabled.")
             self.heartbeat.stop()
         except Exception:
+            self.failed_report_state = True
             LOG.exception("Failed reporting state!")
+            return
+        if self.failed_report_state:
+            self.failed_report_state = False
+            LOG.info("Successfully reported state after a previous failure.")
 
     def agent_updated(self, context, payload):
         LOG.info("agent_updated by server side %s!", payload)
