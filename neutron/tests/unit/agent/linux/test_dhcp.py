@@ -2502,10 +2502,9 @@ class TestDnsmasq(TestBase):
         self._test_read_leases_file_leases(None, True)
 
     def test_make_subnet_interface_ip_map(self):
-        with mock.patch('neutron.agent.linux.ip_lib.IPDevice') as ip_dev:
-            ip_dev.return_value.addr.list.return_value = [
-                {'cidr': '192.168.0.1/24'}
-            ]
+        with mock.patch('neutron.agent.linux.ip_lib.'
+                        'get_devices_with_ip') as list_mock:
+            list_mock.return_value = [{'cidr': '192.168.0.1/24'}]
 
             dm = self._get_dnsmasq(FakeDualNetwork())
 
@@ -2705,9 +2704,9 @@ class TestDnsmasq(TestBase):
         for key, value in config_opts.items():
             self.conf.set_override(key, value)
         dm = self._get_dnsmasq(network_class())
-        with mock.patch('neutron.agent.linux.ip_lib.IPDevice') as ipdev_mock:
-            list_addr = ipdev_mock.return_value.addr.list
-            list_addr.return_value = [{'cidr': alloc.ip_address + '/24'}
+        with mock.patch('neutron.agent.linux.ip_lib.'
+                        'get_devices_with_ip') as list_mock:
+            list_mock.return_value = [{'cidr': alloc.ip_address + '/24'}
                                       for alloc in FakeDhcpPort().fixed_ips]
             options, idx_map = dm._generate_opts_per_subnet()
 

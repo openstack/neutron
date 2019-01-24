@@ -1066,9 +1066,6 @@ class Dnsmasq(DhcpLocalProcess):
         return options
 
     def _make_subnet_interface_ip_map(self):
-        ip_dev = ip_lib.IPDevice(self.interface_name,
-                                 namespace=self.network.namespace)
-
         subnet_lookup = dict(
             (netaddr.IPNetwork(subnet.cidr), subnet.id)
             for subnet in self.network.subnets
@@ -1076,7 +1073,8 @@ class Dnsmasq(DhcpLocalProcess):
 
         retval = {}
 
-        for addr in ip_dev.addr.list():
+        for addr in ip_lib.get_devices_with_ip(self.network.namespace,
+                                               name=self.interface_name):
             ip_net = netaddr.IPNetwork(addr['cidr'])
 
             if ip_net in subnet_lookup:
