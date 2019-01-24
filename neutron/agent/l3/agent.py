@@ -769,6 +769,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
     def __init__(self, host, conf=None):
         super(L3NATAgentWithStateReport, self).__init__(host=host, conf=conf)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
+        self.failed_report_state = False
         self.agent_state = {
             'binary': 'neutron-l3-agent',
             'host': host,
@@ -826,7 +827,12 @@ class L3NATAgentWithStateReport(L3NATAgent):
             self.heartbeat.stop()
             return
         except Exception:
+            self.failed_report_state = True
             LOG.exception("Failed reporting state!")
+            return
+        if self.failed_report_state:
+            self.failed_report_state = False
+            LOG.info("Successfully reported state after a previous failure.")
 
     def after_start(self):
         eventlet.spawn_n(self._process_routers_loop)
