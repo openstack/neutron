@@ -16,7 +16,6 @@ from oslo_log import log as logging
 from oslo_serialization import jsonutils
 
 from neutron.agent.common import async_process
-from neutron.agent.common import ovs_lib
 from neutron.agent.ovsdb import api as ovsdb
 from neutron.agent.ovsdb.native import helpers
 from neutron.common import utils
@@ -109,11 +108,6 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
                     external_ids = ovsdb.val_to_py(external_ids)
                 if ofport:
                     ofport = ovsdb.val_to_py(ofport)
-                if ofport == ovs_lib.INVALID_OFPORT:
-                    LOG.debug("Ofport of port %(name)s is %(ofport)s. "
-                              "Skipping its event.",
-                              {'name': name, 'ofport': ofport})
-                    continue
                 device = {'name': name,
                           'ofport': ofport,
                           'external_ids': external_ids}
