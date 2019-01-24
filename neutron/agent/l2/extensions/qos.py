@@ -271,6 +271,12 @@ class QosAgentExtension(l2_agent_extension.L2AgentExtension):
             if old_qos_policy:
                 self.qos_driver.delete(port, old_qos_policy)
                 self.qos_driver.update(port, qos_policy)
+            elif not qos_policy.rules:
+                # There are no rules in new qos_policy,
+                # so it should be deleted.
+                # But new policy has a relationship with the port,
+                # so reseting should not be called.
+                self.qos_driver.delete(port)
             else:
                 self.qos_driver.create(port, qos_policy)
 

@@ -234,6 +234,7 @@ class QosExtensionBaseTestCase(base.BaseTestCase):
             manager.NeutronManager, 'load_class_for_provider',
             return_value=lambda: mock.Mock(
                 spec=qos_linux.QosLinuxAgentDriver)).start()
+        setattr(TEST_POLICY, 'rules', [])
 
 
 class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
@@ -262,6 +263,12 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
         port = self._create_test_port_dict()
         qos_policy_id = port['qos_policy_id']
         port_id = port['port_id']
+
+        TEST_POLICY.rules = [rule.QosBandwidthLimitRule(
+            context=None, id=FAKE_RULE_ID,
+            qos_policy_id=TEST_POLICY.id,
+            max_kbps=100, max_burst_kbps=200,
+            direction=common_constants.EGRESS_DIRECTION)]
         self.qos_ext.handle_port(self.context, port)
         # we make sure the underlying qos driver is called with the
         # right parameters
@@ -271,6 +278,29 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
             self.qos_ext.policy_map.qos_policy_ports[qos_policy_id][port_id])
         self.assertIn(port_id, self.qos_ext.policy_map.port_policies)
         self.assertEqual(TEST_POLICY,
+            self.qos_ext.policy_map.known_policies[qos_policy_id])
+
+    def test_handle_unknown_port_with_no_rules(self):
+        test_policy_with_rules = {'context': None,
+                                  'name': 'test1',
+                                  'id': uuidutils.generate_uuid()}
+
+        test_policy = policy.QosPolicy(**test_policy_with_rules)
+        test_policy.rules = []
+
+        port = self._create_test_port_dict(test_policy.id)
+        qos_policy_id = port['qos_policy_id']
+        port_id = port['port_id']
+
+        self.pull_mock.return_value = test_policy
+        self.qos_ext.handle_port(self.context, port)
+        # we make sure the underlying qos driver is called with the
+        # right parameters
+        self.qos_ext.qos_driver.delete.assert_called_once_with(port)
+        self.assertEqual(port,
+            self.qos_ext.policy_map.qos_policy_ports[qos_policy_id][port_id])
+        self.assertIn(port_id, self.qos_ext.policy_map.port_policies)
+        self.assertEqual(test_policy,
             self.qos_ext.policy_map.known_policies[qos_policy_id])
 
     def test_handle_known_port(self):
@@ -285,7 +315,13 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
         port = self._create_test_port_dict()
         self.qos_ext.handle_port(self.context, port)
         self.qos_ext.resource_rpc.pull.reset_mock()
-        port['qos_policy_id'] = uuidutils.generate_uuid()
+        test_policy_with_rules = {'context': None,
+                                  'name': 'test1',
+                                  'id': uuidutils.generate_uuid()}
+
+        test_policy = policy.QosPolicy(**test_policy_with_rules)
+        self.pull_mock.return_value = test_policy
+        port['qos_policy_id'] = test_policy.id
         self.qos_ext.handle_port(self.context, port)
         self.pull_mock.assert_called_once_with(
              self.context, resources.QOS_POLICY,

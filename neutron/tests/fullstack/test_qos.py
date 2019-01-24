@@ -64,6 +64,7 @@ class BaseQoSRuleTestCase(object):
                 l2_agent_type=self.l2_agent_type
             ) for _ in range(self.number_of_hosts)]
         env_desc = environment.EnvironmentDescription(
+            agent_down_time=10,
             qos=True)
         env = environment.Environment(env_desc, host_desc)
         super(BaseQoSRuleTestCase, self).setUp(env)
@@ -189,6 +190,47 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
         self._wait_for_bw_rule_removed(vm, self.direction)
         self._wait_for_bw_rule_applied(
             vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.reverse_direction)
+
+    def test_bw_limit_qos_l2_agent_restart(self):
+        self.l2_agent_process = self.environment.hosts[0].l2_agent
+        self.l2_agent = self.safe_client.client.list_agents(
+            agent_type=self.l2_agent_type)['agents'][0]
+
+        # Create port with qos policy attached, with different direction
+        vm, qos_policy = self._prepare_vm_with_qos_policy(
+            [functools.partial(
+                self._add_bw_limit_rule,
+                BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.direction),
+             functools.partial(
+                self._add_bw_limit_rule,
+                BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.reverse_direction)])
+
+        bw_rule_1 = qos_policy['rules'][0]
+        bw_rule_2 = qos_policy['rules'][1]
+        qos_policy_id = qos_policy['id']
+
+        self._wait_for_bw_rule_applied(
+            vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.direction)
+        self._wait_for_bw_rule_applied(
+            vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.reverse_direction)
+
+        # Stop l2_agent and clear these rules
+        self.l2_agent_process.stop()
+        self._wait_until_agent_down(self.l2_agent['id'])
+
+        self.client.delete_bandwidth_limit_rule(bw_rule_1['id'],
+                                                qos_policy_id)
+        self.client.delete_bandwidth_limit_rule(bw_rule_2['id'],
+                                                qos_policy_id)
+
+        # Start l2_agent to check if these rules is cleared
+        self.l2_agent_process.start()
+        self._wait_until_agent_up(self.l2_agent['id'])
+
+        self._wait_for_bw_rule_applied(
+            vm, None, None, self.direction)
+        self._wait_for_bw_rule_applied(
+            vm, None, None, self.reverse_direction)
 
 
 class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
