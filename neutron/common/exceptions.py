@@ -17,8 +17,6 @@ from neutron_lib import exceptions
 from neutron_lib.exceptions import l3
 from neutron_lib.exceptions import qos
 
-from neutron._i18n import _
-
 
 # TODO(boden): remove lib shims
 SubnetPoolNotFound = exceptions.SubnetPoolNotFound
@@ -76,6 +74,10 @@ MultipleFilterIDForIPFound = exceptions.MultipleFilterIDForIPFound
 FilterIDForIPNotFound = exceptions.FilterIDForIPNotFound
 FailedToAddQdiscToDevice = exceptions.FailedToAddQdiscToDevice
 PortBindingNotFound = exceptions.PortBindingNotFound
+PortBindingAlreadyActive = exceptions.PortBindingAlreadyActive
+PortBindingAlreadyExists = exceptions.PortBindingAlreadyExists
+PortBindingError = exceptions.PortBindingError
+ProcessExecutionError = exceptions.ProcessExecutionError
 
 QosPolicyNotFound = qos.QosPolicyNotFound
 QosRuleNotFound = qos.QosRuleNotFound
@@ -91,41 +93,10 @@ QosPolicyInUse = qos.QosPolicyInUse
 QosRuleNotSupported = qos.QosRuleNotSupported
 QoSRuleParameterConflict = qos.QoSRuleParameterConflict
 QoSRulesConflict = qos.QoSRulesConflict
+RouterQosBindingNotFound = qos.RouterQosBindingNotFound
+RouterQosBindingError = qos.RouterQosBindingError
 
 RouterNotCompatibleWithAgent = l3.RouterNotCompatibleWithAgent
 FloatingIpSetupException = l3.FloatingIpSetupException
 IpTablesApplyException = l3.IpTablesApplyException
 AbortSyncRouters = l3.AbortSyncRouters
-
-
-# TODO(boden): rehome these
-
-class PortBindingAlreadyActive(exceptions.Conflict):
-    message = _("Binding for port %(port_id)s on host %(host)s is already "
-                "active.")
-
-
-class PortBindingAlreadyExists(exceptions.Conflict):
-    message = _("Binding for port %(port_id)s on host %(host)s already "
-                "exists.")
-
-
-class PortBindingError(exceptions.NeutronException):
-    message = _("Binding for port %(port_id)s on host %(host)s could not be "
-                "created or updated.")
-
-
-class ProcessExecutionError(RuntimeError):
-    def __init__(self, message, returncode):
-        super(ProcessExecutionError, self).__init__(message)
-        self.returncode = returncode
-
-
-class RouterQosBindingNotFound(exceptions.NotFound):
-    message = _("QoS binding for router %(router_id)s gateway and policy "
-                "%(policy_id)s could not be found.")
-
-
-class RouterQosBindingError(exceptions.NeutronException):
-    message = _("QoS binding for router %(router_id)s gateway and policy "
-                "%(policy_id)s could not be created: %(db_error)s.")
