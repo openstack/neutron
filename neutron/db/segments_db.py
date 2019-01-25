@@ -15,11 +15,13 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib.db import api as db_api
+from neutron_lib.plugins.ml2 import api as ml2_api
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
 from neutron.objects import base as base_obj
 from neutron.objects import network as network_obj
+from neutron.services.segments import exceptions as segments_exceptions
 
 LOG = logging.getLogger(__name__)
 
@@ -59,6 +61,19 @@ def add_network_segment(context, network_id, segment, segment_index=0,
              {'id': netseg_obj.id,
               'network_type': netseg_obj.network_type,
               'network_id': netseg_obj.network_id})
+
+
+def update_network_segment(context, segment_id, segmentation_id):
+    with db_api.CONTEXT_WRITER.using(context):
+        netseg_obj = network_obj.NetworkSegment.get_object(context,
+                                                           id=segment_id)
+        if not netseg_obj:
+            raise segments_exceptions.SegmentNotFound(segment_id=segment_id)
+        netseg_obj[ml2_api.SEGMENTATION_ID] = segmentation_id
+        netseg_obj.update()
+
+    LOG.info("Updated segment %(id)s, segmentation_id: %(segmentation_id)s)",
+             {'id': segment_id, 'segmentation_id': segmentation_id})
 
 
 def get_network_segments(context, network_id, filter_dynamic=False):

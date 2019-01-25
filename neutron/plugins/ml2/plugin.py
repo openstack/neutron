@@ -62,6 +62,7 @@ from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import allowedaddresspairs as addr_exc
 from neutron_lib.exceptions import port_security as psec_exc
+from neutron_lib.objects import utils as obj_utils
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
@@ -107,7 +108,6 @@ from neutron.db import segments_db
 from neutron.db import subnet_service_type_mixin
 from neutron.db import vlantransparent_db
 from neutron.extensions import filter_validation
-from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
 from neutron.ipam import exceptions as ipam_exc
 from neutron.objects import base as base_obj
@@ -797,6 +797,61 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                   segment[api.SEGMENTATION_ID],
                                   segment[api.PHYSICAL_NETWORK])
 
+    def _update_segmentation_id(self, context, network, net_data):
+        """Update segmentation ID in a single provider network"""
+        segments = segments_db.get_networks_segments(
+            context, [network['id']])[network['id']]
+        if len(segments) > 1:
+            msg = _('Provider network attributes can be updated only in '
+                    'provider networks with a single segment.')
+            raise exc.InvalidInput(error_message=msg)
+
+        vif_types = [portbindings.VIF_TYPE_UNBOUND,
+                     portbindings.VIF_TYPE_BINDING_FAILED]
+        for mech_driver in self.mechanism_manager.ordered_mech_drivers:
+            if (provider_net.SEGMENTATION_ID in mech_driver.obj.
+                    provider_network_attribute_updates_supported()):
+                agent_type = mech_driver.obj.agent_type
+                agents = self.get_agents(context,
+                                         filters={'agent_type': [agent_type]})
+                for agent in agents:
+                    vif_types.append(mech_driver.obj.get_vif_type(
+                        context, agent, segments[0]))
+
+        filter_obj = obj_utils.NotIn(vif_types)
+        filters = {portbindings.VIF_TYPE:
+                   filter_obj.filter(models.PortBinding.vif_type),
+                   'network_id': [network['id']]}
+        if super(Ml2Plugin, self).get_ports_count(context,
+                                                  filters=filters):
+            msg = (_('Provider network attribute %(attr)s cannot be updated '
+                     'if any port in the network has not the following '
+                     '%(vif_field)s: %(vif_types)s') %
+                   {'attr': provider_net.SEGMENTATION_ID,
+                    'vif_field': portbindings.VIF_TYPE,
+                    'vif_types': ', '.join(vif_types)})
+            raise exc.InvalidInput(error_message=msg)
+
+        self.type_manager.update_network_segment(context, network,
+                                                 net_data, segments[0])
+
+    def _update_provider_network_attributes(self, context, network, net_data):
+        """Raise exception if provider network attrs update are not supported.
+
+        This function will raise an exception if the provider network attribute
+        update is not supported.
+        """
+        if net_data.get(provider_net.SEGMENTATION_ID):
+            self._update_segmentation_id(context, network, net_data)
+
+        provider_net_attrs = (set(provider_net.ATTRIBUTES) -
+                              {provider_net.SEGMENTATION_ID})
+        if any(validators.is_attr_set(net_data.get(a))
+               for a in provider_net_attrs):
+            msg = (_('Plugin does not support updating the following provider '
+                     'network attributes: %s') % ', '.join(provider_net_attrs))
+            raise exc.InvalidInput(error_message=msg)
+
     def _delete_objects(self, context, resource, objects):
         delete_op = getattr(self, 'delete_%s' % resource)
         for obj in objects:
@@ -985,11 +1040,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @db_api.retry_if_session_inactive()
     def update_network(self, context, id, network):
         net_data = network[net_def.RESOURCE_NAME]
-        provider._raise_if_updates_provider_attributes(net_data)
         need_network_update_notify = False
 
         with db_api.CONTEXT_WRITER.using(context):
             original_network = super(Ml2Plugin, self).get_network(context, id)
+            self._update_provider_network_attributes(
+                context, original_network, net_data)
+
             updated_network = super(Ml2Plugin, self).update_network(context,
                                                                     id,
                                                                     network)

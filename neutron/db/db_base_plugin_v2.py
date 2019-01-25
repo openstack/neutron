@@ -18,6 +18,7 @@ import functools
 import netaddr
 from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
 from neutron_lib.api.definitions import port as port_def
+from neutron_lib.api.definitions import portbindings as portbindings_def
 from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
@@ -1476,11 +1477,14 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         filters = filters or {}
         fixed_ips = filters.pop('fixed_ips', {})
+        vif_type = filters.pop(portbindings_def.VIF_TYPE, None)
         query = model_query.get_collection_query(context, Port,
                                                  filters=filters,
                                                  *args, **kwargs)
         ip_addresses = fixed_ips.get('ip_address')
         subnet_ids = fixed_ips.get('subnet_id')
+        if vif_type is not None:
+            query = query.filter(Port.port_bindings.any(vif_type=vif_type))
         if ip_addresses:
             query = query.filter(
                 Port.fixed_ips.any(IPAllocation.ip_address.in_(ip_addresses)))

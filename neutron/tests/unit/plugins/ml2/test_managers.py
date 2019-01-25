@@ -16,11 +16,15 @@
 
 import mock
 
+from neutron_lib.api.definitions import provider_net as provider
+from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import placement as place_exc
 from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
 from oslo_db import exception as db_exc
+from oslo_utils import uuidutils
 
+from neutron.db import segments_db
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import managers
 from neutron.tests import base
@@ -180,3 +184,50 @@ class TestMechManager(base.BaseTestCase):
 
     def test_port_precommit(self):
         self._check_resource('port')
+
+
+class TypeManagerTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super(TypeManagerTestCase, self).setUp()
+        self.type_manager = managers.TypeManager()
+        self.ctx = mock.Mock()
+        self.network = {'id': uuidutils.generate_uuid()}
+
+    def test_update_network_segment_no_vlan_no_segmentation_id(self):
+        net_data = {}
+        segment = {api.NETWORK_TYPE: 'vlan'}
+        self.assertRaises(
+            exc.InvalidInput, self.type_manager.update_network_segment,
+            self.ctx, self.network, net_data, segment)
+
+        net_data = {provider.SEGMENTATION_ID: 1000}
+        segment = {api.NETWORK_TYPE: 'no_vlan'}
+        self.assertRaises(
+            exc.InvalidInput, self.type_manager.update_network_segment,
+            self.ctx, self.network, net_data, segment)
+
+    def test_update_network_segment(self):
+        segmentation_id = 1000
+        net_data = {provider.SEGMENTATION_ID: segmentation_id}
+        segment = {'id': uuidutils.generate_uuid(),
+                   api.NETWORK_TYPE: 'vlan',
+                   api.PHYSICAL_NETWORK: 'default_network'}
+        new_segment = {api.NETWORK_TYPE: 'vlan',
+                       api.PHYSICAL_NETWORK: 'default_network',
+                       api.SEGMENTATION_ID: segmentation_id}
+        with mock.patch.object(self.type_manager,
+                               'validate_provider_segment') as mock_validate, \
+                mock.patch.object(self.type_manager,
+                                  'reserve_provider_segment') as mock_reserve,\
+                mock.patch.object(self.type_manager,
+                                  'release_network_segment') as mock_release, \
+                mock.patch.object(segments_db, 'update_network_segment') as \
+                mock_update_network_segment:
+            self.type_manager.update_network_segment(self.ctx, self.network,
+                                                     net_data, segment)
+            mock_validate.assert_called_once_with(new_segment)
+            mock_reserve.assert_called_once_with(self.ctx, new_segment)
+            mock_update_network_segment.assert_called_once_with(
+                self.ctx, segment['id'], segmentation_id)
+            mock_release.assert_called_once_with(self.ctx, segment)
