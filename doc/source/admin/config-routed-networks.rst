@@ -161,7 +161,7 @@ Controller node
 
       [DEFAULT]
       # ...
-      service_plugins = ..., segments
+      service_plugins = ...,segments
 
 #. Add a ``placement`` section to the ``neutron.conf`` file with authentication
    credentials for the Compute service placement API:
