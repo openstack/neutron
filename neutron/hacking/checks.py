@@ -246,7 +246,7 @@ def check_python3_no_filter(logical_line):
 # TODO(boden): rehome this check to neutron-lib
 @flake8ext
 def check_no_sqlalchemy_event_import(logical_line, filename, noqa):
-    """N346 - Use neutron.db.api.sqla_listen instead of sqlalchemy event."""
+    """N346 - Use neutron_lib.db.api.sqla_listen rather than sqlalchemy."""
     if noqa:
         return
     is_import = (logical_line.startswith('import') or

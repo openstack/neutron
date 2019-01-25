@@ -434,7 +434,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         action='access_as_shared', target_tenant='*')
 
                 # TODO(ihrachys) Below can be removed when we make sqlalchemy
-                # event listeners in neutron/db/api.py to refresh expired
+                # event listeners in neutron_lib/db/api.py to refresh expired
                 # attributes.
                 #
                 # First trigger expiration of rbac_entries.
