@@ -638,21 +638,20 @@ class Dnsmasq(DhcpLocalProcess):
             timestamp = 0
         else:
             timestamp = int(time.time()) + self.conf.dhcp_lease_duration
-        dhcp_enabled_subnet_ids = [s.id for s in
-                                   self._get_all_subnets(self.network)
-                                   if s.enable_dhcp]
+        dhcpv4_enabled_subnet_ids = [
+            s.id for s in self._get_all_subnets(self.network)
+            if s.enable_dhcp and s.ip_version == constants.IP_VERSION_4]
         for host_tuple in self._iter_hosts():
             port, alloc, hostname, name, no_dhcp, no_opts = host_tuple
             # don't write ip address which belongs to a dhcp disabled subnet
-            # or an IPv6 SLAAC/stateless subnet
-            if no_dhcp or alloc.subnet_id not in dhcp_enabled_subnet_ids:
+            # or an IPv6 subnet.
+            if no_dhcp or alloc.subnet_id not in dhcpv4_enabled_subnet_ids:
                 continue
 
-            ip_address = self._format_address_for_dnsmasq(alloc.ip_address)
             # all that matters is the mac address and IP. the hostname and
             # client ID will be overwritten on the next renewal.
             buf.write('%s %s %s * *\n' %
-                      (timestamp, port.mac_address, ip_address))
+                      (timestamp, port.mac_address, alloc.ip_address))
         contents = buf.getvalue()
         file_utils.replace_file(filename, contents)
         LOG.debug('Done building initial lease file %s with contents:\n%s',
