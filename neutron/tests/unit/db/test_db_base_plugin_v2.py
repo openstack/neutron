@@ -3813,7 +3813,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                [{'nexthop': '10.0.2.20',
                                  'destination': '100.0.0.0/8'},
                                 {'nexthop': '10.0.2.20',
-                                 'destination': '100.0.0.0/8'}]]
+                                 'destination': '100.0.0.0/8'}],
+                               [{'destination': '100.1.1.1/8',
+                                 'nexthop': '10.0.2.20'}]]
             tenant_id = network['network']['tenant_id']
             for hostroutes in hostroute_pools:
                 data = {'subnet': {'network_id': network['network']['id'],
