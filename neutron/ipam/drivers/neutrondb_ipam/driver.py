@@ -159,9 +159,16 @@ class NeutronDbSubnet(ipam_base.Subnet):
 
     def _generate_ips(self, context, prefer_next=False, num_addresses=1):
         """Generate a set of IPs from the set of available addresses."""
-        ip_allocations = netaddr.IPSet()
-        for ipallocation in self.subnet_manager.list_allocations(context):
-            ip_allocations.add(ipallocation.ip_address)
+        allocated_ips = []
+        requested_num_addresses = num_addresses
+
+        allocations = self.subnet_manager.list_allocations(context)
+        # It is better not to use 'netaddr.IPSet.add',
+        # because _compact_single_network in 'IPSet.add'
+        # is quite time consuming.
+        ip_allocations = netaddr.IPSet(
+            [netaddr.IPAddress(allocation.ip_address)
+             for allocation in allocations])
 
         for ip_pool in self.subnet_manager.list_pools(context):
             ip_set = netaddr.IPSet()
@@ -170,34 +177,53 @@ class NeutronDbSubnet(ipam_base.Subnet):
             if av_set.size == 0:
                 continue
 
-            if av_set.size < num_addresses:
-                # Not enough addresses in pool to perform validation
-                # TODO(njohnston): How to handle when there are enough IPs but
-                # not enough in a single pool to satisfy the request?
-                continue
+            if av_set.size < requested_num_addresses:
+                # All addresses of the address pool are allocated
+                # for the first time and the remaining addresses
+                # will be allocated in the next address pools.
+                allocated_num_addresses = av_set.size
+            else:
+                # All expected addresses can be assigned in this loop.
+                allocated_num_addresses = requested_num_addresses
 
             if prefer_next:
                 allocated_ip_pool = list(itertools.islice(av_set,
-                    num_addresses))
-                return [str(allocated_ip)
-                        for allocated_ip in allocated_ip_pool]
+                    allocated_num_addresses))
+                allocated_ips.extend([str(allocated_ip)
+                                      for allocated_ip in allocated_ip_pool])
+
+                requested_num_addresses -= allocated_num_addresses
+                if requested_num_addresses:
+                    # More addresses need to be allocated in the next loop.
+                    continue
+                return allocated_ips
 
             window = min(av_set.size, MAX_WIN)
 
             # NOTE(gryf): If there is more than one address, make the window
             # bigger, so that are chances to fulfill demanded amount of IPs.
-            if num_addresses > 1:
-                window = min(av_set.size, num_addresses * MULTIPLIER,
+            if allocated_num_addresses > 1:
+                window = min(av_set.size,
+                             allocated_num_addresses * MULTIPLIER,
                              MAX_WIN_MULTI)
 
-            if window < num_addresses:
+            if window < allocated_num_addresses:
                 continue
             else:
                 # Maximize randomness by using the random module's built in
                 # sampling function
                 av_ips = list(itertools.islice(av_set, 0, window))
-                allocated_ip_pool = random.sample(av_ips, num_addresses)
-            return [str(allocated_ip) for allocated_ip in allocated_ip_pool]
+                allocated_ip_pool = random.sample(av_ips,
+                                                  allocated_num_addresses)
+                allocated_ips.extend([str(allocated_ip)
+                                      for allocated_ip in allocated_ip_pool])
+
+            requested_num_addresses -= allocated_num_addresses
+            if requested_num_addresses:
+                # More addresses need to be allocated in the next loop.
+                continue
+
+            return allocated_ips
 
         raise ipam_exc.IpAddressGenerationFailure(
                   subnet_id=self.subnet_manager.neutron_id)
