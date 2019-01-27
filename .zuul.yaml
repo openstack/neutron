@@ -10,7 +10,7 @@
       - periodic-stable-jobs
       - check-requirements
       - integrated-gate
-      - integrated-gate-py35
+      - integrated-gate-py3
       - release-notes-jobs-python3
     check:
       jobs:
