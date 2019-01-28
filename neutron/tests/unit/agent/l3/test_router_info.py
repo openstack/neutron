@@ -209,6 +209,28 @@ class TestRouterInfo(base.BaseTestCase):
             p_i_p.assert_called_once_with()
             p_e_o_d.assert_called_once_with()
 
+    def test__update_internal_ports_cache(self):
+        ri = router_info.RouterInfo(mock.Mock(), _uuid(), {}, **self.ri_kwargs)
+        ri.internal_ports = [
+            {'id': 'port-id-1', 'mtu': 1500},
+            {'id': 'port-id-2', 'mtu': 2000}]
+        initial_internal_ports = ri.internal_ports[:]
+
+        # Test add new element to the cache
+        new_port = {'id': 'new-port-id', 'mtu': 1500}
+        ri._update_internal_ports_cache(new_port)
+        self.assertEqual(
+            initial_internal_ports + [new_port],
+            ri.internal_ports)
+
+        # Test update existing port in cache
+        updated_port = new_port.copy()
+        updated_port['mtu'] = 2500
+        ri._update_internal_ports_cache(updated_port)
+        self.assertEqual(
+            initial_internal_ports + [updated_port],
+            ri.internal_ports)
+
 
 class BasicRouterTestCaseFramework(base.BaseTestCase):
     def _create_router(self, router=None, **kwargs):
