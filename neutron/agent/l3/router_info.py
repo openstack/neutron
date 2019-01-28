@@ -484,9 +484,23 @@ class RouterInfo(object):
         ip_devs = ip_wrapper.get_devices()
         return [ip_dev.name for ip_dev in ip_devs]
 
+    def _update_internal_ports_cache(self, port):
+        # NOTE(slaweq): self.internal_ports is a list of port objects but
+        # when it is updated in _process_internal_ports() method,
+        # but it can be based only on indexes of elements in
+        # self.internal_ports as index of element to updated is unknown.
+        # It has to be done based on port_id and this method is doing exactly
+        # that.
+        for index, p in enumerate(self.internal_ports):
+            if p['id'] == port['id']:
+                self.internal_ports[index] = port
+                break
+        else:
+            self.internal_ports.append(port)
+
     @staticmethod
     def _get_updated_ports(existing_ports, current_ports):
-        updated_ports = dict()
+        updated_ports = []
         current_ports_dict = {p['id']: p for p in current_ports}
         for existing_port in existing_ports:
             current_port = current_ports_dict.get(existing_port['id'])
@@ -498,7 +512,7 @@ class RouterInfo(object):
                            key=helpers.safe_sort_key))
                 mtu_changed = existing_port['mtu'] != current_port['mtu']
                 if fixed_ips_changed or mtu_changed:
-                    updated_ports[current_port['id']] = current_port
+                    updated_ports.append(current_port)
         return updated_ports
 
     @staticmethod
@@ -554,7 +568,7 @@ class RouterInfo(object):
         for p in new_ports:
             self.internal_network_added(p)
             LOG.debug("appending port %s to internal_ports cache", p)
-            self.internal_ports.append(p)
+            self._update_internal_ports_cache(p)
             enable_ra = enable_ra or self._port_has_ipv6_subnet(p)
             for subnet in p['subnets']:
                 if ipv6_utils.is_ipv6_pd_enabled(subnet):
@@ -577,18 +591,15 @@ class RouterInfo(object):
                     del self.pd_subnets[subnet['id']]
 
         updated_cidrs = []
-        if updated_ports:
-            for index, p in enumerate(internal_ports):
-                if not updated_ports.get(p['id']):
-                    continue
-                self.internal_ports[index] = updated_ports[p['id']]
-                interface_name = self.get_internal_device_name(p['id'])
-                ip_cidrs = common_utils.fixed_ip_cidrs(p['fixed_ips'])
-                LOG.debug("updating internal network for port %s", p)
-                updated_cidrs += ip_cidrs
-                self.internal_network_updated(
-                    interface_name, ip_cidrs, p['mtu'])
-                enable_ra = enable_ra or self._port_has_ipv6_subnet(p)
+        for p in updated_ports:
+            self._update_internal_ports_cache(p)
+            interface_name = self.get_internal_device_name(p['id'])
+            ip_cidrs = common_utils.fixed_ip_cidrs(p['fixed_ips'])
+            LOG.debug("updating internal network for port %s", p)
+            updated_cidrs += ip_cidrs
+            self.internal_network_updated(
+                interface_name, ip_cidrs, p['mtu'])
+            enable_ra = enable_ra or self._port_has_ipv6_subnet(p)
 
         # Check if there is any pd prefix update
         for p in internal_ports:
