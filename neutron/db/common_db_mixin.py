@@ -13,10 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import model_query
 from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
-
-from neutron.db import _model_query
 
 
 # TODO(HenryG): Deprecate and schedule for removal
@@ -29,7 +28,7 @@ class CommonDbMixin(object):
 
     @staticmethod
     def _model_query(context, model):
-        return _model_query.query_with_hooks(context, model)
+        return model_query.query_with_hooks(context, model)
 
     @staticmethod
     def _fields(resource, fields):
@@ -37,35 +36,35 @@ class CommonDbMixin(object):
 
     @staticmethod
     def _get_by_id(context, model, id):
-        return _model_query.get_by_id(context, model, id)
+        return model_query.get_by_id(context, model, id)
 
     @staticmethod
     def _apply_filters_to_query(query, model, filters, context=None):
-        return _model_query.apply_filters(query, model, filters, context)
+        return model_query.apply_filters(query, model, filters, context)
 
     @staticmethod
     def _get_collection_query(context, model,
                               filters=None, sorts=None,
                               limit=None, marker_obj=None,
                               page_reverse=False):
-        return _model_query.get_collection_query(context, model,
-                                                 filters, sorts,
-                                                 limit, marker_obj,
-                                                 page_reverse)
+        return model_query.get_collection_query(context, model,
+                                                filters, sorts,
+                                                limit, marker_obj,
+                                                page_reverse)
 
     @staticmethod
     def _get_collection(context, model, dict_func,
                         filters=None, fields=None, sorts=None,
                         limit=None, marker_obj=None,
                         page_reverse=False):
-        return _model_query.get_collection(context, model, dict_func,
-                                           filters, fields, sorts,
-                                           limit, marker_obj,
-                                           page_reverse)
+        return model_query.get_collection(context, model, dict_func,
+                                          filters, fields, sorts,
+                                          limit, marker_obj,
+                                          page_reverse)
 
     @staticmethod
     def _get_collection_count(context, model, filters=None):
-        return _model_query.get_collection_count(context, model, filters)
+        return model_query.get_collection_count(context, model, filters)
 
     # TODO(HenryG): Remove this when available in neutron-lib
     def _get_marker_obj(self, context, resource, limit, marker):

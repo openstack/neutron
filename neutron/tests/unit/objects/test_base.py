@@ -21,6 +21,7 @@ import netaddr
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import api as db_api
+from neutron_lib.db import model_query
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.objects import utils as obj_utils
@@ -33,7 +34,6 @@ from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 import testtools
 
-from neutron.db import _model_query as model_query
 from neutron import objects
 from neutron.objects import agent
 from neutron.objects import base

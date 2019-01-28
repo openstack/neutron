@@ -36,6 +36,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib.db import api as db_api
+from neutron_lib.db import model_query
 from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as exc
@@ -70,7 +71,6 @@ from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
 from neutron.common import utils
-from neutron.db import _model_query as model_query
 from neutron.db import address_scope_db
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db

@@ -13,12 +13,12 @@
 import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants as const
+from neutron_lib.db import model_query
 
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import and_, or_
 
 from neutron.common import utils
-from neutron.db import _model_query as model_query
 from neutron.db.models import segment as segment_model
 from neutron.db.models import subnet_service_type
 from neutron.db import models_v2
