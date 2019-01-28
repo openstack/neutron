@@ -117,7 +117,7 @@ On the controller nodes:
 
    .. code-block:: none
 
-      service_plugins = router, qos
+      service_plugins = router,qos
 
 #. In ``/etc/neutron/plugins/ml2/ml2_conf.ini``, add ``qos`` to
    ``extension_drivers`` in the ``[ml2]`` section. For example:
@@ -125,7 +125,7 @@ On the controller nodes:
    .. code-block:: ini
 
       [ml2]
-      extension_drivers = port_security, qos
+      extension_drivers = port_security,qos
 
 #. Edit the configuration file for the agent you are using and set the
    ``extensions`` to include ``qos`` in the ``[agent]`` section of the
