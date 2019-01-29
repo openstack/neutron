@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import datetime
 
 import mock
@@ -20,6 +21,7 @@ from neutron_lib.api import extensions
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import constants
 from neutron_lib.plugins import directory
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
@@ -138,10 +140,43 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         network = {'id': 'foo_network_id'}
         self._test__get_enabled_agents(network, agents=[agent1, agent2])
 
+    def test__notify_agents_allocate_priority(self):
+        mock_context = mock.MagicMock()
+        mock_context.is_admin = True
+        methods = ['network_create_end', 'network_update_end',
+                  'network_delete_end', 'subnet_create_end',
+                  'subnet_update_end', 'subnet_delete_end',
+                  'port_create_end', 'port_update_end', 'port_delete_end']
+        with mock.patch.object(self.notifier, '_schedule_network') as f:
+            with mock.patch.object(self.notifier, '_get_enabled_agents') as g:
+                for method in methods:
+                    f.return_value = [mock.MagicMock()]
+                    g.return_value = [mock.MagicMock()]
+                    payload = {}
+                    if method.startswith('port'):
+                        payload['port'] = \
+                            {'device_id':
+                             constants.DEVICE_ID_RESERVED_DHCP_PORT}
+                    expected_payload = copy.deepcopy(payload)
+                    expected_payload['priority'] = \
+                        dhcp_rpc_agent_api.METHOD_PRIORITY_MAP.get(method)
+                    self.notifier._notify_agents(mock_context, method, payload,
+                                                 'fake_network_id')
+                    if method == 'network_delete_end':
+                        self.mock_fanout.assert_called_with(mock.ANY, method,
+                                                            expected_payload)
+                    elif method != 'network_create_end':
+                        if method == 'port_create_end':
+                            expected_payload['priority'] = \
+                                dhcp_rpc_agent_api.PRIORITY_PORT_CREATE_HIGH
+                        self.mock_cast.assert_called_with(mock.ANY, method,
+                                                          expected_payload,
+                                                          mock.ANY, mock.ANY)
+
     def test__notify_agents_fanout_required(self):
         self.notifier._notify_agents(mock.ANY,
                                      'network_delete_end',
-                                     mock.ANY, 'foo_network_id')
+                                     {}, 'foo_network_id')
         self.assertEqual(1, self.mock_fanout.call_count)
 
     def _test__notify_agents_with_function(
