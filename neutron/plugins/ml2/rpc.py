@@ -333,15 +333,15 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             return
         port = port_context.current
         if (port['device_owner'] != n_const.DEVICE_OWNER_DVR_INTERFACE and
-            status == n_const.PORT_STATUS_ACTIVE and
-            port[portbindings.HOST_ID] != host and
-            not l3_hamode_db.is_ha_router_port(rpc_context,
-                                               port['device_owner'],
-                                               port['device_id'])):
-                # don't setup ACTIVE forwarding entries unless bound to this
-                # host or if it's an HA or DVR port (which is special-cased in
-                # the mech driver)
-                return
+                status == n_const.PORT_STATUS_ACTIVE and
+                port[portbindings.HOST_ID] != host and
+                not l3_hamode_db.is_ha_router_port(rpc_context,
+                                                   port['device_owner'],
+                                                   port['device_id'])):
+            # don't setup ACTIVE forwarding entries unless bound to this
+            # host or if it's an HA or DVR port (which is special-cased in
+            # the mech driver)
+            return
         port_context.current['status'] = status
         port_context.current[portbindings.HOST_ID] = host
         if status == n_const.PORT_STATUS_ACTIVE:

@@ -2418,8 +2418,8 @@ class TestSegmentHostRoutes(TestSegmentML2):
                                 segment_id=segment['id'],
                                 gateway_ip=gateway_ips[1],
                                 cidr=cidrs[1]) as subnet1:
-                    subnet0 = subnet0['subnet']
-                    subnet1 = subnet1['subnet']
+                subnet0 = subnet0['subnet']
+                subnet1 = subnet1['subnet']
 
         req = self.new_show_request('subnets', subnet0['id'])
         res = req.get_response(self.api)

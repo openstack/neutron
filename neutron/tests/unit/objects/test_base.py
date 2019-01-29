@@ -970,9 +970,9 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
     @mock.patch.object(obj_db_api, 'update_objects')
     @mock.patch.object(obj_db_api, 'update_object', return_value={})
     def test_update_objects_without_validate_filters(self, *mocks):
-            self._test_class.update_objects(
-                self.context, {'unknown_filter': 'new_value'},
-                validate_filters=False, unknown_filter='value')
+        self._test_class.update_objects(
+            self.context, {'unknown_filter': 'new_value'},
+            validate_filters=False, unknown_filter='value')
 
     def _prep_string_field(self):
         self.filter_string_field = None
@@ -1066,9 +1066,9 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             self.assertEqual(expected, self._test_class.count(self.context))
 
     def test_count_invalid_fields(self):
-            self.assertRaises(n_exc.InvalidInput,
-                              self._test_class.count, self.context,
-                              fake_field='xxx')
+        self.assertRaises(n_exc.InvalidInput,
+                          self._test_class.count, self.context,
+                          fake_field='xxx')
 
     def _check_equal(self, expected, observed):
         self.assertItemsEqual(get_obj_persistent_fields(expected),

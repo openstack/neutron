@@ -54,7 +54,7 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
         if expected_resource:
             self.assertEqual(expected_resource, usage_info.resource)
         if expected_dirty is not None:
-                self.assertEqual(expected_dirty, usage_info.dirty)
+            self.assertEqual(expected_dirty, usage_info.dirty)
         if expected_used is not None:
             self.assertEqual(expected_used, usage_info.used)
 

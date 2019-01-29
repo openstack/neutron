@@ -911,15 +911,16 @@ class TestRollback(test_db_base.NeutronDbPluginV2TestCase):
 
         Backend = ipam_pluggable_backend.IpamPluggableBackend
         with mock.patch.object(Backend, '_store_ip_allocation', wraps=store),\
-            mock.patch.object(Backend, '_safe_rollback', wraps=rollback),\
-            mock.patch.object(Backend, '_allocate_ips_for_port', wraps=alloc):
-                # Create port with two addresses. The wrapper lets one succeed
-                # then simulates race for the second to trigger IPAM rollback.
-                response = self._create_port(
-                    self.fmt,
-                    net_id=net['network']['id'],
-                    fixed_ips=[{'subnet_id': subnet1['subnet']['id']},
-                               {'subnet_id': subnet2['subnet']['id']}])
+                mock.patch.object(Backend, '_safe_rollback', wraps=rollback),\
+                mock.patch.object(Backend, '_allocate_ips_for_port',
+                                  wraps=alloc):
+            # Create port with two addresses. The wrapper lets one succeed
+            # then simulates race for the second to trigger IPAM rollback.
+            response = self._create_port(
+                self.fmt,
+                net_id=net['network']['id'],
+                fixed_ips=[{'subnet_id': subnet1['subnet']['id']},
+                           {'subnet_id': subnet2['subnet']['id']}])
 
         # When all goes well, retry kicks in and the operation is successful.
         self.assertEqual(webob.exc.HTTPCreated.code, response.status_int)
