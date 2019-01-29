@@ -1936,6 +1936,7 @@ class GetDevicesInfoTestCase(base.BaseTestCase):
                   ('IFLA_PROMISCUITY', 0),
                   ('IFLA_ADDRESS', '5a:76:ed:cc:ce:91'),
                   ('IFLA_BROADCAST', 'ff:ff:ff:ff:ff:f1'),
+                  ('IFLA_LINK', 2),
                   ('IFLA_LINKINFO', {'attrs': (
                       ('IFLA_INFO_KIND', 'vlan'),
                       ('IFLA_INFO_DATA', {'attrs': (('IFLA_VLAN_ID', 1000), )})
@@ -1952,7 +1953,8 @@ class GetDevicesInfoTestCase(base.BaseTestCase):
                       ('IFLA_INFO_KIND', 'vxlan'),
                       ('IFLA_INFO_DATA', {'attrs': (
                           ('IFLA_VXLAN_ID', 1001),
-                          ('IFLA_VXLAN_GROUP', '239.1.1.1'))})
+                          ('IFLA_VXLAN_GROUP', '239.1.1.1'),
+                          ('IFLA_VXLAN_LINK', 2))})
                   )}))
     }
 
@@ -1989,7 +1991,7 @@ class GetDevicesInfoTestCase(base.BaseTestCase):
         self.assertEqual(expected, ret[0])
 
     def test_get_devices_info_vlan(self):
-        self.mock_getdevs.return_value = (self.DEVICE_VLAN, )
+        self.mock_getdevs.return_value = (self.DEVICE_VLAN, self.DEVICE_DUMMY)
         ret = ip_lib.get_devices_info('namespace')
         expected = {'index': 5,
                     'name': 'int_02',
@@ -2000,11 +2002,17 @@ class GetDevicesInfoTestCase(base.BaseTestCase):
                     'mac': '5a:76:ed:cc:ce:91',
                     'broadcast': 'ff:ff:ff:ff:ff:f1',
                     'kind': 'vlan',
-                    'vlan_id': 1000}
-        self.assertEqual(expected, ret[0])
+                    'vlan_id': 1000,
+                    'parent_index': 2,
+                    'parent_name': 'int_01'}
+        for device in (device for device in ret if device['kind'] == 'vlan'):
+            self.assertEqual(expected, device)
+            break
+        else:
+            self.fail('No VLAN device found')
 
     def test_get_devices_info_vxlan(self):
-        self.mock_getdevs.return_value = (self.DEVICE_VXLAN, )
+        self.mock_getdevs.return_value = (self.DEVICE_VXLAN, self.DEVICE_DUMMY)
         ret = ip_lib.get_devices_info('namespace')
         expected = {'index': 9,
                     'name': 'int_03',
@@ -2016,5 +2024,11 @@ class GetDevicesInfoTestCase(base.BaseTestCase):
                     'broadcast': 'ff:ff:ff:ff:ff:f2',
                     'kind': 'vxlan',
                     'vxlan_id': 1001,
-                    'vxlan_group': '239.1.1.1'}
-        self.assertEqual(expected, ret[0])
+                    'vxlan_group': '239.1.1.1',
+                    'vxlan_link_index': 2,
+                    'vxlan_link_name': 'int_01'}
+        for device in (device for device in ret if device['kind'] == 'vxlan'):
+            self.assertEqual(expected, device)
+            break
+        else:
+            self.fail('No VXLAN device found')
