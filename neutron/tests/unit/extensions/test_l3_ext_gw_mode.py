@@ -405,10 +405,10 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             ext_net_id = s['subnet']['network_id']
             self._set_net_external(ext_net_id)
             with mock.patch.object(
-                l3_db.L3_NAT_dbonly_mixin, '_validate_gw_info',
-                side_effect=[db_exc.RetryRequest(None), ext_net_id]):
-                    self._set_router_external_gateway(r['router']['id'],
-                                                      ext_net_id)
+                    l3_db.L3_NAT_dbonly_mixin, '_validate_gw_info',
+                    side_effect=[db_exc.RetryRequest(None), ext_net_id]):
+                self._set_router_external_gateway(r['router']['id'],
+                                                  ext_net_id)
             res = self._show('routers', r['router']['id'])['router']
             self.assertEqual(ext_net_id,
                              res['external_gateway_info']['network_id'])

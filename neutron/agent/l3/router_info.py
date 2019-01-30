@@ -946,9 +946,9 @@ class RouterInfo(object):
 
         except (n_exc.FloatingIpSetupException,
                 n_exc.IpTablesApplyException):
-                # All floating IPs must be put in error state
-                LOG.exception("Failed to process floating IPs.")
-                fip_statuses = self.put_fips_in_error_state()
+            # All floating IPs must be put in error state
+            LOG.exception("Failed to process floating IPs.")
+            fip_statuses = self.put_fips_in_error_state()
         finally:
             self.update_fip_statuses(fip_statuses)
 

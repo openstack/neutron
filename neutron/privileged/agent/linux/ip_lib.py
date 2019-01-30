@@ -132,12 +132,12 @@ def _get_iproute(namespace):
 
 
 def _translate_ip_device_exception(e, device=None, namespace=None):
-        if e.code == errno.ENODEV:
-            raise NetworkInterfaceNotFound(device=device, namespace=namespace)
-        if e.code == errno.EOPNOTSUPP:
-            raise InterfaceOperationNotSupported(device=device,
-                                                 namespace=namespace)
-        raise
+    if e.code == errno.ENODEV:
+        raise NetworkInterfaceNotFound(device=device, namespace=namespace)
+    if e.code == errno.EOPNOTSUPP:
+        raise InterfaceOperationNotSupported(device=device,
+                                             namespace=namespace)
+    raise
 
 
 def _get_link_id(device, namespace):

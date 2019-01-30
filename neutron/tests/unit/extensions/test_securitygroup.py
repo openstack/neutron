@@ -296,14 +296,14 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         self._assert_sg_rule_has_kvs(v6_rule, expected)
 
     def test_create_security_group_bulk(self):
-            rule1 = self._build_security_group("sg_1", "sec_grp_1")
-            rule2 = self._build_security_group("sg_2", "sec_grp_2")
-            rules = {'security_groups': [rule1['security_group'],
-                                         rule2['security_group']]}
-            res = self._create_security_group_response(self.fmt, rules)
-            ret = self.deserialize(self.fmt, res)
-            self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
-            self.assertEqual(2, len(ret['security_groups']))
+        rule1 = self._build_security_group("sg_1", "sec_grp_1")
+        rule2 = self._build_security_group("sg_2", "sec_grp_2")
+        rules = {'security_groups': [rule1['security_group'],
+                                     rule2['security_group']]}
+        res = self._create_security_group_response(self.fmt, rules)
+        ret = self.deserialize(self.fmt, res)
+        self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+        self.assertEqual(2, len(ret['security_groups']))
 
     def test_skip_duplicate_default_sg_error(self):
         num_called = [0]

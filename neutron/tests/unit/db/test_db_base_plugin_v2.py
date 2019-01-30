@@ -1881,46 +1881,46 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
 
     def test_requested_subnet_id_v4_and_v6(self):
         with self.subnet() as subnet:
-                # Get a IPv4 and IPv6 address
-                tenant_id = subnet['subnet']['tenant_id']
-                net_id = subnet['subnet']['network_id']
-                res = self._create_subnet(
-                    self.fmt,
-                    tenant_id=tenant_id,
-                    net_id=net_id,
-                    cidr='2607:f0d0:1002:51::/124',
-                    ip_version=6,
-                    gateway_ip=constants.ATTR_NOT_SPECIFIED)
-                subnet2 = self.deserialize(self.fmt, res)
-                kwargs = {"fixed_ips":
-                          [{'subnet_id': subnet['subnet']['id']},
-                           {'subnet_id': subnet2['subnet']['id']}]}
-                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-                port3 = self.deserialize(self.fmt, res)
-                ips = port3['port']['fixed_ips']
-                cidr_v4 = subnet['subnet']['cidr']
-                cidr_v6 = subnet2['subnet']['cidr']
-                self.assertEqual(2, len(ips))
-                self._test_requested_port_subnet_ids(ips,
-                                                     [subnet['subnet']['id'],
-                                                      subnet2['subnet']['id']])
-                self._test_dual_stack_port_ip_addresses_in_subnets(ips,
-                                                                   cidr_v4,
-                                                                   cidr_v6)
+            # Get a IPv4 and IPv6 address
+            tenant_id = subnet['subnet']['tenant_id']
+            net_id = subnet['subnet']['network_id']
+            res = self._create_subnet(
+                self.fmt,
+                tenant_id=tenant_id,
+                net_id=net_id,
+                cidr='2607:f0d0:1002:51::/124',
+                ip_version=6,
+                gateway_ip=constants.ATTR_NOT_SPECIFIED)
+            subnet2 = self.deserialize(self.fmt, res)
+            kwargs = {"fixed_ips":
+                      [{'subnet_id': subnet['subnet']['id']},
+                       {'subnet_id': subnet2['subnet']['id']}]}
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            port3 = self.deserialize(self.fmt, res)
+            ips = port3['port']['fixed_ips']
+            cidr_v4 = subnet['subnet']['cidr']
+            cidr_v6 = subnet2['subnet']['cidr']
+            self.assertEqual(2, len(ips))
+            self._test_requested_port_subnet_ids(ips,
+                                                 [subnet['subnet']['id'],
+                                                  subnet2['subnet']['id']])
+            self._test_dual_stack_port_ip_addresses_in_subnets(ips,
+                                                               cidr_v4,
+                                                               cidr_v6)
 
-                res = self._create_port(self.fmt, net_id=net_id)
-                port4 = self.deserialize(self.fmt, res)
-                # Check that a v4 and a v6 address are allocated
-                ips = port4['port']['fixed_ips']
-                self.assertEqual(2, len(ips))
-                self._test_requested_port_subnet_ids(ips,
-                                                     [subnet['subnet']['id'],
-                                                      subnet2['subnet']['id']])
-                self._test_dual_stack_port_ip_addresses_in_subnets(ips,
-                                                                   cidr_v4,
-                                                                   cidr_v6)
-                self._delete('ports', port3['port']['id'])
-                self._delete('ports', port4['port']['id'])
+            res = self._create_port(self.fmt, net_id=net_id)
+            port4 = self.deserialize(self.fmt, res)
+            # Check that a v4 and a v6 address are allocated
+            ips = port4['port']['fixed_ips']
+            self.assertEqual(2, len(ips))
+            self._test_requested_port_subnet_ids(ips,
+                                                 [subnet['subnet']['id'],
+                                                  subnet2['subnet']['id']])
+            self._test_dual_stack_port_ip_addresses_in_subnets(ips,
+                                                               cidr_v4,
+                                                               cidr_v6)
+            self._delete('ports', port3['port']['id'])
+            self._delete('ports', port4['port']['id'])
 
     def _test_requested_port_subnet_ids(self, ips, expected_subnet_ids):
         self.assertEqual(set(x['subnet_id'] for x in ips),
@@ -2323,49 +2323,49 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_range_allocation(self):
         with self.subnet(gateway_ip='10.0.0.3',
                          cidr='10.0.0.0/29') as subnet:
-                kwargs = {"fixed_ips":
-                          [{'subnet_id': subnet['subnet']['id']},
-                           {'subnet_id': subnet['subnet']['id']},
-                           {'subnet_id': subnet['subnet']['id']},
-                           {'subnet_id': subnet['subnet']['id']},
-                           {'subnet_id': subnet['subnet']['id']}]}
-                net_id = subnet['subnet']['network_id']
-                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-                port = self.deserialize(self.fmt, res)
-                ips = port['port']['fixed_ips']
-                self.assertEqual(5, len(ips))
-                alloc = ['10.0.0.1', '10.0.0.2', '10.0.0.4', '10.0.0.5',
-                         '10.0.0.6']
-                for ip in ips:
-                    self.assertIn(ip['ip_address'], alloc)
-                    self.assertEqual(ip['subnet_id'],
-                                     subnet['subnet']['id'])
-                    alloc.remove(ip['ip_address'])
-                self.assertEqual(0, len(alloc))
-                self._delete('ports', port['port']['id'])
+            kwargs = {"fixed_ips":
+                      [{'subnet_id': subnet['subnet']['id']},
+                       {'subnet_id': subnet['subnet']['id']},
+                       {'subnet_id': subnet['subnet']['id']},
+                       {'subnet_id': subnet['subnet']['id']},
+                       {'subnet_id': subnet['subnet']['id']}]}
+            net_id = subnet['subnet']['network_id']
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            port = self.deserialize(self.fmt, res)
+            ips = port['port']['fixed_ips']
+            self.assertEqual(5, len(ips))
+            alloc = ['10.0.0.1', '10.0.0.2', '10.0.0.4', '10.0.0.5',
+                     '10.0.0.6']
+            for ip in ips:
+                self.assertIn(ip['ip_address'], alloc)
+                self.assertEqual(ip['subnet_id'],
+                                 subnet['subnet']['id'])
+                alloc.remove(ip['ip_address'])
+            self.assertEqual(0, len(alloc))
+            self._delete('ports', port['port']['id'])
 
         with self.subnet(gateway_ip='11.0.0.6',
                          cidr='11.0.0.0/29') as subnet:
-                kwargs = {"fixed_ips":
-                          [{'subnet_id': subnet['subnet']['id']},
-                           {'subnet_id': subnet['subnet']['id']},
-                           {'subnet_id': subnet['subnet']['id']},
-                           {'subnet_id': subnet['subnet']['id']},
-                           {'subnet_id': subnet['subnet']['id']}]}
-                net_id = subnet['subnet']['network_id']
-                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-                port = self.deserialize(self.fmt, res)
-                ips = port['port']['fixed_ips']
-                self.assertEqual(5, len(ips))
-                alloc = ['11.0.0.1', '11.0.0.2', '11.0.0.3', '11.0.0.4',
-                         '11.0.0.5']
-                for ip in ips:
-                    self.assertIn(ip['ip_address'], alloc)
-                    self.assertEqual(ip['subnet_id'],
-                                     subnet['subnet']['id'])
-                    alloc.remove(ip['ip_address'])
-                self.assertEqual(0, len(alloc))
-                self._delete('ports', port['port']['id'])
+            kwargs = {"fixed_ips":
+                      [{'subnet_id': subnet['subnet']['id']},
+                       {'subnet_id': subnet['subnet']['id']},
+                       {'subnet_id': subnet['subnet']['id']},
+                       {'subnet_id': subnet['subnet']['id']},
+                       {'subnet_id': subnet['subnet']['id']}]}
+            net_id = subnet['subnet']['network_id']
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            port = self.deserialize(self.fmt, res)
+            ips = port['port']['fixed_ips']
+            self.assertEqual(5, len(ips))
+            alloc = ['11.0.0.1', '11.0.0.2', '11.0.0.3', '11.0.0.4',
+                     '11.0.0.5']
+            for ip in ips:
+                self.assertIn(ip['ip_address'], alloc)
+                self.assertEqual(ip['subnet_id'],
+                                 subnet['subnet']['id'])
+                alloc.remove(ip['ip_address'])
+            self.assertEqual(0, len(alloc))
+            self._delete('ports', port['port']['id'])
 
     def test_requested_invalid_fixed_ips(self):
         with self.subnet() as subnet:

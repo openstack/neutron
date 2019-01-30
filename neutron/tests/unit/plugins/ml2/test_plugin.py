@@ -2024,15 +2024,15 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
                     mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.'
                                '_attempt_binding',
                                side_effect=plugin._attempt_binding) as at_mock:
-                    plugin._bind_port_if_needed(port_context)
-                    if bound_vif_type == portbindings.VIF_TYPE_BINDING_FAILED:
-                        # An unsuccessful binding attempt should be retried
-                        # MAX_BIND_TRIES amount of times.
-                        self.assertEqual(ml2_plugin.MAX_BIND_TRIES,
-                                         at_mock.call_count)
-                    else:
-                        # Successful binding should only be attempted once.
-                        self.assertEqual(1, at_mock.call_count)
+                plugin._bind_port_if_needed(port_context)
+                if bound_vif_type == portbindings.VIF_TYPE_BINDING_FAILED:
+                    # An unsuccessful binding attempt should be retried
+                    # MAX_BIND_TRIES amount of times.
+                    self.assertEqual(ml2_plugin.MAX_BIND_TRIES,
+                                     at_mock.call_count)
+                else:
+                    # Successful binding should only be attempted once.
+                    self.assertEqual(1, at_mock.call_count)
 
     def test_port_binding_profile_not_changed(self):
         profile = {'e': 5}
@@ -2838,36 +2838,36 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                     'update_port_precommit') as port_pre,\
                 mock.patch.object(
                     ml2_db, 'get_distributed_port_bindings') as dist_bindings:
-                dist_bindings.return_value = [binding]
-                port_pre.return_value = True
-                with self.network() as network:
-                    with self.subnet(network=network) as subnet:
-                        subnet_id = subnet['subnet']['id']
-                        data = {'port': {
+            dist_bindings.return_value = [binding]
+            port_pre.return_value = True
+            with self.network() as network:
+                with self.subnet(network=network) as subnet:
+                    subnet_id = subnet['subnet']['id']
+                    data = {'port': {
                             'network_id': network['network']['id'],
                             'tenant_id':
-                            network['network']['tenant_id'],
+                                network['network']['tenant_id'],
                             'name': 'port1',
                             'device_owner':
-                            constants.DEVICE_OWNER_DVR_INTERFACE,
+                                constants.DEVICE_OWNER_DVR_INTERFACE,
                             'admin_state_up': 1,
                             'fixed_ips':
-                            [{'subnet_id': subnet_id}]}}
-                        port_req = self.new_create_request('ports', data)
-                        port_res = port_req.get_response(self.api)
-                        self.assertEqual(201, port_res.status_int)
-                        port = self.deserialize(self.fmt, port_res)
-                        port_id = port['port']['id']
-                        new_name = 'a_brand_new_name'
-                        data = {'port': {'name': new_name}}
-                        req = self.new_update_request('ports', data, port_id)
-                        res = req.get_response(self.api)
-                        self.assertEqual(200, res.status_int)
-                        self.assertTrue(dist_bindings.called)
-                        self.assertTrue(port_pre.called)
-                        self.assertTrue(port_post.called)
-                        port = self._show('ports', port_id)
-                        self.assertEqual(new_name, port['port']['name'])
+                                [{'subnet_id': subnet_id}]}}
+                    port_req = self.new_create_request('ports', data)
+                    port_res = port_req.get_response(self.api)
+                    self.assertEqual(201, port_res.status_int)
+                    port = self.deserialize(self.fmt, port_res)
+                    port_id = port['port']['id']
+                    new_name = 'a_brand_new_name'
+                    data = {'port': {'name': new_name}}
+                    req = self.new_update_request('ports', data, port_id)
+                    res = req.get_response(self.api)
+                    self.assertEqual(200, res.status_int)
+                    self.assertTrue(dist_bindings.called)
+                    self.assertTrue(port_pre.called)
+                    self.assertTrue(port_post.called)
+                    port = self._show('ports', port_id)
+                    self.assertEqual(new_name, port['port']['name'])
 
 
 class TestML2PluggableIPAM(test_ipam.UseIpamMixin, TestMl2SubnetsV2):
