@@ -268,16 +268,11 @@ class QosAgentExtension(l2_extension.L2AgentExtension):
             self._process_reset_port(port)
         else:
             old_qos_policy = self.policy_map.set_port_policy(port, qos_policy)
-            if old_qos_policy:
-                self.qos_driver.delete(port, old_qos_policy)
-                self.qos_driver.update(port, qos_policy)
-            elif not qos_policy.rules:
-                # There are no rules in new qos_policy,
-                # so it should be deleted.
-                # But new policy has a relationship with the port,
-                # so reseting should not be called.
-                self.qos_driver.delete(port)
-            else:
+            # Before applying the new rules, the old rules should be cleared,
+            # even if the old_qos_policy is None,
+            # to avoid the data being out of sync before the l2-agent starts.
+            self.qos_driver.delete(port, old_qos_policy)
+            if qos_policy.rules:
                 self.qos_driver.create(port, qos_policy)
 
     def delete_port(self, context, port):

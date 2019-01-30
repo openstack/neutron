@@ -296,7 +296,7 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
         self.qos_ext.handle_port(self.context, port)
         # we make sure the underlying qos driver is called with the
         # right parameters
-        self.qos_ext.qos_driver.delete.assert_called_once_with(port)
+        self.qos_ext.qos_driver.delete.assert_called_once_with(port, None)
         self.assertEqual(port,
             self.qos_ext.policy_map.qos_policy_ports[qos_policy_id][port_id])
         self.assertIn(port_id, self.qos_ext.policy_map.port_policies)
@@ -320,6 +320,7 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
                                   'id': uuidutils.generate_uuid()}
 
         test_policy = policy.QosPolicy(**test_policy_with_rules)
+        setattr(test_policy, 'rules', [])
         self.pull_mock.return_value = test_policy
         port['qos_policy_id'] = test_policy.id
         self.qos_ext.handle_port(self.context, port)
