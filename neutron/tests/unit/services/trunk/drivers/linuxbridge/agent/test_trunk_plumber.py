@@ -15,9 +15,36 @@
 import mock
 from oslo_utils import uuidutils
 
+from neutron.agent.linux import ip_lib
 from neutron.objects import trunk
 from neutron.services.trunk.drivers.linuxbridge.agent import trunk_plumber
 from neutron.tests import base
+
+
+IP_LINK_OUTPUT = [
+    {'index': 1, 'name': 'lo'},
+    {'index': 2, 'name': 'eth0'},
+    {'index': 3, 'name': 'bond0'},
+    {'index': 4, 'name': 'ovs-system'},
+    {'index': 5, 'name': 'br-ex'},
+    {'index': 6, 'name': 'testb9cfb5d7'},
+    {'index': 7, 'name': 'br-int'},
+    {'index': 8, 'name': 'br-tun'},
+    {'index': 10, 'name': 'tapa962cfc7-9d'},
+    {'index': 11, 'name': 'tap39df7d39-c5', 'kind': 'vlan',
+     'parent_name': 'tapa962cfc7-9d', 'vlan_id': 99},
+    {'index': 12, 'name': 'tap39df7d44-b2', 'kind': 'vlan',
+     'parent_name': 'tapa962cfc7-9d', 'vlan_id': 904},
+    {'index': 13, 'name': 'tap11113d44-3f', 'kind': 'vlan',
+     'parent_name': 'tapa962cfc7-9d', 'vlan_id': 777},
+    {'index': 14, 'name': 'tap34786ac-28'},
+    {'index': 15, 'name': 'tap47198374-5a', 'kind': 'vlan',
+     'parent_name': 'tap34786ac-28', 'vlan_id': 777},
+    {'index': 16, 'name': 'tap47198374-5b', 'kind': 'vlan',
+     'parent_name': 'tap34786ac-28', 'vlan_id': 2},
+    {'index': 17, 'name': 'tap47198374-5c', 'kind': 'vlan',
+     'parent_name': 'tap34786ac-28', 'vlan_id': 3}
+]
 
 
 class PlumberTestCase(base.BaseTestCase):
@@ -29,11 +56,11 @@ class PlumberTestCase(base.BaseTestCase):
         self.trunk = trunk.Trunk()
         self.trunk.port_id = uuidutils.generate_uuid()
         self.trunk.sub_ports = []
-        self.device_exists = mock.patch.object(trunk_plumber.ip_lib,
-                                               'device_exists').start()
+        self.device_exists = mock.patch.object(ip_lib, 'device_exists').start()
         self.device_exists.return_value = True
-        ipwrap = mock.patch.object(trunk_plumber.ip_lib, 'IPWrapper').start()
-        ipwrap.return_value.netns.execute.return_value = IP_LINK_OUTPUT
+        self.mock_get_devices = mock.patch.object(ip_lib,
+                                                  'get_devices_info').start()
+        # ipwrap.return_value.netns.execute.return_value = IP_LINK_OUTPUT
         super(PlumberTestCase, self).setUp()
 
     def test_trunk_on_host(self):
@@ -69,6 +96,7 @@ class PlumberTestCase(base.BaseTestCase):
                                 any_order=True)
 
     def test__get_vlan_children(self):
+        self.mock_get_devices.return_value = IP_LINK_OUTPUT
         expected = [('tap47198374-5a', 777),
                     ('tap47198374-5b', 2),
                     ('tap47198374-5c', 3)]
@@ -84,58 +112,3 @@ class PlumberTestCase(base.BaseTestCase):
                          self.plumber._get_vlan_children('tap47198374-5c'))
         self.assertEqual(set(),
                          self.plumber._get_vlan_children('br-int'))
-
-    def test__iter_output_by_interface(self):
-        iterator = trunk_plumber._iter_output_by_interface(IP_LINK_OUTPUT)
-        names = [i.devname for i in iterator]
-        expected = ['lo', 'eth0', 'bond0', 'ovs-system', 'br-ex',
-                    'testb9cfb5d7', 'br-int', 'br-tun', 'tapa962cfc7-9d',
-                    'tap39df7d39-c5', 'tap39df7d44-b2', 'tap11113d44-3f',
-                    'tap34786ac-28', 'tap47198374-5a', 'tap47198374-5b',
-                    'tap47198374-5c']
-        self.assertEqual(expected, names)
-
-
-IP_LINK_OUTPUT = """
-1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group
-    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00 promiscuity 0
-2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP mode DEFA
-    link/ether 00:0c:29:10:68:04 brd ff:ff:ff:ff:ff:ff promiscuity 0
-3: bond0: <BROADCAST,MULTICAST,MASTER> mtu 1500 qdisc noop state DOWN mode DEFAULT grou
-    link/ether 5e:dc:86:6f:b7:19 brd ff:ff:ff:ff:ff:ff promiscuity 0
-    bond
-4: ovs-system: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode DEFAULT group
-    link/ether 5a:95:a1:b9:42:25 brd ff:ff:ff:ff:ff:ff promiscuity 1
-5: br-ex: <BROADCAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN mode DEFAULT gro
-    link/ether be:cc:4f:f7:28:48 brd ff:ff:ff:ff:ff:ff promiscuity 1
-6: testb9cfb5d7: <BROADCAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN mode DEFA
-    link/ether 82:90:49:84:32:47 brd ff:ff:ff:ff:ff:ff promiscuity 1
-7: br-int: <BROADCAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN mode DEFAULT gr
-    link/ether 5a:5e:7d:02:7c:4d brd ff:ff:ff:ff:ff:ff promiscuity 1
-8: br-tun: <BROADCAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN mode DEFAULT gr
-    link/ether 76:d8:a5:16:d7:4a brd ff:ff:ff:ff:ff:ff promiscuity 1
-10: tapa962cfc7-9d: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode DEFAULT g
-    link/ether 9a:31:1d:cc:b3:86 brd ff:ff:ff:ff:ff:ff promiscuity 0
-    tun
-11: tap39df7d39-c5@tapa962cfc7-9d: <BROADCAST,MULTICAST,M-DOWN> mtu 1500 qdisc noop sta
-    link/ether 9a:31:1d:cc:b3:86 brd ff:ff:ff:ff:ff:ff promiscuity 0
-    vlan protocol 802.1Q id 99 <REORDER_HDR>
-12: tap39df7d44-b2@tapa962cfc7-9d: <BROADCAST,MULTICAST,M-DOWN> mtu 1500 qdisc noop sta
-    link/ether 9a:31:1d:cc:b3:86 brd ff:ff:ff:ff:ff:ff promiscuity 0
-    vlan protocol 802.1Q id 904 <REORDER_HDR>
-13: tap11113d44-3f@tapa962cfc7-9d: <BROADCAST,MULTICAST,M-DOWN> mtu 1500 qdisc noop sta
-    link/ether 9a:31:1d:cc:b3:86 brd ff:ff:ff:ff:ff:ff promiscuity 0
-    vlan protocol 802.1Q id 777 <REORDER_HDR>
-14: tap34786ac-28: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode DEFAULT gr
-    link/ether f6:07:9f:11:4c:dc brd ff:ff:ff:ff:ff:ff promiscuity 0
-    tun
-15: tap47198374-5a@tap34786ac-28: <BROADCAST,MULTICAST,M-DOWN> mtu 1500 qdisc noop stat
-    link/ether f6:07:9f:11:4c:dc brd ff:ff:ff:ff:ff:ff promiscuity 0
-    vlan protocol 802.1Q id 777 <REORDER_HDR>
-16: tap47198374-5b@tap34786ac-28: <BROADCAST,MULTICAST,M-DOWN> mtu 1500 qdisc noop stat
-    link/ether f6:07:9f:11:4c:dc brd ff:ff:ff:ff:ff:ff promiscuity 0
-    vlan protocol 802.1Q id 2 <REORDER_HDR>
-17: tap47198374-5c@tap34786ac-28: <BROADCAST,MULTICAST,M-DOWN> mtu 1500 qdisc noop stat
-    link/ether f6:07:9f:11:4c:dc brd ff:ff:ff:ff:ff:ff promiscuity 0
-    vlan protocol 802.1Q id 3 <REORDER_HDR>
-"""  # noqa
