@@ -21,6 +21,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_const
 from neutron_lib import context as n_context
+from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_context import context as common_context
 from oslo_log import log as logging
@@ -64,6 +65,9 @@ LOG = logging.getLogger(__name__)
 # Needed to reduce load on server side and to speed up resync on agent side.
 SYNC_ROUTERS_MAX_CHUNK_SIZE = 256
 SYNC_ROUTERS_MIN_CHUNK_SIZE = 32
+
+ROUTER_PROCESS_GREENLET_MAX = 32
+ROUTER_PROCESS_GREENLET_MIN = 8
 
 
 def log_verbose_exc(message, router_payload):
@@ -239,6 +243,8 @@ class L3NATAgent(ha.AgentMixin,
             self.driver,
             self.metadata_driver)
 
+        # L3 agent router processing green pool
+        self._pool = eventlet.GreenPool(size=ROUTER_PROCESS_GREENLET_MIN)
         self._queue = queue.ResourceProcessingQueue()
         super(L3NATAgent, self).__init__(host=self.conf.host)
 
@@ -356,6 +362,15 @@ class L3NATAgent(ha.AgentMixin,
 
         return legacy_router.LegacyRouter(*args, **kwargs)
 
+    @lockutils.synchronized('resize_greenpool')
+    def _resize_process_pool(self):
+        self._pool_size = max([ROUTER_PROCESS_GREENLET_MIN,
+                               min([ROUTER_PROCESS_GREENLET_MAX,
+                                    len(self.router_info)])])
+        LOG.info("Resizing router processing queue green pool size to: %d",
+                 self._pool_size)
+        self._pool.resize(self._pool_size)
+
     def _router_added(self, router_id, router):
         ri = self._create_router(router_id, router)
         registry.notify(resources.ROUTER, events.BEFORE_CREATE,
@@ -377,6 +392,8 @@ class L3NATAgent(ha.AgentMixin,
                 except Exception:
                     LOG.exception('Error while deleting router %s',
                                   router_id)
+
+        self._resize_process_pool()
 
     def _safe_router_removed(self, router_id):
         """Try to delete a router and return True if successful."""
@@ -418,6 +435,8 @@ class L3NATAgent(ha.AgentMixin,
                 self.router_info[router_id] = ri
 
         registry.notify(resources.ROUTER, events.AFTER_DELETE, self, router=ri)
+
+        self._resize_process_pool()
 
     def init_extension_manager(self, connection):
         l3_ext_manager.register_opts(self.conf)
@@ -655,9 +674,8 @@ class L3NATAgent(ha.AgentMixin,
 
     def _process_routers_loop(self):
         LOG.debug("Starting _process_routers_loop")
-        pool = eventlet.GreenPool(size=8)
         while True:
-            pool.spawn_n(self._process_router_update)
+            self._pool.spawn_n(self._process_router_update)
 
     # NOTE(kevinbenton): this is set to 1 second because the actual interval
     # is controlled by a FixedIntervalLoopingCall in neutron/service.py that
