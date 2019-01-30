@@ -542,9 +542,9 @@ class TestLinuxBridgeManager(base.BaseTestCase):
 
     def test_ensure_physical_in_bridge_with_existed_brq(self):
         with mock.patch.object(linuxbridge_neutron_agent.LOG, 'error') as log:
-                self.lbm.ensure_physical_in_bridge("123", constants.TYPE_FLAT,
-                                                   "physnet9", "1")
-                self.assertEqual(1, log.call_count)
+            self.lbm.ensure_physical_in_bridge("123", constants.TYPE_FLAT,
+                                               "physnet9", "1")
+            self.assertEqual(1, log.call_count)
 
     @mock.patch.object(ip_lib, "device_exists", return_value=False)
     def test_add_tap_interface_with_interface_disappearing(self, exists):
@@ -987,9 +987,9 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
         with mock.patch.object(linuxbridge_neutron_agent.LOG, 'info') as log,\
                 mock.patch.object(self.lb_rpc.agent.mgr,
                                   "delete_bridge") as del_fn:
-                self.lb_rpc.network_delete("anycontext", network_id="123")
-                self.assertEqual(0, del_fn.call_count)
-                self.assertEqual(1, log.call_count)
+            self.lb_rpc.network_delete("anycontext", network_id="123")
+            self.assertEqual(0, del_fn.call_count)
+            self.assertEqual(1, log.call_count)
 
     def _test_fdb_add(self, proxy_enabled=False):
         fdb_entries = {'net_id':

@@ -353,9 +353,9 @@ class TrunkPluginCompatDriversTestCase(test_plugin.Ml2PluginV2TestCase):
         fakes.FakeDriver.create()
         with mock.patch.object(
                 validators, 'get_validator', side_effect=KeyError), \
-            testtools.ExpectedException(
-                    trunk_exc.SegmentationTypeValidatorNotFound):
-                trunk_plugin.TrunkPlugin()
+                testtools.ExpectedException(
+                        trunk_exc.SegmentationTypeValidatorNotFound):
+            trunk_plugin.TrunkPlugin()
 
     def test_plugins_fails_to_start_conflicting_seg_types(self):
         fakes.FakeDriver.create()

@@ -1103,21 +1103,21 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         with self.router() as r, self.network() as n:
             with self.subnet(network=n, cidr='10.0.0.0/24') as s1, (
                  self.subnet(network=n, cidr='10.0.1.0/24')) as s2:
-                    body = self._router_interface_action('add',
-                                                         r['router']['id'],
-                                                         s1['subnet']['id'],
-                                                         None)
-                    pid1 = body['port_id']
-                    body = self._router_interface_action('add',
-                                                         r['router']['id'],
-                                                         s2['subnet']['id'],
-                                                         None)
-                    pid2 = body['port_id']
-                    self.assertNotEqual(pid1, pid2)
-                    self._router_interface_action('remove', r['router']['id'],
-                                                  s1['subnet']['id'], None)
-                    self._router_interface_action('remove', r['router']['id'],
-                                                  s2['subnet']['id'], None)
+                body = self._router_interface_action('add',
+                                                     r['router']['id'],
+                                                     s1['subnet']['id'],
+                                                     None)
+                pid1 = body['port_id']
+                body = self._router_interface_action('add',
+                                                     r['router']['id'],
+                                                     s2['subnet']['id'],
+                                                     None)
+                pid2 = body['port_id']
+                self.assertNotEqual(pid1, pid2)
+                self._router_interface_action('remove', r['router']['id'],
+                                              s1['subnet']['id'], None)
+                self._router_interface_action('remove', r['router']['id'],
+                                              s2['subnet']['id'], None)
 
     def test_router_add_interface_multiple_ipv6_subnets_same_net(self):
         """Test router-interface-add for multiple ipv6 subnets on a network.
@@ -1129,27 +1129,27 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             with (self.subnet(network=n, cidr='fd00::1/64', ip_version=6)
                   ) as s1, self.subnet(network=n, cidr='fd01::1/64',
                                        ip_version=6) as s2:
-                    body = self._router_interface_action('add',
-                                                         r['router']['id'],
-                                                         s1['subnet']['id'],
-                                                         None)
-                    pid1 = body['port_id']
-                    body = self._router_interface_action('add',
-                                                         r['router']['id'],
-                                                         s2['subnet']['id'],
-                                                         None)
-                    pid2 = body['port_id']
-                    self.assertEqual(pid1, pid2)
-                    port = self._show('ports', pid1)
-                    self.assertEqual(2, len(port['port']['fixed_ips']))
-                    port_subnet_ids = [fip['subnet_id'] for fip in
-                                       port['port']['fixed_ips']]
-                    self.assertIn(s1['subnet']['id'], port_subnet_ids)
-                    self.assertIn(s2['subnet']['id'], port_subnet_ids)
-                    self._router_interface_action('remove', r['router']['id'],
-                                                  s1['subnet']['id'], None)
-                    self._router_interface_action('remove', r['router']['id'],
-                                                  s2['subnet']['id'], None)
+                body = self._router_interface_action('add',
+                                                     r['router']['id'],
+                                                     s1['subnet']['id'],
+                                                     None)
+                pid1 = body['port_id']
+                body = self._router_interface_action('add',
+                                                     r['router']['id'],
+                                                     s2['subnet']['id'],
+                                                     None)
+                pid2 = body['port_id']
+                self.assertEqual(pid1, pid2)
+                port = self._show('ports', pid1)
+                self.assertEqual(2, len(port['port']['fixed_ips']))
+                port_subnet_ids = [fip['subnet_id'] for fip in
+                                   port['port']['fixed_ips']]
+                self.assertIn(s1['subnet']['id'], port_subnet_ids)
+                self.assertIn(s2['subnet']['id'], port_subnet_ids)
+                self._router_interface_action('remove', r['router']['id'],
+                                              s1['subnet']['id'], None)
+                self._router_interface_action('remove', r['router']['id'],
+                                              s2['subnet']['id'], None)
 
     def test_router_add_interface_multiple_ipv6_subnets_different_net(self):
         """Test router-interface-add for ipv6 subnets on different networks.
@@ -1161,21 +1161,21 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             with (self.subnet(network=n1, cidr='fd00::1/64', ip_version=6)
                   ) as s1, self.subnet(network=n2, cidr='fd01::1/64',
                                        ip_version=6) as s2:
-                    body = self._router_interface_action('add',
-                                                         r['router']['id'],
-                                                         s1['subnet']['id'],
-                                                         None)
-                    pid1 = body['port_id']
-                    body = self._router_interface_action('add',
-                                                         r['router']['id'],
-                                                         s2['subnet']['id'],
-                                                         None)
-                    pid2 = body['port_id']
-                    self.assertNotEqual(pid1, pid2)
-                    self._router_interface_action('remove', r['router']['id'],
-                                                  s1['subnet']['id'], None)
-                    self._router_interface_action('remove', r['router']['id'],
-                                                  s2['subnet']['id'], None)
+                body = self._router_interface_action('add',
+                                                     r['router']['id'],
+                                                     s1['subnet']['id'],
+                                                     None)
+                pid1 = body['port_id']
+                body = self._router_interface_action('add',
+                                                     r['router']['id'],
+                                                     s2['subnet']['id'],
+                                                     None)
+                pid2 = body['port_id']
+                self.assertNotEqual(pid1, pid2)
+                self._router_interface_action('remove', r['router']['id'],
+                                              s1['subnet']['id'], None)
+                self._router_interface_action('remove', r['router']['id'],
+                                              s2['subnet']['id'], None)
 
     def test_router_add_iface_ipv6_ext_ra_subnet_returns_400(self):
         """Test router-interface-add for in-valid ipv6 subnets.

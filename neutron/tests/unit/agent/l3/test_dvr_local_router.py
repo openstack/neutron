@@ -584,9 +584,9 @@ class TestDvrRouterOperations(base.BaseTestCase):
         state = True
         with mock.patch.object(l3_agent.ip_lib, 'IPDevice') as rtrdev,\
                 mock.patch.object(ri, '_cache_arp_entry') as arp_cache:
-                rtrdev.return_value.exists.return_value = False
-                state = ri._update_arp_entry(
-                    mock.ANY, mock.ANY, subnet_id, 'add')
+            rtrdev.return_value.exists.return_value = False
+            state = ri._update_arp_entry(
+                mock.ANY, mock.ANY, subnet_id, 'add')
         self.assertFalse(state)
         self.assertTrue(arp_cache.called)
         arp_cache.assert_called_once_with(mock.ANY, mock.ANY,

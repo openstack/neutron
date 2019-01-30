@@ -1426,7 +1426,7 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                 mock.patch.object(plugin,
                                   'get_dhcp_agents_hosting_networks',
                                   return_value=[]):
-                    return dhcp_notifier_schedule.call_count > 1
+            return dhcp_notifier_schedule.call_count > 1
 
     def test_reserved_dhcp_port_creation(self):
         device_id = constants.DEVICE_ID_RESERVED_DHCP_PORT

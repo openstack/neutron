@@ -26,20 +26,20 @@ from neutron.tests.unit.plugins.ml2 import _test_mech_agent as base
 
 
 class TestFakePortContext(base.FakePortContext):
-        def __init__(self, agent_type, agents, segments,
-                     vnic_type=portbindings.VNIC_NORMAL,
-                     profile=None):
-            super(TestFakePortContext, self).__init__(agent_type,
-                                                      agents,
-                                                      segments,
-                                                      vnic_type=vnic_type,
-                                                      profile=profile)
+    def __init__(self, agent_type, agents, segments,
+                 vnic_type=portbindings.VNIC_NORMAL,
+                 profile=None):
+        super(TestFakePortContext, self).__init__(agent_type,
+                                                  agents,
+                                                  segments,
+                                                  vnic_type=vnic_type,
+                                                  profile=profile)
 
-        def set_binding(self, segment_id, vif_type, vif_details, state):
-            self._bound_segment_id = segment_id
-            self._bound_vif_type = vif_type
-            self._bound_vif_details = vif_details
-            self._bound_state = state
+    def set_binding(self, segment_id, vif_type, vif_details, state):
+        self._bound_segment_id = segment_id
+        self._bound_vif_type = vif_type
+        self._bound_vif_details = vif_details
+        self._bound_state = state
 
 
 class SriovNicSwitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):

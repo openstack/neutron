@@ -153,9 +153,9 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
         return head_models.get_metadata()
 
     def include_object(self, object_, name, type_, reflected, compare_to):
-        if type_ == 'table' and (name == 'alembic_version'
-                                 or name in external.TABLES):
-                return False
+        if type_ == 'table' and (name == 'alembic_version' or
+                                 name in external.TABLES):
+            return False
 
         return super(_TestModelsMigrations, self).include_object(
             object_, name, type_, reflected, compare_to)

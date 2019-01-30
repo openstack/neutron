@@ -238,7 +238,7 @@ class TestFindForkTopParent(base.BaseTestCase):
                                side_effect=_find_parent_pid), \
                 mock.patch.object(utils, 'pid_invoked_with_cmdline',
                                   **pid_invoked_with_cmdline):
-                    actual = utils.find_fork_top_parent(_marker)
+            actual = utils.find_fork_top_parent(_marker)
         self.assertEqual(expected, actual)
 
     def test_returns_own_pid_no_parent(self):
@@ -342,10 +342,10 @@ class TestGetRoothelperChildPid(base.BaseTestCase):
             pid_invoked_with_cmdline['return_value'] = False
         with mock.patch.object(utils, 'find_child_pids',
                                side_effect=_find_child_pids), \
-            mock.patch.object(utils, 'pid_invoked_with_cmdline',
-                              **pid_invoked_with_cmdline):
-                actual = utils.get_root_helper_child_pid(
-                        mock_pid, mock.ANY, run_as_root)
+                mock.patch.object(utils, 'pid_invoked_with_cmdline',
+                                  **pid_invoked_with_cmdline):
+            actual = utils.get_root_helper_child_pid(
+                mock_pid, mock.ANY, run_as_root)
         if expected is _marker:
             expected = str(mock_pid)
         self.assertEqual(expected, actual)

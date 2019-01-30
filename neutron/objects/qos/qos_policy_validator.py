@@ -31,20 +31,20 @@ def check_bandwidth_rule_conflict(policy, rule_data):
             continue
         elif rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
             if "max_kbps" in rule_data and (
-               int(rule.min_kbps) > int(rule_data["max_kbps"])):
-                    raise n_exc.QoSRuleParameterConflict(
-                        rule_value=rule_data["max_kbps"],
-                        policy_id=policy["id"],
-                        existing_rule=rule.rule_type,
-                        existing_value=rule.min_kbps)
+                    int(rule.min_kbps) > int(rule_data["max_kbps"])):
+                raise n_exc.QoSRuleParameterConflict(
+                    rule_value=rule_data["max_kbps"],
+                    policy_id=policy["id"],
+                    existing_rule=rule.rule_type,
+                    existing_value=rule.min_kbps)
         elif rule.rule_type == qos_consts.RULE_TYPE_BANDWIDTH_LIMIT:
             if "min_kbps" in rule_data and (
-                int(rule.max_kbps) < int(rule_data["min_kbps"])):
-                    raise n_exc.QoSRuleParameterConflict(
-                        rule_value=rule_data["min_kbps"],
-                        policy_id=policy["id"],
-                        existing_rule=rule.rule_type,
-                        existing_value=rule.max_kbps)
+                    int(rule.max_kbps) < int(rule_data["min_kbps"])):
+                raise n_exc.QoSRuleParameterConflict(
+                    rule_value=rule_data["min_kbps"],
+                    policy_id=policy["id"],
+                    existing_rule=rule.rule_type,
+                    existing_value=rule.max_kbps)
 
 
 def check_rules_conflict(policy, rule_obj):

@@ -168,5 +168,5 @@ class Test_LegacyPlusProviderConfiguration(base.BaseTestCase):
     @mock.patch.object(provider_configuration.ProviderConfiguration,
                        "add_provider")
     def test__update_router_provider_invalid(self, mock_method):
-            mock_method.side_effect = lib_exc.Invalid(message='message')
-            driver_controller._LegacyPlusProviderConfiguration()
+        mock_method.side_effect = lib_exc.Invalid(message='message')
+        driver_controller._LegacyPlusProviderConfiguration()

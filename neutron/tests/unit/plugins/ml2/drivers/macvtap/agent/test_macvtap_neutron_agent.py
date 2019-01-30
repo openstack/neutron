@@ -50,11 +50,12 @@ class TestMacvtapRPCCallbacks(base.BaseTestCase):
     def test_network_delete_vlan(self):
         self.rpc.network_map = {NETWORK_ID: NETWORK_SEGMENT_VLAN}
         with mock.patch.object(ip_lib.IpLinkCommand, 'delete') as mock_del,\
-            mock.patch.object(macvtap_common, 'get_vlan_device_name',
-                              return_value='vlan1'),\
-            mock.patch.object(ip_lib.IPDevice, 'exists', return_value=True):
-                self.rpc.network_delete("anycontext", network_id=NETWORK_ID)
-                self.assertTrue(mock_del.called)
+                mock.patch.object(macvtap_common, 'get_vlan_device_name',
+                                  return_value='vlan1'),\
+                mock.patch.object(ip_lib.IPDevice, 'exists',
+                                  return_value=True):
+            self.rpc.network_delete("anycontext", network_id=NETWORK_ID)
+            self.assertTrue(mock_del.called)
 
     def test_network_delete_flat(self):
         self.rpc.network_map = {NETWORK_ID: NETWORK_SEGMENT_FLAT}

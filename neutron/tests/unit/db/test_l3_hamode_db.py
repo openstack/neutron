@@ -616,8 +616,8 @@ class L3HATestCase(L3HATestFramework):
 
         with mock.patch.object(self.plugin, '_create_ha_subnet',
                                side_effect=ValueError):
-                self.assertRaises(ValueError, self.plugin._create_ha_network,
-                                  self.admin_ctx, _uuid())
+            self.assertRaises(ValueError, self.plugin._create_ha_network,
+                              self.admin_ctx, _uuid())
 
         networks_after = self.core_plugin.get_networks(self.admin_ctx)
         self.assertEqual(networks_before, networks_after)
