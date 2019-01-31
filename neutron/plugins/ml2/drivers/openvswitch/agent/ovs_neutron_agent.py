@@ -316,7 +316,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
             # we only want to update resource versions on startup
             self.agent_state.pop('resource_versions', None)
-            if self.agent_state.pop('start_flag', None):
+            if self.agent_state.pop('start_flag', None) and self.iter_num == 0:
                 # On initial start, we notify systemd after initialization
                 # is complete.
                 systemd.notify_once()
@@ -1978,6 +1978,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     self._reset_tunnel_ofports()
                     self.setup_tunnel_br()
                     self.setup_tunnel_br_flows()
+                    self.agent_state['start_flag'] = True
                     tunnel_sync = True
                 if self.enable_distributed_routing:
                     self.dvr_agent.reset_ovs_parameters(self.int_br,
