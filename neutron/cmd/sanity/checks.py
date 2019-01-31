@@ -201,6 +201,21 @@ def get_dnsmasq_version_with_dhcp_release6():
     return DNSMASQ_VERSION_DHCP_RELEASE6
 
 
+def dnsmasq_local_service_supported():
+    cmd = ['dnsmasq', '--test', '--local-service']
+    env = {'LC_ALL': 'C'}
+    obj, cmd = agent_utils.create_process(cmd, addl_env=env)
+    _stdout, _stderr = obj.communicate()
+    returncode = obj.returncode
+    if returncode == 127:
+        LOG.debug("Exception while checking dnsmasq version. "
+                  "dnsmasq: No such file or directory")
+        return False
+    elif returncode == 1:
+        return False
+    return True
+
+
 def dnsmasq_version_supported():
     try:
         cmd = ['dnsmasq', '--version']
