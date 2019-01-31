@@ -1207,11 +1207,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         if address_scope_changed:
             # Notify about the update of subnetpool's address scope
-            kwargs = {'context': context, 'subnetpool_id': id}
-            registry.notify(resources.SUBNETPOOL_ADDRESS_SCOPE,
-                            events.AFTER_UPDATE,
-                            self.update_subnetpool,
-                            **kwargs)
+            registry.publish(resources.SUBNETPOOL_ADDRESS_SCOPE,
+                             events.AFTER_UPDATE,
+                             self.update_subnetpool,
+                             payload=events.DBEventPayload(
+                                 context, resource_id=id))
 
         for key in ['min_prefixlen', 'max_prefixlen', 'default_prefixlen']:
             updated['key'] = str(updated[key])

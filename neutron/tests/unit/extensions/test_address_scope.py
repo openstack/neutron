@@ -388,7 +388,7 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                 subnet = self.deserialize(self.fmt,
                                           req.get_response(self.api))
 
-                with mock.patch.object(registry, 'notify') as notify:
+                with mock.patch.object(registry, 'publish') as publish:
                     plugin = db_base_plugin_v2.NeutronDbPluginV2()
                     plugin.is_address_scope_owned_by_tenant = mock.Mock(
                         return_value=True)
@@ -408,15 +408,17 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                     if as_change:
                         self.assertEqual(bar_as_id,
                                          updated_sp['address_scope_id'])
-                        notify.assert_called_once_with(
+                        publish.assert_called_once_with(
                             resources.SUBNETPOOL_ADDRESS_SCOPE,
                             events.AFTER_UPDATE,
-                            plugin.update_subnetpool, context=ctx,
-                            subnetpool_id=subnetpool_id)
+                            plugin.update_subnetpool, payload=mock.ANY)
+                        payload = publish.mock_calls[0][2]['payload']
+                        self.assertEqual(ctx, payload.context)
+                        self.assertEqual(subnetpool_id, payload.resource_id)
                     else:
                         self.assertEqual(foo_as_id,
                                          updated_sp['address_scope_id'])
-                        self.assertFalse(notify.called)
+                        self.assertFalse(publish.called)
 
     def test_update_subnetpool_address_scope_notify(self):
         self._test_update_subnetpool_address_scope_notify()
