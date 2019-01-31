@@ -386,8 +386,14 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             original = self._make_port_dict(db_port, process_extensions=False)
             if original.get('mac_address') != new_mac:
                 original_ips = original.get('fixed_ips', [])
-                new_ips = new_port.setdefault('fixed_ips', original_ips)
-                new_ips_subnets = [new_ip['subnet_id'] for new_ip in new_ips]
+                # NOTE(hjensas): Only set the default for 'fixed_ips' in
+                # new_port if the original port or new_port actually have IPs.
+                # Setting the default to [] breaks deferred IP allocation.
+                # See Bug: https://bugs.launchpad.net/neutron/+bug/1811905
+                if original_ips or new_port.get('fixed_ips'):
+                    new_ips = new_port.setdefault('fixed_ips', original_ips)
+                    new_ips_subnets = [new_ip['subnet_id']
+                                       for new_ip in new_ips]
                 for orig_ip in original_ips:
                     if ipv6_utils.is_eui64_address(orig_ip.get('ip_address')):
                         subnet_to_delete = {}
