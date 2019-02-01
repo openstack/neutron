@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Fixes bug `1501206 <https://bugs.launchpad.net/neutron/+bug/1501206>`_.
+    This ensures that DHCP agent instances running dnsmasq as a DNS server
+    can no longer be exploited as DNS amplifiers when the tenant network is
+    using publicly routed IP addresses by adding an option that will allow
+    them to only serve DNS requests from local networks.

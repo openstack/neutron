@@ -1233,15 +1233,14 @@ class TestDnsmasq(TestBase):
             'dnsmasq',
             '--no-hosts',
             no_resolv,
-            '--except-interface=lo',
             '--pid-file=%s' % expected_pid_file,
             '--dhcp-hostsfile=/dhcp/%s/host' % network.id,
             '--addn-hosts=/dhcp/%s/addn_hosts' % network.id,
             '--dhcp-optsfile=/dhcp/%s/opts' % network.id,
             '--dhcp-leasefile=/dhcp/%s/leases' % network.id,
             '--dhcp-match=set:ipxe,175',
+            '--local-service',
             '--bind-interfaces',
-            '--interface=tap0',
         ]
 
         seconds = ''
