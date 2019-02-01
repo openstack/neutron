@@ -74,8 +74,7 @@ class LinuxBridgeTrunkDriver(trunk_rpc.TrunkSkeleton):
 
     @registry.receives(local_resources.PORT_DEVICE,
                        [local_events.AFTER_DELETE])
-    def agent_port_delete(self, resource, event, trigger, context, port_id,
-                          **kwargs):
+    def agent_port_delete(self, resource, event, trigger, payload=None):
         """Agent informed us a VIF was removed."""
         # NOTE(kevinbenton): we don't need to do anything to cleanup VLAN
         # interfaces if a trunk was removed because the kernel will do that
@@ -85,17 +84,17 @@ class LinuxBridgeTrunkDriver(trunk_rpc.TrunkSkeleton):
 
     @registry.receives(local_resources.PORT_DEVICE,
                        [local_events.AFTER_UPDATE])
-    def agent_port_change(self, resource, event, trigger, context,
-                          device_details, **kwargs):
+    def agent_port_change(self, resource, event, trigger, payload=None):
         """The agent hath informed us thusly of a port update or create."""
-        trunk = self._tapi.get_trunk(context, device_details['port_id'])
+        port_id = payload.latest_state['port_id']
+        trunk = self._tapi.get_trunk(payload.context, port_id)
         if trunk:
             # a wild trunk has appeared! make its children
-            self.wire_trunk(context, trunk)
+            self.wire_trunk(payload.context, trunk)
             return
         # clear any VLANs in case this was a trunk that changed status while
         # agent was offline.
-        self._plumber.delete_subports_by_port_id(device_details['port_id'])
+        self._plumber.delete_subports_by_port_id(port_id)
 
     def wire_trunk(self, context, trunk):
         """Wire up subports while keeping the server trunk status apprised."""
