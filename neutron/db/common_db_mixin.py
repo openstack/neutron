@@ -14,17 +14,12 @@
 #    under the License.
 
 from neutron_lib.db import model_query
-from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
 
 
 # TODO(HenryG): Deprecate and schedule for removal
 class CommonDbMixin(object):
     """Deprecated."""
-
-    @staticmethod
-    def register_dict_extend_funcs(resource, funcs):
-        resource_extend.register_funcs(resource, funcs)
 
     @staticmethod
     def _model_query(context, model):
@@ -37,10 +32,6 @@ class CommonDbMixin(object):
     @staticmethod
     def _get_by_id(context, model, id):
         return model_query.get_by_id(context, model, id)
-
-    @staticmethod
-    def _apply_filters_to_query(query, model, filters, context=None):
-        return model_query.apply_filters(query, model, filters, context)
 
     @staticmethod
     def _get_collection_query(context, model,
@@ -69,7 +60,3 @@ class CommonDbMixin(object):
     # TODO(HenryG): Remove this when available in neutron-lib
     def _get_marker_obj(self, context, resource, limit, marker):
         return db_utils.get_marker_obj(self, context, resource, limit, marker)
-
-    @staticmethod
-    def _filter_non_model_columns(data, model):
-        return db_utils.filter_non_model_columns(data, model)
