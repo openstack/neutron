@@ -47,6 +47,9 @@ from neutron.services.portforwarding.common import exceptions as pf_exc
 
 LOG = logging.getLogger(__name__)
 
+# Move to neutron-lib someday.
+PORT_FORWARDING_FLOATINGIP_KEY = '_pf_floatingips'
+
 
 def make_result_with_fields(f):
     @functools.wraps(f)
@@ -511,18 +514,25 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         router_ids = [router.get('id') for router in routers]
         router_pf_fip_set = collections.defaultdict(set)
         fip_pfs = collections.defaultdict(set)
-        router_fip = collections.defaultdict(set)
+        router_fip_ids = collections.defaultdict(set)
         item_pf_fields = pf.PortForwarding.get_port_forwarding_obj_by_routers(
             context, router_ids)
 
         for router_id, fip_addr, pf_id, fip_id in item_pf_fields:
             router_pf_fip_set[router_id].add(utils.ip_to_cidr(fip_addr, 32))
             fip_pfs[fip_id].add(pf_id)
-            router_fip[router_id].add(fip_id)
+            router_fip_ids[router_id].add(fip_id)
 
         for router in routers:
-            if router['id'] in router_fip:
+            if router['id'] in router_fip_ids:
                 router['port_forwardings_fip_set'] = router_pf_fip_set[
                     router['id']]
-                router['fip_managed_by_port_forwardings'] = router_fip[
+                router['fip_managed_by_port_forwardings'] = router_fip_ids[
                     router['id']]
+
+                router_pf_fips_info = router.get(
+                    PORT_FORWARDING_FLOATINGIP_KEY, [])
+                for fip_id in router_fip_ids[router['id']]:
+                    fip = self.l3_plugin.get_floatingip(context, fip_id)
+                    router_pf_fips_info.append(fip)
+                router[PORT_FORWARDING_FLOATINGIP_KEY] = router_pf_fips_info

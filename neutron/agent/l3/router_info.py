@@ -166,6 +166,10 @@ class RouterInfo(object):
         """Filter Floating IPs to be hosted on this agent."""
         return self.router.get(lib_constants.FLOATINGIP_KEY, [])
 
+    def get_port_forwarding_fips(self):
+        """Get router port forwarding floating IPs."""
+        return self.router.get('_pf_floatingips', [])
+
     def floating_forward_rules(self, fip):
         fixed_ip = fip['fixed_ip_address']
         floating_ip = fip['floating_ip_address']

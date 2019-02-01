@@ -109,6 +109,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                              enable_fip=True, enable_snat=True,
                              num_internal_ports=1,
                              dual_stack=False, v6_ext_gw_with_sub=True,
+                             enable_pf_floating_ip=False,
                              qos_policy_id=None):
         if ip_version == constants.IP_VERSION_6 and not dual_stack:
             enable_snat = False
@@ -125,6 +126,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                                                  dual_stack=dual_stack,
                                                  v6_ext_gw_with_sub=(
                                                      v6_ext_gw_with_sub),
+                                                 enable_pf_floating_ip=(
+                                                     enable_pf_floating_ip),
                                                  qos_policy_id=qos_policy_id)
 
     def _test_conntrack_disassociate_fip(self, ha):
