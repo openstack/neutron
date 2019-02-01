@@ -1012,8 +1012,8 @@ class TestDhcpBase(TestBase):
             def enable(self):
                 self.called.append('enable')
 
-            def disable(self, retain_port=False):
-                self.called.append('disable %s' % retain_port)
+            def disable(self, retain_port=False, block=False):
+                self.called.append('disable %s %s' % (retain_port, block))
 
             def reload_allocations(self):
                 pass
@@ -1024,7 +1024,7 @@ class TestDhcpBase(TestBase):
 
         c = SubClass()
         c.restart()
-        self.assertEqual(c.called, ['disable True', 'enable'])
+        self.assertEqual(c.called, ['disable True True', 'enable'])
 
 
 class TestDhcpLocalProcess(TestBase):
