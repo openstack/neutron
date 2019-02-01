@@ -24,6 +24,7 @@ import sys
 import netaddr
 from neutron_lib.agent import topics
 from neutron_lib import constants
+from neutron_lib import exceptions
 from neutron_lib.plugins import utils as plugin_utils
 from neutron_lib.utils import helpers
 from oslo_config import cfg
@@ -38,7 +39,6 @@ from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
-from neutron.common import exceptions
 from neutron.common import profiler as setup_profiler
 from neutron.common import utils
 from neutron.conf.agent import common as agent_config

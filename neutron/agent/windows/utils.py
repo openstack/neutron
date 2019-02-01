@@ -18,13 +18,14 @@ import os
 
 import eventlet
 from eventlet import tpool
+from neutron_lib import exceptions
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
 from oslo_utils import encodeutils
 import six
 
 from neutron._i18n import _
-from neutron.common import exceptions
+
 
 if os.name == 'nt':
     import wmi

@@ -22,7 +22,6 @@ from oslo_config import cfg
 from oslo_log import log
 
 from neutron._i18n import _
-from neutron.common import exceptions as n_exc
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.objects.plugins.ml2 import flatallocation as flat_obj
 from neutron.plugins.ml2.drivers import helpers
@@ -96,7 +95,7 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
                 physical_network=physical_network)
             alloc.create()
         except obj_base.NeutronDbObjectDuplicateEntry:
-            raise n_exc.FlatNetworkInUse(
+            raise exc.FlatNetworkInUse(
                 physical_network=physical_network)
         segment[api.MTU] = self.get_mtu(alloc.physical_network)
         return segment

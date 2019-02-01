@@ -15,12 +15,12 @@
 
 import mock
 from neutron_lib import constants
+from neutron_lib import exceptions
 from oslo_utils import excutils
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
-from neutron.common import exceptions
 from neutron.conf.agent import common as config
 from neutron.tests import base
 

@@ -27,14 +27,13 @@ from neutron_lib.db import api as db_api
 from neutron_lib.db import model_query
 from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
-from neutron_lib import exceptions as n_exc
+from neutron_lib import exceptions
 from neutron_lib.utils import net
 from oslo_config import cfg
 from oslo_log import log as logging
 from sqlalchemy.orm import exc
 
 from neutron.common import constants as n_const
-from neutron.common import exceptions
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
 from neutron.objects import base as base_obj
@@ -225,7 +224,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         try:
             network = model_query.get_by_id(context, models_v2.Network, id)
         except exc.NoResultFound:
-            raise n_exc.NetworkNotFound(net_id=id)
+            raise exceptions.NetworkNotFound(net_id=id)
         return network
 
     def _get_subnet(self, context, id):
@@ -234,13 +233,13 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         try:
             subnet = model_query.get_by_id(context, models_v2.Subnet, id)
         except exc.NoResultFound:
-            raise n_exc.SubnetNotFound(subnet_id=id)
+            raise exceptions.SubnetNotFound(subnet_id=id)
         return subnet
 
     def _get_subnet_object(self, context, id):
         subnet = subnet_obj.Subnet.get_object(context, id=id)
         if not subnet:
-            raise n_exc.SubnetNotFound(subnet_id=id)
+            raise exceptions.SubnetNotFound(subnet_id=id)
         return subnet
 
     def _get_subnetpool(self, context, id):
@@ -254,7 +253,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         try:
             port = model_query.get_by_id(context, models_v2.Port, id)
         except exc.NoResultFound:
-            raise n_exc.PortNotFound(port_id=id)
+            raise exceptions.PortNotFound(port_id=id)
         return port
 
     def _get_route_by_subnet(self, context, subnet_id):

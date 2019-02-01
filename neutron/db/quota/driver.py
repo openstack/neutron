@@ -20,7 +20,6 @@ from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_log import log
 
-from neutron.common import exceptions as n_exc
 from neutron.db.quota import api as quota_api
 from neutron.objects import quota as quota_obj
 from neutron.quota import resource as res
@@ -122,7 +121,7 @@ class DbQuotaDriver(object):
         if quota_obj.Quota.delete_objects(
             context, project_id=tenant_id) < 1:
             # No record deleted means the quota was not found
-            raise n_exc.TenantQuotaNotFound(tenant_id=tenant_id)
+            raise exceptions.TenantQuotaNotFound(tenant_id=tenant_id)
 
     @staticmethod
     @db_api.retry_if_session_inactive()
@@ -300,7 +299,7 @@ class DbQuotaDriver(object):
         # Ensure no value is less than zero
         unders = [key for key, val in values.items() if val < 0]
         if unders:
-            raise n_exc.InvalidQuotaValue(unders=sorted(unders))
+            raise exceptions.InvalidQuotaValue(unders=sorted(unders))
 
         # Get the applicable quotas
         quotas = self._get_quotas(context, tenant_id, resources)

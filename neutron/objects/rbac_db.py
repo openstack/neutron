@@ -18,13 +18,12 @@ import itertools
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
-from neutron_lib import exceptions as lib_exc
+from neutron_lib import exceptions
 from six import add_metaclass
 from six import with_metaclass
 from sqlalchemy import and_
 
 from neutron._i18n import _
-from neutron.common import exceptions as n_exc
 from neutron.db import _utils as db_utils
 from neutron.db import rbac_db_mixin
 from neutron.db import rbac_db_models as models
@@ -191,7 +190,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
                     db_obj['tenant_id'] != context.tenant_id):
                 msg = _("Only admins can manipulate policies on objects "
                         "they do not own")
-                raise lib_exc.InvalidInput(error_message=msg)
+                raise exceptions.InvalidInput(error_message=msg)
         callback_map = {events.BEFORE_UPDATE: cls.validate_rbac_policy_update,
                         events.BEFORE_DELETE: cls.validate_rbac_policy_delete}
         if event in callback_map:
@@ -290,7 +289,7 @@ class RbacNeutronMetaclass(type):
             synthetic_attr = mcs.get_attribute('synthetic_fields', bases, dct)
             dct['synthetic_fields'] = synthetic_attr or []
         if 'shared' in dct['synthetic_fields']:
-            raise n_exc.ObjectActionError(
+            raise exceptions.ObjectActionError(
                 action=_('shared attribute switching to synthetic'),
                 reason=_('already a synthetic attribute'))
         dct['synthetic_fields'].append('shared')

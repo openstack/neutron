@@ -19,12 +19,11 @@ import operator
 import netaddr
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
-from neutron_lib import exceptions as lib_exc
+from neutron_lib import exceptions
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
 from neutron._i18n import _
-from neutron.common import exceptions as n_exc
 from neutron.db import models_v2
 from neutron.ipam import driver
 from neutron.ipam import exceptions as ipam_exc
@@ -56,7 +55,7 @@ class SubnetAllocator(driver.Pool):
                 .filter_by(id=self._subnetpool['id']).scalar())
         if current_hash is None:
             # NOTE(cbrandily): subnetpool has been deleted
-            raise n_exc.SubnetPoolNotFound(
+            raise exceptions.SubnetPoolNotFound(
                 subnetpool_id=self._subnetpool['id'])
         new_hash = uuidutils.generate_uuid()
 
@@ -70,7 +69,7 @@ class SubnetAllocator(driver.Pool):
 
             count = query.update({'hash': new_hash})
         if not count:
-            raise db_exc.RetryRequest(lib_exc.SubnetPoolInUse(
+            raise db_exc.RetryRequest(exceptions.SubnetPoolInUse(
                                       subnet_pool_id=self._subnetpool['id']))
 
     def _get_allocated_cidrs(self):
@@ -118,7 +117,7 @@ class SubnetAllocator(driver.Pool):
                                                                  quota_unit)
 
             if used + requested_units > quota:
-                raise n_exc.SubnetPoolQuotaExceeded()
+                raise exceptions.SubnetPoolQuotaExceeded()
 
     def _allocate_any_subnet(self, request):
         with db_api.CONTEXT_WRITER.using(self._context):
@@ -141,8 +140,8 @@ class SubnetAllocator(driver.Pool):
                                       gateway_ip=gateway_ip,
                                       allocation_pools=pools)
             msg = _("Insufficient prefix space to allocate subnet size /%s")
-            raise n_exc.SubnetAllocationError(reason=msg %
-                                              str(request.prefixlen))
+            raise exceptions.SubnetAllocationError(
+                reason=msg % str(request.prefixlen))
 
     def _allocate_specific_subnet(self, request):
         with db_api.CONTEXT_WRITER.using(self._context):
@@ -160,17 +159,17 @@ class SubnetAllocator(driver.Pool):
                                   allocation_pools=request.allocation_pools)
             msg = _("Cannot allocate requested subnet from the available "
                     "set of prefixes")
-            raise n_exc.SubnetAllocationError(reason=msg)
+            raise exceptions.SubnetAllocationError(reason=msg)
 
     def allocate_subnet(self, request):
         max_prefixlen = int(self._subnetpool['max_prefixlen'])
         min_prefixlen = int(self._subnetpool['min_prefixlen'])
         if request.prefixlen > max_prefixlen:
-            raise n_exc.MaxPrefixSubnetAllocationError(
+            raise exceptions.MaxPrefixSubnetAllocationError(
                               prefixlen=request.prefixlen,
                               max_prefixlen=max_prefixlen)
         if request.prefixlen < min_prefixlen:
-            raise n_exc.MinPrefixSubnetAllocationError(
+            raise exceptions.MinPrefixSubnetAllocationError(
                               prefixlen=request.prefixlen,
                               min_prefixlen=min_prefixlen)
 
@@ -180,7 +179,7 @@ class SubnetAllocator(driver.Pool):
             return self._allocate_specific_subnet(request)
         else:
             msg = _("Unsupported request type")
-            raise n_exc.SubnetAllocationError(reason=msg)
+            raise exceptions.SubnetAllocationError(reason=msg)
 
     def get_subnet(self, subnet_id):
         raise NotImplementedError()
@@ -336,14 +335,14 @@ class SubnetPoolReader(object):
     def _read_prefix_info(self, subnetpool):
         prefix_list = subnetpool['prefixes']
         if not prefix_list:
-            raise n_exc.EmptySubnetPoolPrefixList()
+            raise exceptions.EmptySubnetPoolPrefixList()
 
         ip_version = None
         for prefix in prefix_list:
             if not ip_version:
                 ip_version = netaddr.IPNetwork(prefix).version
             elif netaddr.IPNetwork(prefix).version != ip_version:
-                raise n_exc.PrefixVersionMismatch()
+                raise exceptions.PrefixVersionMismatch()
         self.default_quota = subnetpool.get('default_quota')
 
         if self.default_quota is constants.ATTR_NOT_SPECIFIED:
@@ -385,10 +384,10 @@ class SubnetPoolHelper(object):
 
     def validate_min_prefixlen(self, min_prefixlen, max_prefixlen):
         if min_prefixlen < 0:
-            raise n_exc.UnsupportedMinSubnetPoolPrefix(prefix=min_prefixlen,
-                                                       version=4)
+            raise exceptions.UnsupportedMinSubnetPoolPrefix(
+                prefix=min_prefixlen, version=4)
         if min_prefixlen > max_prefixlen:
-            raise n_exc.IllegalSubnetPoolPrefixBounds(
+            raise exceptions.IllegalSubnetPoolPrefixBounds(
                                              prefix_type='min_prefixlen',
                                              prefixlen=min_prefixlen,
                                              base_prefix_type='max_prefixlen',
@@ -397,7 +396,7 @@ class SubnetPoolHelper(object):
     def validate_max_prefixlen(self, prefixlen, ip_version):
         max = self._PREFIX_VERSION_INFO[ip_version]['max_prefixlen']
         if prefixlen > max:
-            raise n_exc.IllegalSubnetPoolPrefixBounds(
+            raise exceptions.IllegalSubnetPoolPrefixBounds(
                                             prefix_type='max_prefixlen',
                                             prefixlen=prefixlen,
                                             base_prefix_type='ip_version_max',
@@ -408,13 +407,13 @@ class SubnetPoolHelper(object):
                                    max_prefixlen,
                                    default_prefixlen):
         if default_prefixlen < min_prefixlen:
-            raise n_exc.IllegalSubnetPoolPrefixBounds(
+            raise exceptions.IllegalSubnetPoolPrefixBounds(
                                              prefix_type='default_prefixlen',
                                              prefixlen=default_prefixlen,
                                              base_prefix_type='min_prefixlen',
                                              base_prefixlen=min_prefixlen)
         if default_prefixlen > max_prefixlen:
-            raise n_exc.IllegalSubnetPoolPrefixBounds(
+            raise exceptions.IllegalSubnetPoolPrefixBounds(
                                              prefix_type='default_prefixlen',
                                              prefixlen=default_prefixlen,
                                              base_prefix_type='max_prefixlen',

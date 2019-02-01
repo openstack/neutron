@@ -18,6 +18,8 @@ import sys
 
 import fixtures
 import mock
+from neutron_lib import exceptions
+from neutron_lib.exceptions import l3 as l3_exc
 from oslo_config import cfg
 import testtools
 
@@ -26,7 +28,6 @@ from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import constants
-from neutron.common import exceptions as n_exc
 from neutron.tests import base
 from neutron.tests import tools
 
@@ -439,7 +440,7 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
 
     def test_defer_apply_with_exception(self):
         self.iptables._apply = mock.Mock(side_effect=Exception)
-        with testtools.ExpectedException(n_exc.IpTablesApplyException):
+        with testtools.ExpectedException(l3_exc.IpTablesApplyException):
             with self.iptables.defer_apply():
                 pass
 
@@ -887,7 +888,7 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
                     # pretend line 11 failed
                     msg = ("Exit code: 1\nStdout: ''\n"
                            "Stderr: 'iptables-restore: line 11 failed\n'")
-                    raise n_exc.ProcessExecutionError(
+                    raise exceptions.ProcessExecutionError(
                         msg, iptables_manager.XTABLES_RESOURCE_PROBLEM_CODE)
                 return FILTER_DUMP
             self.execute.side_effect = iptables_restore_failer
@@ -926,7 +927,7 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
     def test_iptables_use_table_lock(self):
         # Under normal operation, if we do call iptables-restore with a -w
         # and it succeeds, the next call will only use -w.
-        PE_error = n_exc.ProcessExecutionError(
+        PE_error = exceptions.ProcessExecutionError(
                        "", iptables_manager.XTABLES_RESOURCE_PROBLEM_CODE)
 
         num_calls = 3

@@ -20,11 +20,11 @@ import mock
 import six
 import testtools
 
+from neutron_lib import exceptions
 from oslo_config import cfg
 import oslo_i18n
 
 from neutron.agent.linux import utils
-from neutron.common import exceptions as n_exc
 from neutron.tests import base
 from neutron.tests.common import helpers
 
@@ -147,7 +147,7 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
         self.mock_popen.return_value = ('', '')
         self.process.return_value.returncode = 1
         with mock.patch.object(utils, 'LOG') as log:
-            self.assertRaises(n_exc.ProcessExecutionError, utils.execute,
+            self.assertRaises(exceptions.ProcessExecutionError, utils.execute,
                               ['ls'], log_fail_as_error=False)
             self.assertFalse(log.error.called)
 
@@ -201,8 +201,8 @@ class TestFindParentPid(base.BaseTestCase):
         self.m_execute = mock.patch.object(utils, 'execute').start()
 
     def test_returns_none_for_no_valid_pid(self):
-        self.m_execute.side_effect = n_exc.ProcessExecutionError('',
-                                                                 returncode=1)
+        self.m_execute.side_effect = exceptions.ProcessExecutionError(
+            '', returncode=1)
         self.assertIsNone(utils.find_parent_pid(-1))
 
     def test_returns_parent_id_for_good_ouput(self):
@@ -210,9 +210,9 @@ class TestFindParentPid(base.BaseTestCase):
         self.assertEqual(utils.find_parent_pid(-1), '123')
 
     def test_raises_exception_returncode_0(self):
-        with testtools.ExpectedException(n_exc.ProcessExecutionError):
+        with testtools.ExpectedException(exceptions.ProcessExecutionError):
             self.m_execute.side_effect = \
-                n_exc.ProcessExecutionError('', returncode=0)
+                exceptions.ProcessExecutionError('', returncode=0)
             utils.find_parent_pid(-1)
 
     def test_raises_unknown_exception(self):
@@ -265,7 +265,7 @@ class TestKillProcess(base.BaseTestCase):
     def _test_kill_process(self, pid, raise_exception=False,
                            kill_signal=signal.SIGKILL, pid_killed=True):
         if raise_exception:
-            exc = n_exc.ProcessExecutionError('', returncode=0)
+            exc = exceptions.ProcessExecutionError('', returncode=0)
         else:
             exc = None
         with mock.patch.object(utils, 'execute',
@@ -284,7 +284,7 @@ class TestKillProcess(base.BaseTestCase):
         self._test_kill_process('1', raise_exception=True)
 
     def test_kill_process_raises_exception_for_execute_exception(self):
-        with testtools.ExpectedException(n_exc.ProcessExecutionError):
+        with testtools.ExpectedException(exceptions.ProcessExecutionError):
             # Simulate that the process is running after trying to kill due to
             # any reason such as, for example, Permission denied
             self._test_kill_process('1', raise_exception=True,
@@ -298,7 +298,7 @@ class TestFindChildPids(base.BaseTestCase):
 
     def test_returns_empty_list_for_exit_code_1(self):
         with mock.patch.object(utils, 'execute',
-                               side_effect=n_exc.ProcessExecutionError(
+                               side_effect=exceptions.ProcessExecutionError(
                                    '', returncode=1)):
             self.assertEqual([], utils.find_child_pids(-1))
 

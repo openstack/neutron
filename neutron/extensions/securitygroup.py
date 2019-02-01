@@ -21,7 +21,7 @@ from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib.db import constants as db_const
-from neutron_lib import exceptions as nexception
+from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from oslo_utils import netutils
 import six
@@ -29,43 +29,42 @@ import six
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import base
-from neutron.common import exceptions
 from neutron.conf import quota
 from neutron.extensions import standardattrdescription as stdattr_ext
 from neutron.quota import resource_registry
 
 
 # Security group Exceptions
-class SecurityGroupInvalidPortRange(nexception.InvalidInput):
+class SecurityGroupInvalidPortRange(exceptions.InvalidInput):
     message = _("For TCP/UDP protocols, port_range_min must be "
                 "<= port_range_max")
 
 
-class SecurityGroupInvalidProtocolForPortRange(nexception.InvalidInput):
+class SecurityGroupInvalidProtocolForPortRange(exceptions.InvalidInput):
     message = _("Invalid protocol %(protocol)s for port range, only "
                 "supported for TCP, UDP, UDPLITE, SCTP and DCCP.")
 
 
-class SecurityGroupInvalidPortValue(nexception.InvalidInput):
+class SecurityGroupInvalidPortValue(exceptions.InvalidInput):
     message = _("Invalid value for port %(port)s")
 
 
-class SecurityGroupInvalidIcmpValue(nexception.InvalidInput):
+class SecurityGroupInvalidIcmpValue(exceptions.InvalidInput):
     message = _("Invalid value for ICMP %(field)s (%(attr)s) "
                 "%(value)s. It must be 0 to 255.")
 
 
-class SecurityGroupEthertypeConflictWithProtocol(nexception.InvalidInput):
+class SecurityGroupEthertypeConflictWithProtocol(exceptions.InvalidInput):
     message = _("Invalid ethertype %(ethertype)s for protocol "
                 "%(protocol)s.")
 
 
-class SecurityGroupMissingIcmpType(nexception.InvalidInput):
+class SecurityGroupMissingIcmpType(exceptions.InvalidInput):
     message = _("ICMP code (port-range-max) %(value)s is provided"
                 " but ICMP type (port-range-min) is missing.")
 
 
-class SecurityGroupInUse(nexception.InUse):
+class SecurityGroupInUse(exceptions.InUse):
     message = _("Security Group %(id)s %(reason)s.")
 
     def __init__(self, **kwargs):
@@ -74,60 +73,60 @@ class SecurityGroupInUse(nexception.InUse):
         super(SecurityGroupInUse, self).__init__(**kwargs)
 
 
-class SecurityGroupCannotRemoveDefault(nexception.InUse):
+class SecurityGroupCannotRemoveDefault(exceptions.InUse):
     message = _("Insufficient rights for removing default security group.")
 
 
-class SecurityGroupCannotUpdateDefault(nexception.InUse):
+class SecurityGroupCannotUpdateDefault(exceptions.InUse):
     message = _("Updating default security group not allowed.")
 
 
-class SecurityGroupDefaultAlreadyExists(nexception.InUse):
+class SecurityGroupDefaultAlreadyExists(exceptions.InUse):
     message = _("Default security group already exists.")
 
 
-class SecurityGroupRuleInvalidProtocol(nexception.InvalidInput):
+class SecurityGroupRuleInvalidProtocol(exceptions.InvalidInput):
     message = _("Security group rule protocol %(protocol)s not supported. "
                 "Only protocol values %(values)s and integer representations "
                 "[0 to 255] are supported.")
 
 
-class SecurityGroupRulesNotSingleTenant(nexception.InvalidInput):
+class SecurityGroupRulesNotSingleTenant(exceptions.InvalidInput):
     message = _("Multiple tenant_ids in bulk security group rule create"
                 " not allowed")
 
 
-class SecurityGroupRemoteGroupAndRemoteIpPrefix(nexception.InvalidInput):
+class SecurityGroupRemoteGroupAndRemoteIpPrefix(exceptions.InvalidInput):
     message = _("Only remote_ip_prefix or remote_group_id may "
                 "be provided.")
 
 
-class SecurityGroupProtocolRequiredWithPorts(nexception.InvalidInput):
+class SecurityGroupProtocolRequiredWithPorts(exceptions.InvalidInput):
     message = _("Must also specify protocol if port range is given.")
 
 
-class SecurityGroupNotSingleGroupRules(nexception.InvalidInput):
+class SecurityGroupNotSingleGroupRules(exceptions.InvalidInput):
     message = _("Only allowed to update rules for "
                 "one security profile at a time")
 
 
-class SecurityGroupNotFound(nexception.NotFound):
+class SecurityGroupNotFound(exceptions.NotFound):
     message = _("Security group %(id)s does not exist")
 
 
-class SecurityGroupRuleNotFound(nexception.NotFound):
+class SecurityGroupRuleNotFound(exceptions.NotFound):
     message = _("Security group rule %(id)s does not exist")
 
 
-class DuplicateSecurityGroupRuleInPost(nexception.InUse):
+class DuplicateSecurityGroupRuleInPost(exceptions.InUse):
     message = _("Duplicate Security Group Rule in POST.")
 
 
-class SecurityGroupRuleExists(nexception.InUse):
+class SecurityGroupRuleExists(exceptions.InUse):
     message = _("Security group rule already exists. Rule id is %(rule_id)s.")
 
 
-class SecurityGroupRuleInUse(nexception.InUse):
+class SecurityGroupRuleInUse(exceptions.InUse):
     message = _("Security Group Rule %(id)s %(reason)s.")
 
     def __init__(self, **kwargs):
@@ -136,15 +135,15 @@ class SecurityGroupRuleInUse(nexception.InUse):
         super(SecurityGroupRuleInUse, self).__init__(**kwargs)
 
 
-class SecurityGroupRuleParameterConflict(nexception.InvalidInput):
+class SecurityGroupRuleParameterConflict(exceptions.InvalidInput):
     message = _("Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s")
 
 
-class SecurityGroupConflict(nexception.Conflict):
+class SecurityGroupConflict(exceptions.Conflict):
     message = _("Error %(reason)s while attempting the operation.")
 
 
-class SecurityGroupRuleInvalidEtherType(nexception.InvalidInput):
+class SecurityGroupRuleInvalidEtherType(exceptions.InvalidInput):
     message = _("Security group rule for ethertype '%(ethertype)s' not "
                 "supported. Allowed values are %(values)s.")
 

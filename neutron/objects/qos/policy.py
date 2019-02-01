@@ -16,12 +16,12 @@
 import itertools
 
 from neutron_lib import constants as n_const
+from neutron_lib.exceptions import qos as qos_exc
 from oslo_db import exception as db_exc
 from oslo_utils import versionutils
 from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron.common import exceptions
 from neutron.db.models import l3
 from neutron.db import models_v2
 from neutron.db.qos import models as qos_db_model
@@ -119,8 +119,8 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         for rule in self.rules:
             if rule_id == rule.id:
                 return rule
-        raise exceptions.QosRuleNotFound(policy_id=self.id,
-                                         rule_id=rule_id)
+        raise qos_exc.QosRuleNotFound(policy_id=self.id,
+                                      rule_id=rule_id)
 
     # TODO(hichihara): For tag mechanism. This will be removed in bug/1704137
     def to_dict(self):
@@ -148,7 +148,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
         obj = cls.get_object(context, id=policy_id)
         if obj is None:
-            raise exceptions.QosPolicyNotFound(policy_id=policy_id)
+            raise qos_exc.QosPolicyNotFound(policy_id=policy_id)
         return obj
 
     @classmethod
@@ -240,7 +240,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                                     policy_id=self.id,
                                                     _pager=pager)
                 if binding_obj:
-                    raise exceptions.QosPolicyInUse(
+                    raise qos_exc.QosPolicyInUse(
                         policy_id=self.id,
                         object_type=object_type,
                         object_id=binding_obj[0]['%s_id' % object_type])
@@ -255,9 +255,9 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         try:
             network_binding_obj.create()
         except db_exc.DBReferenceError as e:
-            raise exceptions.NetworkQosBindingError(policy_id=self.id,
-                                                    net_id=network_id,
-                                                    db_error=e)
+            raise qos_exc.NetworkQosBindingError(policy_id=self.id,
+                                                 net_id=network_id,
+                                                 db_error=e)
 
     def attach_port(self, port_id):
         port_binding_obj = binding.QosPolicyPortBinding(
@@ -265,9 +265,9 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         try:
             port_binding_obj.create()
         except db_exc.DBReferenceError as e:
-            raise exceptions.PortQosBindingError(policy_id=self.id,
-                                                 port_id=port_id,
-                                                 db_error=e)
+            raise qos_exc.PortQosBindingError(policy_id=self.id,
+                                              port_id=port_id,
+                                              db_error=e)
 
     def attach_floatingip(self, fip_id):
         fip_binding_obj = binding.QosPolicyFloatingIPBinding(
@@ -275,9 +275,9 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         try:
             fip_binding_obj.create()
         except db_exc.DBReferenceError as e:
-            raise exceptions.FloatingIPQosBindingError(policy_id=self.id,
-                                                       fip_id=fip_id,
-                                                       db_error=e)
+            raise qos_exc.FloatingIPQosBindingError(policy_id=self.id,
+                                                    fip_id=fip_id,
+                                                    db_error=e)
 
     def attach_router(self, router_id):
         router_binding_obj = binding.QosPolicyRouterGatewayIPBinding(
@@ -285,37 +285,37 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         try:
             router_binding_obj.create()
         except db_exc.DBReferenceError as e:
-            raise exceptions.RouterQosBindingError(policy_id=self.id,
-                                                   router_id=router_id,
-                                                   db_error=e)
+            raise qos_exc.RouterQosBindingError(policy_id=self.id,
+                                                router_id=router_id,
+                                                db_error=e)
 
     def detach_network(self, network_id):
         deleted = binding.QosPolicyNetworkBinding.delete_objects(
             self.obj_context, network_id=network_id)
         if not deleted:
-            raise exceptions.NetworkQosBindingNotFound(net_id=network_id,
-                                                       policy_id=self.id)
+            raise qos_exc.NetworkQosBindingNotFound(net_id=network_id,
+                                                    policy_id=self.id)
 
     def detach_port(self, port_id):
         deleted = binding.QosPolicyPortBinding.delete_objects(self.obj_context,
                                                               port_id=port_id)
         if not deleted:
-            raise exceptions.PortQosBindingNotFound(port_id=port_id,
-                                                    policy_id=self.id)
+            raise qos_exc.PortQosBindingNotFound(port_id=port_id,
+                                                 policy_id=self.id)
 
     def detach_floatingip(self, fip_id):
         deleted = binding.QosPolicyFloatingIPBinding.delete_objects(
             self.obj_context, fip_id=fip_id)
         if not deleted:
-            raise exceptions.FloatingIPQosBindingNotFound(fip_id=fip_id,
-                                                          policy_id=self.id)
+            raise qos_exc.FloatingIPQosBindingNotFound(fip_id=fip_id,
+                                                       policy_id=self.id)
 
     def detach_router(self, router_id):
         deleted = binding.QosPolicyRouterGatewayIPBinding.delete_objects(
             self.obj_context, router_id=router_id)
         if not deleted:
-            raise exceptions.RouterQosBindingNotFound(router_id=router_id,
-                                                      policy_id=self.id)
+            raise qos_exc.RouterQosBindingNotFound(router_id=router_id,
+                                                   policy_id=self.id)
 
     def set_default(self):
         if not self.get_default():
@@ -324,7 +324,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                                   project_id=self.project_id)
             qos_default_policy.create()
         elif self.get_default() != self.id:
-            raise exceptions.QoSPolicyDefaultAlreadyExists(
+            raise qos_exc.QoSPolicyDefaultAlreadyExists(
                 project_id=self.project_id)
 
     def unset_default(self):

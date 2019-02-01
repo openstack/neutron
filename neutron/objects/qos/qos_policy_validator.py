@@ -13,9 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
-
-from neutron.common import exceptions as n_exc
 
 
 def check_bandwidth_rule_conflict(policy, rule_data):
@@ -32,7 +31,7 @@ def check_bandwidth_rule_conflict(policy, rule_data):
         elif rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
             if "max_kbps" in rule_data and (
                     int(rule.min_kbps) > int(rule_data["max_kbps"])):
-                raise n_exc.QoSRuleParameterConflict(
+                raise qos_exc.QoSRuleParameterConflict(
                     rule_value=rule_data["max_kbps"],
                     policy_id=policy["id"],
                     existing_rule=rule.rule_type,
@@ -40,7 +39,7 @@ def check_bandwidth_rule_conflict(policy, rule_data):
         elif rule.rule_type == qos_consts.RULE_TYPE_BANDWIDTH_LIMIT:
             if "min_kbps" in rule_data and (
                     int(rule.max_kbps) < int(rule_data["min_kbps"])):
-                raise n_exc.QoSRuleParameterConflict(
+                raise qos_exc.QoSRuleParameterConflict(
                     rule_value=rule_data["min_kbps"],
                     policy_id=policy["id"],
                     existing_rule=rule.rule_type,
@@ -62,7 +61,7 @@ def check_rules_conflict(policy, rule_obj):
         if rule.id == getattr(rule_obj, "id", None):
             continue
         if rule.duplicates(rule_obj):
-            raise n_exc.QoSRulesConflict(
+            raise qos_exc.QoSRulesConflict(
                 new_rule_type=rule_obj.rule_type,
                 rule_id=rule.id,
                 policy_id=policy.id)

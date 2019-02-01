@@ -31,7 +31,6 @@ import testtools
 
 from neutron.agent.common import utils  # noqa
 from neutron.agent.linux import ip_lib
-from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
 from neutron import privileged
 from neutron.privileged.agent.linux import ip_lib as priv_lib
@@ -389,7 +388,7 @@ class TestIpWrapper(base.BaseTestCase):
 
     def test_add_vxlan_invalid_srcport_length(self):
         wrapper = ip_lib.IPWrapper()
-        self.assertRaises(n_exc.NetworkVxlanPortRangeError,
+        self.assertRaises(exceptions.NetworkVxlanPortRangeError,
                           wrapper.add_vxlan, 'vxlan0', 'vni0', group='group0',
                           dev='dev0', ttl='ttl0', tos='tos0',
                           local='local0', proxy=True,
@@ -397,7 +396,7 @@ class TestIpWrapper(base.BaseTestCase):
 
     def test_add_vxlan_invalid_srcport_range(self):
         wrapper = ip_lib.IPWrapper()
-        self.assertRaises(n_exc.NetworkVxlanPortRangeError,
+        self.assertRaises(exceptions.NetworkVxlanPortRangeError,
                           wrapper.add_vxlan, 'vxlan0', 'vni0', group='group0',
                           dev='dev0', ttl='ttl0', tos='tos0',
                           local='local0', proxy=True,

@@ -46,7 +46,6 @@ import neutron
 from neutron.api import api_common
 from neutron.api import extensions
 from neutron.api.v2 import router
-from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import test_lib
 from neutron.common import utils
@@ -5618,12 +5617,12 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_validate_subnet_dns_nameservers_exhausted(self):
         self._helper_test_validate_subnet(
             'max_dns_nameservers',
-            n_exc.DNSNameServersExhausted)
+            lib_exc.DNSNameServersExhausted)
 
     def test_validate_subnet_host_routes_exhausted(self):
         self._helper_test_validate_subnet(
             'max_subnet_host_routes',
-            n_exc.HostRoutesExhausted)
+            lib_exc.HostRoutesExhausted)
 
     def test_port_prevents_network_deletion(self):
         with self.port() as p:
@@ -6748,7 +6747,7 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
         network.subnets = [models_v2.Subnet(subnetpool_id='test_id',
                                             ip_version=constants.IP_VERSION_4)]
         new_subnetpool_id = None
-        self.assertRaises(n_exc.NetworkSubnetPoolAffinityError,
+        self.assertRaises(lib_exc.NetworkSubnetPoolAffinityError,
                           self.plugin.ipam._validate_network_subnetpools,
                           network, new_subnetpool_id, 4)
 
@@ -6802,7 +6801,7 @@ class TestNetworks(testlib_api.SqlTestCase):
             plugin.update_network(ctx, net_id, network)
 
     def test_update_shared_net_used_fails(self):
-        self._test_update_shared_net_used('', n_exc.InvalidSharedSetting)
+        self._test_update_shared_net_used('', lib_exc.InvalidSharedSetting)
 
     def test_update_shared_net_used_as_router_gateway(self):
         self._test_update_shared_net_used(

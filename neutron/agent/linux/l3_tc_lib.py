@@ -13,11 +13,11 @@
 import re
 
 from neutron_lib import constants
+from neutron_lib import exceptions
 from oslo_log import log as logging
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import tc_lib
-from neutron.common import exceptions
 
 LOG = logging.getLogger(__name__)
 

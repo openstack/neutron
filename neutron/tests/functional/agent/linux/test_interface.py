@@ -14,6 +14,7 @@
 
 import functools
 
+from neutron_lib import exceptions
 from neutron_lib.utils import net
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -21,7 +22,6 @@ import testtools
 
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
-from neutron.common import exceptions
 from neutron.common import utils
 from neutron.conf.agent import common as config
 from neutron.tests.common import net_helpers

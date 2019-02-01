@@ -18,6 +18,7 @@ import imp
 import os
 
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -27,7 +28,6 @@ import webob.dec
 import webob.exc
 
 from neutron._i18n import _
-from neutron.common import exceptions
 from neutron import extensions as core_extensions
 from neutron.plugins.common import constants as const
 from neutron.services import provider_configuration

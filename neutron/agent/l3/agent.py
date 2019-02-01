@@ -22,6 +22,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_const
 from neutron_lib import context as n_context
+from neutron_lib.exceptions import l3 as l3_exc
 from oslo_config import cfg
 from oslo_context import context as common_context
 from oslo_log import log as logging
@@ -52,7 +53,6 @@ from neutron.agent.linux import pd
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as l3_constants
-from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import utils
@@ -485,7 +485,7 @@ class L3NATAgent(ha.AgentMixin,
         # Either ex_net_id or handle_internal_only_routers must be set
         ex_net_id = (router['external_gateway_info'] or {}).get('network_id')
         if not ex_net_id and not self.conf.handle_internal_only_routers:
-            raise n_exc.RouterNotCompatibleWithAgent(router_id=router['id'])
+            raise l3_exc.RouterNotCompatibleWithAgent(router_id=router['id'])
 
         # If target_ex_net_id and ex_net_id are set they must be equal
         target_ex_net_id = self._fetch_external_net_id()
@@ -493,7 +493,7 @@ class L3NATAgent(ha.AgentMixin,
             # Double check that our single external_net_id has not changed
             # by forcing a check by RPC.
             if ex_net_id != self._fetch_external_net_id(force=True):
-                raise n_exc.RouterNotCompatibleWithAgent(
+                raise l3_exc.RouterNotCompatibleWithAgent(
                     router_id=router['id'])
 
         if router['id'] not in self.router_info:
@@ -623,7 +623,7 @@ class L3NATAgent(ha.AgentMixin,
 
             try:
                 self._process_router_if_compatible(router)
-            except n_exc.RouterNotCompatibleWithAgent as e:
+            except l3_exc.RouterNotCompatibleWithAgent as e:
                 log_verbose_exc(e.msg, router)
                 # Was the router previously handled by this agent?
                 if router['id'] in self.router_info:
@@ -664,7 +664,7 @@ class L3NATAgent(ha.AgentMixin,
         try:
             with self.namespaces_manager as ns_manager:
                 self.fetch_and_sync_all_routers(context, ns_manager)
-        except n_exc.AbortSyncRouters:
+        except l3_exc.AbortSyncRouters:
             self.fullsync = True
 
     def fetch_and_sync_all_routers(self, context, ns_manager):
@@ -720,7 +720,7 @@ class L3NATAgent(ha.AgentMixin,
             failed_routers = chunk or router_ids
             LOG.exception("Failed synchronizing routers '%s' "
                           "due to RPC error", failed_routers)
-            raise n_exc.AbortSyncRouters()
+            raise l3_exc.AbortSyncRouters()
 
         self.fullsync = False
         LOG.debug("periodic_sync_routers_task successfully completed")

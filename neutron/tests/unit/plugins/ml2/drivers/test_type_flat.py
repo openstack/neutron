@@ -19,7 +19,6 @@ from neutron_lib import exceptions as exc
 from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
 
-from neutron.common import exceptions as n_exc
 from neutron.objects.plugins.ml2 import flatallocation as flat_obj
 from neutron.plugins.ml2.drivers import type_flat
 from neutron.tests import base
@@ -118,7 +117,7 @@ class FlatTypeTest(testlib_api.SqlTestCase):
         segment = {api.NETWORK_TYPE: p_const.TYPE_FLAT,
                    api.PHYSICAL_NETWORK: 'flat_net1'}
         self.driver.reserve_provider_segment(self.context, segment)
-        self.assertRaises(n_exc.FlatNetworkInUse,
+        self.assertRaises(exc.FlatNetworkInUse,
                           self.driver.reserve_provider_segment,
                           self.context, segment)
 

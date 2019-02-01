@@ -14,12 +14,12 @@ import random
 
 import mock
 from neutron_lib import constants as n_const
+from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 from oslo_versionedobjects import exception
 import testtools
 
-from neutron.common import exceptions as n_exc
 from neutron.objects.db import api as db_api
 from neutron.objects import network as net_obj
 from neutron.objects import ports as port_obj
@@ -166,7 +166,7 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     def test_get_policy_obj_not_found(self):
         context = self.context.elevated()
-        self.assertRaises(n_exc.QosPolicyNotFound,
+        self.assertRaises(qos_exc.QosPolicyNotFound,
                           policy.QosPolicy.get_policy_obj,
                           context, "fake_id")
 
@@ -222,7 +222,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
     def test_attach_network_nonexistent_network(self):
 
         obj = self._create_test_policy()
-        self.assertRaises(n_exc.NetworkQosBindingError,
+        self.assertRaises(qos_exc.NetworkQosBindingError,
                           obj.attach_network, uuidutils.generate_uuid())
 
     def test_attach_network_get_policy_network(self):
@@ -254,19 +254,19 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
     def test_attach_port_nonexistent_port(self):
 
         obj = self._create_test_policy()
-        self.assertRaises(n_exc.PortQosBindingError,
+        self.assertRaises(qos_exc.PortQosBindingError,
                           obj.attach_port, uuidutils.generate_uuid())
 
     def test_attach_network_nonexistent_policy(self):
 
         policy_obj = self._make_object(self.obj_fields[0])
-        self.assertRaises(n_exc.NetworkQosBindingError,
+        self.assertRaises(qos_exc.NetworkQosBindingError,
                           policy_obj.attach_network, self._network_id)
 
     def test_attach_port_nonexistent_policy(self):
 
         policy_obj = self._make_object(self.obj_fields[0])
-        self.assertRaises(n_exc.PortQosBindingError,
+        self.assertRaises(qos_exc.PortQosBindingError,
                           policy_obj.attach_port, self._port['id'])
 
     def test_attach_port_get_port_policy(self):
@@ -337,22 +337,22 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
     def test_detach_port_nonexistent_port(self):
         obj = self._create_test_policy()
-        self.assertRaises(n_exc.PortQosBindingNotFound,
+        self.assertRaises(qos_exc.PortQosBindingNotFound,
                           obj.detach_port, 'non-existent-port')
 
     def test_detach_network_nonexistent_network(self):
         obj = self._create_test_policy()
-        self.assertRaises(n_exc.NetworkQosBindingNotFound,
+        self.assertRaises(qos_exc.NetworkQosBindingNotFound,
                           obj.detach_network, 'non-existent-port')
 
     def test_detach_port_nonexistent_policy(self):
         policy_obj = self._make_object(self.obj_fields[0])
-        self.assertRaises(n_exc.PortQosBindingNotFound,
+        self.assertRaises(qos_exc.PortQosBindingNotFound,
                           policy_obj.detach_port, self._port['id'])
 
     def test_detach_network_nonexistent_policy(self):
         policy_obj = self._make_object(self.obj_fields[0])
-        self.assertRaises(n_exc.NetworkQosBindingNotFound,
+        self.assertRaises(qos_exc.NetworkQosBindingNotFound,
                           policy_obj.detach_network, self._network_id)
 
     @mock.patch.object(policy.QosPolicyDefault, 'create')
@@ -365,7 +365,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
     def test_set_default_default_policy_exists(self):
         obj = self._create_test_policy()
         with mock.patch.object(obj, 'get_default', return_value=mock.Mock()):
-            self.assertRaises(n_exc.QoSPolicyDefaultAlreadyExists,
+            self.assertRaises(qos_exc.QoSPolicyDefaultAlreadyExists,
                               obj.set_default)
 
     def test_set_default_is_default_policy(self):
@@ -432,7 +432,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         obj = self._create_test_policy()
         obj.attach_port(self._port['id'])
 
-        self.assertRaises(n_exc.QosPolicyInUse, obj.delete)
+        self.assertRaises(qos_exc.QosPolicyInUse, obj.delete)
 
         obj.detach_port(self._port['id'])
         obj.delete()
@@ -441,7 +441,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         obj = self._create_test_policy()
         obj.attach_network(self._network_id)
 
-        self.assertRaises(n_exc.QosPolicyInUse, obj.delete)
+        self.assertRaises(qos_exc.QosPolicyInUse, obj.delete)
 
         obj.detach_network(self._network_id)
         obj.delete()

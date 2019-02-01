@@ -15,6 +15,7 @@
 import copy
 
 import mock
+from neutron_lib.exceptions import l3 as l3_exc
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
@@ -24,7 +25,6 @@ from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
-from neutron.common import exceptions as n_exc
 from neutron.common import utils as n_utils
 from neutron.tests import base
 
@@ -155,7 +155,7 @@ class TestDvrFipNs(base.BaseTestCase):
         self.fip_ns._check_for_gateway_ip_change = mock.Mock(return_value=True)
         self.fip_ns.agent_gateway_port = agent_gw_port
 
-        self.assertRaises(n_exc.FloatingIpSetupException,
+        self.assertRaises(l3_exc.FloatingIpSetupException,
                           self.fip_ns.create_or_update_gateway_port,
                           agent_gw_port)
         self.assertTrue(fip_unsub.called)

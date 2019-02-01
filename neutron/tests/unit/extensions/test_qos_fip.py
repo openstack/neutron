@@ -13,11 +13,11 @@
 #
 
 from neutron_lib import context
+from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
-from neutron.common import exceptions as n_exception
 from neutron.conf.db import extraroute_db
 from neutron.db import l3_fip_qos
 from neutron.extensions import l3
@@ -87,7 +87,7 @@ class FloatingIPQoSDBTestCaseBase(object):
                 qos_policy_id=policy_obj.id)
             self.assertEqual(policy_obj.id,
                              fip['floatingip'][qos_consts.QOS_POLICY_ID])
-            self.assertRaises(n_exception.QosPolicyInUse, policy_obj.delete)
+            self.assertRaises(qos_exc.QosPolicyInUse, policy_obj.delete)
 
     def test_floatingip_update_qos_policy_id(self):
         ctx = context.get_admin_context()

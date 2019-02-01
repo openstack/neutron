@@ -24,6 +24,7 @@ from neutron_lib.agent import constants as agent_consts
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants
 from neutron_lib import exceptions as exc
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from oslo_config import cfg
 from oslo_log import log
@@ -52,7 +53,6 @@ from neutron.agent.linux import ra
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as n_const
-from neutron.common import exceptions as n_exc
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf.agent.l3 import ha as ha_conf
@@ -2602,7 +2602,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         with mock.patch.object(
             agent, "_process_router_if_compatible",
-            side_effect=n_exc.RouterNotCompatibleWithAgent(
+            side_effect=l3_exc.RouterNotCompatibleWithAgent(
                 router_id=router['id'])
         ) as process_router_if_compatible, mock.patch.object(
             agent, "_safe_router_removed"
@@ -2718,7 +2718,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         agent.router_info = {}
         self.conf.set_override('gateway_external_network_id', 'aaa')
-        self.assertRaises(n_exc.RouterNotCompatibleWithAgent,
+        self.assertRaises(l3_exc.RouterNotCompatibleWithAgent,
                           agent._process_router_if_compatible,
                           router)
         self.assertNotIn(router['id'], agent.router_info)

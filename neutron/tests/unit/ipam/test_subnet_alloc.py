@@ -18,12 +18,12 @@ import netaddr
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import api as db_api
+from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
-from neutron.common import exceptions as n_exc
 from neutron.ipam import requests as ipam_req
 from neutron.ipam import subnet_alloc
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -103,7 +103,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
                                     uuidutils.generate_uuid(),
                                     constants.IPv4,
                                     21)
-        self.assertRaises(n_exc.SubnetAllocationError,
+        self.assertRaises(exceptions.SubnetAllocationError,
                           sa.allocate_subnet, req)
 
     def test_insufficient_prefix_space_for_specific_allocation(self):
@@ -115,7 +115,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
         req = ipam_req.SpecificSubnetRequest(self._tenant_id,
                                          uuidutils.generate_uuid(),
                                          '10.1.0.0/21')
-        self.assertRaises(n_exc.SubnetAllocationError,
+        self.assertRaises(exceptions.SubnetAllocationError,
                           sa.allocate_subnet, req)
 
     def test_allocate_any_subnet_gateway(self):
@@ -183,7 +183,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
         req = ipam_req.SpecificSubnetRequest(self._tenant_id,
                                          uuidutils.generate_uuid(),
                                          'fe80::/63')
-        self.assertRaises(n_exc.SubnetPoolQuotaExceeded,
+        self.assertRaises(exceptions.SubnetPoolQuotaExceeded,
                           sa.allocate_subnet,
                           req)
 

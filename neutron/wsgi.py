@@ -42,7 +42,6 @@ import webob.exc
 
 from neutron._i18n import _
 from neutron.common import config
-from neutron.common import exceptions as n_exc
 from neutron.conf import wsgi as wsgi_config
 
 CONF = cfg.CONF
@@ -385,7 +384,7 @@ class JSONDeserializer(TextDeserializer):
             return jsonutils.loads(datastring)
         except ValueError:
             msg = _("Cannot understand JSON")
-            raise n_exc.MalformedRequestBody(reason=msg)
+            raise exception.MalformedRequestBody(reason=msg)
 
     def default(self, datastring):
         return {'body': self._from_json(datastring)}
@@ -598,7 +597,7 @@ class Resource(Application):
             msg = _("Unsupported Content-Type")
             LOG.exception("InvalidContentType: %s", msg)
             return Fault(webob.exc.HTTPBadRequest(explanation=msg))
-        except n_exc.MalformedRequestBody:
+        except exception.MalformedRequestBody:
             msg = _("Malformed request body")
             LOG.exception("MalformedRequestBody: %s", msg)
             return Fault(webob.exc.HTTPBadRequest(explanation=msg))

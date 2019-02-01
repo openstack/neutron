@@ -16,9 +16,9 @@
 
 import mock
 from neutron_lib import constants
+from neutron_lib import exceptions
 import testtools
 
-from neutron.common import exceptions
 from neutron.privileged.agent.linux import netlink_constants as nl_constants
 from neutron.privileged.agent.linux import netlink_lib as nl_lib
 from neutron.tests import base

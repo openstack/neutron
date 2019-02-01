@@ -17,13 +17,12 @@ import mock
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
-from neutron_lib import exceptions as n_exc
+from neutron_lib import exceptions
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
 
 from neutron.api.rpc.handlers import dhcp_rpc
-from neutron.common import exceptions
 from neutron.common import utils
 from neutron.db import provisioning_blocks
 from neutron.tests import base
@@ -153,19 +152,19 @@ class TestDhcpRpcCallback(base.BaseTestCase):
 
     def test__port_action_bad_action(self):
         self.assertRaises(
-            n_exc.Invalid,
+            exceptions.Invalid,
             self._test__port_action_with_failures,
             exc=None,
             action='foo_action')
 
     def test_create_port_catch_network_not_found(self):
         self._test__port_action_with_failures(
-            exc=n_exc.NetworkNotFound(net_id='foo_network_id'),
+            exc=exceptions.NetworkNotFound(net_id='foo_network_id'),
             action='create_port')
 
     def test_create_port_catch_subnet_not_found(self):
         self._test__port_action_with_failures(
-            exc=n_exc.SubnetNotFound(subnet_id='foo_subnet_id'),
+            exc=exceptions.SubnetNotFound(subnet_id='foo_subnet_id'),
             action='create_port')
 
     def test_create_port_catch_db_reference_error(self):
@@ -175,23 +174,24 @@ class TestDhcpRpcCallback(base.BaseTestCase):
 
     def test_create_port_catch_ip_generation_failure_reraise(self):
         self.assertRaises(
-            n_exc.IpAddressGenerationFailure,
+            exceptions.IpAddressGenerationFailure,
             self._test__port_action_with_failures,
-            exc=n_exc.IpAddressGenerationFailure(net_id='foo_network_id'),
+            exc=exceptions.IpAddressGenerationFailure(net_id='foo_network_id'),
             action='create_port')
 
     def test_create_port_catch_and_handle_ip_generation_failure(self):
         self.plugin.get_subnet.side_effect = (
-            n_exc.SubnetNotFound(subnet_id='foo_subnet_id'))
+            exceptions.SubnetNotFound(subnet_id='foo_subnet_id'))
         self._test__port_action_with_failures(
-            exc=n_exc.IpAddressGenerationFailure(net_id='foo_network_id'),
+            exc=exceptions.IpAddressGenerationFailure(net_id='foo_network_id'),
             action='create_port')
         self._test__port_action_with_failures(
-            exc=n_exc.InvalidInput(error_message='sorry'),
+            exc=exceptions.InvalidInput(error_message='sorry'),
             action='create_port')
 
     def test_update_port_missing_port_on_get(self):
-        self.plugin.get_port.side_effect = n_exc.PortNotFound(port_id='66')
+        self.plugin.get_port.side_effect = exceptions.PortNotFound(
+            port_id='66')
         self.assertIsNone(self.callbacks.update_dhcp_port(
             context='ctx', host='host', port_id='66',
             port={'port': {'network_id': 'a'}}))
@@ -199,13 +199,15 @@ class TestDhcpRpcCallback(base.BaseTestCase):
     def test_update_port_missing_port_on_update(self):
         self.plugin.get_port.return_value = {
             'device_id': constants.DEVICE_ID_RESERVED_DHCP_PORT}
-        self.plugin.update_port.side_effect = n_exc.PortNotFound(port_id='66')
+        self.plugin.update_port.side_effect = exceptions.PortNotFound(
+            port_id='66')
         self.assertIsNone(self.callbacks.update_dhcp_port(
             context='ctx', host='host', port_id='66',
             port={'port': {'network_id': 'a'}}))
 
     def test_get_network_info_return_none_on_not_found(self):
-        self.plugin.get_network.side_effect = n_exc.NetworkNotFound(net_id='a')
+        self.plugin.get_network.side_effect = exceptions.NetworkNotFound(
+            net_id='a')
         retval = self.callbacks.get_network_info(mock.Mock(), network_id='a')
         self.assertIsNone(retval)
 

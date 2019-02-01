@@ -12,11 +12,11 @@
 
 import mock
 from neutron_lib import constants as lib_constants
+from neutron_lib.exceptions import l3 as l3_exc
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
-from neutron.common import exceptions as n_exc
 from neutron.conf.agent import common as config
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.tests import base
@@ -352,7 +352,7 @@ class TestBasicRouterOperations(BasicRouterTestCaseFramework):
         ri = self._create_router()
         ri.process_floating_ip_nat_rules = mock.Mock(side_effect=Exception)
 
-        self.assertRaises(n_exc.FloatingIpSetupException,
+        self.assertRaises(l3_exc.FloatingIpSetupException,
                           ri.process_snat_dnat_for_fip)
 
         ri.process_floating_ip_nat_rules.assert_called_once_with()
@@ -374,7 +374,7 @@ class TestBasicRouterOperations(BasicRouterTestCaseFramework):
         ri.process_floating_ip_addresses = mock.Mock(
             side_effect=Exception)
 
-        self.assertRaises(n_exc.FloatingIpSetupException,
+        self.assertRaises(l3_exc.FloatingIpSetupException,
                           ri.configure_fip_addresses,
                           mock.sentinel.interface_name)
 

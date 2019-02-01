@@ -33,7 +33,6 @@ from oslo_utils import excutils
 
 from neutron._i18n import _
 from neutron.common import constants as n_const
-from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.db import provisioning_blocks
 from neutron.extensions import segment as segment_ext
@@ -298,7 +297,7 @@ class DhcpRpcCallback(object):
                     utils.get_dhcp_agent_device_id(network_id, host) or
                 not self._is_dhcp_agent_hosting_network(plugin, context, host,
                     network_id)):
-                raise n_exc.DhcpPortInUse(port_id=port['id'])
+                raise exceptions.DhcpPortInUse(port_id=port['id'])
             LOG.debug('Update dhcp port %(port)s '
                       'from %(host)s.',
                       {'port': port,

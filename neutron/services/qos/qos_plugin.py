@@ -26,11 +26,11 @@ from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from neutron_lib import exceptions as lib_exc
+from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.placement import constants as pl_constants
 from neutron_lib.placement import utils as pl_utils
 from neutron_lib.services.qos import constants as qos_consts
 
-from neutron.common import exceptions as n_exc
 from neutron.db import db_base_plugin_common
 from neutron.extensions import qos
 from neutron.objects import base as base_obj
@@ -223,8 +223,8 @@ class QoSPlugin(qos.QoSPluginBase):
     def validate_policy_for_port(self, policy, port):
         for rule in policy.rules:
             if not self.driver_manager.validate_rule_for_port(rule, port):
-                raise n_exc.QosRuleNotSupported(rule_type=rule.rule_type,
-                                                port_id=port['id'])
+                raise qos_exc.QosRuleNotSupported(rule_type=rule.rule_type,
+                                                  port_id=port['id'])
 
     @db_base_plugin_common.convert_result_to_dict
     def create_policy(self, context, policy):
@@ -472,14 +472,14 @@ class QoSPlugin(qos.QoSPluginBase):
         :type policy_id: str uuid
 
         :returns: a QoS policy rule object
-        :raises: n_exc.QosRuleNotFound
+        :raises: qos_exc.QosRuleNotFound
         """
         with db_api.autonested_transaction(context.session):
             # Ensure we have access to the policy.
             policy_object.QosPolicy.get_policy_obj(context, policy_id)
             rule = rule_cls.get_object(context, id=rule_id)
         if not rule:
-            raise n_exc.QosRuleNotFound(policy_id=policy_id, rule_id=rule_id)
+            raise qos_exc.QosRuleNotFound(policy_id=policy_id, rule_id=rule_id)
         return rule
 
     # TODO(QoS): enforce rule types when accessing rule objects

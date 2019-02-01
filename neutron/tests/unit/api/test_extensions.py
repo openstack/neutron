@@ -17,6 +17,7 @@ import copy
 
 import fixtures
 import mock
+from neutron_lib import exceptions
 from neutron_lib.plugins import constants as lib_const
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
@@ -33,7 +34,6 @@ import webtest
 import neutron
 from neutron.api import extensions
 from neutron.common import config
-from neutron.common import exceptions
 from neutron.plugins.common import constants
 from neutron import quota
 from neutron.tests import base

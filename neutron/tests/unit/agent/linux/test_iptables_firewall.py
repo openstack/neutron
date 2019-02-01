@@ -17,6 +17,7 @@ import copy
 
 import mock
 from neutron_lib import constants
+from neutron_lib import exceptions
 from oslo_config import cfg
 import testtools
 
@@ -25,7 +26,6 @@ from neutron.agent.linux import ip_conntrack
 from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_firewall
-from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent import securitygroups_rpc as security_config
@@ -2329,7 +2329,7 @@ class OVSHybridIptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         for i in range(ip_conntrack.ZONE_START,
             ip_conntrack.MAX_CONNTRACK_ZONES):
             self.firewall.ipconntrack._device_zone_map['dev-%s' % i] = i
-        with testtools.ExpectedException(n_exc.CTZoneExhaustedError):
+        with testtools.ExpectedException(exceptions.CTZoneExhaustedError):
             self.firewall.ipconntrack._find_open_zone()
 
         # with it full, try again, this should trigger a cleanup

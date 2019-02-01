@@ -12,9 +12,9 @@
 
 import mock
 from neutron_lib import constants
+from neutron_lib import exceptions
 
 from neutron.agent.linux import l3_tc_lib as tc_lib
-from neutron.common import exceptions
 from neutron.tests import base
 
 FLOATING_IP_DEVICE_NAME = "qg-device_rfp"

@@ -12,12 +12,12 @@
 
 import mock
 from neutron_lib import constants as common_constants
+from neutron_lib import exceptions
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import l3_tc_lib
-from neutron.common import exceptions
 from neutron.tests.functional import base as functional_base
 
 RATE_LIMIT = 1024
