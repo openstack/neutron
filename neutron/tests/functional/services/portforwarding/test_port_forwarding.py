@@ -25,10 +25,12 @@ from six.moves import queue
 
 from neutron.services.portforwarding.common import exceptions as pf_exc
 from neutron.services.portforwarding import pf_plugin
+from neutron.tests.functional import base as functional_base
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
 
 
-class PortForwardingTestCaseBase(ml2_test_base.ML2TestFramework):
+class PortForwardingTestCaseBase(ml2_test_base.ML2TestFramework,
+                                 functional_base.BaseLoggingTestCase):
     def setUp(self):
         super(PortForwardingTestCaseBase, self).setUp()
         self.pf_plugin = pf_plugin.PortForwardingPlugin()
