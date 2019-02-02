@@ -192,9 +192,17 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             raise ext_sg.SecurityGroupNotFound(id=id)
         return sg
 
-    def _check_security_group(self, context, id, **kwargs):
-        if not sg_obj.SecurityGroup.objects_exist(context, id=id, **kwargs):
-            raise ext_sg.SecurityGroupNotFound(id=id)
+    def _check_security_group(self, context, id, tenant_id=None):
+        if tenant_id:
+            tmp_context_tenant_id = context.tenant_id
+            context.tenant_id = tenant_id
+
+        try:
+            if not sg_obj.SecurityGroup.objects_exist(context, id=id):
+                raise ext_sg.SecurityGroupNotFound(id=id)
+        finally:
+            if tenant_id:
+                context.tenant_id = tmp_context_tenant_id
 
     @db_api.retry_if_session_inactive()
     def delete_security_group(self, context, id):
@@ -528,14 +536,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # Check that remote_group_id exists for tenant
         if remote_group_id:
             self._check_security_group(context, remote_group_id,
-                                       project_id=rule['tenant_id'])
+                                       tenant_id=rule['tenant_id'])
 
         security_group_id = rule['security_group_id']
 
         # Confirm that the tenant has permission
         # to add rules to this security group.
         self._check_security_group(context, security_group_id,
-                                   project_id=rule['tenant_id'])
+                                   tenant_id=rule['tenant_id'])
         return security_group_id
 
     def _validate_security_group_rules(self, context, security_group_rules):
