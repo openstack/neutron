@@ -501,12 +501,13 @@ def _update_port_in_external_dns_service(resource, event, trigger, **kwargs):
                                            updated_ips)
 
 
-def _delete_port_in_external_dns_service(resource, event, trigger, **kwargs):
+def _delete_port_in_external_dns_service(resource, event,
+                                         trigger, payload=None):
     dns_driver = _get_dns_driver()
     if not dns_driver:
         return
-    context = kwargs['context']
-    port_id = kwargs['port_id']
+    context = payload.context
+    port_id = payload.resource_id
     dns_data_db = port_obj.PortDNS.get_object(
         context, port_id=port_id)
     if not dns_data_db:
