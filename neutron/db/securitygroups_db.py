@@ -224,7 +224,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         self._registry_notify(resources.SECURITY_GROUP,
                               events.BEFORE_DELETE,
                               exc_cls=ext_sg.SecurityGroupInUse, id=id,
-                              **kwargs)
+                              payload=events.DBEventPayload(
+                                  context, states=(sg,), resource_id=id))
 
         with db_api.CONTEXT_WRITER.using(context):
             # pass security_group_rule_ids to ensure
