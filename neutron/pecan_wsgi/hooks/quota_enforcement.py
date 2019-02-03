@@ -16,10 +16,10 @@
 import collections
 
 from neutron_lib.db import api as db_api
+from neutron_lib import exceptions
 from oslo_log import log as logging
 from pecan import hooks
 
-from neutron.common import exceptions
 from neutron import manager
 from neutron import quota
 from neutron.quota import resource_registry

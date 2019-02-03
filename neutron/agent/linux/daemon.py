@@ -22,10 +22,10 @@ import pwd
 import signal
 import sys
 
+from neutron_lib import exceptions
 from oslo_log import log as logging
 
 from neutron._i18n import _
-from neutron.common import exceptions
 
 LOG = logging.getLogger(__name__)
 

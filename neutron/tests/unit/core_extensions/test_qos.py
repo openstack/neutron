@@ -15,11 +15,11 @@
 
 import mock
 from neutron_lib import context
+from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 
-from neutron.common import exceptions as n_exc
 from neutron.core_extensions import base as base_core
 from neutron.core_extensions import qos as qos_core
 from neutron.objects.qos import policy
@@ -154,7 +154,7 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
 
     def test_process_resource_port_updated_remove_provided_policy(self):
         self.policy_m.is_accessible.return_value = False
-        self.assertRaises(n_exc.PolicyRemoveAuthorizationError,
+        self.assertRaises(qos_exc.PolicyRemoveAuthorizationError,
                           self._process_port_updated_policy,
                           context=self.non_admin_context,
                           shared=False,
@@ -249,7 +249,7 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
 
     def test_process_fields_update_network_remove_provided_policy(self):
         self.policy_m.is_accessible.return_value = False
-        self.assertRaises(n_exc.PolicyRemoveAuthorizationError,
+        self.assertRaises(qos_exc.PolicyRemoveAuthorizationError,
                           self._process_network_updated_policy,
                           context=self.non_admin_context,
                           shared=False,

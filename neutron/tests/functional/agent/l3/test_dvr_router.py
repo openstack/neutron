@@ -20,6 +20,7 @@ import mock
 import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants
+from neutron_lib.exceptions import l3 as l3_exc
 import six
 import testtools
 
@@ -33,7 +34,6 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants as n_const
-from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import machine_fixtures
@@ -162,7 +162,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         for subnet in new_fg_port['subnets']:
             subnet['gateway_ip'] = '19.4.4.2'
         router.router[n_const.FLOATINGIP_AGENT_INTF_KEY] = [new_fg_port]
-        self.assertRaises(n_exc.FloatingIpSetupException,
+        self.assertRaises(l3_exc.FloatingIpSetupException,
                           self.agent._process_updated_router,
                           router.router)
         self.agent._process_updated_router(router.router)
@@ -216,7 +216,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         for subnet in new_fg_port['subnets']:
             subnet['gateway_ip'] = '19.4.4.2'
         router.router[n_const.FLOATINGIP_AGENT_INTF_KEY] = [new_fg_port]
-        self.assertRaises(n_exc.FloatingIpSetupException,
+        self.assertRaises(l3_exc.FloatingIpSetupException,
                           self.manage_router,
                           self.agent,
                           router.router)
@@ -259,7 +259,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             router_info[n_const.FLOATINGIP_AGENT_INTF_KEY])
         # This will raise the exception and will also clear
         # subscription for the ext_net_id
-        self.assertRaises(n_exc.FloatingIpSetupException,
+        self.assertRaises(l3_exc.FloatingIpSetupException,
                           self.manage_router,
                           self.agent,
                           router_info)

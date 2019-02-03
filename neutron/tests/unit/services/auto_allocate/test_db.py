@@ -21,7 +21,6 @@ from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
-from neutron.common import exceptions as c_exc
 from neutron.services.auto_allocate import db
 from neutron.services.auto_allocate import exceptions
 from neutron.tests.unit import testlib_api
@@ -216,7 +215,7 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
         self.mixin._core_plugin.create_network.return_value = (
             {'id': network_id})
         self.mixin._core_plugin.create_subnet.side_effect = (
-            c_exc.SubnetAllocationError(reason='disaster'))
+            n_exc.SubnetAllocationError(reason='disaster'))
         with mock.patch.object(self.mixin, "_get_supported_subnetpools") as f,\
                 mock.patch.object(self.mixin, "_cleanup") as g:
             f.return_value = (

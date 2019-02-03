@@ -25,6 +25,8 @@ import os
 import re
 import sys
 
+from neutron_lib import exceptions
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.utils import runtime
 from oslo_concurrency import lockutils
 from oslo_config import cfg
@@ -36,7 +38,6 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import constants
-from neutron.common import exceptions as n_exc
 from neutron.conf.agent import common as config
 
 LOG = logging.getLogger(__name__)
@@ -424,13 +425,13 @@ class IptablesManager(object):
         finally:
             try:
                 self.defer_apply_off()
-            except n_exc.IpTablesApplyException:
+            except l3_exc.IpTablesApplyException:
                 # already in the format we want, just reraise
                 raise
             except Exception:
                 msg = _('Failure applying iptables rules')
                 LOG.exception(msg)
-                raise n_exc.IpTablesApplyException(msg)
+                raise l3_exc.IpTablesApplyException(msg)
 
     def defer_apply_on(self):
         self.iptables_apply_deferred = True
@@ -462,7 +463,7 @@ class IptablesManager(object):
                 msg = (_("IPTables Rules did not converge. Diff: %s") %
                        '\n'.join(second))
                 LOG.error(msg)
-                raise n_exc.IpTablesApplyException(msg)
+                raise l3_exc.IpTablesApplyException(msg)
             return first
 
     def get_rules_for_table(self, table):
@@ -495,7 +496,7 @@ class IptablesManager(object):
             return self._do_run_restore(args, commands, lock=True)
 
         err = self._do_run_restore(args, commands)
-        if (isinstance(err, n_exc.ProcessExecutionError) and
+        if (isinstance(err, exceptions.ProcessExecutionError) and
                 err.returncode == XTABLES_RESOURCE_PROBLEM_CODE):
             # maybe we run on a platform that includes iptables commit
             # 999eaa241212d3952ddff39a99d0d55a74e3639e (for example, latest

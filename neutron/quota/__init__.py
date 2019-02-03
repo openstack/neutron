@@ -16,7 +16,7 @@
 
 import sys
 
-from neutron_lib import exceptions as lib_exc
+from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_log import versionutils
@@ -25,7 +25,6 @@ import six
 import webob
 
 from neutron._i18n import _
-from neutron.common import exceptions
 from neutron.conf import quota
 from neutron.db.quota import api as quota_api
 from neutron.quota import resource_registry
@@ -96,7 +95,7 @@ class ConfDriver(object):
         overs = [key for key, val in values.items()
                  if quotas[key] >= 0 and quotas[key] < val]
         if overs:
-            raise lib_exc.OverQuota(overs=sorted(overs), quotas=quotas,
+            raise exceptions.OverQuota(overs=sorted(overs), quotas=quotas,
                                     usages={})
 
     @staticmethod

@@ -16,6 +16,7 @@ import collections
 
 import netaddr
 from neutron_lib import constants as lib_constants
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
 
@@ -25,7 +26,6 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import ra
 from neutron.common import constants as n_const
-from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.ipam import utils as ipam_utils
@@ -295,7 +295,7 @@ class RouterInfo(object):
             # TODO(salv-orlando): Less broad catching
             msg = _('L3 agent failure to setup NAT for floating IPs')
             LOG.exception(msg)
-            raise n_exc.FloatingIpSetupException(msg)
+            raise l3_exc.FloatingIpSetupException(msg)
 
     def _add_fip_addr_to_device(self, fip, device):
         """Configures the floating ip address on the device.
@@ -413,7 +413,7 @@ class RouterInfo(object):
             # TODO(salv-orlando): Less broad catching
             msg = _('L3 agent failure to setup floating IPs')
             LOG.exception(msg)
-            raise n_exc.FloatingIpSetupException(msg)
+            raise l3_exc.FloatingIpSetupException(msg)
 
     def put_fips_in_error_state(self):
         fip_statuses = {}
@@ -924,7 +924,7 @@ class RouterInfo(object):
                 ex_gw_port)
             fip_statuses = self.configure_fip_addresses(interface_name)
 
-        except n_exc.FloatingIpSetupException:
+        except l3_exc.FloatingIpSetupException:
             # All floating IPs must be put in error state
             LOG.exception("Failed to process floating IPs.")
             fip_statuses = self.put_fips_in_error_state()
@@ -949,8 +949,8 @@ class RouterInfo(object):
                 ex_gw_port)
             fip_statuses = self.configure_fip_addresses(interface_name)
 
-        except (n_exc.FloatingIpSetupException,
-                n_exc.IpTablesApplyException):
+        except (l3_exc.FloatingIpSetupException,
+                l3_exc.IpTablesApplyException):
             # All floating IPs must be put in error state
             LOG.exception("Failed to process floating IPs.")
             fip_statuses = self.put_fips_in_error_state()

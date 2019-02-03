@@ -40,10 +40,10 @@ from ctypes import util
 import re
 
 from neutron_lib import constants
+from neutron_lib import exceptions
 from oslo_log import log as logging
 
 from neutron._i18n import _
-from neutron.common import exceptions
 from neutron import privileged
 from neutron.privileged.agent.linux import netlink_constants as nl_constants
 

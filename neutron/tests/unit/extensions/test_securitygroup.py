@@ -22,13 +22,13 @@ from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib.db import constants as db_const
+from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 import oslo_db.exception as exc
 import testtools
 import webob.exc
 
-from neutron.common import exceptions as n_exc
 from neutron.db import db_base_plugin_v2
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup as ext_sg
@@ -1860,7 +1860,7 @@ class TestConvertIPPrefixToCIDR(base.BaseTestCase):
 
     def test_convert_bad_ip_prefix_to_cidr(self):
         for val in ['bad_ip', 256, "2001:db8:a::123/129"]:
-            self.assertRaises(n_exc.InvalidCIDR,
+            self.assertRaises(exceptions.InvalidCIDR,
                               ext_sg.convert_ip_prefix_to_cidr, val)
         self.assertIsNone(ext_sg.convert_ip_prefix_to_cidr(None))
 

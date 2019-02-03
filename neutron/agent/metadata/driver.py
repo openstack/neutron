@@ -21,6 +21,7 @@ import pwd
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -29,7 +30,7 @@ from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
 from neutron.common import constants
-from neutron.common import exceptions
+
 
 LOG = logging.getLogger(__name__)
 

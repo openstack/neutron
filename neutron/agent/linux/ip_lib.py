@@ -32,7 +32,6 @@ from pyroute2 import netns
 
 from neutron._i18n import _
 from neutron.agent.common import utils
-from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.privileged.agent.linux import ip_lib as privileged
@@ -285,7 +284,8 @@ class IPWrapper(SubProcessBase):
             if len(srcport) == 2 and srcport[0] <= srcport[1]:
                 kwargs['vxlan_port_range'] = (str(srcport[0]), str(srcport[1]))
             else:
-                raise n_exc.NetworkVxlanPortRangeError(vxlan_range=srcport)
+                raise exceptions.NetworkVxlanPortRangeError(
+                    vxlan_range=srcport)
         if dstport:
             kwargs['vxlan_port'] = dstport
         privileged.create_interface(name, self.namespace, "vxlan", **kwargs)

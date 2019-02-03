@@ -15,11 +15,11 @@
 
 import mock
 from neutron_lib import constants
+from neutron_lib import exceptions
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.l3.extensions.qos import gateway_ip as gateway_ip_qos
-from neutron.common import exceptions
 from neutron.common import utils as common_utils
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule

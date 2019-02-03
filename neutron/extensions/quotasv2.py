@@ -17,7 +17,7 @@ from neutron_lib.api import converters
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import faults
 from neutron_lib.db import constants as const
-from neutron_lib import exceptions as n_exc
+from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_utils import importutils
@@ -27,7 +27,6 @@ from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
-from neutron.common import exceptions
 from neutron import quota
 from neutron.quota import resource_registry
 from neutron import wsgi
@@ -108,7 +107,7 @@ class QuotaSetsController(wsgi.Controller):
     def _check_admin(self, context,
                      reason=_("Only admin can view or configure quota")):
         if not context.is_admin:
-            raise n_exc.AdminRequired(reason=reason)
+            raise exceptions.AdminRequired(reason=reason)
 
     def delete(self, request, id):
         self._check_admin(request.context)

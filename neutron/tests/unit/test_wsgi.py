@@ -26,7 +26,6 @@ import testtools
 import webob
 import webob.exc
 
-from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.tests import base
 from neutron.tests.common import helpers
@@ -581,7 +580,8 @@ class JSONDeserializerTest(base.BaseTestCase):
         deserializer = wsgi.JSONDeserializer()
 
         self.assertRaises(
-            n_exc.MalformedRequestBody, deserializer.default, data_string)
+            exception.MalformedRequestBody,
+            deserializer.default, data_string)
 
     def test_json_with_utf8(self):
         data = b'{"a": "\xe7\xbd\x91\xe7\xbb\x9c"}'

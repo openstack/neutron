@@ -17,12 +17,12 @@ import sys
 
 import mock
 from neutron_lib import constants
+from neutron_lib import exceptions
 from oslo_config import cfg
 
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.common import exceptions
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common \
     import constants as lconst

@@ -14,9 +14,8 @@
 # limitations under the License.
 
 from neutron_lib import context
-from neutron_lib import exceptions as lib_exc
+from neutron_lib import exceptions
 
-from neutron.common import exceptions
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db.quota import api as quota_api
 from neutron.db.quota import driver
@@ -183,7 +182,7 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
 
         self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 2)
 
-        self.assertRaises(lib_exc.OverQuota, self.plugin.limit_check,
+        self.assertRaises(exceptions.OverQuota, self.plugin.limit_check,
                           context.get_admin_context(), PROJECT, resources,
                           values)
 
@@ -255,7 +254,7 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
                                             fake_count=2)}
         deltas = {RESOURCE: 1}
         self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 2)
-        self.assertRaises(lib_exc.OverQuota,
+        self.assertRaises(exceptions.OverQuota,
                           quota_driver.make_reservation,
                           self.context,
                           self.context.tenant_id,

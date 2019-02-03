@@ -44,7 +44,6 @@ from sqlalchemy import not_
 
 from neutron._i18n import _
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
-from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils
 from neutron.db import db_base_plugin_common
@@ -100,7 +99,7 @@ def _update_subnetpool_dict(orig_pool, new_pool):
         if not orig_ip_set.issubset(new_ip_set):
             msg = _("Existing prefixes must be "
                     "a subset of the new prefixes")
-            raise n_exc.IllegalSubnetPoolPrefixUpdate(msg=msg)
+            raise exc.IllegalSubnetPoolPrefixUpdate(msg=msg)
         new_ip_set.compact()
         updated['prefixes'] = [str(prefix.cidr)
                                for prefix in new_ip_set.iter_cidrs()]
@@ -245,7 +244,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 return
             ports = ports.filter(models_v2.Port.tenant_id == tenant_id)
         if ports.count():
-            raise n_exc.InvalidSharedSetting(network=network_id)
+            raise exc.InvalidSharedSetting(network=network_id)
 
     def set_ipam_backend(self):
         self.ipam = ipam_pluggable_backend.IpamPluggableBackend()
@@ -292,7 +291,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                             if rbac.target_tenant != '*'}
         allowed_projects.add(network.project_id)
         if project_ids - allowed_projects:
-            raise n_exc.InvalidSharedSetting(network=network.name)
+            raise exc.InvalidSharedSetting(network=network.name)
 
     def _validate_ipv6_attributes(self, subnet, cur_subnet):
         if cur_subnet:
@@ -617,13 +616,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         ipal.ip_address == gateway_ip,
                         ipal.subnet_id == cur_subnet['id']).first()
                 if allocated and allocated.port_id:
-                    raise n_exc.GatewayIpInUse(
+                    raise exc.GatewayIpInUse(
                         ip_address=gateway_ip,
                         port_id=allocated.port_id)
 
         if validators.is_attr_set(s.get('dns_nameservers')):
             if len(s['dns_nameservers']) > cfg.CONF.max_dns_nameservers:
-                raise n_exc.DNSNameServersExhausted(
+                raise exc.DNSNameServersExhausted(
                     subnet_id=s.get('id', _('new subnet')),
                     quota=cfg.CONF.max_dns_nameservers)
             for dns in s['dns_nameservers']:
@@ -637,7 +636,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         if validators.is_attr_set(s.get('host_routes')):
             if len(s['host_routes']) > cfg.CONF.max_subnet_host_routes:
-                raise n_exc.HostRoutesExhausted(
+                raise exc.HostRoutesExhausted(
                     subnet_id=s.get('id', _('new subnet')),
                     quota=cfg.CONF.max_subnet_host_routes)
             # check if the routes are all valid
@@ -1102,14 +1101,14 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         if not self.is_address_scope_owned_by_tenant(context,
                                                      address_scope_id):
-            raise n_exc.IllegalSubnetPoolAssociationToAddressScope(
+            raise exc.IllegalSubnetPoolAssociationToAddressScope(
                 subnetpool_id=subnetpool_id, address_scope_id=address_scope_id)
 
         as_ip_version = self.get_ip_version_for_address_scope(context,
                                                               address_scope_id)
 
         if ip_version != as_ip_version:
-            raise n_exc.IllegalSubnetPoolIpVersionAssociationToAddressScope(
+            raise exc.IllegalSubnetPoolIpVersionAssociationToAddressScope(
                 subnetpool_id=subnetpool_id, address_scope_id=address_scope_id,
                 ip_version=as_ip_version)
 
@@ -1122,7 +1121,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 continue
             sp_set = netaddr.IPSet(sp.prefixes)
             if sp_set.intersection(new_set):
-                raise n_exc.AddressScopePrefixConflict()
+                raise exc.AddressScopePrefixConflict()
 
     def _check_subnetpool_update_allowed(self, context, subnetpool_id,
                                          address_scope_id):
@@ -1139,7 +1138,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     "%(address_scope_id)s") % {
                         'subnetpool_id': subnetpool_id,
                         'address_scope_id': address_scope_id}
-            raise n_exc.IllegalSubnetPoolUpdate(reason=msg)
+            raise exc.IllegalSubnetPoolUpdate(reason=msg)
 
     def _check_default_subnetpool_exists(self, context, ip_version):
         """Check if a default already exists for the given IP version.
@@ -1252,14 +1251,14 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             subnetpool = self._get_subnetpool(context, id=id)
             if subnet_obj.Subnet.objects_exist(context, subnetpool_id=id):
                 reason = _("Subnet pool has existing allocations")
-                raise n_exc.SubnetPoolDeleteError(reason=reason)
+                raise exc.SubnetPoolDeleteError(reason=reason)
             subnetpool.delete()
 
     def _check_mac_addr_update(self, context, port, new_mac, device_owner):
         if (device_owner and
             device_owner.startswith(
                 constants.DEVICE_OWNER_NETWORK_PREFIX)):
-            raise n_exc.UnsupportedPortDeviceOwner(
+            raise exc.UnsupportedPortDeviceOwner(
                 op=_("mac address update"), port_id=id,
                 device_owner=device_owner)
 
@@ -1539,7 +1538,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                             return
                     else:
                         # raise as extension doesn't support L3 anyways.
-                        raise n_exc.DeviceIDNotOwnedByTenant(
+                        raise exc.DeviceIDNotOwnedByTenant(
                             device_id=device_id)
                 if tenant_id != router['tenant_id']:
-                    raise n_exc.DeviceIDNotOwnedByTenant(device_id=device_id)
+                    raise exc.DeviceIDNotOwnedByTenant(device_id=device_id)

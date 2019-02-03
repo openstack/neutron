@@ -19,10 +19,10 @@ import os
 import sys
 
 import mock
+from neutron_lib import exceptions
 import testtools
 
 from neutron.agent.linux import daemon
-from neutron.common import exceptions
 from neutron.tests import base
 from neutron.tests import tools
 

@@ -68,7 +68,6 @@ from neutron.api.rpc.handlers import metadata_rpc
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.common import constants as n_const
-from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
 from neutron.common import utils
 from neutron.db import address_scope_db
@@ -2111,7 +2110,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._validate_compute_port(port_db)
             if self._get_binding_for_host(port_db.port_bindings,
                                           attrs[pbe_ext.HOST]):
-                raise n_exc.PortBindingAlreadyExists(
+                raise exc.PortBindingAlreadyExists(
                     port_id=port_id, host=attrs[pbe_ext.HOST])
             status = const.ACTIVE
             is_active_binding = True
@@ -2138,8 +2137,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context, allow_commit=is_active_binding)
         if (bind_context._binding.vif_type ==
                 portbindings.VIF_TYPE_BINDING_FAILED):
-            raise n_exc.PortBindingError(port_id=port_id,
-                                         host=attrs[pbe_ext.HOST])
+            raise exc.PortBindingError(port_id=port_id,
+                                       host=attrs[pbe_ext.HOST])
         bind_context._binding.port_id = port_id
         bind_context._binding.status = status
         if not is_active_binding:
@@ -2175,7 +2174,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         binding = ports_obj.PortBinding.get_object(context, host=host,
                                                    port_id=port_id)
         if not binding:
-            raise n_exc.PortBindingNotFound(port_id=port_id, host=host)
+            raise exc.PortBindingNotFound(port_id=port_id, host=host)
         return self._make_port_binding_dict(binding, fields)
 
     def _get_binding_for_host(self, bindings, host):
@@ -2193,7 +2192,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             original_binding = self._get_binding_for_host(
                 port_db.port_bindings, host)
             if not original_binding:
-                raise n_exc.PortBindingNotFound(port_id=port_id, host=host)
+                raise exc.PortBindingNotFound(port_id=port_id, host=host)
             is_active_binding = (original_binding.status == const.ACTIVE)
             network = self.get_network(context, port_db['network_id'])
             port_dict = self._make_port_dict(port_db)
@@ -2210,7 +2209,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context, allow_commit=is_active_binding)
         if (bind_context._binding.vif_type ==
                 portbindings.VIF_TYPE_BINDING_FAILED):
-            raise n_exc.PortBindingError(port_id=port_id, host=host)
+            raise exc.PortBindingError(port_id=port_id, host=host)
         if not is_active_binding:
             with db_api.CONTEXT_WRITER.using(context):
                 bind_context._binding.persist_state_to_session(context.session)
@@ -2230,12 +2229,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             active_binding = p_utils.get_port_binding_by_status_and_host(
                 port_db.port_bindings, const.ACTIVE)
             if host == (active_binding and active_binding.host):
-                raise n_exc.PortBindingAlreadyActive(port_id=port_id,
-                                                     host=host)
+                raise exc.PortBindingAlreadyActive(port_id=port_id,
+                                                   host=host)
             inactive_binding = p_utils.get_port_binding_by_status_and_host(
                 port_db.port_bindings, const.INACTIVE, host=host)
             if not inactive_binding or inactive_binding.host != host:
-                raise n_exc.PortBindingNotFound(port_id=port_id, host=host)
+                raise exc.PortBindingNotFound(port_id=port_id, host=host)
             network = self.get_network(context, port_db['network_id'])
             port_dict = self._make_port_dict(port_db)
             levels = db.get_binding_level_objs(context, port_id,
@@ -2267,7 +2266,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self.notifier.binding_activate(context, port_id,
                                                inactive_binding.host)
                 return self._make_port_binding_dict(cur_context._binding)
-        raise n_exc.PortBindingError(port_id=port_id, host=host)
+        raise exc.PortBindingError(port_id=port_id, host=host)
 
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()

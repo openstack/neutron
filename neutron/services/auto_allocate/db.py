@@ -31,7 +31,6 @@ from neutron_lib.plugins import utils as p_utils
 from oslo_log import log as logging
 
 from neutron._i18n import _
-from neutron.common import exceptions as c_exc
 from neutron.db import common_db_mixin
 from neutron.objects import auto_allocate as auto_allocate_obj
 from neutron.objects import base as base_obj
@@ -295,7 +294,7 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
                 subnets.append(p_utils.create_subnet(
                     self.core_plugin, context, {'subnet': subnet_args}))
             return subnets
-        except (c_exc.SubnetAllocationError, ValueError,
+        except (n_exc.SubnetAllocationError, ValueError,
                 n_exc.BadRequest, n_exc.NotFound) as e:
             LOG.error("Unable to auto allocate topology for tenant "
                       "%(tenant_id)s due to missing or unmet "

@@ -19,10 +19,10 @@ import ddt
 import eventlet
 from eventlet import tpool
 import mock
+from neutron_lib import exceptions
 import six
 
 from neutron.agent.windows import utils
-from neutron.common import exceptions
 from neutron.tests import base
 
 

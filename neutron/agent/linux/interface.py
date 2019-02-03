@@ -18,6 +18,7 @@ import time
 
 import netaddr
 from neutron_lib import constants
+from neutron_lib import exceptions
 from oslo_log import log as logging
 from oslo_utils import excutils
 import six
@@ -25,7 +26,6 @@ import six
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as n_const
-from neutron.common import exceptions
 
 LOG = logging.getLogger(__name__)
 

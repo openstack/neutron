@@ -30,7 +30,6 @@ from oslo_log import log as logging
 from sqlalchemy.orm import exc as orm_exc
 
 from neutron._i18n import _
-from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.db import db_base_plugin_common
@@ -70,7 +69,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                          "%(start)s - %(end)s:",
                          {'start': ip_pool['start'],
                           'end': ip_pool['end']})
-                raise n_exc.InvalidAllocationPool(pool=ip_pool)
+                raise exc.InvalidAllocationPool(pool=ip_pool)
         return ip_range_pools
 
     def delete_subnet(self, context, subnet_id):
@@ -257,7 +256,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         for subnet in network.subnets:
             if (subnet.ip_version == ip_version and
                     new_subnetpool_id != subnet.subnetpool_id):
-                raise n_exc.NetworkSubnetPoolAffinityError()
+                raise exc.NetworkSubnetPoolAffinityError()
 
     def validate_allocation_pools(self, ip_pools, subnet_cidr):
         """Validate IP allocation pools.
@@ -281,12 +280,12 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                     end_ip.version != subnet.version):
                 LOG.info("Specified IP addresses do not match "
                          "the subnet IP version")
-                raise n_exc.InvalidAllocationPool(pool=ip_pool)
+                raise exc.InvalidAllocationPool(pool=ip_pool)
             if start_ip < subnet_first_ip or end_ip > subnet_last_ip:
                 LOG.info("Found pool larger than subnet "
                          "CIDR:%(start)s - %(end)s",
                          {'start': start_ip, 'end': end_ip})
-                raise n_exc.OutOfBoundsAllocationPool(
+                raise exc.OutOfBoundsAllocationPool(
                     pool=ip_pool,
                     subnet_cidr=subnet_cidr)
             # Valid allocation pool
@@ -307,7 +306,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                     LOG.info("Found overlapping ranges: %(l_range)s and "
                              "%(r_range)s",
                              {'l_range': l_range, 'r_range': r_range})
-                    raise n_exc.OverlappingAllocationPools(
+                    raise exc.OverlappingAllocationPools(
                         pool_1=l_range,
                         pool_2=r_range,
                         subnet_cidr=subnet_cidr)
@@ -401,7 +400,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
     def validate_gw_out_of_pools(self, gateway_ip, pools):
         for pool_range in pools:
             if netaddr.IPAddress(gateway_ip) in pool_range:
-                raise n_exc.GatewayConflictWithAllocationPools(
+                raise exc.GatewayConflictWithAllocationPools(
                     pool=pool_range,
                     ip_address=gateway_ip)
 

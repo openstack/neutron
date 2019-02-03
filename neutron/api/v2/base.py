@@ -31,7 +31,6 @@ from neutron._i18n import _
 from neutron.api import api_common
 from neutron.api.v2 import resource as wsgi_resource
 from neutron.common import constants as n_const
-from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
 from neutron import policy
 from neutron import quota
@@ -485,7 +484,7 @@ class Controller(object):
                     {self._resource: delta},
                     self._plugin)
                 reservations.append(reservation)
-        except n_exc.QuotaResourceUnknown as e:
+        except exceptions.QuotaResourceUnknown as e:
             # We don't want to quota this resource
             LOG.debug(e)
 

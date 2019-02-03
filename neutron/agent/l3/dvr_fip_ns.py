@@ -16,6 +16,7 @@ import contextlib
 import os
 
 from neutron_lib import constants as lib_constants
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.utils import runtime
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
@@ -29,7 +30,6 @@ from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants
-from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
 from neutron.ipam import utils as ipam_utils
 
@@ -352,7 +352,7 @@ class FipNamespace(namespaces.Namespace):
                                               'ns': ns_name})
             msg = _('DVR: Gateway update route in FIP namespace failed, retry '
                     'should be attempted on next call')
-            raise n_exc.FloatingIpSetupException(msg)
+            raise l3_exc.FloatingIpSetupException(msg)
 
         for fixed_ip in agent_gateway_port['fixed_ips']:
             ip_lib.send_ip_addr_adv_notif(ns_name,
