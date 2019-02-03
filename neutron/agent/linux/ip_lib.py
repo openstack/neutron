@@ -1396,7 +1396,7 @@ def get_devices_with_ip(namespace, name=None, **kwargs):
 
 def get_devices_info(namespace, **kwargs):
     devices = privileged.get_link_devices(namespace, **kwargs)
-    retval = []
+    retval = {}
     for device in devices:
         ret = {'index': device['index'],
                'name': get_attr(device, 'IFLA_IFNAME'),
@@ -1406,6 +1406,9 @@ def get_devices_info(namespace, **kwargs):
                'promiscuity': get_attr(device, 'IFLA_PROMISCUITY'),
                'mac': get_attr(device, 'IFLA_ADDRESS'),
                'broadcast': get_attr(device, 'IFLA_BROADCAST')}
+        ifla_link = get_attr(device, 'IFLA_LINK')
+        if ifla_link:
+            ret['parent_index'] = ifla_link
         ifla_linkinfo = get_attr(device, 'IFLA_LINKINFO')
         if ifla_linkinfo:
             ret['kind'] = get_attr(ifla_linkinfo, 'IFLA_INFO_KIND')
@@ -1413,8 +1416,17 @@ def get_devices_info(namespace, **kwargs):
             if ret['kind'] == 'vxlan':
                 ret['vxlan_id'] = get_attr(ifla_data, 'IFLA_VXLAN_ID')
                 ret['vxlan_group'] = get_attr(ifla_data, 'IFLA_VXLAN_GROUP')
+                ret['vxlan_link_index'] = get_attr(ifla_data,
+                                                   'IFLA_VXLAN_LINK')
             elif ret['kind'] == 'vlan':
                 ret['vlan_id'] = get_attr(ifla_data, 'IFLA_VLAN_ID')
-        retval.append(ret)
+        retval[device['index']] = ret
 
-    return retval
+    for device in retval.values():
+        if device.get('parent_index'):
+            device['parent_name'] = retval[device['parent_index']]['name']
+        elif device.get('vxlan_link_index'):
+            device['vxlan_link_name'] = (
+                retval[device['vxlan_link_index']]['name'])
+
+    return list(retval.values())

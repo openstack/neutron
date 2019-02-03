@@ -108,6 +108,11 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
 
         devices = priv_ip_lib.get_link_devices(self.namespace)
         self.assertGreater(len(devices), 0)
+        device_name_index = {}
+        for device in devices:
+            name = ip_lib.get_attr(device, 'IFLA_IFNAME')
+            device_name_index[name] = device['index']
+
         for device in devices:
             name = ip_lib.get_attr(device, 'IFLA_IFNAME')
             if name in self.interfaces_to_exclude:
@@ -122,6 +127,10 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
                 vlan_id = int(name.split('_')[-1])
                 self.assertEqual(
                     ip_lib.get_attr(ifla_infodata, 'IFLA_VLAN_ID'), vlan_id)
+                vlan_link_name = self.interfaces[vlan_interfaces.index(name)]
+                vlan_link_index = device_name_index[vlan_link_name]
+                self.assertEqual(vlan_link_index, ip_lib.get_attr(device,
+                                                                  'IFLA_LINK'))
             interfaces_tested.append(name)
         self.assertEqual(sorted(interfaces_tested),
                          sorted(self.interfaces + vlan_interfaces))
@@ -142,6 +151,11 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
 
         devices = priv_ip_lib.get_link_devices(self.namespace)
         self.assertGreater(len(devices), 0)
+        device_name_index = {}
+        for device in devices:
+            name = ip_lib.get_attr(device, 'IFLA_IFNAME')
+            device_name_index[name] = device['index']
+
         for device in devices:
             name = ip_lib.get_attr(device, 'IFLA_IFNAME')
             if name in self.interfaces_to_exclude:
@@ -160,6 +174,11 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
                 self.assertEqual(
                     ip_lib.get_attr(ifla_infodata, 'IFLA_VXLAN_GROUP'),
                     '239.1.1.1')
+                vxlan_link_name = self.interfaces[vxlan_interfaces.index(name)]
+                vxlan_link_index = device_name_index[vxlan_link_name]
+                self.assertEqual(
+                    vxlan_link_index,
+                    ip_lib.get_attr(ifla_infodata, 'IFLA_VXLAN_LINK'))
             interfaces_tested.append(name)
         self.assertEqual(sorted(interfaces_tested),
                          sorted(self.interfaces + vxlan_interfaces))
