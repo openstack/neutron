@@ -21,7 +21,7 @@
         - neutron-tempest-linuxbridge
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
-        - tempest-multinode-full:
+        - tempest-multinode-full-py3:
             voting: false
             # We don't run the job on things like neutron docs-only changes
             irrelevant-files: &tempest-irrelevant-files
