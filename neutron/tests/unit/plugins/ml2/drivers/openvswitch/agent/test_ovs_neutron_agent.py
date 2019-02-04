@@ -1137,7 +1137,8 @@ class TestOvsNeutronAgent(object):
                                          self.agent.agent_state, True)
             self.systemd_notify.assert_called_once_with()
             self.systemd_notify.reset_mock()
-            self.assertNotIn("start_flag", self.agent.agent_state)
+            # agent keeps sending "start_flag" while iter 0 not completed
+            self.assertIn("start_flag", self.agent.agent_state)
             self.assertEqual(
                 self.agent.agent_state["configurations"]["devices"],
                 self.agent.int_br_device_count
