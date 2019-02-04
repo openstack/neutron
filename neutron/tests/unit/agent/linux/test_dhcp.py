@@ -462,10 +462,10 @@ class FakeV4SubnetAgentWithNoDnsProvided(FakeV4Subnet):
 
 
 class FakeNetworkBase(object):
-    dns_domain = 'openstacklocal'
+    dns_domain = ''
 
-    def get(self, attr, default=None):
-        return getattr(self, attr) or default
+    def get(self, attr):
+        return getattr(self, attr)
 
 
 class FakeV4MultipleAgentsWithoutDnsProvided(FakeNetworkBase):
@@ -1332,6 +1332,11 @@ class TestDnsmasq(TestBase):
         self._test_spawn(['--conf-file='], network=network)
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
                                     mock.call(exp_addn_name, exp_addn_data)])
+
+    def test_spawn_with_dns_domain_default(self):
+        network = FakeDualNetwork()
+        self._test_spawn(
+            ['--conf-file=', '--domain=openstacklocal'], network=network)
 
     def test_spawn_with_dns_domain_conf(self):
         self.conf.set_override('dns_domain', 'starwars.local')
