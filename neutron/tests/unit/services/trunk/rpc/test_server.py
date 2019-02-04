@@ -14,11 +14,11 @@
 import mock
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.plugins import directory
+from neutron_lib import rpc as n_rpc
 
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.common import rpc as n_rpc
 from neutron.objects import trunk as trunk_obj
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.services.trunk import constants

@@ -12,12 +12,12 @@
 # under the License.
 
 import mock
+from neutron_lib import rpc
 from oslo_config import cfg
 import oslo_messaging
 
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.common import rpc
 from neutron.services.trunk.rpc import agent
 from neutron.tests import base
 

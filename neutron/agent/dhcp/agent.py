@@ -23,6 +23,7 @@ from neutron_lib.agent import topics
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions
+from neutron_lib import rpc as n_rpc
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -39,7 +40,6 @@ from neutron.agent.linux import external_process
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as n_const
-from neutron.common import rpc as n_rpc
 from neutron.common import utils
 from neutron import manager
 

@@ -21,6 +21,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
+from neutron_lib import rpc as n_rpc
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log
 import oslo_messaging
@@ -30,7 +31,6 @@ from neutron.agent import _topics as n_topics
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import constants as c_const
-from neutron.common import rpc as n_rpc
 from neutron.db import l3_hamode_db
 from neutron.db import provisioning_blocks
 from neutron.plugins.ml2 import db as ml2_db

@@ -23,6 +23,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_const
 from neutron_lib import context as n_context
 from neutron_lib.exceptions import l3 as l3_exc
+from neutron_lib import rpc as n_rpc
 from oslo_config import cfg
 from oslo_context import context as common_context
 from oslo_log import log as logging
@@ -54,7 +55,6 @@ from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as l3_constants
 from neutron.common import ipv6_utils
-from neutron.common import rpc as n_rpc
 from neutron.common import utils
 from neutron import manager
 

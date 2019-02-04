@@ -46,6 +46,7 @@ from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from neutron_lib.plugins import utils as p_utils
+from neutron_lib import rpc as n_rpc
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_config import cfg
 from oslo_db import exception as os_db_exception
@@ -68,7 +69,6 @@ from neutron.api.rpc.handlers import metadata_rpc
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.common import constants as n_const
-from neutron.common import rpc as n_rpc
 from neutron.common import utils
 from neutron.db import address_scope_db
 from neutron.db import agents_db

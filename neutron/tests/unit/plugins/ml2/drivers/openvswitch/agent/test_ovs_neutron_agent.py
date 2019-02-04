@@ -18,6 +18,7 @@ import time
 import mock
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib import constants as n_const
+from neutron_lib import rpc as n_rpc
 from oslo_config import cfg
 from oslo_log import log
 import oslo_messaging
@@ -30,7 +31,6 @@ from neutron.agent.common import polling
 from neutron.agent.common import utils
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as c_const
-from neutron.common import rpc as n_rpc
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_neutron_agent \

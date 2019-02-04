@@ -16,6 +16,7 @@
 import mock
 from neutron_lib import constants as lib_const
 from neutron_lib import context
+from neutron_lib import rpc as n_rpc
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 
@@ -26,7 +27,6 @@ from neutron.agent.l3 import router_info as l3router
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.common import rpc as n_rpc
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.tests import base

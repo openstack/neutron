@@ -15,8 +15,9 @@
 
 import mock
 
+from neutron_lib import rpc
+
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
-from neutron.common import rpc
 from neutron.tests import base
 
 

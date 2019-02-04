@@ -14,13 +14,13 @@
 #    under the License.
 
 from neutron_lib.callbacks import resources as r_const
+from neutron_lib import rpc as n_rpc
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.common import rpc as n_rpc
 from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.common import db_api
 
