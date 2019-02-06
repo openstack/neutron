@@ -35,6 +35,7 @@ from neutron._i18n import _
 from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.db.models import securitygroup as sg_models
+from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.extensions import securitygroup as ext_sg
 from neutron.objects import base as base_obj
 from neutron.objects import securitygroup as sg_obj
@@ -42,7 +43,8 @@ from neutron.objects import securitygroup as sg_obj
 
 @resource_extend.has_resource_extenders
 @registry.has_registry_receivers
-class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
+class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
+                           rbac_mixin.RbacPluginMixin):
     """Mixin class to add security group to db_base_plugin_v2."""
 
     __native_bulk_support = True
@@ -794,13 +796,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             return
 
         port_sg = port.get(ext_sg.SECURITYGROUPS, [])
-        filters = {'id': port_sg}
         tenant_id = port.get('tenant_id')
-        if tenant_id:
-            filters['tenant_id'] = [tenant_id]
-        valid_groups = set(g['id'] for g in
-                           self.get_security_groups(context, fields=['id'],
-                                                    filters=filters))
+
+        sg_objs = sg_obj.SecurityGroup.get_objects(context, id=port_sg)
+
+        valid_groups = set(g.id for g in sg_objs
+            if not tenant_id or g.tenant_id == tenant_id or
+            sg_obj.SecurityGroup.is_shared_with_tenant(context,
+                                                       g.id, tenant_id))
 
         requested_groups = set(port_sg)
         port_sg_missing = requested_groups - valid_groups

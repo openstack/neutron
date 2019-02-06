@@ -89,6 +89,35 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
                                           context.tenant_id))
 
     @classmethod
+    def get_object(cls, context, **kwargs):
+        # We want to get the policy regardless of its tenant id. We'll make
+        # sure the tenant has permission to access the policy later on.
+        admin_context = context.elevated()
+        with cls.db_context_reader(admin_context):
+            obj = super(RbacNeutronDbObjectMixin,
+                        cls).get_object(admin_context, **kwargs)
+            if (not obj or not cls.is_accessible(context, obj)):
+                return
+            return obj
+
+    @classmethod
+    def get_objects(cls, context, _pager=None, validate_filters=True,
+                    **kwargs):
+        # We want to get the policy regardless of its tenant id. We'll make
+        # sure the tenant has permission to access the policy later on.
+        admin_context = context.elevated()
+        with cls.db_context_reader(admin_context):
+            objs = super(RbacNeutronDbObjectMixin,
+                         cls).get_objects(admin_context, _pager,
+                                          validate_filters, **kwargs)
+            result = []
+            for obj in objs:
+                if not cls.is_accessible(context, obj):
+                    continue
+                result.append(obj)
+            return result
+
+    @classmethod
     def _get_db_obj_rbac_entries(cls, context, rbac_obj_id, rbac_action):
         rbac_db_model = cls.rbac_db_cls.db_model
         return db_utils.model_query(context, rbac_db_model).filter(

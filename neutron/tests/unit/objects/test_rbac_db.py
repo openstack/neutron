@@ -25,7 +25,7 @@ from neutron.objects import base
 from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import rbac_db
-from neutron.tests.unit.objects import test_base
+from neutron.tests.unit.objects import test_rbac
 from neutron.tests.unit import testlib_api
 
 
@@ -77,7 +77,7 @@ class FakeNeutronDbObject(rbac_db.NeutronRbacObject):
         pass
 
 
-class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
+class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
                                   testlib_api.SqlTestCase):
     _test_class = FakeNeutronDbObject
 

@@ -1,0 +1,4 @@
+features:
+  - |
+    Security groups are now supported via the network RBAC mechanism.
+    Please refer to the admin guide for further details.

@@ -18,6 +18,7 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.db import models_v2
+from neutron.db import rbac_db_models
 from neutron.db import standard_attr
 from neutron.extensions import securitygroup as sg
 
@@ -27,6 +28,10 @@ class SecurityGroup(standard_attr.HasStandardAttributes, model_base.BASEV2,
     """Represents a v2 neutron security group."""
 
     name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
+    rbac_entries = sa.orm.relationship(rbac_db_models.SecurityGroupRBAC,
+                                       backref='security_group',
+                                       lazy='subquery',
+                                       cascade='all, delete, delete-orphan')
     api_collections = [sg.SECURITYGROUPS]
     collection_resource_map = {sg.SECURITYGROUPS: 'security_group'}
     tag_support = True

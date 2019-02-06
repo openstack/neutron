@@ -17,6 +17,7 @@ is supported by:
 * Regular port creation permissions on networks (since Liberty).
 * Binding QoS policies permissions to networks or ports (since Mitaka).
 * Attaching router gateways to networks (since Mitaka).
+* Binding security groups to ports (since Stein).
 
 
 Sharing an object with specific projects
@@ -201,11 +202,91 @@ This process can be repeated any number of times to share a qos-policy
 with an arbitrary number of projects.
 
 
+Sharing a security group with specific projects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create a security group to share:
+
+.. code-block:: console
+
+   $ openstack security group create my_security_group
+   +-------------------+--------------------------------------+
+   | Field             | Value                                |
+   +-------------------+--------------------------------------+
+   | created_at        | 2019-02-07T06:09:59Z                 |
+   | description       | my_security_group                    |
+   | id                | 5ba835b7-22b0-4be6-bdbe-e0722d1b5f24 |
+   | location          | None                                 |
+   | name              | my_security_group                    |
+   | project_id        | 077e8f39d3db4c9e998d842b0503283a     |
+   | revision_number   | 1                                    |
+   | rules             | ...                                  |
+   | tags              | []                                   |
+   | updated_at        | 2019-02-07T06:09:59Z                 |
+   +-------------------+--------------------------------------+
+
+
+Create the RBAC policy entry using the :command:`openstack network rbac create`
+command (in this example, the ID of the project we want to share with is
+``32016615de5d43bb88de99e7f2e26a1e``):
+
+.. code-block:: console
+
+   $ openstack network rbac create --target-project \
+   32016615de5d43bb88de99e7f2e26a1e --action access_as_shared \
+   --type security_group 5ba835b7-22b0-4be6-bdbe-e0722d1b5f24
+   +-------------------+--------------------------------------+
+   | Field             | Value                                |
+   +-------------------+--------------------------------------+
+   | action            | access_as_shared                     |
+   | id                | 8828e38d-a0df-4c78-963b-e5f215d3d550 |
+   | name              | None                                 |
+   | object_id         | 5ba835b7-22b0-4be6-bdbe-e0722d1b5f24 |
+   | object_type       | security_group                       |
+   | project_id        | 077e8f39d3db4c9e998d842b0503283a     |
+   | target_project_id | 32016615de5d43bb88de99e7f2e26a1e     |
+   +-------------------+--------------------------------------+
+
+
+The ``target-project`` parameter specifies the project that requires
+access to the security group. The ``action`` parameter specifies what
+the project is allowed to do. The ``type`` parameter says
+that the target object is a security group. The final parameter is the ID of
+the security group we are granting access to.
+
+Project ``32016615de5d43bb88de99e7f2e26a1e`` will now be able to see
+the security group when running :command:`openstack security group list` and
+:command:`openstack security group show` and will also be able to bind
+it to its ports. No other users (other than admins and the owner)
+will be able to see the security group.
+
+To remove access for that project, delete the RBAC policy that allows
+it using the :command:`openstack network rbac delete` command:
+
+.. code-block:: console
+
+   $ openstack network rbac delete 8828e38d-a0df-4c78-963b-e5f215d3d550
+
+If that project has ports with the security group applied to them,
+the server will not delete the RBAC policy until
+the security group is no longer in use:
+
+.. code-block:: console
+
+   $ openstack network rbac delete 8828e38d-a0df-4c78-963b-e5f215d3d550
+   RBAC policy on object 8828e38d-a0df-4c78-963b-e5f215d3d550
+   cannot be removed because other objects depend on it.
+
+This process can be repeated any number of times to share a security-group
+with an arbitrary number of projects.
+
+
 How the 'shared' flag relates to these entries
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As introduced in other guide entries, neutron provides a means of
-making an object (``network``, ``qos-policy``) available to every project.
+making an object (``network``, ``qos-policy``, ``security-group``) available
+to every project.
 This is accomplished using the ``shared`` flag on the supported object:
 
 .. code-block:: console
