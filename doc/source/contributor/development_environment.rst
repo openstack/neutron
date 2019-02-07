@@ -55,6 +55,22 @@ Grab the code::
     git clone git://git.openstack.org/openstack/neutron.git
     cd neutron
 
+About ignore files
+------------------
+In the .gitignore files, add patterns to exclude files created by tools
+integrated, such as test frameworks from the project's recommended workflow,
+rendered documentation and package builds.
+
+Don't add patterns to exculde files created by preferred personal like for
+example editors, IDEs or operating system.
+These should instead be maintained outside the repository, for example in a
+~/.gitignore file added with::
+
+    git config --global core.excludesfile '~/.gitignore'
+
+Ignores files for all repositories that you work with.
+
+
 Testing Neutron
 ---------------
 
