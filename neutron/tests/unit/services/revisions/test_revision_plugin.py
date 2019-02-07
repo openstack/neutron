@@ -78,10 +78,27 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
                 other_ctx.session.delete(
                     other_ctx.session.query(models_v2.Port).first()
                 )
-                # expire the port so the revision bumping code will trigger a
-                # lookup on its attributes and encounter an ObjectDeletedError
+                other_ctx.session.flush()
+
+                # ensure no attribute lookups are attempted on an
+                # object deleted from the session when doing related
+                # bumps
                 self.ctx.session.expire(port)
-                rp._bump_related_revisions(self.ctx.session, ipal_obj)
+
+                collected = rp._collect_related_tobump(
+                    self.ctx.session, [ipal_obj], set())
+                rp._bump_obj_revisions(
+                    self.ctx.session, collected, version_check=False)
+
+    def test_shared_network_create(self):
+        # this test intends to run db_base_plugin_v2 -> create_network_db,
+        # which in turn creates a Network and then a NetworkRBAC object.
+        # An issue was observed with the revision_plugin which would interfere
+        # with the flush process that occurs with these two connected objects,
+        # creating two copies of the Network object in the Session and putting
+        # it into an invalid state.
+        with self.network(shared=True):
+            pass
 
     def test_port_name_update_revises(self):
         with self.port() as port:
