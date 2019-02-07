@@ -288,6 +288,21 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         data = self._deserializers[ctype].deserialize(response.body)['body']
         return data
 
+    def _find_ip_address(self, subnet):
+        network_ports = self._list_ports(
+            "json", 200, subnet['network_id']).json['ports']
+        used_ips = set()
+        for port in network_ports:
+            for ip in port['fixed_ips']:
+                if ip['subnet_id'] == subnet['id']:
+                    used_ips.add(ip['ip_address'])
+
+        for pool in subnet['allocation_pools']:
+            ips_range = netaddr.IPRange(pool['start'], pool['end'])
+            for ip in ips_range:
+                if ip not in used_ips:
+                    return str(ip)
+
     def _create_bulk_from_list(self, fmt, resource, objects, **kwargs):
         """Creates a bulk request from a list of objects."""
         collection = "%ss" % resource

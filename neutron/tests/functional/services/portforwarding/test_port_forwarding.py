@@ -13,7 +13,6 @@
 import threading
 
 import mock
-import netaddr
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
 from neutron_lib.callbacks import exceptions as c_exc
 from neutron_lib import exceptions as lib_exc
@@ -101,15 +100,9 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         self._set_router_gw(self.router['id'], self.ext_net['id'])
         self._add_router_interface(self.router['id'], self.subnet['id'])
         self.fip = self._create_floatingip(self.ext_net['id'])
-        # We choose an IP address in the middle of the subnet so
-        # tests that update the IP in the port,
-        # like test_concurrent_create_port_forwarding_update_port(),
-        # don't accidentally choose an invalid IP address in
-        # the subnet, like the broadcast address.
         self.port = self._create_port(
             self.fmt, self.net['id'],
-            fixed_ips=[{'subnet_id': self.subnet['id'],
-                        'ip_address': '10.0.0.100'}]).json['port']
+            fixed_ips=[{'subnet_id': self.subnet['id']}]).json['port']
         self.port_forwarding = {
             apidef.RESOURCE_NAME:
                 {apidef.EXTERNAL_PORT: 2225,
@@ -451,11 +444,7 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
                           funcs, args_list)
 
     def test_concurrent_create_port_forwarding_update_port(self):
-        # The initial IP address of the port is in the middle of the
-        # subnet range, so adding 2 to it should also produce a
-        # valid IP address.
-        new_ip = str(
-            netaddr.IPAddress(self.port['fixed_ips'][0]['ip_address']) + 2)
+        new_ip = self._find_ip_address(self.subnet)
         funcs = [self.pf_plugin.create_floatingip_port_forwarding,
                  self._update_port]
         args_list = [(self.context, self.fip['id'], self.port_forwarding),
