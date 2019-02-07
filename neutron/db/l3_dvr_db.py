@@ -720,8 +720,6 @@ class _DVRAgentInterfaceMixin(object):
         # Perform a single query up front for all routers
         routers = super(_DVRAgentInterfaceMixin, self)._build_routers_list(
             context, routers, gw_ports)
-        if not routers:
-            return []
         for router in routers:
             gw_port_host = self._get_gateway_port_host(
                 context, router, gw_ports)
