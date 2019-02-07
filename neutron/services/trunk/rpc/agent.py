@@ -14,13 +14,13 @@
 
 import abc
 
+from neutron_lib import rpc as n_rpc
 from oslo_log import helpers as log_helpers
 import oslo_messaging
 
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.common import rpc as n_rpc
 from neutron.services.trunk.rpc import constants as trunk_consts
 
 # This module contains stub (client-side) and skeleton (server-side)

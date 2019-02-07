@@ -18,6 +18,7 @@ import hmac
 from neutron_lib.agent import topics
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib import rpc as n_rpc
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -34,7 +35,6 @@ from neutron.agent import rpc as agent_rpc
 from neutron.common import cache_utils as cache
 from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
-from neutron.common import rpc as n_rpc
 from neutron.conf.agent.metadata import config
 
 LOG = logging.getLogger(__name__)

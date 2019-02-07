@@ -16,6 +16,7 @@
 import collections
 
 import netaddr
+from neutron_lib import rpc as n_rpc
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 
@@ -25,7 +26,6 @@ from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import constants
-from neutron.common import rpc as n_rpc
 from neutron_lib.agent import l3_extension
 from neutron_lib import constants as lib_consts
 

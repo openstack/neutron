@@ -16,10 +16,9 @@
 import collections
 
 from neutron_lib.agent import topics
+from neutron_lib import rpc as n_rpc
 from oslo_log import log as logging
 import oslo_messaging
-
-from neutron.common import rpc as n_rpc
 
 
 LOG = logging.getLogger(__name__)

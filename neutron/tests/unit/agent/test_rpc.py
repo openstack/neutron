@@ -21,12 +21,12 @@ from neutron_lib.agent import topics as lib_topics
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
+from neutron_lib import rpc as n_rpc
 from oslo_context import context as oslo_context
 from oslo_utils import uuidutils
 
 from neutron.agent import rpc
 from neutron.common import constants as n_const
-from neutron.common import rpc as n_rpc
 from neutron.objects import network
 from neutron.objects import ports
 from neutron.tests import base

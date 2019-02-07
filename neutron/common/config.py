@@ -21,6 +21,7 @@ import sys
 
 from keystoneauth1 import loading as ks_loading
 from neutron_lib.api import validators
+from neutron_lib import rpc as n_rpc
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -28,7 +29,6 @@ from oslo_middleware import cors
 from oslo_service import wsgi
 
 from neutron._i18n import _
-from neutron.common import rpc as n_rpc
 from neutron.conf import common as common_config
 from neutron import policy
 from neutron import version

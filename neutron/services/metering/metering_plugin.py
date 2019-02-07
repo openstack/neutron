@@ -14,9 +14,9 @@
 
 from neutron_lib.agent import topics
 from neutron_lib.api.definitions import metering as metering_apidef
+from neutron_lib import rpc as n_rpc
 
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
-from neutron.common import rpc as n_rpc
 from neutron.db.metering import metering_db
 from neutron.db.metering import metering_rpc
 from neutron import service

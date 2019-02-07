@@ -23,11 +23,11 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.plugins import directory
+from neutron_lib import rpc as n_rpc
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron.common import rpc as n_rpc
 
 # Priorities - lower value is higher priority
 PRIORITY_NETWORK_CREATE = 0

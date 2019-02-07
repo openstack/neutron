@@ -32,7 +32,6 @@ from oslo_utils import uuidutils
 from neutron.agent import resource_cache
 from neutron.api.rpc.callbacks import resources
 from neutron.common import constants as n_const
-from neutron.common import rpc as n_rpc
 from neutron import objects
 
 LOG = logging.getLogger(__name__)
@@ -52,7 +51,7 @@ def create_consumers(endpoints, prefix, topic_details, start_listening=True):
     :returns: A common Connection.
     """
 
-    connection = n_rpc.Connection()
+    connection = lib_rpc.Connection()
     for details in topic_details:
         topic, operation, node_name = itertools.islice(
             itertools.chain(details, [None]), 3)
@@ -80,7 +79,7 @@ class PluginReportStateAPI(object):
     def __init__(self, topic):
         target = oslo_messaging.Target(topic=topic, version='1.2',
                                        namespace=n_const.RPC_NAMESPACE_STATE)
-        self.client = n_rpc.get_client(target)
+        self.client = lib_rpc.get_client(target)
 
     def has_alive_neutron_server(self, context, **kwargs):
         cctxt = self.client.prepare()
@@ -117,7 +116,7 @@ class PluginApi(object):
 
     def __init__(self, topic):
         target = oslo_messaging.Target(topic=topic, version='1.0')
-        self.client = n_rpc.get_client(target)
+        self.client = lib_rpc.get_client(target)
 
     def get_device_details(self, context, device, agent_id, host=None):
         cctxt = self.client.prepare()

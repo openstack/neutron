@@ -17,6 +17,7 @@ import collections
 
 from neutron_lib import constants
 from neutron_lib.db import constants as db_consts
+from neutron_lib import rpc as n_rpc
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log as logging
 
@@ -24,7 +25,6 @@ from neutron.agent.linux import l3_tc_lib as tc_lib
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.common import rpc as n_rpc
 
 LOG = logging.getLogger(__name__)
 

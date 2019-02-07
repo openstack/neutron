@@ -13,10 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import rpc as n_rpc
 from oslo_log import helpers as log_helpers
 import oslo_messaging
 
-from neutron.common import rpc as n_rpc
 from neutron.services.logapi.common import constants as log_const
 
 

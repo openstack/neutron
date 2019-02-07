@@ -21,11 +21,11 @@ from neutron_lib.api.definitions import network as net_apidef
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import faults
 from neutron_lib.plugins import directory
+from neutron_lib import rpc as n_rpc
 import six
 
 from neutron.api import extensions
 from neutron.api.v2 import resource
-from neutron.common import rpc as n_rpc
 from neutron import policy
 from neutron import wsgi
 

@@ -24,6 +24,7 @@ from neutron_lib import context as n_context
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from neutron_lib import rpc as n_rpc
 from oslo_config import cfg
 from oslo_utils import importutils
 from oslo_utils import timeutils
@@ -32,7 +33,6 @@ from sqlalchemy import orm
 import testscenarios
 import testtools
 
-from neutron.common import rpc as n_rpc
 from neutron.db import db_base_plugin_v2 as db_v2
 from neutron.db import l3_db
 from neutron.db import l3_dvr_db

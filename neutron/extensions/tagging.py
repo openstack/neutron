@@ -18,6 +18,7 @@ from neutron_lib.api import faults
 from neutron_lib.api import validators
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
+from neutron_lib import rpc as n_rpc
 from neutron_lib.services import base as service_base
 import six
 import webob.exc
@@ -25,7 +26,6 @@ import webob.exc
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import resource as api_resource
-from neutron.common import rpc as n_rpc
 from neutron.db import standard_attr
 
 

@@ -35,6 +35,7 @@ from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as plugin_utils
+from neutron_lib import rpc as n_rpc
 from neutron_lib.services import base as base_services
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -44,7 +45,6 @@ from sqlalchemy.orm import exc
 from neutron._i18n import _
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.common import ipv6_utils
-from neutron.common import rpc as n_rpc
 from neutron.common import utils
 from neutron.db import _utils as db_utils
 from neutron.db.models import l3 as l3_models

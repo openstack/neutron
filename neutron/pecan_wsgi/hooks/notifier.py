@@ -15,10 +15,10 @@
 
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib import rpc as n_rpc
 from oslo_log import log
 from pecan import hooks
 
-from neutron.common import rpc as n_rpc
 from neutron.pecan_wsgi import constants as pecan_constants
 from neutron.pecan_wsgi.hooks import utils
 
