@@ -401,10 +401,8 @@ class HaRouter(router.RouterInfo):
             pm.disable(sig=str(int(signal.SIGKILL)))
 
     def update_initial_state(self, callback):
-        ha_device = ip_lib.IPDevice(
-            self.get_ha_device_name(),
-            self.ha_namespace)
-        addresses = ha_device.addr.list()
+        addresses = ip_lib.get_devices_with_ip(self.ha_namespace,
+                                               name=self.get_ha_device_name())
         cidrs = (address['cidr'] for address in addresses)
         ha_cidr = self._get_primary_vip()
         state = 'master' if ha_cidr in cidrs else 'backup'

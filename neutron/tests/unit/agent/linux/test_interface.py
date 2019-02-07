@@ -21,6 +21,7 @@ from oslo_utils import excutils
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
+from neutron.common import utils
 from neutron.conf.agent import common as config
 from neutron.tests import base
 
@@ -66,6 +67,9 @@ class TestBase(base.BaseTestCase):
         self.ip = self.ip_p.start()
         self.device_exists_p = mock.patch.object(ip_lib, 'device_exists')
         self.device_exists = self.device_exists_p.start()
+        self.get_devices_with_ip_p = mock.patch.object(ip_lib,
+                                                       'get_devices_with_ip')
+        self.get_devices_with_ip = self.get_devices_with_ip_p.start()
 
 
 class TestABCDriver(TestBase):
@@ -352,17 +356,18 @@ class TestABCDriver(TestBase):
         addresses = [dict(scope='link',
                           dynamic=False,
                           cidr='fe80:cafe::/64')]
-        self.ip_dev().addr.list = mock.Mock(return_value=addresses)
+        self.get_devices_with_ip.return_value = addresses
         device_name = self.ip_dev().name
         bc = BaseChild(self.conf)
 
         llas = bc.get_ipv6_llas(device_name, ns)
 
         self.assertEqual(addresses, llas)
-        self.ip_dev.assert_has_calls(
-            [mock.call(device_name, namespace=ns),
-             mock.call().addr.list(
-                scope='link', ip_version=constants.IP_VERSION_6)])
+        kwargs = {'family': utils.get_socket_address_family(
+                                constants.IP_VERSION_6),
+                  'scope': 'link'}
+        self.get_devices_with_ip.assert_called_with(
+            ns, name=device_name, **kwargs)
 
     def test_set_mtu_logs_once(self):
         bc = BaseChild(self.conf)

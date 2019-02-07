@@ -277,9 +277,9 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             return set()
         interface_name = self.get_snat_external_device_interface_name(
                 ex_gw_port)
-        device = ip_lib.IPDevice(
-            interface_name, namespace=self.snat_namespace.name)
-        return set([addr['cidr'] for addr in device.addr.list()])
+        return set([addr['cidr'] for addr in ip_lib.get_devices_with_ip(
+                                                 self.snat_namespace.name,
+                                                 name=interface_name)])
 
     def get_router_cidrs(self, device):
         """Over-ride the get_router_cidrs function to return the list.

@@ -26,6 +26,7 @@ import six
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as n_const
+from neutron.common import utils
 
 LOG = logging.getLogger(__name__)
 
@@ -224,10 +225,11 @@ class LinuxInterfaceDriver(object):
                 break
 
     def get_ipv6_llas(self, device_name, namespace):
-        device = ip_lib.IPDevice(device_name,
-                                 namespace=namespace)
-
-        return device.addr.list(scope='link', ip_version=6)
+        kwargs = {'family': utils.get_socket_address_family(
+                                constants.IP_VERSION_6),
+                  'scope': 'link'}
+        return ip_lib.get_devices_with_ip(namespace, name=device_name,
+                                          **kwargs)
 
     def check_bridge_exists(self, bridge):
         if not ip_lib.device_exists(bridge):
