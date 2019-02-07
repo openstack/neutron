@@ -130,7 +130,8 @@ class DhcpBase(object):
                  version=None, plugin=None):
         self.conf = conf
         self.network = network
-        self.dns_domain = self.network.get('dns_domain', self.conf.dns_domain)
+        self.dns_domain = (self.network.get('dns_domain') or
+                           self.conf.dns_domain)
         self.process_monitor = process_monitor
         self.device_manager = DeviceManager(self.conf, plugin)
         self.version = version
