@@ -37,7 +37,6 @@ from oslo_utils import importutils
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
-from neutron.db import common_db_mixin
 from neutron.db import dns_db
 from neutron.db import extraroute_db
 from neutron.db import l3_dvr_ha_scheduler_db
@@ -73,7 +72,6 @@ def disable_l3_qos_extension_by_plugins(ext, aliases):
 
 @resource_extend.has_resource_extenders
 class L3RouterPlugin(service_base.ServicePluginBase,
-                     common_db_mixin.CommonDbMixin,
                      extraroute_db.ExtraRoute_db_mixin,
                      l3_hamode_db.L3_HA_NAT_db_mixin,
                      l3_gateway_ip_qos.L3_gw_ip_qos_db_mixin,

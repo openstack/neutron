@@ -28,7 +28,6 @@ import testtools
 import neutron
 from neutron.agent.common import ovs_lib
 from neutron.db import agents_db
-from neutron.db import common_db_mixin
 
 HOST = 'localhost'
 DEFAULT_AZ = 'nova'
@@ -52,8 +51,7 @@ def get_test_log_path():
     return os.environ.get('OS_LOG_PATH', '/tmp')
 
 
-class FakePlugin(common_db_mixin.CommonDbMixin,
-                 agents_db.AgentDbMixin):
+class FakePlugin(agents_db.AgentDbMixin):
     pass
 
 

@@ -26,7 +26,6 @@ from oslo_utils import uuidutils
 import testscenarios
 
 from neutron.db import agentschedulers_db as sched_db
-from neutron.db import common_db_mixin
 from neutron.objects import agent
 from neutron.objects import network as network_obj
 from neutron.scheduler import dhcp_agent_scheduler
@@ -405,8 +404,7 @@ class TestAutoScheduleSegments(test_plugin.Ml2PluginV2TestCase,
 
 
 class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
-                           sched_db.DhcpAgentSchedulerDbMixin,
-                           common_db_mixin.CommonDbMixin):
+                           sched_db.DhcpAgentSchedulerDbMixin):
     def test_reschedule_network_from_down_agent(self):
         net_id = uuidutils.generate_uuid()
         agents = self._create_and_set_agents_down(['host-a', 'host-b'], 1)

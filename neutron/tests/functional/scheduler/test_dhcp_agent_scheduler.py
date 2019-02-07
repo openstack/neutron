@@ -24,7 +24,6 @@ import testscenarios
 
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
-from neutron.db import common_db_mixin
 from neutron.objects import network
 from neutron.scheduler import dhcp_agent_scheduler
 from neutron.tests.common import helpers
@@ -106,7 +105,6 @@ class BaseTestScheduleNetwork(object):
 class TestChanceScheduleNetwork(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                                 agentschedulers_db.DhcpAgentSchedulerDbMixin,
                                 agents_db.AgentDbMixin,
-                                common_db_mixin.CommonDbMixin,
                                 BaseTestScheduleNetwork):
     """Test various scenarios for ChanceScheduler.schedule."""
 
@@ -144,7 +142,6 @@ class TestChanceScheduleNetwork(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
 class TestWeightScheduleNetwork(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                                 agentschedulers_db.DhcpAgentSchedulerDbMixin,
                                 agents_db.AgentDbMixin,
-                                common_db_mixin.CommonDbMixin,
                                 BaseTestScheduleNetwork):
     """Test various scenarios for WeightScheduler.schedule."""
 
@@ -190,8 +187,7 @@ class TestWeightScheduleNetwork(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
 
 class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                        agentschedulers_db.DhcpAgentSchedulerDbMixin,
-                       agents_db.AgentDbMixin,
-                       common_db_mixin.CommonDbMixin):
+                       agents_db.AgentDbMixin):
     """Test various scenarios for ChanceScheduler.auto_schedule_networks.
 
         Below is the brief description of the scenario variables
@@ -435,8 +431,7 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
 
 class TestAZAwareWeightScheduler(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                                  agentschedulers_db.DhcpAgentSchedulerDbMixin,
-                                 agents_db.AgentDbMixin,
-                                 common_db_mixin.CommonDbMixin):
+                                 agents_db.AgentDbMixin):
     """Test various scenarios for AZAwareWeightScheduler.schedule.
 
         az_count

@@ -20,7 +20,6 @@ from neutron_lib.plugins import directory
 from oslo_log import helpers as log_helpers
 from sqlalchemy.orm import exc
 
-from neutron.db import common_db_mixin
 from neutron.db import standard_attr
 from neutron.extensions import tagging
 from neutron.objects import tag as tag_obj
@@ -31,7 +30,7 @@ resource_model_map = standard_attr.get_standard_attr_resource_model_map()
 
 
 @resource_extend.has_resource_extenders
-class TagPlugin(common_db_mixin.CommonDbMixin, tagging.TagPluginBase):
+class TagPlugin(tagging.TagPluginBase):
     """Implementation of the Neutron Tag Service Plugin."""
 
     supported_extension_aliases = ['standard-attr-tag']

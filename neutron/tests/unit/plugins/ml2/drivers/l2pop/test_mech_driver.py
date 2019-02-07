@@ -30,7 +30,6 @@ from oslo_serialization import jsonutils
 import testtools
 
 from neutron.db import agents_db
-from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_hamode_db
 from neutron.plugins.ml2 import driver_context
@@ -59,8 +58,7 @@ DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 DEVICE_OWNER_ROUTER_HA_INTF = constants.DEVICE_OWNER_ROUTER_HA_INTF + 'fake'
 
 
-class FakeL3PluginWithAgents(common_db_mixin.CommonDbMixin,
-                             l3_hamode_db.L3_HA_NAT_db_mixin,
+class FakeL3PluginWithAgents(l3_hamode_db.L3_HA_NAT_db_mixin,
                              l3_agentschedulers_db.L3AgentSchedulerDbMixin,
                              agents_db.AgentDbMixin):
     pass

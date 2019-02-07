@@ -42,7 +42,6 @@ import testtools
 from neutron.agent.common import utils as agent_utils
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.db import agents_db
-from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_hamode_db
 from neutron.objects import l3_hamode
@@ -56,7 +55,6 @@ _uuid = uuidutils.generate_uuid
 
 
 class FakeL3PluginWithAgents(test_l3.TestL3PluginBaseAttributes,
-                             common_db_mixin.CommonDbMixin,
                              l3_hamode_db.L3_HA_NAT_db_mixin,
                              l3_agentschedulers_db.L3AgentSchedulerDbMixin,
                              agents_db.AgentDbMixin):

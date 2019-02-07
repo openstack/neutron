@@ -29,7 +29,6 @@ from neutron_lib.services import base as service_base
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
-from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_common
 from neutron.objects import base as objects_base
 from neutron.objects import trunk as trunk_objects
@@ -45,8 +44,7 @@ LOG = logging.getLogger(__name__)
 
 @resource_extend.has_resource_extenders
 @registry.has_registry_receivers
-class TrunkPlugin(service_base.ServicePluginBase,
-                  common_db_mixin.CommonDbMixin):
+class TrunkPlugin(service_base.ServicePluginBase):
 
     supported_extension_aliases = [trunk_apidef.ALIAS,
                                    trunk_details.ALIAS]

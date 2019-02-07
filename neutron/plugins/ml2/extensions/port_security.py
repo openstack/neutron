@@ -19,15 +19,13 @@ from neutron_lib.plugins.ml2 import api
 from neutron_lib.utils import net
 from oslo_log import log as logging
 
-from neutron.db import common_db_mixin
 from neutron.db import portsecurity_db_common as ps_db_common
 
 LOG = logging.getLogger(__name__)
 
 
 class PortSecurityExtensionDriver(api.ExtensionDriver,
-                                  ps_db_common.PortSecurityDbCommon,
-                                  common_db_mixin.CommonDbMixin):
+                                  ps_db_common.PortSecurityDbCommon):
     _supported_extension_alias = 'port-security'
 
     def initialize(self):

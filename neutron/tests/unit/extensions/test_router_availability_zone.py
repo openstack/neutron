@@ -17,7 +17,6 @@ from neutron_lib import constants as lib_const
 from neutron_lib.plugins import constants
 
 from neutron.db.availability_zone import router as router_az_db
-from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_db
 from neutron.extensions import l3
@@ -32,8 +31,7 @@ class AZL3ExtensionManager(test_az.AZExtensionManager):
                 l3.L3.get_resources())
 
 
-class AZRouterTestPlugin(common_db_mixin.CommonDbMixin,
-                         l3_db.L3_NAT_db_mixin,
+class AZRouterTestPlugin(l3_db.L3_NAT_db_mixin,
                          router_az_db.RouterAvailabilityZoneMixin,
                          l3_agentschedulers_db.AZL3AgentSchedulerDbMixin):
     supported_extension_aliases = [l3_apidef.ALIAS,

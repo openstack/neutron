@@ -28,7 +28,6 @@ from neutron_lib.plugins import utils as plugin_utils
 from oslo_utils import uuidutils
 
 from neutron.db import agents_db
-from neutron.db import common_db_mixin
 from neutron.db import l3_dvr_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db.models import l3 as l3_models
@@ -43,7 +42,6 @@ _uuid = uuidutils.generate_uuid
 
 
 class FakeL3Plugin(test_l3.TestL3PluginBaseAttributes,
-                   common_db_mixin.CommonDbMixin,
                    l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                    l3_dvrscheduler_db.L3_DVRsch_db_mixin,
                    agents_db.AgentDbMixin):
