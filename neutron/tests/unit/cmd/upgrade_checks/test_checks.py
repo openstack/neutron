@@ -26,7 +26,7 @@ class TestChecks(base.BaseTestCase):
         self.checks = checks.CoreChecks()
 
     def test_get_checks_list(self):
-        self.assertIsInstance(self.checks.get_checks(), tuple)
+        self.assertIsInstance(self.checks.get_checks(), list)
 
     def test_noop_check(self):
         check_result = checks.CoreChecks.noop_check(mock.Mock())
