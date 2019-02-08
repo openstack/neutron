@@ -215,7 +215,7 @@ class HackingTestCase(base.BaseTestCase):
             self.assertEqual(
                 1, len(list(
                     checks.check_no_imports_from_tests(
-                        fail_code, "neutron/common/rpc.py", None))))
+                        fail_code, "neutron/common/utils.py", None))))
             self.assertEqual(
                 0, len(list(
                     checks.check_no_imports_from_tests(
