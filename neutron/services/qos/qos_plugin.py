@@ -31,6 +31,7 @@ from neutron_lib.placement import constants as pl_constants
 from neutron_lib.placement import utils as pl_utils
 from neutron_lib.services.qos import constants as qos_consts
 
+from neutron._i18n import _
 from neutron.db import db_base_plugin_common
 from neutron.extensions import qos
 from neutron.objects import base as base_obj
@@ -226,6 +227,23 @@ class QoSPlugin(qos.QoSPluginBase):
                 raise qos_exc.QosRuleNotSupported(rule_type=rule.rule_type,
                                                   port_id=port['id'])
 
+    def reject_min_bw_rule_updates(self, context, policy):
+        ports = self._get_ports_with_policy(context, policy)
+        for port in ports:
+            # NOTE(bence romsics): In some cases the presence of
+            # 'binding:profile.allocation' is a more precise marker than
+            # 'device_owner' about when we have to reject min-bw related
+            # policy/rule updates. However 'binding:profile.allocation' cannot
+            # be used in a generic way here. Consider the case when the first
+            # min-bw rule is added to a policy having ports in-use. Those ports
+            # will not have 'binding:profile.allocation', but this policy
+            # update must be rejected.
+            if (port.device_owner is not None and
+                    port.device_owner.startswith('compute:')):
+                raise NotImplementedError(_(
+                    'Cannot update QoS policies/rules backed by resources '
+                    'tracked in Placement'))
+
     @db_base_plugin_common.convert_result_to_dict
     def create_policy(self, context, policy):
         """Create a QoS policy.
@@ -384,6 +402,8 @@ class QoSPlugin(qos.QoSPluginBase):
             rule.create()
             policy.obj_load_attr('rules')
             self.validate_policy(context, policy)
+            if rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
+                self.reject_min_bw_rule_updates(context, policy)
             self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
                                      context, policy)
 
@@ -424,6 +444,8 @@ class QoSPlugin(qos.QoSPluginBase):
             rule.update()
             policy.obj_load_attr('rules')
             self.validate_policy(context, policy)
+            if rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
+                self.reject_min_bw_rule_updates(context, policy)
             self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
                                      context, policy)
 
@@ -451,6 +473,8 @@ class QoSPlugin(qos.QoSPluginBase):
             rule = policy.get_rule_by_id(rule_id)
             rule.delete()
             policy.obj_load_attr('rules')
+            if rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
+                self.reject_min_bw_rule_updates(context, policy)
             self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
                                      context, policy)
 
