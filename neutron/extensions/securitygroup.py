@@ -41,8 +41,9 @@ class SecurityGroupInvalidPortRange(exceptions.InvalidInput):
 
 
 class SecurityGroupInvalidProtocolForPortRange(exceptions.InvalidInput):
-    message = _("Invalid protocol %(protocol)s for port range, only "
-                "supported for TCP, UDP, UDPLITE, SCTP and DCCP.")
+    message = _("Port range cannot be specified for protocol %(protocol)s. "
+                "Port range is only supported for "
+                "TCP, UDP, UDPLITE, SCTP and DCCP.")
 
 
 class SecurityGroupInvalidPortValue(exceptions.InvalidInput):
