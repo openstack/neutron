@@ -1,0 +1,15 @@
+upgrade:
+  - The number of api and rpc workers may change on upgrade.
+    It is strongly recommended that all deployers set these
+    values in their neutron configurations, rather than
+    using the defaults.
+fixes:
+  - Neutron API workers default to the number of CPU cores.
+    This can lead to high cpu/low memory boxes getting into
+    trouble. The defaults have been tweaked to attempt to
+    put an upper bound on the default of either the number
+    of cores, or half of system memory, whichever is lower.
+    In addition, the default number of RPC workers has been
+    changed from a value of ``1``, to a value of half the
+    number of API workers.
+

@@ -13,6 +13,7 @@
 # under the License.
 
 import mock
+from oslo_config import cfg
 from oslo_upgradecheck.upgradecheck import Code
 
 from neutron.cmd.upgrade_checks import checks
@@ -28,6 +29,26 @@ class TestChecks(base.BaseTestCase):
     def test_get_checks_list(self):
         self.assertIsInstance(self.checks.get_checks(), list)
 
-    def test_noop_check(self):
-        check_result = checks.CoreChecks.noop_check(mock.Mock())
-        self.assertEqual(Code.SUCCESS, check_result.code)
+    def test_worker_check_good(self):
+        cfg.CONF.set_override("api_workers", 2)
+        cfg.CONF.set_override("rpc_workers", 2)
+        result = checks.CoreChecks.worker_count_check(mock.Mock())
+        self.assertEqual(Code.SUCCESS, result.code)
+
+    def test_worker_check_api_missing(self):
+        cfg.CONF.set_override("api_workers", None)
+        cfg.CONF.set_override("rpc_workers", 2)
+        result = checks.CoreChecks.worker_count_check(mock.Mock())
+        self.assertEqual(Code.WARNING, result.code)
+
+    def test_worker_check_rpc_missing(self):
+        cfg.CONF.set_override("api_workers", 2)
+        cfg.CONF.set_override("rpc_workers", None)
+        result = checks.CoreChecks.worker_count_check(mock.Mock())
+        self.assertEqual(Code.WARNING, result.code)
+
+    def test_worker_check_both_missing(self):
+        cfg.CONF.set_override("api_workers", None)
+        cfg.CONF.set_override("rpc_workers", None)
+        result = checks.CoreChecks.worker_count_check(mock.Mock())
+        self.assertEqual(Code.WARNING, result.code)

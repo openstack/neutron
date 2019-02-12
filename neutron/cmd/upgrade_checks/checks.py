@@ -12,6 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from oslo_config import cfg
 from oslo_upgradecheck import upgradecheck
 
 from neutron._i18n import _
@@ -22,12 +23,19 @@ class CoreChecks(base.BaseChecks):
 
     def get_checks(self):
         return [
-            (_("Check nothing"), self.noop_check)
+            (_("Worker counts configured"), self.worker_count_check)
         ]
 
     @staticmethod
-    def noop_check(checker):
-        # NOTE(slaweq) This is only example Noop check, it can be removed when
-        # some real check methods will be added
-        return upgradecheck.Result(
-            upgradecheck.Code.SUCCESS, _("Always succeed (placeholder)"))
+    def worker_count_check(checker):
+
+        if cfg.CONF.api_workers and cfg.CONF.rpc_workers:
+            return upgradecheck.Result(
+                upgradecheck.Code.SUCCESS, _("Number of workers already "
+                "defined in config"))
+        else:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING, _("The default number of workers "
+                "has changed. Please see release notes for the new values, "
+                "but it is strongly encouraged for deployers to manually set "
+                "the values for api_workers and rpc_workers."))

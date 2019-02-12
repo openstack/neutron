@@ -26,10 +26,12 @@ service_opts = [
     cfg.IntOpt('api_workers',
                help=_('Number of separate API worker processes for service. '
                       'If not specified, the default is equal to the number '
-                      'of CPUs available for best performance.')),
+                      'of CPUs available for best performance, capped by '
+                      'potential RAM usage.')),
     cfg.IntOpt('rpc_workers',
-               default=1,
-               help=_('Number of RPC worker processes for service.')),
+               help=_('Number of RPC worker processes for service. '
+                      'If not specified, the default is equal to half the '
+                      'number of API workers.')),
     cfg.IntOpt('rpc_state_report_workers',
                default=1,
                help=_('Number of RPC worker processes dedicated to state '

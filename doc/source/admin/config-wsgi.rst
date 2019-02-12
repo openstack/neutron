@@ -127,3 +127,25 @@ serve this job:
     # /usr/bin/neutron-rpc-server --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
 
 .. end
+
+Neutron Worker Processes
+------------------------
+
+Neutron will attempt to spawn a number of child processes for handling API
+and RPC requests. The number of API workers is set to the number of CPU
+cores, further limited by available memory, and the number of RPC workers
+is set to half that number.
+
+It is strongly recommended that all deployers set these values themselves,
+via the api_workers and rpc_workers configuration parameters.
+
+For a cloud with a high load to a relatively small number of objects,
+a smaller value for api_workers will provide better performance than
+many (somewhere around 4-8.) For a cloud with a high load to lots of
+different objects, then the more the better. Budget neutron-server
+using about 2GB of RAM in steady-state.
+
+For rpc_workers, there needs to be enough to keep up with incoming
+events from the various neutron agents. Signs that there are too few
+can be agent heartbeats arriving late, nova vif bindings timing out
+on the hypervisors, or rpc message timeout exceptions in agent logs.

@@ -33,6 +33,7 @@ from oslo_service import loopingcall
 from oslo_service import service as common_service
 from oslo_utils import excutils
 from oslo_utils import importutils
+import psutil
 
 from neutron.common import config
 from neutron.common import profiler
@@ -148,28 +149,51 @@ class RpcReportsWorker(RpcWorker):
     start_listeners_method = 'start_rpc_state_reports_listener'
 
 
-def _get_rpc_workers():
-    plugin = directory.get_plugin()
+def _get_worker_count():
+    # Start with the number of CPUs
+    num_workers = processutils.get_worker_count()
+
+    # Now don't use more than half the system memory, assuming
+    # a steady-state bloat of around 2GB.
+    mem = psutil.virtual_memory()
+    mem_workers = int(mem.total / (2 * 1024 * 1024 * 1024))
+    if mem_workers < num_workers:
+        num_workers = mem_workers
+
+    # And just in case, always at least one.
+    if num_workers <= 0:
+        num_workers = 1
+
+    return num_workers
+
+
+def _get_rpc_workers(plugin=None):
+    if plugin is None:
+        plugin = directory.get_plugin()
     service_plugins = directory.get_plugins().values()
 
-    if cfg.CONF.rpc_workers < 1:
-        cfg.CONF.set_override('rpc_workers', 1)
+    workers = cfg.CONF.rpc_workers
+    if workers is None:
+        # By default, half as many rpc workers as api workers
+        workers = int(_get_worker_count() / 2)
+    if workers < 1:
+        workers = 1
 
-    # If 0 < rpc_workers then start_rpc_listeners would be called in a
+    # If workers > 0 then start_rpc_listeners would be called in a
     # subprocess and we cannot simply catch the NotImplementedError.  It is
     # simpler to check this up front by testing whether the plugin supports
     # multiple RPC workers.
     if not plugin.rpc_workers_supported():
         LOG.debug("Active plugin doesn't implement start_rpc_listeners")
-        if 0 < cfg.CONF.rpc_workers:
+        if workers > 0:
             LOG.error("'rpc_workers = %d' ignored because "
                       "start_rpc_listeners is not implemented.",
-                      cfg.CONF.rpc_workers)
+                      workers)
         raise NotImplementedError()
 
     # passing service plugins only, because core plugin is among them
     rpc_workers = [RpcWorker(service_plugins,
-                             worker_process_count=cfg.CONF.rpc_workers)]
+                             worker_process_count=workers)]
 
     if (cfg.CONF.rpc_state_report_workers > 0 and
             plugin.rpc_state_report_workers_supported()):
@@ -283,7 +307,7 @@ def start_plugins_workers():
 def _get_api_workers():
     workers = cfg.CONF.api_workers
     if workers is None:
-        workers = processutils.get_worker_count()
+        workers = _get_worker_count()
     return workers
 
 
