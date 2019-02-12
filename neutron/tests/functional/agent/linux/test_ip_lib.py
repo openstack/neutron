@@ -202,6 +202,18 @@ class IpLibTestCase(IpLibTestFramework):
         device.link.delete()
         self.assertFalse(device.exists())
 
+    def test_vlan_exists(self):
+        attr = self.generate_device_details()
+        ip = ip_lib.IPWrapper(namespace=attr.namespace)
+        ip.netns.add(attr.namespace)
+        self.addCleanup(ip.netns.delete, attr.namespace)
+        priv_ip_lib.create_interface(attr.name, attr.namespace, 'dummy')
+        self.assertFalse(ip_lib.vlan_in_use(1999, namespace=attr.namespace))
+        device = ip.add_vlan('vlan1999', attr.name, 1999)
+        self.assertTrue(ip_lib.vlan_in_use(1999, namespace=attr.namespace))
+        device.link.delete()
+        self.assertFalse(ip_lib.vlan_in_use(1999, namespace=attr.namespace))
+
     def test_vxlan_exists(self):
         attr = self.generate_device_details()
         ip = ip_lib.IPWrapper(namespace=attr.namespace)
