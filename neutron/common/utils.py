@@ -48,6 +48,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import fileutils
 from oslo_utils import importutils
+import pkg_resources
 import six
 from stevedore import driver
 
@@ -366,6 +367,12 @@ def is_port_trusted(port):
     since we restrict who can use that in the default policy.json file.
     """
     return port['device_owner'].startswith(n_const.DEVICE_OWNER_NETWORK_PREFIX)
+
+
+def is_version_greater_equal(version1, version2):
+    """Returns True if version1 is greater or equal than version2 else False"""
+    return (pkg_resources.parse_version(version1) >=
+            pkg_resources.parse_version(version2))
 
 
 class DelayedStringRenderer(object):
