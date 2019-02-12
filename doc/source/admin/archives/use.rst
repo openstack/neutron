@@ -342,6 +342,6 @@ you are using. If you are using a plug-in that:
 
     If your plug-in implements Networking security groups, you can also
     leverage Compute security groups by setting
-    ``security_group_api = neutron`` in the ``nova.conf`` file. After
+    ``use_neutron = True`` in the ``nova.conf`` file. After
     you set this option, all Compute security group commands are proxied
     to Networking.

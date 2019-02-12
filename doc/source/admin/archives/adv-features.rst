@@ -326,9 +326,9 @@ to change the behavior.
 To use the Compute security group APIs or use Compute to orchestrate the
 creation of ports for instances on specific security groups, you must
 complete additional configuration. You must configure the
-``/etc/nova/nova.conf`` file and set the ``security_group_api=neutron``
-option on every node that runs nova-compute and nova-api. After you make
-this change, restart nova-api and nova-compute to pick up this change.
+``/etc/nova/nova.conf`` file and set the ``use_neutron=True``
+option on every node that runs nova-compute, nova-conductor and nova-api.
+After you make this change, restart those nova services to pick up this change.
 Then, you can use both the Compute and OpenStack Network security group
 APIs at the same time.
 
