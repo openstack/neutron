@@ -88,11 +88,12 @@ class DriverController(object):
         drv = self._get_provider_for_create(context, router)
         self._stm.add_resource_association(context, plugin_constants.L3,
                                            drv.name, router['id'])
-        registry.notify(
+        registry.publish(
             resources.ROUTER_CONTROLLER, events.PRECOMMIT_ADD_ASSOCIATION,
-            trigger, context=context, router=router,
-            router_db=router_db, old_driver=None,
-            new_driver=drv, **kwargs)
+            trigger, payload=events.DBEventPayload(
+                context, request_body=router, states=(router_db,),
+                metadata={'old_driver': None, 'new_driver': drv},
+                resource_id=router_db.get('id')))
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_DELETE],
                        priority_group.PRIORITY_ROUTER_CONTROLLER)
@@ -100,10 +101,13 @@ class DriverController(object):
                                router_id, **kwargs):
         """Remove the association between a router and a service provider."""
         drv = self.get_provider_for_router(context, router_id)
-        registry.notify(
+        registry.publish(
             resources.ROUTER_CONTROLLER, events.PRECOMMIT_DELETE_ASSOCIATIONS,
-            trigger, context=context, router_id=router_id,
-            old_driver=drv, new_driver=None, **kwargs)
+            trigger, payload=events.DBEventPayload(
+                context,
+                metadata={'old_driver': drv, 'new_driver': None},
+                resource_id=router_id))
+
         self._stm.del_resource_associations(context, [router_id])
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_UPDATE],
@@ -190,11 +194,13 @@ class DriverController(object):
                 self._stm.add_resource_association(
                     context, plugin_constants.L3,
                     driver_name, router_id)
-                registry.notify(
+                registry.publish(
                     resources.ROUTER_CONTROLLER,
                     events.PRECOMMIT_ADD_ASSOCIATION,
-                    self, context=context, router_id=router_id,
-                    router=router, old_driver=None, new_driver=driver)
+                    self, payload=events.DBEventPayload(
+                        context, states=(router,),
+                        metadata={'old_driver': None, 'new_driver': driver},
+                        resource_id=router_id))
         return self.drivers[driver_name]
 
     def _get_provider_for_create(self, context, router):
