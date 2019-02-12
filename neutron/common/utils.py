@@ -45,6 +45,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import fileutils
 from oslo_utils import importutils
+import pkg_resources
 import six
 from stevedore import driver
 
@@ -287,6 +288,12 @@ def ip_version_from_int(ip_version_int):
     if ip_version_int == 6:
         return n_const.IPv6
     raise ValueError(_('Illegal IP version number'))
+
+
+def is_version_greater_equal(version1, version2):
+    """Returns True if version1 is greater or equal than version2 else False"""
+    return (pkg_resources.parse_version(version1) >=
+            pkg_resources.parse_version(version2))
 
 
 class DelayedStringRenderer(object):
