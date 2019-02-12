@@ -31,7 +31,7 @@ def load_checks():
             project_checks_class = module.entry_point.load()
             project_checks = project_checks_class().get_checks()
             if project_checks:
-                checks.append(project_checks)
+                checks += project_checks
         except Exception as e:
             LOG.exception("Checks class %(entrypoint)s failed to load. "
                           "Error: %(err)s",

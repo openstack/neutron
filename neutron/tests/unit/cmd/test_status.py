@@ -21,11 +21,11 @@ from neutron.tests import base
 class TestUpgradeChecks(base.BaseTestCase):
 
     def test_load_checks(self):
-        expected_checks = tuple(
-            ("test check", "test_check_method"))
+        checks = [("test check", "test_check_method")]
+        expected_checks = tuple(checks)
         checks_class_1 = mock.MagicMock()
         checks_class_1.entry_point.load()().get_checks.return_value = (
-            expected_checks)
+            checks)
         checks_class_2 = mock.MagicMock()
         checks_class_2.entry_point.load()().get_checks.return_value = None
         with mock.patch(
@@ -35,4 +35,4 @@ class TestUpgradeChecks(base.BaseTestCase):
             namespace_plugins._extensions = {
                 "tests": checks_class_1,
                 "no-checks-class": checks_class_2}
-            self.assertEqual((expected_checks,), status.load_checks())
+            self.assertEqual(expected_checks, status.load_checks())

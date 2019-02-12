@@ -21,9 +21,9 @@ from neutron.cmd.upgrade_checks import base
 class CoreChecks(base.BaseChecks):
 
     def get_checks(self):
-        return (
+        return [
             (_("Check nothing"), self.noop_check)
-        )
+        ]
 
     @staticmethod
     def noop_check(checker):
