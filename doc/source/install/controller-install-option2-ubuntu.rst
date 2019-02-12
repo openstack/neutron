@@ -132,6 +132,18 @@ Configure the server component
     Replace ``NOVA_PASS`` with the password you chose for the ``nova``
     user in the Identity service.
 
+
+* In the ``[oslo_concurrency]`` section, configure the lock path:
+
+  .. path /etc/neutron/neutron.conf
+  .. code-block:: ini
+
+     [oslo_concurrency]
+     # ...
+     lock_path = /var/lib/neutron/tmp
+
+  .. end
+
 Configure the Modular Layer 2 (ML2) plug-in
 -------------------------------------------
 

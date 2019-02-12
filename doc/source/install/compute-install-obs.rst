@@ -79,6 +79,18 @@ authentication mechanism, message queue, and plug-in.
        ``[keystone_authtoken]`` section.
 
 
+* In the ``[oslo_concurrency]`` section, configure the lock path:
+
+  .. path /etc/neutron/neutron.conf
+  .. code-block:: ini
+
+     [oslo_concurrency]
+     # ...
+     lock_path = /var/lib/neutron/tmp
+
+  .. end
+
+
 
 Configure networking options
 ----------------------------
