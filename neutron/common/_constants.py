@@ -56,3 +56,7 @@ AGENT_RES_PROCESSING_STEP = 100
 # Number of resources for neutron to divide the large RPC
 # call data sets.
 RPC_RES_PROCESSING_STEP = 20
+
+# IPtables version to support --random-fully option.
+# Do not move this constant to neutron-lib, since it is temporary
+IPTABLES_RANDOM_FULLY_VERSION = '1.6.2'

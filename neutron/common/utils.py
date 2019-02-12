@@ -41,6 +41,7 @@ from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
+import pkg_resources
 import six
 
 import neutron
@@ -310,6 +311,12 @@ def get_socket_address_family(ip_version):
     """Returns the address family depending on the IP version"""
     return (int(socket.AF_INET if ip_version == n_const.IP_VERSION_4
                 else socket.AF_INET6))
+
+
+def is_version_greater_equal(version1, version2):
+    """Returns True if version1 is greater or equal than version2 else False"""
+    return (pkg_resources.parse_version(version1) >=
+            pkg_resources.parse_version(version2))
 
 
 class DelayedStringRenderer(object):
