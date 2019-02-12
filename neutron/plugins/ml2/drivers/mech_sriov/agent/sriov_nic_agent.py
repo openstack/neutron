@@ -159,6 +159,7 @@ class SriovNicSwitchAgent(object):
         LOG.info("RPC agent_id: %s", self.agent_id)
 
         self.topic = topics.AGENT
+        self.failed_report_state = False
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         # RPC network init
         # Handle updates from service
@@ -188,7 +189,12 @@ class SriovNicSwitchAgent(object):
             self.agent_state.pop('resource_versions', None)
             self.agent_state.pop('start_flag', None)
         except Exception:
+            self.failed_report_state = True
             LOG.exception("Failed reporting state!")
+            return
+        if self.failed_report_state:
+            self.failed_report_state = False
+            LOG.info("Successfully reported state after a previous failure.")
 
     def _create_agent_extension_manager(self, connection):
         ext_manager.register_opts(self.conf)
