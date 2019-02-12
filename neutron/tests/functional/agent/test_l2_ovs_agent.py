@@ -341,7 +341,7 @@ class TestOVSAgent(base.OVSAgentTestFramework):
 
         callback.assert_called_with(resources.AGENT,
                                     events.OVS_RESTARTED,
-                                    mock.ANY)
+                                    mock.ANY, payload=None)
 
 
 class TestOVSAgentExtensionConfig(base.OVSAgentTestFramework):

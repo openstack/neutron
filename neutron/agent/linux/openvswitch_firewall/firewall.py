@@ -411,7 +411,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             callbacks_resources.AGENT,
             callbacks_events.OVS_RESTARTED)
 
-    def _init_firewall_callback(self, resource, event, trigger, **kwargs):
+    def _init_firewall_callback(self, resource, event, trigger, payload=None):
         LOG.info("Reinitialize Openvswitch firewall after OVS restart.")
         self._initialize_firewall()
 
