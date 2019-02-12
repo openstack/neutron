@@ -272,6 +272,13 @@ class DhcpRpcCallback(object):
         plugin = directory.get_plugin()
         return self._port_action(plugin, context, port, 'create_port')
 
+    def _is_dhcp_agent_hosting_network(self, plugin, context, host,
+                                       network_id):
+        """Check whether a DHCP agent (host) is hosting a network."""
+        agents = plugin.get_dhcp_agents_hosting_networks(context, [network_id],
+                                                         hosts=[host])
+        return len(agents) != 0
+
     @oslo_messaging.expected_exceptions(exceptions.IpAddressGenerationFailure)
     @db_api.retry_db_errors
     def update_dhcp_port(self, context, **kwargs):
@@ -282,11 +289,13 @@ class DhcpRpcCallback(object):
         port['port'][portbindings.HOST_ID] = host
         plugin = directory.get_plugin()
         try:
+            network_id = port['port']['network_id']
             old_port = plugin.get_port(context, port['id'])
             if (old_port['device_id'] != n_const.DEVICE_ID_RESERVED_DHCP_PORT
                 and old_port['device_id'] !=
-                utils.get_dhcp_agent_device_id(port['port']['network_id'],
-                                               host)):
+                utils.get_dhcp_agent_device_id(network_id, host) or
+                not self._is_dhcp_agent_hosting_network(plugin, context, host,
+                    network_id)):
                 raise n_exc.DhcpPortInUse(port_id=port['id'])
             LOG.debug('Update dhcp port %(port)s '
                       'from %(host)s.',
