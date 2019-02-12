@@ -37,6 +37,7 @@ from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
+from neutron.common import utils
 from neutron.conf.agent import common as config
 
 LOG = logging.getLogger(__name__)
@@ -301,6 +302,9 @@ class IptablesManager(object):
     # run iptables-restore without it.
     use_table_lock = False
 
+    # Flag to denote iptables supports --random-fully argument
+    _random_fully = None
+
     def __init__(self, _execute=None, state_less=False, use_ipv6=False,
                  namespace=None, binary_name=binary_name):
         if _execute:
@@ -471,6 +475,23 @@ class IptablesManager(object):
         if self.namespace:
             args = ['ip', 'netns', 'exec', self.namespace] + args
         return self.execute(args, run_as_root=True).split('\n')
+
+    def _get_version(self):
+        # Output example is "iptables v1.6.2"
+        args = ['iptables', '--version']
+        version = str(self.execute(args, run_as_root=True).split()[1][1:])
+        LOG.debug("IPTables version installed: %s", version)
+        return version
+
+    @property
+    def random_fully(self):
+        if self._random_fully is not None:
+            return self._random_fully
+
+        version = self._get_version()
+        self.__class__._random_fully = utils.is_version_greater_equal(
+            version, constants.IPTABLES_RANDOM_FULLY_VERSION)
+        return self._random_fully
 
     @property
     def xlock_wait_time(self):
