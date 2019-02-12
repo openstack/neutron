@@ -272,6 +272,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.prevent_arp_spoofing = (
             not self.sg_agent.firewall.provides_arp_spoofing_protection)
 
+        self.failed_report_state = False
         # TODO(mangelajo): optimize resource_versions to only report
         #                  versions about resources which are common,
         #                  or which are used by specific extensions.
@@ -350,7 +351,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 # is complete.
                 systemd.notify_once()
         except Exception:
+            self.failed_report_state = True
             LOG.exception("Failed reporting state!")
+            return
+        if self.failed_report_state:
+            self.failed_report_state = False
+            LOG.info("Successfully reported state after a previous failure.")
 
     def _restore_local_vlan_map(self):
         self._local_vlan_hints = {}
