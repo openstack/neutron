@@ -46,7 +46,6 @@ import six
 import neutron
 from neutron._i18n import _
 from neutron.api import api_common
-from neutron.db import api  # noqa
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
