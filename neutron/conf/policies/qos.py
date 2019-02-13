@@ -16,74 +16,226 @@ from neutron.conf.policies import base
 
 
 rules = [
-    policy.RuleDefault('get_policy',
-                       base.RULE_ANY,
-                       description='Access rule for getting QoS policy'),
-    policy.RuleDefault('create_policy',
-                       base.RULE_ADMIN_ONLY,
-                       description='Access rule for creating QoS policy'),
-    policy.RuleDefault('update_policy',
-                       base.RULE_ADMIN_ONLY,
-                       description='Access rule for updating QoS policy'),
-    policy.RuleDefault('delete_policy',
-                       base.RULE_ADMIN_ONLY,
-                       description='Access rule for deleting QoS policy'),
+    policy.DocumentedRuleDefault(
+        'get_policy',
+        base.RULE_ANY,
+        'Get QoS policies',
+        [
+            {
+                'method': 'GET',
+                'path': '/qos/policies',
+            },
+            {
+                'method': 'GET',
+                'path': '/qos/policies/{id}',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'create_policy',
+        base.RULE_ADMIN_ONLY,
+        'Create a QoS policy',
+        [
+            {
+                'method': 'POST',
+                'path': '/qos/policies',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_policy',
+        base.RULE_ADMIN_ONLY,
+        'Update a QoS policy',
+        [
+            {
+                'method': 'PUT',
+                'path': '/qos/policies/{id}',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_policy',
+        base.RULE_ADMIN_ONLY,
+        'Delete a QoS policy',
+        [
+            {
+                'method': 'DELETE',
+                'path': '/qos/policies/{id}',
+            },
+        ]
+    ),
 
-    policy.RuleDefault('get_rule_type',
-                       base.RULE_ANY,
-                       description=('Access rule for getting '
-                                    'all available QoS rule types')),
+    policy.DocumentedRuleDefault(
+        'get_rule_type',
+        base.RULE_ANY,
+        'Get available QoS rule types',
+        [
+            {
+                'method': 'GET',
+                'path': '/qos/rule-types',
+            },
+            {
+                'method': 'GET',
+                'path': '/qos/rule-types/{rule_type}',
+            },
+        ]
+    ),
 
-    policy.RuleDefault('get_policy_bandwidth_limit_rule',
-                       base.RULE_ANY,
-                       description=('Access rule for getting '
-                                    'QoS bandwidth limit rule')),
-    policy.RuleDefault('create_policy_bandwidth_limit_rule',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for creating '
-                                    'QoS bandwidth limit rule')),
-    policy.RuleDefault('update_policy_bandwidth_limit_rule',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for updating '
-                                    'QoS bandwidth limit rule')),
-    policy.RuleDefault('delete_policy_bandwidth_limit_rule',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for deleting '
-                                    'QoS bandwidth limit rule')),
+    policy.DocumentedRuleDefault(
+        'get_policy_bandwidth_limit_rule',
+        base.RULE_ANY,
+        'Get a QoS bandwidth limit rule',
+        [
+            {
+                'method': 'GET',
+                'path': '/qos/policies/{policy_id}/bandwidth_limit_rules',
+            },
+            {
+                'method': 'GET',
+                'path': ('/qos/policies/{policy_id}/'
+                         'bandwidth_limit_rules/{rule_id}'),
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'create_policy_bandwidth_limit_rule',
+        base.RULE_ADMIN_ONLY,
+        'Create a QoS bandwidth limit rule',
+        [
+            {
+                'method': 'POST',
+                'path': '/qos/policies/{policy_id}/bandwidth_limit_rules',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_policy_bandwidth_limit_rule',
+        base.RULE_ADMIN_ONLY,
+        'Update a QoS bandwidth limit rule',
+        [
+            {
+                'method': 'PUT',
+                'path': ('/qos/policies/{policy_id}/'
+                         'bandwidth_limit_rules/{rule_id}'),
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_policy_bandwidth_limit_rule',
+        base.RULE_ADMIN_ONLY,
+        'Delete a QoS bandwidth limit rule',
+        [
+            {
+                'method': 'DELETE',
+                'path': ('/qos/policies/{policy_id}/'
+                         'bandwidth_limit_rules/{rule_id}'),
+            },
+        ]
+    ),
 
-    policy.RuleDefault('get_policy_dscp_marking_rule',
-                       base.RULE_ANY,
-                       description=('Access rule for getting '
-                                    'QoS dscp marking rule')),
-    policy.RuleDefault('create_policy_dscp_marking_rule',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for creating '
-                                    'QoS dscp marking rule')),
-    policy.RuleDefault('update_policy_dscp_marking_rule',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for updating '
-                                    'QoS dscp marking rule')),
-    policy.RuleDefault('delete_policy_dscp_marking_rule',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for deleting '
-                                    'QoS dscp marking rule')),
+    policy.DocumentedRuleDefault(
+        'get_policy_dscp_marking_rule',
+        base.RULE_ANY,
+        'Get a QoS DSCP marking rule',
+        [
+            {
+                'method': 'GET',
+                'path': '/qos/policies/{policy_id}/dscp_marking_rules',
+            },
+            {
+                'method': 'GET',
+                'path': ('/qos/policies/{policy_id}/'
+                         'dscp_marking_rules/{rule_id}'),
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'create_policy_dscp_marking_rule',
+        base.RULE_ADMIN_ONLY,
+        'Create a QoS DSCP marking rule',
+        [
+            {
+                'method': 'POST',
+                'path': '/qos/policies/{policy_id}/dscp_marking_rules',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_policy_dscp_marking_rule',
+        base.RULE_ADMIN_ONLY,
+        'Update a QoS DSCP marking rule',
+        [
+            {
+                'method': 'PUT',
+                'path': ('/qos/policies/{policy_id}/'
+                         'dscp_marking_rules/{rule_id}'),
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_policy_dscp_marking_rule',
+        base.RULE_ADMIN_ONLY,
+        'Delete a QoS DSCP marking rule',
+        [
+            {
+                'method': 'DELETE',
+                'path': ('/qos/policies/{policy_id}/'
+                         'dscp_marking_rules/{rule_id}'),
+            },
+        ]
+    ),
 
-    policy.RuleDefault('get_policy_minimum_bandwidth_rule',
-                       base.RULE_ANY,
-                       description=('Access rule for getting '
-                                   'QoS minimum bandwidth rule')),
-    policy.RuleDefault('create_policy_minimum_bandwidth_rule',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for creating '
-                                    'QoS minimum bandwidth rule')),
-    policy.RuleDefault('update_policy_minimum_bandwidth_rule',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for updating '
-                                    'QoS minimum bandwidth rule')),
-    policy.RuleDefault('delete_policy_minimum_bandwidth_rule',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for deleting '
-                                    'QoS minimum bandwidth rule')),
+    policy.DocumentedRuleDefault(
+        'get_policy_minimum_bandwidth_rule',
+        base.RULE_ANY,
+        'Get a QoS minimum bandwidth rule',
+        [
+            {
+                'method': 'GET',
+                'path': '/qos/policies/{policy_id}/minimum_bandwidth_rules',
+            },
+            {
+                'method': 'GET',
+                'path': ('/qos/policies/{policy_id}/'
+                         'minimum_bandwidth_rules/{rule_id}'),
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'create_policy_minimum_bandwidth_rule',
+        base.RULE_ADMIN_ONLY,
+        'Create a QoS minimum bandwidth rule',
+        [
+            {
+                'method': 'POST',
+                'path': '/qos/policies/{policy_id}/minimum_bandwidth_rules',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_policy_minimum_bandwidth_rule',
+        base.RULE_ADMIN_ONLY,
+        'Update a QoS minimum bandwidth rule',
+        [
+            {
+                'method': 'PUT',
+                'path': ('/qos/policies/{policy_id}/'
+                         'minimum_bandwidth_rules/{rule_id}'),
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_policy_minimum_bandwidth_rule',
+        base.RULE_ADMIN_ONLY,
+        'Delete a QoS minimum bandwidth rule',
+        [
+            {
+                'method': 'DELETE',
+                'path': ('/qos/policies/{policy_id}/'
+                         'minimum_bandwidth_rules/{rule_id}'),
+            },
+        ]
+    ),
 ]
 
 

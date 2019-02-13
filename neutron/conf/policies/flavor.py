@@ -15,56 +15,144 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+FLAVOR_COLLECTION_PATH = '/flavors'
+FLAVOR_RESOURCE_PATH = '/flavors/{id}'
+PROFILE_COLLECTION_PATH = '/service_profiles'
+PROFILE_RESOURCE_PATH = '/service_profiles/{id}'
+ASSOC_COLLECTION_PATH = '/flavors/{flavor_id}/service_profiles'
+ASSOC_RESOURCE_PATH = '/flavors/{flavor_id}/service_profiles/{profile_id}'
+
+
 rules = [
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'create_flavor',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for creating flavor'),
-    policy.RuleDefault(
+        'Create a flavor',
+        [
+            {
+                'method': 'POST',
+                'path': FLAVOR_COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'get_flavor',
         base.RULE_ANY,
-        description='Access rule for getting flavor'),
-    policy.RuleDefault(
+        'Get a flavor',
+        [
+            {
+                'method': 'GET',
+                'path': FLAVOR_COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': FLAVOR_RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'update_flavor',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for updating flavor'),
-    policy.RuleDefault(
+        'Update a flavor',
+        [
+            {
+                'method': 'PUT',
+                'path': FLAVOR_RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'delete_flavor',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for deleting flavor'),
+        'Delete a flavor',
+        [
+            {
+                'method': 'DELETE',
+                'path': FLAVOR_RESOURCE_PATH,
+            },
+        ]
+    ),
 
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'create_service_profile',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for creating service profile'),
-    policy.RuleDefault(
+        'Create a service profile',
+        [
+            {
+                'method': 'POST',
+                'path': PROFILE_COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'get_service_profile',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for getting service profile'),
-    policy.RuleDefault(
+        'Get a service profile',
+        [
+            {
+                'method': 'GET',
+                'path': PROFILE_COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': PROFILE_RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'update_service_profile',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for updating service profile'),
-    policy.RuleDefault(
+        'Update a service profile',
+        [
+            {
+                'method': 'PUT',
+                'path': PROFILE_RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'delete_service_profile',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for deleting service profile'),
+        'Delete a service profile',
+        [
+            {
+                'method': 'DELETE',
+                'path': PROFILE_RESOURCE_PATH,
+            },
+        ]
+    ),
 
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'create_flavor_service_profile',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for associating '
-                     'flavor with service profile')),
-    policy.RuleDefault(
+        'Associate a flavor with a service profile',
+        [
+            {
+                'method': 'POST',
+                'path': ASSOC_COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'delete_flavor_service_profile',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for disassociating '
-                     'flavor with service profile')),
-    policy.RuleDefault(
-        'get_flavor_service_profile',
-        base.RULE_ANY,
-        description=('Access rule for getting flavor associating '
-                     'with the given service profiles')),
+        'Disassociate a flavor with a service profile',
+        [
+            {
+                'method': 'DELETE',
+                'path': ASSOC_RESOURCE_PATH,
+            },
+        ]
+    ),
+    # TODO(amotoki): GET /flavors/{flavor_id}/service_profiles/{profile_id}
+    # does not work and leads to an internal server error.
+    # It is not defined in the API reference either.
+    # It needs investigation and temporarily commented out.
+    # policy.RuleDefault(
+    #     'get_flavor_service_profile',
+    #     base.RULE_ANY,
+    #     'Get a flavor associate with a given service profiles',
+    # ),
 ]
 
 

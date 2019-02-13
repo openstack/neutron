@@ -15,171 +15,240 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+COLLECTION_PATH = '/ports'
+RESOURCE_PATH = '/ports/{id}'
+
+ACTION_POST = [
+    {'method': 'POST', 'path': COLLECTION_PATH},
+]
+ACTION_PUT = [
+    {'method': 'PUT', 'path': RESOURCE_PATH},
+]
+ACTION_DELETE = [
+    {'method': 'DELETE', 'path': RESOURCE_PATH},
+]
+ACTION_GET = [
+    {'method': 'GET', 'path': COLLECTION_PATH},
+    {'method': 'GET', 'path': RESOURCE_PATH},
+]
+
+
 rules = [
     policy.RuleDefault(
         'network_device',
         'field:port:device_owner=~^network:',
-        description='Rule of port with network device_owner'),
+        'Definition of port with network device_owner'),
     policy.RuleDefault(
         'admin_or_data_plane_int',
         base.policy_or('rule:context_is_admin',
                        'role:data_plane_integrator'),
-        description='Rule for data plane integration'),
+        'Rule for data plane integration'),
 
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'create_port',
         base.RULE_ANY,
-        description='Access rule for creating port'),
-    policy.RuleDefault(
+        'Create a port',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_port:device_owner',
         base.policy_or('not rule:network_device',
                        base.RULE_ADVSVC,
                        base.RULE_ADMIN_OR_NET_OWNER),
-        description='Access rule for creating port with device_owner'),
-    policy.RuleDefault(
+        'Specify ``device_owner`` attribute when creting a port',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_port:mac_address',
         base.policy_or(base.RULE_ADVSVC,
                        base.RULE_ADMIN_OR_NET_OWNER),
-        description=('Access rule for creating port with mac_address')),
-    policy.RuleDefault(
+        'Specify ``mac_address`` attribute when creating a port',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_port:fixed_ips',
         base.policy_or(base.RULE_ADVSVC,
                        base.RULE_ADMIN_OR_NET_OWNER),
-        description='Access rule for creating port with fixed_ips'),
-    policy.RuleDefault(
+        'Specify ``fixed_ips`` information when creating a port',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_port:fixed_ips:ip_address',
         base.policy_or(base.RULE_ADVSVC,
                        base.RULE_ADMIN_OR_NET_OWNER),
-        description=('Access rule for creating port specifying IP address in '
-                     'fixed_ips')),
-    policy.RuleDefault(
+        'Specify IP address in ``fixed_ips`` when creating a port',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_port:fixed_ips:subnet_id',
         base.policy_or(base.RULE_ADVSVC,
                        base.RULE_ADMIN_OR_NET_OWNER,
                        'rule:shared'),
-        description=('Access rule for creating port specifying subnet ID in '
-                     'fixed_ips')),
-    policy.RuleDefault(
+        'Specify subnet ID in ``fixed_ips`` when creating a port',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_port:port_security_enabled',
         base.policy_or(base.RULE_ADVSVC,
                        base.RULE_ADMIN_OR_NET_OWNER),
-        description=('Access rule for creating '
-                     'port with port_security_enabled')),
-    policy.RuleDefault(
+        'Specify ``port_security_enabled`` attribute when creating a port',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_port:binding:host_id',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for creating '
-                     'port with binging host_id')),
-    policy.RuleDefault(
+        'Specify ``binding:host_id`` attribute when creating a port',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_port:binding:profile',
         base.RULE_ADMIN_ONLY,
-        description=('Access rule for creating '
-                     'port with binding profile')),
-    policy.RuleDefault(
+        'Specify ``binding:profile`` attribute when creating a port',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_port:binding:vnic_type',
         base.RULE_ANY,
-        description=('Access rule for creating '
-                     'port with binding vnic_type')),
-    policy.RuleDefault(
+        'Specify ``binding:vnic_type`` attribute when creating a port',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
         'create_port:allowed_address_pairs',
         base.RULE_ADMIN_OR_NET_OWNER,
-        description=('Access rule for creating port '
-                     'with allowed_address_pairs attribute')),
+        'Specify ``allowed_address_pairs`` attribute when creating a port',
+        ACTION_POST
+    ),
 
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'get_port',
         base.policy_or(base.RULE_ADVSVC,
                        'rule:admin_owner_or_network_owner'),
-        description='Access rule for getting port'),
-    policy.RuleDefault(
+        'Get a port',
+        ACTION_GET
+    ),
+    policy.DocumentedRuleDefault(
         'get_port:binding:vif_type',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for getting binding vif_type of port'),
-    policy.RuleDefault(
+        'Get ``binding:vif_type`` attribute of a port',
+        ACTION_GET
+    ),
+    policy.DocumentedRuleDefault(
         'get_port:binding:vif_details',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for getting binding vif_details of port'),
-    policy.RuleDefault(
+        'Get ``binding:vif_details`` attribute of a port',
+        ACTION_GET
+    ),
+    policy.DocumentedRuleDefault(
         'get_port:binding:host_id',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for getting binding host_id of port'),
-    policy.RuleDefault(
+        'Get ``binding:host_id`` attribute of a port',
+        ACTION_GET
+    ),
+    policy.DocumentedRuleDefault(
         'get_port:binding:profile',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for getting binding profile of port'),
-    policy.RuleDefault(
+        'Get ``binding:profile`` attribute of a port',
+        ACTION_GET
+    ),
+    policy.DocumentedRuleDefault(
         'get_port:resource_request',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for getting resource request of port'),
+        'Get ``resource_request`` attribute of a port',
+        ACTION_GET
+    ),
     # TODO(amotoki): Add get_port:binding:vnic_type
     # TODO(amotoki): Add get_port:binding:data_plane_status
 
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'update_port',
         base.policy_or(base.RULE_ADMIN_OR_OWNER,
                        base.RULE_ADVSVC),
-        description='Access rule for updating port'),
-    policy.RuleDefault(
+        'Update a port',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_port:device_owner',
         base.policy_or('not rule:network_device',
                        base.RULE_ADVSVC,
                        base.RULE_ADMIN_OR_NET_OWNER),
-        description='Access rule for updating device_owner of port'),
-    policy.RuleDefault(
+        'Update ``device_owner`` attribute of a port',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_port:mac_address',
         base.policy_or(base.RULE_ADMIN_ONLY,
                        base.RULE_ADVSVC),
-        description='Access rule for updating mac_address of port'),
-    policy.RuleDefault(
+        'Update ``mac_address`` attribute of a port',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_port:fixed_ips',
         base.policy_or(base.RULE_ADVSVC,
                        base.RULE_ADMIN_OR_NET_OWNER),
-        description='Access rule for updating fixed_ips of port'),
-    policy.RuleDefault(
+        'Specify ``fixed_ips`` information when updating a port',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_port:fixed_ips:ip_address',
         base.policy_or(base.RULE_ADVSVC,
                        base.RULE_ADMIN_OR_NET_OWNER),
-        description=('Access rule for updating port specifying IP address in '
-                     'fixed_ips')),
-    policy.RuleDefault(
+        'Specify IP address in ``fixed_ips`` information when updating a port',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_port:fixed_ips:subnet_id',
         base.policy_or(base.RULE_ADVSVC,
                        base.RULE_ADMIN_OR_NET_OWNER,
                        'rule:shared'),
-        description=('Access rule for updating port specifying subnet ID in '
-                     'fixed_ips')),
-    policy.RuleDefault(
+        'Specify subnet ID in ``fixed_ips`` information when updating a port',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_port:port_security_enabled',
         base.policy_or(base.RULE_ADVSVC,
                        base.RULE_ADMIN_OR_NET_OWNER),
-        description='Access rule for updating port_security_enabled of port'),
-    policy.RuleDefault(
+        'Update ``port_security_enabled`` attribute of a port',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_port:binding:host_id',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for updating binding host_id of port'),
-    policy.RuleDefault(
+        'Update ``binding:host_id`` attribute of a port',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_port:binding:profile',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for updating binding profile of port'),
-    policy.RuleDefault(
+        'Update ``binding:profile`` attribute of a port',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_port:binding:vnic_type',
         base.policy_or(base.RULE_ADMIN_OR_OWNER,
                        base.RULE_ADVSVC),
-        description='Access rule for updating binding vnic_type of port'),
-    policy.RuleDefault(
+        'Update ``binding:vnic_type`` attribute of a port',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_port:allowed_address_pairs',
         base.RULE_ADMIN_OR_NET_OWNER,
-        description='Access rule for updating allowed_address_pairs of port'),
-    policy.RuleDefault(
+        'Update ``allowed_address_pairs`` attribute of a port',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
         'update_port:data_plane_status',
         'rule:admin_or_data_plane_int',
-        description='Access rule for updating data_plane_status of port'),
+        'Update ``data_plane_status`` attribute of a port',
+        ACTION_PUT
+    ),
 
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'delete_port',
         base.policy_or(base.RULE_ADVSVC,
                        'rule:admin_owner_or_network_owner'),
-        description='Access rule for deleting port'),
+        'Delete a port',
+        ACTION_DELETE
+    ),
 ]
 
 

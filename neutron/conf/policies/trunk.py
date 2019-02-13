@@ -15,31 +15,92 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+COLLECTION_PATH = '/trunks'
+RESOURCE_PATH = '/trunks/{id}'
+
+
 rules = [
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'create_trunk',
         base.RULE_ANY,
-        description='Access rule for creating trunk'),
-    policy.RuleDefault(
+        'Create a trunk',
+        [
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'get_trunk',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for getting trunk'),
-    policy.RuleDefault(
+        'Get a trunk',
+        [
+            {
+                'method': 'GET',
+                'path': COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_trunk',
+        base.RULE_ADMIN_OR_OWNER,
+        'Update a trunk',
+        [
+            {
+                'method': 'PUT',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'delete_trunk',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for deleting trunk'),
-    policy.RuleDefault(
+        'Delete a trunk',
+        [
+            {
+                'method': 'DELETE',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'get_subports',
         base.RULE_ANY,
-        description='Access rule for listing subports attached to a trunk'),
-    policy.RuleDefault(
+        'List subports attached to a trunk',
+        [
+            {
+                'method': 'GET',
+                'path': '/trunks/{id}/get_subports',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'add_subports',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for adding subports to a trunk'),
-    policy.RuleDefault(
+        'Add subports to a trunk',
+        [
+            {
+                'method': 'PUT',
+                'path': '/trunks/{id}/add_subports',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'remove_subports',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for deleting subports from a trunk'),
+        'Delete subports from a trunk',
+        [
+            {
+                'method': 'PUT',
+                'path': '/trunks/{id}/remove_subports',
+            },
+        ]
+    ),
 ]
 
 

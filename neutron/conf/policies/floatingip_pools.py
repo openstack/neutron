@@ -16,10 +16,17 @@ from neutron.conf.policies import base
 
 
 rules = [
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'get_floatingip_pool',
         base.RULE_ANY,
-        description='Access rule for getting floating IP pools'),
+        'Get floating IP pools',
+        [
+            {
+                'method': 'GET',
+                'path': '/floatingip_pools',
+            },
+        ]
+    ),
 ]
 
 

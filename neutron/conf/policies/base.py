@@ -66,7 +66,7 @@ rules = [
     policy.RuleDefault(
         'admin_only',
         'rule:context_is_admin',
-        description='Rule only for admin access'),
+        description='Rule for admin-only access'),
     policy.RuleDefault(
         'regular_user',
         '',

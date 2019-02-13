@@ -15,66 +15,161 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+COLLECTION_PATH = '/agents'
+RESOURCE_PATH = '/agents/{id}'
+
+
 rules = [
-    policy.RuleDefault('get_agent',
-                       base.RULE_ADMIN_ONLY,
-                       description='Access rule for getting agent'),
-    policy.RuleDefault('update_agent',
-                       base.RULE_ADMIN_ONLY,
-                       description='Access rule for updating agent'),
-    policy.RuleDefault('delete_agent',
-                       base.RULE_ADMIN_ONLY,
-                       description='Access rule for deleting agent'),
-    policy.RuleDefault('create_dhcp-network',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for adding '
-                                    'network to dhcp agent')),
-    policy.RuleDefault('get_dhcp-networks',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for listing '
-                                    'networks on the dhcp agent')),
-    policy.RuleDefault('delete_dhcp-network',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for removing '
-                                    'network from dhcp agent')),
-    policy.RuleDefault('create_l3-router',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for adding '
-                                    'router to l3 agent')),
-    policy.RuleDefault('get_l3-routers',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for listing '
-                                    'routers on the l3 agent')),
-    policy.RuleDefault('delete_l3-router',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for deleting '
-                                    'router from l3 agent')),
-    policy.RuleDefault('get_dhcp-agents',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for listing '
-                                    'dhcp agents hosting the network')),
-    policy.RuleDefault('get_l3-agents',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for listing '
-                                    'l3 agents hosting the router')),
+    policy.DocumentedRuleDefault(
+        'get_agent',
+        base.RULE_ADMIN_ONLY,
+        'Get an agent',
+        [
+            {
+                'method': 'GET',
+                'path': COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_agent',
+        base.RULE_ADMIN_ONLY,
+        'Update an agent',
+        [
+            {
+                'method': 'PUT',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_agent',
+        base.RULE_ADMIN_ONLY,
+        'Delete an agent',
+        [
+            {
+                'method': 'DELETE',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'create_dhcp-network',
+        base.RULE_ADMIN_ONLY,
+        'Add a network to a DHCP agent',
+        [
+            {
+                'method': 'POST',
+                'path': '/agents/{agent_id}/dhcp-networks',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'get_dhcp-networks',
+        base.RULE_ADMIN_ONLY,
+        'List networks on a DHCP agent',
+        [
+            {
+                'method': 'GET',
+                'path': '/agents/{agent_id}/dhcp-networks',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_dhcp-network',
+        base.RULE_ADMIN_ONLY,
+        'Remove a network from a DHCP agent',
+        [
+            {
+                'method': 'DELETE',
+                'path': '/agents/{agent_id}/dhcp-networks/{network_id}',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'create_l3-router',
+        base.RULE_ADMIN_ONLY,
+        'Add a router to an L3 agent',
+        [
+            {
+                'method': 'POST',
+                'path': '/agents/{agent_id}/l3-routers',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'get_l3-routers',
+        base.RULE_ADMIN_ONLY,
+        'List routers on an L3 agent',
+        [
+            {
+                'method': 'GET',
+                'path': '/agents/{agent_id}/l3-routers',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_l3-router',
+        base.RULE_ADMIN_ONLY,
+        'Remove a router from an L3 agent',
+        [
+            {
+                'method': 'DELETE',
+                'path': '/agents/{agent_id}/l3-routers/{router_id}',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'get_dhcp-agents',
+        base.RULE_ADMIN_ONLY,
+        'List DHCP agents hosting a network',
+        [
+            {
+                'method': 'GET',
+                'path': '/networks/{network_id}/dhcp-agents',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'get_l3-agents',
+        base.RULE_ADMIN_ONLY,
+        'List L3 agents hosting a router',
+        [
+            {
+                'method': 'GET',
+                'path': '/routers/{router_id}/l3-agents',
+            },
+        ]
+    ),
     # TODO(amotoki): Remove LBaaS related policies once neutron-lbaas
     # is retired.
-    policy.RuleDefault('get_loadbalancer-agent',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for getting '
-                                    'lbaas agent hosting the pool')),
-    policy.RuleDefault('get_loadbalancer-pools',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for listing '
-                                    'pools on the lbaas agent')),
-    policy.RuleDefault('get_agent-loadbalancers',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for listing '
-                                    'loadbalancers on the lbaasv2 agent')),
-    policy.RuleDefault('get_loadbalancer-hosting-agent',
-                       base.RULE_ADMIN_ONLY,
-                       description=('Access rule for getting '
-                                    'lbaasv2 agent hosting the loadbalancer')),
+    policy.DocumentedRuleDefault(
+        'get_agent-loadbalancers',
+        base.RULE_ADMIN_ONLY,
+        'List load balancers on an LBaaS v2 agent',
+        [
+            {
+                'method': 'GET',
+                'path': '/agents/{agent_id}/agent-loadbalancers',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'get_loadbalancer-hosting-agent',
+        base.RULE_ADMIN_ONLY,
+        'List LBaaS v2 agents hosting a load balancer',
+        [
+            {
+                'method': 'GET',
+                'path': ('/lbaas/loadbalancers/{load_balancer_id}/'
+                         'loadbalancer-hosting-agent'),
+            },
+        ]
+    ),
 ]
 
 

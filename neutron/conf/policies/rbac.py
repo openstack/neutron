@@ -15,40 +15,88 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+COLLECTION_PATH = '/rbac-policies'
+RESOURCE_PATH = '/rbac-policies/{id}'
+
+
 rules = [
     policy.RuleDefault(
         'restrict_wildcard',
         base.policy_or('(not field:rbac_policy:target_tenant=*)',
                        base.RULE_ADMIN_ONLY),
-        description='Rule of restrict wildcard'),
+        'Definition of a wildcard target_tenant'),
 
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'create_rbac_policy',
         base.RULE_ANY,
-        description='Access rule for creating RBAC policy'),
-    policy.RuleDefault(
+        'Create an RBAC policy',
+        [
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'create_rbac_policy:target_tenant',
         'rule:restrict_wildcard',
-        description=('Access rule for creating RBAC '
-                     'policy with a specific target tenant')),
-    policy.RuleDefault(
+        'Specify ``target_tenant`` when creating an RBAC policy',
+        [
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'update_rbac_policy',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for updating RBAC policy'),
-    policy.RuleDefault(
+        'Update an RBAC policy',
+        [
+            {
+                'method': 'PUT',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'update_rbac_policy:target_tenant',
         base.policy_and('rule:restrict_wildcard',
                         base.RULE_ADMIN_OR_OWNER),
-        description=('Access rule for updating target_tenant '
-                     'attribute of RBAC policy')),
-    policy.RuleDefault(
+        'Update ``target_tenant`` attribute of an RBAC policy',
+        [
+            {
+                'method': 'PUT',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'get_rbac_policy',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for getting RBAC policy'),
-    policy.RuleDefault(
+        'Get an RBAC policy',
+        [
+            {
+                'method': 'GET',
+                'path': COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'delete_rbac_policy',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for deleting RBAC policy'),
+        'Delete an RBAC policy',
+        [
+            {
+                'method': 'DELETE',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
 ]
 
 

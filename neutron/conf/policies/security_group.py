@@ -15,40 +15,103 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+SG_COLLECTION_PATH = '/security-groups'
+SG_RESOURCE_PATH = '/security-groups/{id}'
+RULE_COLLECTION_PATH = '/security-group-rules'
+RULE_RESOURCE_PATH = '/security-group-rules/{id}'
+
+
 rules = [
     # TODO(amotoki): admin_or_owner is the right rule?
     # Does an empty string make more sense for create_security_group?
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'create_security_group',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for creating security group'),
-    policy.RuleDefault(
+        'Create a security group',
+        [
+            {
+                'method': 'POST',
+                'path': SG_COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'get_security_group',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for getting security group'),
-    policy.RuleDefault(
+        'Get a security group',
+        [
+            {
+                'method': 'GET',
+                'path': SG_COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': SG_RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'update_security_group',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for updating security group'),
-    policy.RuleDefault(
+        'Update a security group',
+        [
+            {
+                'method': 'PUT',
+                'path': SG_RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'delete_security_group',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for deleting security group'),
+        'Delete a security group',
+        [
+            {
+                'method': 'DELETE',
+                'path': SG_RESOURCE_PATH,
+            },
+        ]
+    ),
 
     # TODO(amotoki): admin_or_owner is the right rule?
     # Does an empty string make more sense for create_security_group_rule?
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'create_security_group_rule',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for creating security group rule'),
-    policy.RuleDefault(
+        'Create a security group rule',
+        [
+            {
+                'method': 'POST',
+                'path': RULE_COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'get_security_group_rule',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for getting security group rule'),
-    policy.RuleDefault(
+        'Get a security group rule',
+        [
+            {
+                'method': 'GET',
+                'path': RULE_COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': RULE_RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'delete_security_group_rule',
         base.RULE_ADMIN_OR_OWNER,
-        description='Access rule for deleting security group rule'),
+        'Delete a security group rule',
+        [
+            {
+                'method': 'DELETE',
+                'path': RULE_RESOURCE_PATH,
+            },
+        ]
+    ),
 ]
 
 

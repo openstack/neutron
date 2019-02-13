@@ -15,17 +15,32 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+RESOURCE_PATH = '/auto-allocated-topology/{project_id}'
+
+
 rules = [
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'get_auto_allocated_topology',
         base.RULE_ADMIN_OR_OWNER,
-        description=("Access rule for getting a project's "
-                     "auto-allocated topology")),
-    policy.RuleDefault(
+        "Get a project's auto-allocated topology",
+        [
+            {
+                'method': 'GET',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'delete_auto_allocated_topology',
         base.RULE_ADMIN_OR_OWNER,
-        description=("Access rule for deleting a project's "
-                     "auto-allocated topology")),
+        "Delete a project's auto-allocated topology",
+        [
+            {
+                'method': 'DELETE',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
 ]
 
 

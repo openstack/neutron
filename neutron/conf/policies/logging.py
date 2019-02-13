@@ -15,27 +15,70 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
+COLLECTION_PATH = '/log/logs'
+RESOURCE_PATH = '/log/logs/{id}'
+
+
 rules = [
-    policy.RuleDefault(
+    policy.DocumentedRuleDefault(
         'get_loggable_resource',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for getting loggable resource'),
-    policy.RuleDefault(
+        'Get loggable resources',
+        [
+            {
+                'method': 'GET',
+                'path': '/log/loggable-resources',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'create_log',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for creating network log'),
-    policy.RuleDefault(
+        'Create a network log',
+        [
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'get_log',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for getting network log'),
-    policy.RuleDefault(
+        'Get a network log',
+        [
+            {
+                'method': 'GET',
+                'path': COLLECTION_PATH,
+            },
+            {
+                'method': 'GET',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'update_log',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for updating network log'),
-    policy.RuleDefault(
+        'Update a network log',
+        [
+            {
+                'method': 'PUT',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         'delete_log',
         base.RULE_ADMIN_ONLY,
-        description='Access rule for deleting network log'),
+        'Delete a network log',
+        [
+            {
+                'method': 'DELETE',
+                'path': RESOURCE_PATH,
+            },
+        ]
+    ),
 ]
 
 
