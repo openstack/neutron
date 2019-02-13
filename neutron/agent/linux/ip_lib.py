@@ -1431,7 +1431,9 @@ def get_devices_info(namespace, **kwargs):
 
     for device in retval.values():
         if device.get('parent_index'):
-            device['parent_name'] = retval[device['parent_index']]['name']
+            parent_device = retval.get(device['parent_index'])
+            if parent_device:
+                device['parent_name'] = parent_device['name']
         elif device.get('vxlan_link_index'):
             device['vxlan_link_name'] = (
                 retval[device['vxlan_link_index']]['name'])

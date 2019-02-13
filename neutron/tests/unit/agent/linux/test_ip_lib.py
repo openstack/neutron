@@ -1957,6 +1957,18 @@ class GetDevicesInfoTestCase(base.BaseTestCase):
                   )}))
     }
 
+    DEVICE_VETH = {
+        'index': 11,
+        'attrs': (('IFLA_IFNAME', 'int_04'), ('IFLA_OPERSTATE', 'UP'),
+                  ('IFLA_LINKMODE', 0), ('IFLA_MTU', 900),
+                  ('IFLA_PROMISCUITY', 0),
+                  ('IFLA_ADDRESS', '5a:76:ed:cc:ce:93'),
+                  ('IFLA_BROADCAST', 'ff:ff:ff:ff:ff:f3'),
+                  ('IFLA_LINK', 30),
+                  ('IFLA_LINKINFO', {
+                      'attrs': (('IFLA_INFO_KIND', 'veth'), )}))
+    }
+
     def setUp(self):
         super(GetDevicesInfoTestCase, self).setUp()
         self.mock_getdevs = mock.patch.object(priv_lib,
@@ -2031,3 +2043,22 @@ class GetDevicesInfoTestCase(base.BaseTestCase):
             break
         else:
             self.fail('No VXLAN device found')
+
+    def test_get_devices_info_veth(self):
+        self.mock_getdevs.return_value = (self.DEVICE_VETH, self.DEVICE_DUMMY)
+        ret = ip_lib.get_devices_info('namespace')
+        expected = {'index': 11,
+                    'name': 'int_04',
+                    'operstate': 'UP',
+                    'linkmode': 0,
+                    'mtu': 900,
+                    'promiscuity': 0,
+                    'mac': '5a:76:ed:cc:ce:93',
+                    'broadcast': 'ff:ff:ff:ff:ff:f3',
+                    'kind': 'veth',
+                    'parent_index': 30}
+        for device in (device for device in ret if device['kind'] == 'veth'):
+            self.assertEqual(expected, device)
+            break
+        else:
+            self.fail('No VETH device found')
