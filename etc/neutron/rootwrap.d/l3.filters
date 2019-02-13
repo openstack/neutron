@@ -51,10 +51,21 @@ ip6tables-restore: CommandFilter, ip6tables-restore, root
 
 # Keepalived
 keepalived: CommandFilter, keepalived, root
-kill_keepalived: KillFilter, root, /usr/sbin/keepalived, -HUP, -15, -9
+kill_keepalived: KillFilter, root, keepalived, -HUP, -15, -9
 
 # l3 agent to delete floatingip's conntrack state
 conntrack: CommandFilter, conntrack, root
 
 # keepalived state change monitor
 keepalived_state_change: CommandFilter, neutron-keepalived-state-change, root
+# The following filters are used to kill the keepalived state change monitor.
+# Since the monitor runs as a Python script, the system reports that the
+# command of the process to be killed is python.
+# TODO(mlavalle) These kill filters will be updated once we come up with a
+# mechanism to kill using the name of the script being executed by Python
+kill_keepalived_monitor_py: KillFilter, root, python, -15
+kill_keepalived_monitor_py27: KillFilter, root, python2.7, -15
+kill_keepalived_monitor_py3: KillFilter, root, python3, -15
+kill_keepalived_monitor_py35: KillFilter, root, python3.5, -15
+kill_keepalived_monitor_py36: KillFilter, root, python3.6, -15
+kill_keepalived_monitor_py37: KillFilter, root, python3.7, -15
