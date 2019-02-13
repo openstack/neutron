@@ -134,7 +134,8 @@ def list_opts():
              neutron.conf.common.core_cli_opts,
              neutron.conf.common.core_opts,
              neutron.conf.wsgi.socket_opts,
-             neutron.conf.service.service_opts)
+             neutron.conf.service.SERVICE_OPTS,
+             neutron.conf.service.RPC_EXTRA_OPTS)
          ),
         (neutron.conf.common.NOVA_CONF_SECTION,
          itertools.chain(
@@ -149,7 +150,8 @@ def list_base_agent_opts():
         ('DEFAULT',
          itertools.chain(
              neutron.conf.agent.common.INTERFACE_OPTS,
-             neutron.conf.agent.common.INTERFACE_DRIVER_OPTS)
+             neutron.conf.agent.common.INTERFACE_DRIVER_OPTS,
+             neutron.conf.service.RPC_EXTRA_OPTS)
          ),
         ('agent', neutron.conf.agent.common.AGENT_STATE_OPTS),
         ('ovs',
@@ -201,7 +203,8 @@ def list_l3_agent_opts():
         ('DEFAULT',
          itertools.chain(
              neutron.conf.agent.l3.config.OPTS,
-             neutron.conf.service.service_opts,
+             neutron.conf.service.SERVICE_OPTS,
+             neutron.conf.service.RPC_EXTRA_OPTS,
              neutron.conf.agent.l3.ha.OPTS,
              neutron.conf.agent.common.PD_DRIVER_OPTS,
              neutron.conf.agent.common.RA_OPTS)
@@ -269,6 +272,10 @@ def list_ml2_conf_opts():
 
 def list_ovs_opts():
     return [
+        ('DEFAULT',
+         itertools.chain(
+             neutron.conf.service.RPC_EXTRA_OPTS)
+         ),
         ('ovs',
          itertools.chain(
              neutron.conf.plugins.ml2.drivers.ovs_conf.ovs_opts,

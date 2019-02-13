@@ -21,6 +21,7 @@ from neutron.common import config
 from neutron.conf.agent import cmd
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
+from neutron.conf import service as service_config
 
 LOG = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ def setup_conf():
     l3_config.register_l3_agent_config_opts(l3_config.OPTS, conf)
     agent_config.register_interface_driver_opts_helper(conf)
     agent_config.register_interface_opts()
+    service_config.register_service_opts(service_config.RPC_EXTRA_OPTS, conf)
     conf.set_default("ovsdb_timeout", CLEANUP_OVSDB_TIMEOUT, "OVS")
     return conf
 
