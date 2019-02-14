@@ -24,7 +24,6 @@ from neutron_lib import context
 from neutron_lib.db import api as session
 from neutron_lib.plugins import directory
 from neutron_lib import rpc as n_rpc
-from neutron_lib import worker as neutron_worker
 from oslo_concurrency import processutils
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -38,6 +37,7 @@ import psutil
 from neutron.common import config
 from neutron.common import profiler
 from neutron.conf import service
+from neutron import worker as neutron_worker
 from neutron import wsgi
 
 
@@ -94,7 +94,7 @@ def serve_wsgi(cls):
     return service
 
 
-class RpcWorker(neutron_worker.BaseWorker):
+class RpcWorker(neutron_worker.NeutronBaseWorker):
     """Wraps a worker to be handled by ProcessLauncher"""
     start_listeners_method = 'start_rpc_listeners'
 
@@ -107,7 +107,7 @@ class RpcWorker(neutron_worker.BaseWorker):
         self._servers = []
 
     def start(self):
-        super(RpcWorker, self).start()
+        super(RpcWorker, self).start(desc="rpc worker")
         for plugin in self._plugins:
             if hasattr(plugin, self.start_listeners_method):
                 try:
@@ -220,7 +220,7 @@ def _get_plugins_workers():
     ]
 
 
-class AllServicesNeutronWorker(neutron_worker.BaseWorker):
+class AllServicesNeutronWorker(neutron_worker.NeutronBaseWorker):
     def __init__(self, services, worker_process_count=1):
         super(AllServicesNeutronWorker, self).__init__(worker_process_count)
         self._services = services
@@ -230,7 +230,7 @@ class AllServicesNeutronWorker(neutron_worker.BaseWorker):
     def start(self):
         for srv in self._services:
             self._launcher.launch_service(srv)
-        super(AllServicesNeutronWorker, self).start()
+        super(AllServicesNeutronWorker, self).start(desc="services worker")
 
     def stop(self):
         self._launcher.stop()
@@ -322,7 +322,7 @@ def _run_wsgi(app_name):
 def run_wsgi_app(app):
     server = wsgi.Server("Neutron")
     server.start(app, cfg.CONF.bind_port, cfg.CONF.bind_host,
-                 workers=_get_api_workers())
+                 workers=_get_api_workers(), desc="api worker")
     LOG.info("Neutron service started, listening on %(host)s:%(port)s",
              {'host': cfg.CONF.bind_host, 'port': cfg.CONF.bind_port})
     return server

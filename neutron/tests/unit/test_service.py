@@ -80,7 +80,8 @@ class TestRunWsgiApp(base.BaseTestCase):
             service.run_wsgi_app(mock.sentinel.app)
         start_call = mock_server.return_value.start.call_args
         expected_call = mock.call(
-            mock.ANY, mock.ANY, mock.ANY, workers=expected_passed_value)
+            mock.ANY, mock.ANY, mock.ANY, desc='api worker',
+            workers=expected_passed_value)
         self.assertEqual(expected_call, start_call)
 
     def test_api_workers_zero(self):

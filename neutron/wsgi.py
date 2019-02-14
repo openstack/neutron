@@ -25,7 +25,6 @@ import eventlet.wsgi
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exception
-from neutron_lib import worker as neutron_worker
 from oslo_config import cfg
 import oslo_i18n
 from oslo_log import log as logging
@@ -43,6 +42,7 @@ import webob.exc
 from neutron._i18n import _
 from neutron.common import config
 from neutron.conf import wsgi as wsgi_config
+from neutron import worker as neutron_worker
 
 CONF = cfg.CONF
 wsgi_config.register_socket_opts()
@@ -58,19 +58,20 @@ def encode_body(body):
     return encodeutils.to_utf8(body)
 
 
-class WorkerService(neutron_worker.BaseWorker):
+class WorkerService(neutron_worker.NeutronBaseWorker):
     """Wraps a worker to be handled by ProcessLauncher"""
-    def __init__(self, service, application, disable_ssl=False,
+    def __init__(self, service, application, set_proctitle, disable_ssl=False,
                  worker_process_count=0):
-        super(WorkerService, self).__init__(worker_process_count)
+        super(WorkerService, self).__init__(worker_process_count,
+                                            set_proctitle)
 
         self._service = service
         self._application = application
         self._disable_ssl = disable_ssl
         self._server = None
 
-    def start(self):
-        super(WorkerService, self).start()
+    def start(self, desc=None):
+        super(WorkerService, self).start(desc=desc)
         # When api worker is stopped it kills the eventlet wsgi server which
         # internally closes the wsgi server socket object. This server socket
         # object becomes not usable which leads to "Bad file descriptor"
@@ -162,7 +163,7 @@ class Server(object):
 
         return sock
 
-    def start(self, application, port, host='0.0.0.0', workers=0):
+    def start(self, application, port, host='0.0.0.0', workers=0, desc=None):
         """Run a WSGI server with the given application."""
         self._host = host
         self._port = port
@@ -174,14 +175,16 @@ class Server(object):
 
         self._launch(application, workers)
 
-    def _launch(self, application, workers=0):
-        service = WorkerService(self, application, self.disable_ssl, workers)
+    def _launch(self, application, workers=0, desc=None):
+        set_proctitle = "off" if desc is None else CONF.setproctitle
+        service = WorkerService(self, application, set_proctitle,
+                                self.disable_ssl, workers)
         if workers < 1:
             # The API service should run in the current process.
             self._server = service
             # Dump the initial option values
             cfg.CONF.log_opt_values(LOG, logging.DEBUG)
-            service.start()
+            service.start(desc=desc)
             systemd.notify_once()
         else:
             # dispose the whole pool before os.fork, otherwise there will

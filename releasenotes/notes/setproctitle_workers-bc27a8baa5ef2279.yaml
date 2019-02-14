@@ -1,0 +1,20 @@
+features:
+  - Neutron child processes now set their process titles
+    to match their roles ('api worker', 'rpc worker',
+    'periodic worker', 'services worker', or any other defined
+    by workers from out-of-tree plugins.) This behavior can be
+    disabled by setting the ``setproctitle`` config option in the
+    ``[default]`` section in neutron.conf to ``off``. The original
+    process string is also appended to the end, to help with
+    scripting that is looking for the old strings. There is also an
+    option called ``brief``, which results in much shorter and easier
+    to read process names. The default setting for this
+    option is ``on``, for a combination of backwards compatibility
+    and identifying different processes easily. The recommended
+    setting is ``brief``, once the deployer has verified that none
+    of their tooling depends on the older strings.
+upgrade:
+  - The change to the process title happens by default with the new
+    ``setproctitle`` config option. The old string is still part of
+    the new process title, but any scripts looking for exact string
+    matches of the old string may need to be modified.
