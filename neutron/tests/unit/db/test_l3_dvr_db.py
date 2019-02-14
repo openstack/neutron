@@ -826,6 +826,26 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                                 port=mock.ANY,
                                                 interface_info=interface_info)
 
+    def test__generate_arp_table_and_notify_agent(self):
+        fixed_ip = {
+            'ip_address': '1.2.3.4',
+            'subnet_id': _uuid()}
+        mac_address = "00:11:22:33:44:55"
+        expected_arp_table = {
+            'ip_address': fixed_ip['ip_address'],
+            'subnet_id': fixed_ip['subnet_id'],
+            'mac_address': mac_address}
+        notifier = mock.Mock()
+        ports = [{'id': _uuid(), 'device_id': 'router_1'},
+                 {'id': _uuid(), 'device_id': 'router_2'}]
+        with mock.patch.object(self.core_plugin, "get_ports",
+                               return_value=ports):
+            self.mixin._generate_arp_table_and_notify_agent(
+                self.ctx, fixed_ip, mac_address, notifier)
+        notifier.assert_has_calls([
+            mock.call(self.ctx, "router_1", expected_arp_table),
+            mock.call(self.ctx, "router_2", expected_arp_table)])
+
     def _test_update_arp_entry_for_dvr_service_port(
             self, device_owner, action):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
