@@ -179,7 +179,8 @@ class TunnelTest(object):
             ovs_lib.BaseOVS,
             'get_bridge_external_bridge_id').start()
         self.get_bridge_external_bridge_id.side_effect = (
-            lambda bridge: bridge if bridge in self.ovs_bridges else None)
+            lambda bridge, log_errors: bridge if bridge in self.ovs_bridges
+            else None)
 
         self.execute = mock.patch('neutron.agent.common.utils.execute').start()
 

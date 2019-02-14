@@ -1015,7 +1015,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # bridge-id's configured
         br_names = []
         for bridge in ovs_bridges:
-            bridge_id = ovs.get_bridge_external_bridge_id(bridge)
+            bridge_id = ovs.get_bridge_external_bridge_id(bridge,
+                                                          log_errors=False)
             if bridge_id != bridge:
                 br_names.append(bridge)
         ovs_bridges.difference_update(br_names)
