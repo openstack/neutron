@@ -13,11 +13,11 @@
 
 import mock
 from neutron_lib.callbacks import events
+from neutron_lib.callbacks import resources
 from neutron_lib import fixture
 
 from neutron.api.rpc.callbacks import resource_manager
 from neutron.services.trunk import callbacks
-from neutron.services.trunk import constants as trunk_consts
 from neutron.services.trunk.rpc import backend
 from neutron.tests import base
 from neutron.tests import tools
@@ -39,22 +39,22 @@ class ServerSideRpcBackendTest(base.BaseTestCase):
         calls = [mock.call(
                     *tools.get_subscribe_args(
                         test_obj.process_event,
-                        trunk_consts.TRUNK,
+                        resources.TRUNK,
                         events.AFTER_CREATE)),
                  mock.call(
                     *tools.get_subscribe_args(
                         test_obj.process_event,
-                        trunk_consts.TRUNK,
+                        resources.TRUNK,
                         events.AFTER_DELETE)),
                  mock.call(
                     *tools.get_subscribe_args(
                         test_obj.process_event,
-                        trunk_consts.SUBPORTS,
+                        resources.SUBPORTS,
                         events.AFTER_CREATE)),
                  mock.call(
                     *tools.get_subscribe_args(
                         test_obj.process_event,
-                        trunk_consts.SUBPORTS,
+                        resources.SUBPORTS,
                         events.AFTER_DELETE))
                  ]
         self._mgr.subscribe.assert_has_calls(calls, any_order=True)
@@ -65,12 +65,12 @@ class ServerSideRpcBackendTest(base.BaseTestCase):
         trunk_plugin = mock.Mock()
 
         test_obj.process_event(
-            trunk_consts.TRUNK, events.AFTER_CREATE, trunk_plugin,
+            resources.TRUNK, events.AFTER_CREATE, trunk_plugin,
             callbacks.TrunkPayload("context",
                                    "id",
                                    current_trunk="current_trunk"))
         test_obj.process_event(
-            trunk_consts.TRUNK, events.AFTER_DELETE, trunk_plugin,
+            resources.TRUNK, events.AFTER_DELETE, trunk_plugin,
             callbacks.TrunkPayload("context",
                                    "id",
                                    original_trunk="original_trunk"))

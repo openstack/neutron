@@ -61,7 +61,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
         drivers.register()
         registry.subscribe(rules.enforce_port_deletion_rules,
                            resources.PORT, events.BEFORE_DELETE)
-        registry.publish(constants.TRUNK_PLUGIN, events.AFTER_INIT, self)
+        registry.publish(resources.TRUNK_PLUGIN, events.AFTER_INIT, self)
         for driver in self._drivers:
             LOG.debug('Trunk plugin loaded with driver %s', driver.name)
         self.check_compatibility()
@@ -227,10 +227,10 @@ class TrunkPlugin(service_base.ServicePluginBase,
             payload = callbacks.TrunkPayload(context, trunk_obj.id,
                                              current_trunk=trunk_obj)
             registry.notify(
-                constants.TRUNK, events.PRECOMMIT_CREATE, self,
+                resources.TRUNK, events.PRECOMMIT_CREATE, self,
                 payload=payload)
         registry.notify(
-            constants.TRUNK, events.AFTER_CREATE, self, payload=payload)
+            resources.TRUNK, events.AFTER_CREATE, self, payload=payload)
         return trunk_obj
 
     @db_base_plugin_common.convert_result_to_dict
@@ -249,9 +249,9 @@ class TrunkPlugin(service_base.ServicePluginBase,
             payload = events.DBEventPayload(
                 context, resource_id=trunk_id, states=(original_trunk,),
                 desired_state=trunk_obj, request_body=trunk_data)
-            registry.publish(constants.TRUNK, events.PRECOMMIT_UPDATE, self,
+            registry.publish(resources.TRUNK, events.PRECOMMIT_UPDATE, self,
                              payload=payload)
-        registry.notify(constants.TRUNK, events.AFTER_UPDATE, self,
+        registry.notify(resources.TRUNK, events.AFTER_UPDATE, self,
                         payload=callbacks.TrunkPayload(
                             context, trunk_id,
                             original_trunk=original_trunk,
@@ -272,11 +272,11 @@ class TrunkPlugin(service_base.ServicePluginBase,
                 trunk.delete()
                 payload = callbacks.TrunkPayload(context, trunk_id,
                                                  original_trunk=trunk)
-                registry.notify(constants.TRUNK, events.PRECOMMIT_DELETE, self,
+                registry.notify(resources.TRUNK, events.PRECOMMIT_DELETE, self,
                                 payload=payload)
             else:
                 raise trunk_exc.TrunkInUse(trunk_id=trunk_id)
-        registry.notify(constants.TRUNK, events.AFTER_DELETE, self,
+        registry.notify(resources.TRUNK, events.AFTER_DELETE, self,
                         payload=payload)
 
     @db_base_plugin_common.convert_result_to_dict
@@ -325,11 +325,11 @@ class TrunkPlugin(service_base.ServicePluginBase,
                                              original_trunk=original_trunk,
                                              subports=added_subports)
             if added_subports:
-                registry.notify(constants.SUBPORTS, events.PRECOMMIT_CREATE,
+                registry.notify(resources.SUBPORTS, events.PRECOMMIT_CREATE,
                                 self, payload=payload)
         if added_subports:
             registry.notify(
-                constants.SUBPORTS, events.AFTER_CREATE, self, payload=payload)
+                resources.SUBPORTS, events.AFTER_CREATE, self, payload=payload)
         return trunk
 
     @db_base_plugin_common.convert_result_to_dict
@@ -377,11 +377,11 @@ class TrunkPlugin(service_base.ServicePluginBase,
                                              original_trunk=original_trunk,
                                              subports=removed_subports)
             if removed_subports:
-                registry.notify(constants.SUBPORTS, events.PRECOMMIT_DELETE,
+                registry.notify(resources.SUBPORTS, events.PRECOMMIT_DELETE,
                                 self, payload=payload)
         if removed_subports:
             registry.notify(
-                constants.SUBPORTS, events.AFTER_DELETE, self, payload=payload)
+                resources.SUBPORTS, events.AFTER_DELETE, self, payload=payload)
         return trunk
 
     @db_base_plugin_common.filter_fields

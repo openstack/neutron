@@ -18,6 +18,7 @@ import functools
 import eventlet
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import context as n_context
 from oslo_concurrency import lockutils
 from oslo_context import context as o_context
@@ -379,7 +380,7 @@ class OVSDBHandler(object):
 
         try:
             registry.notify(
-                constants.TRUNK, events.BEFORE_CREATE, self,
+                resources.TRUNK, events.BEFORE_CREATE, self,
                 context=ctx, trunk=trunk)
             self.trunk_manager.create_trunk(
                 trunk.id, trunk.port_id,

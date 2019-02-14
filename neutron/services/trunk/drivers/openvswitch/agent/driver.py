@@ -18,7 +18,6 @@ import oslo_messaging
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
-from neutron.services.trunk import constants
 from neutron.services.trunk.drivers.openvswitch.agent import ovsdb_handler
 from neutron.services.trunk.drivers.openvswitch.agent import trunk_manager
 from neutron.services.trunk.rpc import agent
@@ -75,7 +74,7 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
                     "%(subports)s: %(err)s",
                     {'event': event_type, 'subports': subports, 'err': e})
 
-    @local_registry.receives(constants.TRUNK, [local_events.BEFORE_CREATE])
+    @local_registry.receives(resources.TRUNK, [local_events.BEFORE_CREATE])
     def check_trunk_dependencies(
         self, resource, event, trigger, **kwargs):
         # The OVS trunk driver does not work with iptables firewall and QoS.
