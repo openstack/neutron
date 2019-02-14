@@ -247,14 +247,12 @@ class DVRResourceOperationHandler(object):
         if port_list:
             self._populate_mtu_and_subnets_for_ports(context, port_list)
             return port_list
-        port_list = []
 
         int_ports = (
             rp.port for rp in router.attached_ports
             if rp.port_type == const.DEVICE_OWNER_DVR_INTERFACE
         )
-        LOG.info('SNAT interface port list does not exist,'
-                 ' so create one: %s', port_list)
+        LOG.info('SNAT interface port list does not exist, creating one')
         v6_subnets = []
         network = None
         for intf in int_ports:
