@@ -350,6 +350,7 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
                                 _TestModelsMigrations,
                                 testlib_api.SqlTestCaseLight):
 
+    @test_base.skip_if_timeout("bug 1687027")
     def test_check_mysql_engine(self):
         engine = self.get_engine()
         cfg.CONF.set_override('connection', engine.url, group='database')
@@ -367,6 +368,32 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
                    'InnoDB' and
                    table != 'alembic_version']
             self.assertEqual(0, len(res), "%s non InnoDB tables created" % res)
+
+    @test_base.skip_if_timeout("bug 1687027")
+    def test_upgrade_expand_branch(self):
+        super(TestModelsMigrationsMysql, self).test_upgrade_expand_branch()
+
+    @test_base.skip_if_timeout("bug 1687027")
+    def test_upgrade_contract_branch(self):
+        super(TestModelsMigrationsMysql, self).test_upgrade_contract_branch()
+
+    @test_base.skip_if_timeout("bug 1687027")
+    def test_branches(self):
+        super(TestModelsMigrationsMysql, self).test_branches()
+
+    @test_base.skip_if_timeout("bug 1687027")
+    def test_has_offline_migrations_pending_contract_scripts(self):
+        super(TestModelsMigrationsMysql,
+              self).test_has_offline_migrations_pending_contract_scripts()
+
+    @test_base.skip_if_timeout("bug 1687027")
+    def test_has_offline_migrations_all_heads_upgraded(self):
+        super(TestModelsMigrationsMysql,
+              self).test_has_offline_migrations_all_heads_upgraded()
+
+    @test_base.skip_if_timeout("bug 1687027")
+    def test_models_sync(self):
+        super(TestModelsMigrationsMysql, self).test_models_sync()
 
 
 class TestModelsMigrationsPsql(testlib_api.PostgreSQLTestCaseMixin,
@@ -587,6 +614,7 @@ class TestWalkMigrationsMysql(testlib_api.MySQLTestCaseMixin,
     # on slow nodes than 'psycopg2' and because of that this increased
     # timeout is required only when for testing with 'mysql' backend.
     @test_base.set_timeout(600)
+    @test_base.skip_if_timeout("bug 1687027")
     def test_walk_versions(self):
         super(TestWalkMigrationsMysql, self).test_walk_versions()
 
