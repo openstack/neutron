@@ -156,8 +156,10 @@ class BaseOVS(object):
     def get_bridges(self):
         return self.ovsdb.list_br().execute(check_error=True)
 
-    def get_bridge_external_bridge_id(self, bridge):
-        return self.ovsdb.br_get_external_id(bridge, 'bridge-id').execute()
+    def get_bridge_external_bridge_id(self, bridge, check_error=False,
+                                      log_errors=True):
+        return self.ovsdb.br_get_external_id(bridge, 'bridge-id').execute(
+            check_error=check_error, log_errors=log_errors)
 
     def set_db_attribute(self, table_name, record, column, value,
                          check_error=False, log_errors=True):
