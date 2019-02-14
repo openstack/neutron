@@ -37,6 +37,7 @@ from oslo_utils import fileutils
 from oslo_utils import strutils
 from oslotest import base
 import six
+from sqlalchemy import exc as sqlalchemy_exc
 import testtools
 
 from neutron._i18n import _
@@ -94,6 +95,28 @@ def sanitize_log_path(path):
     for s, r in six.iteritems(replace_map):
         path = path.replace(s, r)
     return path
+
+
+def skip_if_timeout(reason):
+    def decor(f):
+        @functools.wraps(f)
+        def inner(self, *args, **kwargs):
+            try:
+                return f(self, *args, **kwargs)
+            except fixtures.TimeoutException:
+                msg = ("Timeout raised for test %s, skipping it "
+                       "because of: %s") % (self.id(), reason)
+                raise self.skipTest(msg)
+            except sqlalchemy_exc.InterfaceError:
+                # In case of db tests very often TimeoutException is reason of
+                # some sqlalchemy InterfaceError exception and that is final
+                # raised exception which needs to be handled
+                msg = ("DB connection broken in test %s. It is very likely "
+                       "that this happend because of test timeout. "
+                       "Skipping test because of: %s") % (self.id(), reason)
+                raise self.skipTest(msg)
+        return inner
+    return decor
 
 
 def set_timeout(timeout):
