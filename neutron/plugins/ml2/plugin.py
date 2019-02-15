@@ -16,15 +16,30 @@
 from eventlet import greenthread
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.agent import topics
+from neutron_lib.api.definitions import address_scope
+from neutron_lib.api.definitions import agent as agent_apidef
 from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
 from neutron_lib.api.definitions import availability_zone as az_def
+from neutron_lib.api.definitions import availability_zone_filter
+from neutron_lib.api.definitions import default_subnetpools
+from neutron_lib.api.definitions import dhcpagentscheduler
+from neutron_lib.api.definitions import empty_string_filtering
+from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
+from neutron_lib.api.definitions import filter_validation as filter_apidef
+from neutron_lib.api.definitions import ip_substring_port_filtering
+from neutron_lib.api.definitions import multiprovidernet
 from neutron_lib.api.definitions import network as net_def
+from neutron_lib.api.definitions import network_availability_zone
+from neutron_lib.api.definitions import network_mtu as mtu_apidef
 from neutron_lib.api.definitions import network_mtu_writable as mtuw_apidef
 from neutron_lib.api.definitions import port as port_def
+from neutron_lib.api.definitions import port_mac_address_regenerate
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import portbindings_extended as pbe_ext
+from neutron_lib.api.definitions import provider_net
+from neutron_lib.api.definitions import security_groups_port_filtering
 from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api.definitions import vlantransparent as vlan_apidef
 from neutron_lib.api import extensions
@@ -154,25 +169,29 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     __filter_validation_support = True
 
     # List of supported extensions
-    _supported_extension_aliases = ["provider", "external-net", "binding",
-                                    "quotas", "security-group", "agent",
-                                    "dhcp_agent_scheduler",
-                                    "multi-provider", "allowed-address-pairs",
-                                    "extra_dhcp_opt", "subnet_allocation",
-                                    "net-mtu", "net-mtu-writable",
-                                    "vlan-transparent",
-                                    "address-scope",
-                                    "availability_zone",
-                                    "network_availability_zone",
-                                    "availability_zone_filter",
-                                    "default-subnetpools",
+    _supported_extension_aliases = [provider_net.ALIAS,
+                                    external_net.ALIAS, portbindings.ALIAS,
+                                    "quotas", "security-group",
+                                    agent_apidef.ALIAS,
+                                    dhcpagentscheduler.ALIAS,
+                                    multiprovidernet.ALIAS,
+                                    addr_apidef.ALIAS,
+                                    edo_ext.ALIAS, "subnet_allocation",
+                                    mtu_apidef.ALIAS,
+                                    mtuw_apidef.ALIAS,
+                                    vlan_apidef.ALIAS,
+                                    address_scope.ALIAS,
+                                    az_def.ALIAS,
+                                    network_availability_zone.ALIAS,
+                                    availability_zone_filter.ALIAS,
+                                    default_subnetpools.ALIAS,
                                     "subnet-service-types",
-                                    "ip-substring-filtering",
-                                    "port-security-groups-filtering",
-                                    "empty-string-filtering",
-                                    "filter-validation",
-                                    "port-mac-address-regenerate",
-                                    "binding-extended"]
+                                    ip_substring_port_filtering.ALIAS,
+                                    security_groups_port_filtering.ALIAS,
+                                    empty_string_filtering.ALIAS,
+                                    filter_apidef.ALIAS,
+                                    port_mac_address_regenerate.ALIAS,
+                                    pbe_ext.ALIAS]
 
     # List of agent types for which all binding_failed ports should try to be
     # rebound when agent revive

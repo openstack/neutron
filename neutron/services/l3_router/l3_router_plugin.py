@@ -14,7 +14,17 @@
 #    under the License.
 
 from neutron_lib.agent import topics
+from neutron_lib.api.definitions import dvr
+from neutron_lib.api.definitions import extraroute
+from neutron_lib.api.definitions import fip_port_details
+from neutron_lib.api.definitions import floatingip_pools
 from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.api.definitions import l3_ext_gw_mode
+from neutron_lib.api.definitions import l3_ext_ha_mode
+from neutron_lib.api.definitions import l3_flavors
+from neutron_lib.api.definitions import l3_port_ip_change_not_allowed
+from neutron_lib.api.definitions import qos_gateway_ip
+from neutron_lib.api.definitions import router_availability_zone
 from neutron_lib import constants as n_const
 from neutron_lib.db import resource_extend
 from neutron_lib.plugins import constants as plugin_constants
@@ -82,13 +92,16 @@ class L3RouterPlugin(service_base.ServicePluginBase,
     l3_db.L3_NAT_db_mixin, l3_hamode_db.L3_HA_NAT_db_mixin,
     l3_dvr_db.L3_NAT_with_dvr_db_mixin, and extraroute_db.ExtraRoute_db_mixin.
     """
-    _supported_extension_aliases = ["dvr", "router", "ext-gw-mode",
-                                    "extraroute", "l3_agent_scheduler",
-                                    "l3-ha", "router_availability_zone",
-                                    "l3-flavors", "qos-fip",
-                                    "fip-port-details", "floatingip-pools",
-                                    "qos-gateway-ip",
-                                    "l3-port-ip-change-not-allowed"]
+    _supported_extension_aliases = [dvr.ALIAS, l3_apidef.ALIAS,
+                                    l3_ext_gw_mode.ALIAS,
+                                    extraroute.ALIAS, "l3_agent_scheduler",
+                                    l3_ext_ha_mode.ALIAS,
+                                    router_availability_zone.ALIAS,
+                                    l3_flavors.ALIAS, "qos-fip",
+                                    fip_port_details.ALIAS,
+                                    floatingip_pools.ALIAS,
+                                    qos_gateway_ip.ALIAS,
+                                    l3_port_ip_change_not_allowed.ALIAS]
 
     __native_pagination_support = True
     __native_sorting_support = True
