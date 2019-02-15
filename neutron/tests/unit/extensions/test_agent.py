@@ -17,6 +17,7 @@ import copy
 from datetime import datetime
 import time
 
+from neutron_lib.api.definitions import agent as agent_apidef
 from neutron_lib import constants
 from neutron_lib import context
 from oslo_config import cfg
@@ -56,7 +57,7 @@ class AgentTestExtensionManager(object):
 # This plugin class is just for testing
 class TestAgentPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                       agents_db.AgentDbMixin):
-    supported_extension_aliases = ["agent"]
+    supported_extension_aliases = [agent_apidef.ALIAS]
 
 
 class AgentDBTestMixIn(object):

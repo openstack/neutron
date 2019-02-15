@@ -115,7 +115,7 @@ class AddressScopeTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     __native_pagination_support = True
     __native_sorting_support = True
 
-    supported_extension_aliases = ["address-scope"]
+    supported_extension_aliases = [apidef.ALIAS]
 
 
 class TestAddressScope(AddressScopeTestCase):

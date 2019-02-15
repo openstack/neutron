@@ -16,6 +16,8 @@ import copy
 
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import trunk as trunk_apidef
+from neutron_lib.api.definitions import trunk_details
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -46,7 +48,8 @@ LOG = logging.getLogger(__name__)
 class TrunkPlugin(service_base.ServicePluginBase,
                   common_db_mixin.CommonDbMixin):
 
-    supported_extension_aliases = ["trunk", "trunk-details"]
+    supported_extension_aliases = [trunk_apidef.ALIAS,
+                                   trunk_details.ALIAS]
 
     __native_pagination_support = True
     __native_sorting_support = True

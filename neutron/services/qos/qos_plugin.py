@@ -17,7 +17,10 @@ from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import port_resource_request
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import qos as qos_apidef
+from neutron_lib.api.definitions import qos_bw_limit_direction
 from neutron_lib.api.definitions import qos_bw_minimum_ingress
+from neutron_lib.api.definitions import qos_default
+from neutron_lib.api.definitions import qos_rule_type_details
 from neutron_lib.api.definitions import qos_rules_alias
 from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
@@ -53,9 +56,9 @@ class QoSPlugin(qos.QoSPluginBase):
 
     """
     supported_extension_aliases = [qos_apidef.ALIAS,
-                                   'qos-bw-limit-direction',
-                                   'qos-default',
-                                   'qos-rule-type-details',
+                                   qos_bw_limit_direction.ALIAS,
+                                   qos_default.ALIAS,
+                                   qos_rule_type_details.ALIAS,
                                    port_resource_request.ALIAS,
                                    qos_bw_minimum_ingress.ALIAS,
                                    qos_rules_alias.ALIAS]

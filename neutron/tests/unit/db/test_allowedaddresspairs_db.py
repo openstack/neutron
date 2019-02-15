@@ -50,7 +50,7 @@ class AllowedAddressPairTestPlugin(portsecurity_db.PortSecurityDbMixin,
     associating ports with port security and allowed address pairs.
     """
 
-    supported_extension_aliases = ["allowed-address-pairs"]
+    supported_extension_aliases = [addr_apidef.ALIAS]
 
     def create_port(self, context, port):
         p = port['port']

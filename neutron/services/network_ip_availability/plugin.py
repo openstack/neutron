@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from neutron_lib.api.definitions import network_ip_availability
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions
 
@@ -25,7 +26,7 @@ class NetworkIPAvailabilityPlugin(ip_availability_db.IpAvailabilityMixin,
     """This plugin exposes IP availability data for networks and subnets."""
     _instance = None
 
-    supported_extension_aliases = ["network-ip-availability"]
+    supported_extension_aliases = [network_ip_availability.ALIAS]
 
     __filter_validation_support = True
 

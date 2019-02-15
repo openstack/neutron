@@ -45,7 +45,7 @@ class DataPlaneStatusTestExtensionManager(object):
 class DataPlaneStatusExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                          dps_db.DataPlaneStatusMixin):
 
-    supported_extension_aliases = ["data-plane-status"]
+    supported_extension_aliases = [dps_lib.ALIAS]
 
     @staticmethod
     @resource_extend.extends([port_def.COLLECTION_NAME])

@@ -42,7 +42,7 @@ class SubnetServiceTypesExtensionTestPlugin(
     """Test plugin to mixin the subnet service_types extension.
     """
 
-    supported_extension_aliases = ["subnet-service-types", "binding"]
+    supported_extension_aliases = ["subnet-service-types", portbindings.ALIAS]
 
 
 class SubnetServiceTypesExtensionTestCase(

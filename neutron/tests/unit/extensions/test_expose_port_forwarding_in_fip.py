@@ -12,8 +12,11 @@
 # under the License.
 
 import mock
+from neutron_lib.api.definitions import dns as dns_apidef
+from neutron_lib.api.definitions import dvr as dvr_apidef
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import constants as plugin_constants
@@ -40,8 +43,8 @@ CORE_PLUGIN = 'neutron.tests.unit.extensions.test_l3.TestNoL3NatPlugin'
 
 class TestL3PorForwardingServicePlugin(test_l3.TestL3NatServicePlugin,
                                        l3_fip_qos.FloatingQoSDbMixin):
-    supported_extension_aliases = ["router", "dns-integration",
-                                   "dvr", "qos-fip"]
+    supported_extension_aliases = [l3_apidef.ALIAS, dns_apidef.ALIAS,
+                                   dvr_apidef.ALIAS, "qos-fip"]
 
 
 def _get_expected(ref):

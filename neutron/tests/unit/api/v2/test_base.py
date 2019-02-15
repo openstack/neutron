@@ -18,6 +18,8 @@ import os
 import mock
 from neutron_lib.api import attributes
 from neutron_lib.api import converters
+from neutron_lib.api.definitions import empty_string_filtering
+from neutron_lib.api.definitions import filter_validation
 from neutron_lib.callbacks import registry
 from neutron_lib import constants
 from neutron_lib import context
@@ -86,8 +88,8 @@ class APIv2TestBase(base.BaseTestCase):
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
         instance = self.plugin.return_value
-        instance.supported_extension_aliases = ['empty-string-filtering',
-                                                'filter-validation']
+        instance.supported_extension_aliases = [empty_string_filtering.ALIAS,
+                                                filter_validation.ALIAS]
         instance._NeutronPluginBaseV2__native_pagination_support = True
         instance._NeutronPluginBaseV2__native_sorting_support = True
         instance._NeutronPluginBaseV2__filter_validation_support = True

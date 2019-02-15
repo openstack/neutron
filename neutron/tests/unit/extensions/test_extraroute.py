@@ -13,7 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import external_net as enet_apidef
 from neutron_lib.api.definitions import extraroute as xroute_apidef
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.utils import helpers
@@ -46,7 +48,7 @@ class ExtraRouteTestExtensionManager(object):
 # This plugin class is for tests with plugin that integrates L3.
 class TestExtraRouteIntPlugin(test_l3.TestL3NatIntPlugin,
                               extraroute_db.ExtraRoute_db_mixin):
-    supported_extension_aliases = ["external-net", "router",
+    supported_extension_aliases = [enet_apidef.ALIAS, l3_apidef.ALIAS,
                                    xroute_apidef.ALIAS]
 
 
@@ -54,7 +56,7 @@ class TestExtraRouteIntPlugin(test_l3.TestL3NatIntPlugin,
 # plugins that delegate away L3 routing functionality
 class TestExtraRouteL3NatServicePlugin(test_l3.TestL3NatServicePlugin,
                                        extraroute_db.ExtraRoute_db_mixin):
-    supported_extension_aliases = ["router", xroute_apidef.ALIAS]
+    supported_extension_aliases = [l3_apidef.ALIAS, xroute_apidef.ALIAS]
 
 
 class ExtraRouteDBTestCaseBase(object):

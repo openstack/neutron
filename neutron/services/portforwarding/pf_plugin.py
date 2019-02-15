@@ -17,6 +17,7 @@ import collections
 import functools
 
 import netaddr
+from neutron_lib.api.definitions import expose_port_forwarding_in_fip
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
 from neutron_lib.api.definitions import l3
 from neutron_lib.callbacks import events
@@ -76,8 +77,8 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
 
     required_service_plugins = ['router']
 
-    supported_extension_aliases = ['floating-ip-port-forwarding',
-                                   'expose-port-forwarding-in-fip']
+    supported_extension_aliases = [apidef.ALIAS,
+                                   expose_port_forwarding_in_fip.ALIAS]
 
     __native_pagination_support = True
     __native_sorting_support = True

@@ -11,7 +11,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import agent as agent_apidef
 from neutron_lib.api.definitions import availability_zone as az_def
+from neutron_lib.api.definitions import availability_zone_filter as azf_def
 from neutron_lib import context
 from neutron_lib.exceptions import availability_zone as az_exc
 
@@ -39,8 +41,8 @@ class AZExtensionManager(object):
 
 class AZTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                    agents_db.AgentDbMixin):
-    supported_extension_aliases = ["agent", "availability_zone",
-                                   "availability_zone_filter"]
+    supported_extension_aliases = [agent_apidef.ALIAS, az_def.ALIAS,
+                                   azf_def.ALIAS]
 
 
 class AZTestCommon(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):

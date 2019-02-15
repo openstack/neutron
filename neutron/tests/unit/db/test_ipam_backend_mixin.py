@@ -305,7 +305,7 @@ class TestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     __native_pagination_support = True
     __native_sorting_support = True
 
-    supported_extension_aliases = ["binding"]
+    supported_extension_aliases = [portbindings.ALIAS]
 
     def get_plugin_description(self):
         return "Test Plugin"

@@ -20,6 +20,7 @@ from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
 from neutron_lib.api.definitions import l2_adjacency as l2adj_apidef
 from neutron_lib.api.definitions import port as port_apidef
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import segment as seg_apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
 from neutron_lib.callbacks import registry
@@ -128,7 +129,8 @@ class SegmentTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     __native_pagination_support = True
     __native_sorting_support = True
 
-    supported_extension_aliases = ["segment", "binding", "ip_allocation"]
+    supported_extension_aliases = [seg_apidef.ALIAS, portbindings.ALIAS,
+                                   ipalloc_apidef.ALIAS]
 
     def get_plugin_description(self):
         return "Network Segments"

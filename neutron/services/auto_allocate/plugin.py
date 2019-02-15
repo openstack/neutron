@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import auto_allocated_topology
+
 
 from neutron.services.auto_allocate import db
 
@@ -22,7 +24,7 @@ class Plugin(db.AutoAllocatedTopologyMixin):
 
     _instance = None
 
-    supported_extension_aliases = ["auto-allocated-topology"]
+    supported_extension_aliases = [auto_allocated_topology.ALIAS]
 
     __filter_validation_support = True
 

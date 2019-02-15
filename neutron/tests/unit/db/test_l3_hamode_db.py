@@ -14,7 +14,9 @@
 
 import mock
 
+from neutron_lib.api.definitions import dvr as dvr_apidef
 from neutron_lib.api.definitions import external_net as extnet_apidef
+from neutron_lib.api.definitions import l3_ext_ha_mode
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as providernet
@@ -402,7 +404,8 @@ class L3HATestCase(L3HATestFramework):
     def test_get_ha_sync_data_for_host_with_non_dvr_agent(self):
         with mock.patch.object(self.plugin,
                                '_get_dvr_sync_data') as mock_get_sync:
-            self.plugin.supported_extension_aliases = ['dvr', 'l3-ha']
+            self.plugin.supported_extension_aliases = [
+                dvr_apidef.ALIAS, l3_ext_ha_mode.ALIAS]
             self.plugin.get_ha_sync_data_for_host(self.admin_ctx,
                                                   self.agent1['host'],
                                                   self.agent1)
@@ -411,7 +414,8 @@ class L3HATestCase(L3HATestFramework):
     def test_get_ha_sync_data_for_host_with_dvr_agent(self):
         with mock.patch.object(self.plugin,
                                '_get_dvr_sync_data') as mock_get_sync:
-            self.plugin.supported_extension_aliases = ['dvr', 'l3-ha']
+            self.plugin.supported_extension_aliases = [
+                dvr_apidef.ALIAS, l3_ext_ha_mode.ALIAS]
             self.plugin.get_ha_sync_data_for_host(self.admin_ctx,
                                                   self.agent2['host'],
                                                   self.agent2)
