@@ -377,6 +377,7 @@
             NeutronSecurityGroup.create_and_list_security_group_rules:
               security_group_args: {}
               security_group_rule_args: {}
+              security_group_rules_count: 20
           runner:
             constant:
               times: 50
