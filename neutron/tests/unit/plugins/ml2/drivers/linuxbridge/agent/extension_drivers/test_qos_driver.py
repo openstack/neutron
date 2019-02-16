@@ -148,26 +148,26 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
         with mock.patch.object(
             tc_lib.TcCommand, "update_filters_bw_limit"
         ) as update_filters_bw_limit, mock.patch.object(
-            tc_lib.TcCommand, "update_tbf_bw_limit"
-        ) as update_tbf_bw_limit:
+            tc_lib.TcCommand, "set_tbf_bw_limit"
+        ) as set_tbf_bw_limit:
             self.qos_driver.update_bandwidth_limit(self.port,
                                                    self.rule_egress_bw_limit)
             update_filters_bw_limit.assert_called_once_with(
                 self.rule_egress_bw_limit.max_kbps,
                 self.rule_egress_bw_limit.max_burst_kbps,
             )
-            update_tbf_bw_limit.assert_not_called()
+            set_tbf_bw_limit.assert_not_called()
 
     def test_update_ingress_bandwidth_limit(self):
         with mock.patch.object(
             tc_lib.TcCommand, "update_filters_bw_limit"
         ) as update_filters_bw_limit, mock.patch.object(
-            tc_lib.TcCommand, "update_tbf_bw_limit"
-        ) as update_tbf_bw_limit:
+            tc_lib.TcCommand, "set_tbf_bw_limit"
+        ) as set_tbf_bw_limit:
             self.qos_driver.update_bandwidth_limit(self.port,
                                                    self.rule_ingress_bw_limit)
             update_filters_bw_limit.assert_not_called()
-            update_tbf_bw_limit.assert_called_once_with(
+            set_tbf_bw_limit.assert_called_once_with(
                 self.rule_egress_bw_limit.max_kbps,
                 self.rule_egress_bw_limit.max_burst_kbps,
                 TEST_LATENCY_VALUE

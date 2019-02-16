@@ -13,16 +13,24 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import math
 import re
 
 from neutron_lib import exceptions
+from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
+from oslo_log import log as logging
+from pyroute2.netlink import rtnl
+from pyroute2.netlink.rtnl.tcmsg import common as rtnl_common
 
 from neutron._i18n import _
 from neutron.agent.linux import ip_lib
 from neutron.common import constants
 from neutron.common import utils
+from neutron.privileged.agent.linux import tc_lib as priv_tc_lib
 
+
+LOG = logging.getLogger(__name__)
 
 INGRESS_QDISC_ID = "ffff:"
 MAX_MTU_VALUE = 65535
@@ -42,6 +50,12 @@ UNITS = {
 filters_pattern = re.compile(r"police \w+ rate (\w+) burst (\w+)")
 tbf_pattern = re.compile(
     r"qdisc (\w+) \w+: \w+ refcnt \d rate (\w+) burst (\w+) \w*")
+
+TC_QDISC_TYPES = ['htb', 'tbf', 'ingress']
+
+TC_QDISC_PARENT = {'root': rtnl.TC_H_ROOT,
+                  'ingress': rtnl.TC_H_INGRESS}
+TC_QDISC_PARENT_NAME = {v: k for k, v in TC_QDISC_PARENT.items()}
 
 
 class InvalidKernelHzValue(exceptions.NeutronException):
@@ -78,6 +92,56 @@ def convert_to_kilobits(value, base):
     else:
         bits_value = utils.bytes_to_bits(val * (base ** UNITS[unit]))
     return utils.bits_to_kilobits(bits_value, base)
+
+
+def _get_attr(pyroute2_obj, attr_name):
+    rule_attrs = pyroute2_obj.get('attrs', [])
+    for attr in (attr for attr in rule_attrs if attr[0] == attr_name):
+        return attr[1]
+    return
+
+
+def _get_tbf_burst_value(rate, burst_limit, kernel_hz):
+    min_burst_value = float(rate) / float(kernel_hz)
+    return max(min_burst_value, burst_limit)
+
+
+def _calc_burst(rate, buffer):
+    """Calculate burst rate
+
+    :param rate: (int) rate in bytes per second.
+    :param buffer: (int) buffer size in bytes.
+    :return: (int) burst in bytes
+    """
+    # NOTE(ralonsoh): this function is based in
+    # pyroute2.netlink.rtnl.tcmsg.common.calc_xmittime
+    return int(math.ceil(
+        float(buffer * rate) /
+        (rtnl_common.TIME_UNITS_PER_SEC * rtnl_common.tick_in_usec)))
+
+
+def _calc_latency_ms(limit, burst, rate):
+    """Calculate latency value, in ms
+
+    :param limit: (int) pyroute2 limit value
+    :param burst: (int) burst in bytes
+    :param rate: (int) maximum bandwidth in kbytes per second
+    :return: (int) latency, in ms
+    """
+    return int(math.ceil(
+        float((limit - burst) * rtnl_common.TIME_UNITS_PER_SEC) /
+        (rate * 1000)))
+
+
+def _handle_from_hex_to_string(handle):
+    """Convert TC handle from hex to string
+
+    :param handle: (int) TC handle
+    :return: (string) handle formatted to string: 0xMMMMmmmm -> "M:m"
+    """
+    minor = str(handle & 0xFFFF)
+    major = str((handle & 0xFFFF0000) >> 16)
+    return ':'.join([major, minor])
 
 
 class TcCommand(ip_lib.IPDevice):
@@ -123,23 +187,15 @@ class TcCommand(ip_lib.IPDevice):
         return None, None
 
     def get_tbf_bw_limits(self):
-        cmd = ['qdisc', 'show', 'dev', self.name]
-        cmd_result = self._execute_tc_cmd(cmd)
-        if not cmd_result:
+        qdiscs = list_tc_qdiscs(self.name, namespace=self.namespace)
+        if not qdiscs:
             return None, None
-        m = tbf_pattern.match(cmd_result)
-        if not m:
+
+        qdisc = qdiscs[0]
+        if qdisc['qdisc_type'] != 'tbf':
             return None, None
-        qdisc_name = m.group(1)
-        if qdisc_name != "tbf":
-            return None, None
-        # NOTE(slaweq): because tc is giving bw limit in SI units
-        # we need to calculate it as 1000bit = 1kbit:
-        bw_limit = convert_to_kilobits(m.group(2), constants.SI_BASE)
-        # NOTE(slaweq): because tc is giving burst limit in IEC units
-        # we need to calculate it as 1024bit = 1kbit:
-        burst_limit = convert_to_kilobits(m.group(3), constants.IEC_BASE)
-        return bw_limit, burst_limit
+
+        return qdisc['max_kbps'], qdisc['burst_kb']
 
     def set_filters_bw_limit(self, bw_limit, burst_limit):
         """Set ingress qdisc and filter for police ingress traffic on device
@@ -155,21 +211,21 @@ class TcCommand(ip_lib.IPDevice):
         return self.update_filters_bw_limit(bw_limit, burst_limit)
 
     def set_tbf_bw_limit(self, bw_limit, burst_limit, latency_value):
-        """Set token bucket filter qdisc on device
+        """Set/update token bucket filter qdisc on device
 
         This will allow to limit speed of packets going out from interface. It
         means that it is fine to limit ingress traffic from instance point of
         view.
         """
-        return self._replace_tbf_qdisc(bw_limit, burst_limit, latency_value)
+        return add_tc_qdisc(self.name, 'tbf', parent='root',
+                            max_kbps=bw_limit, burst_kb=burst_limit,
+                            latency_ms=latency_value, kernel_hz=self.kernel_hz,
+                            namespace=self.namespace)
 
-    def update_filters_bw_limit(self, bw_limit, burst_limit,
-                                qdisc_id=INGRESS_QDISC_ID):
+    def update_filters_bw_limit(self, bw_limit, burst_limit):
         self.delete_filters_bw_limit()
-        return self._set_filters_bw_limit(bw_limit, burst_limit, qdisc_id)
-
-    def update_tbf_bw_limit(self, bw_limit, burst_limit, latency_value):
-        return self._replace_tbf_qdisc(bw_limit, burst_limit, latency_value)
+        add_tc_qdisc(self.name, 'ingress', namespace=self.namespace)
+        return self._add_policy_filter(bw_limit, burst_limit)
 
     def delete_filters_bw_limit(self):
         # NOTE(slaweq): For limit traffic egress from instance we need to use
@@ -179,13 +235,6 @@ class TcCommand(ip_lib.IPDevice):
     def delete_tbf_bw_limit(self):
         self._delete_qdisc("root")
 
-    def _set_filters_bw_limit(self, bw_limit, burst_limit,
-                              qdisc_id=INGRESS_QDISC_ID):
-        cmd = ['qdisc', 'add', 'dev', self.name, 'ingress',
-               'handle', qdisc_id]
-        self._execute_tc_cmd(cmd)
-        return self._add_policy_filter(bw_limit, burst_limit)
-
     def _delete_qdisc(self, qdisc_name):
         cmd = ['qdisc', 'del', 'dev', self.name, qdisc_name]
         # Return_code=2 is fine because it means
@@ -194,24 +243,6 @@ class TcCommand(ip_lib.IPDevice):
         # Return_code=1 means "RTNETLINK answers: Cannot find device <device>".
         # If the device doesn't exist, the qdisc is already deleted.
         return self._execute_tc_cmd(cmd, extra_ok_codes=[1, 2])
-
-    def _get_tbf_burst_value(self, bw_limit, burst_limit):
-        min_burst_value = float(bw_limit) / float(self.kernel_hz)
-        return max(min_burst_value, burst_limit)
-
-    def _replace_tbf_qdisc(self, bw_limit, burst_limit, latency_value):
-        burst = "%s%s" % (
-            self._get_tbf_burst_value(bw_limit, burst_limit), BURST_UNIT)
-        latency = "%s%s" % (latency_value, LATENCY_UNIT)
-        rate_limit = "%s%s" % (bw_limit, BW_LIMIT_UNIT)
-        cmd = [
-            'qdisc', 'replace', 'dev', self.name,
-            'root', 'tbf',
-            'rate', rate_limit,
-            'latency', latency,
-            'burst', burst
-        ]
-        return self._execute_tc_cmd(cmd)
 
     def _add_policy_filter(self, bw_limit, burst_limit,
                            qdisc_id=INGRESS_QDISC_ID):
@@ -232,3 +263,79 @@ class TcCommand(ip_lib.IPDevice):
             'mtu', MAX_MTU_VALUE,
             'drop']
         return self._execute_tc_cmd(cmd)
+
+
+def add_tc_qdisc(device, qdisc_type, parent=None, handle=None, latency_ms=None,
+                 max_kbps=None, burst_kb=None, kernel_hz=None,
+                 namespace=None):
+    """Add/replace a TC qdisc on a device
+
+    pyroute2 input parameters:
+      - rate (min bw): bytes/second
+      - burst: bytes
+      - latency: us
+
+    :param device: (string) device name
+    :param qdisc_type: (string) qdisc type (TC_QDISC_TYPES)
+    :param parent: (string) qdisc parent class ('root', '2:10')
+    :param handle: (string, int) (required for HTB) major handler identifier
+                   (0xffff0000, '1', '1:', '1:0') [1]
+    :param latency_ms: (string, int) (required for TBF) latency time in ms
+    :param max_kbps: (string, int) (required for TBF) maximum bandwidth in
+                     kbits per second.
+    :param burst_kb: (string, int) (required for TBF) maximum bandwidth in
+                     kbits.
+    :param kernel_hz: (string, int) (required for TBF) kernel HZ.
+    :param namespace: (string) (optional) namespace name
+
+    [1] https://lartc.org/howto/lartc.qdisc.classful.html
+    """
+    if qdisc_type and qdisc_type not in TC_QDISC_TYPES:
+        raise qos_exc.TcLibQdiscTypeError(
+            qdisc_type=qdisc_type, supported_qdisc_types=TC_QDISC_TYPES)
+
+    args = {'kind': qdisc_type}
+    if qdisc_type in ['htb', 'ingress']:
+        if handle:
+            args['handle'] = str(handle).split(':')[0] + ':0'
+    elif qdisc_type == 'tbf':
+        if not latency_ms or not max_kbps or not kernel_hz:
+            raise qos_exc.TcLibQdiscNeededArguments(
+                qdisc_type=qdisc_type,
+                needed_arguments=['latency_ms', 'max_kbps', 'kernel_hz'])
+        args['burst'] = int(
+            _get_tbf_burst_value(max_kbps, burst_kb, kernel_hz) * 1024 / 8)
+        args['rate'] = int(max_kbps * 1024 / 8)
+        args['latency'] = latency_ms * 1000
+    if parent:
+        args['parent'] = rtnl.TC_H_ROOT if parent == 'root' else parent
+    priv_tc_lib.add_tc_qdisc(device, namespace=namespace, **args)
+
+
+def list_tc_qdiscs(device, namespace=None):
+    """List all TC qdiscs of a device
+
+    :param device: (string) device name
+    :param namespace: (string) (optional) namespace name
+    :return: (list) TC qdiscs
+    """
+    qdiscs = priv_tc_lib.list_tc_qdiscs(device, namespace=namespace)
+    retval = []
+    for qdisc in qdiscs:
+        qdisc_attrs = {
+            'qdisc_type': _get_attr(qdisc, 'TCA_KIND'),
+            'parent': TC_QDISC_PARENT_NAME.get(
+                qdisc['parent'], _handle_from_hex_to_string(qdisc['parent'])),
+            'handle': _handle_from_hex_to_string(qdisc['handle'])}
+        if qdisc_attrs['qdisc_type'] == 'tbf':
+            tca_options = _get_attr(qdisc, 'TCA_OPTIONS')
+            tca_tbf_parms = _get_attr(tca_options, 'TCA_TBF_PARMS')
+            qdisc_attrs['max_kbps'] = int(tca_tbf_parms['rate'] * 8 / 1024)
+            burst_bytes = _calc_burst(tca_tbf_parms['rate'],
+                                      tca_tbf_parms['buffer'])
+            qdisc_attrs['burst_kb'] = int(burst_bytes * 8 / 1024)
+            qdisc_attrs['latency_ms'] = _calc_latency_ms(
+                tca_tbf_parms['limit'], burst_bytes, tca_tbf_parms['rate'])
+        retval.append(qdisc_attrs)
+
+    return retval

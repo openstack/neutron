@@ -74,7 +74,7 @@ class TcLibTestCase(functional_base.BaseSudoTestCase):
         new_bw_limit = BW_LIMIT + 500
         new_burst = BURST + 50
 
-        tc.update_tbf_bw_limit(new_bw_limit, new_burst, LATENCY)
+        tc.set_tbf_bw_limit(new_bw_limit, new_burst, LATENCY)
         bw_limit, burst = tc.get_tbf_bw_limits()
         self.assertEqual(new_bw_limit, bw_limit)
         self.assertEqual(new_burst, burst)

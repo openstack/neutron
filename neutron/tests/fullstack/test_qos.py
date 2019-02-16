@@ -404,15 +404,9 @@ class TestBwLimitQoSLinuxbridge(_TestBwLimitQoS, base.BaseFullStackTestCase):
 
     @staticmethod
     def _get_expected_ingress_burst_value(limit):
-        # calculate expected burst in same way as it's done in tc_lib but
-        # burst value = 0 so it's always value calculated from kernel's hz
-        # value
-        # as in tc_lib.bits_to_kilobits result is rounded up that even
-        # 1 bit gives 1 kbit same should be added here to expected burst
-        # value
         return int(
             float(limit) /
-            float(linuxbridge_agent_config.DEFAULT_KERNEL_HZ_VALUE) + 1)
+            float(linuxbridge_agent_config.DEFAULT_KERNEL_HZ_VALUE))
 
     def _wait_for_bw_rule_applied(self, vm, limit, burst, direction):
         port_name = linuxbridge_agent.LinuxBridgeManager.get_tap_device_name(

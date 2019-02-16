@@ -90,7 +90,7 @@ class QosLinuxbridgeAgentDriver(qos.QosLinuxAgentDriver):
     def update_bandwidth_limit(self, port, rule):
         tc_wrapper = self._get_tc_wrapper(port)
         if rule.direction == const.INGRESS_DIRECTION:
-            tc_wrapper.update_tbf_bw_limit(
+            tc_wrapper.set_tbf_bw_limit(
                 rule.max_kbps, rule.max_burst_kbps, self.tbf_latency)
         else:
             tc_wrapper.update_filters_bw_limit(
