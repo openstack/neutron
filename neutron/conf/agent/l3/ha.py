@@ -23,8 +23,7 @@ from neutron.agent.linux import keepalived
 OPTS = [
     cfg.StrOpt('ha_confs_path',
                default='$state_path/ha_confs',
-               help=_('Location to store keepalived/conntrackd '
-                      'config files')),
+               help=_('Location to store keepalived config files')),
     cfg.StrOpt('ha_vrrp_auth_type',
                default='PASS',
                choices=keepalived.VALID_AUTH_TYPES,
