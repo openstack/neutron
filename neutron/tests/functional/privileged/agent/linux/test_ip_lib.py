@@ -183,6 +183,47 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
         self.assertEqual(sorted(interfaces_tested),
                          sorted(self.interfaces + vxlan_interfaces))
 
+    def test_get_devices_info_veth_different_namespaces(self):
+        namespace2 = 'ns_test-' + uuidutils.generate_uuid()
+        priv_ip_lib.create_netns(namespace2)
+        self.addCleanup(self._remove_ns, namespace2)
+        ip_wrapper = ip_lib.IPWrapper(self.namespace)
+        ip_wrapper.add_veth('veth1_1', 'veth1_2', namespace2)
+
+        devices = priv_ip_lib.get_link_devices(self.namespace)
+        for device in devices:
+            name = ip_lib.get_attr(device, 'IFLA_IFNAME')
+            if name == 'veth1_1':
+                veth1_1 = device
+                break
+        else:
+            self.fail('Interface "veth1_1" not found')
+
+        ifla_linkinfo = ip_lib.get_attr(veth1_1, 'IFLA_LINKINFO')
+        self.assertEqual(ip_lib.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND'),
+                         'veth')
+        self.assertIsNone(ip_lib.get_attr(veth1_1, 'IFLA_LINK'))
+
+    def test_get_devices_info_veth_same_namespaces(self):
+        ip_wrapper = ip_lib.IPWrapper(self.namespace)
+        ip_wrapper.add_veth('veth1_1', 'veth1_2')
+
+        devices = priv_ip_lib.get_link_devices(self.namespace)
+        veth1_1 = veth1_2 = None
+        for device in devices:
+            name = ip_lib.get_attr(device, 'IFLA_IFNAME')
+            if name == 'veth1_1':
+                veth1_1 = device
+            elif name == 'veth1_2':
+                veth1_2 = device
+
+        self.assertIsNotNone(veth1_1)
+        self.assertIsNotNone(veth1_2)
+        veth1_1_link = ip_lib.get_attr(veth1_1, 'IFLA_LINK')
+        veth1_2_link = ip_lib.get_attr(veth1_2, 'IFLA_LINK')
+        self.assertEqual(veth1_1['index'], veth1_2_link)
+        self.assertEqual(veth1_2['index'], veth1_1_link)
+
 
 class ListIpRulesTestCase(functional_base.BaseSudoTestCase):
 
