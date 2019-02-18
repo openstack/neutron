@@ -52,6 +52,7 @@ from neutron.agent.l3 import namespace_manager
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import pd
+from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as l3_constants
@@ -113,6 +114,7 @@ class L3PluginApi(object):
         1.8 - Added address scope information
         1.9 - Added get_router_ids
         1.10 Added update_all_ha_network_port_statuses
+        1.11 Added get_host_ha_router_count
     """
 
     def __init__(self, topic, host):
@@ -188,6 +190,11 @@ class L3PluginApi(object):
         return cctxt.call(context, 'delete_agent_gateway_port',
                           host=self.host, network_id=fip_net)
 
+    def get_host_ha_router_count(self, context):
+        """Make a call to get the count of HA router."""
+        cctxt = self.client.prepare(version='1.11')
+        return cctxt.call(context, 'get_host_ha_router_count', host=self.host)
+
 
 @profiler.trace_cls("l3-agent")
 class L3NATAgent(ha.AgentMixin,
@@ -232,21 +239,22 @@ class L3NATAgent(ha.AgentMixin,
         self.fullsync = True
         self.sync_routers_chunk_size = SYNC_ROUTERS_MAX_CHUNK_SIZE
 
-        # Get the list of service plugins from Neutron Server
+        # Get the HA router count from Neutron Server
         # This is the first place where we contact neutron-server on startup
         # so retry in case its not ready to respond.
         while True:
             try:
-                self.neutron_service_plugins = (
-                    self.plugin_rpc.get_service_plugin_list(self.context))
+                self.ha_router_count = int(
+                    self.plugin_rpc.get_host_ha_router_count(self.context))
             except oslo_messaging.MessagingTimeout as e:
                 LOG.warning('l3-agent cannot contact neutron server '
-                            'to retrieve service plugins enabled. '
+                            'to retrieve HA router count. '
                             'Check connectivity to neutron server. '
                             'Retrying... '
                             'Detailed message: %(msg)s.', {'msg': e})
                 continue
             break
+        LOG.info("Agent HA routers count %s", self.ha_router_count)
 
         self.init_extension_manager(self.plugin_rpc)
 
@@ -277,13 +285,49 @@ class L3NATAgent(ha.AgentMixin,
         consumers = [[topics.NETWORK, topics.UPDATE]]
         agent_rpc.create_consumers([self], topics.AGENT, consumers)
 
-        # We set HA network port status to DOWN to let l2 agent update it
-        # to ACTIVE after wiring. This allows us to spawn keepalived only
-        # when l2 agent finished wiring the port.
-        try:
-            self.plugin_rpc.update_all_ha_network_port_statuses(self.context)
-        except Exception:
-            LOG.exception('update_all_ha_network_port_statuses failed')
+        self._check_ha_router_process_status()
+
+    def _check_ha_router_process_status(self):
+        """Check HA router VRRP process status in network node.
+
+        Check if the HA router HA routers VRRP (keepalived) process count
+        and state change python monitor process count meet the expected
+        quantity. If so, l3-agent will not call neutron to set all related
+        HA port to down state, this can prevent some unexpected VRRP
+        re-election. If not, a physical host may have down and just
+        restarted, set HA network port status to DOWN.
+        """
+        if (self.conf.agent_mode not in [lib_const.L3_AGENT_MODE_DVR_SNAT,
+                                         lib_const.L3_AGENT_MODE_LEGACY]):
+            return
+
+        if self.ha_router_count <= 0:
+            return
+
+        # HA routers VRRP (keepalived) process count
+        vrrp_pcount = linux_utils.get_process_count_by_name("keepalived")
+        LOG.debug("VRRP process count %s.", vrrp_pcount)
+        # HA routers state change python monitor process count
+        vrrp_st_pcount = linux_utils.get_process_count_by_name(
+            "neutron-keepalived-state-change")
+        LOG.debug("neutron-keepalived-state-change process count %s.",
+                  vrrp_st_pcount)
+
+        # Due to the process structure design of keepalived and the current
+        # config of l3-ha router, it will run one main 'keepalived' process
+        # and a child  'VRRP' process. So in the following check, we divided
+        # number of processes by 2 to match the ha router count.
+        if (not (vrrp_pcount / 2 >= self.ha_router_count and
+                 vrrp_st_pcount >= self.ha_router_count)):
+            LOG.debug("Call neutron server to set HA port to DOWN state.")
+            try:
+                # We set HA network port status to DOWN to let l2 agent
+                # update it to ACTIVE after wiring. This allows us to spawn
+                # keepalived only when l2 agent finished wiring the port.
+                self.plugin_rpc.update_all_ha_network_port_statuses(
+                    self.context)
+            except Exception:
+                LOG.exception('update_all_ha_network_port_statuses failed')
 
     def _check_config_params(self):
         """Check items in configuration files.

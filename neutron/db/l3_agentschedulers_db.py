@@ -313,6 +313,13 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             return []
         return self._get_router_ids_for_agent(context, agent, router_ids)
 
+    def get_host_ha_router_count(self, context, host):
+        router_ids = self.list_router_ids_on_host(context, host)
+        up_routers = l3_objs.Router.get_objects(context, id=router_ids,
+                                                admin_state_up=True)
+        return len(l3_objs.RouterExtraAttributes.get_objects(
+            context, router_id=[obj.id for obj in up_routers], ha=True))
+
     def _get_router_ids_for_agent(self, context, agent, router_ids):
         """Get IDs of routers that the agent should host
 

@@ -47,7 +47,8 @@ class L3RpcCallback(object):
     # 1.8 Added address scope information
     # 1.9 Added get_router_ids
     # 1.10 Added update_all_ha_network_port_statuses
-    target = oslo_messaging.Target(version='1.10')
+    # 1.11 Added get_host_ha_router_count
+    target = oslo_messaging.Target(version='1.11')
 
     @property
     def plugin(self):
@@ -249,6 +250,9 @@ class L3RpcCallback(object):
 
     def get_service_plugin_list(self, context, **kwargs):
         return directory.get_plugins().keys()
+
+    def get_host_ha_router_count(self, context, host):
+        return self.l3plugin.get_host_ha_router_count(context, host)
 
     @db_api.retry_db_errors
     def update_floatingip_statuses(self, context, router_id, fip_statuses):

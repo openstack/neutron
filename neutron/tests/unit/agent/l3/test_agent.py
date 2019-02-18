@@ -25,7 +25,6 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants
 from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import l3 as l3_exc
-from neutron_lib.plugins import constants as plugin_constants
 from oslo_config import cfg
 from oslo_log import log
 import oslo_messaging
@@ -2855,23 +2854,22 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             ri.process_address_scope()
             self.assertEqual(2, mocked_func.call_count)
 
-    def test_get_service_plugin_list(self):
-        service_plugins = [plugin_constants.L3]
-        self.plugin_api.get_service_plugin_list.return_value = service_plugins
+    def test_get_host_ha_router_count(self):
+        self.plugin_api.get_host_ha_router_count.return_value = 1
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.assertEqual(service_plugins, agent.neutron_service_plugins)
-        self.assertTrue(self.plugin_api.get_service_plugin_list.called)
+        self.assertEqual(1, agent.ha_router_count)
+        self.assertTrue(self.plugin_api.get_host_ha_router_count.called)
 
-    def test_get_service_plugin_list_retried(self):
+    def test_get_host_ha_router_count_retried(self):
         raise_timeout = oslo_messaging.MessagingTimeout()
         # Raise a timeout the first 2 times it calls
-        # get_service_plugin_list then return a empty tuple
-        self.plugin_api.get_service_plugin_list.side_effect = (
-            raise_timeout, tuple()
+        # get_host_ha_router_count then return 0
+        self.plugin_api.get_host_ha_router_count.side_effect = (
+            raise_timeout, 0
         )
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
-        self.assertEqual(tuple(), agent.neutron_service_plugins)
+        self.assertEqual(0, agent.ha_router_count)
 
     def test_external_gateway_removed_ext_gw_port_no_fip_ns(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
