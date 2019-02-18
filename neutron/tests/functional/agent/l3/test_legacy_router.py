@@ -129,10 +129,19 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
                          self.agent._pool.size)
 
         for router in router_info_list:
-            self.agent._router_removed(router, router.router_id)
+            self.agent._safe_router_removed(router.router_id)
 
-        self.assertEqual(l3_agent.ROUTER_PROCESS_GREENLET_MIN,
-                         self.agent._pool.size)
+        agent_router_info_len = len(self.agent.router_info)
+        if agent_router_info_len < l3_agent.ROUTER_PROCESS_GREENLET_MIN:
+            self.assertEqual(l3_agent.ROUTER_PROCESS_GREENLET_MIN,
+                             self.agent._pool.size)
+        elif (l3_agent.ROUTER_PROCESS_GREENLET_MIN <= agent_router_info_len <=
+                l3_agent.ROUTER_PROCESS_GREENLET_MAX):
+            self.assertEqual(agent_router_info_len,
+                             self.agent._pool.size)
+        else:
+            self.assertEqual(l3_agent.ROUTER_PROCESS_GREENLET_MAX,
+                             self.agent._pool.size)
 
     def _make_bridge(self):
         bridge = framework.get_ovs_bridge(utils.get_rand_name())

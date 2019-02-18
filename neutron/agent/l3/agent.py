@@ -419,8 +419,9 @@ class L3NATAgent(ha.AgentMixin,
         except Exception:
             LOG.exception('Error while deleting router %s', router_id)
             return False
-        else:
-            return True
+
+        self._resize_process_pool()
+        return True
 
     def _router_removed(self, ri, router_id):
         if ri is None:
@@ -438,8 +439,6 @@ class L3NATAgent(ha.AgentMixin,
         del self.router_info[router_id]
 
         registry.notify(resources.ROUTER, events.AFTER_DELETE, self, router=ri)
-
-        self._resize_process_pool()
 
     def init_extension_manager(self, connection):
         l3_ext_manager.register_opts(self.conf)
