@@ -1569,7 +1569,7 @@ class DeviceManager(object):
         ipv4_rule = ('-p udp -m udp --dport %d -j CHECKSUM --checksum-fill'
                      % constants.DHCP_RESPONSE_PORT)
         ipv6_rule = ('-p udp -m udp --dport %d -j CHECKSUM --checksum-fill'
-                     % n_const.DHCPV6_CLIENT_PORT)
+                     % constants.DHCPV6_CLIENT_PORT)
         iptables_mgr.ipv4['mangle'].add_rule('POSTROUTING', ipv4_rule)
         iptables_mgr.ipv6['mangle'].add_rule('POSTROUTING', ipv6_rule)
         iptables_mgr.apply()

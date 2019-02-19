@@ -33,7 +33,6 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import config as common_config
-from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_config
@@ -1734,7 +1733,7 @@ class TestDeviceManager(base.BaseTestCase):
     def test_setup_calls_fill_dhcp_udp_checksums_v6(self):
         self._test_setup_helper(False)
         rule = ('-p udp -m udp --dport %d -j CHECKSUM --checksum-fill'
-                % n_const.DHCPV6_CLIENT_PORT)
+                % const.DHCPV6_CLIENT_PORT)
         expected = [mock.call.add_rule('POSTROUTING', rule)]
         self.mangle_inst_v6.assert_has_calls(expected)
 
