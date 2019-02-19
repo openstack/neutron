@@ -31,6 +31,7 @@
           export DEVSTACK_GATE_NEUTRON=1
           export DEVSTACK_GATE_CONFIGDRIVE=0
           export DEVSTACK_GATE_GRENADE=pullup
+          export DEVSTACK_GATE_USE_PYTHON3=True
           # Test DVR upgrade on multinode
           export PROJECTS="openstack-dev/grenade $PROJECTS"
           export DEVSTACK_GATE_NEUTRON_DVR=1
