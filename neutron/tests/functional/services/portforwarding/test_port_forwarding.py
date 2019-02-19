@@ -95,8 +95,9 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
             self.fmt, self.ext_net['id'], '172.24.2.0/24').json['subnet']
         self.net = self._create_network(self.fmt, 'private', True).json[
             'network']
-        self.subnet = self._create_subnet(self.fmt, self.net['id'],
-                                          '10.0.0.0/24').json['subnet']
+        self.subnet = self._create_subnet(
+            self.fmt, self.net['id'], '10.0.0.0/24',
+            enable_dhcp=False).json['subnet']
         self._set_router_gw(self.router['id'], self.ext_net['id'])
         self._add_router_interface(self.router['id'], self.subnet['id'])
         self.fip = self._create_floatingip(self.ext_net['id'])
