@@ -18,12 +18,23 @@ import socket
 from neutron_lib import constants as n_constants
 import pyroute2
 
+from neutron._i18n import _
 from neutron import privileged
 from neutron.privileged.agent.linux import ip_lib
 
 
 _IP_VERSION_FAMILY_MAP = {n_constants.IP_VERSION_4: socket.AF_INET,
                           n_constants.IP_VERSION_6: socket.AF_INET6}
+
+
+class TrafficControlClassNotFound(RuntimeError):
+    message = _('Traffic control class %(classid)s not found in namespace '
+                '%(namespace)s.')
+
+    def __init__(self, message=None, classid=None, namespace=None):
+        message = message or self.message % {
+                'classid': classid, 'namespace': namespace}
+        super(TrafficControlClassNotFound, self).__init__(message)
 
 
 @privileged.default.entrypoint
@@ -110,4 +121,24 @@ def list_tc_policy_classes(device, namespace=None):
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise ip_lib.NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+
+
+@privileged.default.entrypoint
+def delete_tc_policy_class(device, parent, classid, namespace=None,
+                           **kwargs):
+    """Delete TC policy class"""
+    try:
+        index = ip_lib.get_link_id(device, namespace)
+        with ip_lib.get_iproute(namespace) as ip:
+            ip.tc('del-class', index=index, handle=classid, parent=parent,
+                  **kwargs)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise ip_lib.NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+    except pyroute2.NetlinkError as e:
+        if e.code == errno.ENOENT:
+            raise TrafficControlClassNotFound(classid=classid,
+                                              namespace=namespace)
         raise
