@@ -17,6 +17,8 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_upgradecheck import upgradecheck
 
+from neutron.conf import common as neutron_conf_base
+
 CHECKS_ENTRYPOINTS = 'neutron.status.upgrade.checks'
 LOG = logging.getLogger(__name__)
 
@@ -38,6 +40,17 @@ def load_checks():
                           {'entrypoint': module_name, 'err': e})
             continue
     return tuple(checks)
+
+
+def setup_conf(conf=cfg.CONF):
+    """Setup the cfg for the status check utility.
+
+    Use separate setup_conf for the utility because there are many options
+    from the main config that do not apply during checks.
+    """
+
+    neutron_conf_base.register_core_common_config_opts(conf)
+    return conf
 
 
 class Checker(upgradecheck.UpgradeCommands):
@@ -62,5 +75,6 @@ class Checker(upgradecheck.UpgradeCommands):
 
 
 def main():
+    conf = setup_conf()
     return upgradecheck.main(
-        cfg.CONF, project='neutron', upgrade_command=Checker())
+        conf, project='neutron', upgrade_command=Checker())
