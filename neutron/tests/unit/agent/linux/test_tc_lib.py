@@ -321,3 +321,44 @@ class TcTestCase(base.BaseTestCase):
     def test__get_tbf_burst_value_when_burst_smaller_then_minimal(self):
         result = tc_lib._get_tbf_burst_value(BW_LIMIT, 0, KERNEL_HZ_VALUE)
         self.assertEqual(2, result)
+
+
+class TcPolicyClassTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super(TcPolicyClassTestCase, self).setUp()
+        self.mock_add_tc_policy_class = mock.patch.object(
+            priv_tc_lib, 'add_tc_policy_class').start()
+        self.mock_list_tc_policy_classes = mock.patch.object(
+            priv_tc_lib, 'list_tc_policy_classes').start()
+        self.namespace = 'namespace'
+
+    def test_add_tc_policy_class(self):
+        tc_lib.add_tc_policy_class(
+            'device', 'root', '1:10', 'qdisc_type', min_kbps=1000,
+            max_kbps=2000, burst_kb=1600, namespace=self.namespace)
+        self.mock_add_tc_policy_class.assert_called_once_with(
+            'device', rtnl.TC_H_ROOT, '1:10', 'qdisc_type', rate=1000 * 128,
+            ceil=2000 * 128, burst=1600 * 128, namespace=self.namespace)
+
+    def test_list_tc_policy_classes(self):
+        htb_params = {'buffer': 12500000, 'ceil': 256000, 'rate': 192000}
+        self.mock_list_tc_policy_classes.return_value = tuple([
+            {'index': 3, 'handle': 65537, 'parent': 4294967295,
+             'attrs': (
+                 ('TCA_KIND', 'htb'),
+                 ('TCA_OPTIONS', {
+                     'attrs': tuple([('TCA_HTB_PARMS', htb_params)])}))
+             }])
+        _class = tc_lib.list_tc_policy_class('device',
+                                             namespace=self.namespace)[0]
+        reference = {'device': 'device',
+                     'index': 3,
+                     'namespace': self.namespace,
+                     'parent': 'root',
+                     'classid': '1:1',
+                     'qdisc_type': 'htb',
+                     'min_kbps': 1500,
+                     'max_kbps': 2000,
+                     'burst_kb': 1200}
+        self.assertEqual(reference, _class)

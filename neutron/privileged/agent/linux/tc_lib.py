@@ -83,3 +83,31 @@ def delete_tc_qdisc(device, parent=None, kind=None, namespace=None,
         if e.errno == errno.ENOENT:
             raise ip_lib.NetworkNamespaceNotFound(netns_name=namespace)
         raise
+
+
+@privileged.default.entrypoint
+def add_tc_policy_class(device, parent, classid, qdisc_type, namespace=None,
+                        **kwargs):
+    """Add/replace TC policy class"""
+    try:
+        index = ip_lib.get_link_id(device, namespace)
+        with ip_lib.get_iproute(namespace) as ip:
+            ip.tc('replace-class', kind=qdisc_type, index=index,
+                  handle=classid, parent=parent, **kwargs)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise ip_lib.NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+
+
+@privileged.default.entrypoint
+def list_tc_policy_classes(device, namespace=None):
+    """List all TC policy classes of a device"""
+    try:
+        index = ip_lib.get_link_id(device, namespace)
+        with ip_lib.get_iproute(namespace) as ip:
+            return ip_lib.make_serializable(ip.get_classes(index=index))
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise ip_lib.NetworkNamespaceNotFound(netns_name=namespace)
+        raise
