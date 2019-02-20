@@ -22,6 +22,7 @@ from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.agent import firewall
+from neutron.common import constants as common_constants
 from neutron.conf.agent import securitygroups_rpc as sc_cfg
 
 
@@ -132,12 +133,17 @@ class SecurityGroupAgentRpc(object):
         self._apply_port_filter(device_ids)
 
     def _apply_port_filter(self, device_ids, update_filter=False):
+        step = common_constants.AGENT_RES_PROCESSING_STEP
         if self.use_enhanced_rpc:
-            devices_info = self.plugin_rpc.security_group_info_for_devices(
-                self.context, list(device_ids))
-            devices = devices_info['devices']
-            security_groups = devices_info['security_groups']
-            security_group_member_ips = devices_info['sg_member_ips']
+            devices = {}
+            security_groups = {}
+            security_group_member_ips = {}
+            for i in range(0, len(device_ids), step):
+                devices_info = self.plugin_rpc.security_group_info_for_devices(
+                    self.context, list(device_ids)[i:i + step])
+                devices.update(devices_info['devices'])
+                security_groups.update(devices_info['security_groups'])
+                security_group_member_ips.update(devices_info['sg_member_ips'])
         else:
             devices = self.plugin_rpc.security_group_rules_for_devices(
                 self.context, list(device_ids))
