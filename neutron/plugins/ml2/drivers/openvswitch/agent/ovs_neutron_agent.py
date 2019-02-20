@@ -1971,13 +1971,15 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         return port_stats
 
     def cleanup_stale_flows(self):
-        bridges = [self.int_br]
-        bridges.extend(self.phys_brs.values())
+        LOG.info("Cleaning stale %s flows", self.int_br.br_name)
+        self.int_br.cleanup_flows()
+        for pby_br in self.phys_brs.values():
+            LOG.info("Cleaning stale %s flows", pby_br.br_name)
+            pby_br.cleanup_flows()
+
         if self.enable_tunneling:
-            bridges.append(self.tun_br)
-        for bridge in bridges:
-            LOG.info("Cleaning stale %s flows", bridge.br_name)
-            bridge.cleanup_flows()
+            LOG.info("Cleaning stale %s flows", self.tun_br.br_name)
+            self.tun_br.cleanup_flows()
 
     def process_port_info(self, start, polling_manager, sync, ovs_restarted,
                           ports, ancillary_ports, updated_ports_copy,
