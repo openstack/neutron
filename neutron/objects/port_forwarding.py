@@ -76,7 +76,7 @@ class PortForwarding(base.NeutronDbObject):
         return True
 
     def obj_load_attr(self, attrname):
-        if attrname == 'floating_ip_address' or attrname == 'router_id':
+        if attrname in ['floating_ip_address', 'router_id']:
             return self._load_attr_from_fip(attrname)
         super(PortForwarding, self).obj_load_attr(attrname)
 

@@ -31,7 +31,7 @@ def main():
     agent_pid = sys.argv[3]
     prefix = os.getenv('PREFIX1', "::")
 
-    if operation == "add" or operation == "update":
+    if operation in ["add", "update"]:
         file_utils.replace_file(prefix_fname, "%s/64" % prefix)
     elif operation == "delete":
         file_utils.replace_file(prefix_fname, "::/64")
