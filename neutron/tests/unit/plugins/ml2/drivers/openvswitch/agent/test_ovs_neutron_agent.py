@@ -2248,21 +2248,28 @@ class TestOvsNeutronAgentRyu(TestOvsNeutronAgent,
                 mock.patch.object(self.agent.int_br,
                                   'uninstall_flows') as uninstall_flows:
             self.agent.int_br.set_agent_uuid_stamp(1234)
-            dump_flows.return_value = [
+            fake_flows = [
                 # mock ryu.ofproto.ofproto_v1_3_parser.OFPFlowStats
                 mock.Mock(cookie=1234, table_id=0),
                 mock.Mock(cookie=17185, table_id=2),
                 mock.Mock(cookie=9029, table_id=2),
                 mock.Mock(cookie=1234, table_id=3),
             ]
+            dump_flows.return_value = fake_flows
             self.agent.iter_num = 3
             self.agent.cleanup_stale_flows()
+
+            dump_flows_expected = [
+                mock.call(tid) for tid in constants.INT_BR_ALL_TABLES]
+            dump_flows.assert_has_calls(dump_flows_expected)
+
             expected = [mock.call(cookie=17185,
                                   cookie_mask=uint64_max),
                         mock.call(cookie=9029,
                                   cookie_mask=uint64_max)]
             uninstall_flows.assert_has_calls(expected, any_order=True)
-            self.assertEqual(len(expected), len(uninstall_flows.mock_calls))
+            self.assertEqual(len(constants.INT_BR_ALL_TABLES) * len(expected),
+                             len(uninstall_flows.mock_calls))
 
 
 class AncillaryBridgesTest(object):
