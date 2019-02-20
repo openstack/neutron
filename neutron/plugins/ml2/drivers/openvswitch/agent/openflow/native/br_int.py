@@ -38,6 +38,8 @@ LOG = logging.getLogger(__name__)
 class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
     """openvswitch agent br-int specific logic."""
 
+    of_tables = constants.INT_BR_ALL_TABLES
+
     def setup_default_table(self):
         self.setup_canary_table()
         self.install_goto(dest_table_id=constants.TRANSIENT_TABLE)
