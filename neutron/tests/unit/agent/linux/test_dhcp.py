@@ -1134,8 +1134,7 @@ class TestDhcpLocalProcess(TestBase):
     @mock.patch.object(fileutils, 'ensure_tree')
     def test_enable(self, ensure_dir):
         attrs_to_mock = dict(
-            [(a, mock.DEFAULT) for a in
-                ['active', 'interface_name']]
+            (a, mock.DEFAULT) for a in ['active', 'interface_name']
         )
 
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
@@ -1158,8 +1157,8 @@ class TestDhcpLocalProcess(TestBase):
         self.assertTrue(self.external_process().disable.called)
 
     def test_disable_not_active(self):
-        attrs_to_mock = dict([(a, mock.DEFAULT) for a in
-                              ['active', 'interface_name']])
+        attrs_to_mock = dict((a, mock.DEFAULT) for a in
+                             ['active', 'interface_name'])
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
             mocks['active'].__get__ = mock.Mock(return_value=False)
             mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
@@ -1176,8 +1175,8 @@ class TestDhcpLocalProcess(TestBase):
         delete_ns.assert_called_with('qdhcp-ns')
 
     def test_disable_retain_port(self):
-        attrs_to_mock = dict([(a, mock.DEFAULT) for a in
-                              ['active', 'interface_name']])
+        attrs_to_mock = dict((a, mock.DEFAULT) for a in
+                             ['active', 'interface_name'])
         network = FakeDualNetwork()
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
             mocks['active'].__get__ = mock.Mock(return_value=True)
@@ -1318,8 +1317,8 @@ class TestDnsmasq(TestBase):
         self.execute.return_value = ('', '')
 
         attrs_to_mock = dict(
-            [(a, mock.DEFAULT) for a in
-                ['_output_opts_file', 'get_conf_file_name', 'interface_name']]
+            (a, mock.DEFAULT) for a in
+            ['_output_opts_file', 'get_conf_file_name', 'interface_name']
         )
 
         test_pm = mock.Mock()

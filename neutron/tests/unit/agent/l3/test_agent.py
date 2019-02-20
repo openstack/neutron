@@ -1730,9 +1730,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         p = ri.external_gateway_nat_fip_rules
         s = ri.external_gateway_nat_snat_rules
         attrs_to_mock = dict(
-            [(a, mock.DEFAULT) for a in
-                ['external_gateway_nat_fip_rules',
-                 'external_gateway_nat_snat_rules']]
+            (a, mock.DEFAULT) for a in
+            ['external_gateway_nat_fip_rules',
+             'external_gateway_nat_snat_rules']
         )
         with mock.patch.multiple(ri, **attrs_to_mock) as mocks:
             mocks['external_gateway_nat_fip_rules'].side_effect = p

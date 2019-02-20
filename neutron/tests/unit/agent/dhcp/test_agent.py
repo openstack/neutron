@@ -308,9 +308,9 @@ class TestDhcpAgent(base.BaseTestCase):
         with mock.patch(DEVICE_MANAGER):
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
             attrs_to_mock = dict(
-                [(a, mock.DEFAULT) for a in
-                 ['periodic_resync', 'start_ready_ports_loop',
-                  '_process_loop']])
+                (a, mock.DEFAULT) for a in
+                ['periodic_resync', 'start_ready_ports_loop',
+                 '_process_loop'])
             with mock.patch.multiple(dhcp, **attrs_to_mock) as mocks:
                 with mock.patch.object(dhcp_agent.eventlet,
                                        'spawn_n') as spawn_n:
@@ -380,9 +380,9 @@ class TestDhcpAgent(base.BaseTestCase):
 
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
 
-            attrs_to_mock = dict([(a, mock.DEFAULT)
+            attrs_to_mock = dict((a, mock.DEFAULT)
                                  for a in ['disable_dhcp_helper', 'cache',
-                                           'safe_configure_dhcp_for_network']])
+                                           'safe_configure_dhcp_for_network'])
 
             with mock.patch.multiple(dhcp, **attrs_to_mock) as mocks:
                 mocks['cache'].get_network_ids.return_value = known_net_ids

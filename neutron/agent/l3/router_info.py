@@ -1189,8 +1189,8 @@ class RouterInfo(object):
 
         # Update ex_gw_port on the router info cache
         self.ex_gw_port = self.get_ex_gw_port()
-        self.fip_map = dict([(fip['floating_ip_address'],
-                              fip['fixed_ip_address'])
-                             for fip in self.get_floating_ips()])
+        self.fip_map = dict((fip['floating_ip_address'],
+                             fip['fixed_ip_address'])
+                            for fip in self.get_floating_ips())
         self.fip_managed_by_port_forwardings = self.router.get(
             'fip_managed_by_port_forwardings')
