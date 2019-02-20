@@ -19,6 +19,7 @@ import sqlalchemy as sa
 from sqlalchemy import event  # noqa
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext import declarative
+from sqlalchemy.orm import attributes
 from sqlalchemy.orm import session as se
 
 from neutron._i18n import _
@@ -75,6 +76,16 @@ class StandardAttribute(model_base.BASEV2):
             # this is a brand new object uncommitted so we don't bump now
             return
         self.revision_number += 1
+
+    def _set_updated_revision_number(self, revision_number, updated_at):
+        attributes.set_committed_value(
+            self, "revision_number", revision_number)
+        attributes.set_committed_value(
+            self, "updated_at", updated_at)
+
+    @property
+    def _effective_standard_attribute_id(self):
+        return self.id
 
 
 class HasStandardAttributes(object):
@@ -146,6 +157,10 @@ class HasStandardAttributes(object):
                                    single_parent=True,
                                    uselist=False)
 
+    @property
+    def _effective_standard_attribute_id(self):
+        return self.standard_attr_id
+
     def __init__(self, *args, **kwargs):
         standard_attr_keys = ['description', 'created_at',
                               'updated_at', 'revision_number']
@@ -187,6 +202,10 @@ class HasStandardAttributes(object):
         # for all other modifications or when relevant children are being
         # modified (e.g. fixed_ips change should bump port revision)
         self.standard_attr.bump_revision()
+
+    def _set_updated_revision_number(self, revision_number, updated_at):
+        self.standard_attr._set_updated_revision_number(
+            revision_number, updated_at)
 
 
 def _resource_model_map_helper(rs_map, resource, subclass):
