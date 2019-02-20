@@ -432,14 +432,16 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             admin_ctx, gw_port_id, l3_port_check=False)
         with context.session.begin(subtransactions=True):
             context.session.refresh(router)
-        registry.notify(resources.ROUTER_GATEWAY,
-                        events.AFTER_DELETE, self,
-                        router_id=router_id,
-                        context=context,
-                        router=router,
-                        network_id=old_network_id,
-                        new_network_id=new_network_id,
-                        gateway_ips=gw_ips)
+        # TODO(boden): normalize metadata
+        metadata = {'network_id': old_network_id,
+                    'new_network_id': new_network_id,
+                    'gateway_ips': gw_ips}
+        registry.publish(resources.ROUTER_GATEWAY,
+                         events.AFTER_DELETE, self,
+                         payload=events.DBEventPayload(
+                             context, states=(router,),
+                             metadata=metadata,
+                             resource_id=router_id))
 
     def _delete_router_gw_port_db(self, context, router):
         with context.session.begin(subtransactions=True):
@@ -468,11 +470,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             subnets = self._core_plugin.get_subnets_by_network(context,
                                                                new_network_id)
             try:
-                kwargs = {'context': context, 'router_id': router_id,
-                          'network_id': new_network_id, 'subnets': subnets}
-                registry.notify(
+                registry.publish(
                     resources.ROUTER_GATEWAY, events.BEFORE_CREATE, self,
-                    **kwargs)
+                    payload=events.DBEventPayload(
+                        context, request_body=router,
+                        metadata={
+                            'network_id': new_network_id,
+                            'subnets': subnets},
+                        resource_id=router_id))
             except exceptions.CallbackFailure as e:
                 # raise the underlying exception
                 raise e.errors[0].error
@@ -486,13 +491,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
             gw_ips = [x['ip_address'] for x in router.gw_port['fixed_ips']]
 
-            registry.notify(resources.ROUTER_GATEWAY,
-                            events.AFTER_CREATE,
-                            self._create_gw_port,
-                            context=context,
-                            gw_ips=gw_ips,
-                            network_id=new_network_id,
-                            router_id=router_id)
+            registry.publish(resources.ROUTER_GATEWAY,
+                             events.AFTER_CREATE,
+                             self._create_gw_port,
+                             payload=events.DBEventPayload(
+                                 context, states=(router,),
+                                 metadata={'gateway_ips': gw_ips,
+                                           'network_id': new_network_id},
+                                 resource_id=router_id))
 
     def _update_current_gw_port(self, context, router_id, router, ext_ips):
         self._core_plugin.update_port(context, router.gw_port['id'], {'port':

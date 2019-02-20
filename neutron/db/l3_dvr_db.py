@@ -317,8 +317,7 @@ class DVRResourceOperationHandler(object):
 
     @registry.receives(resources.ROUTER_GATEWAY, [events.AFTER_DELETE])
     def _delete_dvr_internal_ports(self, event, trigger, resource,
-                                   context, router, network_id,
-                                   new_network_id, **kwargs):
+                                   payload=None):
         """GW port AFTER_DELETE event handler to cleanup DVR ports.
 
         This event is emitted when a router gateway port is being deleted,
@@ -326,25 +325,27 @@ class DVRResourceOperationHandler(object):
         agent gateway port associated with the dvr router.
         """
 
-        if not is_distributed_router(router):
+        if not is_distributed_router(payload.latest_state):
             return
-        if not new_network_id:
-            self.delete_csnat_router_interface_ports(context.elevated(),
-                                                     router)
+        if not payload.metadata.get('new_network_id'):
+            self.delete_csnat_router_interface_ports(
+                payload.context.elevated(), payload.latest_state)
+
+        network_id = payload.metadata.get('network_id')
         # NOTE(Swami): Delete the Floatingip agent gateway port
         # on all hosts when it is the last gateway port in the
         # given external network.
         filters = {'network_id': [network_id],
                    'device_owner': [const.DEVICE_OWNER_ROUTER_GW]}
         ext_net_gw_ports = self._core_plugin.get_ports(
-            context.elevated(), filters)
+            payload.context.elevated(), filters)
         if not ext_net_gw_ports:
             self.delete_floatingip_agent_gateway_port(
-                context.elevated(), None, network_id)
+                payload.context.elevated(), None, network_id)
             # Send the information to all the L3 Agent hosts
             # to clean up the fip namespace as it is no longer required.
             self.l3plugin.l3_rpc_notifier.delete_fipnamespace_for_ext_net(
-                context, network_id)
+                payload.context, network_id)
 
     def delete_floatingip_agent_gateway_port(self, context, host_id,
                                              ext_net_id):
