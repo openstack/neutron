@@ -75,8 +75,8 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         self.mixin = SecurityGroupDbMixinImpl()
 
     def test_create_security_group_conflict(self):
-        with mock.patch.object(registry, "notify") as mock_notify:
-            mock_notify.side_effect = exceptions.CallbackFailure(Exception())
+        with mock.patch.object(registry, "publish") as mock_publish:
+            mock_publish.side_effect = exceptions.CallbackFailure(Exception())
             secgroup = {'security_group': mock.ANY}
             with testtools.ExpectedException(
                 securitygroup.SecurityGroupConflict):
@@ -279,29 +279,34 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             DEFAULT_SECGROUP_DICT.update({
                 'revision_number': mock.ANY,
             })
-        with mock.patch.object(registry, "notify") as mock_notify:
+        with mock.patch.object(registry, 'publish') as publish, \
+                mock.patch.object(registry, "notify") as mock_notify:
             sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
             mock_notify.assert_has_calls([
-                mock.call('security_group', 'before_create', mock.ANY,
-                          context=mock.ANY, is_default=False,
-                          security_group=FAKE_SECGROUP['security_group']),
-
-                mock.call('security_group', 'before_create', mock.ANY,
-                          context=mock.ANY, is_default=True,
-                          security_group=DEFAULT_SECGROUP),
                 mock.call('security_group', 'precommit_create', mock.ANY,
                           context=mock.ANY, is_default=True,
                           security_group=DEFAULT_SECGROUP_DICT),
                 mock.call('security_group', 'after_create', mock.ANY,
                           context=mock.ANY, is_default=True,
                           security_group=DEFAULT_SECGROUP_DICT),
-
                 mock.call('security_group', 'precommit_create', mock.ANY,
                           context=mock.ANY, is_default=False,
                           security_group=sg_dict),
                 mock.call('security_group', 'after_create', mock.ANY,
                           context=mock.ANY, is_default=False,
                           security_group=sg_dict)])
+
+            publish.assert_has_calls([
+                mock.call('security_group', 'before_create', mock.ANY,
+                          payload=mock.ANY),
+                mock.call('security_group', 'before_create', mock.ANY,
+                          payload=mock.ANY)])
+            payload = publish.mock_calls[0][2]['payload']
+            self.assertDictEqual(payload.desired_state,
+                                 FAKE_SECGROUP['security_group'])
+            payload = publish.mock_calls[1][2]['payload']
+            self.assertDictEqual(payload.desired_state, DEFAULT_SECGROUP)
+
             # Ensure that the result of create is same as get.
             # Especially we want to check the revision number here.
             sg_dict_got = self.mixin.get_security_group(
