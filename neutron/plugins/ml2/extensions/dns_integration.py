@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib.api.definitions import dns as dns_apidef
+from neutron_lib.api.definitions import dns_domain_ports
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -380,7 +381,7 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
 
 
 class DNSDomainPortsExtensionDriver(DNSExtensionDriverML2):
-    _supported_extension_aliases = [dns_apidef.ALIAS, 'dns-domain-ports']
+    _supported_extension_aliases = [dns_apidef.ALIAS, dns_domain_ports.ALIAS]
 
     @property
     def extension_aliases(self):
