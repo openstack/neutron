@@ -377,6 +377,8 @@ class RouterInfo(object):
                 fip.get('host') == self.host):
                 LOG.debug("Floating IP is migrating from centralized "
                           "to distributed: %s", fip)
+                # TODO(dougwig) - remove this disable when fixing bug #1816874
+                # pylint: disable=assignment-from-no-return
                 fip_statuses[fip['id']] = self.migrate_centralized_floating_ip(
                     fip, interface_name, device)
             elif fip_statuses[fip['id']] == fip['status']:

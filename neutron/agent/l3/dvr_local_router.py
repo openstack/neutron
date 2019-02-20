@@ -108,6 +108,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
     def floating_ip_added_dist(self, fip, fip_cidr):
         """Add floating IP to respective namespace based on agent mode."""
         if fip.get(lib_constants.DVR_SNAT_BOUND):
+            # TODO(dougwig) - remove this disable when fixing bug #1816874
+            # pylint: disable=assignment-from-no-return
             floating_ip_status = self.add_centralized_floatingip(fip, fip_cidr)
             return floating_ip_status
         if not self._check_if_floatingip_bound_to_host(fip):
