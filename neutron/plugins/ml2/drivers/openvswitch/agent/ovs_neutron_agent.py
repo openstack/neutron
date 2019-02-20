@@ -1869,18 +1869,18 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
              need_binding_devices, failed_devices['added']) = (
                 self.treat_devices_added_or_updated(
                     devices_added_updated, provisioning_needed, re_added))
-            LOG.debug("process_network_ports - iteration:%(iter_num)d - "
-                      "treat_devices_added_or_updated completed. "
-                      "Skipped %(num_skipped)d and no activated binding "
-                      "devices %(num_no_active_binding)d of %(num_current)d "
-                      "devices currently available. "
-                      "Time elapsed: %(elapsed).3f",
-                      {'iter_num': self.iter_num,
-                       'num_skipped': len(skipped_devices),
-                       'num_no_active_binding':
-                           len(binding_no_activated_devices),
-                       'num_current': len(port_info['current']),
-                       'elapsed': time.time() - start})
+            LOG.info("process_network_ports - iteration:%(iter_num)d - "
+                     "treat_devices_added_or_updated completed. "
+                     "Skipped %(num_skipped)d and no activated binding "
+                     "devices %(num_no_active_binding)d of %(num_current)d "
+                     "devices currently available. "
+                     "Time elapsed: %(elapsed).3f",
+                     {'iter_num': self.iter_num,
+                      'num_skipped': len(skipped_devices),
+                      'num_no_active_binding':
+                          len(binding_no_activated_devices),
+                      'num_current': len(port_info['current']),
+                      'elapsed': time.time() - start})
             # Update the list of current ports storing only those which
             # have been actually processed.
             skipped_devices = set(skipped_devices)
@@ -1906,17 +1906,17 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             start = time.time()
             failed_devices['removed'] |= self.treat_devices_removed(
                 port_info['removed'])
-            LOG.debug("process_network_ports - iteration:%(iter_num)d - "
-                      "treat_devices_removed completed in %(elapsed).3f",
-                      {'iter_num': self.iter_num,
-                       'elapsed': time.time() - start})
+            LOG.info("process_network_ports - iteration:%(iter_num)d - "
+                     "treat_devices_removed completed in %(elapsed).3f",
+                     {'iter_num': self.iter_num,
+                      'elapsed': time.time() - start})
         if skipped_devices:
             start = time.time()
             self.treat_devices_skipped(skipped_devices)
-            LOG.debug("process_network_ports - iteration:%(iter_num)d - "
-                      "treat_devices_skipped completed in %(elapsed).3f",
-                      {'iter_num': self.iter_num,
-                       'elapsed': time.time() - start})
+            LOG.info("process_network_ports - iteration:%(iter_num)d - "
+                     "treat_devices_skipped completed in %(elapsed).3f",
+                     {'iter_num': self.iter_num,
+                      'elapsed': time.time() - start})
         return failed_devices
 
     def process_install_ports_egress_flows(self, ports):
@@ -2002,11 +2002,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             start = time.time()
             failed_added = self.treat_ancillary_devices_added(
                 port_info['added'])
-            LOG.debug("process_ancillary_network_ports - iteration: "
-                      "%(iter_num)d - treat_ancillary_devices_added "
-                      "completed in %(elapsed).3f",
-                      {'iter_num': self.iter_num,
-                       'elapsed': time.time() - start})
+            LOG.info("process_ancillary_network_ports - iteration: "
+                     "%(iter_num)d - treat_ancillary_devices_added "
+                     "completed in %(elapsed).3f",
+                     {'iter_num': self.iter_num,
+                      'elapsed': time.time() - start})
             failed_devices['added'] = failed_added
 
         if 'removed' in port_info and port_info['removed']:
@@ -2015,11 +2015,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 port_info['removed'])
             failed_devices['removed'] = failed_removed
 
-            LOG.debug("process_ancillary_network_ports - iteration: "
-                      "%(iter_num)d - treat_ancillary_devices_removed "
-                      "completed in %(elapsed).3f",
-                      {'iter_num': self.iter_num,
-                       'elapsed': time.time() - start})
+            LOG.info("process_ancillary_network_ports - iteration: "
+                     "%(iter_num)d - treat_ancillary_devices_removed "
+                     "completed in %(elapsed).3f",
+                     {'iter_num': self.iter_num,
+                      'elapsed': time.time() - start})
         return failed_devices
 
     @classmethod
@@ -2114,12 +2114,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
     def loop_count_and_wait(self, start_time, port_stats):
         # sleep till end of polling interval
         elapsed = time.time() - start_time
-        LOG.debug("Agent rpc_loop - iteration:%(iter_num)d "
-                  "completed. Processed ports statistics: "
-                  "%(port_stats)s. Elapsed:%(elapsed).3f",
-                  {'iter_num': self.iter_num,
-                   'port_stats': port_stats,
-                   'elapsed': elapsed})
+        LOG.info("Agent rpc_loop - iteration:%(iter_num)d "
+                 "completed. Processed ports statistics: "
+                 "%(port_stats)s. Elapsed:%(elapsed).3f",
+                 {'iter_num': self.iter_num,
+                  'port_stats': port_stats,
+                  'elapsed': elapsed})
         if elapsed < self.polling_interval:
             time.sleep(self.polling_interval - elapsed)
         else:
@@ -2191,11 +2191,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             if self.ancillary_brs:
                 ancillary_port_info = self.scan_ancillary_ports(
                     ancillary_ports, sync)
-                LOG.debug("Agent rpc_loop - iteration:%(iter_num)d"
-                          " - ancillary port info retrieved. "
-                          "Elapsed:%(elapsed).3f",
-                          {'iter_num': self.iter_num,
-                           'elapsed': time.time() - start})
+                LOG.info("Agent rpc_loop - iteration:%(iter_num)d"
+                         " - ancillary port info retrieved. "
+                         "Elapsed:%(elapsed).3f",
+                         {'iter_num': self.iter_num,
+                          'elapsed': time.time() - start})
             else:
                 ancillary_port_info = {}
 
@@ -2331,8 +2331,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             port_info = {}
             ancillary_port_info = {}
             start = time.time()
-            LOG.debug("Agent rpc_loop - iteration:%d started",
-                      self.iter_num)
+            LOG.info("Agent rpc_loop - iteration:%d started",
+                     self.iter_num)
             ovs_status = self.check_ovs_status()
             if ovs_status == constants.OVS_RESTARTED:
                 self._handle_ovs_restart(polling_manager)
@@ -2363,10 +2363,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             if (self._agent_has_updates(polling_manager) or sync or
                     devices_need_retry):
                 try:
-                    LOG.debug("Agent rpc_loop - iteration:%(iter_num)d - "
-                              "starting polling. Elapsed:%(elapsed).3f",
-                              {'iter_num': self.iter_num,
-                               'elapsed': time.time() - start})
+                    LOG.info("Agent rpc_loop - iteration:%(iter_num)d - "
+                             "starting polling. Elapsed:%(elapsed).3f",
+                             {'iter_num': self.iter_num,
+                              'elapsed': time.time() - start})
                     # Save updated ports dict to perform rollback in
                     # case resync would be needed, and then clear
                     # self.updated_ports. As the greenthread should not yield
@@ -2390,11 +2390,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     if ofport_changed_ports:
                         port_info.setdefault('updated', set()).update(
                             ofport_changed_ports)
-                    LOG.debug("Agent rpc_loop - iteration:%(iter_num)d - "
-                              "port information retrieved. "
-                              "Elapsed:%(elapsed).3f",
-                              {'iter_num': self.iter_num,
-                               'elapsed': time.time() - start})
+                    LOG.info("Agent rpc_loop - iteration:%(iter_num)d - "
+                             "port information retrieved. "
+                             "Elapsed:%(elapsed).3f",
+                             {'iter_num': self.iter_num,
+                              'elapsed': time.time() - start})
                     # Secure and wire/unwire VIFs and update their status
                     # on Neutron server
                     if (self._port_info_has_changes(port_info) or
@@ -2409,10 +2409,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                         if need_clean_stale_flow:
                             self.cleanup_stale_flows()
                             need_clean_stale_flow = False
-                        LOG.debug("Agent rpc_loop - iteration:%(iter_num)d - "
-                                  "ports processed. Elapsed:%(elapsed).3f",
-                                  {'iter_num': self.iter_num,
-                                   'elapsed': time.time() - start})
+                        LOG.info("Agent rpc_loop - iteration:%(iter_num)d - "
+                                 "ports processed. Elapsed:%(elapsed).3f",
+                                 {'iter_num': self.iter_num,
+                                  'elapsed': time.time() - start})
 
                     ports = port_info['current']
 
@@ -2420,11 +2420,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                         failed_ancillary_devices = (
                             self.process_ancillary_network_ports(
                                 ancillary_port_info))
-                        LOG.debug("Agent rpc_loop - iteration: "
-                                  "%(iter_num)d - ancillary ports "
-                                  "processed. Elapsed:%(elapsed).3f",
-                                  {'iter_num': self.iter_num,
-                                   'elapsed': time.time() - start})
+                        LOG.info("Agent rpc_loop - iteration: "
+                                 "%(iter_num)d - ancillary ports "
+                                 "processed. Elapsed:%(elapsed).3f",
+                                 {'iter_num': self.iter_num,
+                                  'elapsed': time.time() - start})
                         ancillary_ports = ancillary_port_info['current']
 
                     polling_manager.polling_completed()
