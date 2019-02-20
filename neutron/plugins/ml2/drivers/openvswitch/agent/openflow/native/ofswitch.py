@@ -165,15 +165,20 @@ class OpenFlowSwitchMixin(object):
             flows += rep.body
         return flows
 
-    def cleanup_flows(self):
-        cookies = set([f.cookie for f in self.dump_flows()]) - \
-                  self.reserved_cookies
-        LOG.debug("Reserved cookies for %s: %s", self.br_name,
-                  self.reserved_cookies)
+    def _dump_and_clean(self, table_id=None):
+        cookies = set([f.cookie for f in self.dump_flows(table_id)]) - \
+                      self.reserved_cookies
         for c in cookies:
             LOG.warning("Deleting flow with cookie 0x%(cookie)x",
                         {'cookie': c})
             self.uninstall_flows(cookie=c, cookie_mask=ovs_lib.UINT64_BITMASK)
+
+    def cleanup_flows(self):
+        LOG.info("Reserved cookies for %s: %s", self.br_name,
+                 self.reserved_cookies)
+
+        for table_id in self.of_tables:
+            self._dump_and_clean(table_id)
 
     def install_goto_next(self, table_id, active_bundle=None):
         self.install_goto(table_id=table_id, dest_table_id=table_id + 1,
