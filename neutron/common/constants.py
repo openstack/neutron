@@ -274,3 +274,6 @@ RP_INVENTORY_DEFAULTS = 'resource_provider_inventory_defaults'
 # for the restart success rate.
 # [1] http://paste.openstack.org/show/745685/
 AGENT_RES_PROCESSING_STEP = 100
+# Number of resources for neutron to divide the large RPC
+# call data sets.
+RPC_RES_PROCESSING_STEP = 20
