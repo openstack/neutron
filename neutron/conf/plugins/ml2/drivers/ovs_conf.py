@@ -86,11 +86,11 @@ ovs_opts = [
     cfg.PortOpt('of_listen_port', default=6633,
                 help=_("Port to listen on for OpenFlow connections. "
                        "Used only for 'native' driver.")),
-    cfg.IntOpt('of_connect_timeout', default=30,
+    cfg.IntOpt('of_connect_timeout', default=300,
                help=_("Timeout in seconds to wait for "
                       "the local switch connecting the controller. "
                       "Used only for 'native' driver.")),
-    cfg.IntOpt('of_request_timeout', default=10,
+    cfg.IntOpt('of_request_timeout', default=300,
                help=_("Timeout in seconds to wait for a single "
                       "OpenFlow request. "
                       "Used only for 'native' driver.")),
