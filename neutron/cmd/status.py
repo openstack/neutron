@@ -18,6 +18,7 @@ from oslo_log import log as logging
 from oslo_upgradecheck import upgradecheck
 
 from neutron.conf import common as neutron_conf_base
+from neutron.conf import service as neutron_conf_service
 
 CHECKS_ENTRYPOINTS = 'neutron.status.upgrade.checks'
 LOG = logging.getLogger(__name__)
@@ -50,6 +51,8 @@ def setup_conf(conf=cfg.CONF):
     """
 
     neutron_conf_base.register_core_common_config_opts(conf)
+    neutron_conf_service.register_service_opts(
+        neutron_conf_service.service_opts, cfg.CONF)
     return conf
 
 
