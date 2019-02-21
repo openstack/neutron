@@ -113,6 +113,9 @@ class NeutronManager(object):
     __trace_args__ = {"name": "rpc"}
 
     def __init__(self, options=None, config_file=None):
+        # Store instances of already loaded plugins to avoid instantiate same
+        # plugin more than once
+        self._loaded_plugins = {}
         # If no options have been provided, create an empty dict
         if not options:
             options = {}
@@ -166,7 +169,12 @@ class NeutronManager(object):
         return self.load_class_for_provider(namespace, plugin_provider)
 
     def _get_plugin_instance(self, namespace, plugin_provider):
-        return self._get_plugin_class(namespace, plugin_provider)()
+        plugin_class = self._get_plugin_class(namespace, plugin_provider)
+        plugin_inst = self._loaded_plugins.get(plugin_class)
+        if not plugin_inst:
+            plugin_inst = plugin_class()
+            self._loaded_plugins[plugin_class] = plugin_inst
+        return plugin_inst
 
     def _load_services_from_core_plugin(self, plugin):
         """Puts core plugin in service_plugins for supported services."""
