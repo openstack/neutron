@@ -24,6 +24,7 @@ from neutron_lib import constants as lib_constants
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
+from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.tests.common import machine_fixtures
@@ -109,6 +110,12 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         self.assertIsNone(device.route.get_gateway())
 
     def test_router_processing_pool_size(self):
+        mock.patch.object(router_info.RouterInfo, 'initialize').start()
+        mock.patch.object(router_info.RouterInfo, 'process').start()
+        self.agent.l3_ext_manager = mock.Mock()
+        mock.patch.object(router_info.RouterInfo, 'delete').start()
+        mock.patch.object(registry, 'notify').start()
+
         router_info_1 = self.generate_router_info(False)
         r1 = self.manage_router(self.agent, router_info_1)
         self.assertEqual(l3_agent.ROUTER_PROCESS_GREENLET_MIN,
