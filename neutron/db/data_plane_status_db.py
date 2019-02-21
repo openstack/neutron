@@ -21,7 +21,8 @@ class DataPlaneStatusMixin(object):
     """Mixin class to add data plane status to a port"""
 
     def _process_create_port_data_plane_status(self, context, data, res):
-        obj = dps_obj.PortDataPlaneStatus(context, port_id=res['id'],
+        obj = dps_obj.PortDataPlaneStatus(
+            context, port_id=res['id'],
             data_plane_status=data[dps_lib.DATA_PLANE_STATUS])
         obj.create()
         res[dps_lib.DATA_PLANE_STATUS] = data[dps_lib.DATA_PLANE_STATUS]

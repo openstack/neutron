@@ -196,7 +196,8 @@ def upgrade():
         sa.ForeignKeyConstraint(['router_id'], ['routers.id']),
         sa.PrimaryKeyConstraint('router_id'))
 
-    op.create_table('cisco_hosting_devices',
+    op.create_table(
+        'cisco_hosting_devices',
         sa.Column('tenant_id', sa.String(length=255), nullable=True,
                   index=True),
         sa.Column('id', sa.String(length=36), nullable=False),
@@ -213,7 +214,8 @@ def upgrade():
                                 ondelete='SET NULL'),
         sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('cisco_port_mappings',
+    op.create_table(
+        'cisco_port_mappings',
         sa.Column('logical_resource_id', sa.String(length=36), nullable=False),
         sa.Column('logical_port_id', sa.String(length=36), nullable=False),
         sa.Column('port_type', sa.String(length=32), nullable=True),
@@ -227,7 +229,8 @@ def upgrade():
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('logical_resource_id', 'logical_port_id')
     )
-    op.create_table('cisco_router_mappings',
+    op.create_table(
+        'cisco_router_mappings',
         sa.Column('router_id', sa.String(length=36), nullable=False),
         sa.Column('auto_schedule', sa.Boolean(), nullable=False),
         sa.Column('hosting_device_id', sa.String(length=36), nullable=True),

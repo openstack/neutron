@@ -153,7 +153,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                                        for pool in subnet.allocation_pools]
             res['host_routes'] = [{'destination': str(route.destination),
                                    'nexthop': str(route.nexthop)}
-                                 for route in subnet.host_routes]
+                                  for route in subnet.host_routes]
             res['dns_nameservers'] = [str(dns.address)
                                       for dns in subnet.dns_nameservers]
             res['shared'] = subnet.shared

@@ -74,7 +74,8 @@ def get_agent_by_host(context, agent_host):
 def _get_active_network_ports(context, network_id):
     query = context.session.query(ml2_models.PortBinding,
                                   agent_model.Agent)
-    query = query.join(agent_model.Agent,
+    query = query.join(
+        agent_model.Agent,
         agent_model.Agent.host == ml2_models.PortBinding.host)
     query = query.join(models_v2.Port)
     query = query.options(orm.subqueryload(ml2_models.PortBinding.port))
@@ -85,7 +86,8 @@ def _get_active_network_ports(context, network_id):
 
 def _ha_router_interfaces_on_network_query(context, network_id):
     query = context.session.query(models_v2.Port)
-    query = query.join(l3ha_model.L3HARouterAgentPortBinding,
+    query = query.join(
+        l3ha_model.L3HARouterAgentPortBinding,
         l3ha_model.L3HARouterAgentPortBinding.router_id ==
         models_v2.Port.device_id)
     return query.filter(

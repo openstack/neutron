@@ -64,8 +64,8 @@ class IpamSubnetManager(object):
         :param context: neutron api request context
         :param neutron_subnet_id: neutron subnet id associated with ipam subnet
         """
-        return ipam_objs.IpamSubnet.delete_objects(context,
-             neutron_subnet_id=neutron_subnet_id)
+        return ipam_objs.IpamSubnet.delete_objects(
+             context, neutron_subnet_id=neutron_subnet_id)
 
     def create_pool(self, context, pool_start, pool_end):
         """Create an allocation pool for the subnet.

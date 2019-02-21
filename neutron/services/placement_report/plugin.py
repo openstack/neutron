@@ -214,7 +214,7 @@ class PlacementReporterAgents(object):
                 for driver in self._mechanism_drivers
                 if driver.obj.resource_provider_uuid5_namespace is not None]
             LOG.debug('agent types supporting placement reports: %s',
-                ', '.join(self._supported_agent_types))
+                      ', '.join(self._supported_agent_types))
         return self._supported_agent_types
 
     def mechanism_driver_by_agent_type(self, agent_type):

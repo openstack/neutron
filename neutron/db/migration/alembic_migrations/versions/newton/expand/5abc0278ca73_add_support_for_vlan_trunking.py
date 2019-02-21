@@ -22,7 +22,8 @@ down_revision = '45f8dd33480b'
 
 
 def upgrade():
-    op.create_table('trunks',
+    op.create_table(
+        'trunks',
         sa.Column('admin_state_up', sa.Boolean(),
                   nullable=False, server_default=sql.true()),
         sa.Column('tenant_id', sa.String(length=255), nullable=True,
@@ -42,7 +43,8 @@ def upgrade():
         sa.UniqueConstraint('port_id'),
         sa.UniqueConstraint('standard_attr_id')
     )
-    op.create_table('subports',
+    op.create_table(
+        'subports',
         sa.Column('port_id', sa.String(length=36)),
         sa.Column('trunk_id', sa.String(length=36), nullable=False),
         sa.Column('segmentation_type', sa.String(length=32), nullable=False),
@@ -51,6 +53,7 @@ def upgrade():
         sa.ForeignKeyConstraint(['trunk_id'], ['trunks.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('port_id'),
-        sa.UniqueConstraint('trunk_id', 'segmentation_type', 'segmentation_id',
+        sa.UniqueConstraint(
+            'trunk_id', 'segmentation_type', 'segmentation_id',
             name='uniq_subport0trunk_id0segmentation_type0segmentation_id')
     )

@@ -468,7 +468,7 @@ class OVSBridge(BaseOVS):
         if "cookie" in kwargs:
             kwargs["cookie"] = check_cookie_mask(str(kwargs["cookie"]))
         flow_str = ",".join("=".join([key, str(val)])
-            for key, val in kwargs.items())
+                            for key, val in kwargs.items())
 
         flows = self.run_ofctl("dump-flows", [flow_str])
         if flows:

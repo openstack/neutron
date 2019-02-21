@@ -73,5 +73,5 @@ class BaseWeightScheduler(BaseScheduler):
     def select(self, plugin, context, resource_hostable_agents,
                resource_hosted_agents, num_agents_needed):
         chosen_agents = sorted(resource_hostable_agents,
-                           key=attrgetter('load'))[0:num_agents_needed]
+                               key=attrgetter('load'))[0:num_agents_needed]
         return chosen_agents

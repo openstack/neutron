@@ -289,7 +289,8 @@ class KeepalivedIPv6Test(object):
         self.config_path = tempfile.mkdtemp()
 
         # Instantiate keepalived manager with the IPv6 configuration.
-        self.manager = keepalived.KeepalivedManager('router1', self.config,
+        self.manager = keepalived.KeepalivedManager(
+            'router1', self.config,
             namespace=self.nsname, process_monitor=self.pm,
             conf_path=self.config_path)
         self.manager.spawn()

@@ -125,7 +125,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                 if _combine(route) == route_str:
                     route.delete()
         for route_str in new_route_set - old_route_set:
-            route = subnet_obj.Route(context,
+            route = subnet_obj.Route(
+                context,
                 destination=common_utils.AuthenticIPNetwork(
                     route_str.partition("_")[0]),
                 nexthop=netaddr.IPAddress(route_str.partition("_")[2]),

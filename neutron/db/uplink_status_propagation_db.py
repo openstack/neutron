@@ -20,7 +20,8 @@ class UplinkStatusPropagationMixin(object):
     """Mixin class to add uplink propagation to a port"""
 
     def _process_create_port(self, context, data, res):
-        obj = usp_obj.PortUplinkStatusPropagation(context, port_id=res['id'],
+        obj = usp_obj.PortUplinkStatusPropagation(
+            context, port_id=res['id'],
             propagate_uplink_status=data[usp.PROPAGATE_UPLINK_STATUS])
         obj.create()
         res[usp.PROPAGATE_UPLINK_STATUS] = data[usp.PROPAGATE_UPLINK_STATUS]

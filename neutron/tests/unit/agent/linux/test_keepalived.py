@@ -402,8 +402,7 @@ class KeepalivedTrackScriptTestCase(base.BaseTestCase):
             keepalived.KeepalivedVirtualRoute('12.0.0.0/24', '10.0.0.1'), ]
         self.assertEqual('''    track_script {
         ha_health_check_1
-    }''',
-            ts.get_config_str())
+    }''', ts.get_config_str())
 
     def test_get_script_str(self):
         ts = keepalived.KeepalivedTrackScript(

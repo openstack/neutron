@@ -125,7 +125,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             for agent in snat_agent_list:
                 LOG.debug('DVR: Handle new unbound migration port, '
                           'host %(host)s, router_ids %(router_ids)s',
-                    {'host': agent.host, 'router_ids': router_ids})
+                          {'host': agent.host, 'router_ids': router_ids})
                 self.l3_rpc_notifier.routers_updated_on_host(
                     context, router_ids, agent.host)
                 if agent.host == port_host:
@@ -400,7 +400,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
     def _get_router_ids_for_agent(self, context, agent_db, router_ids):
         result_set = set(super(L3_DVRsch_db_mixin,
-                            self)._get_router_ids_for_agent(
+                               self)._get_router_ids_for_agent(
             context, agent_db, router_ids))
         router_ids = set(router_ids or [])
         if router_ids and result_set == router_ids:

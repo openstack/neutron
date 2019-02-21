@@ -230,11 +230,10 @@ class L3RpcCallback(object):
             # of hosts on which DVR router interfaces are spawned). Such
             # bindings are created/updated here by invoking
             # update_distributed_port_binding
-            self.plugin.update_distributed_port_binding(context, port['id'],
-                                                {'port':
-                                                 {portbindings.HOST_ID: host,
-                                                  'device_id': router_id}
-                                                 })
+            self.plugin.update_distributed_port_binding(
+                context, port['id'],
+                {'port': {portbindings.HOST_ID: host,
+                          'device_id': router_id}})
 
     def get_external_network_id(self, context, **kwargs):
         """Get one external network id for l3 agent.
@@ -305,8 +304,9 @@ class L3RpcCallback(object):
             admin_ctx, network_id, host)
         self._ensure_host_set_on_port(admin_ctx, host, agent_port)
         LOG.debug('Agent Gateway port returned : %(agent_port)s with '
-                  'host %(host)s', {'agent_port': agent_port,
-                  'host': host})
+                  'host %(host)s',
+                  {'agent_port': agent_port,
+                   'host': host})
         return agent_port
 
     @db_api.retry_db_errors

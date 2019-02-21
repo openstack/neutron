@@ -98,20 +98,28 @@ class DaemonMonitor(object):
         for p in router_ports:
             subnets = p.get('subnets', [])
             v6_subnets = [subnet for subnet in subnets if
-                    netaddr.IPNetwork(subnet['cidr']).version == 6]
+                          netaddr.IPNetwork(subnet['cidr']).version == 6]
             if not v6_subnets:
                 continue
             ra_modes = {subnet['ipv6_ra_mode'] for subnet in v6_subnets}
-            auto_config_prefixes = [subnet['cidr'] for subnet in v6_subnets if
-                    subnet['ipv6_ra_mode'] == constants.IPV6_SLAAC or
-                    subnet['ipv6_ra_mode'] == constants.DHCPV6_STATELESS]
-            stateful_config_prefixes = [subnet['cidr'] for subnet in v6_subnets
-                    if subnet['ipv6_ra_mode'] == constants.DHCPV6_STATEFUL]
+            auto_config_prefixes = [
+                subnet['cidr'] for subnet in v6_subnets
+                if (subnet['ipv6_ra_mode'] == constants.IPV6_SLAAC or
+                    subnet['ipv6_ra_mode'] == constants.DHCPV6_STATELESS)
+            ]
+            stateful_config_prefixes = [
+                subnet['cidr'] for subnet in v6_subnets
+                if subnet['ipv6_ra_mode'] == constants.DHCPV6_STATEFUL
+            ]
             interface_name = self._dev_name_helper(p['id'])
-            slaac_subnets = [subnet for subnet in v6_subnets if
-                subnet['ipv6_ra_mode'] == constants.IPV6_SLAAC]
-            dns_servers = list(iter_chain(*[subnet['dns_nameservers'] for
-                subnet in slaac_subnets if subnet.get('dns_nameservers')]))
+            slaac_subnets = [
+                subnet for subnet in v6_subnets
+                if subnet['ipv6_ra_mode'] == constants.IPV6_SLAAC
+            ]
+            dns_servers = list(iter_chain(*[
+                subnet['dns_nameservers'] for subnet in slaac_subnets
+                if subnet.get('dns_nameservers')
+            ]))
             network_mtu = p.get('mtu', 0)
 
             buf.write('%s' % CONFIG_TEMPLATE.render(

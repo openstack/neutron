@@ -522,8 +522,9 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                     ctx.reraise = False
                     return False
 
-    def _add_tap_interface(self, network_id, network_type, physical_network,
-                          segmentation_id, tap_device_name, device_owner, mtu):
+    def _add_tap_interface(self, network_id,
+                           network_type, physical_network, segmentation_id,
+                           tap_device_name, device_owner, mtu):
         """Add tap interface.
 
         If a VIF has been plugged into a network, this function will

@@ -296,7 +296,7 @@ class DhcpRpcCallback(object):
                 old_port['device_id'] !=
                     utils.get_dhcp_agent_device_id(network_id, host) or
                 not self._is_dhcp_agent_hosting_network(plugin, context, host,
-                    network_id)):
+                                                        network_id)):
                 raise exceptions.DhcpPortInUse(port_id=port['id'])
             LOG.debug('Update dhcp port %(port)s '
                       'from %(host)s.',

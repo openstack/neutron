@@ -550,8 +550,8 @@ class TunnelRpcCallbackMixin(object):
                         host, ip_endpoint.ip_address)
                 elif (host_endpoint and host_endpoint.ip_address != tunnel_ip):
                     # Notify all other listening agents to delete stale tunnels
-                    self._notifier.tunnel_delete(rpc_context,
-                        host_endpoint.ip_address, tunnel_type)
+                    self._notifier.tunnel_delete(
+                        rpc_context, host_endpoint.ip_address, tunnel_type)
                     driver.obj.delete_endpoint(host_endpoint.ip_address)
 
             tunnel = driver.obj.add_endpoint(tunnel_ip, host)

@@ -188,8 +188,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                                                      fields)
                 if (fields is None or len(fields) == 0 or
                    'security_group_rules' in fields):
-                    rules = self.get_security_group_rules(context,
-                        {'security_group_id': [id]})
+                    rules = self.get_security_group_rules(
+                        context, {'security_group_id': [id]})
                     ret['security_group_rules'] = rules
 
         finally:
@@ -318,8 +318,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
     def _create_port_security_group_binding(self, context, port_id,
                                             security_group_id):
         with db_api.CONTEXT_WRITER.using(context):
-            db = sg_models.SecurityGroupPortBinding(port_id=port_id,
-                                          security_group_id=security_group_id)
+            db = sg_models.SecurityGroupPortBinding(
+                port_id=port_id, security_group_id=security_group_id)
             context.session.add(db)
 
     def _get_port_security_group_bindings(self, context,
@@ -427,9 +427,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                                                           id=sg_rule.id)
             res_rule_dict = self._make_security_group_rule_dict(sg_rule.db_obj)
             kwargs['security_group_rule'] = res_rule_dict
-            self._registry_notify(resources.SECURITY_GROUP_RULE,
-                              events.PRECOMMIT_CREATE,
-                              exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
+            self._registry_notify(
+                resources.SECURITY_GROUP_RULE,
+                events.PRECOMMIT_CREATE,
+                exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
         return res_rule_dict
 
     def _get_ip_proto_number(self, protocol):
@@ -478,8 +479,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             if rule['port_range_min'] == 0 or rule['port_range_max'] == 0:
                 raise ext_sg.SecurityGroupInvalidPortValue(port=0)
             elif (rule['port_range_min'] is not None and
-                rule['port_range_max'] is not None and
-                rule['port_range_min'] <= rule['port_range_max']):
+                  rule['port_range_max'] is not None and
+                  rule['port_range_min'] <= rule['port_range_max']):
                 pass
             else:
                 raise ext_sg.SecurityGroupInvalidPortRange()
@@ -800,10 +801,12 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
 
         sg_objs = sg_obj.SecurityGroup.get_objects(context, id=port_sg)
 
-        valid_groups = set(g.id for g in sg_objs
-            if not tenant_id or g.tenant_id == tenant_id or
-            sg_obj.SecurityGroup.is_shared_with_tenant(context,
-                                                       g.id, tenant_id))
+        valid_groups = set(
+            g.id for g in sg_objs
+            if (not tenant_id or g.tenant_id == tenant_id or
+                sg_obj.SecurityGroup.is_shared_with_tenant(
+                    context, g.id, tenant_id))
+        )
 
         requested_groups = set(port_sg)
         port_sg_missing = requested_groups - valid_groups

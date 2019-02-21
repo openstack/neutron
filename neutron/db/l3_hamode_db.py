@@ -144,8 +144,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                         "%(ha_vr_id)d.",
                         {'router_id': router_id, 'ha_vr_id': allocation.vr_id})
                     router_body = {l3_apidef.ROUTER:
-                            {l3_ext_ha_apidef.HA_INFO: True,
-                             'ha_vr_id': allocation.vr_id}}
+                                   {l3_ext_ha_apidef.HA_INFO: True,
+                                    'ha_vr_id': allocation.vr_id}}
                     registry.publish(resources.ROUTER, events.PRECOMMIT_UPDATE,
                                      self, payload=events.DBEventPayload(
                                          context, request_body=router_body,
@@ -234,9 +234,11 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
     def get_number_of_agents_for_scheduling(self, context):
         """Return number of agents on which the router will be scheduled."""
 
-        num_agents = len(self.get_l3_agents(context, active=True,
-            filters={'agent_modes': [constants.L3_AGENT_MODE_LEGACY,
-                                     constants.L3_AGENT_MODE_DVR_SNAT]}))
+        num_agents = len(
+            self.get_l3_agents(
+                context, active=True,
+                filters={'agent_modes': [constants.L3_AGENT_MODE_LEGACY,
+                                         constants.L3_AGENT_MODE_DVR_SNAT]}))
         max_agents = cfg.CONF.max_l3_agents_per_router
         if max_agents:
             if max_agents > num_agents:
@@ -257,8 +259,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                     port_id=port_id,
                     router_id=router_id,
                     port_type=constants.DEVICE_OWNER_ROUTER_HA_INTF).create()
-                portbinding = l3_hamode.L3HARouterAgentPortBinding(context,
-                    port_id=port_id, router_id=router_id)
+                portbinding = l3_hamode.L3HARouterAgentPortBinding(
+                    context, port_id=port_id, router_id=router_id)
                 portbinding.create()
 
             return portbinding
@@ -671,8 +673,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             sync_data = self._get_dvr_sync_data(context, host, agent,
                                                 router_ids, active)
         else:
-            sync_data = super(L3_HA_NAT_db_mixin, self).get_sync_data(context,
-                                                            router_ids, active)
+            sync_data = super(L3_HA_NAT_db_mixin, self).get_sync_data(
+                context, router_ids, active)
         return self._process_sync_ha_data(
             context, sync_data, host, dvr_agent_mode)
 
@@ -703,7 +705,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                           constants.DEVICE_OWNER_ROUTER_SNAT,
                           constants.DEVICE_OWNER_ROUTER_GW]}
         ports = self._core_plugin.get_ports(admin_ctx, filters=device_filter)
-        active_ports = (port for port in ports
+        active_ports = (
+            port for port in ports
             if states[port['device_id']] == n_const.HA_ROUTER_STATE_ACTIVE)
 
         for port in active_ports:

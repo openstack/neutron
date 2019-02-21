@@ -138,7 +138,7 @@ def upgrade():
         sa.Column('network_id', sa.String(length=36), nullable=False),
         sa.Column('dhcp_agent_id', sa.String(length=36), nullable=False),
         sa.ForeignKeyConstraint(['dhcp_agent_id'], ['agents.id'],
-            ondelete='CASCADE'),
+                                ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
-            ondelete='CASCADE'),
+                                ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('network_id', 'dhcp_agent_id'))

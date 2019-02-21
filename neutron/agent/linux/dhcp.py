@@ -718,8 +718,8 @@ class Dnsmasq(DhcpLocalProcess):
                                ip_address, 'set:', port.id))
                 elif client_id and len(port.extra_dhcp_opts) == 1:
                     buf.write('%s,%s%s,%s,%s\n' %
-                          (port.mac_address, self._ID, client_id, name,
-                           ip_address))
+                              (port.mac_address, self._ID, client_id, name,
+                               ip_address))
                 else:
                     buf.write('%s,%s,%s,%s%s\n' %
                               (port.mac_address, name, ip_address,

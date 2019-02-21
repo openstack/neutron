@@ -330,7 +330,7 @@ class FipNamespace(namespaces.Namespace):
             is_ipv6=False)
 
     def _update_gateway_route(self, agent_gateway_port,
-                             interface_name, tbl_index):
+                              interface_name, tbl_index):
         ns_name = self.get_name()
         ipd = ip_lib.IPDevice(interface_name, namespace=ns_name)
         # If the 'fg-' device doesn't exist in the namespace then trying

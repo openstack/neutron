@@ -92,7 +92,8 @@ class DNSDbMixin(object):
                 context, floatingip_data, req_data))
         dns_actions_data = None
         if current_dns_name and current_dns_domain:
-            fip_obj.FloatingIPDNS(context,
+            fip_obj.FloatingIPDNS(
+                context,
                 floatingip_id=floatingip_data['id'],
                 dns_name=req_data[dns_apidef.DNSNAME],
                 dns_domain=req_data[dns_apidef.DNSDOMAIN],
@@ -149,7 +150,8 @@ class DNSDbMixin(object):
             else:
                 return
         if current_dns_name and current_dns_domain:
-            fip_obj.FloatingIPDNS(context,
+            fip_obj.FloatingIPDNS(
+                context,
                 floatingip_id=floatingip_data['id'],
                 dns_name='',
                 dns_domain='',

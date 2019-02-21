@@ -32,10 +32,11 @@ class CoreChecks(base.BaseChecks):
         if cfg.CONF.api_workers and cfg.CONF.rpc_workers:
             return upgradecheck.Result(
                 upgradecheck.Code.SUCCESS, _("Number of workers already "
-                "defined in config"))
+                                             "defined in config"))
         else:
             return upgradecheck.Result(
-                upgradecheck.Code.WARNING, _("The default number of workers "
-                "has changed. Please see release notes for the new values, "
-                "but it is strongly encouraged for deployers to manually set "
-                "the values for api_workers and rpc_workers."))
+                upgradecheck.Code.WARNING,
+                _("The default number of workers "
+                  "has changed. Please see release notes for the new values, "
+                  "but it is strongly encouraged for deployers to manually "
+                  "set the values for api_workers and rpc_workers."))

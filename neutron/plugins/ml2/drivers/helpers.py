@@ -152,8 +152,8 @@ class SegmentTypeDriver(BaseTypeDriver):
                         if count:
                             LOG.debug("%(type)s segment %(segment)s allocate "
                                       "done ",
-                                  {"type": network_type,
-                                   "segment": raw_segment})
+                                      {"type": network_type,
+                                       "segment": raw_segment})
                             return alloc
 
                         # Segment allocated or deleted since select

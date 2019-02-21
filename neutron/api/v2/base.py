@@ -327,8 +327,8 @@ class Controller(object):
             fields_to_strip += self._exclude_attributes_by_policy(
                 request.context, obj_list[0])
         collection = {self._collection:
-                      [self._filter_attributes(obj,
-                          fields_to_strip=fields_to_strip)
+                      [self._filter_attributes(
+                           obj, fields_to_strip=fields_to_strip)
                        for obj in obj_list]}
         pagination_links = pagination_helper.get_links(obj_list)
         if pagination_links:

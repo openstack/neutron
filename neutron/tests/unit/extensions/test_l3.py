@@ -1610,24 +1610,24 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                    set_context=True) as p:
                         err_code = exc.HTTPNotFound.code
                         self._router_interface_action('add',
-                                                    r['router']['id'],
-                                                    None,
-                                                    p['port']['id'],
-                                                    expected_code=err_code,
-                                                    tenant_id='bad_tenant')
+                                                      r['router']['id'],
+                                                      None,
+                                                      p['port']['id'],
+                                                      expected_code=err_code,
+                                                      tenant_id='bad_tenant')
                         self._router_interface_action('add',
-                                                    r['router']['id'],
-                                                    None,
-                                                    p['port']['id'],
-                                                    tenant_id=tenant_id)
+                                                      r['router']['id'],
+                                                      None,
+                                                      p['port']['id'],
+                                                      tenant_id=tenant_id)
 
                         # clean-up should fail as well
                         self._router_interface_action('remove',
-                                                    r['router']['id'],
-                                                    None,
-                                                    p['port']['id'],
-                                                    expected_code=err_code,
-                                                    tenant_id='bad_tenant')
+                                                      r['router']['id'],
+                                                      None,
+                                                      p['port']['id'],
+                                                      expected_code=err_code,
+                                                      tenant_id='bad_tenant')
 
     def test_router_add_interface_port_without_ips(self):
         with self.network() as network, self.router() as r:
@@ -2373,7 +2373,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 port_id = p['port']['id']
                 with self.router() as r:
                     self._router_interface_action('add', r['router']['id'],
-                                                None, port_id)
+                                                  None, port_id)
                 with self.subnet(cidr='12.0.0.0/24') as public_sub:
                     self._set_net_external(public_sub['subnet']['network_id'])
                     self._add_external_gateway_to_router(
@@ -2583,7 +2583,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     ip_range = list(netaddr.IPNetwork(
                         private_sub['subnet']['cidr']))
                     fixed_ips = [{'ip_address': str(ip_range[-3])},
-                                {'ip_address': str(ip_range[-2])}]
+                                 {'ip_address': str(ip_range[-2])}]
 
                     self._router_interface_action(
                         'add', r['router']['id'],
@@ -3070,9 +3070,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                ) as private_port:
 
                     fp1 = self._make_floatingip(self.fmt, network_ex_id1,
-                                            private_port['port']['id'])
+                                                private_port['port']['id'])
                     fp2 = self._make_floatingip(self.fmt, network_ex_id2,
-                                            private_port['port']['id'])
+                                                private_port['port']['id'])
                     self.assertEqual(fp1['floatingip']['router_id'],
                                      r1['router']['id'])
                     self.assertEqual(fp2['floatingip']['router_id'],
@@ -3109,7 +3109,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                ) as private_port:
 
                     fp = self._make_floatingip(self.fmt, network_ex_id,
-                                            private_port['port']['id'])
+                                               private_port['port']['id'])
                     self.assertEqual(r1['router']['id'],
                                      fp['floatingip']['router_id'])
 
@@ -3656,7 +3656,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         plugin = directory.get_plugin(plugin_constants.L3)
         with self.floatingip_with_assoc() as fip:
             fip_port = self._list('ports',
-               query_params='device_owner=network:floatingip')['ports'][0]
+                query_params='device_owner=network:floatingip')['ports'][0]
             # simulate a failed update by just setting the device_id of
             # the fip port back to PENDING
             data = {'port': {'device_id': 'PENDING'}}
@@ -3800,10 +3800,10 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                                           None,
                                           p1['port']['id'])
             port = {'port': {'fixed_ips':
-                       [{'ip_address': '9.0.1.4',
-                         'subnet_id': subnet['subnet']['id']},
-                        {'ip_address': '9.0.1.5',
-                         'subnet_id': subnet['subnet']['id']}]}}
+                             [{'ip_address': '9.0.1.4',
+                               'subnet_id': subnet['subnet']['id']},
+                              {'ip_address': '9.0.1.5',
+                               'subnet_id': subnet['subnet']['id']}]}}
             ctx = context.get_admin_context()
             self.assertRaises(
                 n_exc.BadRequest,
@@ -4403,9 +4403,9 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
 
     @contextlib.contextmanager
     def _create_floatingip_with_dns_on_update(self, net_dns_domain='',
-               port_dns_name='', flip_dns_domain='', flip_dns_name=''):
+            port_dns_name='', flip_dns_domain='', flip_dns_name=''):
         n, private_sub, p = self._create_net_sub_port(
-                dns_domain=net_dns_domain, dns_name=port_dns_name)
+            dns_domain=net_dns_domain, dns_name=port_dns_name)
         with self._create_floatingip_with_dns(flip_dns_domain=flip_dns_domain,
                 flip_dns_name=flip_dns_name, private_sub=private_sub) as flip:
             flip_id = flip['id']
@@ -4438,12 +4438,12 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
         # The recordsets.create function should be called with:
         # dns_domain, dns_name, 'A', ip_address ('A' for IPv4, 'AAAA' for IPv6)
         self.mock_client.recordsets.create.assert_called_with(self.DNS_DOMAIN,
-                self.DNS_NAME, 'A', [floating_ip_address])
+            self.DNS_NAME, 'A', [floating_ip_address])
         in_addr_name, in_addr_zone_name = self._get_in_addr(
-                floating_ip_address)
+            floating_ip_address)
         self.mock_admin_client.recordsets.create.assert_called_with(
-                in_addr_zone_name, in_addr_name, 'PTR',
-                ['%s.%s' % (self.DNS_NAME, self.DNS_DOMAIN)])
+            in_addr_zone_name, in_addr_name, 'PTR',
+            ['%s.%s' % (self.DNS_NAME, self.DNS_DOMAIN)])
 
     @mock.patch(MOCK_PATH, **mock_config)
     def test_floatingip_create(self, mock_args):
@@ -4546,11 +4546,11 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
         self.assertEqual(200, res.status_code)
         self.assertIsNone(flip_port_id)
         in_addr_name, in_addr_zone_name = self._get_in_addr(
-                floatingip['floating_ip_address'])
+            floatingip['floating_ip_address'])
         self.mock_client.recordsets.delete.assert_called_with(
-                self.DNS_DOMAIN, '')
+            self.DNS_DOMAIN, '')
         self.mock_admin_client.recordsets.delete.assert_called_with(
-                in_addr_zone_name, in_addr_name)
+            in_addr_zone_name, in_addr_name)
 
     @mock.patch(MOCK_PATH, **mock_config)
     def test_floatingip_delete(self, mock_args):

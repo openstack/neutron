@@ -139,9 +139,11 @@ class DNSExtensionDriver(api.ExtensionDriver):
             plugin_context,
             port_id=db_data['id'])
         if dns_data_db:
-            is_dns_name_changed = (dns_name is not None and
-                    dns_data_db[dns_apidef.DNSNAME] != dns_name)
-            is_dns_domain_changed = (dns_domain is not None and
+            is_dns_name_changed = (
+                dns_name is not None and
+                dns_data_db[dns_apidef.DNSNAME] != dns_name)
+            is_dns_domain_changed = (
+                dns_domain is not None and
                 dns_data_db[dns_apidef.DNSDOMAIN] != dns_domain)
             if (is_dns_name_changed or is_dns_domain_changed or
                     (has_fixed_ips and dns_data_db['current_dns_name'])):
@@ -159,8 +161,8 @@ class DNSExtensionDriver(api.ExtensionDriver):
             dns_data_db.update()
             return dns_data_db
         if dns_name or dns_domain:
-            dns_data_db = self._create_port_dns_record(plugin_context,
-                    request_data, db_data, network, dns_name or '')
+            dns_data_db = self._create_port_dns_record(
+                plugin_context, request_data, db_data, network, dns_name or '')
         return dns_data_db
 
     def _populate_previous_external_dns_data(self, dns_data_db):

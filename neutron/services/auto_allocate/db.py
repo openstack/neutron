@@ -66,8 +66,8 @@ def _ensure_external_network_default_value_callback(
         if is_default:
             # ensure only one default external network at any given time
             pager = base_obj.Pager(limit=1)
-            objs = net_obj.ExternalNetwork.get_objects(context,
-                _pager=pager, is_default=True)
+            objs = net_obj.ExternalNetwork.get_objects(context, _pager=pager,
+                                                       is_default=True)
             if objs:
                 if objs[0] and network['id'] != objs[0].network_id:
                     raise exceptions.DefaultExternalNetworkExists(
@@ -96,9 +96,9 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
         new = super(AutoAllocatedTopologyMixin, cls).__new__(cls, *args,
                                                              **kwargs)
         registry.subscribe(_ensure_external_network_default_value_callback,
-            resources.NETWORK, events.PRECOMMIT_UPDATE)
+                           resources.NETWORK, events.PRECOMMIT_UPDATE)
         registry.subscribe(_ensure_external_network_default_value_callback,
-            resources.NETWORK, events.PRECOMMIT_CREATE)
+                           resources.NETWORK, events.PRECOMMIT_CREATE)
         return new
 
     # TODO(armax): if a tenant modifies auto allocated resources under
@@ -145,7 +145,7 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
             return self._check_requirements(context, tenant_id)
         elif fields:
             raise n_exc.BadRequest(resource='auto_allocate',
-                msg=_("Unrecognized field"))
+                                   msg=_("Unrecognized field"))
 
         # Check for an existent topology
         network_id = self._get_auto_allocated_network(context, tenant_id)
@@ -335,8 +335,8 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
                       {'tenant_id': tenant_id, 'reason': e})
             router_id = router['id'] if router else None
             self._cleanup(context,
-                network_id=subnets[0]['network_id'],
-                router_id=router_id, subnets=attached_subnets)
+                          network_id=subnets[0]['network_id'],
+                          router_id=router_id, subnets=attached_subnets)
             raise exceptions.AutoAllocationFailure(
                 reason=_("Unable to provide external connectivity"))
         except Exception as e:

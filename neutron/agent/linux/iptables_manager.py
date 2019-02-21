@@ -815,7 +815,7 @@ def _get_rules_by_chain(rules):
 
 
 def _generate_chain_diff_iptables_commands(chain, old_chain_rules,
-                                          new_chain_rules):
+                                           new_chain_rules):
     # keep track of the old index because we have to insert rules
     # in the right position
     old_index = 1

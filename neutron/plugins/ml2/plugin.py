@@ -1371,8 +1371,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if self._check_update_has_allowed_address_pairs(port):
             #  has address pairs in request
             raise addr_exc.AddressPairAndPortSecurityRequired()
-        elif (not
-         self._check_update_deletes_allowed_address_pairs(port)):
+        elif not self._check_update_deletes_allowed_address_pairs(port):
             # not a request for deleting the address-pairs
             updated_port[addr_apidef.ADDRESS_PAIRS] = (
                     self.get_allowed_address_pairs(context, id))
@@ -1386,8 +1385,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # security groups, port security is set
         if self._check_update_has_security_groups(port):
             raise psec_exc.PortSecurityAndIPRequiredForSecurityGroups()
-        elif (not
-          self._check_update_deletes_security_groups(port)):
+        elif not self._check_update_deletes_security_groups(port):
             if not extensions.is_extension_supported(self, 'security-group'):
                 return
             # Update did not have security groups passed in. Check
@@ -1578,7 +1576,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                           id, host)
         device_id = attrs and attrs.get('device_id')
         router_id = binding and binding.get('router_id')
-        update_required = (not binding or
+        update_required = (
+            not binding or
             binding.vif_type == portbindings.VIF_TYPE_BINDING_FAILED or
             router_id != device_id)
         if update_required:
@@ -1591,8 +1590,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     network = self.get_network(context,
                                                orig_port['network_id'])
                     levels = db.get_binding_level_objs(context, id, host)
-                    mech_context = driver_context.PortContext(self,
-                        context, orig_port, network,
+                    mech_context = driver_context.PortContext(
+                        self, context, orig_port, network,
                         binding, levels, original_port=orig_port)
                     self._process_distributed_port_binding(
                         mech_context, context, attrs)
@@ -2059,7 +2058,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # change in segments could affect resulting network mtu, so let's
         # recalculate it
         network_db = self._get_network(context, network_id)
-        network_db.mtu = self._get_network_mtu(network_db,
+        network_db.mtu = self._get_network_mtu(
+            network_db,
             validate=(event != events.PRECOMMIT_DELETE))
         network_db.save(session=context.session)
 

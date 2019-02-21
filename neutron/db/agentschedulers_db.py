@@ -384,7 +384,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                     raise das_exc.NetworkHostedByDHCPAgent(
                         network_id=network_id, agent_id=id)
             network.NetworkDhcpAgentBinding(context, dhcp_agent_id=id,
-                 network_id=network_id).create()
+                                            network_id=network_id).create()
         dhcp_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_DHCP)
         if dhcp_notifier:
             dhcp_notifier.network_added_to_agent(

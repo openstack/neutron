@@ -131,7 +131,7 @@ class ResourceConsumerTracker(object):
         """
         for resource_type, resource_version in versions.items():
             self._set_version(consumer, resource_type,
-                             resource_version)
+                              resource_version)
 
         if versions:
             self._cleanup_removed_versions(consumer, versions)

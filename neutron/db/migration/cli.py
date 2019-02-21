@@ -572,7 +572,7 @@ def get_alembic_version_table(config):
         return []
 
     with environment.EnvironmentContext(config, script_dir,
-                                       fn=alembic_version_table_from_env):
+                                        fn=alembic_version_table_from_env):
         script_dir.run_env()
 
     return alembic_version_table[0]

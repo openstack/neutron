@@ -313,8 +313,8 @@ class SubnetPoolReader(object):
         self._sp_helper.validate_max_prefixlen(self.max_prefixlen,
                                                ip_version)
         self._sp_helper.validate_default_prefixlen(self.min_prefixlen,
-                                                self.max_prefixlen,
-                                                self.default_prefixlen)
+                                                   self.max_prefixlen,
+                                                   self.default_prefixlen)
 
     def _read_prefix_bound(self, type, subnetpool, default_bound=None):
         prefixlen_attr = type + '_prefixlen'
@@ -372,15 +372,15 @@ class SubnetPoolReader(object):
 class SubnetPoolHelper(object):
 
     _PREFIX_VERSION_INFO = {4: {'max_prefixlen': constants.IPv4_BITS,
-                               'wildcard': '0.0.0.0',
-                               'default_min_prefixlen': 8,
-                               # IPv4 quota measured in units of /32
-                               'quota_units': 32},
-                           6: {'max_prefixlen': constants.IPv6_BITS,
-                               'wildcard': '::',
-                               'default_min_prefixlen': 64,
-                               # IPv6 quota measured in units of /64
-                               'quota_units': 64}}
+                                'wildcard': '0.0.0.0',
+                                'default_min_prefixlen': 8,
+                                # IPv4 quota measured in units of /32
+                                'quota_units': 32},
+                            6: {'max_prefixlen': constants.IPv6_BITS,
+                                'wildcard': '::',
+                                'default_min_prefixlen': 64,
+                                # IPv6 quota measured in units of /64
+                                'quota_units': 64}}
 
     def validate_min_prefixlen(self, min_prefixlen, max_prefixlen):
         if min_prefixlen < 0:

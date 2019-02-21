@@ -103,7 +103,7 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tagging.TagPluginBase):
             return
         try:
             tag_obj.Tag(context, standard_attr_id=res.standard_attr_id,
-                tag=tag).create()
+                        tag=tag).create()
         except obj_exc.NeutronDbObjectDuplicateEntry:
             pass
 
@@ -116,6 +116,6 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tagging.TagPluginBase):
     @log_helpers.log_method_call
     def delete_tag(self, context, resource, resource_id, tag):
         res = self._get_resource(context, resource, resource_id)
-        if not tag_obj.Tag.delete_objects(context,
-            tag=tag, standard_attr_id=res.standard_attr_id):
+        if not tag_obj.Tag.delete_objects(
+            context, tag=tag, standard_attr_id=res.standard_attr_id):
             raise tagging.TagNotFound(tag=tag)

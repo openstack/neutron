@@ -187,8 +187,8 @@ class NeutronDbSubnet(ipam_base.Subnet):
                 allocated_num_addresses = requested_num_addresses
 
             if prefer_next:
-                allocated_ip_pool = list(itertools.islice(av_set,
-                    allocated_num_addresses))
+                allocated_ip_pool = list(itertools.islice(
+                    av_set, allocated_num_addresses))
                 allocated_ips.extend([str(allocated_ip)
                                       for allocated_ip in allocated_ip_pool])
 

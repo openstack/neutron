@@ -39,12 +39,14 @@ designate_opts = [
                       'context')),
     cfg.BoolOpt('allow_reverse_dns_lookup', default=True,
                 help=_('Allow the creation of PTR records')),
-    cfg.IntOpt('ipv4_ptr_zone_prefix_size', default=24,
+    cfg.IntOpt(
+        'ipv4_ptr_zone_prefix_size', default=24,
         help=_('Number of bits in an ipv4 PTR zone that will be considered '
                'network prefix. It has to align to byte boundary. Minimum '
                'value is 8. Maximum value is 24. As a consequence, range '
                'of values is 8, 16 and 24')),
-    cfg.IntOpt('ipv6_ptr_zone_prefix_size', default=120,
+    cfg.IntOpt(
+        'ipv6_ptr_zone_prefix_size', default=120,
         help=_('Number of bits in an ipv6 PTR zone that will be considered '
                'network prefix. It has to align to nyble boundary. Minimum '
                'value is 4. Maximum value is 124. As a consequence, range '
@@ -59,6 +61,6 @@ designate_opts = [
 def register_designate_opts(CONF=cfg.CONF):
     CONF.register_opts(designate_opts, 'designate')
     loading.register_auth_conf_options(CONF, 'designate')
-    loading.register_session_conf_options(conf=CONF,
-        group='designate',
+    loading.register_session_conf_options(
+        conf=CONF, group='designate',
         deprecated_opts={'cafile': [cfg.DeprecatedOpt('ca_cert')]})

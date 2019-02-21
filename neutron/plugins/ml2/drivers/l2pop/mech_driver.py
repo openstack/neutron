@@ -90,7 +90,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
             fdb_entries[network_id]['ports'] = other_fdb_ports
 
         self.L2populationAgentNotify.remove_fdb_entries(self.rpc_ctx,
-            fdb_entries)
+                                                        fdb_entries)
 
     def filter_hosts_with_segment_access(
             self, context, segments, candidate_hosts, agent_getter):

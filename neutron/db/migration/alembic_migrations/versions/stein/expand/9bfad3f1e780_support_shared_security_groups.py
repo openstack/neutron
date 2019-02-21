@@ -31,7 +31,8 @@ down_revision = '0ff9e3881597'
 
 
 def upgrade():
-    op.create_table('securitygrouprbacs',
+    op.create_table(
+        'securitygrouprbacs',
         sa.Column('project_id', sa.String(length=255), nullable=True),
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('target_tenant', sa.String(length=255), nullable=False),

@@ -45,8 +45,9 @@ class NetworkIPAvailabilityPlugin(ip_availability_db.IpAvailabilityMixin,
     def get_network_ip_availabilities(self, context, filters=None,
                                       fields=None):
         """Returns ip availability data for a collection of networks."""
-        net_ip_availabilities = super(NetworkIPAvailabilityPlugin,
-                     self).get_network_ip_availabilities(context, filters)
+        net_ip_availabilities = super(
+            NetworkIPAvailabilityPlugin, self
+        ).get_network_ip_availabilities(context, filters)
         return [db_utils.resource_fields(net_ip_availability, fields)
                 for net_ip_availability in net_ip_availabilities]
 

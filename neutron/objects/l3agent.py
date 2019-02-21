@@ -62,5 +62,5 @@ class RouterL3AgentBinding(base.NeutronDbObject):
                      l3_attrs.RouterExtraAttributes.ha == sql.false(),
                      l3_attrs.RouterExtraAttributes.ha == sql.null())))
         bindings = [cls._load_object(context, db_obj) for db_obj in
-                query.all()]
+                    query.all()]
         return bindings

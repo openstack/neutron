@@ -68,7 +68,7 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
                                      proto='arp',
                                      dl_dst="ff:ff:ff:ff:ff:ff",
                                      actions=("resubmit(,%s)" %
-                                       constants.ARP_RESPONDER))
+                                              constants.ARP_RESPONDER))
 
             # PATCH_LV_TO_TUN table will handle packets coming from patch_int
             # unicasts go to table UCAST_TO_TUN where remote addresses are
@@ -77,7 +77,7 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
                                  priority=0,
                                  dl_dst="00:00:00:00:00:00/01:00:00:00:00:00",
                                  actions=("resubmit(,%s)" %
-                                   constants.UCAST_TO_TUN))
+                                          constants.UCAST_TO_TUN))
 
             # Broadcasts/multicasts go to table FLOOD_TO_TUN that handles
             # flooding
@@ -85,7 +85,7 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
                                  priority=0,
                                  dl_dst="01:00:00:00:00:00/01:00:00:00:00:00",
                                  actions=("resubmit(,%s)" %
-                                   constants.FLOOD_TO_TUN))
+                                          constants.FLOOD_TO_TUN))
 
             # Tables [tunnel_type]_TUN_TO_LV will set lvid depending on tun_id
             # for each tunnel type, and resubmit to table LEARN_FROM_TUN where

@@ -3277,7 +3277,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ifname = ri.get_internal_device_name(intf['id'])
         for subnet in intf['subnets']:
             return dibbler.PDDibbler(ri.router['id'],
-                       subnet['id'], ifname).requestor_id
+                                     subnet['id'], ifname).requestor_id
 
     def _pd_assert_dibbler_calls(self, expected, actual):
         '''Check the external process calls for dibbler are expected

@@ -1213,7 +1213,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
         bindings = self.plugin.get_ha_router_port_bindings(
             ctx, [router['id']])
         binding = [binding for binding in bindings
-            if binding.l3_agent_id == self.agent1['id']][0]
+                   if binding.l3_agent_id == self.agent1['id']][0]
         port = self.core_plugin.get_port(ctx, binding.port_id)
 
         # As network segments are not available, mock bind_port

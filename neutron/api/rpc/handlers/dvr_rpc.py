@@ -102,8 +102,7 @@ class DVRServerRpcCallback(object):
         host = kwargs.get('host')
         subnet = kwargs.get('subnet')
         LOG.debug("DVR Agent requests list of VM ports on host %s", host)
-        return self.plugin.get_ports_on_host_by_subnet(context,
-            host, subnet)
+        return self.plugin.get_ports_on_host_by_subnet(context, host, subnet)
 
     def get_subnet_for_dvr(self, context, **kwargs):
         fixed_ips = kwargs.get('fixed_ips')
