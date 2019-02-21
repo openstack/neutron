@@ -52,6 +52,22 @@ class L3DvrTestCaseBase(ml2_test_base.ML2TestFramework,
                                admin_state_up=admin_state_up))
 
 
+class MultipleL3PluginTestCase(L3DvrTestCaseBase):
+
+    def get_additional_service_plugins(self):
+        p = super(MultipleL3PluginTestCase,
+                  self).get_additional_service_plugins()
+        p.update({'l3_plugin_name_1': self.l3_plugin,
+                  'l3_plugin_name_2': self.l3_plugin})
+        return p
+
+    def test_create_router(self):
+        router = self._create_router()
+        self.assertEqual(
+            constants.DEVICE_OWNER_DVR_INTERFACE,
+            self.l3_plugin._get_device_owner(self.context, router))
+
+
 class L3DvrTestCase(L3DvrTestCaseBase):
     def test_update_router_db_centralized_to_distributed(self):
         router = self._create_router(distributed=False)
