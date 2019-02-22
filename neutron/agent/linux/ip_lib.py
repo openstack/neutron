@@ -793,18 +793,18 @@ class IpNetnsCommand(IpCommandBase):
 
 def vlan_in_use(segmentation_id, namespace=None):
     """Return True if VLAN ID is in use by an interface, else False."""
-    ip_wrapper = IPWrapper(namespace=namespace)
-    interfaces = ip_wrapper.netns.execute(["ip", "-d", "link", "list"],
-                                          check_exit_code=True)
-    return '802.1Q id %s ' % segmentation_id in interfaces
+    interfaces = get_devices_info(namespace)
+    vlans = {interface.get('vlan_id') for interface in interfaces
+             if interface.get('vlan_id')}
+    return segmentation_id in vlans
 
 
 def vxlan_in_use(segmentation_id, namespace=None):
     """Return True if VXLAN VNID is in use by an interface, else False."""
-    ip_wrapper = IPWrapper(namespace=namespace)
-    interfaces = ip_wrapper.netns.execute(["ip", "-d", "link", "list"],
-                                          check_exit_code=True)
-    return 'vxlan id %s ' % segmentation_id in interfaces
+    interfaces = get_devices_info(namespace)
+    vxlans = {interface.get('vxlan_id') for interface in interfaces
+              if interface.get('vxlan_id')}
+    return segmentation_id in vxlans
 
 
 def device_exists(device_name, namespace=None):
