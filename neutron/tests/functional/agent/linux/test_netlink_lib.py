@@ -64,7 +64,10 @@ class NetlinkLibTestCase(functional_base.BaseSudoTestCase):
     def _delete_entry(self, delete_entries, remain_entries, zone):
         nl_lib.delete_entries(entries=delete_entries)
         entries_list = nl_lib.list_entries(zone=zone)
-        self.assertEqual(remain_entries, entries_list)
+        for delete_entry in delete_entries:
+            self.assertNotIn(delete_entry, entries_list)
+        for remain_entry in remain_entries:
+            self.assertIn(remain_entry, entries_list)
 
     @staticmethod
     def _find_unused_zone_id(start, end):
@@ -92,7 +95,8 @@ class NetlinkLibTestCase(functional_base.BaseSudoTestCase):
             (4, 'udp', 4, 5, '1.1.1.1', '2.2.2.2', _zone)
         )
         entries_list = nl_lib.list_entries(zone=_zone)
-        self.assertEqual(expected, entries_list)
+        for entry in expected:
+            self.assertIn(entry, entries_list)
 
     def test_delete_icmp_entry(self):
         _zone = self._find_unused_zone_id(31, 50)
