@@ -21,6 +21,7 @@ from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants as n_const
+from neutron.common import utils as common_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -55,6 +56,15 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
                       "current dvr_snat host.", self.snat_namespace.name)
             self.external_gateway_removed(ex_gw_port, interface_name)
 
+    def _list_centralized_floating_ip_cidrs(self):
+        # Compute a list of addresses this gw is supposed to have.
+        # This avoids unnecessarily removing those addresses and
+        # causing a momentarily network outage.
+        floating_ips = self.get_floating_ips()
+        return [common_utils.ip_to_cidr(ip['floating_ip_address'])
+                for ip in floating_ips
+                if ip.get(n_const.DVR_SNAT_BOUND)]
+
     def external_gateway_updated(self, ex_gw_port, interface_name):
         if not self._is_this_snat_host():
             # no centralized SNAT gateway for this node/agent
@@ -71,10 +81,11 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             # newly created gateway
             return self.external_gateway_added(ex_gw_port, interface_name)
         else:
+            preserve_ips = self._list_centralized_floating_ip_cidrs()
             self._external_gateway_added(ex_gw_port,
                                         interface_name,
                                         self.snat_namespace.name,
-                                        preserve_ips=[])
+                                        preserve_ips)
 
     def _external_gateway_removed(self, ex_gw_port, interface_name):
         super(DvrEdgeRouter, self).external_gateway_removed(ex_gw_port,
