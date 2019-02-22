@@ -55,6 +55,8 @@
             irrelevant-files: *tempest-irrelevant-files
         - grenade-py3:
             irrelevant-files: *tempest-irrelevant-files
+        - openstacksdk-functional-devstack-networking:
+            voting: false
     gate:
       jobs:
         - neutron-functional
