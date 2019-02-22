@@ -338,13 +338,17 @@ class L3NATAgent(ha.AgentMixin,
             kwargs['host'] = self.host
 
         if router.get('distributed') and router.get('ha'):
-            # if the router does not contain information about the HA interface
-            # this means that this DVR+HA router needs to host only the edge
-            # side of it, typically because it's landing on a node that needs
-            # to provision a router namespace because of a DVR service port
-            # (e.g. DHCP).
-            if (self.conf.agent_mode == lib_const.L3_AGENT_MODE_DVR_SNAT
-                    and router.get(lib_const.HA_INTERFACE_KEY) is not None):
+            # Case 1: If the router contains information about the HA interface
+            # and if the requesting agent is a DVR_SNAT agent then go ahead
+            # and create a HA router.
+            # Case 2: If the router does not contain information about the HA
+            # interface this means that this DVR+HA router needs to host only
+            # the edge side of it, typically because it's landing on a node
+            # that needs to provision a router namespace because of a DVR
+            # service port (e.g. DHCP). So go ahead and create a regular DVR
+            # edge router.
+            if (self.conf.agent_mode == lib_const.L3_AGENT_MODE_DVR_SNAT and
+                    router.get(lib_const.HA_INTERFACE_KEY) is not None):
                 kwargs['state_change_callback'] = self.enqueue_state_change
                 return dvr_edge_ha_router.DvrEdgeHaRouter(*args, **kwargs)
 
@@ -499,20 +503,39 @@ class L3NATAgent(ha.AgentMixin,
 
     def _process_updated_router(self, router):
         ri = self.router_info[router['id']]
+        is_dvr_snat_agent = (self.conf.agent_mode ==
+                             lib_const.L3_AGENT_MODE_DVR_SNAT)
         is_dvr_only_agent = (self.conf.agent_mode in
                              [lib_const.L3_AGENT_MODE_DVR,
                               l3_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL])
-        is_ha_router = getattr(ri, 'ha_state', None) is not None
-        # For HA routers check that DB state matches actual state
-        if router.get('ha') and not is_dvr_only_agent and is_ha_router:
-            self.check_ha_state_for_router(
-                router['id'], router.get(l3_constants.HA_ROUTER_STATE_KEY))
-        ri.router = router
-        registry.notify(resources.ROUTER, events.BEFORE_UPDATE,
-                        self, router=ri)
-        ri.process()
-        registry.notify(resources.ROUTER, events.AFTER_UPDATE, self, router=ri)
-        self.l3_ext_manager.update_router(self.context, router)
+        old_router_ha_interface = ri.router.get(lib_const.HA_INTERFACE_KEY)
+        current_router_ha_interface = router.get(lib_const.HA_INTERFACE_KEY)
+        ha_interface_change = ((old_router_ha_interface is None and
+                                current_router_ha_interface is not None) or
+                               (old_router_ha_interface is not None and
+                                current_router_ha_interface is None))
+        is_dvr_ha_router = router.get('distributed') and router.get('ha')
+
+        if is_dvr_snat_agent and is_dvr_ha_router and ha_interface_change:
+            LOG.debug("Removing HA router %s, since it is not bound to "
+                      "the current agent, and recreating regular DVR router "
+                      "based on service port requirements.",
+                      router['id'])
+            if self._safe_router_removed(router['id']):
+                self._process_added_router(router)
+        else:
+            is_ha_router = getattr(ri, 'ha_state', None) is not None
+            # For HA routers check that DB state matches actual state
+            if router.get('ha') and not is_dvr_only_agent and is_ha_router:
+                self.check_ha_state_for_router(
+                    router['id'], router.get(l3_constants.HA_ROUTER_STATE_KEY))
+            ri.router = router
+            registry.notify(resources.ROUTER, events.BEFORE_UPDATE,
+                            self, router=ri)
+            ri.process()
+            registry.notify(
+                resources.ROUTER, events.AFTER_UPDATE, self, router=ri)
+            self.l3_ext_manager.update_router(self.context, router)
 
     def _resync_router(self, router_update,
                        priority=queue.PRIORITY_SYNC_ROUTERS_TASK):

@@ -1467,6 +1467,43 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.manage_router(restarted_agent, router1.router)
         self.assertTrue(fip_cidr_centralized_mock.called)
 
+    def test_dvr_ha_router_unbound_from_agents(self):
+        self._setup_dvr_ha_agents()
+        self._setup_dvr_ha_bridges()
+
+        router1 = self._create_dvr_ha_router(
+            self.agent, enable_gw=True)
+        router2 = self._create_dvr_ha_router(
+            self.failover_agent, enable_gw=True)
+
+        utils.wait_until_true(lambda: router1.ha_state == 'master')
+        utils.wait_until_true(lambda: router2.ha_state == 'backup')
+
+        self._assert_ip_addresses_in_dvr_ha_snat_namespace(router1)
+        self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(router2)
+        router1_ha_device = router1.get_ha_device_name()
+        router2_ha_device = router2.get_ha_device_name()
+        self.assertTrue(
+            ip_lib.device_exists(router1_ha_device, router1.ha_namespace))
+        self.assertTrue(
+            ip_lib.device_exists(router2_ha_device, router2.ha_namespace))
+
+        router1.router['_ha_interface'] = None
+        self.agent._process_updated_router(router1.router)
+        router_updated = self.agent.router_info[router1.router_id]
+
+        self.assertTrue(self._namespace_exists(router_updated.ns_name))
+        self._assert_snat_namespace_exists(router_updated)
+        snat_namespace_name = dvr_snat_ns.SnatNamespace.get_snat_ns_name(
+            router_updated.router_id)
+        self.assertFalse(
+            ip_lib.device_exists(router1_ha_device, snat_namespace_name))
+
+        utils.wait_until_true(lambda: router2.ha_state == 'master')
+        self._assert_ip_addresses_in_dvr_ha_snat_namespace(router2)
+        self.assertTrue(
+            ip_lib.device_exists(router2_ha_device, router2.ha_namespace))
+
     def _test_dvr_ha_router_failover_with_gw_and_fip(self, enable_gw,
                                                      enable_centralized_fip,
                                                      snat_bound_fip):
