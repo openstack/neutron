@@ -10,7 +10,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-import re
 
 from neutron_lib.utils import runtime
 from oslo_concurrency import lockutils
@@ -111,46 +110,7 @@ class Plumber(object):
 
     def _get_vlan_children(self, dev):
         """Return set of (devname, vlan_id) tuples for children of device."""
-        # TODO(kevinbenton): move into ip-lib after privsep stuff settles
-        ip_wrapper = ip_lib.IPWrapper(namespace=self.namespace)
-        output = ip_wrapper.netns.execute(["ip", "-d", "link", "list"],
-                                          check_exit_code=True)
-        return {(i.devname, i.vlan_tag)
-                for i in _iter_output_by_interface(output)
-                if i.parent_devname == dev}
-
-
-def _iter_output_by_interface(output):
-    interface = []
-    for line in output.splitlines():
-        if not line.startswith(' '):
-            # no space indicates new interface info
-            interface_str = ' '.join(interface)
-            if interface_str.strip():
-                yield _InterfaceInfo(interface_str)
-                interface = []
-        interface.append(line)
-    if interface:
-        yield _InterfaceInfo(' '.join(interface))
-
-
-class _InterfaceInfo(object):
-    def __init__(self, line):
-        try:
-            name_section = line.split(': ')[1]
-        except IndexError:
-            name_section = None
-            LOG.warning("Bad interface line: %s", line)
-        if not name_section or '@' not in name_section:
-            self.devname = name_section
-            self.parent_devname = self.vlan_tag = None
-        else:
-            self.devname, parent = name_section.split('@')
-            m = re.match(r'.*802\.1Q id (\d+).*', line)
-            self.vlan_tag = int(m.group(1)) if m else None
-            # we only care about parent interfaces if it's a vlan sub-interface
-            self.parent_devname = parent if self.vlan_tag is not None else None
-
-    def __repr__(self):
-        return ('_InterfaceInfo(devname=%s, parent=%s, vlan=%s)' %
-                (self.devname, self.parent_devname, self.vlan_tag))
+        devices = ip_lib.get_devices_info(namespace=self.namespace)
+        return {(device['name'], device['vlan_id']) for device in devices
+                if device.get('kind') == 'vlan' and
+                device.get('parent_name') == dev}
