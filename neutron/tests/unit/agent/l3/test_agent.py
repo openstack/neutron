@@ -766,6 +766,47 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_external_gateway_updated_dual_stack(self):
         self._test_external_gateway_updated(dual_stack=True)
 
+    def test_external_gateway_updated_dvr(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.conf.agent_mode = 'dvr_snat'
+        agent.host = HOSTNAME
+        router = l3_test_common.prepare_router_data(num_internal_ports=2)
+        router['distributed'] = True
+        router['gw_port_host'] = HOSTNAME
+        self._set_ri_kwargs(agent, router['id'], router)
+        ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
+        ri._create_dvr_gateway = mock.Mock()
+        ri.get_snat_interfaces = mock.Mock(return_value=self.snat_ports)
+        ri.snat_ports = self.snat_ports
+        ri._create_snat_namespace()
+        ex_net_id = _uuid()
+        ri.fip_ns = agent.get_fip_ns(ex_net_id)
+        ri.internal_ports = self.snat_ports
+        ri.use_ipv6 = False
+        interface_name, ex_gw_port = l3_test_common.prepare_ext_gw_test(
+            self, ri)
+
+        fake_fip = {'floatingips': [{'id': _uuid(),
+                                     'floating_ip_address': '192.168.1.34',
+                                     'fixed_ip_address': '192.168.0.1',
+                                     'port_id': _uuid(),
+                                     'dvr_snat_bound': True}]}
+        router[lib_constants.FLOATINGIP_KEY] = fake_fip['floatingips']
+        ri.external_gateway_updated(ex_gw_port, interface_name)
+        self.assertEqual(1, self.mock_driver.plug.call_count)
+        self.assertEqual(1, self.mock_driver.init_router_port.call_count)
+        exp_arp_calls = [mock.call(ri.snat_namespace.name, interface_name,
+                                   '20.0.0.30')]
+        self.send_adv_notif.assert_has_calls(exp_arp_calls)
+        ip_cidrs = ['20.0.0.30/24']
+        kwargs = {'preserve_ips': ['192.168.1.34/32'],
+                  'namespace': ri.snat_namespace.name,
+                  'extra_subnets': [{'cidr': '172.16.0.0/24'}],
+                  'clean_connections': True}
+        self.mock_driver.init_router_port.assert_called_with(interface_name,
+                                                             ip_cidrs,
+                                                             **kwargs)
+
     def test_dvr_edge_router_init_for_snat_namespace_object(self):
         router = {'id': _uuid()}
         self._set_ri_kwargs(mock.Mock(), router['id'], router)
