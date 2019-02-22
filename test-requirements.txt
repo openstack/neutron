@@ -18,8 +18,10 @@ oslotest>=3.2.0 # Apache-2.0
 stestr>=1.0.0 # Apache-2.0
 reno>=2.5.0  # Apache-2.0
 ddt>=1.0.1 # MIT
-astroid==1.6.5 # LGPLv2.1
-pylint==1.9.2 # GPLv2
+astroid==1.6.5;python_version<"3.0" # LGPLv2.1
+astroid==2.1.0;python_version>="3.0" # LGPLv2.1
+pylint==1.9.2;python_version<"3.0" # GPLv2
+pylint==2.2.0;python_version>="3.0" # GPLv2
 # Needed to run DB commands in virtualenvs
 PyMySQL>=0.7.6 # MIT License
 bashate>=0.5.1 # Apache-2.0

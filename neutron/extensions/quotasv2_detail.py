@@ -61,7 +61,7 @@ class Quotasv2_detail(api_extensions.ExtensionDescriptor):
 
     # Ensure new extension is not loaded with old conf driver.
     extensions.register_custom_supported_check(
-        ALIAS, lambda: True if QUOTA_DRIVER == DB_QUOTA_DRIVER else False,
+        ALIAS, lambda: QUOTA_DRIVER == DB_QUOTA_DRIVER,
         plugin_agnostic=True)
 
     @classmethod

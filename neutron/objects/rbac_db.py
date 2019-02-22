@@ -272,21 +272,21 @@ class RbacNeutronMetaclass(type):
     """
 
     @classmethod
-    def _get_attribute(mcs, attribute_name, bases):
+    def _get_attribute(cls, attribute_name, bases):
         for b in bases:
             attribute = getattr(b, attribute_name, None)
             if attribute:
                 return attribute
 
     @classmethod
-    def get_attribute(mcs, attribute_name, bases, dct):
+    def get_attribute(cls, attribute_name, bases, dct):
         return (dct.get(attribute_name, None) or
-                mcs._get_attribute(attribute_name, bases))
+                cls._get_attribute(attribute_name, bases))
 
     @classmethod
-    def update_synthetic_fields(mcs, bases, dct):
+    def update_synthetic_fields(cls, bases, dct):
         if not dct.get('synthetic_fields', None):
-            synthetic_attr = mcs.get_attribute('synthetic_fields', bases, dct)
+            synthetic_attr = cls.get_attribute('synthetic_fields', bases, dct)
             dct['synthetic_fields'] = synthetic_attr or []
         if 'shared' in dct['synthetic_fields']:
             raise exceptions.ObjectActionError(
@@ -315,25 +315,25 @@ class RbacNeutronMetaclass(type):
         return func
 
     @classmethod
-    def replace_class_methods_with_hooks(mcs, bases, dct):
+    def replace_class_methods_with_hooks(cls, bases, dct):
         methods_replacement_map = {'create': _create_hook,
                                    'update': _update_hook,
                                    'to_dict': _to_dict_hook}
         for orig_method_name, new_method in methods_replacement_map.items():
-            orig_method = mcs.get_attribute(orig_method_name, bases, dct)
-            hook_method = mcs.get_replaced_method(orig_method,
+            orig_method = cls.get_attribute(orig_method_name, bases, dct)
+            hook_method = cls.get_replaced_method(orig_method,
                                                   new_method)
             dct[orig_method_name] = hook_method
 
-    def __new__(mcs, name, bases, dct):
-        mcs.validate_existing_attrs(name, dct)
-        mcs.update_synthetic_fields(bases, dct)
-        mcs.replace_class_methods_with_hooks(bases, dct)
-        cls = type(name, (RbacNeutronDbObjectMixin,) + bases, dct)
-        cls.add_extra_filter_name('shared')
-        mcs.subscribe_to_rbac_events(cls)
+    def __new__(cls, name, bases, dct):
+        cls.validate_existing_attrs(name, dct)
+        cls.update_synthetic_fields(bases, dct)
+        cls.replace_class_methods_with_hooks(bases, dct)
+        klass = type(name, (RbacNeutronDbObjectMixin,) + bases, dct)
+        klass.add_extra_filter_name('shared')
+        cls.subscribe_to_rbac_events(klass)
 
-        return cls
+        return klass
 
 
 NeutronRbacObject = with_metaclass(RbacNeutronMetaclass, base.NeutronDbObject)

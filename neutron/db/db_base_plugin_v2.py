@@ -417,7 +417,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                             item.target_tenant == '*'):
                         entry = item
                         break
-                setattr(network, 'shared', True if entry else False)
+                setattr(network, 'shared', bool(entry))
                 self._validate_shared_update(context, id, network, n)
                 update_shared = n.pop('shared')
                 if update_shared and not entry:
