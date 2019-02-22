@@ -2653,6 +2653,67 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 router)
             safe_router_removed.assert_called_once_with(router['id'])
 
+    def test_process_dvr_routers_ha_on_update_when_router_unbound(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.conf.agent_mode = 'dvr_snat'
+        router = mock.Mock()
+        router.id = '1234'
+        router.distributed = True
+        router.ha = True
+        router_info = mock.MagicMock()
+        agent.router_info[router.id] = router_info
+        updated_router = {'id': '1234',
+                          'distributed': True,
+                          'ha': True,
+                          'external_gateway_info': {},
+                          'routes': [],
+                          'admin_state_up': True}
+
+        self.plugin_api.get_routers.return_value = [updated_router]
+        update = resource_processing_queue.ResourceUpdate(
+            updated_router['id'], l3_agent.PRIORITY_RPC,
+            resource=updated_router)
+
+        with mock.patch.object(agent,
+                               "_safe_router_removed"
+                               ) as router_remove,\
+            mock.patch.object(agent,
+                              "_process_added_router"
+                              ) as add_router:
+            agent._process_routers_if_compatible([updated_router], update)
+            router_remove.assert_called_once_with(updated_router['id'])
+            add_router.assert_called_once_with(updated_router)
+
+    def test_process_dvr_routers_ha_on_update_without_ha_interface(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.conf.agent_mode = 'dvr_snat'
+        router = mock.Mock()
+        router.id = '1234'
+        router.distributed = True
+        router._ha_interface = True
+        router.ha = True
+        router_info = mock.MagicMock()
+        agent.router_info[router.id] = router_info
+        updated_router = {'id': '1234',
+                          'distributed': True, 'ha': True,
+                          'external_gateway_info': {}, 'routes': [],
+                          'admin_state_up': True}
+
+        self.plugin_api.get_routers.return_value = [updated_router]
+        update = resource_processing_queue.ResourceUpdate(
+            updated_router['id'], l3_agent.PRIORITY_RPC,
+            resource=updated_router)
+
+        with mock.patch.object(agent,
+                               "_safe_router_removed"
+                               ) as router_remove,\
+            mock.patch.object(agent,
+                              "_process_added_router"
+                              ) as add_router:
+            agent._process_routers_if_compatible([updated_router], update)
+            router_remove.assert_called_once_with(updated_router['id'])
+            add_router.assert_called_once_with(updated_router)
+
     def test_process_routers_if_compatible_error(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = {'id': _uuid()}
