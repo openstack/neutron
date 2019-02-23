@@ -89,7 +89,6 @@ disable=
 # new for python3 version of pylint
  chained-comparison,
  consider-using-dict-comprehension,
- consider-using-in,
  consider-using-set-comprehension,
  unnecessary-pass,
  useless-object-inheritance

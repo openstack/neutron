@@ -2073,10 +2073,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         mech_context = driver_context.NetworkContext(
             self, context, network_with_segments,
             original_network=network_with_segments)
-        if (event == events.PRECOMMIT_CREATE or
-                event == events.PRECOMMIT_DELETE):
+        if event in [events.PRECOMMIT_CREATE, events.PRECOMMIT_DELETE]:
             self.mechanism_manager.update_network_precommit(mech_context)
-        elif event == events.AFTER_CREATE or event == events.AFTER_DELETE:
+        elif event in [events.AFTER_CREATE, events.AFTER_DELETE]:
             self.mechanism_manager.update_network_postcommit(mech_context)
 
     @staticmethod
