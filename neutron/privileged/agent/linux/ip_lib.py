@@ -137,7 +137,6 @@ def _translate_ip_device_exception(e, device=None, namespace=None):
     if e.code == errno.EOPNOTSUPP:
         raise InterfaceOperationNotSupported(device=device,
                                              namespace=namespace)
-    raise
 
 
 def _get_link_id(device, namespace):
@@ -155,6 +154,7 @@ def _run_iproute_link(command, device, namespace=None, **kwargs):
             return ip.link(command, index=idx, **kwargs)
     except NetlinkError as e:
         _translate_ip_device_exception(e, device, namespace)
+        raise
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -168,6 +168,7 @@ def _run_iproute_neigh(command, device, namespace, **kwargs):
             return ip.neigh(command, ifindex=idx, **kwargs)
     except NetlinkError as e:
         _translate_ip_device_exception(e, device, namespace)
+        raise
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -181,6 +182,7 @@ def _run_iproute_addr(command, device, namespace, **kwargs):
             return ip.addr(command, index=idx, **kwargs)
     except NetlinkError as e:
         _translate_ip_device_exception(e, device, namespace)
+        raise
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
