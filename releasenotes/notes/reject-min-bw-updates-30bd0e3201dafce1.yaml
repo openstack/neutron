@@ -1,0 +1,8 @@
+---
+other:
+  - |
+    Neutron server now rejects (as ``NotImplementedError``) updates of
+    ``minimum_bandwidth`` QoS rules if the rule is already in effect on bound
+    ports. Implementing updates will require updates to Placement allocations
+    and possibly migrating servers where the new ``minimum_bandwidth`` can be
+    satisifed.
