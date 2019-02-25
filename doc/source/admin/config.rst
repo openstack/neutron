@@ -25,6 +25,7 @@ Configuration
    config-logging
    config-macvtap
    config-mtu
+   config-network-segment-ranges
    config-ovs-dpdk
    config-ovs-offload
    config-ovsfwdriver
