@@ -18,6 +18,7 @@ from neutron_lib.agent import constants as agent_consts
 from neutron_lib.agent import topics
 from neutron_lib.api.definitions import address_scope
 from neutron_lib.api.definitions import agent as agent_apidef
+from neutron_lib.api.definitions import agent_resources_synced
 from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import availability_zone_filter
@@ -191,7 +192,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     empty_string_filtering.ALIAS,
                                     filter_apidef.ALIAS,
                                     port_mac_address_regenerate.ALIAS,
-                                    pbe_ext.ALIAS]
+                                    pbe_ext.ALIAS,
+                                    agent_resources_synced.ALIAS]
 
     # List of agent types for which all binding_failed ports should try to be
     # rebound when agent revive

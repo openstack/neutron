@@ -73,3 +73,9 @@ class AgentDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
         db_fields = obj.modify_fields_to_db(obj)
         self.assertIsNone(db_fields['resource_versions'])
+
+    def test_resources_synced_10(self):
+        obj = agent.Agent()
+        primitive = obj.obj_to_primitive(target_version='1.0')
+        self.assertNotIn(
+            'resources_synced', primitive['versioned_object.data'])

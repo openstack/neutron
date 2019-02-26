@@ -261,6 +261,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
         res['resource_versions'] = self._get_dict(agent, 'resource_versions',
                                                   ignore_missing=True)
         res['availability_zone'] = agent['availability_zone']
+        res['resources_synced'] = agent['resources_synced']
         return db_utils.resource_fields(res, fields)
 
     @db_api.retry_if_session_inactive()

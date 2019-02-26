@@ -53,6 +53,9 @@ class Agent(model_base.BASEV2, model_base.HasId):
     resource_versions = sa.Column(sa.String(8191))
     # load - number of resources hosted by the agent
     load = sa.Column(sa.Integer, server_default='0', nullable=False)
+    # resources_synced: nullable boolean, success of last sync to Placement
+    resources_synced = sa.Column(
+        sa.Boolean, default=None, server_default=None, nullable=True)
 
     @property
     def is_active(self):
