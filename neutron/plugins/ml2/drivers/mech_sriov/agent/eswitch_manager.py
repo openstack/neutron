@@ -192,7 +192,7 @@ class EmbSwitch(object):
         # convert the rate_kbps value from kbps to Mbps.
         # Zero means to disable the rate so the lowest rate available is 1Mbps.
         # Floating numbers are not allowed
-        if rate_kbps > 0 and rate_kbps < 1000:
+        if 0 < rate_kbps < 1000:
             rate_mbps = 1
         else:
             rate_mbps = helpers.round_val(rate_kbps / 1000.0)

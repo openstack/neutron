@@ -154,7 +154,7 @@ def convert_protocol(value):
         return
     try:
         val = int(value)
-        if val >= 0 and val <= 255:
+        if 0 <= val <= 255:
             # Set value of protocol number to string due to bug 1381379,
             # PostgreSQL fails when it tries to compare integer with string,
             # that exists in db.
