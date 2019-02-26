@@ -48,6 +48,7 @@
           export DEVSTACK_GATE_NEUTRON=1
           export DEVSTACK_GATE_CONFIGDRIVE=0
           export DEVSTACK_GATE_TEMPEST_FULL=1
+          export DEVSTACK_GATE_USE_PYTHON3=True
           # Test DVR works multinode
           export DEVSTACK_GATE_NEUTRON_DVR=1
           export BRANCH_OVERRIDE=default
