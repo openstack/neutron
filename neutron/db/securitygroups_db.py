@@ -296,6 +296,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                 self._make_security_group_rule_dict(r.db_obj)
                 for r in security_group.rules
             ]
+        else:
+            res['security_group_rules'] = []
         resource_extend.apply_funcs(ext_sg.SECURITYGROUPS, res,
                                     security_group.db_obj)
         return db_utils.resource_fields(res, fields)
