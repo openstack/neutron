@@ -698,6 +698,43 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 for k, v, in keys:
                     self.assertEqual(sg_rule[0][k], v)
 
+    def test_get_security_group_empty_rules(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            remote_group_id = sg['security_group']['id']
+
+            self._delete_default_security_group_egress_rules(
+                remote_group_id)
+
+            res = self.new_show_request('security-groups', remote_group_id)
+            group = self.deserialize(
+                self.fmt, res.get_response(self.ext_api))
+
+            sg_rule = group['security_group']['security_group_rules']
+            self.assertEqual(group['security_group']['id'],
+                             remote_group_id)
+            self.assertEqual(0, len(sg_rule))
+
+    def test_get_security_group_empty_rules_id_only(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            remote_group_id = sg['security_group']['id']
+
+            self._delete_default_security_group_egress_rules(
+                remote_group_id)
+
+            res = self.new_show_request('security-groups', remote_group_id,
+                                        fields=['id'])
+            group = self.deserialize(
+                self.fmt, res.get_response(self.ext_api))
+
+            secgroup = group['security_group']
+            self.assertFalse('security_group_rules' in secgroup)
+            self.assertEqual(group['security_group']['id'],
+                             remote_group_id)
+
     # This test case checks that admins from a different tenant can add rules
     # as themselves. This is an odd behavior, with some weird GET semantics,
     # but this test is checking that we don't break that old behavior, at least
