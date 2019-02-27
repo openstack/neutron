@@ -30,6 +30,7 @@ Configuration
    config-ovs-offload
    config-ovsfwdriver
    config-qos
+   config-qos-min-bw
    config-rbac
    config-routed-networks
    config-sfc

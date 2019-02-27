@@ -71,6 +71,12 @@ extensions = [
     'oslo_policy.sphinxpolicygen',
 ]
 
+# Project cross-reference roles
+openstack_projects = [
+    'neutron',
+    'nova',
+]
+
 # openstackdocstheme options
 repository_name = 'openstack/neutron'
 bug_project = 'neutron'
