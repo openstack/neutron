@@ -239,7 +239,8 @@ class QoSPlugin(qos.QoSPluginBase):
             # will not have 'binding:profile.allocation', but this policy
             # update must be rejected.
             if (port.device_owner is not None and
-                    port.device_owner.startswith('compute:')):
+                    port.device_owner.startswith(
+                        nl_constants.DEVICE_OWNER_COMPUTE_PREFIX)):
                 raise NotImplementedError(_(
                     'Cannot update QoS policies/rules backed by resources '
                     'tracked in Placement'))
