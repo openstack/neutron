@@ -35,7 +35,7 @@ def eventlet_rpc_server():
         manager.init()
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         ext_mgr.extend_resources("2.0", attributes.RESOURCES)
-        rpc_workers_launcher = service.start_rpc_workers()
+        rpc_workers_launcher = service.start_all_workers()
     except NotImplementedError:
         LOG.info("RPC was already started in parent process by "
                  "plugin.")
