@@ -542,9 +542,10 @@ class RouterInfo(object):
         self.radvd.enable(internal_ports)
 
     def disable_radvd(self):
-        LOG.debug('Terminating radvd daemon in router device: %s',
-                  self.router_id)
-        self.radvd.disable()
+        if self.radvd:
+            LOG.debug('Terminating radvd daemon in router device: %s',
+                      self.router_id)
+            self.radvd.disable()
 
     def internal_network_updated(self, interface_name, ip_cidrs, mtu):
         self.driver.set_mtu(interface_name, mtu, namespace=self.ns_name,
