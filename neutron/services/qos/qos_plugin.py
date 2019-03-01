@@ -340,8 +340,7 @@ class QoSPlugin(qos.QoSPluginBase):
             policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
             # Ensure the rule belongs to the policy.
             checker.check_bandwidth_rule_conflict(policy, rule_data)
-            policy.get_rule_by_id(rule_id)
-            rule = rule_cls(context, id=rule_id)
+            rule = policy.get_rule_by_id(rule_id)
             rule.update_fields(rule_data, reset_changes=True)
             checker.check_rules_conflict(policy, rule)
             rule.update()
