@@ -41,7 +41,8 @@ from neutron.conf import service
 from neutron import wsgi
 
 
-service.register_service_opts(service.service_opts)
+service.register_service_opts(service.SERVICE_OPTS)
+service.register_service_opts(service.RPC_EXTRA_OPTS)
 
 LOG = logging.getLogger(__name__)
 

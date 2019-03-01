@@ -59,6 +59,7 @@ from neutron.common import constants as c_const
 from neutron.common import utils as n_utils
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent import xenapi_conf
+from neutron.conf import service as service_conf
 from neutron.plugins.ml2.drivers.agent import capabilities
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
@@ -2353,6 +2354,7 @@ def main(bridge_classes):
     ovs_capabilities.register()
     ext_manager.register_opts(cfg.CONF)
     agent_config.setup_privsep()
+    service_conf.register_service_opts(service_conf.RPC_EXTRA_OPTS, cfg.CONF)
 
     ext_mgr = ext_manager.L2AgentExtensionsManager(cfg.CONF)
 
