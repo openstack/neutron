@@ -97,12 +97,13 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
 
     def _assert_ping_during_agents_restart(
             self, agents, src_namespace, ips, restart_timeout=10,
-            ping_timeout=1, count=10):
+            ping_timeout=1, count=10, max_workers=None):
+        max_workers = max_workers or len(agents)
         with net_helpers.async_ping(
                 src_namespace, ips, timeout=ping_timeout,
                 count=count) as done:
             LOG.debug("Restarting agents")
-            executor = futures.ThreadPoolExecutor(max_workers=len(agents))
+            executor = futures.ThreadPoolExecutor(max_workers=max_workers)
             restarts = [agent.restart(executor=executor)
                         for agent in agents]
 
