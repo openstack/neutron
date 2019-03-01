@@ -121,26 +121,32 @@ def merge_port_ranges(rule_conj_list):
     # item means a removal.
     result = []
     rule_tmpl = rule_conj_list[0][0]
-    cur_conj = set()
+    cur_conj = {}
     cur_range_min = None
     for port, m, conj_id in port_ranges:
         if m == 'min':
+            if conj_id in cur_conj:
+                cur_conj[conj_id] += 1
+                continue
             if cur_conj and cur_range_min != port:
                 rule = rule_tmpl.copy()
                 rule['port_range_min'] = cur_range_min
                 rule['port_range_max'] = port - 1
-                result.append((rule, list(cur_conj)))
+                result.append((rule, list(cur_conj.keys())))
             cur_range_min = port
-            cur_conj.add(conj_id)
+            cur_conj[conj_id] = 1
         else:
+            if cur_conj[conj_id] > 1:
+                cur_conj[conj_id] -= 1
+                continue
             if cur_range_min <= port:
                 rule = rule_tmpl.copy()
                 rule['port_range_min'] = cur_range_min
                 rule['port_range_max'] = port
-                result.append((rule, list(cur_conj)))
+                result.append((rule, list(cur_conj.keys())))
                 # The next port range without 'port' starts from (port + 1)
                 cur_range_min = port + 1
-            cur_conj.remove(conj_id)
+            del cur_conj[conj_id]
 
     if (len(result) == 1 and result[0][0]['port_range_min'] == 1 and
         result[0][0]['port_range_max'] == 65535):
