@@ -136,8 +136,8 @@ class RevisionPlugin(service_base.ServicePluginBase):
             if not rel.load_on_pending:
                 raise RuntimeError(_("revises_on_change relationships must "
                                      "have load_on_pending set to True to "
-                                     "bump parent revisions on create: %s"),
-                                   relationship_col)
+                                     "bump parent revisions on create: %s")
+                                   % relationship_col)
 
     def _clear_rev_bumped_flags(self, session):
         """This clears all flags on commit/rollback to enable rev bumps."""
