@@ -42,6 +42,7 @@ from neutron_lib.api.definitions import portbindings_extended as pbe_ext
 from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import security_groups_port_filtering
 from neutron_lib.api.definitions import subnet as subnet_def
+from neutron_lib.api.definitions import subnet_onboard as subnet_onboard_def
 from neutron_lib.api.definitions import vlantransparent as vlan_apidef
 from neutron_lib.api import extensions
 from neutron_lib.api import validators
@@ -193,7 +194,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     filter_apidef.ALIAS,
                                     port_mac_address_regenerate.ALIAS,
                                     pbe_ext.ALIAS,
-                                    agent_resources_synced.ALIAS]
+                                    agent_resources_synced.ALIAS,
+                                    subnet_onboard_def.ALIAS]
 
     # List of agent types for which all binding_failed ports should try to be
     # rebound when agent revive

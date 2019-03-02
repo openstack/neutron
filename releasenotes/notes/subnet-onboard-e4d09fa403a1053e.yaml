@@ -1,0 +1,13 @@
+---
+prelude: >
+    Existing subnets that were created outside of a subnet pool can know
+    be moved, or "onboarded" into an existing subnet pool. This provides
+    a way for subnets to be brought under the management of a subnet pool
+    and begin participating in an address scope. By enabling onboarding,
+    existing subnets can be used with features that build on subnet pools
+    and address scopes. Subnet onboarding is subject to all the same
+    restrictions as and guarantees currently enforced by subnet pools
+    and address scopes.
+features:
+  - Existing subnets can now be moved into a subnet pool, and by extension
+    can be moved into address scopes they were not initially participating in.
