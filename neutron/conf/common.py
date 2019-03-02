@@ -110,6 +110,13 @@ core_opts = [
     cfg.IntOpt('send_events_interval', default=2,
                help=_('Number of seconds between sending events to nova if '
                       'there are any events to send.')),
+    cfg.StrOpt('setproctitle', default='on',
+               help=_("Set process name to match child worker role. "
+                      "Available options are: 'off' - retains the previous "
+                      "behavior; 'on' - renames processes to "
+                      "'neutron-server: role (original string)'; "
+                      "'brief' - renames the same as 'on', but without the "
+                      "original string, such as 'neutron-server: role'.")),
     cfg.StrOpt('ipam_driver', default='internal',
                help=_("Neutron IPAM (IP address management) driver to use. "
                       "By default, the reference implementation of the "

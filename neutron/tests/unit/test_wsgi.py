@@ -74,7 +74,7 @@ class TestWorkerService(TestServiceBase):
         _service.pool.spawn.return_value = None
 
         _app = mock.Mock()
-        workerservice = wsgi.WorkerService(_service, _app)
+        workerservice = wsgi.WorkerService(_service, _app, "on")
         workerservice.start()
         self.assertFalse(apimock.called)
 
@@ -82,7 +82,7 @@ class TestWorkerService(TestServiceBase):
         _service = mock.Mock()
         _app = mock.Mock()
 
-        worker_service = wsgi.WorkerService(_service, _app)
+        worker_service = wsgi.WorkerService(_service, _app, "on")
         self._test_reset(worker_service)
 
 
