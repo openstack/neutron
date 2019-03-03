@@ -30,7 +30,7 @@ class SecurityGroup(base.NeutronDbObject):
         'name': obj_fields.StringField(nullable=True),
         'project_id': obj_fields.StringField(nullable=True),
         'is_default': obj_fields.BooleanField(default=False),
-        'rules': obj_fields.ListOfObjectsField(
+        'rules': common_types.ListOfObjectsField(
             'SecurityGroupRule', nullable=True
         ),
         # NOTE(ihrachys): we don't include source_rules that is present in the
@@ -42,6 +42,8 @@ class SecurityGroup(base.NeutronDbObject):
     synthetic_fields = ['is_default', 'rules']
 
     extra_filter_names = {'is_default'}
+
+    lazy_fields = set(['rules'])
 
     def create(self):
         # save is_default before super() resets it to False
