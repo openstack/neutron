@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import uuid
+
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as const
 from neutron_lib.plugins.ml2 import api
@@ -243,3 +245,18 @@ class TestMechanismDriver(api.MechanismDriver):
     def filter_hosts_with_segment_access(
             self, context, segments, candidate_hosts, agent_getter):
         return set()
+
+    @property
+    def resource_provider_uuid5_namespace(self):
+        return uuid.UUID('7f0ce65c-1f13-11e9-8921-3c6aa7b21d17')
+
+    @property
+    def agent_type(self):
+        return 'test_mechanism_driver_agent'
+
+    @property
+    def supported_vnic_types(self):
+        return ('test_mechanism_driver_vnic_type',)
+
+    def get_standard_device_mappings(self, agent):
+        return {}
