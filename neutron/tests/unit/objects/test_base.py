@@ -32,6 +32,7 @@ from oslo_utils import uuidutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
+from sqlalchemy import orm
 import testtools
 
 from neutron import objects
@@ -2126,7 +2127,11 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             obj.update()
             self.assertIsNotNone(obj.db_obj)
             for k, v in obj.modify_fields_to_db(fields_to_update).items():
-                self.assertEqual(v, obj.db_obj[k], '%s attribute differs' % k)
+                if isinstance(obj.db_obj[k], orm.dynamic.AppenderQuery):
+                    self.assertIsInstance(v, list)
+                else:
+                    self.assertEqual(v, obj.db_obj[k],
+                                     '%s attribute differs' % k)
 
         obj.delete()
         self.assertIsNone(obj.db_obj)
