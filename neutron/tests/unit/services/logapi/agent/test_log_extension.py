@@ -56,7 +56,8 @@ class LoggingExtensionBaseTestCase(base.BaseTestCase):
         self.connection = mock.Mock()
         agent_api = ovs_ext_api.OVSAgentExtensionAPI(
             ovs_bridge.OVSAgentBridge('br-int'),
-            ovs_bridge.OVSAgentBridge('br-tun'))
+            ovs_bridge.OVSAgentBridge('br-tun'),
+            {'physnet1': ovs_bridge.OVSAgentBridge('br-physnet1')})
         self.agent_ext.consume_api(agent_api)
         mock.patch(
             'neutron.manager.NeutronManager.load_class_for_provider').start()

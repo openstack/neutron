@@ -227,10 +227,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.setup_tunnel_br(ovs_conf.tunnel_bridge)
             self.setup_tunnel_br_flows()
 
-        agent_api = ovs_ext_api.OVSAgentExtensionAPI(self.int_br, self.tun_br)
-        self.ext_manager.initialize(
-            self.connection, constants.EXTENSION_DRIVER_TYPE, agent_api)
-
         self.dvr_agent = ovs_dvr_neutron_agent.OVSDVRNeutronAgent(
             self.context,
             self.dvr_plugin_rpc,
@@ -252,6 +248,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # Collect additional bridges to monitor
         self.ancillary_brs = self.setup_ancillary_bridges(
             ovs_conf.integration_bridge, ovs_conf.tunnel_bridge)
+
+        agent_api = ovs_ext_api.OVSAgentExtensionAPI(self.int_br,
+                                                     self.tun_br,
+                                                     self.phys_brs)
+        self.ext_manager.initialize(
+            self.connection, constants.EXTENSION_DRIVER_TYPE, agent_api)
 
         # In order to keep existed device's local vlan unchanged,
         # restore local vlan mapping at start

@@ -203,6 +203,22 @@ class ClientFixture(fixtures.Fixture):
 
         return rule['bandwidth_limit_rule']
 
+    def create_minimum_bandwidth_rule(self, tenant_id, qos_policy_id,
+                                      min_bw, direction=None):
+        rule = {'tenant_id': tenant_id,
+                'min_kbps': min_bw}
+        if direction:
+            rule['direction'] = direction
+        rule = self.client.create_minimum_bandwidth_rule(
+            policy=qos_policy_id,
+            body={'minimum_bandwidth_rule': rule})
+
+        self.addCleanup(_safe_method(
+            self.client.delete_minimum_bandwidth_rule),
+            rule['minimum_bandwidth_rule']['id'], qos_policy_id)
+
+        return rule['minimum_bandwidth_rule']
+
     def create_dscp_marking_rule(self, tenant_id, qos_policy_id, dscp_mark=0):
         rule = {'tenant_id': tenant_id}
         if dscp_mark:

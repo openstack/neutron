@@ -40,10 +40,11 @@ class OVSAgentExtensionAPI(object):
     method which has been added to the AgentExtension class.
     '''
 
-    def __init__(self, int_br, tun_br):
+    def __init__(self, int_br, tun_br, phys_brs):
         super(OVSAgentExtensionAPI, self).__init__()
         self.br_int = int_br
         self.br_tun = tun_br
+        self.br_phys = phys_brs
 
     def request_int_br(self):
         """Allows extensions to request an integration bridge to use for
@@ -61,3 +62,13 @@ class OVSAgentExtensionAPI(object):
             return None
 
         return OVSCookieBridge(self.br_tun)
+
+    def request_phy_brs(self):
+        """Allows extensions to request all physical bridges to use for
+        extension specific flows.
+
+        This a generator function which returns all existing physical bridges
+        in the switch.
+        """
+        for phy_br in self.br_phys.values():
+            yield OVSCookieBridge(phy_br)

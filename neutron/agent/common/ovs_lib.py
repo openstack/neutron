@@ -22,8 +22,10 @@ import uuid
 
 from neutron_lib import constants as p_const
 from neutron_lib import exceptions
+from neutron_lib.services.qos import constants as qos_constants
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 import six
 import tenacity
 
@@ -223,6 +225,7 @@ class OVSBridge(BaseOVS):
         self.datapath_type = datapath_type
         self._default_cookie = generate_random_cookie()
         self._highest_protocol_needed = constants.OPENFLOW10
+        self._min_bw_qos_id = uuidutils.generate_uuid()
 
     @property
     def default_cookie(self):
@@ -927,6 +930,194 @@ class OVSBridge(BaseOVS):
         dpid_cfg = {'datapath-id': datapath_id}
         self.set_db_attribute('Bridge', self.br_name, 'other_config', dpid_cfg,
                               check_error=True)
+
+    def get_egress_min_bw_for_port(self, port_id):
+        queue = self._find_queue(port_id)
+        if not queue:
+            return
+
+        min_bps = queue['other_config'].get('min-rate')
+        return int(int(min_bps) / 1000) if min_bps else None
+
+    def _set_queue_for_minimum_bandwidth(self, queue_num):
+        # reg4 is used to memoize if queue was set or not. If it is first visit
+        # to table 0 for a packet (i.e. reg4 == 0), set queue and memoize (i.e.
+        # load 1 to reg4), then goto table 0 again. The packet will be handled
+        # as usual when the second visit to table 0.
+        self.add_flow(
+            table=constants.LOCAL_SWITCHING,
+            in_port=queue_num,
+            reg4=0,
+            priority=200,
+            actions=("set_queue:%s,load:1->NXM_NX_REG4[0],"
+                     "resubmit(,%s)" % (queue_num, constants.LOCAL_SWITCHING)))
+
+    def _unset_queue_for_minimum_bandwidth(self, queue_num):
+        self.delete_flows(
+            table=constants.LOCAL_SWITCHING,
+            in_port=queue_num,
+            reg4=0)
+
+    def update_minimum_bandwidth_queue(self, port_id, egress_port_names,
+                                       queue_num, min_kbps):
+        queue_num = int(queue_num)
+        queue_id = self._update_queue(port_id, queue_num, min_kbps=min_kbps)
+        qos_id, qos_queues = self._find_qos()
+        if qos_queues:
+            qos_queues[queue_num] = queue_id
+        else:
+            qos_queues = {queue_num: queue_id}
+        qos_id = self._update_qos(
+            qos_id=qos_id, queues=qos_queues)
+        for egress_port_name in egress_port_names:
+            self._set_port_qos(egress_port_name, qos_id=qos_id)
+        self._set_queue_for_minimum_bandwidth(queue_num)
+        return qos_id
+
+    def delete_minimum_bandwidth_queue(self, port_id):
+        queue = self._find_queue(port_id)
+        if not queue:
+            return
+        queue_num = int(queue['external_ids']['queue-num'])
+        self._unset_queue_for_minimum_bandwidth(queue_num)
+        qos_id, qos_queues = self._find_qos()
+        if queue_num in qos_queues.keys():
+            qos_queues.pop(queue_num)
+            self._update_qos(
+                qos_id=qos_id, queues=qos_queues)
+            self._delete_queue(queue['_uuid'])
+
+    def clear_minimum_bandwidth_qos(self):
+        qoses = self._list_qos(
+            qos_type=qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH)
+
+        for qos in qoses:
+            qos_id = qos['_uuid']
+            queues = {num: queue.uuid
+                      for num, queue in qos['queues'].items()}
+            ports = self.ovsdb.db_find(
+                'Port',
+                ('qos', '=', qos_id),
+                colmuns=['name']).execute(check_error=True)
+            for port in ports:
+                self._set_port_qos(port['name'])
+            self.ovsdb.db_destroy('QoS', qos_id).execute(check_error=True)
+            for queue_uuid in queues.values():
+                self.ovsdb.db_destroy('Queue', queue_uuid).execute(
+                    check_error=True)
+
+    def _update_queue(self, port_id, queue_num, max_kbps=None,
+                      max_burst_kbps=None, min_kbps=None):
+        other_config = {}
+        if max_kbps:
+            other_config[six.u('max-rate')] = six.u(str(max_kbps * 1000))
+        if max_burst_kbps:
+            other_config[six.u('burst')] = six.u(str(max_burst_kbps * 1000))
+        if min_kbps:
+            other_config[six.u('min-rate')] = six.u(str(min_kbps * 1000))
+
+        queue = self._find_queue(port_id)
+        if queue and queue['_uuid']:
+            if queue['other_config'] != other_config:
+                self.set_db_attribute('Queue', queue['_uuid'], 'other_config',
+                                      other_config, check_error=True)
+        else:
+            # NOTE(ralonsoh): "external_ids" is a map of string-string pairs
+            external_ids = {
+                'port': str(port_id),
+                'type': str(qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH),
+                'queue-num': str(queue_num)}
+            self.ovsdb.db_create(
+                'Queue', other_config=other_config,
+                external_ids=external_ids).execute(check_error=True)
+            queue = self._find_queue(port_id)
+        return queue['_uuid']
+
+    def _find_queue(self, port_id, _type=None):
+        # NOTE(ralonsoh): in ovsdb native library, '{>=}' operator is not
+        # implemented yet. This is a workaround: list all queues and compare
+        # the external_ids key needed.
+        _type = _type or qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH
+        queues = self._list_queues(port=port_id, _type=_type)
+        if queues:
+            return queues[0]
+        return None
+
+    def _list_queues(self, _type=None, port=None):
+        queues = self.ovsdb.db_list(
+            'Queue',
+            columns=['_uuid', 'external_ids', 'other_config']).execute(
+            check_error=True)
+        if port:
+            queues = [queue for queue in queues
+                      if queue['external_ids'].get('port') == str(port)]
+        if _type:
+            queues = [queue for queue in queues
+                      if queue['external_ids'].get('type') == str(_type)]
+        return queues
+
+    def _delete_queue(self, queue_id):
+        self.ovsdb.db_destroy('Queue', queue_id).execute(check_error=True)
+
+    def _update_qos(self, qos_id=None, queues=None):
+        queues = queues or {}
+        if not qos_id:
+            external_ids = {'id': self._min_bw_qos_id,
+                            '_type': qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH}
+            self.ovsdb.db_create(
+                'QoS',
+                type='linux-htb',
+                queues=queues,
+                external_ids=external_ids).execute(check_error=True)
+            qos_id, _ = self._find_qos()
+        else:
+            self.clear_db_attribute('QoS', qos_id, 'queues')
+            if queues:
+                self.set_db_attribute('QoS', qos_id, 'queues', queues,
+                                      check_error=True)
+        return qos_id
+
+    def _list_qos(self, _id=None, qos_type=None):
+        external_ids = {}
+        if _id:
+            external_ids['id'] = _id
+        if qos_type:
+            external_ids['_type'] = qos_type
+        if external_ids:
+            return self.ovsdb.db_find(
+                'QoS',
+                ('external_ids', '=', external_ids),
+                colmuns=['_uuid', 'queues']).execute(check_error=True)
+
+        return self.ovsdb.db_find(
+            'QoS', colmuns=['_uuid', 'queues']).execute(check_error=True)
+
+    def _find_qos(self):
+        qos_regs = self._list_qos(_id=self._min_bw_qos_id)
+        if qos_regs:
+            queues = {num: queue.uuid
+                      for num, queue in qos_regs[0]['queues'].items()}
+            return qos_regs[0]['_uuid'], queues
+        return None, None
+
+    def _set_port_qos(self, port_name, qos_id=None):
+        if qos_id:
+            self.set_db_attribute('Port', port_name, 'qos', qos_id,
+                                  check_error=True)
+        else:
+            self.clear_db_attribute('Port', port_name, 'qos')
+
+    def get_bridge_ports(self, port_type=None):
+        port_names = self.get_port_name_list() + [self.br_name]
+        ports = self.get_ports_attributes('Interface',
+                                          ports=port_names,
+                                          columns=['name', 'type'],
+                                          if_exists=True) or []
+        if port_type is None:
+            return ports
+        elif not isinstance(port_type, list):
+            port_type = [port_type]
+        return [port['name'] for port in ports if port['type'] in port_type]
 
     def __enter__(self):
         self.create()

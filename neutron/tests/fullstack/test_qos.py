@@ -42,6 +42,7 @@ load_tests = testlib_api.module_load_tests
 
 BANDWIDTH_BURST = 100
 BANDWIDTH_LIMIT = 500
+MIN_BANDWIDTH = 300
 DSCP_MARK = 16
 
 
@@ -609,3 +610,88 @@ class TestQoSPolicyIsDefault(base.BaseFullStackTestCase):
         self.assertFalse(qos_policy_2['is_default'])
         self.assertRaises(exceptions.Conflict,
                           self._update_qos_policy, qos_policy_2['id'], True)
+
+
+class _TestMinBwQoS(BaseQoSRuleTestCase):
+
+    number_of_hosts = 1
+
+    def _wait_for_min_bw_rule_removed(self, vm, direction):
+        # No values are provided when port doesn't have qos policy
+        self._wait_for_min_bw_rule_applied(vm, None, direction)
+
+    def _add_min_bw_rule(self, min_bw, direction, qos_policy):
+        qos_policy_id = qos_policy['id']
+        rule = self.safe_client.create_minimum_bandwidth_rule(
+            self.tenant_id, qos_policy_id, min_bw, direction)
+        # Make it consistent with GET reply
+        rule['type'] = qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH
+        rule['qos_policy_id'] = qos_policy_id
+        qos_policy['rules'].append(rule)
+
+    def test_min_bw_qos_policy_rule_lifecycle(self):
+        new_limit = MIN_BANDWIDTH - 100
+
+        # Create port with qos policy attached
+        vm, qos_policy = self._prepare_vm_with_qos_policy(
+            [functools.partial(
+                self._add_min_bw_rule, MIN_BANDWIDTH, self.direction)])
+        bw_rule = qos_policy['rules'][0]
+
+        self._wait_for_min_bw_rule_applied(vm, MIN_BANDWIDTH, self.direction)
+        qos_policy_id = qos_policy['id']
+
+        self.client.delete_minimum_bandwidth_rule(bw_rule['id'], qos_policy_id)
+        self._wait_for_min_bw_rule_removed(vm, self.direction)
+
+        new_rule = self.safe_client.create_minimum_bandwidth_rule(
+            self.tenant_id, qos_policy_id, new_limit, direction=self.direction)
+        self._wait_for_min_bw_rule_applied(vm, new_limit, self.direction)
+
+        # Update qos policy rule id
+        self.client.update_minimum_bandwidth_rule(
+            new_rule['id'], qos_policy_id,
+            body={'minimum_bandwidth_rule': {'min_kbps': MIN_BANDWIDTH}})
+        self._wait_for_min_bw_rule_applied(vm, MIN_BANDWIDTH, self.direction)
+
+        # Remove qos policy from port
+        self.client.update_port(
+            vm.neutron_port['id'],
+            body={'port': {'qos_policy_id': None}})
+        self._wait_for_min_bw_rule_removed(vm, self.direction)
+
+
+class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
+    l2_agent_type = constants.AGENT_TYPE_OVS
+    direction_scenarios = [
+        ('egress', {'direction': constants.EGRESS_DIRECTION})
+    ]
+    scenarios = testscenarios.multiply_scenarios(
+        direction_scenarios, fullstack_utils.get_ovs_interface_scenarios())
+
+    def _wait_for_min_bw_rule_applied(self, vm, min_bw, direction):
+        if direction == constants.EGRESS_DIRECTION:
+            utils.wait_until_true(
+                lambda: vm.bridge.get_egress_min_bw_for_port(
+                    vm.neutron_port['id']) == min_bw)
+        elif direction == constants.INGRESS_DIRECTION:
+            self.fail('"%s" direction not implemented'
+                      % constants.INGRESS_DIRECTION)
+
+    def test_bw_limit_qos_port_removed(self):
+        """Test if rate limit config is properly removed when whole port is
+        removed.
+        """
+        # Create port with qos policy attached
+        vm, qos_policy = self._prepare_vm_with_qos_policy(
+            [functools.partial(
+                self._add_min_bw_rule, MIN_BANDWIDTH, self.direction)])
+        self._wait_for_min_bw_rule_applied(
+            vm, MIN_BANDWIDTH, self.direction)
+
+        # Delete port with qos policy attached
+        vm.destroy()
+        self._wait_for_min_bw_rule_removed(vm, self.direction)
+        self.assertIsNone(vm.bridge.find_qos(vm.port.name))
+        self.assertIsNone(vm.bridge.find_queue(vm.port.name,
+                                               ovs_lib.QOS_DEFAULT_QUEUE))
