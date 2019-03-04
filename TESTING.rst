@@ -509,6 +509,41 @@ To run only the unit tests::
 
     tox -e py27
 
+Many changes span across both the neutron and neutron-lib repos, and tox
+will always build the test environment using the published module versions
+specified in requirements.txt and lower-constraints.txt. To run tox tests
+against a different version of neutron-lib, use the TOX_ENV_SRC_MODULES
+environment variable to point at a local package repo.
+
+For example, to run against the 'master' branch of neutron-lib:
+
+    cd $SRC
+    git clone git://git.openstack.org/openstack/neutron-lib
+    cd $NEUTRON_DIR
+    env TOX_ENV_SRC_MODULES=$SRC/neutron-lib tox -r -e pep8,py27
+
+To run against a change of your own, repeat the same steps, but use the
+directory with your changes, not a fresh clone.
+
+To run against a particular gerrit change of the lib (substituting the
+desired gerrit refs for this example):
+
+    cd $SRC
+    git clone git://git.openstack.org/openstack/neutron-lib
+    cd neutron-lib
+    git fetch git://git.openstack.org/openstack/neutron-lib refs/changes/13/635313/6 && git checkout FETCH_HEAD
+    cd $NEUTRON_DIR
+    env TOX_ENV_SRC_MODULES=$SRC/neutron-lib tox -r -e pep8,py27
+
+Note that the '-r' is needed to re-create the tox virtual envs, and will also
+be needed to restore them to standard when not using this method.
+
+Any pip installable package can be overriden with this environment variable,
+not just neutron-lib. To specify multiple packages to override, specify them
+as a space separated list to TOX_ENV_SRC_MODULES. Example:
+
+    env TOX_ENV_SRC_MODULES="$SRC/neutron-lib $SRC/oslo.db" tox -r -e pep8,py27
+
 Functional Tests
 ~~~~~~~~~~~~~~~~
 
