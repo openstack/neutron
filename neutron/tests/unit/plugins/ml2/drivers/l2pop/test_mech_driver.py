@@ -355,11 +355,13 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 self.mock_fanout.assert_called_with(
                     mock.ANY, 'remove_fdb_entries', expected)
 
-    def test_ovs_agent_restarted_with_dvr_port(self):
+    def _test_ovs_agent_restarted_with_dvr_port(
+            self, agent_boot_timeout=True, agent_restarted=False):
         plugin = directory.get_plugin()
         router = self._create_dvr_router()
         with mock.patch.object(l2pop_mech_driver.L2populationMechanismDriver,
-                               'agent_restarted', return_value=True):
+                               'agent_restarted',
+                               return_value=agent_boot_timeout):
             with self.subnet(network=self._network,
                              enable_dhcp=False) as snet:
                 with self.port(
@@ -373,10 +375,12 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     port = self._show('ports', port_id)
                     self.assertEqual(portbindings.VIF_TYPE_DISTRIBUTED,
                                     port['port'][portbindings.VIF_TYPE])
-                    self.callbacks.update_device_up(self.adminContext,
-                                                agent_id=HOST_4,
-                                                device=port_id,
-                                                host=HOST_4)
+                    self.callbacks.update_device_up(
+                        self.adminContext,
+                        agent_id=HOST_4,
+                        device=port_id,
+                        host=HOST_4,
+                        agent_restarted=agent_restarted)
                     fanout_expected = {port['port']['network_id']: {
                         'network_type': u'vxlan',
                         'ports': {
@@ -385,6 +389,13 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     self.mock_fanout.assert_called_with(mock.ANY,
                                                         'add_fdb_entries',
                                                         fanout_expected)
+
+    def test_ovs_agent_restarted_with_dvr_port_boot_config_timeout(self):
+        self._test_ovs_agent_restarted_with_dvr_port()
+
+    def test_ovs_agent_restarted_with_dvr_port_rpc_send_timeout(self):
+        self._test_ovs_agent_restarted_with_dvr_port(
+            agent_boot_timeout=False, agent_restarted=True)
 
     def test_ha_agents_with_dvr_rtr_does_not_get_other_fdb(self):
         router = self._create_dvr_router()
