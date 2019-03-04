@@ -269,29 +269,45 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         spawn_metadata_proxy.assert_called()
         destroy_metadata_proxy.assert_not_called()
 
-    def _test__configure_ipv6_params_on_ext_gw_port_if_necessary_helper(
-            self, state, enable_expected):
+    def _test__configure_ipv6_params_helper(self, state, gw_port_id):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router_info = l3router.RouterInfo(agent, _uuid(), {}, **self.ri_kwargs)
-        router_info.ex_gw_port = {'id': _uuid()}
-        with mock.patch.object(router_info, '_configure_ipv6_params_on_gw'
-                               ) as mock_configure_ipv6:
-            agent._configure_ipv6_params_on_ext_gw_port_if_necessary(
-                router_info, state)
-            interface_name = router_info.get_external_device_name(
-                    router_info.ex_gw_port['id'])
+        if gw_port_id:
+            router_info.ex_gw_port = {'id': gw_port_id}
+        expected_forwarding_state = state == 'master'
+        with mock.patch.object(
+            router_info.driver, "configure_ipv6_forwarding"
+        ) as configure_ipv6_forwarding, mock.patch.object(
+            router_info, "_configure_ipv6_params_on_gw"
+        ) as configure_ipv6_on_gw:
+            agent._configure_ipv6_params(router_info, state)
 
-            mock_configure_ipv6.assert_called_once_with(
-                router_info.ex_gw_port, router_info.ns_name, interface_name,
-                enable_expected)
+            if state == 'master':
+                configure_ipv6_forwarding.assert_called_once_with(
+                    router_info.ns_name, 'all', expected_forwarding_state)
+            else:
+                configure_ipv6_forwarding.assert_not_called()
 
-    def test__configure_ipv6_params_on_ext_gw_port_if_necessary_master(self):
-        self._test__configure_ipv6_params_on_ext_gw_port_if_necessary_helper(
-            'master', True)
+            if gw_port_id:
+                interface_name = router_info.get_external_device_name(
+                        router_info.ex_gw_port['id'])
+                configure_ipv6_on_gw.assert_called_once_with(
+                    router_info.ex_gw_port, router_info.ns_name,
+                    interface_name, expected_forwarding_state)
+            else:
+                configure_ipv6_on_gw.assert_not_called()
 
-    def test__configure_ipv6_params_on_ext_gw_port_if_necessary_backup(self):
-        self._test__configure_ipv6_params_on_ext_gw_port_if_necessary_helper(
-            'backup', False)
+    def test__configure_ipv6_params_master(self):
+        self._test__configure_ipv6_params_helper('master', gw_port_id=_uuid())
+
+    def test__configure_ipv6_params_backup(self):
+        self._test__configure_ipv6_params_helper('backup', gw_port_id=_uuid())
+
+    def test__configure_ipv6_params_master_no_gw_port(self):
+        self._test__configure_ipv6_params_helper('master', gw_port_id=None)
+
+    def test__configure_ipv6_params_backup_no_gw_port(self):
+        self._test__configure_ipv6_params_helper('backup', gw_port_id=None)
 
     def test_check_ha_state_for_router_master_standby(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)

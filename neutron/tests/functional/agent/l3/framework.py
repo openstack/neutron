@@ -106,7 +106,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
     def generate_router_info(self, enable_ha, ip_version=4, extra_routes=True,
                              enable_fip=True, enable_snat=True,
                              num_internal_ports=1,
-                             dual_stack=False, v6_ext_gw_with_sub=True,
+                             dual_stack=False, enable_gw=True,
+                             v6_ext_gw_with_sub=True,
                              qos_policy_id=None):
         if ip_version == 6 and not dual_stack:
             enable_snat = False
@@ -121,6 +122,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                                                  enable_ha=enable_ha,
                                                  extra_routes=extra_routes,
                                                  dual_stack=dual_stack,
+                                                 enable_gw=enable_gw,
                                                  v6_ext_gw_with_sub=(
                                                      v6_ext_gw_with_sub),
                                                  qos_policy_id=qos_policy_id)

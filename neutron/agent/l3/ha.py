@@ -121,7 +121,7 @@ class AgentMixin(object):
         # configuration to keepalived-state-change in order to remove the
         # dependency that currently exists on l3-agent running for the IPv6
         # failover.
-        self._configure_ipv6_params_on_ext_gw_port_if_necessary(ri, state)
+        self._configure_ipv6_params(ri, state)
         if self.conf.enable_metadata_proxy:
             self._update_metadata_proxy(ri, router_id, state)
         self._update_radvd_daemon(ri, state)
@@ -129,25 +129,31 @@ class AgentMixin(object):
         self.state_change_notifier.queue_event((router_id, state))
         self.l3_ext_manager.ha_state_change(self.context, state_change_data)
 
-    def _configure_ipv6_params_on_ext_gw_port_if_necessary(self, ri, state):
+    def _configure_ipv6_params(self, ri, state):
+        if not self.use_ipv6:
+            return
+
+        ipv6_forwarding_enable = state == 'master'
+        if ri.router.get('distributed', False):
+            namespace = ri.ha_namespace
+        else:
+            namespace = ri.ns_name
+
+        if ipv6_forwarding_enable:
+            ri.driver.configure_ipv6_forwarding(
+                namespace, 'all', ipv6_forwarding_enable)
+
         # If ipv6 is enabled on the platform, ipv6_gateway config flag is
         # not set and external_network associated to the router does not
         # include any IPv6 subnet, enable the gateway interface to accept
         # Router Advts from upstream router for default route on master
         # instances as well as ipv6 forwarding. Otherwise, disable them.
         ex_gw_port_id = ri.ex_gw_port and ri.ex_gw_port['id']
-        if not ex_gw_port_id:
-            return
-
-        interface_name = ri.get_external_device_name(ex_gw_port_id)
-        if ri.router.get('distributed', False):
-            namespace = ri.ha_namespace
-        else:
-            namespace = ri.ns_name
-
-        enable = state == 'master'
-        ri._configure_ipv6_params_on_gw(ri.ex_gw_port, namespace,
-                                        interface_name, enable)
+        if ex_gw_port_id:
+            interface_name = ri.get_external_device_name(ex_gw_port_id)
+            ri._configure_ipv6_params_on_gw(
+                ri.ex_gw_port, namespace, interface_name,
+                ipv6_forwarding_enable)
 
     def _update_metadata_proxy(self, ri, router_id, state):
         # NOTE(slaweq): Since the metadata proxy is spawned in the qrouter
