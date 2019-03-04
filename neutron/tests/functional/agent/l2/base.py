@@ -269,7 +269,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         return ports
 
     def _mock_update_device(self, context, devices_up, devices_down, agent_id,
-                            host=None):
+                            host=None, agent_restarted=False):
         dev_up = []
         dev_down = []
         for port in self.ports:
@@ -313,7 +313,8 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
     def _prepare_failed_dev_up_trigger(self, agent):
 
         def mock_failed_devices_up(context, devices_up, devices_down,
-                                   agent_id, host=None):
+                                   agent_id, host=None,
+                                   agent_restarted=False):
             failed_devices = []
             devices = list(devices_up)
             # first port fails
@@ -334,7 +335,8 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
     def _prepare_failed_dev_down_trigger(self, agent):
 
         def mock_failed_devices_down(context, devices_up, devices_down,
-                                     agent_id, host=None):
+                                     agent_id, host=None,
+                                     agent_restarted=False):
             # first port fails
             failed_port_id = self.ports[0]['id']
             failed_devices_down = []
