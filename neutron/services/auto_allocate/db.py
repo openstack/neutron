@@ -194,13 +194,10 @@ class AutoAllocatedTopologyMixin(object):
             raise e.error
 
     def _check_requirements(self, context, tenant_id):
-        """Raise if requirements are not met."""
+        """Raise if requirements are not met.
+           CCloud: don't check for subnetpools
+        """
         self._get_default_external_network(context)
-        try:
-            self._get_supported_subnetpools(context)
-        except n_exc.NotFound:
-            raise exceptions.AutoAllocationFailure(
-                reason=_("No default subnetpools defined"))
         return {'id': 'dry-run=pass', 'tenant_id': tenant_id}
 
     def _validate(self, context, tenant_id):
@@ -237,21 +234,28 @@ class AutoAllocatedTopologyMixin(object):
         return db_utils.resource_fields(res, fields)
 
     def _get_default_external_network(self, context):
-        """Get the default external network for the deployment."""
+        """Get the default external network for the deployment.
+           CCloud specific: the default external network depends
+           on current domain scope
+        """
 
-        default_external_networks = net_obj.ExternalNetwork.get_objects(
-            context, is_default=True)
+        external_networks = net_obj.ExternalNetwork.get_objects(
+            context)
 
-        if not default_external_networks:
-            LOG.error("Unable to find default external network "
-                      "for deployment, please create/assign one to "
-                      "allow auto-allocation to work correctly.")
+        if not external_networks:
             raise exceptions.AutoAllocationFailure(
-                reason=_("No default router:external network"))
-        if len(default_external_networks) > 1:
-            LOG.error("Multiple external default networks detected. "
-                      "Network %s is true 'default'.",
-                      default_external_networks[0]['network_id'])
+                reason=_("Unable to find any external network "
+                         "for project, please run the project wizard"
+                         "in the dashboard first"))
+        if len(external_networks) > 1:
+            default_external_networks = [net for net in external_networks
+                                         if net.get('is_default')]
+            if not default_external_networks:
+                LOG.warning("Multiple external networks for project %s"
+                            " found, choosing (default) network %s",
+                            context.tenant_name,
+                            external_networks[0].network_id)
+                default_external_networks = external_networks
         return default_external_networks[0].network_id
 
     def _get_supported_subnetpools(self, context):
@@ -270,7 +274,11 @@ class AutoAllocatedTopologyMixin(object):
         return available_pools
 
     def _provision_tenant_private_network(self, context, tenant_id):
-        """Create a tenant private network/subnets."""
+        """Create a tenant private network/subnets.
+           CCloud specific: use specific cidr range instead
+           of default subnetpool
+        """
+
         network = None
         try:
             network_args = {
@@ -282,16 +290,15 @@ class AutoAllocatedTopologyMixin(object):
             network = p_utils.create_network(
                 self.core_plugin, context, {'network': network_args})
             subnets = []
-            for pool in self._get_supported_subnetpools(context):
-                subnet_args = {
-                    'name': 'auto_allocated_subnet_v%s' % pool['ip_version'],
-                    'network_id': network['id'],
-                    'tenant_id': tenant_id,
-                    'ip_version': pool['ip_version'],
-                    'subnetpool_id': pool['id'],
-                }
-                subnets.append(p_utils.create_subnet(
-                    self.core_plugin, context, {'subnet': subnet_args}))
+            subnet_args = {
+                'name': 'auto_allocated_subnet_v4',
+                'network_id': network['id'],
+                'tenant_id': tenant_id,
+                'ip_version': 4,
+                'cidr': '10.180.0.0/24',
+            }
+            subnets.append(p_utils.create_subnet(
+                self.core_plugin, context, {'subnet': subnet_args}))
             return subnets
         except (n_exc.SubnetAllocationError, ValueError,
                 n_exc.BadRequest, n_exc.NotFound) as e:

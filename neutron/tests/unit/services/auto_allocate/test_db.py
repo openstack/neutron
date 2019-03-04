@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import unittest
+
 import mock
 import testtools
 
@@ -323,6 +325,8 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
         self.assertRaises(exceptions.AutoAllocationFailure,
             self.mixin._check_requirements, self.ctx, 'foo_tenant')
 
+    @unittest.skip("Pools checks disabled in CCloud for flavored"
+                   " auto-allocate")
     def test__check_requirements_fail_on_missing_pools(self):
         with mock.patch.object(
             self.mixin, '_get_default_external_network'),\
