@@ -102,6 +102,7 @@ case $VENV in
     load_rc_hook qos
     load_rc_hook segments
     load_rc_hook trunk
+    load_rc_hook network_segment_range
     load_conf_hook vlan_provider
     load_conf_hook osprofiler
     load_conf_hook availability_zone
