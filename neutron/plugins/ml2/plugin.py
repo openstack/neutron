@@ -2293,5 +2293,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def delete_port_binding(self, context, host, port_id):
-        ports_obj.PortBinding.delete_objects(context, host=host,
+        ports_obj.PortBinding.delete_objects(context,
+                                             host=host,
                                              port_id=port_id)
+        db.clear_binding_levels(context,
+                                port_id=port_id,
+                                host=host)
