@@ -28,6 +28,7 @@ HOST_TWO = 'fake_host_two2'
 
 
 class GeneveTypeTest(base_type_tunnel.TunnelTypeTestMixin,
+                     base_type_tunnel.TunnelTypeNetworkSegmentRangeTestMixin,
                      testlib_api.SqlTestCase):
     DRIVER_CLASS = type_geneve.GeneveTypeDriver
     TYPE = p_const.TYPE_GENEVE

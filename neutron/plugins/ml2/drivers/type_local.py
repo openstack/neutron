@@ -42,6 +42,15 @@ class LocalTypeDriver(api.ML2TypeDriver):
     def initialize(self):
         pass
 
+    def initialize_network_segment_range_support(self):
+        pass
+
+    def update_network_segment_range_allocations(self):
+        pass
+
+    def get_network_segment_ranges(self):
+        pass
+
     def is_partial_segment(self, segment):
         return False
 
@@ -51,11 +60,11 @@ class LocalTypeDriver(api.ML2TypeDriver):
                 msg = _("%s prohibited for local provider network") % key
                 raise exc.InvalidInput(error_message=msg)
 
-    def reserve_provider_segment(self, context, segment):
+    def reserve_provider_segment(self, context, segment, filters=None):
         # No resources to reserve
         return segment
 
-    def allocate_tenant_segment(self, context):
+    def allocate_tenant_segment(self, context, filters=None):
         # No resources to allocate
         return {api.NETWORK_TYPE: p_const.TYPE_LOCAL}
 

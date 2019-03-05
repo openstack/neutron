@@ -23,6 +23,7 @@ from neutron_lib.plugins import utils as plugin_utils
 from oslo_config import cfg
 from testtools import matchers
 
+from neutron.objects import network_segment_range as obj_network_segment_range
 from neutron.objects.plugins.ml2 import vlanallocation as vlan_alloc_obj
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
@@ -41,6 +42,8 @@ EMPTY_VLAN_RANGES = {
     PROVIDER_NET: []
 }
 CORE_PLUGIN = 'ml2'
+SERVICE_PLUGIN_KLASS = ('neutron.services.network_segment_range.plugin.'
+                        'NetworkSegmentRangePlugin')
 
 
 class VlanTypeTest(testlib_api.SqlTestCase):
@@ -319,3 +322,41 @@ class VlanTypeAllocationTest(testlib_api.SqlTestCase):
                 driver.allocate_tenant_segment(ctx))
         # then nothing
         self.assertFalse(driver.allocate_tenant_segment(ctx))
+
+
+class VlanTypeTestWithNetworkSegmentRange(testlib_api.SqlTestCase):
+
+    def setUp(self):
+        super(VlanTypeTestWithNetworkSegmentRange, self).setUp()
+        cfg.CONF.set_override('network_vlan_ranges',
+                              NETWORK_VLAN_RANGES,
+                              group='ml2_type_vlan')
+        cfg.CONF.set_override('service_plugins', [SERVICE_PLUGIN_KLASS])
+        self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
+            NETWORK_VLAN_RANGES)
+        self.driver = type_vlan.VlanTypeDriver()
+        self.driver._sync_vlan_allocations()
+        self.context = context.Context()
+        self.setup_coreplugin(CORE_PLUGIN)
+
+    def test__populate_new_default_network_segment_ranges(self):
+        # _populate_new_default_network_segment_ranges will be called when
+        # the type driver initializes with `network_segment_range` loaded as
+        # one of the `service_plugins`
+        ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
+            self.context)
+        self.assertEqual(1, len(ret))
+        network_segment_range = ret[0]
+        self.assertTrue(network_segment_range.default)
+        self.assertTrue(network_segment_range.shared)
+        self.assertIsNone(network_segment_range.project_id)
+        self.assertEqual(p_const.TYPE_VLAN, network_segment_range.network_type)
+        self.assertEqual(TENANT_NET, network_segment_range.physical_network)
+        self.assertEqual(VLAN_MIN, network_segment_range.minimum)
+        self.assertEqual(VLAN_MAX, network_segment_range.maximum)
+
+    def test__delete_expired_default_network_segment_ranges(self):
+        self.driver._delete_expired_default_network_segment_ranges()
+        ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
+            self.context)
+        self.assertEqual(0, len(ret))

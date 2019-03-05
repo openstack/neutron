@@ -19,6 +19,8 @@ from oslo_config import cfg
 from oslo_log import log
 
 from neutron.conf.plugins.ml2.drivers import driver_type
+from neutron.db.models.plugins.ml2 import gre_allocation_endpoints as \
+    gre_alloc_model
 from neutron.objects.plugins.ml2 import greallocation as gre_obj
 from neutron.plugins.ml2.drivers import type_tunnel
 
@@ -32,6 +34,7 @@ class GreTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
     def __init__(self):
         super(GreTypeDriver, self).__init__(
             gre_obj.GreAllocation, gre_obj.GreEndpoint)
+        self.model_segmentation_id = gre_alloc_model.GreAllocation.gre_id
 
     def get_type(self):
         return p_const.TYPE_GRE

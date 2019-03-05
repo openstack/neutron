@@ -26,6 +26,7 @@ VXLAN_UDP_PORT_TWO = 8888
 
 
 class VxlanTypeTest(base_type_tunnel.TunnelTypeTestMixin,
+                    base_type_tunnel.TunnelTypeNetworkSegmentRangeTestMixin,
                     testlib_api.SqlTestCase):
     DRIVER_MODULE = type_vxlan
     DRIVER_CLASS = type_vxlan.VxlanTypeDriver

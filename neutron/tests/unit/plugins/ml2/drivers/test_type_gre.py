@@ -28,6 +28,7 @@ HOST_TWO = 'fake_host_two'
 
 
 class GreTypeTest(base_type_tunnel.TunnelTypeTestMixin,
+                  base_type_tunnel.TunnelTypeNetworkSegmentRangeTestMixin,
                   testlib_api.SqlTestCase):
     DRIVER_MODULE = type_gre
     DRIVER_CLASS = type_gre.GreTypeDriver

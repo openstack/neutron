@@ -19,16 +19,22 @@ from neutron_lib import constants as p_const
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exc
+from neutron_lib.plugins import constants as plugin_constants
+from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from neutron_lib.plugins import utils as plugin_utils
 from oslo_config import cfg
 from oslo_log import log
+from oslo_utils import uuidutils
 from six import moves
 
 from neutron._i18n import _
 from neutron.conf.plugins.ml2.drivers import driver_type
+from neutron.db.models.plugins.ml2 import vlanallocation as vlan_alloc_model
+from neutron.objects import network_segment_range as range_obj
 from neutron.objects.plugins.ml2 import vlanallocation as vlanalloc
 from neutron.plugins.ml2.drivers import helpers
+from neutron.services.network_segment_range import plugin as range_plugin
 
 LOG = log.getLogger(__name__)
 
@@ -48,7 +54,41 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
 
     def __init__(self):
         super(VlanTypeDriver, self).__init__(vlanalloc.VlanAllocation)
+        self.model_segmentation_id = vlan_alloc_model.VlanAllocation.vlan_id
         self._parse_network_vlan_ranges()
+
+    @db_api.retry_db_errors
+    def _populate_new_default_network_segment_ranges(self):
+        ctx = context.get_admin_context()
+        for (physical_network, vlan_ranges) in (
+                self.network_vlan_ranges.items()):
+            for vlan_min, vlan_max in vlan_ranges:
+                res = {
+                    'id': uuidutils.generate_uuid(),
+                    'name': '',
+                    'default': True,
+                    'shared': True,
+                    'network_type': p_const.TYPE_VLAN,
+                    'physical_network': physical_network,
+                    'minimum': vlan_min,
+                    'maximum': vlan_max}
+                with db_api.CONTEXT_WRITER.using(ctx):
+                    new_default_range_obj = (
+                        range_obj.NetworkSegmentRange(ctx, **res))
+                    new_default_range_obj.create()
+
+    @db_api.retry_db_errors
+    def _delete_expired_default_network_segment_ranges(self):
+        ctx = context.get_admin_context()
+        with db_api.CONTEXT_WRITER.using(ctx):
+            filters = {
+                'default': True,
+                'network_type': p_const.TYPE_VLAN,
+            }
+            old_default_range_objs = range_obj.NetworkSegmentRange.get_objects(
+                ctx, **filters)
+            for obj in old_default_range_objs:
+                obj.delete()
 
     def _parse_network_vlan_ranges(self):
         try:
@@ -73,8 +113,9 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                 allocations[alloc.physical_network].append(alloc)
 
             # process vlan ranges for each configured physical network
+            ranges = self.get_network_segment_ranges()
             for (physical_network,
-                 vlan_ranges) in self.network_vlan_ranges.items():
+                 vlan_ranges) in ranges.items():
                 # determine current configured allocatable vlans for
                 # this physical network
                 vlan_ids = set()
@@ -132,12 +173,61 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                                    alloc.physical_network})
                         alloc.delete()
 
+    @db_api.retry_db_errors
+    def _get_network_segment_ranges_from_db(self):
+        ranges = {}
+        ctx = context.get_admin_context()
+        with db_api.CONTEXT_READER.using(ctx):
+            range_objs = (range_obj.NetworkSegmentRange.get_objects(
+                ctx, network_type=self.get_type()))
+            for obj in range_objs:
+                physical_network = obj['physical_network']
+                if physical_network not in ranges:
+                    ranges[physical_network] = []
+                ranges[physical_network].append((obj['minimum'],
+                                                 obj['maximum']))
+        return ranges
+
     def get_type(self):
         return p_const.TYPE_VLAN
 
     def initialize(self):
-        self._sync_vlan_allocations()
+        if not range_plugin.is_network_segment_range_enabled():
+            # service plugins are initialized/loaded after the ML2 driver
+            # initialization. Thus, we base on the information whether
+            # ``network_segment_range`` service plugin is enabled/defined in
+            # ``neutron.conf`` to decide whether to skip the first time sync
+            # allocation during driver initialization, instead of using the
+            # directory.get_plugin() method - the normal way used elsewhere to
+            # check if a plugin is loaded.
+            self._sync_vlan_allocations()
         LOG.info("VlanTypeDriver initialization complete")
+
+    def initialize_network_segment_range_support(self):
+        self._delete_expired_default_network_segment_ranges()
+        self._populate_new_default_network_segment_ranges()
+        # Override self.network_vlan_ranges with the network segment range
+        # information from DB and then do a sync_allocations since the
+        # segment range service plugin has not yet been loaded at this
+        # initialization time.
+        self.network_vlan_ranges = self._get_network_segment_ranges_from_db()
+        self._sync_vlan_allocations()
+
+    def update_network_segment_range_allocations(self):
+        self._sync_vlan_allocations()
+
+    def get_network_segment_ranges(self):
+        """Get the driver network segment ranges.
+
+        Queries all VLAN network segment ranges from DB if the
+        ``NETWORK_SEGMENT_RANGE`` service plugin is enabled. Otherwise,
+        they will be loaded from the host config file - `ml2_conf.ini`.
+        """
+        ranges = self.network_vlan_ranges
+        if directory.get_plugin(plugin_constants.NETWORK_SEGMENT_RANGE):
+            ranges = self._get_network_segment_ranges_from_db()
+
+        return ranges
 
     def is_partial_segment(self, segment):
         return segment.get(api.SEGMENTATION_ID) is None
@@ -145,8 +235,9 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
     def validate_provider_segment(self, segment):
         physical_network = segment.get(api.PHYSICAL_NETWORK)
         segmentation_id = segment.get(api.SEGMENTATION_ID)
+        ranges = self.get_network_segment_ranges()
         if physical_network:
-            if physical_network not in self.network_vlan_ranges:
+            if physical_network not in ranges:
                 msg = (_("physical_network '%s' unknown "
                          "for VLAN provider network") % physical_network)
                 raise exc.InvalidInput(error_message=msg)
@@ -158,7 +249,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                             'max': p_const.MAX_VLAN_TAG})
                     raise exc.InvalidInput(error_message=msg)
             else:
-                if not self.network_vlan_ranges.get(physical_network):
+                if not ranges.get(physical_network):
                     msg = (_("Physical network %s requires segmentation_id "
                              "to be specified when creating a provider "
                              "network") % physical_network)
@@ -175,7 +266,9 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                 msg = _("%s prohibited for VLAN provider network") % key
                 raise exc.InvalidInput(error_message=msg)
 
-    def reserve_provider_segment(self, context, segment):
+    def reserve_provider_segment(self, context, segment, filters=None):
+        filters = filters or {}
+        project_id = filters.get('project_id')
         filters = {}
         physical_network = segment.get(api.PHYSICAL_NETWORK)
         if physical_network is not None:
@@ -185,6 +278,9 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                 filters['vlan_id'] = vlan_id
 
         if self.is_partial_segment(segment):
+            if (directory.get_plugin(
+                    plugin_constants.NETWORK_SEGMENT_RANGE)and project_id):
+                filters['project_id'] = project_id
             alloc = self.allocate_partially_specified_segment(
                 context, **filters)
             if not alloc:
@@ -200,10 +296,13 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                 api.SEGMENTATION_ID: alloc.vlan_id,
                 api.MTU: self.get_mtu(alloc.physical_network)}
 
-    def allocate_tenant_segment(self, context):
-        for physnet in self.network_vlan_ranges:
+    def allocate_tenant_segment(self, context, filters=None):
+        filters = filters or {}
+        ranges = self.get_network_segment_ranges()
+        for physnet in ranges:
+            filters['physical_network'] = physnet
             alloc = self.allocate_partially_specified_segment(
-                context, physical_network=physnet)
+                context, **filters)
             if alloc:
                 break
         else:
@@ -217,7 +316,8 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
         physical_network = segment[api.PHYSICAL_NETWORK]
         vlan_id = segment[api.SEGMENTATION_ID]
 
-        ranges = self.network_vlan_ranges.get(physical_network, [])
+        vlan_ranges = self.get_network_segment_ranges()
+        ranges = vlan_ranges.get(physical_network, [])
         inside = any(lo <= vlan_id <= hi for lo, hi in ranges)
         count = False
 

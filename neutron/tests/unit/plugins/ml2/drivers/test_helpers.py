@@ -15,6 +15,8 @@
 
 import mock
 from neutron_lib import context
+from neutron_lib.plugins import utils as plugin_utils
+from oslo_config import cfg
 from oslo_db import exception as exc
 from sqlalchemy.orm import query
 
@@ -29,6 +31,10 @@ VLAN_OUTSIDE = 100
 NETWORK_VLAN_RANGES = {
     TENANT_NET: [(VLAN_MIN, VLAN_MAX)],
 }
+NETWORK_VLAN_RANGES_CFG_ENTRIES = [TENANT_NET, "%s:%s:%s" %
+                                   (TENANT_NET, VLAN_MIN, VLAN_MAX)]
+SERVICE_PLUGIN_KLASS = ('neutron.services.network_segment_range.plugin.'
+                        'NetworkSegmentRangePlugin')
 
 
 class HelpersTest(testlib_api.SqlTestCase):
@@ -131,3 +137,19 @@ class HelpersTest(testlib_api.SqlTestCase):
             observed = self.driver.allocate_partially_specified_segment(
                 self.context, **expected)
             self.check_raw_segment(expected, observed)
+
+
+class HelpersTestWithNetworkSegmentRange(HelpersTest):
+
+    def setUp(self):
+        super(HelpersTestWithNetworkSegmentRange, self).setUp()
+        cfg.CONF.set_override('network_vlan_ranges',
+                              NETWORK_VLAN_RANGES_CFG_ENTRIES,
+                              group='ml2_type_vlan')
+        cfg.CONF.set_override('service_plugins', [SERVICE_PLUGIN_KLASS])
+        self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
+            NETWORK_VLAN_RANGES_CFG_ENTRIES)
+        self.context = context.get_admin_context()
+        self.driver = type_vlan.VlanTypeDriver()
+        self.driver.initialize_network_segment_range_support()
+        self.driver._sync_vlan_allocations()

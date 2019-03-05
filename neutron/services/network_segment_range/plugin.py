@@ -19,6 +19,7 @@ from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import network_segment_range as range_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as plugin_utils
+from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log
 import six
@@ -30,6 +31,13 @@ from neutron.objects import base as base_obj
 from neutron.objects import network_segment_range as obj_network_segment_range
 
 LOG = log.getLogger(__name__)
+
+
+def is_network_segment_range_enabled():
+    network_segment_range_class = ('neutron.services.network_segment_range.'
+                                   'plugin.NetworkSegmentRangePlugin')
+    return any(p in cfg.CONF.service_plugins
+               for p in ['network_segment_range', network_segment_range_class])
 
 
 class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):

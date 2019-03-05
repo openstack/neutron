@@ -23,6 +23,7 @@ from six import moves
 import testtools
 from testtools import matchers
 
+from neutron.objects import network_segment_range as obj_network_segment_range
 from neutron.plugins.ml2.drivers import type_tunnel
 
 TUNNEL_IP_ONE = "10.10.10.10"
@@ -32,8 +33,11 @@ HOST_ONE = 'fake_host_one'
 HOST_TWO = 'fake_host_two'
 TUN_MIN = 100
 TUN_MAX = 109
+RAW_TUNNEL_RANGES = [str(TUN_MIN) + ':' + str(TUN_MAX)]
 TUNNEL_RANGES = [(TUN_MIN, TUN_MAX)]
 UPDATED_TUNNEL_RANGES = [(TUN_MIN + 5, TUN_MAX + 5)]
+SERVICE_PLUGIN_KLASS = ('neutron.services.network_segment_range.plugin.'
+                        'NetworkSegmentRangePlugin')
 
 
 class TunnelTypeTestMixin(object):
@@ -460,3 +464,42 @@ class TunnelTypeMTUTestMixin(object):
 
     def test_get_mtu_ipv6(self):
         self._test_get_mtu(6)
+
+
+class TunnelTypeNetworkSegmentRangeTestMixin(object):
+
+    DRIVER_CLASS = None
+
+    def setUp(self):
+        super(TunnelTypeNetworkSegmentRangeTestMixin, self).setUp()
+        cfg.CONF.set_override('service_plugins', [SERVICE_PLUGIN_KLASS])
+        self.context = context.Context()
+        self.driver = self.DRIVER_CLASS()
+
+    def test__populate_new_default_network_segment_ranges(self):
+        # _populate_new_default_network_segment_ranges will be called when
+        # the type driver initializes with `network_segment_range` loaded as
+        # one of the `service_plugins`
+        self.driver._initialize(RAW_TUNNEL_RANGES)
+        self.driver.initialize_network_segment_range_support()
+        self.driver.sync_allocations()
+        ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
+            self.context)
+        self.assertEqual(1, len(ret))
+        network_segment_range = ret[0]
+        self.assertTrue(network_segment_range.default)
+        self.assertTrue(network_segment_range.shared)
+        self.assertIsNone(network_segment_range.project_id)
+        self.assertEqual(self.driver.get_type(),
+                         network_segment_range.network_type)
+        self.assertIsNone(network_segment_range.physical_network)
+        self.assertEqual(TUN_MIN, network_segment_range.minimum)
+        self.assertEqual(TUN_MAX, network_segment_range.maximum)
+
+    def test__delete_expired_default_network_segment_ranges(self):
+        self.driver.tunnel_ranges = TUNNEL_RANGES
+        self.driver.sync_allocations()
+        self.driver._delete_expired_default_network_segment_ranges()
+        ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
+            self.context)
+        self.assertEqual(0, len(ret))

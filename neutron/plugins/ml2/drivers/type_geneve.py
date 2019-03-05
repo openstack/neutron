@@ -20,6 +20,8 @@ from oslo_config import cfg
 from oslo_log import log
 
 from neutron.conf.plugins.ml2.drivers import driver_type
+from neutron.db.models.plugins.ml2 import geneveallocation as \
+    geneve_alloc_model
 from neutron.objects.plugins.ml2 import geneveallocation as geneve_obj
 from neutron.plugins.ml2.drivers import type_tunnel
 
@@ -34,6 +36,8 @@ class GeneveTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
         super(GeneveTypeDriver, self).__init__(geneve_obj.GeneveAllocation,
                                                geneve_obj.GeneveEndpoint)
         self.max_encap_size = cfg.CONF.ml2_type_geneve.max_header_size
+        self.model_segmentation_id = (
+            geneve_alloc_model.GeneveAllocation.geneve_vni)
 
     def get_type(self):
         return p_const.TYPE_GENEVE

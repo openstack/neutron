@@ -187,6 +187,13 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             LOG.info("Initializing driver for type '%s'", network_type)
             driver.obj.initialize()
 
+    def initialize_network_segment_range_support(self):
+        for network_type, driver in self.drivers.items():
+            if network_type in constants.NETWORK_SEGMENT_RANGE_TYPES:
+                LOG.info("Initializing driver network segment range support "
+                         "for type '%s'", network_type)
+                driver.obj.initialize_network_segment_range_support()
+
     def _add_network_segment(self, context, network_id, segment,
                              segment_index=0):
         segments_db.add_network_segment(
@@ -195,20 +202,23 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def create_network_segments(self, context, network, tenant_id):
         """Call type drivers to create network segments."""
         segments = self._process_provider_create(network)
+        filters = {'project_id': tenant_id}
         with db_api.CONTEXT_WRITER.using(context):
             network_id = network['id']
             if segments:
                 for segment_index, segment in enumerate(segments):
                     segment = self.reserve_provider_segment(
-                        context, segment)
+                        context, segment, filters=filters)
                     self._add_network_segment(context, network_id, segment,
                                               segment_index)
             elif (cfg.CONF.ml2.external_network_type and
                   self._get_attribute(network, extnet_apidef.EXTERNAL)):
-                segment = self._allocate_ext_net_segment(context)
+                segment = self._allocate_ext_net_segment(
+                    context, filters=filters)
                 self._add_network_segment(context, network_id, segment)
             else:
-                segment = self._allocate_tenant_net_segment(context)
+                segment = self._allocate_tenant_net_segment(
+                    context, filters=filters)
                 self._add_network_segment(context, network_id, segment)
 
     def reserve_network_segment(self, context, segment_data):
@@ -249,33 +259,33 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             msg = _("network_type value '%s' not supported") % network_type
             raise exc.InvalidInput(error_message=msg)
 
-    def reserve_provider_segment(self, context, segment):
+    def reserve_provider_segment(self, context, segment, filters=None):
         network_type = segment.get(api.NETWORK_TYPE)
         driver = self.drivers.get(network_type)
         if isinstance(driver.obj, api.TypeDriver):
             return driver.obj.reserve_provider_segment(context.session,
-                                                       segment)
+                                                       segment, filters)
         else:
             return driver.obj.reserve_provider_segment(context,
-                                                       segment)
+                                                       segment, filters)
 
-    def _allocate_segment(self, context, network_type):
+    def _allocate_segment(self, context, network_type, filters=None):
         driver = self.drivers.get(network_type)
         if isinstance(driver.obj, api.TypeDriver):
-            return driver.obj.allocate_tenant_segment(context.session)
+            return driver.obj.allocate_tenant_segment(context.session, filters)
         else:
-            return driver.obj.allocate_tenant_segment(context)
+            return driver.obj.allocate_tenant_segment(context, filters)
 
-    def _allocate_tenant_net_segment(self, context):
+    def _allocate_tenant_net_segment(self, context, filters=None):
         for network_type in self.tenant_network_types:
-            segment = self._allocate_segment(context, network_type)
+            segment = self._allocate_segment(context, network_type, filters)
             if segment:
                 return segment
         raise exc.NoNetworkAvailable()
 
-    def _allocate_ext_net_segment(self, context):
+    def _allocate_ext_net_segment(self, context, filters=None):
         network_type = cfg.CONF.ml2.external_network_type
-        segment = self._allocate_segment(context, network_type)
+        segment = self._allocate_segment(context, network_type, filters)
         if segment:
             return segment
         raise exc.NoNetworkAvailable()
@@ -335,6 +345,13 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                           "network type is not supported.", segment)
         else:
             LOG.debug("No segment found with id %(segment_id)s", segment_id)
+
+    def update_network_segment_range_allocations(self, network_type):
+        driver = self.drivers.get(network_type)
+        driver.obj.update_network_segment_range_allocations()
+
+    def network_type_supported(self, network_type):
+        return bool(network_type in self.drivers)
 
 
 class MechanismManager(stevedore.named.NamedExtensionManager):
