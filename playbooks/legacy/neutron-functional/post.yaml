@@ -66,6 +66,22 @@
           - --exclude=*
           - --prune-empty-dirs
 
+    # TODO(slaweq): this should be moved to separate role and used in zuulv3
+    # jobs definitions also
+    - name: Store journal logs in {{ ansible_user_dir }}/workspace/logs/journal.log
+      become: yes
+      shell:
+        cmd: |
+          /bin/journalctl -a > {{ ansible_user_dir }}/workspace/logs/journal.log
+
+    - name: Set journal.log file permissions
+      become: yes
+      file:
+        path: '{{ ansible_user_dir }}/workspace/logs/journal.log'
+        owner: '{{ ansible_user }}'
+        group: '{{ ansible_user }}'
+        mode: 0644
+
     - name: Copy files from {{ ansible_user_dir }}/workspace/ on node
       synchronize:
         src: '{{ ansible_user_dir }}/workspace/'
