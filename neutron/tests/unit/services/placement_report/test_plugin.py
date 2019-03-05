@@ -14,6 +14,7 @@
 
 import mock
 
+from keystoneauth1 import exceptions as ks_exc
 from neutron_lib.agent import constants as agent_const
 from oslo_log import log as logging
 
@@ -42,11 +43,55 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
         with mock.patch.object(
                 self.service_plugin._placement_client,
                 'list_resource_providers',
+                return_value={'resource_providers': []}):
+            self.assertRaises(
+                IndexError, self.service_plugin._get_rp_by_name, 'no_such_rp')
+
+    def test_no_sync_for_rp_name_not_found(self):
+        # looking all good
+        agent = {
+            'agent_type': 'test_mechanism_driver_agent',
+            'configurations': {'resource_provider_bandwidths': {}},
+            'host': 'fake host',
+        }
+        agent_db = mock.Mock()
+
+        with mock.patch.object(
+                self.service_plugin._placement_client,
+                'list_resource_providers',
                 return_value={'resource_providers': []}), \
-            mock.patch.object(plugin.LOG, 'warning') as log_mock:
-            rp = self.service_plugin._get_rp_by_name('whatever')
-            self.assertEqual(1, log_mock.call_count)
-        self.assertEqual({'uuid': None}, rp)
+            mock.patch.object(
+                self.service_plugin._batch_notifier,
+                'queue_event') as mock_queue_event:
+
+            self.service_plugin._sync_placement_state(agent, agent_db)
+
+            self.assertFalse(agent_db.resources_synced)
+            agent_db.update.assert_called_with()
+            mock_queue_event.assert_not_called()
+
+    def test_no_sync_for_placement_gone(self):
+        # looking all good
+        agent = {
+            'agent_type': 'test_mechanism_driver_agent',
+            'configurations': {'resource_provider_bandwidths': {}},
+            'host': 'fake host',
+        }
+        agent_db = mock.Mock()
+
+        with mock.patch.object(
+                self.service_plugin._placement_client,
+                'list_resource_providers',
+                side_effect=ks_exc.HttpError), \
+            mock.patch.object(
+                self.service_plugin._batch_notifier,
+                'queue_event') as mock_queue_event:
+
+            self.service_plugin._sync_placement_state(agent, agent_db)
+
+            self.assertFalse(agent_db.resources_synced)
+            agent_db.update.assert_called_with()
+            mock_queue_event.assert_not_called()
 
     def test_no_sync_for_unsupported_agent_type(self):
         payload = mock.Mock(
