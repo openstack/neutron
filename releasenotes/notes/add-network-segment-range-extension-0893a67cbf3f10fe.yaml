@@ -1,0 +1,25 @@
+---
+prelude: >
+    Added support for network segment range management. This introduces the
+    ability for administrators to control the segment ranges globally or on
+    a per-tenant basis via the Neutron API.
+features:
+  - |
+    Before Stein, network segment ranges were configured as an entry in ML2
+    config file ``/etc/neutron/plugins/ml2/ml2_conf.ini`` that was statically
+    defined for tenant network allocation and therefore had to be managed as
+    part of the host deployment and management.
+    The new ``network-segment-range`` API extension has been introduced, which
+    exposes the network segment ranges to be administered via API. This
+    allows users with admin privileges to be able to dynamically manage
+    the shared and/or tenant specific network segment ranges.
+    Standard attributes with tagging support are introduced to the new
+    resource.
+    The feature is controlled by the newly-added service plugin
+    ``network_segment_range``.
+    A set of ``default`` network segment ranges will be created out of
+    the ranges that are defined in the host ML2 config file
+    ``/etc/neutron/plugins/ml2/ml2_conf.ini``, such as
+    ``network_vlan_ranges``, ``vni_ranges`` for ml2_type_vxlan,
+    ``tunnel_id_ranges`` for ml2_type_gre and ``vni_ranges`` for
+    ml2_type_geneve.

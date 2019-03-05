@@ -327,6 +327,13 @@ def get_random_port_binding_statuses():
     return random.choice(n_const.PORT_BINDING_STATUSES)
 
 
+def get_random_network_segment_range_network_type():
+    return random.choice([constants.TYPE_VLAN,
+                          constants.TYPE_VXLAN,
+                          constants.TYPE_GRE,
+                          constants.TYPE_GENEVE])
+
+
 def is_bsd():
     """Return True on BSD-based systems."""
 

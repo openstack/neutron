@@ -28,6 +28,7 @@ from neutron.conf.policies import logging
 from neutron.conf.policies import metering
 from neutron.conf.policies import network
 from neutron.conf.policies import network_ip_availability
+from neutron.conf.policies import network_segment_range
 from neutron.conf.policies import port
 from neutron.conf.policies import qos
 from neutron.conf.policies import rbac
@@ -55,6 +56,7 @@ def list_rules():
         metering.list_rules(),
         network.list_rules(),
         network_ip_availability.list_rules(),
+        network_segment_range.list_rules(),
         port.list_rules(),
         qos.list_rules(),
         rbac.list_rules(),

@@ -313,3 +313,8 @@ class FloatingIPStatusEnumField(obj_fields.AutoTypedField):
 
 class RouterStatusEnumField(obj_fields.AutoTypedField):
     AUTO_TYPE = obj_fields.Enum(valid_values=constants.VALID_ROUTER_STATUS)
+
+
+class NetworkSegmentRangeNetworkTypeEnumField(obj_fields.AutoTypedField):
+    AUTO_TYPE = obj_fields.Enum(
+        valid_values=lib_constants.NETWORK_SEGMENT_RANGE_TYPES)
