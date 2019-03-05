@@ -291,6 +291,7 @@ class TcTestCase(base.BaseTestCase):
         self.assertEqual('5:0', qdiscs[0]['handle'])
         self.assertEqual('htb', qdiscs[0]['qdisc_type'])
 
+    @mock.patch('pyroute2.netlink.rtnl.tcmsg.common.tick_in_usec', 15.625)
     def test_list_tc_qdiscs_tbf(self):
         tca_tbf_params = {'buffer': 9375000,
                           'rate': 320000,
@@ -341,6 +342,7 @@ class TcPolicyClassTestCase(base.BaseTestCase):
             'device', rtnl.TC_H_ROOT, '1:10', 'qdisc_type', rate=1000 * 128,
             ceil=2000 * 128, burst=1600 * 128, namespace=self.namespace)
 
+    @mock.patch('pyroute2.netlink.rtnl.tcmsg.common.tick_in_usec', 15.625)
     def test_list_tc_policy_classes(self):
         htb_params = {'buffer': 12500000, 'ceil': 256000, 'rate': 192000}
         self.mock_list_tc_policy_classes.return_value = tuple([
