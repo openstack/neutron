@@ -40,11 +40,11 @@ class OVSAgentExtensionAPI(object):
     method which has been added to the AgentExtension class.
     '''
 
-    def __init__(self, int_br, tun_br, phys_brs):
+    def __init__(self, int_br, tun_br, phys_brs=None):
         super(OVSAgentExtensionAPI, self).__init__()
         self.br_int = int_br
         self.br_tun = tun_br
-        self.br_phys = phys_brs
+        self.br_phys = phys_brs or {}
 
     def request_int_br(self):
         """Allows extensions to request an integration bridge to use for
