@@ -14,6 +14,7 @@
 
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
+from neutron_lib.db import sqlalchemytypes
 from oslo_utils import timeutils
 import sqlalchemy as sa
 from sqlalchemy import event  # noqa
@@ -23,7 +24,6 @@ from sqlalchemy.orm import attributes
 from sqlalchemy.orm import session as se
 
 from neutron._i18n import _
-from neutron.db import sqlalchemytypes
 
 
 class StandardAttribute(model_base.BASEV2):
