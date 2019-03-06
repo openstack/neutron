@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    The Neutron L3 and DHCP agents now dynamically tune the number of
+    processing greenthreads they run based on the number of objects they
+    are managing, with the current values for this range being between eight
+    and thirty-two threads, which is an increase over the previous static value
+    of eight threads. This should help address some of the scaling problems
+    in the agents. For more information see bug
+    `1813787 <https://bugs.launchpad.net/neutron/+bug/1813787>`_.
