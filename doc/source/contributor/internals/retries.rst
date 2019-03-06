@@ -24,7 +24,7 @@
 Retrying Operations
 ===================
 
-Inside of the neutron.db.api module there is a decorator called
+Inside of the neutron_lib.db.api module there is a decorator called
 'retry_if_session_inactive'. This should be used to protect any
 functions that perform DB operations. This decorator will capture
 any deadlock errors, RetryRequests, connection errors, and unique

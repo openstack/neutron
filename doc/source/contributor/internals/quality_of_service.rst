@@ -218,7 +218,7 @@ instantiated (and to suggest just that, the base rule class is marked as ABC).
 
 QoS objects rely on some primitive database API functions that are added in:
 
-* neutron.db.api: those can be reused to fetch other models that do not have
+* neutron_lib.db.api: those can be reused to fetch other models that do not have
   corresponding versioned objects yet, if needed.
 * neutron.db.qos.api: contains database functions that are specific to QoS
   models.
