@@ -30,6 +30,7 @@ from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as lib_exc
 from neutron_lib import fixture
 from neutron_lib.plugins import directory
+from neutron_lib.tests import tools
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net
 from oslo_concurrency import lockutils
@@ -63,7 +64,6 @@ from neutron.objects import router as l3_obj
 from neutron.plugins.ml2.common import exceptions as ml2_exceptions
 from neutron import policy
 from neutron.tests import base
-from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit import testlib_api
 
