@@ -73,14 +73,13 @@ case $VENV in
     # Because of bug present in current Ubuntu Xenial kernel version
     # we need a fix for VXLAN local tunneling.
     if [[ "$VENV" =~ "dsvm-fullstack" ]]; then
+
         # The OVS_BRANCH variable is used by git checkout. In the case below,
-        # we use openvswitch commit 138df3e563de9da0e5a4155b3534a69621495742
-        # that contains a fix for usage of VXLAN tunnels on a single node
-        # (commit 741f47cf35df2bfc7811b2cff75c9bb8d05fd26f) and is compatible
-        # with kernel 4.4.119
-        # NOTE(slaweq): Replace with a release tag when one is available.
-        # See commit 138df3e563de9da0e5a4155b3534a69621495742 (on the ovs repo).
-        OVS_BRANCH="138df3e563de9da0e5a4155b3534a69621495742"
+        # we use openvswitch release 2.9.3 that contains a fix for usage of
+        # VXLAN tunnels on a single node (ovs repository commit
+        # 741f47cf35df2bfc7811b2cff75c9bb8d05fd26f). This can be dropped once
+        # we switch to Ubuntu Bionic nodes, where kernel has the fix
+        OVS_BRANCH="v2.9.3"
         compile_ovs_kernel_module
     fi
 
