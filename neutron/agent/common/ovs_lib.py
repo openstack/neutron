@@ -662,6 +662,20 @@ class OVSBridge(BaseOVS):
                 txn.add(self.ovsdb.db_set('Controller',
                                           controller_uuid, *attr))
 
+    def set_controllers_inactivity_probe(self, interval):
+        """Set bridge controllers inactivity probe interval.
+
+        :param interval: inactivity_probe value in seconds.
+        """
+        attr = [('inactivity_probe', interval * 1000)]
+        controllers = self.db_get_val('Bridge', self.br_name, 'controller')
+        controllers = [controllers] if isinstance(
+            controllers, uuid.UUID) else controllers
+        with self.ovsdb.transaction(check_error=True) as txn:
+            for controller_uuid in controllers:
+                txn.add(self.ovsdb.db_set('Controller',
+                                          controller_uuid, *attr))
+
     def _set_egress_bw_limit_for_port(self, port_name, max_kbps,
                                       max_burst_kbps):
         with self.ovsdb.transaction(check_error=True) as txn:

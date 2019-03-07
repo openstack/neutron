@@ -94,6 +94,11 @@ ovs_opts = [
                help=_("Timeout in seconds to wait for a single "
                       "OpenFlow request. "
                       "Used only for 'native' driver.")),
+    cfg.IntOpt('of_inactivity_probe', default=10,
+               help=_("The inactivity_probe interval in seconds for the local "
+                      "switch connection to the controller. "
+                      "A value of 0 disables inactivity probes. "
+                      "Used only for 'native' driver.")),
 ]
 
 agent_opts = [

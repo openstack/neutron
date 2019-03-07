@@ -93,6 +93,7 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
         #
         # [1] https://github.com/openvswitch/ovs/blob/master/DESIGN.md
         self.set_controllers_connection_mode("out-of-band")
+        self.set_controllers_inactivity_probe(conf.OVS.of_inactivity_probe)
 
     def drop_port(self, in_port):
         self.install_drop(priority=2, in_port=in_port)
