@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Reject QoS minimum bandwidth rule operations on ports, networks without
+    physnet, see bug `1819029 <https://bugs.launchpad.net/neutron/+bug/1819029>`_.
