@@ -429,3 +429,11 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.ovs.update_minimum_bandwidth_queue(self.port_id, [], 1, 2800)
         self._check_value(2800, self.ovs.get_egress_min_bw_for_port,
                           port_id=self.port_id)
+
+    def test_set_controllers_inactivity_probe(self):
+        self._create_bridge()
+        self.ovs.set_controller(['tcp:127.0.0.1:6633'])
+        self.ovs.set_controllers_inactivity_probe(8)
+        self.assertEqual(8000,
+                         self.ovs.db_get_val('Controller', self.br_name,
+                                             'inactivity_probe'))

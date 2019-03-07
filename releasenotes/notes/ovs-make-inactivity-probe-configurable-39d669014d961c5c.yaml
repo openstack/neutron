@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    A new option ``[ovs] of_inactivity_probe`` has been added to allow
+    changing the inactivity probe interval when using the OVS ML2 agent
+    with the native OpenFlow driver. Operators can increase this if they
+    are experiencing OpenFlow timeouts. The default value is 10 seconds.
