@@ -154,7 +154,10 @@ class AgentMixin(object):
                                         interface_name, enable)
 
     def _update_metadata_proxy(self, ri, router_id, state):
-        if state == 'master':
+        # NOTE(slaweq): Since the metadata proxy is spawned in the qrouter
+        # namespace and not in the snat namespace, even standby DVR-HA
+        # routers needs to serve metadata requests to local ports.
+        if state == 'master' or ri.router.get('distributed', False):
             LOG.debug('Spawning metadata proxy for router %s', router_id)
             self.metadata_driver.spawn_monitored_metadata_proxy(
                 self.process_monitor, ri.ns_name, self.conf.metadata_port,
