@@ -46,15 +46,6 @@ IPSET_DIRECTION = {constants.INGRESS_DIRECTION: 'src',
 comment_rule = iptables_manager.comment_rule
 libc = ctypes.CDLL(util.find_library('libc.so.6'))
 
-# iptables protocols that support --dport and --sport
-IPTABLES_PORT_PROTOCOLS = [
-    constants.PROTO_NAME_DCCP,
-    constants.PROTO_NAME_SCTP,
-    constants.PROTO_NAME_TCP,
-    constants.PROTO_NAME_UDP,
-    constants.PROTO_NAME_UDPLITE
-]
-
 
 def get_hybrid_port_name(port_name):
     return (constants.TAP_DEVICE_PREFIX + port_name)[:n_const.LINUX_DEV_LEN]
@@ -742,9 +733,15 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             # icmp code can be 0 so we cannot use "if port_range_max" here
             if port_range_max is not None:
                 args[-1] += '/%s' % port_range_max
-        elif protocol in IPTABLES_PORT_PROTOCOLS:
+        elif protocol in n_const.SG_PORT_PROTO_NAMES:
+            # iptables protocols that support --dport, --sport and -m multiport
             if port_range_min == port_range_max:
-                args += ['--%s' % direction, '%s' % (port_range_min,)]
+                if protocol in n_const.IPTABLES_MULTIPORT_ONLY_PROTOCOLS:
+                    # use -m multiport, but without a port range
+                    args += ['-m', 'multiport', '--%ss' % direction,
+                             '%s' % port_range_min]
+                else:
+                    args += ['--%s' % direction, '%s' % port_range_min]
             else:
                 args += ['-m', 'multiport', '--%ss' % direction,
                          '%s:%s' % (port_range_min, port_range_max)]

@@ -473,14 +473,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         ip_proto = self._get_ip_proto_number(rule['protocol'])
         # Not all firewall_driver support all these protocols,
         # but being strict here doesn't hurt.
-        if ip_proto in [constants.PROTO_NUM_DCCP, constants.PROTO_NUM_SCTP,
-                        constants.PROTO_NUM_TCP, constants.PROTO_NUM_UDP,
-                        constants.PROTO_NUM_UDPLITE]:
+        if (ip_proto in n_const.SG_PORT_PROTO_NUMS or
+                ip_proto in n_const.SG_PORT_PROTO_NAMES):
             if rule['port_range_min'] == 0 or rule['port_range_max'] == 0:
                 raise ext_sg.SecurityGroupInvalidPortValue(port=0)
             elif (rule['port_range_min'] is not None and
                   rule['port_range_max'] is not None and
                   rule['port_range_min'] <= rule['port_range_max']):
+                # When min/max are the same it is just a single port
                 pass
             else:
                 raise ext_sg.SecurityGroupInvalidPortRange()
@@ -496,13 +496,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                 raise ext_sg.SecurityGroupMissingIcmpType(
                     value=rule['port_range_max'])
         else:
-            # Only the protocols above support port ranges, raise otherwise.
-            # When min/max are the same it is just a single port.
-            if (rule['port_range_min'] is not None and
-                    rule['port_range_max'] is not None and
-                    rule['port_range_min'] != rule['port_range_max']):
-                raise ext_sg.SecurityGroupInvalidProtocolForPortRange(
-                    protocol=ip_proto)
+            # Only the protocols above support ports, raise otherwise.
+            if (rule['port_range_min'] is not None or
+                    rule['port_range_max'] is not None):
+                port_protocols = (
+                    ', '.join(s.upper() for s in n_const.SG_PORT_PROTO_NAMES))
+                raise ext_sg.SecurityGroupInvalidProtocolForPort(
+                    protocol=ip_proto, valid_port_protocols=port_protocols)
 
     def _validate_ethertype_and_protocol(self, rule):
         """Check if given ethertype and  protocol are valid or not"""
