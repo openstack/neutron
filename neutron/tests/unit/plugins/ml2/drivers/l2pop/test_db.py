@@ -16,6 +16,7 @@ import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.tests import tools
 from neutron_lib.utils import net
 from oslo_utils import uuidutils
 
@@ -28,7 +29,6 @@ from neutron.objects import router as l3_objs
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
 from neutron.plugins.ml2 import models
 from neutron.tests.common import helpers
-from neutron.tests import tools
 from neutron.tests.unit import testlib_api
 
 HOST = helpers.HOST
