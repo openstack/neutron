@@ -35,7 +35,6 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants as n_const
 from neutron.common import utils
-from neutron.tests import base as test_base
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
@@ -525,6 +524,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                                  extra_routes=False,
                                  enable_floating_ip=True,
                                  enable_centralized_fip=False,
+                                 vrrp_id=None,
                                  **kwargs):
         if not agent:
             agent = self.agent
@@ -536,6 +536,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             num_internal_ports=2,
             enable_gw=enable_gw,
             snat_bound_fip=snat_bound_fip,
+            vrrp_id=vrrp_id,
             **kwargs)
         internal_ports = router.get(lib_constants.INTERFACE_KEY, [])
         router['distributed'] = True
@@ -1282,14 +1283,18 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
     def _mocked_dvr_ha_router(self, agent, enable_ha=True, enable_gw=True,
                               enable_centralized_fip=False,
-                              snat_bound_fip=False):
+                              snat_bound_fip=False,
+                              vrrp_id=None,
+                              **kwargs):
         r_info = self.generate_dvr_router_info(
             enable_ha=enable_ha,
             enable_snat=True,
             agent=agent,
             enable_gw=enable_gw,
             enable_centralized_fip=enable_centralized_fip,
-            snat_bound_fip=snat_bound_fip)
+            snat_bound_fip=snat_bound_fip,
+            vrrp_id=vrrp_id,
+            **kwargs)
 
         r_snat_ns_name = namespaces.build_ns_name(dvr_snat_ns.SNAT_NS_PREFIX,
                                                   r_info['id'])
@@ -1322,7 +1327,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
     def _create_dvr_ha_router(self, agent, enable_gw=True,
                               enable_centralized_fip=False,
-                              snat_bound_fip=False, ha_interface=True):
+                              snat_bound_fip=False, ha_interface=True,
+                              vrrp_id=None, **kwargs):
         get_ns_name = mock.patch.object(namespaces.RouterNamespace,
                                         '_get_ns_name').start()
         get_snat_ns_name = mock.patch.object(dvr_snat_ns.SnatNamespace,
@@ -1331,7 +1337,9 @@ class TestDvrRouter(framework.L3AgentTestFramework):
          mocked_r_ns_name,
          mocked_r_snat_ns_name) = self._mocked_dvr_ha_router(
              agent, ha_interface, enable_gw, enable_centralized_fip,
-             snat_bound_fip)
+             snat_bound_fip,
+             vrrp_id=vrrp_id,
+             **kwargs)
 
         if not ha_interface:
             r_info['ha'] = True
@@ -1473,9 +1481,15 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._setup_dvr_ha_bridges()
 
         router1 = self._create_dvr_ha_router(
-            self.agent, enable_gw=True)
+            self.agent, enable_gw=True,
+            vrrp_id=14,
+            ha_port_ip="169.254.192.106",
+            ha_port_mac="12:34:56:78:3a:aa")
         router2 = self._create_dvr_ha_router(
-            self.failover_agent, enable_gw=True)
+            self.failover_agent, enable_gw=True,
+            vrrp_id=14,
+            ha_port_ip="169.254.192.107",
+            ha_port_mac="12:34:56:78:3a:bb")
 
         master, backup = self._get_master_and_slave_routers(
             router1, router2, check_external_device=False)
@@ -1508,18 +1522,26 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
     def _test_dvr_ha_router_failover_with_gw_and_fip(self, enable_gw,
                                                      enable_centralized_fip,
-                                                     snat_bound_fip):
+                                                     snat_bound_fip,
+                                                     vrrp_id=None):
         self._setup_dvr_ha_agents()
         self._setup_dvr_ha_bridges()
 
         router1 = self._create_dvr_ha_router(
             self.agent, enable_gw=enable_gw,
             enable_centralized_fip=enable_centralized_fip,
-            snat_bound_fip=snat_bound_fip)
+            snat_bound_fip=snat_bound_fip,
+            vrrp_id=vrrp_id,
+            ha_port_ip="169.254.192.100",
+            ha_port_mac="12:34:56:78:2b:aa")
         router2 = self._create_dvr_ha_router(
             self.failover_agent, enable_gw=enable_gw,
             enable_centralized_fip=enable_centralized_fip,
-            snat_bound_fip=snat_bound_fip)
+            snat_bound_fip=snat_bound_fip,
+            vrrp_id=vrrp_id,
+            ha_port_ip="169.254.192.101",
+            ha_port_mac="12:34:56:78:2b:bb")
+
         master, backup = self._get_master_and_slave_routers(
             router1, router2, check_external_device=False)
 
@@ -1533,12 +1555,18 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._assert_ip_addresses_in_dvr_ha_snat_namespace_with_fip(backup)
         self._assert_no_ip_addresses_in_dvr_ha_snat_namespace_with_fip(master)
 
-    def _test_dvr_ha_router_failover(self, enable_gw):
+    def _test_dvr_ha_router_failover(self, enable_gw, vrrp_id=None):
         self._setup_dvr_ha_agents()
         self._setup_dvr_ha_bridges()
 
-        router1 = self._create_dvr_ha_router(self.agent, enable_gw=enable_gw)
-        router2 = self._create_dvr_ha_router(self.failover_agent, enable_gw)
+        router1 = self._create_dvr_ha_router(
+            self.agent, enable_gw=enable_gw, vrrp_id=vrrp_id,
+            ha_port_ip="169.254.192.102",
+            ha_port_mac="12:34:56:78:2b:cc")
+        router2 = self._create_dvr_ha_router(
+            self.failover_agent, enable_gw, vrrp_id=vrrp_id,
+            ha_port_ip="169.254.192.103",
+            ha_port_mac="12:34:56:78:2b:dd")
 
         master, backup = self._get_master_and_slave_routers(
             router1, router2, check_external_device=False)
@@ -1554,26 +1582,32 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._assert_ip_addresses_in_dvr_ha_snat_namespace(backup)
         self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(master)
 
-    @test_base.unstable_test("bug 1819160")
     def test_dvr_ha_router_failover_with_gw(self):
-        self._test_dvr_ha_router_failover(enable_gw=True)
+        self._test_dvr_ha_router_failover(enable_gw=True, vrrp_id=10)
 
-    @test_base.unstable_test("bug 1819160")
     def test_dvr_ha_router_failover_with_gw_and_floatingip(self):
         self._test_dvr_ha_router_failover_with_gw_and_fip(
-            enable_gw=True, enable_centralized_fip=True, snat_bound_fip=True)
+            enable_gw=True, enable_centralized_fip=True, snat_bound_fip=True,
+            vrrp_id=11)
 
-    @test_base.unstable_test("bug 1819160")
     def test_dvr_ha_router_failover_without_gw(self):
-        self._test_dvr_ha_router_failover(enable_gw=False)
+        self._test_dvr_ha_router_failover(enable_gw=False, vrrp_id=12)
 
     def test_dvr_non_ha_router_update(self):
         self._setup_dvr_ha_agents()
         self._setup_dvr_ha_bridges()
 
-        router1 = self._create_dvr_ha_router(self.agent)
-        router2 = self._create_dvr_ha_router(self.failover_agent,
-                                             ha_interface=False)
+        router1 = self._create_dvr_ha_router(
+            self.agent,
+            vrrp_id=13,
+            ha_port_ip="169.254.192.104",
+            ha_port_mac="12:34:56:78:2b:ee")
+        router2 = self._create_dvr_ha_router(
+            self.failover_agent,
+            ha_interface=False,
+            vrrp_id=13,
+            ha_port_ip="169.254.192.105",
+            ha_port_mac="12:34:56:78:2b:ff")
 
         r1_chsfr = mock.patch.object(self.agent,
                                      'check_ha_state_for_router').start()
