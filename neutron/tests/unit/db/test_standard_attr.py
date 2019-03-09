@@ -120,7 +120,7 @@ class StandardAttrAPIImapctTestCase(testlib_api.SqlTestCase):
         expected = ['subnets', 'trunks', 'routers', 'segments',
                     'security_group_rules', 'networks', 'policies',
                     'subnetpools', 'ports', 'security_groups', 'floatingips',
-                    'logs']
+                    'logs', 'network_segment_ranges']
         self.assertEqual(
             set(expected),
             set(standard_attr.get_standard_attr_resource_model_map().keys())
@@ -132,7 +132,8 @@ class StandardAttrAPIImapctTestCase(testlib_api.SqlTestCase):
         # should be exposed in release note for API users. And also it should
         # be list as other tag support resources in doc/source/devref/tag.rst
         expected = ['subnets', 'trunks', 'routers', 'networks', 'policies',
-                    'subnetpools', 'ports', 'security_groups', 'floatingips']
+                    'subnetpools', 'ports', 'security_groups', 'floatingips',
+                    'network_segment_ranges']
         self.assertEqual(
             set(expected),
             set(standard_attr.get_tag_resource_parent_map().keys())

@@ -27,6 +27,10 @@ class VxlanAllocation(model_base.BASEV2):
     allocated = sa.Column(sa.Boolean, nullable=False, default=False,
                           server_default=sql.false(), index=True)
 
+    @classmethod
+    def get_segmentation_id(cls):
+        return cls.vxlan_vni
+
 
 class VxlanEndpoints(model_base.BASEV2):
     """Represents tunnel endpoint in RPC mode."""

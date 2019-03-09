@@ -76,3 +76,4 @@ Current API resources extended by standard attr extensions:
 - ports: neutron.db.models_v2.Port
 - security_groups: neutron.db.models.securitygroup.SecurityGroup
 - floatingips: neutron.db.l3_db.FloatingIP
+- network_segment_ranges: neutron.db.models.network_segment_range.NetworkSegmentRange

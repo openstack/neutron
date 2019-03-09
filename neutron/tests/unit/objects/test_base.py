@@ -517,6 +517,8 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     common_types.IpProtocolEnumField: tools.get_random_ip_protocol,
     common_types.ListOfIPNetworksField: get_list_of_random_networks,
     common_types.MACAddressField: tools.get_random_EUI,
+    common_types.NetworkSegmentRangeNetworkTypeEnumField:
+        tools.get_random_network_segment_range_network_type,
     common_types.PortBindingStatusEnumField:
         tools.get_random_port_binding_statuses,
     common_types.PortRangeField: tools.get_random_port,
@@ -595,7 +597,7 @@ class _BaseObjectTestCase(object):
         self.valid_field = [f for f in self._test_class.fields
                             if f not in invalid_fields][0]
         self.valid_field_filter = {self.valid_field:
-                                   self.obj_fields[-1][self.valid_field]}
+                                   self.obj_fields[-1].get(self.valid_field)}
         self.obj_registry = self.useFixture(
             NeutronObjectRegistryFixture())
         self.obj_registry.register(FakeSmallNeutronObject)

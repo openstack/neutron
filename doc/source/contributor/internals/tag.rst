@@ -60,6 +60,7 @@ Current API resources extended by tag extensions:
 
 - floatingips
 - networks
+- network_segment_ranges
 - policies
 - ports
 - routers

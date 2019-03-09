@@ -22,6 +22,7 @@ This includes:
 * segments
 * policies
 * trunks
+* network_segment_ranges
 
 Use cases
 ~~~~~~~~~

@@ -39,3 +39,7 @@ class VlanAllocation(model_base.BASEV2):
     vlan_id = sa.Column(sa.Integer, nullable=False, primary_key=True,
                         autoincrement=False)
     allocated = sa.Column(sa.Boolean, nullable=False)
+
+    @classmethod
+    def get_segmentation_id(cls):
+        return cls.vlan_id

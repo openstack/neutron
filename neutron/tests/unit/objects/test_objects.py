@@ -62,6 +62,7 @@ object_data = {
     'NetworkPortSecurity': '1.0-b30802391a87945ee9c07582b4ff95e3',
     'NetworkRBAC': '1.2-192845c5ed0718e1c54fac36936fcd7d',
     'NetworkSegment': '1.0-57b7f2960971e3b95ded20cbc59244a8',
+    'NetworkSegmentRange': '1.0-bdec1fffc9058ea676089b1f2f2b3cf3',
     'Port': '1.4-1b6183bccfc2cd210919a1a72faefce1',
     'PortBinding': '1.0-3306deeaa6deb01e33af06777d48d578',
     'PortBindingLevel': '1.1-50d47f63218f87581b6cd9a62db574e5',
