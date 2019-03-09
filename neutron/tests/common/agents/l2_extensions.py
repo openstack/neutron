@@ -15,12 +15,14 @@
 
 import re
 import signal
+import time
 
 from oslo_log import log as logging
 
 from neutron.agent.common import async_process
 from neutron.agent.linux import iptables_manager
 from neutron.common import utils as common_utils
+from neutron.tests.common import net_helpers
 
 LOG = logging.getLogger(__name__)
 
@@ -108,19 +110,29 @@ def wait_for_dscp_marked_packet(sender_vm, receiver_vm, dscp_mark):
         cmd += ["and", "(ip[1] & 0xfc == %s)" % (dscp_mark << 2)]
     tcpdump_async = async_process.AsyncProcess(cmd, run_as_root=True,
                                                namespace=receiver_vm.namespace)
-    tcpdump_async.start()
-    sender_vm.block_until_ping(receiver_vm.ip)
+    tcpdump_async.start(block=True)
+
+    with net_helpers.async_ping(sender_vm.namespace, [receiver_vm.ip]) as done:
+        while not done():
+            time.sleep(0.25)
+
     try:
         tcpdump_async.stop(kill_signal=signal.SIGINT)
     except async_process.AsyncProcessException:
         # If it was already stopped than we don't care about it
         pass
 
+    tcpdump_stderr_lines = []
     pattern = r"(?P<packets_count>^\d+) packets received by filter"
     for line in tcpdump_async.iter_stderr():
         m = re.match(pattern, line)
         if m and int(m.group("packets_count")) != 0:
             return
+        tcpdump_stderr_lines.append(line)
+
+    tcpdump_stdout_lines = [line for line in tcpdump_async.iter_stdout()]
+    LOG.debug("Captured output lines from tcpdump. Stdout: %s; Stderr: %s",
+              tcpdump_stdout_lines, tcpdump_stderr_lines)
 
     raise TcpdumpException(
         "No packets marked with DSCP = %(dscp_mark)s received from %(src)s "
