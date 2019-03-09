@@ -33,6 +33,8 @@ from neutron.conf import common as common_config
 from neutron.conf.plugins.ml2.drivers import agent
 from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
+from neutron.plugins.ml2.drivers.openvswitch.agent.extension_drivers \
+    import qos_driver as ovs_qos_driver
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
     import br_int
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
@@ -112,8 +114,10 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         # Physical bridges should be created prior to running
         self._bridge_classes()['br_phys'](self.br_phys).create()
         ext_mgr = ext_manager.L2AgentExtensionsManager(self.config)
-        agent = ovs_agent.OVSNeutronAgent(self._bridge_classes(),
-                                          ext_mgr, self.config)
+        with mock.patch.object(ovs_qos_driver.QosOVSAgentDriver,
+                               '_minimum_bandwidth_initialize'):
+            agent = ovs_agent.OVSNeutronAgent(self._bridge_classes(),
+                                              ext_mgr, self.config)
         self.addCleanup(self.ovs.delete_bridge, self.br_int)
         if tunnel_types:
             self.addCleanup(self.ovs.delete_bridge, self.br_tun)
