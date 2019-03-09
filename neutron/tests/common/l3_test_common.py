@@ -60,6 +60,7 @@ def prepare_router_data(ip_version=lib_constants.IP_VERSION_4,
                         v6_ext_gw_with_sub=True,
                         snat_bound_fip=False,
                         enable_pf_floating_ip=False,
+                        vrrp_id=None,
                         **kwargs):
     fixed_ips = []
     subnets = []
@@ -160,9 +161,13 @@ def prepare_router_data(ip_version=lib_constants.IP_VERSION_4,
     router_append_interface(router, count=num_internal_ports,
                             ip_version=ip_version, dual_stack=dual_stack)
     if enable_ha:
+        ha_port_ip = kwargs.get('ha_port_ip', '169.254.192.1')
+        ha_port_mac = kwargs.get('ha_port_mac', '12:34:56:78:2b:aa')
         router['ha'] = True
-        router['ha_vr_id'] = 1
-        router[lib_constants.HA_INTERFACE_KEY] = (get_ha_interface())
+        router['ha_vr_id'] = vrrp_id or 1
+        router[lib_constants.HA_INTERFACE_KEY] = (
+            get_ha_interface(ip=ha_port_ip,
+                             mac=ha_port_mac))
 
     if enable_snat is not None:
         router['enable_snat'] = enable_snat
