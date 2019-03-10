@@ -6,6 +6,7 @@ source $LIBDIR/l2_agent
 source $LIBDIR/l2_agent_sriovnicswitch
 source $LIBDIR/l3_agent
 source $LIBDIR/ml2
+source $LIBDIR/network_segment_range
 source $LIBDIR/qos
 source $LIBDIR/ovs
 source $LIBDIR/segments
@@ -55,6 +56,9 @@ if [[ "$1" == "stack" ]]; then
             fi
             if is_service_enabled neutron-segments; then
                 configure_segments_extension
+            fi
+            if is_service_enabled neutron-network-segment-range; then
+                configure_network_segment_range
             fi
             if is_service_enabled q-agt neutron-agent; then
                 configure_l2_agent
