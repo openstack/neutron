@@ -755,7 +755,9 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         return self.model_map[obj_cls.db_model]
 
     # TODO(ihrachys) document the intent of all common test cases in docstrings
-    def test_get_object(self):
+    def test_get_object(self, context=None):
+        if context is None:
+            context = self.context
         with mock.patch.object(
                 obj_db_api, 'get_object',
                 return_value=self.db_objs[0]) as get_object_mock:
@@ -766,7 +768,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 self.assertTrue(self._is_test_class(obj))
                 self._check_equal(self.objs[0], obj)
                 get_object_mock.assert_called_once_with(
-                    self._test_class, self.context,
+                    self._test_class, context,
                     **self._test_class.modify_fields_to_db(obj_keys))
 
     def test_get_object_missing_object(self):
@@ -827,7 +829,9 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                             **filter_kwargs))
         return mock_calls
 
-    def test_get_objects(self):
+    def test_get_objects(self, context=None):
+        if context is None:
+            context = self.context
         '''Test that get_objects fetches data from database.'''
         with mock.patch.object(
                 obj_db_api, 'get_objects',
@@ -837,7 +841,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 [get_obj_persistent_fields(obj) for obj in self.objs],
                 [get_obj_persistent_fields(obj) for obj in objs])
         get_objects_mock.assert_any_call(
-            self._test_class, self.context,
+            self._test_class, context,
             _pager=self.pager_map[self._test_class.obj_name()]
         )
 

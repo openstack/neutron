@@ -20,6 +20,7 @@ from neutron.objects import network
 from neutron.objects.qos import binding
 from neutron.objects.qos import policy
 from neutron.tests.unit.objects import test_base as obj_test_base
+from neutron.tests.unit.objects import test_rbac
 from neutron.tests.unit import testlib_api
 
 
@@ -156,7 +157,7 @@ class NetworkSegmentDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
         self.assertFalse(obj.hosts)
 
 
-class NetworkObjectIfaceTestCase(obj_test_base.BaseObjectIfaceTestCase):
+class NetworkObjectIfaceTestCase(test_rbac.RBACBaseObjectIfaceTestCase):
     _test_class = network.Network
 
     def setUp(self):

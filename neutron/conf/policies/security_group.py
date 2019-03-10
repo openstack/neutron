@@ -37,7 +37,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         'get_security_group',
-        base.RULE_ADMIN_OR_OWNER,
+        base.RULE_ANY,
         'Get a security group',
         [
             {

@@ -10,12 +10,57 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import random
+
 from neutron.objects import securitygroup
 from neutron.tests.unit.objects import test_base
+from neutron.tests.unit.objects import test_rbac
 from neutron.tests.unit import testlib_api
 
 
-class SecurityGroupIfaceObjTestCase(test_base.BaseObjectIfaceTestCase):
+class _SecurityGroupRBACBase(object):
+
+    def get_random_object_fields(self, obj_cls=None):
+        fields = (super(_SecurityGroupRBACBase, self).
+                  get_random_object_fields(obj_cls))
+        rnd_actions = self._test_class.db_model.get_valid_actions()
+        idx = random.randint(0, len(rnd_actions) - 1)
+        fields['action'] = rnd_actions[idx]
+        return fields
+
+
+class SecurityGroupRBACDbObjectTestCase(_SecurityGroupRBACBase,
+                                        test_base.BaseDbObjectTestCase,
+                                        testlib_api.SqlTestCase):
+
+    _test_class = securitygroup.SecurityGroupRBAC
+
+    def setUp(self):
+        super(SecurityGroupRBACDbObjectTestCase, self).setUp()
+        for obj in self.db_objs:
+            sg_obj = securitygroup.SecurityGroup(self.context,
+                                          id=obj['object_id'],
+                                          project_id=obj['project_id'])
+            sg_obj.create()
+
+    def _create_test_security_group_rbac(self):
+        self.objs[0].create()
+        return self.objs[0]
+
+    def test_object_version_degradation_1_1_to_1_0_no_shared(self):
+        security_group_rbac_obj = self._create_test_security_group_rbac()
+        x = security_group_rbac_obj.obj_to_primitive('1.0')
+        security_group_rbac_dict = x
+        self.assertNotIn('shared',
+                         security_group_rbac_dict['versioned_object.data'])
+
+
+class SecurityGroupRBACIfaceObjectTestCase(_SecurityGroupRBACBase,
+                                           test_base.BaseObjectIfaceTestCase):
+    _test_class = securitygroup.SecurityGroupRBAC
+
+
+class SecurityGroupIfaceObjTestCase(test_rbac.RBACBaseObjectIfaceTestCase):
 
     _test_class = securitygroup.SecurityGroup
 

@@ -153,38 +153,26 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
     @classmethod
     def get_object(cls, context, **kwargs):
-        # We want to get the policy regardless of its tenant id. We'll make
-        # sure the tenant has permission to access the policy later on.
-        admin_context = context.elevated()
-        with cls.db_context_reader(admin_context):
-            policy_obj = super(QosPolicy, cls).get_object(admin_context,
-                                                          **kwargs)
-            if (not policy_obj or
-                    not cls.is_accessible(context, policy_obj)):
-                return
+        policy_obj = super(QosPolicy, cls).get_object(context, **kwargs)
+        if not policy_obj:
+            return
 
-            policy_obj.obj_load_attr('rules')
-            policy_obj.obj_load_attr('is_default')
-            return policy_obj
+        policy_obj.obj_load_attr('rules')
+        policy_obj.obj_load_attr('is_default')
+        return policy_obj
 
     @classmethod
     def get_objects(cls, context, _pager=None, validate_filters=True,
                     **kwargs):
-        # We want to get the policy regardless of its tenant id. We'll make
-        # sure the tenant has permission to access the policy later on.
-        admin_context = context.elevated()
-        with cls.db_context_reader(admin_context):
-            objs = super(QosPolicy, cls).get_objects(admin_context, _pager,
-                                                     validate_filters,
-                                                     **kwargs)
-            result = []
-            for obj in objs:
-                if not cls.is_accessible(context, obj):
-                    continue
-                obj.obj_load_attr('rules')
-                obj.obj_load_attr('is_default')
-                result.append(obj)
-            return result
+        objs = super(QosPolicy, cls).get_objects(context, _pager,
+                                                 validate_filters,
+                                                 **kwargs)
+        result = []
+        for obj in objs:
+            obj.obj_load_attr('rules')
+            obj.obj_load_attr('is_default')
+            result.append(obj)
+        return result
 
     @classmethod
     def _get_object_policy(cls, context, binding_cls, **kwargs):

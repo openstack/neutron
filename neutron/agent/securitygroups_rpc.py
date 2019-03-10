@@ -16,6 +16,7 @@
 
 import functools
 
+from neutron_lib.api.definitions import rbac_security_groups as rbac_sg_apidef
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -43,6 +44,7 @@ def disable_security_group_extension_by_config(aliases):
     if not is_firewall_enabled():
         LOG.info('Disabled security-group extension.')
         _disable_extension('security-group', aliases)
+        _disable_extension(rbac_sg_apidef.ALIAS, aliases)
         LOG.info('Disabled allowed-address-pairs extension.')
         _disable_extension('allowed-address-pairs', aliases)
 

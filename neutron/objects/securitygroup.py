@@ -10,25 +10,42 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.common import utils
 from neutron.db.models import securitygroup as sg_models
+from neutron.db import rbac_db_models
 from neutron.objects import base
 from neutron.objects import common_types
+from neutron.objects import ports
+from neutron.objects import rbac
+from neutron.objects import rbac_db
 
 
 @base.NeutronObjectRegistry.register
-class SecurityGroup(base.NeutronDbObject):
+class SecurityGroupRBAC(rbac.RBACBaseObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
+    db_model = rbac_db_models.SecurityGroupRBAC
+
+
+@base.NeutronObjectRegistry.register
+class SecurityGroup(rbac_db.NeutronRbacObject):
+    # Version 1.0: Initial version
+    # Version 1.1: Add RBAC support
+    VERSION = '1.1'
+
+    # required by RbacNeutronMetaclass
+    rbac_db_cls = SecurityGroupRBAC
     db_model = sg_models.SecurityGroup
 
     fields = {
         'id': common_types.UUIDField(),
         'name': obj_fields.StringField(nullable=True),
         'project_id': obj_fields.StringField(nullable=True),
+        'shared': obj_fields.BooleanField(default=False),
         'is_default': obj_fields.BooleanField(default=False),
         'rules': obj_fields.ListOfObjectsField(
             'SecurityGroupRule', nullable=True
@@ -63,6 +80,17 @@ class SecurityGroup(base.NeutronDbObject):
             setattr(self, 'is_default',
                     bool(db_obj.get('default_security_group')))
             self.obj_reset_changes(['is_default'])
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):
+            primitive.pop('shared')
+
+    @classmethod
+    def get_bound_tenant_ids(cls, context, obj_id):
+        port_objs = ports.Port.get_objects(context,
+                                           security_group_ids=[obj_id])
+        return {port.tenant_id for port in port_objs}
 
 
 @base.NeutronObjectRegistry.register

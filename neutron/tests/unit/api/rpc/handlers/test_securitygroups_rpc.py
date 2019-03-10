@@ -91,7 +91,9 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
         self.rcache.record_resource_update(self.ctx, 'Port', p)
         return p
 
-    def _make_security_group_ovo(self, **kwargs):
+    @mock.patch.object(securitygroup.SecurityGroup, 'is_shared_with_tenant',
+                       return_value=False)
+    def _make_security_group_ovo(self, *args, **kwargs):
         attrs = {'id': uuidutils.generate_uuid(), 'revision_number': 1}
         sg_rule = securitygroup.SecurityGroupRule(
             id=uuidutils.generate_uuid(),
