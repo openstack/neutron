@@ -795,6 +795,11 @@ class Dnsmasq(DhcpLocalProcess):
                                         filename)
                             continue
                     parts = l.strip().split()
+                    if len(parts) != 5:
+                        LOG.warning(_LW('Invalid lease entry %(lease)s found'
+                                        'in %(file)s lease file, ignoring'),
+                                    {'lease': parts, 'file': filename})
+                        continue
                     (iaid, ip, client_id) = parts[1], parts[2], parts[4]
                     ip = ip.strip('[]')
                     if netaddr.IPAddress(ip).version == constants.IP_VERSION_4:
