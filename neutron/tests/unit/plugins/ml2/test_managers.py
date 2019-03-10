@@ -16,6 +16,7 @@
 
 import mock
 
+from neutron_lib.exceptions import placement as place_exc
 from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -67,6 +68,60 @@ class TestManagers(base.BaseTestCase):
                                'bind_port') as bind_port:
             manager._bind_port_level(self.context, 0, self.segments_to_bind)
         self.assertEqual(0, bind_port.call_count)
+
+    def test__infer_driver_from_allocation_positive(self):
+        cfg.CONF.set_override(
+            'mechanism_drivers', ['fake_agent'], group='ml2')
+        manager = managers.MechanismManager()
+        with mock.patch.object(mech_fake_agent.FakeAgentMechanismDriver,
+                               'responsible_for_ports_allocation',
+                               return_value=True):
+            responsible_driver = manager._infer_driver_from_allocation(
+                FakePortContext(
+                    None,
+                    None,
+                    self.segments_to_bind,
+                    profile={'allocation': 'fake_resource_provider'}))
+            self.assertEqual(responsible_driver.name, 'fake_agent')
+
+    def test__infer_driver_from_allocation_negative(self):
+        cfg.CONF.set_override(
+            'mechanism_drivers', ['fake_agent'], group='ml2')
+        manager = managers.MechanismManager()
+        with mock.patch.object(mech_fake_agent.FakeAgentMechanismDriver,
+                               'responsible_for_ports_allocation',
+                               return_value=False):
+            self.assertRaises(
+                place_exc.UnknownResourceProvider,
+                manager._infer_driver_from_allocation,
+                FakePortContext(
+                    None,
+                    None,
+                    self.segments_to_bind,
+                    profile={'allocation': 'fake_resource_provider'})
+            )
+
+    def test__infer_driver_from_allocation_ambiguous(self):
+        cfg.CONF.set_override(
+            'mechanism_drivers',
+            ['fake_agent', 'another_fake_agent'],
+            group='ml2')
+        manager = managers.MechanismManager()
+        with mock.patch.object(mech_fake_agent.FakeAgentMechanismDriver,
+                               'responsible_for_ports_allocation',
+                               return_value=True), \
+            mock.patch.object(mech_fake_agent.AnotherFakeAgentMechanismDriver,
+                              'responsible_for_ports_allocation',
+                              return_value=True):
+            self.assertRaises(
+                place_exc.AmbiguousResponsibilityForResourceProvider,
+                manager._infer_driver_from_allocation,
+                FakePortContext(
+                    None,
+                    None,
+                    self.segments_to_bind,
+                    profile={'allocation': 'fake_resource_provider'})
+            )
 
     @mock.patch.object(managers.LOG, 'critical')
     @mock.patch.object(managers.MechanismManager, '_driver_not_loaded')

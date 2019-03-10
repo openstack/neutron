@@ -87,6 +87,28 @@ class SriovSwitchMechGenericTestCase(SriovNicSwitchMechanismBaseTestCase,
             segment = {api.NETWORK_TYPE: network_type}
             self.assertTrue(self.driver.check_segment_for_agent(segment))
 
+    def test_driver_responsible_for_ports_allocation(self):
+        agents = [
+            {'agent_type': 'NIC Switch agent',
+             'configurations': {'resource_provider_bandwidths': {'eth0': {}}},
+             'host': 'host',
+             'id': '1'}
+        ]
+        segments = []
+        # uuid -v5 87f1895c-73bb-11e8-9008-c4d987b2a692 host:eth0
+        profile = {'allocation': '5762cf50-781b-5f01-8ebc-0cce8c9e74cd'}
+
+        port_ctx = base.FakePortContext(
+            self.AGENT_TYPE,
+            agents,
+            segments,
+            vnic_type=portbindings.VNIC_DIRECT,
+            profile=profile)
+        with mock.patch.object(self.driver, '_possible_agents_for_port',
+                               return_value=agents):
+            self.assertTrue(
+                self.driver.responsible_for_ports_allocation(port_ctx))
+
 
 class SriovMechVlanTestCase(SriovNicSwitchMechanismBaseTestCase,
                             base.AgentMechanismBaseTestCase):

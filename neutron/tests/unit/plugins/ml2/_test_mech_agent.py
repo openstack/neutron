@@ -246,6 +246,22 @@ class AgentMechanismGenericTestCase(AgentMechanismBaseTestCase):
         self.driver.bind_port(context)
         self._check_unbound(context)
 
+    def test_driver_not_responsible_for_ports_allocation(self):
+        agents = [
+            {'configurations': {'rp_bandwidths': {'eth0': {}}},
+             'host': 'host'},
+        ]
+        profile = {}
+        segments = []
+        port_ctx = FakePortContext(
+            self.AGENT_TYPE,
+            agents,
+            segments,
+            vnic_type=portbindings.VNIC_DIRECT,
+            profile=profile)
+        self.assertFalse(
+            self.driver.responsible_for_ports_allocation(port_ctx))
+
 
 class AgentMechanismLocalTestCase(AgentMechanismBaseTestCase):
     LOCAL_SEGMENTS = [{api.ID: 'unknown_segment_id',

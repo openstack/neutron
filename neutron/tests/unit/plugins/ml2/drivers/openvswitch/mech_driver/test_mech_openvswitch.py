@@ -166,7 +166,27 @@ class OpenvswitchMechanismHybridPlugTestCase(OpenvswitchMechanismBaseTestCase):
 
 class OpenvswitchMechanismGenericTestCase(OpenvswitchMechanismBaseTestCase,
                                           base.AgentMechanismGenericTestCase):
-    pass
+    def test_driver_responsible_for_ports_allocation(self):
+        agents = [
+            {'agent_type': 'Open vSwitch agent',
+             'configurations': {'resource_provider_bandwidths': {'eth0': {}}},
+             'id': '1',
+             'host': 'host'}
+        ]
+        segments = []
+        # uuid -v5 87ee7d5c-73bb-11e8-9008-c4d987b2a692 host:eth0
+        profile = {'allocation': '13cc0ed9-e802-5eaa-b4c7-3441855e31f2'}
+
+        port_ctx = base.FakePortContext(
+            self.AGENT_TYPE,
+            agents,
+            segments,
+            vnic_type=portbindings.VNIC_NORMAL,
+            profile=profile)
+        with mock.patch.object(self.driver, '_possible_agents_for_port',
+                               return_value=agents):
+            self.assertTrue(
+                self.driver.responsible_for_ports_allocation(port_ctx))
 
 
 class OpenvswitchMechanismLocalTestCase(OpenvswitchMechanismBaseTestCase,
