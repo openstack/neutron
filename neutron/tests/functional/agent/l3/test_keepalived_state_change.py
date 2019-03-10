@@ -45,13 +45,13 @@ class TestKeepalivedStateChange(base.BaseSudoTestCase):
         self.router_id = uuidutils.generate_uuid()
         self.conf_dir = self.get_default_temp_dir().path
         self.cidr = '169.254.128.1/24'
-        self.interface_name = 'interface'
+        self.interface_name = utils.get_rand_name()
         self.monitor = keepalived_state_change.MonitorDaemon(
             self.get_temp_file_path('monitor.pid'),
             self.router_id,
             1,
             2,
-            'namespace',
+            utils.get_rand_name(),
             self.conf_dir,
             self.interface_name,
             self.cidr)
@@ -82,6 +82,32 @@ class TestKeepalivedStateChange(base.BaseSudoTestCase):
         with mock.patch.object(
                 self.monitor, 'notify_agent', side_effect=Exception):
             self.monitor.parse_and_handle_event(self.line)
+
+    def test_handle_initial_state_backup(self):
+        ip = ip_lib.IPWrapper(namespace=self.monitor.namespace)
+        ip.netns.add(self.monitor.namespace)
+        self.addCleanup(ip.netns.delete, self.monitor.namespace)
+        ip.add_dummy(self.interface_name)
+
+        with mock.patch.object(
+                self.monitor, 'write_state_change') as write_state_change,\
+                mock.patch.object(
+                    self.monitor, 'notify_agent') as notify_agent:
+
+            self.monitor.handle_initial_state()
+            write_state_change.assert_not_called()
+            notify_agent.assert_not_called()
+
+    def test_handle_initial_state_master(self):
+        ip = ip_lib.IPWrapper(namespace=self.monitor.namespace)
+        ip.netns.add(self.monitor.namespace)
+        self.addCleanup(ip.netns.delete, self.monitor.namespace)
+        ha_interface = ip.add_dummy(self.interface_name)
+
+        ha_interface.addr.add(self.cidr)
+
+        self.monitor.handle_initial_state()
+        self.assertEqual('master', self._get_state())
 
 
 class TestMonitorDaemon(base.BaseSudoTestCase):
