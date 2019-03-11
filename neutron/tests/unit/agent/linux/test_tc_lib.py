@@ -105,16 +105,16 @@ class TestTcCommand(base.BaseTestCase):
     def setUp(self):
         super(TestTcCommand, self).setUp()
         self.tc = tc_lib.TcCommand(DEVICE_NAME, KERNEL_HZ_VALUE)
-        self.bw_limit = "%s%s" % (BW_LIMIT, tc_lib.BW_LIMIT_UNIT)
-        self.burst = "%s%s" % (BURST, tc_lib.BURST_UNIT)
-        self.latency = "%s%s" % (LATENCY, tc_lib.LATENCY_UNIT)
-        self.execute = mock.patch('neutron.agent.common.utils.execute').start()
         self.mock_list_tc_qdiscs = mock.patch.object(tc_lib,
                                                      'list_tc_qdiscs').start()
         self.mock_add_tc_qdisc = mock.patch.object(tc_lib,
                                                    'add_tc_qdisc').start()
         self.mock_delete_tc_qdisc = mock.patch.object(
             tc_lib, 'delete_tc_qdisc').start()
+        self.mock_list_tc_filters = mock.patch.object(
+            tc_lib, 'list_tc_filters').start()
+        self.mock_add_tc_filter_policy = mock.patch.object(
+            tc_lib, 'add_tc_filter_policy').start()
 
     def test_check_kernel_hz_lower_then_zero(self):
         self.assertRaises(
@@ -127,26 +127,23 @@ class TestTcCommand(base.BaseTestCase):
         )
 
     def test_get_filters_bw_limits(self):
-        self.execute.return_value = TC_FILTERS_OUTPUT
+        self.mock_list_tc_filters.return_value = [{'rate_kbps': BW_LIMIT,
+                                                   'burst_kb': BURST}]
         bw_limit, burst_limit = self.tc.get_filters_bw_limits()
         self.assertEqual(BW_LIMIT, bw_limit)
         self.assertEqual(BURST, burst_limit)
 
-    def test_get_filters_bw_limits_when_output_not_match(self):
-        output = (
-            "Some different "
-            "output from command:"
-            "tc filters show dev XXX parent ffff:"
-        )
-        self.execute.return_value = output
+    def test_get_filters_bw_limits_no_filters(self):
+        self.mock_list_tc_filters.return_value = []
         bw_limit, burst_limit = self.tc.get_filters_bw_limits()
         self.assertIsNone(bw_limit)
         self.assertIsNone(burst_limit)
 
-    def test_get_filters_bw_limits_when_wrong_units(self):
-        output = TC_FILTERS_OUTPUT.replace("kbit", "Xbit")
-        self.execute.return_value = output
-        self.assertRaises(tc_lib.InvalidUnit, self.tc.get_filters_bw_limits)
+    def test_get_filters_bw_limits_no_rate_info(self):
+        self.mock_list_tc_filters.return_value = [{'other_values': 1}]
+        bw_limit, burst_limit = self.tc.get_filters_bw_limits()
+        self.assertIsNone(bw_limit)
+        self.assertIsNone(burst_limit)
 
     def test_get_tbf_bw_limits(self):
         self.mock_list_tc_qdiscs.return_value = [
@@ -166,17 +163,14 @@ class TestTcCommand(base.BaseTestCase):
 
     def test_update_filters_bw_limit(self):
         self.tc.update_filters_bw_limit(BW_LIMIT, BURST)
-        self.execute.assert_called_once_with(
-            ['tc', 'filter', 'add', 'dev', DEVICE_NAME, 'parent',
-             tc_lib.INGRESS_QDISC_ID, 'protocol', 'all', 'prio', '49',
-             'basic', 'police', 'rate', self.bw_limit, 'burst', self.burst,
-             'mtu', tc_lib.MAX_MTU_VALUE, 'drop'], run_as_root=True,
-            check_exit_code=True, log_fail_as_error=True, extra_ok_codes=None)
         self.mock_add_tc_qdisc.assert_called_once_with(
             self.tc.name, 'ingress', namespace=self.tc.namespace)
         self.mock_delete_tc_qdisc.assert_called_once_with(
             self.tc.name, is_ingress=True, raise_interface_not_found=False,
             raise_qdisc_not_found=False, namespace=self.tc.namespace)
+        self.mock_add_tc_filter_policy.assert_called_once_with(
+            self.tc.name, tc_lib.INGRESS_QDISC_ID, BW_LIMIT, BURST,
+            tc_lib.MAX_MTU_VALUE, 'drop', priority=49)
 
     def test_delete_filters_bw_limit(self):
         self.tc.delete_filters_bw_limit()
@@ -362,3 +356,21 @@ class TcPolicyClassTestCase(base.BaseTestCase):
                      'max_kbps': 2000,
                      'burst_kb': 1200}
         self.assertEqual(reference, _class)
+
+
+class TcFilterTestCase(base.BaseTestCase):
+
+    def test__mac_to_pyroute2_keys(self):
+        mac = '01:23:45:67:89:ab'
+        offset = 10
+        keys = tc_lib._mac_to_pyroute2_keys(mac, offset)
+        high = {'value': 0x1234567,
+                'mask': 0xffffffff,
+                'offset': 10,
+                'key': '0x1234567/0xffffffff+10'}
+        low = {'value': 0x89ab0000,
+               'mask': 0xffff0000,
+               'offset': 14,
+               'key': '0x89ab0000/0xffff0000+14'}
+        self.assertEqual(high, keys[0])
+        self.assertEqual(low, keys[1])

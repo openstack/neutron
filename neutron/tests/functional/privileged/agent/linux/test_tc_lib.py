@@ -232,3 +232,62 @@ class TcPolicyClassTestCase(functional_base.BaseSudoTestCase):
             priv_tc_lib.TrafficControlClassNotFound,
             priv_tc_lib.delete_tc_policy_class, self.device, '1:',
             '1:1000', namespace=self.namespace)
+
+
+class TcFilterClassTestCase(functional_base.BaseSudoTestCase):
+
+    CLASSES = {'1:1': {'rate': 10000, 'ceil': 20000, 'burst': 1500},
+               '1:3': {'rate': 20000, 'ceil': 50000, 'burst': 1600},
+               '1:5': {'rate': 30000, 'ceil': 90000, 'burst': 1700},
+               '1:7': {'rate': 35001, 'ceil': 90000, 'burst': 1701}}
+
+    def setUp(self):
+        super(TcFilterClassTestCase, self).setUp()
+        self.namespace = 'ns_test-' + uuidutils.generate_uuid()
+        priv_ip_lib.create_netns(self.namespace)
+        self.addCleanup(self._remove_ns, self.namespace)
+        self.device = 'int_dummy'
+        priv_ip_lib.create_interface('int_dummy', self.namespace, 'dummy')
+
+    def _remove_ns(self, namespace):
+        priv_ip_lib.remove_netns(namespace)
+
+    def test_add_tc_filter_match32(self):
+        priv_tc_lib.add_tc_qdisc(
+            self.device, parent=rtnl.TC_H_ROOT, kind='htb', handle='1:',
+            namespace=self.namespace)
+        priv_tc_lib.add_tc_policy_class(
+            self.device, '1:', '1:10', 'htb', namespace=self.namespace,
+            rate=10000)
+        keys = tc_lib._mac_to_pyroute2_keys('7a:8c:f9:1f:e5:cb', 41)
+        priv_tc_lib.add_tc_filter_match32(
+            self.device, '1:0', 10, '1:10', [keys[0]['key'], keys[1]['key']],
+            namespace=self.namespace)
+
+        filters = tc_lib.list_tc_filters(
+            self.device, '1:0', namespace=self.namespace)
+        self.assertEqual(1, len(filters))
+        filter_keys = filters[0]['keys']
+        self.assertEqual(len(keys), len(filter_keys))
+        for index, value in enumerate(keys):
+            value.pop('key')
+            self.assertEqual(value, filter_keys[index])
+
+    def test_add_tc_filter_policy(self):
+        priv_tc_lib.add_tc_qdisc(
+            self.device, parent=rtnl.TC_H_ROOT, kind='ingress',
+            namespace=self.namespace)
+
+        # NOTE(ralonsoh):
+        # - rate: 320000 bytes/sec (pyroute2 units) = 2500 kbits/sec (OS units)
+        # - burst: 192000 bytes/sec = 1500 kbits/sec
+        priv_tc_lib.add_tc_filter_policy(
+            self.device, 'ffff:', 49, 320000, 192000, 1200, 'drop',
+            namespace=self.namespace)
+
+        filters = tc_lib.list_tc_filters(
+            self.device, 'ffff:', namespace=self.namespace)
+        self.assertEqual(1, len(filters))
+        self.assertEqual(2500, filters[0]['rate_kbps'])
+        self.assertEqual(1500, filters[0]['burst_kb'])
+        self.assertEqual(1200, filters[0]['mtu'])
