@@ -387,6 +387,19 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         qos = self._list_qos(qos_id)
         self.assertEqual(0, len(qos['queues']))
 
+    def test_delete_minimum_bandwidth_queue_no_qos_found(self):
+        queue_id, neutron_port_id = self._create_queue(queue_num=1)
+        self.addCleanup(self.ovs._delete_queue, queue_id)
+
+        # Check that it will not raise any exception even if there is no
+        # qos with associated queues
+        self.ovs.delete_minimum_bandwidth_queue(neutron_port_id)
+
+        # And verify that this queue wasn't in fact deleted as there was no
+        # qos found
+        queue = self._list_queues(queue_id)
+        self.assertEqual(queue_id, queue['_uuid'])
+
     def test_clear_minimum_bandwidth_qos(self):
         queue_id_1, _ = self._create_queue(queue_num=1)
         queue_id_2, _ = self._create_queue(queue_num=2)

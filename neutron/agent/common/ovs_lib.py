@@ -981,6 +981,8 @@ class OVSBridge(BaseOVS):
         queue_num = int(queue['external_ids']['queue-num'])
         self._unset_queue_for_minimum_bandwidth(queue_num)
         qos_id, qos_queues = self._find_qos()
+        if not qos_queues:
+            return
         if queue_num in qos_queues.keys():
             qos_queues.pop(queue_num)
             self._update_qos(
