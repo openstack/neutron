@@ -26,6 +26,7 @@ from neutron_lib.services.qos import constants as qos_constants
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
+from ovsdbapp.backend.ovs_idl import idlutils
 import six
 import tenacity
 
@@ -1005,8 +1006,7 @@ class OVSBridge(BaseOVS):
                 self._set_port_qos(port['name'])
             self.ovsdb.db_destroy('QoS', qos_id).execute(check_error=True)
             for queue_uuid in queues.values():
-                self.ovsdb.db_destroy('Queue', queue_uuid).execute(
-                    check_error=True)
+                self._delete_queue(queue_uuid)
 
     def _update_queue(self, port_id, queue_num, max_kbps=None,
                       max_burst_kbps=None, min_kbps=None):
@@ -1059,7 +1059,10 @@ class OVSBridge(BaseOVS):
         return queues
 
     def _delete_queue(self, queue_id):
-        self.ovsdb.db_destroy('Queue', queue_id).execute(check_error=True)
+        try:
+            self.ovsdb.db_destroy('Queue', queue_id).execute(check_error=True)
+        except idlutils.RowNotFound:
+            LOG.info('OVS Queue %s was already deleted', queue_id)
 
     def _update_qos(self, qos_id=None, queues=None):
         queues = queues or {}
