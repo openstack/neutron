@@ -395,7 +395,6 @@
     parent: neutron-tempest-iptables_hybrid
     nodeset: devstack-single-node-fedora-latest
     irrelevant-files: *tempest-irrelevant-files
-    voting: false
 
 - job:
     name: neutron-grenade
