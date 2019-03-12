@@ -51,6 +51,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         self.cp = directory.get_plugin()
         self.l3p = directory.get_plugin(constants.L3)
         self._ctx = nctx.get_admin_context()
+        self._tenant_id = uuidutils.generate_uuid()
 
     @property
     def ctx(self):
