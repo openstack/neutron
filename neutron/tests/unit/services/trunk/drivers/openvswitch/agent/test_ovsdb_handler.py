@@ -130,13 +130,13 @@ class TestOVSDBHandler(base.BaseTestCase):
         self.fake_port = {
             'name': 'foo',
             'external_ids': {
-                'trunk_id': 'trunk_id',
+                'trunk_id': self.trunk_id,
                 'subport_ids': jsonutils.dumps(
                     [s.id for s in self.fake_subports]),
             }
         }
         self.subport_bindings = {
-            'trunk_id': [
+            self.trunk_id: [
                 {'id': subport.port_id,
                  'mac_address': 'mac'} for subport in self.fake_subports]}
 
@@ -203,7 +203,7 @@ class TestOVSDBHandler(base.BaseTestCase):
                 trunk_manager.TrunkManagerError(error='error'))
 
             status = self.ovsdb_handler.wire_subports_for_trunk(
-                None, 'trunk_id', self.fake_subports)
+                None, self.trunk_id, self.fake_subports)
             self.assertTrue(f.call_count)
             self.assertEqual(constants.DEGRADED_STATUS, status)
 
@@ -214,7 +214,7 @@ class TestOVSDBHandler(base.BaseTestCase):
         with mock.patch.object(self.ovsdb_handler, '_set_trunk_metadata',
                 side_effect=RuntimeError):
             status = self.ovsdb_handler.wire_subports_for_trunk(
-                None, 'trunk_id', self.fake_subports)
+                None, self.trunk_id, self.fake_subports)
         self.assertEqual(constants.DEGRADED_STATUS, status)
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
@@ -224,7 +224,7 @@ class TestOVSDBHandler(base.BaseTestCase):
         with mock.patch.object(self.ovsdb_handler, '_update_trunk_metadata',
                 side_effect=exceptions.ParentPortNotFound(bridge='foo_br')):
             status = self.ovsdb_handler.unwire_subports_for_trunk(
-                'trunk_id', ['subport_id'])
+                self.trunk_id, ['subport_id'])
         self.assertEqual(constants.ACTIVE_STATUS, status)
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
