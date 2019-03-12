@@ -35,6 +35,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants as n_const
 from neutron.common import utils
+from neutron.tests import base as test_base
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
@@ -1554,13 +1555,16 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._assert_ip_addresses_in_dvr_ha_snat_namespace(router2)
         self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(router1)
 
+    @test_base.unstable_test("bug 1819160")
     def test_dvr_ha_router_failover_with_gw(self):
         self._test_dvr_ha_router_failover(enable_gw=True)
 
+    @test_base.unstable_test("bug 1819160")
     def test_dvr_ha_router_failover_with_gw_and_floatingip(self):
         self._test_dvr_ha_router_failover_with_gw_and_fip(
             enable_gw=True, enable_centralized_fip=True, snat_bound_fip=True)
 
+    @test_base.unstable_test("bug 1819160")
     def test_dvr_ha_router_failover_without_gw(self):
         self._test_dvr_ha_router_failover(enable_gw=False)
 
