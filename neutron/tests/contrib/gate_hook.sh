@@ -2,7 +2,7 @@
 
 set -ex
 
-VENV=${1:-"dsvm-functional"}
+VENV=${1:-"dsvm-fullstack"}
 FLAVOR=${2:-"all"}
 
 GATE_DEST=$BASE/new
@@ -55,7 +55,7 @@ function load_rc_for_rally {
 
 
 case $VENV in
-"dsvm-functional"|"dsvm-functional-python27"|"dsvm-fullstack")
+"dsvm-fullstack")
     # The following need to be set before sourcing
     # configure_for_func_testing.
     GATE_STACK_USER=stack

@@ -1,0 +1,2 @@
+journal_log_path: "{{ ansible_user_dir }}/logs"
+journal_log_file_name: "{{ journal_log_path }}/journal.log"

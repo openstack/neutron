@@ -1,0 +1,9 @@
+- name: Ensure logdir exists
+  become: yes
+  msg: "Ensure logdir {{ logdir }} exists and have correct permission"
+  file:
+    path: "{{ logdir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0775
