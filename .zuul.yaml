@@ -227,17 +227,73 @@
 
 - job:
     name: neutron-tempest-dvr-ha-multinode-full
-    parent: legacy-dsvm-base-multinode
-    run: playbooks/legacy/neutron-tempest-dvr-ha-multinode-full/run.yaml
-    post-run: playbooks/legacy/neutron-tempest-dvr-ha-multinode-full/post.yaml
+    parent: tempest-multinode-full
+    nodeset: openstack-three-node-bionic
     timeout: 10800
+    roles:
+      - zuul: openstack/neutron-tempest-plugin
     required-projects:
       - openstack-infra/devstack-gate
       - openstack/neutron
       - openstack/tempest
-    nodeset: ubuntu-xenial-3-node
+    pre-run: playbooks/dvr-multinode-scenario-pre-run.yaml
     irrelevant-files: *tempest-irrelevant-files
     voting: false
+    vars:
+      devstack_local_conf:
+        post-config:
+          $NEUTRON_CONF:
+            DEFAULT:
+              router_distributed: True
+              l3_ha: True
+          # NOTE(slaweq): We can get rid of this hardcoded absolute path when
+          # devstack-tempest job will be switched to use lib/neutron instead of
+          # lib/neutron-legacy
+          "/$NEUTRON_CORE_PLUGIN_CONF":
+            ml2:
+              mechanism_drivers: openvswitch,l2population
+            agent:
+              enable_distributed_routing: True
+              l2_population: True
+              tunnel_types: vxlan
+            ovs:
+              tunnel_bridge: br-tun
+              bridge_mappings: public:br-ex
+          $NEUTRON_L3_CONF:
+            DEFAULT:
+              agent_mode: dvr
+            agent:
+              availability_zone: nova
+          $NEUTRON_DHCP_CONF:
+            agent:
+              availability_zone: nova
+    group-vars:
+      subnode:
+        devstack_services:
+          q-agt: true
+          q-l3: true
+          q-meta: true
+        devstack_local_conf:
+          post-config:
+            $NEUTRON_CONF:
+              DEFAULT:
+                router_distributed: True
+            # NOTE(slaweq): We can get rid of this hardcoded absolute path when
+            # devstack-tempest job will be switched to use lib/neutron instead of
+            # lib/neutron-legacy
+            "/$NEUTRON_CORE_PLUGIN_CONF":
+              agent:
+                enable_distributed_routing: True
+                l2_population: True
+                tunnel_types: vxlan
+              ovs:
+                tunnel_bridge: br-tun
+                bridge_mappings: public:br-ex
+            $NEUTRON_L3_CONF:
+              DEFAULT:
+                agent_mode: dvr_snat
+              agent:
+                availability_zone: nova
 
 - job:
     name: neutron-tempest-iptables_hybrid
