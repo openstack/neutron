@@ -53,7 +53,6 @@ class SnatNamespace(namespaces.Namespace):
             elif d.name.startswith(namespaces.EXTERNAL_DEV_PREFIX):
                 self.driver.unplug(
                     d.name,
-                    bridge=self.agent_conf.external_network_bridge,
                     namespace=self.name,
                     prefix=namespaces.EXTERNAL_DEV_PREFIX)
 

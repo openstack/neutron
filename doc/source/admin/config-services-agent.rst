@@ -39,8 +39,7 @@ should be instructed to act upon these values through RPC.
 Each individual agent may have its own configuration file. This file should be
 loaded after the main ``neutron.conf`` file, so the agent configuration takes
 precedence. The agent-specific configuration may contain configurations which
-vary between hosts in a neutron deployment such as the
-``external_network_bridge`` for an L3 agent. If any agent requires access to
-additional external services beyond the neutron RPC, those endpoints should be
-defined in the agent-specific configuration file (for example, nova metadata
-for metadata agent).
+vary between hosts in a neutron deployment such as the ``local_ip`` for an L2
+agent. If any agent requires access to additional external services beyond the
+neutron RPC, those endpoints should be defined in the agent-specific
+configuration file (for example, nova metadata for metadata agent).

@@ -143,15 +143,15 @@ class Host(fixtures.Fixture):
             self.local_ip, test_name=self.test_name)
         self.useFixture(agent_cfg_fixture)
 
+        self.br_phys = self.useFixture(
+            net_helpers.OVSBridgeFixture(
+                agent_cfg_fixture.get_br_phys_name())).bridge
         if self.env_desc.tunneling_enabled:
             self.useFixture(
                 net_helpers.OVSBridgeFixture(
                     agent_cfg_fixture.get_br_tun_name())).bridge
             self.connect_to_central_network_via_tunneling()
         else:
-            self.br_phys = self.useFixture(
-                net_helpers.OVSBridgeFixture(
-                    agent_cfg_fixture.get_br_phys_name())).bridge
             self.connect_to_central_network_via_vlans(self.br_phys)
 
         self.ovs_agent = self.useFixture(
@@ -165,10 +165,6 @@ class Host(fixtures.Fixture):
                     self.env_desc, self.host_desc,
                     self.neutron_config.temp_dir,
                     self.ovs_agent.agent_cfg_fixture.get_br_int_name()))
-            br_ex = self.useFixture(
-                net_helpers.OVSBridgeFixture(
-                    self.l3_agent_cfg_fixture.get_external_bridge())).bridge
-            self.connect_to_central_network_via_vlans(br_ex)
 
         if self.host_desc.dhcp_agent:
             self.dhcp_agent_cfg_fixture = self.useFixture(

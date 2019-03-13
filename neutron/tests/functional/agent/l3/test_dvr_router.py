@@ -149,9 +149,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._validate_fips_for_external_network(
             router, router.fip_ns.get_name())
         # Now delete the fg- port that was created
-        ext_net_bridge = self.agent.conf.external_network_bridge
         router.fip_ns.driver.unplug(fg_port_name,
-                                    bridge=ext_net_bridge,
                                     namespace=router.fip_ns.name,
                                     prefix=dvr_fip_ns.FIP_EXT_DEV_PREFIX)
         # Now check if the fg- port is missing.
@@ -204,9 +202,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._validate_fips_for_external_network(
             router, router.fip_ns.get_name())
         # Now delete the fg- port that was created
-        ext_net_bridge = self.agent.conf.external_network_bridge
         router.fip_ns.driver.unplug(fg_port_name,
-                                    bridge=ext_net_bridge,
                                     namespace=router.fip_ns.name,
                                     prefix=dvr_fip_ns.FIP_EXT_DEV_PREFIX)
         # Now check if the fg- port is missing.
@@ -2036,10 +2032,10 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                       fixed_ip_address_scope='scope2')
         router.process()
 
-        br_ex = framework.get_ovs_bridge(
-            self.agent.conf.external_network_bridge)
+        br_int = framework.get_ovs_bridge(
+            self.agent.conf.ovs_integration_bridge)
         src_machine = self.useFixture(
-            machine_fixtures.FakeMachine(br_ex, '19.4.4.12/24'))
+            machine_fixtures.FakeMachine(br_int, '19.4.4.12/24'))
         # Floating ip should work no matter of address scope
         net_helpers.assert_ping(src_machine.namespace, fip_same_scope)
         net_helpers.assert_ping(src_machine.namespace, fip_diff_scope)
@@ -2051,11 +2047,11 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
         gw_port = router.get_ex_gw_port()
         gw_ip = self._port_first_ip_cidr(gw_port).partition('/')[0]
-        br_ex = framework.get_ovs_bridge(
-            self.agent.conf.external_network_bridge)
+        br_int = framework.get_ovs_bridge(
+            self.agent.conf.ovs_integration_bridge)
 
         src_machine = self.useFixture(
-            machine_fixtures.FakeMachine(br_ex, '19.4.4.12/24', gw_ip))
+            machine_fixtures.FakeMachine(br_int, '19.4.4.12/24', gw_ip))
         # For the internal networks that are in the same address scope as
         # external network, they can directly route to external network
         net_helpers.assert_ping(src_machine.namespace, machine_same_scope.ip)

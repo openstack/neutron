@@ -94,7 +94,7 @@ To confirm the agent's availability zone:
     | availability_zone   | zone-1                                          |
     | binary              | neutron-l3-agent                                |
     | configurations      | agent_mode='legacy', ex_gw_ports='2',           |
-    |                     | external_network_bridge='', floating_ips='0',   |
+    |                     | floating_ips='0',                               |
     |                     | gateway_external_network_id='',                 |
     |                     | handle_internal_only_routers='True',            |
     |                     | interface_driver='openvswitch', interfaces='4', |

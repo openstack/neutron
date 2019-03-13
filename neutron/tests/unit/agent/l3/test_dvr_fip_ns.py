@@ -107,9 +107,6 @@ class TestDvrFipNs(base.BaseTestCase):
             self.fip_ns.create_or_update_gateway_port(agent_gw_port)
         self.assertTrue(fip_create.called)
         self.assertEqual(1, self.driver.plug.call_count)
-        ext_net_bridge = self.conf.external_network_bridge
-        if ext_net_bridge:
-            self.assertEqual(1, self.driver.remove_vlan_tag.call_count)
         self.assertEqual(1, self.driver.init_l3.call_count)
         interface_name = self.fip_ns.get_ext_device_name(agent_gw_port['id'])
         gw_cidrs = [sn['cidr'] for sn in agent_gw_port['subnets']
@@ -253,10 +250,8 @@ class TestDvrFipNs(base.BaseTestCase):
             exists.assert_called_once_with(self.fip_ns.name)
             delete.assert_called_once_with(self.fip_ns.name)
 
-        ext_net_bridge = self.conf.external_network_bridge
         ns_name = self.fip_ns.get_name()
         self.driver.unplug.assert_called_once_with('fg-aaaa',
-                                                   bridge=ext_net_bridge,
                                                    prefix='fg-',
                                                    namespace=ns_name)
         ip_wrapper.del_veth.assert_called_once_with('fpr-aaaa')

@@ -103,7 +103,7 @@ should be instructed to act upon these values via RPC.
 Each individual agent may have its own configuration file. This file should be
 loaded after the main ```neutron.conf``` file, so the agent configuration takes
 precedence. The agent specific configuration may contain configurations which
-vary between hosts in a Neutron deployment such as the external_network_bridge
-for a L3 agent. If any agent requires access to additional external services
-beyond the Neutron RPC, those endpoints should be defined in the agent specific
+vary between hosts in a Neutron deployment such as the ``local_ip`` for an L2
+agent. If any agent requires access to additional external services beyond the
+neutron RPC, those endpoints should be defined in the agent-specific
 configuration file (e.g. nova metadata for metadata agent).

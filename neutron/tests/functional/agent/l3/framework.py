@@ -79,9 +79,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         conf.set_override('interface_driver', self.INTERFACE_DRIVER)
 
         br_int = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
-        br_ex = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         conf.set_override('ovs_integration_bridge', br_int.br_name)
-        conf.set_override('external_network_bridge', br_ex.br_name)
 
         temp_dir = self.get_new_temp_dir()
         get_temp_file_path = functools.partial(self.get_temp_file_path,
@@ -542,13 +540,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             self.assertIn(extra_subnet, routes)
 
     def _assert_interfaces_deleted_from_ovs(self):
-
-        def assert_ovs_bridge_empty(bridge_name):
-            bridge = ovs_lib.OVSBridge(bridge_name)
-            self.assertFalse(bridge.get_port_name_list())
-
-        assert_ovs_bridge_empty(self.agent.conf.ovs_integration_bridge)
-        assert_ovs_bridge_empty(self.agent.conf.external_network_bridge)
+        bridge = ovs_lib.OVSBridge(self.agent.conf.ovs_integration_bridge)
+        self.assertFalse(bridge.get_port_name_list())
 
     def floating_ips_configured(self, router):
         floating_ips = router.router[constants.FLOATINGIP_KEY]
@@ -594,7 +587,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         router1 = self._create_router(router_info, self.agent)
         self._add_fip(router1, '192.168.111.12')
 
-        r1_br = ip_lib.IPDevice(router1.driver.conf.external_network_bridge)
+        r1_br = ip_lib.IPDevice(router1.driver.conf.ovs_integration_bridge)
         r1_br.addr.add('19.4.4.1/24')
         r1_br.link.set_up()
 
@@ -604,7 +597,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                                             mac='22:22:22:22:22:22'))
         router2 = self._create_router(router_info_2, self.failover_agent)
 
-        r2_br = ip_lib.IPDevice(router2.driver.conf.external_network_bridge)
+        r2_br = ip_lib.IPDevice(router2.driver.conf.ovs_integration_bridge)
         r2_br.addr.add('19.4.4.1/24')
         r2_br.link.set_up()
 
@@ -642,12 +635,12 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
 
     @staticmethod
     def fail_gw_router_port(router):
-        r_br = ip_lib.IPDevice(router.driver.conf.external_network_bridge)
+        r_br = ip_lib.IPDevice(router.driver.conf.ovs_integration_bridge)
         r_br.link.set_down()
 
     @staticmethod
     def restore_gw_router_port(router):
-        r_br = ip_lib.IPDevice(router.driver.conf.external_network_bridge)
+        r_br = ip_lib.IPDevice(router.driver.conf.ovs_integration_bridge)
         r_br.link.set_up()
 
     @classmethod

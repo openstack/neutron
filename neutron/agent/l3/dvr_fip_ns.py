@@ -163,19 +163,9 @@ class FipNamespace(namespaces.Namespace):
                          ex_gw_port['id'],
                          interface_name,
                          ex_gw_port['mac_address'],
-                         bridge=self.agent_conf.external_network_bridge,
                          namespace=ns_name,
                          prefix=FIP_EXT_DEV_PREFIX,
                          mtu=ex_gw_port.get('mtu'))
-        if self.agent_conf.external_network_bridge:
-            # NOTE(Swami): for OVS implementations remove the DEAD VLAN tag
-            # on ports. DEAD VLAN tag is added to each newly created port
-            # and should be removed by L2 agent but if
-            # external_network_bridge is set than external gateway port is
-            # created in this bridge and will not be touched by L2 agent.
-            # This is related to lp#1767422
-            self.driver.remove_vlan_tag(
-                self.agent_conf.external_network_bridge, interface_name)
         # Remove stale fg devices
         ip_wrapper = ip_lib.IPWrapper(namespace=ns_name)
         devices = ip_wrapper.get_devices()
@@ -183,9 +173,7 @@ class FipNamespace(namespaces.Namespace):
             name = device.name
             if name.startswith(FIP_EXT_DEV_PREFIX) and name != interface_name:
                 LOG.debug('DVR: unplug: %s', name)
-                ext_net_bridge = self.agent_conf.external_network_bridge
                 self.driver.unplug(name,
-                                   bridge=ext_net_bridge,
                                    namespace=ns_name,
                                    prefix=FIP_EXT_DEV_PREFIX)
 
@@ -232,9 +220,7 @@ class FipNamespace(namespaces.Namespace):
                 # single port from FIP NS to br-ext
                 # TODO(carl) Where does the port get deleted?
                 LOG.debug('DVR: unplug: %s', d.name)
-                ext_net_bridge = self.agent_conf.external_network_bridge
                 self.driver.unplug(d.name,
-                                   bridge=ext_net_bridge,
                                    namespace=self.name,
                                    prefix=FIP_EXT_DEV_PREFIX)
 

@@ -4111,8 +4111,7 @@ class L3NatDBIntAgentSchedulingTestCase(L3BaseForIntTests,
                 host='host1',
                 ext_net_id=s1['subnet']['network_id'])
             helpers.register_l3_agent(
-                host='host2', internal_only=False,
-                ext_net_id='', ext_bridge='')
+                host='host2', internal_only=False, ext_net_id='')
             l3_rpc_cb.get_router_ids(self.adminContext,
                                      host='host1')
             self._assert_router_on_agent(r['router']['id'], 'host1')
