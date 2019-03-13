@@ -35,6 +35,7 @@ Configuration
    config-sfc
    config-sriov
    config-subnet-pools
+   config-subnet-onboard
    config-service-subnets
    config-trunking
    config-wsgi
