@@ -52,7 +52,7 @@ def setup_conf(conf=cfg.CONF):
 
     neutron_conf_base.register_core_common_config_opts(conf)
     neutron_conf_service.register_service_opts(
-        neutron_conf_service.service_opts, cfg.CONF)
+        neutron_conf_service.SERVICE_OPTS, cfg.CONF)
     return conf
 
 
