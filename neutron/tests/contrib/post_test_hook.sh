@@ -27,9 +27,6 @@ function generate_log_index {
 
     # honor job flavors like -python35
     case $venv in
-    *"dsvm-fullstack"*)
-        venv="dsvm-fullstack"
-        ;;
     *"dsvm-functional"*)
         venv="dsvm-functional"
         ;;
@@ -52,7 +49,7 @@ function generate_log_index {
     $xtrace
 }
 
-if [[ "$venv" == dsvm-functional* ]] || [[ "$venv" == dsvm-fullstack* ]]; then
+if [[ "$venv" == dsvm-functional* ]]; then
     owner=stack
     sudo_env=
 
