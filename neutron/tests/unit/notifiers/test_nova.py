@@ -167,7 +167,7 @@ class TestNovaNotify(base.BaseTestCase):
 
         event = self.nova_notifier.create_port_changed_event(
             'create_floatingip', {}, returned_obj)
-        self.assertFalse(event, None)
+        self.assertIsNone(event)
 
     def test_delete_floatingip_notify(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
@@ -233,7 +233,7 @@ class TestNovaNotify(base.BaseTestCase):
                                'send_events') as send_events:
             self.nova_notifier.send_network_change('update_floatingip',
                                                    {}, {})
-            self.assertFalse(send_events.called, False)
+            self.assertFalse(send_events.called)
 
     @mock.patch('novaclient.client.Client')
     def test_nova_send_events_returns_bad_list(self, mock_client):

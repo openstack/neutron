@@ -188,7 +188,7 @@ class PlacementReporterAgentsTestCases(test_plugin.Ml2PluginV2TestCase):
         self.agents = plugin.PlacementReporterAgents(ml2_plugin=self.plugin)
         mech_driver = self.agents.mechanism_driver_by_agent_type(
             'test_mechanism_driver_agent')
-        self.assertTrue(mech_driver, mechanism_test.TestMechanismDriver)
+        self.assertIsInstance(mech_driver, mechanism_test.TestMechanismDriver)
 
     def test_mechanism_driver_by_agent_type_not_found(self):
         self.agents = plugin.PlacementReporterAgents(ml2_plugin=self.plugin)
