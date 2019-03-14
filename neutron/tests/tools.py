@@ -15,7 +15,6 @@
 
 import datetime
 import os
-import platform
 import random
 import time
 import warnings
@@ -332,17 +331,6 @@ def get_random_network_segment_range_network_type():
                           constants.TYPE_VXLAN,
                           constants.TYPE_GRE,
                           constants.TYPE_GENEVE])
-
-
-def is_bsd():
-    """Return True on BSD-based systems."""
-
-    system = platform.system()
-    if system == 'Darwin':
-        return True
-    if 'bsd' in system.lower():
-        return True
-    return False
 
 
 def reset_random_seed():
