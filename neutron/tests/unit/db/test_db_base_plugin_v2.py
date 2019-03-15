@@ -3295,6 +3295,17 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = subnet_req.get_response(self.api)
             self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
 
+    def test_create_subnet_invalid_gw_32_V4_cidr(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                    'cidr': '10.0.0.0/4',
+                    'ip_version': constants.IP_VERSION_4,
+                    'tenant_id': network['network']['tenant_id'],
+                    'gateway_ip': '10.0.0.1/32'}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
+
     def test_create_subnet_with_cidr_and_default_subnetpool(self):
         """Expect subnet-create to keep semantic with default pools."""
         with self.network() as network:
@@ -3371,6 +3382,28 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     'ip_version': constants.IP_VERSION_6,
                     'tenant_id': network['network']['tenant_id'],
                     'gateway_ip': 'fe80::1'}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
+
+    def test_create_subnet_invalid_gw_V6_cidr(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                    'cidr': '2001:db8:0:1::/64',
+                    'ip_version': '6',
+                    'tenant_id': network['network']['tenant_id'],
+                    'gateway_ip': '2001:db8::1/64'}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
+
+    def test_create_subnet_invalid_gw_128_V6_cidr(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                    'cidr': '2001:db8:0:1::/64',
+                    'ip_version': '6',
+                    'tenant_id': network['network']['tenant_id'],
+                    'gateway_ip': '2001:db8:0:1:1/128'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
             self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
