@@ -60,6 +60,8 @@ class SecurityGroup(rbac_db.NeutronRbacObject):
 
     extra_filter_names = {'is_default'}
 
+    lazy_fields = set(['rules'])
+
     def create(self):
         # save is_default before super() resets it to False
         is_default = self.is_default
