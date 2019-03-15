@@ -176,8 +176,9 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
             # DetachedInstanceError
             agent_id = agent.id
             try:
-                network.NetworkDhcpAgentBinding(context,
-                     dhcp_agent_id=agent_id, network_id=network_id).create()
+                network.NetworkDhcpAgentBinding(
+                     context, dhcp_agent_id=agent_id,
+                     network_id=network_id).create()
             except exceptions.NeutronDbObjectDuplicateEntry:
                 # it's totally ok, someone just did our job!
                 bound_agents.remove(agent)

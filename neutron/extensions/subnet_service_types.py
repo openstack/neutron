@@ -58,12 +58,13 @@ validators.add_validator('type:validate_subnet_service_types',
 
 EXTENDED_ATTRIBUTES_2_0 = {
     subnet_def.COLLECTION_NAME: {
-        'service_types': {'allow_post': True,
-                          'allow_put': True,
-                          'default': constants.ATTR_NOT_SPECIFIED,
-                          'validate': {'type:validate_subnet_service_types':
-                                      None},
-                          'is_visible': True, },
+        'service_types': {
+            'allow_post': True,
+            'allow_put': True,
+            'default': constants.ATTR_NOT_SPECIFIED,
+            'validate': {'type:validate_subnet_service_types': None},
+            'is_visible': True,
+        },
     },
 }
 

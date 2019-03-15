@@ -63,7 +63,7 @@ class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
             old_router = self._make_router_dict(router)
             router.enable_snat = self._get_enable_snat(info)
             router_body = {l3_apidef.ROUTER:
-                {l3_apidef.EXTERNAL_GW_INFO: info}}
+                           {l3_apidef.EXTERNAL_GW_INFO: info}}
             registry.publish(resources.ROUTER, events.PRECOMMIT_UPDATE, self,
                              payload=events.DBEventPayload(
                                  context, request_body=router_body,

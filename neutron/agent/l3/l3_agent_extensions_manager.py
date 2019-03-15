@@ -32,8 +32,8 @@ class L3AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
     """Manage l3 agent extensions."""
 
     def __init__(self, conf):
-        super(L3AgentExtensionsManager, self).__init__(conf,
-                L3_AGENT_EXT_MANAGER_NAMESPACE)
+        super(L3AgentExtensionsManager,
+              self).__init__(conf, L3_AGENT_EXT_MANAGER_NAMESPACE)
 
     def add_router(self, context, data):
         """Notify all agent extensions to add router."""

@@ -43,13 +43,13 @@ def upgrade():
 
     op.add_column(ML2_PORT_BINDING,
                   sa.Column('status',
-                  sa.String(length=16),
-                  nullable=False,
-                  server_default=constants.ACTIVE))
+                            sa.String(length=16),
+                            nullable=False,
+                            server_default=constants.ACTIVE))
 
     if (engine.name == MYSQL_ENGINE):
         op.execute("ALTER TABLE ml2_port_bindings DROP PRIMARY KEY,"
-                "ADD PRIMARY KEY(port_id, host);")
+                   "ADD PRIMARY KEY(port_id, host);")
     else:
         inspector = insp.from_engine(bind)
         pk_constraint = inspector.get_pk_constraint(ML2_PORT_BINDING)

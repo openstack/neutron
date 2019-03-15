@@ -64,11 +64,11 @@ class TestPrefixDelegation(tests_base.DietTestCase):
         l3_agent.pd.routers = {}
         router_id = '1'
         ri = dvr_local_router.DvrLocalRouter(l3_agent,
-                                           'host',
-                                           router_id,
-                                           mock.Mock(),
-                                           mock.Mock(),
-                                           mock.Mock())
+                                             'host',
+                                             router_id,
+                                             mock.Mock(),
+                                             mock.Mock(),
+                                             mock.Mock())
         ns_name = ri.ns_name
         self._test_add_update_pd(l3_agent, ri, ns_name)
 

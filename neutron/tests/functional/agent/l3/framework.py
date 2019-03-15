@@ -121,18 +121,19 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             extra_routes = False
 
         return l3_test_common.prepare_router_data(ip_version=ip_version,
-                                                 enable_snat=enable_snat,
-                                                 num_internal_ports=(
-                                                     num_internal_ports),
-                                                 enable_floating_ip=enable_fip,
-                                                 enable_ha=enable_ha,
-                                                 extra_routes=extra_routes,
-                                                 dual_stack=dual_stack,
-                                                 v6_ext_gw_with_sub=(
-                                                     v6_ext_gw_with_sub),
-                                                 enable_pf_floating_ip=(
-                                                     enable_pf_floating_ip),
-                                                 qos_policy_id=qos_policy_id)
+                                                  enable_snat=enable_snat,
+                                                  num_internal_ports=(
+                                                      num_internal_ports),
+                                                  enable_floating_ip=(
+                                                      enable_fip),
+                                                  enable_ha=enable_ha,
+                                                  extra_routes=extra_routes,
+                                                  dual_stack=dual_stack,
+                                                  v6_ext_gw_with_sub=(
+                                                      v6_ext_gw_with_sub),
+                                                  enable_pf_floating_ip=(
+                                                      enable_pf_floating_ip),
+                                                  qos_policy_id=qos_policy_id)
 
     def _test_conntrack_disassociate_fip(self, ha):
         '''Test that conntrack immediately drops stateful connection
@@ -379,7 +380,9 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                                           ipv6_subnet_modes=None,
                                           interface_id=None):
         return l3_test_common.router_append_subnet(router, count,
-                ip_version, ipv6_subnet_modes, interface_id)
+                                                   ip_version,
+                                                   ipv6_subnet_modes,
+                                                   interface_id)
 
     def _namespace_exists(self, namespace):
         return ip_lib.network_namespace_exists(namespace)

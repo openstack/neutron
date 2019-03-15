@@ -55,9 +55,11 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def __init__(self):
         sg_enabled = securitygroups_rpc.is_firewall_enabled()
-        hybrid_plug_required = (not cfg.CONF.SECURITYGROUP.firewall_driver or
+        hybrid_plug_required = (
+            not cfg.CONF.SECURITYGROUP.firewall_driver or
             cfg.CONF.SECURITYGROUP.firewall_driver in (
-                IPTABLES_FW_DRIVER_FULL, 'iptables_hybrid')) and sg_enabled
+                IPTABLES_FW_DRIVER_FULL, 'iptables_hybrid')
+        ) and sg_enabled
         vif_details = {portbindings.CAP_PORT_FILTER: sg_enabled,
                        portbindings.OVS_HYBRID_PLUG: hybrid_plug_required}
         # NOTE(moshele): Bind DIRECT (SR-IOV) port allows
@@ -163,9 +165,10 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         if bridge_name:
             vif_details[portbindings.VIF_DETAILS_BRIDGE_NAME] = bridge_name
 
-        registry.publish(a_const.OVS_BRIDGE_NAME, events.BEFORE_READ,
-            set_bridge_name_inner, payload=events.EventPayload(
-                None, metadata={'port': port}))
+        registry.publish(
+            a_const.OVS_BRIDGE_NAME, events.BEFORE_READ,
+            set_bridge_name_inner,
+            payload=events.EventPayload(None, metadata={'port': port}))
 
     def _pre_get_vif_details(self, agent, context):
         a_config = agent['configurations']

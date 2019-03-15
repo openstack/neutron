@@ -292,8 +292,8 @@ class Network(rbac_db.NeutronRbacObject):
     def _set_dns_domain(self, dns_domain):
         NetworkDNSDomain.delete_objects(self.obj_context, network_id=self.id)
         if dns_domain:
-            NetworkDNSDomain(self.obj_context,
-                network_id=self.id, dns_domain=dns_domain).create()
+            NetworkDNSDomain(self.obj_context, network_id=self.id,
+                             dns_domain=dns_domain).create()
         self.dns_domain = dns_domain
         self.obj_reset_changes(['dns_domain'])
 

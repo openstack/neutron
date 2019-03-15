@@ -105,7 +105,7 @@ class FloatingIP(standard_attr.HasStandardAttributes, model_base.BASEV2,
         sa.UniqueConstraint(
             floating_network_id, fixed_port_id, fixed_ip_address,
             name=('uniq_floatingips0floatingnetworkid'
-                 '0fixedportid0fixedipaddress')),
+                  '0fixedportid0fixedipaddress')),
         model_base.BASEV2.__table_args__,)
     api_collections = [l3_apidef.FLOATINGIPS]
     collection_resource_map = {l3_apidef.FLOATINGIPS: l3_apidef.FLOATINGIP}

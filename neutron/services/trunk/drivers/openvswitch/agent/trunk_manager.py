@@ -49,7 +49,7 @@ def get_patch_peer_attrs(peer_name, port_mac=None, port_id=None):
     if port_id:
         external_ids['iface-id'] = port_id
     attrs = [('type', 'patch'),
-            ('options', {'peer': peer_name})]
+             ('options', {'peer': peer_name})]
     if external_ids:
         attrs.append(
             ('external_ids', external_ids))

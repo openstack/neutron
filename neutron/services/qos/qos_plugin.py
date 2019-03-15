@@ -414,7 +414,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
     @db_base_plugin_common.convert_result_to_dict
     def update_policy_rule(self, context, rule_cls, rule_id, policy_id,
-            rule_data):
+                           rule_data):
         """Update a QoS policy rule.
 
         :param context: neutron api request context

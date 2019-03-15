@@ -711,7 +711,7 @@ class _DVRAgentInterfaceMixin(object):
         # Collect gw ports only if available
         if gw_port_id and gw_ports.get(gw_port_id):
             l3_agent = ag_obj.Agent.get_object(context,
-                id=binding_objs[0].l3_agent_id)
+                                               id=binding_objs[0].l3_agent_id)
             return l3_agent.host
 
     def _build_routers_list(self, context, routers, gw_ports):
@@ -810,7 +810,7 @@ class _DVRAgentInterfaceMixin(object):
 
     @log_helper.log_method_call
     def _get_dvr_sync_data(self, context, host, agent, router_ids=None,
-                          active=None):
+                           active=None):
         routers, interfaces, floating_ips = self._get_router_info_list(
             context, router_ids=router_ids, active=active,
             device_owners=const.ROUTER_INTERFACE_OWNERS)
@@ -1098,7 +1098,7 @@ class _DVRAgentInterfaceMixin(object):
     def _get_address_pair_active_port_with_fip(
             self, context, port_dict, port_addr_pair_ip):
         port_valid_state = (port_dict['admin_state_up'] or
-            (port_dict['status'] == const.PORT_STATUS_ACTIVE))
+                            port_dict['status'] == const.PORT_STATUS_ACTIVE)
         if not port_valid_state:
             return
         fips = l3_obj.FloatingIP.get_objects(

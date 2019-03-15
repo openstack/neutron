@@ -198,14 +198,14 @@ class IPAllocation(base.NeutronDbObject):
         # incorrect results
         if exclude:
             alloc_db = (context.session.query(models_v2.IPAllocation).
-                       filter_by(subnet_id=subnet_id).join(models_v2.Port).
-                       filter(~models_v2.Port.device_owner.
-                       in_(device_owner)).first())
+                        filter_by(subnet_id=subnet_id).join(models_v2.Port).
+                        filter(~models_v2.Port.device_owner.
+                        in_(device_owner)).first())
         else:
             alloc_db = (context.session.query(models_v2.IPAllocation).
-                       filter_by(subnet_id=subnet_id).join(models_v2.Port).
-                       filter(models_v2.Port.device_owner.
-                       in_(device_owner)).first())
+                        filter_by(subnet_id=subnet_id).join(models_v2.Port).
+                        filter(models_v2.Port.device_owner.
+                        in_(device_owner)).first())
         if exclude and alloc_db:
             return super(IPAllocation, cls)._load_object(context, alloc_db)
         if alloc_db:
@@ -511,7 +511,7 @@ class Port(base.NeutronDbObject):
 
     @classmethod
     def get_ports_ids_by_security_groups(cls, context, security_group_ids,
-            excluded_device_owners=None):
+                                         excluded_device_owners=None):
         query = context.session.query(sg_models.SecurityGroupPortBinding)
         query = query.filter(
             sg_models.SecurityGroupPortBinding.security_group_id.in_(

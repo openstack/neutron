@@ -377,7 +377,7 @@ class RouterInfo(object):
                            'new': fip['fixed_ip_address']})
                 fip_statuses[fip['id']] = self.move_floating_ip(fip)
             elif (ip_cidr in centralized_fip_cidrs and
-                fip.get('host') == self.host):
+                  fip.get('host') == self.host):
                 LOG.debug("Floating IP is migrating from centralized "
                           "to distributed: %s", fip)
                 fip_statuses[fip['id']] = self.migrate_centralized_floating_ip(
@@ -587,8 +587,9 @@ class RouterInfo(object):
                 if ipv6_utils.is_ipv6_pd_enabled(subnet):
                     interface_name = self.get_internal_device_name(p['id'])
                     self.agent.pd.enable_subnet(self.router_id, subnet['id'],
-                                     subnet['cidr'],
-                                     interface_name, p['mac_address'])
+                                                subnet['cidr'],
+                                                interface_name,
+                                                p['mac_address'])
                     if (subnet['cidr'] !=
                             lib_constants.PROVISIONAL_IPV6_PD_PREFIX):
                         self.pd_subnets[subnet['id']] = subnet['cidr']

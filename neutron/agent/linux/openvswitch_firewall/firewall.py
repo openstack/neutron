@@ -326,7 +326,8 @@ class ConjIPFlowManager(object):
             # no address overlaps.
             addr_to_conj = self._build_addr_conj_id_map(
                 ethertype, sg_conj_id_map)
-            self._update_flows_for_vlan_subr(direction, ethertype, vlan_tag,
+            self._update_flows_for_vlan_subr(
+                direction, ethertype, vlan_tag,
                 self.flow_state[vlan_tag][(direction, ethertype)],
                 addr_to_conj)
             self.flow_state[vlan_tag][(direction, ethertype)] = addr_to_conj

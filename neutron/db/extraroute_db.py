@@ -143,7 +143,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
         super(ExtraRoute_dbonly_mixin,
-            self)._confirm_router_interface_not_in_use(
+              self)._confirm_router_interface_not_in_use(
             context, router_id, subnet_id)
         subnet = self._core_plugin.get_subnet(context, subnet_id)
         subnet_cidr = netaddr.IPNetwork(subnet['cidr'])

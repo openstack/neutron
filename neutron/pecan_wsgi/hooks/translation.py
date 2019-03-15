@@ -29,8 +29,8 @@ class ExceptionTranslationHook(hooks.PecanHook):
         language = None
         if state.request.accept_language:
             all_languages = oslo_i18n.get_available_languages('neutron')
-            language = state.request.accept_language.lookup(all_languages,
-                default='fake_LANG')
+            language = state.request.accept_language.lookup(
+                all_languages, default='fake_LANG')
             if language == 'fake_LANG':
                 language = None
         exc = api_common.convert_exception_to_http_exc(e, faults.FAULT_MAP,

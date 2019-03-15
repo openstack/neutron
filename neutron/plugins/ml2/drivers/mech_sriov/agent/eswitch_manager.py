@@ -380,7 +380,8 @@ class ESwitchManager(object):
 
         # We don't know about this device at the moment, so add to the map.
         if PciOsWrapper.pf_device_exists(dev_name):
-            self._create_emb_switch(phys_net, dev_name,
+            self._create_emb_switch(
+                phys_net, dev_name,
                 exclude_devices.get(dev_name, set()))
 
     def discover_devices(self, device_mappings, exclude_devices):
@@ -426,7 +427,8 @@ class ESwitchManager(object):
         Clear the "rate" configuration from VF by setting it to 0.
         @param pci_slot: VF PCI slot
         """
-        self._clear_rate(pci_slot,
+        self._clear_rate(
+            pci_slot,
             ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE)
 
     def clear_min_tx_rate(self, pci_slot):
@@ -435,7 +437,8 @@ class ESwitchManager(object):
         Clear the "min_tx_rate" configuration from VF by setting it to 0.
         @param pci_slot: VF PCI slot
         """
-        self._clear_rate(pci_slot,
+        self._clear_rate(
+            pci_slot,
             ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_MIN_TX_RATE)
 
     def _clear_rate(self, pci_slot, rate_type):

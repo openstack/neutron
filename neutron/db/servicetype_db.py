@@ -44,11 +44,10 @@ class ServiceTypeManager(object):
 
     def get_service_providers(self, context, filters=None, fields=None):
         if filters and 'service_type' in filters:
-            return list(
-                chain.from_iterable(self.config[svc_type].
-                                    get_service_providers(filters, fields)
-                    for svc_type in filters['service_type']
-                        if svc_type in self.config)
+            return list(chain.from_iterable(
+                self.config[svc_type].get_service_providers(filters, fields)
+                for svc_type in filters['service_type']
+                if svc_type in self.config)
             )
         return list(
             chain.from_iterable(
@@ -76,7 +75,8 @@ class ServiceTypeManager(object):
     def add_resource_association(self, context, service_type, provider_name,
                                  resource_id):
         r = self.get_service_providers(context,
-            filters={'service_type': [service_type], 'name': [provider_name]})
+                                       filters={'service_type': [service_type],
+                                                'name': [provider_name]})
         if not r:
             raise pconf.ServiceProviderNotFound(provider=provider_name,
                                                 service_type=service_type)

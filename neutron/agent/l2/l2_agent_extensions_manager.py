@@ -32,8 +32,8 @@ class L2AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
     """
 
     def __init__(self, conf):
-        super(L2AgentExtensionsManager, self).__init__(conf,
-                L2_AGENT_EXT_MANAGER_NAMESPACE)
+        super(L2AgentExtensionsManager,
+              self).__init__(conf, L2_AGENT_EXT_MANAGER_NAMESPACE)
 
     def handle_port(self, context, data):
         """Notify all agent extensions to handle port."""

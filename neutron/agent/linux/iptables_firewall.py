@@ -72,7 +72,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     CONNTRACK_ZONE_PER_PORT = False
 
     def __init__(self, namespace=None):
-        self.iptables = iptables_manager.IptablesManager(state_less=True,
+        self.iptables = iptables_manager.IptablesManager(
+            state_less=True,
             use_ipv6=ipv6_utils.is_enabled_and_bind_by_default(),
             namespace=namespace)
         # TODO(majopela, shihanzhang): refactor out ipset to a separate
@@ -722,8 +723,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
             if (is_port and rule_protocol in constants.IPTABLES_PROTOCOL_MAP):
                 # iptables adds '-m protocol' when the port number is specified
-                iptables_rule += ['-m',
-                    constants.IPTABLES_PROTOCOL_MAP[rule_protocol]]
+                iptables_rule += [
+                    '-m', constants.IPTABLES_PROTOCOL_MAP[rule_protocol]
+                ]
         return iptables_rule
 
     def _port_arg(self, direction, protocol, port_range_min, port_range_max):

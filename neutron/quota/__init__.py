@@ -96,7 +96,7 @@ class ConfDriver(object):
                  if quotas[key] >= 0 and quotas[key] < val]
         if overs:
             raise exceptions.OverQuota(overs=sorted(overs), quotas=quotas,
-                                    usages={})
+                                       usages={})
 
     @staticmethod
     def get_tenant_quotas(context, resources, tenant_id):

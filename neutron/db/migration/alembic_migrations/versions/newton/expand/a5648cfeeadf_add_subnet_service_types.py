@@ -30,7 +30,8 @@ down_revision = '030a959ceafa'
 
 
 def upgrade():
-    op.create_table('subnet_service_types',
+    op.create_table(
+        'subnet_service_types',
         sa.Column('subnet_id', sa.String(length=36)),
         sa.Column('service_type', sa.String(length=255)),
         sa.ForeignKeyConstraint(['subnet_id'], ['subnets.id'],

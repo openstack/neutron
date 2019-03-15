@@ -185,8 +185,8 @@ class IpConntrackManager(object):
                              r'.* -j CT --zone (?P<zone>\d+).*', rule)
             if match:
                 # strip off any prefix that the interface is using
-                short_port_id = (match.group('dev')
-                    [n_const.LINUX_DEV_PREFIX_LEN:])
+                short_port_id = (
+                    match.group('dev')[n_const.LINUX_DEV_PREFIX_LEN:])
                 self._device_zone_map[short_port_id] = int(match.group('zone'))
         LOG.debug("Populated conntrack zone map: %s", self._device_zone_map)
 

@@ -95,7 +95,7 @@ ATTR_POSITIONS = {
     'icmp': [('type', 6), ('code', 7), ('src', 4), ('dst', 5), ('id', 8),
              ('zone', 16)],
     'icmpv6': [('type', 6), ('code', 7), ('src', 4), ('dst', 5), ('id', 8),
-             ('zone', 16)],
+               ('zone', 16)],
     'tcp': [('sport', 7), ('dport', 8), ('src', 5), ('dst', 6), ('zone', 15)],
     'udp': [('sport', 6), ('dport', 7), ('src', 4), ('dst', 5), ('zone', 14)]
 }

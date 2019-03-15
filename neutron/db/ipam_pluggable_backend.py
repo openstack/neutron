@@ -50,7 +50,7 @@ def get_ip_update_not_allowed_device_owner_list():
 def is_neutron_built_in_router(context, router_id):
     l3plugin = directory.get_plugin(plugin_consts.L3)
     return bool(l3plugin and
-        l3plugin.router_supports_scheduling(context, router_id))
+                l3plugin.router_supports_scheduling(context, router_id))
 
 
 class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
@@ -437,8 +437,8 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 port_copy = copy.deepcopy(original)
                 port_copy.update(new_port)
                 port_copy['fixed_ips'] = auto_assign_subnets
-                self.allocate_ips_for_port_and_store(context,
-                            {'port': port_copy}, port_copy['id'])
+                self.allocate_ips_for_port_and_store(
+                    context, {'port': port_copy}, port_copy['id'])
 
             getattr(db_port, 'fixed_ips')  # refresh relationship before return
 

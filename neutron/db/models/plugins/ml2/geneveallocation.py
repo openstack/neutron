@@ -21,7 +21,7 @@ class GeneveAllocation(model_base.BASEV2):
     __tablename__ = 'ml2_geneve_allocations'
 
     geneve_vni = sa.Column(sa.Integer, nullable=False, primary_key=True,
-                        autoincrement=False)
+                           autoincrement=False)
     allocated = sa.Column(sa.Boolean, nullable=False, default=False,
                           server_default=sql.false(), index=True)
 

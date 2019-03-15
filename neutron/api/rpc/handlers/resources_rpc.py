@@ -94,7 +94,8 @@ class ResourcesPullRpcApi(object):
     def pull(self, context, resource_type, resource_id):
         resource_type_cls = _resource_to_class(resource_type)
         cctxt = self.client.prepare()
-        primitive = cctxt.call(context, 'pull',
+        primitive = cctxt.call(
+            context, 'pull',
             resource_type=resource_type,
             version=resource_type_cls.VERSION, resource_id=resource_id)
 
@@ -107,7 +108,8 @@ class ResourcesPullRpcApi(object):
     def bulk_pull(self, context, resource_type, filter_kwargs=None):
         resource_type_cls = _resource_to_class(resource_type)
         cctxt = self.client.prepare()
-        primitives = cctxt.call(context, 'bulk_pull',
+        primitives = cctxt.call(
+            context, 'bulk_pull',
             resource_type=resource_type,
             version=resource_type_cls.VERSION, filter_kwargs=filter_kwargs)
         return [resource_type_cls.clean_obj_from_primitive(primitive)

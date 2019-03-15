@@ -46,7 +46,7 @@ def contract_creation_exceptions():
 def upgrade():
     op.add_column(ROUTER_L3_AGENT_BINDING,
                   sa.Column('binding_index', sa.Integer(), nullable=False,
-                           server_default='1'))
+                            server_default='1'))
 
     bindings_table = sa.Table(
         ROUTER_L3_AGENT_BINDING,

@@ -52,7 +52,7 @@ class OVSPhysicalBridge(ovs_bridge.OVSAgentBridge,
 
     def add_dvr_mac_vlan(self, mac, port):
         self.install_output(table_id=constants.DVR_NOT_LEARN_VLAN,
-            priority=2, eth_src=mac, port=port)
+                            priority=2, eth_src=mac, port=port)
 
     def remove_dvr_mac_vlan(self, mac):
         # REVISIT(yamamoto): match in_port as well?

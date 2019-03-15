@@ -60,19 +60,22 @@ def _apply_tag_filters(model, query, filters):
     if 'tags' in filters:
         tags = _get_tag_list(filters.pop('tags'))
         first_tag = tags.pop(0)
-        query = query.join(tag_model.Tag,
+        query = query.join(
+            tag_model.Tag,
             model.standard_attr_id == tag_model.Tag.standard_attr_id)
         query = query.filter(tag_model.Tag.tag == first_tag)
 
         for tag in tags:
             tag_alias = aliased(tag_model.Tag)
-            query = query.join(tag_alias,
+            query = query.join(
+                tag_alias,
                 model.standard_attr_id == tag_alias.standard_attr_id)
             query = query.filter(tag_alias.tag == tag)
 
     if 'tags-any' in filters:
         tags = _get_tag_list(filters.pop('tags-any'))
-        query = query.join(tag_model.Tag,
+        query = query.join(
+            tag_model.Tag,
             model.standard_attr_id == tag_model.Tag.standard_attr_id)
         query = query.filter(tag_model.Tag.tag.in_(tags))
 
@@ -84,7 +87,8 @@ def _apply_tag_filters(model, query, filters):
 
         for tag in tags:
             tag_alias = aliased(tag_model.Tag)
-            subq = subq.join(tag_alias,
+            subq = subq.join(
+                tag_alias,
                 tag_model.Tag.standard_attr_id == tag_alias.standard_attr_id)
             subq = subq.filter(tag_alias.tag == tag)
 

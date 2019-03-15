@@ -329,7 +329,7 @@ class TestDvrFipNs(base.BaseTestCase):
     @mock.patch.object(router_info.RouterInfo, 'get_router_cidrs')
     @mock.patch.object(ip_lib, 'IPDevice')
     def _test_scan_fip_ports(self, ri, ip_list, stale_list, IPDevice,
-        get_router_cidrs):
+                             get_router_cidrs):
         IPDevice.return_value = device = mock.Mock()
         device.exists.return_value = True
         ri.get_router_cidrs.return_value = ip_list

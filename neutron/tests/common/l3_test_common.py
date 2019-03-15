@@ -266,7 +266,7 @@ def router_append_subnet(router, count=1,
     if interface_id:
         try:
             interface = next(i for i in interfaces
-                         if i['id'] == interface_id)
+                             if i['id'] == interface_id)
         except StopIteration:
             raise ValueError("interface_id not found")
 

@@ -279,13 +279,16 @@ class FloatingIP(base.NeutronDbObject):
     def get_scoped_floating_ips(cls, context, router_ids):
         query = context.session.query(l3.FloatingIP,
                                       models_v2.SubnetPool.address_scope_id)
-        query = query.join(models_v2.Port,
+        query = query.join(
+            models_v2.Port,
             l3.FloatingIP.fixed_port_id == models_v2.Port.id)
         # Outer join of Subnet can cause each ip to have more than one row.
-        query = query.outerjoin(models_v2.Subnet,
+        query = query.outerjoin(
+            models_v2.Subnet,
             models_v2.Subnet.network_id == models_v2.Port.network_id)
         query = query.filter(models_v2.Subnet.ip_version == 4)
-        query = query.outerjoin(models_v2.SubnetPool,
+        query = query.outerjoin(
+            models_v2.SubnetPool,
             models_v2.Subnet.subnetpool_id == models_v2.SubnetPool.id)
 
         # Filter out on router_ids

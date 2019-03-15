@@ -681,7 +681,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         l3plugin = directory.get_plugin(plugin_constants.L3)
         if l3plugin:
             gw_ports = self._get_router_gw_ports_by_network(context,
-                    network['id'])
+                                                            network['id'])
             router_ids = [p.device_id for p in gw_ports]
             for id in router_ids:
                 try:
@@ -711,8 +711,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             return
         external_gateway_info['external_fixed_ips'].append(
                                      {'subnet_id': subnet['id']})
-        info = {'router': {'external_gateway_info':
-            external_gateway_info}}
+        info = {'router': {'external_gateway_info': external_gateway_info}}
         l3plugin.update_router(context, router_id, info)
 
     @db_api.retry_if_session_inactive()
@@ -724,8 +723,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         # If this subnet supports auto-addressing, then update any
         # internal ports on the network with addresses for this subnet.
         if ipv6_utils.is_auto_address_subnet(result):
-            updated_ports = self.ipam.add_auto_addrs_on_network_ports(context,
-                                result, ipam_subnet)
+            updated_ports = self.ipam.add_auto_addrs_on_network_ports(
+                context, result, ipam_subnet)
             for port_id in updated_ports:
                 port_info = {'port': {'id': port_id}}
                 try:
@@ -1336,7 +1335,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         with db_api.CONTEXT_WRITER.using(context):
             for port in port_data:
                 raw_mac_address = port.pop('mac_address',
-                    constants.ATTR_NOT_SPECIFIED)
+                                           constants.ATTR_NOT_SPECIFIED)
                 if raw_mac_address is constants.ATTR_NOT_SPECIFIED:
                     raw_mac_address = macs.pop()
                 eui_mac_address = netaddr.EUI(raw_mac_address, 48)
@@ -1379,12 +1378,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     self._enforce_device_owner_not_router_intf_or_device_id(
                         context, pdata.get('device_owner'),
                         pdata.get('device_id'), pdata.get('tenant_id'))
-                bulk_port_data.append(dict(project_id=pdata.get('project_id'),
+                bulk_port_data.append(dict(
+                    project_id=pdata.get('project_id'),
                     name=pdata.get('name'),
                     network_id=pdata.get('network_id'),
                     admin_state_up=pdata.get('admin_state_up'),
-                    status=pdata.get('status',
-                        constants.PORT_STATUS_ACTIVE),
+                    status=pdata.get('status', constants.PORT_STATUS_ACTIVE),
                     mac_address=pdata.get('mac_address'),
                     device_id=pdata.get('device_id'),
                     device_owner=pdata.get('device_owner'),

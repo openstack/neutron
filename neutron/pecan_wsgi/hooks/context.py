@@ -23,5 +23,5 @@ class ContextHook(hooks.PecanHook):
 
     def before(self, state):
         ctx = (state.request.environ.get('neutron.context') or
-            context.get_admin_context())
+               context.get_admin_context())
         state.request.context['neutron_context'] = ctx

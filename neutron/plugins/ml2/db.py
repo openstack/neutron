@@ -264,7 +264,8 @@ def generate_distributed_port_status(context, port_id):
 
 def get_distributed_port_binding_by_host(context, port_id, host):
     with db_api.CONTEXT_READER.using(context):
-        binding = (context.session.query(models.DistributedPortBinding).
+        binding = (
+            context.session.query(models.DistributedPortBinding).
             filter(models.DistributedPortBinding.port_id.startswith(port_id),
                    models.DistributedPortBinding.host == host).first())
     if not binding:

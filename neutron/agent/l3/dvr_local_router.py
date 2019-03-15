@@ -318,8 +318,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
     def _delete_gateway_device_if_exists(self, ns_ip_device, gw_ip_addr,
                                          snat_idx):
         try:
-            ns_ip_device.route.delete_gateway(gw_ip_addr,
-                                        table=snat_idx)
+            ns_ip_device.route.delete_gateway(gw_ip_addr, table=snat_idx)
         except exceptions.DeviceNotFoundError:
             pass
 

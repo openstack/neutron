@@ -119,7 +119,7 @@ class IpsetManager(object):
         new_set_name = set_name + SWAP_SUFFIX
         set_type = self._get_ipset_set_type(ethertype)
         process_input = ["create %s hash:net family %s" % (new_set_name,
-                                                          set_type)]
+                                                           set_type)]
         for ip in member_ips:
             process_input.append("add %s %s" % (new_set_name, ip))
 

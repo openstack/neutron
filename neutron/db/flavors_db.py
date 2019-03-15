@@ -222,8 +222,8 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
                                  marker=None, page_reverse=False):
         """From flavor, choose service profile and find provider for driver."""
 
-        objs = obj_flavor.FlavorServiceProfileBinding.get_objects(context,
-            flavor_id=flavor_id)
+        objs = obj_flavor.FlavorServiceProfileBinding.get_objects(
+            context, flavor_id=flavor_id)
         if not objs:
             raise flav_exc.FlavorServiceProfileBindingNotFound(
                 sp_id='', fl_id=flavor_id)

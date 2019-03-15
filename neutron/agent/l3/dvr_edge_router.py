@@ -82,9 +82,9 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         else:
             preserve_ips = self._list_centralized_floating_ip_cidrs()
             self._external_gateway_added(ex_gw_port,
-                                        interface_name,
-                                        self.snat_namespace.name,
-                                        preserve_ips)
+                                         interface_name,
+                                         self.snat_namespace.name,
+                                         preserve_ips)
 
     def _external_gateway_removed(self, ex_gw_port, interface_name):
         super(DvrEdgeRouter, self).external_gateway_removed(ex_gw_port,

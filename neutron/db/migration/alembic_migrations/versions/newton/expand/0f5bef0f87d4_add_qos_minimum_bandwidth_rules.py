@@ -43,6 +43,7 @@ def upgrade():
                                        constants.INGRESS_DIRECTION,
                                        name='directions'),
                   nullable=False, server_default=constants.EGRESS_DIRECTION),
-        sa.UniqueConstraint('qos_policy_id', 'direction',
+        sa.UniqueConstraint(
+            'qos_policy_id', 'direction',
             name='qos_minimum_bandwidth_rules0qos_policy_id0direction')
     )

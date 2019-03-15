@@ -948,7 +948,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 self.context, devices_up, devices_down, self.agent_id,
                 self.conf.host)
             failed_devices = (devices_set.get('failed_devices_up') +
-                devices_set.get('failed_devices_down'))
+                              devices_set.get('failed_devices_down'))
             if failed_devices:
                 LOG.error("Configuration for devices %s failed!",
                           failed_devices)
@@ -995,8 +995,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             # Install protection only when prefix is not zero because a /0
             # prefix allows any address anyway and the nd_target can only
             # match on /1 or more.
-            bridge.install_icmpv6_na_spoofing_protection(port=vif.ofport,
-                ip_addresses=ipv6_addresses)
+            bridge.install_icmpv6_na_spoofing_protection(
+                port=vif.ofport, ip_addresses=ipv6_addresses)
 
         ipv4_addresses = {ip for ip in addresses
                           if netaddr.IPNetwork(ip).version == 4}
@@ -1222,8 +1222,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             # be same, so check only one of them.
             # Not logging error here, as the interface may not exist yet.
             # Type check is done to cleanup wrong interface if any.
-            int_type = self.int_br.db_get_val("Interface",
-                int_if_name, "type", log_errors=False)
+            int_type = self.int_br.db_get_val("Interface", int_if_name, "type",
+                                              log_errors=False)
             if self.use_veth_interconnection:
                 # Drop ports if the interface types doesn't match the
                 # configuration value.
@@ -1444,7 +1444,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
         self._update_port_info_failed_devices_stats(port_info, failed_devices)
         self._update_port_info_failed_devices_stats(ancillary_port_info,
-                                failed_ancillary_devices)
+                                                    failed_ancillary_devices)
 
         if updated_ports is None:
             updated_ports = set()
@@ -1974,9 +1974,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             bridge.cleanup_flows()
 
     def process_port_info(self, start, polling_manager, sync, ovs_restarted,
-                       ports, ancillary_ports, updated_ports_copy,
-                       consecutive_resyncs, ports_not_ready_yet,
-                       failed_devices, failed_ancillary_devices):
+                          ports, ancillary_ports, updated_ports_copy,
+                          consecutive_resyncs, ports_not_ready_yet,
+                          failed_devices, failed_ancillary_devices):
         # There are polling managers that don't have get_events, e.g.
         # AlwaysPoll used by windows implementations
         # REVISIT (rossella_s) This needs to be reworked to hide implementation
@@ -1999,7 +1999,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 # TODO(rossella_s): For implementations that use AlwaysPoll
                 # resync if a device failed. This can be improved in future
                 sync = (any(failed_devices.values()) or
-                    any(failed_ancillary_devices.values()))
+                        any(failed_ancillary_devices.values()))
 
             # NOTE(rossella_s) don't empty the queue of events
             # calling polling_manager.get_events() since
@@ -2109,9 +2109,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self._report_state()
         if self.enable_distributed_routing:
             self.dvr_agent.reset_ovs_parameters(self.int_br,
-                                         self.tun_br,
-                                         self.patch_int_ofport,
-                                         self.patch_tun_ofport)
+                                                self.tun_br,
+                                                self.patch_int_ofport,
+                                                self.patch_tun_ofport)
             self.dvr_agent.reset_dvr_parameters()
             self.dvr_agent.setup_dvr_flows()
         # notify that OVS has restarted
@@ -2178,8 +2178,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     tunnel_sync = True
             ovs_restarted |= (ovs_status == constants.OVS_RESTARTED)
             devices_need_retry = (any(failed_devices.values()) or
-                any(failed_ancillary_devices.values()) or
-                ports_not_ready_yet)
+                                  any(failed_ancillary_devices.values()) or
+                                  ports_not_ready_yet)
             if (self._agent_has_updates(polling_manager) or sync or
                     devices_need_retry):
                 try:

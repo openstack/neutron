@@ -349,7 +349,7 @@ class NovaSegmentNotifier(object):
                                                 segment_id=current_segment_ids)
         segment_ids = {s.segment_id for s in subnets}
         self.batch_notifier.queue_event(Event(self._add_host_to_aggregate,
-            segment_ids, host=host))
+                                              segment_ids, host=host))
 
     def _add_host_to_aggregate(self, event):
         for segment_id in event.segment_ids:
@@ -379,8 +379,9 @@ class NovaSegmentNotifier(object):
         if segment_id:
             if event == events.AFTER_DELETE:
                 ipv4_subnets_number = -ipv4_subnets_number
-            self.batch_notifier.queue_event(Event(self._update_nova_inventory,
-                segment_id, reserved=ipv4_subnets_number))
+            self.batch_notifier.queue_event(
+                Event(self._update_nova_inventory,
+                      segment_id, reserved=ipv4_subnets_number))
 
     @registry.receives(resources.PORT, [events.AFTER_UPDATE])
     def _notify_port_updated(self, resource, event, trigger, context,
@@ -407,7 +408,7 @@ class NovaSegmentNotifier(object):
         update = port_ipv4_subnets_number - original_port_ipv4_subnets_number
         if update:
             self.batch_notifier.queue_event(Event(self._update_nova_inventory,
-                segment_id, reserved=update))
+                                                  segment_id, reserved=update))
 
     def _get_ipv4_subnets_number_and_segment_id(self, port, context):
         ipv4_subnet_ids = self._get_ipv4_subnet_ids(port)

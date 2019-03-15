@@ -24,7 +24,7 @@ from neutron_lib.objects import exceptions
 
 from neutron.common import utils
 from neutron.objects.port.extensions import (allowedaddresspairs
-    as obj_addr_pair)
+                                             as obj_addr_pair)
 
 
 @resource_extend.has_resource_extenders

@@ -193,7 +193,7 @@ class OVSDVRNeutronAgent(object):
                           "plugin: %r", details)
                 self.dvr_mac_address = (
                     netaddr.EUI(details['mac_address'],
-                    dialect=netaddr.mac_unix_expanded))
+                                dialect=netaddr.mac_unix_expanded))
                 return
 
     def setup_dvr_flows_on_integ_br(self):
@@ -396,7 +396,7 @@ class OVSDVRNeutronAgent(object):
                 # the compute port is discovered first here that its on
                 # a dvr routed subnet queue this subnet to that port
                 comp_ovsport = OVSPort(vif.vif_id, vif.ofport,
-                                  vif.vif_mac, local_port['device_owner'])
+                                       vif.vif_mac, local_port['device_owner'])
                 comp_ovsport.add_subnet(subnet_uuid)
                 self.local_ports[vif.vif_id] = comp_ovsport
             # create rule for just this vm port

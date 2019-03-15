@@ -25,7 +25,7 @@ down_revision = '89ab9a816d70'
 
 def upgrade():
     op.add_column('subnets',
-        sa.Column('segment_id', sa.String(length=36), nullable=True))
+                  sa.Column('segment_id', sa.String(length=36), nullable=True))
     op.create_foreign_key(
         None, 'subnets', 'networksegments', ['segment_id'], ['id'])
 
