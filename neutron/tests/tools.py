@@ -204,19 +204,6 @@ def fail(msg=None):
     raise unittest2.TestCase.failureException(msg)
 
 
-class UnorderedList(list):
-    """A list that is equals to any permutation of itself."""
-
-    def __eq__(self, other):
-        if not isinstance(other, list):
-            return False
-        return (sorted(self, key=helpers.safe_sort_key) ==
-                sorted(other, key=helpers.safe_sort_key))
-
-    def __neq__(self, other):
-        return not self == other
-
-
 def get_random_string_list(i=3, n=5):
     return [helpers.get_random_string(n) for _ in range(0, i)]
 

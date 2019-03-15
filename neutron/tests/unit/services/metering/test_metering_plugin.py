@@ -18,6 +18,7 @@ from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
+from neutron_lib.tests import tools
 from oslo_utils import uuidutils
 
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
@@ -27,7 +28,6 @@ from neutron.extensions import l3 as ext_l3
 from neutron.extensions import metering as ext_metering
 from neutron.objects import agent as agent_obj
 from neutron.tests.common import helpers
-from neutron.tests import tools
 from neutron.tests.unit.db.metering import test_metering_db
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
