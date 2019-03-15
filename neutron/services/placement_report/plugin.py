@@ -67,14 +67,6 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
         rps = self._placement_client.list_resource_providers(
             name=name)['resource_providers']
         # RP names are unique, therefore we can get 0 or 1. But not many.
-        if len(rps) != 1:
-            # NOTE(bence romsics): While we could raise() here and by detect
-            # an error a bit earlier, we want the error to surface in the
-            # sync batch below so it is going to be properly caught and is
-            # going to influence the agent's resources_synced attribute.
-            LOG.warning(
-                'placement client: no such resource provider: %s', name)
-            return {'uuid': None}
         return rps[0]
 
     def _sync_placement_state(self, agent, agent_db):
@@ -85,12 +77,26 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
         supported_vnic_types = mech_driver.supported_vnic_types
         device_mappings = mech_driver.get_standard_device_mappings(agent)
 
+        log_msg = (
+            'Synchronization of resources '
+            'of agent type %(type)s '
+            'at host %(host)s '
+            'to placement %(result)s.')
+
         try:
             agent_host_rp_uuid = self._get_rp_by_name(
                 name=agent['host'])['uuid']
-        except ks_exc.HttpError:
-            # Delay the error for the same reason as in _get_rp_by_name().
-            agent_host_rp_uuid = None
+        except (IndexError, ks_exc.HttpError, ks_exc.ClientException):
+            agent_db.resources_synced = False
+            agent_db.update()
+
+            LOG.warning(
+                log_msg,
+                {'type': agent['agent_type'],
+                 'host': agent['host'],
+                 'result': 'failed'})
+
+            return
 
         state = placement_report.PlacementState(
             rp_bandwidths=configurations[
@@ -139,14 +145,18 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
             agent_db.resources_synced = resources_synced
             agent_db.update()
 
-            LOG.debug(
-                'Synchronization of resources'
-                ' of agent type %(type)s'
-                ' at host %(host)s'
-                ' to placement %(result)s.',
-                {'type': agent['agent_type'],
-                 'host': agent['host'],
-                 'result': 'succeeded' if resources_synced else 'failed'})
+            if resources_synced:
+                LOG.debug(
+                    log_msg,
+                    {'type': agent['agent_type'],
+                     'host': agent['host'],
+                     'result': 'succeeded'})
+            else:
+                LOG.warning(
+                    log_msg,
+                    {'type': agent['agent_type'],
+                     'host': agent['host'],
+                     'result': 'failed'})
 
         self._batch_notifier.queue_event(batch)
 
