@@ -28,6 +28,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ip_monitor
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import config
+from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import keepalived
 
 
@@ -66,6 +67,7 @@ class MonitorDaemon(daemon.Daemon):
         # as root
         if not run_as_root:
             super(MonitorDaemon, self).run()
+        self.handle_initial_state()
         for iterable in self.monitor:
             self.parse_and_handle_event(iterable)
 
@@ -88,6 +90,23 @@ class MonitorDaemon(daemon.Daemon):
         except Exception:
             LOG.exception('Failed to process or handle event for line %s',
                           iterable)
+
+    def handle_initial_state(self):
+        try:
+            state = 'backup'
+            ip = ip_lib.IPDevice(self.interface, self.namespace)
+            for address in ip.addr.list():
+                if address.get('cidr') == self.cidr:
+                    state = 'master'
+                    self.write_state_change(state)
+                    self.notify_agent(state)
+                    break
+
+            LOG.debug('Initial status of router %s is %s',
+                      self.router_id, state)
+        except Exception:
+            LOG.exception('Failed to get initial status of router %s',
+                          self.router_id)
 
     def write_state_change(self, state):
         with open(os.path.join(
@@ -140,9 +159,12 @@ def configure(conf):
     conf.set_override('debug', True)
     conf.set_override('use_syslog', True)
     config.setup_logging()
+    agent_config.setup_privsep()
 
 
 def main():
+    agent_config.register_root_helper(cfg.CONF)
+    cfg.CONF.register_cli_opts(agent_config.ROOT_HELPER_OPTS, 'AGENT')
     keepalived.register_cli_l3_agent_keepalived_opts()
     keepalived.register_l3_agent_keepalived_opts()
     configure(cfg.CONF)
