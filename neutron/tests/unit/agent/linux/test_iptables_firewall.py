@@ -275,6 +275,20 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
+    def test_filter_bad_vrrp_with_dport(self):
+        rule = {'ethertype': 'IPv4',
+                'direction': 'ingress',
+                'protocol': 'vrrp',
+                'port_range_min': 10,
+                'port_range_max': 10}
+        # Dest port isn't support with VRRP, so don't send it
+        # down to iptables.
+        ingress = mock.call.add_rule('ifake_dev',
+                                     '-p vrrp -j RETURN',
+                                     comment=None)
+        egress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
     def test_filter_ipv4_ingress_tcp_port_by_num(self):
         rule = {'ethertype': 'IPv4',
                 'direction': 'ingress',
