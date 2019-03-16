@@ -418,18 +418,10 @@
 
 - job:
     name: neutron-functional-with-uwsgi
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-functional-with-uwsgi/run.yaml
-    post-run: playbooks/legacy/neutron-functional-with-uwsgi/post.yaml
-    timeout: 7800
-    required-projects:
-      - openstack-infra/devstack-gate
-      - openstack/neutron
-    irrelevant-files:
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^releasenotes/.*$
+    parent: neutron-functional
+    vars:
+      devstack_localrc:
+        NEUTRON_DEPLOY_MOD_WSGI: true
     voting: false
 
 - job:
