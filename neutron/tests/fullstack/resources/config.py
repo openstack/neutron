@@ -25,11 +25,21 @@ from neutron.tests import base
 from neutron.tests.common import config_fixtures
 from neutron.tests.common.exclusive_resources import port
 from neutron.tests.common import helpers as c_helpers
+from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base as fullstack_base
 
 PHYSICAL_NETWORK_NAME = "physnet1"
 MINIMUM_BANDWIDTH_INGRESS_KBPS = 1000
 MINIMUM_BANDWIDTH_EGRESS_KBPS = 1000
+
+NEUTRON_SERVER_PORT_START = 10000
+NEUTRON_SERVER_PORT_END = 20000
+
+OVS_OF_PORT_LISTEN_START = 20001
+OVS_OF_PORT_LISTEN_END = 30000
+
+CLIENT_CONN_PORT_START = 30001
+CLIENT_CONN_PORT_END = 65000
 
 
 class ConfigFixture(config_fixtures.ConfigFileFixture):
@@ -101,10 +111,15 @@ class NeutronConfigFixture(ConfigFixture):
             self.config['DEFAULT']['router_scheduler_driver'] = (
                 env_desc.router_scheduler)
 
+        net_helpers.set_local_port_range(CLIENT_CONN_PORT_START,
+                                         CLIENT_CONN_PORT_END)
+
     def _setUp(self):
         self.config['DEFAULT'].update({
             'bind_port': self.useFixture(
-                port.ExclusivePort(constants.PROTO_NAME_TCP)).port
+                port.ExclusivePort(constants.PROTO_NAME_TCP,
+                                   start=NEUTRON_SERVER_PORT_START,
+                                   end=NEUTRON_SERVER_PORT_END)).port
         })
         super(NeutronConfigFixture, self)._setUp()
 
@@ -213,7 +228,9 @@ class OVSConfigFixture(ConfigFixture):
         if self.config['ovs']['of_interface'] == 'native':
             self.config['ovs'].update({
                 'of_listen_port': self.useFixture(
-                    port.ExclusivePort(constants.PROTO_NAME_TCP)).port
+                    port.ExclusivePort(constants.PROTO_NAME_TCP,
+                                       start=OVS_OF_PORT_LISTEN_START,
+                                       end=OVS_OF_PORT_LISTEN_END)).port
             })
         super(OVSConfigFixture, self)._setUp()
 

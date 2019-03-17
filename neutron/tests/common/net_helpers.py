@@ -228,6 +228,18 @@ def get_free_namespace_port(protocol, namespace=None, start=1024, end=None):
     return get_unused_port(used_ports, start, end)
 
 
+def set_local_port_range(start, end):
+    utils.execute(
+        ['sysctl', '-w', 'net.ipv4.ip_local_port_range=%d %d' % (start, end)],
+        run_as_root=True)
+    utils.execute(['sysctl', '-p'], run_as_root=True)
+    # verify
+    port_range = utils.execute(
+        ['sysctl', '-n', 'net.ipv4.ip_local_port_range'], run_as_root=True)
+    assert int(port_range.split()[0]) == start
+    assert int(port_range.split()[1]) == end
+
+
 def create_patch_ports(source, destination):
     """Hook up two OVS bridges.
 
