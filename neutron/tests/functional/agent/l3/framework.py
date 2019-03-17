@@ -112,7 +112,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                              extra_routes=True,
                              enable_fip=True, enable_snat=True,
                              num_internal_ports=1,
-                             dual_stack=False, v6_ext_gw_with_sub=True,
+                             dual_stack=False, enable_gw=True,
+                             v6_ext_gw_with_sub=True,
                              enable_pf_floating_ip=False,
                              qos_policy_id=None):
         if ip_version == constants.IP_VERSION_6 and not dual_stack:
@@ -129,6 +130,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                                                   enable_ha=enable_ha,
                                                   extra_routes=extra_routes,
                                                   dual_stack=dual_stack,
+                                                  enable_gw=enable_gw,
                                                   v6_ext_gw_with_sub=(
                                                       v6_ext_gw_with_sub),
                                                   enable_pf_floating_ip=(
