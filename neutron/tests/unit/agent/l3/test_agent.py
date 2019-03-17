@@ -214,6 +214,45 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent.enqueue_state_change(router.id, 'master')
         self.assertFalse(agent._update_metadata_proxy.call_count)
 
+    def test_enqueue_state_change_router_active_ha(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = {'distributed': False}
+        router_info = mock.MagicMock(router=router)
+        with mock.patch.object(
+            agent.metadata_driver, 'spawn_monitored_metadata_proxy'
+        ) as spawn_metadata_proxy, mock.patch.object(
+            agent.metadata_driver, 'destroy_monitored_metadata_proxy'
+        ) as destroy_metadata_proxy:
+            agent._update_metadata_proxy(router_info, "router_id", "master")
+        spawn_metadata_proxy.assert_called()
+        destroy_metadata_proxy.assert_not_called()
+
+    def test_enqueue_state_change_router_standby_ha(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = {'distributed': False}
+        router_info = mock.MagicMock(router=router)
+        with mock.patch.object(
+            agent.metadata_driver, 'spawn_monitored_metadata_proxy'
+        ) as spawn_metadata_proxy, mock.patch.object(
+            agent.metadata_driver, 'destroy_monitored_metadata_proxy'
+        ) as destroy_metadata_proxy:
+            agent._update_metadata_proxy(router_info, "router_id", "standby")
+        spawn_metadata_proxy.assert_not_called()
+        destroy_metadata_proxy.assert_called()
+
+    def test_enqueue_state_change_router_standby_ha_dvr(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = {'distributed': True}
+        router_info = mock.MagicMock(router=router)
+        with mock.patch.object(
+            agent.metadata_driver, 'spawn_monitored_metadata_proxy'
+        ) as spawn_metadata_proxy, mock.patch.object(
+            agent.metadata_driver, 'destroy_monitored_metadata_proxy'
+        ) as destroy_metadata_proxy:
+            agent._update_metadata_proxy(router_info, "router_id", "standby")
+        spawn_metadata_proxy.assert_called()
+        destroy_metadata_proxy.assert_not_called()
+
     def _test__configure_ipv6_params_on_ext_gw_port_if_necessary_helper(
             self, state, enable_expected):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
