@@ -11,14 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO(hjensas) When we have neutron-lib release, use it.
-# from neutron_lib.api.definitions import port_mac_address_regenerate as apidef
-
-from neutron.extensions import _port_mac_address_regenerate_lib as apidef
+from neutron_lib.api.definitions import port_mac_address_regenerate
 from neutron_lib.api import extensions as api_extensions
 
 
 class Port_mac_address_regenerate(api_extensions.APIExtensionDescriptor):
     """Extension to support port MAC address regeneration"""
 
-    api_definition = apidef
+    api_definition = port_mac_address_regenerate
