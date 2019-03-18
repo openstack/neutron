@@ -57,6 +57,9 @@ class PortForwardingTestCaseBase(ml2_test_base.ML2TestFramework,
     def _delete_floatingip(self, fip_id):
         return self.l3_plugin.delete_floatingip(self.context, fip_id)
 
+    def _get_ports(self, filters):
+        return self.core_plugin.get_ports(self.context, filters=filters)
+
     def _update_port(self, port_id, update_info):
         return self.core_plugin.update_port(
             self.context, port_id, {'port': update_info})
@@ -86,6 +89,13 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         super(PortForwardingTestCase, self).setUp()
         self._prepare_env()
 
+    def _get_network_port_ips(self):
+        net_ports = self._get_ports(
+            filters={"network_id": [self.net['id']]})
+        net_port_ips = [
+            p['fixed_ips'][0]['ip_address'] for p in net_ports]
+        return net_port_ips
+
     def _prepare_env(self):
         self.router = self._create_router(distributed=True)
         self.ext_net = self._create_network(
@@ -101,9 +111,13 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         self._set_router_gw(self.router['id'], self.ext_net['id'])
         self._add_router_interface(self.router['id'], self.subnet['id'])
         self.fip = self._create_floatingip(self.ext_net['id'])
+
+        self.port_ip = self._find_ip_address(
+            self.subnet, exclude=self._get_network_port_ips(), is_random=True)
         self.port = self._create_port(
             self.fmt, self.net['id'],
-            fixed_ips=[{'subnet_id': self.subnet['id']}]).json['port']
+            fixed_ips=[{'subnet_id': self.subnet['id'],
+                        'ip_address': self.port_ip}]).json['port']
         self.port_forwarding = {
             apidef.RESOURCE_NAME:
                 {apidef.EXTERNAL_PORT: 2225,
@@ -445,7 +459,10 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
                           funcs, args_list)
 
     def test_concurrent_create_port_forwarding_update_port(self):
-        new_ip = self._find_ip_address(self.subnet)
+        new_ip = self._find_ip_address(
+            self.subnet,
+            exclude=self._get_network_port_ips(),
+            is_random=True)
         funcs = [self.pf_plugin.create_floatingip_port_forwarding,
                  self._update_port]
         args_list = [(self.context, self.fip['id'], self.port_forwarding),
