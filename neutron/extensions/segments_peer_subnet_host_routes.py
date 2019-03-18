@@ -10,9 +10,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.extensions import _segments_peer_subnet_host_routes_lib as apidef
+from neutron_lib.api.definitions import segments_peer_subnet_host_routes
 from neutron_lib.api import extensions
 
 
 class Segments_peer_subnet_host_routes(extensions.APIExtensionDescriptor):
-    api_definition = apidef
+    api_definition = segments_peer_subnet_host_routes
