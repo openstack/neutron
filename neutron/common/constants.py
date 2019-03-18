@@ -134,6 +134,28 @@ IPTABLES_PROTOCOL_NAME_MAP = {lib_constants.PROTO_NAME_IPV6_ENCAP: 'ipv6',
                               '141': 'wesp',
                               '142': 'rohc'}
 
+# Security group protocols that support ports
+SG_PORT_PROTO_NUMS = [
+    lib_constants.PROTO_NUM_DCCP,
+    lib_constants.PROTO_NUM_SCTP,
+    lib_constants.PROTO_NUM_TCP,
+    lib_constants.PROTO_NUM_UDP,
+    lib_constants.PROTO_NUM_UDPLITE
+]
+
+SG_PORT_PROTO_NAMES = [
+    lib_constants.PROTO_NAME_DCCP,
+    lib_constants.PROTO_NAME_SCTP,
+    lib_constants.PROTO_NAME_TCP,
+    lib_constants.PROTO_NAME_UDP,
+    lib_constants.PROTO_NAME_UDPLITE
+]
+
+# iptables protocols that only support --dport and --sport using -m multiport
+IPTABLES_MULTIPORT_ONLY_PROTOCOLS = [
+    lib_constants.PROTO_NAME_UDPLITE
+]
+
 # A length of a iptables chain name must be less than or equal to 11
 # characters.
 # <max length of iptables chain name> - (<binary_name> + '-') = 28-(16+1) = 11

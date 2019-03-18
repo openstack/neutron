@@ -415,6 +415,32 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
+    def test_filter_ipv4_ingress_udplite_port(self):
+        rule = {'ethertype': 'IPv4',
+                'direction': 'ingress',
+                'protocol': 'udplite',
+                'port_range_min': 10,
+                'port_range_max': 10}
+        ingress = mock.call.add_rule(
+            'ifake_dev',
+            '-p udplite -m multiport --dports 10 -j RETURN',
+            top=False, comment=None)
+        egress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv4_ingress_udplite_mport(self):
+        rule = {'ethertype': 'IPv4',
+                'direction': 'ingress',
+                'protocol': 'udplite',
+                'port_range_min': 10,
+                'port_range_max': 100}
+        ingress = mock.call.add_rule(
+            'ifake_dev',
+            '-p udplite -m multiport --dports 10:100 -j RETURN',
+            top=False, comment=None)
+        egress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
     def test_filter_ipv4_ingress_protocol_blank(self):
         rule = {'ethertype': 'IPv4',
                 'direction': 'ingress',

@@ -1,0 +1,11 @@
+---
+upgrade:
+  - |
+    The Neutron API now enforces that ports are a valid option for
+    security group rules based on the protocol given, instead of
+    relying on the backend firewall driver to do this enforcement,
+    typically silently ignoring the port option in the rule. The
+    valid set of whitelisted protocols that support ports are TCP,
+    UDP, UDPLITE, SCTP and DCCP. Ports used with other protocols
+    will now generate an HTTP 400 error. For more information, see
+    bug `1818385 <https://bugs.launchpad.net/neutron/+bug/1818385>`_.

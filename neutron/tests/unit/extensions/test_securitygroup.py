@@ -608,17 +608,18 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             self.deserialize(self.fmt, res)
             self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
 
-    def test_create_security_group_rule_protocol_as_number_with_port(self):
+    def test_create_security_group_rule_protocol_as_number_with_port_bad(self):
+        # When specifying ports, neither can be None
         name = 'webservers'
         description = 'my webservers'
         with self.security_group(name, description) as sg:
             security_group_id = sg['security_group']['id']
-            protocol = 111
+            protocol = 6
             rule = self._build_security_group_rule(
-                security_group_id, 'ingress', protocol, '70')
+                security_group_id, 'ingress', protocol, '70', None)
             res = self._create_security_group_rule(self.fmt, rule)
             self.deserialize(self.fmt, res)
-            self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+            self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
     def test_create_security_group_rule_protocol_as_number_range(self):
         # This is a SG rule with a port range, but treated as a single
@@ -627,22 +628,22 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         description = 'my webservers'
         with self.security_group(name, description) as sg:
             security_group_id = sg['security_group']['id']
-            protocol = 111
+            protocol = 6
             rule = self._build_security_group_rule(
                 security_group_id, 'ingress', protocol, '70', '70')
             res = self._create_security_group_rule(self.fmt, rule)
             self.deserialize(self.fmt, res)
             self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
 
-    def test_create_security_group_rule_protocol_as_number_range_bad(self):
-        # Only certain protocols support a SG rule with a port range
+    def test_create_security_group_rule_protocol_as_number_port_bad(self):
+        # Only certain protocols support a SG rule with a port
         name = 'webservers'
         description = 'my webservers'
         with self.security_group(name, description) as sg:
             security_group_id = sg['security_group']['id']
             protocol = 111
             rule = self._build_security_group_rule(
-                security_group_id, 'ingress', protocol, '70', '71')
+                security_group_id, 'ingress', protocol, '70', '70')
             res = self._create_security_group_rule(self.fmt, rule)
             self.deserialize(self.fmt, res)
             self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
