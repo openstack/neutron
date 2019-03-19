@@ -2,7 +2,7 @@
 
 set -ex
 
-VENV=${1:-"dsvm-fullstack"}
+VENV=${1:-"api"}
 FLAVOR=${2:-"all"}
 
 GATE_DEST=$BASE/new
@@ -55,42 +55,6 @@ function load_rc_for_rally {
 
 
 case $VENV in
-"dsvm-fullstack")
-    # The following need to be set before sourcing
-    # configure_for_func_testing.
-    GATE_STACK_USER=stack
-    PROJECT_NAME=neutron
-    IS_GATE=True
-    LOCAL_CONF=$DEVSTACK_PATH/local.conf
-
-    source $DEVSTACK_PATH/functions
-    source $NEUTRON_PATH/devstack/lib/ovs
-
-    source $NEUTRON_PATH/tools/configure_for_func_testing.sh
-
-    configure_host_for_func_testing
-
-    # Because of bug present in current Ubuntu Xenial kernel version
-    # we need a fix for VXLAN local tunneling.
-    if [[ "$VENV" =~ "dsvm-fullstack" ]]; then
-        if is_ubuntu && [ ${DISTRO} == "xenial" ]; then
-            # The OVS_BRANCH variable is used by git checkout. In the case below,
-            # we use openvswitch release 2.9.3 that contains a fix for usage of
-            # VXLAN tunnels on a single node (ovs repository commit
-            # 741f47cf35df2bfc7811b2cff75c9bb8d05fd26f). This can be dropped once
-            # we switch to Ubuntu Bionic nodes, where kernel has the fix
-            OVS_BRANCH="v2.9.3"
-            compile_ovs_kernel_module
-        fi
-    fi
-
-    # prepare base environment for ./stack.sh
-    load_rc_hook stack_base
-
-    # enable monitoring
-    load_rc_hook dstat
-    ;;
-
 "api"|"api-pecan"|"full-pecan"|"dsvm-scenario-ovs")
     # TODO(ihrachys) consider feeding result of ext-list into tempest.conf
     load_rc_hook api_all_extensions

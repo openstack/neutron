@@ -145,19 +145,14 @@
 
 - job:
     name: neutron-fullstack
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-fullstack/run.yaml
-    post-run: playbooks/legacy/neutron-fullstack/post.yaml
-    timeout: 7800
-    required-projects:
-      - openstack-infra/devstack-gate
-      - openstack/neutron
-    irrelevant-files:
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^releasenotes/.*$
-
+    parent: neutron-functional
+    vars:
+      tox_envlist: dsvm-fullstack
+      zuul_copy_output:
+        # We need to copy directory with logs to have it in job artifacts also,
+        # /opt/stack/logs is default logs directory defined in neutron's
+        # tox.ini file
+        '{{ devstack_base_dir }}/logs/dsvm-fullstack-logs': logs
 
 - job:
     name: neutron-rally-task
@@ -415,18 +410,10 @@
 
 - job:
     name: neutron-fullstack-with-uwsgi
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-fullstack-with-uwsgi/run.yaml
-    post-run: playbooks/legacy/neutron-fullstack-with-uwsgi/post.yaml
-    timeout: 7800
-    required-projects:
-      - openstack-infra/devstack-gate
-      - openstack/neutron
-    irrelevant-files:
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^releasenotes/.*$
+    parent: neutron-fullstack
+    vars:
+      devstack_localrc:
+        NEUTRON_DEPLOY_MOD_WSGI: true
     voting: false
 
 - job:
