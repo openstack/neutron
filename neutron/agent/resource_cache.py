@@ -48,7 +48,7 @@ class RemoteResourceCache(object):
     def start_watcher(self):
         self._watcher = RemoteResourceWatcher(self)
 
-    def get_resource_by_id(self, rtype, obj_id):
+    def get_resource_by_id(self, rtype, obj_id, agent_restarted=False):
         """Returns None if it doesn't exist."""
         if obj_id in self._deleted_ids_by_type[rtype]:
             return None
@@ -56,10 +56,12 @@ class RemoteResourceCache(object):
         if cached_item:
             return cached_item
         # try server in case object existed before agent start
-        self._flood_cache_for_query(rtype, id=(obj_id, ))
+        self._flood_cache_for_query(rtype, id=(obj_id, ),
+                                    agent_restarted=agent_restarted)
         return self._type_cache(rtype).get(obj_id)
 
-    def _flood_cache_for_query(self, rtype, **filter_kwargs):
+    def _flood_cache_for_query(self, rtype, agent_restarted=False,
+                               **filter_kwargs):
         """Load info from server for first query.
 
         Queries the server if this is the first time a given query for
@@ -80,7 +82,8 @@ class RemoteResourceCache(object):
                 # been updated already and pushed to us in another thread.
                 LOG.debug("Ignoring stale update for %s: %s", rtype, resource)
                 continue
-            self.record_resource_update(context, rtype, resource)
+            self.record_resource_update(context, rtype, resource,
+                                        agent_restarted=agent_restarted)
         LOG.debug("%s resources returned for queries %s", len(resources),
                   query_ids)
         self._satisfied_server_queries.update(query_ids)
@@ -158,7 +161,8 @@ class RemoteResourceCache(object):
             return True
         return False
 
-    def record_resource_update(self, context, rtype, resource):
+    def record_resource_update(self, context, rtype, resource,
+                               agent_restarted=False):
         """Takes in an OVO and generates an event on relevant changes.
 
         A change is deemed to be relevant if it is not stale and if any
@@ -189,7 +193,8 @@ class RemoteResourceCache(object):
         registry.notify(rtype, events.AFTER_UPDATE, self,
                         context=context, changed_fields=changed_fields,
                         existing=existing, updated=resource,
-                        resource_id=resource.id)
+                        resource_id=resource.id,
+                        agent_restarted=agent_restarted)
 
     def record_resource_delete(self, context, rtype, resource_id):
         # deletions are final, record them so we never

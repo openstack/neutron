@@ -402,11 +402,19 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     def port_update(self, context, **kwargs):
         port = kwargs.get('port')
+        agent_restarted = kwargs.pop("agent_restarted", False)
         # Put the port identifier in the updated_ports set.
         # Even if full port details might be provided to this call,
         # they are not used since there is no guarantee the notifications
         # are processed in the same order as the relevant API requests
-        self.updated_ports.add(port['id'])
+        if not agent_restarted:
+            # When ovs-agent is just restarted, the first RPC loop will
+            # process all the port as 'added'. And all of these ports will
+            # send a port_update notification after that processing. This
+            # will cause all these ports to be processed again in next RPC
+            # loop as 'updated'. So here we just ignore such local update
+            # notification.
+            self.updated_ports.add(port['id'])
 
     def port_delete(self, context, **kwargs):
         port_id = kwargs.get('port_id')
@@ -1586,12 +1594,14 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         skipped_devices = []
         need_binding_devices = []
         binding_no_activated_devices = set()
+        agent_restarted = self.iter_num == 0
         devices_details_list = (
             self.plugin_rpc.get_devices_details_list_and_failed_devices(
                 self.context,
                 devices,
                 self.agent_id,
-                self.conf.host))
+                self.conf.host,
+                agent_restarted))
         failed_devices = set(devices_details_list.get('failed_devices'))
 
         devices = devices_details_list.get('devices')

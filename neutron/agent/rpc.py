@@ -125,7 +125,8 @@ class PluginApi(object):
                           devices=devices, agent_id=agent_id, host=host)
 
     def get_devices_details_list_and_failed_devices(self, context, devices,
-                                                    agent_id, host=None):
+                                                    agent_id, host=None,
+                                                    **kwargs):
         """Get devices details and the list of devices that failed.
 
         This method returns the devices details. If an error is thrown when
@@ -224,6 +225,7 @@ class CacheBackedPluginApi(PluginApi):
         the payloads the handlers are expecting (an ID).
         """
         rtype = rtype.lower()  # all legacy handlers don't camelcase
+        agent_restarted = kwargs.pop("agent_restarted", None)
         method, host_with_activation, host_with_deactivation = (
             self._get_method_host(rtype, event, **kwargs))
         if not hasattr(self._legacy_interface, method):
@@ -240,6 +242,9 @@ class CacheBackedPluginApi(PluginApi):
         else:
             payload = {rtype: {'id': resource_id},
                        '%s_id' % rtype: resource_id}
+            if method == "port_update" and agent_restarted is not None:
+                # Mark ovs-agent restart for local port_update
+                payload["agent_restarted"] = agent_restarted
             getattr(self._legacy_interface, method)(context, **payload)
 
     def _get_method_host(self, rtype, event, **kwargs):
@@ -284,20 +289,23 @@ class CacheBackedPluginApi(PluginApi):
         return method, host_with_activation, host_with_deactivation
 
     def get_devices_details_list_and_failed_devices(self, context, devices,
-                                                    agent_id, host=None):
+                                                    agent_id, host=None,
+                                                    agent_restarted=False):
         result = {'devices': [], 'failed_devices': []}
         for device in devices:
             try:
                 result['devices'].append(
-                    self.get_device_details(context, device, agent_id, host))
+                    self.get_device_details(context, device, agent_id, host,
+                                            agent_restarted))
             except Exception:
                 LOG.exception("Failed to get details for device %s", device)
                 result['failed_devices'].append(device)
         return result
 
-    def get_device_details(self, context, device, agent_id, host=None):
+    def get_device_details(self, context, device, agent_id, host=None,
+                           agent_restarted=False):
         port_obj = self.remote_resource_cache.get_resource_by_id(
-            resources.PORT, device)
+            resources.PORT, device, agent_restarted)
         if not port_obj:
             LOG.debug("Device %s does not exist in cache.", device)
             return {'device': device}
