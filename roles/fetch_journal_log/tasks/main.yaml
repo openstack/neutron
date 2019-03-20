@@ -1,6 +1,5 @@
 - name: Ensure {{ journal_log_path }} exists
   become: yes
-  msg: "Ensure logdir {{ journal_log_path }} exists and have correct permission"
   file:
     path: "{{ journal_log_path }}"
     state: directory

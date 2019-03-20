@@ -1,6 +1,5 @@
 - name: Ensure logdir exists
   become: yes
-  msg: "Ensure logdir {{ logdir }} exists and have correct permission"
   file:
     path: "{{ logdir }}"
     state: directory
