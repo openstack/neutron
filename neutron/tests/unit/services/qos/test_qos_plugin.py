@@ -501,6 +501,63 @@ class TestQosPlugin(base.BaseQosTestCase):
                 self.qos_plugin.create_policy_minimum_bandwidth_rule,
                 self.ctxt, policy.id, self.rule_data)
 
+    def test_create_min_bw_rule_on_bound_port(self):
+        policy = self._get_policy()
+        policy.rules = [self.min_rule]
+        segment = network_object.NetworkSegment(
+            physical_network='fake physnet')
+        net = network_object.Network(
+            self.ctxt,
+            segments=[segment])
+        port = ports_object.Port(
+            self.ctxt,
+            id=uuidutils.generate_uuid(),
+            network_id=uuidutils.generate_uuid(),
+            device_owner='compute:fake-zone')
+        with mock.patch(
+                'neutron.objects.qos.policy.QosPolicy.get_object',
+                return_value=policy), \
+            mock.patch(
+                'neutron.objects.network.Network.get_object',
+                return_value=net), \
+            mock.patch.object(
+                self.qos_plugin,
+                '_get_ports_with_policy',
+                return_value=[port]):
+            self.assertRaises(
+                NotImplementedError,
+                self.qos_plugin.create_policy_minimum_bandwidth_rule,
+                self.ctxt, policy.id, self.rule_data)
+
+    def test_create_min_bw_rule_on_unbound_port(self):
+        policy = self._get_policy()
+        policy.rules = [self.min_rule]
+        segment = network_object.NetworkSegment(
+            physical_network='fake physnet')
+        net = network_object.Network(
+            self.ctxt,
+            segments=[segment])
+        port = ports_object.Port(
+            self.ctxt,
+            id=uuidutils.generate_uuid(),
+            network_id=uuidutils.generate_uuid(),
+            device_owner='')
+        with mock.patch(
+                'neutron.objects.qos.policy.QosPolicy.get_object',
+                return_value=policy), \
+            mock.patch(
+                'neutron.objects.network.Network.get_object',
+                return_value=net), \
+            mock.patch.object(
+                self.qos_plugin,
+                '_get_ports_with_policy',
+                return_value=[port]):
+            try:
+                self.qos_plugin.create_policy_minimum_bandwidth_rule(
+                    self.ctxt, policy.id, self.rule_data)
+            except NotImplementedError:
+                self.fail()
+
     @mock.patch(
         'neutron.objects.rbac_db.RbacNeutronDbObjectMixin'
         '.create_rbac_policy')
