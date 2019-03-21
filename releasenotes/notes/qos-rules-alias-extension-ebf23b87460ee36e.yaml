@@ -1,0 +1,9 @@
+---
+prelude: >
+    Support alias end points for rules in QoS API.
+features:
+  - |
+    The ``qos-rules-alias`` API extension was implemented to enable users to
+    perform GET, PUT and DELETE operations on QoS rules as though they are
+    first level resources. In other words, the user doesn't have to specify the
+    QoS policy ID.

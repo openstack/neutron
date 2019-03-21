@@ -236,6 +236,105 @@ rules = [
             },
         ]
     ),
+    policy.DocumentedRuleDefault(
+        'get_alias_bandwidth_limit_rule',
+        'rule:get_policy_bandwidth_limit_rule',
+        'Get a QoS bandwidth limit rule through alias',
+        [
+            {
+                'method': 'GET',
+                'path': '/qos/alias_bandwidth_limit_rules/{rule_id}/',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_alias_bandwidth_limit_rule',
+        'rule:update_policy_bandwidth_limit_rule',
+        'Update a QoS bandwidth limit rule through alias',
+        [
+            {
+                'method': 'PUT',
+                'path': '/qos/alias_bandwidth_limit_rules/{rule_id}/',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_alias_bandwidth_limit_rule',
+        'rule:delete_policy_bandwidth_limit_rule',
+        'Delete a QoS bandwidth limit rule through alias',
+        [
+            {
+                'method': 'DELETE',
+                'path': '/qos/alias_bandwidth_limit_rules/{rule_id}/',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'get_alias_dscp_marking_rule',
+        'rule:get_policy_dscp_marking_rule',
+        'Get a QoS DSCP marking rule through alias',
+        [
+            {
+                'method': 'GET',
+                'path': '/qos/alias_dscp_marking_rules/{rule_id}/',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_alias_dscp_marking_rule',
+        'rule:update_policy_dscp_marking_rule',
+        'Update a QoS DSCP marking rule through alias',
+        [
+            {
+                'method': 'PUT',
+                'path': '/qos/alias_dscp_marking_rules/{rule_id}/',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_alias_dscp_marking_rule',
+        'rule:delete_policy_dscp_marking_rule',
+        'Delete a QoS DSCP marking rule through alias',
+        [
+            {
+                'method': 'DELETE',
+                'path': '/qos/alias_dscp_marking_rules/{rule_id}/',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'get_alias_minimum_bandwidth_rule',
+        'rule:get_policy_minimum_bandwidth_rule',
+        'Get a QoS minimum bandwidth rule through alias',
+        [
+            {
+                'method': 'GET',
+                'path': '/qos/alias_minimum_bandwidth_rules/{rule_id}/',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'update_alias_minimum_bandwidth_rule',
+        'rule:update_policy_minimum_bandwidth_rule',
+        'Update a QoS minimum bandwidth rule through alias',
+        [
+            {
+                'method': 'PUT',
+                'path': '/qos/alias_minimum_bandwidth_rules/{rule_id}/',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'delete_alias_minimum_bandwidth_rule',
+        'rule:delete_policy_minimum_bandwidth_rule',
+        'Delete a QoS minimum bandwidth rule through alias',
+        [
+            {
+                'method': 'DELETE',
+                'path': '/qos/alias_minimum_bandwidth_rules/{rule_id}/',
+            },
+        ]
+    ),
 ]
 
 
