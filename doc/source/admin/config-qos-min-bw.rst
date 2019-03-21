@@ -1,5 +1,5 @@
-Quality of Service (QoS): Guaranteed Bandwidth
-==============================================
+Quality of Service (QoS): Guaranteed Minimum Bandwidth
+======================================================
 
 Most Networking Quality of Service (QoS) features are implemented solely
 by OpenStack Neutron and they are already documented in the :doc:`QoS
@@ -17,8 +17,8 @@ use the Guaranteed Minimum Bandwidth feature.
 A guarantee of minimum available bandwidth can be enforced on two levels:
 
 * Scheduling a server on a compute host where the bandwidth is available.
-  To be more precise: scheduling a server's port on a compute host's
-  physical network interface where the bandwidth is available.
+  To be more precise: scheduling one or more ports of a server on a compute
+  host's physical network interfaces where the bandwidth is available.
 * Queueing network packets on a physical network interface to provide the
   guaranteed bandwidth.
 
@@ -34,14 +34,14 @@ here we only document the placement-level enforcement.
 Limitations
 -----------
 
-* A port with a ``minimum-bandwidth`` rule must be passed when booting a
-  server (``openstack server create``). Passing a network with a
-  minimum-bandwidth rule at boot is rejected because of technical
-  reasons (in this case the port is created too late for Neutron to
-  affect scheduling).
+* A pre-created port with a ``minimum-bandwidth`` rule must be passed
+  when booting a server (``openstack server create``). Passing a network
+  with a minimum-bandwidth rule at boot is not supported because of
+  technical reasons (in this case the port is created too late for
+  Neutron to affect scheduling).
 
 * Bandwidth guarantees for ports can only be requested on networks
-  backed by physnets.
+  backed by a physical network (physnet).
 
 * In Stein there is no support for networks with multiple physnets.
   However some simpler multi-segment networks are still supported:
@@ -87,15 +87,15 @@ Limitations
   <https://developer.openstack.org/api-guide/compute/port_with_resource_request.html>`_
   of the OpenStack Compute API Guide.
 
-* If an SR-IOV physical function is configured for use by neutron-ovs-agent,
-  and the same physical function's virtual functions are configured
-  for use by the neutron-sriov-agent then the available bandwidth must
-  be statically split between the corresponding resource providers by
-  administrative choice. For example a 10g SR-IOV capable physical NIC
-  could be treated as two independent NICs - a 5g NIC (technically the
-  physical function of the NIC) added to an Open vSwitch bridge, and
-  another 5g NIC whose virtual functions can be handed out to servers
-  by neutron-sriov-agent.
+* If an SR-IOV physical function is configured for use by the
+  neutron-openvswitch-agent, and the same physical function's virtual
+  functions are configured for use by the neutron-sriov-agent then the
+  available bandwidth must be statically split between the corresponding
+  resource providers by administrative choice. For example a 10 Gbps
+  SR-IOV capable physical NIC could be treated as two independent NICs -
+  a 5 Gbps NIC (technically the physical function of the NIC) added to
+  an Open vSwitch bridge, and another 5 Gbps NIC whose virtual functions
+  can be handed out to servers by neutron-sriov-agent.
 
 Placement pre-requisites
 ------------------------
@@ -144,27 +144,48 @@ provider information from neutron-server to Placement.
 Since neutron-server talks to Placement you need to configure how
 neutron-server should find Placement and authenticate to it.
 
-``neutron.conf``:
+``/etc/neutron/neutron.conf`` (on controller nodes):
 
 .. code-block:: ini
 
     [DEFAULT]
     service_plugins = placement,...
+    auth_strategy = keystone
 
     [placement]
     auth_type = password
-    auth_url = https://keystone.address/identity
+    auth_url = https://controller/identity
     password = secret
     project_domain_name = Default
     project_name = service
     user_domain_name = Default
     username = placement
 
-neutron-ovs-agent config
-~~~~~~~~~~~~~~~~~~~~~~~~
+If a vnic_type is supported by default by multiple ML2 mechanism
+drivers (e.g. ``vnic_type=direct`` by both ``openvswitch`` and
+``sriovnicswitch``) and multiple agents' resources are also meant to be
+tracked by Placement, then the admin must decide which driver to take
+ports of that vnic_type by blacklisting the vnic_type for the unwanted
+drivers. Use :oslo.config:option:`ovs_driver.vnic_type_blacklist` in this
+case. Valid values are all the ``supported_vnic_types`` of the
+`respective mechanism drivers
+<https://docs.openstack.org/neutron/latest/admin/config-ml2.html#supported-vnic-types>`_.
 
-Set agent configuration as the authentic source of the resources
-available. Set it on a per-bridge basis by
+``/etc/neutron/plugins/ml2/ml2_conf.ini`` (on controller nodes):
+
+.. code-block:: ini
+
+    [ovs_driver]
+    vnic_type_blacklist = direct
+
+    [sriov_driver]
+    #vnic_type_blacklist = direct
+
+neutron-openvswitch-agent config
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Set the agent configuration as the authentic source of
+the resources available. Set it on a per-bridge basis by
 :oslo.config:option:`ovs.resource_provider_bandwidths`.
 The format is: ``bridge:egress:ingress,...``
 You may set only one direction and omit the other.
@@ -177,23 +198,13 @@ You may set only one direction and omit the other.
     Egress and ingress available bandwidth values are in ``kilobit/sec (kbps)``.
 
 If desired, resource provider inventory fields can be tweaked on a
-per agent basis by setting
+per-agent basis by setting
 :oslo.config:option:`ovs.resource_provider_inventory_defaults`.
 Valid values are all the
 `optional parameters of the update resource provider inventory call
 <https://developer.openstack.org/api-ref/placement/?expanded=update-resource-provider-inventory-detail#update-resource-provider-inventory>`_.
 
-If a vnic_type is supported by default by multiple ML2 mechanism
-drivers (e.g. ``vnic_type=direct`` by both ``openvswitch`` and
-``sriovnicswitch``) and multiple agents' resources are also meant to be
-tracked by Placement, then the admin must decide which driver to take
-ports of that vnic_type by blacklisting the vnic_type for the unwanted
-drivers. Use :oslo.config:option:`ovs_driver.vnic_type_blacklist` in this
-case. Valid values are all the ``supported_vnic_types`` of the
-`respective mechanism drivers
-<https://docs.openstack.org/neutron/latest/admin/config-ml2.html#supported-vnic-types>`_.
-
-``ovs_agent.ini`` or ``ml2_conf.ini``:
+``/etc/neutron/plugins/ml2/ovs_agent.ini`` (on compute and network nodes):
 
 .. code-block:: ini
 
@@ -202,14 +213,11 @@ case. Valid values are all the ``supported_vnic_types`` of the
     resource_provider_bandwidths = br-physnet0:10000000:10000000,...
     #resource_provider_inventory_defaults = step_size:1000,...
 
-    [ovs_driver]
-    vnic_type_blacklist = direct
-
 neutron-sriov-agent config
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The configuration of neutron-sriov-agent is analog to that of
-neutron-ovs-agent. However look out for:
+neutron-openvswitch-agent. However look out for:
 
 * The different .ini section names as you can see below.
 * That neutron-sriov-agent allows a physnet to be backed by multiple physical
@@ -217,7 +225,7 @@ neutron-ovs-agent. However look out for:
 * Of course refer to SR-IOV physical functions instead of bridges in
   :oslo.config:option:`sriov_nic.resource_provider_bandwidths`.
 
-``sriov_agent.ini``:
+``/etc/neutron/plugins/ml2/sriov_agent.ini`` (on compute nodes):
 
 .. code-block:: ini
 
@@ -225,9 +233,6 @@ neutron-ovs-agent. However look out for:
     physical_device_mappings = physnet0:ens5,physnet0:ens6,...
     resource_provider_bandwidths = ens5:40000000:40000000,ens6:40000000:40000000,...
     #resource_provider_inventory_defaults = step_size:1000,...
-
-    [sriov_driver]
-    #vnic_type_blacklist = direct
 
 Propagation of resource information
 -----------------------------------
@@ -237,7 +242,7 @@ The flow of information is different for available and used resources.
 The authentic source of available resources is neutron agent configuration -
 where the resources actually exist, as described in the agent configuration
 sections above. This information is propagated in the following chain:
-``neutron-x-agent -> neutron-server -> Placement``.
+``neutron-l2-agent -> neutron-server -> Placement``.
 
 From neutron agent to server the information is included in the
 ``configurations`` field of the agent heartbeat message sent on the message
@@ -264,6 +269,7 @@ queue periodically.
                                               'reserved': 0,
                                               'step_size': 1},
      ...
+    }
 
 Re-reading the resource related subset of configuration on ``SIGHUP`` is not
 implemented. The agent must be restarted to pick up and send changed
@@ -310,7 +316,7 @@ than Neutron).
 It is important to note that the restart of neutron-server does not trigger
 any kind of re-sync to Placement (to avoid an update storm).
 
-As mentioned before the information flow for resources requested and
+As mentioned before, the information flow for resources requested and
 (if proper) allocated is different. It involves a conversation between Nova,
 Neutron and Placement.
 
@@ -375,7 +381,7 @@ servers with those ports:
         --network net0 \
         --qos-policy policy0
 
-    # alternatively an sr-iov port, unused in this example
+    # alternatively an SR-IOV port, unused in this example
     $ openstack port create port-direct-qos \
         --network net0 \
         --vnic-type direct \
@@ -393,37 +399,38 @@ Since Placement carries a global view of a cloud deployment's resources
 (what is available, what is used) it may in some conditions get out of sync
 with reality.
 
-One important case is when the Neutron-only Minimum Guaranteed Bandwidth
+One important case is when the data-plane-only Minimum Guaranteed Bandwidth
 feature was used before Stein (first released in Newton). Since before Stein
 guarantees were not enforced during server placement the available resources
 may have become overallocated without notice. In this case Placement's view
-and the reality of resource use should be made consistent during/after an
+and the reality of resource usage should be made consistent during/after an
 upgrade to Stein.
 
 Another case stems from OpenStack not having distributed transactions to
 allocate resources provided by multiple OpenStack components (here Nova and
 Neutron). There are known race conditions in which Placement's view may get
-out of touch with reality. The design knowingly minimizes the race condition
-windows though. Known problems:
+out of sync with reality. The design knowingly minimizes the race condition
+windows, but there are known problems:
 
-* A QoS policy is modified after Nova read a port's ``resource_request``
-  but before the port is bound.
-* `A bound port with a resource allocation is deleted. The port's allocation
-  is leaked. <https://bugs.launchpad.net/nova/+bug/1820588>`_
+* If a QoS policy is modified after Nova read a port's ``resource_request``
+  but before the port is bound its state before the modification will be
+  applied.
+* If a bound port with a resource allocation is deleted. The port's allocation
+  is leaked. `<https://bugs.launchpad.net/nova/+bug/1820588>`_
 
 .. note::
 
-  Deleting a bound port has no known use case though. Please consider
-  detaching the interface first by ``openstack server remove port`` instead.
+  Deleting a bound port has no known use case. Please consider detaching
+  the interface first by ``openstack server remove port`` instead.
 
 Incorrect allocations may be fixed by:
 
-* Moving a server deletes the wrong and re-creates the proper allocation
-  as soon as move operations are implemented (not in Stein unfortunately).
-  Moving servers fixes local overallocations.
+* Moving the server, which will delete the wrong allocation and create the
+  correct allocation as soon as move operations are implemented (not in Stein
+  unfortunately). Moving servers fixes local overallocations.
 * The need for an upgrade-helper allocation healing tool is being tracked in
-  `bug/1819923 <https://bugs.launchpad.net/nova/+bug/1819923>`_.
-* Manually by `openstack resource provider allocation set
+  `bug 1819923 <https://bugs.launchpad.net/nova/+bug/1819923>`_.
+* Manually, by using `openstack resource provider allocation set
   <https://docs.openstack.org/osc-placement/latest/cli/index.html#resource-provider-allocation-set>`_
   /`delete <https://docs.openstack.org/osc-placement/latest/cli/index.html#resource-provider-allocation-delete>`_.
 
@@ -449,12 +456,16 @@ Debugging
     # as admin
     $ openstack network agent show ... | grep configurations
 
+Please find an example in section `Propagation of resource information`_.
+
 * Did neutron-server successfully sync to Placement?
 
 .. code-block:: console
 
     # as admin
     $ openstack network agent show ... | grep resources_synced
+
+Please find an example in section `Propagation of resource information`_.
 
 * Is the resource provider tree correct? Is the root a compute host? One level
   below the agents? Two levels below the physical network interfaces?
