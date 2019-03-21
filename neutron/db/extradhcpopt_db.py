@@ -19,6 +19,7 @@ from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 
 from neutron.objects.port.extensions import extra_dhcp_opt as obj_extra_dhcp
+from neutron.objects import ports as port_obj
 
 
 @resource_extend.has_resource_extenders
@@ -119,8 +120,12 @@ class ExtraDhcpOptMixin(object):
     @staticmethod
     @resource_extend.extends([port_def.COLLECTION_NAME])
     def _extend_port_dict_extra_dhcp_opt(res, port):
+        if isinstance(port, port_obj.Port):
+            port_dhcp_options = port.get('dhcp_options')
+        else:
+            port_dhcp_options = port.dhcp_opts
         res[edo_ext.EXTRADHCPOPTS] = [{'opt_name': dho.opt_name,
                                        'opt_value': dho.opt_value,
                                        'ip_version': dho.ip_version}
-                                      for dho in port.dhcp_opts]
+                                      for dho in port_dhcp_options]
         return res

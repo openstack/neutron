@@ -13,7 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import functools
+import weakref
 
 import fixtures
 import mock
@@ -24,6 +26,7 @@ from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import multiprovidernet as mpnet_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions as c_exc
 from neutron_lib.callbacks import registry
@@ -282,6 +285,43 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
             kwargs = after_delete.mock_calls[0][2]
             self.assertEqual(n['network']['id'],
                              kwargs['network']['id'])
+
+    def test_create_port_obj_bulk(self):
+        cfg.CONF.set_override('base_mac', "12:34:56:00")
+        test_mac = "00-12-34-56-78-90"
+        num_ports = 4
+        plugin = directory.get_plugin()
+        # Most of the plugin methods are undefined in a weakproxy.  This is not
+        # the case most fo the time - Ml2Plugin is typically the plugin here -
+        # but the IPAM classes that inherit this test have a weakproxy here and
+        # thus fail.  This avoids that error.
+        if isinstance(plugin, weakref.ProxyTypes):
+            self.skipTest("Bulk port method tests do not apply to IPAM plugin")
+        tenant_id = 'some_tenant'
+        device_owner = "me"
+        ctx = context.Context('', tenant_id)
+        with self.network(tenant_id=tenant_id) as network_to_use:
+            net_id = network_to_use['network']['id']
+            port = {'port': {'name': 'port',
+                             'network_id': net_id,
+                             'mac_address': constants.ATTR_NOT_SPECIFIED,
+                             'fixed_ips': constants.ATTR_NOT_SPECIFIED,
+                             'admin_state_up': True,
+                             'device_id': 'device_id',
+                             'device_owner': device_owner,
+                             'tenant_id': tenant_id}}
+            ports = [copy.deepcopy(port) for x in range(num_ports)]
+            ports[1]['port']['mac_address'] = test_mac
+            port_data = plugin.create_port_obj_bulk(ctx, ports)
+            self.assertEqual(num_ports, len(port_data))
+            result_macs = []
+            for port in port_data:
+                port_mac = str(port.get('mac_address'))
+                self.assertIsNone(validators.validate_mac_address(port_mac))
+                result_macs.append(port_mac)
+                for ip_addr in port.get('fixed_ips'):
+                    self.assertIsNone(validators.validate_ip_address(ip_addr))
+            self.assertTrue(test_mac in result_macs)
 
     def test_bulk_network_before_and_after_events_outside_of_txn(self):
         # capture session states during each before and after event
@@ -886,27 +926,6 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             self._delete('ports', p['port']['id'])
             self.assertFalse(self.tx_open)
 
-    def test_bulk_ports_before_and_after_events_outside_of_txn(self):
-        with self.network() as n:
-            pass
-        # capture session states during each before and after event
-        before = []
-        after = []
-        b_func = lambda *a, **k: before.append(k['context'].session.is_active)
-        a_func = lambda *a, **k: after.append(k['context'].session.is_active)
-        registry.subscribe(b_func, resources.PORT, events.BEFORE_CREATE)
-        registry.subscribe(a_func, resources.PORT, events.AFTER_CREATE)
-        data = [{'tenant_id': self._tenant_id,
-                 'network_id': n['network']['id']}] * 4
-        self._create_bulk_from_list(
-            self.fmt, 'port', data, context=context.get_admin_context())
-        # ensure events captured
-        self.assertTrue(before)
-        self.assertTrue(after)
-        # ensure session was closed for all
-        self.assertFalse(any(before))
-        self.assertFalse(any(after))
-
     def test_create_router_port_and_fail_create_postcommit(self):
 
         with mock.patch.object(managers.MechanismManager,
@@ -1134,14 +1153,14 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         with self.network() as net:
             plugin = directory.get_plugin()
 
-            with mock.patch.object(plugin, '_bind_port_if_needed',
+            with mock.patch.object(plugin, '_process_port_binding',
                 side_effect=ml2_exc.MechanismDriverError(
-                    method='create_port_bulk')) as _bind_port_if_needed:
+                    method='create_port_bulk')) as _process_port_binding:
 
                 res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
                                              'test', True, context=ctx)
+                self.assertTrue(_process_port_binding.called)
 
-                self.assertTrue(_bind_port_if_needed.called)
                 # We expect a 500 as we injected a fault in the plugin
                 self._validate_behavior_on_bulk_failure(
                     res, 'ports', webob.exc.HTTPServerError.code)
@@ -1156,16 +1175,19 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             res = self._create_port_bulk(self.fmt, 3, net['network']['id'],
                                          'test', True, context=ctx)
             ports = self.deserialize(self.fmt, res)
-            used_sg = ports['ports'][0]['security_groups']
-            m_upd.assert_has_calls(
-                [mock.call(ctx, [sg]) for sg in used_sg], any_order=True)
+            if 'ports' in ports:
+                used_sg = ports['ports'][0]['security_groups']
+                m_upd.assert_has_calls(
+                    [mock.call(ctx, [sg]) for sg in used_sg], any_order=True)
+            else:
+                self.assertTrue('ports' in ports)
 
     def test_create_ports_bulk_with_sec_grp_member_provider_update(self):
         ctx = context.get_admin_context()
         plugin = directory.get_plugin()
+        bulk_mock_name = "security_groups_member_updated"
         with self.network() as net,\
-                mock.patch.object(plugin.notifier,
-                                  'security_groups_member_updated') as m_upd:
+                mock.patch.object(plugin.notifier, bulk_mock_name) as m_upd:
 
             net_id = net['network']['id']
             data = [{
@@ -1183,7 +1205,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                                               data, context=ctx)
             ports = self.deserialize(self.fmt, res)
             used_sg = ports['ports'][0]['security_groups']
-            m_upd.assert_called_once_with(ctx, used_sg)
+            m_upd.assert_called_with(ctx, used_sg)
             m_upd.reset_mock()
             data[0]['device_owner'] = constants.DEVICE_OWNER_DHCP
             self._create_bulk_from_list(self.fmt, 'port',

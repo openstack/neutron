@@ -14,6 +14,7 @@
 #    under the License.
 
 from eventlet import greenthread
+import netaddr
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.agent import topics
 from neutron_lib.api.definitions import address_scope
@@ -28,6 +29,7 @@ from neutron_lib.api.definitions import empty_string_filtering
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib.api.definitions import filter_validation as filter_apidef
+from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
 from neutron_lib.api.definitions import ip_substring_port_filtering
 from neutron_lib.api.definitions import multiprovidernet
 from neutron_lib.api.definitions import network as net_def
@@ -107,6 +109,7 @@ from neutron.db import vlantransparent_db
 from neutron.extensions import filter_validation
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
+from neutron.ipam import exceptions as ipam_exc
 from neutron.objects import base as base_obj
 from neutron.objects import ports as ports_obj
 from neutron.plugins.ml2.common import exceptions as ml2_exc
@@ -738,8 +741,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @resource_extend.extends([port_def.COLLECTION_NAME])
     def _ml2_extend_port_dict_binding(port_res, port_db):
         plugin = directory.get_plugin()
+        if isinstance(port_db, ports_obj.Port):
+            bindings = port_db.bindings
+        else:
+            bindings = port_db.port_bindings
         port_binding = p_utils.get_port_binding_by_status_and_host(
-            port_db.port_bindings, const.ACTIVE)
+            bindings, const.ACTIVE)
         # None when called during unit tests for other plugins.
         if port_binding:
             plugin._update_port_dict_binding(port_res, port_binding)
@@ -1354,8 +1361,135 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def create_port_bulk(self, context, ports):
-        objects = self._create_bulk_ml2(port_def.RESOURCE_NAME, context, ports)
-        return [obj['result'] for obj in objects]
+        # TODO(njohnston): Break this up into smaller functions.
+        port_list = ports.get('ports')
+        for port in port_list:
+            self._before_create_port(context, port)
+
+        port_data = []
+        network_cache = dict()
+        macs = self._generate_macs(len(port_list))
+        with db_api.CONTEXT_WRITER.using(context):
+            for port in port_list:
+                # Set up the port request dict
+                pdata = port.get('port')
+                if pdata.get('device_owner'):
+                    self._enforce_device_owner_not_router_intf_or_device_id(
+                        context, pdata.get('device_owner'),
+                        pdata.get('device_id'), pdata.get('tenant_id'))
+                bulk_port_data = dict(project_id=pdata.get('project_id'),
+                    name=pdata.get('name'),
+                    network_id=pdata.get('network_id'),
+                    admin_state_up=pdata.get('admin_state_up'),
+                    status=pdata.get('status',
+                        const.PORT_STATUS_ACTIVE),
+                    device_id=pdata.get('device_id'),
+                    device_owner=pdata.get('device_owner'),
+                    security_groups=pdata.get('security_groups'),
+                    description=pdata.get('description'))
+
+                # Ensure that the networks exist.
+                network_id = pdata.get('network_id')
+                if network_id not in network_cache:
+                    network = self.get_network(context, network_id)
+                    network_cache[network_id] = network
+                else:
+                    network = network_cache[network_id]
+
+                # Determine the MAC address
+                raw_mac_address = pdata.get('mac_address',
+                    const.ATTR_NOT_SPECIFIED)
+                if raw_mac_address is const.ATTR_NOT_SPECIFIED:
+                    raw_mac_address = macs.pop()
+                elif self._is_mac_in_use(context, network_id, raw_mac_address):
+                    raise exc.MacAddressInUse(net_id=network_id,
+                                              mac=raw_mac_address)
+                eui_mac_address = netaddr.EUI(raw_mac_address, 48)
+
+                # Create the Port object
+                db_port_obj = ports_obj.Port(context,
+                                            mac_address=eui_mac_address,
+                                            id=uuidutils.generate_uuid(),
+                                            **bulk_port_data)
+                db_port_obj.create()
+                port_dict = self._make_port_dict(db_port_obj,
+                                                 process_extensions=False)
+                port_compat = {'port': port_dict}
+
+                # Call IPAM to allocate IP addresses
+                try:
+                    # TODO(njohnston): IPAM allocation needs to be revamped to
+                    # be bulk-friendly.
+                    self.ipam.allocate_ips_for_port_and_store(
+                        context, db_port_obj, db_port_obj['id'])
+                    db_port_obj['ip_allocation'] = (ipalloc_apidef.
+                                                IP_ALLOCATION_IMMEDIATE)
+                except ipam_exc.DeferIpam:
+                    db_port_obj['ip_allocation'] = (ipalloc_apidef.
+                                                IP_ALLOCATION_DEFERRED)
+                fixed_ips = pdata.get('fixed_ips')
+                if validators.is_attr_set(fixed_ips) and not fixed_ips:
+                    # [] was passed explicitly as fixed_ips: unaddressed port.
+                    db_port_obj['ip_allocation'] = (ipalloc_apidef.
+                                                    IP_ALLOCATION_NONE)
+
+                # Activities immediately post-port-creation
+                self.extension_manager.process_create_port(context, port_dict,
+                                                           db_port_obj)
+                self._portsec_ext_port_create_processing(context, port_dict,
+                                                         port_compat)
+
+                # sgids must be got after portsec checked with security group
+                sgids = self._get_security_groups_on_port(context, port_compat)
+                self._process_port_create_security_group(context, port_dict,
+                                                         sgids)
+
+                # process port binding
+                binding = db.add_port_binding(context, port_dict['id'])
+                mech_context = driver_context.PortContext(self, context,
+                                                          port_dict, network,
+                                                          binding, None)
+                self._process_port_binding(mech_context, port_dict)
+
+                # process allowed address pairs
+                db_port_obj[addr_apidef.ADDRESS_PAIRS] = (
+                    self._process_create_allowed_address_pairs(
+                        context, port_compat,
+                        port_dict.get(addr_apidef.ADDRESS_PAIRS)))
+
+                # handle DHCP setup
+                dhcp_opts = port_dict.get(edo_ext.EXTRADHCPOPTS, [])
+                self._process_port_create_extra_dhcp_opts(context, port_dict,
+                                                          dhcp_opts)
+                # send PRECOMMIT_CREATE notification
+                kwargs = {'context': context, 'port': db_port_obj}
+                registry.notify(
+                    resources.PORT, events.PRECOMMIT_CREATE, self, **kwargs)
+                self.mechanism_manager.create_port_precommit(mech_context)
+
+                # handle DHCP agent provisioning
+                self._setup_dhcp_agent_provisioning_component(context,
+                                                              port_dict)
+
+                port_data.append(
+                        {
+                            'id': db_port_obj['id'],
+                            'port_obj': db_port_obj,
+                            'mech_context': mech_context,
+                            'port_dict': port_dict
+                        })
+
+        # Perform actions after the transaction is committed
+        completed_ports = []
+        for port in port_data:
+            resource_extend.apply_funcs('ports',
+                                        port['port_dict'],
+                                        port['port_obj'].db_obj)
+            completed_ports.append(
+                    self._after_create_port(context,
+                                            port['port_dict'],
+                                            port['mech_context']))
+        return completed_ports
 
     # TODO(yalei) - will be simplified after security group and address pair be
     # converted to ext driver too.

@@ -207,7 +207,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                'name': port['name'],
                "network_id": port["network_id"],
                'tenant_id': port['tenant_id'],
-               "mac_address": port["mac_address"],
+               "mac_address": str(port["mac_address"]),
                "admin_state_up": port["admin_state_up"],
                "status": port["status"],
                "fixed_ips": [{'subnet_id': ip["subnet_id"],
@@ -217,7 +217,11 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                "device_owner": port["device_owner"]}
         # Call auxiliary extend functions, if any
         if process_extensions:
-            resource_extend.apply_funcs(port_def.COLLECTION_NAME, res, port)
+            port_data = port
+            if isinstance(port, port_obj.Port):
+                port_data = port.db_obj
+            resource_extend.apply_funcs(
+                port_def.COLLECTION_NAME, res, port_data)
         return db_utils.resource_fields(res, fields)
 
     def _get_network(self, context, id):
