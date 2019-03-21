@@ -609,26 +609,30 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
 
         return (router1, router2)
 
-    def _get_master_and_slave_routers(self, router1, router2):
+    def _get_master_and_slave_routers(self, router1, router2,
+                                      check_external_device=True):
 
         try:
             common_utils.wait_until_true(
                 lambda: router1.ha_state == 'master')
-            common_utils.wait_until_true(
-                lambda: self._check_external_device(router1))
+            if check_external_device:
+                common_utils.wait_until_true(
+                    lambda: self._check_external_device(router1))
             master_router = router1
             slave_router = router2
         except common_utils.WaitTimeout:
             common_utils.wait_until_true(
                 lambda: router2.ha_state == 'master')
-            common_utils.wait_until_true(
-                lambda: self._check_external_device(router2))
+            if check_external_device:
+                common_utils.wait_until_true(
+                    lambda: self._check_external_device(router2))
             master_router = router2
             slave_router = router1
 
         common_utils.wait_until_true(
                 lambda: master_router.ha_state == 'master')
-        common_utils.wait_until_true(
+        if check_external_device:
+            common_utils.wait_until_true(
                 lambda: self._check_external_device(master_router))
         common_utils.wait_until_true(
             lambda: slave_router.ha_state == 'backup')
