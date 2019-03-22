@@ -62,7 +62,9 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                 IPTABLES_FW_DRIVER_FULL, 'iptables_hybrid')
         ) and sg_enabled
         vif_details = {portbindings.CAP_PORT_FILTER: sg_enabled,
-                       portbindings.OVS_HYBRID_PLUG: hybrid_plug_required}
+                       portbindings.OVS_HYBRID_PLUG: hybrid_plug_required,
+                       portbindings.VIF_DETAILS_CONNECTIVITY:
+                           portbindings.CONNECTIVITY_L2}
         # NOTE(moshele): Bind DIRECT (SR-IOV) port allows
         # to offload the OVS flows using tc to the SR-IOV NIC.
         # We are using OVS mechanism driver because the openvswitch (>=2.8.0)
