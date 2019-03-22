@@ -14,9 +14,9 @@
 import copy
 
 import netaddr
-from neutron_lib.utils import runtime
 
 from neutron.agent.linux import utils as linux_utils
+from oslo_concurrency import lockutils
 
 IPSET_ADD_BULK_THRESHOLD = 5
 NET_PREFIX = 'N'
@@ -83,32 +83,34 @@ class IpsetManager(object):
             self.set_members_mutate(set_name, ethertype, member_ips)
         return add_ips, del_ips
 
-    @runtime.synchronized('ipset', external=True)
     def set_members_mutate(self, set_name, ethertype, member_ips):
-        if not self.set_name_exists(set_name):
-            # The initial creation is handled with create/refresh to
-            # avoid any downtime for existing sets (i.e. avoiding
-            # a flush/restore), as the restore operation of ipset is
-            # additive to the existing set.
-            self._create_set(set_name, ethertype)
-            self._refresh_set(set_name, member_ips, ethertype)
-            # TODO(majopela,shihanzhang,haleyb): Optimize this by
-            # gathering the system ipsets at start. So we can determine
-            # if a normal restore is enough for initial creation.
-            # That should speed up agent boot up time.
-        else:
-            add_ips = self._get_new_set_ips(set_name, member_ips)
-            del_ips = self._get_deleted_set_ips(set_name, member_ips)
-            if (len(add_ips) + len(del_ips) < IPSET_ADD_BULK_THRESHOLD):
-                self._add_members_to_set(set_name, add_ips)
-                self._del_members_from_set(set_name, del_ips)
-            else:
+        with lockutils.lock('neutron-ipset-%s' % self.namespace,
+                            external=True):
+            if not self.set_name_exists(set_name):
+                # The initial creation is handled with create/refresh to
+                # avoid any downtime for existing sets (i.e. avoiding
+                # a flush/restore), as the restore operation of ipset is
+                # additive to the existing set.
+                self._create_set(set_name, ethertype)
                 self._refresh_set(set_name, member_ips, ethertype)
+                # TODO(majopela,shihanzhang,haleyb): Optimize this by
+                # gathering the system ipsets at start. So we can determine
+                # if a normal restore is enough for initial creation.
+                # That should speed up agent boot up time.
+            else:
+                add_ips = self._get_new_set_ips(set_name, member_ips)
+                del_ips = self._get_deleted_set_ips(set_name, member_ips)
+                if (len(add_ips) + len(del_ips) < IPSET_ADD_BULK_THRESHOLD):
+                    self._add_members_to_set(set_name, add_ips)
+                    self._del_members_from_set(set_name, del_ips)
+                else:
+                    self._refresh_set(set_name, member_ips, ethertype)
 
-    @runtime.synchronized('ipset', external=True)
     def destroy(self, id, ethertype, forced=False):
-        set_name = self.get_name(id, ethertype)
-        self._destroy(set_name, forced)
+        with lockutils.lock('neutron-ipset-%s' % self.namespace,
+                            external=True):
+            set_name = self.get_name(id, ethertype)
+            self._destroy(set_name, forced)
 
     def _add_member_to_set(self, set_name, member_ip):
         cmd = ['ipset', 'add', '-exist', set_name, member_ip]
