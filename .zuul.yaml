@@ -226,7 +226,6 @@
       - openstack-dev/grenade
       - openstack-infra/devstack-gate
       - openstack/neutron
-    nodeset: ubuntu-xenial-2-node
     irrelevant-files: *tempest-irrelevant-files
 
 - job:
@@ -239,7 +238,6 @@
       - openstack-dev/grenade
       - openstack-infra/devstack-gate
       - openstack/neutron
-    nodeset: ubuntu-xenial-2-node
     irrelevant-files: *tempest-irrelevant-files
 
 - job:
