@@ -62,7 +62,13 @@
       jobs:
         - neutron-functional
         - neutron-functional-python27
-        - neutron-fullstack
+        # NOTE(slaweq) Because of bugs:
+        # https://bugs.launchpad.net/neutron/+bug/1820865 and
+        # https://bugs.launchpad.net/neutron/+bug/1820870
+        # which cause fullstack to be very unstable we need to disable it
+        # from gate queue for now.
+        # TODO(slaweq): Restore fullstack job when above bugs will be fixed
+        #- neutron-fullstack
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
         - neutron-tempest-iptables_hybrid
@@ -153,6 +159,7 @@
         # /opt/stack/logs is default logs directory defined in neutron's
         # tox.ini file
         '{{ devstack_base_dir }}/logs/dsvm-fullstack-logs': logs
+    voting: false
 
 - job:
     name: neutron-rally-task
