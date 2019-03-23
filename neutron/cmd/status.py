@@ -14,6 +14,7 @@
 
 from neutron_lib.utils import runtime
 from oslo_config import cfg
+from oslo_db import options as db_options
 from oslo_log import log as logging
 from oslo_upgradecheck import upgradecheck
 
@@ -53,6 +54,7 @@ def setup_conf(conf=cfg.CONF):
     neutron_conf_base.register_core_common_config_opts(conf)
     neutron_conf_service.register_service_opts(
         neutron_conf_service.SERVICE_OPTS, cfg.CONF)
+    db_options.set_defaults(conf)
     return conf
 
 
