@@ -92,15 +92,15 @@ This can be done in two ways:
    changes as described below:
 
    * Add an iptables rule to accept incoming telnet connections to remote_pdb.
-     This can be done in the ``neutron/tests/contrib/post_test_hook.sh`` file,
-     in the proper section according to the test that you want to debug::
+     This can be done in one of the ansible roles used in the test job.
+     Like for example in ``neutron/roles/configure_functional_tests`` file
+     for functional tests::
 
         sudo iptables -I openstack-INPUT -p tcp -m state --state NEW -m tcp --dport 44444 -j ACCEPT
 
    * Increase the ``OS_TEST_TIMEOUT`` value to make the test wait longer when
      remote_pdb is active to make debugging easier.  This change can also be
-     done in the ``neutron/tests/contrib/post_test_hook.sh`` file, in the
-     same section where the iptables rule was added::
+     done in the ansible role mentioned above::
 
         export OS_TEST_TIMEOUT=999999
 
@@ -108,8 +108,8 @@ This can be done in two ways:
      and that cannot be changed from within the job.
 
    * To make it easier to find the IP address of the test node, you should
-     add a line to the ``neutron/tests/contrib/post_test_hook.sh`` file to
-     print the IPs configured on the test node.  For example::
+     add to the ansible role so it prints the IPs configured on the test node.
+     For example::
 
         hostname -I
 
