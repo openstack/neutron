@@ -20,8 +20,13 @@ from neutron._i18n import _
 
 l2_population_options = [
     cfg.IntOpt('agent_boot_time', default=180,
+               deprecated_for_removal=True,
+               deprecated_since='Stein',
                help=_('Delay within which agent is expected to update '
-                      'existing ports when it restarts')),
+                      'existing ports when it restarts. This option '
+                      'is deprecated in favor of direct RPC restart '
+                      'state transfer and will be removed in a future '
+                      'release.')),
 ]
 
 

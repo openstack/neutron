@@ -749,7 +749,8 @@ class TestOvsNeutronAgent(object):
             self.agent._bind_devices(port_details)
             update_devices.assert_called_once_with(mock.ANY, devices_up,
                                                    devices_down,
-                                                   mock.ANY, mock.ANY)
+                                                   mock.ANY, mock.ANY,
+                                                   agent_restarted=True)
 
     def _test_arp_spoofing(self, enable_prevent_arp_spoofing):
         self.agent.prevent_arp_spoofing = enable_prevent_arp_spoofing
