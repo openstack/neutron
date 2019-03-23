@@ -174,7 +174,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
         policy = policy_object.QosPolicy.get_object(
             context.elevated(), id=policy_id)
-        self.validate_policy_for_port(policy, port)
+        self.validate_policy_for_port(context, policy, port)
 
     def _validate_update_port_callback(self, resource, event, trigger,
                                        payload=None):
@@ -191,7 +191,7 @@ class QoSPlugin(qos.QoSPluginBase):
         policy = policy_object.QosPolicy.get_object(
             context.elevated(), id=policy_id)
 
-        self.validate_policy_for_port(policy, updated_port)
+        self.validate_policy_for_port(context, policy, updated_port)
 
     def _validate_update_network_callback(self, resource, event, trigger,
                                           payload=None):
@@ -213,21 +213,30 @@ class QoSPlugin(qos.QoSPluginBase):
         ports = [
             port for port in ports if port.qos_policy_id is None
         ]
-        self.validate_policy_for_ports(policy, ports)
+        self.validate_policy_for_ports(context, policy, ports)
 
     def validate_policy(self, context, policy):
         ports = self._get_ports_with_policy(context, policy)
-        self.validate_policy_for_ports(policy, ports)
+        self.validate_policy_for_ports(context, policy, ports)
 
-    def validate_policy_for_ports(self, policy, ports):
+    def validate_policy_for_ports(self, context, policy, ports):
         for port in ports:
-            self.validate_policy_for_port(policy, port)
+            self.validate_policy_for_port(context, policy, port)
 
-    def validate_policy_for_port(self, policy, port):
+    def validate_policy_for_port(self, context, policy, port):
         for rule in policy.rules:
             if not self.driver_manager.validate_rule_for_port(rule, port):
                 raise qos_exc.QosRuleNotSupported(rule_type=rule.rule_type,
                                                   port_id=port['id'])
+            # minimum-bandwidth rule is only supported (independently of
+            # drivers) on networks whose first segment is backed by a physnet
+            if rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
+                net = network_object.Network.get_object(
+                    context, id=port.network_id)
+                physnet = net.segments[0].physical_network
+                if physnet is None:
+                    raise qos_exc.QosRuleNotSupported(rule_type=rule.rule_type,
+                                                      port_id=port['id'])
 
     def reject_min_bw_rule_updates(self, context, policy):
         ports = self._get_ports_with_policy(context, policy)

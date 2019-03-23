@@ -31,6 +31,8 @@ import webob.exc
 from neutron.common import constants
 from neutron.extensions import qos_rules_alias
 from neutron import manager
+from neutron.objects import network as network_object
+from neutron.objects import ports as ports_object
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule as rule_object
 from neutron.services.qos import qos_plugin
@@ -279,8 +281,8 @@ class TestQosPlugin(base.BaseQosTestCase):
             if policy_id or network_policy_id:
                 get_policy.assert_called_once_with(admin_ctxt,
                                                    id=expected_policy_id)
-                validate_policy_for_port.assert_called_once_with(policy_mock,
-                                                                 port_mock)
+                validate_policy_for_port.assert_called_once_with(
+                    self.ctxt, policy_mock, port_mock)
             else:
                 get_policy.assert_not_called()
                 validate_policy_for_port.assert_not_called()
@@ -340,8 +342,8 @@ class TestQosPlugin(base.BaseQosTestCase):
             else:
                 get_port.assert_called_once_with(self.ctxt, id=port_id)
                 get_policy.assert_called_once_with(admin_ctxt, id=policy_id)
-                validate_policy_for_port.assert_called_once_with(policy_mock,
-                                                                 port_mock)
+                validate_policy_for_port.assert_called_once_with(
+                    self.ctxt, policy_mock, port_mock)
 
     def test_validate_update_port_callback_policy_changed(self):
         self._test_validate_update_port_callback(
@@ -403,7 +405,7 @@ class TestQosPlugin(base.BaseQosTestCase):
                 get_ports.assert_called_once_with(self.ctxt,
                                                   network_id=network_id)
                 validate_policy_for_ports.assert_called_once_with(
-                    policy_mock, [port_mock_without_own_policy])
+                    self.ctxt, policy_mock, [port_mock_without_own_policy])
 
     def test_validate_update_network_callback_policy_changed(self):
         self._test_validate_update_network_callback(
@@ -428,7 +430,7 @@ class TestQosPlugin(base.BaseQosTestCase):
             self.assertRaises(
                 qos_exc.QosRuleNotSupported,
                 self.qos_plugin.validate_policy_for_port,
-                self.policy, port)
+                self.ctxt, self.policy, port)
 
     def test_validate_policy_for_port_all_rules_valid(self):
         port = {'id': uuidutils.generate_uuid()}
@@ -438,9 +440,66 @@ class TestQosPlugin(base.BaseQosTestCase):
         ):
             self.policy.rules = [self.rule]
             try:
-                self.qos_plugin.validate_policy_for_port(self.policy, port)
+                self.qos_plugin.validate_policy_for_port(
+                    self.ctxt, self.policy, port)
             except qos_exc.QosRuleNotSupported:
                 self.fail("QosRuleNotSupported exception unexpectedly raised")
+
+    def test_create_min_bw_rule_on_physnet_port(self):
+        policy = self._get_policy()
+        policy.rules = [self.min_rule]
+        segment = network_object.NetworkSegment(
+            physical_network='fake physnet')
+        net = network_object.Network(
+            self.ctxt,
+            segments=[segment])
+        port = ports_object.Port(
+            self.ctxt,
+            id=uuidutils.generate_uuid(),
+            network_id=uuidutils.generate_uuid(),
+            device_owner='fake owner')
+        with mock.patch(
+                'neutron.objects.qos.policy.QosPolicy.get_object',
+                return_value=policy), \
+            mock.patch(
+                'neutron.objects.network.Network.get_object',
+                return_value=net), \
+            mock.patch.object(
+                self.qos_plugin,
+                '_get_ports_with_policy',
+                return_value=[port]):
+            try:
+                self.qos_plugin.create_policy_minimum_bandwidth_rule(
+                    self.ctxt, policy.id, self.rule_data)
+            except qos_exc.QosRuleNotSupported:
+                self.fail()
+
+    def test_create_min_bw_rule_on_non_physnet_port(self):
+        policy = self._get_policy()
+        policy.rules = [self.min_rule]
+        segment = network_object.NetworkSegment()
+        net = network_object.Network(
+            self.ctxt,
+            segments=[segment])
+        port = ports_object.Port(
+            self.ctxt,
+            id=uuidutils.generate_uuid(),
+            network_id=uuidutils.generate_uuid(),
+            device_owner='fake owner')
+        with mock.patch(
+                'neutron.objects.qos.policy.QosPolicy.get_object',
+                return_value=policy), \
+            mock.patch(
+                'neutron.objects.network.Network.get_object',
+                return_value=net), \
+            mock.patch.object(
+                self.qos_plugin,
+                '_get_ports_with_policy',
+                return_value=[port]):
+            self.assertRaises(
+                qos_exc.QosRuleNotSupported,
+                self.qos_plugin.create_policy_minimum_bandwidth_rule,
+                self.ctxt, policy.id, self.rule_data)
 
     @mock.patch(
         'neutron.objects.rbac_db.RbacNeutronDbObjectMixin'
