@@ -685,6 +685,9 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             'neutron.agent.linux.external_process.ProcessManager'
         )
         self.external_process = self.external_process_p.start()
+        self.mock_resize_p = mock.patch('neutron.agent.dhcp.agent.'
+                                        'DhcpAgent._resize_process_pool')
+        self.mock_resize = self.mock_resize_p.start()
 
     def _process_manager_constructor_call(self, ns=FAKE_NETWORK_DHCP_NS):
         return mock.call(conf=cfg.CONF,
