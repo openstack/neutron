@@ -217,13 +217,26 @@ class DhcpLocalProcess(DhcpBase):
 
     def enable(self):
         """Enables DHCP for this network by spawning a local process."""
-        if self.active:
-            self.restart()
-        elif self._enable_dhcp():
-            fileutils.ensure_tree(self.network_conf_dir, mode=0o755)
-            interface_name = self.device_manager.setup(self.network)
-            self.interface_name = interface_name
-            self.spawn_process()
+        try:
+            common_utils.wait_until_true(self._enable)
+        except common_utils.WaitTimeout:
+            LOG.error("Failed to start DHCP process for network %s",
+                      self.network.id)
+
+    def _enable(self):
+        try:
+            if self.active:
+                self.restart()
+            elif self._enable_dhcp():
+                fileutils.ensure_tree(self.network_conf_dir, mode=0o755)
+                interface_name = self.device_manager.setup(self.network)
+                self.interface_name = interface_name
+                self.spawn_process()
+            return True
+        except exceptions.ProcessExecutionError as error:
+            LOG.debug("Spawning DHCP process for network %s failed; "
+                      "Error: %s", self.network.id, error)
+            return False
 
     def _get_process_manager(self, cmd_callback=None):
         return external_process.ProcessManager(
@@ -237,10 +250,9 @@ class DhcpLocalProcess(DhcpBase):
     def disable(self, retain_port=False, block=False):
         """Disable DHCP for this network by killing the local process."""
         self.process_monitor.unregister(self.network.id, DNSMASQ_SERVICE_NAME)
-        pm = self._get_process_manager()
-        pm.disable()
+        self._get_process_manager().disable()
         if block:
-            common_utils.wait_until_true(lambda: not pm.active)
+            common_utils.wait_until_true(lambda: not self.active)
         if not retain_port:
             self._destroy_namespace_and_port()
         self._remove_config_files()
