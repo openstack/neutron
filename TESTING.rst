@@ -518,7 +518,7 @@ environment variable to point at a local package repo.
 For example, to run against the 'master' branch of neutron-lib:
 
     cd $SRC
-    git clone git://git.openstack.org/openstack/neutron-lib
+    git clone https://git.openstack.org/openstack/neutron-lib
     cd $NEUTRON_DIR
     env TOX_ENV_SRC_MODULES=$SRC/neutron-lib tox -r -e pep8,py27
 
@@ -529,9 +529,9 @@ To run against a particular gerrit change of the lib (substituting the
 desired gerrit refs for this example):
 
     cd $SRC
-    git clone git://git.openstack.org/openstack/neutron-lib
+    git clone https://git.openstack.org/openstack/neutron-lib
     cd neutron-lib
-    git fetch git://git.openstack.org/openstack/neutron-lib refs/changes/13/635313/6 && git checkout FETCH_HEAD
+    git fetch https://git.openstack.org/openstack/neutron-lib refs/changes/13/635313/6 && git checkout FETCH_HEAD
     cd $NEUTRON_DIR
     env TOX_ENV_SRC_MODULES=$SRC/neutron-lib tox -r -e pep8,py27
 
