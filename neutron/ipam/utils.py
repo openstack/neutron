@@ -16,16 +16,27 @@
 import netaddr
 from neutron_lib import constants
 
+from neutron.common import constants as n_const
 
-def check_subnet_ip(cidr, ip_address):
+
+def check_subnet_ip(cidr, ip_address, port_owner=None):
     """Validate that the IP address is on the subnet."""
     ip = netaddr.IPAddress(ip_address)
     net = netaddr.IPNetwork(cidr)
-    # Check that the IP is valid on subnet. This cannot be the
-    # network or the broadcast address (which exists only in IPv4)
-    return (ip != net.network
-            and (net.version == 6 or ip != net[-1])
-            and net.netmask & ip == net.network)
+    # Check that the IP is valid on subnet. In IPv4 this cannot be the
+    # network or the broadcast address
+    if net.version == constants.IP_VERSION_6:
+        # NOTE(njohnston): In some cases the code cannot know the owner of the
+        # port.  In these cases port_owner should be None, and we pass it
+        # through here.
+        return ((port_owner in n_const.ROUTER_PORT_OWNERS or
+                 port_owner is None or
+                 ip != net.network) and
+                net.netmask & ip == net.network)
+    else:
+        return (ip != net.network and
+                ip != net[-1] and
+                net.netmask & ip == net.network)
 
 
 def check_gateway_invalid_in_subnet(cidr, gateway):
@@ -38,8 +49,8 @@ def check_gateway_invalid_in_subnet(cidr, gateway):
     # If gateway is out of subnet, there is no way to
     # check since we don't have gateway's subnet cidr.
     return (ip in net and
-            (ip == net.network or
-             (net.version == constants.IP_VERSION_4 and ip == net[-1])))
+            (net.version == constants.IP_VERSION_4 and
+            ip in (net.network, net[-1])))
 
 
 def generate_pools(cidr, gateway_ip):

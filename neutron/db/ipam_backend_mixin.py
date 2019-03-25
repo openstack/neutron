@@ -59,7 +59,10 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
     @staticmethod
     def _gateway_ip_str(subnet, cidr_net):
         if subnet.get('gateway_ip') is const.ATTR_NOT_SPECIFIED:
-            return str(netaddr.IPNetwork(cidr_net).network + 1)
+            if subnet.get('version') == const.IP_VERSION_6:
+                return str(netaddr.IPNetwork(cidr_net).network)
+            else:
+                return str(netaddr.IPNetwork(cidr_net).network + 1)
         return subnet.get('gateway_ip')
 
     @staticmethod
@@ -358,7 +361,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             # Ensure that the IP is valid on the subnet
             if ('ip_address' in fixed and
                 not ipam_utils.check_subnet_ip(subnet['cidr'],
-                                               fixed['ip_address'])):
+                                               fixed['ip_address'],
+                                               fixed['device_owner'])):
                 raise exc.InvalidIpForSubnet(ip_address=fixed['ip_address'])
             return subnet
 
@@ -368,7 +372,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         for subnet in subnets:
             if ipam_utils.check_subnet_ip(subnet['cidr'],
-                                          fixed['ip_address']):
+                                          fixed['ip_address'],
+                                          fixed['device_owner']):
                 return subnet
         raise exc.InvalidIpForNetwork(ip_address=fixed['ip_address'])
 
