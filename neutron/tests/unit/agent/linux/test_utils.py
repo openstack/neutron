@@ -26,6 +26,7 @@ from neutron.agent.linux import utils
 from neutron.common import exceptions as n_exc
 from neutron.tests import base
 from neutron.tests.common import helpers
+from neutron.tests import tools
 
 
 _marker = object()
@@ -291,6 +292,43 @@ class TestKillProcess(base.BaseTestCase):
 
     def test_kill_process_with_different_signal(self):
         self._test_kill_process('1', kill_signal=signal.SIGTERM)
+
+
+class TestGetCmdlineFromPid(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestGetCmdlineFromPid, self).setUp()
+        self.pid = 34
+        self.process_is_running_mock = mock.patch.object(
+            utils, "process_is_running").start()
+
+    def _test_cmdline(self, process, expected_cmd):
+        self.process_is_running_mock.return_value = True
+        mock_open = self.useFixture(
+            tools.OpenFixture('/proc/%s/cmdline' % self.pid, process)
+        ).mock_open
+        cmdline = utils.get_cmdline_from_pid(self.pid)
+        mock_open.assert_called_once_with('/proc/%s/cmdline' % self.pid, 'r')
+        self.assertEqual(expected_cmd, cmdline)
+
+    def test_cmdline_separated_with_null_char(self):
+        process_cmd = "python3\0test-binary\0test option\0"
+        expected_cmdline = ["python3", "test-binary", "test option"]
+        self._test_cmdline(process_cmd, expected_cmdline)
+
+    def test_cmdline_separated_with_space_char(self):
+        process_cmd = "python3 test-binary test option\0"
+        expected_cmdline = ["python3", "test-binary", "test", "option"]
+        self._test_cmdline(process_cmd, expected_cmdline)
+
+    def test_no_process_running(self):
+        self.process_is_running_mock.return_value = False
+        mock_open = self.useFixture(
+            tools.OpenFixture('/proc/%s/cmdline' % self.pid)
+        ).mock_open
+        cmdline = utils.get_cmdline_from_pid(self.pid)
+        mock_open.assert_not_called()
+        self.assertEqual([], cmdline)
 
 
 class TestFindChildPids(base.BaseTestCase):
