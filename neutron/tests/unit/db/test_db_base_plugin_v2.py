@@ -59,6 +59,7 @@ from neutron.db import standard_attr
 from neutron.ipam.drivers.neutrondb_ipam import driver as ipam_driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.objects import router as l3_obj
+from neutron import policy
 from neutron.tests import base
 from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
@@ -169,6 +170,17 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         self._skip_native_sorting = not _is_native_sorting_support()
         if ext_mgr:
             self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
+            # NOTE(amotoki): policy._ENFORCER is initialized in
+            # neutron.tests.base.BaseTestCase.setUp() but this is too early
+            # and neutron.policy.FieldCheck conv_func does not work
+            # because extended resources are not populated to
+            # attributes.RESOURCES yet.
+            # Thus we need to refresh the default policy rules after loading
+            # extensions. Especially it is important to re-instantiate
+            # DefaultRule() under neutron.conf.policies. To do this,
+            # we need to reload the default policy modules.
+            policy.reset()
+            policy.init()
 
     def setup_config(self):
         # Create the default configurations
