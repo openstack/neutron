@@ -52,7 +52,7 @@ Getting the code
 
 Grab the code::
 
-    git clone git://git.openstack.org/openstack/neutron.git
+    git clone https://git.openstack.org/openstack/neutron.git
     cd neutron
 
 About ignore files

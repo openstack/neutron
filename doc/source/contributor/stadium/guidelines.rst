@@ -45,10 +45,10 @@ Requirements
 Neutron dependency
 ~~~~~~~~~~~~~~~~~~
 
-Subprojects usually depend on neutron repositories, by using -e git://...
+Subprojects usually depend on neutron repositories, by using -e https://...
 schema to define such a dependency. The dependency *must not* be present in
 requirements lists though, and instead belongs to tox.ini deps section. This is
-because next pbr library releases do not guarantee -e git://... dependencies
+because next pbr library releases do not guarantee -e https://... dependencies
 will work.
 
 You may still put some versioned neutron dependency in your requirements list

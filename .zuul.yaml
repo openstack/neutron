@@ -328,7 +328,7 @@
     vars:
       tempest_concurrency: 4
       devstack_plugins:
-        neutron: git://git.openstack.org/openstack/neutron.git
+        neutron: https://git.openstack.org/openstack/neutron.git
       devstack_services:
         tls-proxy: false
         tempest: true
