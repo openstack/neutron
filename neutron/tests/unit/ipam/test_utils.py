@@ -32,7 +32,7 @@ class TestIpamUtils(base.BaseTestCase):
         self.assertTrue(utils.check_subnet_ip('1.1.1.0/24', '1.1.1.254'))
 
     def test_check_subnet_ip_v6_network(self):
-        self.assertFalse(utils.check_subnet_ip('F111::0/64', 'F111::0'))
+        self.assertTrue(utils.check_subnet_ip('F111::0/64', 'F111::0'))
 
     def test_check_subnet_ip_v6_valid(self):
         self.assertTrue(utils.check_subnet_ip('F111::0/64', 'F111::1'))
