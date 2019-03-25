@@ -1,0 +1,6 @@
+---
+upgrade:
+  - |
+    The first address in an IPv6 network is now a valid, usable IP for routers.
+    It had previously been reserved, but now can be assigned to a router so
+    that an IPv6 address ending in "::" could be a valid default route.
