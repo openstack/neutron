@@ -15,6 +15,7 @@
 
 import collections
 import re
+import sys
 
 from neutron_lib.api import attributes
 from neutron_lib.api.definitions import network as net_apidef
@@ -421,3 +422,24 @@ def enforce(context, action, target, plugin=None, pluralized=None):
             log_rule_list(rule)
             LOG.debug("Failed policy check for '%s'", action)
     return result
+
+
+def get_enforcer():
+    # NOTE(amotoki): This was borrowed from nova/policy.py.
+    # This method is for use by oslo.policy CLI scripts. Those scripts need the
+    # 'output-file' and 'namespace' options, but having those in sys.argv means
+    # loading the neutron config options will fail as those are not expected to
+    # be present. So we pass in an arg list with those stripped out.
+    conf_args = []
+    # Start at 1 because cfg.CONF expects the equivalent of sys.argv[1:]
+    i = 1
+    while i < len(sys.argv):
+        if sys.argv[i].strip('-') in ['namespace', 'output-file']:
+            i += 2
+            continue
+        conf_args.append(sys.argv[i])
+        i += 1
+
+    cfg.CONF(conf_args, project='neutron')
+    init()
+    return _ENFORCER
