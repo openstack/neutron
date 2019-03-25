@@ -16,10 +16,12 @@
 import os
 import warnings
 
+import mock
 from oslo_config import cfg
 
 from neutron.agent.linux import utils
 from neutron.conf.agent import common as config
+from neutron.conf.agent import ovs_conf
 from neutron.tests import base
 from neutron.tests.common import base as common_base
 from neutron.tests.common import helpers
@@ -27,6 +29,14 @@ from neutron.tests.common import helpers
 # This is the directory from which infra fetches log files for functional tests
 DEFAULT_LOG_DIR = os.path.join(helpers.get_test_log_path(),
                                'dsvm-functional-logs')
+
+
+def config_decorator(method_to_decorate, config_tuples):
+    def wrapper(*args, **kwargs):
+        method_to_decorate(*args, **kwargs)
+        for config_tuple in config_tuples:
+            cfg.CONF.set_override(*config_tuple)
+    return wrapper
 
 
 class BaseLoggingTestCase(base.BaseTestCase):
@@ -66,6 +76,7 @@ class BaseSudoTestCase(BaseLoggingTestCase):
             self.skipTest('Testing with sudo is not enabled')
         self.setup_rootwrap()
         config.setup_privsep()
+        self._override_default_config()
 
     @common_base.no_skip_on_missing_deps
     def check_command(self, cmd, error_text, skip_msg, run_as_root=False):
@@ -75,3 +86,13 @@ class BaseSudoTestCase(BaseLoggingTestCase):
             if error_text in str(e):
                 self.skipTest(skip_msg)
             raise
+
+    @staticmethod
+    def _override_default_config():
+        # NOTE(ralonsoh): once https://review.openstack.org/#/c/641681/ is
+        # merged, we should increase the default value of those new parameters.
+        ovs_agent_opts = [('ovsdb_timeout', 30, 'OVS')]
+        ovs_agent_decorator = config_decorator(
+            ovs_conf.register_ovs_agent_opts, ovs_agent_opts)
+        mock.patch.object(ovs_conf, 'register_ovs_agent_opts',
+                          new=ovs_agent_decorator).start()
