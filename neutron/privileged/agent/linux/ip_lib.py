@@ -131,6 +131,13 @@ def _get_iproute(namespace):
         return pyroute2.IPRoute()
 
 
+@privileged.default.entrypoint
+def open_namespace(namespace):
+    """Open namespace to test if the namespace is ready to be manipulated"""
+    with pyroute2.NetNS(namespace, flags=0):
+        pass
+
+
 def _translate_ip_device_exception(e, device=None, namespace=None):
     if e.code == errno.ENODEV:
         raise NetworkInterfaceNotFound(device=device, namespace=namespace)
