@@ -14,9 +14,9 @@
 
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from oslo_log import log as logging
 
-from neutron.services.trunk import constants as trunk_consts
 from neutron.services.trunk.rpc import server
 
 LOG = logging.getLogger(__name__)
@@ -37,21 +37,21 @@ class ServerSideRpcBackend(object):
     # to agents as needed. These are designed to work with any
     # agent-based driver that may integrate with the trunk service
     # plugin, e.g. linux bridge or ovs.
-    @registry.receives(trunk_consts.TRUNK,
+    @registry.receives(resources.TRUNK,
                        [events.AFTER_CREATE, events.AFTER_DELETE])
-    @registry.receives(trunk_consts.SUBPORTS,
+    @registry.receives(resources.SUBPORTS,
                        [events.AFTER_CREATE, events.AFTER_DELETE])
     def process_event(self, resource, event, trunk_plugin, payload):
         """Emit RPC notifications to registered subscribers."""
         context = payload.context
         LOG.debug("RPC notification needed for trunk %s", payload.trunk_id)
-        if resource == trunk_consts.SUBPORTS:
+        if resource == resources.SUBPORTS:
             payload = payload.subports
             method = {
                 events.AFTER_CREATE: self._stub.subports_added,
                 events.AFTER_DELETE: self._stub.subports_deleted,
             }
-        elif resource == trunk_consts.TRUNK:
+        elif resource == resources.TRUNK:
             # On AFTER_DELETE event, current_trunk is None
             payload = payload.current_trunk or payload.original_trunk
             method = {

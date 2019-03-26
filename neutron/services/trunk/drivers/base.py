@@ -17,8 +17,8 @@ import abc
 
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 
-from neutron.services.trunk import constants as trunk_consts
 from neutron.services.trunk.rpc import backend
 
 
@@ -61,7 +61,7 @@ class DriverBase(object):
         """True if the driver is compatible with the agent type."""
         return agent_type == self.agent_type
 
-    @registry.receives(trunk_consts.TRUNK_PLUGIN, [events.AFTER_INIT])
+    @registry.receives(resources.TRUNK_PLUGIN, [events.AFTER_INIT])
     def register(self, resource, event, trigger, payload=None):
         """Register the trunk driver.
 
