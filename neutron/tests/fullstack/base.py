@@ -19,6 +19,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as config
 from neutron.tests import base as tests_base
@@ -150,3 +151,8 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
             "Port", vm.port.name,
             "tag", network.get("provider:segmentation_id"))
         return vm
+
+    def assert_namespace_exists(self, ns_name):
+        common_utils.wait_until_true(
+            lambda: ip_lib.network_namespace_exists(ns_name,
+                                                    try_is_ready=True))
