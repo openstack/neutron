@@ -600,7 +600,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             attr, resource, target, action)
         self.assertFalse(result)
 
-    @mock.patch("neutron.common.constants.EXT_PARENT_RESOURCE_MAPPING",
+    @mock.patch("neutron_lib.services.constants.EXT_PARENT_RESOURCE_MAPPING",
                 {'parentresource': 'registered_plugin_name'})
     @mock.patch("neutron_lib.plugins.directory.get_plugin")
     def test_enforce_tenant_id_check_parent_resource_owner(
