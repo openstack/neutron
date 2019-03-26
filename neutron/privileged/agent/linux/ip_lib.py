@@ -103,6 +103,13 @@ def _run_iproute(command, device, namespace, **kwargs):
 
 
 @privileged.default.entrypoint
+def open_namespace(namespace):
+    """Open namespace to test if the namespace is ready to be manipulated"""
+    with pyroute2.NetNS(namespace, flags=0):
+        pass
+
+
+@privileged.default.entrypoint
 def add_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
                     **kwargs):
     """Add a neighbour entry.

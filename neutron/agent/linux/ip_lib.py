@@ -1059,14 +1059,24 @@ def list_network_namespaces(**kwargs):
         return netns.listnetns(**kwargs)
 
 
-def network_namespace_exists(namespace, **kwargs):
+def network_namespace_exists(namespace, try_is_ready=False, **kwargs):
     """Check if a network namespace exists.
 
     :param namespace: The name of the namespace to check
+    :param try_is_ready: Try to open the namespace to know if the namespace
+                         is ready to be operated.
     :param kwargs: Callers add any filters they use as kwargs
     """
-    output = list_network_namespaces(**kwargs)
-    return namespace in output
+    if not try_is_ready:
+        output = list_network_namespaces(**kwargs)
+        return namespace in output
+
+    try:
+        privileged.open_namespace(namespace)
+        return True
+    except (RuntimeError, OSError):
+        pass
+    return False
 
 
 def ensure_device_is_ready(device_name, namespace=None):
