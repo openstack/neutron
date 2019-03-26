@@ -107,8 +107,9 @@ class TestDhcpAgentNoHA(BaseDhcpAgentTest):
         namespace = dhcp_agent._get_namespace_name(
             self.network['id'],
             suffix=self.environment.hosts[0].dhcp_agent.get_namespace_suffix())
-        ip = ip_lib.IPWrapper(namespace)
+        self.assert_namespace_exists(namespace)
 
+        ip = ip_lib.IPWrapper(namespace)
         devices = ip.get_devices()
         self.assertEqual(1, len(devices))
 
