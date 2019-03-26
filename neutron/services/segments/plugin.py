@@ -442,6 +442,9 @@ class SegmentHostRoutes(object):
     def _get_subnets(self, context, network_id):
         return subnet_obj.Subnet.get_objects(context, network_id=network_id)
 
+    def _count_subnets(self, context, network_id):
+        return subnet_obj.Subnet.count(context, network_id=network_id)
+
     def _calculate_routed_network_host_routes(self, context, ip_version,
                                               network_id=None, subnet_id=None,
                                               segment_id=None,
@@ -596,7 +599,8 @@ class SegmentHostRoutes(object):
         subnet = kwargs['subnet']
         # If there are other subnets on the network and subnet has segment_id
         # ensure host routes for all subnets are updated.
-        if (len(self._get_subnets(context, subnet['network_id'])) > 1 and
+
+        if (self._count_subnets(context, subnet['network_id']) > 1 and
                 subnet.get('segment_id')):
             self._update_routed_network_host_routes(context,
                                                     subnet['network_id'])
