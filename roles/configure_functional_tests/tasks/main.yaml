@@ -7,6 +7,7 @@
 
         BASE_DIR={{ base_dir }}
         GATE_DEST={{ gate_dest_dir }}
+        PROJECT_NAME={{ project_name }}
         NEUTRON_PATH={{ neutron_dir }}
         DEVSTACK_PATH={{ devstack_dir }}
         VENV={{ tests_venv }}
