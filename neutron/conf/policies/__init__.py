@@ -24,6 +24,7 @@ from neutron.conf.policies import flavor
 from neutron.conf.policies import floatingip
 from neutron.conf.policies import floatingip_pools
 from neutron.conf.policies import floatingip_port_forwarding
+from neutron.conf.policies import l3_conntrack_helper
 from neutron.conf.policies import logging
 from neutron.conf.policies import metering
 from neutron.conf.policies import network
@@ -52,6 +53,7 @@ def list_rules():
         floatingip.list_rules(),
         floatingip_pools.list_rules(),
         floatingip_port_forwarding.list_rules(),
+        l3_conntrack_helper.list_rules(),
         logging.list_rules(),
         metering.list_rules(),
         network.list_rules(),

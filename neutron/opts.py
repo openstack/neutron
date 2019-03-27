@@ -40,6 +40,7 @@ import neutron.conf.db.l3_dvr_db
 import neutron.conf.db.l3_gwmode_db
 import neutron.conf.db.l3_hamode_db
 import neutron.conf.extensions.allowedaddresspairs
+import neutron.conf.extensions.conntrack_helper
 import neutron.conf.plugins.ml2.config
 import neutron.conf.plugins.ml2.drivers.agent
 import neutron.conf.plugins.ml2.drivers.driver_type
@@ -100,8 +101,11 @@ def list_agent_opts():
 def list_extension_opts():
     return [
         ('DEFAULT',
-         neutron.conf.extensions.allowedaddresspairs
-         .allowed_address_pair_opts),
+         itertools.chain(
+             neutron.conf.extensions.allowedaddresspairs
+             .allowed_address_pair_opts,
+             neutron.conf.extensions.conntrack_helper.conntrack_helper_opts)
+         ),
         ('quotas',
          itertools.chain(
              neutron.conf.quota.l3_quota_opts,

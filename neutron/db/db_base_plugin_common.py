@@ -77,6 +77,21 @@ def filter_fields(f):
     return inner_filter
 
 
+def make_result_with_fields(f):
+    @functools.wraps(f)
+    def inner(*args, **kwargs):
+        fields = kwargs.get('fields')
+        result = f(*args, **kwargs)
+        if fields is None:
+            return result
+        elif isinstance(result, list):
+            return [db_utils.resource_fields(r, fields) for r in result]
+        else:
+            return db_utils.resource_fields(result, fields)
+
+    return inner
+
+
 class DbBasePluginCommon(object):
     """Stores getters and helper methods for db_base_plugin_v2
 

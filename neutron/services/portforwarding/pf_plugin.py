@@ -14,7 +14,6 @@
 #    under the License.
 
 import collections
-import functools
 
 import netaddr
 from neutron_lib.api.definitions import expose_port_forwarding_in_fip
@@ -26,7 +25,6 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_consts
 from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
-from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import l3 as lib_l3_exc
 from neutron_lib.objects import exceptions as obj_exc
@@ -50,21 +48,6 @@ LOG = logging.getLogger(__name__)
 
 # Move to neutron-lib someday.
 PORT_FORWARDING_FLOATINGIP_KEY = '_pf_floatingips'
-
-
-def make_result_with_fields(f):
-    @functools.wraps(f)
-    def inner(*args, **kwargs):
-        fields = kwargs.get('fields')
-        result = f(*args, **kwargs)
-        if fields is None:
-            return result
-        elif isinstance(result, list):
-            return [db_utils.resource_fields(r, fields) for r in result]
-        else:
-            return db_utils.resource_fields(result, fields)
-
-    return inner
 
 
 @resource_extend.has_resource_extenders
@@ -464,7 +447,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
             raise lib_l3_exc.FloatingIPNotFound(floatingip_id=fip_id)
         return fip_obj
 
-    @make_result_with_fields
+    @db_base_plugin_common.make_result_with_fields
     @db_base_plugin_common.convert_result_to_dict
     def get_floatingip_port_forwarding(self, context, id, floatingip_id,
                                        fields=None):
@@ -482,7 +465,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 raise pf_exc.PortForwardingNotSupportFilterField(
                     filter=filter_member_key)
 
-    @make_result_with_fields
+    @db_base_plugin_common.make_result_with_fields
     @db_base_plugin_common.convert_result_to_dict
     def get_floatingip_port_forwardings(self, context, floatingip_id=None,
                                         filters=None, fields=None, sorts=None,
