@@ -322,6 +322,11 @@ class TestGetCmdlineFromPid(base.BaseTestCase):
         expected_cmdline = ["python3", "test-binary", "test", "option"]
         self._test_cmdline(process_cmd, expected_cmdline)
 
+    def test_cmdline_with_single_argument(self):
+        process_cmd = "test-binary\0"
+        expected_cmdline = ["test-binary"]
+        self._test_cmdline(process_cmd, expected_cmdline)
+
     def test_no_process_running(self):
         self.process_is_running_mock.return_value = False
         mock_open = self.useFixture(
