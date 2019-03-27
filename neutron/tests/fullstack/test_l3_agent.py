@@ -23,6 +23,7 @@ from oslo_utils import uuidutils
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import l3_tc_lib
 from neutron.common import utils as common_utils
 from neutron.tests import base as tests_base
 from neutron.tests.common.exclusive_resources import ip_network
@@ -115,21 +116,117 @@ class TestL3Agent(base.BaseFullStackTestCase):
         # ping router old gateway IP, should fail now
         external_vm.block_until_no_ping(old_gw_ip)
 
+    def _get_namespace(self, router_id, agent=None):
+        namespace = namespaces.build_ns_name(namespaces.NS_PREFIX, router_id)
+        if agent:
+            suffix = agent.get_namespace_suffix()
+        else:
+            suffix = self.environment.hosts[0].l3_agent.get_namespace_suffix()
+        return "%s@%s" % (namespace, suffix)
+
+    def _get_l3_agents_with_ha_state(
+            self, l3_agents, router_id, ha_state=None):
+        found_agents = []
+        agents_hosting_router = self.client.list_l3_agent_hosting_routers(
+            router_id)['agents']
+        for agent in l3_agents:
+            agent_host = agent.neutron_cfg_fixture.get_host()
+            for agent_hosting_router in agents_hosting_router:
+                if (agent_hosting_router['host'] == agent_host and
+                        ((ha_state is None) or (
+                             agent_hosting_router['ha_state'] == ha_state))):
+                    found_agents.append(agent)
+                    break
+        return found_agents
+
+    def _router_fip_qos_after_admin_state_down_up(self, ha=False):
+        tenant_id = uuidutils.generate_uuid()
+        ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
+        external_vm = self._create_external_vm(ext_net, ext_sub)
+
+        router = self.safe_client.create_router(tenant_id,
+                                                ha=ha,
+                                                external_network=ext_net['id'])
+
+        vm = self._create_net_subnet_and_vm(
+            tenant_id, ['20.0.0.0/24', '2001:db8:aaaa::/64'],
+            self.environment.hosts[1], router)
+        # ping external vm to test snat
+        vm.block_until_ping(external_vm.ip)
+
+        qos_policy = self.safe_client.create_qos_policy(
+            tenant_id, 'fs_policy', 'Fullstack testing policy',
+            shared='False', is_default='False')
+        self.safe_client.create_bandwidth_limit_rule(
+            tenant_id, qos_policy['id'], 1111, 2222,
+            constants.INGRESS_DIRECTION)
+        self.safe_client.create_bandwidth_limit_rule(
+            tenant_id, qos_policy['id'], 3333, 4444,
+            constants.EGRESS_DIRECTION)
+
+        fip = self.safe_client.create_floatingip(
+            tenant_id, ext_net['id'], vm.ip, vm.neutron_port['id'],
+            qos_policy_id=qos_policy['id'])
+        # ping floating ip from external vm
+        external_vm.block_until_ping(fip['floating_ip_address'])
+
+        self.safe_client.update_router(router['id'], admin_state_up=False)
+        external_vm.block_until_no_ping(fip['floating_ip_address'])
+
+        self.safe_client.update_router(router['id'], admin_state_up=True)
+        external_vm.block_until_ping(fip['floating_ip_address'])
+
+        if ha:
+            l3_agents = [host.agents['l3'] for host in self.environment.hosts]
+            router_agent = self._get_l3_agents_with_ha_state(
+                l3_agents, router['id'])[0]
+            qrouter_ns = self._get_namespace(
+                            router['id'],
+                            router_agent)
+        else:
+            qrouter_ns = self._get_namespace(router['id'])
+        ip = ip_lib.IPWrapper(qrouter_ns)
+        common_utils.wait_until_true(lambda: ip.get_devices())
+
+        devices = ip.get_devices()
+        for dev in devices:
+            if dev.name.startswith("qg-"):
+                interface_name = dev.name
+
+        tc_wrapper = l3_tc_lib.FloatingIPTcCommand(
+            interface_name,
+            namespace=qrouter_ns)
+        common_utils.wait_until_true(
+            functools.partial(
+                self._wait_until_filters_set,
+                tc_wrapper),
+            timeout=60)
+
+    def _wait_until_filters_set(self, tc_wrapper):
+
+        def _is_filter_set(direction):
+            filter_ids = tc_wrapper.get_existing_filter_ids(
+                direction)
+            if not filter_ids:
+                return False
+            return 1 == len(filter_ids)
+        return (_is_filter_set(constants.INGRESS_DIRECTION) and
+                _is_filter_set(constants.EGRESS_DIRECTION))
+
 
 class TestLegacyL3Agent(TestL3Agent):
 
     def setUp(self):
         host_descriptions = [
-            environment.HostDescription(l3_agent=True, dhcp_agent=True),
+            environment.HostDescription(l3_agent=True, dhcp_agent=True,
+                                        l3_agent_extensions="fip_qos"),
             environment.HostDescription()]
         env = environment.Environment(
             environment.EnvironmentDescription(
-                network_type='vlan', l2_pop=False),
+                network_type='vlan', l2_pop=False,
+                qos=True),
             host_descriptions)
         super(TestLegacyL3Agent, self).setUp(env)
-
-    def _get_namespace(self, router_id):
-        return namespaces.build_ns_name(namespaces.NS_PREFIX, router_id)
 
     def test_namespace_exists(self):
         tenant_id = uuidutils.generate_uuid()
@@ -140,9 +237,7 @@ class TestLegacyL3Agent(TestL3Agent):
             tenant_id, network['id'], '20.0.0.0/24', gateway_ip='20.0.0.1')
         self.safe_client.add_router_interface(router['id'], subnet['id'])
 
-        namespace = "%s@%s" % (
-            self._get_namespace(router['id']),
-            self.environment.hosts[0].l3_agent.get_namespace_suffix(), )
+        namespace = self._get_namespace(router['id'])
         self.assert_namespace_exists(namespace)
 
     def test_mtu_update(self):
@@ -154,9 +249,7 @@ class TestLegacyL3Agent(TestL3Agent):
             tenant_id, network['id'], '20.0.0.0/24', gateway_ip='20.0.0.1')
         self.safe_client.add_router_interface(router['id'], subnet['id'])
 
-        namespace = "%s@%s" % (
-            self._get_namespace(router['id']),
-            self.environment.hosts[0].l3_agent.get_namespace_suffix(), )
+        namespace = self._get_namespace(router['id'])
         self.assert_namespace_exists(namespace)
 
         ip = ip_lib.IPWrapper(namespace)
@@ -259,16 +352,21 @@ class TestLegacyL3Agent(TestL3Agent):
     def test_gateway_ip_changed(self):
         self._test_gateway_ip_changed()
 
+    def test_router_fip_qos_after_admin_state_down_up(self):
+        self._router_fip_qos_after_admin_state_down_up()
+
 
 class TestHAL3Agent(TestL3Agent):
 
     def setUp(self):
         host_descriptions = [
-            environment.HostDescription(l3_agent=True, dhcp_agent=True)
+            environment.HostDescription(l3_agent=True, dhcp_agent=True,
+                                        l3_agent_extensions="fip_qos")
             for _ in range(2)]
         env = environment.Environment(
             environment.EnvironmentDescription(
-                network_type='vlan', l2_pop=True),
+                network_type='vlan', l2_pop=True,
+                qos=True),
             host_descriptions)
         super(TestHAL3Agent, self).setUp(env)
 
@@ -307,19 +405,6 @@ class TestHAL3Agent(TestL3Agent):
 
             if self._get_keepalived_state(keepalived_state_file) == "master":
                 return keepalived_state_file
-
-    def _get_l3_agents_with_ha_state(self, l3_agents, router_id, ha_state):
-        found_agents = []
-        agents_hosting_router = self.client.list_l3_agent_hosting_routers(
-            router_id)['agents']
-        for agent in l3_agents:
-            agent_host = agent.neutron_cfg_fixture.get_host()
-            for agent_hosting_router in agents_hosting_router:
-                if (agent_hosting_router['host'] == agent_host and
-                        agent_hosting_router['ha_state'] == ha_state):
-                    found_agents.append(agent)
-                    break
-        return found_agents
 
     def test_keepalived_multiple_sighups_does_not_forfeit_mastership(self):
         """Setup a complete "Neutron stack" - both an internal and an external
@@ -413,3 +498,6 @@ class TestHAL3Agent(TestL3Agent):
 
     def test_gateway_ip_changed(self):
         self._test_gateway_ip_changed()
+
+    def test_router_fip_qos_after_admin_state_down_up(self):
+        self._router_fip_qos_after_admin_state_down_up(ha=True)

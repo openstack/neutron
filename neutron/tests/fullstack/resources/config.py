@@ -391,6 +391,10 @@ class L3ConfigFixture(ConfigFixture):
             self.config['agent'].update({
                 'availability_zone': host_desc.availability_zone
             })
+        if host_desc.l3_agent_extensions:
+            self.config['agent'].update({
+                'extensions': host_desc.l3_agent_extensions
+            })
 
     def _prepare_config_with_ovs_agent(self, integration_bridge):
         self.config.update({

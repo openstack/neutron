@@ -73,6 +73,9 @@ class ClientFixture(fixtures.Fixture):
 
         return self._create_resource(resource_type, spec)
 
+    def update_router(self, router_id, **kwargs):
+        return self._update_resource('router', router_id, kwargs)
+
     def create_network(self, tenant_id, name=None, external=False,
                        network_type=None, segmentation_id=None,
                        physical_network=None, mtu=None):
@@ -141,7 +144,7 @@ class ClientFixture(fixtures.Fixture):
         return self._update_resource('port', port_id, kwargs)
 
     def create_floatingip(self, tenant_id, floating_network_id,
-                          fixed_ip_address, port_id):
+                          fixed_ip_address, port_id, qos_policy_id=None):
         spec = {
             'floating_network_id': floating_network_id,
             'tenant_id': tenant_id,
@@ -149,6 +152,8 @@ class ClientFixture(fixtures.Fixture):
             'port_id': port_id
         }
 
+        if qos_policy_id:
+            spec['qos_policy_id'] = qos_policy_id
         return self._create_resource('floatingip', spec)
 
     def add_router_interface(self, router_id, subnet_id):

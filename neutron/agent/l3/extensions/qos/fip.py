@@ -104,6 +104,17 @@ class RouterFipRateLimitMaps(qos_base.RateLimitMaps):
 
         return _get_fip_ratelimit_cache()
 
+    def remove_fip_all_cache(self, fip):
+        for direction in constants.VALID_DIRECTIONS:
+            self.remove_fip_ratelimit_cache(direction, fip)
+        self.clean_by_resource(fip)
+
+    def clean_router_all_fip_cache(self, router_id):
+        floating_ips = self.router_floating_ips.pop(
+            router_id, [])
+        for fip in floating_ips:
+            self.remove_fip_all_cache(fip)
+
 
 class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
                            l3_extension.L3AgentExtension):
@@ -142,9 +153,6 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
                         self.process_ip_rates(
                             fip, dvr_fip_device, rates, with_cache=False)
             self.fip_qos_map.update_policy(qos_policy)
-
-    def _process_reset_fip(self, fip):
-        self.fip_qos_map.clean_by_resource(fip)
 
     @coordination.synchronized('qos-floating-ip-{ip}')
     def process_ip_rate_limit(self, ip, direction,
@@ -197,7 +205,7 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
 
     def get_fip_qos_rates(self, context, fip, policy_id):
         if policy_id is None:
-            self._process_reset_fip(fip)
+            self.fip_qos_map.clean_by_resource(fip)
             # process_ip_rate_limit will treat value 0 as
             # cleaning the tc filters if exits or no action.
             return {constants.INGRESS_DIRECTION: {
@@ -321,7 +329,7 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
                 self._remove_fip_rate_limit(device, fip)
             if dvr_fip_device:
                 self._remove_fip_rate_limit(dvr_fip_device, fip)
-            self._process_reset_fip(fip)
+            self.fip_qos_map.clean_by_resource(fip)
 
     def add_router(self, context, data):
         router_info = self._get_router_info(data['id'])
@@ -334,9 +342,7 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
             self.process_floating_ip_addresses(context, router_info)
 
     def delete_router(self, context, data):
-        # NOTE(liuyulong): to delete the router, you need to disassociate the
-        # floating IP first, so the update_router has done the cache clean.
-        pass
+        self.fip_qos_map.clean_router_all_fip_cache(data['id'])
 
     def ha_state_change(self, context, data):
         pass
