@@ -31,13 +31,14 @@
           export DEVSTACK_GATE_TEMPEST=1
           export DEVSTACK_GATE_TEMPEST_FULL=1
           export DEVSTACK_GATE_NEUTRON=1
+          export DEVSTACK_GATE_TEMPEST_REGEX="'(^tempest\.scenario.*)|(?!.*\[.*\bslow\b.*\])(^tempest\.api)' --blacklist-file=/opt/stack/new/neutron/neutron/tests/contrib/tempest_blacklist.txt"
           export BRANCH_OVERRIDE=default
           if [ "$BRANCH_OVERRIDE" != "default" ] ; then
               export OVERRIDE_ZUUL_BRANCH=$BRANCH_OVERRIDE
           fi
 
           function gate_hook {
-              bash -xe $BASE/new/neutron/neutron/tests/contrib/gate_hook.sh full-ovsfw
+              bash -xe /opt/stack/new/neutron/neutron/tests/contrib/gate_hook.sh full-ovsfw
           }
           export -f gate_hook
 

@@ -1,0 +1,8 @@
+# Tests outside of neutron repository regularly failing
+# in Extended Maintenance branches
+# In these branches, "There is no statement about the level of testing and
+# upgrades from Extended Maintenance are not supported within the Community."
+# Blacklist them to limit CI usage for backports
+
+# https://bugs.launchpad.net/neutron/+bug/1821925
+tempest.api.volume.test_volumes_extend.VolumesExtendTest.test_volume_extend_when_volume_has_snapshot
