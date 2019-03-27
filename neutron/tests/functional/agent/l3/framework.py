@@ -275,10 +275,6 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         router.process()
 
         if enable_ha:
-            port = router.get_ex_gw_port()
-            interface_name = router.get_external_device_name(port['id'])
-            self._assert_no_ip_addresses_on_interface(router.ns_name,
-                                                      interface_name)
             common_utils.wait_until_true(lambda: router.ha_state == 'master')
 
             # Keepalived notifies of a state transition when it starts,
