@@ -23,6 +23,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
 from neutron_lib import rpc as n_rpc
+from neutron_lib.services import constants as service_const
 from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
 from oslo_utils import excutils
@@ -784,7 +785,7 @@ class Controller(object):
         if not is_get and (request.context.is_admin or
                            request.context.is_advsvc or
                            self.parent['member_name'] not in
-                           n_const.EXT_PARENT_RESOURCE_MAPPING or
+                           service_const.EXT_PARENT_RESOURCE_MAPPING or
                            resource_item.get(self._parent_id_name)):
             return
 
@@ -795,7 +796,7 @@ class Controller(object):
             if (not request.context.is_admin or
                     not request.context.is_advsvc and
                     self.parent['member_name'] in
-                    n_const.EXT_PARENT_RESOURCE_MAPPING):
+                    service_const.EXT_PARENT_RESOURCE_MAPPING):
                 resource_item.setdefault(
                     "%s_%s" % (n_const.EXT_PARENT_PREFIX,
                                self._parent_id_name),
