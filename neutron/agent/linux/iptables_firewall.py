@@ -30,6 +30,7 @@ from neutron.agent.linux import ip_conntrack
 from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
+from neutron.common import _constants as const
 from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.common import utils as c_utils
@@ -733,10 +734,10 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             # icmp code can be 0 so we cannot use "if port_range_max" here
             if port_range_max is not None:
                 args[-1] += '/%s' % port_range_max
-        elif protocol in n_const.SG_PORT_PROTO_NAMES:
+        elif protocol in const.SG_PORT_PROTO_NAMES:
             # iptables protocols that support --dport, --sport and -m multiport
             if port_range_min == port_range_max:
-                if protocol in n_const.IPTABLES_MULTIPORT_ONLY_PROTOCOLS:
+                if protocol in const.IPTABLES_MULTIPORT_ONLY_PROTOCOLS:
                     # use -m multiport, but without a port range
                     args += ['-m', 'multiport', '--%ss' % direction,
                              '%s' % port_range_min]
