@@ -33,6 +33,7 @@ import six
 from sqlalchemy.orm import scoped_session
 
 from neutron._i18n import _
+from neutron.common import _constants as const
 from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.db.models import securitygroup as sg_models
@@ -476,8 +477,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         ip_proto = self._get_ip_proto_number(rule['protocol'])
         # Not all firewall_driver support all these protocols,
         # but being strict here doesn't hurt.
-        if (ip_proto in n_const.SG_PORT_PROTO_NUMS or
-                ip_proto in n_const.SG_PORT_PROTO_NAMES):
+        if (ip_proto in const.SG_PORT_PROTO_NUMS or
+                ip_proto in const.SG_PORT_PROTO_NAMES):
             if rule['port_range_min'] == 0 or rule['port_range_max'] == 0:
                 raise ext_sg.SecurityGroupInvalidPortValue(port=0)
             elif (rule['port_range_min'] is not None and
@@ -503,7 +504,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             if (rule['port_range_min'] is not None or
                     rule['port_range_max'] is not None):
                 port_protocols = (
-                    ', '.join(s.upper() for s in n_const.SG_PORT_PROTO_NAMES))
+                    ', '.join(s.upper() for s in const.SG_PORT_PROTO_NAMES))
                 raise ext_sg.SecurityGroupInvalidProtocolForPort(
                     protocol=ip_proto, valid_port_protocols=port_protocols)
 
