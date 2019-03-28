@@ -1,0 +1,17 @@
+---
+features:
+  - |
+    Support for L3 conntrack helpers has been added.
+
+    Users can now configure conntrack helper target rules to be set for a
+    ``Router``. This is accomplished by associating a ``conntrack_helper``
+    sub-resource to a router. To create a ``conntrack_helper``, the user
+    specifies: a router ID, the protocol (TCP or UDP, for example), the port
+    number and the conntrack helper module alias (tftp or ftp, for example).
+    CRUD operations for ``conntrack_helpers`` are implemented by a Neutron API
+    extension and a service plugin. Please refer to the Neutron API reference
+    documentation for details. A router can have multiple ``conntack_helpers``.
+
+    The new configuration option
+    ``[l3-conntrack-helpers]/allowed_conntrack_helpers`` allow the operator to
+    configure allowed helpers, and the helper protocol constraints.
