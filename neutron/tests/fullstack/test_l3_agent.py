@@ -130,10 +130,6 @@ class TestLegacyL3Agent(TestL3Agent):
     def _get_namespace(self, router_id):
         return namespaces.build_ns_name(namespaces.NS_PREFIX, router_id)
 
-    def _assert_namespace_exists(self, ns_name):
-        common_utils.wait_until_true(
-            lambda: ip_lib.network_namespace_exists(ns_name))
-
     def test_namespace_exists(self):
         tenant_id = uuidutils.generate_uuid()
 
@@ -146,7 +142,7 @@ class TestLegacyL3Agent(TestL3Agent):
         namespace = "%s@%s" % (
             self._get_namespace(router['id']),
             self.environment.hosts[0].l3_agent.get_namespace_suffix(), )
-        self._assert_namespace_exists(namespace)
+        self.assert_namespace_exists(namespace)
 
     def test_mtu_update(self):
         tenant_id = uuidutils.generate_uuid()
@@ -160,7 +156,7 @@ class TestLegacyL3Agent(TestL3Agent):
         namespace = "%s@%s" % (
             self._get_namespace(router['id']),
             self.environment.hosts[0].l3_agent.get_namespace_suffix(), )
-        self._assert_namespace_exists(namespace)
+        self.assert_namespace_exists(namespace)
 
         ip = ip_lib.IPWrapper(namespace)
         common_utils.wait_until_true(lambda: ip.get_devices())

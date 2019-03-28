@@ -176,6 +176,17 @@ def get_iproute(namespace):
         return pyroute2.IPRoute()
 
 
+@privileged.default.entrypoint
+# NOTE(slaweq): Because of issue with pyroute2.NetNS objects running in threads
+# we need to lock this function to workaround this issue.
+# For details please check https://bugs.launchpad.net/neutron/+bug/1811515
+@lockutils.synchronized("privileged-ip-lib")
+def open_namespace(namespace):
+    """Open namespace to test if the namespace is ready to be manipulated"""
+    with pyroute2.NetNS(namespace, flags=0):
+        pass
+
+
 def _translate_ip_device_exception(e, device=None, namespace=None):
     if e.code == errno.ENODEV:
         raise NetworkInterfaceNotFound(device=device, namespace=namespace)
