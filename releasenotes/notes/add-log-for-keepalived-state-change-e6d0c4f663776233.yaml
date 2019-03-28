@@ -1,0 +1,4 @@
+---
+other:
+  - |
+    Add log file for ``neutron-keepalived-state-change`` daemon.
