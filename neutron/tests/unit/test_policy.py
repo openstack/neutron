@@ -183,7 +183,13 @@ FAKE_RESOURCES = {"%ss" % FAKE_RESOURCE_NAME:
                             'validate': {'type:dict':
                                          {'sub_attr_1': {'type:string': None},
                                           'sub_attr_2': {'type:string': None}}}
-                            }},
+                            },
+                   'list_attr': {'allow_post': True,
+                                 'allow_put': True,
+                                 'is_visible': True,
+                                 'default': None,
+                                 'enforce_policy': True
+                                 }},
                   # special plural name
                   "%s" % FAKE_SPECIAL_RESOURCE_NAME.replace('y', 'ies'):
                   {'attr': {'allow_post': True,
@@ -252,6 +258,10 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             "create_fake_resource:attr": "rule:admin_or_owner",
             "create_fake_resource:attr:sub_attr_1": "rule:admin_or_owner",
             "create_fake_resource:attr:sub_attr_2": "rule:admin_only",
+            "create_fake_resource:list_attr": "rule:admin_only_or_owner",
+            "create_fake_resource:list_attr:admin_element": "rule:admin_only",
+            "create_fake_resource:list_attr:user_element": (
+                "rule:admin_or_owner"),
 
             "create_fake_policy:": "rule:admin_or_owner",
         }
@@ -469,6 +479,23 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                               self.context,
                               action,
                               target)
+
+    def test_enforce_subattribute_as_list(self):
+        action = "create_" + FAKE_RESOURCE_NAME
+        target = {
+            'tenant_id': 'fake',
+            'list_attr': [{'user_element': 'x'}]}
+        result = policy.enforce(self.context,
+                                action, target, None)
+        self.assertTrue(result)
+
+    def test_enforce_subattribute_as_list_forbiden(self):
+        action = "create_" + FAKE_RESOURCE_NAME
+        target = {
+            'tenant_id': 'fake',
+            'list_attr': [{'admin_element': 'x'}]}
+        self.assertRaises(oslo_policy.PolicyNotAuthorized, policy.enforce,
+                          self.context, action, target, None)
 
     def test_retryrequest_on_notfound(self):
         failure = exceptions.NetworkNotFound(net_id='whatever')
