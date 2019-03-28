@@ -24,6 +24,7 @@ import sys
 
 from neutron_lib import exceptions
 from oslo_log import log as logging
+import six
 
 from neutron._i18n import _
 
@@ -136,7 +137,7 @@ class Pidfile(object):
 
     def write(self, pid):
         os.ftruncate(self.fd, 0)
-        os.write(self.fd, b"%d" % pid)
+        os.write(self.fd, six.b("%s" % pid))
         os.fsync(self.fd)
 
     def read(self):
