@@ -26,7 +26,6 @@ from oslo_context import context as oslo_context
 from oslo_utils import uuidutils
 
 from neutron.agent import rpc
-from neutron.common import constants as n_const
 from neutron.objects import network
 from neutron.objects import ports
 from neutron.tests import base
@@ -291,7 +290,7 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
         self.assertEqual(self._port_id, entry['device'])
         self.assertEqual(self._port_id, entry['port_id'])
         self.assertEqual(self._network_id, entry['network_id'])
-        self.assertNotIn(n_const.NO_ACTIVE_BINDING, entry)
+        self.assertNotIn(constants.NO_ACTIVE_BINDING, entry)
 
     def test_get_device_details_binding_not_in_host(self):
         self._api.remote_resource_cache.get_resource_by_id.side_effect = [
@@ -301,4 +300,4 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
         self.assertEqual(self._port_id, entry['device'])
         self.assertNotIn('port_id', entry)
         self.assertNotIn('network_id', entry)
-        self.assertIn(n_const.NO_ACTIVE_BINDING, entry)
+        self.assertIn(constants.NO_ACTIVE_BINDING, entry)

@@ -45,7 +45,6 @@ from sqlalchemy import exc as sql_exc
 from sqlalchemy import orm
 
 from neutron._i18n import _
-from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
 from neutron.conf.db import l3_hamode_db
 from neutron.db import _utils as db_utils
@@ -173,7 +172,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
     def _create_ha_subnet(self, context, network_id, tenant_id):
         args = {'network_id': network_id,
                 'tenant_id': '',
-                'name': n_const.HA_SUBNET_NAME % tenant_id,
+                'name': constants.HA_SUBNET_NAME % tenant_id,
                 'ip_version': 4,
                 'cidr': cfg.CONF.l3_ha_net_cidr,
                 'enable_dhcp': False,
@@ -209,7 +208,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         admin_ctx = context.elevated()
 
         args = {'network':
-                {'name': n_const.HA_NETWORK_NAME % tenant_id,
+                {'name': constants.HA_NETWORK_NAME % tenant_id,
                  'tenant_id': '',
                  'shared': False,
                  'admin_state_up': True}}
@@ -289,7 +288,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 'admin_state_up': True,
                 'device_id': router_id,
                 'device_owner': constants.DEVICE_OWNER_ROUTER_HA_INTF,
-                'name': n_const.HA_PORT_NAME % tenant_id}
+                'name': constants.HA_PORT_NAME % tenant_id}
         creation = functools.partial(p_utils.create_port, self._core_plugin,
                                      context, {'port': args})
         content = functools.partial(self._create_ha_port_binding, context,
@@ -574,9 +573,9 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             for binding in bindings:
                 if not (binding.agent.is_active and
                         binding.agent.admin_state_up):
-                    if binding.state == n_const.HA_ROUTER_STATE_ACTIVE:
+                    if binding.state == constants.HA_ROUTER_STATE_ACTIVE:
                         router_active_agents_dead.append(binding.agent)
-                    elif binding.state == n_const.HA_ROUTER_STATE_STANDBY:
+                    elif binding.state == constants.HA_ROUTER_STATE_STANDBY:
                         router_standby_agents_dead.append(binding.agent)
             if router_active_agents_dead:
                 # Just check if all l3_agents are down
@@ -587,12 +586,12 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                     # agent communication may be issue but router
                     # may still be active. We do not know the
                     # exact status of router.
-                    state = n_const.HA_ROUTER_STATE_UNKNOWN
+                    state = constants.HA_ROUTER_STATE_UNKNOWN
                 else:
                     # Make router status as standby on all dead agents
                     # as some other agents are alive , router can become
                     # active on them after some time
-                    state = n_const.HA_ROUTER_STATE_STANDBY
+                    state = constants.HA_ROUTER_STATE_STANDBY
                 for dead_agent in router_active_agents_dead:
                     self.update_routers_states(context, {router_id: state},
                                                dead_agent.host)
@@ -619,7 +618,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         # and l2pop would not work correctly.
         return next(
             (agent.host for agent, state in bindings
-             if state == n_const.HA_ROUTER_STATE_ACTIVE),
+             if state == constants.HA_ROUTER_STATE_ACTIVE),
             None)
 
     @log_helpers.log_method_call
@@ -642,7 +641,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
             router = routers_dict.get(binding.router_id)
             router[constants.HA_INTERFACE_KEY] = port_dict
-            router[n_const.HA_ROUTER_STATE_KEY] = binding.state
+            router[constants.HA_ROUTER_STATE_KEY] = binding.state
 
         interfaces = []
         for router in routers_dict.values():
@@ -707,7 +706,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         ports = self._core_plugin.get_ports(admin_ctx, filters=device_filter)
         active_ports = (
             port for port in ports
-            if states[port['device_id']] == n_const.HA_ROUTER_STATE_ACTIVE)
+            if states[port['device_id']] == constants.HA_ROUTER_STATE_ACTIVE)
 
         for port in active_ports:
             try:
@@ -742,7 +741,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                    "host": gateway_port_binding_host,
                    "status": gateway_port_status})
         for ha_binding_agent, ha_binding_state in ha_bindings:
-            if ha_binding_state != n_const.HA_ROUTER_STATE_ACTIVE:
+            if ha_binding_state != constants.HA_ROUTER_STATE_ACTIVE:
                 continue
             # For create router gateway, the gateway port may not be ACTIVE
             # yet, so we return 'master' host directly.

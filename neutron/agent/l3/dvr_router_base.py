@@ -10,10 +10,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from oslo_log import log as logging
 
 from neutron.agent.l3 import router_info as router
-from neutron.common import constants as l3_constants
 
 LOG = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class DvrRouterBase(router.RouterInfo):
         self.snat_ports = self.get_snat_interfaces()
 
     def get_snat_interfaces(self):
-        return self.router.get(l3_constants.SNAT_ROUTER_INTF_KEY, [])
+        return self.router.get(constants.SNAT_ROUTER_INTF_KEY, [])
 
     def get_snat_port_for_internal_port(self, int_port, snat_ports=None):
         """Return the SNAT port for the given internal interface port."""

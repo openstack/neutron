@@ -17,6 +17,7 @@ import itertools
 import os
 
 import netaddr
+from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.utils import file as file_utils
 from oslo_config import cfg
@@ -25,7 +26,6 @@ from oslo_utils import fileutils
 
 from neutron._i18n import _
 from neutron.agent.linux import external_process
-from neutron.common import constants
 from neutron.common import utils
 
 VALID_STATES = ['MASTER', 'BACKUP']

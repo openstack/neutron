@@ -19,7 +19,6 @@ from neutron_lib.services.qos import base as qos_driver_base
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 
-from neutron.common import constants
 from neutron.objects import ports as ports_object
 from neutron.objects.qos import rule as rule_object
 from neutron.services.qos.drivers import manager as driver_mgr
@@ -219,7 +218,7 @@ class TestQosDriversManagerRules(TestQosDriversManagerBase):
         self.assertEqual(
             expected_parsed_range_parameter, parameter_values)
         self.assertEqual(
-            constants.VALUES_TYPE_RANGE, parameter_type)
+            lib_consts.VALUES_TYPE_RANGE, parameter_type)
 
         parameter_values, parameter_type = (
             driver_mgr.QosServiceDriverManager._parse_parameter_values(
@@ -227,7 +226,7 @@ class TestQosDriversManagerRules(TestQosDriversManagerBase):
         self.assertEqual(
             expected_parsed_values_parameter, parameter_values)
         self.assertEqual(
-            constants.VALUES_TYPE_CHOICES, parameter_type)
+            lib_consts.VALUES_TYPE_CHOICES, parameter_type)
 
     def test_supported_rule_type_details(self):
         driver_manager = self._create_manager_with_drivers({
@@ -259,11 +258,11 @@ class TestQosDriversManagerRules(TestQosDriversManagerBase):
             'name': 'driver-A',
             'supported_parameters': [{
                 'parameter_name': 'max_kbps',
-                'parameter_type': constants.VALUES_TYPE_RANGE,
+                'parameter_type': lib_consts.VALUES_TYPE_RANGE,
                 'parameter_values': {'start': 0, 'end': 1000}
             }, {
                 'parameter_name': 'max_burst_kbps',
-                'parameter_type': constants.VALUES_TYPE_RANGE,
+                'parameter_type': lib_consts.VALUES_TYPE_RANGE,
                 'parameter_values': {'start': 0, 'end': 1000}
             }]
         }]

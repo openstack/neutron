@@ -19,7 +19,6 @@ from neutron_lib.db import constants as db_consts
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_config import cfg
 
-from neutron.common import constants
 from neutron import manager
 from neutron.objects.qos import rule_type
 from neutron.services.qos import qos_plugin
@@ -31,15 +30,15 @@ DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 DRIVER_SUPPORTED_PARAMETERS = [
     {
         'parameter_name': qos_consts.MAX_KBPS,
-        'parameter_type': constants.VALUES_TYPE_RANGE,
+        'parameter_type': lib_consts.VALUES_TYPE_RANGE,
         'parameter_values': {"start": 0, "end": db_consts.DB_INTEGER_MAX_VALUE}
     }, {
         'parameter_name': qos_consts.MAX_BURST,
-        'parameter_type': constants.VALUES_TYPE_RANGE,
+        'parameter_type': lib_consts.VALUES_TYPE_RANGE,
         'parameter_values': {"start": 0, "end": db_consts.DB_INTEGER_MAX_VALUE}
     }, {
         'parameter_name': qos_consts.DIRECTION,
-        'parameter_type': constants.VALUES_TYPE_CHOICES,
+        'parameter_type': lib_consts.VALUES_TYPE_CHOICES,
         'parameter_values': lib_consts.VALID_DIRECTIONS
     }
 ]

@@ -35,7 +35,6 @@ import stevedore
 
 from neutron._i18n import _
 from neutron.common import cache_utils as cache
-from neutron.common import constants as const
 
 
 LOG = logging.getLogger(__name__)
@@ -108,11 +107,11 @@ def set_rules(policies, overwrite=True):
 
 def _is_attribute_explicitly_set(attribute_name, resource, target, action):
     """Verify that an attribute is present and is explicitly set."""
-    if target.get(const.ATTRIBUTES_TO_UPDATE):
+    if target.get(constants.ATTRIBUTES_TO_UPDATE):
         # In the case of update, the function should not pay attention to a
         # default value of an attribute, but check whether it was explicitly
         # marked as being updated instead.
-        return (attribute_name in target[const.ATTRIBUTES_TO_UPDATE] and
+        return (attribute_name in target[constants.ATTRIBUTES_TO_UPDATE] and
                 target[attribute_name] is not constants.ATTR_NOT_SPECIFIED)
     result = (attribute_name in target and
               target[attribute_name] is not constants.ATTR_NOT_SPECIFIED)
@@ -291,9 +290,9 @@ class OwnerCheck(policy.Check):
                     reason=err_reason)
             parent_foreign_key = _RESOURCE_FOREIGN_KEYS.get(
                 "%ss" % parent_res, None)
-            if parent_res == const.EXT_PARENT_PREFIX:
+            if parent_res == constants.EXT_PARENT_PREFIX:
                 for resource in service_const.EXT_PARENT_RESOURCE_MAPPING:
-                    key = "%s_%s_id" % (const.EXT_PARENT_PREFIX, resource)
+                    key = "%s_%s_id" % (constants.EXT_PARENT_PREFIX, resource)
                     if key in target:
                         parent_foreign_key = key
                         parent_res = resource

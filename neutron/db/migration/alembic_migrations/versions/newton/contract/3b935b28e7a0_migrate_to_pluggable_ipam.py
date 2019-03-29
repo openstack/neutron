@@ -14,10 +14,10 @@
 #
 
 from alembic import op
+from neutron_lib import constants as const
 from oslo_utils import uuidutils
 import sqlalchemy as sa
 
-from neutron.common import constants as const
 
 """migrate to pluggable ipam """
 

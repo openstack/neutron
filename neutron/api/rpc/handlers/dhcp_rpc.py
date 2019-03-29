@@ -32,7 +32,6 @@ import oslo_messaging
 from oslo_utils import excutils
 
 from neutron._i18n import _
-from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.db import provisioning_blocks
 from neutron.extensions import segment as segment_ext
@@ -73,7 +72,7 @@ class DhcpRpcCallback(object):
     #           the major version as above applies here too.
 
     target = oslo_messaging.Target(
-        namespace=n_const.RPC_NAMESPACE_DHCP_PLUGIN,
+        namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
         version='1.6')
 
     def _get_active_networks(self, context, **kwargs):

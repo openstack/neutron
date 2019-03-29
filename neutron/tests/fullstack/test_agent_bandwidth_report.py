@@ -16,7 +16,6 @@ import functools
 
 from neutron_lib import constants
 
-from neutron.common import constants as c_const
 from neutron.common import utils
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base
@@ -67,22 +66,23 @@ class TestAgentBandwidthReport(base.BaseFullStackTestCase):
                 return False
             bridge_or_devices = agent_configurations[mapping_key][physnet]
 
-            if (c_const.RP_BANDWIDTHS not in agent_configurations or
-                    c_const.RP_INVENTORY_DEFAULTS not in agent_configurations):
+            if (constants.RP_BANDWIDTHS not in agent_configurations or
+                    constants.RP_INVENTORY_DEFAULTS not in
+                    agent_configurations):
                 return False
 
             if mapping_key == self.BR_MAPPINGS:
                 if (bridge_or_devices not in
-                        agent_configurations[c_const.RP_BANDWIDTHS]):
+                        agent_configurations[constants.RP_BANDWIDTHS]):
                     return False
             else:
                 for device in bridge_or_devices:
                     if (device not in
-                            agent_configurations[c_const.RP_BANDWIDTHS]):
+                            agent_configurations[constants.RP_BANDWIDTHS]):
                         return False
 
-        for device in agent_configurations[c_const.RP_BANDWIDTHS]:
-            conf_device = agent_configurations[c_const.RP_BANDWIDTHS][device]
+        for device in agent_configurations[constants.RP_BANDWIDTHS]:
+            conf_device = agent_configurations[constants.RP_BANDWIDTHS][device]
             if (f_const.MINIMUM_BANDWIDTH_INGRESS_KBPS !=
                     conf_device['ingress'] and
                     f_const.MINIMUM_BANDWIDTH_EGRESS_KBPS !=
@@ -98,7 +98,7 @@ class TestAgentBandwidthReport(base.BaseFullStackTestCase):
 
     def _add_new_device_to_agent_config(self, l2_agent_config,
                                         mapping_key_name, new_dev):
-        old_bw = l2_agent_config[c_const.RP_BANDWIDTHS]
+        old_bw = l2_agent_config[constants.RP_BANDWIDTHS]
         old_mappings = l2_agent_config[mapping_key_name]
         if new_dev in old_bw or new_dev in old_mappings:
             return
@@ -109,7 +109,7 @@ class TestAgentBandwidthReport(base.BaseFullStackTestCase):
                                f_const.MINIMUM_BANDWIDTH_INGRESS_KBPS)
         l2_agent_config[mapping_key_name] = '%s,%s' % (
             old_mappings, new_mappings)
-        l2_agent_config[c_const.RP_BANDWIDTHS] = '%s,%s' % (
+        l2_agent_config[constants.RP_BANDWIDTHS] = '%s,%s' % (
             old_bw, new_bw)
 
     def _change_agent_conf_and_restart_agent(self, l2_agent_config, l2_agent,

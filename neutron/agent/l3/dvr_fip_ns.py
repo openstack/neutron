@@ -29,7 +29,6 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
-from neutron.common import constants
 from neutron.common import utils as common_utils
 from neutron.ipam import utils as ipam_utils
 
@@ -70,7 +69,7 @@ class FipNamespace(namespaces.Namespace):
             use_ipv6=self.use_ipv6)
         path = os.path.join(agent_conf.state_path, 'fip-linklocal-networks')
         self.local_subnets = lla.LinkLocalAllocator(
-            path, constants.DVR_FIP_LL_CIDR)
+            path, lib_constants.DVR_FIP_LL_CIDR)
         self.destroyed = False
         self._stale_fips_checked = False
 

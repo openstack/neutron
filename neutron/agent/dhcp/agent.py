@@ -39,7 +39,6 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
-from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron import manager
 
@@ -714,7 +713,7 @@ class DhcpPluginApi(object):
         self.host = host
         target = oslo_messaging.Target(
                 topic=topic,
-                namespace=n_const.RPC_NAMESPACE_DHCP_PLUGIN,
+                namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
                 version='1.0')
         self.client = n_rpc.get_client(target)
 

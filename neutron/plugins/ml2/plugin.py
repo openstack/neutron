@@ -88,7 +88,6 @@ from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import metadata_rpc
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
-from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.db import address_scope_db
 from neutron.db import agents_db
@@ -2108,7 +2107,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # REVISIT(rkukura): Consider calling into MechanismDrivers to
         # process device names, or having MechanismDrivers supply list
         # of device prefixes to strip.
-        for prefix in n_const.INTERFACE_PREFIXES:
+        for prefix in const.INTERFACE_PREFIXES:
             if device.startswith(prefix):
                 return device[len(prefix):]
         # REVISIT(irenab): Consider calling into bound MD to

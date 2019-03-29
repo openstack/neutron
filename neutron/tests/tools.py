@@ -30,7 +30,6 @@ from oslo_utils import netutils
 from oslo_utils import timeutils
 import unittest2
 
-from neutron.common import constants as n_const
 from neutron.services.logapi.common import constants as log_const
 
 
@@ -238,8 +237,8 @@ def get_random_prefixlen(version=4):
     return random.randint(0, maxlen)
 
 
-def get_random_port(start=n_const.PORT_RANGE_MIN):
-    return random.randint(start, n_const.PORT_RANGE_MAX)
+def get_random_port(start=constants.PORT_RANGE_MIN):
+    return random.randint(start, constants.PORT_RANGE_MAX)
 
 
 def get_random_vlan():
@@ -247,7 +246,7 @@ def get_random_vlan():
 
 
 def get_random_ip_version():
-    return random.choice(n_const.IP_ALLOWED_VERSIONS)
+    return random.choice(constants.IP_ALLOWED_VERSIONS)
 
 
 def get_random_EUI():
@@ -275,11 +274,11 @@ def get_random_ip_address(version=4):
 
 
 def get_random_router_status():
-    return random.choice(n_const.VALID_ROUTER_STATUS)
+    return random.choice(constants.VALID_ROUTER_STATUS)
 
 
 def get_random_floatingip_status():
-    return random.choice(n_const.VALID_FLOATINGIP_STATUS)
+    return random.choice(constants.VALID_FLOATINGIP_STATUS)
 
 
 def get_random_flow_direction():
@@ -287,15 +286,15 @@ def get_random_flow_direction():
 
 
 def get_random_ha_states():
-    return random.choice(n_const.VALID_HA_STATES)
+    return random.choice(constants.VALID_HA_STATES)
 
 
 def get_random_ether_type():
-    return random.choice(n_const.VALID_ETHERTYPES)
+    return random.choice(constants.VALID_ETHERTYPES)
 
 
 def get_random_ipam_status():
-    return random.choice(n_const.VALID_IPAM_ALLOCATION_STATUSES)
+    return random.choice(constants.VALID_IPAM_ALLOCATION_STATUSES)
 
 
 def get_random_ip_protocol():
@@ -303,7 +302,7 @@ def get_random_ip_protocol():
 
 
 def get_random_port_binding_statuses():
-    return random.choice(n_const.PORT_BINDING_STATUSES)
+    return random.choice(constants.PORT_BINDING_STATUSES)
 
 
 def get_random_network_segment_range_network_type():

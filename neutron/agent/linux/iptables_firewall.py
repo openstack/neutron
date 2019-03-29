@@ -31,7 +31,6 @@ from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
 from neutron.common import _constants as const
-from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.common import utils as c_utils
 
@@ -49,7 +48,7 @@ libc = ctypes.CDLL(util.find_library('libc.so.6'))
 
 
 def get_hybrid_port_name(port_name):
-    return (constants.TAP_DEVICE_PREFIX + port_name)[:n_const.LINUX_DEV_LEN]
+    return (constants.TAP_DEVICE_PREFIX + port_name)[:constants.LINUX_DEV_LEN]
 
 
 class mac_iptables(netaddr.mac_eui48):
@@ -356,7 +355,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                           comment=ic.INPUT_TO_SG)
 
     def _get_br_device_name(self, port):
-        return ('brq' + port['network_id'])[:n_const.LINUX_DEV_LEN]
+        return ('brq' + port['network_id'])[:constants.LINUX_DEV_LEN]
 
     def _get_jump_rules(self, port, create=True):
         zone = self.ipconntrack.get_device_zone(port, create=create)
@@ -696,7 +695,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _protocol_name_map(self):
         if not self._iptables_protocol_name_map:
-            tmp_map = n_const.IPTABLES_PROTOCOL_NAME_MAP.copy()
+            tmp_map = constants.IPTABLES_PROTOCOL_NAME_MAP.copy()
             tmp_map.update(self._local_protocol_name_map())
             self._iptables_protocol_name_map = tmp_map
         return self._iptables_protocol_name_map
@@ -948,7 +947,7 @@ class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
             '%s%s' % (CHAIN_NAME_PREFIX[direction], port['device']))
 
     def _get_br_device_name(self, port):
-        return ('qvb' + port['device'])[:n_const.LINUX_DEV_LEN]
+        return ('qvb' + port['device'])[:constants.LINUX_DEV_LEN]
 
     def _get_device_name(self, port):
         device_name = super(

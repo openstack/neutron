@@ -12,9 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron.common import constants
 from neutron.db.models import agent as agent_model
 from neutron.db.models import l3ha
 from neutron.objects import base

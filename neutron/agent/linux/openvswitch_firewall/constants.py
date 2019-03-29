@@ -15,7 +15,6 @@
 
 from neutron_lib import constants
 
-from neutron.common import constants as n_const
 
 OF_STATE_NOT_TRACKED = "-trk"
 OF_STATE_TRACKED = "+trk"
@@ -47,6 +46,6 @@ REVERSE_IP_PROTOCOL_MAP_WITH_PORTS = {
     PROTOCOLS_WITH_PORTS}
 
 ethertype_to_dl_type_map = {
-    constants.IPv4: n_const.ETHERTYPE_IP,
-    constants.IPv6: n_const.ETHERTYPE_IPV6,
+    constants.IPv4: constants.ETHERTYPE_IP,
+    constants.IPv6: constants.ETHERTYPE_IPV6,
 }

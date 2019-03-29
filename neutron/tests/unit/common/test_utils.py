@@ -27,7 +27,6 @@ import six
 import testscenarios
 import testtools
 
-from neutron.common import constants as common_constants
 from neutron.common import utils
 from neutron.tests import base
 from neutron.tests.unit import tests
@@ -490,7 +489,7 @@ class BaseUnitConversionTest(object):
 
 class TestSIUnitConversions(BaseUnitConversionTest, base.BaseTestCase):
 
-    base_unit = common_constants.SI_BASE
+    base_unit = constants.SI_BASE
 
     def test_bits_to_kilobits(self):
         test_values = [
@@ -509,7 +508,7 @@ class TestSIUnitConversions(BaseUnitConversionTest, base.BaseTestCase):
 
 class TestIECUnitConversions(BaseUnitConversionTest, base.BaseTestCase):
 
-    base_unit = common_constants.IEC_BASE
+    base_unit = constants.IEC_BASE
 
     def test_bits_to_kilobits(self):
         test_values = [

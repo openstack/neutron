@@ -23,7 +23,6 @@ from neutron.api.rpc.callbacks import events as rpc_events
 from neutron.api.rpc.callbacks.producer import registry as rpc_registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.common import constants
 from neutron.objects.qos import policy as policy_object
 
 
@@ -92,10 +91,10 @@ class QosServiceDriverManager(object):
                 "start": possible_values[0],
                 "end": possible_values[1]
             }
-            parameter_type = constants.VALUES_TYPE_RANGE
+            parameter_type = lib_constants.VALUES_TYPE_RANGE
         elif validator == 'type:values':
             parameter_values = possible_values
-            parameter_type = constants.VALUES_TYPE_CHOICES
+            parameter_type = lib_constants.VALUES_TYPE_CHOICES
         return parameter_values, parameter_type
 
     def call(self, method_name, *args, **kwargs):

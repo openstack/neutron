@@ -34,7 +34,6 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
-from neutron.common import constants as n_const
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as agent_config
 from neutron.conf import common as common_config
@@ -240,7 +239,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         ip_wrapper = ip_lib.IPWrapper(namespace=router.ns_name)
         ra_state = ip_wrapper.netns.execute(['sysctl', '-b',
             'net.ipv6.conf.%s.accept_ra' % external_device_name])
-        self.assertEqual(enabled, int(ra_state) != n_const.ACCEPT_RA_DISABLED)
+        self.assertEqual(
+            enabled, int(ra_state) != constants.ACCEPT_RA_DISABLED)
 
     def _wait_until_ipv6_forwarding_has_state(self, ns_name, dev_name, state):
 

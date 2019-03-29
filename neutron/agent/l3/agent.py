@@ -54,7 +54,6 @@ from neutron.agent.linux import pd
 from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
-from neutron.common import constants as l3_constants
 from neutron.common import ipv6_utils
 from neutron.common import utils
 from neutron import manager
@@ -593,7 +592,7 @@ class L3NATAgent(ha.AgentMixin,
             # For HA routers check that DB state matches actual state
             if router.get('ha') and not is_dvr_only_agent and is_ha_router:
                 self.check_ha_state_for_router(
-                    router['id'], router.get(l3_constants.HA_ROUTER_STATE_KEY))
+                    router['id'], router.get(lib_const.HA_ROUTER_STATE_KEY))
             ri.router = router
             registry.notify(resources.ROUTER, events.BEFORE_UPDATE,
                             self, router=ri)

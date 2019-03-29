@@ -11,10 +11,9 @@
 #    under the License.
 
 from alembic import op
-from neutron_lib import constants as lib_const
+from neutron_lib import constants
 import sqlalchemy as sa
 
-from neutron.common import constants
 
 """Add routerport bindings for L3 HA
 
@@ -59,11 +58,11 @@ def upgrade():
         # back-ported
         for router_port in session.query(router_ports).filter(
                 router_ports.c.port_type ==
-                lib_const.DEVICE_OWNER_ROUTER_HA_INTF):
+                constants.DEVICE_OWNER_ROUTER_HA_INTF):
             router_port_tuples.discard((router_port.router_id,
                                         router_port.port_id))
         new_records = [dict(router_id=router_id, port_id=port_id,
-                            port_type=lib_const.DEVICE_OWNER_ROUTER_HA_INTF)
+                            port_type=constants.DEVICE_OWNER_ROUTER_HA_INTF)
                        for router_id, port_id in router_port_tuples]
     op.bulk_insert(router_ports, new_records)
     session.commit()

@@ -13,9 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants as const
 from oslo_utils import uuidutils
 
-from neutron.common import constants as const
 from neutron.objects import ipam as ipam_objs
 
 # Database operations for Neutron's DB-backed IPAM driver

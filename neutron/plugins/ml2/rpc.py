@@ -30,7 +30,6 @@ from sqlalchemy.orm import exc
 from neutron.agent import _topics as n_topics
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
-from neutron.common import constants as c_const
 from neutron.db import l3_hamode_db
 from neutron.db import provisioning_blocks
 from neutron.plugins.ml2 import db as ml2_db
@@ -138,7 +137,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                       "%(host)s", {'device': device,
                                    'host': host})
             return {'device': device,
-                    c_const.NO_ACTIVE_BINDING: True}
+                    n_const.NO_ACTIVE_BINDING: True}
 
         network_qos_policy_id = port_context.network._network.get(
             qos_consts.QOS_POLICY_ID)

@@ -18,7 +18,6 @@ import tempfile
 
 from neutron_lib import constants
 
-from neutron.common import constants as c_const
 from neutron.common import utils
 from neutron.plugins.ml2.extensions import qos as qos_ext
 from neutron.tests import base
@@ -208,7 +207,7 @@ class OVSConfigFixture(ConfigFixture):
                 'tun_peer_patch_port': self._generate_tun_peer()})
         else:
             if env_desc.report_bandwidths:
-                self.config['ovs'][c_const.RP_BANDWIDTHS] = \
+                self.config['ovs'][constants.RP_BANDWIDTHS] = \
                     '%s:%s:%s' % (ext_dev, MINIMUM_BANDWIDTH_EGRESS_KBPS,
                                   MINIMUM_BANDWIDTH_INGRESS_KBPS)
 

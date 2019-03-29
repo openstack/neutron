@@ -18,6 +18,7 @@ import sys
 
 import fixtures
 import mock
+from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.exceptions import l3 as l3_exc
 from oslo_config import cfg
@@ -27,7 +28,6 @@ from neutron._i18n import _
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils as linux_utils
-from neutron.common import constants
 from neutron.tests import base
 from neutron.tests import tools
 

@@ -30,7 +30,6 @@ from oslo_serialization import jsonutils
 from oslo_utils import importutils
 
 import neutron
-from neutron.common import constants as n_const
 from neutron import policy
 from neutron.tests import base
 
@@ -327,7 +326,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         self._test_advsvc_action_on_attr('get', 'port', 'shared', False)
 
     def test_advsvc_update_port_works(self):
-        kwargs = {n_const.ATTRIBUTES_TO_UPDATE: ['shared']}
+        kwargs = {constants.ATTRIBUTES_TO_UPDATE: ['shared']}
         self._test_advsvc_action_on_attr('update', 'port', 'shared', True,
                                          **kwargs)
 
@@ -353,11 +352,11 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         self._test_enforce_adminonly_attribute('create_network')
 
     def test_enforce_adminonly_attribute_update(self):
-        kwargs = {n_const.ATTRIBUTES_TO_UPDATE: ['shared']}
+        kwargs = {constants.ATTRIBUTES_TO_UPDATE: ['shared']}
         self._test_enforce_adminonly_attribute('update_network', **kwargs)
 
     def test_reset_adminonly_attr_to_default_fails(self):
-        kwargs = {n_const.ATTRIBUTES_TO_UPDATE: ['shared']}
+        kwargs = {constants.ATTRIBUTES_TO_UPDATE: ['shared']}
         self._test_nonadmin_action_on_attr('update', 'shared', False,
                                            oslo_policy.PolicyNotAuthorized,
                                            **kwargs)

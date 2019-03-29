@@ -14,12 +14,12 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
 from pyroute2.netlink import rtnl
 
 from neutron.agent.linux import tc_lib
-from neutron.common import constants
 from neutron.common import utils
 from neutron.privileged.agent.linux import tc_lib as priv_tc_lib
 from neutron.tests import base

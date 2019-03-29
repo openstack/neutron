@@ -27,7 +27,6 @@ from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import router_info
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
-from neutron.common import constants as n_const
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
@@ -648,7 +647,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         )
 
         router = l3_test_common.prepare_router_data(enable_snat=True)
-        router[n_const.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
+        router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
         router['distributed'] = True
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self._set_ri_kwargs(agent, router['id'], router)

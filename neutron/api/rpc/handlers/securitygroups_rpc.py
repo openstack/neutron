@@ -17,6 +17,7 @@ import collections
 from neutron_lib.agent import topics
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib import constants
 from neutron_lib.plugins import directory
 from neutron_lib import rpc as n_rpc
 from neutron_lib.utils import net
@@ -24,7 +25,6 @@ from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.common import constants
 from neutron.db import securitygroups_rpc_base as sg_rpc_base
 
 LOG = logging.getLogger(__name__)

@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.common import constants as n_const
+from neutron_lib import constants as n_const
 
 
 def get_device_port_name(port_id):

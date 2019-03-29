@@ -24,7 +24,6 @@ from neutron.agent.common import utils
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
-from neutron.common import constants as n_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
@@ -531,7 +530,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             'output:{:d},resubmit(,{:d})'.format(
                 self.port_ofport,
                 ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE),
-            dl_type="0x{:04x}".format(n_const.ETHERTYPE_IP),
+            dl_type="0x{:04x}".format(constants.ETHERTYPE_IP),
             nw_proto=constants.PROTO_NUM_TCP,
             priority=77,
             reg5=self.port_ofport,
@@ -576,7 +575,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         filter_rules = [mock.call(
             actions='resubmit(,{:d})'.format(
                 ovs_consts.ACCEPT_OR_INGRESS_TABLE),
-            dl_type="0x{:04x}".format(n_const.ETHERTYPE_IP),
+            dl_type="0x{:04x}".format(constants.ETHERTYPE_IP),
             nw_proto=constants.PROTO_NUM_UDP,
             priority=77,
             ct_state=ovsfw_consts.OF_STATE_NEW_NOT_ESTABLISHED,

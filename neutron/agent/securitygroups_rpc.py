@@ -22,7 +22,7 @@ from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.agent import firewall
-from neutron.common import constants as common_constants
+from neutron.common import _constants as common_constants
 from neutron.conf.agent import securitygroups_rpc as sc_cfg
 
 

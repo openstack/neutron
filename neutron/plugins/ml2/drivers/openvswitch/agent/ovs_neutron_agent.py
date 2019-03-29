@@ -55,7 +55,6 @@ from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config
-from neutron.common import constants as c_const
 from neutron.common import utils as n_utils
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent import xenapi_conf
@@ -284,8 +283,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             'host': host,
             'topic': n_const.L2_AGENT_TOPIC,
             'configurations': {'bridge_mappings': self.bridge_mappings,
-                               c_const.RP_BANDWIDTHS: self.rp_bandwidths,
-                               c_const.RP_INVENTORY_DEFAULTS:
+                               n_const.RP_BANDWIDTHS: self.rp_bandwidths,
+                               n_const.RP_INVENTORY_DEFAULTS:
                                    self.rp_inventory_defaults,
                                'integration_bridge':
                                ovs_conf.integration_bridge,
@@ -1670,7 +1669,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                           details['network_id'])
                 self.ext_manager.handle_port(self.context, details)
             else:
-                if c_const.NO_ACTIVE_BINDING in details:
+                if n_const.NO_ACTIVE_BINDING in details:
                     # Port was added to the bridge, but its binding in this
                     # agent hasn't been activated yet. It will be treated as
                     # added when binding is activated

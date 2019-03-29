@@ -33,7 +33,6 @@ from neutron._i18n import _
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent import rpc as agent_rpc
 from neutron.common import cache_utils as cache
-from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.conf.agent.metadata import config
 
@@ -63,7 +62,7 @@ class MetadataPluginAPI(object):
     def __init__(self, topic):
         target = oslo_messaging.Target(
             topic=topic,
-            namespace=n_const.RPC_NAMESPACE_METADATA,
+            namespace=constants.RPC_NAMESPACE_METADATA,
             version='1.0')
         self.client = n_rpc.get_client(target)
 

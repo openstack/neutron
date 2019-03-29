@@ -37,7 +37,6 @@ from oslo_utils import excutils
 import six
 
 from neutron._i18n import _
-from neutron.common import constants as l3_const
 from neutron.common import utils as n_utils
 from neutron.conf.db import l3_dvr_db
 from neutron.db import l3_attrs_db
@@ -738,12 +737,12 @@ class _DVRAgentInterfaceMixin(object):
             if router['gw_port_id']:
                 snat_router_intfs = snat_intfs_by_router_id[router['id']]
                 LOG.debug("SNAT ports returned: %s ", snat_router_intfs)
-                router[l3_const.SNAT_ROUTER_INTF_KEY] = snat_router_intfs
+                router[const.SNAT_ROUTER_INTF_KEY] = snat_router_intfs
                 if not fip_agent_gw_ports:
                     fip_agent_gw_ports = self._get_fip_agent_gw_ports(
                         context, agent.id)
                     LOG.debug("FIP Agent ports: %s", fip_agent_gw_ports)
-                router[l3_const.FLOATINGIP_AGENT_INTF_KEY] = (
+                router[const.FLOATINGIP_AGENT_INTF_KEY] = (
                     fip_agent_gw_ports)
 
         return routers_dict
@@ -755,7 +754,7 @@ class _DVRAgentInterfaceMixin(object):
         By default, floating IPs are not bound to any host.  Instead
         of using the empty string to denote this use a constant.
         """
-        return floating_ip.get('host', l3_const.FLOATING_IP_HOST_UNBOUND)
+        return floating_ip.get('host', const.FLOATING_IP_HOST_UNBOUND)
 
     def _process_floating_ips_dvr(self, context, routers_dict,
                                   floating_ips, host, agent):
@@ -777,7 +776,7 @@ class _DVRAgentInterfaceMixin(object):
         fip_host = self._get_floating_ip_host(floating_ip)
 
         # Skip if it is unbound
-        if fip_host == l3_const.FLOATING_IP_HOST_UNBOUND:
+        if fip_host == const.FLOATING_IP_HOST_UNBOUND:
             return True
 
         # Skip if the given agent is in the wrong mode - SNAT bound
@@ -790,7 +789,7 @@ class _DVRAgentInterfaceMixin(object):
 
         # Skip if it is bound, but not to the given host
         fip_dest_host = floating_ip.get('dest_host')
-        if (fip_host != l3_const.FLOATING_IP_HOST_NEEDS_BINDING and
+        if (fip_host != const.FLOATING_IP_HOST_NEEDS_BINDING and
                 fip_host != host and fip_dest_host is None):
             return True
 
@@ -879,11 +878,11 @@ class _DVRAgentInterfaceMixin(object):
             # Add the port binding host to the floatingip dictionary
             for fip in floating_ips:
                 # Assume no host binding required
-                fip['host'] = l3_const.FLOATING_IP_HOST_UNBOUND
+                fip['host'] = const.FLOATING_IP_HOST_UNBOUND
                 vm_port = port_dict.get(fip['port_id'], None)
                 if vm_port:
                     # Default value if host port-binding required
-                    fip['host'] = l3_const.FLOATING_IP_HOST_NEEDS_BINDING
+                    fip['host'] = const.FLOATING_IP_HOST_NEEDS_BINDING
                     port_host = vm_port[portbindings.HOST_ID]
                     if port_host:
                         fip['dest_host'] = (
@@ -900,7 +899,7 @@ class _DVRAgentInterfaceMixin(object):
                     # Handle the case were there is no host binding
                     # for the private ports that are associated with
                     # floating ip.
-                    if fip['host'] == l3_const.FLOATING_IP_HOST_NEEDS_BINDING:
+                    if fip['host'] == const.FLOATING_IP_HOST_NEEDS_BINDING:
                         fip[const.DVR_SNAT_BOUND] = True
         routers_dict = self._process_routers(context, routers, agent)
         self._process_floating_ips_dvr(context, routers_dict,
@@ -909,10 +908,10 @@ class _DVRAgentInterfaceMixin(object):
         for router in routers_dict.values():
             if router.get('gw_port'):
                 ports_to_populate.append(router['gw_port'])
-            if router.get(l3_const.FLOATINGIP_AGENT_INTF_KEY):
-                ports_to_populate += router[l3_const.FLOATINGIP_AGENT_INTF_KEY]
-            if router.get(l3_const.SNAT_ROUTER_INTF_KEY):
-                ports_to_populate += router[l3_const.SNAT_ROUTER_INTF_KEY]
+            if router.get(const.FLOATINGIP_AGENT_INTF_KEY):
+                ports_to_populate += router[const.FLOATINGIP_AGENT_INTF_KEY]
+            if router.get(const.SNAT_ROUTER_INTF_KEY):
+                ports_to_populate += router[const.SNAT_ROUTER_INTF_KEY]
         ports_to_populate += interfaces
         self._populate_mtu_and_subnets_for_ports(context, ports_to_populate)
         self._process_interfaces(routers_dict, interfaces)

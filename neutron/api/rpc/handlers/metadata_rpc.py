@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib import constants
 from neutron_lib.plugins import directory
 import oslo_messaging
-
-from neutron.common import constants
 
 
 class MetadataRpcCallback(object):
