@@ -595,7 +595,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             subnet_prefixlen = netaddr.IPNetwork(s['cidr']).prefixlen
             error_message = _("Subnet has a prefix length that is "
                               "incompatible with DHCP service enabled")
-            if ((ip_ver == 4 and subnet_prefixlen > 30) or
+            if ((ip_ver == 4 and subnet_prefixlen > 28) or
                     (ip_ver == 6 and subnet_prefixlen > 126)):
                 raise exc.InvalidInput(error_message=error_message)
 
