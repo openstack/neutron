@@ -352,11 +352,14 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
                           addr_req)
 
     def test_allocate_any_address_exhausted_pools_fails(self):
+        target_ip_count = 13
         # Same as above, the ranges will be recalculated always
         ipam_subnet = self._create_and_allocate_ipam_subnet(
-            '192.168.0.0/30', ip_version=constants.IP_VERSION_4)[0]
-        ipam_subnet.allocate(ipam_req.AnyAddressRequest)
-        # The second address generation request on a /30 for v4 net must fail
+            '192.168.0.0/28', ip_version=constants.IP_VERSION_4)[0]
+        ip_addresses = ipam_subnet.bulk_allocate(
+                ipam_req.BulkAddressRequest(target_ip_count))
+        self.assertEqual(target_ip_count, len(ip_addresses))
+        # The next address generation request on a /28 for v4 net must fail
         self.assertRaises(ipam_exc.IpAddressGenerationFailure,
                           ipam_subnet.allocate,
                           ipam_req.AnyAddressRequest)
@@ -399,11 +402,13 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
                           ipam_req.BulkAddressRequest(2))
 
     def test_prefernext_allocate_multiple_address_pools(self):
+        target_ip_count = 13
         ipam_subnet = self._create_and_allocate_ipam_subnet(
-            '192.168.0.0/30', ip_version=constants.IP_VERSION_4)[0]
-
-        ipam_subnet.allocate(ipam_req.PreferNextAddressRequest())
-        # The second address generation request on a /30 for v4 net must fail
+            '192.168.0.0/28', ip_version=constants.IP_VERSION_4)[0]
+        ip_addresses = ipam_subnet.bulk_allocate(
+                ipam_req.BulkAddressRequest(target_ip_count))
+        self.assertEqual(target_ip_count, len(ip_addresses))
+        # The next address generation request on a /28 for v4 net must fail
         self.assertRaises(ipam_exc.IpAddressGenerationFailure,
                           ipam_subnet.allocate,
                           ipam_req.PreferNextAddressRequest)
