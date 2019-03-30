@@ -23,6 +23,7 @@ import fixtures
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib.tests import tools
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net
 from oslo_utils import netutils
@@ -249,14 +250,6 @@ def get_random_ip_version():
     return random.choice(n_const.IP_ALLOWED_VERSIONS)
 
 
-def get_random_cidr(version=4):
-    if version == 4:
-        return '10.%d.%d.0/%d' % (random.randint(3, 254),
-                                  random.randint(3, 254),
-                                  24)
-    return '2001:db8:%x::/%d' % (random.getrandbits(16), 64)
-
-
 def get_random_EUI():
     return netaddr.EUI(
         net.get_random_mac(['fe', '16', '3e', '00', '00', '00'])
@@ -264,7 +257,7 @@ def get_random_EUI():
 
 
 def get_random_ip_network(version=4):
-    return netaddr.IPNetwork(get_random_cidr(version=version))
+    return netaddr.IPNetwork(tools.get_random_cidr(version=version))
 
 
 def get_random_ip_address(version=4):
