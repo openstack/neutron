@@ -82,7 +82,6 @@ oslo.service==1.24.0
 oslo.upgradecheck==0.1.0
 oslo.utils==3.33.0
 oslo.versionedobjects==1.35.1
-oslosphinx==4.7.0
 oslotest==3.2.0
 osprofiler==1.4.0
 ovs==2.8.0
