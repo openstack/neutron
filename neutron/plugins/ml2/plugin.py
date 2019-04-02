@@ -841,16 +841,19 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         This function will raise an exception if the provider network attribute
         update is not supported.
         """
-        if net_data.get(provider_net.SEGMENTATION_ID):
-            self._update_segmentation_id(context, network, net_data)
-
         provider_net_attrs = (set(provider_net.ATTRIBUTES) -
                               {provider_net.SEGMENTATION_ID})
-        if any(validators.is_attr_set(net_data.get(a))
-               for a in provider_net_attrs):
-            msg = (_('Plugin does not support updating the following provider '
-                     'network attributes: %s') % ', '.join(provider_net_attrs))
-            raise exc.InvalidInput(error_message=msg)
+        requested_provider_net_attrs = set(net_data) & provider_net_attrs
+        for attr in requested_provider_net_attrs:
+            if (validators.is_attr_set(net_data.get(attr)) and
+                    net_data.get(attr) != network[attr]):
+                msg = (_('Plugin does not support updating the following '
+                         'provider network attributes: %s') %
+                       ', '.join(provider_net_attrs))
+                raise exc.InvalidInput(error_message=msg)
+
+        if net_data.get(provider_net.SEGMENTATION_ID):
+            self._update_segmentation_id(context, network, net_data)
 
     def _delete_objects(self, context, resource, objects):
         delete_op = getattr(self, 'delete_%s' % resource)

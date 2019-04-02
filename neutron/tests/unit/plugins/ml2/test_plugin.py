@@ -421,11 +421,18 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
             self.assertEqual(3, f.call_count)
         retry_fixture.cleanUp()
 
-    def test__update_provider_network_attributes_no_segmentation_id(self):
+    def test__update_provider_network_attributes_update_attrs(self):
         plugin = directory.get_plugin()
-        with self.network() as net:
+        kwargs = {'arg_list': (pnet.NETWORK_TYPE, ),
+                  pnet.NETWORK_TYPE: 'vlan'}
+        with self.network(**kwargs) as net:
             for attribute in set(pnet.ATTRIBUTES) - {pnet.SEGMENTATION_ID}:
-                net_data = {attribute: 'attribute_value'}
+                net_data = {attribute: net['network'][attribute]}
+                self.assertIsNone(
+                    plugin._update_provider_network_attributes(
+                        self.context, net['network'], net_data))
+
+                net_data = {attribute: 'other_value'}
                 self.assertRaises(
                     exc.InvalidInput,
                     plugin._update_provider_network_attributes,
