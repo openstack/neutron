@@ -107,7 +107,6 @@ from neutron.db import segments_db
 from neutron.db import subnet_service_type_mixin
 from neutron.db import vlantransparent_db
 from neutron.extensions import filter_validation
-from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
 from neutron.ipam import exceptions as ipam_exc
 from neutron.objects import base as base_obj
@@ -797,6 +796,22 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                   segment[api.SEGMENTATION_ID],
                                   segment[api.PHYSICAL_NETWORK])
 
+    def _update_provider_network_attributes(self, context, network, net_data):
+        """Raise exception if provider network attrs update are not supported.
+
+        This function will raise an exception if the provider network attribute
+        update is not supported.
+        """
+        provider_net_attrs = set(provider_net.ATTRIBUTES)
+        requested_provider_net_attrs = set(net_data) & provider_net_attrs
+        for attr in requested_provider_net_attrs:
+            if (validators.is_attr_set(net_data.get(attr)) and
+                    net_data.get(attr) != network[attr]):
+                msg = (_('Plugin does not support updating the following '
+                         'provider network attributes: %s') %
+                       ', '.join(provider_net_attrs))
+                raise exc.InvalidInput(error_message=msg)
+
     def _delete_objects(self, context, resource, objects):
         delete_op = getattr(self, 'delete_%s' % resource)
         for obj in objects:
@@ -985,11 +1000,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @db_api.retry_if_session_inactive()
     def update_network(self, context, id, network):
         net_data = network[net_def.RESOURCE_NAME]
-        provider._raise_if_updates_provider_attributes(net_data)
         need_network_update_notify = False
 
         with db_api.CONTEXT_WRITER.using(context):
             original_network = super(Ml2Plugin, self).get_network(context, id)
+            self._update_provider_network_attributes(
+                context, original_network, net_data)
             updated_network = super(Ml2Plugin, self).update_network(context,
                                                                     id,
                                                                     network)
