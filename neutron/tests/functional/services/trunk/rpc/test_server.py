@@ -14,7 +14,8 @@
 
 import mock
 
-from neutron.services.trunk import constants
+from neutron_lib.services.trunk import constants
+
 from neutron.services.trunk import plugin as trunk_plugin
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base

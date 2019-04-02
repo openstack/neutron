@@ -26,6 +26,7 @@ from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
+from neutron_lib.services.trunk import constants
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
@@ -34,7 +35,6 @@ from neutron.db import db_base_plugin_common
 from neutron.objects import base as objects_base
 from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk import callbacks
-from neutron.services.trunk import constants
 from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import rules
@@ -223,7 +223,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
                                         description=trunk_description,
                                         project_id=trunk['tenant_id'],
                                         port_id=trunk['port_id'],
-                                        status=constants.DOWN_STATUS,
+                                        status=constants.TRUNK_DOWN_STATUS,
                                         sub_ports=sub_ports)
         with db_api.autonested_transaction(context.session):
             trunk_obj.create()
@@ -308,10 +308,10 @@ class TrunkPlugin(service_base.ServicePluginBase,
             # DOWN and thus can potentially overwrite an interleaving state
             # change to ACTIVE. Eventually the driver should bring the status
             # back to ACTIVE or ERROR.
-            if trunk.status == constants.ERROR_STATUS:
+            if trunk.status == constants.TRUNK_ERROR_STATUS:
                 raise trunk_exc.TrunkInErrorState(trunk_id=trunk_id)
             else:
-                trunk.update(status=constants.DOWN_STATUS)
+                trunk.update(status=constants.TRUNK_DOWN_STATUS)
 
             for subport in subports:
                 obj = trunk_objects.SubPort(
@@ -374,7 +374,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
             # Should a trunk be in DOWN or BUILD state (e.g. when dealing
             # with multiple concurrent requests), the status is still forced
             # to DOWN. See add_subports() for more details.
-            trunk.update(status=constants.DOWN_STATUS)
+            trunk.update(status=constants.TRUNK_DOWN_STATUS)
             payload = callbacks.TrunkPayload(context, trunk_id,
                                              current_trunk=trunk,
                                              original_trunk=original_trunk,
@@ -422,5 +422,6 @@ class TrunkPlugin(service_base.ServicePluginBase,
             # NOTE(status_police) Trunk status goes to DOWN when the parent
             # port is unbound. This means there are no more physical resources
             # associated with the logical resource.
-            self.update_trunk(context, trunk_id,
-                              {'trunk': {'status': constants.DOWN_STATUS}})
+            self.update_trunk(
+                context, trunk_id,
+                {'trunk': {'status': constants.TRUNK_DOWN_STATUS}})

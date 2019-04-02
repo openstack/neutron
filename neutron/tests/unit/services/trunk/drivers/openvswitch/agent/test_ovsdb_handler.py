@@ -15,6 +15,7 @@
 
 import mock
 
+from neutron_lib.services.trunk import constants
 import oslo_messaging
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
@@ -23,7 +24,6 @@ import testtools
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import utils
 from neutron.objects import trunk as trunk_obj
-from neutron.services.trunk import constants
 from neutron.services.trunk.drivers.openvswitch.agent import exceptions
 from neutron.services.trunk.drivers.openvswitch.agent import ovsdb_handler
 from neutron.services.trunk.drivers.openvswitch.agent import trunk_manager
@@ -205,7 +205,7 @@ class TestOVSDBHandler(base.BaseTestCase):
             status = self.ovsdb_handler.wire_subports_for_trunk(
                 None, self.trunk_id, self.fake_subports)
             self.assertTrue(f.call_count)
-            self.assertEqual(constants.DEGRADED_STATUS, status)
+            self.assertEqual(constants.TRUNK_DEGRADED_STATUS, status)
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
     def test_wire_subports_for_trunk_ovsdb_failure(self, br):
@@ -215,7 +215,7 @@ class TestOVSDBHandler(base.BaseTestCase):
                 side_effect=RuntimeError):
             status = self.ovsdb_handler.wire_subports_for_trunk(
                 None, self.trunk_id, self.fake_subports)
-        self.assertEqual(constants.DEGRADED_STATUS, status)
+        self.assertEqual(constants.TRUNK_DEGRADED_STATUS, status)
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
     def test_unwire_subports_for_trunk_port_not_found(self, br):
@@ -225,7 +225,7 @@ class TestOVSDBHandler(base.BaseTestCase):
                 side_effect=exceptions.ParentPortNotFound(bridge='foo_br')):
             status = self.ovsdb_handler.unwire_subports_for_trunk(
                 self.trunk_id, ['subport_id'])
-        self.assertEqual(constants.ACTIVE_STATUS, status)
+        self.assertEqual(constants.TRUNK_ACTIVE_STATUS, status)
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
     def test_unwire_subports_for_trunk_trunk_manager_failure(self, br):
@@ -236,7 +236,7 @@ class TestOVSDBHandler(base.BaseTestCase):
             status = self.ovsdb_handler.unwire_subports_for_trunk(
                 'foo_trunk_id', ['subport_id'])
             self.assertTrue(f.call_count)
-            self.assertEqual(constants.DEGRADED_STATUS, status)
+            self.assertEqual(constants.TRUNK_DEGRADED_STATUS, status)
 
     def test__wire_trunk_get_trunk_details_failure(self):
         self.trunk_manager.get_port_uuid_from_external_ids.side_effect = (
@@ -257,7 +257,7 @@ class TestOVSDBHandler(base.BaseTestCase):
         self.ovsdb_handler._wire_trunk(mock.Mock(), self.fake_port)
         trunk_rpc = self.ovsdb_handler.trunk_rpc
         trunk_rpc.update_trunk_status.assert_called_once_with(
-            mock.ANY, mock.ANY, constants.ERROR_STATUS)
+            mock.ANY, mock.ANY, constants.TRUNK_ERROR_STATUS)
 
     def test__wire_trunk_rewire_trunk_failure(self):
         with mock.patch.object(self.ovsdb_handler,
@@ -265,12 +265,12 @@ class TestOVSDBHandler(base.BaseTestCase):
                 mock.patch.object(self.ovsdb_handler,
                                   'get_connected_subports_for_trunk') as g:
             g.return_value = ['stale_port']
-            f.return_value = constants.DEGRADED_STATUS
+            f.return_value = constants.TRUNK_DEGRADED_STATUS
             self.ovsdb_handler._wire_trunk(
                 mock.Mock(), self.fake_port, rewire=True)
             trunk_rpc = self.ovsdb_handler.trunk_rpc
             trunk_rpc.update_trunk_status.assert_called_once_with(
-                mock.ANY, mock.ANY, constants.DEGRADED_STATUS)
+                mock.ANY, mock.ANY, constants.TRUNK_DEGRADED_STATUS)
 
     def test__wire_trunk_report_trunk_called_on_wiring(self):
         with mock.patch.object(self.trunk_manager, 'create_trunk'),\
@@ -293,11 +293,11 @@ class TestOVSDBHandler(base.BaseTestCase):
                  'subport_ids': '[]'})
 
     def test__get_current_status_active(self):
-        self.assertEqual(constants.ACTIVE_STATUS,
+        self.assertEqual(constants.TRUNK_ACTIVE_STATUS,
                          self.ovsdb_handler._get_current_status([], []))
 
     def test__get_current_status_degraded(self):
-        self.assertEqual(constants.DEGRADED_STATUS,
+        self.assertEqual(constants.TRUNK_DEGRADED_STATUS,
                          self.ovsdb_handler._get_current_status(
                              [mock.ANY], []))
 

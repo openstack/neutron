@@ -14,6 +14,7 @@
 
 import mock
 from neutron_lib.callbacks import events as cb_events
+from neutron_lib.services.trunk import constants as t_const
 import oslo_messaging
 from oslo_utils import uuidutils
 import testtools
@@ -21,7 +22,6 @@ import testtools
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.objects import trunk
-from neutron.services.trunk import constants as t_const
 from neutron.services.trunk.drivers.linuxbridge.agent import driver
 from neutron.services.trunk.drivers.linuxbridge.agent import trunk_plumber
 from neutron.tests import base
@@ -122,7 +122,7 @@ class LinuxBridgeTrunkDriverTestCase(base.BaseTestCase):
             'ctx', self.trunk)
         self.plumber.ensure_trunk_subports.assert_called_once_with(self.trunk)
         self.tapi.set_trunk_status.assert_called_once_with(
-            'ctx', self.trunk, t_const.ACTIVE_STATUS)
+            'ctx', self.trunk, t_const.TRUNK_ACTIVE_STATUS)
 
     def test_wire_trunk_not_on_host(self):
         # trunk device not on host
@@ -144,7 +144,7 @@ class LinuxBridgeTrunkDriverTestCase(base.BaseTestCase):
         self.lbd.wire_trunk('ctx', self.trunk)
         # degraded due to dataplane failure
         self.tapi.set_trunk_status.assert_called_once_with(
-            'ctx', self.trunk, t_const.DEGRADED_STATUS)
+            'ctx', self.trunk, t_const.TRUNK_DEGRADED_STATUS)
 
 
 class TrunkAPITestCase(base.BaseTestCase):

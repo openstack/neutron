@@ -22,10 +22,10 @@ from neutron_lib.api import validators
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
+from neutron_lib.services.trunk import constants
 
 from neutron._i18n import _
 from neutron.objects import trunk as trunk_objects
-from neutron.services.trunk import constants
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import utils
 
@@ -193,7 +193,8 @@ class SubPortsValidator(object):
         port_ids = {}
         any_has_inherit = False
         for i, s in enumerate(self.subports):
-            has_inherit = s.get('segmentation_type') == constants.INHERIT
+            has_inherit = (s.get('segmentation_type') ==
+                           constants.SEGMENTATION_TYPE_INHERIT)
             any_has_inherit |= has_inherit
             port_ids[s['port_id']] = (
                 InheritIndex(index=i, has_inherit=has_inherit))
@@ -202,7 +203,8 @@ class SubPortsValidator(object):
         if (any_has_inherit and
                 not extensions.is_extension_supported(
                     core_plugin, provider.ALIAS)):
-            msg = _("Cannot accept segmentation type %s") % constants.INHERIT
+            msg = (_("Cannot accept segmentation type %s") %
+                   constants.SEGMENTATION_TYPE_INHERIT)
             raise n_exc.InvalidInput(error_message=msg)
 
         ports = core_plugin.get_ports(context, filters={'id': port_ids})
