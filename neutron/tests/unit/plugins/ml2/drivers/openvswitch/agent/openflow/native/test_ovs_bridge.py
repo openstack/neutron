@@ -49,3 +49,8 @@ class OVSAgentBridgeTestCase(ovs_test_base.OVSRyuTestBase):
         # make sure that in case of any misconfiguration when no datapath is
         # found a proper exception, not a TypeError is raised
         self.assertRaises(RuntimeError, br._get_dp)
+
+    def test__get_dp_when_get_datapath_id_returns_None(self):
+        br = self.br_int_cls('br-int')
+        with mock.patch.object(br, 'get_datapath_id', return_value=None):
+            self.assertRaises(RuntimeError, br._get_dp)
