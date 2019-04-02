@@ -2127,10 +2127,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.dvr_agent.reset_dvr_parameters()
             self.dvr_agent.setup_dvr_flows()
         # notify that OVS has restarted
-        registry.notify(
+        registry.publish(
             callback_resources.AGENT,
             callback_events.OVS_RESTARTED,
-            self)
+            self, payload=None)
         # restart the polling manager so that it will signal as added
         # all the current ports
         # REVISIT (rossella_s) Define a method "reset" in
