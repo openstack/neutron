@@ -54,6 +54,9 @@
         - networking-ovn-tempest-dsvm-ovs-release:
             voting: false
             irrelevant-files: *tempest-irrelevant-files
+        - networking-midonet-tempest-aio-ml2-centos-7:
+            voting: false
+            irrelevant-files: *tempest-irrelevant-files
         - grenade-py3:
             irrelevant-files: *tempest-irrelevant-files
             # TODO(slaweq): switch it again to voting after bug
