@@ -15,6 +15,7 @@
 
 import functools
 
+import netaddr
 import six
 
 from neutron_lib.api.definitions import network as net_def
@@ -203,11 +204,14 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
 
     def _make_port_dict(self, port, fields=None,
                         process_extensions=True):
+        mac = port["mac_address"]
+        if isinstance(mac, netaddr.EUI):
+            mac.dialect = netaddr.mac_unix_expanded
         res = {"id": port["id"],
                'name': port['name'],
                "network_id": port["network_id"],
                'tenant_id': port['tenant_id'],
-               "mac_address": str(port["mac_address"]),
+               "mac_address": str(mac),
                "admin_state_up": port["admin_state_up"],
                "status": port["status"],
                "fixed_ips": [{'subnet_id': ip["subnet_id"],
