@@ -15,6 +15,7 @@
 
 from eventlet import greenthread
 import netaddr
+from netaddr.strategy import eui48
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.agent import topics
 from neutron_lib.api.definitions import address_scope
@@ -1404,7 +1405,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 elif self._is_mac_in_use(context, network_id, raw_mac_address):
                     raise exc.MacAddressInUse(net_id=network_id,
                                               mac=raw_mac_address)
-                eui_mac_address = netaddr.EUI(raw_mac_address, 48)
+                eui_mac_address = netaddr.EUI(raw_mac_address,
+                                              dialect=eui48.mac_unix_expanded)
 
                 # Create the Port object
                 db_port_obj = ports_obj.Port(context,
