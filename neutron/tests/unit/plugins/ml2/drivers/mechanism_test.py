@@ -20,6 +20,9 @@ from neutron_lib import constants as const
 from neutron_lib.plugins.ml2 import api
 
 
+VIF_TYPE_TEST = 'vif_type_test'
+
+
 class TestMechanismDriver(api.MechanismDriver):
     """Test mechanism driver for testing mechanism driver api."""
 
@@ -246,6 +249,9 @@ class TestMechanismDriver(api.MechanismDriver):
             self, context, segments, candidate_hosts, agent_getter):
         return set()
 
+    def get_vif_type(self, context, agent, segment):
+        return VIF_TYPE_TEST
+
     @property
     def resource_provider_uuid5_namespace(self):
         return uuid.UUID('7f0ce65c-1f13-11e9-8921-3c6aa7b21d17')
@@ -260,3 +266,7 @@ class TestMechanismDriver(api.MechanismDriver):
 
     def get_standard_device_mappings(self, agent):
         return {}
+
+    @staticmethod
+    def provider_network_attribute_updates_supported():
+        return []

@@ -200,6 +200,10 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         segments_db.add_network_segment(
             context, network_id, segment, segment_index)
 
+    def _update_network_segment(self, context, network_id, segmentation_id):
+        segments_db.update_network_segment(
+            context, network_id, segmentation_id)
+
     def create_network_segments(self, context, network, tenant_id):
         """Call type drivers to create network segments."""
         segments = self._process_provider_create(network)
@@ -221,6 +225,30 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                 segment = self._allocate_tenant_net_segment(
                     context, filters=filters)
                 self._add_network_segment(context, network_id, segment)
+
+    def update_network_segment(self, context, network, net_data, segment):
+        """Call type drivers to update a network segment.
+
+        Update operation is currently only supported for VLAN type segments,
+        and only the SEGMENTATION_ID field can be changed.
+        """
+        segmentation_id = net_data.get(provider.SEGMENTATION_ID)
+        network_type = segment[api.NETWORK_TYPE]
+        if network_type != constants.TYPE_VLAN:
+            msg = (_('Only VLAN type networks can be updated.'))
+            raise exc.InvalidInput(error_message=msg)
+        elif not segmentation_id:
+            msg = (_('Only %s field can be updated in VLAN type networks') %
+                   api.SEGMENTATION_ID)
+            raise exc.InvalidInput(error_message=msg)
+
+        new_segment = {api.NETWORK_TYPE: segment[api.NETWORK_TYPE],
+                       api.PHYSICAL_NETWORK: segment[api.PHYSICAL_NETWORK],
+                       api.SEGMENTATION_ID: segmentation_id}
+        self.validate_provider_segment(new_segment)
+        self.reserve_provider_segment(context, new_segment)
+        self._update_network_segment(context, segment['id'], segmentation_id)
+        self.release_network_segment(context, segment)
 
     def reserve_network_segment(self, context, segment_data):
         """Call type drivers to reserve a network segment."""
