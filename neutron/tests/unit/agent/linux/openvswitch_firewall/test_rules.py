@@ -421,8 +421,8 @@ class TestMergeRules(base.BaseTestCase):
         self.assertEqual(len(expected), len(result))
         for (range_min, range_max, conj_ids), result1 in zip(
                 expected, result):
-            self.assertEqual(range_min, result1[0]['port_range_min'])
-            self.assertEqual(range_max, result1[0]['port_range_max'])
+            self.assertEqual(range_min, result1[0].get('port_range_min'))
+            self.assertEqual(range_max, result1[0].get('port_range_max'))
             self.assertEqual(conj_ids, set(result1[1]))
 
     def test__assert_mergeable_rules(self):
@@ -489,6 +489,15 @@ class TestMergeRules(base.BaseTestCase):
                 (1, 29, {10, 12}),
                 (30, 40, {10, 12, 4}),
                 (41, 65535, {10, 12})], result)
+
+    def test_merge_port_ranges_no_port_ranges_same_conj_id(self):
+        result = rules.merge_port_ranges(
+            [(dict(self.rule_tmpl), 10),
+             (dict(self.rule_tmpl), 12),
+             (dict([('port_range_min', 30), ('port_range_max', 30)] +
+                   self.rule_tmpl), 10)])
+        self._test_merge_port_ranges_helper([
+                (None, None, {10, 12})], result)
 
     def test_merge_port_ranges_nonoverlapping(self):
         result = rules.merge_port_ranges(
