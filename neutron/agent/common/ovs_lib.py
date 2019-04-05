@@ -811,6 +811,11 @@ class OVSBridge(BaseOVS):
             if queue:
                 txn.add(self.ovsdb.db_destroy('Queue', queue['_uuid']))
 
+    def set_datapath_id(self, datapath_id):
+        dpid_cfg = {'datapath-id': datapath_id}
+        self.set_db_attribute('Bridge', self.br_name, 'other_config', dpid_cfg,
+                              check_error=True)
+
     def __enter__(self):
         self.create()
         return self
