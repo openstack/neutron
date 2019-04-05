@@ -17,7 +17,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-"""description of revision
+"""network segment ranges
 
 Revision ID: 0ff9e3881597
 Revises: fb0167bd9639
