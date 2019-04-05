@@ -870,9 +870,15 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 LOG.debug("Setting status for %s to DOWN", device)
                 devices_down.append(device)
         if devices_up or devices_down:
+            # When the iter_num == 0, that indicate the ovs-agent is doing
+            # the initialization work. L2 pop needs this precise knowledge
+            # to notify the agent to refresh the tunnel related flows.
+            # Otherwise, these flows will be cleaned as stale due to the
+            # different cookie id.
+            agent_restarted = self.iter_num == 0
             devices_set = self.plugin_rpc.update_device_list(
                 self.context, devices_up, devices_down, self.agent_id,
-                self.conf.host)
+                self.conf.host, agent_restarted=agent_restarted)
             failed_devices = (devices_set.get('failed_devices_up') +
                 devices_set.get('failed_devices_down'))
             if failed_devices:

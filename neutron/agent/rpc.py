@@ -145,11 +145,12 @@ class PluginApi(object):
                           agent_id=agent_id, host=host)
 
     def update_device_list(self, context, devices_up, devices_down,
-                           agent_id, host):
+                           agent_id, host, agent_restarted=False):
         cctxt = self.client.prepare(version='1.5')
         return cctxt.call(context, 'update_device_list',
                           devices_up=devices_up, devices_down=devices_down,
-                          agent_id=agent_id, host=host)
+                          agent_id=agent_id, host=host,
+                          agent_restarted=agent_restarted)
 
     def tunnel_sync(self, context, tunnel_ip, tunnel_type=None, host=None):
         cctxt = self.client.prepare(version='1.4')
