@@ -34,6 +34,7 @@ from oslo_utils import timeutils
 from osprofiler import profiler
 
 from neutron._i18n import _
+from neutron.agent.common import resource_processing_queue as queue
 from neutron.agent.common import utils as common_utils
 from neutron.agent.l3 import dvr
 from neutron.agent.l3 import dvr_edge_ha_router
@@ -45,7 +46,6 @@ from neutron.agent.l3 import l3_agent_extension_api as l3_ext_api
 from neutron.agent.l3 import l3_agent_extensions_manager as l3_ext_manager
 from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import namespace_manager
-from neutron.agent.l3 import router_processing_queue as queue
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import pd
@@ -72,7 +72,7 @@ PRIORITY_SYNC_ROUTERS_TASK = 2
 PRIORITY_PD_UPDATE = 3
 
 # Actions
-DELETE_ROUTER = queue.DELETE_ROUTER
+DELETE_ROUTER = 1
 DELETE_RELATED_ROUTER = 2
 ADD_UPDATE_ROUTER = 3
 ADD_UPDATE_RELATED_ROUTER = 4
@@ -255,7 +255,7 @@ class L3NATAgent(ha.AgentMixin,
             self.driver,
             self.metadata_driver)
 
-        self._queue = queue.RouterProcessingQueue()
+        self._queue = queue.ResourceProcessingQueue()
         super(L3NATAgent, self).__init__(host=self.conf.host)
 
         self.target_ex_net_id = None
@@ -436,9 +436,9 @@ class L3NATAgent(ha.AgentMixin,
     def router_deleted(self, context, router_id):
         """Deal with router deletion RPC message."""
         LOG.debug('Got router deleted notification for %s', router_id)
-        update = queue.RouterUpdate(router_id,
-                                    PRIORITY_RPC,
-                                    action=DELETE_ROUTER)
+        update = queue.ResourceUpdate(router_id,
+                                      PRIORITY_RPC,
+                                      action=DELETE_ROUTER)
         self._queue.add(update)
 
     def routers_updated(self, context, routers):
@@ -449,16 +449,16 @@ class L3NATAgent(ha.AgentMixin,
             if isinstance(routers[0], dict):
                 routers = [router['id'] for router in routers]
             for id in routers:
-                update = queue.RouterUpdate(
+                update = queue.ResourceUpdate(
                     id, PRIORITY_RPC, action=ADD_UPDATE_ROUTER)
                 self._queue.add(update)
 
     def router_removed_from_agent(self, context, payload):
         LOG.debug('Got router removed from agent :%r', payload)
         router_id = payload['router_id']
-        update = queue.RouterUpdate(router_id,
-                                    PRIORITY_RPC,
-                                    action=DELETE_ROUTER)
+        update = queue.ResourceUpdate(router_id,
+                                      PRIORITY_RPC,
+                                      action=DELETE_ROUTER)
         self._queue.add(update)
 
     def router_added_to_agent(self, context, payload):
@@ -473,7 +473,7 @@ class L3NATAgent(ha.AgentMixin,
                 ports.append(ri.ex_gw_port)
             port_belongs = lambda p: p['network_id'] == network_id
             if any(port_belongs(p) for p in ports):
-                update = queue.RouterUpdate(
+                update = queue.ResourceUpdate(
                     ri.router_id, PRIORITY_SYNC_ROUTERS_TASK)
                 self._resync_router(update)
 
@@ -559,11 +559,11 @@ class L3NATAgent(ha.AgentMixin,
             return
         router_update.timestamp = timeutils.utcnow()
         router_update.priority = priority
-        router_update.router = None  # Force the agent to resync the router
+        router_update.resource = None  # Force the agent to resync the router
         self._queue.add(router_update)
 
     def _process_router_update(self):
-        for rp, update in self._queue.each_update_to_next_router():
+        for rp, update in self._queue.each_update_to_next_resource():
             LOG.debug("Starting router update for %s, action %s, priority %s",
                       update.id, update.action, update.priority)
             if update.action == PD_UPDATE:
@@ -571,7 +571,7 @@ class L3NATAgent(ha.AgentMixin,
                 LOG.debug("Finished a router update for %s", update.id)
                 continue
 
-            routers = [update.router] if update.router else []
+            routers = [update.resource] if update.resource else []
 
             not_delete_no_routers = (update.action != DELETE_ROUTER and
                                      not routers)
@@ -623,7 +623,7 @@ class L3NATAgent(ha.AgentMixin,
                 # on it already and we don't want to race.
                 new_action = RELATED_ACTION_MAP.get(
                     update.action, ADD_UPDATE_RELATED_ROUTER)
-                new_update = queue.RouterUpdate(
+                new_update = queue.ResourceUpdate(
                     router['id'],
                     priority=PRIORITY_RELATED_ROUTER,
                     action=new_action)
@@ -715,10 +715,10 @@ class L3NATAgent(ha.AgentMixin,
                             ns_manager.keep_ext_net(ext_net_id)
                         elif is_snat_agent and not r.get('ha'):
                             ns_manager.ensure_snat_cleanup(r['id'])
-                    update = queue.RouterUpdate(
+                    update = queue.ResourceUpdate(
                         r['id'],
                         PRIORITY_SYNC_ROUTERS_TASK,
-                        router=r,
+                        resource=r,
                         action=ADD_UPDATE_ROUTER,
                         timestamp=timestamp)
                     self._queue.add(update)
@@ -754,10 +754,10 @@ class L3NATAgent(ha.AgentMixin,
         # Delete routers that have disappeared since the last sync
         for router_id in prev_router_ids - curr_router_ids:
             ns_manager.keep_router(router_id)
-            update = queue.RouterUpdate(router_id,
-                                        PRIORITY_SYNC_ROUTERS_TASK,
-                                        timestamp=timestamp,
-                                        action=DELETE_ROUTER)
+            update = queue.ResourceUpdate(router_id,
+                                          PRIORITY_SYNC_ROUTERS_TASK,
+                                          timestamp=timestamp,
+                                          action=DELETE_ROUTER)
             self._queue.add(update)
 
     @property
@@ -778,10 +778,10 @@ class L3NATAgent(ha.AgentMixin,
 
     def create_pd_router_update(self):
         router_id = None
-        update = queue.RouterUpdate(router_id,
-                                    PRIORITY_PD_UPDATE,
-                                    timestamp=timeutils.utcnow(),
-                                    action=PD_UPDATE)
+        update = queue.ResourceUpdate(router_id,
+                                      PRIORITY_PD_UPDATE,
+                                      timestamp=timeutils.utcnow(),
+                                      action=PD_UPDATE)
         self._queue.add(update)
 
 
