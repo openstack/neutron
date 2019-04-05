@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib.api.definitions import network_segment_range as range_def
+from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as lib_exc
@@ -38,6 +39,20 @@ def is_network_segment_range_enabled():
                                    'plugin.NetworkSegmentRangePlugin')
     return any(p in cfg.CONF.service_plugins
                for p in ['network_segment_range', network_segment_range_class])
+
+
+def _get_physical_network(network_segment_range):
+    if network_segment_range.get('network_type') != const.TYPE_VLAN:
+        return None
+
+    physical_network = network_segment_range.get(
+        "physical_network", const.ATTR_NOT_SPECIFIED)
+    if not validators.is_attr_set(physical_network):
+        message = _("Network type %s requires 'physical_network' to be "
+                    "specified while creating new range") % const.TYPE_VLAN
+        raise lib_exc.BadRequest(resource=range_def.RESOURCE_NAME,
+                                 msg=message)
+    return physical_network
 
 
 class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
@@ -77,9 +92,7 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
         filters = {
             'default': False,
             'network_type': network_segment_range['network_type'],
-            'physical_network': (network_segment_range['physical_network']
-                                 if network_segment_range['network_type'] ==
-                                 const.TYPE_VLAN else None),
+            'physical_network': _get_physical_network(network_segment_range)
         }
         range_objs = obj_network_segment_range.NetworkSegmentRange.get_objects(
             context, **filters)
