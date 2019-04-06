@@ -1,0 +1,27 @@
+---
+critical:
+  - |
+    The neutron-openvswitch-agent can sometimes spend too much time handling
+    a large number of ports, exceeding its timeout value, ``agent_boot_time``,
+    for L2 population. Because of this, some flow update operations will not
+    be triggerred, resulting in lost flows during agent restart, especially
+    for host-to-host vxlan tunnel flows, causing the original tunnel flows to
+    be treated as stale due to the different cookie IDs. The agent's first
+    RPC loop will also do a stale flow clean-up procedure and delete them,
+    leading to a loss of connectivity.
+    Please ensure that all neutron-server and neutron-openvswitch-agent
+    binaries are upgraded for the changes to take effect, after which
+    the L2 population ``agent_boot_time`` config option will no longer
+    be used.
+fixes:
+  - |
+    The neutron-openvswitch-agent was changed to notify the neutron-server
+    in its first RPC loop that it has restarted. This signals neutron-server
+    to provide updated L2 population information to correctly program FDB
+    entries, ensuring connectivity to instances is not interrupted.
+    This fixes the following bugs:
+    `1794991 <https://bugs.launchpad.net/neutron/+bug/1794991>`_,
+    `1799178 <https://bugs.launchpad.net/neutron/+bug/1799178>`_,
+    `1813703 <https://bugs.launchpad.net/neutron/+bug/1813703>`_,
+    `1813714 <https://bugs.launchpad.net/neutron/+bug/1813714>`_,
+    `1813715 <https://bugs.launchpad.net/neutron/+bug/1813715>`_.
