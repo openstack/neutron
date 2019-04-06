@@ -2328,7 +2328,7 @@ class AncillaryBridgesTest(object):
     def _test_ancillary_bridges(self, bridges, ancillary):
         device_ids = ancillary[:]
 
-        def pullup_side_effect(*args):
+        def pullup_side_effect(*args, **kwargs):
             # Check that the device_id exists, if it does return it
             # if it does not return None
             try:
