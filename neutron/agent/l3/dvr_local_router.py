@@ -181,6 +181,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             device = ip_lib.IPDevice(fip_2_rtr_name, namespace=fip_ns_name)
 
             device.route.delete_route(fip_cidr, str(rtr_2_fip.ip))
+            return device
 
     def floating_ip_moved_dist(self, fip):
         """Handle floating IP move between fixed IPs."""
@@ -194,7 +195,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         return self.floating_ip_added_dist(fip, ip_cidr)
 
     def remove_floating_ip(self, device, ip_cidr):
-        self.floating_ip_removed_dist(ip_cidr)
+        fip_2_rtr_device = self.floating_ip_removed_dist(ip_cidr)
+        if fip_2_rtr_device:
+            fip_2_rtr_device.delete_conntrack_state(ip_cidr)
 
     def move_floating_ip(self, fip):
         self.floating_ip_moved_dist(fip)
