@@ -23,7 +23,6 @@ import testscenarios
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import tc_lib
 from neutron.common import utils
-from neutron.tests import base as tests_base
 from neutron.tests.common.agents import l2_extensions
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
@@ -630,7 +629,6 @@ class _TestMinBwQoS(BaseQoSRuleTestCase):
         rule['qos_policy_id'] = qos_policy_id
         qos_policy['rules'].append(rule)
 
-    @tests_base.unstable_test('bug 1819125')
     def test_min_bw_qos_policy_rule_lifecycle(self):
         new_limit = MIN_BANDWIDTH - 100
 
@@ -680,7 +678,6 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
             self.fail('"%s" direction not implemented'
                       % constants.INGRESS_DIRECTION)
 
-    @tests_base.unstable_test('bug 1819125')
     def test_bw_limit_qos_port_removed(self):
         """Test if rate limit config is properly removed when whole port is
         removed.

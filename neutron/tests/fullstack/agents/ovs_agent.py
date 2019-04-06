@@ -15,8 +15,10 @@
 
 import sys
 
+import mock
 from oslo_config import cfg
 
+from neutron.agent.common import ovs_lib
 from neutron.services.trunk.drivers.openvswitch.agent \
     import driver as trunk_driver
 from neutron.tests.common.agents import ovs_agent
@@ -42,7 +44,8 @@ def main():
     # ovs-vswitchd processes for each test will be isolated in separate
     # namespace
     monkeypatch_init_handler()
-    ovs_agent.main()
+    with mock.patch.object(ovs_lib.OVSBridge, 'clear_minimum_bandwidth_qos'):
+        ovs_agent.main()
 
 
 if __name__ == "__main__":
