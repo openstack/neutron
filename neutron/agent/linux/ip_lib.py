@@ -313,7 +313,13 @@ class IPDevice(SubProcessBase):
             can also be passed.
         """
         self.addr.delete(cidr)
+        self.delete_conntrack_state(cidr)
 
+    def delete_conntrack_state(self, cidr):
+        """Delete conntrack state rules
+
+        Deletes both rules (if existing), the destination and the reply one.
+        """
         ip_str = str(netaddr.IPNetwork(cidr).ip)
         ip_wrapper = IPWrapper(namespace=self.namespace)
 
