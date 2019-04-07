@@ -28,6 +28,7 @@ from oslo_utils import uuidutils
 from webob import exc
 
 from neutron.api import extensions
+from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
@@ -46,10 +47,12 @@ from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit import testlib_api
 from neutron import wsgi
 
+
 L3_HOSTA = 'hosta'
 DHCP_HOSTA = 'hosta'
 L3_HOSTB = 'hostb'
 DHCP_HOSTC = 'hostc'
+DHCP_HOSTD = 'hostd'
 
 DEVICE_OWNER_COMPUTE = ''.join([constants.DEVICE_OWNER_COMPUTE_PREFIX,
                                 'test:',
@@ -1380,7 +1383,9 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                                             network_id)
         self.dhcp_notifier_cast.assert_called_with(
                 mock.ANY, 'network_create_end',
-                {'network': {'id': network_id}}, DHCP_HOSTA)
+                {'network': {'id': network_id},
+                 'priority': dhcp_rpc_agent_api.PRIORITY_NETWORK_CREATE},
+                DHCP_HOSTA)
         notifications = fake_notifier.NOTIFICATIONS
         expected_event_type = 'dhcp_agent.network.add'
         self._assert_notify(notifications, expected_event_type)
@@ -1398,7 +1403,9 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                                              network_id)
         self.dhcp_notifier_cast.assert_called_with(
                 mock.ANY, 'network_delete_end',
-                {'network_id': network_id}, DHCP_HOSTA)
+                {'network_id': network_id,
+                 'priority': dhcp_rpc_agent_api.PRIORITY_NETWORK_DELETE},
+                DHCP_HOSTA)
         notifications = fake_notifier.NOTIFICATIONS
         expected_event_type = 'dhcp_agent.network.remove'
         self._assert_notify(notifications, expected_event_type)
@@ -1441,17 +1448,19 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
         ctx = context.get_admin_context()
         net['network'] = self.plugin.get_network(ctx, net['network']['id'])
         sub['subnet'] = self.plugin.get_subnet(ctx, sub['subnet']['id'])
+        sub['priority'] = dhcp_rpc_agent_api.PRIORITY_SUBNET_UPDATE
         port['port'] = self.plugin.get_port(ctx, port['port']['id'])
         return net, sub, port
 
-    def _notification_mocks(self, hosts, net, subnet, port):
+    def _notification_mocks(self, hosts, net, subnet, port, port_priority):
         host_calls = {}
         for host in hosts:
             expected_calls = [
                 mock.call(
                     mock.ANY,
                     'network_create_end',
-                    {'network': {'id': net['network']['id']}},
+                    {'priority': dhcp_rpc_agent_api.PRIORITY_NETWORK_CREATE,
+                     'network': {'id': net['network']['id']}},
                     host),
                 mock.call(
                     mock.ANY,
@@ -1461,7 +1470,8 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                 mock.call(
                     mock.ANY,
                     'port_create_end',
-                    {'port': port['port']},
+                    {'port': port['port'],
+                     'priority': port_priority},
                     host, 'dhcp_agent')]
             host_calls[host] = expected_calls
         return host_calls
@@ -1469,19 +1479,46 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
     def test_network_port_create_notification(self):
         hosts = [DHCP_HOSTA]
         net, subnet, port = self._network_port_create(hosts)
-        expected_calls = self._notification_mocks(hosts, net, subnet, port)
+        expected_calls = self._notification_mocks(
+            hosts, net, subnet, port,
+            dhcp_rpc_agent_api.PRIORITY_PORT_CREATE_HIGH)
         self.assertEqual(
             expected_calls[DHCP_HOSTA], self.dhcp_notifier_cast.call_args_list)
 
     def test_network_ha_port_create_notification(self):
-        cfg.CONF.set_override('dhcp_agents_per_network', 2)
-        hosts = [DHCP_HOSTA, DHCP_HOSTC]
+        cfg.CONF.set_override('dhcp_agents_per_network', 3)
+        hosts = [DHCP_HOSTA, DHCP_HOSTC, DHCP_HOSTD]
         net, subnet, port = self._network_port_create(hosts)
-        expected_calls = self._notification_mocks(hosts, net, subnet, port)
-        for expected in expected_calls[DHCP_HOSTA]:
+        for host_call in self.dhcp_notifier_cast.call_args_list:
+            if ("'priority': " + str(
+                    dhcp_rpc_agent_api.PRIORITY_PORT_CREATE_HIGH)
+                    in str(host_call)):
+                if DHCP_HOSTA in str(host_call):
+                    expected_high_calls = self._notification_mocks(
+                        [DHCP_HOSTA], net, subnet, port,
+                        dhcp_rpc_agent_api.PRIORITY_PORT_CREATE_HIGH)
+                    high_host = DHCP_HOSTA
+                    hosts.pop(0)
+                elif DHCP_HOSTC in str(host_call):
+                    expected_high_calls = self._notification_mocks(
+                        [DHCP_HOSTC], net, subnet, port,
+                        dhcp_rpc_agent_api.PRIORITY_PORT_CREATE_HIGH)
+                    high_host = DHCP_HOSTC
+                    hosts.pop(1)
+                elif DHCP_HOSTD in str(host_call):
+                    expected_high_calls = self._notification_mocks(
+                        [DHCP_HOSTD], net, subnet, port,
+                        dhcp_rpc_agent_api.PRIORITY_PORT_CREATE_HIGH)
+                    high_host = DHCP_HOSTD
+                    hosts.pop(2)
+        expected_low_calls = self._notification_mocks(
+            hosts, net, subnet, port,
+            dhcp_rpc_agent_api.PRIORITY_PORT_CREATE_LOW)
+        for expected in expected_high_calls[high_host]:
             self.assertIn(expected, self.dhcp_notifier_cast.call_args_list)
-        for expected in expected_calls[DHCP_HOSTC]:
-            self.assertIn(expected, self.dhcp_notifier_cast.call_args_list)
+        for host, low_expecteds in expected_low_calls.items():
+            for expected in low_expecteds:
+                self.assertIn(expected, self.dhcp_notifier_cast.call_args_list)
 
     def _is_schedule_network_called(self, device_id):
         dhcp_notifier_schedule = mock.patch(

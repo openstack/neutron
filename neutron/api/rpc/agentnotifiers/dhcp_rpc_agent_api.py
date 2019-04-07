@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
+import random
+
 from neutron_lib.agent import topics
 from neutron_lib.api import extensions
 from neutron_lib.callbacks import events
@@ -25,6 +28,36 @@ from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.common import rpc as n_rpc
+
+# Priorities - lower value is higher priority
+PRIORITY_NETWORK_CREATE = 0
+PRIORITY_NETWORK_UPDATE = 1
+PRIORITY_NETWORK_DELETE = 2
+PRIORITY_SUBNET_UPDATE = 3
+PRIORITY_SUBNET_DELETE = 4
+# In order to improve port dhcp provisioning when nova concurrently create
+# multiple vms, I classify the port_create_end message to two levels, the
+# high-level message only cast to one agent, the low-level message cast to all
+# other agent. In this way, When there are a large number of ports that need to
+# be processed, we can dispatch the high priority message of port to different
+# agent, so that the processed port will not block other port's processing in
+# other dhcp agents.
+PRIORITY_PORT_CREATE_HIGH = 5
+PRIORITY_PORT_CREATE_LOW = 6
+PRIORITY_PORT_UPDATE = 7
+PRIORITY_PORT_DELETE = 8
+
+METHOD_PRIORITY_MAP = {
+    'network_create_end': PRIORITY_NETWORK_CREATE,
+    'network_update_end': PRIORITY_NETWORK_UPDATE,
+    'network_delete_end': PRIORITY_NETWORK_DELETE,
+    'subnet_create_end': PRIORITY_SUBNET_UPDATE,
+    'subnet_update_end': PRIORITY_SUBNET_UPDATE,
+    'subnet_delete_end': PRIORITY_SUBNET_DELETE,
+    'port_create_end': PRIORITY_PORT_CREATE_LOW,
+    'port_update_end': PRIORITY_PORT_UPDATE,
+    'port_delete_end': PRIORITY_PORT_DELETE
+}
 
 
 LOG = logging.getLogger(__name__)
@@ -101,7 +134,8 @@ class DhcpAgentNotifyAPI(object):
             for agent in new_agents:
                 self._cast_message(
                     context, 'network_create_end',
-                    {'network': {'id': network['id']}}, agent['host'])
+                    {'network': {'id': network['id']},
+                     'priority': PRIORITY_NETWORK_CREATE}, agent['host'])
         elif not existing_agents:
             LOG.warning('Unable to schedule network %s: no agents '
                         'available; will retry on subsequent port '
@@ -147,6 +181,7 @@ class DhcpAgentNotifyAPI(object):
 
     def _notify_agents(self, context, method, payload, network_id):
         """Notify all the agents that are hosting the network."""
+        payload['priority'] = METHOD_PRIORITY_MAP.get(method)
         # fanout is required as we do not know who is "listening"
         no_agents = not extensions.is_extension_supported(
             self.plugin, constants.DHCP_AGENT_SCHEDULER_EXT_ALIAS)
@@ -184,9 +219,20 @@ class DhcpAgentNotifyAPI(object):
                 return
             enabled_agents = self._get_enabled_agents(
                 context, network, agents, method, payload)
+
+            if method == 'port_create_end':
+                high_agent = enabled_agents.pop(
+                    random.randint(0, len(enabled_agents) - 1))
+                self._notify_high_priority_agent(
+                    context, copy.deepcopy(payload), high_agent)
             for agent in enabled_agents:
                 self._cast_message(
                     context, method, payload, agent.host, agent.topic)
+
+    def _notify_high_priority_agent(self, context, payload, agent):
+        payload['priority'] = PRIORITY_PORT_CREATE_HIGH
+        self._cast_message(context, "port_create_end",
+                           payload, agent.host, agent.topic)
 
     def _cast_message(self, context, method, payload, host,
                       topic=topics.DHCP_AGENT):
@@ -201,11 +247,13 @@ class DhcpAgentNotifyAPI(object):
 
     def network_removed_from_agent(self, context, network_id, host):
         self._cast_message(context, 'network_delete_end',
-                           {'network_id': network_id}, host)
+                           {'network_id': network_id,
+                            'priority': PRIORITY_NETWORK_DELETE}, host)
 
     def network_added_to_agent(self, context, network_id, host):
         self._cast_message(context, 'network_create_end',
-                           {'network': {'id': network_id}}, host)
+                           {'network': {'id': network_id},
+                            'priority': PRIORITY_NETWORK_CREATE}, host)
 
     def agent_updated(self, context, admin_state_up, host):
         self._cast_message(context, 'agent_updated',
