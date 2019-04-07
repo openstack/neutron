@@ -1434,6 +1434,27 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         # Since the new host is in the same segment, it succeeds.
         self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
 
+    def test_port_update_deferred_allocation_binding_info_and_new_mac(self):
+        """Binding information and new mac address is provided on update"""
+        network, segment, subnet = self._create_test_segment_with_subnet()
+
+        # Map the host to the segment
+        self._setup_host_mappings([(segment['segment']['id'], 'fakehost')])
+
+        port = self._create_deferred_ip_port(network)
+        self._validate_deferred_ip_allocation(port['port']['id'])
+
+        # Try requesting an IP (but the only subnet is on a segment)
+        data = {'port': {portbindings.HOST_ID: 'fakehost',
+                         'mac_address': '00:00:00:00:00:01'}}
+        port_id = port['port']['id']
+        port_req = self.new_update_request('ports', data, port_id)
+        response = port_req.get_response(self.api)
+
+        # Port update succeeds and allocates a new IP address.
+        self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
+        self._assert_one_ip_in_subnet(response, subnet['subnet']['cidr'])
+
 
 class TestSegmentAwareIpamML2(TestSegmentAwareIpam):
 
