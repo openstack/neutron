@@ -19,6 +19,7 @@ import mock
 import netaddr
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib import constants
+from neutron_lib import exceptions
 from oslo_config import cfg
 import oslo_messaging
 from oslo_utils import fileutils
@@ -1134,23 +1135,31 @@ class TestDhcpLocalProcess(TestBase):
     @mock.patch.object(fileutils, 'ensure_tree')
     def test_enable(self, ensure_dir):
         attrs_to_mock = dict(
-            (a, mock.DEFAULT) for a in ['active', 'interface_name']
+            (a, mock.DEFAULT) for a in
+            ['active', 'interface_name', 'spawn_process']
         )
 
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
             mocks['active'].__get__ = mock.Mock(return_value=False)
             mocks['interface_name'].__set__ = mock.Mock()
+            mocks['spawn_process'].side_effect = [
+                exceptions.ProcessExecutionError(
+                    returncode=2, message="Test dnsmasq start failed"),
+                None]
             lp = LocalChild(self.conf,
                             FakeDualNetwork())
+
             lp.enable()
 
             self.mock_mgr.assert_has_calls(
                 [mock.call(self.conf, None),
                  mock.call().setup(mock.ANY)])
-            self.assertEqual(lp.called, ['spawn'])
-            self.assertTrue(mocks['interface_name'].__set__.called)
-            ensure_dir.assert_called_with(
-                '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc', mode=0o755)
+            self.assertEqual(2, mocks['interface_name'].__set__.call_count)
+            ensure_dir.assert_has_calls([
+                mock.call(
+                    '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc', mode=0o755),
+                mock.call(
+                    '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc', mode=0o755)])
 
     def _assert_disabled(self, lp):
         self.assertTrue(lp.process_monitor.unregister.called)
