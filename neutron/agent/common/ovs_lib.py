@@ -31,6 +31,7 @@ from neutron._i18n import _
 from neutron.agent.common import ip_lib
 from neutron.agent.common import utils
 from neutron.agent.ovsdb import api as ovsdb_api
+from neutron.common import constants as common_constants
 from neutron.conf.agent import ovs_conf
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
@@ -410,7 +411,7 @@ class OVSBridge(BaseOVS):
                     msg = "cannot use 'strict' with 'add' action"
                     raise exceptions.InvalidInput(error_message=msg)
 
-        strict_param = ["--strict"] if strict else []
+        extra_param = ["--strict"] if strict else []
 
         if action == 'del' and {} in kwargs_list:
             # the 'del' case simplifies itself if kwargs_list has at least
@@ -419,8 +420,12 @@ class OVSBridge(BaseOVS):
         else:
             flow_strs = [_build_flow_expr_str(kw, action, strict)
                          for kw in kwargs_list]
-            self.run_ofctl('%s-flows' % action, strict_param + ['-'],
-                           '\n'.join(flow_strs))
+            LOG.debug("Processing %d OpenFlow rules.", len(flow_strs))
+
+            step = common_constants.AGENT_RES_PROCESSING_STEP
+            for i in range(0, len(flow_strs), step):
+                self.run_ofctl('%s-flows' % action, extra_param + ['-'],
+                               '\n'.join(flow_strs[i:i + step]))
 
     def add_flow(self, **kwargs):
         self.do_action_flows('add', [kwargs])
