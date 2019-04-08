@@ -335,7 +335,20 @@ def get_cmdline_from_pid(pid):
     if pid is None or not os.path.exists('/proc/%s' % pid):
         return []
     with open('/proc/%s/cmdline' % pid, 'r') as f:
-        return f.readline().split('\0')[:-1]
+        cmdline = f.readline()
+        cmdline_args = cmdline.split('\0')[:-1]
+
+        # NOTE(slaweq): sometimes it may happen that values in
+        # /proc/{pid}/cmdline are separated by space instead of NUL char,
+        # in such case we would have everything in one element of cmdline_args
+        # list and it would not match to expected cmd so we need to try to
+        # split it by spaces
+        if len(cmdline_args) == 1:
+            cmdline_args = cmdline_args[0].split(' ')
+
+        LOG.debug("Found cmdline %s for rocess with PID %s.",
+                  cmdline_args, pid)
+        return cmdline_args
 
 
 def cmd_matches_expected(cmd, expected_cmd):
