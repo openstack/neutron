@@ -315,11 +315,16 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 self.fullsync = True
 
             # we only want to update resource versions on startup
-            self.agent_state.pop('resource_versions', None)
-            if self.agent_state.pop('start_flag', None) and self.iter_num == 0:
+            if self.agent_state.pop('resource_versions', None):
                 # On initial start, we notify systemd after initialization
                 # is complete.
                 systemd.notify_once()
+
+            if self.iter_num > 0:
+                # agent is considered started after
+                # initial sync with server (iter 0) is done
+                self.agent_state.pop('start_flag', None)
+
         except Exception:
             LOG.exception(_LE("Failed reporting state!"))
 
