@@ -395,6 +395,8 @@ class KeepalivedManager(object):
 
     def _output_config_file(self):
         config_str = self.config.get_config_str()
+        LOG.debug("Router %s keepalived config: %s",
+                  self.resource_id, config_str)
         config_path = self.get_full_config_file_path('keepalived.conf')
         file_utils.replace_file(config_path, config_str)
 
