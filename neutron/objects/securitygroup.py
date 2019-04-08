@@ -59,8 +59,10 @@ class SecurityGroup(base.NeutronDbObject):
 
     def from_db_object(self, db_obj):
         super(SecurityGroup, self).from_db_object(db_obj)
-        setattr(self, 'is_default', bool(db_obj.get('default_security_group')))
-        self.obj_reset_changes(['is_default'])
+        if self._load_synthetic_fields:
+            setattr(self, 'is_default',
+                    bool(db_obj.get('default_security_group')))
+            self.obj_reset_changes(['is_default'])
 
 
 @base.NeutronObjectRegistry.register
