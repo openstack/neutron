@@ -34,7 +34,7 @@ class ExtraDhcpOptTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     associating ports with extra dhcp options.
     """
 
-    supported_extension_aliases = ["extra_dhcp_opt"]
+    supported_extension_aliases = [edo_ext.ALIAS]
 
     def create_port(self, context, port):
         with context.session.begin(subtransactions=True):

@@ -63,7 +63,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     associating ports with security groups and port security.
     """
 
-    supported_extension_aliases = ["security-group", "port-security"]
+    supported_extension_aliases = ["security-group", psec.ALIAS]
 
     def create_network(self, context, network):
         tenant_id = network['network'].get('tenant_id')

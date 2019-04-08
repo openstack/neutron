@@ -19,6 +19,7 @@ import copy
 
 import mock
 import netaddr
+from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import portbindings
@@ -306,7 +307,8 @@ class TestL3NatIntPlugin(TestL3NatBasePlugin,
     __native_pagination_support = True
     __native_sorting_support = True
 
-    supported_extension_aliases = ["external-net", "router", "dns-integration"]
+    supported_extension_aliases = [extnet_apidef.ALIAS, l3_apidef.ALIAS,
+                                   dns_apidef.ALIAS]
 
 
 # This plugin class is for tests with plugin that integrates L3 and L3 agent
@@ -316,8 +318,8 @@ class TestL3NatIntAgentSchedulingPlugin(TestL3NatIntPlugin,
                                         L3AgentSchedulerDbMixin,
                                         l3_hamode_db.L3_HA_NAT_db_mixin):
 
-    supported_extension_aliases = ["external-net", "router",
-                                   "l3_agent_scheduler"]
+    supported_extension_aliases = [extnet_apidef.ALIAS, l3_apidef.ALIAS,
+                                   lib_constants.L3_AGENT_SCHEDULER_EXT_ALIAS]
     router_scheduler = importutils.import_object(
         cfg.CONF.router_scheduler_driver)
 
@@ -328,7 +330,7 @@ class TestNoL3NatPlugin(TestL3NatBasePlugin):
     __native_pagination_support = True
     __native_sorting_support = True
 
-    supported_extension_aliases = ["external-net"]
+    supported_extension_aliases = [extnet_apidef.ALIAS]
 
 
 # A L3 routing service plugin class for tests with plugins that
@@ -341,7 +343,7 @@ class TestL3NatServicePlugin(TestL3PluginBaseAttributes,
     __native_pagination_support = True
     __native_sorting_support = True
 
-    supported_extension_aliases = ["router", "dns-integration"]
+    supported_extension_aliases = [l3_apidef.ALIAS, dns_apidef.ALIAS]
 
     @classmethod
     def get_plugin_type(cls):
@@ -358,7 +360,8 @@ class TestL3NatAgentSchedulingServicePlugin(TestL3NatServicePlugin,
                                             L3_DVRsch_db_mixin,
                                             l3_hamode_db.L3_HA_NAT_db_mixin):
 
-    supported_extension_aliases = ["router", "l3_agent_scheduler"]
+    supported_extension_aliases = [l3_apidef.ALIAS,
+                                   lib_constants.L3_AGENT_SCHEDULER_EXT_ALIAS]
 
     def __init__(self):
         super(TestL3NatAgentSchedulingServicePlugin, self).__init__()

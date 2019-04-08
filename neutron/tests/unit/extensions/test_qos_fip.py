@@ -12,6 +12,8 @@
 #    under the License.
 #
 
+from neutron_lib.api.definitions import external_net as enet_apidef
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib import context
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
@@ -42,14 +44,14 @@ class FloatingIPQoSTestExtensionManager(object):
 class TestFloatingIPQoSIntPlugin(
         test_l3.TestL3NatIntPlugin,
         l3_fip_qos.FloatingQoSDbMixin):
-    supported_extension_aliases = ["external-net", "router",
+    supported_extension_aliases = [enet_apidef.ALIAS, l3_apidef.ALIAS,
                                    qos_fip.FIP_QOS_ALIAS]
 
 
 class TestFloatingIPQoSL3NatServicePlugin(
         test_l3.TestL3NatServicePlugin,
         l3_fip_qos.FloatingQoSDbMixin):
-    supported_extension_aliases = ["router", qos_fip.FIP_QOS_ALIAS]
+    supported_extension_aliases = [l3_apidef.ALIAS, qos_fip.FIP_QOS_ALIAS]
 
 
 class FloatingIPQoSDBTestCaseBase(object):

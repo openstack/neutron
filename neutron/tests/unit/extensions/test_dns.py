@@ -15,6 +15,8 @@
 import math
 
 import netaddr
+from neutron_lib.api.definitions import dns as dns_apidef
+from neutron_lib.api.definitions import l3 as l3_apdef
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import constants as db_const
@@ -47,7 +49,7 @@ class DnsExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2):
     """Test plugin to mixin the DNS Integration extensions.
     """
 
-    supported_extension_aliases = ["dns-integration", "router"]
+    supported_extension_aliases = [dns_apidef.ALIAS, l3_apdef.ALIAS]
 
 
 class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):

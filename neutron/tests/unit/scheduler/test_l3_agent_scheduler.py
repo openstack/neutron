@@ -18,7 +18,9 @@ import contextlib
 import datetime
 
 import mock
+from neutron_lib.api.definitions import l3_ext_ha_mode
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import router_availability_zone
 from neutron_lib import constants
 from neutron_lib import context as n_context
 from neutron_lib.exceptions import l3 as l3_exc
@@ -1452,7 +1454,8 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
 class L3HAPlugin(db_v2.NeutronDbPluginV2,
                  l3_hamode_db.L3_HA_NAT_db_mixin,
                  l3_hascheduler_db.L3_HA_scheduler_db_mixin):
-    supported_extension_aliases = ["l3-ha", "router_availability_zone"]
+    supported_extension_aliases = [l3_ext_ha_mode.ALIAS,
+                                   router_availability_zone.ALIAS]
 
     @classmethod
     def get_plugin_type(cls):

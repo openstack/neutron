@@ -15,7 +15,9 @@
 #    under the License.
 #
 
+from neutron_lib.api.definitions import external_net as enet_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.api.definitions import l3_ext_gw_mode
 from neutron_lib.api.definitions import qos_gateway_ip
 from neutron_lib import context
 from neutron_lib.services.qos import constants as qos_consts
@@ -46,17 +48,17 @@ class GatewayIPQoSTestExtensionManager(object):
 class TestGatewayIPQoSIntPlugin(
         test_l3.TestL3NatIntPlugin,
         l3_gateway_ip_qos.L3_gw_ip_qos_db_mixin):
-    supported_extension_aliases = ["external-net",
-                                   "router",
-                                   "ext-gw-mode",
+    supported_extension_aliases = [enet_apidef.ALIAS,
+                                   l3_apidef.ALIAS,
+                                   l3_ext_gw_mode.ALIAS,
                                    qos_gateway_ip.ALIAS]
 
 
 class TestGatewayIPQoSL3NatServicePlugin(
         test_l3.TestL3NatServicePlugin,
         l3_gateway_ip_qos.L3_gw_ip_qos_db_mixin):
-    supported_extension_aliases = ["router",
-                                   "ext-gw-mode",
+    supported_extension_aliases = [l3_apidef.ALIAS,
+                                   l3_ext_gw_mode.ALIAS,
                                    qos_gateway_ip.ALIAS]
 
 

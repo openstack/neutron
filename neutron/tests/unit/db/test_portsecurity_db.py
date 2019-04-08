@@ -11,6 +11,7 @@
 #    under the License.
 
 import mock
+from neutron_lib.api.definitions import port_security
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 
@@ -23,7 +24,7 @@ common = pdc.PortSecurityDbCommon
 
 class FakePlugin(pd.PortSecurityDbMixin):
 
-    supported_extension_aliases = ['port-security']
+    supported_extension_aliases = [port_security.ALIAS]
 
 
 class PortSecurityDbMixinTestCase(base.BaseTestCase):

@@ -22,7 +22,11 @@ from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
 from neutron_lib.api.definitions import l2_adjacency as l2adj_apidef
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib.api.definitions import port as port_def
+from neutron_lib.api.definitions import segment as seg_apidef
+from neutron_lib.api.definitions import segments_peer_subnet_host_routes
+from neutron_lib.api.definitions import standard_attr_segment
 from neutron_lib.api.definitions import subnet as subnet_def
+from neutron_lib.api.definitions import subnet_segmentid_writable
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -61,11 +65,12 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
 
     _instance = None
 
-    supported_extension_aliases = ["segment", "ip_allocation",
+    supported_extension_aliases = [seg_apidef.ALIAS,
+                                   ipalloc_apidef.ALIAS,
                                    l2adj_apidef.ALIAS,
-                                   "standard-attr-segment",
-                                   "subnet-segmentid-writable",
-                                   'segments-peer-subnet-host-routes']
+                                   standard_attr_segment.ALIAS,
+                                   subnet_segmentid_writable.ALIAS,
+                                   segments_peer_subnet_host_routes.ALIAS]
 
     __native_pagination_support = True
     __native_sorting_support = True

@@ -70,7 +70,7 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         instance = self.plugin.return_value
         instance.get_networks_count.return_value = 1
         # Register mock plugin and enable the 'provider' extension
-        instance.supported_extension_aliases = ["provider"]
+        instance.supported_extension_aliases = [provider_net.ALIAS]
         tools.make_mock_plugin_json_encodable(instance)
         directory.add_plugin(constants.CORE, instance)
         ext_mgr = ProviderExtensionManager()

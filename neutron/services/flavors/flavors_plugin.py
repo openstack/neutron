@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import flavors
+from neutron_lib.api.definitions import servicetype
 from neutron_lib.plugins import constants
 from neutron_lib.services import base as service_base
 
@@ -23,7 +25,7 @@ class FlavorsPlugin(service_base.ServicePluginBase,
                     flavors_db.FlavorsDbMixin):
     """Implements Neutron Flavors Service plugin."""
 
-    supported_extension_aliases = ['flavors', 'service-type']
+    supported_extension_aliases = [flavors.ALIAS, servicetype.ALIAS]
 
     __filter_validation_support = True
 

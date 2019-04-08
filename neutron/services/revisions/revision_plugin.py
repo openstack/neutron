@@ -11,6 +11,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import revisionifmatch
 from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from neutron_lib.services import base as service_base
@@ -31,7 +32,7 @@ class RevisionPlugin(service_base.ServicePluginBase):
     """Plugin to populate revision numbers into standard attr resources."""
 
     supported_extension_aliases = ['standard-attr-revisions',
-                                   'revision-if-match']
+                                   revisionifmatch.ALIAS]
 
     __filter_validation_support = True
 

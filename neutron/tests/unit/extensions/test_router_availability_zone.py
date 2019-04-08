@@ -11,6 +11,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.api.definitions import router_availability_zone
+from neutron_lib import constants as lib_const
 from neutron_lib.plugins import constants
 
 from neutron.db.availability_zone import router as router_az_db
@@ -33,8 +36,9 @@ class AZRouterTestPlugin(common_db_mixin.CommonDbMixin,
                          l3_db.L3_NAT_db_mixin,
                          router_az_db.RouterAvailabilityZoneMixin,
                          l3_agentschedulers_db.AZL3AgentSchedulerDbMixin):
-    supported_extension_aliases = ["router", "l3_agent_scheduler",
-                                   "router_availability_zone"]
+    supported_extension_aliases = [l3_apidef.ALIAS,
+                                   lib_const.L3_AGENT_SCHEDULER_EXT_ALIAS,
+                                   router_availability_zone.ALIAS]
 
     @classmethod
     def get_plugin_type(cls):

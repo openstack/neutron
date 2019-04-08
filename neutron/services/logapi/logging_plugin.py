@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import logging
 from neutron_lib.db import api as db_api
 
 from neutron.db import db_base_plugin_common
@@ -28,7 +29,7 @@ from neutron.services.logapi.drivers import manager as driver_mgr
 class LoggingPlugin(log_ext.LoggingPluginBase):
     """Implementation of the Neutron logging api plugin."""
 
-    supported_extension_aliases = ['logging']
+    supported_extension_aliases = [logging.ALIAS]
 
     __native_pagination_support = True
     __native_sorting_support = True

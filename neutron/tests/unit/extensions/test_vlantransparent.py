@@ -43,7 +43,7 @@ class VlanTransparentExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                          vlt_db.Vlantransparent_db_mixin):
     """Test plugin to mixin the VLAN transparent extensions."""
 
-    supported_extension_aliases = ["vlan-transparent"]
+    supported_extension_aliases = [vlan_apidef.ALIAS]
 
     def create_network(self, context, network):
         with context.session.begin(subtransactions=True):

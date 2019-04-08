@@ -15,7 +15,9 @@
 import ddt
 import mock
 
+from neutron_lib.api.definitions import external_net as enet_apidef
 from neutron_lib.api.definitions import floatingip_pools as apidef
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib import constants as lib_const
 from neutron_lib import context
 from neutron_lib.plugins import constants as plugin_constants
@@ -45,14 +47,14 @@ class FloatingIPPoolsTestExtensionManager(object):
 class TestFloatingIPPoolsIntPlugin(
         test_l3.TestL3NatIntPlugin,
         l3_fip_pools_db.FloatingIPPoolsDbMixin):
-    supported_extension_aliases = ["external-net", "router",
+    supported_extension_aliases = [enet_apidef.ALIAS, l3_apidef.ALIAS,
                                    apidef.ALIAS]
 
 
 class TestFloatingIPPoolsL3NatServicePlugin(
         test_l3.TestL3NatServicePlugin,
         l3_fip_pools_db.FloatingIPPoolsDbMixin):
-    supported_extension_aliases = ["router", apidef.ALIAS]
+    supported_extension_aliases = [l3_apidef.ALIAS, apidef.ALIAS]
 
 
 @ddt.ddt

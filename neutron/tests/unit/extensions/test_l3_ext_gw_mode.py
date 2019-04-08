@@ -16,7 +16,9 @@
 
 import mock
 import netaddr
+from neutron_lib.api.definitions import external_net as enet_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.api.definitions import l3_ext_gw_mode
 from neutron_lib import constants
 from neutron_lib import context as nctx
 from neutron_lib.db import api as db_api
@@ -70,7 +72,8 @@ class TestExtensionManager(object):
 class TestDbIntPlugin(test_l3.TestL3NatIntPlugin,
                       l3_gwmode_db.L3_NAT_db_mixin):
 
-    supported_extension_aliases = ["external-net", "router", "ext-gw-mode"]
+    supported_extension_aliases = [enet_apidef.ALIAS, l3_apidef.ALIAS,
+                                   l3_ext_gw_mode.ALIAS]
 
 
 # A simple class for making a concrete class out of the mixin
@@ -78,7 +81,7 @@ class TestDbIntPlugin(test_l3.TestL3NatIntPlugin,
 class TestDbSepPlugin(test_l3.TestL3NatServicePlugin,
                       l3_gwmode_db.L3_NAT_db_mixin):
 
-    supported_extension_aliases = ["router", "ext-gw-mode"]
+    supported_extension_aliases = [l3_apidef.ALIAS, l3_ext_gw_mode.ALIAS]
 
 
 class TestGetEnableSnat(testscenarios.WithScenarios, base.BaseTestCase):
