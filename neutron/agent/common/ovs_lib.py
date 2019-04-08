@@ -447,10 +447,14 @@ class OVSBridge(BaseOVS):
         else:
             flow_strs = [_build_flow_expr_str(kw, action, strict)
                          for kw in kwargs_list]
+            LOG.debug("Processing %d OpenFlow rules.", len(flow_strs))
             if use_bundle:
                 extra_param.append('--bundle')
-            self.run_ofctl('%s-flows' % action, extra_param + ['-'],
-                           '\n'.join(flow_strs))
+
+            step = common_constants.AGENT_RES_PROCESSING_STEP
+            for i in range(0, len(flow_strs), step):
+                self.run_ofctl('%s-flows' % action, extra_param + ['-'],
+                               '\n'.join(flow_strs[i:i + step]))
 
     def add_flow(self, **kwargs):
         self.do_action_flows('add', [kwargs])
