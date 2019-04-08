@@ -1047,7 +1047,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         need_network_update_notify = False
 
         with db_api.CONTEXT_WRITER.using(context):
-            original_network = super(Ml2Plugin, self).get_network(context, id)
+            original_network = self.get_network(context, id)
             self._update_provider_network_attributes(
                 context, original_network, net_data)
 

@@ -2424,6 +2424,50 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         self.assertEqual(1, network['network'][pnet.SEGMENTATION_ID])
         self.assertNotIn(mpnet_apidef.SEGMENTS, network['network'])
 
+    def test_fail_update_network_provider_attr(self):
+        data = {'network': {'name': 'net1',
+                            pnet.NETWORK_TYPE: 'flat',
+                            pnet.PHYSICAL_NETWORK: 'physnet1',
+                            'tenant_id': 'tenant_one'}}
+        network_req = self.new_create_request('networks', data)
+        network = self.deserialize(self.fmt,
+                                   network_req.get_response(self.api))
+        self.assertEqual('flat', network['network'][pnet.NETWORK_TYPE])
+        self.assertEqual('physnet1', network['network'][pnet.PHYSICAL_NETWORK])
+        self.assertNotIn(mpnet_apidef.SEGMENTS, network['network'])
+        data = {'network': {'name': 'updated-net1',
+                            pnet.NETWORK_TYPE: 'flat',
+                            pnet.PHYSICAL_NETWORK: 'update_physnet1'}}
+        network_req = self.new_update_request('networks', data,
+                                              network['network']['id'])
+        network = self.deserialize(self.fmt,
+                                   network_req.get_response(self.api))
+        self.assertIn('NeutronError', network)
+        self.assertIn(('Invalid input for operation: Plugin does not '
+                       'support updating the following provider network '
+                       'attributes: '),
+                      network['NeutronError']['message'])
+
+    def test_update_network_provider_attr_no_change(self):
+        data = {'network': {'name': 'net1',
+                            pnet.NETWORK_TYPE: 'flat',
+                            pnet.PHYSICAL_NETWORK: 'physnet1',
+                            'tenant_id': 'tenant_one'}}
+        network_req = self.new_create_request('networks', data)
+        network = self.deserialize(self.fmt,
+                                   network_req.get_response(self.api))
+        self.assertEqual('flat', network['network'][pnet.NETWORK_TYPE])
+        self.assertEqual('physnet1', network['network'][pnet.PHYSICAL_NETWORK])
+        self.assertNotIn(mpnet_apidef.SEGMENTS, network['network'])
+        data = {'network': {'name': 'updated-net1',
+                            pnet.NETWORK_TYPE: 'flat',
+                            pnet.PHYSICAL_NETWORK: 'physnet1'}}
+        network_req = self.new_update_request('networks', data,
+                                              network['network']['id'])
+        network = self.deserialize(self.fmt,
+                                   network_req.get_response(self.api))
+        self.assertEqual('updated-net1', network['network']['name'])
+
     def test_create_network_single_multiprovider(self):
         data = {'network': {'name': 'net1',
                             mpnet_apidef.SEGMENTS:
