@@ -71,6 +71,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         config.register_opts(common_config.core_cli_opts)
         logging.register_options(config)
         agent_config.register_process_monitor_opts(config)
+        agent_config.register_root_helper(config)
         return config
 
     def _configure_agent(self, host, agent_mode='dvr_snat'):
@@ -99,6 +100,11 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                           get_temp_file_path('external/pids'))
         conf.set_override('host', host)
         conf.set_override('agent_mode', agent_mode)
+        conf.set_override(
+            'root_helper', cfg.CONF.AGENT.root_helper, group='AGENT')
+        conf.set_override(
+            'root_helper_daemon', cfg.CONF.AGENT.root_helper_daemon,
+            group='AGENT')
 
         return conf
 

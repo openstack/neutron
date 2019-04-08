@@ -353,7 +353,10 @@ class HaRouter(router.RouterInfo):
                 '--pid_file=%s' % pid_file,
                 '--state_path=%s' % self.agent_conf.state_path,
                 '--user=%s' % os.geteuid(),
-                '--group=%s' % os.getegid()]
+                '--group=%s' % os.getegid(),
+                '--AGENT-root_helper=%s' % self.agent_conf.AGENT.root_helper,
+                '--AGENT-root_helper_daemon=%s' %
+                self.agent_conf.AGENT.root_helper_daemon]
             return cmd
 
         return callback
