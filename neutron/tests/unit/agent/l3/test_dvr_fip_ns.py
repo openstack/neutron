@@ -302,9 +302,10 @@ class TestDvrFipNs(base.BaseTestCase):
                                                    fip_2_rtr_name,
                                                    fip_ns_name)
 
-            device.link.set_mtu.assert_called_with(2000)
-            self.assertEqual(2, device.link.set_mtu.call_count)
             self.assertEqual(2, device.link.set_up.call_count)
+
+        device.link.set_mtu.assert_called_with(2000)
+        self.assertEqual(2, device.link.set_mtu.call_count)
 
         if not addr_exists:
             expected = [mock.call(str(addr_pair[0]), add_broadcast=False),
