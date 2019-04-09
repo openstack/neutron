@@ -253,3 +253,15 @@ EXT_PARENT_RESOURCE_MAPPING = {
     l3.FLOATINGIP: plugin_consts.L3
 }
 EXT_PARENT_PREFIX = 'ext_parent'
+
+# Number of resources for neutron agent side functions to deal
+# with large sets.
+# Setting this value does not count on special conditions, it is just a human
+# countable or scalable number. [1] gives us the method to test the scale
+# issue. And we have tested the value of 1000, 500, 200, 100. But for 100,
+# ovs-agent will have a lower timeout probability. And according to the
+# testing result, step size 100 can indeed cost about 10% much more time
+# than 500/1000. But such extra time looks inevitably needed to be sacrificed
+# for the restart success rate.
+# [1] http://paste.openstack.org/show/745685/
+AGENT_RES_PROCESSING_STEP = 100
