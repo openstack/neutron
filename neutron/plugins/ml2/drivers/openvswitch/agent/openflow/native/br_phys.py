@@ -28,6 +28,7 @@ class OVSPhysicalBridge(ovs_bridge.OVSAgentBridge,
     # Used by OVSDVRProcessMixin
     dvr_process_table_id = constants.DVR_PROCESS_VLAN
     dvr_process_next_table_id = constants.LOCAL_VLAN_TRANSLATION
+    of_tables = constants.PHY_BR_ALL_TABLES
 
     def setup_default_table(self):
         self.install_normal()

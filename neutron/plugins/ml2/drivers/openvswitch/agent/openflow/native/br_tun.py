@@ -46,6 +46,7 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
     # Used by OVSDVRProcessMixin
     dvr_process_table_id = constants.DVR_PROCESS
     dvr_process_next_table_id = constants.PATCH_LV_TO_TUN
+    of_tables = constants.TUN_BR_ALL_TABLES
 
     def setup_default_table(self, patch_int_ofport, arp_responder_enabled):
         (dp, ofp, ofpp) = self._get_dp()

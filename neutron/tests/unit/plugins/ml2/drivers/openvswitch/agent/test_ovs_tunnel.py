@@ -568,10 +568,10 @@ class TunnelTest(object):
             mock.call.cleanup_flows(),
             mock.call.check_canary_table()
         ]
-        self.mock_tun_bridge_expected += [
-            mock.call.cleanup_flows()
-        ]
         self.mock_map_tun_bridge_expected += [
+            mock.call.cleanup_flows(),
+        ]
+        self.mock_tun_bridge_expected += [
             mock.call.cleanup_flows()
         ]
         # No cleanup is expected on ancillary bridge
