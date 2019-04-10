@@ -681,23 +681,17 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         int_br.provision_local_vlan(port=int_port, lvid=lvid,
                                     segmentation_id=segmentation_id)
 
-    def provision_local_vlan(self, net_uuid, network_type, physical_network,
-                             segmentation_id):
-        '''Provisions a local VLAN.
+    def _add_local_vlan(self, net_uuid, network_type, physical_network,
+                        segmentation_id):
+        """Add a network to the local VLAN manager
 
-        :param net_uuid: the uuid of the network associated with this vlan.
-        :param network_type: the network type ('gre', 'vxlan', 'vlan', 'flat',
-                                               'local', 'geneve')
-        :param physical_network: the physical network for 'vlan' or 'flat'
-        :param segmentation_id: the VID for 'vlan' or tunnel ID for 'tunnel'
-        '''
-
-        # On a restart or crash of OVS, the network associated with this VLAN
-        # will already be assigned, so check for that here before assigning a
-        # new one.
+        On a restart or crash of OVS, the network associated with this VLAN
+        will already be assigned, so check for that here before assigning a
+        new one. If the VLAN tag is not used, check if there are local VLAN
+        tags available.
+        """
         try:
             lvm = self.vlan_manager.get(net_uuid)
-            lvid = lvm.vlan
         except vlanmanager.MappingNotFound:
             lvid = self._local_vlan_hints.pop(net_uuid, None)
             if lvid is None:
@@ -709,11 +703,29 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.vlan_manager.add(
                 net_uuid, lvid, network_type, physical_network,
                 segmentation_id)
+            lvm = self.vlan_manager.get(net_uuid)
+            LOG.info(
+                "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s",
+                {'vlan_id': lvm.vlan, 'net_uuid': net_uuid})
 
-        LOG.info("Assigning %(vlan_id)s as local vlan for "
-                 "net-id=%(net_uuid)s",
-                 {'vlan_id': lvid, 'net_uuid': net_uuid})
+        return lvm
 
+    def provision_local_vlan(self, net_uuid, network_type, physical_network,
+                             segmentation_id):
+        '''Provisions a local VLAN.
+
+        :param net_uuid: the uuid of the network associated with this vlan.
+        :param network_type: the network type ('gre', 'vxlan', 'vlan', 'flat',
+                                               'local', 'geneve')
+        :param physical_network: the physical network for 'vlan' or 'flat'
+        :param segmentation_id: the VID for 'vlan' or tunnel ID for 'tunnel'
+        '''
+        lvm = self._add_local_vlan(net_uuid, network_type, physical_network,
+                                   segmentation_id)
+        if not lvm or not lvm.vlan:
+            return
+
+        lvid = lvm.vlan
         if network_type in constants.TUNNEL_NETWORK_TYPES:
             if self.enable_tunneling:
                 # outbound broadcast/multicast
