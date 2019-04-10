@@ -978,6 +978,7 @@ def get_device_mtu(device_name, namespace=None):
 
 NetworkNamespaceNotFound = privileged.NetworkNamespaceNotFound
 NetworkInterfaceNotFound = privileged.NetworkInterfaceNotFound
+IpAddressAlreadyExists = privileged.IpAddressAlreadyExists
 
 
 def add_ip_address(cidr, device, namespace=None, scope='global',
