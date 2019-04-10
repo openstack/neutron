@@ -175,6 +175,17 @@ class TestNetworkSegmentRange(testlib_api.SqlTestCase):
             self.context,
             network_segment_range)
 
+    def test_create_network_segment_range_missing_physical_network_for_vlan(
+            self):
+        test_range = self._vlan_range.copy()
+        test_range.pop("physical_network")
+        network_segment_range = {'network_segment_range': test_range}
+        self.assertRaises(
+            exc.NeutronException,
+            self.plugin.create_network_segment_range,
+            self.context,
+            network_segment_range)
+
     def test_update_network_segment_range(self):
         test_range = self._vlan_range
         network_segment_range = {'network_segment_range': test_range}
