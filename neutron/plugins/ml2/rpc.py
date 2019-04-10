@@ -27,7 +27,6 @@ from oslo_log import log
 import oslo_messaging
 from sqlalchemy.orm import exc
 
-from neutron.agent import _topics as n_topics
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.db import l3_hamode_db
@@ -419,9 +418,9 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
                                                           topics.NETWORK,
                                                           topics.UPDATE)
         self.topic_port_binding_deactivate = topics.get_topic_name(
-            topic, n_topics.PORT_BINDING, n_topics.DEACTIVATE)
+            topic, topics.PORT_BINDING, topics.DEACTIVATE)
         self.topic_port_binding_activate = topics.get_topic_name(
-            topic, n_topics.PORT_BINDING, n_topics.ACTIVATE)
+            topic, topics.PORT_BINDING, topics.ACTIVATE)
 
         target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)

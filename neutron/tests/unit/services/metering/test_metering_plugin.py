@@ -13,6 +13,7 @@
 # under the License.
 
 import mock
+from neutron_lib.agent import topics
 from neutron_lib.api.definitions import metering as metering_apidef
 from neutron_lib import context
 from neutron_lib.db import api as db_api
@@ -99,7 +100,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                                         return_value=self.ctx)
         self.mock_context = self.context_patch.start()
 
-        self.topic = 'metering_agent'
+        self.topic = topics.METERING_AGENT
 
         add = ('neutron.api.rpc.agentnotifiers.' +
                'metering_rpc_agent_api.MeteringAgentNotifyAPI' +
@@ -356,7 +357,7 @@ class TestMeteringPluginL3AgentScheduler(
                                           '.get_l3_agents_hosting_routers')
         self.l3routers_mock = self.l3routers_patch.start()
 
-        self.topic = 'metering_agent'
+        self.topic = topics.METERING_AGENT
 
         add = ('neutron.api.rpc.agentnotifiers.' +
                'metering_rpc_agent_api.MeteringAgentNotifyAPI' +

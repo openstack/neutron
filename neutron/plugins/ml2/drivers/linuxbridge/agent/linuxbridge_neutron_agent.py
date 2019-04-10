@@ -34,7 +34,6 @@ from oslo_service import service
 from oslo_utils import excutils
 from six import moves
 
-from neutron.agent import _topics as n_topics
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
@@ -848,8 +847,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                      [topics.NETWORK, topics.DELETE],
                      [topics.NETWORK, topics.UPDATE],
                      [topics.SECURITY_GROUP, topics.UPDATE],
-                     [n_topics.PORT_BINDING, n_topics.DEACTIVATE],
-                     [n_topics.PORT_BINDING, n_topics.ACTIVATE]]
+                     [topics.PORT_BINDING, topics.DEACTIVATE],
+                     [topics.PORT_BINDING, topics.ACTIVATE]]
         if cfg.CONF.VXLAN.l2_population:
             consumers.append([topics.L2POPULATION, topics.UPDATE])
         return consumers
