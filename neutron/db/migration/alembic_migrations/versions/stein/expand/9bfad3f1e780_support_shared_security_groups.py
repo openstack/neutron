@@ -16,6 +16,8 @@
 from alembic import op
 import sqlalchemy as sa
 
+from neutron.db import migration
+
 
 """support shared security groups
 
@@ -28,6 +30,9 @@ Create Date: 2019-02-05 15:24:45.011378
 # revision identifiers, used by Alembic.
 revision = '9bfad3f1e780'
 down_revision = '0ff9e3881597'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.STEIN]
 
 
 def upgrade():

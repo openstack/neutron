@@ -31,6 +31,7 @@ PIKE = 'pike'
 QUEENS = 'queens'
 ROCKY = 'rocky'
 STEIN = 'stein'
+TRAIN = 'train'
 
 NEUTRON_MILESTONES = [
     # earlier milestones were not tagged
@@ -41,6 +42,7 @@ NEUTRON_MILESTONES = [
     PIKE,
     QUEENS,
     ROCKY,
+    STEIN,
     # Do not add the milestone until the end of the release
 ]
 
