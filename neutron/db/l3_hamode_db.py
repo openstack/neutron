@@ -14,6 +14,7 @@
 #
 
 import functools
+import random
 
 import netaddr
 from neutron_lib.api import validators
@@ -144,6 +145,16 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
         return allocated_vr_ids
 
+    def _get_vr_id(self, context, network_id):
+        allocated_vr_ids = self._get_allocated_vr_id(context,
+                                                     network_id)
+        available_vr_ids = VR_ID_RANGE - allocated_vr_ids
+
+        if not available_vr_ids:
+            return None
+
+        return random.choice(list(available_vr_ids))
+
     @db_api.retry_if_session_inactive()
     def _ensure_vr_id(self, context, router_db, ha_network):
         router_id = router_db.id
@@ -164,16 +175,13 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                              'ha_vr_id': router_db.extra_attributes.ha_vr_id})
                         return
 
-                    allocated_vr_ids = self._get_allocated_vr_id(context,
-                                                                 network_id)
-                    available_vr_ids = VR_ID_RANGE - allocated_vr_ids
-
-                    if not available_vr_ids:
+                    vr_id = self._get_vr_id(context, network_id)
+                    if vr_id is None:
                         raise l3_ha.NoVRIDAvailable(router_id=router_id)
 
                     allocation = l3ha_model.L3HARouterVRIdAllocation()
                     allocation.network_id = network_id
-                    allocation.vr_id = available_vr_ids.pop()
+                    allocation.vr_id = vr_id
 
                     context.session.add(allocation)
                     router_db.extra_attributes.ha_vr_id = allocation.vr_id
