@@ -19,6 +19,7 @@ import mock
 from oslo_config import cfg
 
 from neutron.agent.common import ovs_lib
+from neutron.agent.l2.extensions import qos as qos_extension
 from neutron.services.trunk.drivers.openvswitch.agent \
     import driver as trunk_driver
 from neutron.tests.common.agents import ovs_agent
@@ -38,14 +39,21 @@ def monkeypatch_init_handler():
     trunk_driver.init_handler = new_init_handler
 
 
+def monkeypatch_qos():
+    mock.patch.object(ovs_lib.OVSBridge, 'clear_minimum_bandwidth_qos').start()
+    if "qos" in cfg.CONF.service_plugins:
+        mock.patch.object(qos_extension.QosAgentExtension,
+                          '_process_reset_port').start()
+
+
 def main():
     # TODO(slaweq): this monkepatch will not be necessary when
     # https://review.openstack.org/#/c/506722/ will be merged and ovsdb-server
     # ovs-vswitchd processes for each test will be isolated in separate
     # namespace
     monkeypatch_init_handler()
-    with mock.patch.object(ovs_lib.OVSBridge, 'clear_minimum_bandwidth_qos'):
-        ovs_agent.main()
+    monkeypatch_qos()
+    ovs_agent.main()
 
 
 if __name__ == "__main__":
