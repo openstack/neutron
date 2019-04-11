@@ -33,6 +33,7 @@ from neutron_lib import fixture
 from neutron_lib.tests.unit import fake_notifier
 from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
+from oslo_db import exception as db_exceptions
 from oslo_db import options as db_options
 from oslo_utils import excutils
 from oslo_utils import fileutils
@@ -120,7 +121,8 @@ def skip_if_timeout(reason):
                 msg = ("Timeout raised for test %s, skipping it "
                        "because of: %s") % (self.id(), reason)
                 raise self.skipTest(msg)
-            except sqlalchemy_exc.InterfaceError:
+            except (sqlalchemy_exc.InterfaceError,
+                    db_exceptions.DBConnectionError):
                 # In case of db tests very often TimeoutException is reason of
                 # some sqlalchemy InterfaceError exception and that is final
                 # raised exception which needs to be handled
