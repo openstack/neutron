@@ -119,7 +119,8 @@ class OVSDVRNeutronAgent(object):
                  patch_int_ofport=constants.OFPORT_INVALID,
                  patch_tun_ofport=constants.OFPORT_INVALID,
                  host=None, enable_tunneling=False,
-                 enable_distributed_routing=False):
+                 enable_distributed_routing=False,
+                 arp_responder_enabled=False):
         self.context = context
         self.plugin_rpc = plugin_rpc
         self.host = host
@@ -133,6 +134,7 @@ class OVSDVRNeutronAgent(object):
                                   patch_int_ofport, patch_tun_ofport)
         self.reset_dvr_parameters()
         self.dvr_mac_address = None
+        self.arp_responder_enabled = arp_responder_enabled
         if self.enable_distributed_routing:
             self.get_dvr_mac_address()
 
@@ -262,6 +264,10 @@ class OVSDVRNeutronAgent(object):
         phys_br.add_dvr_mac_vlan(mac=mac,
                                  port=self.phys_ofports[physical_network])
 
+    def _add_arp_dvr_mac_for_phys_br(self, physical_network, mac):
+        self.int_br.add_dvr_gateway_mac_arp_vlan(
+                mac=mac, port=self.int_ofports[physical_network])
+
     def _remove_dvr_mac_for_phys_br(self, physical_network, mac):
         # REVISIT(yamamoto): match in_port as well?
         self.int_br.remove_dvr_mac_vlan(mac=mac)
@@ -272,6 +278,10 @@ class OVSDVRNeutronAgent(object):
     def _add_dvr_mac_for_tun_br(self, mac):
         self.int_br.add_dvr_mac_tun(mac=mac, port=self.patch_tun_ofport)
         self.tun_br.add_dvr_mac_tun(mac=mac, port=self.patch_int_ofport)
+
+    def _add_arp_dvr_mac_for_tun_br(self, mac):
+        self.int_br.add_dvr_gateway_mac_arp_tun(
+                mac=mac, port=self.patch_tun_ofport)
 
     def _remove_dvr_mac_for_tun_br(self, mac):
         self.int_br.remove_dvr_mac_tun(mac=mac, port=self.patch_tun_ofport)
@@ -285,6 +295,13 @@ class OVSDVRNeutronAgent(object):
             self._add_dvr_mac_for_tun_br(mac)
         LOG.debug("Added DVR MAC flow for %s", mac)
         self.registered_dvr_macs.add(mac)
+
+    def _add_dvr_mac_for_arp(self, mac):
+        for physical_network in self.bridge_mappings:
+            self._add_arp_dvr_mac_for_phys_br(physical_network, mac)
+        if self.enable_tunneling:
+            self._add_arp_dvr_mac_for_tun_br(mac)
+        LOG.debug("Added ARP DVR MAC flow for %s", mac)
 
     def _remove_dvr_mac(self, mac):
         for physical_network in self.bridge_mappings:
@@ -301,6 +318,8 @@ class OVSDVRNeutronAgent(object):
             c_mac = netaddr.EUI(mac['mac_address'],
                                 dialect=netaddr.mac_unix_expanded)
             if c_mac == self.dvr_mac_address:
+                self._add_dvr_mac_for_arp(c_mac)
+                LOG.debug("Added the DVR MAC rule for ARP %s", c_mac)
                 continue
             self._add_dvr_mac(c_mac)
 
@@ -406,6 +425,15 @@ class OVSDVRNeutronAgent(object):
                 gateway_mac=subnet_info['gateway_mac'],
                 dst_mac=comp_ovsport.get_mac(),
                 dst_port=comp_ovsport.get_ofport())
+        # Add the following flow rule only when ARP RESPONDER is
+        # enabled
+        if self.arp_responder_enabled:
+            self.int_br.install_dvr_dst_mac_for_arp(
+                lvm.network_type,
+                vlan_tag=lvm.vlan,
+                gateway_mac=port.vif_mac,
+                dvr_mac=self.dvr_mac_address,
+                rtr_port=port.ofport)
 
         if lvm.network_type == n_const.TYPE_VLAN:
             # TODO(vivek) remove the IPv6 related flows once SNAT is not
@@ -600,7 +628,16 @@ class OVSDVRNeutronAgent(object):
                     network_type=network_type,
                     vlan_tag=vlan_to_use, dst_mac=comp_port.get_mac())
             ldm.remove_all_compute_ofports()
-
+            # If ARP Responder enabled, remove the rule that redirects
+            # the dvr_mac_address destination to the router port, since
+            # the router port is removed or unbound.
+            if self.arp_responder_enabled:
+                self.int_br.delete_dvr_dst_mac_for_arp(
+                    network_type=network_type,
+                    vlan_tag=vlan_to_use,
+                    gateway_mac=port.vif_mac,
+                    dvr_mac=self.dvr_mac_address,
+                    rtr_port=port.ofport)
             if ldm.get_csnat_ofport() == constants.OFPORT_INVALID:
                 # if there is no csnat port for this subnet, remove
                 # this subnet from local_dvr_map, as no dvr (or) csnat
