@@ -59,10 +59,6 @@
             irrelevant-files: *tempest-irrelevant-files
         - grenade-py3:
             irrelevant-files: *tempest-irrelevant-files
-            # TODO(slaweq): switch it again to voting after bug
-            # https://bugs.launchpad.net/devstack/+bug/1820892
-            # will be fixed
-            voting: false
         - openstacksdk-functional-devstack-networking:
             voting: false
     gate:
@@ -73,23 +69,17 @@
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
         - neutron-tempest-iptables_hybrid
-        # TODO(slaweq): bring back grenade jobs after bug
-        # https://bugs.launchpad.net/devstack/+bug/1820892
-        # will be fixed
-        #- neutron-grenade-multinode
-        #- neutron-grenade-dvr-multinode
-        #- neutron-grenade
+        - neutron-grenade-multinode
+        - neutron-grenade-dvr-multinode
+        - neutron-grenade
         - tempest-full:
             timeout: 10800
         - tempest-full-py3:
             timeout: 10800
         - tempest-slow-py3:
             irrelevant-files: *tempest-irrelevant-files
-        # TODO(slaweq): bring back grenade jobs after bug
-        # https://bugs.launchpad.net/devstack/+bug/1820892
-        # will be fixed
-        #- grenade-py3:
-        #    irrelevant-files: *tempest-irrelevant-files
+        - grenade-py3:
+            irrelevant-files: *tempest-irrelevant-files
     periodic:
       jobs:
         - neutron-functional
@@ -240,10 +230,6 @@
       - openstack-infra/devstack-gate
       - openstack/neutron
     irrelevant-files: *tempest-irrelevant-files
-    # TODO(slaweq): switch it again to voting after bug
-    # https://bugs.launchpad.net/devstack/+bug/1820892
-    # will be fixed
-    voting: false
 
 - job:
     name: neutron-grenade-dvr-multinode
@@ -256,10 +242,6 @@
       - openstack-infra/devstack-gate
       - openstack/neutron
     irrelevant-files: *tempest-irrelevant-files
-    # TODO(slaweq): switch it again to voting after bug
-    # https://bugs.launchpad.net/devstack/+bug/1820892
-    # will be fixed
-    voting: false
 
 - job:
     name: neutron-tempest-dvr-ha-multinode-full
@@ -403,10 +385,6 @@
       - openstack-infra/devstack-gate
       - openstack/neutron
     irrelevant-files: *tempest-irrelevant-files
-    # TODO(slaweq): switch it again to voting after bug
-    # https://bugs.launchpad.net/devstack/+bug/1820892
-    # will be fixed
-    voting: false
 
 - job:
     name: neutron-tempest-postgres-full
