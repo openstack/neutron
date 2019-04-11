@@ -17,21 +17,23 @@ import datetime
 
 from oslo_utils import uuidutils
 
-from neutron.agent.l3 import router_processing_queue as l3_queue
+from neutron.agent.common import resource_processing_queue as queue
 from neutron.tests import base
 
 _uuid = uuidutils.generate_uuid
 FAKE_ID = _uuid()
 FAKE_ID_2 = _uuid()
 
+PRIORITY_RPC = 0
 
-class TestExclusiveRouterProcessor(base.BaseTestCase):
+
+class TestExclusiveResourceProcessor(base.BaseTestCase):
 
     def test_i_am_master(self):
-        master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)
-        not_master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)
-        master_2 = l3_queue.ExclusiveRouterProcessor(FAKE_ID_2)
-        not_master_2 = l3_queue.ExclusiveRouterProcessor(FAKE_ID_2)
+        master = queue.ExclusiveResourceProcessor(FAKE_ID)
+        not_master = queue.ExclusiveResourceProcessor(FAKE_ID)
+        master_2 = queue.ExclusiveResourceProcessor(FAKE_ID_2)
+        not_master_2 = queue.ExclusiveResourceProcessor(FAKE_ID_2)
 
         self.assertTrue(master._i_am_master())
         self.assertFalse(not_master._i_am_master())
@@ -42,10 +44,10 @@ class TestExclusiveRouterProcessor(base.BaseTestCase):
         master_2.__exit__(None, None, None)
 
     def test_master(self):
-        master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)
-        not_master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)
-        master_2 = l3_queue.ExclusiveRouterProcessor(FAKE_ID_2)
-        not_master_2 = l3_queue.ExclusiveRouterProcessor(FAKE_ID_2)
+        master = queue.ExclusiveResourceProcessor(FAKE_ID)
+        not_master = queue.ExclusiveResourceProcessor(FAKE_ID)
+        master_2 = queue.ExclusiveResourceProcessor(FAKE_ID_2)
+        not_master_2 = queue.ExclusiveResourceProcessor(FAKE_ID_2)
 
         self.assertEqual(master, master._master)
         self.assertEqual(master, not_master._master)
@@ -56,56 +58,55 @@ class TestExclusiveRouterProcessor(base.BaseTestCase):
         master_2.__exit__(None, None, None)
 
     def test__enter__(self):
-        self.assertNotIn(FAKE_ID, l3_queue.ExclusiveRouterProcessor._masters)
-        master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)
+        self.assertNotIn(FAKE_ID, queue.ExclusiveResourceProcessor._masters)
+        master = queue.ExclusiveResourceProcessor(FAKE_ID)
         master.__enter__()
-        self.assertIn(FAKE_ID, l3_queue.ExclusiveRouterProcessor._masters)
+        self.assertIn(FAKE_ID, queue.ExclusiveResourceProcessor._masters)
         master.__exit__(None, None, None)
 
     def test__exit__(self):
-        master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)
-        not_master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)
+        master = queue.ExclusiveResourceProcessor(FAKE_ID)
+        not_master = queue.ExclusiveResourceProcessor(FAKE_ID)
         master.__enter__()
-        self.assertIn(FAKE_ID, l3_queue.ExclusiveRouterProcessor._masters)
+        self.assertIn(FAKE_ID, queue.ExclusiveResourceProcessor._masters)
         not_master.__enter__()
         not_master.__exit__(None, None, None)
-        self.assertIn(FAKE_ID, l3_queue.ExclusiveRouterProcessor._masters)
+        self.assertIn(FAKE_ID, queue.ExclusiveResourceProcessor._masters)
         master.__exit__(None, None, None)
-        self.assertNotIn(FAKE_ID, l3_queue.ExclusiveRouterProcessor._masters)
+        self.assertNotIn(FAKE_ID, queue.ExclusiveResourceProcessor._masters)
 
     def test_data_fetched_since(self):
-        master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)
+        master = queue.ExclusiveResourceProcessor(FAKE_ID)
         self.assertEqual(datetime.datetime.min,
-                         master._get_router_data_timestamp())
+                         master._get_resource_data_timestamp())
 
         ts1 = datetime.datetime.utcnow() - datetime.timedelta(seconds=10)
         ts2 = datetime.datetime.utcnow()
 
         master.fetched_and_processed(ts2)
-        self.assertEqual(ts2, master._get_router_data_timestamp())
+        self.assertEqual(ts2, master._get_resource_data_timestamp())
         master.fetched_and_processed(ts1)
-        self.assertEqual(ts2, master._get_router_data_timestamp())
+        self.assertEqual(ts2, master._get_resource_data_timestamp())
 
         master.__exit__(None, None, None)
 
     def test_updates(self):
-        master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)
-        not_master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)
+        master = queue.ExclusiveResourceProcessor(FAKE_ID)
+        not_master = queue.ExclusiveResourceProcessor(FAKE_ID)
 
-        master.queue_update(l3_queue.RouterUpdate(FAKE_ID, 0))
-        not_master.queue_update(l3_queue.RouterUpdate(FAKE_ID, 0))
+        master.queue_update(queue.ResourceUpdate(FAKE_ID, 0))
+        not_master.queue_update(queue.ResourceUpdate(FAKE_ID, 0))
 
         for update in not_master.updates():
-            raise Exception("Only the master should process a router")
+            raise Exception("Only the master should process a resource")
 
         self.assertEqual(2, len([i for i in master.updates()]))
 
     def test_hit_retry_limit(self):
         tries = 1
-        queue = l3_queue.RouterProcessingQueue()
-        update = l3_queue.RouterUpdate(FAKE_ID, l3_queue.PRIORITY_RPC,
-                                       tries=tries)
-        queue.add(update)
+        rpqueue = queue.ResourceProcessingQueue()
+        update = queue.ResourceUpdate(FAKE_ID, PRIORITY_RPC, tries=tries)
+        rpqueue.add(update)
         self.assertFalse(update.hit_retry_limit())
-        queue.add(update)
+        rpqueue.add(update)
         self.assertTrue(update.hit_retry_limit())
