@@ -16,8 +16,11 @@
 import uuid
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants as const
 from neutron_lib.plugins.ml2 import api
+
+from neutron.plugins.ml2.drivers import mech_agent
 
 
 VIF_TYPE_TEST = 'vif_type_test'
@@ -25,6 +28,10 @@ VIF_TYPE_TEST = 'vif_type_test'
 
 class TestMechanismDriver(api.MechanismDriver):
     """Test mechanism driver for testing mechanism driver api."""
+
+    def __init__(self, *args, **kwargs):
+        super(TestMechanismDriver, self).__init__(*args, **kwargs)
+        self._supported_vnic_types = ('test_mechanism_driver_vnic_type', )
 
     def initialize(self):
         self.bound_ports = set()
@@ -249,24 +256,50 @@ class TestMechanismDriver(api.MechanismDriver):
             self, context, segments, candidate_hosts, agent_getter):
         return set()
 
-    def get_vif_type(self, context, agent, segment):
-        return VIF_TYPE_TEST
-
     @property
     def resource_provider_uuid5_namespace(self):
         return uuid.UUID('7f0ce65c-1f13-11e9-8921-3c6aa7b21d17')
 
     @property
-    def agent_type(self):
-        return 'test_mechanism_driver_agent'
-
-    @property
     def supported_vnic_types(self):
-        return ('test_mechanism_driver_vnic_type',)
+        return self._supported_vnic_types
 
     def get_standard_device_mappings(self, agent):
         return {}
 
+    # NOTE(ralonsoh): to be removed with neutron-lib >= 1.26.0
     @staticmethod
     def provider_network_attribute_updates_supported():
         return []
+
+
+class TestMechanismDriverWithAgent(mech_agent.AgentMechanismDriverBase,
+                                   TestMechanismDriver):
+    """Test mechanism driver with agent for testing mechanism driver api."""
+
+    def __init__(self):
+        super(TestMechanismDriverWithAgent, self).__init__('test_agent_type')
+        self.bound_ports = set()
+        self._agent_type = 'test_mechanism_driver_agent'
+
+    def get_vif_type(self, context, agent, segment):
+        return VIF_TYPE_TEST
+
+    @staticmethod
+    def provider_network_attribute_updates_supported():
+        return [pnet.SEGMENTATION_ID]
+
+    def try_to_bind_segment_for_agent(self, context, segment, agent):
+        pass
+
+    @property
+    def agent_type(self):
+        return self._agent_type
+
+    @agent_type.setter
+    def agent_type(self, agent_type):
+        self._agent_type = agent_type
+
+    @TestMechanismDriver.supported_vnic_types.setter
+    def supported_vnic_types(self, vnic_types):
+        self._supported_vnic_types = vnic_types

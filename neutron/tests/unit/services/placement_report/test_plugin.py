@@ -27,6 +27,8 @@ LOG = logging.getLogger(__name__)
 
 class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
 
+    _mechanism_drivers = ['logger', 'test_with_agent']
+
     def setUp(self):
         super(PlacementReportPluginTestCases, self).setUp()
         self.service_plugin = plugin.PlacementReportPlugin()
@@ -222,6 +224,8 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
 
 
 class PlacementReporterAgentsTestCases(test_plugin.Ml2PluginV2TestCase):
+
+    _mechanism_drivers = ['logger', 'test_with_agent']
 
     def test_supported_agent_types(self):
         self.agents = plugin.PlacementReporterAgents(ml2_plugin=self.plugin)

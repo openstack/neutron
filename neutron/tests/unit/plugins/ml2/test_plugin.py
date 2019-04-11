@@ -473,6 +473,44 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                     exc.InvalidInput, plugin._update_segmentation_id,
                     self.context, net['network'], {})
 
+    def test__update_segmentation_id_agentless_mech_drivers(self):
+        plugin = directory.get_plugin()
+        segments = [{pnet.NETWORK_TYPE: 'vlan',
+                     pnet.PHYSICAL_NETWORK: 'physnet1',
+                     pnet.SEGMENTATION_ID: 1}]
+        mech_drivers = plugin.mechanism_manager.ordered_mech_drivers
+        for mech_driver in (md.obj for md in mech_drivers if
+                            hasattr(md.obj, 'agent_type')):
+            mock.patch.object(type(mech_driver), 'agent_type',
+                new_callable=mock.PropertyMock(return_value=None)).start()
+
+        with self.network(**{'arg_list': (mpnet_apidef.SEGMENTS, ),
+                             mpnet_apidef.SEGMENTS: segments}) as net, \
+                mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
+                                  'get_ports_count') as mock_get_ports_count, \
+                mock.patch.object(plugin.type_manager,
+                                  'update_network_segment'), \
+                mock.patch.object(plugin, 'get_agents') as mock_get_agents, \
+                mock.patch.object(obj_utils, 'NotIn') as mock_not_in:
+            mock_get_ports_count.return_value = 0
+            net_data = {pnet.SEGMENTATION_ID: 1000}
+            plugin._update_segmentation_id(self.context, net['network'],
+                                           net_data)
+
+            mock_get_agents.assert_not_called()
+            mock_not_in.assert_called_once_with([
+                portbindings.VIF_TYPE_UNBOUND,
+                portbindings.VIF_TYPE_BINDING_FAILED])
+            filters = {portbindings.VIF_TYPE: mock.ANY,
+                       'network_id': [net['network']['id']]}
+            mock_get_ports_count.assert_called_once_with(
+                self.context, filters=filters)
+
+
+class TestMl2NetworksV2AgentMechDrivers(Ml2PluginV2TestCase):
+
+    _mechanism_drivers = ['logger', 'test', 'test_with_agent']
+
     def test__update_segmentation_id_ports(self):
         plugin = directory.get_plugin()
         segments = [{pnet.NETWORK_TYPE: 'vlan',
@@ -484,10 +522,6 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                                   'get_ports_count') as mock_get_ports_count, \
                 mock.patch.object(plugin.type_manager,
                                   'update_network_segment'), \
-                mock.patch.object(
-                    mech_test.TestMechanismDriver,
-                    'provider_network_attribute_updates_supported',
-                    return_value=[pnet.SEGMENTATION_ID]), \
                 mock.patch.object(plugin, 'get_agents',
                                   return_value=[mock.ANY]), \
                 mock.patch.object(obj_utils, 'NotIn') as mock_not_in:
