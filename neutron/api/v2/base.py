@@ -20,6 +20,7 @@ from neutron_lib.api import attributes
 from neutron_lib.api import faults
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib import constants
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
 from neutron_lib import rpc as n_rpc
@@ -32,7 +33,6 @@ import webob.exc
 from neutron._i18n import _
 from neutron.api import api_common
 from neutron.api.v2 import resource as wsgi_resource
-from neutron.common import constants as n_const
 from neutron import policy
 from neutron import quota
 from neutron.quota import resource_registry
@@ -652,7 +652,7 @@ class Controller(object):
         # Make a list of attributes to be updated to inform the policy engine
         # which attributes are set explicitly so that it can distinguish them
         # from the ones that are set to their default values.
-        orig_obj[n_const.ATTRIBUTES_TO_UPDATE] = body[self._resource].keys()
+        orig_obj[constants.ATTRIBUTES_TO_UPDATE] = body[self._resource].keys()
         # Then get the ext_parent_id, format to ext_parent_parent_resource_id
         if self._parent_id_name in orig_obj:
             self._set_parent_id_into_ext_resources_request(
@@ -798,13 +798,13 @@ class Controller(object):
                     self.parent['member_name'] in
                     service_const.EXT_PARENT_RESOURCE_MAPPING):
                 resource_item.setdefault(
-                    "%s_%s" % (n_const.EXT_PARENT_PREFIX,
+                    "%s_%s" % (constants.EXT_PARENT_PREFIX,
                                self._parent_id_name),
                     parent_id)
         # If this func is called by create/update/delete, we just add.
         else:
             resource_item.setdefault(
-                "%s_%s" % (n_const.EXT_PARENT_PREFIX, self._parent_id_name),
+                "%s_%s" % (constants.EXT_PARENT_PREFIX, self._parent_id_name),
                 parent_id)
 
 

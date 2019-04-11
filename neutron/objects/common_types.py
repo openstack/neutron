@@ -15,7 +15,7 @@ import itertools
 import uuid
 
 import netaddr
-from neutron_lib import constants as lib_constants
+from neutron_lib import constants
 from neutron_lib.db import constants as lib_db_const
 from neutron_lib.objects import exceptions as o_exc
 
@@ -24,7 +24,6 @@ from oslo_versionedobjects import fields as obj_fields
 import six
 
 from neutron._i18n import _
-from neutron.common import constants
 from neutron.common import utils
 
 
@@ -33,7 +32,7 @@ class HARouterEnumField(obj_fields.AutoTypedField):
 
 
 class IPV6ModeEnumField(obj_fields.AutoTypedField):
-    AUTO_TYPE = obj_fields.Enum(valid_values=lib_constants.IPV6_MODES)
+    AUTO_TYPE = obj_fields.Enum(valid_values=constants.IPV6_MODES)
 
 
 class RangeConstrainedInteger(obj_fields.Integer):
@@ -60,7 +59,7 @@ class IPNetworkPrefixLen(RangeConstrainedInteger):
     """IP network (CIDR) prefix length custom Enum"""
     def __init__(self, **kwargs):
         super(IPNetworkPrefixLen, self).__init__(
-              start=0, end=lib_constants.IPv6_BITS,
+              start=0, end=constants.IPv6_BITS,
               **kwargs)
 
 
@@ -84,8 +83,8 @@ class PortRangeWith0Field(obj_fields.AutoTypedField):
 
 class VlanIdRange(RangeConstrainedInteger):
     def __init__(self, **kwargs):
-        super(VlanIdRange, self).__init__(start=lib_constants.MIN_VLAN_TAG,
-                                          end=lib_constants.MAX_VLAN_TAG,
+        super(VlanIdRange, self).__init__(start=constants.MIN_VLAN_TAG,
+                                          end=constants.MAX_VLAN_TAG,
                                           **kwargs)
 
 
@@ -156,7 +155,7 @@ class IPVersionEnumField(obj_fields.AutoTypedField):
 class DscpMark(IntegerEnum):
     def __init__(self, valid_values=None, **kwargs):
         super(DscpMark, self).__init__(
-            valid_values=lib_constants.VALID_DSCP_MARKS)
+            valid_values=constants.VALID_DSCP_MARKS)
 
 
 class DscpMarkField(obj_fields.AutoTypedField):
@@ -164,7 +163,7 @@ class DscpMarkField(obj_fields.AutoTypedField):
 
 
 class FlowDirectionEnumField(obj_fields.AutoTypedField):
-    AUTO_TYPE = obj_fields.Enum(valid_values=lib_constants.VALID_DIRECTIONS)
+    AUTO_TYPE = obj_fields.Enum(valid_values=constants.VALID_DIRECTIONS)
 
 
 class IpamAllocationStatusEnumField(obj_fields.AutoTypedField):
@@ -182,7 +181,7 @@ class IpProtocolEnum(obj_fields.Enum):
         super(IpProtocolEnum, self).__init__(
             valid_values=list(
                 itertools.chain(
-                    lib_constants.IP_PROTOCOL_MAP.keys(),
+                    constants.IP_PROTOCOL_MAP.keys(),
                     [str(v) for v in range(256)]
                 )
             ),
@@ -317,4 +316,4 @@ class RouterStatusEnumField(obj_fields.AutoTypedField):
 
 class NetworkSegmentRangeNetworkTypeEnumField(obj_fields.AutoTypedField):
     AUTO_TYPE = obj_fields.Enum(
-        valid_values=lib_constants.NETWORK_SEGMENT_RANGE_TYPES)
+        valid_values=constants.NETWORK_SEGMENT_RANGE_TYPES)

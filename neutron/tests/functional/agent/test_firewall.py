@@ -31,7 +31,6 @@ from neutron.agent.linux import iptables_firewall
 from neutron.agent.linux import openvswitch_firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.cmd.sanity import checks
-from neutron.common import constants as n_const
 from neutron.conf.agent import securitygroups_rpc as security_config
 from neutron.tests.common import conn_testers
 from neutron.tests.common import helpers
@@ -115,7 +114,7 @@ class BaseFirewallTestCase(linux_base.BaseOVSLinuxTestCase):
     def initialize_iptables(self):
         cfg.CONF.set_override('enable_ipset', self.enable_ipset,
                               'SECURITYGROUP')
-        br_name = ('brq' + self.net_id)[:n_const.LINUX_DEV_LEN]
+        br_name = ('brq' + self.net_id)[:constants.LINUX_DEV_LEN]
         tester = self.useFixture(
             conn_testers.LinuxBridgeConnectionTester(self.ip_cidr,
                                                      bridge_name=br_name))

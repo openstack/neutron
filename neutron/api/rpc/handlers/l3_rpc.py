@@ -26,8 +26,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron.common import constants as n_const
-
 
 LOG = logging.getLogger(__name__)
 
@@ -150,7 +148,7 @@ class L3RpcCallback(object):
                                               gw_port_host,
                                               router.get('gw_port'),
                                               router['id'])
-                for p in router.get(n_const.SNAT_ROUTER_INTF_KEY, []):
+                for p in router.get(constants.SNAT_ROUTER_INTF_KEY, []):
                     self._ensure_host_set_on_port(
                         context, gw_port_host, p, router['id'],
                         ha_router_port=router.get('ha'))

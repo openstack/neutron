@@ -19,7 +19,6 @@ import netaddr
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
-from neutron.common import constants as n_consts
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
     constants as ovs_consts)
@@ -82,7 +81,7 @@ class ConnectionTester(fixtures.Fixture):
     UDP = net_helpers.NetcatTester.UDP
     TCP = net_helpers.NetcatTester.TCP
     ICMP = constants.PROTO_NAME_ICMP
-    ARP = n_consts.ETHERTYPE_NAME_ARP
+    ARP = constants.ETHERTYPE_NAME_ARP
     INGRESS = constants.INGRESS_DIRECTION
     EGRESS = constants.EGRESS_DIRECTION
 

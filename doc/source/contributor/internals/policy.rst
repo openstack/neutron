@@ -188,7 +188,7 @@ service plugins. Such as router and floatingip owner check for ``router``
 service plugin. Developers can register the extension resource name and service
 plugin name which were registered in neutron-lib into
 ``EXT_PARENT_RESOURCE_MAPPING`` which is located in
-``neutron.common.constants``.
+``neutron_lib.services.constants``.
 
 The check, performed in the ``__call__`` method, works as follows:
 

@@ -41,7 +41,6 @@ import testtools
 
 from neutron.agent.common import utils as agent_utils
 from neutron.api.rpc.handlers import l3_rpc
-from neutron.common import constants as n_const
 from neutron.db import agents_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
@@ -193,56 +192,56 @@ class L3HATestCase(L3HATestFramework):
             self):
         router = self._create_router()
         self.plugin.update_routers_states(
-            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.admin_ctx, {router['id']: constants.HA_ROUTER_STATE_ACTIVE},
             self.agent1['host'])
         self.plugin.update_routers_states(
-            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.admin_ctx, {router['id']: constants.HA_ROUTER_STATE_ACTIVE},
             self.agent2['host'])
         with mock.patch.object(agent_utils, 'is_agent_down',
                                return_value=True):
             self._assert_ha_state_for_agent(router, self.agent1,
-                                            n_const.HA_ROUTER_STATE_UNKNOWN)
+                                            constants.HA_ROUTER_STATE_UNKNOWN)
 
     def test_get_l3_bindings_hosting_router_agents_admin_state_up_is_false(
             self):
         router = self._create_router()
         self.plugin.update_routers_states(
-            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.admin_ctx, {router['id']: constants.HA_ROUTER_STATE_ACTIVE},
             self.agent1['host'])
         self.plugin.update_routers_states(
-            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.admin_ctx, {router['id']: constants.HA_ROUTER_STATE_ACTIVE},
             self.agent2['host'])
         helpers.set_agent_admin_state(self.agent1['id'], admin_state_up=False)
         self._assert_ha_state_for_agent(router, self.agent1,
-                                        n_const.HA_ROUTER_STATE_STANDBY)
+                                        constants.HA_ROUTER_STATE_STANDBY)
 
     def test_get_l3_bindings_hosting_router_agents_admin_state_up_is_true(
             self):
         router = self._create_router()
         self.plugin.update_routers_states(
-            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.admin_ctx, {router['id']: constants.HA_ROUTER_STATE_ACTIVE},
             self.agent1['host'])
         self.plugin.update_routers_states(
-            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.admin_ctx, {router['id']: constants.HA_ROUTER_STATE_ACTIVE},
             self.agent2['host'])
         helpers.set_agent_admin_state(self.agent1['id'], admin_state_up=True)
         self._assert_ha_state_for_agent(router, self.agent1,
-                                        n_const.HA_ROUTER_STATE_ACTIVE)
+                                        constants.HA_ROUTER_STATE_ACTIVE)
 
     def test_get_l3_bindings_hosting_router_with_ha_states_one_dead(self):
         router = self._create_router()
         self.plugin.update_routers_states(
-            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.admin_ctx, {router['id']: constants.HA_ROUTER_STATE_ACTIVE},
             self.agent1['host'])
         self.plugin.update_routers_states(
-            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_STANDBY},
+            self.admin_ctx, {router['id']: constants.HA_ROUTER_STATE_STANDBY},
             self.agent2['host'])
         with mock.patch.object(agent_utils, 'is_agent_down',
                                return_value=True):
             # With above mock all agents are in dead state
             # hence router state is Unknown overall.
             self._assert_ha_state_for_agent(
-                router, self.agent1, n_const.HA_ROUTER_STATE_UNKNOWN)
+                router, self.agent1, constants.HA_ROUTER_STATE_UNKNOWN)
 
     def test_ha_router_create(self):
         router = self._create_router()
@@ -777,7 +776,7 @@ class L3HATestCase(L3HATestFramework):
         routers = self.plugin.get_ha_sync_data_for_host(
             self.admin_ctx, self.agent1['host'], self.agent1)
         for router in routers:
-            self.assertEqual('standby', router[n_const.HA_ROUTER_STATE_KEY])
+            self.assertEqual('standby', router[constants.HA_ROUTER_STATE_KEY])
 
         states = {router1['id']: 'active',
                   router2['id']: 'standby'}
@@ -788,7 +787,7 @@ class L3HATestCase(L3HATestFramework):
             self.admin_ctx, self.agent1['host'], self.agent1)
         for router in routers:
             self.assertEqual(states[router['id']],
-                             router[n_const.HA_ROUTER_STATE_KEY])
+                             router[constants.HA_ROUTER_STATE_KEY])
 
     def test_sync_ha_router_info_ha_interface_port_concurrently_deleted(self):
         ctx = self.admin_ctx
@@ -855,7 +854,7 @@ class L3HATestCase(L3HATestFramework):
                             router2['id']: 'active'})
         routers = self.plugin.get_ha_sync_data_for_host(
             self.admin_ctx, self.agent1['host'], self.agent1)
-        self.assertEqual('active', routers[0][n_const.HA_ROUTER_STATE_KEY])
+        self.assertEqual('active', routers[0][constants.HA_ROUTER_STATE_KEY])
 
     def test_update_routers_states_port_not_found(self):
         router1 = self._create_router()
@@ -1388,10 +1387,10 @@ class L3HAModeDbTestCase(L3HATestFramework):
                                          interface_info)
 
         self.plugin.update_routers_states(
-            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.admin_ctx, {router['id']: constants.HA_ROUTER_STATE_ACTIVE},
             self.agent1['host'])
         self.plugin.update_routers_states(
-            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_STANDBY},
+            self.admin_ctx, {router['id']: constants.HA_ROUTER_STATE_STANDBY},
             self.agent2['host'])
 
         routers = self.plugin._get_sync_routers(self.admin_ctx,
@@ -1399,10 +1398,10 @@ class L3HAModeDbTestCase(L3HATestFramework):
         self.assertEqual(self.agent1['host'], routers[0]['gw_port_host'])
 
         self.plugin.update_routers_states(
-            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_STANDBY},
+            self.admin_ctx, {router['id']: constants.HA_ROUTER_STATE_STANDBY},
             self.agent1['host'])
         self.plugin.update_routers_states(
-            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.admin_ctx, {router['id']: constants.HA_ROUTER_STATE_ACTIVE},
             self.agent2['host'])
         routers = self.plugin._get_sync_routers(self.admin_ctx,
                                                 router_ids=[router['id']])

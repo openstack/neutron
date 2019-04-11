@@ -27,7 +27,6 @@ from oslo_utils import netutils
 import six
 from stevedore import driver
 
-from neutron.common import constants as l3_constants
 from neutron.common import utils
 
 LOG = logging.getLogger(__name__)
@@ -244,7 +243,7 @@ class PrefixDelegation(object):
                                                 gw_ifname,
                                                 ns_name,
                                                 lla_with_mask),
-                              timeout=l3_constants.LLA_TASK_TIMEOUT,
+                              timeout=n_const.LLA_TASK_TIMEOUT,
                               sleep=2)
 
     def _lla_available(self, gw_ifname, ns_name, lla_with_mask):

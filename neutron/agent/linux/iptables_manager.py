@@ -25,6 +25,7 @@ import os
 import re
 import sys
 
+from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.utils import runtime
@@ -37,7 +38,6 @@ from neutron._i18n import _
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import utils as linux_utils
-from neutron.common import constants
 from neutron.conf.agent import common as config
 
 LOG = logging.getLogger(__name__)

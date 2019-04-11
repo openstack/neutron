@@ -16,12 +16,12 @@ import sys
 import types
 
 import mock
+from neutron_lib import constants
 from oslo_config import cfg
 
 from neutron.agent.l3 import agent
 from neutron.agent.l3 import namespaces
 from neutron.agent import l3_agent
-from neutron.common import constants
 
 
 class L3NATAgentForTest(agent.L3NATAgentWithStateReport):

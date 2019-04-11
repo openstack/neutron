@@ -31,7 +31,6 @@ from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import iptables
 from neutron.agent.linux.openvswitch_firewall import rules
-from neutron.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
 
@@ -732,7 +731,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 priority=95,
                 in_port=port.ofport,
                 reg_port=port.ofport,
-                dl_type=constants.ETHERTYPE_IPV6,
+                dl_type=lib_const.ETHERTYPE_IPV6,
                 nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
                 icmp_type=icmp_type,
                 actions='resubmit(,%d)' % (
@@ -804,7 +803,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 in_port=port.ofport,
                 reg_port=port.ofport,
                 dl_src=mac_addr,
-                dl_type=constants.ETHERTYPE_ARP,
+                dl_type=lib_const.ETHERTYPE_ARP,
                 arp_spa=ip_addr,
                 actions='resubmit(,%d)' % (
                     ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
@@ -813,7 +812,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=65,
                 reg_port=port.ofport,
-                dl_type=constants.ETHERTYPE_IP,
+                dl_type=lib_const.ETHERTYPE_IP,
                 in_port=port.ofport,
                 dl_src=mac_addr,
                 nw_src=ip_addr,
@@ -831,7 +830,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 priority=65,
                 reg_port=port.ofport,
                 in_port=port.ofport,
-                dl_type=constants.ETHERTYPE_IPV6,
+                dl_type=lib_const.ETHERTYPE_IPV6,
                 dl_src=mac_addr,
                 ipv6_src=ip_addr,
                 actions='ct(table={:d},zone=NXM_NX_REG{:d}[0..15])'.format(
@@ -841,8 +840,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         # DHCP discovery
         for dl_type, src_port, dst_port in (
-                (constants.ETHERTYPE_IP, 68, 67),
-                (constants.ETHERTYPE_IPV6, 546, 547)):
+                (lib_const.ETHERTYPE_IP, 68, 67),
+                (lib_const.ETHERTYPE_IPV6, 546, 547)):
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=80,
@@ -857,8 +856,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             )
         # Ban dhcp service running on an instance
         for dl_type, src_port, dst_port in (
-                (constants.ETHERTYPE_IP, 67, 68),
-                (constants.ETHERTYPE_IPV6, 547, 546)):
+                (lib_const.ETHERTYPE_IP, 67, 68),
+                (lib_const.ETHERTYPE_IPV6, 547, 546)):
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=70,
@@ -877,7 +876,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             priority=70,
             in_port=port.ofport,
             reg_port=port.ofport,
-            dl_type=constants.ETHERTYPE_IPV6,
+            dl_type=lib_const.ETHERTYPE_IPV6,
             nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
             icmp_type=lib_const.ICMPV6_TYPE_RA,
             actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
@@ -906,7 +905,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                     ovsfw_consts.REG_PORT,
                     ovs_consts.BASE_INGRESS_TABLE),
             )
-        for ethertype in [constants.ETHERTYPE_IP, constants.ETHERTYPE_IPV6]:
+        for ethertype in [lib_const.ETHERTYPE_IP, lib_const.ETHERTYPE_IPV6]:
             self._add_flow(
                 table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
                 priority=90,
@@ -964,7 +963,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             ct_state=ovsfw_consts.OF_STATE_NOT_ESTABLISHED,
             actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
         )
-        for ethertype in [constants.ETHERTYPE_IP, constants.ETHERTYPE_IPV6]:
+        for ethertype in [lib_const.ETHERTYPE_IP, lib_const.ETHERTYPE_IPV6]:
             self._add_flow(
                 table=ovs_consts.RULES_EGRESS_TABLE,
                 priority=40,
@@ -983,7 +982,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 table=ovs_consts.BASE_INGRESS_TABLE,
                 priority=100,
                 reg_port=port.ofport,
-                dl_type=constants.ETHERTYPE_IPV6,
+                dl_type=lib_const.ETHERTYPE_IPV6,
                 nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
                 icmp_type=icmp_type,
                 actions='output:{:d}'.format(port.ofport)
@@ -994,7 +993,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self._add_flow(
             table=ovs_consts.BASE_INGRESS_TABLE,
             priority=100,
-            dl_type=constants.ETHERTYPE_ARP,
+            dl_type=lib_const.ETHERTYPE_ARP,
             reg_port=port.ofport,
             actions='output:{:d}'.format(port.ofport)
         )
@@ -1002,8 +1001,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         # DHCP offers
         for dl_type, src_port, dst_port in (
-                (constants.ETHERTYPE_IP, 67, 68),
-                (constants.ETHERTYPE_IPV6, 547, 546)):
+                (lib_const.ETHERTYPE_IP, 67, 68),
+                (lib_const.ETHERTYPE_IPV6, 547, 546)):
             self._add_flow(
                 table=ovs_consts.BASE_INGRESS_TABLE,
                 priority=95,
@@ -1016,7 +1015,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             )
 
         # Track untracked
-        for dl_type in (constants.ETHERTYPE_IP, constants.ETHERTYPE_IPV6):
+        for dl_type in (lib_const.ETHERTYPE_IP, lib_const.ETHERTYPE_IPV6):
             self._add_flow(
                 table=ovs_consts.BASE_INGRESS_TABLE,
                 priority=90,
@@ -1071,7 +1070,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             ct_state=ovsfw_consts.OF_STATE_NOT_ESTABLISHED,
             actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
         )
-        for ethertype in [constants.ETHERTYPE_IP, constants.ETHERTYPE_IPV6]:
+        for ethertype in [lib_const.ETHERTYPE_IP, lib_const.ETHERTYPE_IPV6]:
             self._add_flow(
                 table=ovs_consts.RULES_INGRESS_TABLE,
                 priority=40,

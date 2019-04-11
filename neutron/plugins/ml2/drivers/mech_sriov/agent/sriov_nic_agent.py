@@ -40,7 +40,6 @@ from neutron.agent import securitygroups_rpc as agent_sg_rpc
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
-from neutron.common import constants as c_const
 from neutron.common import profiler as setup_profiler
 from neutron.common import utils as n_utils
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config
@@ -160,8 +159,9 @@ class SriovNicSwitchAgent(object):
             self.connection)
 
         configurations = {'device_mappings': physical_devices_mappings,
-                          c_const.RP_BANDWIDTHS: rp_bandwidths,
-                          c_const.RP_INVENTORY_DEFAULTS: rp_inventory_defaults,
+                          n_constants.RP_BANDWIDTHS: rp_bandwidths,
+                          n_constants.RP_INVENTORY_DEFAULTS:
+                              rp_inventory_defaults,
                           'extensions': self.ext_manager.names()}
 
         # TODO(mangelajo): optimize resource_versions (see ovs agent)
@@ -355,7 +355,7 @@ class SriovNicSwitchAgent(object):
                                            port_id,
                                            (device, profile.get('pci_slot')))
                 self.ext_manager.handle_port(self.context, device_details)
-            elif c_const.NO_ACTIVE_BINDING in device_details:
+            elif n_constants.NO_ACTIVE_BINDING in device_details:
                 # Port was added but its binding in this agent
                 # hasn't been activated yet. It will be treated as
                 # added when binding is activated

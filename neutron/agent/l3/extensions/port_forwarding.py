@@ -16,6 +16,8 @@
 import collections
 
 import netaddr
+from neutron_lib.agent import l3_extension
+from neutron_lib import constants
 from neutron_lib import rpc as n_rpc
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
@@ -25,9 +27,7 @@ from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.common import constants
-from neutron_lib.agent import l3_extension
-from neutron_lib import constants as lib_consts
+
 
 LOG = logging.getLogger(__name__)
 DEFAULT_PORT_FORWARDING_CHAIN = 'fip-pf'
@@ -174,7 +174,7 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
         device = ip_lib.IPDevice(interface_name, namespace=namespace)
 
         is_distributed = ri.router.get('distributed')
-        ha_port = ri.router.get(lib_consts.HA_INTERFACE_KEY, None)
+        ha_port = ri.router.get(constants.HA_INTERFACE_KEY, None)
         fip_statuses = {}
         for port_forwarding in port_forwardings:
             # check if the port forwarding is managed in this agent from
@@ -202,10 +202,10 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
                                                           fip_ip)
                         else:
                             ri._add_vip(fip_cidr, interface_name)
-                        status = lib_consts.FLOATINGIP_STATUS_ACTIVE
+                        status = constants.FLOATINGIP_STATUS_ACTIVE
                 except Exception:
                     # Any error will causes the fip status to be set 'ERROR'
-                    status = lib_consts.FLOATINGIP_STATUS_ERROR
+                    status = constants.FLOATINGIP_STATUS_ERROR
                     LOG.warning("Unable to configure floating IP %(fip_id)s "
                                 "for port forwarding %(pf_id)s",
                                 {'fip_id': port_forwarding.floatingip_id,
@@ -218,7 +218,7 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
             if status:
                 fip_statuses[port_forwarding.floatingip_id] = status
 
-        if ha_port and ha_port['status'] == lib_consts.PORT_STATUS_ACTIVE:
+        if ha_port and ha_port['status'] == constants.PORT_STATUS_ACTIVE:
             ri.enable_keepalived()
 
         for port_forwarding in port_forwardings:
@@ -266,8 +266,8 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
         is_distributed = ri.router.get('distributed')
         agent_mode = ri.agent_conf.agent_mode
         if (is_distributed and
-                agent_mode in [lib_consts.L3_AGENT_MODE_DVR_NO_EXTERNAL,
-                               lib_consts.L3_AGENT_MODE_DVR]):
+                agent_mode in [constants.L3_AGENT_MODE_DVR_NO_EXTERNAL,
+                               constants.L3_AGENT_MODE_DVR]):
             # just support centralized cases
             return False
         return True
@@ -343,7 +343,7 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
     def _sync_and_remove_fip(self, context, fip_id_cidrs, device, ri):
         if not fip_id_cidrs:
             return
-        ha_port = ri.router.get(lib_consts.HA_INTERFACE_KEY)
+        ha_port = ri.router.get(constants.HA_INTERFACE_KEY)
         fip_ids = [item[0] for item in fip_id_cidrs]
         pfs = self.resource_rpc.bulk_pull(context, resources.PORTFORWARDING,
                                           filter_kwargs={

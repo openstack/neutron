@@ -39,7 +39,6 @@ from neutron.agent import securitygroups_rpc as agent_sg_rpc
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
-from neutron.common import constants as c_const
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import capabilities
 from neutron.plugins.ml2.drivers.agent import config as cagt_config  # noqa
@@ -319,7 +318,7 @@ class CommonAgentLoop(service.Service):
                                  payload=events.DBEventPayload(
                                      self.context, states=(device_details,),
                                      resource_id=device))
-            elif c_const.NO_ACTIVE_BINDING in device_details:
+            elif constants.NO_ACTIVE_BINDING in device_details:
                 LOG.info("Device %s has no active binding in host", device)
             else:
                 LOG.info("Device %s not defined on plugin", device)

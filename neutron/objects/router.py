@@ -16,11 +16,11 @@ import netaddr
 
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.validators import availability_zone as az_validator
+from neutron_lib import constants as n_const
 from oslo_versionedobjects import fields as obj_fields
 import six
 from sqlalchemy import func
 
-from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.db.models import dvr as dvr_models
 from neutron.db.models import l3

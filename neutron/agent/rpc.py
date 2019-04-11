@@ -31,7 +31,7 @@ from oslo_utils import uuidutils
 
 from neutron.agent import resource_cache
 from neutron.api.rpc.callbacks import resources
-from neutron.common import constants as n_const
+from neutron.common import _constants as n_const
 from neutron import objects
 
 LOG = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ class PluginReportStateAPI(object):
     """
     def __init__(self, topic):
         target = oslo_messaging.Target(topic=topic, version='1.2',
-                                       namespace=n_const.RPC_NAMESPACE_STATE)
+                                       namespace=constants.RPC_NAMESPACE_STATE)
         self.client = lib_rpc.get_client(target)
 
     def has_alive_neutron_server(self, context, **kwargs):
@@ -321,7 +321,7 @@ class CacheBackedPluginApi(PluginApi):
             LOG.debug("Device %s has no active binding in this host",
                       port_obj)
             return {'device': device,
-                    n_const.NO_ACTIVE_BINDING: True}
+                    constants.NO_ACTIVE_BINDING: True}
         net = self.remote_resource_cache.get_resource_by_id(
             resources.NETWORK, port_obj.network_id)
         net_qos_policy_id = net.qos_policy_id

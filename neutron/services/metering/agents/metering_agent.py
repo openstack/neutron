@@ -30,7 +30,6 @@ from oslo_utils import timeutils
 from neutron._i18n import _
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as common_config
-from neutron.common import constants as n_const
 from neutron.conf.agent import common as config
 from neutron.conf.services import metering_agent
 from neutron import manager
@@ -136,7 +135,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
         self.label_tenant_id = {}
         for router in self.routers.values():
             tenant_id = router['tenant_id']
-            labels = router.get(n_const.METERING_LABEL_KEY, [])
+            labels = router.get(constants.METERING_LABEL_KEY, [])
             for label in labels:
                 label_id = label['id']
                 self.label_tenant_id[label_id] = tenant_id

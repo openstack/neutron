@@ -16,6 +16,7 @@
 import functools
 
 from neutron_lib.api import attributes
+from neutron_lib import constants
 from neutron_lib.db import model_base
 from neutron_lib import exceptions
 from oslo_config import cfg
@@ -27,7 +28,6 @@ from webob import exc
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.common import constants
 from neutron import wsgi
 
 

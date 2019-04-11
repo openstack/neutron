@@ -15,12 +15,12 @@ import re
 
 import eventlet
 import netaddr
+from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 
 from neutron.agent.linux import utils as linux_utils
-from neutron.common import constants as n_const
 
 LOG = logging.getLogger(__name__)
 CONTRACK_MGRS = {}
@@ -186,7 +186,7 @@ class IpConntrackManager(object):
             if match:
                 # strip off any prefix that the interface is using
                 short_port_id = (
-                    match.group('dev')[n_const.LINUX_DEV_PREFIX_LEN:])
+                    match.group('dev')[constants.LINUX_DEV_PREFIX_LEN:])
                 self._device_zone_map[short_port_id] = int(match.group('zone'))
         LOG.debug("Populated conntrack zone map: %s", self._device_zone_map)
 
@@ -196,11 +196,11 @@ class IpConntrackManager(object):
         # map is populated strictly based on interface names that we don't know
         # the full UUID of.
         if self.zone_per_port:
-            identifier = port['device'][n_const.LINUX_DEV_PREFIX_LEN:]
+            identifier = port['device'][constants.LINUX_DEV_PREFIX_LEN:]
         else:
             identifier = port['network_id']
-        return identifier[:(n_const.LINUX_DEV_LEN -
-                          n_const.LINUX_DEV_PREFIX_LEN)]
+        return identifier[:(constants.LINUX_DEV_LEN -
+                          constants.LINUX_DEV_PREFIX_LEN)]
 
     def get_device_zone(self, port, create=True):
         device_key = self._device_key(port)

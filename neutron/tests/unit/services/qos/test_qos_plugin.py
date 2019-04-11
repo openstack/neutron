@@ -28,7 +28,6 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 import webob.exc
 
-from neutron.common import constants
 from neutron.extensions import qos_rules_alias
 from neutron import manager
 from neutron.objects import network as network_object
@@ -1099,7 +1098,7 @@ class TestQosPlugin(base.BaseQosTestCase):
             'name': 'fake-driver',
             'supported_parameters': [{
                 'parameter_name': 'max_kbps',
-                'parameter_type': constants.VALUES_TYPE_RANGE,
+                'parameter_type': lib_constants.VALUES_TYPE_RANGE,
                 'parameter_range': {'start': 0, 'end': 100}
             }]
         }]

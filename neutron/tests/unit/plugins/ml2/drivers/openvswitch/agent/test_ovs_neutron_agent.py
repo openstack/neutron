@@ -30,7 +30,6 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils
 from neutron.agent.linux import ip_lib
-from neutron.common import constants as c_const
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_neutron_agent \
@@ -817,7 +816,7 @@ class TestOvsNeutronAgent(object):
 
     def test_treat_devices_added_updated_no_active_binding(self):
         details = {'device': 'id',
-                   c_const.NO_ACTIVE_BINDING: True}
+                   n_const.NO_ACTIVE_BINDING: True}
         port = mock.Mock()
         with mock.patch.object(self.agent.plugin_rpc,
                                'get_devices_details_list_and_failed_devices',
@@ -2323,15 +2322,15 @@ class TestOvsNeutronAgent(object):
         self.assertFalse(br.install_arp_responder.called)
 
     def test_configurations_has_rp_bandwidth(self):
-        self.assertIn(c_const.RP_BANDWIDTHS,
+        self.assertIn(n_const.RP_BANDWIDTHS,
                       self.agent.agent_state['configurations'])
 
     def test_configurations_has_rp_default_inventory(self):
-        self.assertIn(c_const.RP_INVENTORY_DEFAULTS,
+        self.assertIn(n_const.RP_INVENTORY_DEFAULTS,
                       self.agent.agent_state['configurations'])
         rp_inv_defaults = \
             self.agent.agent_state['configurations'][
-                c_const.RP_INVENTORY_DEFAULTS]
+                n_const.RP_INVENTORY_DEFAULTS]
         self.assertListEqual(
             sorted(['reserved', 'min_unit', 'allocation_ratio', 'step_size']),
             sorted(list(rp_inv_defaults)))
@@ -2342,7 +2341,7 @@ class TestOvsNeutronAgent(object):
 
     def test__validate_rp_bandwidth_bridges(self):
         cfg.CONF.set_override('bridge_mappings', [], 'OVS')
-        cfg.CONF.set_override(c_const.RP_BANDWIDTHS,
+        cfg.CONF.set_override(n_const.RP_BANDWIDTHS,
                               ['no_such_br_in_bridge_mappings:1:1'],
                               'OVS')
         self.assertRaises(ValueError, self._make_agent)

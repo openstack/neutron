@@ -21,7 +21,6 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 
-from neutron.common import constants as n_const
 from neutron.ipam.drivers.neutrondb_ipam import driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import requests as ipam_req
@@ -240,7 +239,7 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
             # set ip version to 6 regardless of what's been passed to the
             # method
             ip_version = constants.IP_VERSION_6
-            v6_address_mode = n_const.IPV6_SLAAC
+            v6_address_mode = constants.IPV6_SLAAC
         subnet = self._create_subnet(
             self.plugin, self.ctx, self.net_id, cidr,
             ip_version=ip_version,

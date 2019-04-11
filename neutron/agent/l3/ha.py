@@ -16,12 +16,12 @@
 import os
 
 import eventlet
+from neutron_lib import constants
 from oslo_log import log as logging
 from oslo_utils import fileutils
 import webob
 
 from neutron.agent.linux import utils as agent_utils
-from neutron.common import constants
 from neutron.notifiers import batch_notifier
 
 LOG = logging.getLogger(__name__)

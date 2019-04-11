@@ -25,7 +25,6 @@ from neutron_lib import constants
 from neutron_lib import context
 
 from neutron.api.rpc.handlers import l3_rpc
-from neutron.common import constants as n_const
 from neutron.tests.common import helpers
 from neutron.tests.functional import base as functional_base
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
@@ -266,7 +265,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
 
         self.assertEqual(
             router['id'], result[router['id']]['id'])
-        self.assertIn(n_const.FLOATINGIP_AGENT_INTF_KEY, result[router['id']])
+        self.assertIn(constants.FLOATINGIP_AGENT_INTF_KEY,
+                      result[router['id']])
         self.l3_plugin._get_fip_agent_gw_ports.assert_called_once_with(
             self.context, self.l3_agent['id'])
         self.l3_plugin._get_snat_sync_interfaces.assert_called_once_with(
@@ -864,7 +864,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 floatingips = router_info[0][constants.FLOATINGIP_KEY]
                 self.assertEqual(1, len(floatingips))
                 self.assertTrue(floatingips[0][constants.DVR_SNAT_BOUND])
-                self.assertEqual(n_const.FLOATING_IP_HOST_NEEDS_BINDING,
+                self.assertEqual(constants.FLOATING_IP_HOST_NEEDS_BINDING,
                                  floatingips[0]['host'])
                 router1_info = (
                     self.l3_plugin.list_active_sync_routers_on_active_l3_agent(

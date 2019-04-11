@@ -19,7 +19,6 @@ from neutron_lib.db import constants as db_const
 from neutron_lib.utils import net
 from oslo_serialization import jsonutils
 
-from neutron.common import constants
 from neutron.objects import common_types
 from neutron.tests import base as test_base
 from neutron.tests import tools
@@ -136,7 +135,7 @@ class IPNetworkFieldTest(test_base.BaseTestCase, TestField):
         self.field = common_types.IPNetworkField()
         addrs = [
             tools.get_random_ip_network(version=ip_version)
-            for ip_version in constants.IP_ALLOWED_VERSIONS
+            for ip_version in const.IP_ALLOWED_VERSIONS
         ]
         self.coerce_good_values = [(addr, addr) for addr in addrs]
         self.coerce_bad_values = [
@@ -160,7 +159,7 @@ class IPVersionEnumFieldTest(test_base.BaseTestCase, TestField):
         super(IPVersionEnumFieldTest, self).setUp()
         self.field = common_types.IPVersionEnumField()
         self.coerce_good_values = [(val, val)
-                                   for val in constants.IP_ALLOWED_VERSIONS]
+                                   for val in const.IP_ALLOWED_VERSIONS]
         self.coerce_bad_values = [5, 0, -1, 'str']
         self.to_primitive_values = self.coerce_good_values
         self.from_primitive_values = self.coerce_good_values
@@ -207,7 +206,7 @@ class EtherTypeEnumFieldTest(test_base.BaseTestCase, TestField):
         super(EtherTypeEnumFieldTest, self).setUp()
         self.field = common_types.EtherTypeEnumField()
         self.coerce_good_values = [(val, val)
-                                   for val in constants.VALID_ETHERTYPES]
+                                   for val in const.VALID_ETHERTYPES]
         self.coerce_bad_values = ['IpV4', 8, 'str', 'ipv6']
         self.to_primitive_values = self.coerce_good_values
         self.from_primitive_values = self.coerce_good_values

@@ -15,6 +15,7 @@
 
 import copy
 
+from neutron_lib import constants as const
 from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
 from oslo_utils import excutils
@@ -22,7 +23,6 @@ from pecan import hooks
 import webob
 
 from neutron._i18n import _
-from neutron.common import constants as const
 from neutron.extensions import quotasv2
 from neutron import manager
 from neutron.pecan_wsgi import constants as pecan_constants

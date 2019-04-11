@@ -29,7 +29,6 @@ from neutron_lib.plugins import directory
 from oslo_serialization import jsonutils
 import testtools
 
-from neutron.common import constants as n_const
 from neutron.db import agents_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
@@ -262,7 +261,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                          router['id'], interface_info)
         self.plugin.update_routers_states(
             self.adminContext,
-            {router['id']: n_const.HA_ROUTER_STATE_ACTIVE}, host)
+            {router['id']: constants.HA_ROUTER_STATE_ACTIVE}, host)
 
         port = self._get_first_interface(subnet['network_id'], router)
 

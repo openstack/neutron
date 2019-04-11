@@ -25,7 +25,6 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import ra
-from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.ipam import utils as ipam_utils
@@ -705,13 +704,14 @@ class RouterInfo(object):
             if not self.is_v6_gateway_set(gateway_ips):
                 # There is no IPv6 gw_ip, use RouterAdvt for default route.
                 self.driver.configure_ipv6_ra(
-                    ns_name, interface_name, n_const.ACCEPT_RA_WITH_FORWARDING)
+                    ns_name, interface_name,
+                    lib_constants.ACCEPT_RA_WITH_FORWARDING)
             else:
                 # Otherwise, disable it
                 disable_ra = True
         if disable_ra:
             self.driver.configure_ipv6_ra(ns_name, interface_name,
-                                          n_const.ACCEPT_RA_DISABLED)
+                                          lib_constants.ACCEPT_RA_DISABLED)
         self.driver.configure_ipv6_forwarding(ns_name, interface_name, enabled)
         # This will make sure the 'all' setting is the same as the interface,
         # which is needed for forwarding to work.  Don't disable once it's
@@ -858,7 +858,7 @@ class RouterInfo(object):
             'snat', '-m mark ! --mark %s/%s '
                     '-m conntrack --ctstate DNAT '
                     '-j SNAT --to-source %s'
-                    % (ext_in_mark, n_const.ROUTER_MARK_MASK, ex_gw_ip))
+                    % (ext_in_mark, lib_constants.ROUTER_MARK_MASK, ex_gw_ip))
         return [dont_snat_traffic_to_internal_ports_if_not_to_floating_ip,
                 snat_internal_traffic_to_floating_ip]
 
@@ -872,7 +872,7 @@ class RouterInfo(object):
         mark = self.agent_conf.external_ingress_mark
         mark_packets_entering_external_gateway_port = (
             'mark', '-i %s -j MARK --set-xmark %s/%s' %
-                    (interface_name, mark, n_const.ROUTER_MARK_MASK))
+                    (interface_name, mark, lib_constants.ROUTER_MARK_MASK))
         return [mark_packets_entering_external_gateway_port]
 
     def _empty_snat_chains(self, iptables_manager):
@@ -1035,7 +1035,7 @@ class RouterInfo(object):
             '-j MARK --set-xmark %(value)s/%(mask)s' %
             {'interface_name': INTERNAL_DEV_PREFIX + '+',
              'value': self.agent_conf.metadata_access_mark,
-             'mask': n_const.ROUTER_MARK_MASK})
+             'mask': lib_constants.ROUTER_MARK_MASK})
         self.iptables_manager.ipv4['mangle'].add_rule(
             'PREROUTING', mark_metadata_for_internal_interfaces)
 

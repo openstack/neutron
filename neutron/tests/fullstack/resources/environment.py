@@ -18,7 +18,6 @@ from neutronclient.common import exceptions as nc_exc
 from oslo_config import cfg
 
 from neutron.agent.linux import ip_lib
-from neutron.common import constants as common_const
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as lb_agent
@@ -38,7 +37,7 @@ class EnvironmentDescription(object):
                  mech_drivers='openvswitch,linuxbridge',
                  service_plugins='router', arp_responder=False,
                  agent_down_time=75, router_scheduler=None,
-                 global_mtu=common_const.DEFAULT_NETWORK_MTU,
+                 global_mtu=constants.DEFAULT_NETWORK_MTU,
                  debug_iptables=False, log=False, report_bandwidths=False):
         self.network_type = network_type
         self.l2_pop = l2_pop

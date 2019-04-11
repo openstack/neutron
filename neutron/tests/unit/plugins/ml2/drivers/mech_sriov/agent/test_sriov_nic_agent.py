@@ -16,12 +16,12 @@
 
 import mock
 from neutron_lib.api.definitions import portbindings
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.agent.l2 import l2_agent_extensions_manager as l2_ext_manager
 from neutron.agent import rpc as agent_rpc
-from neutron.common import constants as c_const
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config  # noqa
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import exceptions
 from neutron.plugins.ml2.drivers.mech_sriov.agent import sriov_nic_agent
@@ -547,11 +547,11 @@ class TestSriovAgent(base.BaseTestCase):
         rp_bandwidth = {'ens7': {'egress': 10000, 'ingress': 10000}}
         agent = sriov_nic_agent.SriovNicSwitchAgent(
             {}, {}, 0, rp_bandwidth, {})
-        self.assertIn(c_const.RP_BANDWIDTHS,
+        self.assertIn(constants.RP_BANDWIDTHS,
                       agent.agent_state['configurations'])
 
         rp_bandwidths = agent.agent_state['configurations'][
-            c_const.RP_BANDWIDTHS]
+            constants.RP_BANDWIDTHS]
         self.assertEqual(rp_bandwidth['ens7'], rp_bandwidths['ens7'])
 
     def test_configurations_has_rp_default_inventory(self):
@@ -563,11 +563,11 @@ class TestSriovAgent(base.BaseTestCase):
         }
         agent = sriov_nic_agent.SriovNicSwitchAgent(
             {}, {}, 0, {}, rp_inventory_values)
-        self.assertIn(c_const.RP_INVENTORY_DEFAULTS,
+        self.assertIn(constants.RP_INVENTORY_DEFAULTS,
                       agent.agent_state['configurations'])
 
         rp_inv_defaults = agent.agent_state['configurations'][
-            c_const.RP_INVENTORY_DEFAULTS]
+            constants.RP_INVENTORY_DEFAULTS]
         self.assertListEqual(
             sorted(list(rp_inventory_values)),
             sorted(list(rp_inv_defaults.keys())))

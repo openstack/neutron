@@ -13,12 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from neutron_lib.utils import net
 from oslo_config import cfg
 from oslo_service import wsgi
 
 from neutron._i18n import _
-from neutron.common import constants
 
 
 core_opts = [

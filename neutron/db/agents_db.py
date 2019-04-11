@@ -42,7 +42,6 @@ import six
 
 from neutron.agent.common import utils
 from neutron.api.rpc.callbacks import version_manager
-from neutron.common import constants as n_const
 from neutron.conf.agent.database import agents_db
 from neutron.db.models import agent as agent_model
 from neutron.extensions import _availability_zone_filter_lib as azfil_ext
@@ -477,7 +476,7 @@ class AgentExtRpcCallback(object):
     """
 
     target = oslo_messaging.Target(version='1.2',
-                                   namespace=n_const.RPC_NAMESPACE_STATE)
+                                   namespace=constants.RPC_NAMESPACE_STATE)
     START_TIME = timeutils.utcnow()
 
     def __init__(self, plugin=None):

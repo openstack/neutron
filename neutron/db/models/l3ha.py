@@ -13,11 +13,11 @@
 # under the License.
 #
 
+from neutron_lib import constants as n_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 
-from neutron.common import constants as n_const
 from neutron.db.models import agent as agent_model
 from neutron.db import models_v2
 

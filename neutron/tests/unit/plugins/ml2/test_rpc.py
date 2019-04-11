@@ -32,7 +32,6 @@ from oslo_context import context as oslo_context
 from sqlalchemy.orm import exc
 
 from neutron.agent import rpc as agent_rpc
-from neutron.common import constants as n_const
 from neutron.db import provisioning_blocks
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2.drivers import type_tunnel
@@ -162,7 +161,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         port['device_owner'] = constants.DEVICE_OWNER_COMPUTE_PREFIX
         port[portbindings.HOST_ID] = 'other-host'
         res = self.callbacks.get_device_details(mock.Mock(), host='host')
-        self.assertIn(n_const.NO_ACTIVE_BINDING, res)
+        self.assertIn(constants.NO_ACTIVE_BINDING, res)
 
     def test_get_device_details_qos_policy_id_from_port(self):
         port = collections.defaultdict(

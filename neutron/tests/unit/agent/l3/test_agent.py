@@ -51,7 +51,6 @@ from neutron.agent.linux import pd
 from neutron.agent.linux import ra
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
-from neutron.common import constants as n_const
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf.agent.l3 import ha as ha_conf
@@ -319,8 +318,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router_info.ha_state = 'master'
         with mock.patch.object(agent.state_change_notifier,
                                'queue_event') as queue_event:
-            agent.check_ha_state_for_router(router.id,
-                                            n_const.HA_ROUTER_STATE_STANDBY)
+            agent.check_ha_state_for_router(
+                router.id, lib_constants.HA_ROUTER_STATE_STANDBY)
             queue_event.assert_called_once_with((router.id, 'master'))
 
     def test_check_ha_state_for_router_standby_standby(self):
@@ -332,8 +331,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router_info.ha_state = 'backup'
         with mock.patch.object(agent.state_change_notifier,
                                'queue_event') as queue_event:
-            agent.check_ha_state_for_router(router.id,
-                                            n_const.HA_ROUTER_STATE_STANDBY)
+            agent.check_ha_state_for_router(
+                router.id, lib_constants.HA_ROUTER_STATE_STANDBY)
             queue_event.assert_not_called()
 
     def test_periodic_sync_routers_task_raise_exception(self):
@@ -1040,7 +1039,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             '-o %s -j SNAT --to-source %s' % (interface_name, source_nat_ip),
             '-m mark ! --mark 0x2/%s -m conntrack --ctstate DNAT '
             '-j SNAT --to-source %s' %
-            (n_const.ROUTER_MARK_MASK, source_nat_ip)]
+            (lib_constants.ROUTER_MARK_MASK, source_nat_ip)]
         for r in nat_rules:
             if negate:
                 self.assertNotIn(r.rule, expected_rules)
@@ -1048,7 +1047,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 self.assertIn(r.rule, expected_rules)
         expected_rules = [
             '-i %s -j MARK --set-xmark 0x2/%s' %
-            (interface_name, n_const.ROUTER_MARK_MASK),
+            (interface_name, lib_constants.ROUTER_MARK_MASK),
             '-o %s -m connmark --mark 0x0/%s -j CONNMARK '
             '--save-mark --nfmask %s --ctmask %s' %
             (interface_name,
@@ -1281,7 +1280,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         router = l3_test_common.prepare_router_data(enable_snat=True)
         router[lib_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
-        router[n_const.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
+        router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
         router['distributed'] = True
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self._set_ri_kwargs(agent, router['id'], router)
@@ -1346,7 +1345,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         router = l3_test_common.prepare_router_data(enable_snat=True)
         router[lib_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
-        router[n_const.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
+        router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
         router['distributed'] = True
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self._set_ri_kwargs(agent, router['id'], router)
@@ -1412,7 +1411,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         router = l3_test_common.prepare_router_data(enable_snat=True)
         router[lib_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
-        router[n_const.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
+        router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
         router['distributed'] = True
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self._set_ri_kwargs(agent, router['id'], router)
@@ -1489,7 +1488,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         router = l3_test_common.prepare_router_data(enable_snat=True)
         router[lib_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
-        router[n_const.FLOATINGIP_AGENT_INTF_KEY] = []
+        router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = []
         router['distributed'] = True
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self._set_ri_kwargs(agent, router['id'], router)
@@ -1536,7 +1535,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         router = l3_test_common.prepare_router_data(enable_snat=True)
         router[lib_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
-        router[n_const.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
+        router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
         router['distributed'] = True
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self._set_ri_kwargs(agent, router['id'], router)
@@ -1589,7 +1588,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         router = l3_test_common.prepare_router_data(enable_snat=True)
         router[lib_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
-        router[n_const.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
+        router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
         router['distributed'] = True
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self._set_ri_kwargs(agent, router['id'], router)
@@ -2298,7 +2297,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         snat_rule2 = ("-A %s-snat -m mark ! --mark 0x2/%s "
                       "-m conntrack --ctstate DNAT "
                       "-j SNAT --to-source %s") % (
-            wrap_name, n_const.ROUTER_MARK_MASK,
+            wrap_name, lib_constants.ROUTER_MARK_MASK,
             ex_gw_port['fixed_ips'][0]['ip_address'])
 
         self.assertIn(jump_float_rule, nat_rules)
@@ -2311,7 +2310,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         mangle_rules = list(map(str, ri.iptables_manager.ipv4['mangle'].rules))
         mangle_rule = ("-A %s-mark -i iface "
                        "-j MARK --set-xmark 0x2/%s" %
-                       (wrap_name, n_const.ROUTER_MARK_MASK))
+                       (wrap_name, lib_constants.ROUTER_MARK_MASK))
         self.assertIn(mangle_rule, mangle_rules)
 
     def test_process_router_delete_stale_internal_devices(self):
@@ -3812,7 +3811,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                 {'interface_name':
                                  namespaces.INTERNAL_DEV_PREFIX + '+',
                                  'value': self.conf.metadata_access_mark,
-                                 'mask': n_const.ROUTER_MARK_MASK}),
+                                 'mask': lib_constants.ROUTER_MARK_MASK}),
                             mock.call.add_rule(
                                 'float-snat',
                                 '-m connmark --mark 0x0/0xffff0000 '
@@ -3857,7 +3856,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                 {'interface_name':
                                  namespaces.INTERNAL_DEV_PREFIX + '+',
                                  'value': self.conf.metadata_access_mark,
-                                 'mask': n_const.ROUTER_MARK_MASK})])
+                                 'mask': lib_constants.ROUTER_MARK_MASK})])
         mock_iptables_manager.ipv4['mangle'].assert_has_calls(v4_mangle_calls,
                                                               any_order=True)
 

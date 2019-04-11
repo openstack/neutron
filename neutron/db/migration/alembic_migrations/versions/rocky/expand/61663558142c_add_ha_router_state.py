@@ -13,9 +13,9 @@
 #    under the License.
 #
 
+from neutron_lib import constants
 import sqlalchemy as sa
 
-from neutron.common import constants
 from neutron.db import migration
 
 """Add unknown state to HA router
