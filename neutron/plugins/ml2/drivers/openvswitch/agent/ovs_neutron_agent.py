@@ -240,7 +240,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.patch_tun_ofport,
             host,
             self.enable_tunneling,
-            self.enable_distributed_routing)
+            self.enable_distributed_routing,
+            self.arp_responder_enabled)
 
         if self.enable_distributed_routing:
             self.dvr_agent.setup_dvr_flows()
