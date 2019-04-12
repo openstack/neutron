@@ -317,9 +317,17 @@ class RpcCallbacksTestCase(base.BaseTestCase):
 class RpcApiTestCase(base.BaseTestCase):
 
     def _test_rpc_api(self, rpcapi, topic, method, rpc_method, **kwargs):
+        if method == "update_device_list":
+            expected = {'devices_up': [],
+                        'failed_devices_up': [],
+                        'devices_down': [],
+                        'failed_devices_down': []}
+        else:
+            expected = 'foo'
+
         ctxt = oslo_context.RequestContext(user='fake_user',
                                            tenant='fake_project')
-        expected_retval = 'foo' if rpc_method == 'call' else None
+        expected_retval = expected if rpc_method == 'call' else None
         expected_version = kwargs.pop('version', None)
         fanout = kwargs.pop('fanout', False)
 
