@@ -1389,8 +1389,10 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             while not self.firewall.ipconntrack._queue.empty():
                 self.firewall.ipconntrack._process_queue()
             cmd = ['conntrack', '-D']
-            if protocol:
-                cmd.extend(['-p', protocol])
+            if protocol is not None:
+                if str(protocol) == '0':
+                    protocol = 'ip'
+                cmd.extend(['-p', str(protocol)])
             if ethertype == 'IPv4':
                 cmd.extend(['-f', 'ipv4'])
                 if direction == 'ingress':
@@ -1412,7 +1414,13 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
     def test_remove_conntrack_entries_for_delete_rule_ipv4(self):
         for direction in ['ingress', 'egress']:
-            for pro in [None, 'tcp', 'icmp', 'udp']:
+            for pro in [None, 'ip', 'tcp', 'icmp', 'udp', '0']:
+                self._test_remove_conntrack_entries(
+                    'IPv4', pro, direction, ct_zone=10)
+
+    def test_remove_conntrack_entries_for_delete_rule_ipv4_by_num(self):
+        for direction in ['ingress', 'egress']:
+            for pro in [None, 0, 6, 1, 17]:
                 self._test_remove_conntrack_entries(
                     'IPv4', pro, direction, ct_zone=10)
 

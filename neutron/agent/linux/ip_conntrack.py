@@ -117,7 +117,10 @@ class IpConntrackManager(object):
         protocol = rule.get('protocol')
         direction = rule.get('direction')
         cmd = ['conntrack', '-D']
-        if protocol:
+        if protocol is not None:
+            # 0 is IP in /etc/protocols, but conntrack will throw an error
+            if str(protocol) == '0':
+                protocol = 'ip'
             cmd.extend(['-p', str(protocol)])
         cmd.extend(['-f', str(ethertype).lower()])
         cmd.append('-d' if direction == 'ingress' else '-s')
