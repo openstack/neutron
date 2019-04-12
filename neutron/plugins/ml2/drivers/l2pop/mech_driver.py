@@ -120,6 +120,13 @@ class L2populationMechanismDriver(api.MechanismDriver):
         if not agent_host:
             return
 
+        # We should not add arp responder for non tunnel network type
+        port_context = context._plugin_context
+        agent = l2pop_db.get_agent_by_host(port_context, agent_host)
+        segment = context.bottom_bound_segment
+        if not self._validate_segment(segment, port['id'], agent):
+            return
+
         agent_ip = l2pop_db.get_agent_ip_by_host(context._plugin_context,
                                                  agent_host)
 
