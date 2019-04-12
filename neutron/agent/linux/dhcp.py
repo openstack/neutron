@@ -1021,7 +1021,7 @@ class Dnsmasq(DhcpLocalProcess):
                     if (s.ip_version == 4 and
                             s.cidr != subnet.cidr and
                             sub_segment_id == segment_id):
-                        host_routes.append("%s,0.0.0.0" % s.cidr)
+                        host_routes.insert(0, "%s,0.0.0.0" % s.cidr)
 
                 if host_routes:
                     if gateway:
