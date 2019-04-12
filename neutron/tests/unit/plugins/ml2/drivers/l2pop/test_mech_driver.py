@@ -1087,6 +1087,35 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 self.mock_fanout.assert_called_with(
                     mock.ANY, 'add_fdb_entries', add_expected)
 
+    def test_fixed_ips_changed_vlan(self):
+        self._register_ml2_agents()
+
+        with self.subnet(network=self._network2) as subnet:
+            host_arg = {portbindings.HOST_ID: HOST}
+            fixed_ips = [{'subnet_id': subnet['subnet']['id'],
+                          'ip_address': '10.0.0.2'}]
+            with self.port(subnet=subnet, cidr='10.0.0.0/24',
+                           device_owner=DEVICE_OWNER_COMPUTE,
+                           arg_list=(portbindings.HOST_ID,),
+                           fixed_ips=fixed_ips,
+                           **host_arg) as port:
+                p = port['port']
+
+                device = 'tap' + p['id']
+
+                self.callbacks.update_device_up(self.adminContext,
+                                                agent_id=HOST,
+                                                device=device)
+
+                data = {'port': {'fixed_ips': [{'ip_address': '10.0.0.2'},
+                                               {'ip_address': '10.0.0.10'}]}}
+                self.new_update_request('ports', data, p['id'])
+                l2pop_mech = l2pop_mech_driver.L2populationMechanismDriver()
+                l2pop_mech.L2PopulationAgentNotify = mock.Mock()
+                l2notify = l2pop_mech.L2PopulationAgentNotify
+                l2notify.update_fdb_entries = mock.Mock()
+                self.assertFalse(l2notify.update_fdb_entries.called)
+
     def test_fixed_ips_changed(self):
         self._register_ml2_agents()
 
