@@ -1546,18 +1546,19 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                                  *args, **kwargs)
         ip_addresses = fixed_ips.get('ip_address')
         subnet_ids = fixed_ips.get('subnet_id')
+        ip_addresses_s = fixed_ips.get('ip_address_substr')
         if vif_type is not None:
             query = query.filter(Port.port_bindings.any(vif_type=vif_type))
         if mac_address:
             lowered_macs = [x.lower() for x in mac_address]
             query = query.filter(func.lower(Port.mac_address).in_(
                                                     lowered_macs))
+        if ip_addresses or subnet_ids or ip_addresses_s:
+            query = query.join(Port.fixed_ips)
         if ip_addresses:
-            query = query.filter(
-                Port.fixed_ips.any(IPAllocation.ip_address.in_(ip_addresses)))
+            query = query.filter(IPAllocation.ip_address.in_(ip_addresses))
         if subnet_ids:
-            query = query.filter(
-                Port.fixed_ips.any(IPAllocation.subnet_id.in_(subnet_ids)))
+            query = query.filter(IPAllocation.subnet_id.in_(subnet_ids))
         if limit:
             query = query.limit(limit)
         return query
