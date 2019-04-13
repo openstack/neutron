@@ -34,7 +34,7 @@ class RateLimitMapsTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(RateLimitMapsTestCase, self).setUp()
-        self.policy_map = qos_base.RateLimitMaps()
+        self.policy_map = qos_base.RateLimitMaps("cache-lock")
 
     def test_update_policy(self):
         self.policy_map.update_policy(TEST_POLICY)

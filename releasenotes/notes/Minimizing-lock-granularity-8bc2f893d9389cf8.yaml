@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Leverage the coordination lock to the resource processing
+    and notification thread functions to minimize the lock
+    granularity.

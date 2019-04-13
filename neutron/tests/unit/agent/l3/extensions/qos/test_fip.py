@@ -384,3 +384,37 @@ class RouterFipRateLimitMapsTestCase(base.BaseTestCase):
         self.assertIsNone(self.policy_map.find_fip_router_id("8.8.8.8"))
         self.assertEqual(router_id,
                          self.policy_map.find_fip_router_id(TEST_FIP))
+
+    def test_get_router_floating_ips(self):
+        router_id = _uuid()
+        test_ips = [TEST_FIP, TEST_FIP2]
+        self.policy_map.router_floating_ips[router_id] = set([TEST_FIP,
+                                                              TEST_FIP2])
+        get_ips = self.policy_map.get_router_floating_ips(router_id)
+        self.assertEqual(len(test_ips), len(get_ips))
+
+    def test_remove_fip_ratelimit_cache(self):
+        fip = "1.1.1.1"
+        self.policy_map.set_fip_ratelimit_cache(
+            "ingress", fip, 100, 200)
+        self.policy_map.set_fip_ratelimit_cache(
+            "egress", fip, 100, 200)
+        self.policy_map.remove_fip_ratelimit_cache("ingress", fip)
+        self.assertIsNone(self.policy_map.ingress_ratelimits.get(fip))
+        self.policy_map.remove_fip_ratelimit_cache("egress", fip)
+        self.assertIsNone(self.policy_map.egress_ratelimits.get(fip))
+
+    def test_set_fip_ratelimit_cache(self):
+        fip = "1.1.1.1"
+        self.policy_map.set_fip_ratelimit_cache(
+            "ingress", fip, 100, 200)
+        self.policy_map.set_fip_ratelimit_cache(
+            "egress", fip, 300, 400)
+        in_rate, in_burst = self.policy_map.get_fip_ratelimit_cache(
+            "ingress", fip)
+        self.assertEqual(100, in_rate)
+        self.assertEqual(200, in_burst)
+        e_rate, e_burst = self.policy_map.get_fip_ratelimit_cache(
+            "egress", fip)
+        self.assertEqual(300, e_rate)
+        self.assertEqual(400, e_burst)

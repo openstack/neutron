@@ -24,11 +24,14 @@ from neutron.agent.linux import ip_lib
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import coordination
 
 LOG = logging.getLogger(__name__)
 
 
 class RouterFipRateLimitMaps(qos_base.RateLimitMaps):
+    LOCK_NAME = "fip-qos-cache"
+
     def __init__(self):
         """Initialize RouterFipRateLimitMaps
 
@@ -51,12 +54,58 @@ class RouterFipRateLimitMaps(qos_base.RateLimitMaps):
         """
         self.ingress_ratelimits = {}
         self.egress_ratelimits = {}
-        super(RouterFipRateLimitMaps, self).__init__()
+        super(RouterFipRateLimitMaps, self).__init__(self.LOCK_NAME)
 
     def find_fip_router_id(self, fip):
-        for router_id, ips in self.router_floating_ips.items():
-            if fip in ips:
-                return router_id
+
+        @lockutils.synchronized(self.lock_name)
+        def _find_fip_router_id():
+            for router_id, ips in self.router_floating_ips.items():
+                if fip in ips:
+                    return router_id
+
+        return _find_fip_router_id()
+
+    def get_router_floating_ips(self, router_id):
+
+        @lockutils.synchronized(self.lock_name)
+        def _get_router_floating_ips():
+            return self.router_floating_ips.pop(
+                router_id, [])
+
+        return _get_router_floating_ips()
+
+    def remove_fip_ratelimit_cache(self, direction, fip):
+
+        @lockutils.synchronized(self.lock_name)
+        def _remove_fip_ratelimit_cache():
+            rate_limits_direction = direction + "_ratelimits"
+            rate_limits = getattr(self, rate_limits_direction, {})
+            rate_limits.pop(fip, None)
+
+        _remove_fip_ratelimit_cache()
+
+    def set_fip_ratelimit_cache(self, direction, fip, rate, burst):
+
+        @lockutils.synchronized(self.lock_name)
+        def _set_fip_ratelimit_cache():
+            rate_limits_direction = direction + "_ratelimits"
+            rate_limits = getattr(self, rate_limits_direction, {})
+            rate_limits[fip] = (rate, burst)
+
+        _set_fip_ratelimit_cache()
+
+    def get_fip_ratelimit_cache(self, direction, fip):
+
+        @lockutils.synchronized(self.lock_name)
+        def _get_fip_ratelimit_cache():
+            rate_limits_direction = direction + "_ratelimits"
+            rate_limits = getattr(self, rate_limits_direction, {})
+            rate, burst = rate_limits.get(fip, (qos_base.IP_DEFAULT_RATE,
+                                                qos_base.IP_DEFAULT_BURST))
+            return rate, burst
+
+        return _get_fip_ratelimit_cache()
 
 
 class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
@@ -68,7 +117,6 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
         self.fip_qos_map = RouterFipRateLimitMaps()
         self._register_rpc_consumers()
 
-    @lockutils.synchronized('qos-fip')
     def _handle_notification(self, context, resource_type,
                              qos_policies, event_type):
         if event_type == events.UPDATED:
@@ -98,20 +146,16 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
                             fip, dvr_fip_device, rates, with_cache=False)
             self.fip_qos_map.update_policy(qos_policy)
 
+    def _remove_fip_rate_limit_cache(self, fip):
+        for direction in constants.VALID_DIRECTIONS:
+            self.fip_qos_map.remove_fip_ratelimit_cache(direction, fip)
+
     def _process_reset_fip(self, fip):
         self.fip_qos_map.clean_by_resource(fip)
 
-    def process_ip_rate_limit(self, ip, direction, device, rate, burst):
-        rate_limits_direction = direction + "_ratelimits"
-        rate_limits = getattr(self.fip_qos_map, rate_limits_direction, {})
-        old_rate, old_burst = rate_limits.get(ip, (qos_base.IP_DEFAULT_RATE,
-                                                   qos_base.IP_DEFAULT_BURST))
-
-        if old_rate == rate and old_burst == burst:
-            # Two possibilities here:
-            # 1. Floating IP rate limit does not change.
-            # 2. Floating IP bandwidth does not limit.
-            return
+    @coordination.synchronized('qos-floating-ip-{ip}')
+    def process_ip_rate_limit(self, ip, direction,
+                              device, rate, burst):
 
         tc_wrapper = self._get_tc_wrapper(device)
 
@@ -121,12 +165,11 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
             # floating IP bandwidth was changed to default value (no limit).
             # NOTE: l3_tc_lib will ignore exception FilterIDForIPNotFound.
             tc_wrapper.clear_ip_rate_limit(direction, ip)
-            rate_limits.pop(ip, None)
+            self.fip_qos_map.remove_fip_ratelimit_cache(direction, ip)
             return
 
         # Finally just set it, l3_tc_lib will clean the old rules if exists.
         tc_wrapper.set_ip_rate_limit(direction, ip, rate, burst)
-        rate_limits[ip] = (rate, burst)
 
     def _get_rate_limit_ip_device(self, router_info):
         ex_gw_port = router_info.get_ex_gw_port()
@@ -152,17 +195,12 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
         namespace = router_info.get_gw_ns_name()
         return ip_lib.IPDevice(name, namespace=namespace)
 
-    def _remove_ip_rate_limit_cache(self, ip, direction):
-        rate_limits_direction = direction + "_ratelimits"
-        rate_limits = getattr(self.fip_qos_map, rate_limits_direction, {})
-        rate_limits.pop(ip, None)
-
     def _remove_fip_rate_limit(self, device, fip_ip):
         tc_wrapper = self._get_tc_wrapper(device)
         for direction in constants.VALID_DIRECTIONS:
             if device.exists():
                 tc_wrapper.clear_ip_rate_limit(direction, fip_ip)
-            self._remove_ip_rate_limit_cache(fip_ip, direction)
+            self.fip_qos_map.remove_fip_ratelimit_cache(direction, fip_ip)
 
     def get_fip_qos_rates(self, context, fip, policy_id):
         if policy_id is None:
@@ -184,9 +222,21 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
         for direction in constants.VALID_DIRECTIONS:
             rate = rates.get(direction)
             if with_cache:
+
+                old_rate, old_burst = self.fip_qos_map.get_fip_ratelimit_cache(
+                    direction, fip)
+                if old_rate == rate['rate'] and old_burst == rate['burst']:
+                    # Two possibilities here:
+                    # 1. Floating IP rate limit does not change.
+                    # 2. Floating IP bandwidth does not limit.
+                    continue
+
                 self.process_ip_rate_limit(
                     fip, direction, device,
                     rate['rate'], rate['burst'])
+
+                self.fip_qos_map.set_fip_ratelimit_cache(
+                    direction, fip, rate['rate'], rate['burst'])
             else:
                 tc_wrapper = self._get_tc_wrapper(device)
                 if (rate['rate'] == qos_base.IP_DEFAULT_RATE and
@@ -280,13 +330,11 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
                 self._remove_fip_rate_limit(dvr_fip_device, fip)
             self._process_reset_fip(fip)
 
-    @lockutils.synchronized('qos-fip')
     def add_router(self, context, data):
         router_info = self._get_router_info(data['id'])
         if router_info:
             self.process_floating_ip_addresses(context, router_info)
 
-    @lockutils.synchronized('qos-fip')
     def update_router(self, context, data):
         router_info = self._get_router_info(data['id'])
         if router_info:
