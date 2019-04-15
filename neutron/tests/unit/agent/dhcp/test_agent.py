@@ -675,7 +675,6 @@ class TestDhcpAgent(base.BaseTestCase):
             dhcp.configure_dhcp_for_network(fake_network)
             md_cls.spawn_monitored_metadata_proxy.assert_called_once_with(
                 mock.ANY, mock.ANY, mock.ANY, mock.ANY,
-                bind_address=const.METADATA_V4_IP,
                 network_id=fake_network.id)
             md_cls.reset_mock()
             dhcp.disable_dhcp_helper(fake_network.id)
@@ -694,7 +693,6 @@ class TestDhcpAgent(base.BaseTestCase):
                 mock.ANY, fake_network.id, mock.ANY, fake_network.namespace)
             md_cls.spawn_monitored_metadata_proxy.assert_called_once_with(
                 mock.ANY, mock.ANY, mock.ANY, mock.ANY,
-                bind_address=const.METADATA_V4_IP,
                 network_id=fake_network.id)
 
     def test_report_state_revival_logic(self):
@@ -1068,12 +1066,10 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                        '.spawn_monitored_metadata_proxy')
         with mock.patch(method_path) as spawn:
             self.dhcp.enable_isolated_metadata_proxy(network)
-            metadata_ip = const.METADATA_V4_IP
             spawn.assert_called_once_with(self.dhcp._process_monitor,
                                           network.namespace,
                                           const.METADATA_PORT,
                                           cfg.CONF,
-                                          bind_address=metadata_ip,
                                           router_id='forzanapoli')
 
     def test_enable_isolated_metadata_proxy_with_metadata_network(self):
@@ -1100,7 +1096,6 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                                           network.namespace,
                                           const.METADATA_PORT,
                                           cfg.CONF,
-                                          bind_address='169.254.169.254',
                                           network_id=network.id,
                                           bind_interface='fake-interface',
                                           bind_address_v6='fe80::a9fe:a9fe')
