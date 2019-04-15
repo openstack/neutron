@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    In order to improve heavy load ovs agent restart success rate, instead
+    a retry or fullsync, the native driver ``of_connect_timeout`` and
+    ``of_request_timeout`` are now set to 300s. The value does not have side
+    effect for the regular pressure ovs agent.
