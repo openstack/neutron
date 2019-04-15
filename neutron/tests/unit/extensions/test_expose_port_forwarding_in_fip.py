@@ -15,17 +15,28 @@ import mock
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
 from neutron_lib import context
+from oslo_utils import uuidutils
 
+from neutron.db import l3_fip_qos
 from neutron.extensions import floating_ip_port_forwarding as pf_ext
 from neutron.extensions import l3
+from neutron.objects.qos import policy
 from neutron.services.portforwarding import pf_plugin
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
 
 
 PLUGIN_NAME = 'port_forwarding'
-L3_PLUGIN = 'neutron.tests.unit.extensions.test_l3.TestL3NatServicePlugin'
+L3_PLUGIN = ('neutron.tests.unit.extensions.'
+             'test_expose_port_forwarding_in_fip.'
+             'TestL3PorForwardingServicePlugin')
 CORE_PLUGIN = 'neutron.tests.unit.extensions.test_l3.TestNoL3NatPlugin'
+
+
+class TestL3PorForwardingServicePlugin(test_l3.TestL3NatServicePlugin,
+                                       l3_fip_qos.FloatingQoSDbMixin):
+    supported_extension_aliases = ["router", "dns-integration",
+                                   "dvr", "qos-fip"]
 
 
 def _get_expected(ref):
@@ -59,11 +70,25 @@ class TestExtendFipPortForwardingExtension(
         mock.patch('neutron.api.rpc.handlers.resources_rpc.'
                    'ResourcesPushRpcApi').start()
         svc_plugins = {'l3_plugin_name': L3_PLUGIN,
-                       'port_forwarding_plugin_name': PLUGIN_NAME}
+                       'port_forwarding_plugin_name': PLUGIN_NAME,
+                       'qos': 'neutron.services.qos.qos_plugin.QoSPlugin'}
         ext_mgr = ExtendFipPortForwardingExtensionManager()
         super(TestExtendFipPortForwardingExtension, self).setUp(
             plugin=CORE_PLUGIN, ext_mgr=ext_mgr, service_plugins=svc_plugins)
         self.pf_plugin = pf_plugin.PortForwardingPlugin()
+        self.l3_plugin = TestL3PorForwardingServicePlugin()
+
+        ctx = context.get_admin_context()
+        self.policy_1 = policy.QosPolicy(ctx,
+                                         id=uuidutils.generate_uuid(),
+                                         project_id='tenant', name='pol1',
+                                         rules=[])
+        self.policy_1.create()
+        self.policy_2 = policy.QosPolicy(ctx,
+                                         id=uuidutils.generate_uuid(),
+                                         project_id='tenant', name='pol2',
+                                         rules=[])
+        self.policy_2.create()
 
     def test_get_fip_after_port_forwarding_create(self):
         port_forwarding = {
@@ -123,6 +148,40 @@ class TestExtendFipPortForwardingExtension(
                     expect = [expect_result1, expect_result2]
                     self.assertEqual(
                         expect, body['floatingip'][apidef.COLLECTION_NAME])
+                    router_id = body['floatingip']['router_id']
+                    self.assertIsNotNone(router_id)
+
+                    self.l3_plugin.update_floatingip(
+                        ctx, fip['floatingip']['id'], {'floatingip': {}})
+                    body = self._show('floatingips', fip['floatingip']['id'])
+                    self.assertEqual(router_id,
+                                     body['floatingip']['router_id'])
+
+                    self.l3_plugin.update_floatingip(
+                        ctx, fip['floatingip']['id'],
+                        {'floatingip': {'qos_policy_id': self.policy_1.id}})
+                    body = self._show('floatingips', fip['floatingip']['id'])
+                    self.assertEqual(router_id,
+                                     body['floatingip']['router_id'])
+                    self.assertEqual(self.policy_1.id,
+                                     body['floatingip']['qos_policy_id'])
+
+                    self.l3_plugin.update_floatingip(
+                        ctx, fip['floatingip']['id'],
+                        {'floatingip': {'qos_policy_id': self.policy_2.id}})
+                    body = self._show('floatingips', fip['floatingip']['id'])
+                    self.assertEqual(router_id,
+                                     body['floatingip']['router_id'])
+                    self.assertEqual(self.policy_2.id,
+                                     body['floatingip']['qos_policy_id'])
+
+                    self.l3_plugin.update_floatingip(
+                        ctx, fip['floatingip']['id'],
+                        {'floatingip': {'qos_policy_id': None}})
+                    body = self._show('floatingips', fip['floatingip']['id'])
+                    self.assertEqual(router_id,
+                                     body['floatingip']['router_id'])
+                    self.assertIsNone(body['floatingip']['qos_policy_id'])
 
     def test_create_port_forwarding_and_remove_subnets(self):
         port_forwarding = {
