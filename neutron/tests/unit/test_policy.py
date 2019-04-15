@@ -27,12 +27,15 @@ from oslo_policy import fixture as op_fixture
 from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
 from oslo_utils import importutils
+from oslo_utils import uuidutils
 
 import neutron
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron import policy
 from neutron.tests import base
+
+_uuid = uuidutils.generate_uuid
 
 
 class PolicyFileTestCase(base.BaseTestCase):
@@ -252,6 +255,14 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             "create_port:mac": "rule:admin_or_network_owner or "
                                "rule:context_is_advsvc",
             "create_port:device_owner": "not rule:network_device",
+            "create_port:fixed_ips": (
+                "rule:context_is_advsvc or rule:admin_or_network_owner or "
+                "rule:shared"),
+            "create_port:fixed_ips:ip_address": (
+                "rule:context_is_advsvc or rule:admin_or_network_owner"),
+            "create_port:fixed_ips:subnet_id": (
+                "rule:context_is_advsvc or rule:admin_or_network_owner or "
+                "rule:shared"),
             "update_port": "rule:admin_or_owner or rule:context_is_advsvc",
             "get_port": "rule:admin_or_owner or rule:context_is_advsvc",
             "delete_port": "rule:admin_or_owner or rule:context_is_advsvc",
@@ -282,10 +293,10 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             result = policy.enforce(context, action, target)
             self.assertTrue(result)
 
-    def _test_nonadmin_action_on_attr(self, action, attr, value,
+    def _test_nonadmin_action_on_attr(self, action, obj, attr, value,
                                       exception=None, **kwargs):
         user_context = context.Context('', "user", roles=['user'])
-        self._test_action_on_attr(user_context, action, "network", attr,
+        self._test_action_on_attr(user_context, action, obj, attr,
                                   value, exception, **kwargs)
 
     def _test_advsvc_action_on_attr(self, action, obj, attr, value,
@@ -296,15 +307,16 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                                   value, exception, **kwargs)
 
     def test_nonadmin_write_on_private_fails(self):
-        self._test_nonadmin_action_on_attr('create', 'shared', False,
-                                           oslo_policy.PolicyNotAuthorized)
+        self._test_nonadmin_action_on_attr(
+            'create', 'network', 'shared', False,
+            oslo_policy.PolicyNotAuthorized)
 
     def test_nonadmin_read_on_private_fails(self):
-        self._test_nonadmin_action_on_attr('get', 'shared', False,
+        self._test_nonadmin_action_on_attr('get', 'network', 'shared', False,
                                            oslo_policy.PolicyNotAuthorized)
 
     def test_nonadmin_write_on_shared_fails(self):
-        self._test_nonadmin_action_on_attr('create', 'shared', True,
+        self._test_nonadmin_action_on_attr('create', 'network', 'shared', True,
                                            oslo_policy.PolicyNotAuthorized)
 
     def test_create_port_device_owner_regex(self):
@@ -322,6 +334,45 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             self._test_advsvc_action_on_attr(
                 'create', 'port', 'device_owner', val
             )
+
+    def test_create_port_fixed_ips_on_shared_network(self):
+
+        def fakegetnetwork(*args, **kwargs):
+            return {'tenant_id': 'fake',
+                    'shared': True}
+
+        kwargs = {'network_id': _uuid()}
+        with mock.patch.object(directory.get_plugin(),
+                               'get_network', new=fakegetnetwork):
+            self._test_nonadmin_action_on_attr(
+                'create', 'port',
+                'fixed_ips', [{'subnet_id': 'test-subnet-id'}],
+                **kwargs)
+            self._test_nonadmin_action_on_attr(
+                'create', 'port',
+                'fixed_ips', [{'ip_address': '1.2.3.4'}],
+                exception=oslo_policy.PolicyNotAuthorized,
+                **kwargs)
+
+    def test_create_port_fixed_ips_on_nonshared_network(self):
+
+        def fakegetnetwork(*args, **kwargs):
+            return {'tenant_id': 'fake',
+                    'shared': False}
+
+        kwargs = {'network_id': _uuid()}
+        with mock.patch.object(directory.get_plugin(),
+                               'get_network', new=fakegetnetwork):
+            self._test_nonadmin_action_on_attr(
+                'create', 'port',
+                'fixed_ips', [{'subnet_id': 'test-subnet-id'}],
+                exception=oslo_policy.PolicyNotAuthorized,
+                **kwargs)
+            self._test_nonadmin_action_on_attr(
+                'create', 'port',
+                'fixed_ips', [{'ip_address': '1.2.3.4'}],
+                exception=oslo_policy.PolicyNotAuthorized,
+                **kwargs)
 
     def test_advsvc_get_network_works(self):
         self._test_advsvc_action_on_attr('get', 'network', 'shared', False)
@@ -349,7 +400,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                                          oslo_policy.PolicyNotAuthorized)
 
     def test_nonadmin_read_on_shared_succeeds(self):
-        self._test_nonadmin_action_on_attr('get', 'shared', True)
+        self._test_nonadmin_action_on_attr('get', 'network', 'shared', True)
 
     def _test_enforce_adminonly_attribute(self, action, **kwargs):
         admin_context = context.get_admin_context()
@@ -368,9 +419,10 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def test_reset_adminonly_attr_to_default_fails(self):
         kwargs = {n_const.ATTRIBUTES_TO_UPDATE: ['shared']}
-        self._test_nonadmin_action_on_attr('update', 'shared', False,
-                                           oslo_policy.PolicyNotAuthorized,
-                                           **kwargs)
+        self._test_nonadmin_action_on_attr(
+            'update', 'network', 'shared', False,
+            oslo_policy.PolicyNotAuthorized,
+            **kwargs)
 
     def test_enforce_adminonly_attribute_nonadminctx_returns_403(self):
         action = "create_network"
