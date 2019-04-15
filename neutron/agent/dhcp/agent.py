@@ -828,7 +828,7 @@ class DhcpAgent(manager.Manager):
 
         metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
             self._process_monitor, network.namespace, constants.METADATA_PORT,
-            self.conf, bind_address=constants.METADATA_V4_IP, **kwargs)
+            self.conf, **kwargs)
 
     def disable_isolated_metadata_proxy(self, network):
         if (self.conf.enable_metadata_network and
