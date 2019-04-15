@@ -340,20 +340,42 @@ class FieldCheck(policy.Check):
             conv_func = lambda x: x
 
         self.field = field
+        self.resource = resource
         self.value = conv_func(value)
         self.regex = re.compile(value[1:]) if value.startswith('~') else None
 
     def __call__(self, target_dict, cred_dict, enforcer):
-        target_value = target_dict.get(self.field)
+        target_value = self._get_target_value(target_dict)
         # target_value might be a boolean, explicitly compare with None
         if target_value is None:
-            LOG.debug("Unable to find requested field: %(field)s in target: "
-                      "%(target_dict)s",
-                      {'field': self.field, 'target_dict': target_dict})
             return False
         if self.regex:
             return bool(self.regex.match(target_value))
         return target_value == self.value
+
+    def _get_target_value(self, target_dict):
+        if self.field in target_dict:
+            return target_dict[self.field]
+        # NOTE(slaweq): In case that target field is "networks:shared" we need
+        # to treat it in "special" way as it may be used for resources other
+        # than network, e.g. for port or subnet
+        target_value = None
+        if self.resource == "networks" and self.field == constants.SHARED:
+            target_network_id = target_dict.get("network_id")
+            if not target_network_id:
+                LOG.debug("Unable to find network_id field in target: "
+                          "%(target_dict)s",
+                          {'field': self.field, 'target_dict': target_dict})
+                return
+            plugin = directory.get_plugin()
+            network = plugin.get_network(
+                context.get_admin_context(), target_network_id)
+            target_value = network.get(self.field)
+        if target_value is None:
+            LOG.debug("Unable to find requested field: %(field)s in target: "
+                      "%(target_dict)s",
+                      {'field': self.field, 'target_dict': target_dict})
+        return target_value
 
 
 def _prepare_check(context, action, target, pluralized):
