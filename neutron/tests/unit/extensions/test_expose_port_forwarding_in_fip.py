@@ -15,18 +15,22 @@ import mock
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
 from neutron_lib import context
+from neutron_lib.plugins import constants as plugin_constants
+from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
+from webob import exc
 
+from neutron.db import l3_dvr_db
 from neutron.db import l3_fip_qos
 from neutron.extensions import floating_ip_port_forwarding as pf_ext
 from neutron.extensions import l3
 from neutron.objects.qos import policy
-from neutron.services.portforwarding import pf_plugin
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
 
 
-PLUGIN_NAME = 'port_forwarding'
+PF_PLUGIN_NAME = ('neutron.services.portforwarding.'
+                  'pf_plugin.PortForwardingPlugin')
 L3_PLUGIN = ('neutron.tests.unit.extensions.'
              'test_expose_port_forwarding_in_fip.'
              'TestL3PorForwardingServicePlugin')
@@ -69,14 +73,13 @@ class TestExtendFipPortForwardingExtension(
     def setUp(self):
         mock.patch('neutron.api.rpc.handlers.resources_rpc.'
                    'ResourcesPushRpcApi').start()
-        svc_plugins = {'l3_plugin_name': L3_PLUGIN,
-                       'port_forwarding_plugin_name': PLUGIN_NAME,
-                       'qos': 'neutron.services.qos.qos_plugin.QoSPlugin'}
+        svc_plugins = (L3_PLUGIN, PF_PLUGIN_NAME,
+                       'neutron.services.qos.qos_plugin.QoSPlugin')
         ext_mgr = ExtendFipPortForwardingExtensionManager()
         super(TestExtendFipPortForwardingExtension, self).setUp(
             plugin=CORE_PLUGIN, ext_mgr=ext_mgr, service_plugins=svc_plugins)
-        self.pf_plugin = pf_plugin.PortForwardingPlugin()
-        self.l3_plugin = TestL3PorForwardingServicePlugin()
+        self.l3_plugin = directory.get_plugin(plugin_constants.L3)
+        self.pf_plugin = directory.get_plugin(plugin_constants.PORTFORWARDING)
 
         ctx = context.get_admin_context()
         self.policy_1 = policy.QosPolicy(ctx,
@@ -254,3 +257,56 @@ class TestExtendFipPortForwardingExtension(
                     self._router_interface_action(
                         'remove', router['router']['id'],
                         insub3['subnet']['id'], None)
+
+    @mock.patch.object(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
+                       '_notify_floating_ip_change')
+    @mock.patch.object(l3_dvr_db.DVRResourceOperationHandler,
+                       '_create_dvr_floating_gw_port')
+    def test_port_in_used_by_port_forwarding(self, mock_gw_port, mock_notify):
+        port_forwarding = {
+            apidef.RESOURCE_NAME:
+                {apidef.EXTERNAL_PORT: 2225,
+                 apidef.INTERNAL_PORT: 25,
+                 apidef.INTERNAL_PORT_ID: None,
+                 apidef.PROTOCOL: "tcp",
+                 apidef.INTERNAL_IP_ADDRESS: None}}
+        ctx = context.get_admin_context()
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
+        with self.network(**kwargs) as extnet, self.network() as innet:
+            with self.subnet(network=extnet, cidr='200.0.0.0/22'),\
+                    self.subnet(network=innet, cidr='10.0.0.0/24') as insub,\
+                    self.router(distributed=True) as router:
+                fip = self._make_floatingip(self.fmt, extnet['network']['id'])
+                # check the floatingip response contains port_forwarding field
+                self.assertIn(apidef.COLLECTION_NAME, fip['floatingip'])
+                self._add_external_gateway_to_router(router['router']['id'],
+                                                     extnet['network']['id'])
+                self._router_interface_action('add', router['router']['id'],
+                                              insub['subnet']['id'], None)
+
+                with self.port(subnet=insub) as port1:
+                    update_dict1 = {
+                        apidef.INTERNAL_PORT_ID: port1['port']['id'],
+                        apidef.INTERNAL_IP_ADDRESS:
+                            port1['port']['fixed_ips'][0]['ip_address']}
+                    port_forwarding[apidef.RESOURCE_NAME].update(update_dict1)
+                    self.pf_plugin.create_floatingip_port_forwarding(
+                        ctx, fip['floatingip']['id'], port_forwarding)
+
+                    body = self._show('floatingips', fip['floatingip']['id'])
+                    self.assertEqual(
+                        1, len(body['floatingip'][apidef.COLLECTION_NAME]))
+
+                    self._make_floatingip(
+                        self.fmt,
+                        extnet['network']['id'],
+                        port_id=port1['port']['id'],
+                        http_status=exc.HTTPBadRequest.code)
+                    fip_2 = self._make_floatingip(self.fmt,
+                                                  extnet['network']['id'])
+                    self._update(
+                        'floatingips',
+                        fip_2['floatingip']['id'],
+                        {'floatingip': {'port_id': port1['port']['id']}},
+                        expected_code=exc.HTTPBadRequest.code)

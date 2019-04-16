@@ -25,5 +25,11 @@ class PortForwardingNotSupportFilterField(n_exc.BadRequest):
     message = _("Port Forwarding filter %(filter)s is not supported.")
 
 
+class PortHasPortForwarding(n_exc.BadRequest):
+    message = _("Cannot associate floating IP to port "
+                "%(port_id)s because it already has a "
+                "Port Forwarding binding.")
+
+
 class FipInUseByPortForwarding(n_exc.InUse):
     message = _("Floating IP %(id)s in use by Port Forwarding resources.")
