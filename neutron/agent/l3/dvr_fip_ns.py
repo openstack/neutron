@@ -443,12 +443,13 @@ class FipNamespace(namespaces.Namespace):
             rtr_2_fip_dev, fip_2_rtr_dev = ip_wrapper.add_veth(rtr_2_fip_name,
                                                                fip_2_rtr_name,
                                                                fip_ns_name)
-            mtu = ri.get_ex_gw_port().get('mtu')
-            if mtu:
-                rtr_2_fip_dev.link.set_mtu(mtu)
-                fip_2_rtr_dev.link.set_mtu(mtu)
             rtr_2_fip_dev.link.set_up()
             fip_2_rtr_dev.link.set_up()
+
+        mtu = ri.get_ex_gw_port().get('mtu')
+        if mtu:
+            rtr_2_fip_dev.link.set_mtu(mtu)
+            fip_2_rtr_dev.link.set_mtu(mtu)
 
         self._add_cidr_to_device(rtr_2_fip_dev, str(rtr_2_fip))
         self._add_cidr_to_device(fip_2_rtr_dev, str(fip_2_rtr))
