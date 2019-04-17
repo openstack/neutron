@@ -147,10 +147,31 @@ class PluginApi(object):
     def update_device_list(self, context, devices_up, devices_down,
                            agent_id, host, agent_restarted=False):
         cctxt = self.client.prepare(version='1.5')
-        return cctxt.call(context, 'update_device_list',
-                          devices_up=devices_up, devices_down=devices_down,
-                          agent_id=agent_id, host=host,
-                          agent_restarted=agent_restarted)
+
+        ret_devices_up = []
+        failed_devices_up = []
+        ret_devices_down = []
+        failed_devices_down = []
+
+        step = n_const.RPC_RES_PROCESSING_STEP
+        devices_up = list(devices_up)
+        devices_down = list(devices_down)
+        for i in range(0, max(len(devices_up), len(devices_down)), step):
+            # Divide-and-conquer RPC timeout
+            ret = cctxt.call(context, 'update_device_list',
+                             devices_up=devices_up[i:i + step],
+                             devices_down=devices_down[i:i + step],
+                             agent_id=agent_id, host=host,
+                             agent_restarted=agent_restarted)
+            ret_devices_up.extend(ret.get("devices_up", []))
+            failed_devices_up.extend(ret.get("failed_devices_up", []))
+            ret_devices_down.extend(ret.get("devices_down", []))
+            failed_devices_down.extend(ret.get("failed_devices_down", []))
+
+        return {'devices_up': ret_devices_up,
+                'failed_devices_up': failed_devices_up,
+                'devices_down': ret_devices_down,
+                'failed_devices_down': failed_devices_down}
 
     def tunnel_sync(self, context, tunnel_ip, tunnel_type=None, host=None):
         cctxt = self.client.prepare(version='1.4')
