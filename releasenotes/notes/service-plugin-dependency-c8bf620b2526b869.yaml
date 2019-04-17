@@ -1,0 +1,22 @@
+---
+fixes:
+  - |
+    Adds the ``router`` service plugin to the ``port_forwarding`` service
+    plugin required list. For more info see
+    https://bugs.launchpad.net/neutron/+bug/1809238
+other:
+  - |
+    Neutron now supports having service plugins require other plugin(s) as
+    dependencies. For example, the ``port_forwarding`` service plugin
+    requires the ``router`` service plugin to achieve full functionality. A
+    new list, ``required_service_plugins``, was added to each service
+    plugin so the required dependencies of each service plugin can be
+    initialized.  If one service plugin requires another, but the requirement
+    is not set in the config file, neutron will now initialize it to the
+    plugin directory.
+upgrade:
+  - |
+    During the dependency resolution procedure, the code that loads service
+    plugins was refactored to not raise an exception if one plugin is
+    configured multiple times, with the last one taking effect. This is a
+    change from the previous behavior.

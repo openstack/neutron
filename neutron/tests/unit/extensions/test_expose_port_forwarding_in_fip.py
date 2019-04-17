@@ -73,7 +73,7 @@ class TestExtendFipPortForwardingExtension(
     def setUp(self):
         mock.patch('neutron.api.rpc.handlers.resources_rpc.'
                    'ResourcesPushRpcApi').start()
-        svc_plugins = (L3_PLUGIN, PF_PLUGIN_NAME,
+        svc_plugins = (PF_PLUGIN_NAME, L3_PLUGIN,
                        'neutron.services.qos.qos_plugin.QoSPlugin')
         ext_mgr = ExtendFipPortForwardingExtensionManager()
         super(TestExtendFipPortForwardingExtension, self).setUp(
