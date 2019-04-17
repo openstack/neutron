@@ -281,6 +281,22 @@ class FipPortForwardingExtensionTestCase(PortForwardingExtensionBaseTestCase):
                 lib_const.FLOATINGIP_STATUS_DOWN}
         mock_send_fip_status.assert_called_once_with(mock.ANY, fip_status)
 
+    def test_check_if_need_process_no_snat_ns(self):
+        ex_gw_port = {'id': _uuid()}
+        router_id = _uuid()
+        router = {'id': router_id,
+                  'gw_port': ex_gw_port,
+                  'ha': False,
+                  'distributed': True}
+        router_info = l3router.RouterInfo(
+            self.agent, router_id, router,
+            **self.ri_kwargs)
+        router_info.agent_conf.agent_mode = lib_const.L3_AGENT_MODE_DVR_SNAT
+        router_info.fip_managed_by_port_forwardings = True
+        router_info.snat_namespace = mock.Mock()
+        router_info.snat_namespace.exists.return_value = False
+        self.assertFalse(self.fip_pf_ext._check_if_need_process(router_info))
+
 
 class RouterFipPortForwardingMappingTestCase(base.BaseTestCase):
 
