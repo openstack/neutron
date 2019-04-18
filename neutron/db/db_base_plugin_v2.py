@@ -1276,11 +1276,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         if subnetpool.address_scope_id:
             # Notify all affected routers of any address scope changes
-            registry.notify(resources.SUBNETPOOL_ADDRESS_SCOPE,
-                            events.AFTER_UPDATE,
-                            self.onboard_network_subnets,
-                            payload=events.DBEventPayload(
-                                context, resource_id=subnetpool_id))
+            registry.publish(resources.SUBNETPOOL_ADDRESS_SCOPE,
+                             events.AFTER_UPDATE,
+                             self.onboard_network_subnets,
+                             payload=events.DBEventPayload(
+                                 context, resource_id=subnetpool_id))
 
         onboard_info = []
         for subnet in subnets_to_onboard:
