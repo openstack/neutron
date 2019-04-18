@@ -536,7 +536,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             if of_port.ofport != ovs_port.ofport:
                 self.sg_port_map.remove_port(of_port)
                 of_port = OFPort(port, ovs_port, of_port.vlan_tag)
-            self.sg_port_map.update_port(of_port, port)
+                self.sg_port_map.create_port(of_port, port)
+            else:
+                self.sg_port_map.update_port(of_port, port)
 
         return of_port
 
