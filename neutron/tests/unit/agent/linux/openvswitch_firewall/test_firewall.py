@@ -474,6 +474,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         self.mock_bridge.br.get_vif_port_by_id.return_value = \
             fake_ovs_port
         port = self.firewall.get_or_create_ofport(port_dict)
+        self.assertIn(of_port.id, self.firewall.sg_port_map.ports.keys())
         self.assertEqual(port.ofport, 2)
 
     def test_get_or_create_ofport_missing(self):
