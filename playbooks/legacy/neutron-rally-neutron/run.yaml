@@ -13,12 +13,12 @@
           set -x
           cat > clonemap.yaml << EOF
           clonemap:
-            - name: openstack-infra/devstack-gate
+            - name: openstack/devstack-gate
               dest: devstack-gate
           EOF
           /usr/zuul-env/bin/zuul-cloner -m clonemap.yaml --cache-dir /opt/git \
-              https://git.openstack.org \
-              openstack-infra/devstack-gate
+              https://opendev.org \
+              openstack/devstack-gate
         executable: /bin/bash
         chdir: '{{ ansible_user_dir }}/workspace'
       environment: '{{ zuul | zuul_legacy_vars }}'
@@ -58,7 +58,7 @@
               export IDENTITY_API_VERSION=3
           fi
 
-          DEVSTACK_LOCAL_CONFIG="enable_plugin rally https://git.openstack.org/openstack/rally"
+          DEVSTACK_LOCAL_CONFIG="enable_plugin rally https://opendev.org/openstack/rally"
           DEVSTACK_LOCAL_CONFIG+=$'\n'"CINDER_ENABLE_V1_API=True"
           DEVSTACK_LOCAL_CONFIG+=$'\n'"IDENTITY_API_VERSION=$IDENTITY_API_VERSION"
 
@@ -79,11 +79,11 @@
           fi
 
           if [ $DEVSTACK_GATE_HEAT -ne 0 ]; then
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin heat https://git.openstack.org/openstack/heat"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin heat https://opendev.org/openstack/heat"
           fi
 
           export PROJECTS="openstack/neutron $PROJECTS"
-          export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin neutron https://git.openstack.org/openstack/neutron"
+          export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin neutron https://opendev.org/openstack/neutron"
           if [ $DEVSTACK_GATE_NEUTRON_EXTENSIONS -ne 0 ]; then
               export PROJECTS="openstack/neutron-lbaas $PROJECTS"
               export PROJECTS="openstack/octavia $PROJECTS"
@@ -92,42 +92,42 @@
               export PROJECTS="openstack/tripleo-image-elements $PROJECTS"
               export PROJECTS="openstack/neutron-vpnaas $PROJECTS"
               export PROJECTS="openstack/networking-bgpvpn $PROJECTS"
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin neutron-lbaas https://git.openstack.org/openstack/neutron-lbaas"
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin octavia https://git.openstack.org/openstack/octavia"
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin neutron-fwaas https://git.openstack.org/openstack/neutron-fwaas"
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin neutron-vpnaas https://git.openstack.org/openstack/neutron-vpnaas"
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin networking-bgpvpn https://git.openstack.org/openstack/networking-bgpvpn.git"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin neutron-lbaas https://opendev.org/openstack/neutron-lbaas"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin octavia https://opendev.org/openstack/octavia"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin neutron-fwaas https://opendev.org/openstack/neutron-fwaas"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin neutron-vpnaas https://opendev.org/openstack/neutron-vpnaas"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin networking-bgpvpn https://opendev.org/openstack/networking-bgpvpn.git"
               export ENABLED_SERVICES+=q-lbaasv2,octavia,o-cw,o-hk,o-hm,o-api,q-fwaas,q-svc,q-agt,q-dhcp,q-l3,q-meta,
           fi
           if [ $DEVSTACK_GATE_IRONIC -ne 0 ]; then
               export PROJECTS="openstack/ironic $PROJECTS"
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin ironic https://git.openstack.org/openstack/ironic"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin ironic https://opendev.org/openstack/ironic"
           fi
           if [ $DEVSTACK_GATE_ZAQAR -ne 0 ]; then
               export PROJECTS="openstack/python-zaqarclient $PROJECTS"
               export PROJECTS="openstack/zaqar-ui $PROJECTS"
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin zaqar https://git.openstack.org/openstack/zaqar"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin zaqar https://opendev.org/openstack/zaqar"
           fi
           if [ $DEVSTACK_GATE_SENLIN -ne 0 ]; then
               export PROJECTS="openstack/senlin $PROJECTS"
               export PROJECTS="openstack/python-senlinclient $PROJECTS"
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin senlin https://git.openstack.org/openstack/senlin"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin senlin https://opendev.org/openstack/senlin"
               export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_service sl-api sl-eng"
           fi
           if [ $DEVSTACK_GATE_WATCHER -ne 0 ]; then
               export PROJECTS="openstack/watcher $PROJECTS"
               export PROJECTS="openstack/python-watcherclient $PROJECTS"
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin watcher https://git.openstack.org/openstack/watcher"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin watcher https://opendev.org/openstack/watcher"
               export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_service watcher-api watcher-decision-engine watcher-applier"
           fi
           if [ $DEVSTACK_GATE_MAGNUM -ne 0 ]||[ $RALLY_SCENARIO = "magnum" ]; then
               export PROJECTS="openstack/magnum $PROJECTS"
               export PROJECTS="openstack/python-magnumclient $PROJECTS"
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin magnum https://git.openstack.org/openstack/magnum"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin magnum https://opendev.org/openstack/magnum"
           fi
           if [ $DEVSTACK_GATE_TELEMETRY -ne 0 ]; then
               export PROJECTS="openstack/panko $PROJECTS"
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin panko https://git.openstack.org/openstack/panko"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin panko https://opendev.org/openstack/panko"
               export ENABLED_SERVICES+=panko-api,
               export PROJECTS="openstack/ceilometer $PROJECTS"
               export PROJECTS="openstack/aodh $PROJECTS"
@@ -135,9 +135,9 @@
 
               export CEILOMETER_NOTIFICATION_TOPICS=notifications,profiler
 
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin ceilometer https://git.openstack.org/openstack/ceilometer"
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin aodh https://git.openstack.org/openstack/aodh"
-              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin gnocchi https://git.openstack.org/openstack/gnocchi"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin ceilometer https://opendev.org/openstack/ceilometer"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin aodh https://opendev.org/openstack/aodh"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin gnocchi https://opendev.org/openstack/gnocchi"
               export ENABLED_SERVICES+=ceilometer-acompute,ceilometer-acentral,ceilometer-api,
               export ENABLED_SERVICES+=ceilometer-anotification,ceilometer-collector,
               export ENABLED_SERVICES+=aodh-api,aodh-evaluator,aodh-notifier,
