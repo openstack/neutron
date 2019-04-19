@@ -233,7 +233,9 @@ def get_sorts(request, attr_info):
         msg = _("The number of sort_keys and sort_dirs must be same")
         raise exc.HTTPBadRequest(explanation=msg)
     valid_dirs = [constants.SORT_DIRECTION_ASC, constants.SORT_DIRECTION_DESC]
-    absent_keys = [x for x in sort_keys if x not in attr_info]
+    valid_sort_keys = set(attr for attr, schema in attr_info.items()
+                          if schema.get('is_sort_key', False))
+    absent_keys = [x for x in sort_keys if x not in valid_sort_keys]
     if absent_keys:
         msg = _("%s is invalid attribute for sort_keys") % absent_keys
         raise exc.HTTPBadRequest(explanation=msg)
