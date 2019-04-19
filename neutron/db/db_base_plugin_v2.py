@@ -715,7 +715,14 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         l3plugin.update_router(context, router_id, info)
 
     @db_api.retry_if_session_inactive()
-    def _create_subnet_postcommit(self, context, result, network, ipam_subnet):
+    def _create_subnet_postcommit(self, context, result,
+                                  network=None, ipam_subnet=None):
+        if not network:
+            network = self._get_network(context,
+                                        result['network_id'])
+        if not ipam_subnet:
+            ipam_subnet = self.ipam.get_subnet(context, result['id'])
+
         if hasattr(network, 'external') and network.external:
             self._update_router_gw_ports(context,
                                          network,
