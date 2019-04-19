@@ -360,10 +360,16 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         base_data = {'subnet': {'network_id': net_id,
                                 'ip_version': ip_version,
                                 'tenant_id': self._tenant_id}}
+        if 'ipv6_mode' in kwargs:
+            base_data['subnet']['ipv6_ra_mode'] = kwargs['ipv6_mode']
+            base_data['subnet']['ipv6_address_mode'] = kwargs['ipv6_mode']
         # auto-generate cidrs as they should not overlap
+        base_cidr = "10.0.%s.0/24"
+        if ip_version == constants.IP_VERSION_6:
+            base_cidr = "fd%s::/64"
         overrides = dict((k, v)
                          for (k, v) in zip(range(number),
-                                           [{'cidr': "10.0.%s.0/24" % num}
+                                           [{'cidr': base_cidr % num}
                                             for num in range(number)]))
         kwargs.update({'override': overrides})
         return self._create_bulk(fmt, number, 'subnet', base_data, **kwargs)
@@ -3298,6 +3304,18 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                            'test')
             self._validate_behavior_on_bulk_success(res, 'subnets')
 
+    def test_create_subnets_bulk_native_ipv6(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk subnet create")
+        with self.network() as net:
+            res = self._create_subnet_bulk(self.fmt,
+                                           2,
+                                           net['network']['id'],
+                                           'test',
+                                           ip_version=constants.IP_VERSION_6,
+                                           ipv6_mode=constants.IPV6_SLAAC)
+            self._validate_behavior_on_bulk_success(res, 'subnets')
+
     def test_create_subnets_bulk_emulated(self):
         real_has_attr = hasattr
 
@@ -4403,6 +4421,25 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnet_ipv6_slaac_with_port_not_found(self):
         self._test_create_subnet_ipv6_auto_addr_with_port_on_network(
             constants.IPV6_SLAAC, insert_port_not_found=True)
+
+    def test_bulk_create_subnet_ipv6_auto_addr_with_port_on_network(self):
+        # Create a network with one IPv4 subnet and one port
+        with self.network() as network,\
+            self.subnet(network=network) as v4_subnet,\
+            self.port(subnet=v4_subnet,
+                device_owner=constants.DEVICE_OWNER_DHCP) as port:
+            # Add 2 IPv6 auto-address subnets in a bulk request
+            self._create_subnet_bulk(
+                self.fmt, 2, network['network']['id'], 'test',
+                ip_version=constants.IP_VERSION_6,
+                ipv6_mode=constants.IPV6_SLAAC)
+            # Confirm that the port has been updated with addresses
+            # from the new auto-address subnets
+            req = self.new_show_request('ports', port['port']['id'],
+                                        self.fmt)
+            sport = self.deserialize(self.fmt, req.get_response(self.api))
+            fixed_ips = sport['port']['fixed_ips']
+            self.assertEqual(3, len(fixed_ips))
 
     def test_update_subnet_no_gateway(self):
         with self.subnet() as subnet:
