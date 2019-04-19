@@ -108,10 +108,10 @@
     description: Run neutron functional tests
     timeout: 7800
     required-projects:
-      - git.openstack.org/openstack-dev/devstack
+      - opendev.org/openstack/devstack
       - openstack/neutron
     roles:
-      - zuul: openstack-dev/devstack
+      - zuul: openstack/devstack
     pre-run: playbooks/configure_functional_job.yaml
     run: playbooks/run_functional_job.yaml
     post-run: playbooks/post_functional_job.yaml
@@ -164,8 +164,8 @@
       devstack_localrc:
         USE_PYTHON3: true
       devstack_plugins:
-        rally-openstack: https://git.openstack.org/openstack/rally-openstack
-        neutron: https://git.openstack.org/openstack/neutron
+        rally-openstack: https://opendev.org/openstack/rally-openstack
+        neutron: https://opendev.org/openstack/neutron
       devstack_services:
         neutron-trunk: true
       rally_task: rally-jobs/task-neutron.yaml
@@ -185,7 +185,7 @@
     parent: tempest-full-py3
     timeout: 10800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     vars:
@@ -199,7 +199,7 @@
     parent: tempest-full-py3
     timeout: 10800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     vars:
@@ -225,8 +225,8 @@
     post-run: playbooks/legacy/neutron-grenade-multinode/post.yaml
     timeout: 10800
     required-projects:
-      - openstack-dev/grenade
-      - openstack-infra/devstack-gate
+      - openstack/grenade
+      - openstack/devstack-gate
       - openstack/neutron
     irrelevant-files: *tempest-irrelevant-files
 
@@ -237,8 +237,8 @@
     post-run: playbooks/legacy/neutron-grenade-dvr-multinode/post.yaml
     timeout: 7500
     required-projects:
-      - openstack-dev/grenade
-      - openstack-infra/devstack-gate
+      - openstack/grenade
+      - openstack/devstack-gate
       - openstack/neutron
     irrelevant-files: *tempest-irrelevant-files
 
@@ -250,7 +250,7 @@
     roles:
       - zuul: openstack/neutron-tempest-plugin
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     pre-run: playbooks/dvr-multinode-scenario-pre-run.yaml
@@ -317,13 +317,13 @@
     parent: tempest-full-py3
     timeout: 10800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     vars:
       tempest_concurrency: 4
       devstack_plugins:
-        neutron: https://git.openstack.org/openstack/neutron.git
+        neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
         tls-proxy: false
         tempest: true
@@ -380,8 +380,8 @@
     post-run: playbooks/legacy/neutron-grenade/post.yaml
     timeout: 10800
     required-projects:
-      - openstack-dev/grenade
-      - openstack-infra/devstack-gate
+      - openstack/grenade
+      - openstack/devstack-gate
       - openstack/neutron
     irrelevant-files: *tempest-irrelevant-files
 
@@ -392,7 +392,7 @@
     post-run: playbooks/legacy/neutron-tempest-postgres-full/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
 
@@ -403,7 +403,7 @@
     post-run: playbooks/legacy/neutron-tempest-with-os-ken-master/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
 
