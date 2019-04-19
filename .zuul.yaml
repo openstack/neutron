@@ -163,7 +163,7 @@
     post-run: playbooks/legacy/neutron-functional/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
     irrelevant-files:
       - ^.*\.rst$
@@ -178,7 +178,7 @@
     post-run: playbooks/legacy/neutron-fullstack/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
     irrelevant-files:
       - ^.*\.rst$
@@ -194,7 +194,7 @@
     post-run: playbooks/legacy/neutron-rally-neutron/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/aodh
       - openstack/ceilometer
       - openstack/diskimage-builder
@@ -232,7 +232,7 @@
     post-run: playbooks/legacy/neutron-tempest-dvr/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     irrelevant-files:
@@ -253,7 +253,7 @@
     post-run: playbooks/legacy/neutron-tempest-linuxbridge/post.yaml
     timeout: 8400
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     irrelevant-files:
@@ -275,7 +275,7 @@
     post-run: playbooks/legacy/neutron-tempest-multinode-full/post.yaml
     timeout: 10800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     nodeset: ubuntu-xenial-2-node
@@ -298,7 +298,7 @@
     post-run: playbooks/legacy/neutron-tempest-dvr-ha-multinode-full/post.yaml
     timeout: 10800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     nodeset: ubuntu-xenial-3-node
@@ -321,7 +321,7 @@
     post-run: playbooks/legacy/neutron-tempest-ovsfw/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     irrelevant-files:
