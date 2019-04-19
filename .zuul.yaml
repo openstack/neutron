@@ -173,7 +173,7 @@
     post-run: playbooks/legacy/neutron-functional/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
     irrelevant-files:
       - ^.*\.rst$
@@ -188,7 +188,7 @@
     post-run: playbooks/legacy/neutron-functional-python35/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
     irrelevant-files:
       - ^.*\.rst$
@@ -204,7 +204,7 @@
     post-run: playbooks/legacy/neutron-fullstack/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
     irrelevant-files:
       - ^.*\.rst$
@@ -220,7 +220,7 @@
     post-run: playbooks/legacy/neutron-fullstack-python35/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
     irrelevant-files:
       - ^.*\.rst$
@@ -235,8 +235,8 @@
     timeout: 7800
     vars:
       devstack_plugins:
-        rally-openstack: https://git.openstack.org/openstack/rally-openstack
-        neutron: https://git.openstack.org/openstack/neutron
+        rally-openstack: https://opendev.org/openstack/rally-openstack
+        neutron: https://opendev.org/openstack/neutron
       devstack_services:
         neutron-trunk: true
       rally_task: rally-jobs/task-neutron.yaml
@@ -258,7 +258,7 @@
     post-run: playbooks/legacy/neutron-tempest-dvr/post.yaml
     timeout: 10800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     irrelevant-files:
@@ -279,7 +279,7 @@
     post-run: playbooks/legacy/neutron-tempest-linuxbridge/post.yaml
     timeout: 10800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     irrelevant-files:
@@ -301,8 +301,8 @@
     post-run: playbooks/legacy/neutron-grenade-multinode/post.yaml
     timeout: 10800
     required-projects:
-      - openstack-dev/grenade
-      - openstack-infra/devstack-gate
+      - openstack/grenade
+      - openstack/devstack-gate
       - openstack/neutron
     nodeset: ubuntu-xenial-2-node
     irrelevant-files:
@@ -323,8 +323,8 @@
     post-run: playbooks/legacy/neutron-grenade-dvr-multinode/post.yaml
     timeout: 7500
     required-projects:
-      - openstack-dev/grenade
-      - openstack-infra/devstack-gate
+      - openstack/grenade
+      - openstack/devstack-gate
       - openstack/neutron
     nodeset: ubuntu-xenial-2-node
     irrelevant-files:
@@ -345,7 +345,7 @@
     post-run: playbooks/legacy/neutron-tempest-multinode-full/post.yaml
     timeout: 10800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     nodeset: ubuntu-xenial-2-node
@@ -368,7 +368,7 @@
     post-run: playbooks/legacy/neutron-tempest-dvr-ha-multinode-full/post.yaml
     timeout: 10800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     nodeset: ubuntu-xenial-3-node
@@ -391,7 +391,7 @@
     post-run: playbooks/legacy/neutron-tempest-iptables_hybrid/post.yaml
     timeout: 10800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     irrelevant-files:
@@ -412,8 +412,8 @@
     post-run: playbooks/legacy/neutron-grenade/post.yaml
     timeout: 10800
     required-projects:
-      - openstack-dev/grenade
-      - openstack-infra/devstack-gate
+      - openstack/grenade
+      - openstack/devstack-gate
       - openstack/neutron
     irrelevant-files:
       - ^(test-|)requirements.txt$
@@ -433,7 +433,7 @@
     post-run: playbooks/legacy/neutron-tempest-postgres-full/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
 
@@ -444,7 +444,7 @@
     post-run: playbooks/legacy/neutron-tempest-with-ryu-master/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
 
@@ -455,7 +455,7 @@
     post-run: playbooks/legacy/neutron-fullstack-with-uwsgi/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
     irrelevant-files:
       - ^.*\.rst$
@@ -471,7 +471,7 @@
     post-run: playbooks/legacy/neutron-functional-with-uwsgi/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/neutron
     irrelevant-files:
       - ^.*\.rst$
