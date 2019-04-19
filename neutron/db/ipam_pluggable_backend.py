@@ -175,6 +175,10 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         ipam_driver = driver.Pool.get_instance(None, context)
         ipam_driver.remove_subnet(subnet_id)
 
+    def get_subnet(self, context, subnet_id):
+        ipam_driver = driver.Pool.get_instance(None, context)
+        return ipam_driver.get_subnet(subnet_id)
+
     def allocate_ips_for_port_and_store(self, context, port, port_id):
         # Make a copy of port dict to prevent changing
         # incoming dict by adding 'id' to it.

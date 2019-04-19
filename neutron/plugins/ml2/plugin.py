@@ -1180,10 +1180,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                         result, network)
             self.mechanism_manager.create_subnet_precommit(mech_context)
 
-        # TODO(kevinbenton): move this to '_after_subnet_create'
-        # db base plugin post commit ops
-        self._create_subnet_postcommit(context, result, net_db, ipam_sub)
-
         return result, mech_context
 
     @utils.transaction_guard
@@ -1194,6 +1190,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return self._after_create_subnet(context, result, mech_context)
 
     def _after_create_subnet(self, context, result, mech_context):
+        # db base plugin post commit ops
+        self._create_subnet_postcommit(context, result)
+
         kwargs = {'context': context, 'subnet': result}
         registry.notify(resources.SUBNET, events.AFTER_CREATE, self, **kwargs)
         try:
