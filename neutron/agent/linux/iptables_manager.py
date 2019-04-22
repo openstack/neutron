@@ -303,7 +303,7 @@ class IptablesManager(object):
     use_table_lock = False
 
     def __init__(self, _execute=None, state_less=False, use_ipv6=False,
-                 namespace=None, binary_name=binary_name):
+                 nat=True, namespace=None, binary_name=binary_name):
         if _execute:
             self.execute = _execute
         else:
@@ -343,7 +343,8 @@ class IptablesManager(object):
 
         if not state_less:
             self.initialize_mangle_table()
-            self.initialize_nat_table()
+            if nat:
+                self.initialize_nat_table()
 
     def initialize_mangle_table(self):
         self.ipv4.update(
