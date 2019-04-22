@@ -23,6 +23,7 @@ import six
 
 from neutron.agent.l2.extensions.fdb_population import (
         FdbPopulationAgentExtension)
+from neutron.agent.linux import ip_lib
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import (
      constants as linux_bridge_constants)
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
@@ -70,13 +71,13 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
         fdb_extension = FdbPopulationAgentExtension()
         self.assertRaises(SystemExit, fdb_extension.initialize, None, 'sriov')
 
-    @mock.patch('neutron.agent.linux.utils.execute')
+    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
     def test_construct_empty_fdb_table(self, mock_execute):
         self._get_fdb_extension(mock_execute, fdb_table='')
         cmd = ['bridge', 'fdb', 'show', 'dev', self.DEVICE]
         mock_execute.assert_called_once_with(cmd, run_as_root=True)
 
-    @mock.patch('neutron.agent.linux.utils.execute')
+    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
     def test_construct_existing_fdb_table(self, mock_execute):
         fdb_extension = self._get_fdb_extension(mock_execute,
                                                 fdb_table=self.FDB_TABLE)
@@ -88,7 +89,7 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
         for mac in macs:
             self.assertIn(mac, updated_macs_for_device)
 
-    @mock.patch('neutron.agent.linux.utils.execute')
+    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
     def test_update_port_add_rule(self, mock_execute):
         fdb_extension = self._get_fdb_extension(mock_execute, self.FDB_TABLE)
         mock_execute.reset_mock()
@@ -101,7 +102,7 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
         mac = self.UPDATE_MSG['mac_address']
         self.assertIn(mac, updated_macs_for_device)
 
-    @mock.patch('neutron.agent.linux.utils.execute')
+    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
     def test_update_port_changed_mac(self, mock_execute):
         fdb_extension = self._get_fdb_extension(mock_execute, self.FDB_TABLE)
         mock_execute.reset_mock()
@@ -145,7 +146,7 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
             fdb_extension.fdb_tracker.device_to_macs.get(self.DEVICE))
         self.assertIsNone(updated_macs_for_device)
 
-    @mock.patch('neutron.agent.linux.utils.execute')
+    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
     def test_catch_update_port_exception(self, mock_execute):
         fdb_extension = self._get_fdb_extension(mock_execute, '')
         mock_execute.side_effect = RuntimeError
@@ -155,7 +156,7 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
         mac = self.UPDATE_MSG['mac_address']
         self.assertNotIn(mac, updated_macs_for_device)
 
-    @mock.patch('neutron.agent.linux.utils.execute')
+    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
     def test_catch_delete_port_exception(self, mock_execute):
         fdb_extension = self._get_fdb_extension(mock_execute, '')
         fdb_extension.handle_port(context=None, details=self.UPDATE_MSG)
@@ -166,7 +167,7 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
         mac = self.UPDATE_MSG['mac_address']
         self.assertIn(mac, updated_macs_for_device)
 
-    @mock.patch('neutron.agent.linux.utils.execute')
+    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
     def test_delete_port(self, mock_execute):
         fdb_extension = self._get_fdb_extension(mock_execute, '')
         fdb_extension.handle_port(context=None, details=self.UPDATE_MSG)
@@ -176,7 +177,7 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
                'dev', self.DEVICE]
         mock_execute.assert_called_once_with(cmd, run_as_root=True)
 
-    @mock.patch('neutron.agent.linux.utils.execute')
+    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
     def test_multiple_devices(self, mock_execute):
         cfg.CONF.set_override('shared_physical_device_mappings',
                 ['physnet1:p1p1', 'physnet1:p2p2'], 'FDB')

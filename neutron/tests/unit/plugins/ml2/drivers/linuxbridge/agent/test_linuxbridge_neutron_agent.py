@@ -859,7 +859,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                   'ensure_vxlan',
                                   return_value=None),\
                 mock.patch.object(
-                    utils,
+                    ip_lib.IpNetnsCommand,
                     'execute',
                     side_effect=None if fdb_append else RuntimeError()),\
                 mock.patch.object(ip_lib,
@@ -1071,7 +1071,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                         'network_type': 'vxlan',
                         'segment_id': 1}}
 
-        with mock.patch.object(utils, 'execute',
+        with mock.patch.object(ip_lib.IpNetnsCommand, 'execute',
                                return_value='') as execute_fn, \
                 mock.patch.object(ip_lib, 'add_neigh_entry',
                                   return_value='') as add_fn:
@@ -1140,7 +1140,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                         'network_type': 'vxlan',
                         'segment_id': 1}}
 
-        with mock.patch.object(utils, 'execute',
+        with mock.patch.object(ip_lib.IpNetnsCommand, 'execute',
                                return_value='') as execute_fn, \
                 mock.patch.object(ip_lib, 'delete_neigh_entry',
                                   return_value='') as del_fn:

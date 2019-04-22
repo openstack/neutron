@@ -21,7 +21,6 @@ import os
 from oslo_utils import excutils
 
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
 
 # NOTE(toabctl): Don't use /sys/devices/virtual/net here because not all tap
 # devices are listed here (i.e. when using Xen)
@@ -109,32 +108,37 @@ class BridgeDevice(ip_lib.IPDevice):
 class FdbInterface(object):
     """provide basic functionality to edit the FDB table"""
 
+    @staticmethod
+    def _execute_bridge(cmd, namespace, **kwargs):
+        ip_wrapper = ip_lib.IPWrapper(namespace)
+        return ip_wrapper.netns.execute(cmd, run_as_root=True, **kwargs)
+
     @classmethod
-    def _execute(cls, op, mac, dev, ip_dst, **kwargs):
+    def _cmd(cls, op, mac, dev, ip_dst, namespace, **kwargs):
         cmd = ['bridge', 'fdb', op, mac, 'dev', dev]
         if ip_dst is not None:
             cmd += ['dst', ip_dst]
-        return utils.execute(cmd, run_as_root=True, **kwargs)
+        cls._execute_bridge(cmd, namespace, **kwargs)
 
     @classmethod
-    def add(cls, mac, dev, ip_dst=None, **kwargs):
-        return cls._execute('add', mac, dev, ip_dst, **kwargs)
+    def add(cls, mac, dev, ip_dst=None, namespace=None, **kwargs):
+        return cls._cmd('add', mac, dev, ip_dst, namespace, **kwargs)
 
     @classmethod
-    def append(cls, mac, dev, ip_dst=None, **kwargs):
-        return cls._execute('append', mac, dev, ip_dst, **kwargs)
+    def append(cls, mac, dev, ip_dst=None, namespace=None, **kwargs):
+        return cls._cmd('append', mac, dev, ip_dst, namespace, **kwargs)
 
     @classmethod
-    def replace(cls, mac, dev, ip_dst=None, **kwargs):
-        return cls._execute('replace', mac, dev, ip_dst, **kwargs)
+    def replace(cls, mac, dev, ip_dst=None, namespace=None, **kwargs):
+        return cls._cmd('replace', mac, dev, ip_dst, namespace, **kwargs)
 
     @classmethod
-    def delete(cls, mac, dev, ip_dst=None, **kwargs):
-        return cls._execute('delete', mac, dev, ip_dst, **kwargs)
+    def delete(cls, mac, dev, ip_dst=None, namespace=None, **kwargs):
+        return cls._cmd('delete', mac, dev, ip_dst, namespace, **kwargs)
 
     @classmethod
-    def show(cls, dev=None, **kwargs):
+    def show(cls, dev=None, namespace=None, **kwargs):
         cmd = ['bridge', 'fdb', 'show']
         if dev:
             cmd += ['dev', dev]
-        return utils.execute(cmd, run_as_root=True, **kwargs)
+        return cls._execute_bridge(cmd, namespace, **kwargs)

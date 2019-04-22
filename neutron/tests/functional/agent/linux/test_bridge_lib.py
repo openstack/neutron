@@ -12,9 +12,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import re
+
+import netaddr
 from oslo_utils import uuidutils
+import testscenarios
 
 from neutron.agent.linux import bridge_lib
+from neutron.agent.linux import ip_lib
+from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 
@@ -85,3 +91,99 @@ class BridgeLibTestCase(base.BaseSudoTestCase):
         with open(sysfs_path, 'r') as sysfs_disable_ipv6_file:
             sysfs_disable_ipv6 = sysfs_disable_ipv6_file.read()
             self.assertEqual("1\n", sysfs_disable_ipv6)
+
+
+class FdbInterfaceTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
+
+    MAC1 = 'ca:fe:ca:fe:ca:fe'
+    MAC2 = 'ca:fe:ca:fe:ca:01'
+    RULE_PATTERN = (r"^(?P<mac>([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})) "
+                    r"(dst (?P<ip>\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b))*")
+
+    scenarios = [
+        ('namespace', {'namespace': 'ns_' + uuidutils.generate_uuid()}),
+        ('no_namespace', {'namespace': None})
+    ]
+
+    def setUp(self):
+        super(FdbInterfaceTestCase, self).setUp()
+        self.device = 'interface'
+        self.device_vxlan = 'int_vxlan'
+        self.ip = '10.220.0.1/24'
+        self.ip_vxlan = '10.221.0.1/24'
+        if self.namespace:
+            priv_ip_lib.create_netns(self.namespace)
+        self.addCleanup(self._cleanup)
+        ip_wrapper = ip_lib.IPWrapper(self.namespace)
+        ip_wrapper.add_dummy(self.device)
+        ip_wrapper.add_vxlan(self.device_vxlan, 100, dev=self.device)
+        ip_device = ip_lib.IPDevice(self.device, self.namespace)
+        ip_device.link.set_up()
+        ip_device.addr.add(self.ip)
+        ip_device_vxlan = ip_lib.IPDevice(self.device_vxlan, self.namespace)
+        ip_device_vxlan.link.set_up()
+        ip_device_vxlan.addr.add(self.ip_vxlan)
+
+    def _cleanup(self):
+        if self.namespace:
+            priv_ip_lib.remove_netns(self.namespace)
+        else:
+            priv_ip_lib.delete_interface(self.device_vxlan, None)
+            priv_ip_lib.delete_interface(self.device, None)
+
+    def _list_fdb_rules(self, device):
+        output = bridge_lib.FdbInterface.show(dev=device,
+                                              namespace=self.namespace)
+        rules = re.finditer(self.RULE_PATTERN, output, flags=re.MULTILINE)
+        ret = {}
+        for rule in rules:
+            ret[rule.groupdict()['mac']] = rule.groupdict()['ip']
+        return ret
+
+    def test_add_delete(self):
+        self.assertNotIn(self.MAC1, self._list_fdb_rules(self.device))
+        bridge_lib.FdbInterface.add(self.MAC1, self.device,
+                                    namespace=self.namespace)
+        self.assertIn(self.MAC1, self._list_fdb_rules(self.device))
+        bridge_lib.FdbInterface.delete(self.MAC1, self.device,
+                                       namespace=self.namespace)
+        self.assertNotIn(self.MAC1, self._list_fdb_rules(self.device))
+
+    def test_add_delete_dst(self):
+        self.assertNotIn(self.MAC1, self._list_fdb_rules(self.device_vxlan))
+        bridge_lib.FdbInterface.add(
+            self.MAC1, self.device_vxlan, namespace=self.namespace,
+            ip_dst=str(netaddr.IPNetwork(self.ip).ip))
+        rules = self._list_fdb_rules(self.device_vxlan)
+        self.assertEqual(str(netaddr.IPNetwork(self.ip).ip), rules[self.MAC1])
+        bridge_lib.FdbInterface.delete(
+            self.MAC1, self.device_vxlan, namespace=self.namespace,
+            ip_dst=str(netaddr.IPNetwork(self.ip).ip))
+        self.assertNotIn(self.MAC1, self._list_fdb_rules(self.device_vxlan))
+
+    def test_append(self):
+        self.assertNotIn(self.MAC1, self._list_fdb_rules(self.device))
+        bridge_lib.FdbInterface.append(self.MAC1, self.device,
+                                       namespace=self.namespace)
+        self.assertIn(self.MAC1, self._list_fdb_rules(self.device))
+
+    def test_append_dst(self):
+        self.assertNotIn(self.MAC1, self._list_fdb_rules(self.device_vxlan))
+        bridge_lib.FdbInterface.append(
+            self.MAC1, self.device_vxlan, namespace=self.namespace,
+            ip_dst=str(netaddr.IPNetwork(self.ip).ip))
+        rules = self._list_fdb_rules(self.device_vxlan)
+        self.assertEqual(str(netaddr.IPNetwork(self.ip).ip), rules[self.MAC1])
+
+    def test_replace(self):
+        self.assertNotIn(self.MAC1, self._list_fdb_rules(self.device))
+        bridge_lib.FdbInterface.add(
+            self.MAC1, self.device_vxlan, namespace=self.namespace,
+            ip_dst=str(netaddr.IPNetwork(self.ip).ip))
+        rules = self._list_fdb_rules(self.device_vxlan)
+        self.assertEqual(str(netaddr.IPNetwork(self.ip).ip), rules[self.MAC1])
+        bridge_lib.FdbInterface.replace(
+            self.MAC1, self.device_vxlan, namespace=self.namespace,
+            ip_dst='1.1.1.1')
+        rules = self._list_fdb_rules(self.device_vxlan)
+        self.assertEqual('1.1.1.1', rules[self.MAC1])
