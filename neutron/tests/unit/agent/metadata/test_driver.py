@@ -52,13 +52,6 @@ class TestMetadataDriverRules(base.BaseTestCase):
             rules,
             metadata_driver.MetadataDriver.metadata_filter_rules(9697, '0x1'))
 
-    def test_metadata_checksum_rules(self):
-        rules = ('POSTROUTING', '-o qr-+ -p tcp -m tcp --sport 9697 '
-                 '-j CHECKSUM --checksum-fill')
-        self.assertEqual(
-            [rules],
-            metadata_driver.MetadataDriver.metadata_checksum_rules(9697))
-
 
 class TestMetadataDriverProcess(base.BaseTestCase):
 
