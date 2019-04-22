@@ -319,7 +319,7 @@ class OVSBridge(BaseOVS):
             # TODO(mangelajo): We could accept attr tuples for the Port too
             # but, that could potentially break usage of this function in
             # stable branches (where we need to backport).
-            # https://review.openstack.org/#/c/564825/4/neutron/agent/common/
+            # https://review.opendev.org/#/c/564825/4/neutron/agent/common/
             # ovs_lib.py@289
             if interface_attr_tuples:
                 txn.add(self.ovsdb.db_set('Interface', port_name,

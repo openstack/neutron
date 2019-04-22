@@ -130,7 +130,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
         # TODO(lajoskatona): Change to handle all segments when any traits
         # support will be available. See Placement spec:
-        # https://review.openstack.org/565730
+        # https://review.opendev.org/565730
         first_segment = network_object.NetworkSegment.get_objects(
             context.get_admin_context(),
             network_id=port_res['network_id'])[0]

@@ -61,7 +61,7 @@ class MacvtapMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         # context.original['host_id'] is set to the failed host.
         # The only safe way to detect a migration is to look into the binding
         # profiles 'migrating_to' attribute, which is set by Nova since patch
-        # https://review.openstack.org/#/c/275073/.
+        # https://review.opendev.org/#/c/275073/.
         if not context.original:
             # new port
             return False

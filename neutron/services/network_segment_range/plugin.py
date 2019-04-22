@@ -122,7 +122,7 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
                 network_type in const.NETWORK_SEGMENT_RANGE_TYPES):
             # TODO(kailun): To use
             #  range_exc.NetworkSegmentRangeNetTypeNotSupported when the
-            #  neutron-lib patch https://review.openstack.org/640777 is merged
+            #  neutron-lib patch https://review.opendev.org/640777 is merged
             #  and released.
             message = _("Network type %s does not support "
                         "network segment ranges.") % network_type
@@ -190,7 +190,7 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
                                    sorts=None, limit=None, marker=None,
                                    page_reverse=False):
         # TODO(kailun): Based on the current spec:
-        #  https://review.openstack.org/599980, this method call may
+        #  https://review.opendev.org/599980, this method call may
         #  possibly return a large amount of data since ``available``
         #  segment list and ``used`` segment/project mapping will be also
         #  returned and they can be large sometimes. Considering that this
@@ -221,7 +221,7 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
             if existing_range_data['default']:
                 # TODO(kailun): To use
                 #  range_exc.NetworkSegmentRangeDefaultReadOnly when the
-                #  neutron-lib patch https://review.openstack.org/640777 is
+                #  neutron-lib patch https://review.opendev.org/640777 is
                 #  merged and released.
                 message = _("Network Segment Range %s is a "
                             "default segment range which could not be "
@@ -235,7 +235,7 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
                     updated_range=updated_range_data):
                 # TODO(kailun): To use
                 #  range_exc.NetworkSegmentRangeReferencedByProject when the
-                #  neutron-lib patch https://review.openstack.org/640777 is
+                #  neutron-lib patch https://review.opendev.org/640777 is
                 #  merged and released.
                 message = _("Network Segment Range %s is referenced by "
                             "one or more tenant networks.") % id
@@ -263,7 +263,7 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
             if range_data['default']:
                 # TODO(kailun): To use
                 #  range_exc.NetworkSegmentRangeDefaultReadOnly when the
-                #  neutron-lib patch https://review.openstack.org/640777 is
+                #  neutron-lib patch https://review.opendev.org/640777 is
                 #  merged and released.
                 message = _("Network Segment Range %s is a "
                             "default segment range which could not be "
@@ -275,7 +275,7 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
                     context, range_data):
                 # TODO(kailun): To use
                 #  range_exc.NetworkSegmentRangeReferencedByProject when the
-                #  neutron-lib patch https://review.openstack.org/640777 is
+                #  neutron-lib patch https://review.opendev.org/640777 is
                 #  merged and released.
                 message = _("Network Segment Range %s is referenced by "
                             "one or more tenant networks.") % id

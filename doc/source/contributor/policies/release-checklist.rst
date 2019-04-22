@@ -25,7 +25,7 @@ Prior to major release,
    http://docs.openstack.org/project-team-guide/release-management.html);
 #. start collecting state for targeted features from the team. For example,
    propose a post-mortem patch for neutron-specs as in:
-   https://review.openstack.org/#/c/286413/
+   https://review.opendev.org/#/c/286413/
 #. revise deprecation warnings collected in latest Jenkins runs: some of them
    may indicate a problem that should be fixed prior to release (see
    deprecations.txt file in those log directories); also, check whether any
@@ -43,7 +43,7 @@ New major release process contains several phases:
    the release;
 #. once the team is ready to release the first release candidate (RC1), either
    PTL or one of release liaisons proposes a patch for openstack/releases repo.
-   For example, see: https://review.openstack.org/#/c/292445/
+   For example, see: https://review.opendev.org/#/c/292445/
 #. once the openstack/releases patch lands, release team creates a new stable
    branch using hash values specified in the patch;
 #. at this point, master branch is open for patches targeted to the next
@@ -64,7 +64,7 @@ The following technical steps should be taken before the final release is cut
 off:
 
 #. the latest alembic scripts are tagged with a milestone label. For example,
-   see: https://review.openstack.org/#/c/288212/
+   see: https://review.opendev.org/#/c/288212/
 
 In the new stable branch, you should make sure that:
 

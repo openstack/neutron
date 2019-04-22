@@ -672,10 +672,10 @@ The :code:`convert_filters` method is available in
 
 References
 ----------
-.. [#] https://git.openstack.org/cgit/openstack/neutron/tree/neutron/objects/base.py?h=stable/ocata#n258
-.. [#] https://git.openstack.org/cgit/openstack/neutron/tree/neutron/db/standard_attr.py?h=stable/ocata
-.. [#] https://git.openstack.org/cgit/openstack/neutron/tree/neutron/objects/base.py?h=stable/ocata#n516
-.. [#] https://git.openstack.org/cgit/openstack/neutron/tree/neutron/objects/base.py?h=stable/ocata#n542
+.. [#] https://opendev.org/openstack/neutron/tree/neutron/objects/base.py?h=stable/ocata#n258
+.. [#] https://opendev.org/openstack/neutron/tree/neutron/db/standard_attr.py?h=stable/ocata
+.. [#] https://opendev.org/openstack/neutron/tree/neutron/objects/base.py?h=stable/ocata#n516
+.. [#] https://opendev.org/openstack/neutron/tree/neutron/objects/base.py?h=stable/ocata#n542
 .. [#] https://docs.openstack.org/neutron/latest/contributor/internals/db_layer.html#the-standard-attribute-table
-.. [#] https://git.openstack.org/cgit/openstack/neutron/tree/neutron/objects/rbac_db.py?h=stable/ocata#n291
-.. [#] https://git.openstack.org/cgit/openstack/neutron-lib/tree/neutron_lib/objects/utils.py
+.. [#] https://opendev.org/openstack/neutron/tree/neutron/objects/rbac_db.py?h=stable/ocata#n291
+.. [#] https://opendev.org/openstack/neutron-lib/tree/neutron_lib/objects/utils.py

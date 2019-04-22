@@ -491,7 +491,7 @@ When named release (liberty, mitaka, etc.) is done for neutron or a
 sub-project, the alembic revision scripts at the head of each branch for that
 release must be tagged. This is referred to as a milestone revision tag.
 
-For example, `here <https://review.openstack.org/228272>`_ is a patch that tags
+For example, `here <https://review.opendev.org/228272>`_ is a patch that tags
 the liberty milestone revisions for the neutron-fwaas sub-project. Note that
 each branch (expand and contract) is tagged.
 

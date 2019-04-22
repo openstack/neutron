@@ -60,20 +60,20 @@ Plugin development
 Document common pitfalls as well as good practices done during plugin development.
 
 * Use mixin classes as last resort. They can be a powerful tool to add behavior
-  but their strength is also a weakness, as they can introduce `unpredictable <https://review.openstack.org/#/c/121290/>`_
+  but their strength is also a weakness, as they can introduce `unpredictable <https://review.opendev.org/#/c/121290/>`_
   behavior to the `MRO <https://www.python.org/download/releases/2.3/mro/>`_,
   amongst other issues.
 * In lieu of mixins, if you need to add behavior that is relevant for ML2,
   consider using the `extension manager <http://specs.openstack.org/openstack/neutron-specs/specs/juno/neutron-ml2-mechanismdriver-extensions.html>`_.
 * If you make changes to the DB class methods, like calling methods that can
   be inherited, think about what effect that may have to plugins that have
-  controller `backends <https://review.openstack.org/#/c/116924/>`_.
+  controller `backends <https://review.opendev.org/#/c/116924/>`_.
 * If you make changes to the ML2 plugin or components used by the ML2 plugin,
   think about the `effect <http://lists.openstack.org/pipermail/openstack-dev/2015-October/076134.html>`_
   that may have to other plugins.
 * When adding behavior to the L2 and L3 db base classes, do not assume that
   there is an agent on the other side of the message broker that interacts
-  with the server. Plugins may not rely on `agents <https://review.openstack.org/#/c/174020/>`_ at all.
+  with the server. Plugins may not rely on `agents <https://review.opendev.org/#/c/174020/>`_ at all.
 * Be mindful of required capabilities when you develop plugin extensions. The
   `Extension description <https://github.com/openstack/neutron/blob/b14c06b5/neutron/api/extensions.py#L122>`_ provides the ability to specify the list of required capabilities
   for the extension you are developing. By declaring this list, the server will
@@ -116,20 +116,20 @@ Document common pitfalls as well as good practices done during database developm
   can fit your use case.
 * When designing data models that are related to each other, be careful to how
   you model the relationships' loading `strategy <http://docs.sqlalchemy.org/en/latest/orm/loading_relationships.html#using-loader-strategies-lazy-loading-eager-loading>`_. For instance a joined relationship can
-  be very efficient over others (some examples include `router gateways <https://review.openstack.org/#/c/88665/>`_
-  or `network availability zones <https://review.openstack.org/#/c/257086/>`_).
+  be very efficient over others (some examples include `router gateways <https://review.opendev.org/#/c/88665/>`_
+  or `network availability zones <https://review.opendev.org/#/c/257086/>`_).
 * If you add a relationship to a Neutron object that will be referenced in the
   majority of cases where the object is retrieved, be sure to use the
   lazy='joined' parameter to the relationship so the related objects are loaded
   as part of the same query. Otherwise, the default method is 'select', which
   emits a new DB query to retrieve each related object adversely impacting
-  performance. For example, see `patch 88665 <https://review.openstack.org/#/c/88665/>`_
+  performance. For example, see `patch 88665 <https://review.opendev.org/#/c/88665/>`_
   which resulted in a significant improvement since router retrieval functions
   always include the gateway interface.
 * Conversely, do not use lazy='joined' if the relationship is only used in
   corner cases because the JOIN statement comes at a cost that may be
   significant if the relationship contains many objects. For example, see
-  `patch 168214 <https://review.openstack.org/#/c/168214/>`_ which reduced a
+  `patch 168214 <https://review.opendev.org/#/c/168214/>`_ which reduced a
   subnet retrieval by ~90% by avoiding a join to the IP allocation table.
 * When writing extensions to existing objects (e.g. Networks), ensure that
   they are written in a way that the data on the object can be calculated
@@ -137,7 +137,7 @@ Document common pitfalls as well as good practices done during database developm
   is performed once in bulk during a list operation. Otherwise a list call
   for a 1000 objects will change from a constant small number of DB queries
   to 1000 DB queries. For example, see
-  `patch 257086 <https://review.openstack.org/#/c/257086/>`_ which changed the
+  `patch 257086 <https://review.opendev.org/#/c/257086/>`_ which changed the
   availability zone code from the incorrect style to a database friendly one.
 
 * Sometimes in code we use the following structures:
@@ -285,7 +285,7 @@ For anything more elaborate, please visit the testing section.
   In fact, when the built-in open method is mocked during tests, some
   utilities (like debtcollector) may still rely on the real thing, and may
   end up using the mock rather what they are really looking for. If you must,
-  consider using `OpenFixture <https://review.openstack.org/#/c/232716/>`_, but
+  consider using `OpenFixture <https://review.opendev.org/#/c/232716/>`_, but
   it is better not to mock open() at all.
 
 Documentation

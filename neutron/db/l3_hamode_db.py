@@ -121,7 +121,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         network_id = ha_network.network_id
 
         # TODO(kevinbenton): let decorator handle duplicate retry
-        # like in review.openstack.org/#/c/367179/1/neutron/db/l3_hamode_db.py
+        # like in review.opendev.org/#/c/367179/1/neutron/db/l3_hamode_db.py
         for count in range(MAX_ALLOCATION_TRIES):
             try:
                 # NOTE(kevinbenton): we disallow subtransactions because the

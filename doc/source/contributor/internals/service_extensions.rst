@@ -46,9 +46,9 @@ to have these loaded automatically at server startup. If you
 consider adding an entry to the dictionary, please be kind and
 reach out to your PTL or a member of the drivers team for approval.
 
-#. http://git.openstack.org/cgit/openstack/neutron-fwaas/
-#. http://git.openstack.org/cgit/openstack/neutron-lbaas/
-#. http://git.openstack.org/cgit/openstack/neutron-vpnaas/
+#. http://opendev.org/openstack/neutron-fwaas/
+#. http://opendev.org/openstack/neutron-lbaas/
+#. http://opendev.org/openstack/neutron-vpnaas/
 
 
 Calling the Core Plugin from Services

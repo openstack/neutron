@@ -152,7 +152,7 @@ This can be done in two ways:
         RemotePdb session open at 172.99.68.50:44444, waiting for connection ...
 
    An example of such a ``Do not merge`` patch described above can be found at
-   `<https://review.openstack.org/#/c/558259/>`_.
+   `<https://review.opendev.org/#/c/558259/>`_.
 
    Please note that after adding new packages to the ``requirements.txt`` file,
    the ``requirements-check`` job for your test patch will fail, but it is not

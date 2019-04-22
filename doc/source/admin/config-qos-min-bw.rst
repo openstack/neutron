@@ -560,14 +560,14 @@ Links
 * Neutron spec: QoS minimum bandwidth allocation in Placement API
 
   * `on specs.openstack.org <https://specs.openstack.org/openstack/neutron-specs/specs/rocky/minimum-bandwidth-allocation-placement-api.html>`__
-  * `on review.openstack.org <https://review.openstack.org/508149>`__
+  * `on review.opendev.org <https://review.opendev.org/508149>`__
 
 * Nova spec: Network Bandwidth resource provider
 
   * `on specs.openstack.org
     <https://specs.openstack.org/openstack/nova-specs/specs/stein/approved/bandwidth-resource-provider.html>`__
-  * `on review.openstack.org
-    <https://review.openstack.org/502306>`__
+  * `on review.opendev.org
+    <https://review.opendev.org/502306>`__
 
 * Relevant OpenStack Networking API references
 
@@ -584,8 +584,8 @@ Links
 
 * Implementation
 
-  * `on review.openstack.org
-    <https://review.openstack.org/#/q/topic:minimum-bandwidth-allocation-placement-api+OR+topic:bp/bandwidth-resource-provider>`_
+  * `on review.opendev.org
+    <https://review.opendev.org/#/q/topic:minimum-bandwidth-allocation-placement-api+OR+topic:bp/bandwidth-resource-provider>`_
 
 * Known Bugs
 

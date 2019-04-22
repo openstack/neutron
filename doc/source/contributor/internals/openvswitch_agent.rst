@@ -95,7 +95,7 @@ the integration bridge with the physical network bridge, with flow
 rules adding, modifying, or stripping VLAN tags as necessary, thus
 preserving backward compatibility with the way the OVS agent used
 to work prior to the tunneling capability (for more details, please
-look at https://review.openstack.org/#/c/4367).
+look at https://review.opendev.org/#/c/4367).
 
 Bear in mind, that this design decision may be overhauled in the
 future to support existing VLAN-tagged traffic (coming from NFV VMs

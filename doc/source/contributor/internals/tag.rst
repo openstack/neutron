@@ -131,4 +131,4 @@ Remove all tags on a network ::
     DELETE /v2.0/networks/{network_id}/tags
 
 PUT and DELETE for collections are the motivation of `extending the API
-framework <https://review.openstack.org/#/c/284519/>`_.
+framework <https://review.opendev.org/#/c/284519/>`_.

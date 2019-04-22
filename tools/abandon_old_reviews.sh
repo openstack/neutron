@@ -17,9 +17,9 @@
 # abandoning people's changes is a good thing, but must be done with care.
 #
 # before you run this modify your .ssh/config to create a
-# review.openstack.org entry:
+# review.opendev.org entry:
 #
-#   Host review.openstack.org
+#   Host review.opendev.org
 #   User <yourgerritusername>
 #   Port 29418
 #
@@ -70,20 +70,20 @@ function abandon_review {
     local gitid=$1
     shift
     local msg=$@
-    # echo ssh review.openstack.org gerrit review $gitid --abandon --message \"$msg\"
+    # echo ssh review.opendev.org gerrit review $gitid --abandon --message \"$msg\"
     unassign_and_new_bug $gitid
     if [ $DRY_RUN -eq 1 ]; then
         echo "Would abandon $gitid"
     else
         echo "Abandoning $gitid"
-        ssh review.openstack.org gerrit review $gitid --abandon --message \"$msg\"
+        ssh review.opendev.org gerrit review $gitid --abandon --message \"$msg\"
     fi
 }
 
 function unassign_and_new_bug {
     # unassign current assignee and set bug to 'new' status
     local gitid=$1
-    cm=$(ssh review.openstack.org "gerrit query $gitid --current-patch-set --format json" | jq .commitMessage)
+    cm=$(ssh review.opendev.org "gerrit query $gitid --current-patch-set --format json" | jq .commitMessage)
     for closes in $(echo -e $cm | grep -i "closes" | grep -i "bug" | grep -o -E '[0-9]+'); do
         if [ $DRY_RUN -eq 1 ]; then
             echo "Would unassign and tag 'timeout-abandon' $closes"
@@ -117,7 +117,7 @@ if [ "$PROJECTS" = "()" ]; then
     exit 1
 fi
 
-blocked_reviews=$(ssh review.openstack.org "gerrit query --current-patch-set --format json $PROJECTS status:open age:4w label:Code-Review<=-2" | jq .currentPatchSet.revision | grep -v null | sed 's/"//g')
+blocked_reviews=$(ssh review.opendev.org "gerrit query --current-patch-set --format json $PROJECTS status:open age:4w label:Code-Review<=-2" | jq .currentPatchSet.revision | grep -v null | sed 's/"//g')
 
 blocked_msg=$(cat <<EOF
 
@@ -135,14 +135,14 @@ EOF
 # blocked_reviews="b6c4218ae4d75b86c33fa3d37c27bc23b46b6f0f"
 
 for review in $blocked_reviews; do
-    # echo ssh review.openstack.org gerrit review $review --abandon --message \"$msg\"
+    # echo ssh review.opendev.org gerrit review $review --abandon --message \"$msg\"
     echo "Blocked review $review"
     abandon_review $review $blocked_msg
 done
 
 # then purge all the reviews that are > 4w with no changes and Jenkins has -1ed
 
-failing_reviews=$(ssh review.openstack.org "gerrit query  --current-patch-set --format json $PROJECTS status:open age:4w NOT label:Verified>=1,Zuul" | jq .currentPatchSet.revision | grep -v null | sed 's/"//g')
+failing_reviews=$(ssh review.opendev.org "gerrit query  --current-patch-set --format json $PROJECTS status:open age:4w NOT label:Verified>=1,Zuul" | jq .currentPatchSet.revision | grep -v null | sed 's/"//g')
 
 failing_msg=$(cat <<EOF
 

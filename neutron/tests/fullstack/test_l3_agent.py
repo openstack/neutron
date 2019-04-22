@@ -278,7 +278,7 @@ class TestHAL3Agent(TestL3Agent):
 
     def test_ha_router(self):
         # TODO(amuller): Test external connectivity before and after a
-        # failover, see: https://review.openstack.org/#/c/196393/
+        # failover, see: https://review.opendev.org/#/c/196393/
 
         tenant_id = uuidutils.generate_uuid()
         router = self.safe_client.create_router(tenant_id, ha=True)
