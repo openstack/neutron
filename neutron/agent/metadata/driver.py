@@ -197,14 +197,6 @@ class MetadataDriver(object):
                   'port': port})]
 
     @classmethod
-    def metadata_checksum_rules(cls, port):
-        return [('POSTROUTING', '-o %(interface_name)s '
-                 '-p tcp -m tcp --sport %(port)s -j CHECKSUM '
-                 '--checksum-fill' %
-                 {'interface_name': namespaces.INTERNAL_DEV_PREFIX + '+',
-                  'port': port})]
-
-    @classmethod
     def _get_metadata_proxy_user_group(cls, conf):
         user = conf.metadata_proxy_user or str(os.geteuid())
         group = conf.metadata_proxy_group or str(os.getegid())
@@ -279,8 +271,6 @@ def after_router_added(resource, event, l3_agent, **kwargs):
         router.iptables_manager.ipv4['filter'].add_rule(c, r)
     for c, r in proxy.metadata_nat_rules(proxy.metadata_port):
         router.iptables_manager.ipv4['nat'].add_rule(c, r)
-    for c, r in proxy.metadata_checksum_rules(proxy.metadata_port):
-        router.iptables_manager.ipv4['mangle'].add_rule(c, r)
     router.iptables_manager.apply()
 
     if not isinstance(router, ha_router.HaRouter):
