@@ -60,6 +60,12 @@
             irrelevant-files: *tempest-irrelevant-files
         - openstacksdk-functional-devstack-networking:
             voting: false
+        - neutron-functional-with-uwsgi:
+            voting: false
+        - neutron-fullstack-with-uwsgi:
+            voting: false
+        - neutron-tempest-with-uwsgi:
+            voting: false
     gate:
       jobs:
         - neutron-functional
@@ -86,9 +92,6 @@
         - neutron-tempest-with-os-ken-master
     experimental:
       jobs:
-        - neutron-functional-with-uwsgi
-        - neutron-fullstack-with-uwsgi
-        - neutron-tempest-with-uwsgi
 
         # TODO(slaweq): we should consider to convert this job to "non-legacy"
         # one and move it to check queue, at least as non-voting
@@ -413,7 +416,6 @@
     vars:
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: true
-    voting: false
 
 - job:
     name: neutron-functional-with-uwsgi
@@ -421,7 +423,6 @@
     vars:
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: true
-    voting: false
 
 - job:
     name: neutron-tempest-with-uwsgi
@@ -436,4 +437,3 @@
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: true
     irrelevant-files: *tempest-irrelevant-files
-    voting: false
