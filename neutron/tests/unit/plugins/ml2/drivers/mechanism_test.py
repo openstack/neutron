@@ -267,11 +267,6 @@ class TestMechanismDriver(api.MechanismDriver):
     def get_standard_device_mappings(self, agent):
         return {}
 
-    # NOTE(ralonsoh): to be removed with neutron-lib >= 1.26.0
-    @staticmethod
-    def provider_network_attribute_updates_supported():
-        return []
-
 
 class TestMechanismDriverWithAgent(mech_agent.AgentMechanismDriverBase,
                                    TestMechanismDriver):

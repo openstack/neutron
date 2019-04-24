@@ -140,7 +140,3 @@ class LoggerMechanismDriver(api.MechanismDriver):
                  "%(segments)s, candidate hosts %(hosts)s ",
                  {'segments': segments, 'hosts': candidate_hosts})
         return set()
-
-    @staticmethod
-    def provider_network_attribute_updates_supported():
-        return []
