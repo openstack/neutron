@@ -388,12 +388,12 @@ Some scenario tests require advanced ``Glance`` images (for example, ``Ubuntu``
 or ``CentOS``) in order to pass. Those tests are skipped by default. To enable
 them, include the following in ``tempest.conf``:
 
-   .. code-block:: ini
+.. code-block:: ini
 
-      [compute]
-      image_ref = <uuid of advanced image>
-      [neutron_plugin_options]
-      image_is_advanced = True
+   [compute]
+   image_ref = <uuid of advanced image>
+   [neutron_plugin_options]
+   image_is_advanced = True
 
 Specific test requirements for advanced images are:
 
@@ -515,7 +515,7 @@ specified in requirements.txt and lower-constraints.txt. To run tox tests
 against a different version of neutron-lib, use the TOX_ENV_SRC_MODULES
 environment variable to point at a local package repo.
 
-For example, to run against the 'master' branch of neutron-lib:
+For example, to run against the 'master' branch of neutron-lib::
 
     cd $SRC
     git clone https://git.openstack.org/openstack/neutron-lib
@@ -526,7 +526,7 @@ To run against a change of your own, repeat the same steps, but use the
 directory with your changes, not a fresh clone.
 
 To run against a particular gerrit change of the lib (substituting the
-desired gerrit refs for this example):
+desired gerrit refs for this example)::
 
     cd $SRC
     git clone https://git.openstack.org/openstack/neutron-lib
@@ -540,7 +540,7 @@ be needed to restore them to standard when not using this method.
 
 Any pip installable package can be overriden with this environment variable,
 not just neutron-lib. To specify multiple packages to override, specify them
-as a space separated list to TOX_ENV_SRC_MODULES. Example:
+as a space separated list to TOX_ENV_SRC_MODULES. Example::
 
     env TOX_ENV_SRC_MODULES="$SRC/neutron-lib $SRC/oslo.db" tox -r -e pep8,py27
 
