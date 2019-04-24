@@ -362,6 +362,9 @@ class HaRouter(router.RouterInfo):
     def _get_state_change_monitor_callback(self):
         ha_device = self.get_ha_device_name()
         ha_cidr = self._get_primary_vip()
+        config_dir = self.keepalived_manager.get_conf_dir()
+        state_change_log = (
+            "%s/neutron-keepalived-state-change.log") % config_dir
 
         def callback(pid_file):
             root_helper_daemon = self.agent_conf.AGENT.root_helper_daemon or ''
@@ -369,7 +372,8 @@ class HaRouter(router.RouterInfo):
                 'neutron-keepalived-state-change',
                 '--router_id=%s' % self.router_id,
                 '--namespace=%s' % self.ha_namespace,
-                '--conf_dir=%s' % self.keepalived_manager.get_conf_dir(),
+                '--conf_dir=%s' % config_dir,
+                '--log-file=%s' % state_change_log,
                 '--monitor_interface=%s' % ha_device,
                 '--monitor_cidr=%s' % ha_cidr,
                 '--pid_file=%s' % pid_file,
