@@ -44,7 +44,6 @@ from webob import exc
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
-from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
 from neutron.db import dns_db
 from neutron.db import external_net_db
@@ -336,7 +335,6 @@ class TestNoL3NatPlugin(TestL3NatBasePlugin):
 # A L3 routing service plugin class for tests with plugins that
 # delegate away L3 routing functionality
 class TestL3NatServicePlugin(TestL3PluginBaseAttributes,
-                             common_db_mixin.CommonDbMixin,
                              l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                              l3_db.L3_NAT_db_mixin, dns_db.DNSDbMixin):
 

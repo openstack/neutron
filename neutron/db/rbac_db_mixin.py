@@ -22,13 +22,12 @@ from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 
-from neutron.db import common_db_mixin
 from neutron.extensions import rbac as ext_rbac
 from neutron.objects import base as base_obj
 from neutron.objects import rbac as rbac_obj
 
 
-class RbacPluginMixin(common_db_mixin.CommonDbMixin):
+class RbacPluginMixin(object):
     """Plugin mixin that implements the RBAC DB operations."""
 
     object_type_cache = {}

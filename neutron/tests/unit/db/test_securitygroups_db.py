@@ -23,7 +23,6 @@ from neutron_lib import context
 import sqlalchemy
 import testtools
 
-from neutron.db import common_db_mixin
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup
 from neutron.services.revisions import revision_plugin
@@ -61,8 +60,7 @@ def fake_callback(resource, event, *args, **kwargs):
     raise KeyError('bar')
 
 
-class SecurityGroupDbMixinImpl(securitygroups_db.SecurityGroupDbMixin,
-                               common_db_mixin.CommonDbMixin):
+class SecurityGroupDbMixinImpl(securitygroups_db.SecurityGroupDbMixin):
     pass
 
 

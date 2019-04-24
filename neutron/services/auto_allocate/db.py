@@ -31,7 +31,6 @@ from neutron_lib.plugins import utils as p_utils
 from oslo_log import log as logging
 
 from neutron._i18n import _
-from neutron.db import common_db_mixin
 from neutron.objects import auto_allocate as auto_allocate_obj
 from neutron.objects import base as base_obj
 from neutron.objects import network as net_obj
@@ -88,7 +87,7 @@ def _ensure_external_network_default_value_callback(
 
 
 @resource_extend.has_resource_extenders
-class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
+class AutoAllocatedTopologyMixin(object):
 
     def __new__(cls, *args, **kwargs):
         # NOTE(kevinbenton): we subscribe on object construction because

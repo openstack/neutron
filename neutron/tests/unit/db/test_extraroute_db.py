@@ -20,13 +20,11 @@ from neutron_lib import context
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 
-from neutron.db import common_db_mixin
 from neutron.db import extraroute_db
 from neutron.tests.unit import testlib_api
 
 
-class _Plugin(common_db_mixin.CommonDbMixin,
-              extraroute_db.ExtraRoute_dbonly_mixin):
+class _Plugin(extraroute_db.ExtraRoute_dbonly_mixin):
     pass
 
 

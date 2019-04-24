@@ -34,7 +34,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from sqlalchemy.orm import exc
 
-from neutron.db import common_db_mixin
 from neutron.db import models_v2
 from neutron.objects import base as base_obj
 from neutron.objects import ports as port_obj
@@ -78,7 +77,7 @@ def filter_fields(f):
     return inner_filter
 
 
-class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
+class DbBasePluginCommon(object):
     """Stores getters and helper methods for db_base_plugin_v2
 
     All private getters and simple helpers like _make_*_dict were moved from

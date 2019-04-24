@@ -21,7 +21,6 @@ from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
-from neutron.db import common_db_mixin as base_db
 from neutron.db import l3_dvr_db
 from neutron.extensions import metering
 from neutron.objects import base as base_obj
@@ -29,8 +28,7 @@ from neutron.objects import metering as metering_objs
 from neutron.objects import router as l3_obj
 
 
-class MeteringDbMixin(metering.MeteringPluginBase,
-                      base_db.CommonDbMixin):
+class MeteringDbMixin(metering.MeteringPluginBase):
 
     def __init__(self):
         self.meter_rpc = metering_rpc_agent_api.MeteringAgentNotifyAPI()

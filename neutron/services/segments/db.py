@@ -29,7 +29,6 @@ from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
 from oslo_utils import uuidutils
 
-from neutron.db import common_db_mixin
 from neutron.db import segments_db as db
 from neutron.extensions import segment as extension
 from neutron import manager
@@ -58,7 +57,7 @@ def check_user_configured_segment_plugin():
     return _USER_CONFIGURED_SEGMENT_PLUGIN
 
 
-class SegmentDbMixin(common_db_mixin.CommonDbMixin):
+class SegmentDbMixin(object):
     """Mixin class to add segment."""
 
     @staticmethod

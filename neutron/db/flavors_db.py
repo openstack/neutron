@@ -18,7 +18,6 @@ from neutron_lib.exceptions import flavors as flav_exc
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 
-from neutron.db import common_db_mixin
 from neutron.db import servicetype_db as sdb
 from neutron.objects import base as base_obj
 from neutron.objects import flavor as obj_flavor
@@ -27,7 +26,7 @@ from neutron.objects import flavor as obj_flavor
 LOG = logging.getLogger(__name__)
 
 
-class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
+class FlavorsDbMixin(object):
 
     """Class to support flavors and service profiles."""
 

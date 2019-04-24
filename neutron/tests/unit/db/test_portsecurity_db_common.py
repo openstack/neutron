@@ -13,7 +13,6 @@
 import mock
 from neutron_lib.api.definitions import port_security as psec
 
-from neutron.db import common_db_mixin
 from neutron.db import portsecurity_db_common as pdc
 from neutron.objects import base as objects_base
 from neutron.objects import network
@@ -21,7 +20,7 @@ from neutron.objects.port.extensions import port_security as p_ps
 from neutron.tests import base
 
 
-class FakePlugin(pdc.PortSecurityDbCommon, common_db_mixin.CommonDbMixin):
+class FakePlugin(pdc.PortSecurityDbCommon):
     pass
 
 
