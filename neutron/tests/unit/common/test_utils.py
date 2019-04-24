@@ -281,6 +281,17 @@ class TestIpVersionFromInt(base.BaseTestCase):
                           8)
 
 
+class TestIsVersionGreaterEqual(base.BaseTestCase):
+    def test_is_version_greater_equal_greater(self):
+        self.assertTrue(utils.is_version_greater_equal('1.6.2', '1.6.0'))
+
+    def test_is_version_greater_equal_equal(self):
+        self.assertTrue(utils.is_version_greater_equal('1.6.2', '1.6.2'))
+
+    def test_is_version_greater_equal_less(self):
+        self.assertFalse(utils.is_version_greater_equal('1.6.0', '1.6.2'))
+
+
 class TestDelayedStringRenderer(base.BaseTestCase):
     def test_call_deferred_until_str(self):
         my_func = mock.MagicMock(return_value='Brie cheese!')

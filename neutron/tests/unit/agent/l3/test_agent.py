@@ -18,6 +18,7 @@ from itertools import chain as iter_chain
 from itertools import combinations as iter_combinations
 
 import eventlet
+import fixtures
 import mock
 import netaddr
 from neutron_lib.agent import constants as agent_consts
@@ -192,10 +193,28 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         ri.process()
 
 
+class IptablesFixture(fixtures.Fixture):
+    def _setUp(self):
+        # We MUST save and restore random_fully because it is a class
+        # attribute and could change state in some tests, which can cause
+        # the other router test cases to randomly fail due to race conditions.
+        self.random_fully = iptables_manager.IptablesManager.random_fully
+        iptables_manager.IptablesManager.random_fully = True
+        self.addCleanup(self._reset)
+
+    def _reset(self):
+        iptables_manager.IptablesManager.random_fully = self.random_fully
+
+
 class TestBasicRouterOperations(BasicRouterOperationsFramework):
+    def setUp(self):
+        super(TestBasicRouterOperations, self).setUp()
+        self.useFixture(IptablesFixture())
+
     def test_request_id_changes(self):
         a = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.assertNotEqual(a.context.request_id, a.context.request_id)
+        self.useFixture(IptablesFixture())
 
     def test_init_ha_conf(self):
         with mock.patch('os.path.dirname', return_value='/etc/ha/'):
@@ -1026,7 +1045,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self._test_external_gateway_action('remove', router, dual_stack=True)
 
     def _verify_snat_mangle_rules(self, nat_rules, mangle_rules, router,
-                                  negate=False):
+                                  random_fully, negate=False):
         interfaces = router[lib_constants.INTERFACE_KEY]
         source_cidrs = []
         for iface in interfaces:
@@ -1037,13 +1056,18 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 source_cidrs.append(source_cidr)
         source_nat_ip = router['gw_port']['fixed_ips'][0]['ip_address']
         interface_name = ('qg-%s' % router['gw_port']['id'])[:14]
+        mask_rule = ('-m mark ! --mark 0x2/%s -m conntrack --ctstate DNAT '
+                     '-j SNAT --to-source %s' %
+                     (lib_constants.ROUTER_MARK_MASK, source_nat_ip))
+        snat_rule = ('-o %s -j SNAT --to-source %s' %
+                     (interface_name, source_nat_ip))
+        if random_fully:
+            mask_rule += ' --random-fully'
+            snat_rule += ' --random-fully'
         expected_rules = [
             '! -i %s ! -o %s -m conntrack ! --ctstate DNAT -j ACCEPT' %
             (interface_name, interface_name),
-            '-o %s -j SNAT --to-source %s' % (interface_name, source_nat_ip),
-            '-m mark ! --mark 0x2/%s -m conntrack --ctstate DNAT '
-            '-j SNAT --to-source %s' %
-            (lib_constants.ROUTER_MARK_MASK, source_nat_ip)]
+            mask_rule, snat_rule]
         for r in nat_rules:
             if negate:
                 self.assertNotIn(r.rule, expected_rules)
@@ -1635,7 +1659,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.get_external_device_name = mock.Mock(return_value='exgw')
         self._test_process_floating_ip_addresses_add(ri, agent)
 
-    def test_process_router_snat_disabled(self):
+    def _test_process_router_snat_disabled(self, random_fully):
+        iptables_manager.IptablesManager.random_fully = random_fully
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = l3_test_common.prepare_router_data(enable_snat=True)
         ri = l3router.RouterInfo(agent, router['id'], router, **self.ri_kwargs)
@@ -1659,10 +1684,17 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             if r not in ri.iptables_manager.ipv4['mangle'].rules]
         self.assertEqual(1, len(mangle_rules_delta))
         self._verify_snat_mangle_rules(nat_rules_delta, mangle_rules_delta,
-                                       router)
+                                       router, random_fully)
         self.assertEqual(1, self.send_adv_notif.call_count)
 
-    def test_process_router_snat_enabled(self):
+    def test_process_router_snat_disabled_random_fully(self):
+        self._test_process_router_snat_disabled(True)
+
+    def test_process_router_snat_disabled_random_fully_false(self):
+        self._test_process_router_snat_disabled(False)
+
+    def _test_process_router_snat_enabled(self, random_fully):
+        iptables_manager.IptablesManager.random_fully = random_fully
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = l3_test_common.prepare_router_data(enable_snat=False)
         ri = l3router.RouterInfo(agent, router['id'], router, **self.ri_kwargs)
@@ -1686,8 +1718,14 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             if r not in orig_mangle_rules]
         self.assertEqual(1, len(mangle_rules_delta))
         self._verify_snat_mangle_rules(nat_rules_delta, mangle_rules_delta,
-                                       router)
+                                       router, random_fully)
         self.assertEqual(1, self.send_adv_notif.call_count)
+
+    def test_process_router_snat_enabled_random_fully(self):
+        self._test_process_router_snat_enabled(True)
+
+    def test_process_router_snat_enabled_random_fully_false(self):
+        self._test_process_router_snat_enabled(False)
 
     def _test_update_routing_table(self, is_snat_host=True):
         router = l3_test_common.prepare_router_data()
@@ -2296,11 +2334,12 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         jump_float_rule = "-A %s-snat -j %s-float-snat" % (wrap_name,
                                                            wrap_name)
-        snat_rule1 = ("-A %s-snat -o iface -j SNAT --to-source %s") % (
+        snat_rule1 = ("-A %s-snat -o iface -j SNAT --to-source %s "
+                      "--random-fully") % (
             wrap_name, ex_gw_port['fixed_ips'][0]['ip_address'])
         snat_rule2 = ("-A %s-snat -m mark ! --mark 0x2/%s "
                       "-m conntrack --ctstate DNAT "
-                      "-j SNAT --to-source %s") % (
+                      "-j SNAT --to-source %s --random-fully") % (
             wrap_name, lib_constants.ROUTER_MARK_MASK,
             ex_gw_port['fixed_ips'][0]['ip_address'])
 
