@@ -208,15 +208,17 @@ class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
                            'tenant_id': net_owner,
                            'project_id': net_owner}}
         policy = self._make_networkrbac(net, net_owner)['rbac_policy']
-        kwargs = {}
 
         with mock.patch.object(db_plugin_v2, '_get_network') as get_net,\
             mock.patch.object(db_plugin_v2,
                               'ensure_no_tenant_ports_on_network') as ensure:
             get_net.return_value = net['network']
+            payload = events.DBEventPayload(
+                self.context, states=(policy,),
+                metadata={'object_type': 'network'})
             self.plugin.validate_network_rbac_policy_change(
                 None, events.BEFORE_DELETE, None,
-                self.context, 'network', policy, **kwargs)
+                payload=payload)
             self.assertEqual(0, ensure.call_count)
 
     def test_update_self_share_networkrbac(self):
@@ -228,15 +230,18 @@ class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
                            'tenant_id': net_owner,
                            'project_id': net_owner}}
         policy = self._make_networkrbac(net, net_owner)['rbac_policy']
-        kwargs = {'policy_update': {'target_tenant': 'new-target-tenant'}}
 
         with mock.patch.object(db_plugin_v2, '_get_network') as get_net,\
             mock.patch.object(db_plugin_v2,
                               'ensure_no_tenant_ports_on_network') as ensure:
             get_net.return_value = net['network']
+            payload = events.DBEventPayload(
+                self.context, states=(policy,),
+                request_body={'target_tenant': 'new-target-tenant'},
+                metadata={'object_type': 'network'})
             self.plugin.validate_network_rbac_policy_change(
                 None, events.BEFORE_UPDATE, None,
-                self.context, 'network', policy, **kwargs)
+                payload=payload)
             self.assertEqual(0, ensure.call_count)
 
     def _create_rbac_obj(self, _class):

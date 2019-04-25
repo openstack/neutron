@@ -175,10 +175,14 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     @registry.receives(resources.RBAC_POLICY, [events.BEFORE_CREATE,
                                                events.BEFORE_UPDATE,
                                                events.BEFORE_DELETE])
-    @db_api.retry_if_session_inactive()
     def validate_network_rbac_policy_change(self, resource, event, trigger,
-                                            context, object_type, policy,
-                                            **kwargs):
+                                            payload=None):
+        return self._validate_network_rbac_policy_change(
+            resource, event, trigger, payload.context, payload)
+
+    @db_api.retry_if_session_inactive()
+    def _validate_network_rbac_policy_change(self, resource, event, trigger,
+                                             context, payload):
         """Validates network RBAC policy changes.
 
         On creation, verify that the creator is an admin or that it owns the
@@ -187,6 +191,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         On update and delete, make sure the tenant losing access does not have
         resources that depend on that access.
         """
+        object_type = payload.metadata.get('object_type')
+        policy = (payload.request_body if event == events.BEFORE_CREATE
+                  else payload.latest_state)
+
         if object_type != 'network' or policy['action'] != 'access_as_shared':
             # we only care about shared network policies
             return
@@ -206,7 +214,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if self_sharing:
             return
         if event == events.BEFORE_UPDATE:
-            new_tenant = kwargs['policy_update']['target_tenant']
+            new_tenant = payload.request_body['target_tenant']
             if policy['target_tenant'] != new_tenant:
                 tenant_to_check = policy['target_tenant']
 

@@ -37,9 +37,10 @@ class RbacPluginMixin(object):
     def create_rbac_policy(self, context, rbac_policy):
         e = rbac_policy['rbac_policy']
         try:
-            registry.notify(resources.RBAC_POLICY, events.BEFORE_CREATE, self,
-                            context=context, object_type=e['object_type'],
-                            policy=e)
+            registry.publish(resources.RBAC_POLICY, events.BEFORE_CREATE, self,
+                             payload=events.DBEventPayload(
+                                 context, request_body=e,
+                                 metadata={'object_type': e['object_type']}))
         except c_exc.CallbackFailure as e:
             raise n_exc.InvalidInput(error_message=e)
         rbac_class = (
@@ -68,9 +69,11 @@ class RbacPluginMixin(object):
         entry = self._get_rbac_policy(context, id)
         object_type = entry.db_model.object_type
         try:
-            registry.notify(resources.RBAC_POLICY, events.BEFORE_UPDATE, self,
-                            context=context, policy=entry,
-                            object_type=object_type, policy_update=pol)
+            registry.publish(resources.RBAC_POLICY, events.BEFORE_UPDATE, self,
+                             payload=events.DBEventPayload(
+                                 context, request_body=pol,
+                                 states=(entry,), resource_id=id,
+                                 metadata={'object_type': object_type}))
         except c_exc.CallbackFailure as ex:
             raise ext_rbac.RbacPolicyInUse(object_id=entry.object_id,
                                            details=ex)
@@ -83,9 +86,10 @@ class RbacPluginMixin(object):
         entry = self._get_rbac_policy(context, id)
         object_type = entry.db_model.object_type
         try:
-            registry.notify(resources.RBAC_POLICY, events.BEFORE_DELETE, self,
-                            context=context, object_type=object_type,
-                            policy=entry)
+            registry.publish(resources.RBAC_POLICY, events.BEFORE_DELETE, self,
+                             payload=events.DBEventPayload(
+                                 context, states=(entry,), resource_id=id,
+                                 metadata={'object_type': object_type}))
         except c_exc.CallbackFailure as ex:
             raise ext_rbac.RbacPolicyInUse(object_id=entry.object_id,
                                            details=ex)
@@ -93,9 +97,10 @@ class RbacPluginMixin(object):
         # object_id link to network
         entry_dict = entry.to_dict()
         entry.delete()
-        registry.notify(resources.RBAC_POLICY, events.AFTER_DELETE, self,
-                        context=context, object_type=object_type,
-                        policy=entry_dict)
+        registry.publish(resources.RBAC_POLICY, events.AFTER_DELETE, self,
+                         payload=events.DBEventPayload(
+                             context, states=(entry_dict,), resource_id=id,
+                             metadata={'object_type': object_type}))
         self.object_type_cache.pop(id, None)
 
     def _get_rbac_policy(self, context, id):
