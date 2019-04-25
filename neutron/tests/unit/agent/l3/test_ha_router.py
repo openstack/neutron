@@ -16,6 +16,7 @@ import copy
 import signal
 
 import mock
+from neutron_lib import constants as n_consts
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import ha_router
@@ -170,3 +171,31 @@ class TestBasicRouterOperations(base.BaseTestCase):
         new_gw_port['fixed_ips'].remove(fixed_ip)
         new_gw_port['qos_policy_id'] = _uuid()
         self.assertFalse(ri._gateway_ports_equal(old_gw_port, new_gw_port))
+
+    def test_set_ha_port(self):
+        ri = self._create_router()
+        self.assertIsNone(ri.ha_port)
+
+        ri.router = {}
+        ri.set_ha_port()
+        self.assertIsNone(ri.ha_port)
+
+        # HA_INTERFACE_KEY from None to some value
+        ri.router = {n_consts.HA_INTERFACE_KEY: {"id": _uuid(),
+                                                 "status": "DOWN"}}
+        ri.set_ha_port()
+        self.assertIsNotNone(ri.ha_port)
+        self.assertEqual('DOWN', ri.ha_port["status"])
+
+        # HA port state change
+        ri.router = {n_consts.HA_INTERFACE_KEY: {"id": _uuid(),
+                                                 "status": "ACTIVE"}}
+        ri.set_ha_port()
+        self.assertIsNotNone(ri.ha_port)
+        self.assertEqual('ACTIVE', ri.ha_port["status"])
+
+        ri.router = {}
+        ri.set_ha_port()
+        # neutron server return empty HA_INTERFACE_KEY, but
+        # agent side router info should remain the original value.
+        self.assertIsNotNone(ri.ha_port)
