@@ -1203,7 +1203,8 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
             ports = (v1, v2, v3)
             self._test_list_resources('port', ports)
 
-    def test_list_ports_filtered_by_fixed_ip(self):
+    def _test_list_ports_filtered_by_fixed_ip(self, **kwargs):
+
         # for this test we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
         with self.port() as port1, self.port():
@@ -1213,8 +1214,18 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
 """.strip() % (fixed_ips['ip_address'],
                '192.168.126.5',
                fixed_ips['subnet_id'])
+            extra_params = "&".join(["{}={}".format(k, v)
+                                     for k, v in kwargs.items()])
+            if extra_params:
+                query_params = "{}&{}".format(query_params, extra_params)
             self._test_list_resources('port', [port1],
                                       query_params=query_params)
+
+    def test_list_ports_filtered_by_fixed_ip(self):
+        self._test_list_ports_filtered_by_fixed_ip()
+
+    def test_list_ports_filtered_by_fixed_ip_with_limit(self):
+        self._test_list_ports_filtered_by_fixed_ip(limit=500)
 
     def test_list_ports_public_network(self):
         with self.network(shared=True) as network:
