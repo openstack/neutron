@@ -131,7 +131,12 @@ class DriverController(object):
                 payload.request_body['distributed'] = (payload.states[0]
                                                        ['distributed'])
             if 'ha' not in payload.request_body:
-                payload.request_body['ha'] = payload.states[0]['distributed']
+                payload.request_body['ha'] = payload.states[0]['ha']
+            LOG.debug("Get a provider driver handle based on the ha flag: "
+                      "%(ha_flag)s and distributed flag: %(distributed_flag)s",
+                      {'ha_flag': payload.request_body['ha'],
+                       'distributed_flag':
+                       payload.request_body['distributed']})
             new_drv = self._attrs_to_driver(payload.request_body)
         if new_drv:
             LOG.debug("Router %(id)s migrating from %(old)s provider to "
