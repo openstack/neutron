@@ -44,7 +44,7 @@ tests. If you want to be able to run Neutron in a full OpenStack environment,
 you can use the excellent `DevStack`_ project to do so. There is a wiki page
 that describes `setting up Neutron using DevStack`_.
 
-.. _DevStack: https://git.openstack.org/cgit/openstack-dev/devstack
+.. _DevStack: https://opendev.org/openstack/devstack
 .. _setting up Neutron using Devstack: https://wiki.openstack.org/wiki/NeutronDevstack
 
 Getting the code
@@ -52,7 +52,7 @@ Getting the code
 
 Grab the code::
 
-    git clone https://git.openstack.org/openstack/neutron.git
+    git clone https://opendev.org/openstack/neutron.git
     cd neutron
 
 About ignore files

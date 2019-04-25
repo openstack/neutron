@@ -865,7 +865,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                         # level that represents the closest physical interface
                         # to the nova server." Link to spec:
                         #
-                        # https://review.openstack.org/#/c/508149/14/specs\
+                        # https://review.opendev.org/#/c/508149/14/specs\
                         #        /rocky/minimum-bandwidth-\
                         #        allocation-placement-api.rst@582
                         #

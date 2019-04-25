@@ -53,7 +53,7 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
         self._core_plugin = directory.get_plugin()
         # NOTE(bence romsics): The following bug and fix may be relevant here.
         # https://bugs.launchpad.net/nova/+bug/1697825
-        # https://review.openstack.org/493536
+        # https://review.opendev.org/493536
         self._placement_client = place_client.PlacementAPIClient(cfg.CONF)
         self._agents = PlacementReporterAgents(self._core_plugin)
         self._batch_notifier = batch_notifier.BatchNotifier(

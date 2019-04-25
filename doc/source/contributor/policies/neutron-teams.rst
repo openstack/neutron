@@ -1,7 +1,7 @@
 Neutron Core Reviewers
 ======================
 
-The `Neutron Core Reviewer Team <https://review.openstack.org/#/admin/groups/38,members>`_
+The `Neutron Core Reviewer Team <https://review.opendev.org/#/admin/groups/38,members>`_
 is responsible for many things related to Neutron. A lot of these things include mundane
 tasks such as the following:
 
@@ -163,11 +163,11 @@ responsibility over the areas of code listed below:
 
 Neutron Core Reviewer Team
 --------------------------
-`Neutron core reviewers <https://review.openstack.org/#/admin/groups/38,members>`_ have
+`Neutron core reviewers <https://review.opendev.org/#/admin/groups/38,members>`_ have
 merge rights to the following git repositories:
 
-* `openstack/neutron <https://git.openstack.org/cgit/openstack/neutron/>`_
-* `openstack/python-neutronclient <https://git.openstack.org/cgit/openstack/python-neutronclient/>`_
+* `openstack/neutron <https://opendev.org/openstack/neutron/>`_
+* `openstack/python-neutronclient <https://opendev.org/openstack/python-neutronclient/>`_
 
 Please note that as we adopt to the system above with core specialty in
 particular areas, we expect this broad core team to shrink as people naturally
@@ -191,10 +191,10 @@ arise.
 
 Neutron Specs Core Reviewer Team
 --------------------------------
-Neutron `specs core reviewers <https://review.openstack.org/#/admin/groups/314,members>`_
+Neutron `specs core reviewers <https://review.opendev.org/#/admin/groups/314,members>`_
 have +2 rights to the following git repositories:
 
-* `openstack/neutron-specs <https://git.openstack.org/cgit/openstack/neutron-specs/>`_
+* `openstack/neutron-specs <https://opendev.org/openstack/neutron-specs/>`_
 
 The Neutron specs core reviewer team is responsible for reviewing specs targeted to
 all Neutron git repositories (Neutron + Advanced Services). It is worth noting that
@@ -212,7 +212,7 @@ the group can be extended to other individuals, if required.
 Drivers Team
 ------------
 
-The `drivers team <https://review.openstack.org/#/admin/groups/464,members>`_ is
+The `drivers team <https://review.opendev.org/#/admin/groups/464,members>`_ is
 the group of people who have full rights to the specs repo. This team, which matches
 `Launchpad Neutron Drivers team <https://launchpad.net/~neutron-drivers>`_, is
 instituted to ensure a consistent architectural vision for the Neutron project, and
@@ -228,7 +228,7 @@ and/or read the meeting notes.
 Release Team
 ------------
 
-The `release team <https://review.openstack.org/#/admin/groups/150,members>`_ is
+The `release team <https://review.opendev.org/#/admin/groups/150,members>`_ is
 a group of people with some additional gerrit permissions primarily aimed at
 allowing release management of Neutron sub-projects.  These permissions include:
 

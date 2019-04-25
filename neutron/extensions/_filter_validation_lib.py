@@ -12,7 +12,7 @@
 
 """
 This module should be deleted once neutron-lib containing
-https://review.openstack.org/#/c/580190/ change is released.
+https://review.opendev.org/#/c/580190/ change is released.
 """
 
 

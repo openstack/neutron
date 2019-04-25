@@ -48,7 +48,7 @@ def monkeypatch_qos():
 
 def main():
     # TODO(slaweq): this monkepatch will not be necessary when
-    # https://review.openstack.org/#/c/506722/ will be merged and ovsdb-server
+    # https://review.opendev.org/#/c/506722/ will be merged and ovsdb-server
     # ovs-vswitchd processes for each test will be isolated in separate
     # namespace
     monkeypatch_init_handler()

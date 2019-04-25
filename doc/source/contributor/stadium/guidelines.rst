@@ -82,7 +82,7 @@ requirements for you.
 
 Once a subproject opts in global requirements synchronization, it should enable
 check-requirements jobs in project-config. For example, see `this patch
-<https://review.openstack.org/#/c/215671/>`_.
+<https://review.opendev.org/#/c/215671/>`_.
 
 Stable branches
 ---------------
@@ -101,7 +101,7 @@ branches, you should make sure that your project is registered in
 openstack/requirements:projects.txt *for the branch in question*.
 
 Subproject stable branches are supervised by horizontal `neutron-stable-maint
-team <https://review.openstack.org/#/admin/groups/539,members>`_.
+team <https://review.opendev.org/#/admin/groups/539,members>`_.
 
 More info on stable branch process can be found on `the following page
 <http://docs.openstack.org/project-team-guide/stable-branches.html>`_.
@@ -110,7 +110,7 @@ Stable merge requirements
 -------------------------
 
 Merges into stable branches are handled by members of the `neutron-stable-maint
-gerrit group <https://review.openstack.org/#/admin/groups/539,members>`_. The
+gerrit group <https://review.opendev.org/#/admin/groups/539,members>`_. The
 reason for this is to ensure consistency among stable branches, and compliance
 with policies for stable backports.
 
@@ -135,9 +135,9 @@ Sub-Project Release Process
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 All subproject releases are managed by `global OpenStack Release Managers team
-<https://review.openstack.org/#/admin/groups/11,members>`_. The
+<https://review.opendev.org/#/admin/groups/11,members>`_. The
 `neutron-release team
-<https://review.openstack.org/#/admin/groups/150,members>`_ handles only the
+<https://review.opendev.org/#/admin/groups/150,members>`_ handles only the
 following operations:
 
 * Make stable branches end of life
@@ -152,7 +152,7 @@ To release a sub-project, follow the following steps:
   other Neutron projects. You can skip this step if you don't have a version in
   setup.cfg.
 * A sub-project owner `proposes
-  <https://git.openstack.org/cgit/openstack/releases/tree/README.rst>`_ a patch
+  <https://opendev.org/openstack/releases/tree/README.rst>`_ a patch
   to openstack/releases repository with the intended git hash. `The Neutron
   release liaison <https://wiki.openstack.org/wiki/CrossProjectLiaisons#Release_management>`_
   should be added in Gerrit to the list of reviewers for the patch.

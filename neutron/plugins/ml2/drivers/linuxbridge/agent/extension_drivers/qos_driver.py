@@ -32,7 +32,7 @@ class QosLinuxbridgeAgentDriver(qos.QosLinuxAgentDriver):
     #   - All driver calls should include the rule parameter, including
     #     the delete function, to have the 'direction' parameter. This QoS
     #     extension modification is going to be implemented in
-    #     https://review.openstack.org/#/c/341186/
+    #     https://review.opendev.org/#/c/341186/
     SUPPORTED_RULES = driver.SUPPORTED_RULES
 
     IPTABLES_DIRECTION = {const.INGRESS_DIRECTION: 'physdev-out',

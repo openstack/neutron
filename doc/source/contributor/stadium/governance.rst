@@ -39,8 +39,8 @@ These initiatives enabled the various individual teams in charge of the
 smaller projects the opportunity to iterate faster and reduce the time to
 feature. This has been due to the increased autonomy and implicit trust model
 that made the lack of oversight of the PTL and the Neutron drivers/core team
-acceptable for a small number of initiatives. When the proposed `arrangement <https://review.openstack.org/#/c/175952/>`_
-allowed projects to be `automatically <http://git.openstack.org/cgit/openstack/governance/commit/?id=321a020cbcaada01976478ea9f677ebb4df7bd6d>`_
+acceptable for a small number of initiatives. When the proposed `arrangement <https://review.opendev.org/#/c/175952/>`_
+allowed projects to be `automatically <http://opendev.org/openstack/governance/commit/?id=321a020cbcaada01976478ea9f677ebb4df7bd6d>`_
 enlisted as a Neutron project based simply on description, and desire for
 affiliation, the number of projects included in the Stadium started to grow
 rapidly, which created a number of challenges for the PTL and the drivers
@@ -72,7 +72,7 @@ When is a project considered part of the Stadium?
 -------------------------------------------------
 
 In order to be considered part of the Stadium, a project must show a track
-record of alignment with the Neutron `core project <http://git.openstack.org/cgit/openstack/neutron>`_.
+record of alignment with the Neutron `core project <http://opendev.org/openstack/neutron>`_.
 This means showing proof of adoption of practices as led by the Neutron core
 team. Some of these practices are typically already followed by the most
 mature OpenStack projects:
@@ -93,9 +93,9 @@ mature OpenStack projects:
   DB logic errors due to schema/models mismatch. For more details, please
   look at the following resources:
 
-  * https://review.openstack.org/#/c/346091/
-  * https://review.openstack.org/#/c/346272/
-  * https://review.openstack.org/#/c/346083/
+  * https://review.opendev.org/#/c/346091/
+  * https://review.opendev.org/#/c/346272/
+  * https://review.opendev.org/#/c/346083/
 
   More Database related information can be found on:
 
@@ -190,9 +190,9 @@ Checklist
   This is a two step process that involves the following:
 
   * Build the artefacts: this can be done by following example
-    https://review.openstack.org/#/c/293399/.
+    https://review.opendev.org/#/c/293399/.
   * Publish the artefacts: this can be done by following example
-    https://review.openstack.org/#/c/216448/.
+    https://review.opendev.org/#/c/216448/.
 
   More information can also be found on the
   `project creator guide <http://docs.openstack.org/infra/manual/creators.html#add-link-to-your-developer-documentation>`_.
@@ -201,9 +201,9 @@ Checklist
   the ability to display historical series, like failure rates of
   OpenStack CI jobs. A few examples that added dashboards over time are:
 
-  * `Neutron <https://review.openstack.org/#/c/278832/>`_.
-  * `Networking-OVN <https://review.openstack.org/#/c/335791>`_.
-  * `Networking-Midonet <https://review.openstack.org/#/c/315033>`_.
+  * `Neutron <https://review.opendev.org/#/c/278832/>`_.
+  * `Networking-OVN <https://review.opendev.org/#/c/335791>`_.
+  * `Networking-Midonet <https://review.opendev.org/#/c/315033>`_.
 
   Any subproject must have a Grafana dashboard that shows failure
   rates for at least Gate and Check queues.
@@ -212,26 +212,26 @@ Checklist
   required to integrate with neutron-lib CI and adopt neutron-lib in
   general. One step is to validate that neutron-lib master is working
   with the master of a given project that uses neutron-lib. For example
-  `patch <https://review.openstack.org/#/c/338603/>`_ introduced such
+  `patch <https://review.opendev.org/#/c/338603/>`_ introduced such
   support for the Neutron project. Any subproject that wants to do the
   same would need to adopt the following few lines:
 
-  #. https://review.openstack.org/#/c/338603/4/jenkins/jobs/projects.yaml@4685
-  #. https://review.openstack.org/#/c/338603/3/zuul/layout.yaml@8501
-  #. https://review.openstack.org/#/c/338603/4/grafana/neutron.yaml@39
+  #. https://review.opendev.org/#/c/338603/4/jenkins/jobs/projects.yaml@4685
+  #. https://review.opendev.org/#/c/338603/3/zuul/layout.yaml@8501
+  #. https://review.opendev.org/#/c/338603/4/grafana/neutron.yaml@39
 
   Line 1 and 2 respectively add a job to the periodic queue for the
   project, whereas line 3 introduced the failure rate trend for the
   periodic job to spot failure spikes etc. Make sure your project has
   the following:
 
-  #. https://review.openstack.org/#/c/357086/
-  #. https://review.openstack.org/#/c/359143/
+  #. https://review.opendev.org/#/c/357086/
+  #. https://review.opendev.org/#/c/359143/
 
 * How to port api-ref over to neutron-lib: to publish the subproject
   API reference into the `Networking API guide <http://developer.openstack.org/api-ref/networking/>`_
   you must contribute the API documentation into neutron-lib's api-ref
-  directory as done in the `WADL/REST transition patch <https://review.openstack.org/#/c/327510/>`_.
+  directory as done in the `WADL/REST transition patch <https://review.opendev.org/#/c/327510/>`_.
   Once this is done successfully, a link to the subproject API will
   show under the published `table of content <https://github.com/openstack/neutron-lib/blob/master/api-ref/source/index.rst>`_.
   An RFE bug tracking this effort effectively initiates the request
@@ -242,15 +242,15 @@ Checklist
   steps to port API definitions over to neutron-lib are demonstrated
   in the following patches:
 
-  * https://review.openstack.org/#/c/353131/
-  * https://review.openstack.org/#/c/353132/
+  * https://review.opendev.org/#/c/353131/
+  * https://review.opendev.org/#/c/353132/
 
-  The `neutron-lib patch <https://review.openstack.org/#/c/353131/>`_
+  The `neutron-lib patch <https://review.opendev.org/#/c/353131/>`_
   introduces the elements that define the API, and testing coverage
   validates that the resource and actions maps use valid keywords.
   API reference documentation is provided alongside the definition to
   keep everything in one place.
-  The `neutron patch <https://review.openstack.org/#/c/353132/>`_
+  The `neutron patch <https://review.opendev.org/#/c/353132/>`_
   uses the Neutron extension framework to plug the API definition
   on top of the Neutron API backbone. The change can only merge when
   there is a released version of neutron-lib.
@@ -259,8 +259,8 @@ Checklist
   Stadium must have release notes. In order to set up release notes,
   please see the patches below for an example on how to set up reno:
 
-  * https://review.openstack.org/#/c/320904/
-  * https://review.openstack.org/#/c/243085/
+  * https://review.opendev.org/#/c/320904/
+  * https://review.opendev.org/#/c/243085/
 
   For release documentation related to Neutron, please check the
   :doc:`/contributor/policies/index`.
@@ -276,9 +276,9 @@ Checklist
   following example on how to contribute these two python-neutronclient
   according to the OSC framework and guidelines:
 
-  * https://review.openstack.org/#/c/340624/
-  * https://review.openstack.org/#/c/340763/
-  * https://review.openstack.org/#/c/352653/
+  * https://review.opendev.org/#/c/340624/
+  * https://review.opendev.org/#/c/340763/
+  * https://review.opendev.org/#/c/352653/
 
   More information on how to develop python-openstackclient plugins
   can be found on the following links:
@@ -287,7 +287,7 @@ Checklist
   * https://docs.openstack.org/python-openstackclient/latest/contributor/humaninterfaceguide.html
 
   It is worth prefixing the commands being added with the keyword
-  `network <https://review.openstack.org/#/c/340624/10/setup.cfg>`_ to
+  `network <https://review.opendev.org/#/c/340624/10/setup.cfg>`_ to
   avoid potential clash with other commands with similar names. This
   is only required if the command object name is highly likely to have
   an ambiguous meaning.

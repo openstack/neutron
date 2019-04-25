@@ -45,5 +45,5 @@ References
 ~~~~~~~~~~
 
 [1]. https://www.mail-archive.com/openstack-dev@lists.openstack.org/msg88910.html
-[2]. https://review.openstack.org/#/c/348562/
-[3]. https://review.openstack.org/#/c/348757/
+[2]. https://review.opendev.org/#/c/348562/
+[3]. https://review.opendev.org/#/c/348757/

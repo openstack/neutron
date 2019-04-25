@@ -617,7 +617,7 @@ class TestWalkMigrationsMysql(testlib_api.MySQLTestCaseMixin,
                               testlib_api.SqlTestCaseLight):
 
     # NOTE(slaweq): this workaround is taken from Manila patch:
-    # https://review.openstack.org/#/c/291397/
+    # https://review.opendev.org/#/c/291397/
     # Set 5 minutes timeout for case of running it on
     # very slow nodes/VMs. Note, that this test becomes slower with each
     # addition of new DB migration. On fast nodes it can take about 5-10

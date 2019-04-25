@@ -302,7 +302,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             # Note(SridharG): enable the assert_gateway for IPv6 once
             # keepalived on Ubuntu14.04 (i.e., check-neutron-dsvm-functional
             # platform) is updated to 1.2.10 (or above).
-            # For more details: https://review.openstack.org/#/c/151284/
+            # For more details: https://review.opendev.org/#/c/151284/
             self._assert_gateway(router, v6_ext_gw_with_sub)
             self.assertTrue(self.floating_ips_configured(router))
             self._assert_snat_chains(router)

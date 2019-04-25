@@ -12,7 +12,7 @@
 
 """
 TODO(hongbin): This module should be deleted once neutron-lib containing
-https://review.openstack.org/#/c/562331/ change is released.
+https://review.opendev.org/#/c/562331/ change is released.
 """
 
 

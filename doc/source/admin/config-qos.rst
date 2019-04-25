@@ -30,7 +30,7 @@ Supported QoS rule types
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 QoS supported rule types are now available as ``VALID_RULE_TYPES`` in `QoS rule types
-<https://git.openstack.org/cgit/openstack/neutron-lib/tree/neutron_lib/services/qos/constants.py>`_:
+<https://opendev.org/openstack/neutron-lib/tree/neutron_lib/services/qos/constants.py>`_:
 
 * bandwidth_limit: Bandwidth limitations on networks, ports or floating IPs.
 

@@ -36,7 +36,7 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         conn_patcher.start()
         super(OVSTunnelBridgeTest, self).setUp()
         # NOTE(ivasilevskaya) The behaviour of oslotest.base.addCleanup()
-        # according to https://review.openstack.org/#/c/119201/4 guarantees
+        # according to https://review.opendev.org/#/c/119201/4 guarantees
         # that all started mocks will be stopped even without direct call to
         # patcher.stop().
         # If any individual mocks should be stopped by other than default

@@ -155,4 +155,4 @@ test execution.
  PyMySQL>=0.6.2  # MIT License
 
 
-Example implementation `in VPNaaS <https://review.openstack.org/209943>`_
+Example implementation `in VPNaaS <https://review.opendev.org/209943>`_

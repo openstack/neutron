@@ -1417,7 +1417,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                    if e['name'] != p]
 
         # TODO(rossella_s): scanning the ancillary bridge won't be needed
-        # anymore when https://review.openstack.org/#/c/203381 since the bridge
+        # anymore when https://review.opendev.org/#/c/203381 since the bridge
         # id stored in external_ids will be used to identify the bridge the
         # port belongs to
         cur_ancillary_ports = set()

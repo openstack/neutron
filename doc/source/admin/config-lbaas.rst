@@ -174,13 +174,13 @@ The Dashboard panels for managing LBaaS v2 are available starting with the
 Mitaka release.
 
 #.  Clone the `neutron-lbaas-dashboard repository
-    <https://git.openstack.org/cgit/openstack/neutron-lbaas-dashboard/>`__
+    <https://opendev.org/openstack/neutron-lbaas-dashboard/>`__
     and check out the release
     branch that matches the installed version of Dashboard:
 
     .. code-block:: console
 
-       $ git clone https://git.openstack.org/openstack/neutron-lbaas-dashboard
+       $ git clone https://opendev.org/openstack/neutron-lbaas-dashboard
        $ cd neutron-lbaas-dashboard
        $ git checkout OPENSTACK_RELEASE
 

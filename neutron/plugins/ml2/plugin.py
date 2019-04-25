@@ -1628,7 +1628,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         updated_port[psec.PORTSECURITY]):
                 need_port_update_notify = True
             # TODO(QoS): Move out to the extension framework somehow.
-            # Follow https://review.openstack.org/#/c/169223 for a solution.
+            # Follow https://review.opendev.org/#/c/169223 for a solution.
             if (qos_consts.QOS_POLICY_ID in attrs and
                     original_port[qos_consts.QOS_POLICY_ID] !=
                     updated_port[qos_consts.QOS_POLICY_ID]):

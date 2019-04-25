@@ -16,7 +16,7 @@ is used to allow access to the projects above. Members of the above group
 have the ability to set bug priorities, target bugs to releases, and other
 administrative tasks around bugs. The administrators of this group are the
 members of the `neutron-drivers-core
-<https://review.openstack.org/#/admin/groups/464,members>`_ gerrit group.
+<https://review.opendev.org/#/admin/groups/464,members>`_ gerrit group.
 Non administrators of this group include anyone who is involved with the
 Neutron project and has a desire to assist with bug triage.
 
@@ -261,8 +261,8 @@ The process of bug triaging consists of the following steps:
 
 * Check if a similar bug was filed before. Rely on your memory if Launchpad
   is not clever enough to spot a duplicate upon submission.  You may also
-  check already verified bugs for `Neutron <https://review.openstack.org/#/q/status:open+label:Verified-2+project:openstack/neutron>`_
-  and `python-neutronclient <https://review.openstack.org/#/q/status:open+label:Verified-2+project:openstack/python-neutronclient>`_
+  check already verified bugs for `Neutron <https://review.opendev.org/#/q/status:open+label:Verified-2+project:openstack/neutron>`_
+  and `python-neutronclient <https://review.opendev.org/#/q/status:open+label:Verified-2+project:openstack/python-neutronclient>`_
   to see if the bug has been reported.  If so, mark it as a duplicate of the
   previous bug.
 * Check if the bug meets the requirements of a good bug report, by checking

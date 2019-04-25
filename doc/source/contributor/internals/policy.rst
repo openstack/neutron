@@ -395,23 +395,23 @@ OpenStack projects.
 References
 ----------
 
-.. [#] `Oslo policy module <http://git.openstack.org/cgit/openstack/oslo.policy/>`_
+.. [#] `Oslo policy module <http://opendev.org/openstack/oslo.policy/>`_
 .. [#] `Oslo policy developer <https://docs.openstack.org/oslo.policy/latest/>`_
 .. [#] API controller item_ method
 
-.. _item: http://git.openstack.org/cgit/openstack/neutron/tree/neutron/api/v2/base.py?id=2015.1.1#n282
+.. _item: http://opendev.org/openstack/neutron/tree/neutron/api/v2/base.py?id=2015.1.1#n282
 
 .. [#] Policy engine's build_match_rule_ method
 
-.. _build_match_rule: http://git.openstack.org/cgit/openstack/neutron/tree/neutron/policy.py?id=2015.1.1#n187
+.. _build_match_rule: http://opendev.org/openstack/neutron/tree/neutron/policy.py?id=2015.1.1#n187
 
 .. [#] exclude_attributes_by_policy_ method
 
-.. _exclude_attributes_by_policy: http://git.openstack.org/cgit/openstack/neutron/tree/neutron/api/v2/base.py?id=2015.1.1#n132
+.. _exclude_attributes_by_policy: http://opendev.org/openstack/neutron/tree/neutron/api/v2/base.py?id=2015.1.1#n132
 
 .. [#] Policy reset_ in neutron.api.v2.router
 
-.. _reset: http://git.openstack.org/cgit/openstack/neutron/tree/neutron/api/v2/router.py?id=2015.1.1#n122
+.. _reset: http://opendev.org/openstack/neutron/tree/neutron/api/v2/router.py?id=2015.1.1#n122
 
 .. [#] https://github.com/openstack/neutron/blob/051b6b40f3921b9db4f152a54f402c402cbf138c/neutron/pecan_wsgi/hooks/policy_enforcement.py#L173
 .. [#] https://github.com/openstack/neutron/blob/051b6b40f3921b9db4f152a54f402c402cbf138c/neutron/pecan_wsgi/hooks/policy_enforcement.py#L143

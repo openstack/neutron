@@ -99,7 +99,7 @@ git filter-branch \
 echo "Generating new .gitreview file..."
 cat > .gitreview <<EOF
 [gerrit]
-host=review.openstack.org
+host=review.opendev.org
 port=29418
 project=stackforge/${project_name}.git
 EOF

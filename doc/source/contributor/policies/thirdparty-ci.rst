@@ -38,7 +38,7 @@ What Tests To Run
 Network API tests (git link).
 Network scenario tests (The test_network_* tests here).
 Any tests written specifically for your setup.
-http://git.openstack.org/cgit/openstack/tempest/tree/tempest/api/network
+http://opendev.org/openstack/tempest/tree/tempest/api/network
 
 Run with the test filter: 'network'. This will include all neutron specific
 tests as well as any other tests that are tagged as requiring networking. An
@@ -129,5 +129,5 @@ References
 ----------
 
 .. [1] http://ci.openstack.org/third_party.html
-.. [2] https://review.openstack.org/#/q/status:open+project:openstack-infra/system-config+branch:master+topic:third-party,n,z
+.. [2] https://review.opendev.org/#/q/status:open+project:openstack-infra/system-config+branch:master+topic:third-party,n,z
 .. [3] https://github.com/openstack-infra/project-config/blob/master/dev/zuul/layout.yaml
