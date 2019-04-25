@@ -440,15 +440,19 @@ def list_tc_policy_class(device, namespace=None):
         qdisc_type = _get_attr(tc_class, 'TCA_KIND')
         tca_options = _get_attr(tc_class, 'TCA_OPTIONS')
         max_kbps, min_kbps, burst_kb = get_params(tca_options, qdisc_type)
-        classes.append({'device': device,
-                        'index': index,
-                        'namespace': namespace,
-                        'parent': parent,
-                        'classid': classid,
-                        'qdisc_type': qdisc_type,
-                        'min_kbps': min_kbps,
-                        'max_kbps': max_kbps,
-                        'burst_kb': burst_kb})
+        tc_class_data = {'device': device,
+                         'index': index,
+                         'namespace': namespace,
+                         'parent': parent,
+                         'classid': classid,
+                         'qdisc_type': qdisc_type,
+                         'min_kbps': min_kbps,
+                         'max_kbps': max_kbps,
+                         'burst_kb': burst_kb}
+        tca_stats = _get_attr(tc_class, 'TCA_STATS')
+        if tca_stats:
+            tc_class_data['stats'] = tca_stats
+        classes.append(tc_class_data)
 
     return classes
 

@@ -13,8 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
+from oslo_utils import uuidutils
+
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import tc_lib
+from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
+from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base
 
 TEST_HZ_VALUE = 250
@@ -83,3 +88,50 @@ class TcLibTestCase(functional_base.BaseSudoTestCase):
         bw_limit, burst = tc.get_tbf_bw_limits()
         self.assertIsNone(bw_limit)
         self.assertIsNone(burst)
+
+
+class TcPolicyClassTestCase(functional_base.BaseSudoTestCase):
+
+    def _remove_ns(self, namespace):
+        priv_ip_lib.remove_netns(namespace)
+
+    def _create_two_namespaces(self):
+        self.ns = ['ns1_' + uuidutils.generate_uuid(),
+                   'ns2_' + uuidutils.generate_uuid()]
+        self.device = ['int1', 'int2']
+        self.mac = []
+        self.ip = ['10.100.0.1/24', '10.100.0.2/24']
+        list(map(priv_ip_lib.create_netns, self.ns))
+        ip_wrapper = ip_lib.IPWrapper(self.ns[0])
+        ip_wrapper.add_veth(self.device[0], self.device[1], self.ns[1])
+        for i in range(2):
+            self.addCleanup(self._remove_ns, self.ns[i])
+            ip_device = ip_lib.IPDevice(self.device[i], self.ns[i])
+            self.mac.append(ip_device.link.address)
+            ip_device.link.set_up()
+            ip_device.addr.add(self.ip[i])
+
+    def test_list_tc_policy_class_retrieve_statistics(self):
+        statistics = {'bytes', 'packets', 'drop', 'overlimits', 'bps', 'pps',
+                      'qlen', 'backlog'}
+        self._create_two_namespaces()
+        tc_lib.add_tc_qdisc(self.device[0], 'htb', parent='root', handle='1:',
+                            namespace=self.ns[0])
+        tc_lib.add_tc_policy_class(self.device[0], '1:', '1:10',
+                                   max_kbps=1000, burst_kb=900, min_kbps=500,
+                                   namespace=self.ns[0])
+        tc_lib.add_tc_filter_match_mac(self.device[0], '1:', '1:10',
+                                       self.mac[1], namespace=self.ns[0])
+        tc_classes = tc_lib.list_tc_policy_class(self.device[0],
+                                                 namespace=self.ns[0])
+        self.assertEqual(1, len(tc_classes))
+        self.assertEqual(statistics, set(tc_classes[0]['stats']))
+
+        bytes = tc_classes[0]['stats']['bytes']
+        packets = tc_classes[0]['stats']['packets']
+        net_helpers.assert_ping(self.ns[1], netaddr.IPNetwork(self.ip[0]).ip,
+                                count=1)
+        tc_classes = tc_lib.list_tc_policy_class(self.device[0],
+                                                 namespace=self.ns[0])
+        self.assertGreater(tc_classes[0]['stats']['bytes'], bytes)
+        self.assertGreater(tc_classes[0]['stats']['packets'], packets)
