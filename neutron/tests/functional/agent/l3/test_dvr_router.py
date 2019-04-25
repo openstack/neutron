@@ -1319,6 +1319,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         br_int_2 = self._get_agent_ovs_integration_bridge(self.failover_agent)
 
         veth1, veth2 = self.useFixture(net_helpers.VethFixture()).ports
+        veth1.link.set_up()
+        veth2.link.set_up()
         br_int_1.add_port(veth1.name)
         br_int_2.add_port(veth2.name)
 
