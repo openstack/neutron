@@ -171,6 +171,9 @@ class AgentMixin(object):
             ri.disable_radvd()
 
     def notify_server(self, batched_events):
+        eventlet.spawn_n(self._notify_server, batched_events)
+
+    def _notify_server(self, batched_events):
         translated_states = dict((router_id, TRANSLATION_MAP[state]) for
                                  router_id, state in batched_events)
         LOG.debug('Updating server with HA routers states %s',
