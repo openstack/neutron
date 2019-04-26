@@ -13,9 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import random
+
 import netaddr
 from oslo_utils import uuidutils
 
+from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import tc_lib
 from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
@@ -135,3 +138,104 @@ class TcPolicyClassTestCase(functional_base.BaseSudoTestCase):
                                                  namespace=self.ns[0])
         self.assertGreater(tc_classes[0]['stats']['bytes'], bytes)
         self.assertGreater(tc_classes[0]['stats']['packets'], packets)
+
+
+class TcFiltersTestCase(functional_base.BaseSudoTestCase):
+
+    def _remove_ns(self, namespace):
+        priv_ip_lib.remove_netns(namespace)
+
+    def _create_two_namespaces_connected_using_vxlan(self):
+        """Create two namespaces connected with a veth pair and VXLAN
+
+        ---------------------------------    ----------------------------------
+        (ns1)                           |    |                            (ns2)
+        int1: 10.0.100.1/24 <-----------|----|------------> int2: 10.0.100.2/24
+          |                             |    |                              |
+          |> int1_vxlan1: 10.0.200.1/24 |    |  int1_vxlan2: 10.0.200.2/24 <|
+        ---------------------------------    ----------------------------------
+        """
+        self.vxlan_id = 100
+        self.ns = ['ns1_' + uuidutils.generate_uuid(),
+                   'ns2_' + uuidutils.generate_uuid()]
+        self.device = ['int1', 'int2']
+        self.device_vxlan = ['int_vxlan1', 'int_vxlan2']
+        self.mac_vxlan = []
+        self.ip = ['10.100.0.1/24', '10.100.0.2/24']
+        self.ip_vxlan = ['10.200.0.1/24', '10.200.0.2/24']
+        for i in range(len(self.ns)):
+            priv_ip_lib.create_netns(self.ns[i])
+            self.addCleanup(self._remove_ns, self.ns[i])
+            ip_wrapper = ip_lib.IPWrapper(self.ns[i])
+            if i == 0:
+                ip_wrapper.add_veth(self.device[0], self.device[1], self.ns[1])
+            ip_wrapper.add_vxlan(self.device_vxlan[i], self.vxlan_id,
+                                 dev=self.device[i])
+            ip_device = ip_lib.IPDevice(self.device[i], self.ns[i])
+            ip_device.link.set_up()
+            ip_device.addr.add(self.ip[i])
+            ip_device_vxlan = ip_lib.IPDevice(self.device_vxlan[i], self.ns[i])
+            self.mac_vxlan.append(ip_device_vxlan.link.address)
+            ip_device_vxlan.link.set_up()
+            ip_device_vxlan.addr.add(self.ip_vxlan[i])
+
+        bridge_lib.FdbInterface.append(
+            '00:00:00:00:00:00', self.device_vxlan[0], namespace=self.ns[0],
+            ip_dst=str(netaddr.IPNetwork(self.ip[1]).ip))
+        bridge_lib.FdbInterface.append(
+            '00:00:00:00:00:00', self.device_vxlan[1], namespace=self.ns[1],
+            ip_dst=str(netaddr.IPNetwork(self.ip[0]).ip))
+
+    def test_add_tc_filter_vxlan(self):
+        # The traffic control is applied on the veth pair device of the first
+        # namespace (self.ns[0]). The traffic created from the VXLAN interface
+        # when replying to the ping (sent from the other namespace), is
+        # encapsulated in a VXLAN frame and goes through the veth pair
+        # interface.
+        self._create_two_namespaces_connected_using_vxlan()
+
+        tc_lib.add_tc_qdisc(self.device[0], 'htb', parent='root', handle='1:',
+                            namespace=self.ns[0])
+        classes = tc_lib.list_tc_policy_class(self.device[0],
+                                              namespace=self.ns[0])
+        self.assertEqual(0, len(classes))
+
+        class_ids = []
+        for i in range(1, 10):
+            class_id = '1:%s' % i
+            class_ids.append(class_id)
+            tc_lib.add_tc_policy_class(
+                self.device[0], '1:', class_id, namespace=self.ns[0],
+                min_kbps=1000, max_kbps=2000, burst_kb=1600)
+
+        # Add a filter for a randomly chosen created class, in the first
+        # namespace veth pair device, with the VXLAN MAC address. The traffic
+        # from the VXLAN device must go through this chosen class.
+        chosen_class_id = random.choice(class_ids)
+        tc_lib.add_tc_filter_vxlan(
+            self.device[0], '1:', chosen_class_id, self.mac_vxlan[0],
+            self.vxlan_id, namespace=self.ns[0])
+
+        tc_classes = tc_lib.list_tc_policy_class(self.device[0],
+                                              namespace=self.ns[0])
+        for tc_class in (c for c in tc_classes if
+                         c['classid'] == chosen_class_id):
+            bytes = tc_class['stats']['bytes']
+            packets = tc_class['stats']['packets']
+            break
+        else:
+            self.fail('TC class %(class_id)s is not present in the device '
+                      '%(device)s' % {'class_id': chosen_class_id,
+                                      'device': self.device[0]})
+
+        net_helpers.assert_ping(
+            self.ns[1], netaddr.IPNetwork(self.ip_vxlan[0]).ip, count=1)
+        tc_classes = tc_lib.list_tc_policy_class(self.device[0],
+                                                 namespace=self.ns[0])
+        for tc_class in tc_classes:
+            if tc_class['classid'] == chosen_class_id:
+                self.assertGreater(tc_class['stats']['bytes'], bytes)
+                self.assertGreater(tc_class['stats']['packets'], packets)
+            else:
+                self.assertEqual(0, tc_class['stats']['bytes'])
+                self.assertEqual(0, tc_class['stats']['packets'])

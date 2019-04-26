@@ -58,6 +58,17 @@ TC_QDISC_PARENT = {'root': rtnl.TC_H_ROOT,
                    'ingress': rtnl.TC_H_INGRESS}
 TC_QDISC_PARENT_NAME = {v: k for k, v in TC_QDISC_PARENT.items()}
 
+TC_CLASS_MAX_FLOWID = 0xffff
+
+# NOTE(ralonsoh): VXLAN header: +28 bytes from the outer MAC header (TC
+# initial offset)
+#   - VXLAN flags: 1 byte
+#   - Reserved: 3 bytes
+#   - VNI: 3 bytes --> VXLAN_VNI_OFFSET = 32 (+32 from the TC initial offset)
+#   - Reserved: 1 byte
+VXLAN_INNER_SRC_MAC_OFFSET = 42
+VXLAN_VNI_OFFSET = 32
+
 
 class InvalidKernelHzValue(exceptions.NeutronException):
     message = _("Kernel HZ value %(value)s is not valid. This value must be "
@@ -467,6 +478,24 @@ def delete_tc_policy_class(device, parent, classid, namespace=None):
     """
     priv_tc_lib.delete_tc_policy_class(device, parent, classid,
                                        namespace=namespace)
+
+
+def add_tc_filter_vxlan(device, parent, classid, src_mac, vxlan_id,
+                        namespace=None):
+    """Add a TC filter to match VXLAN traffic based on the VM mac and the VNI.
+
+    :param device: (string) device name
+    :param parent: (string) qdisc parent class ('root', 'ingress', '2:10')
+    :param classid: (string) major:minor handler identifier ('10:20')
+    :param src_mac: (string) source MAC address to match (VM mac)
+    :param vxlan_id: (int) VXLAN ID (VNI)
+    :param namespace: (string) (optional) namespace name
+    """
+    keys = [hex(int(vxlan_id << 8)) + '/0xffffff00+' + str(VXLAN_VNI_OFFSET)]
+    keys += [key['key'] for key in
+             _mac_to_pyroute2_keys(src_mac, VXLAN_INNER_SRC_MAC_OFFSET)]
+    priv_tc_lib.add_tc_filter_match32(device, parent, 1, classid, keys,
+                                      namespace=namespace)
 
 
 def add_tc_filter_match_mac(device, parent, classid, mac, offset=0, priority=0,
