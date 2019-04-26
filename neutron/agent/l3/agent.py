@@ -173,7 +173,7 @@ class L3PluginApi(object):
     def update_ha_routers_states(self, context, states):
         """Update HA routers states."""
         cctxt = self.client.prepare(version='1.5')
-        return cctxt.call(context, 'update_ha_routers_states',
+        return cctxt.cast(context, 'update_ha_routers_states',
                           host=self.host, states=states)
 
     def process_prefix_update(self, context, prefix_update):
