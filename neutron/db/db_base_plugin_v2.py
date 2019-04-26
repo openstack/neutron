@@ -1475,6 +1475,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         Port = models_v2.Port
         IPAllocation = models_v2.IPAllocation
 
+        limit = kwargs.pop('limit', None)
         filters = filters or {}
         fixed_ips = filters.pop('fixed_ips', {})
         vif_type = filters.pop(portbindings_def.VIF_TYPE, None)
@@ -1491,6 +1492,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if subnet_ids:
             query = query.filter(
                 Port.fixed_ips.any(IPAllocation.subnet_id.in_(subnet_ids)))
+        if limit:
+            query = query.limit(limit)
         return query
 
     @db_api.retry_if_session_inactive()
