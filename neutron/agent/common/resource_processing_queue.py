@@ -14,8 +14,10 @@
 #
 
 import datetime
+import time
 
 from oslo_utils import timeutils
+from oslo_utils import uuidutils
 from six.moves import queue as Queue
 
 
@@ -38,6 +40,25 @@ class ResourceUpdate(object):
         self.action = action
         self.resource = resource
         self.tries = tries
+        # NOTE: Because one resource can be processed multiple times, this
+        # update_id will be used for tracking one resource processing
+        # procedure.
+        self.update_id = uuidutils.generate_uuid()
+        self.create_time = self.start_time = time.time()
+
+    def set_start_time(self):
+        # Set the start_time to 'now' - can be used by callers to help
+        # track time spent in procedures.
+        self.start_time = time.time()
+
+    @property
+    def time_elapsed_since_create(self):
+        return time.time() - self.create_time
+
+    @property
+    def time_elapsed_since_start(self):
+        # Time elapsed between processing start and end.
+        return time.time() - self.start_time
 
     def __lt__(self, other):
         """Implements priority among updates
@@ -163,4 +184,5 @@ class ResourceProcessingQueue(object):
             # rp.updates() will not yield and so this will essentially be a
             # noop.
             for update in rp.updates():
+                update.set_start_time()
                 yield (rp, update)
