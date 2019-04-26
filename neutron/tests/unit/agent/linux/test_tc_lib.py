@@ -101,6 +101,18 @@ class TestIECUnitConversions(BaseUnitConversionTest, base.BaseTestCase):
     base_unit = constants.IEC_BASE
 
 
+class TestHandleFromHexToString(base.BaseTestCase):
+
+    def test_run(self):
+        test_cases = [(0x1, '0:1'),
+                      (0x2a003f, '2a:3f'),
+                      (0xf0000, 'f:0'),
+                      (0xffffffff, 'ffff:ffff'),
+                      (0x12345678, '1234:5678')]
+        for _in, expected in test_cases:
+            self.assertEqual(expected, tc_lib._handle_from_hex_to_string(_in))
+
+
 class TestTcCommand(base.BaseTestCase):
     def setUp(self):
         super(TestTcCommand, self).setUp()

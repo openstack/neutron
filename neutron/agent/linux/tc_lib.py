@@ -156,8 +156,8 @@ def _handle_from_hex_to_string(handle):
     :param handle: (int) TC handle
     :return: (string) handle formatted to string: 0xMMMMmmmm -> "M:m"
     """
-    minor = str(handle & 0xFFFF)
-    major = str((handle & 0xFFFF0000) >> 16)
+    minor = format(handle & 0xFFFF, 'x')
+    major = format((handle & 0xFFFF0000) >> 16, 'x')
     return ':'.join([major, minor])
 
 
