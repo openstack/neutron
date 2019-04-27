@@ -310,4 +310,10 @@ The DHCP agent provides DHCP services for virtual networks.
 
     .. end
 
+Create the provider network
+---------------------------
+
+Follow `this provider network document <https://docs.openstack.org/install-guide/launch-instance-networks-provider.html>`_ from the General Installation Guide.
+
+
 Return to *Networking controller node configuration*.
