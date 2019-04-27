@@ -194,6 +194,40 @@ class L3PluginApi(object):
         return cctxt.call(context, 'get_host_ha_router_count', host=self.host)
 
 
+class RouterFactory(object):
+
+    def __init__(self):
+        self._routers = {}
+
+    def register(self, features, router_cls):
+        """Register router class which implements BaseRouterInfo
+
+        Features which is a list of strings converted to frozenset internally
+        for key uniqueness.
+
+        :param features: a list of strings of router's features
+        :param router_cls: a router class which implements BaseRouterInfo
+        """
+        self._routers[frozenset(features)] = router_cls
+
+    def create(self, features, **kwargs):
+        """Create router instance with registered router class
+
+        :param features: a list of strings of router's features
+        :param kwargs: arguments for router class
+        :returns: a router instance which implements BaseRouterInfo
+        :raises: n_exc.RouterNotFoundInRouterFactory
+        """
+        try:
+            router = self._routers[frozenset(features)]
+            return router(**kwargs)
+        except KeyError:
+            exc = l3_exc.RouterNotFoundInRouterFactory(
+                router_id=kwargs['router_id'], features=features)
+            LOG.exception(exc.msg)
+            raise exc
+
+
 @profiler.trace_cls("l3-agent")
 class L3NATAgent(ha.AgentMixin,
                  dvr.AgentMixin,
@@ -223,6 +257,8 @@ class L3NATAgent(ha.AgentMixin,
         else:
             self.conf = cfg.CONF
         self.router_info = {}
+        self.router_factory = RouterFactory()
+        self._register_router_cls(self.router_factory)
 
         self._check_config_params()
 
@@ -328,6 +364,21 @@ class L3NATAgent(ha.AgentMixin,
             except Exception:
                 LOG.exception('update_all_ha_network_port_statuses failed')
 
+    def _register_router_cls(self, factory):
+        factory.register([], legacy_router.LegacyRouter)
+        factory.register(['ha'], ha_router.HaRouter)
+
+        if self.conf.agent_mode == lib_const.L3_AGENT_MODE_DVR_SNAT:
+            factory.register(['distributed'],
+                             dvr_router.DvrEdgeRouter)
+            factory.register(['ha', 'distributed'],
+                             dvr_edge_ha_router.DvrEdgeHaRouter)
+        else:
+            factory.register(['distributed'],
+                             dvr_local_router.DvrLocalRouter)
+            factory.register(['ha', 'distributed'],
+                             dvr_local_router.DvrLocalRouter)
+
     def _check_config_params(self):
         """Check items in configuration files.
 
@@ -375,7 +426,6 @@ class L3NATAgent(ha.AgentMixin,
                     raise Exception(msg)
 
     def _create_router(self, router_id, router):
-        args = []
         kwargs = {
             'agent': self,
             'router_id': router_id,
@@ -385,8 +435,14 @@ class L3NATAgent(ha.AgentMixin,
             'interface_driver': self.driver,
         }
 
+        features = []
         if router.get('distributed'):
+            features.append('distributed')
             kwargs['host'] = self.host
+
+        if router.get('ha'):
+            features.append('ha')
+            kwargs['state_change_callback'] = self.enqueue_state_change
 
         if router.get('distributed') and router.get('ha'):
             # Case 1: If the router contains information about the HA interface
@@ -398,22 +454,12 @@ class L3NATAgent(ha.AgentMixin,
             # that needs to provision a router namespace because of a DVR
             # service port (e.g. DHCP). So go ahead and create a regular DVR
             # edge router.
-            if (self.conf.agent_mode == lib_const.L3_AGENT_MODE_DVR_SNAT and
-                    router.get(lib_const.HA_INTERFACE_KEY) is not None):
-                kwargs['state_change_callback'] = self.enqueue_state_change
-                return dvr_edge_ha_router.DvrEdgeHaRouter(*args, **kwargs)
+            if (not router.get(lib_const.HA_INTERFACE_KEY) or
+                    self.conf.agent_mode != lib_const.L3_AGENT_MODE_DVR_SNAT):
+                features.remove('ha')
+                kwargs.pop('state_change_callback')
 
-        if router.get('distributed'):
-            if self.conf.agent_mode == lib_const.L3_AGENT_MODE_DVR_SNAT:
-                return dvr_router.DvrEdgeRouter(*args, **kwargs)
-            else:
-                return dvr_local_router.DvrLocalRouter(*args, **kwargs)
-
-        if router.get('ha'):
-            kwargs['state_change_callback'] = self.enqueue_state_change
-            return ha_router.HaRouter(*args, **kwargs)
-
-        return legacy_router.LegacyRouter(*args, **kwargs)
+        return self.router_factory.create(features, **kwargs)
 
     @lockutils.synchronized('resize_greenpool')
     def _resize_process_pool(self):
@@ -486,7 +532,8 @@ class L3NATAgent(ha.AgentMixin,
 
     def init_extension_manager(self, connection):
         l3_ext_manager.register_opts(self.conf)
-        self.agent_api = l3_ext_api.L3AgentExtensionAPI(self.router_info)
+        self.agent_api = l3_ext_api.L3AgentExtensionAPI(self.router_info,
+                                                        self.router_factory)
         self.l3_ext_manager = (
             l3_ext_manager.L3AgentExtensionsManager(self.conf))
         self.l3_ext_manager.initialize(

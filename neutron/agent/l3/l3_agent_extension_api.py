@@ -26,8 +26,9 @@ class L3AgentExtensionAPI(object):
     agent's RouterInfo object.
     '''
 
-    def __init__(self, router_info):
+    def __init__(self, router_info, router_factory):
         self._router_info = router_info
+        self._router_factory = router_factory
 
     def _local_namespaces(self):
         local_ns_list = ip_lib.list_network_namespaces()
@@ -68,3 +69,9 @@ class L3AgentExtensionAPI(object):
     def get_router_info(self, router_id):
         """Return RouterInfo for the given router id."""
         return self._router_info.get(router_id)
+
+    def register_router(self, features, router_cls):
+        """Register router class with the given features. This is for the
+        plugin to ovrride with their own ``router_info`` class.
+        """
+        self._router_factory.register(features, router_cls)

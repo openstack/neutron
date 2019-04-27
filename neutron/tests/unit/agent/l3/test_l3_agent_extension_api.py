@@ -18,8 +18,9 @@ import mock
 
 from oslo_utils import uuidutils
 
+from neutron.agent.l3 import agent
 from neutron.agent.l3 import l3_agent_extension_api as l3_agent_api
-from neutron.agent.l3 import router_info
+from neutron.agent.l3 import router_info as l3router
 from neutron.agent.linux import ip_lib
 from neutron.conf.agent import common as config
 from neutron.conf.agent.l3 import config as l3_config
@@ -38,7 +39,7 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
                      'agent_conf': self.conf,
                      'interface_driver': mock.ANY,
                      'use_ipv6': mock.ANY}
-        ri = router_info.RouterInfo(mock.Mock(), self.router_id, **ri_kwargs)
+        ri = l3router.RouterInfo(mock.Mock(), self.router_id, **ri_kwargs)
         ri.internal_ports = ports
         return {ri.router_id: ri}, ri
 
@@ -51,7 +52,7 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
                                'list_network_namespaces') as mock_list_netns:
 
             mock_list_netns.return_value = []
-            api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
+            api_object = l3_agent_api.L3AgentExtensionAPI(router_info, None)
             router = api_object.get_router_hosting_port(port_ids[0])
 
         mock_list_netns.assert_called_once_with()
@@ -65,7 +66,7 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
         with mock.patch.object(ip_lib,
                                'list_network_namespaces') as mock_list_netns:
             mock_list_netns.return_value = [ri.ns_name]
-            api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
+            api_object = l3_agent_api.L3AgentExtensionAPI(router_info, None)
             router = api_object.get_router_hosting_port(port_ids[0])
             self.assertEqual(ri, router)
 
@@ -75,7 +76,7 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
         with mock.patch.object(ip_lib,
                                'list_network_namespaces') as mock_list_netns:
             mock_list_netns.return_value = [ri.ns_name]
-            api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
+            api_object = l3_agent_api.L3AgentExtensionAPI(router_info, None)
             routers = api_object.get_routers_in_project(self.project_id)
             self.assertEqual([ri], routers)
 
@@ -85,7 +86,7 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
         with mock.patch.object(ip_lib,
                                'list_network_namespaces') as mock_list_netns:
             mock_list_netns.return_value = [ri.ns_name]
-            api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
+            api_object = l3_agent_api.L3AgentExtensionAPI(router_info, None)
             router_in_ns = api_object.is_router_in_namespace(ri.router_id)
             self.assertTrue(router_in_ns)
 
@@ -95,17 +96,32 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
         with mock.patch.object(ip_lib,
                                'list_network_namespaces') as mock_list_netns:
             mock_list_netns.return_value = [uuidutils.generate_uuid()]
-            api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
+            api_object = l3_agent_api.L3AgentExtensionAPI(router_info, None)
             router_in_ns = api_object.is_router_in_namespace(ri.router_id)
             self.assertFalse(router_in_ns)
 
     def test_get_router_info(self):
         router_info, ri = self._prepare_router_data()
-        api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
+        api_object = l3_agent_api.L3AgentExtensionAPI(router_info, None)
         self.assertEqual(ri, api_object.get_router_info(self.router_id))
 
     def test_get_router_info_nonexistent(self):
         router_info, ri = self._prepare_router_data()
-        api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
+        api_object = l3_agent_api.L3AgentExtensionAPI(router_info, None)
         self.assertIsNone(
             api_object.get_router_info(uuidutils.generate_uuid()))
+
+    def test_register_router(self):
+        router_info, ri = self._prepare_router_data()
+        router_info_cls = l3router.BaseRouterInfo
+        router_factory = agent.RouterFactory()
+        api_object = l3_agent_api.L3AgentExtensionAPI(router_info,
+                                                      router_factory)
+        self.assertIsNone(
+            api_object.register_router([], router_info_cls))
+        self.assertIsNone(
+            api_object.register_router(['ha'], router_info_cls))
+        self.assertIsNone(
+            api_object.register_router(['distributed'], router_info_cls))
+        self.assertIsNone(
+            api_object.register_router(['ha', 'distributed'], router_info_cls))

@@ -579,6 +579,10 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
             self._add_fip_agent_gw_port_info_to_router(router,
                                                        external_gw_port)
+        # Router creation is delegated to router_factory. We have to
+        # re-register here so that factory can find override agent mode
+        # normally.
+        self.agent._register_router_cls(self.agent.router_factory)
         return router
 
     def _get_fip_agent_gw_port_for_router(
