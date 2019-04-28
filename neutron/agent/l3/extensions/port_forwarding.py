@@ -270,6 +270,10 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
                                constants.L3_AGENT_MODE_DVR]):
             # just support centralized cases
             return False
+
+        if is_distributed and not ri.snat_namespace.exists():
+            return False
+
         return True
 
     def _process_port_forwarding_event(self, context, port_forwarding,
