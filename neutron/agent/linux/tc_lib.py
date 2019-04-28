@@ -376,15 +376,13 @@ def delete_tc_qdisc(device, parent=None, is_ingress=False,
         raise_qdisc_not_found=raise_qdisc_not_found, namespace=namespace)
 
 
-def add_tc_policy_class(device, parent, classid, qdisc_type,
-                        min_kbps=None, max_kbps=None, burst_kb=None,
-                        namespace=None):
+def add_tc_policy_class(device, parent, classid, min_kbps=None, max_kbps=None,
+                        burst_kb=None, namespace=None):
     """Add a TC policy class
 
     :param device: (string) device name
     :param parent: (string) qdisc parent class ('root', 'ingress', '2:10')
     :param classid: (string) major:minor handler identifier ('10:20')
-    :param qdisc_type: (string) qdisc type ("sfq", "htb", "u32", etc)
     :param min_kbps: (int) (optional) minimum bandwidth in kbps
     :param max_kbps: (int) (optional) maximum bandwidth in kbps
     :param burst_kb: (int) (optional) burst size in kb
@@ -404,7 +402,7 @@ def add_tc_policy_class(device, parent, classid, qdisc_type,
         args['ceil'] = int(max_kbps * 1024 / 8)
     if burst_kb:
         args['burst'] = int(burst_kb * 1024 / 8)
-    priv_tc_lib.add_tc_policy_class(device, parent, classid, qdisc_type,
+    priv_tc_lib.add_tc_policy_class(device, parent, classid, 'htb',
                                     namespace=namespace, **args)
 
 

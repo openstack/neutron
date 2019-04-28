@@ -330,10 +330,10 @@ class TcPolicyClassTestCase(base.BaseTestCase):
 
     def test_add_tc_policy_class(self):
         tc_lib.add_tc_policy_class(
-            'device', 'root', '1:10', 'qdisc_type', min_kbps=1000,
-            max_kbps=2000, burst_kb=1600, namespace=self.namespace)
+            'device', 'root', '1:10', min_kbps=1000, max_kbps=2000,
+            burst_kb=1600, namespace=self.namespace)
         self.mock_add_tc_policy_class.assert_called_once_with(
-            'device', rtnl.TC_H_ROOT, '1:10', 'qdisc_type', rate=1000 * 128,
+            'device', rtnl.TC_H_ROOT, '1:10', 'htb', rate=1000 * 128,
             ceil=2000 * 128, burst=1600 * 128, namespace=self.namespace)
 
     @mock.patch('pyroute2.netlink.rtnl.tcmsg.common.tick_in_usec', 15.625)
