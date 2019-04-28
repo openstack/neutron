@@ -308,12 +308,12 @@ class FipQosExtensionTestCase(QosExtensionBaseTestCase):
                                            lib_const.EGRESS_DIRECTION)
 
     def test_update_router_only_ingress(self):
-        self._test_only_one_direction_rule(self.fip_qos_ext.add_router,
+        self._test_only_one_direction_rule(self.fip_qos_ext.update_router,
                                            self.policy2,
                                            lib_const.INGRESS_DIRECTION)
 
     def test_update_router_only_egress(self):
-        self._test_only_one_direction_rule(self.fip_qos_ext.add_router,
+        self._test_only_one_direction_rule(self.fip_qos_ext.update_router,
                                            self.policy3,
                                            lib_const.EGRESS_DIRECTION)
 
