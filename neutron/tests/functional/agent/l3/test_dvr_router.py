@@ -1477,33 +1477,34 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         router2 = self._create_dvr_ha_router(
             self.failover_agent, enable_gw=True)
 
-        utils.wait_until_true(lambda: router1.ha_state == 'master')
-        utils.wait_until_true(lambda: router2.ha_state == 'backup')
+        master, backup = self._get_master_and_slave_routers(
+            router1, router2, check_external_device=False)
 
-        self._assert_ip_addresses_in_dvr_ha_snat_namespace(router1)
-        self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(router2)
-        router1_ha_device = router1.get_ha_device_name()
-        router2_ha_device = router2.get_ha_device_name()
+        self._assert_ip_addresses_in_dvr_ha_snat_namespace(master)
+        self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(backup)
+        master_ha_device = master.get_ha_device_name()
+        backup_ha_device = backup.get_ha_device_name()
         self.assertTrue(
-            ip_lib.device_exists(router1_ha_device, router1.ha_namespace))
+            ip_lib.device_exists(master_ha_device, master.ha_namespace))
         self.assertTrue(
-            ip_lib.device_exists(router2_ha_device, router2.ha_namespace))
+            ip_lib.device_exists(backup_ha_device, backup.ha_namespace))
 
-        router1.router['_ha_interface'] = None
-        self.agent._process_updated_router(router1.router)
-        router_updated = self.agent.router_info[router1.router_id]
+        new_master_router = copy.deepcopy(master.router)
+        new_master_router['_ha_interface'] = None
+        self.agent._process_updated_router(new_master_router)
+        router_updated = self.agent.router_info[master.router_id]
 
         self.assertTrue(self._namespace_exists(router_updated.ns_name))
         self._assert_snat_namespace_exists(router_updated)
         snat_namespace_name = dvr_snat_ns.SnatNamespace.get_snat_ns_name(
             router_updated.router_id)
         self.assertFalse(
-            ip_lib.device_exists(router1_ha_device, snat_namespace_name))
+            ip_lib.device_exists(master_ha_device, snat_namespace_name))
 
-        utils.wait_until_true(lambda: router2.ha_state == 'master')
-        self._assert_ip_addresses_in_dvr_ha_snat_namespace(router2)
+        utils.wait_until_true(lambda: backup.ha_state == 'master')
+        self._assert_ip_addresses_in_dvr_ha_snat_namespace(backup)
         self.assertTrue(
-            ip_lib.device_exists(router2_ha_device, router2.ha_namespace))
+            ip_lib.device_exists(backup_ha_device, backup.ha_namespace))
 
     def _test_dvr_ha_router_failover_with_gw_and_fip(self, enable_gw,
                                                      enable_centralized_fip,
@@ -1519,18 +1520,18 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             self.failover_agent, enable_gw=enable_gw,
             enable_centralized_fip=enable_centralized_fip,
             snat_bound_fip=snat_bound_fip)
-        utils.wait_until_true(lambda: router1.ha_state == 'master')
-        utils.wait_until_true(lambda: router2.ha_state == 'backup')
+        master, backup = self._get_master_and_slave_routers(
+            router1, router2, check_external_device=False)
 
-        self._assert_ip_addresses_in_dvr_ha_snat_namespace_with_fip(router1)
-        self._assert_no_ip_addresses_in_dvr_ha_snat_namespace_with_fip(router2)
-        self.fail_ha_router(router1)
+        self._assert_ip_addresses_in_dvr_ha_snat_namespace_with_fip(master)
+        self._assert_no_ip_addresses_in_dvr_ha_snat_namespace_with_fip(backup)
+        self.fail_ha_router(master)
 
-        utils.wait_until_true(lambda: router2.ha_state == 'master')
-        utils.wait_until_true(lambda: router1.ha_state == 'backup')
+        utils.wait_until_true(lambda: backup.ha_state == 'master')
+        utils.wait_until_true(lambda: master.ha_state == 'backup')
 
-        self._assert_ip_addresses_in_dvr_ha_snat_namespace_with_fip(router2)
-        self._assert_no_ip_addresses_in_dvr_ha_snat_namespace_with_fip(router1)
+        self._assert_ip_addresses_in_dvr_ha_snat_namespace_with_fip(backup)
+        self._assert_no_ip_addresses_in_dvr_ha_snat_namespace_with_fip(master)
 
     def _test_dvr_ha_router_failover(self, enable_gw):
         self._setup_dvr_ha_agents()
@@ -1539,19 +1540,19 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         router1 = self._create_dvr_ha_router(self.agent, enable_gw=enable_gw)
         router2 = self._create_dvr_ha_router(self.failover_agent, enable_gw)
 
-        utils.wait_until_true(lambda: router1.ha_state == 'master')
-        utils.wait_until_true(lambda: router2.ha_state == 'backup')
+        master, backup = self._get_master_and_slave_routers(
+            router1, router2, check_external_device=False)
 
-        self._assert_ip_addresses_in_dvr_ha_snat_namespace(router1)
-        self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(router2)
+        self._assert_ip_addresses_in_dvr_ha_snat_namespace(master)
+        self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(backup)
 
-        self.fail_ha_router(router1)
+        self.fail_ha_router(master)
 
-        utils.wait_until_true(lambda: router2.ha_state == 'master')
-        utils.wait_until_true(lambda: router1.ha_state == 'backup')
+        utils.wait_until_true(lambda: backup.ha_state == 'master')
+        utils.wait_until_true(lambda: master.ha_state == 'backup')
 
-        self._assert_ip_addresses_in_dvr_ha_snat_namespace(router2)
-        self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(router1)
+        self._assert_ip_addresses_in_dvr_ha_snat_namespace(backup)
+        self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(master)
 
     @test_base.unstable_test("bug 1819160")
     def test_dvr_ha_router_failover_with_gw(self):
