@@ -18,6 +18,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.db import api as db_api
 from neutron_lib.plugins import directory
 from neutron_lib import rpc as n_rpc
+from neutron_lib.services.trunk import constants as trunk_consts
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging
@@ -27,7 +28,6 @@ from neutron.api.rpc.callbacks.producer import registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.objects import trunk as trunk_objects
-from neutron.services.trunk import constants as trunk_consts
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk.rpc import constants
 
@@ -119,7 +119,7 @@ class TrunkSkeleton(object):
         # subport bindings. The trunk will stay in BUILD state until an
         # attempt has been made to bind all subports passed here and the
         # agent acknowledges the operation was successful.
-        trunk.update(status=trunk_consts.BUILD_STATUS)
+        trunk.update(status=trunk_consts.TRUNK_BUILD_STATUS)
 
         for port_id in port_ids:
             try:
@@ -134,7 +134,7 @@ class TrunkSkeleton(object):
                 # NOTE(status_police) The subport binding has failed in a
                 # manner in which we cannot proceed and the user must take
                 # action to bring the trunk back to a sane state.
-                trunk.update(status=trunk_consts.ERROR_STATUS)
+                trunk.update(status=trunk_consts.TRUNK_ERROR_STATUS)
                 return []
             except Exception as e:
                 msg = ("Failed to bind subport port %(port)s on trunk "
@@ -142,7 +142,7 @@ class TrunkSkeleton(object):
                 LOG.error(msg, {'port': port_id, 'trunk': trunk.id, 'exc': e})
 
         if len(port_ids) != len(updated_ports):
-            trunk.update(status=trunk_consts.DEGRADED_STATUS)
+            trunk.update(status=trunk_consts.TRUNK_DEGRADED_STATUS)
 
         return updated_ports
 

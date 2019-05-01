@@ -22,9 +22,9 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from neutron_lib.plugins import utils as plugin_utils
+from neutron_lib.services.trunk import constants
 from oslo_utils import uuidutils
 
-from neutron.services.trunk import constants
 from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import plugin as trunk_plugin
@@ -40,7 +40,7 @@ class SubPortsValidatorTestCase(base.BaseTestCase):
     def setUp(self):
         super(SubPortsValidatorTestCase, self).setUp()
         self.segmentation_types = {
-            constants.VLAN: plugin_utils.is_valid_vlan_tag}
+            constants.SEGMENTATION_TYPE_VLAN: plugin_utils.is_valid_vlan_tag}
         self.context = mock.ANY
 
         mock.patch.object(rules.SubPortsValidator, '_get_port_mtu',
@@ -132,7 +132,7 @@ class SubPortsValidatorPrepareTestCase(base.BaseTestCase):
     def setUp(self):
         super(SubPortsValidatorPrepareTestCase, self).setUp()
         self.segmentation_types = {
-            constants.VLAN: plugin_utils.is_valid_vlan_tag}
+            constants.SEGMENTATION_TYPE_VLAN: plugin_utils.is_valid_vlan_tag}
         self.context = mock.ANY
 
         mock.patch.object(rules.SubPortsValidator, '_get_port_mtu',
@@ -153,7 +153,7 @@ class SubPortsValidatorMtuSanityTestCase(test_plugin.Ml2PluginV2TestCase):
     def setUp(self):
         super(SubPortsValidatorMtuSanityTestCase, self).setUp()
         self.segmentation_types = {
-            constants.VLAN: plugin_utils.is_valid_vlan_tag}
+            constants.SEGMENTATION_TYPE_VLAN: plugin_utils.is_valid_vlan_tag}
 
     def test_validate_subport_mtu_same_as_trunk(self):
         self._test_validate_subport_trunk_mtu(1500, 1500)
@@ -232,8 +232,9 @@ class TrunkPortValidatorTestCase(test_plugin.Ml2PluginV2TestCase):
         self.compat_patch = mock.patch.object(
             trunk_plugin.TrunkPlugin, 'check_compatibility').start()
         self.trunk_plugin = trunk_plugin.TrunkPlugin()
-        self.trunk_plugin.add_segmentation_type(constants.VLAN,
-                                                plugin_utils.is_valid_vlan_tag)
+        self.trunk_plugin.add_segmentation_type(
+            constants.SEGMENTATION_TYPE_VLAN,
+            plugin_utils.is_valid_vlan_tag)
 
     def test_validate_port_parent_in_use_by_trunk(self):
         with self.port() as trunk_parent:

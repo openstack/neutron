@@ -14,12 +14,12 @@
 from neutron_lib.callbacks import events as local_events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources as local_resources
+from neutron_lib.services.trunk import constants as t_const
 from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.services.trunk import constants as t_const
 from neutron.services.trunk.drivers.linuxbridge.agent import trunk_plumber
 from neutron.services.trunk.rpc import agent as trunk_rpc
 
@@ -104,7 +104,8 @@ class LinuxBridgeTrunkDriver(trunk_rpc.TrunkSkeleton):
         self._tapi.bind_subports_to_host(context, trunk)
         try:
             self._plumber.ensure_trunk_subports(trunk)
-            self._tapi.set_trunk_status(context, trunk, t_const.ACTIVE_STATUS)
+            self._tapi.set_trunk_status(
+                context, trunk, t_const.TRUNK_ACTIVE_STATUS)
         except Exception:
             if not self._plumber.trunk_on_host(trunk):
                 LOG.debug("Trunk %s removed during wiring", trunk.port_id)
@@ -112,7 +113,7 @@ class LinuxBridgeTrunkDriver(trunk_rpc.TrunkSkeleton):
             # something broke
             LOG.exception("Failure setting up subports for %s", trunk.port_id)
             self._tapi.set_trunk_status(context, trunk,
-                                        t_const.DEGRADED_STATUS)
+                                        t_const.TRUNK_DEGRADED_STATUS)
 
 
 class _TrunkAPI(object):

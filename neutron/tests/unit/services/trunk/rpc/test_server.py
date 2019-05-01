@@ -15,13 +15,13 @@ import mock
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.plugins import directory
 from neutron_lib import rpc as n_rpc
+from neutron_lib.services.trunk import constants
 
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.objects import trunk as trunk_obj
 from neutron.plugins.ml2 import plugin as ml2_plugin
-from neutron.services.trunk import constants
 from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import plugin as trunk_plugin
@@ -96,7 +96,7 @@ class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
                                                             subports=subports)
         trunk = trunk_obj.Trunk.get_object(self.context, id=trunk['id'])
 
-        self.assertEqual(trunk.status, constants.BUILD_STATUS)
+        self.assertEqual(trunk.status, constants.TRUNK_BUILD_STATUS)
         self.assertIn(trunk.id, updated_subports)
         for port in updated_subports[trunk['id']]:
             self.assertEqual('trunk_host_id', port[portbindings.HOST_ID])
@@ -144,7 +144,7 @@ class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
                                                             subports=subports)
         trunk = trunk_obj.Trunk.get_object(self.context, id=trunk['id'])
 
-        self.assertEqual(trunk.status, constants.ERROR_STATUS)
+        self.assertEqual(trunk.status, constants.TRUNK_ERROR_STATUS)
         self.assertEqual([], updated_subports[trunk.id])
 
     def test_update_subport_bindings_exception(self):
@@ -176,7 +176,7 @@ class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
                                                             subports=subports)
         trunk = trunk_obj.Trunk.get_object(self.context, id=trunk['id'])
         self.assertEqual([], updated_subports.get(trunk.id))
-        self.assertEqual(constants.DEGRADED_STATUS, trunk.status)
+        self.assertEqual(constants.TRUNK_DEGRADED_STATUS, trunk.status)
 
 
 class TrunkStubTest(base.BaseTestCase):

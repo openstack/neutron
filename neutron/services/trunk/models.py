@@ -15,12 +15,12 @@
 
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
+from neutron_lib.services.trunk import constants
 import sqlalchemy as sa
 from sqlalchemy import sql
 
 from neutron.db import models_v2
 from neutron.db import standard_attr
-from neutron.services.trunk import constants
 
 
 class Trunk(standard_attr.HasStandardAttributes, model_base.BASEV2,
@@ -35,7 +35,8 @@ class Trunk(standard_attr.HasStandardAttributes, model_base.BASEV2,
                         nullable=False,
                         unique=True)
     status = sa.Column(
-        sa.String(16), nullable=False, server_default=constants.ACTIVE_STATUS)
+        sa.String(16), nullable=False,
+        server_default=constants.TRUNK_ACTIVE_STATUS)
 
     port = sa.orm.relationship(
         models_v2.Port,

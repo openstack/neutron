@@ -15,8 +15,8 @@ from oslo_log import log as logging
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
+from neutron_lib.services.trunk import constants as trunk_consts
 
-from neutron.services.trunk import constants as trunk_consts
 from neutron.services.trunk.drivers import base
 
 LOG = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ SUPPORTED_INTERFACES = (
     portbindings.VIF_TYPE_BRIDGE,
 )
 SUPPORTED_SEGMENTATION_TYPES = (
-    trunk_consts.VLAN,
+    trunk_consts.SEGMENTATION_TYPE_VLAN,
 )
 
 

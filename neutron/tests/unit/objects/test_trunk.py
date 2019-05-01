@@ -17,12 +17,12 @@ import itertools
 
 import mock
 from neutron_lib import exceptions as n_exc
+from neutron_lib.services.trunk import constants
 from oslo_db import exception as obj_exc
 from oslo_utils import uuidutils
 
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import trunk as t_obj
-from neutron.services.trunk import constants
 from neutron.services.trunk import exceptions as t_exc
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
@@ -157,9 +157,10 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
         trunk = t_obj.Trunk(context=self.context,
                             admin_state_up=False,
                             port_id=self.db_objs[0]['port_id'],
-                            status=constants.DOWN_STATUS)
+                            status=constants.TRUNK_DOWN_STATUS)
         trunk.create()
-        fields = {'admin_state_up': True, 'status': constants.ACTIVE_STATUS}
+        fields = {'admin_state_up': True,
+                  'status': constants.TRUNK_ACTIVE_STATUS}
         trunk.update(**fields)
 
         trunk = t_obj.Trunk.get_object(self.context, id=trunk.id)

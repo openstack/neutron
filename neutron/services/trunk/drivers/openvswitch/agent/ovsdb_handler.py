@@ -20,6 +20,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import context as n_context
+from neutron_lib.services.trunk import constants
 from oslo_concurrency import lockutils
 from oslo_context import context as o_context
 from oslo_log import log as logging
@@ -32,7 +33,6 @@ from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as ovs_agent_constants
-from neutron.services.trunk import constants
 from neutron.services.trunk.drivers.openvswitch.agent import exceptions
 from neutron.services.trunk.drivers.openvswitch.agent \
     import trunk_manager as tman
@@ -296,7 +296,7 @@ class OVSDBHandler(object):
             # might cause troubles during deletion. Signal a DEGRADED status;
             # if the user undo/redo the operation things may go back to
             # normal.
-            return constants.DEGRADED_STATUS
+            return constants.TRUNK_DEGRADED_STATUS
 
         LOG.debug("Added trunk: %s", trunk_id)
         return self._get_current_status(subports, subport_ids)
@@ -327,7 +327,7 @@ class OVSDBHandler(object):
             # normal.
             LOG.error("Failed to store metadata for trunk %(trunk_id)s: "
                       "%(reason)s", {'trunk_id': trunk_id, 'reason': e})
-            return constants.DEGRADED_STATUS
+            return constants.TRUNK_DEGRADED_STATUS
         except exceptions.ParentPortNotFound as e:
             # If a user deletes/migrates a VM and remove subports from a trunk
             # in short sequence, there is a chance that we hit this spot in
@@ -391,11 +391,12 @@ class OVSDBHandler(object):
                        'err': te})
             # NOTE(status_police): Trunk couldn't be created so it ends in
             # ERROR status and resync can fix that later.
-            self.report_trunk_status(ctx, trunk.id, constants.ERROR_STATUS)
+            self.report_trunk_status(
+                ctx, trunk.id, constants.TRUNK_ERROR_STATUS)
             return
 
         # We need to remove stale subports
-        unwire_status = constants.ACTIVE_STATUS
+        unwire_status = constants.TRUNK_ACTIVE_STATUS
         if rewire:
             old_subport_ids = self.get_connected_subports_for_trunk(trunk.id)
             subports = {p['port_id'] for p in trunk.sub_ports}
@@ -414,10 +415,10 @@ class OVSDBHandler(object):
             trunk_bridge=trunk_br, parent_port=port)
 
         if (unwire_status == wire_status and
-                wire_status == constants.ACTIVE_STATUS):
-            status = constants.ACTIVE_STATUS
+                wire_status == constants.TRUNK_ACTIVE_STATUS):
+            status = constants.TRUNK_ACTIVE_STATUS
         else:
-            status = constants.DEGRADED_STATUS
+            status = constants.TRUNK_DEGRADED_STATUS
         self.report_trunk_status(ctx, trunk.id, status)
 
     def _set_trunk_metadata(self, trunk_bridge, port, trunk_id, subport_ids):
@@ -476,9 +477,9 @@ class OVSDBHandler(object):
         # a trunk_update_status to report the latest trunk status, but there
         # can be exceptions (e.g. unwire_subports_for_trunk).
         if len(expected_subports) != len(actual_subports):
-            return constants.DEGRADED_STATUS
+            return constants.TRUNK_DEGRADED_STATUS
         else:
-            return constants.ACTIVE_STATUS
+            return constants.TRUNK_ACTIVE_STATUS
 
     def _is_vm_connected(self, bridge):
         """True if an instance is connected to bridge, False otherwise."""
