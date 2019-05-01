@@ -120,14 +120,8 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
     def _is_network_segment_range_type_supported(self, network_type):
         if not (self.type_manager.network_type_supported(network_type) and
                 network_type in const.NETWORK_SEGMENT_RANGE_TYPES):
-            # TODO(kailun): To use
-            #  range_exc.NetworkSegmentRangeNetTypeNotSupported when the
-            #  neutron-lib patch https://review.opendev.org/640777 is merged
-            #  and released.
-            message = _("Network type %s does not support "
-                        "network segment ranges.") % network_type
-            raise lib_exc.BadRequest(resource=range_def.RESOURCE_NAME,
-                                     msg=message)
+            raise range_exc.NetworkSegmentRangeNetTypeNotSupported(
+                type=network_type)
 
         return True
 
@@ -219,28 +213,14 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
             existing_range_data = network_segment_range.to_dict()
 
             if existing_range_data['default']:
-                # TODO(kailun): To use
-                #  range_exc.NetworkSegmentRangeDefaultReadOnly when the
-                #  neutron-lib patch https://review.opendev.org/640777 is
-                #  merged and released.
-                message = _("Network Segment Range %s is a "
-                            "default segment range which could not be "
-                            "updated or deleted.") % id
-                raise lib_exc.BadRequest(resource=range_def.RESOURCE_NAME,
-                                         msg=message)
+                raise range_exc.NetworkSegmentRangeDefaultReadOnly(range_id=id)
 
             if self._are_allocated_segments_in_range_impacted(
                     context,
                     existing_range=existing_range_data,
                     updated_range=updated_range_data):
-                # TODO(kailun): To use
-                #  range_exc.NetworkSegmentRangeReferencedByProject when the
-                #  neutron-lib patch https://review.opendev.org/640777 is
-                #  merged and released.
-                message = _("Network Segment Range %s is referenced by "
-                            "one or more tenant networks.") % id
-                raise lib_exc.InUse(resource=range_def.RESOURCE_NAME,
-                                    msg=message)
+                raise range_exc.NetworkSegmentRangeReferencedByProject(
+                    range_id=id)
 
             new_range_data = self._add_unchanged_range_attributes(
                 updated_range_data, existing_range_data)
@@ -261,26 +241,12 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
             range_data = network_segment_range.to_dict()
 
             if range_data['default']:
-                # TODO(kailun): To use
-                #  range_exc.NetworkSegmentRangeDefaultReadOnly when the
-                #  neutron-lib patch https://review.opendev.org/640777 is
-                #  merged and released.
-                message = _("Network Segment Range %s is a "
-                            "default segment range which could not be "
-                            "updated or deleted.") % id
-                raise lib_exc.BadRequest(resource=range_def.RESOURCE_NAME,
-                                         msg=message)
+                raise range_exc.NetworkSegmentRangeDefaultReadOnly(range_id=id)
 
             if self._is_network_segment_range_referenced(
                     context, range_data):
-                # TODO(kailun): To use
-                #  range_exc.NetworkSegmentRangeReferencedByProject when the
-                #  neutron-lib patch https://review.opendev.org/640777 is
-                #  merged and released.
-                message = _("Network Segment Range %s is referenced by "
-                            "one or more tenant networks.") % id
-                raise lib_exc.InUse(resource=range_def.RESOURCE_NAME,
-                                    msg=message)
+                raise range_exc.NetworkSegmentRangeReferencedByProject(
+                    range_id=id)
             network_segment_range.delete()
 
         self.type_manager.update_network_segment_range_allocations(
