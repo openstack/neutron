@@ -666,6 +666,22 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # Call the mechanism driver precommit methods, commit
                 # the results, and call the postcommit methods.
                 self.mechanism_manager.update_port_precommit(cur_context)
+            else:
+                # Try to populate the PortContext with the current binding
+                # levels so that the RPC notification won't get suppressed.
+                # This is to avoid leaving ports stuck in a DOWN state.
+                # For more information see bug:
+                # https://bugs.launchpad.net/neutron/+bug/1755810
+                LOG.warning("Concurrent port binding operations failed on "
+                            "port %s", port_id)
+                levels = db.get_binding_levels(plugin_context, port_id,
+                                               cur_binding.host)
+                for level in levels:
+                    cur_context._push_binding_level(level)
+                # refresh context with a snapshot of the current binding state
+                cur_context._binding = driver_context.InstanceSnapshot(
+                    cur_binding)
+
         if commit:
             # Continue, using the port state as of the transaction that
             # just finished, whether that transaction committed new
