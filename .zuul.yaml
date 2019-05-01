@@ -247,7 +247,7 @@
 
 - job:
     name: neutron-tempest-dvr-ha-multinode-full
-    parent: tempest-multinode-full
+    parent: tempest-multinode-full-py3
     nodeset: openstack-three-node-bionic
     timeout: 10800
     roles:
@@ -293,6 +293,8 @@
           q-agt: true
           q-l3: true
           q-meta: true
+        devstack_localrc:
+          USE_PYTHON3: true
         devstack_local_conf:
           post-config:
             $NEUTRON_CONF:
