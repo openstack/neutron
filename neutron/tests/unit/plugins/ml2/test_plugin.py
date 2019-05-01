@@ -48,6 +48,7 @@ from neutron.db import provisioning_blocks
 from neutron.db import segments_db
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.objects import base as base_obj
+from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db as ml2_db
@@ -1961,6 +1962,66 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
                 else:
                     # Successful binding should only be attempted once.
                     self.assertEqual(1, at_mock.call_count)
+
+    def test__bind_port_if_needed_concurrent_calls(self):
+        port_vif_type = portbindings.VIF_TYPE_UNBOUND
+        bound_vif_type = portbindings.VIF_TYPE_OVS
+
+        plugin, port_context, bound_context = (
+            self._create_port_and_bound_context(port_vif_type,
+                                                bound_vif_type))
+        bound_context._binding_levels = [mock.Mock(
+            port_id="port_id",
+            level=0,
+            driver='fake_agent',
+            segment_id="11111111-2222-3333-4444-555555555555")]
+
+        # let _commit_port_binding replace the PortContext with a new instance
+        # which does not have any binding levels set to simulate the concurrent
+        # port binding operations fail
+        with mock.patch(
+            'neutron.plugins.ml2.plugin.Ml2Plugin._bind_port',
+            return_value=bound_context),\
+            mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.'
+                       '_notify_port_updated') as npu_mock,\
+            mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.'
+                       '_attempt_binding',
+                       side_effect=plugin._attempt_binding) as ab_mock,\
+            mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.'
+                       '_commit_port_binding', return_value=(
+                            mock.MagicMock(), True, True)) as cpb_mock:
+            ret_context = plugin._bind_port_if_needed(port_context,
+                                                      allow_notify=True)
+            # _attempt_binding will return without doing anything during
+            # the second iteration since _should_bind_port returns False
+            self.assertEqual(2, ab_mock.call_count)
+            self.assertEqual(1, cpb_mock.call_count)
+            # _notify_port_updated will still be called though it does
+            # nothing due to the missing binding levels
+            npu_mock.assert_called_once_with(ret_context)
+
+    def test__commit_port_binding_populating_with_binding_levels(self):
+        port_vif_type = portbindings.VIF_TYPE_OVS
+        bound_vif_type = portbindings.VIF_TYPE_OVS
+
+        plugin, port_context, bound_context = (
+            self._create_port_and_bound_context(port_vif_type,
+                                                bound_vif_type))
+        db_portbinding = port_obj.PortBindingLevel(
+            self.context,
+            port_id=uuidutils.generate_uuid(),
+            level=0,
+            driver='fake_agent',
+            segment_id="11111111-2222-3333-4444-555555555555")
+        bound_context.network.current = {'id': 'net_id'}
+
+        with mock.patch.object(ml2_db, 'get_binding_levels',
+                return_value=[db_portbinding]),\
+                mock.patch.object(driver_context.PortContext,
+                '_push_binding_level') as pbl_mock:
+            plugin._commit_port_binding(
+                    port_context, bound_context, True, False)
+            pbl_mock.assert_called_once_with(db_portbinding)
 
     def test_port_binding_profile_not_changed(self):
         profile = {'e': 5}
