@@ -435,5 +435,6 @@
     vars:
       tox_envlist: full
       devstack_localrc:
+        USE_PYTHON3: true
         NEUTRON_DEPLOY_MOD_WSGI: true
     irrelevant-files: *tempest-irrelevant-files
