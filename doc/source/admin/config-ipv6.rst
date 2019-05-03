@@ -416,23 +416,38 @@ overlap across the projects.
 Security considerations
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo:: Initially this is probably just stating the security group rules
-          relative to IPv6 that are applied.   Need some help for these
+For more information about security considerations, see the ``Security groups``
+section in
+:doc:`intro-os-networking`.
 
 Configuring interfaces of the guest
 -----------------------------------
 
-OpenStack currently doesn't support the privacy extensions defined by RFC 4941.
-The interface identifier and DUID used must be directly derived from the MAC
-as described in RFC 2373. The compute hosts must not be setup to utilize the
-privacy extensions when generating their interface identifier.
+OpenStack currently doesn't support the Privacy Extensions defined by RFC 4941,
+or the Opaque Identifier generation methods defined in RFC 7217. The interface
+identifier and DUID used must be directly derived from the MAC address
+as described in RFC 2373. The compute instances must not be set up to utilize
+either of these methods when generating their interface identifier, or
+they might not be able to communicate properly on the network. For example,
+in Linux guests, these are controlled via these two ``sysctl`` variables:
 
-There is no provisions for an IPv6-based metadata service similar to what is
-provided for IPv4. In the case of dual stacked guests though it is always
-possible to use the IPv4 metadata service instead.
+- ``net.ipv6.conf.*.use_tempaddr`` (Privacy Extensions)
+- ``net.ipv6.conf.*.addr_gen_mode`` (link-local and autoconf address generation)
 
-Unlike IPv4 the MTU of a given network can be conveyed in the RA messages sent
-by the router as well as in the DHCP messages.
+Both of these settings should be disabled (zero).
+
+Other types of guests might have similar configuration options, please
+consult your distribution documentation for more information.
+
+There are no provisions for an IPv6-based metadata service similar to what is
+provided for IPv4. In the case of dual-stacked guests though it is always
+possible to use the IPv4 metadata service instead. IPv6-only guests will have
+to use another method for metadata injection such as using a configuration
+drive, which is described in the Nova documentation on
+`config-drive <https://docs.openstack.org/nova/latest/user/config-drive.html>`__.
+
+Unlike IPv4, the MTU of a given network can be conveyed in both the Router
+Advertisement messages sent by the router, as well as in DHCP messages.
 
 OpenStack control & management network considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
