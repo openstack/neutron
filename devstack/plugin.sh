@@ -69,7 +69,6 @@ if [[ "$1" == "stack" ]]; then
             #Therefore we create new service, q-sriov-agt, and the
             # q-agt/neutron-agent should be OVS or linux bridge.
             if is_service_enabled q-sriov-agt neutron-sriov-agent; then
-                configure_$NEUTRON_CORE_PLUGIN
                 configure_l2_agent
                 configure_l2_agent_sriovnicswitch
             fi
