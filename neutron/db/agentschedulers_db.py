@@ -359,7 +359,12 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             LOG.exception("Exception encountered during network "
                           "rescheduling")
 
-    def get_dhcp_agents_hosting_networks(
+    def get_dhcp_agents_hosting_networks(self, *args, **kwargs):
+        mapping = self.get_dhcp_agents_hosting_networks_mapping(*args,
+                                                                **kwargs)
+        return [agent for agent, _ in mapping]  # noqa
+
+    def get_dhcp_agents_hosting_networks_mapping(
             self, context, network_ids, active=None, admin_state_up=None,
             hosts=None):
         if not network_ids:
@@ -369,17 +374,18 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         bindings = network.NetworkDhcpAgentBinding.get_objects(
             context, network_id=network_ids)
         # get the already fetched dhcp_agent objects
-        agent_objs = [binding.db_obj.dhcp_agent for binding in bindings]
+        agent_net_id = [(binding.db_obj.dhcp_agent, binding.db_obj.network_id)
+                        for binding in bindings]
         # filter the dhcp_agent objects on admin_state_up
         if admin_state_up is not None:
-            agent_objs = [agent for agent in agent_objs
+            agent_net_id = [(agent, net_id) for agent, net_id in agent_net_id
                           if agent.admin_state_up == admin_state_up]
         # filter the dhcp_agent objects on hosts
         if hosts:
-            agent_objs = [agent for agent in agent_objs
+            agent_net_id = [(agent, net_id) for agent, net_id in agent_net_id
                           if agent.host in hosts]
         # finally filter if the agents are eligible
-        return [agent for agent in agent_objs
+        return [(agent, net_id) for (agent, net_id) in agent_net_id
                 if self.is_eligible_agent(context, active, agent)]
 
     def add_network_to_dhcp_agent(self, context, id, network_id):
