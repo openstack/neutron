@@ -348,13 +348,14 @@ class NovaSegmentNotifier(object):
 
     @registry.receives(resources.SEGMENT_HOST_MAPPING, [events.AFTER_CREATE])
     def _notify_host_addition_to_aggregate(self, resource, event, trigger,
-                                           context, host, current_segment_ids,
-                                           **kwargs):
-        subnets = subnet_obj.Subnet.get_objects(context,
-                                                segment_id=current_segment_ids)
+                                           payload=None):
+        subnets = subnet_obj.Subnet.get_objects(
+            payload.context,
+            segment_id=payload.metadata.get('current_segment_ids'))
         segment_ids = {s.segment_id for s in subnets}
-        self.batch_notifier.queue_event(Event(self._add_host_to_aggregate,
-                                              segment_ids, host=host))
+        self.batch_notifier.queue_event(
+            Event(self._add_host_to_aggregate,
+                  segment_ids, host=payload.metadata.get('host')))
 
     def _add_host_to_aggregate(self, event):
         for segment_id in event.segment_ids:
