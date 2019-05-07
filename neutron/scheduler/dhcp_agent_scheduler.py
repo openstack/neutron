@@ -68,13 +68,18 @@ class AutoScheduler(object):
 
             segments_on_host = {s.segment_id for s in segment_host_mapping}
 
+            agent_net_id = plugin.get_dhcp_agents_hosting_networks_mapping(
+                context, list(net_ids.keys()))
+            agents_of_net = collections.defaultdict(list)
+            for agent, net_id in agent_net_id:
+                agents_of_net[net_id].append(agent)
+
             for dhcp_agent in dhcp_agents:
                 if agent_utils.is_agent_down(dhcp_agent.heartbeat_timestamp):
                     LOG.warning('DHCP agent %s is not active', dhcp_agent.id)
                     continue
                 for net_id, is_routed_network in net_ids.items():
-                    agents = plugin.get_dhcp_agents_hosting_networks(
-                        context, [net_id])
+                    agents = agents_of_net[net_id]
                     segments_on_network = net_segment_ids[net_id]
                     if is_routed_network:
                         if len(segments_on_network & segments_on_host) == 0:
