@@ -68,6 +68,10 @@ class InvalidUnit(exceptions.NeutronException):
     message = _("Unit name '%(unit)s' is not valid.")
 
 
+class TcLibPolicyClassInvalidMinKbpsValue(exceptions.NeutronException):
+    message = _("'min_kbps' is mandatory in a TC class and must be >= 1.")
+
+
 def convert_to_kilobits(value, base):
     value = value.lower()
     if "bit" in value:
@@ -376,7 +380,7 @@ def delete_tc_qdisc(device, parent=None, is_ingress=False,
         raise_qdisc_not_found=raise_qdisc_not_found, namespace=namespace)
 
 
-def add_tc_policy_class(device, parent, classid, min_kbps=None, max_kbps=None,
+def add_tc_policy_class(device, parent, classid, min_kbps=1, max_kbps=None,
                         burst_kb=None, namespace=None):
     """Add a TC policy class
 
@@ -390,14 +394,14 @@ def add_tc_policy_class(device, parent, classid, min_kbps=None, max_kbps=None,
     :return:
     """
     parent = TC_QDISC_PARENT.get(parent, parent)
-    args = {}
     # NOTE(ralonsoh): pyroute2 input parameters and units [1]:
     #   - rate (min bw): bytes/second
     #   - ceil (max bw): bytes/second
     #   - burst: bytes
     # [1] https://www.systutorials.com/docs/linux/man/8-tc/
-    if min_kbps:
-        args['rate'] = int(min_kbps * 1024 / 8)
+    if int(min_kbps) < 1:
+        raise TcLibPolicyClassInvalidMinKbpsValue()
+    args = {'rate': int(min_kbps * 1024 / 8)}
     if max_kbps:
         args['ceil'] = int(max_kbps * 1024 / 8)
     if burst_kb:
