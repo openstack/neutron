@@ -148,6 +148,8 @@ class TestDhcpScheduler(TestDhcpSchedulerBaseTestCase):
                                             "segment_id": None}]
         plugin.get_network.return_value = self.network
         plugin.get_dhcp_agents_hosting_networks.return_value = dead_agent
+        plugin.get_dhcp_agents_hosting_networks_mapping.return_value = \
+            [(dead_agent, self.network_id)]
         network_assigned_to_dead_agent = (
             self._get_agent_binding_from_db(dead_agent))
         self.assertEqual(1, len(network_assigned_to_dead_agent))
