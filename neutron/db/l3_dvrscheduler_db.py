@@ -398,10 +398,13 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         query = query.filter(RouterPort.router_id != router_id)
         return [item[0] for item in query]
 
-    def _get_router_ids_for_agent(self, context, agent_db, router_ids):
+    def _get_router_ids_for_agent(self, context, agent_db, router_ids,
+                                  with_dvr=True):
         result_set = set(super(L3_DVRsch_db_mixin,
                                self)._get_router_ids_for_agent(
-            context, agent_db, router_ids))
+            context, agent_db, router_ids, with_dvr))
+        if not with_dvr:
+            return result_set
         router_ids = set(router_ids or [])
         if router_ids and result_set == router_ids:
             # no need for extra dvr checks if requested routers are
