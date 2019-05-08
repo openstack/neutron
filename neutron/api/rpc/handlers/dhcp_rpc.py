@@ -80,16 +80,21 @@ class DhcpRpcCallback(object):
     def _get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active networks."""
         host = kwargs.get('host')
+        limit = kwargs.get('limit')
+        marker = kwargs.get('marker')
         plugin = directory.get_plugin()
         if extensions.is_extension_supported(
                 plugin, constants.DHCP_AGENT_SCHEDULER_EXT_ALIAS):
             if cfg.CONF.network_auto_schedule:
                 plugin.auto_schedule_networks(context, host)
             nets = plugin.list_active_networks_on_active_dhcp_agent(
-                context, host)
+                context, host, limit=limit, marker=marker, sorts=[('id', True)]
+            )
         else:
             filters = dict(admin_state_up=[True])
-            nets = plugin.get_networks(context, filters=filters)
+            nets = plugin.get_networks(context, filters=filters,
+                                       limit=limit, marker=marker,
+                                       sorts=[('id', True)])
         return nets
 
     def _port_action(self, plugin, context, port, action):

@@ -645,6 +645,29 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self.adminContext, host=DHCP_HOSTA)
         self.assertEqual([], nets)
 
+    def test_list_active_networks_paginated(self):
+        self._register_agent_states()
+        networks = ['net{}'.format(n) for n in range(5)]
+        hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
+                                      DHCP_HOSTA)
+        for net_name in networks:
+            with self.network(name=net_name) as net:
+                self._add_network_to_dhcp_agent(hosta_id,
+                                                net['network']['id'])
+        num_after_add = len(
+            self._list_networks_hosted_by_dhcp_agent(
+                hosta_id)['networks'])
+        self.assertEqual(len(networks), num_after_add)
+        plugin = directory.get_plugin()
+        nets1 = plugin.list_active_networks_on_active_dhcp_agent(
+            self.adminContext, host=DHCP_HOSTA, limit=2,
+            sorts=[('id', True)])
+        nets2 = plugin.list_active_networks_on_active_dhcp_agent(
+            self.adminContext, host=DHCP_HOSTA, limit=3,
+            sorts=[('id', True)], marker=nets1[-1]['id'])
+        self.assertEqual(set(networks),
+                         set([net['name'] for net in nets1 + nets2]))
+
     def test_reserved_port_after_network_remove_from_dhcp_agent(self):
         helpers.register_dhcp_agent(DHCP_HOSTA)
         hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,

@@ -455,7 +455,9 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             self._get_agent(context, id)
             return {'networks': []}
 
-    def list_active_networks_on_active_dhcp_agent(self, context, host):
+    def list_active_networks_on_active_dhcp_agent(self, context, host,
+                                                  sorts=None, limit=None,
+                                                  marker=None):
         try:
             agent = self._get_agent_by_type_and_host(
                 context, constants.AGENT_TYPE_DHCP, host)
@@ -472,7 +474,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         net_ids = [item.network_id for item in query]
         if net_ids:
             return self.get_networks(
-                context,
+                context, marker=marker, sorts=sorts, limit=limit,
                 filters={'id': net_ids, 'admin_state_up': [True]}
             )
         else:
