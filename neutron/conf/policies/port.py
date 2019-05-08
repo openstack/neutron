@@ -68,7 +68,8 @@ rules = [
     policy.DocumentedRuleDefault(
         'create_port:fixed_ips',
         base.policy_or(base.RULE_ADVSVC,
-                       base.RULE_ADMIN_OR_NET_OWNER),
+                       base.RULE_ADMIN_OR_NET_OWNER,
+                       'rule:shared'),
         'Specify ``fixed_ips`` information when creating a port',
         ACTION_POST
     ),
@@ -116,6 +117,20 @@ rules = [
         'create_port:allowed_address_pairs',
         base.RULE_ADMIN_OR_NET_OWNER,
         'Specify ``allowed_address_pairs`` attribute when creating a port',
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
+        'create_port:allowed_address_pairs:mac_address',
+        base.RULE_ADMIN_OR_NET_OWNER,
+        ('Specify ``mac_address` of `allowed_address_pairs`` '
+         'attribute when creating a port'),
+        ACTION_POST
+    ),
+    policy.DocumentedRuleDefault(
+        'create_port:allowed_address_pairs:ip_address',
+        base.RULE_ADMIN_OR_NET_OWNER,
+        ('Specify ``ip_address`` of ``allowed_address_pairs`` '
+         'attribute when creating a port'),
         ACTION_POST
     ),
 
@@ -233,6 +248,20 @@ rules = [
         'update_port:allowed_address_pairs',
         base.RULE_ADMIN_OR_NET_OWNER,
         'Update ``allowed_address_pairs`` attribute of a port',
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
+        'update_port:allowed_address_pairs:mac_address',
+        base.RULE_ADMIN_OR_NET_OWNER,
+        ('Update ``mac_address`` of ``allowed_address_pairs`` '
+         'attribute of a port'),
+        ACTION_PUT
+    ),
+    policy.DocumentedRuleDefault(
+        'update_port:allowed_address_pairs:ip_address',
+        base.RULE_ADMIN_OR_NET_OWNER,
+        ('Update ``ip_address`` of ``allowed_address_pairs`` '
+         'attribute of a port'),
         ACTION_PUT
     ),
     policy.DocumentedRuleDefault(
