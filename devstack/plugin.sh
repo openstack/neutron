@@ -28,6 +28,7 @@ if [[ "$1" == "stack" ]]; then
                [[ "$Q_BUILD_OVS_FROM_GIT" == "True" ]]; then
                 remove_ovs_packages
                 compile_ovs True /usr /var
+                load_conntrack_gre_module
                 start_new_ovs
             fi
             ;;

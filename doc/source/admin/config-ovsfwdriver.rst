@@ -53,3 +53,21 @@ Enable the native OVS firewall driver
 For more information, see the
 :doc:`/contributor/internals/openvswitch_firewall`
 and the `video <https://www.youtube.com/watch?v=SOHeZ3g9yxM>`_.
+
+Using GRE tunnels inside VMs with OVS firewall driver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If GRE tunnels from VM to VM are going to be used, the native OVS firewall
+implementation requires ``nf_conntrack_proto_gre`` module to be loaded in
+the kernel on nodes running the Open vSwitch agent.
+It can be loaded with the command:
+
+.. code-block:: console
+
+    # modprobe nf_conntrack_proto_gre
+
+Some Linux distributions have files that can be used to automatically load
+kernel modules at boot time, for example, ``/etc/modules``. Check with your
+distribution for further information.
+
+This isn't necessary to use ``gre`` tunnel network type Neutron.

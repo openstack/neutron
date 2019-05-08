@@ -220,6 +220,15 @@ def check_ovs_conntrack():
     return result
 
 
+def check_gre_conntrack():
+    result = checks.gre_conntrack_supported()
+    if not result:
+        LOG.warning('Kernel module %s is not loaded. GRE tunnels from '
+                    'VM to VM will not work with OVS firewall driver.',
+                    checks.CONNTRACK_GRE_MODULE)
+    return result
+
+
 def check_ebtables():
     result = checks.ebtables_supported()
     if not result:
@@ -323,6 +332,9 @@ OPTS = [
                     help=_('Check ovsdb native interface support')),
     BoolOptCallback('ovs_conntrack', check_ovs_conntrack,
                     help=_('Check ovs conntrack support')),
+    BoolOptCallback('gre_conntrack', check_gre_conntrack,
+                    help=_('Check if conntrack for gre tunnels traffic is '
+                           'supported')),
     BoolOptCallback('ebtables_installed', check_ebtables,
                     help=_('Check ebtables installation')),
     BoolOptCallback('keepalived_ipv6_support', check_keepalived_ipv6_support,
