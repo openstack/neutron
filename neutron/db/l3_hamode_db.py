@@ -760,6 +760,16 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                     ha_binding_agent.host == gateway_port_binding_host):
                 return ha_binding_agent.host
 
+        LOG.debug("No gateway port host retrieved. HA router %(router_id)s "
+                  "gateway port %(gw_port_id)s "
+                  "binding host: %(host)s, status: %(status)s, "
+                  "router HA bindings: %(ha_bindings)s",
+                  {"router_id": router_id,
+                   "gw_port_id": gateway_port['id'],
+                   "host": gateway_port_binding_host,
+                   "status": gateway_port_status,
+                   "ha_bindings": ha_bindings})
+
 
 def is_ha_router(router):
     """Return True if router to be handled is ha."""

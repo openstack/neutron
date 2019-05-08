@@ -147,7 +147,8 @@ class L3RpcCallback(object):
                 self._ensure_host_set_on_port(context,
                                               gw_port_host,
                                               router.get('gw_port'),
-                                              router['id'])
+                                              router['id'],
+                                              ha_router_port=router.get('ha'))
                 for p in router.get(constants.SNAT_ROUTER_INTF_KEY, []):
                     self._ensure_host_set_on_port(
                         context, gw_port_host, p, router['id'],
@@ -187,6 +188,10 @@ class L3RpcCallback(object):
                 # All ports, including ports created for SNAT'ing for
                 # DVR are handled here
                 try:
+                    LOG.debug("Updating router %(router)s port %(port)s "
+                              "binding host %(host)s",
+                              {"router": router_id, "port": port['id'],
+                               "host": host})
                     self.plugin.update_port(
                         context,
                         port['id'],
@@ -213,6 +218,10 @@ class L3RpcCallback(object):
                     # port binding will be corrected when an active is
                     # elected.
                     try:
+                        LOG.debug("Updating router %(router)s port %(port)s "
+                                  "binding host %(host)s",
+                                  {"router": router_id, "port": port['id'],
+                                   "host": host})
                         self.plugin.update_port(
                             context,
                             port['id'],
