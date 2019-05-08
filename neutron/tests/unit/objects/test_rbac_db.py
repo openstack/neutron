@@ -129,8 +129,14 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
                                             context, object_type, policy,
                                             event_list):
         for event in event_list:
+            payload = events.DBEventPayload(
+                context, states=(policy,),
+                metadata={'object_type': object_type})
+            if event == events.BEFORE_CREATE:
+                payload.states = []
+                payload.request_body = policy
             self._test_class.validate_rbac_policy_change(
-                resource, event, trigger, context, object_type, policy)
+                resource, event, trigger, payload=payload)
 
     @mock.patch.object(_test_class, 'validate_rbac_policy_update')
     def test_validate_rbac_policy_change_handles_only_object_type(
@@ -175,11 +181,15 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
     @mock.patch.object(_test_class, '_validate_rbac_policy_delete')
     def _test_validate_rbac_policy_delete_handles_policy(
             self, policy, mock_validate_delete):
+        payload = events.DBEventPayload(
+            n_context.get_admin_context(),
+            states=(policy,),
+            metadata={
+                'object_type':
+                    self._test_class.rbac_db_cls.db_model.object_type})
         self._test_class.validate_rbac_policy_delete(
             resource=mock.Mock(), event=events.BEFORE_DELETE,
-            trigger='dummy_trigger', context=n_context.get_admin_context(),
-            object_type=self._test_class.rbac_db_cls.db_model.object_type,
-            policy=policy)
+            trigger='dummy_trigger', payload=payload)
         mock_validate_delete.assert_not_called()
 
     def test_validate_rbac_policy_delete_handles_shared_action(self):
@@ -211,15 +221,19 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
                 '_get_db_obj_rbac_entries') as target_tenants_mock:
             filter_mock = target_tenants_mock.return_value.filter
             filter_mock.return_value.count.return_value = 0
+            payload = events.DBEventPayload(
+                context,
+                states=(policy,),
+                metadata={
+                    'object_type':
+                        self._test_class.rbac_db_cls.db_model.object_type})
             self.assertRaises(
                 ext_rbac.RbacPolicyInUse,
                 self._test_class.validate_rbac_policy_delete,
                 resource=None,
                 event=events.BEFORE_DELETE,
                 trigger='dummy_trigger',
-                context=context,
-                object_type=self._test_class.rbac_db_cls.db_model.object_type,
-                policy=policy)
+                payload=payload)
 
     def test_validate_rbac_policy_delete_not_bound_tenant_success(self):
         context = mock.Mock()
@@ -252,6 +266,12 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
                   'tenant_id': 'object_owner_tenant_id',
                   'object_id': 'fake_obj_id'}
         context = mock.Mock()
+        payload = events.DBEventPayload(
+            context,
+            states=(policy,),
+            metadata={
+                'object_type':
+                    self._test_class.rbac_db_cls.db_model.object_type})
         with mock.patch.object(obj_db_api, 'get_object'):
             self.assertRaises(
                 ext_rbac.RbacPolicyInUse,
@@ -259,9 +279,7 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
                 resource=mock.Mock(),
                 event=events.BEFORE_DELETE,
                 trigger='dummy_trigger',
-                context=context,
-                object_type=self._test_class.rbac_db_cls.db_model.object_type,
-                policy=policy)
+                payload=payload)
 
     @mock.patch.object(_test_class, 'attach_rbac')
     @mock.patch.object(obj_db_api, 'get_object',
