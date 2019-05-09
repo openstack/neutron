@@ -72,6 +72,13 @@ common_config.register_placement_opts()
 
 logging.register_options(cfg.CONF)
 
+# Register the ironic configuration options
+ks_loading.register_auth_conf_options(cfg.CONF,
+                                      common_config.IRONIC_CONF_SECTION)
+ks_loading.register_session_conf_options(cfg.CONF,
+                                         common_config.IRONIC_CONF_SECTION)
+common_config.register_ironic_opts()
+
 
 def init(args, default_config_files=None, **kwargs):
     cfg.CONF(args=args, project='neutron',

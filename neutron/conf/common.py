@@ -190,3 +190,43 @@ placement_opts = [
 
 def register_placement_opts(cfg=cfg.CONF):
     cfg.register_opts(placement_opts, group=PLACEMENT_CONF_SECTION)
+
+
+IRONIC_CONF_SECTION = 'ironic'
+
+ironic_opts = [
+    cfg.BoolOpt('enable_notifications', default=False,
+                help=_("Send notification events to ironic. (For example on "
+                       "relevant port status changes.)")),
+    cfg.StrOpt('region_name',
+               help=_('Name of region used to get Ironic endpoints. Useful if'
+                      'keystone manages more than one region.')),
+    cfg.StrOpt('endpoint_type',
+               default='public',
+               choices=['public', 'admin', 'internal'],
+               help=_('Type of the ironic endpoint to use.  This endpoint '
+                      'will be looked up in the keystone catalog and should '
+                      'be one of public, internal or admin.')),
+    cfg.StrOpt('auth_strategy',
+               default='keystone',
+               choices=('keystone', 'noauth'),
+               help=_('Method to use for authentication: noauth or '
+                      'keystone.')),
+    cfg.StrOpt('ironic_url',
+               default='http://localhost:6385/',
+               help=_('Ironic API URL, used to set Ironic API URL when '
+                      'auth_strategy option is noauth to work with standalone '
+                      'Ironic without keystone.')),
+    cfg.IntOpt('retry_interval',
+               default=2,
+               help=_('Interval between retries in case of conflict error '
+                      '(HTTP 409).')),
+    cfg.IntOpt('max_retries',
+               default=30,
+               help=_('Maximum number of retries in case of conflict error '
+                      '(HTTP 409).')),
+]
+
+
+def register_ironic_opts(cfg=cfg.CONF):
+    cfg.register_opts(ironic_opts, group=IRONIC_CONF_SECTION)

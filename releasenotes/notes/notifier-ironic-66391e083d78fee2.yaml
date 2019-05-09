@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    A notifier for the Openstack Baremetal service (``ironic``) is introduced.
+    When enabled notifications are sent to the Baremetal service on relevant
+    resource events/changes. By default notifications to the Baremetal service
+    is *disabled*. To *enable* notifications to the Baremetal service set
+    ``[ironic]/enable_notifications`` to ``True`` in the Networking service
+    configuration (``neutron.conf``).
