@@ -117,6 +117,12 @@ class QosRule(base.NeutronDbObject):
                 ((is_router_gw or not is_network_device_port) and
                  is_network_policy_only))
 
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 3):
+            raise exception.IncompatibleObjectVersion(
+                objver=target_version, objtype=self.__class__.__name__)
+
 
 @base.NeutronObjectRegistry.register
 class QosBandwidthLimitRule(QosRule):
@@ -134,15 +140,6 @@ class QosBandwidthLimitRule(QosRule):
 
     rule_type = qos_consts.RULE_TYPE_BANDWIDTH_LIMIT
 
-    def obj_make_compatible(self, primitive, target_version):
-        _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 3) and 'direction' in primitive:
-            direction = primitive.pop('direction')
-            if direction == constants.INGRESS_DIRECTION:
-                raise exception.IncompatibleObjectVersion(
-                    objver=target_version,
-                    objtype="QosBandwidthLimitRule")
-
 
 @base.NeutronObjectRegistry.register
 class QosDscpMarkingRule(QosRule):
@@ -154,13 +151,6 @@ class QosDscpMarkingRule(QosRule):
     }
 
     rule_type = qos_consts.RULE_TYPE_DSCP_MARKING
-
-    def obj_make_compatible(self, primitive, target_version):
-        _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 1):
-            raise exception.IncompatibleObjectVersion(
-                                 objver=target_version,
-                                 objname="QosDscpMarkingRule")
 
 
 @base.NeutronObjectRegistry.register
@@ -176,10 +166,3 @@ class QosMinimumBandwidthRule(QosRule):
     duplicates_compare_fields = ['direction']
 
     rule_type = qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH
-
-    def obj_make_compatible(self, primitive, target_version):
-        _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 2):
-            raise exception.IncompatibleObjectVersion(
-                                 objver=target_version,
-                                 objname="QosMinimumBandwidthRule")

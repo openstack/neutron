@@ -18,6 +18,7 @@ from neutron_lib import constants as lib_consts
 from neutron_lib.db import constants as db_consts
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_config import cfg
+from oslo_versionedobjects import exception
 
 from neutron import manager
 from neutron.objects.qos import rule_type
@@ -87,29 +88,7 @@ class QosRuleTypeObjectTestCase(test_base.BaseTestCase):
     def test_wrong_type(self):
         self.assertRaises(ValueError, rule_type.QosRuleType, type='bad_type')
 
-    @staticmethod
-    def _policy_through_version(obj, version):
-        primitive = obj.obj_to_primitive(target_version=version)
-        return rule_type.QosRuleType.clean_obj_from_primitive(primitive)
-
-    def test_object_version(self):
+    def test_object_version_degradation_less_than_1_3(self):
         qos_rule_type = rule_type.QosRuleType()
-        rule_type_v1_1 = self._policy_through_version(qos_rule_type, '1.1')
-
-        self.assertIn(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
-                      tuple(rule_type_v1_1.fields['type'].AUTO_TYPE.
-                      _valid_values))
-        self.assertIn(qos_consts.RULE_TYPE_DSCP_MARKING,
-                      tuple(rule_type_v1_1.fields['type'].AUTO_TYPE.
-                      _valid_values))
-
-    def test_object_version_degradation_1_3_to_1_2(self):
-        drivers_obj = rule_type.QosRuleTypeDriver(
-            name="backend_driver", supported_parameters=[{}]
-        )
-        qos_rule_type = rule_type.QosRuleType(
-            type=qos_consts.RULE_TYPE_BANDWIDTH_LIMIT, drivers=[drivers_obj])
-
-        rule_type_v1_2 = self._policy_through_version(qos_rule_type, '1.2')
-        self.assertNotIn("drivers", rule_type_v1_2)
-        self.assertIn("type", rule_type_v1_2)
+        self.assertRaises(exception.IncompatibleObjectVersion,
+                          qos_rule_type.obj_to_primitive, '1.2')

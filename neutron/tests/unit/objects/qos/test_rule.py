@@ -118,25 +118,6 @@ class QosBandwidthLimitRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
         dict_ = obj.to_dict()
         self.assertEqual(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT, dict_['type'])
 
-    def test_bandwidth_limit_object_version_degradation(self):
-        self.db_objs[0]['direction'] = constants.EGRESS_DIRECTION
-        rule_obj = rule.QosBandwidthLimitRule(self.context, **self.db_objs[0])
-        primitive_rule = rule_obj.obj_to_primitive('1.2')
-        self.assertNotIn(
-            "direction", primitive_rule['versioned_object.data'].keys())
-        self.assertEqual(
-            self.db_objs[0]['max_kbps'],
-            primitive_rule['versioned_object.data']['max_kbps'])
-        self.assertEqual(
-            self.db_objs[0]['max_burst_kbps'],
-            primitive_rule['versioned_object.data']['max_burst_kbps'])
-
-        self.db_objs[0]['direction'] = constants.INGRESS_DIRECTION
-        rule_obj = rule.QosBandwidthLimitRule(self.context, **self.db_objs[0])
-        self.assertRaises(
-            exception.IncompatibleObjectVersion,
-            rule_obj.obj_to_primitive, '1.2')
-
     def test_duplicate_rules(self):
         policy_id = uuidutils.generate_uuid()
         ingress_rule_1 = rule.QosBandwidthLimitRule(
@@ -156,6 +137,11 @@ class QosBandwidthLimitRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
         self.assertTrue(ingress_rule_1.duplicates(ingress_rule_2))
         self.assertFalse(ingress_rule_1.duplicates(egress_rule))
         self.assertFalse(ingress_rule_1.duplicates(dscp_rule))
+
+    def test_object_version_degradation_less_than_1_3(self):
+        rule_obj = rule.QosBandwidthLimitRule()
+        self.assertRaises(exception.IncompatibleObjectVersion,
+                          rule_obj.obj_to_primitive, '1.2')
 
 
 class QosBandwidthLimitRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
@@ -179,11 +165,10 @@ class QosDscpMarkingRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     _test_class = rule.QosDscpMarkingRule
 
-    def test_dscp_object_version_degradation(self):
-        dscp_rule = rule.QosDscpMarkingRule()
-
+    def test_object_version_degradation_less_than_1_3(self):
+        rule_obj = rule.QosDscpMarkingRule()
         self.assertRaises(exception.IncompatibleObjectVersion,
-                     dscp_rule.obj_to_primitive, '1.0')
+                          rule_obj.obj_to_primitive, '1.2')
 
     def test_duplicate_rules(self):
         policy_id = uuidutils.generate_uuid()
@@ -219,12 +204,10 @@ class QosMinimumBandwidthRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     _test_class = rule.QosMinimumBandwidthRule
 
-    def test_min_bw_object_version_degradation(self):
-        min_bw_rule = rule.QosMinimumBandwidthRule()
-
-        for version in ['1.0', '1.1']:
-            self.assertRaises(exception.IncompatibleObjectVersion,
-                              min_bw_rule.obj_to_primitive, version)
+    def test_object_version_degradation_less_than_1_3(self):
+        rule_obj = rule.QosMinimumBandwidthRule()
+        self.assertRaises(exception.IncompatibleObjectVersion,
+                          rule_obj.obj_to_primitive, '1.2')
 
     def test_duplicate_rules(self):
         policy_id = uuidutils.generate_uuid()
