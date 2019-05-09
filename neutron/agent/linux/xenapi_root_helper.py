@@ -32,7 +32,7 @@ from oslo_serialization import jsonutils
 from neutron.conf.agent import xenapi_conf
 
 
-ROOT_HELPER_DAEMON_TOKEN = 'xenapi_root_helper'
+ROOT_HELPER_DAEMON_TOKEN = 'xenapi_root_helper'  # nosec
 
 RC_UNKNOWN_XENAPI_ERROR = 80
 MSG_UNAUTHORIZED = "Unauthorized command"
