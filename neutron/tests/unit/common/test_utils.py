@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import logging
 import os.path
 import random
 import re
@@ -22,7 +23,7 @@ import eventlet
 import mock
 import netaddr
 from neutron_lib import constants
-from oslo_log import log as logging
+from oslo_log import log as oslo_logging
 import six
 import testscenarios
 import testtools
@@ -302,7 +303,11 @@ class TestDelayedStringRenderer(base.BaseTestCase):
         self.assertEqual("Type: Brie cheese!", string)
 
     def test_not_called_with_low_log_level(self):
-        LOG = logging.getLogger(__name__)
+        LOG = oslo_logging.getLogger(__name__)
+        root_logger = logging.getLogger(__name__)
+        if not root_logger.handlers:
+            root_logger.addHandler(logging.StreamHandler())
+
         # make sure we return logging to previous level
         current_log_level = LOG.logger.getEffectiveLevel()
         self.addCleanup(LOG.logger.setLevel, current_log_level)
@@ -311,12 +316,12 @@ class TestDelayedStringRenderer(base.BaseTestCase):
         delayed = utils.DelayedStringRenderer(my_func)
 
         # set to warning so we shouldn't be logging debug messages
-        LOG.logger.setLevel(logging.logging.WARNING)
+        LOG.logger.setLevel(oslo_logging.WARNING)
         LOG.debug("Hello %s", delayed)
         self.assertFalse(my_func.called)
 
         # but it should be called with the debug level
-        LOG.logger.setLevel(logging.logging.DEBUG)
+        LOG.logger.setLevel(oslo_logging.DEBUG)
         LOG.debug("Hello %s", delayed)
         self.assertTrue(my_func.called)
 
