@@ -541,11 +541,14 @@ class DhcpAgent(manager.Manager):
             return
         new_ips = {i['ip_address'] for i in created_port['fixed_ips']}
         for port_cached in network.ports:
-            # if there are other ports cached with the same ip address in
-            # the same network this indicate that the cache is out of sync
+            # if in the same network there are ports cached with the same
+            # ip address but different MAC address and/or different id,
+            # this indicate that the cache is out of sync
             cached_ips = {i['ip_address']
                           for i in port_cached['fixed_ips']}
-            if new_ips.intersection(cached_ips):
+            if (new_ips.intersection(cached_ips) and
+                (created_port['id'] != port_cached['id'] or
+                 created_port['mac_address'] != port_cached['mac_address'])):
                 self.schedule_resync("Duplicate IP addresses found, "
                                      "DHCP cache is out of sync",
                                      created_port.network_id)
