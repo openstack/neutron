@@ -355,14 +355,10 @@ class Dnsmasq(DhcpLocalProcess):
             '--dhcp-leasefile=%s' % self.get_conf_file_name('leases'),
             '--dhcp-match=set:ipxe,175',
             '--local-service',
+            '--bind-dynamic',
         ]
-        if self.device_manager.driver.bridged:
+        if not self.device_manager.driver.bridged:
             cmd += [
-                '--bind-interfaces',
-            ]
-        else:
-            cmd += [
-                '--bind-dynamic',
                 '--bridge-interface=%s,tap*' % self.interface_name,
             ]
 
