@@ -1137,6 +1137,21 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.reload_allocations.assert_called_once_with(fake_port2,
                                                         fake_network)
 
+    def test_port_create_end_no_resync_if_same_port_already_in_cache(self):
+        self.reload_allocations_p = mock.patch.object(self.dhcp,
+                                                      'reload_allocations')
+        self.reload_allocations = self.reload_allocations_p.start()
+        payload = dict(port=copy.deepcopy(fake_port2))
+        cached_port = copy.deepcopy(fake_port2)
+        new_fake_network = copy.deepcopy(fake_network)
+        new_fake_network.ports = [cached_port]
+        self.cache.get_network_by_id.return_value = new_fake_network
+        self.dhcp.port_create_end(None, payload)
+        self.dhcp._process_resource_update()
+        self.reload_allocations.assert_called_once_with(fake_port2,
+                                                        new_fake_network)
+        self.schedule_resync.assert_not_called()
+
     def test_port_update_change_ip_on_port(self):
         payload = dict(port=fake_port1, priority=FAKE_PRIORITY)
         self.cache.get_network_by_id.return_value = fake_network
