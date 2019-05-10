@@ -362,7 +362,6 @@ class HaRouter(router.RouterInfo):
         ha_cidr = self._get_primary_vip()
 
         def callback(pid_file):
-            root_helper_daemon = self.agent_conf.AGENT.root_helper_daemon or ''
             cmd = [
                 'neutron-keepalived-state-change',
                 '--router_id=%s' % self.router_id,
@@ -373,9 +372,7 @@ class HaRouter(router.RouterInfo):
                 '--pid_file=%s' % pid_file,
                 '--state_path=%s' % self.agent_conf.state_path,
                 '--user=%s' % os.geteuid(),
-                '--group=%s' % os.getegid(),
-                '--AGENT-root_helper=%s' % self.agent_conf.AGENT.root_helper,
-                '--AGENT-root_helper_daemon=%s' % root_helper_daemon]
+                '--group=%s' % os.getegid()]
             return cmd
 
         return callback
