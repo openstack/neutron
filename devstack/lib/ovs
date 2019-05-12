@@ -210,3 +210,9 @@ function remove_ovs_packages() {
         fi
     done
 }
+
+
+# load_conntrack_gre_module() - loads nf_conntrack_proto_gre kernel module
+function load_conntrack_gre_module() {
+    sudo modprobe nf_conntrack_proto_gre
+}
