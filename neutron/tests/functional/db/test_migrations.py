@@ -362,6 +362,11 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
                                 functional_base.BaseLoggingTestCase):
 
     @test_base.skip_if_timeout("bug 1687027")
+    def test_forbid_offline_migrations_starting_newton(self):
+        super(TestModelsMigrationsMysql,
+              self).test_forbid_offline_migrations_starting_newton()
+
+    @test_base.skip_if_timeout("bug 1687027")
     def test_check_mysql_engine(self):
         engine = self.get_engine()
         cfg.CONF.set_override('connection', engine.url, group='database')
