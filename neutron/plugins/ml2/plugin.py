@@ -2185,6 +2185,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _get_ports_query(self, context, filters=None, *args, **kwargs):
         filters = filters or {}
         security_groups = filters.pop("security_groups", None)
+        limit = kwargs.pop('limit', None)
         if security_groups:
             port_bindings = self._get_port_security_group_bindings(
                 context, filters={'security_group_id':
@@ -2204,6 +2205,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 models_v2.IPAllocation.ip_address.like('%%%s%%' % ip))
                 for ip in ip_addresses_s])
             query = query.filter(substr_filter)
+        if limit:
+            query = query.limit(limit)
         return query
 
     def filter_hosts_with_network_access(
