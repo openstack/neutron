@@ -285,13 +285,22 @@ class OpenvswitchMechanismDPDKTestCase(OpenvswitchMechanismBaseTestCase):
         self.assertEqual(portbindings.VHOST_USER_MODE_SERVER, result)
 
     def test_get_vif_type(self):
-        result = self.driver.get_vif_type(None, self.AGENT, None)
+        normal_port_cxt = base.FakePortContext(None, None, None)
+        result = self.driver.get_vif_type(normal_port_cxt, self.AGENT, None)
         self.assertEqual(portbindings.VIF_TYPE_VHOST_USER, result)
 
-        result = self.driver.get_vif_type(None, self.AGENT_SERVER, None)
+        result = self.driver.get_vif_type(normal_port_cxt,
+                                          self.AGENT_SERVER, None)
         self.assertEqual(portbindings.VIF_TYPE_VHOST_USER, result)
 
-        result = self.driver.get_vif_type(None, self.AGENT_SYSTEM, None)
+        result = self.driver.get_vif_type(normal_port_cxt,
+                                          self.AGENT_SYSTEM, None)
+        self.assertEqual(portbindings.VIF_TYPE_OVS, result)
+
+        direct_port_cxt = base.FakePortContext(
+            None, None, None, vnic_type=portbindings.VNIC_DIRECT)
+        result = self.driver.get_vif_type(direct_port_cxt,
+                                          self.AGENT, None)
         self.assertEqual(portbindings.VIF_TYPE_OVS, result)
 
 
