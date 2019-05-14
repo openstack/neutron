@@ -974,7 +974,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
         keys = [('admin_state_up', True), ('status', self.port_create_status)]
         with self.network(shared=True) as network:
             with self.subnet(network=network) as subnet:
-                with self.port(name='myname') as port:
+                with self.port(name='myname', subnet=subnet) as port:
                     for k, v in keys:
                         self.assertEqual(port['port'][k], v)
                     self.assertIn('mac_address', port['port'])
