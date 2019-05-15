@@ -73,19 +73,6 @@ class Manager(periodic_task.PeriodicTasks):
         pass
 
 
-def validate_post_plugin_load():
-    """Checks if the configuration variables are valid.
-
-    If the configuration is invalid then the method will return an error
-    message. If all is OK then it will return None.
-    """
-    if ('dhcp_agents_per_network' in cfg.CONF and
-            cfg.CONF.dhcp_agents_per_network <= 0):
-        msg = _("dhcp_agents_per_network must be >= 1. '%s' "
-                "is invalid.") % cfg.CONF.dhcp_agents_per_network
-        return msg
-
-
 def validate_pre_plugin_load():
     """Checks if the configuration variables are valid.
 
@@ -135,10 +122,6 @@ class NeutronManager(object):
         plugin = self._get_plugin_instance(CORE_PLUGINS_NAMESPACE,
                                            plugin_provider)
         directory.add_plugin(lib_const.CORE, plugin)
-        msg = validate_post_plugin_load()
-        if msg:
-            LOG.critical(msg)
-            raise Exception(msg)
 
         # load services from the core plugin first
         self._load_services_from_core_plugin(plugin)
