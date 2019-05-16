@@ -397,34 +397,12 @@ segment contains one IPv4 subnet and one IPv6 subnet.
    .. code-block:: console
 
       $ SEGMENT_ID=053b7925-9a89-4489-9992-e164c8cc8763
-      $ curl -s -X GET \
-        http://localhost/placement/resource_providers/$SEGMENT_ID/inventories \
-        -H "Content-type: application/json" \
-        -H "X-Auth-Token: $TOKEN" \
-        -H "Openstack-Api-Version: placement 1.1"
-      {
-          "resource_provider_generation": 1,
-          "inventories": {
-              "allocation_ratio": 1,
-              "total": 254,
-              "reserved": 2,
-              "step_size": 1,
-              "min_unit": 1,
-              "max_unit": 1
-          }
-      }
-
-   .. note::
-
-      As of the writing of this guide, there is not placement API CLI client,
-      so the :command:`curl` command is used for this example.
-
-   .. note::
-
-      Service points URLs differ depending on your OpenStack deployment. You
-      can discover the Placement service URL by executing the
-      :command:`openstack endpoint list | grep placement` command. This
-      command has to be executed as admin.
+      $ openstack resource provider inventory list $SEGMENT_ID
+      +----------------+------------------+----------+----------+-----------+----------+-------+
+      | resource_class | allocation_ratio | max_unit | reserved | step_size | min_unit | total |
+      +----------------+------------------+----------+----------+-----------+----------+-------+
+      | IPV4_ADDRESS   |              1.0 |        1 |        2 |         1 |        1 |    30 |
+      +----------------+------------------+----------+----------+-----------+----------+-------+
 
 #. Verify that host aggregates were created for each segment in the Compute
    service (for the sake of brevity, only one of the segments is shown in this
