@@ -27,6 +27,7 @@ AGENTS_SCHEDULER_OPTS = [
                 help=_('Automatically remove networks from offline DHCP '
                        'agents.')),
     cfg.IntOpt('dhcp_agents_per_network', default=1,
+               min=1,
                help=_('Number of DHCP agents scheduled to host a tenant '
                       'network. If this number is greater than 1, the '
                       'scheduler automatically assigns multiple DHCP agents '
