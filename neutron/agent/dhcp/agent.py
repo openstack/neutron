@@ -177,7 +177,8 @@ class DhcpAgent(manager.Manager):
             if (isinstance(e, oslo_messaging.RemoteError) and
                     e.exc_type == 'NetworkNotFound' or
                     isinstance(e, exceptions.NetworkNotFound)):
-                LOG.debug("Network %s has been deleted.", network.id)
+                LOG.debug("Network %s has been removed from the agent "
+                          "or deleted from DB.", network.id)
             else:
                 LOG.exception('Unable to %(action)s dhcp for %(net_id)s.',
                               {'net_id': network.id, 'action': action})
