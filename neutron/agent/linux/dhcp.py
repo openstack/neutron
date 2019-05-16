@@ -26,7 +26,6 @@ from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.utils import file as file_utils
 from oslo_log import log as logging
-import oslo_messaging
 from oslo_utils import excutils
 from oslo_utils import fileutils
 from oslo_utils import uuidutils
@@ -1363,16 +1362,9 @@ class DeviceManager(object):
         for port in network.ports:
             port_device_id = getattr(port, 'device_id', None)
             if port_device_id == constants.DEVICE_ID_RESERVED_DHCP_PORT:
-                try:
-                    port = self.plugin.update_dhcp_port(
-                        port.id, {'port': {'network_id': network.id,
-                                           'device_id': device_id}})
-                except oslo_messaging.RemoteError as e:
-                    if e.exc_type == 'DhcpPortInUse':
-                        LOG.info("Skipping DHCP port %s as it is "
-                                 "already in use", port.id)
-                        continue
-                    raise
+                port = self.plugin.update_dhcp_port(
+                    port.id, {'port': {'network_id': network.id,
+                                       'device_id': device_id}})
                 if port:
                     return port
 
