@@ -30,7 +30,6 @@ from oslo_utils import excutils
 
 from neutron._i18n import _
 from neutron.common import constants as n_const
-from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import provisioning_blocks
@@ -279,6 +278,7 @@ class DhcpRpcCallback(object):
                                                          hosts=[host])
         return len(agents) != 0
 
+    @oslo_messaging.expected_exceptions(exceptions.NetworkNotFound)
     @oslo_messaging.expected_exceptions(exceptions.IpAddressGenerationFailure)
     @db_api.retry_db_errors
     def update_dhcp_port(self, context, **kwargs):
@@ -294,10 +294,14 @@ class DhcpRpcCallback(object):
             if (old_port['device_id'] !=
                     constants.DEVICE_ID_RESERVED_DHCP_PORT and
                 old_port['device_id'] !=
-                    utils.get_dhcp_agent_device_id(network_id, host) or
-                not self._is_dhcp_agent_hosting_network(plugin, context, host,
-                    network_id)):
-                raise n_exc.DhcpPortInUse(port_id=port['id'])
+                    utils.get_dhcp_agent_device_id(network_id, host)):
+                return
+            if not self._is_dhcp_agent_hosting_network(plugin, context, host,
+                                                       network_id):
+                LOG.warning("The DHCP agent on %(host)s does not host the "
+                            "network %(net_id)s.", {"host": host,
+                                                    "net_id": network_id})
+                raise exceptions.NetworkNotFound(net_id=network_id)
             LOG.debug('Update dhcp port %(port)s '
                       'from %(host)s.',
                       {'port': port,
@@ -307,7 +311,6 @@ class DhcpRpcCallback(object):
             LOG.debug('Host %(host)s tried to update port '
                       '%(port_id)s which no longer exists.',
                       {'host': host, 'port_id': port['id']})
-            return None
 
     @db_api.retry_db_errors
     def dhcp_ready_on_ports(self, context, port_ids):
