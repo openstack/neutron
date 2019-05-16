@@ -2132,8 +2132,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_remove_interface_wrong_port_returns_404(self):
         with self.router() as r:
-            with self.subnet():
-                with self.port() as p:
+            with self.subnet() as s:
+                with self.port(subnet=s) as p:
                     self._router_interface_action('add',
                                                   r['router']['id'],
                                                   None,
