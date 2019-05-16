@@ -163,8 +163,6 @@ def configure(conf):
 
 
 def main():
-    agent_config.register_root_helper(cfg.CONF)
-    cfg.CONF.register_cli_opts(agent_config.ROOT_HELPER_OPTS, 'AGENT')
     keepalived.register_cli_l3_agent_keepalived_opts()
     keepalived.register_l3_agent_keepalived_opts()
     configure(cfg.CONF)
