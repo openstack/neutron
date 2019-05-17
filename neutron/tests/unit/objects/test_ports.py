@@ -12,6 +12,7 @@
 
 import mock
 from neutron_lib import constants
+from neutron_lib.tests import tools
 from oslo_utils import uuidutils
 import testscenarios
 
@@ -20,7 +21,6 @@ from neutron.objects import network
 from neutron.objects import ports
 from neutron.objects.qos import binding
 from neutron.objects.qos import policy
-from neutron.tests import tools
 from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
 

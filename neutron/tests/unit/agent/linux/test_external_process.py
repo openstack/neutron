@@ -15,13 +15,13 @@
 import os.path
 
 import mock
+from neutron_lib import fixture as lib_fixtures
 from oslo_config import cfg
 from oslo_utils import fileutils
 import psutil
 
 from neutron.agent.linux import external_process as ep
 from neutron.tests import base
-from neutron.tests import tools
 
 
 TEST_UUID = 'test-uuid'
@@ -293,12 +293,12 @@ class TestProcessManager(base.BaseTestCase):
         self.assertEqual(retval, '/var/path/uuid.pid')
 
     def test_pid(self):
-        self.useFixture(tools.OpenFixture('/var/path/uuid.pid', '5'))
+        self.useFixture(lib_fixtures.OpenFixture('/var/path/uuid.pid', '5'))
         manager = ep.ProcessManager(self.conf, 'uuid')
         self.assertEqual(manager.pid, 5)
 
     def test_pid_no_an_int(self):
-        self.useFixture(tools.OpenFixture('/var/path/uuid.pid', 'foo'))
+        self.useFixture(lib_fixtures.OpenFixture('/var/path/uuid.pid', 'foo'))
         manager = ep.ProcessManager(self.conf, 'uuid')
         self.assertIsNone(manager.pid)
 

@@ -21,13 +21,13 @@ import six
 import testtools
 
 from neutron_lib import exceptions
+from neutron_lib import fixture as lib_fixtures
 from oslo_config import cfg
 import oslo_i18n
 
 from neutron.agent.linux import utils
 from neutron.tests import base
 from neutron.tests.common import helpers
-from neutron.tests import tools
 
 
 _marker = object()
@@ -306,7 +306,7 @@ class TestGetCmdlineFromPid(base.BaseTestCase):
     def _test_cmdline(self, process, expected_cmd):
         self.process_is_running_mock.return_value = True
         mock_open = self.useFixture(
-            tools.OpenFixture('/proc/%s/cmdline' % self.pid, process)
+            lib_fixtures.OpenFixture('/proc/%s/cmdline' % self.pid, process)
         ).mock_open
         cmdline = utils.get_cmdline_from_pid(self.pid)
         mock_open.assert_called_once_with('/proc/%s/cmdline' % self.pid, 'r')
@@ -330,7 +330,7 @@ class TestGetCmdlineFromPid(base.BaseTestCase):
     def test_no_process_running(self):
         self.process_is_running_mock.return_value = False
         mock_open = self.useFixture(
-            tools.OpenFixture('/proc/%s/cmdline' % self.pid)
+            lib_fixtures.OpenFixture('/proc/%s/cmdline' % self.pid)
         ).mock_open
         cmdline = utils.get_cmdline_from_pid(self.pid)
         mock_open.assert_not_called()

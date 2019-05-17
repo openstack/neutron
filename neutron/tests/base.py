@@ -30,6 +30,7 @@ import mock
 from neutron_lib.callbacks import manager as registry_manager
 from neutron_lib.db import api as db_api
 from neutron_lib import fixture
+from neutron_lib.tests import tools as lib_test_tools
 from neutron_lib.tests.unit import fake_notifier
 from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
@@ -246,7 +247,7 @@ class DietTestCase(base.BaseTestCase):
         self.addOnException(self.check_for_systemexit)
         self.orig_pid = os.getpid()
 
-        tools.reset_random_seed()
+        lib_test_tools.reset_random_seed()
 
     def addOnException(self, handler):
 

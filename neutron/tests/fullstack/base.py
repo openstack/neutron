@@ -16,6 +16,7 @@ from concurrent import futures
 import os
 
 import netaddr
+from neutron_lib.tests import tools
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -27,7 +28,6 @@ from neutron.tests.common import helpers
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack.resources import client as client_resource
-from neutron.tests import tools
 from neutron.tests.unit import testlib_api
 
 

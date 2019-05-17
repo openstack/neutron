@@ -17,6 +17,7 @@ import os
 
 import mock
 from neutron_lib import constants
+from neutron_lib import fixture as lib_fixtures
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
@@ -29,7 +30,6 @@ from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.conf.agent.metadata import config as meta_conf
 from neutron.tests import base
-from neutron.tests import tools
 from neutron.tests.unit.agent.linux import test_utils
 
 _uuid = uuidutils.generate_uuid
@@ -134,7 +134,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                     agent.conf.state_path),
                 "%s.conf" % router_id)
             mock_open = self.useFixture(
-                tools.OpenFixture(cfg_file)).mock_open
+                lib_fixtures.OpenFixture(cfg_file)).mock_open
             agent.metadata_driver.spawn_monitored_metadata_proxy(
                 agent.process_monitor,
                 router_ns,
