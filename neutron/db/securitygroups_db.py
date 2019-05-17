@@ -35,7 +35,6 @@ from sqlalchemy.orm import scoped_session
 
 from neutron._i18n import _
 from neutron.common import _constants as const
-from neutron.common import utils
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.extensions import securitygroup as ext_sg
@@ -387,7 +386,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         rule_dict = security_group_rule['security_group_rule']
         remote_ip_prefix = rule_dict.get('remote_ip_prefix')
         if remote_ip_prefix:
-            remote_ip_prefix = utils.AuthenticIPNetwork(remote_ip_prefix)
+            remote_ip_prefix = net.AuthenticIPNetwork(remote_ip_prefix)
 
         protocol = rule_dict.get('protocol')
         if protocol:

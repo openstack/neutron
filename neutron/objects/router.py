@@ -17,11 +17,11 @@ import netaddr
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.validators import availability_zone as az_validator
 from neutron_lib import constants as n_const
+from neutron_lib.utils import net as net_utils
 from oslo_versionedobjects import fields as obj_fields
 import six
 from sqlalchemy import func
 
-from neutron.common import utils
 from neutron.db.models import dvr as dvr_models
 from neutron.db.models import l3
 from neutron.db.models import l3_attrs
@@ -51,7 +51,7 @@ class RouterRoute(base.NeutronDbObject):
     def modify_fields_from_db(cls, db_obj):
         result = super(RouterRoute, cls).modify_fields_from_db(db_obj)
         if 'destination' in result:
-            result['destination'] = utils.AuthenticIPNetwork(
+            result['destination'] = net_utils.AuthenticIPNetwork(
                 result['destination'])
         if 'nexthop' in result:
             result['nexthop'] = netaddr.IPAddress(result['nexthop'])
@@ -177,7 +177,8 @@ class DVRMacAddress(base.NeutronDbObject):
         if 'mac_address' in fields:
             # NOTE(tonytan4ever): Here uses AuthenticEUI to retain the format
             # passed from API.
-            fields['mac_address'] = utils.AuthenticEUI(fields['mac_address'])
+            fields['mac_address'] = net_utils.AuthenticEUI(
+                fields['mac_address'])
         return fields
 
     @classmethod

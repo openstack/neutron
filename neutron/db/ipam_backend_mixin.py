@@ -25,13 +25,13 @@ from neutron_lib import constants as const
 from neutron_lib.db import api as db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as exc
+from neutron_lib.utils import net as net_utils
 from oslo_config import cfg
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as orm_exc
 
 from neutron._i18n import _
 from neutron.common import ipv6_utils
-from neutron.common import utils as common_utils
 from neutron.db import db_base_plugin_common
 from neutron.db import models_v2
 from neutron.extensions import segment
@@ -130,7 +130,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         for route_str in new_route_set - old_route_set:
             route = subnet_obj.Route(
                 context,
-                destination=common_utils.AuthenticIPNetwork(
+                destination=net_utils.AuthenticIPNetwork(
                     route_str.partition("_")[0]),
                 nexthop=netaddr.IPAddress(route_str.partition("_")[2]),
                 subnet_id=id)
@@ -555,7 +555,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                 route = subnet_obj.Route(
                     context,
                     subnet_id=subnet.id,
-                    destination=common_utils.AuthenticIPNetwork(
+                    destination=net_utils.AuthenticIPNetwork(
                         rt['destination']),
                     nexthop=netaddr.IPAddress(rt['nexthop']))
                 route.create()

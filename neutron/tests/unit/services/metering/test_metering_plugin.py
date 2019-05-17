@@ -20,10 +20,10 @@ from neutron_lib.db import api as db_api
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from neutron_lib.tests import tools
+from neutron_lib.utils import net as net_utils
 from oslo_utils import uuidutils
 
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
-from neutron.common import utils
 from neutron.db.metering import metering_rpc
 from neutron.extensions import l3 as ext_l3
 from neutron.extensions import metering as ext_metering
@@ -264,8 +264,9 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'tenant_id': self.tenant_id,
                          '_metering_labels': [
                              {'rule': {
-                                 'remote_ip_prefix': utils.AuthenticIPNetwork(
-                                     '10.0.0.0/24'),
+                                 'remote_ip_prefix':
+                                     net_utils.AuthenticIPNetwork(
+                                         '10.0.0.0/24'),
                                  'direction': 'ingress',
                                  'metering_label_id': self.uuid,
                                  'excluded': False,
@@ -281,13 +282,14 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'tenant_id': self.tenant_id,
                          '_metering_labels': [
                              {'rule': {
-                                  'remote_ip_prefix': utils.AuthenticIPNetwork(
-                                      '10.0.0.0/24'),
-                                  'direction': 'ingress',
-                                  'metering_label_id': self.uuid,
-                                  'excluded': False,
-                                   'id': second_uuid},
-                             'id': self.uuid}],
+                                 'remote_ip_prefix':
+                                     net_utils.AuthenticIPNetwork(
+                                         '10.0.0.0/24'),
+                                 'direction': 'ingress',
+                                 'metering_label_id': self.uuid,
+                                 'excluded': False,
+                                 'id': second_uuid},
+                                 'id': self.uuid}],
                          'id': self.uuid}]
 
         with self.router(tenant_id=self.tenant_id, set_context=True):

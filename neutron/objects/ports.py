@@ -14,10 +14,10 @@
 
 import netaddr
 from neutron_lib import constants
+from neutron_lib.utils import net as net_utils
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron.common import utils
 from neutron.db.models import dns as dns_models
 from neutron.db.models import l3
 from neutron.db.models import securitygroup as sg_models
@@ -440,7 +440,8 @@ class Port(base.NeutronDbObject):
         # TODO(rossella_s): get rid of it once we switch the db model to using
         # custom types.
         if 'mac_address' in fields:
-            fields['mac_address'] = utils.AuthenticEUI(fields['mac_address'])
+            fields['mac_address'] = net_utils.AuthenticEUI(
+                fields['mac_address'])
 
         distributed_port_binding = fields.get('distributed_bindings')
         if distributed_port_binding:
