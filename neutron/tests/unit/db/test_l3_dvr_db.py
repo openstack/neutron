@@ -189,6 +189,38 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             'device_id': ['agent_id'],
             'device_owner': [const.DEVICE_OWNER_AGENT_GW]})
 
+    def _help_check_and_create_fip_gw_port(self, fip=None):
+        port = {
+            'id': '1234',
+            portbindings.HOST_ID: 'myhost',
+            'floating_network_id': 'external_net'
+        }
+        ctxt = mock.Mock()
+        with mock.patch.object(self.mixin,
+                'create_fip_agent_gw_port_if_not_exists') as c_fip,\
+                mock.patch.object(router_obj.FloatingIP, 'get_objects',
+                                  return_value=[fip] if fip else None):
+            (self.mixin.
+             check_for_fip_and_create_agent_gw_port_on_host_if_not_exists(
+                    ctxt, port, 'host'))
+            if fip:
+                c_fip.assert_called_once_with(ctxt.elevated(),
+                                              fip['floating_network_id'],
+                                              'host')
+            else:
+                c_fip.assert_not_called()
+
+    def test_check_for_fip_and_create_agent_gw_port_no_fip(self):
+        self._help_check_and_create_fip_gw_port()
+
+    def test_check_for_fip_and_create_agent_gw_port_with_dvr_true(self):
+        fip = {
+            'id': _uuid(),
+            'floating_network_id': 'fake_net_id',
+            'router_id': 'foo_router_id'
+        }
+        self._help_check_and_create_fip_gw_port(fip=fip)
+
     def _test_prepare_direct_delete_dvr_internal_ports(self, port):
         plugin = mock.Mock()
         directory.add_plugin(plugin_constants.CORE, plugin)
