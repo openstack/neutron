@@ -30,6 +30,7 @@ from oslo_utils import uuidutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
+from sqlalchemy import orm
 import testtools
 
 from neutron.db import _model_query as model_query
@@ -509,6 +510,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     common_types.IPVersionEnumField: tools.get_random_ip_version,
     common_types.IpProtocolEnumField: tools.get_random_ip_protocol,
     common_types.ListOfIPNetworksField: get_list_of_random_networks,
+    common_types.ListOfObjectsField: lambda: [],
     common_types.MACAddressField: tools.get_random_EUI,
     common_types.PortBindingStatusEnumField:
         tools.get_random_port_binding_statuses,
@@ -1234,7 +1236,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                     self.get_random_db_fields(obj_cls=objclass))
             )
             child_dict = child.to_dict()
-            if isinstance(cls_.fields[field], obj_fields.ListOfObjectsField):
+            if (isinstance(cls_.fields[field],
+                           obj_fields.ListOfObjectsField) or
+                isinstance(cls_.fields[field],
+                           common_types.ListOfObjectsField)):
                 setattr(obj, field, [child])
                 dict_ = obj.to_dict()
                 self.assertEqual([child_dict], dict_[field])
@@ -2053,7 +2058,11 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             obj.update()
             self.assertIsNotNone(obj.db_obj)
             for k, v in obj.modify_fields_to_db(fields_to_update).items():
-                self.assertEqual(v, obj.db_obj[k], '%s attribute differs' % k)
+                if isinstance(obj.db_obj[k], orm.dynamic.AppenderQuery):
+                    self.assertIsInstance(v, list)
+                else:
+                    self.assertEqual(v, obj.db_obj[k],
+                                     '%s attribute differs' % k)
 
         obj.delete()
         self.assertIsNone(obj.db_obj)

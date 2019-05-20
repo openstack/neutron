@@ -33,6 +33,7 @@ from sqlalchemy import orm
 from neutron._i18n import _
 from neutron.db import api as db_api
 from neutron.db import standard_attr
+from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.objects.extensions import standardattributes
 
@@ -61,6 +62,25 @@ def get_object_class_by_model(model):
 def register_filter_hook_on_model(model, filter_name):
     obj_class = get_object_class_by_model(model)
     obj_class.add_extra_filter_name(filter_name)
+
+
+class LazyQueryIterator(six.Iterator):
+    def __init__(self, obj_class, lazy_query):
+        self.obj_class = obj_class
+        self.context = None
+        self.query = lazy_query
+
+    def __iter__(self):
+        self.results = self.query.all()
+        self.i = 0
+        return self
+
+    def __next__(self):
+        if self.i >= len(self.results):
+            raise StopIteration()
+        item = self.obj_class._load_object(self.context, self.results[self.i])
+        self.i += 1
+        return item
 
 
 class Pager(object):
@@ -137,6 +157,11 @@ class NeutronObject(obj_base.VersionedObject,
     synthetic_fields = []
     extra_filter_names = set()
 
+    # To use lazy queries for child objects, you must set the ORM
+    # relationship in the db model to 'dynamic'. By default, all
+    # children are eager loaded.
+    lazy_fields = set()
+
     def __init__(self, context=None, **kwargs):
         super(NeutronObject, self).__init__(context, **kwargs)
         self._load_synthetic_fields = True
@@ -162,7 +187,8 @@ class NeutronObject(obj_base.VersionedObject,
             dict_[name] = value
         for field_name, value in self._synthetic_fields_items():
             field = self.fields[field_name]
-            if isinstance(field, obj_fields.ListOfObjectsField):
+            if (isinstance(field, obj_fields.ListOfObjectsField) or
+               isinstance(field, common_types.ListOfObjectsField)):
                 dict_[field_name] = [obj.to_dict() for obj in value]
             elif isinstance(field, obj_fields.ObjectField):
                 dict_[field_name] = (
@@ -178,7 +204,8 @@ class NeutronObject(obj_base.VersionedObject,
     @classmethod
     def is_object_field(cls, field):
         return (isinstance(cls.fields[field], obj_fields.ListOfObjectsField) or
-                isinstance(cls.fields[field], obj_fields.ObjectField))
+            isinstance(cls.fields[field], common_types.ListOfObjectsField) or
+            isinstance(cls.fields[field], obj_fields.ObjectField))
 
     @classmethod
     def obj_class_from_name(cls, objname, objver):
@@ -430,8 +457,15 @@ class NeutronDbObject(NeutronObject):
         '''Return a database model that persists object data.'''
         return self._captured_db_model
 
+    def _set_lazy_contexts(self, fields, context):
+        for field in self.lazy_fields.intersection(fields):
+            if isinstance(fields[field], LazyQueryIterator):
+                fields[field].context = context
+
     def from_db_object(self, db_obj):
         fields = self.modify_fields_from_db(db_obj)
+        if self.lazy_fields:
+            self._set_lazy_contexts(fields, self.obj_context)
         for field in self.fields:
             if field in fields and not self.is_synthetic(field):
                 setattr(self, field, fields[field])
@@ -460,11 +494,22 @@ class NeutronDbObject(NeutronObject):
         :param fields: dict of fields from NeutronDbObject
         :return: modified dict of fields
         """
+        for k, v in fields.items():
+            if isinstance(v, LazyQueryIterator):
+                fields[k] = list(v)
         result = copy.deepcopy(dict(fields))
         for field, field_db in cls.fields_need_translation.items():
             if field in result:
                 result[field_db] = result.pop(field)
         return result
+
+    @classmethod
+    def _get_lazy_iterator(cls, field, appender_query):
+        if field not in cls.lazy_fields:
+            raise KeyError(_('Field %s is not a lazy query field') % field)
+        n_obj_classes = NeutronObjectRegistry.obj_classes()
+        n_obj = n_obj_classes.get(cls.fields[field].objname)
+        return LazyQueryIterator(n_obj[0], appender_query)
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
@@ -491,6 +536,8 @@ class NeutronDbObject(NeutronObject):
             # don't allow sqlalchemy lists to propagate outside
             if isinstance(v, orm.collections.InstrumentedList):
                 result[k] = list(v)
+            if isinstance(v, orm.dynamic.AppenderQuery):
+                result[k] = cls._get_lazy_iterator(k, v)
         return result
 
     @classmethod
@@ -760,7 +807,8 @@ class NeutronDbObject(NeutronObject):
 
             # synth_db_objs can be list, empty list or None, that is why
             # we need 'is not None', because [] is valid case for 'True'
-            if isinstance(field_def, obj_fields.ListOfObjectsField):
+            if (isinstance(field_def, obj_fields.ListOfObjectsField) or
+               isinstance(field_def, common_types.ListOfObjectsField)):
                 synth_db_objs = (db_obj.get(synthetic_field_db_name, None)
                                  if db_obj else None)
                 if synth_db_objs is not None:
