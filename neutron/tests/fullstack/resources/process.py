@@ -213,6 +213,28 @@ class OVSAgentFixture(ServiceFixture):
             kill_signal=signal.SIGTERM))
 
 
+class PlacementFixture(fixtures.Fixture):
+
+    def __init__(self, env_desc, host_desc, test_name, placement_cfg_fixture):
+        super(PlacementFixture, self).__init__()
+        self.env_desc = env_desc
+        self.host_desc = host_desc
+        self.test_name = test_name
+        self.placement_cfg_fixture = placement_cfg_fixture
+        self.placement_config = self.placement_cfg_fixture.config
+
+    def _setUp(self):
+        self.process_fixture = self.useFixture(ProcessFixture(
+            test_name=self.test_name,
+            process_name='placement',
+            exec_name=spawn.find_executable(
+                'placement.py', path=os.path.join(fullstack_base.ROOTDIR,
+                                                  'servers')
+            ),
+            config_filenames=[self.placement_cfg_fixture.filename],
+            kill_signal=signal.SIGTERM))
+
+
 class SRIOVAgentFixture(ServiceFixture):
 
     NEUTRON_SRIOV_AGENT = "neutron-sriov-nic-agent"
