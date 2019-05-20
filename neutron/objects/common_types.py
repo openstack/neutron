@@ -11,6 +11,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import itertools
 import uuid
 
@@ -313,3 +314,25 @@ class FloatingIPStatusEnumField(obj_fields.AutoTypedField):
 
 class RouterStatusEnumField(obj_fields.AutoTypedField):
     AUTO_TYPE = obj_fields.Enum(valid_values=constants.VALID_ROUTER_STATUS)
+
+
+# Duplicate some fixes in later oslo.versionedobjects, so we can backport
+# fixes without modifying requirements.
+class List(obj_fields.List):
+    def coerce(self, obj, attr, value):
+        if (not isinstance(value, collections.Iterable) or
+           isinstance(value, six.string_types + (collections.Mapping,))):
+            raise ValueError(_('A list is required in field %(attr)s, '
+                               'not a %(type)s') %
+                             {'attr': attr, 'type': type(value).__name__})
+        coerced_list = obj_fields.CoercedList()
+        coerced_list.enable_coercing(self._element_type, obj, attr)
+        coerced_list.extend(value)
+        return coerced_list
+
+
+class ListOfObjectsField(obj_fields.AutoTypedField):
+    def __init__(self, objtype, subclasses=False, **kwargs):
+        self.AUTO_TYPE = List(obj_fields.Object(objtype, subclasses))
+        self.objname = objtype
+        super(ListOfObjectsField, self).__init__(**kwargs)
