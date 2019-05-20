@@ -20,6 +20,7 @@ from neutron_lib.callbacks import exceptions
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
+from neutron_lib import context as context_lib
 from neutron_lib.db import api as db_api
 from neutron_lib.db import model_query
 from neutron_lib.db import resource_extend
@@ -190,7 +191,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                 if (fields is None or len(fields) == 0 or
                    'security_group_rules' in fields):
                     rules = self.get_security_group_rules(
-                        context, {'security_group_id': [id]})
+                        context_lib.get_admin_context(),
+                        {'security_group_id': [id]})
                     ret['security_group_rules'] = rules
 
         finally:
