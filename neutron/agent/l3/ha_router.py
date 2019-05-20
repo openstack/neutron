@@ -124,7 +124,7 @@ class HaRouter(router.RouterInfo):
             raise Exception(msg)
         super(HaRouter, self).initialize(process_monitor)
 
-        self.ha_port = ha_port
+        self.set_ha_port()
         self._init_keepalived_manager(process_monitor)
         self.ha_network_added()
         self.update_initial_state(self.state_change_callback)
@@ -462,10 +462,23 @@ class HaRouter(router.RouterInfo):
         self.ha_network_removed()
         super(HaRouter, self).delete()
 
+    def set_ha_port(self):
+        ha_port = self.router.get(n_consts.HA_INTERFACE_KEY)
+        if not ha_port:
+            return
+        # NOTE: once HA port is set, it MUST remain this value no matter what
+        # the server return. Because there is race condition between l3-agent
+        # side sync router info for processing and server side router deleting.
+        # TODO(liuyulong): make sure router HA ports never change.
+        if not self.ha_port or (self.ha_port and
+                                self.ha_port['status'] != ha_port['status']):
+            self.ha_port = ha_port
+
     def process(self):
         super(HaRouter, self).process()
 
-        self.ha_port = self.router.get(n_consts.HA_INTERFACE_KEY)
+        self.set_ha_port()
+        LOG.debug("Processing HA router with HA port: %s", self.ha_port)
         if (self.ha_port and
                 self.ha_port['status'] == n_consts.PORT_STATUS_ACTIVE):
             self.enable_keepalived()
