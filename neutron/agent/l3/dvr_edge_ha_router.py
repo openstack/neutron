@@ -62,7 +62,7 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
                 self.get_ex_gw_port())
         self._add_vip(fip_cidr, interface_name)
 
-        self.ha_port = self.router.get(constants.HA_INTERFACE_KEY)
+        self.set_ha_port()
         if (self.is_router_master() and self.ha_port and
                 self.ha_port['status'] == constants.PORT_STATUS_ACTIVE):
             return super(DvrEdgeHaRouter, self).add_centralized_floatingip(
