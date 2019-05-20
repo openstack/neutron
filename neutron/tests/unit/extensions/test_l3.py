@@ -3956,6 +3956,21 @@ class L3RpcCallbackTestCase(base.BaseTestCase):
         actual_message = mock_log.call_args[0][0] % mock_log.call_args[0][1]
         self.assertEqual(expected_message, actual_message)
 
+    def test__ensure_host_set_on_ports_dvr_ha_router_with_gatway(self):
+        context = mock.Mock()
+        host = "fake_host"
+        router_id = 'foo_router_id'
+        router = {"id": router_id,
+                  "gw_port_host": host,
+                  "gw_port": {"id": "foo_port_id"},
+                  "distributed": True,
+                  "ha": True}
+        mock__ensure = mock.Mock()
+        self.l3_rpc_cb._ensure_host_set_on_port = mock__ensure
+        self.l3_rpc_cb._ensure_host_set_on_ports(context, host, [router])
+        mock__ensure.assert_called_once_with(
+            context, host, router["gw_port"], router_id, ha_router_port=True)
+
 
 class L3AgentDbIntTestCase(L3BaseForIntTests, L3AgentDbTestCaseBase):
 
