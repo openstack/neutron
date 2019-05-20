@@ -465,6 +465,8 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         query = query.join(Port.fixed_ips)
         query = query.filter(
             IPAllocation.subnet_id.in_(subnet_ids))
+        query = query.filter(
+            ml2_models.PortBinding.status == n_const.ACTIVE)
         device_filter = or_(
             models_v2.Port.device_owner.startswith(
                 n_const.DEVICE_OWNER_COMPUTE_PREFIX),
