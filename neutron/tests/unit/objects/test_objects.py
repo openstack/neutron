@@ -30,6 +30,7 @@ object_data = {
     'Agent': '1.1-64b670752d57b3c7602cb136e0338507',
     'AllowedAddressPair': '1.0-9f9186b6f952fbf31d257b0458b852c0',
     'AutoAllocatedTopology': '1.0-74642e58c53bf3610dc224c59f81b242',
+    'ConntrackHelper': '1.0-b1a50cfe18178db50c7f206e75613f4b',
     'DefaultSecurityGroup': '1.0-971520cb2e0ec06d747885a0cf78347f',
     'DistributedPortBinding': '1.0-39c0d17b281991dcb66716fee5a8bef2',
     'DNSNameServer': '1.0-bf87a85327e2d812d1666ede99d9918b',
