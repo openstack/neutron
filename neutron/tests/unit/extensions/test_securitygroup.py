@@ -1608,9 +1608,9 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     self.assertEqual(port['port'][ext_sg.SECURITYGROUPS][0],
                                      sg['security_group']['id'])
                     # try to delete security group that's in use
-                    res = self._delete('security-groups',
-                                       sg['security_group']['id'],
-                                       webob.exc.HTTPConflict.code)
+                    self._delete('security-groups',
+                                 sg['security_group']['id'],
+                                 webob.exc.HTTPConflict.code)
                     # delete the blocking port
                     self._delete('ports', port['port']['id'])
 
