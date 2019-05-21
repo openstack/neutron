@@ -15,6 +15,7 @@
 import re
 
 import netaddr
+from neutron_lib import constants
 from oslo_utils import uuidutils
 import testscenarios
 
@@ -107,8 +108,10 @@ class FdbInterfaceTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
 
     def setUp(self):
         super(FdbInterfaceTestCase, self).setUp()
-        self.device = 'interface'
-        self.device_vxlan = 'int_vxlan'
+        self.device = ('int_' + uuidutils.generate_uuid())[
+                      :constants.DEVICE_NAME_MAX_LEN]
+        self.device_vxlan = ('vxlan_' + uuidutils.generate_uuid())[
+                            :constants.DEVICE_NAME_MAX_LEN]
         self.ip = '10.220.0.1/24'
         self.ip_vxlan = '10.221.0.1/24'
         if self.namespace:
