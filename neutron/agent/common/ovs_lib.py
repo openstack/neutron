@@ -31,6 +31,7 @@ from neutron._i18n import _, _LE, _LI, _LW
 from neutron.agent.common import ip_lib
 from neutron.agent.common import utils
 from neutron.agent.ovsdb import api as ovsdb
+from neutron.common import constants as common_constants
 from neutron.conf.agent import ovs_conf
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
@@ -357,7 +358,11 @@ class OVSBridge(BaseOVS):
                 if 'cookie' not in kw:
                     kw['cookie'] = self._default_cookie
         flow_strs = [_build_flow_expr_str(kw, action) for kw in kwargs_list]
-        self.run_ofctl('%s-flows' % action, ['-'], '\n'.join(flow_strs))
+        LOG.debug("Processing %d OpenFlow rules.", len(flow_strs))
+        step = common_constants.AGENT_RES_PROCESSING_STEP
+        for i in range(0, len(flow_strs), step):
+            self.run_ofctl('%s-flows' % action, ['-'],
+                           '\n'.join(flow_strs[i:i + step]))
 
     def add_flow(self, **kwargs):
         self.do_action_flows('add', [kwargs])
