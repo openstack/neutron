@@ -14,21 +14,26 @@
 #    under the License.
 
 import collections
+import signal
 
 import netaddr
 from neutron_lib import constants
 from neutron_lib.utils import net
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_serialization import jsonutils
 from oslo_utils import importutils
 from oslo_utils import uuidutils
+import testscenarios
 import testtools
 
+from neutron.agent.common import async_process
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.conf.agent import common as config
 from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 from neutron.tests.common import net_helpers
+from neutron.tests.functional.agent.linux.bin import ip_monitor
 from neutron.tests.functional import base as functional_base
 
 LOG = logging.getLogger(__name__)
@@ -661,3 +666,139 @@ class NamespaceTestCase(functional_base.BaseSudoTestCase):
     def test_network_namespace_exists_ns_doesnt_exists_try_is_ready(self):
         self.assertFalse(ip_lib.network_namespace_exists('another_ns',
                                                          try_is_ready=True))
+
+
+class IpMonitorTestCase(testscenarios.WithScenarios,
+                        functional_base.BaseLoggingTestCase):
+
+    scenarios = [
+        ('namespace', {'namespace': 'ns_' + uuidutils.generate_uuid()}),
+        ('no_namespace', {'namespace': None})
+    ]
+
+    def setUp(self):
+        super(IpMonitorTestCase, self).setUp()
+        self.addCleanup(self._cleanup)
+        if self.namespace:
+            priv_ip_lib.create_netns(self.namespace)
+        self.devices = [('int_' + uuidutils.generate_uuid())[
+                        :constants.DEVICE_NAME_MAX_LEN] for _ in range(5)]
+        self.ip_wrapper = ip_lib.IPWrapper(self.namespace)
+        self.temp_file = self.get_temp_file_path('out_' + self.devices[0] +
+                                                 '.tmp')
+        self.proc = self._run_ip_monitor(ip_monitor)
+
+    def _cleanup(self):
+        self.proc.stop(block=True, kill_signal=signal.SIGTERM)
+        if self.namespace:
+            priv_ip_lib.remove_netns(self.namespace)
+        else:
+            for device in self.devices:
+                try:
+                    priv_ip_lib.delete_interface(device, self.namespace)
+                except priv_ip_lib.NetworkInterfaceNotFound:
+                    pass
+
+    @staticmethod
+    def _normalize_module_name(name):
+        for suf in ['.pyc', '.pyo']:
+            if name.endswith(suf):
+                return name[:-len(suf)] + '.py'
+        return name
+
+    def _run_ip_monitor(self, module):
+        executable = self._normalize_module_name(module.__file__)
+        proc = async_process.AsyncProcess(
+            [executable, self.temp_file, str(self.namespace)],
+            run_as_root=True)
+        proc.start(block=True)
+        return proc
+
+    def _read_file(self, ip_addresses):
+        try:
+            registers = []
+            with open(self.temp_file, 'r') as f:
+                data = f.read()
+                for line in data.splitlines():
+                    register = jsonutils.loads(line)
+                    registers.append({'name': register['name'],
+                                      'cidr': register['cidr'],
+                                      'event': register['event']})
+            for ip_address in ip_addresses:
+                if ip_address not in registers:
+                    return False
+            return True
+        except (OSError, IOError) as e:
+            return False
+
+    def _check_read_file(self, ip_addresses):
+        try:
+            utils.wait_until_true(lambda: self._read_file(ip_addresses),
+                                  timeout=30)
+        except utils.WaitTimeout:
+            with open(self.temp_file, 'r') as f:
+                registers = f.read()
+            self.fail('Defined IP addresses: %s, IP addresses registered: %s' %
+                      (ip_addresses, registers))
+
+    def _handle_ip_addresses(self, event, ip_addresses):
+        for ip_address in (_ip for _ip in ip_addresses
+                           if _ip['event'] == event):
+            ip_device = ip_lib.IPDevice(ip_address['name'], self.namespace)
+            if event == 'removed':
+                ip_device.addr.delete(ip_address['cidr'])
+            if event == 'added':
+                ip_device.addr.add(ip_address['cidr'])
+
+    def test_add_remove_ip_address_and_interface(self):
+        for device in self.devices:
+            self.ip_wrapper.add_dummy(device)
+        utils.wait_until_true(lambda: self._read_file({}), timeout=30)
+        ip_addresses = [
+            {'cidr': '192.168.250.1/24', 'event': 'added',
+             'name': self.devices[0]},
+            {'cidr': '192.168.250.2/24', 'event': 'added',
+             'name': self.devices[1]},
+            {'cidr': '192.168.250.3/24', 'event': 'added',
+             'name': self.devices[2]},
+            {'cidr': '192.168.250.10/24', 'event': 'added',
+             'name': self.devices[3]},
+            {'cidr': '192.168.250.10/24', 'event': 'removed',
+             'name': self.devices[3]},
+            {'cidr': '2001:db8::1/64', 'event': 'added',
+             'name': self.devices[4]},
+            {'cidr': '2001:db8::2/64', 'event': 'added',
+             'name': self.devices[4]}]
+
+        self._handle_ip_addresses('added', ip_addresses)
+        self._handle_ip_addresses('removed', ip_addresses)
+        self._check_read_file(ip_addresses)
+
+        ip_device = ip_lib.IPDevice(self.devices[4], self.namespace)
+        ip_device.link.delete()
+        ip_addresses = [
+            {'cidr': '2001:db8::1/64', 'event': 'removed',
+             'name': self.devices[4]},
+            {'cidr': '2001:db8::2/64', 'event': 'removed',
+             'name': self.devices[4]}]
+        self._check_read_file(ip_addresses)
+
+    def test_interface_added_after_initilization(self):
+        for device in self.devices[:len(self.devices) - 1]:
+            self.ip_wrapper.add_dummy(device)
+        utils.wait_until_true(lambda: self._read_file({}), timeout=30)
+        ip_addresses = [
+            {'cidr': '192.168.250.21/24', 'event': 'added',
+             'name': self.devices[0]},
+            {'cidr': '192.168.250.22/24', 'event': 'added',
+             'name': self.devices[1]}]
+
+        self._handle_ip_addresses('added', ip_addresses)
+        self._check_read_file(ip_addresses)
+
+        self.ip_wrapper.add_dummy(self.devices[-1])
+        ip_addresses.append({'cidr': '192.168.250.23/24', 'event': 'added',
+                             'name': self.devices[-1]})
+
+        self._handle_ip_addresses('added', [ip_addresses[-1]])
+        self._check_read_file(ip_addresses)
