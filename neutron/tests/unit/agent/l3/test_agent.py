@@ -243,12 +243,14 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = mock.Mock()
         router_info = mock.MagicMock()
+        router_info.agent = agent
         agent.router_info[router.id] = router_info
         agent.l3_ext_manager.ha_state_change = mock.Mock()
         agent.enqueue_state_change(router.id, 'master')
         agent.l3_ext_manager.ha_state_change.assert_called_once_with(
             agent.context,
-            {'router_id': router.id, 'state': 'master'})
+            {'router_id': router.id, 'state': 'master',
+             'host': agent.host})
 
     def test_enqueue_state_change_router_active_ha(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
