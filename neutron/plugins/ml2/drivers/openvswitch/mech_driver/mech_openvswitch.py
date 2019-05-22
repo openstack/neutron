@@ -17,6 +17,7 @@ import os
 import uuid
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import provider_net
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib import constants
@@ -200,3 +201,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                                               a_const.VHOST_USER_SOCKET_DIR)
         sock_name = (constants.VHOST_USER_DEVICE_PREFIX + port_id)[:14]
         return os.path.join(sockdir, sock_name)
+
+    @staticmethod
+    def provider_network_attribute_updates_supported():
+        return [provider_net.SEGMENTATION_ID]

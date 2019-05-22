@@ -51,7 +51,8 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
     #   1.4 tunnel_sync rpc signature upgrade to obtain 'host'
     #   1.5 Support update_device_list and
     #       get_devices_details_list_and_failed_devices
-    target = oslo_messaging.Target(version='1.5')
+    #   1.6 Support get_network_details
+    target = oslo_messaging.Target(version='1.6')
 
     def __init__(self, notifier, type_manager):
         self.setup_tunnel_callback_mixin(notifier, type_manager)
@@ -69,7 +70,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
     def _get_request_details(kwargs):
         return (kwargs.get('agent_id'),
                 kwargs.get('host'),
-                kwargs.get('device'))
+                kwargs.get('device') or kwargs.get('network'))
 
     def get_device_details(self, rpc_context, **kwargs):
         """Agent requests device details."""
@@ -218,6 +219,15 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
         return {'devices': devices,
                 'failed_devices': failed_devices}
+
+    def get_network_details(self, rpc_context, **kwargs):
+        """Agent requests network details."""
+        agent_id, host, network = self._get_request_details(kwargs)
+        LOG.debug("Network %(network)s details requested by agent "
+                  "%(agent_id)s with host %(host)s",
+                  {'network': network, 'agent_id': agent_id, 'host': host})
+        plugin = directory.get_plugin()
+        return plugin.get_network(rpc_context, network)
 
     def update_device_down(self, rpc_context, **kwargs):
         """Device no longer exists on agent."""

@@ -25,6 +25,7 @@ import netaddr
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.agent import topics
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import provider_net
 from neutron_lib.callbacks import events as callback_events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources as callback_resources
@@ -400,6 +401,37 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                n_const.TYPE_GRE: {},
                                n_const.TYPE_VXLAN: {}}
 
+    def _update_network_segmentation_id(self, network):
+        if network[provider_net.NETWORK_TYPE] != n_const.TYPE_VLAN:
+            return
+
+        try:
+            lvm = self.vlan_manager.get(network['id'])
+        except vlanmanager.MappingNotFound:
+            return
+
+        segmentation_id_old = lvm.segmentation_id
+        if segmentation_id_old == network[provider_net.SEGMENTATION_ID]:
+            return
+        self.vlan_manager.update_segmentation_id(
+            network['id'], network[provider_net.SEGMENTATION_ID])
+
+        lvid = lvm.vlan
+        physical_network = network[provider_net.PHYSICAL_NETWORK]
+        phys_br = self.phys_brs[physical_network]
+        phys_port = self.phys_ofports[physical_network]
+        int_port = self.int_ofports[physical_network]
+        phys_br.reclaim_local_vlan(port=phys_port, lvid=lvid)
+        phys_br.provision_local_vlan(
+            port=phys_port, lvid=lvid,
+            segmentation_id=network[provider_net.SEGMENTATION_ID],
+            distributed=self.enable_distributed_routing)
+        self.int_br.reclaim_local_vlan(port=int_port,
+                                       segmentation_id=segmentation_id_old)
+        self.int_br.provision_local_vlan(
+            port=int_port, lvid=lvid,
+            segmentation_id=network[provider_net.SEGMENTATION_ID])
+
     def setup_rpc(self):
         self.plugin_rpc = OVSPluginApi(topics.PLUGIN)
         # allow us to receive port_update/delete callbacks from the cache
@@ -449,6 +481,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     def network_update(self, context, **kwargs):
         network_id = kwargs['network']['id']
+        network = self.plugin_rpc.get_network_details(
+            self.context, network_id, self.agent_id, self.conf.host)
+        self._update_network_segmentation_id(network)
         for port_id in self.network_ports[network_id]:
             # notifications could arrive out of order, if the port is deleted
             # we don't want to update it anymore
