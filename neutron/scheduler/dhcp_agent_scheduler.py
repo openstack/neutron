@@ -90,8 +90,13 @@ class AutoScheduler(object):
                     bindings_to_add.append((dhcp_agent, net_id))
         # do it outside transaction so particular scheduling results don't
         # make other to fail
+        debug_data = []
         for agent, net_id in bindings_to_add:
             self.resource_filter.bind(context, [agent], net_id)
+            debug_data.append('(%s, %s, %s)' % (agent['agent_type'],
+                                                agent['host'], net_id))
+        LOG.debug('Resources bound (agent type, host, resource id): %s',
+                  ', '.join(debug_data))
         return True
 
 
