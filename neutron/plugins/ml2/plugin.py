@@ -1718,9 +1718,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     context, port['id'], host)
                 if not binding:
                     return
-                binding['status'] = status
-                binding.update(binding)
-                updated = True
+                if binding['status'] != status:
+                    binding['status'] = status
+                    binding.update(binding)
+                    updated = True
 
         if (updated and
             port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE):
