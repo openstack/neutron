@@ -1,3 +1,7 @@
+# NOTE: In doc/source/contributor/testing/ci_scenario_jobs.rst file there is
+# document with summary of all tempest, neutron-tempest-plugin and grenade jobs
+# summary.
+# Please update this document always when any changes to jobs are made.
 - project:
     templates:
       - neutron-tempest-plugin-jobs
