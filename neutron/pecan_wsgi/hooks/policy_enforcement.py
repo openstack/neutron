@@ -19,6 +19,7 @@ from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
 from oslo_utils import excutils
 from pecan import hooks
+import six
 import webob
 
 from neutron._i18n import _
@@ -121,7 +122,7 @@ class PolicyHook(hooks.PecanHook):
                 original_resources.append(resource_obj)
                 obj = copy.copy(resource_obj)
                 obj.update(item)
-                obj[const.ATTRIBUTES_TO_UPDATE] = item.keys()
+                obj[const.ATTRIBUTES_TO_UPDATE] = six.viewkeys(item)
                 # Put back the item in the list so that policies could be
                 # enforced
                 resources_copy.append(obj)
@@ -223,7 +224,7 @@ class PolicyHook(hooks.PecanHook):
         to see them.
         """
         attributes_to_exclude = []
-        for attr_name in data.keys():
+        for attr_name in six.viewkeys(data):
             # TODO(amotoki): All attribute maps have tenant_id and
             # it determines excluded attributes based on tenant_id.
             # We need to migrate tenant_id to project_id later
