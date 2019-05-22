@@ -13,24 +13,23 @@
 #    under the License.
 
 import os
-import signal
 import sys
+import threading
 
 import httplib2
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
+from six.moves import queue
 
 from neutron._i18n import _
 from neutron.agent.l3 import ha
-from neutron.agent.l3 import ha_router
 from neutron.agent.linux import daemon
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import ip_monitor
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import config
-from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import keepalived
+from neutron import privileged
 
 
 LOG = logging.getLogger(__name__)
@@ -55,33 +54,40 @@ class MonitorDaemon(daemon.Daemon):
         self.interface = interface
         self.cidr = cidr
         self.monitor = None
-        super(MonitorDaemon, self).__init__(
-            pidfile, uuid=router_id,
-            user=user, group=group,
-            procname=ha_router.STATE_CHANGE_PROC_NAME)
+        self.event_stop = threading.Event()
+        self.event_started = threading.Event()
+        self.queue = queue.Queue()
+        super(MonitorDaemon, self).__init__(pidfile, uuid=router_id,
+                                            user=user, group=group)
 
-    def run(self, run_as_root=False):
-        self.monitor = ip_monitor.IPMonitor(namespace=self.namespace,
-                                            run_as_root=run_as_root)
-        self.monitor.start()
-        # Only drop privileges if the process is currently running as root
-        # (The run_as_root variable name here is unfortunate - It means to
-        # use a root helper when the running process is NOT already running
-        # as root
-        if not run_as_root:
-            super(MonitorDaemon, self).run()
+    def run(self):
+        self._thread_ip_monitor = threading.Thread(
+            target=ip_lib.ip_monitor,
+            args=(self.namespace, self.queue, self.event_stop,
+                  self.event_started))
+        self._thread_read_queue = threading.Thread(
+            target=self.read_queue,
+            args=(self.queue, self.event_stop, self.event_started))
+        self._thread_ip_monitor.start()
+        self._thread_read_queue.start()
         self.handle_initial_state()
-        for iterable in self.monitor:
-            self.parse_and_handle_event(iterable)
+        self._thread_read_queue.join()
 
-    def parse_and_handle_event(self, iterable):
-        try:
-            event = ip_monitor.IPMonitorEvent.from_text(iterable)
-            if event.interface == self.interface and event.cidr == self.cidr:
-                new_state = 'master' if event.added else 'backup'
+    def read_queue(self, _queue, event_stop, event_started):
+        event_started.wait()
+        while not event_stop.is_set():
+            try:
+                event = _queue.get(timeout=2)
+            except queue.Empty:
+                event = None
+            if not event:
+                continue
+
+            if event['name'] == self.interface and event['cidr'] == self.cidr:
+                new_state = 'master' if event['event'] == 'added' else 'backup'
                 self.write_state_change(new_state)
                 self.notify_agent(new_state)
-            elif event.interface != self.interface and event.added:
+            elif event['name'] != self.interface and event['event'] == 'added':
                 # Send GARPs for all new router interfaces.
                 # REVISIT(jlibosva): keepalived versions 1.2.19 and below
                 # contain bug where gratuitous ARPs are not sent on receiving
@@ -90,9 +96,6 @@ class MonitorDaemon(daemon.Daemon):
                 # packaged in some distributions (RHEL/CentOS/Ubuntu Xenial).
                 # Remove this code once new keepalived versions are available.
                 self.send_garp(event)
-        except Exception:
-            LOG.exception('Failed to process or handle event for line %s',
-                          iterable)
 
     def handle_initial_state(self):
         try:
@@ -133,26 +136,19 @@ class MonitorDaemon(daemon.Daemon):
 
     def send_garp(self, event):
         """Send gratuitous ARP for given event."""
+        ip_address = str(netaddr.IPNetwork(event['cidr']).ip)
         ip_lib.send_ip_addr_adv_notif(
             self.namespace,
-            event.interface,
-            str(netaddr.IPNetwork(event.cidr).ip),
+            event['name'],
+            ip_address,
             log_exception=False
         )
-
-    def _kill_monitor(self):
-        if self.monitor:
-            # Kill PID instead of calling self.monitor.stop() because the ip
-            # monitor is running as root while keepalived-state-change is not
-            # (dropped privileges after launching the ip monitor) and will fail
-            # with "Permission denied". Also, we can safely do this because the
-            # monitor was launched with respawn_interval=None so it won't be
-            # automatically respawned
-            agent_utils.kill_process(self.monitor.pid, signal.SIGKILL,
-                                     run_as_root=True)
+        LOG.debug('Sent GARP to %(ip_address)s from %(device_name)s',
+                  {'ip_address': ip_address, 'device_name': event['name']})
 
     def handle_sigterm(self, signum, frame):
-        self._kill_monitor()
+        self.event_stop.set()
+        self._thread_read_queue.join(timeout=5)
         super(MonitorDaemon, self).handle_sigterm(signum, frame)
 
 
@@ -162,7 +158,7 @@ def configure(conf):
     conf.set_override('debug', True)
     conf.set_override('use_syslog', True)
     config.setup_logging()
-    agent_config.setup_privsep()
+    privileged.default.set_client_mode(False)
 
 
 def main():
