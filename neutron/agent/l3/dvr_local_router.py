@@ -75,9 +75,10 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         dnat_from_floatingip_to_fixedip = (
             'PREROUTING', '-d %s/32 -i %s -j DNAT --to-destination %s' % (
                 floating_ip, rtr_2_fip_name, fixed_ip))
-        snat_from_fixedip_to_floatingip = (
-            'float-snat', '-s %s/32 -j SNAT --to-source %s' % (
-                fixed_ip, floating_ip))
+        to_source = '-s %s/32 -j SNAT --to-source %s' % (fixed_ip, floating_ip)
+        if self.iptables_manager.random_fully:
+            to_source += ' --random-fully'
+        snat_from_fixedip_to_floatingip = ('float-snat', to_source)
         return [dnat_from_floatingip_to_fixedip,
                 snat_from_fixedip_to_floatingip]
 

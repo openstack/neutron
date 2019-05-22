@@ -341,12 +341,14 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         return lib_constants.FLOATINGIP_STATUS_ACTIVE
 
     def _centralized_floating_forward_rules(self, floating_ip, fixed_ip):
+        to_source = '-s %s/32 -j SNAT --to-source %s' % (fixed_ip, floating_ip)
+        if self.snat_iptables_manager.random_fully:
+            to_source += ' --random-fully'
         return [('PREROUTING', '-d %s/32 -j DNAT --to-destination %s' %
                  (floating_ip, fixed_ip)),
                 ('OUTPUT', '-d %s/32 -j DNAT --to-destination %s' %
                  (floating_ip, fixed_ip)),
-                ('float-snat', '-s %s/32 -j SNAT --to-source %s' %
-                 (fixed_ip, floating_ip))]
+                ('float-snat', to_source)]
 
     def _set_floating_ip_nat_rules_for_centralized_floatingip(self, fip):
         if fip.get(lib_constants.DVR_SNAT_BOUND):
