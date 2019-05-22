@@ -19,6 +19,7 @@ from neutron_lib.plugins import directory
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging
+from sqlalchemy.orm import exc
 
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks.producer import registry
@@ -115,11 +116,23 @@ class TrunkSkeleton(object):
         trunk_port = self.core_plugin.get_port(context, trunk_port_id)
         trunk_host = trunk_port.get(portbindings.HOST_ID)
 
-        # NOTE(status_police) Set the trunk in BUILD state before processing
-        # subport bindings. The trunk will stay in BUILD state until an
-        # attempt has been made to bind all subports passed here and the
-        # agent acknowledges the operation was successful.
-        trunk.update(status=trunk_consts.BUILD_STATUS)
+        tries = 3
+        for try_cnt in range(tries):
+            try:
+                # NOTE(status_police) Set the trunk in BUILD state before
+                # processing subport bindings. The trunk will stay in BUILD
+                # state until an attempt has been made to bind all subports
+                # passed here and the agent acknowledges the operation was
+                # successful.
+                trunk.update(status=trunk_consts.BUILD_STATUS)
+                break
+            except exc.StaleDataError as e:
+                if try_cnt < tries - 1:
+                    LOG.debug("Got StaleDataError exception: %s", e)
+                    continue
+                else:
+                    # re-raise when all tries failed
+                    raise
 
         for port_id in port_ids:
             try:
