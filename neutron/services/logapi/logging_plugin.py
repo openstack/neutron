@@ -15,12 +15,12 @@
 
 from neutron_lib.api.definitions import logging
 from neutron_lib.db import api as db_api
+from neutron_lib.services.logapi import constants as log_const
 
 from neutron.db import db_base_plugin_common
 from neutron.extensions import logging as log_ext
 from neutron.objects import base as base_obj
 from neutron.objects.logapi import logging_resource as log_object
-from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.common import exceptions as log_exc
 from neutron.services.logapi.common import validators
 from neutron.services.logapi.drivers import manager as driver_mgr

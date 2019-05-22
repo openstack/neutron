@@ -14,10 +14,9 @@
 #    under the License.
 
 from neutron_lib import rpc as n_rpc
+from neutron_lib.services.logapi import constants as log_const
 from oslo_log import helpers as log_helpers
 import oslo_messaging
-
-from neutron.services.logapi.common import constants as log_const
 
 
 class LoggingApiStub(object):

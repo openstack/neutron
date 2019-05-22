@@ -16,9 +16,9 @@
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib import exceptions
+from neutron_lib.services.logapi import constants as log_const
 from oslo_log import log as logging
 
-from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.common import exceptions as log_exc
 from neutron.services.logapi.rpc import server as server_rpc
 

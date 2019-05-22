@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.services.logapi import constants as log_const
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as orm_exc
 
@@ -20,7 +21,6 @@ from neutron.db import _utils as db_utils
 from neutron.db.models import securitygroup as sg_db
 from neutron.objects import ports
 from neutron.objects import securitygroup as sg_object
-from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.common import exceptions as log_exc
 from neutron.services.logapi.common import validators
 

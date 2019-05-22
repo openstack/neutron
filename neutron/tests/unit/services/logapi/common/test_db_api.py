@@ -16,11 +16,11 @@
 import mock
 from neutron_lib import constants as const
 from neutron_lib import context
+from neutron_lib.services.logapi import constants as log_const
 from oslo_utils import uuidutils
 
 from neutron.common import utils
 from neutron.objects.logapi import logging_resource as log_object
-from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.common import db_api
 from neutron.services.logapi.common import validators
 from neutron.services.logapi.rpc import server as server_rpc

@@ -23,14 +23,13 @@ import fixtures
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib.services.logapi import constants as log_const
 from neutron_lib.tests import tools
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net
 from oslo_utils import netutils
 from oslo_utils import timeutils
 import unittest2
-
-from neutron.services.logapi.common import constants as log_const
 
 
 # NOTE(yamahata): from neutron-lib 1.9.1, callback priority was added and

@@ -12,10 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.services.logapi import constants as log_const
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron._i18n import _
-from neutron.services.logapi.common import constants as log_const
 
 
 class SecurityEvent(obj_fields.String):
