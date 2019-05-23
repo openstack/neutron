@@ -36,6 +36,9 @@ HA_DEV_PREFIX = 'ha-'
 IP_MONITOR_PROCESS_SERVICE = 'ip_monitor'
 SIGTERM_TIMEOUT = 10
 
+# TODO(liuyulong): move to neutron-lib?
+STATE_CHANGE_PROC_NAME = 'neutron-keepalived-state-change'
+
 # The multiplier is used to compensate execution time of function sending
 # SIGHUP to keepalived process. The constant multiplies ha_vrrp_advert_int
 # config option and the result is the throttle delay.
@@ -368,7 +371,7 @@ class HaRouter(router.RouterInfo):
 
         def callback(pid_file):
             cmd = [
-                'neutron-keepalived-state-change',
+                STATE_CHANGE_PROC_NAME,
                 '--router_id=%s' % self.router_id,
                 '--namespace=%s' % self.ha_namespace,
                 '--conf_dir=%s' % config_dir,
