@@ -58,6 +58,8 @@ doc/build
 doc/source/_static/nova.conf.sample
 doc/source/_static/nova.policy.yaml.sample
 doc/source/_static/placement.policy.yaml.sample
+doc/source/_static/config-samples/
+doc/source/_static/neutron.policy.yaml.sample
 
 # pbr generates these
 AUTHORS
