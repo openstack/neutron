@@ -15,10 +15,10 @@
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
+from neutron_lib.services.logapi import constants as log_const
 from oslo_log import log as logging
 from oslo_utils import importutils
 
-from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.common import sg_callback
 from neutron.services.logapi.drivers import base
 from neutron.services.logapi.drivers import manager

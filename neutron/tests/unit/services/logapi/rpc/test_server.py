@@ -15,12 +15,12 @@
 
 import mock
 from neutron_lib import rpc
+from neutron_lib.services.logapi import constants as log_const
 from oslo_config import cfg
 import oslo_messaging
 
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.rpc import server as server_rpc
 from neutron.tests import base
 

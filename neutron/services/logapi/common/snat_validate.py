@@ -13,10 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.services.logapi import constants as log_const
 from oslo_log import log as logging
 
 from neutron.objects import router
-from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.common import exceptions as log_exc
 from neutron.services.logapi.common import validators
 

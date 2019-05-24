@@ -15,6 +15,7 @@
 
 from neutron_lib import constants as const
 from neutron_lib.db import api as db_api
+from neutron_lib.services.logapi import constants
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as orm_exc
 
@@ -22,7 +23,6 @@ from neutron.db.models import securitygroup as sg_db
 from neutron.objects.logapi import logging_resource as log_object
 from neutron.objects import ports as port_objects
 from neutron.objects import securitygroup as sg_object
-from neutron.services.logapi.common import constants
 from neutron.services.logapi.common import validators
 
 LOG = logging.getLogger(__name__)
