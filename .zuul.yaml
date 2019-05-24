@@ -165,18 +165,23 @@
 - job:
     name: neutron-rally-task
     parent: rally-task-neutron
-    timeout: 7800
+    timeout: 10800
     vars:
       devstack_localrc:
         USE_PYTHON3: true
+        OSPROFILER_COLLECTOR: redis
+        OSPROFILER_HMAC_KEYS: "neutron-hmac-key-used-in-zuul-ci"
+      rally_task: rally-jobs/task-neutron.yaml
       devstack_plugins:
+        osprofiler: https://opendev.org/openstack/osprofiler
         rally-openstack: https://opendev.org/openstack/rally-openstack
         neutron: https://opendev.org/openstack/neutron
       devstack_services:
         neutron-trunk: true
-      rally_task: rally-jobs/task-neutron.yaml
     required-projects:
+      - openstack/rally
       - openstack/rally-openstack
+      - openstack/osprofiler
     irrelevant-files:
       - ^.*\.rst$
       - ^doc/.*$
