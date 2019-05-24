@@ -206,8 +206,16 @@ class PlacementReporterAgents(object):
 
     # Yep, this is meant to depend on ML2.
     def __init__(self, ml2_plugin):
-        self._mechanism_drivers = ml2_plugin.mechanism_manager.\
-            ordered_mech_drivers
+        try:
+            self._mechanism_drivers = ml2_plugin.mechanism_manager.\
+                ordered_mech_drivers
+        except AttributeError:
+            LOG.error(
+                "Invalid plugin configuration: "
+                "The placement service plugin depends on the ML2 core plugin. "
+                "You likely want to remove 'placement' from "
+                "neutron.conf: DEFAULT.service_plugins")
+            raise
         self._supported_agent_types = []
         self._agent_type_to_mech_driver = {}
 
