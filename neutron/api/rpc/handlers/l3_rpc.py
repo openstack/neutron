@@ -263,7 +263,7 @@ class L3RpcCallback(object):
     @db_api.retry_db_errors
     def update_floatingip_statuses(self, context, router_id, fip_statuses):
         """Update operational status for a floating IP."""
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             for (floatingip_id, status) in fip_statuses.items():
                 LOG.debug("New status for floating IP %(floatingip_id)s: "
                           "%(status)s", {'floatingip_id': floatingip_id,
