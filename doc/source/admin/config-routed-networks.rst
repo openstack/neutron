@@ -245,12 +245,12 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       This command provides no output.
 
 #. Create a second segment on the provider network. In this example, the
-   segment uses the ``provider2`` physical network with VLAN ID 2016.
+   segment uses the ``provider2`` physical network with VLAN ID 2017.
 
    .. code-block:: console
 
       $ openstack network segment create --physical-network provider2 \
-        --network-type vlan --segment 2016 --network multisegment1 segment2
+        --network-type vlan --segment 2017 --network multisegment1 segment2
       +------------------+--------------------------------------+
       | Field            | Value                                |
       +------------------+--------------------------------------+
@@ -262,7 +262,7 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       | network_type     | vlan                                 |
       | physical_network | provider2                            |
       | revision_number  | 1                                    |
-      | segmentation_id  | 2016                                 |
+      | segmentation_id  | 2017                                 |
       | tags             | []                                   |
       +------------------+--------------------------------------+
 
@@ -274,7 +274,7 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       +--------------------------------------+----------+--------------------------------------+--------------+---------+
       | ID                                   | Name     | Network                              | Network Type | Segment |
       +--------------------------------------+----------+--------------------------------------+--------------+---------+
-      | 053b7925-9a89-4489-9992-e164c8cc8763 | segment2 | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9 | vlan         |    2016 |
+      | 053b7925-9a89-4489-9992-e164c8cc8763 | segment2 | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9 | vlan         |    2017 |
       | 43e16869-ad31-48e4-87ce-acf756709e18 | segment1 | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9 | vlan         |    2016 |
       +--------------------------------------+----------+--------------------------------------+--------------+---------+
 
