@@ -16,6 +16,7 @@ import os.path
 import random
 import re
 import sys
+import time
 
 import ddt
 import eventlet
@@ -558,3 +559,38 @@ class TestRpBandwidthValidator(base.BaseTestCase):
 
         self.assertRaises(ValueError, utils.validate_rp_bandwidth,
                           self.not_valid_rp_bandwidth, self.device_name_set)
+
+
+class TimerTestCase(base.BaseTestCase):
+
+    def test__getattr(self):
+        with utils.Timer() as timer:
+            time.sleep(1)
+        self.assertEqual(1, round(timer.total_seconds(), 0))
+        self.assertEqual(1, timer.delta.seconds)
+
+    def test__enter_with_timeout(self):
+        with utils.Timer(timeout=10) as timer:
+            time.sleep(1)
+        self.assertEqual(1, round(timer.total_seconds(), 0))
+
+    def test__enter_with_timeout_exception(self):
+        msg = r'Timer timeout expired after 1 second\(s\).'
+        with self.assertRaisesRegex(utils.TimerTimeout, msg):
+            with utils.Timer(timeout=1):
+                time.sleep(2)
+
+    def test__enter_with_timeout_no_exception(self):
+        with utils.Timer(timeout=1, raise_exception=False):
+            time.sleep(2)
+
+    def test__iter(self):
+        iterations = []
+        for i in utils.Timer(timeout=2):
+            iterations.append(i)
+            time.sleep(1.1)
+        self.assertEqual(2, len(iterations))
+
+    def test_delta_time_sec(self):
+        with utils.Timer() as timer:
+            self.assertIsInstance(timer.delta_time_sec, float)
