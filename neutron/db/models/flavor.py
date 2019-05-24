@@ -23,9 +23,6 @@ class Flavor(model_base.BASEV2, model_base.HasId):
                         server_default=sa.sql.true())
     # Make it True for multi-type flavors
     service_type = sa.Column(sa.String(36), nullable=True)
-    service_profiles = orm.relationship("FlavorServiceProfileBinding",
-                                        cascade="all, delete-orphan",
-                                        lazy="subquery")
 
 
 class ServiceProfile(model_base.BASEV2, model_base.HasId):
@@ -34,7 +31,6 @@ class ServiceProfile(model_base.BASEV2, model_base.HasId):
     enabled = sa.Column(sa.Boolean, nullable=False, default=True,
                         server_default=sa.sql.true())
     metainfo = sa.Column(sa.String(4096))
-    flavors = orm.relationship("FlavorServiceProfileBinding")
 
 
 class FlavorServiceProfileBinding(model_base.BASEV2):
@@ -42,9 +38,14 @@ class FlavorServiceProfileBinding(model_base.BASEV2):
                           sa.ForeignKey("flavors.id",
                                         ondelete="CASCADE"),
                           nullable=False, primary_key=True)
-    flavor = orm.relationship(Flavor)
+    flavor = orm.relationship(Flavor,
+                              backref=orm.backref(
+                                  "service_profiles",
+                                  lazy='subquery',
+                                  cascade="all, delete-orphan"))
     service_profile_id = sa.Column(sa.String(36),
                                    sa.ForeignKey("serviceprofiles.id",
                                                  ondelete="CASCADE"),
                                    nullable=False, primary_key=True)
-    service_profile = orm.relationship(ServiceProfile)
+    service_profile = orm.relationship(ServiceProfile,
+                                       backref="flavors")
