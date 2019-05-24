@@ -175,7 +175,40 @@ Example::
 set the :code:`VERSION` field to 1.0.
 Change :code:`VERSION` if fields or their types are modified. When you change
 the version of objects being exposed via RPC, add method
-:code:`obj_make_compatible(self, primitive, target_version)`.
+:code:`obj_make_compatible(self, primitive, target_version)`. For example, if
+a new version introduces a new parameter, it needs to be removed for previous
+versions::
+
+    from oslo_utils import versionutils
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):  # version 1.1 introduces "new_parameter"
+            primitive.pop('new_parameter', None)
+
+In the following example the object has changed an attribute definition. For
+example, in version 1.1 :code:`description` is allowed to be :code:`None` but
+not in version 1.0::
+
+    from oslo_utils import versionutils
+    from oslo_versionedobjects import exception
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):  # version 1.1 changes "description"
+            if primitive['description'] is None:
+                # "description" was not nullable before
+                raise exception.IncompatibleObjectVersion(
+                    objver=target_version, objname='OVOName')
+
+Using the first example as reference, this is how the unit test can be
+implemented::
+
+    def test_object_version_degradation_1_1_to_1_0(self):
+        OVO_obj_1_1 = self._method_to_create_this_OVO()
+        OVO_obj_1_0 = OVO_obj_1_1.obj_to_primitive(target_version='1.0')
+
+        self.assertNotIn('new_parameter', OVO_obj_1_0['versioned_object.data'])
 
 .. note::
    Standard Attributes are automatically added to OVO fields in base class.
