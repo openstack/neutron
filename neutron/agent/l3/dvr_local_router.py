@@ -560,7 +560,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
             if self.fip_ns.agent_gateway_port:
                 self.fip_ns.create_rtr_2_fip_link(self)
-                self.routes_updated(self.routes, self.router['routes'])
+                self.routes_updated([], self.router['routes'])
 
     def update_routing_table(self, operation, route):
         # TODO(Swami): The static routes should be added to the
