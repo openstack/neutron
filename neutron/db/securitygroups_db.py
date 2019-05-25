@@ -587,24 +587,6 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                                     security_group_rule)
         return db_utils.resource_fields(res, fields)
 
-    def _make_security_group_rule_filter_dict(self, security_group_rule):
-        sgr = security_group_rule['security_group_rule']
-        res = {'tenant_id': [sgr['tenant_id']],
-               'security_group_id': [sgr['security_group_id']],
-               'direction': [sgr['direction']]}
-
-        include_if_present = ['protocol', 'port_range_max', 'port_range_min',
-                              'ethertype', 'remote_group_id']
-        for key in include_if_present:
-            value = sgr.get(key)
-            if value:
-                res[key] = [value]
-        # protocol field will get corresponding name and number
-        value = sgr.get('protocol')
-        if value:
-            res['protocol'] = self._get_ip_proto_name_and_num(value)
-        return res
-
     def _rule_to_key(self, rule):
         def _normalize_rule_value(key, value):
             # This string is used as a placeholder for str(None), but shorter.
