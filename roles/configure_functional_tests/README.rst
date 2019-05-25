@@ -5,6 +5,9 @@ Configure host to run on it Neutron functional/fullstack tests
 .. zuul:rolevar:: tests_venv
    :default: {{ tox_envlist }}
 
+.. zuul:rolevar:: project_name
+   :default: neutron
+
 .. zuul:rolevar:: base_dir
    :default: {{ ansible_user_dir }}/src/opendev.org
 
