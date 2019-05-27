@@ -34,6 +34,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
+from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as agent_config
 from neutron.conf import common as common_config
@@ -398,7 +399,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         pm = external_process.ProcessManager(
             conf,
             router.router_id,
-            router.ns_name)
+            router.ns_name,
+            service=metadata_driver.HAPROXY_SERVICE)
         return pm.active
 
     def device_exists_with_ips_and_mac(self, expected_device, name_getter,

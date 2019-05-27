@@ -145,6 +145,15 @@ PROCESS_MONITOR_OPTS = [
     cfg.IntOpt('check_child_processes_interval', default=60,
                help=_('Interval between checks of child process liveness '
                       '(seconds), use 0 to disable')),
+    cfg.StrOpt('kill_scripts_path', default='/etc/neutron/kill_scripts/',
+               help=_('Location of scripts used to kill external processes. '
+                      'Names of scripts here must follow the pattern: '
+                      '"<process-name>-kill" where <process-name> is name of '
+                      'the process which should be killed using this script. '
+                      'For example, kill script for dnsmasq process should be '
+                      'named "dnsmasq-kill". '
+                      'If path is set to None, then default "kill" command '
+                      'will be used to stop processes.')),
 ]
 
 AVAILABILITY_ZONE_OPTS = [

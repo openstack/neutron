@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Added support for custom scripts used to kill external processes managed by
+    neutron agents, such as ``dnsmasq`` or ``keepalived``. Such custom scripts,
+    if defined, will be used instead default ``kill`` command to kill such
+    external processes.

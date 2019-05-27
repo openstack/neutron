@@ -66,6 +66,7 @@ class ProcessManager(MonitoredProcess):
         self.pid_file = pid_file
         self.run_as_root = run_as_root or self.namespace is not None
         self.custom_reload_callback = custom_reload_callback
+        self.kill_scripts_path = cfg.CONF.AGENT.kill_scripts_path
 
         if service:
             self.service_pid_fname = 'pid.' + service
@@ -105,7 +106,7 @@ class ProcessManager(MonitoredProcess):
                 ip_wrapper.netns.execute(cmd, addl_env=self.cmd_addl_env,
                                          run_as_root=self.run_as_root)
             else:
-                cmd = ['kill', '-%s' % (sig), pid]
+                cmd = self.get_kill_cmd(sig, pid)
                 utils.execute(cmd, run_as_root=self.run_as_root)
                 # In the case of shutting down, remove the pid file
                 if sig == '9':
@@ -116,6 +117,13 @@ class ProcessManager(MonitoredProcess):
                                             'signal': sig})
         else:
             LOG.debug('No process started for %s', self.uuid)
+
+    def get_kill_cmd(self, sig, pid):
+        if self.kill_scripts_path:
+            kill_file = "%s-kill" % self.service
+            if os.path.isfile(os.path.join(self.kill_scripts_path, kill_file)):
+                return [kill_file, sig, pid]
+        return ['kill', '-%s' % (sig), pid]
 
     def get_pid_file_name(self):
         """Returns the file name for a given kind of config file."""
