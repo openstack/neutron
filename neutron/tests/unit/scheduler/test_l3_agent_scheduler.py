@@ -1264,9 +1264,9 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
                         return_value=[agent_on_host]) as get_l3_agents,\
                 mock.patch.object(
                         self.dut, 'get_hosts_to_notify',
-                        return_value=['other_host']),\
+                        return_value=['other_host', 'host1']),\
                 mock.patch.object(
-                        self.dut, '_check_for_rtr_serviceable_ports',
+                        self.dut, '_check_dvr_serviceable_ports_on_host',
                         return_value=True):
 
             self.dut.dvr_handle_new_service_port(
