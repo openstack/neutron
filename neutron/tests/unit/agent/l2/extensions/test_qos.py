@@ -32,7 +32,7 @@ from neutron.objects.qos import rule
 from neutron.plugins.ml2.drivers.openvswitch.agent import (
         ovs_agent_extension_api as ovs_ext_api)
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
-from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl import (
+from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native import (
     ovs_bridge)
 from neutron.tests import base
 
@@ -224,10 +224,14 @@ class QosExtensionBaseTestCase(base.BaseTestCase):
         self.qos_ext = qos.QosAgentExtension()
         self.context = context.get_admin_context()
         self.connection = mock.Mock()
+        os_ken_app = mock.Mock()
         self.agent_api = ovs_ext_api.OVSAgentExtensionAPI(
-                         ovs_bridge.OVSAgentBridge('br-int'),
-                         ovs_bridge.OVSAgentBridge('br-tun'),
-                         {'phynet1': ovs_bridge.OVSAgentBridge('br-phynet1')})
+                         ovs_bridge.OVSAgentBridge(
+                             'br-int', os_ken_app=os_ken_app),
+                         ovs_bridge.OVSAgentBridge(
+                             'br-tun', os_ken_app=os_ken_app),
+                         {'phynet1': ovs_bridge.OVSAgentBridge(
+                             'br-phynet1', os_ken_app=os_ken_app)})
         self.qos_ext.consume_api(self.agent_api)
 
         # Don't rely on used driver

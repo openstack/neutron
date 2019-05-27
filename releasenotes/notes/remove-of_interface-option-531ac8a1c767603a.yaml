@@ -1,0 +1,9 @@
+---
+upgrade:
+  - |
+    The deprecated ``of_interface`` option is removed. Neutron will
+    always use the ``native`` driver, which has been the default
+    since Pike (11.0).
+    If old driver ``ovs-ofctl`` was used before upgrade, automatically
+    done change to ``native`` driver will cause short break of data plane
+    connectivity during neutron-ovs-agent upgrade.

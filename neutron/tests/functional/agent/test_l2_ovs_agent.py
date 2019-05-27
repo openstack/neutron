@@ -40,8 +40,10 @@ class TestOVSAgent(base.OVSAgentTestFramework):
 
     def test_no_stale_flows_after_port_delete(self):
         def find_drop_flow(ofport, flows):
-            for flow in flows.split("\n"):
-                if "in_port=%d" % ofport in flow and "actions=drop" in flow:
+            for flow in flows:
+                # flow.instruction == [] means actions=drop
+                if (not flow.instructions and
+                        ('in_port', ofport) in flow.match.items()):
                     return True
             return False
 
@@ -96,6 +98,7 @@ class TestOVSAgent(base.OVSAgentTestFramework):
                         ('br_int', 'br_tun', 'br_phys')):
             actual = self.ovs.db_get_val('Bridge', br_name, 'datapath_type')
             self.assertEqual(expected, actual)
+        self.stop_agent(agent, self.agent_thread)
 
     def test_datapath_type_change(self):
         self._check_datapath_type_netdev('system')

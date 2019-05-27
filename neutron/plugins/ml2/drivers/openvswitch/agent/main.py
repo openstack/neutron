@@ -18,30 +18,20 @@
 import sys
 
 from oslo_config import cfg
-from oslo_utils import importutils
 
 from neutron.common import config as common_config
 from neutron.common import profiler
+from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native import \
+        main as of_main
 
 
 cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.agent.'
                       'common.config')
 
 
-_main_modules = {
-    'ovs-ofctl': 'neutron.plugins.ml2.drivers.openvswitch.agent.openflow.'
-                 'ovs_ofctl.main',
-    'native': 'neutron.plugins.ml2.drivers.openvswitch.agent.openflow.'
-                 'native.main',
-}
-
-
 def main():
     common_config.init(sys.argv[1:])
-    driver_name = cfg.CONF.OVS.of_interface
-    mod_name = _main_modules[driver_name]
-    mod = importutils.import_module(mod_name)
-    mod.init_config()
+    of_main.init_config()
     common_config.setup_logging()
     profiler.setup("neutron-ovs-agent", cfg.CONF.host)
-    mod.main()
+    of_main.main()

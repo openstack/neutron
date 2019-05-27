@@ -27,13 +27,11 @@ from neutron.tests.fullstack.resources import machine
 
 
 class BaseLoggingTestCase(base.BaseFullStackTestCase):
-    of_interface = None
     number_of_hosts = 1
 
     def setUp(self):
         host_desc = [
             environment.HostDescription(
-                of_interface=self.of_interface,
                 l2_agent_type=constants.AGENT_TYPE_OVS,
                 firewall_driver='openvswitch',
                 dhcp_agent=True) for _ in range(self.number_of_hosts)]
@@ -90,8 +88,6 @@ class BaseLoggingTestCase(base.BaseFullStackTestCase):
 
 
 class TestLogging(BaseLoggingTestCase):
-    of_interface = 'native'
-
     def _create_network_log(self, resource_type,
                             resource_id=None, target_id=None):
         return self.safe_client.create_network_log(

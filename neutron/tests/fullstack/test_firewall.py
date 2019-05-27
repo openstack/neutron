@@ -44,7 +44,6 @@ class FirewallMigrationTestCase(base.BaseFullStackTestCase):
         host_descriptions = [
             environment.HostDescription(
                 l3_agent=False,
-                of_interface='native',
                 l2_agent_type=constants.AGENT_TYPE_OVS,
                 firewall_driver='iptables_hybrid',
                 dhcp_agent=False,

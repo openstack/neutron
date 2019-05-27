@@ -17,13 +17,12 @@ import functools
 import fixtures
 import netaddr
 from neutron_lib import constants
+from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
     constants as ovs_consts)
-from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl import (
-    br_int)
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 
@@ -400,11 +399,17 @@ class OVSConnectionTester(OVSBaseConnectionTester):
 
     """
 
+    def __init__(self, ip_cidr, br_int_cls):
+        super(OVSConnectionTester, self).__init__(ip_cidr)
+        self.br_int_cls = br_int_cls
+
     def _setUp(self):
         super(OVSConnectionTester, self)._setUp()
         br_name = self.useFixture(
             net_helpers.OVSBridgeFixture()).bridge.br_name
-        self.bridge = br_int.OVSIntegrationBridge(br_name)
+        self.bridge = self.br_int_cls(br_name)
+        self.bridge.set_secure_mode()
+        self.bridge.setup_controllers(cfg.CONF)
         self.bridge.setup_default_table()
         machines = self.useFixture(
             machine_fixtures.PeerMachines(

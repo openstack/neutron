@@ -197,7 +197,6 @@ class OVSConfigFixture(ConfigFixture):
             'ovs': {
                 'local_ip': local_ip,
                 'integration_bridge': self._generate_integration_bridge(),
-                'of_interface': host_desc.of_interface,
                 'bridge_mappings': '%s:%s' % (PHYSICAL_NETWORK_NAME, ext_dev)
             },
             'securitygroup': {
@@ -236,13 +235,12 @@ class OVSConfigFixture(ConfigFixture):
             })
 
     def _setUp(self):
-        if self.config['ovs']['of_interface'] == 'native':
-            self.config['ovs'].update({
-                'of_listen_port': self.useFixture(
-                    port.ExclusivePort(constants.PROTO_NAME_TCP,
-                                       start=OVS_OF_PORT_LISTEN_START,
-                                       end=OVS_OF_PORT_LISTEN_END)).port
-            })
+        self.config['ovs'].update({
+            'of_listen_port': self.useFixture(
+                port.ExclusivePort(constants.PROTO_NAME_TCP,
+                                   start=OVS_OF_PORT_LISTEN_START,
+                                   end=OVS_OF_PORT_LISTEN_END)).port
+        })
         super(OVSConfigFixture, self)._setUp()
 
     def _generate_integration_bridge(self):

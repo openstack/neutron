@@ -13,15 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import eventlet
-import fixtures
-import mock
-import testscenarios
-
 from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_serialization import jsonutils
-from oslo_utils import importutils
 from testtools.content import text_content
 
 from neutron.agent.common import ovs_lib
@@ -35,10 +29,10 @@ from neutron.plugins.ml2.drivers.openvswitch.agent \
 from neutron.tests.common import base as common_base
 from neutron.tests.common import helpers
 from neutron.tests.common import net_helpers
+from neutron.tests.functional.agent.l2 import base as l2_base
 from neutron.tests.functional.agent import test_ovs_lib
+from neutron.tests.functional import base
 from neutron.tests import tools
-
-load_tests = testscenarios.load_tests_apply_scenarios
 
 OVS_TRACE_FINAL_FLOW = 'Final flow'
 OVS_TRACE_DATAPATH_ACTIONS = 'Datapath actions'
@@ -47,52 +41,18 @@ cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.agent.'
                       'common.config')
 
 
-class OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase):
-    scenarios = [
-        ('ofctl', {'main_module': ('neutron.plugins.ml2.drivers.openvswitch.'
-                                  'agent.openflow.ovs_ofctl.main')}),
-        ('native', {'main_module': ('neutron.plugins.ml2.drivers.openvswitch.'
-                                  'agent.openflow.native.main')})]
+class OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
+                       base.BaseSudoTestCase,
+                       l2_base.OVSOFControllerHelper):
 
     def setUp(self):
         super(OVSAgentTestBase, self).setUp()
         self.br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
-        self.of_interface_mod = importutils.import_module(self.main_module)
-        self.br_int_cls = None
-        self.br_tun_cls = None
-        self.br_phys_cls = None
-        self.br_int = None
-        self.init_done = False
-        self.init_done_ev = eventlet.event.Event()
-        self.main_ev = eventlet.event.Event()
-        self.addCleanup(self._kill_main)
-        retry_count = 3
-        while True:
-            cfg.CONF.set_override('of_listen_port',
-                                  net_helpers.get_free_namespace_port(
-                                      n_const.PROTO_NAME_TCP),
-                                  group='OVS')
-            self.of_interface_mod.init_config()
-            self._main_thread = eventlet.spawn(self._kick_main)
-
-            # Wait for _kick_main -> of_interface main -> _agent_main
-            # NOTE(yamamoto): This complexity came from how "native"
-            # of_interface runs its openflow controller.  "native"
-            # of_interface's main routine blocks while running the
-            # embedded openflow controller.  In that case, the agent
-            # rpc_loop runs in another thread.  However, for FT we
-            # need to run setUp() and test_xxx() in the same thread.
-            # So I made this run of_interface's main in a separate
-            # thread instead.
-            try:
-                while not self.init_done:
-                    self.init_done_ev.wait()
-                break
-            except fixtures.TimeoutException:
-                self._kill_main()
-            retry_count -= 1
-            if retry_count < 0:
-                raise Exception('port allocation failed')
+        self.start_of_controller(cfg.CONF)
+        self.br_int = self.br_int_cls(self.br.br_name)
+        self.br_int.set_secure_mode()
+        self.br_int.setup_controllers(cfg.CONF)
+        self.br_int.setup_default_table()
 
     def _run_trace(self, brname, spec):
         required_keys = [OVS_TRACE_FINAL_FLOW, OVS_TRACE_DATAPATH_ACTIONS]
@@ -111,29 +71,6 @@ class OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase):
                 self.fail("%s not found in trace %s" % (k, trace_lines))
 
         return trace
-
-    def _kick_main(self):
-        with mock.patch.object(ovsagt, 'main', self._agent_main):
-            self.of_interface_mod.main()
-
-    def _kill_main(self):
-        self.main_ev.send()
-        self._main_thread.wait()
-
-    def _agent_main(self, bridge_classes):
-        self.br_int_cls = bridge_classes['br_int']
-        self.br_phys_cls = bridge_classes['br_phys']
-        self.br_tun_cls = bridge_classes['br_tun']
-        self.br_int = self.br_int_cls(self.br.br_name)
-        self.br_int.set_secure_mode()
-        self.br_int.setup_controllers(cfg.CONF)
-        self.br_int.setup_default_table()
-
-        # signal to setUp()
-        self.init_done = True
-        self.init_done_ev.send()
-
-        self.main_ev.wait()
 
 
 class ARPSpoofTestCase(OVSAgentTestBase):
@@ -357,9 +294,7 @@ class DeleteFlowsTestCase(OVSAgentTestBase):
 class OVSFlowTestCase(OVSAgentTestBase):
     """Tests defined in this class use ovs-appctl ofproto/trace commands,
     which simulate processing of imaginary packets, to check desired actions
-    are correctly set up by OVS flows.  In this way, subtle variations in
-    flows between of_interface drivers are absorbed and the same tests work
-    against those drivers.
+    are correctly set up by OVS flows.
     """
 
     def setUp(self):
@@ -466,9 +401,6 @@ class OVSFlowTestCase(OVSAgentTestBase):
         self.assertIn("pop_vlan,", trace["Datapath actions"])
 
     def test_bundled_install(self):
-        if 'ovs_ofctl' in self.main_module:
-            self.skip("ovs-ofctl of_interface doesn't have bundled()")
-
         kwargs = {'in_port': 345, 'vlan_tci': 0x1321}
         dst_p = self.useFixture(
             net_helpers.OVSPortFixture(self.br_tun, self.namespace)).port

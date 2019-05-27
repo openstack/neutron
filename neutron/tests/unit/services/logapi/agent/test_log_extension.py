@@ -24,7 +24,7 @@ from neutron.api.rpc.handlers import resources_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent import (
     ovs_agent_extension_api as ovs_ext_api)
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
-from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl import (
+from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native import (
     ovs_bridge)
 from neutron.services.logapi.agent import log_extension as log_ext
 from neutron.tests import base
@@ -54,10 +54,12 @@ class LoggingExtensionBaseTestCase(base.BaseTestCase):
         self.agent_ext = log_ext.LoggingExtension()
         self.context = context.get_admin_context()
         self.connection = mock.Mock()
+        os_ken_app = mock.Mock()
         agent_api = ovs_ext_api.OVSAgentExtensionAPI(
-            ovs_bridge.OVSAgentBridge('br-int'),
-            ovs_bridge.OVSAgentBridge('br-tun'),
-            {'physnet1': ovs_bridge.OVSAgentBridge('br-physnet1')})
+            ovs_bridge.OVSAgentBridge('br-int', os_ken_app=os_ken_app),
+            ovs_bridge.OVSAgentBridge('br-tun', os_ken_app=os_ken_app),
+            {'physnet1': ovs_bridge.OVSAgentBridge(
+                'br-physnet1', os_ken_app=os_ken_app)})
         self.agent_ext.consume_api(agent_api)
         mock.patch(
             'neutron.manager.NeutronManager.load_class_for_provider').start()

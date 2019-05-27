@@ -38,33 +38,8 @@ class OVSAgentConfigTestBase(base.BaseTestCase):
         self.mod_dvr_agent = importutils.import_module(_DVR_AGENT_NAME)
 
 
-class OVSAgentTestBase(OVSAgentConfigTestBase):
-    def setUp(self):
-        super(OVSAgentTestBase, self).setUp()
-        conn_patcher = mock.patch(
-            'neutron.agent.ovsdb.impl_idl._connection')
-        conn_patcher.start()
-        self.addCleanup(conn_patcher.stop)
-        self.br_int_cls = importutils.import_class(self._BR_INT_CLASS)
-        self.br_phys_cls = importutils.import_class(self._BR_PHYS_CLASS)
-        self.br_tun_cls = importutils.import_class(self._BR_TUN_CLASS)
+class OVSOSKenTestBase(OVSAgentConfigTestBase):
 
-    def _bridge_classes(self):
-        return {
-            'br_int': self.br_int_cls,
-            'br_phys': self.br_phys_cls,
-            'br_tun': self.br_tun_cls,
-        }
-
-
-class OVSOFCtlTestBase(OVSAgentTestBase):
-    _DRIVER_PACKAGE = _AGENT_PACKAGE + '.openflow.ovs_ofctl'
-    _BR_INT_CLASS = _DRIVER_PACKAGE + '.br_int.OVSIntegrationBridge'
-    _BR_TUN_CLASS = _DRIVER_PACKAGE + '.br_tun.OVSTunnelBridge'
-    _BR_PHYS_CLASS = _DRIVER_PACKAGE + '.br_phys.OVSPhysicalBridge'
-
-
-class OVSOSKenTestBase(OVSAgentTestBase):
     _DRIVER_PACKAGE = _AGENT_PACKAGE + '.openflow.native'
     _BR_INT_CLASS = _DRIVER_PACKAGE + '.br_int.OVSIntegrationBridge'
     _BR_TUN_CLASS = _DRIVER_PACKAGE + '.br_tun.OVSTunnelBridge'
@@ -75,6 +50,13 @@ class OVSOSKenTestBase(OVSAgentTestBase):
         self.fake_oflib_of.start()
         self.addCleanup(self.fake_oflib_of.stop)
         super(OVSOSKenTestBase, self).setUp()
+        conn_patcher = mock.patch(
+            'neutron.agent.ovsdb.impl_idl._connection')
+        conn_patcher.start()
+        self.addCleanup(conn_patcher.stop)
+        self.br_int_cls = importutils.import_class(self._BR_INT_CLASS)
+        self.br_phys_cls = importutils.import_class(self._BR_PHYS_CLASS)
+        self.br_tun_cls = importutils.import_class(self._BR_TUN_CLASS)
         os_ken_app = mock.Mock()
         self.br_int_cls = functools.partial(self.br_int_cls,
                                             os_ken_app=os_ken_app)
@@ -82,3 +64,10 @@ class OVSOSKenTestBase(OVSAgentTestBase):
                                              os_ken_app=os_ken_app)
         self.br_tun_cls = functools.partial(self.br_tun_cls,
                                             os_ken_app=os_ken_app)
+
+    def _bridge_classes(self):
+        return {
+            'br_int': self.br_int_cls,
+            'br_phys': self.br_phys_cls,
+            'br_tun': self.br_tun_cls,
+        }

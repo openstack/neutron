@@ -18,7 +18,6 @@ from neutron_lib import constants
 from neutron_lib.services.qos import constants as qos_consts
 from neutronclient.common import exceptions
 from oslo_utils import uuidutils
-import testscenarios
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import tc_lib
@@ -28,7 +27,6 @@ from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import config as fullstack_config
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
-from neutron.tests.fullstack import utils as fullstack_utils
 from neutron.tests.unit import testlib_api
 
 from neutron.conf.plugins.ml2.drivers import linuxbridge as \
@@ -48,7 +46,6 @@ DSCP_MARK = 16
 
 
 class BaseQoSRuleTestCase(object):
-    of_interface = None
     number_of_hosts = 1
     physical_network = None
 
@@ -63,7 +60,6 @@ class BaseQoSRuleTestCase(object):
         host_desc = [
             environment.HostDescription(
                 l3_agent=False,
-                of_interface=self.of_interface,
                 l2_agent_type=self.l2_agent_type
             ) for _ in range(self.number_of_hosts)]
         env_desc = environment.EnvironmentDescription(
@@ -344,12 +340,10 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
 
 class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
     l2_agent_type = constants.AGENT_TYPE_OVS
-    direction_scenarios = [
+    scenarios = [
         ('ingress', {'direction': constants.INGRESS_DIRECTION}),
         ('egress', {'direction': constants.EGRESS_DIRECTION})
     ]
-    scenarios = testscenarios.multiply_scenarios(
-        direction_scenarios, fullstack_utils.get_ovs_interface_scenarios())
 
     @staticmethod
     def _get_expected_burst_value(limit, direction):
@@ -520,7 +514,6 @@ class _TestDscpMarkingQoS(BaseQoSRuleTestCase):
 
 
 class TestDscpMarkingQoSOvs(_TestDscpMarkingQoS, base.BaseFullStackTestCase):
-    scenarios = fullstack_utils.get_ovs_interface_scenarios()
     l2_agent_type = constants.AGENT_TYPE_OVS
 
     def _wait_for_dscp_marking_rule_applied(self, vm, dscp_mark):
@@ -670,11 +663,9 @@ class _TestMinBwQoS(BaseQoSRuleTestCase):
 
 class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
     l2_agent_type = constants.AGENT_TYPE_OVS
-    direction_scenarios = [
+    scenarios = [
         ('egress', {'direction': constants.EGRESS_DIRECTION})
     ]
-    scenarios = testscenarios.multiply_scenarios(
-        direction_scenarios, fullstack_utils.get_ovs_interface_scenarios())
 
     def _wait_for_min_bw_rule_applied(self, vm, min_bw, direction):
         if direction == constants.EGRESS_DIRECTION:
