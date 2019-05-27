@@ -24,7 +24,6 @@ import netaddr
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants
-from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import l3 as l3_exc
 from oslo_config import cfg
 from oslo_log import log
@@ -2889,12 +2888,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                   'external_gateway_info': {'network_id': 'aaa'}}
 
         agent.router_info = {}
-        self.plugin_api.get_external_network_id.side_effect = (
-            exc.TooManyExternalNetworks())
-        self.assertRaises(exc.TooManyExternalNetworks,
-                          agent._process_router_if_compatible,
-                          router)
-        self.assertNotIn(router['id'], agent.router_info)
+        e = oslo_messaging.RemoteError()
+        e.exc_type = 'TooManyExternalNetworks'
+        agent.plugin_rpc.get_external_network_id.side_effect = e
+        agent._process_router_if_compatible(router)
+        self.assertIn(router['id'], agent.router_info)
 
     def test_process_router_if_compatible_with_ext_net_in_conf(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -2911,19 +2909,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                           agent._process_router_if_compatible,
                           router)
         self.assertNotIn(router['id'], agent.router_info)
-
-    def test_process_router_if_compatible_with_no_bridge_no_ext_net(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.plugin_api.get_external_network_id.return_value = 'aaa'
-
-        router = {'id': _uuid(),
-                  'routes': [],
-                  'admin_state_up': True,
-                  'external_gateway_info': {'network_id': 'aaa'}}
-
-        agent.router_info = {}
-        agent._process_router_if_compatible(router)
-        self.assertIn(router['id'], agent.router_info)
 
     def test_nonexistent_interface_driver(self):
         self.conf.set_override('interface_driver', None)

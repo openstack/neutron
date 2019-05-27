@@ -36,7 +36,6 @@ from oslo_utils import excutils
 from oslo_utils import timeutils
 from osprofiler import profiler
 
-from neutron._i18n import _
 from neutron.agent.common import resource_processing_queue as queue
 from neutron.agent.common import utils as common_utils
 from neutron.agent.l3 import dvr
@@ -368,12 +367,10 @@ class L3NATAgent(ha.AgentMixin,
         except oslo_messaging.RemoteError as e:
             with excutils.save_and_reraise_exception() as ctx:
                 if e.exc_type == 'TooManyExternalNetworks':
+                    # At this point we know gateway_external_network_id is not
+                    # defined. Since there are more than one external network,
+                    # we will handle all of them
                     ctx.reraise = False
-                    msg = _(
-                        "The 'gateway_external_network_id' option must be "
-                        "configured for this agent as Neutron has more than "
-                        "one external network.")
-                    raise Exception(msg)
 
     def _create_router(self, router_id, router):
         args = []
