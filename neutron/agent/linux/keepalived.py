@@ -457,6 +457,7 @@ class KeepalivedManager(object):
             cfg.CONF,
             self.resource_id,
             self.namespace,
+            service=KEEPALIVED_SERVICE_NAME,
             pids_path=self.conf_path)
 
     def _get_vrrp_process(self, pid_file):

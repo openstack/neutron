@@ -36,6 +36,8 @@ LOG = logging.getLogger(__name__)
 HA_DEV_PREFIX = 'ha-'
 IP_MONITOR_PROCESS_SERVICE = 'ip_monitor'
 SIGTERM_TIMEOUT = 10
+KEEPALIVED_STATE_CHANGE_MONITOR_SERVICE_NAME = (
+    "neutron-keepalived-state-change-monitor")
 
 # The multiplier is used to compensate execution time of function sending
 # SIGHUP to keepalived process. The constant multiplies ha_vrrp_advert_int
@@ -357,6 +359,7 @@ class HaRouter(router.RouterInfo):
             self.agent_conf,
             '%s.monitor' % self.router_id,
             self.ha_namespace,
+            service=KEEPALIVED_STATE_CHANGE_MONITOR_SERVICE_NAME,
             default_cmd_callback=self._get_state_change_monitor_callback())
 
     def _get_state_change_monitor_callback(self):

@@ -243,6 +243,7 @@ class DhcpLocalProcess(DhcpBase):
             conf=self.conf,
             uuid=self.network.id,
             namespace=self.network.namespace,
+            service=DNSMASQ_SERVICE_NAME,
             default_cmd_callback=cmd_callback,
             pid_file=self.get_conf_file_name('pid'),
             run_as_root=True)
