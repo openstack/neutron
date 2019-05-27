@@ -49,6 +49,8 @@ IP_RULE_TABLES = {'default': 253,
                   'main': 254,
                   'local': 255}
 
+IP_RULE_TABLES_NAMES = {v: k for k, v in IP_RULE_TABLES.items()}
+
 # Rule indexes: pyroute2.netlink.rtnl
 # Rule names: https://www.systutorials.com/docs/linux/man/8-ip-rule/
 # NOTE(ralonsoh): 'masquerade' type is printed as 'nat' in 'ip rule' command
@@ -596,14 +598,9 @@ class IpRouteCommand(IpDeviceCommandBase):
     def _dev_args(self):
         return ['dev', self.name] if self.name else []
 
-    def add_gateway(self, gateway, metric=None, table=None):
-        ip_version = common_utils.get_ip_version(gateway)
-        args = ['replace', 'default', 'via', gateway]
-        if metric:
-            args += ['metric', metric]
-        args += self._dev_args()
-        args += self._table_args(table)
-        self._as_root([ip_version], tuple(args))
+    def add_gateway(self, gateway, metric=None, table=None, scope='global'):
+        self.add_route(None, via=gateway, table=table, metric=metric,
+                       scope=scope)
 
     def _run_as_root_detect_device_not_found(self, options, args):
         try:
@@ -622,41 +619,15 @@ class IpRouteCommand(IpDeviceCommandBase):
         args += self._table_args(table)
         self._run_as_root_detect_device_not_found([ip_version], args)
 
-    def _parse_routes(self, ip_version, output, **kwargs):
-        for line in output.splitlines():
-            parts = line.split()
-
-            # Format of line is: "<cidr>|default [<key> <value>] ..."
-            route = {k: v for k, v in zip(parts[1::2], parts[2::2])}
-            route['cidr'] = parts[0]
-            # Avoids having to explicitly pass around the IP version
-            if route['cidr'] == 'default':
-                route['cidr'] = constants.IP_ANY[ip_version]
-
-            # ip route drops things like scope and dev from the output if it
-            # was specified as a filter.  This allows us to add them back.
-            if self.name:
-                route['dev'] = self.name
-            if self._table:
-                route['table'] = self._table
-            # Callers add any filters they use as kwargs
-            route.update(kwargs)
-
-            yield route
-
-    def list_routes(self, ip_version, **kwargs):
-        args = ['list']
-        args += self._dev_args()
-        args += self._table_args()
-        for k, v in kwargs.items():
-            args += [k, v]
-
-        output = self._run([ip_version], tuple(args))
-        return [r for r in self._parse_routes(ip_version, output, **kwargs)]
+    def list_routes(self, ip_version, scope=None, via=None, table=None,
+                    **kwargs):
+        table = table or self._table
+        return list_ip_routes(self._parent.namespace, ip_version, scope=scope,
+                              via=via, table=table, device=self.name, **kwargs)
 
     def list_onlink_routes(self, ip_version):
         routes = self.list_routes(ip_version, scope='link')
-        return [r for r in routes if 'src' not in r]
+        return [r for r in routes if not r['source_prefix']]
 
     def add_onlink_route(self, cidr):
         self.add_route(cidr, scope='link')
@@ -664,34 +635,12 @@ class IpRouteCommand(IpDeviceCommandBase):
     def delete_onlink_route(self, cidr):
         self.delete_route(cidr, scope='link')
 
-    def get_gateway(self, scope=None, filters=None, ip_version=None):
-        options = [ip_version] if ip_version else []
-
-        args = ['list']
-        args += self._dev_args()
-        args += self._table_args()
-        if filters:
-            args += filters
-
-        retval = None
-
-        if scope:
-            args += ['scope', scope]
-
-        route_list_lines = self._run(options, tuple(args)).split('\n')
-        default_route_line = next((x.strip() for x in
-                                   route_list_lines if
-                                   x.strip().startswith('default')), None)
-        if default_route_line:
-            retval = dict()
-            gateway = DEFAULT_GW_PATTERN.search(default_route_line)
-            if gateway:
-                retval.update(gateway=gateway.group(1))
-            metric = METRIC_PATTERN.search(default_route_line)
-            if metric:
-                retval.update(metric=int(metric.group(1)))
-
-        return retval
+    def get_gateway(self, scope=None, table=None,
+                    ip_version=constants.IP_VERSION_4):
+        routes = self.list_routes(ip_version, scope=scope, table=table)
+        for route in routes:
+            if route['via'] and route['cidr'] in constants.IP_ANY.values():
+                return route
 
     def flush(self, ip_version, table=None, **kwargs):
         args = ['flush']
@@ -700,16 +649,11 @@ class IpRouteCommand(IpDeviceCommandBase):
             args += [k, v]
         self._as_root([ip_version], tuple(args))
 
-    def add_route(self, cidr, via=None, table=None, **kwargs):
-        ip_version = common_utils.get_ip_version(cidr)
-        args = ['replace', cidr]
-        if via:
-            args += ['via', via]
-        args += self._dev_args()
-        args += self._table_args(table)
-        for k, v in kwargs.items():
-            args += [k, v]
-        self._run_as_root_detect_device_not_found([ip_version], args)
+    def add_route(self, cidr, via=None, table=None, metric=None, scope=None,
+                  **kwargs):
+        table = table or self._table
+        add_ip_route(self._parent.namespace, cidr, device=self.name, via=via,
+                     table=table, metric=metric, scope=scope, **kwargs)
 
     def delete_route(self, cidr, via=None, table=None, **kwargs):
         ip_version = common_utils.get_ip_version(cidr)
@@ -1536,3 +1480,54 @@ def ip_monitor(namespace, queue, event_stop, event_started):
         if e.errno == errno.ENOENT:
             raise privileged.NetworkNamespaceNotFound(netns_name=namespace)
         raise
+
+
+def add_ip_route(namespace, cidr, device=None, via=None, table=None,
+                 metric=None, scope=None, **kwargs):
+    """Add an IP route"""
+    if table:
+        table = IP_RULE_TABLES.get(table, table)
+    ip_version = common_utils.get_ip_version(cidr or via)
+    privileged.add_ip_route(namespace, cidr, ip_version,
+                            device=device, via=via, table=table,
+                            metric=metric, scope=scope, **kwargs)
+
+
+def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
+                   device=None, **kwargs):
+    """List IP routes"""
+    def get_device(index, devices):
+        for device in (d for d in devices if d['index'] == index):
+            return get_attr(device, 'IFLA_IFNAME')
+
+    table = table if table else 'main'
+    table = IP_RULE_TABLES.get(table, table)
+    routes = privileged.list_ip_routes(namespace, ip_version, device=device,
+                                       table=table, **kwargs)
+    devices = privileged.get_link_devices(namespace)
+    ret = []
+    for route in routes:
+        cidr = get_attr(route, 'RTA_DST')
+        if cidr:
+            cidr = '%s/%s' % (cidr, route['dst_len'])
+        else:
+            cidr = constants.IP_ANY[ip_version]
+        table = int(get_attr(route, 'RTA_TABLE'))
+        value = {
+            'table': IP_RULE_TABLES_NAMES.get(table, table),
+            'source_prefix': get_attr(route, 'RTA_PREFSRC'),
+            'cidr': cidr,
+            'scope': IP_ADDRESS_SCOPE[int(route['scope'])],
+            'device': get_device(int(get_attr(route, 'RTA_OIF')), devices),
+            'via': get_attr(route, 'RTA_GATEWAY'),
+            'priority': get_attr(route, 'RTA_PRIORITY'),
+        }
+
+        ret.append(value)
+
+    if scope:
+        ret = [route for route in ret if route['scope'] == scope]
+    if via:
+        ret = [route for route in ret if route['via'] == via]
+
+    return ret

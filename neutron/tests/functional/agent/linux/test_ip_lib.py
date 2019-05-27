@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+import itertools
 import signal
 
 import netaddr
@@ -24,6 +25,7 @@ from oslo_log import log as logging
 from oslo_serialization import jsonutils
 from oslo_utils import importutils
 from oslo_utils import uuidutils
+from pyroute2.iproute import linux as iproute_linux
 import testscenarios
 import testtools
 
@@ -98,6 +100,11 @@ class IpLibTestFramework(functional_base.BaseSudoTestCase):
 
 
 class IpLibTestCase(IpLibTestFramework):
+
+    def _check_routes(self, expected_routes, actual_routes):
+        actual_routes = [{key: route[key] for key in expected_routes[0].keys()}
+                         for route in actual_routes]
+        self.assertEqual(expected_routes, actual_routes)
 
     def test_rules_lifecycle(self):
         PRIORITY = 32768
@@ -316,19 +323,17 @@ class IpLibTestCase(IpLibTestFramework):
         }
         expected_gateways = {
             constants.IP_VERSION_4: {
-                'metric': metric,
-                'gateway': gateways[constants.IP_VERSION_4]},
+                'priority': metric,
+                'via': gateways[constants.IP_VERSION_4]},
             constants.IP_VERSION_6: {
-                'metric': metric,
-                'gateway': gateways[constants.IP_VERSION_6]}}
+                'priority': metric,
+                'via': gateways[constants.IP_VERSION_6]}}
 
         for ip_version, gateway_ip in gateways.items():
             device.route.add_gateway(gateway_ip, metric)
-
-            self.assertEqual(
-                expected_gateways[ip_version],
-                device.route.get_gateway(ip_version=ip_version))
-
+            self._check_routes(
+                [expected_gateways[ip_version]],
+                [device.route.get_gateway(ip_version=ip_version)])
             device.route.delete_gateway(gateway_ip)
             self.assertIsNone(
                 device.route.get_gateway(ip_version=ip_version))
@@ -824,3 +829,119 @@ class IpMonitorTestCase(testscenarios.WithScenarios,
 
         self._handle_ip_addresses('removed', ip_addresses)
         self._check_read_file(ip_addresses)
+
+
+class IpRouteCommandTestCase(functional_base.BaseSudoTestCase):
+
+    def setUp(self):
+        super(IpRouteCommandTestCase, self).setUp()
+        self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
+        ip_lib.IPWrapper(self.namespace).add_dummy('test_device')
+        self.device = ip_lib.IPDevice('test_device', namespace=self.namespace)
+        self.device.link.set_up()
+        self.device_cidr_ipv4 = '192.168.100.1/24'
+        self.device_cidr_ipv6 = '2020::1/64'
+        self.device.addr.add(self.device_cidr_ipv4)
+        self.device.addr.add(self.device_cidr_ipv6)
+        self.cidrs = ['192.168.0.0/24', '10.0.0.0/8', '2001::/64', 'faaa::/96']
+
+    def _assert_route(self, ip_version, table=None, source_prefix=None,
+                      cidr=None, scope=None, via=None, metric=None):
+        if cidr:
+            ip_version = utils.get_ip_version(cidr)
+        else:
+            ip_version = utils.get_ip_version(via)
+            cidr = constants.IP_ANY[ip_version]
+        if constants.IP_VERSION_6 == ip_version:
+            scope = ip_lib.IP_ADDRESS_SCOPE[0]
+        elif not scope:
+            scope = 'global' if via else 'link'
+        if ip_version == constants.IP_VERSION_6 and not metric:
+            metric = 1024
+        table = table or iproute_linux.DEFAULT_TABLE
+        table = ip_lib.IP_RULE_TABLES_NAMES.get(table, table)
+        cmp = {'table': table,
+               'cidr': cidr,
+               'source_prefix': source_prefix,
+               'scope': scope,
+               'device': 'test_device',
+               'via': via,
+               'priority': metric}
+        try:
+            utils.wait_until_true(lambda: cmp in self.device.route.list_routes(
+                ip_version, table=table), timeout=5)
+        except utils.WaitTimeout:
+            raise self.fail('Route not found: %s' % cmp)
+        return True
+
+    def test_add_route_table(self):
+        tables = (None, 1, 253, 254, 255)
+        for cidr in self.cidrs:
+            for table in tables:
+                self.device.route.add_route(cidr, table=table)
+                ip_version = utils.get_ip_version(cidr)
+                self._assert_route(ip_version, cidr=cidr, table=table)
+
+    def test_add_route_via(self):
+        gateway_ipv4 = str(netaddr.IPNetwork(self.device_cidr_ipv4).ip)
+        gateway_ipv6 = str(netaddr.IPNetwork(self.device_cidr_ipv6).ip + 1)
+        for cidr in self.cidrs:
+            ip_version = utils.get_ip_version(cidr)
+            gateway = (gateway_ipv4 if ip_version == constants.IP_VERSION_4
+                       else gateway_ipv6)
+            self.device.route.add_route(cidr, via=gateway)
+            self._assert_route(ip_version, cidr=cidr, via=gateway)
+
+    def test_add_route_metric(self):
+        metrics = (None, 1, 10, 255)
+        for cidr in self.cidrs:
+            for metric in metrics:
+                self.device.route.add_route(cidr, metric=metric)
+                ip_version = utils.get_ip_version(cidr)
+                self._assert_route(ip_version, cidr=cidr, metric=metric)
+
+    def test_add_route_scope(self):
+        for cidr in self.cidrs:
+            for scope in ip_lib.IP_ADDRESS_SCOPE_NAME:
+                self.device.route.add_route(cidr, scope=scope)
+                ip_version = utils.get_ip_version(cidr)
+                self._assert_route(ip_version, cidr=cidr, scope=scope)
+
+    def test_add_route_gateway(self):
+        gateways = (str(netaddr.IPNetwork(self.device_cidr_ipv4).ip),
+                    str(netaddr.IPNetwork(self.device_cidr_ipv6).ip + 1))
+        for gateway in gateways:
+            ip_version = utils.get_ip_version(gateway)
+            self.device.route.add_gateway(gateway)
+            self._assert_route(ip_version, cidr=None, via=gateway,
+                               scope='global')
+
+    def test_list_onlink_routes_ipv4(self):
+        cidr_ipv4 = []
+        for cidr in self.cidrs:
+            if utils.get_ip_version(cidr) == constants.IP_VERSION_4:
+                cidr_ipv4.append(cidr)
+                self.device.route.add_onlink_route(cidr)
+
+        for cidr in cidr_ipv4:
+            self._assert_route(constants.IP_VERSION_4, cidr=cidr)
+
+        routes = self.device.route.list_onlink_routes(constants.IP_VERSION_4)
+        self.assertEqual(len(cidr_ipv4), len(routes))
+
+    def test_get_gateway(self):
+        gateways = (str(netaddr.IPNetwork(self.device_cidr_ipv4).ip),
+                    str(netaddr.IPNetwork(self.device_cidr_ipv6).ip + 1))
+        scopes = ('global', 'site', 'link')
+        metrics = (None, 1, 255)
+        tables = (None, 1, 254, 255)
+        for gateway, scope, metric, table in itertools.product(
+                gateways, scopes, metrics, tables):
+            ip_version = utils.get_ip_version(gateway)
+            self.device.route.add_gateway(gateway, scope=scope, metric=metric,
+                                          table=table)
+            self._assert_route(ip_version, cidr=None, via=gateway, scope=scope,
+                               metric=metric, table=table)
+            self.assertEqual(gateway, self.device.route.get_gateway(
+                ip_version=ip_version, table=table)['via'])
+            self.device.route.delete_gateway(gateway, table=table)

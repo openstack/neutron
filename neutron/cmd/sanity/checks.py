@@ -364,7 +364,7 @@ def keepalived_ipv6_supported():
 
             default_gw = gw_dev.route.get_gateway(ip_version=6)
             if default_gw:
-                default_gw = default_gw['gateway']
+                default_gw = default_gw['via']
 
     return expected_default_gw == default_gw
 

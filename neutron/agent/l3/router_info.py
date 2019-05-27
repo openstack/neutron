@@ -785,8 +785,8 @@ class RouterInfo(BaseRouterInfo):
         for ip_version in (lib_constants.IP_VERSION_4,
                            lib_constants.IP_VERSION_6):
             gateway = device.route.get_gateway(ip_version=ip_version)
-            if gateway and gateway.get('gateway'):
-                current_gateways.add(gateway.get('gateway'))
+            if gateway and gateway.get('via'):
+                current_gateways.add(gateway.get('via'))
         for ip in current_gateways - set(gateway_ips):
             device.route.delete_gateway(ip)
         for ip in gateway_ips:

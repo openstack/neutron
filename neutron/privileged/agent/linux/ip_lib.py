@@ -648,3 +648,50 @@ def delete_ip_rule(namespace, **kwargs):
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
         raise
+
+
+@privileged.default.entrypoint
+@lockutils.synchronized("privileged-ip-lib")
+def add_ip_route(namespace, cidr, ip_version, device=None, via=None,
+                 table=None, metric=None, scope=None, **kwargs):
+    """Add an IP route"""
+    try:
+        with get_iproute(namespace) as ip:
+            family = _IP_VERSION_FAMILY_MAP[ip_version]
+            if not scope:
+                scope = 'global' if via else 'link'
+            scope = _get_scope_name(scope)
+            if cidr:
+                kwargs['dst'] = cidr
+            if via:
+                kwargs['gateway'] = via
+            if table:
+                kwargs['table'] = int(table)
+            if device:
+                kwargs['oif'] = get_link_id(device, namespace)
+            if metric:
+                kwargs['priority'] = int(metric)
+            ip.route('replace', family=family, scope=scope, proto='static',
+                     **kwargs)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+
+
+@privileged.default.entrypoint
+@lockutils.synchronized("privileged-ip-lib")
+def list_ip_routes(namespace, ip_version, device=None, table=None, **kwargs):
+    """List IP routes"""
+    try:
+        with get_iproute(namespace) as ip:
+            family = _IP_VERSION_FAMILY_MAP[ip_version]
+            if table:
+                kwargs['table'] = table
+            if device:
+                kwargs['oif'] = get_link_id(device, namespace)
+            return make_serializable(ip.route('show', family=family, **kwargs))
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise

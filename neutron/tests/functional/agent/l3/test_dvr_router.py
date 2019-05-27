@@ -78,6 +78,11 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._dvr_router_lifecycle(enable_ha=True, enable_snat=True,
                                    snat_bound_fip=True)
 
+    def _check_routes(self, expected_routes, actual_routes):
+        actual_routes = [{key: route[key] for key in expected_routes[0].keys()}
+                         for route in actual_routes]
+        self.assertEqual(expected_routes, actual_routes)
+
     def _helper_create_dvr_router_fips_for_ext_network(
             self, agent_mode, **dvr_router_kwargs):
         self.agent.conf.agent_mode = agent_mode
@@ -141,9 +146,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         # Now validate if the gateway is properly configured.
         rtr_2_fip, fip_2_rtr = router.rtr_fip_subnet.get_pair()
         tbl_index = router._get_snat_idx(fip_2_rtr)
-        tbl_filter = ['table', tbl_index]
-        self.assertIn('gateway', fg_device.route.get_gateway(
-            filters=tbl_filter))
+        self.assertIn('via', fg_device.route.get_gateway(table=tbl_index))
         self._validate_fips_for_external_network(
             router, router.fip_ns.get_name())
         # Now delete the fg- port that was created
@@ -169,10 +172,10 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                 ip_version=lib_constants.IP_VERSION_4,
                 table=tbl_index)
         expected_route = [{'cidr': '0.0.0.0/0',
-                           'dev': fg_port_name,
+                           'device': fg_port_name,
                            'table': tbl_index,
-                           u'via': u'19.4.4.2'}]
-        self.assertEqual(expected_route, updated_route)
+                           'via': '19.4.4.2'}]
+        self._check_routes(expected_route, updated_route)
         self._validate_fips_for_external_network(
             router, router.fip_ns.get_name())
         self._delete_router(self.agent, router.router_id)
@@ -194,9 +197,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         # Now validate if the gateway is properly configured.
         rtr_2_fip, fip_2_rtr = router.rtr_fip_subnet.get_pair()
         tbl_index = router._get_snat_idx(fip_2_rtr)
-        tbl_filter = ['table', tbl_index]
-        self.assertIn('gateway', fg_device.route.get_gateway(
-            filters=tbl_filter))
+        self.assertIn('via', fg_device.route.get_gateway(table=tbl_index))
         self._validate_fips_for_external_network(
             router, router.fip_ns.get_name())
         # Now delete the fg- port that was created
@@ -221,10 +222,10 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                 ip_version=lib_constants.IP_VERSION_4,
                 table=tbl_index)
         expected_route = [{'cidr': '0.0.0.0/0',
-                           'dev': fg_port_name,
+                           'device': fg_port_name,
                            'table': tbl_index,
-                           u'via': u'19.4.4.2'}]
-        self.assertEqual(expected_route, updated_route)
+                           'via': '19.4.4.2'}]
+        self._check_routes(expected_route, updated_route)
         self._validate_fips_for_external_network(
             router, router.fip_ns.get_name())
         self._delete_router(self.agent, router.router_id)
@@ -268,10 +269,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                                     namespace=router.fip_ns.name)
         rtr_2_fip, fip_2_rtr = router.rtr_fip_subnet.get_pair()
         tbl_index = router._get_snat_idx(fip_2_rtr)
-        tbl_filter = ['table', tbl_index]
         # Now validate if the gateway is properly configured.
-        self.assertIn('gateway', fg_device.route.get_gateway(
-            filters=tbl_filter))
+        self.assertIn('via', fg_device.route.get_gateway(table=tbl_index))
         self._validate_fips_for_external_network(
             router, router.fip_ns.get_name())
         self._delete_router(self.agent, router.router_id)
@@ -730,7 +729,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         external_device = ip_lib.IPDevice(external_device_name,
                                           namespace=namespace)
         existing_gateway = (
-            external_device.route.get_gateway().get('gateway'))
+            external_device.route.get_gateway().get('via'))
         expected_gateway = external_port['subnets'][0]['gateway_ip']
         self.assertEqual(expected_gateway, existing_gateway)
 
@@ -848,14 +847,15 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertEqual(0, fip_rule_count)
 
     def _assert_default_gateway(self, fip_2_rtr, rfp_device, device_name):
-        expected_gateway = [{'dev': device_name,
+        expected_gateway = [{'device': device_name,
                              'cidr': '0.0.0.0/0',
                              'via': str(fip_2_rtr.ip),
                              'table': dvr_fip_ns.FIP_RT_TBL}]
-        self.assertEqual(expected_gateway, rfp_device.route.list_routes(
+        listed_routes = rfp_device.route.list_routes(
             ip_version=lib_constants.IP_VERSION_4,
             table=dvr_fip_ns.FIP_RT_TBL,
-            via=str(fip_2_rtr.ip)))
+            via=str(fip_2_rtr.ip))
+        self._check_routes(expected_gateway, listed_routes)
 
     def test_dvr_router_rem_fips_on_restarted_agent(self):
         self.agent.conf.agent_mode = 'dvr_snat'
@@ -1683,12 +1683,12 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         fip_ns_int_name = router.fip_ns.get_int_device_name(router.router_id)
         fg_device = ip_lib.IPDevice(fg_port_name,
                                     namespace=fip_ns_name)
-        tbl_filter = ['table', router_fip_table_idx]
         if not check_fpr_int_rule_delete:
-            self.assertIn('gateway', fg_device.route.get_gateway(
-                filters=tbl_filter))
+            self.assertIn('via', fg_device.route.get_gateway(
+                table=router_fip_table_idx))
         else:
-            self.assertIsNone(fg_device.route.get_gateway(filters=tbl_filter))
+            self.assertIsNone(fg_device.route.get_gateway(
+                table=router_fip_table_idx))
 
         ext_net_fw_rules_list = ip_lib.list_ip_rules(
             fip_ns_name, lib_constants.IP_VERSION_4)
@@ -1715,10 +1715,10 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                 table=router_fip_table_idx,
                 via=str(next_hop))
             expected_extra_route = [{'cidr': six.u(destination),
-                                     'dev': fg_port_name,
+                                     'device': fg_port_name,
                                      'table': router_fip_table_idx,
                                      'via': next_hop}]
-            self.assertEqual(expected_extra_route, actual_routes)
+            self._check_routes(expected_extra_route, actual_routes)
         else:
             # When floatingip are deleted or disassociated, make sure that the
             # corresponding rules and routes are cleared from the table
@@ -1776,17 +1776,17 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             route_cidr_2 = (
                 str(net_addr_2) + '/' +
                 str(fixed_ips_2[0]['prefixlen']))
-            expected_routes = [{'dev': fpr_device_name,
+            expected_routes = [{'device': fpr_device_name,
                                 'cidr': six.u(route_cidr_1),
                                 'via': str(rtr_2_fip.ip),
                                 'table': 'main'},
-                               {'dev': fpr_device_name,
+                               {'device': fpr_device_name,
                                 'cidr': six.u(route_cidr_2),
                                 'via': str(rtr_2_fip.ip),
                                 'table': 'main'}]
             # Comparing the static routes for both internal interfaces on the
             # main table.
-            self.assertEqual(expected_routes, actual_routes)
+            self._check_routes(expected_routes, actual_routes)
         else:
             self.assertEqual([], actual_routes)
 
@@ -1962,10 +1962,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         rtr_2_fip, fip_2_rtr = router.rtr_fip_subnet.get_pair()
         tbl_index = router._get_snat_idx(fip_2_rtr)
 
-        self.assertIn('gateway', ex_gw_device.route.get_gateway())
-        tbl_filter = ['table', tbl_index]
-        self.assertIn('gateway', fg_device.route.get_gateway(
-            filters=tbl_filter))
+        self.assertIn('via', ex_gw_device.route.get_gateway())
+        self.assertIn('via', fg_device.route.get_gateway(table=tbl_index))
 
         # Make this copy to make agent think gw_port changed.
         router.ex_gw_port = copy.deepcopy(router.ex_gw_port)

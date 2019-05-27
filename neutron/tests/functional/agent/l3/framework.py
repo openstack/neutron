@@ -196,8 +196,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
     def _gateway_check(self, gateway_ip, external_device):
         expected_gateway = gateway_ip
         ip_vers = netaddr.IPAddress(expected_gateway).version
-        existing_gateway = (external_device.route.get_gateway(
-            ip_version=ip_vers).get('gateway'))
+        existing_gateway = external_device.route.get_gateway(
+            ip_version=ip_vers).get('via')
         self.assertEqual(expected_gateway, existing_gateway)
 
     def _assert_ha_device(self, router):
