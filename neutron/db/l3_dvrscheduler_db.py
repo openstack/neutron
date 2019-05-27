@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -133,19 +135,22 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             for router_id in router_ids:
                 hosts |= set(self.get_hosts_to_notify(context, router_id))
 
-            for host in hosts:
-                updated_routers = set()
-                for router_id in router_ids:
+            host_routers = collections.defaultdict(set)
+            for router_id in router_ids:
+                # avoid calling get_ports in host loop
+                subnet_ids = self.get_subnet_ids_on_router(
+                    context.elevated(), router_id)
+                for host in hosts:
                     LOG.debug('DVR: Handle new service port, host %(host)s, '
                               'router ids %(router_id)s',
                               {'host': host, 'router_id': router_id})
-                    if self._check_for_rtr_serviceable_ports(
-                            context.elevated(), router_id, host):
-                        updated_routers.add(router_id)
+                    if self._check_dvr_serviceable_ports_on_host(
+                            context.elevated(), host, subnet_ids):
+                        host_routers[host].add(router_id)
 
-                if updated_routers:
-                    self.l3_rpc_notifier.routers_updated_on_host(
-                        context, updated_routers, host)
+            for host, router_ids in host_routers.items():
+                self.l3_rpc_notifier.routers_updated_on_host(
+                    context, router_ids, host)
 
     def get_dvr_snat_agent_list(self, context):
         agent_filters = {'agent_modes': [n_const.L3_AGENT_MODE_DVR_SNAT]}
@@ -349,7 +354,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             Port.device_owner.in_(
                 n_utils.get_other_dvr_serviced_device_owners()))
         query = query.filter(owner_filter)
-        hosts = [item[0] for item in query]
+        hosts = [item[0] for item in query if item[0] != '']
         return hosts
 
     def _get_dvr_subnet_ids_on_host_query(self, context, host):
