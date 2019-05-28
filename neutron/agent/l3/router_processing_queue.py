@@ -93,7 +93,7 @@ class ExclusiveRouterProcessor(object):
 
         if router_id not in self._masters:
             self._masters[router_id] = self
-            self._queue = []
+            self._queue = Queue.PriorityQueue(-1)
 
         self._master = self._masters[router_id]
 
@@ -123,7 +123,7 @@ class ExclusiveRouterProcessor(object):
         is being processed.  These updates have already bubbled to the front of
         the RouterProcessingQueue.
         """
-        self._master._queue.append(update)
+        self._master._queue.put(update)
 
     def updates(self):
         """Processes the router until updates stop coming
@@ -132,13 +132,14 @@ class ExclusiveRouterProcessor(object):
         come in from other workers while it is in progress.  This method loops
         until they stop coming.
         """
-        if self._i_am_master():
-            while self._queue:
-                # Remove the update from the queue even if it is old.
-                update = self._queue.pop(0)
-                # Process the update only if it is fresh.
-                if self._get_router_data_timestamp() < update.timestamp:
-                    yield update
+        while self._i_am_master():
+            if self._queue.empty():
+                return
+            # Get the update from the queue even if it is old.
+            update = self._queue.get()
+            # Process the update only if it is fresh.
+            if self._get_router_data_timestamp() < update.timestamp:
+                yield update
 
 
 class RouterProcessingQueue(object):
