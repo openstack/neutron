@@ -408,7 +408,7 @@ class QoSPlugin(qos.QoSPluginBase):
         rule_type = rule_cls.rule_type
         rule_data = rule_data[rule_type + '_rule']
 
-        with db_api.autonested_transaction(context.session):
+        with db_api.CONTEXT_WRITER.using(context):
             # Ensure that we have access to the policy.
             policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
             checker.check_bandwidth_rule_conflict(policy, rule_data)
@@ -447,7 +447,7 @@ class QoSPlugin(qos.QoSPluginBase):
         rule_type = rule_cls.rule_type
         rule_data = rule_data[rule_type + '_rule']
 
-        with db_api.autonested_transaction(context.session):
+        with db_api.CONTEXT_WRITER.using(context):
             # Ensure we have access to the policy.
             policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
             # Ensure the rule belongs to the policy.
@@ -512,7 +512,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
         :returns: None
         """
-        with db_api.autonested_transaction(context.session):
+        with db_api.CONTEXT_WRITER.using(context):
             # Ensure we have access to the policy.
             policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
             rule = policy.get_rule_by_id(rule_id)
@@ -561,7 +561,7 @@ class QoSPlugin(qos.QoSPluginBase):
         :returns: a QoS policy rule object
         :raises: qos_exc.QosRuleNotFound
         """
-        with db_api.autonested_transaction(context.session):
+        with db_api.CONTEXT_READER.using(context):
             # Ensure we have access to the policy.
             policy_object.QosPolicy.get_policy_obj(context, policy_id)
             rule = rule_cls.get_object(context, id=rule_id)
@@ -604,7 +604,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
         :returns: QoS policy rule objects meeting the search criteria
         """
-        with db_api.autonested_transaction(context.session):
+        with db_api.CONTEXT_READER.using(context):
             # Ensure we have access to the policy.
             policy_object.QosPolicy.get_policy_obj(context, policy_id)
             filters = filters or dict()
