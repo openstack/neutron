@@ -17,6 +17,7 @@ NOTE: This module shall not be used by external projects. It will be moved
 
 import contextlib
 
+from neutron_lib.db import api as db_api
 from neutron_lib.db import utils as db_utils
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -54,7 +55,7 @@ def safe_creation(context, create_fn, delete_fn, create_bindings,
     :param transaction: if true the whole operation will be wrapped in a
         transaction. if false, no transaction will be used.
     '''
-    cm = (context.session.begin(subtransactions=True)
+    cm = (db_api.CONTEXT_WRITER.using(context)
           if transaction else _noop_context_manager())
     with cm:
         obj = create_fn()
