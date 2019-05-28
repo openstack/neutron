@@ -24,6 +24,7 @@ import sys
 
 from neutron_lib import exceptions
 from oslo_log import log as logging
+import setproctitle
 import six
 
 from neutron._i18n import _
@@ -238,6 +239,7 @@ class Daemon(object):
     def start(self):
         """Start the daemon."""
 
+        self._parent_proctitle = setproctitle.getproctitle()
         if self.pidfile is not None and self.pidfile.is_running():
             self.pidfile.unlock()
             LOG.error('Pidfile %s already exist. Daemon already '
@@ -248,10 +250,15 @@ class Daemon(object):
         self.daemonize()
         self.run()
 
+    def _set_process_title(self):
+        proctitle = "%s (%s)" % (self.procname, self._parent_proctitle)
+        setproctitle.setproctitle(proctitle)
+
     def run(self):
         """Override this method and call super().run when subclassing Daemon.
 
         start() will call this method after the process has daemonized.
         """
+        self._set_process_title()
         unwatch_log()
         drop_privileges(self.user, self.group)
