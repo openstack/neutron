@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Adds support for OVS DPDK port representors, a direct port on
+    a netdev datapath is considered a DPDK representor port.
