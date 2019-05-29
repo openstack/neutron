@@ -224,14 +224,25 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
     def _assert_external_device(self, router):
         self.assertTrue(self._check_external_device(router))
 
+    def _wait_until_ipv6_accept_ra_has_state(
+            self, ns_name, device_name, enabled):
+        ip_wrapper = ip_lib.IPWrapper(namespace=ns_name)
+
+        def _ipv6_accept_ra_state():
+            ra_state = ip_wrapper.netns.execute(['sysctl', '-b',
+                'net.ipv6.conf.%s.accept_ra' % device_name])
+            return (
+                enabled == (int(ra_state) != n_const.ACCEPT_RA_DISABLED))
+
+        common_utils.wait_until_true(_ipv6_accept_ra_state)
+
     def _assert_ipv6_accept_ra(self, router, enabled=True):
         external_port = router.get_ex_gw_port()
         external_device_name = router.get_external_device_name(
             external_port['id'])
-        ip_wrapper = ip_lib.IPWrapper(namespace=router.ns_name)
-        ra_state = ip_wrapper.netns.execute(['sysctl', '-b',
-            'net.ipv6.conf.%s.accept_ra' % external_device_name])
-        self.assertEqual(enabled, int(ra_state) != n_const.ACCEPT_RA_DISABLED)
+
+        self._wait_until_ipv6_accept_ra_has_state(
+            router.ns_name, external_device_name, enabled)
 
     def _wait_until_ipv6_forwarding_has_state(self, ns_name, dev_name, state):
 
