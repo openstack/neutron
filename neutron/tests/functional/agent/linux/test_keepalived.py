@@ -17,9 +17,10 @@ from oslo_config import cfg
 
 from neutron._i18n import _
 from neutron.agent.linux import external_process
+from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
-from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
+from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base
 from neutron.tests.unit.agent.linux import test_keepalived
@@ -35,10 +36,23 @@ class KeepalivedManagerTestCase(base.BaseLoggingTestCase,
         self.expected_config = self._get_config()
         self.process_monitor = external_process.ProcessMonitor(cfg.CONF,
                                                                'router')
+        self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
+        self.ip_wrapper = ip_lib.IPWrapper(namespace=self.namespace)
+        self._prepare_devices()
+
         self.manager = keepalived.KeepalivedManager(
             'router1', self.expected_config, self.process_monitor,
-            conf_path=cfg.CONF.state_path)
+            conf_path=cfg.CONF.state_path,
+            namespace=self.namespace)
         self.addCleanup(self.manager.disable)
+
+    def _prepare_devices(self):
+        # NOTE(slaweq): those are devices used in keepalived config file,
+        # prepared by self._get_config() method which is defined in
+        # neutron.tests.unit.agent.linux.test_keepalived module
+        dev_names = ['eth0', 'eth1', 'eth2', 'eth4', 'eth6', 'eth10']
+        for name in dev_names:
+            self.ip_wrapper.add_dummy(name)
 
     def _spawn_keepalived(self, keepalived_manager):
         keepalived_manager.spawn()
@@ -63,7 +77,7 @@ class KeepalivedManagerTestCase(base.BaseLoggingTestCase,
 
         # Exit the process, and see that when it comes back
         # It's indeed a different process
-        utils.execute(['kill', exit_code, pid])
+        self.ip_wrapper.netns.execute(['kill', exit_code, pid])
         common_utils.wait_until_true(
             lambda: process.active and pid != process.pid,
             timeout=5,
