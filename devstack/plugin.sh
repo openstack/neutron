@@ -11,6 +11,7 @@ source $LIBDIR/ovs
 source $LIBDIR/segments
 source $LIBDIR/trunk
 source $LIBDIR/log
+source $LIBDIR/fip_port_forwarding
 
 Q_BUILD_OVS_FROM_GIT=$(trueorfalse False Q_BUILD_OVS_FROM_GIT)
 
@@ -67,6 +68,9 @@ if [[ "$1" == "stack" ]]; then
             if is_service_enabled q-l3 neutron-l3; then
                 if is_service_enabled q-qos neutron-qos; then
                     configure_l3_agent_extension_fip_qos
+                fi
+                if is_service_enabled q-port-forwarding neutron-port-forwarding; then
+                    configure_port_forwarding
                 fi
                 configure_l3_agent
             fi
