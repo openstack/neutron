@@ -1094,6 +1094,16 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             )
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
+                priority=95,
+                reg_port=port.ofport,
+                dl_type=lib_const.ETHERTYPE_RARP,
+                in_port=port.ofport,
+                dl_src=mac_addr,
+                actions='resubmit(,%d)' % (
+                    ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
+            )
+            self._add_flow(
+                table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=65,
                 reg_port=port.ofport,
                 dl_type=lib_const.ETHERTYPE_IP,
