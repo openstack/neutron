@@ -730,6 +730,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         port_dict_with_id = port_dict['port'].copy()
         port_dict_with_id['id'] = port_id
         # Validate port id is added to port dict before address_factory call
+        ip_dict.pop('device_owner')
         address_factory.get_request.assert_called_once_with(context,
                                                             port_dict_with_id,
                                                             ip_dict)

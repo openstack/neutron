@@ -814,6 +814,15 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                 self.assertEqual(expected_res[k], observed_res[res_name][k])
 
     def _validate_resource(self, resource, keys, res_name):
+        ipv6_zero_gateway = False
+        ipv6_null_gateway = False
+        if res_name == 'subnet':
+            attrs = resource[res_name]
+            if not attrs['gateway_ip']:
+                ipv6_null_gateway = True
+            elif (attrs['ip_version'] is constants.IP_VERSION_6 and
+                    attrs['gateway_ip'][-2:] == "::"):
+                ipv6_zero_gateway = True
         for k in keys:
             self.assertIn(k, resource[res_name])
             if isinstance(keys[k], list):
@@ -821,7 +830,12 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                      sorted(keys[k], key=helpers.safe_sort_key),
                      sorted(resource[res_name][k], key=helpers.safe_sort_key))
             else:
-                self.assertEqual(keys[k], resource[res_name][k])
+                if not ipv6_null_gateway:
+                    if (k == 'gateway_ip' and ipv6_zero_gateway and
+                            keys[k][-3:] == "::0"):
+                        self.assertEqual(keys[k][:-1], resource[res_name][k])
+                    else:
+                        self.assertEqual(keys[k], resource[res_name][k])
 
 
 class TestBasicGet(NeutronDbPluginV2TestCase):
@@ -4267,23 +4281,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         self.assertEqual(cidr,
                          subnet['subnet']['cidr'])
 
-    def test_create_subnet_ipv6_gw_is_nw_addr_returns_400(self):
-        gateway_ip = '2001::0'
-        cidr = '2001::/64'
-
-        with testlib_api.ExpectedException(
-            webob.exc.HTTPClientError) as ctx_manager:
-            self._test_create_subnet(
-                gateway_ip=gateway_ip, cidr=cidr,
-                ip_version=constants.IP_VERSION_6,
-                ipv6_ra_mode=constants.DHCPV6_STATEFUL,
-                ipv6_address_mode=constants.DHCPV6_STATEFUL)
-        self.assertEqual(webob.exc.HTTPClientError.code,
-                         ctx_manager.exception.code)
-
-    def test_create_subnet_ipv6_gw_is_nw_end_addr_returns_201(self):
-        gateway_ip = '2001::ffff'
-        cidr = '2001::/112'
+    def _create_subnet_ipv6_gw(self, gateway_ip, cidr):
         subnet = self._test_create_subnet(
             gateway_ip=gateway_ip, cidr=cidr,
             ip_version=constants.IP_VERSION_6,
@@ -4291,10 +4289,29 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             ipv6_address_mode=constants.DHCPV6_STATEFUL)
         self.assertEqual(constants.IP_VERSION_6,
                          subnet['subnet']['ip_version'])
-        self.assertEqual(gateway_ip,
-                         subnet['subnet']['gateway_ip'])
+        if gateway_ip and gateway_ip[-3:] == '::0':
+            self.assertEqual(gateway_ip[:-1],
+                             subnet['subnet']['gateway_ip'])
+        else:
+            self.assertEqual(gateway_ip,
+                             subnet['subnet']['gateway_ip'])
         self.assertEqual(cidr,
                          subnet['subnet']['cidr'])
+
+    def test_create_subnet_ipv6_gw_is_nw_start_addr(self):
+        gateway_ip = '2001::0'
+        cidr = '2001::/64'
+        self._create_subnet_ipv6_gw(gateway_ip, cidr)
+
+    def test_create_subnet_ipv6_gw_is_nw_start_addr_canonicalize(self):
+        gateway_ip = '2001::'
+        cidr = '2001::/64'
+        self._create_subnet_ipv6_gw(gateway_ip, cidr)
+
+    def test_create_subnet_ipv6_gw_is_nw_end_addr(self):
+        gateway_ip = '2001::ffff'
+        cidr = '2001::/112'
+        self._create_subnet_ipv6_gw(gateway_ip, cidr)
 
     def test_create_subnet_ipv6_out_of_cidr_lla(self):
         gateway_ip = 'fe80::1'
@@ -4304,6 +4321,39 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             gateway_ip=gateway_ip, cidr=cidr, ip_version=6,
             ipv6_ra_mode=constants.IPV6_SLAAC,
             ipv6_address_mode=constants.IPV6_SLAAC)
+
+    def test_create_subnet_ipv6_first_ip_owned_by_router(self):
+        cidr = '2001::/64'
+        with self.network() as network:
+            net_id = network['network']['id']
+            with self.subnet(network=network,
+                             ip_version=constants.IP_VERSION_6,
+                             cidr=cidr) as subnet:
+                fixed_ip = [{'subnet_id': subnet['subnet']['id'],
+                             'ip_address': '2001::'}]
+                kwargs = {'fixed_ips': fixed_ip,
+                          'tenant_id': 'tenant_id',
+                          'device_id': 'fake_device',
+                          'device_owner': constants.DEVICE_OWNER_ROUTER_GW}
+                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+
+    def test_create_subnet_ipv6_first_ip_owned_by_non_router(self):
+        cidr = '2001::/64'
+        with self.network() as network:
+            net_id = network['network']['id']
+            with self.subnet(network=network,
+                             ip_version=constants.IP_VERSION_6,
+                             cidr=cidr) as subnet:
+                fixed_ip = [{'subnet_id': subnet['subnet']['id'],
+                             'ip_address': '2001::'}]
+                kwargs = {'fixed_ips': fixed_ip,
+                          'tenant_id': 'tenant_id',
+                          'device_id': 'fake_device',
+                          'device_owner': 'fake_owner'}
+                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                self.assertEqual(webob.exc.HTTPClientError.code,
+                                 res.status_int)
 
     def test_create_subnet_ipv6_attributes_no_dhcp_enabled(self):
         gateway_ip = 'fe80::1'
