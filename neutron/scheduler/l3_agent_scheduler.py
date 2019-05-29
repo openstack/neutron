@@ -117,7 +117,7 @@ class L3Scheduler(object):
     def _get_candidates(self, plugin, context, sync_router):
         """Return L3 agents where a router could be scheduled."""
         is_ha = sync_router.get('ha', False)
-        with context.session.begin(subtransactions=True):
+        with lib_db_api.CONTEXT_READER.using(context):
             # allow one router is hosted by just
             # one enabled l3 agent hosting since active is just a
             # timing problem. Non-active l3 agent can return to
@@ -168,7 +168,7 @@ class L3Scheduler(object):
         binding_index) fails because some other RouterL3AgentBinding was
         concurrently created using the same binding_index, then the function
         will retry to create an entry with a new binding_index. This creation
-        will be retried up to db_api.MAX_RETRIES times.
+        will be retried up to lib_db_api.MAX_RETRIES times.
         If, still in the HA router case, the creation failed because the
         router has already been bound to the l3 agent in question or has been
         removed (by a concurrent operation), then no further attempts will be
@@ -286,6 +286,8 @@ class L3Scheduler(object):
             port_binding = utils.create_object_with_dependency(
                 creator, dep_getter, dep_creator,
                 dep_id_attr, dep_deleter)[0]
+            # NOTE(ralonsoh): to be migrated to the new facade that can't be
+            # used with "create_object_with_dependency".
             with lib_db_api.autonested_transaction(context.session):
                 port_binding.l3_agent_id = agent['id']
         except db_exc.DBDuplicateEntry:

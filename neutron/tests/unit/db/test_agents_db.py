@@ -20,6 +20,7 @@ import datetime
 import mock
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_db import exception as exc
@@ -365,7 +366,7 @@ class TestAgentExtRpcCallback(TestAgentsDbBase):
                 mock.ANY, mock.ANY, mock.ANY, TEST_RESOURCE_VERSIONS)
 
     def _take_down_agent(self):
-        with self.context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(self.context):
             pager = base.Pager(limit=1)
             agent_objs = agent_obj.Agent.get_objects(self.context,
                                                      _pager=pager)
