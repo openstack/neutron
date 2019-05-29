@@ -170,7 +170,7 @@ class DriverController(object):
                     payload.context, [payload.resource_id])
                 self._stm.add_resource_association(
                     payload.context, plugin_constants.L3,
-                    new_drv.name, payload.resource_id)
+                    new_drv.name, payload.resource_id, expire_session=False)
                 registry.publish(
                     resources.ROUTER_CONTROLLER,
                     events.PRECOMMIT_ADD_ASSOCIATION,

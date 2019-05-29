@@ -73,7 +73,7 @@ class ServiceTypeManager(object):
         return {rec.resource_id: rec.provider_name for rec in objs}
 
     def add_resource_association(self, context, service_type, provider_name,
-                                 resource_id):
+                                 resource_id, expire_session=True):
         r = self.get_service_providers(context,
                                        filters={'service_type': [service_type],
                                                 'name': [provider_name]})
@@ -94,7 +94,10 @@ class ServiceTypeManager(object):
         # crawl through everything in the mapper to find the resource with
         # the ID that matches resource_id and expire that one, but we can
         # just start with this.
-        context.session.expire_all()
+        # NOTE(ralonsoh): to be removed once the new engine facade is fully
+        # implanted in Neutron.
+        if expire_session:
+            context.session.expire_all()
 
     def del_resource_associations(self, context, resource_ids):
         if not resource_ids:

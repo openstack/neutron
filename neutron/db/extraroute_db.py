@@ -20,6 +20,7 @@ from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from neutron_lib.exceptions import extraroute as xroute_exc
 from neutron_lib.utils import helpers
@@ -53,7 +54,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
     def update_router(self, context, id, router):
         r = router['router']
         if 'routes' in r:
-            with context.session.begin(subtransactions=True):
+            with db_api.CONTEXT_WRITER.using(context):
                 # check if route exists and have permission to access
                 router_db = self._get_router(context, id)
                 old_router = self._make_router_dict(router_db)
@@ -67,9 +68,6 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                                      context, request_body=router_data,
                                      states=(old_router,), resource_id=id,
                                      desired_state=router_db))
-            # NOTE(yamamoto): expire to ensure the following update_router
-            # see the effects of the above _update_extra_routes.
-            context.session.expire(router_db, attribute_names=['route_list'])
         return super(ExtraRoute_dbonly_mixin, self).update_router(
             context, id, router)
 
