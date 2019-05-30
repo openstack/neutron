@@ -88,7 +88,7 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
         network[qos_consts.QOS_POLICY_ID] = qos_policy_id
 
     def _exec(self, method_name, context, kwargs):
-        with db_api.autonested_transaction(context.session):
+        with db_api.CONTEXT_WRITER.using(context):
             return getattr(self, method_name)(context=context, **kwargs)
 
     def process_fields(self, context, resource_type, event_type,
