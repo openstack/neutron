@@ -17,7 +17,10 @@ import abc
 from operator import attrgetter
 import random
 
+from oslo_log import log as logging
 import six
+
+LOG = logging.getLogger(__name__)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -48,6 +51,11 @@ class BaseScheduler(object):
                                     hosted_agents, num_agents)
         # bind the resource to the agents
         self.resource_filter.bind(context, chosen_agents, resource['id'])
+        debug_data = ['(%s, %s, %s)' %
+                      (agent['agent_type'], agent['host'], resource['id'])
+                      for agent in chosen_agents]
+        LOG.debug('Resources bound (agent type, host, resource id): %s',
+                  ', '.join(debug_data))
         return chosen_agents
 
 
