@@ -639,7 +639,14 @@ Known limitations
 
 * SR-IOV is not integrated into the OpenStack Dashboard (horizon). Users must
   use the CLI or API to configure SR-IOV interfaces.
-* Live migration is not supported for instances with SR-IOV ports.
+* Live migration support has been added to the Libvirt Nova virt-driver in the Train
+  release for instances with neutron SR-IOV ports. Indirect mode SR-IOV interfaces
+  (vnic-type: macvtap or virtio-forwarder) can now be migrated transparently to
+  the guest. Direct mode SR-IOV interfaces (vnic-type: direct or direct-physical)
+  are detached before the migration and reattached after the migration so this is not
+  transparent to the guest. To avoid loss of network connectivy when live migrating
+  with direct mode sriov the user should create a failover bond in the guest with a
+  transparently live migration port type e.g. vnic-type normal or indirect mode SR-IOV.
 
   .. note::
 
