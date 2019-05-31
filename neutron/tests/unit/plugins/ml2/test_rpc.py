@@ -494,3 +494,12 @@ class RpcApiTestCase(base.BaseTestCase):
                            devices=['fake_device1', 'fake_device2'],
                            agent_id='fake_agent_id', host='fake_host',
                            version='1.5')
+
+    def test_get_ports_by_vnic_type_and_host(self):
+        rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
+        self._test_rpc_api(rpcapi, None,
+                           'get_ports_by_vnic_type_and_host',
+                           rpc_method='call',
+                           vnic_type='fake_device1',
+                           host='fake_host',
+                           version='1.7')

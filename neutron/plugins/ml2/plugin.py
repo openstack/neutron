@@ -2517,3 +2517,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         db.clear_binding_levels(context,
                                 port_id=port_id,
                                 host=host)
+
+    @db_api.retry_if_session_inactive()
+    def get_ports_by_vnic_type_and_host(self, context, **kwargs):
+        host = kwargs['host']
+        vnic_type = kwargs['vnic_type']
+        ports = ports_obj.Port.get_ports_by_vnic_type_and_host(
+            context, vnic_type, host)
+        return [self._make_port_dict(port.db_obj) for port in ports]

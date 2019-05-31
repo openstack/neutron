@@ -478,3 +478,20 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             ports.Port.get_ports_ids_by_security_groups(
                 self.context, security_group_ids=(sg_id, ),
                 excluded_device_owners=filter_owner)))
+
+    def test_get_ports_by_vnic_type_and_host(self):
+        port1 = self._create_test_port()
+        ports.PortBinding(
+            self.context,
+            host='host1', port_id=port1.id, status='ACTIVE',
+            vnic_type='vnic_type1', vif_type='vif_type1').create()
+
+        port2 = self._create_test_port()
+        ports.PortBinding(
+            self.context,
+            host='host1', port_id=port2.id, status='ACTIVE',
+            vnic_type='vnic_type2', vif_type='vif_type1').create()
+
+        self.assertEqual(1, len(
+            ports.Port.get_ports_by_vnic_type_and_host(
+                self.context, 'vnic_type1', 'host1')))

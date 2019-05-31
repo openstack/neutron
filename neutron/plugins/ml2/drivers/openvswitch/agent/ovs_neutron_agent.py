@@ -34,6 +34,10 @@ from neutron_lib import context
 from neutron_lib.placement import utils as place_utils
 from neutron_lib.plugins import utils as plugin_utils
 from neutron_lib.utils import helpers
+import os_vif
+from os_vif.objects import instance_info as vif_instance_object
+from os_vif.objects import network as vif_network_object
+from os_vif.objects import vif as vif_obj
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -128,7 +132,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
     #   1.3 Added param devices_to_update to security_groups_provider_updated
     #   1.4 Added support for network_update
     #   1.5 Added binding_activate and binding_deactivate
-    target = oslo_messaging.Target(version='1.5')
+    #   1.7 Add support for smartnic ports
+    target = oslo_messaging.Target(version='1.7')
 
     def __init__(self, bridge_classes, ext_manager, conf=None):
         '''Constructor.
@@ -182,6 +187,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.deactivated_bindings = set()
         # Stores the port IDs whose binding has been activated
         self.activated_bindings = set()
+        # Stores smartnic ports update/remove
+        self.updated_smartnic_ports = list()
 
         self.network_ports = collections.defaultdict(set)
         # keeps association between ports and ofports to detect ofport change
@@ -303,7 +310,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                'ovs_capabilities': self.ovs.capabilities,
                                'vhostuser_socket_dir':
                                ovs_conf.vhostuser_socket_dir,
-                               portbindings.OVS_HYBRID_PLUG: hybrid_plug},
+                               portbindings.OVS_HYBRID_PLUG: hybrid_plug,
+                               'baremetal_smartnic':
+                               self.conf.AGENT.baremetal_smartnic},
             'resource_versions': resources.LOCAL_RESOURCE_VERSIONS,
             'agent_type': agent_conf.agent_type,
             'start_flag': True}
@@ -319,6 +328,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
         self.catch_sigterm = False
         self.catch_sighup = False
+
+        if self.conf.AGENT.baremetal_smartnic:
+            os_vif.initialize()
 
         # The initialization is complete; we can start receiving messages
         self.connection.consume_in_threads()
@@ -474,6 +486,79 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # are processed in the same order as the relevant API requests
         self.updated_ports.add(port['id'])
 
+        if not self.conf.AGENT.baremetal_smartnic:
+            return
+        # In case of smart-nic port, add smart-nic representor port to
+        # the integration bridge.
+        port_data = (self.plugin_rpc.remote_resource_cache
+                     .get_resource_by_id(resources.PORT, port['id']))
+        if not port_data:
+            LOG.warning('Failed to get port details, port id: %s', port['id'])
+            return
+        for port_binding in port_data.get('bindings', []):
+            if port_binding['vnic_type'] == portbindings.VNIC_SMARTNIC:
+                if port_binding['host'] == self.conf.host:
+                    self._add_port_to_updated_smartnic_ports(port_data,
+                                                             port_binding)
+                else:
+                    # The port doesn't belong to this Smart NIC,
+                    # the reason for this could be multi Smart NIC
+                    # setup.
+                    LOG.info("Smart NIC port %(port_id)s does not belong "
+                             "to host %(host)s",
+                             {'port_id': port['id'],
+                              'host': self.conf.host})
+
+    def treat_smartnic_port(self, smartnic_port_data):
+        mac = smartnic_port_data['mac']
+        vm_uuid = smartnic_port_data['vm_uuid']
+        rep_port = smartnic_port_data['iface_name']
+        iface_id = smartnic_port_data['iface_id']
+        vif_type = smartnic_port_data['vif_type']
+
+        instance_info = vif_instance_object.InstanceInfo(uuid=vm_uuid)
+        vif = self._get_vif_object(iface_id, rep_port, mac)
+        try:
+            if vif_type == portbindings.VIF_TYPE_OVS:
+                os_vif.plug(vif, instance_info)
+
+            elif vif_type == portbindings.VIF_TYPE_UNBOUND:
+                os_vif.unplug(vif, instance_info)
+
+            else:
+                LOG.error("Unexpected vif_type:%(vif_type)s for "
+                          "%(vnic_type)s port:%(port_id)s",
+                          {'vnic_type': portbindings.VNIC_SMARTNIC,
+                           'vif_type': vif_type,
+                           'port_id': iface_id})
+
+        except Exception as e:
+            LOG.error("Failed to treat %(vnic_type)s port:%(port_id)s , "
+                      "error:%(error)s",
+                      {'vnic_type': portbindings.VNIC_SMARTNIC,
+                       'port_id': iface_id,
+                       'error': e})
+
+    def _get_vif_object(self, iface_id, rep_port, mac):
+        network = vif_network_object.Network(
+            bridge=self.conf.OVS.integration_bridge)
+        port_profile = vif_obj.VIFPortProfileOpenVSwitch(
+            interface_id=iface_id, create_port=True)
+        return vif_obj.VIFOpenVSwitch(
+            vif_name=rep_port, plugin='ovs', port_profile=port_profile,
+            network=network, address=str(mac))
+
+    def _add_port_to_updated_smartnic_ports(self, port_data, port_binding):
+        local_link = port_binding['profile']['local_link_information']
+        if local_link:
+            iface_name = local_link[0]['port_id']
+            self.updated_smartnic_ports.append({
+                'mac': port_data['mac_address'],
+                'vm_uuid': port_data['device_id'],
+                'iface_name': iface_name,
+                'iface_id': port_data['id'],
+                'vif_type': port_binding['vif_type']})
+
     def port_delete(self, context, **kwargs):
         port_id = kwargs.get('port_id')
         self.deleted_ports.add(port_id)
@@ -535,6 +620,17 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # Flush firewall rules after ports are put on dead VLAN to be
         # more secure
         self.sg_agent.remove_devices_filter(deleted_ports)
+
+    def process_smartnic_ports(self):
+        smartnic_ports = self.plugin_rpc.get_ports_by_vnic_type_and_host(
+            self.context, portbindings.VNIC_SMARTNIC, self.conf.host)
+        ports = self.int_br.get_vif_port_set()
+        for smartnic_port in smartnic_ports:
+            if smartnic_port['id'] not in ports:
+                self._add_port_to_updated_smartnic_ports(
+                    smartnic_port,
+                    {'profile': smartnic_port['binding:profile'],
+                     'vif_type': smartnic_port['binding:vif_type']})
 
     def process_deactivated_bindings(self, port_info):
         # don't try to deactivate bindings for removed ports since they are
@@ -1972,6 +2068,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 self.deleted_ports or
                 self.deactivated_bindings or
                 self.activated_bindings or
+                self.updated_smartnic_ports or
                 self.sg_agent.firewall_refresh_needed())
 
     def _port_info_has_changes(self, port_info):
@@ -2249,6 +2346,16 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                               "starting polling. Elapsed:%(elapsed).3f",
                               {'iter_num': self.iter_num,
                                'elapsed': time.time() - start})
+
+                    if self.conf.AGENT.baremetal_smartnic:
+                        if sync:
+                            self.process_smartnic_ports()
+                        updated_smartnic_ports_copy = (
+                            self.updated_smartnic_ports)
+                        self.updated_smartnic_ports = list()
+                        for port_data in updated_smartnic_ports_copy:
+                            self.treat_smartnic_port(port_data)
+
                     # Save updated ports dict to perform rollback in
                     # case resync would be needed, and then clear
                     # self.updated_ports. As the greenthread should not yield

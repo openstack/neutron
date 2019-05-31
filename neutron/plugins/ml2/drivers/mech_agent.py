@@ -105,6 +105,11 @@ class AgentMechanismDriverBase(api.MechanismDriver):
         for agent in agents:
             LOG.debug("Checking agent: %s", agent)
             if agent['alive']:
+                if (vnic_type == portbindings.VNIC_SMARTNIC and not
+                        agent['configurations'].get('baremetal_smartnic')):
+                    LOG.debug('Agent on host %s can not bind SmartNIC '
+                              'port %s', agent['host'], context.current['id'])
+                    continue
                 for segment in context.segments_to_bind:
                     if self.try_to_bind_segment_for_agent(context, segment,
                                                           agent):
