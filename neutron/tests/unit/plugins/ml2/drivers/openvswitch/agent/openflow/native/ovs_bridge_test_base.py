@@ -142,12 +142,15 @@ class OVSBridgeTestBase(ovs_test_base.OVSOSKenTestBase):
 
         m_add_protocols = mock.patch.object(self.br, 'add_protocols')
         m_set_controller = mock.patch.object(self.br, 'set_controller')
+        m_set_probe = mock.patch.object(self.br,
+                                        'set_controllers_inactivity_probe')
         m_set_ccm = mock.patch.object(self.br,
                                       'set_controllers_connection_mode')
 
-        with m_set_ccm as set_ccm, m_set_controller, m_add_protocols:
-            self.br.setup_controllers(cfg)
-            set_ccm.assert_called_once_with("out-of-band")
+        with m_set_ccm as set_ccm:
+            with m_set_controller, m_add_protocols, m_set_probe:
+                self.br.setup_controllers(cfg)
+                set_ccm.assert_called_once_with("out-of-band")
 
 
 class OVSDVRProcessTestMixin(object):
