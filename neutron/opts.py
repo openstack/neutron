@@ -63,6 +63,7 @@ import neutron.wsgi
 
 
 NOVA_GROUP = 'nova'
+IRONIC_GROUP = 'ironic'
 
 CONF = cfg.CONF
 
@@ -75,6 +76,8 @@ deprecations = {'nova.cafile': [cfg.DeprecatedOpt('ca_certificates_file',
 
 _nova_options = ks_loading.register_session_conf_options(
             CONF, NOVA_GROUP, deprecated_opts=deprecations)
+_ironic_options = ks_loading.register_session_conf_options(
+            CONF, IRONIC_GROUP)
 
 
 def list_agent_opts():
@@ -140,6 +143,10 @@ def list_opts():
         (neutron.conf.common.NOVA_CONF_SECTION,
          itertools.chain(
               neutron.conf.common.nova_opts)
+         ),
+        (neutron.conf.common.IRONIC_CONF_SECTION,
+         itertools.chain(
+             neutron.conf.common.ironic_opts)
          ),
         ('quotas', neutron.conf.quota.core_quota_opts)
     ]
@@ -316,6 +323,20 @@ def list_auth_opts():
                 opt_list.append(plugin_option)
     opt_list.sort(key=operator.attrgetter('name'))
     return [(NOVA_GROUP, opt_list)]
+
+
+def list_ironic_auth_opts():
+    opt_list = copy.deepcopy(_ironic_options)
+    opt_list.insert(0, ks_loading.get_auth_common_conf_options()[0])
+    # NOTE(mhickey): There are a lot of auth plugins, we just generate
+    # the config options for a few common ones
+    plugins = ['password', 'v2password', 'v3password']
+    for name in plugins:
+        for plugin_option in ks_loading.get_auth_plugin_conf_options(name):
+            if all(option.name != plugin_option.name for option in opt_list):
+                opt_list.append(plugin_option)
+    opt_list.sort(key=operator.attrgetter('name'))
+    return [(IRONIC_GROUP, opt_list)]
 
 
 def list_xenapi_opts():

@@ -171,6 +171,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             db_api.sqla_listen(
                 models_v2.Port.status, 'set',
                 self.nova_notifier.record_port_status_changed)
+        if cfg.CONF.ironic.enable_notifications:
+            # Import ironic notifier conditionally
+            from neutron.notifiers import ironic
+            self.ironic_notifier = ironic.Notifier.get_instance()
 
     @registry.receives(resources.RBAC_POLICY, [events.BEFORE_CREATE,
                                                events.BEFORE_UPDATE,
