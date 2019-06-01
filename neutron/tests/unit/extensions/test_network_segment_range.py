@@ -313,7 +313,7 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
             name='foo-range2', physical_network='phys_net2')
         self._test_list_with_sort('network-segment-range',
                                   (range2, range1),
-                                  [('physical_network', 'desc')])
+                                  [('name', 'desc')])
 
     def test_list_network_segment_ranges_with_pagination(self):
         range1 = self._test_create_network_segment_range(
@@ -325,7 +325,7 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
         self._test_list_with_pagination(
             'network-segment-range',
             (range1, range2, range3),
-            ('physical_network', 'asc'), 2, 2)
+            ('name', 'asc'), 2, 2)
 
     def test_list_network_segment_ranges_with_pagination_reverse(self):
         range1 = self._test_create_network_segment_range(
@@ -337,7 +337,7 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
         self._test_list_with_pagination_reverse(
             'network-segment-range',
             (range1, range2, range3),
-            ('physical_network', 'asc'), 2, 2)
+            ('name', 'asc'), 2, 2)
 
     def test_delete_network_segment_range(self):
         network_segment_range = self._test_create_network_segment_range()
