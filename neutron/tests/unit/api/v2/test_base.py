@@ -1562,7 +1562,10 @@ class SortingTestCase(base.BaseTestCase):
     def test_get_sorts(self):
         path = '/?sort_key=foo&sort_dir=desc&sort_key=bar&sort_dir=asc'
         request = webob.Request.blank(path)
-        attr_info = {'foo': {'key': 'val'}, 'bar': {'key': 'val'}}
+        attr_info = {
+            'foo': {'key': 'val', 'is_sort_key': True},
+            'bar': {'key': 'val', 'is_sort_key': True}
+        }
         expect_val = [('foo', False), ('bar', True)]
         actual_val = api_common.get_sorts(request, attr_info)
         self.assertEqual(expect_val, actual_val)
@@ -1570,10 +1573,22 @@ class SortingTestCase(base.BaseTestCase):
     def test_get_sorts_with_project_id(self):
         path = '/?sort_key=project_id&sort_dir=desc'
         request = webob.Request.blank(path)
-        attr_info = {'tenant_id': {'key': 'val'}}
+        attr_info = {'tenant_id': {'key': 'val', 'is_sort_key': True}}
         expect_val = [('project_id', False)]
         actual_val = api_common.get_sorts(request, attr_info)
         self.assertEqual(expect_val, actual_val)
+
+    def test_get_sorts_with_non_sort_key(self):
+        path = '/?sort_key=created_at&sort_dir=desc'
+        request = webob.Request.blank(path)
+        attr_info = {
+            'foo': {'key': 'val', 'is_sort_key': True},
+            'bar': {'key': 'val', 'is_sort_key': True},
+            'created_at': {'key': 'val'}
+        }
+        self.assertRaises(exc.HTTPBadRequest,
+                          api_common.get_sorts,
+                          request, attr_info)
 
 
 class FiltersTestCase(base.BaseTestCase):
