@@ -1,0 +1,10 @@
+---
+other:
+  - |
+    Add a generic coordination lock mechanism for various
+    scenarios. This decorator allows flexible lock name
+    with parameters and names of underlying functions. And
+    in order to achive backward compatibility with python2.7
+    several functions was copied from the old version of
+    python inspect. Once python2.7 is retired, we can drop
+    such duplication.
