@@ -1,4 +1,6 @@
 {% set floating_network = floating_network or "public" %}
+{% set image_name = "^(cirros.*-disk|TestVM)$" %}
+{% set flavor_name = "m1.tiny" %}
 
 ---
   version: 2
@@ -468,3 +470,23 @@
             quotas:
               neutron:
                 security_group: -1
+    -
+      title: VM booting workloads
+      workloads:
+        -
+          scenario:
+            NovaServers.boot_and_delete_server:
+              flavor:
+                name: {{flavor_name}}
+              image:
+                name: {{image_name}}
+              auto_assign_nic: true
+          runner:
+            constant:
+              times: 2
+              concurrency: 2
+          contexts:
+            users:
+              tenants: 2
+              users_per_tenant: 2
+            network: {}
