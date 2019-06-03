@@ -59,14 +59,14 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
         fdb_pop.initialize(None, ovs_constants.EXTENSION_DRIVER_TYPE)
         return fdb_pop
 
-    @mock.patch('neutron.agent.linux.utils.execute')
+    @mock.patch('neutron.agent.common.utils.execute')
     def test_initialize(self, mock_execute):
         fdb_extension = FdbPopulationAgentExtension()
         fdb_extension.initialize(None, ovs_constants.EXTENSION_DRIVER_TYPE)
         fdb_extension.initialize(None,
                                  linux_bridge_constants.EXTENSION_DRIVER_TYPE)
 
-    @mock.patch('neutron.agent.linux.utils.execute')
+    @mock.patch('neutron.agent.common.utils.execute')
     def test_initialize_invalid_agent(self, mock_execute):
         fdb_extension = FdbPopulationAgentExtension()
         self.assertRaises(SystemExit, fdb_extension.initialize, None, 'sriov')
@@ -125,7 +125,7 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
         self.assertIn(updated_mac, updated_macs_for_device)
         self.assertNotIn(mac, updated_macs_for_device)
 
-    @mock.patch('neutron.agent.linux.utils.execute')
+    @mock.patch('neutron.agent.common.utils.execute')
     def test_unpermitted_device_owner(self, mock_execute):
         fdb_extension = self._get_fdb_extension(mock_execute, '')
         mock_execute.reset_mock()
@@ -138,7 +138,7 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
         mac = self.UPDATE_MSG['mac_address']
         self.assertNotIn(mac, updated_macs_for_device)
 
-    @mock.patch('neutron.agent.linux.utils.execute')
+    @mock.patch('neutron.agent.common.utils.execute')
     def test_catch_init_exception(self, mock_execute):
         mock_execute.side_effect = RuntimeError
         fdb_extension = self._get_fdb_extension(mock_execute, '')
