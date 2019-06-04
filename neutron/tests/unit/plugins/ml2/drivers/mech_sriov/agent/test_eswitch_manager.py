@@ -379,6 +379,48 @@ class TestESwitchManagerApi(base.BaseTestCase):
         self._test_clear_rate(self.MIN_RATE, self.WRONG_PCI, passed=False,
                               mac_address={})
 
+    def test_create_emb_switch(self):
+        DEVICES = [('0000:04:00.1', 0),
+                   ('0000:04:00.2', 1)]
+        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                        "eswitch_manager.PciOsWrapper.scan_vf_devices",
+                        side_effect=[[], DEVICES]), \
+                mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                           "eswitch_manager.PciOsWrapper.get_numvfs",
+                           return_value=2):
+            physnet = 'test_create_emb_switch'
+            self.assertNotIn(physnet, self.eswitch_mgr.emb_switches_map)
+            # first time device will not be added as no VFs returned
+            self.eswitch_mgr._create_emb_switch(physnet, 'dev1', [])
+            self.assertNotIn(physnet, self.eswitch_mgr.emb_switches_map)
+            self.assertEqual({'dev1'}, self.eswitch_mgr.skipped_devices)
+
+            # second time device should be added with 2 VFs
+            self.eswitch_mgr._create_emb_switch(physnet, 'dev1', [])
+            self.assertIn(physnet, self.eswitch_mgr.emb_switches_map)
+            self.assertEqual(set(), self.eswitch_mgr.skipped_devices)
+            self.assertIn('0000:04:00.1', self.eswitch_mgr.pci_slot_map)
+            self.assertIn('0000:04:00.2', self.eswitch_mgr.pci_slot_map)
+
+    def test_create_emb_switch_zero_vfs(self):
+        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                        "eswitch_manager.PciOsWrapper.scan_vf_devices",
+                        return_value=[]), \
+                mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                           "eswitch_manager.PciOsWrapper.get_numvfs",
+                           return_value=0):
+            physnet = 'test_create_emb_switch'
+            self.assertNotIn(physnet, self.eswitch_mgr.emb_switches_map)
+            # first time device will not be added
+            self.eswitch_mgr._create_emb_switch(physnet, 'dev1', [])
+            self.assertNotIn(physnet, self.eswitch_mgr.emb_switches_map)
+            self.assertEqual({'dev1'}, self.eswitch_mgr.skipped_devices)
+
+            # second time device should be added with 0 VFs
+            self.eswitch_mgr._create_emb_switch(physnet, 'dev1', [])
+            self.assertIn(physnet, self.eswitch_mgr.emb_switches_map)
+            self.assertEqual(set(), self.eswitch_mgr.skipped_devices)
+
 
 class TestEmbSwitch(base.BaseTestCase):
     DEV_NAME = "eth2"
@@ -693,3 +735,17 @@ class TestPciOsWrapper(base.BaseTestCase):
     def test_pf_device_exists_with_dir(self):
         with mock.patch("os.path.isdir", return_value=True):
             self.assertTrue(esm.PciOsWrapper.pf_device_exists('p6p1'))
+
+    def test_get_numvfs(self):
+        with mock.patch("six.moves.builtins.open",
+                        mock.mock_open(read_data="63")) as mock_open:
+            self.assertEqual(63, esm.PciOsWrapper.get_numvfs('dev1'))
+            mock_open.assert_called_once_with(
+                esm.PciOsWrapper.NUMVFS_PATH % 'dev1')
+
+    def test_get_numvfs_no_file(self):
+        with mock.patch("six.moves.builtins.open",
+                        side_effect=IOError()) as mock_open:
+            self.assertEqual(-1, esm.PciOsWrapper.get_numvfs('dev1'))
+            mock_open.assert_called_once_with(
+                esm.PciOsWrapper.NUMVFS_PATH % 'dev1')
