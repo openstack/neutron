@@ -19,6 +19,8 @@ radvd: CommandFilter, radvd, root
 # haproxy
 haproxy: RegExpFilter, haproxy, root, haproxy, -f, .*
 kill_haproxy: KillFilter, root, haproxy, -15, -9, -HUP
+# haproxy kill script filter
+kill_haproxy_script: CommandFilter, haproxy-kill, root
 
 kill_radvd_usr: KillFilter, root, /usr/sbin/radvd, -15, -9, -HUP
 kill_radvd: KillFilter, root, /sbin/radvd, -15, -9, -HUP
@@ -52,6 +54,8 @@ ip6tables-restore: CommandFilter, ip6tables-restore, root
 # Keepalived
 keepalived: CommandFilter, keepalived, root
 kill_keepalived: KillFilter, root, keepalived, -HUP, -15, -9
+# keepalived kill script filter
+kill_keepalived_script: CommandFilter, keepalived-kill, root
 
 # l3 agent to delete floatingip's conntrack state
 conntrack: CommandFilter, conntrack, root
@@ -75,3 +79,5 @@ kill_keepalived_monitor_py37: KillFilter, root, python3.7, -15
 # absolute path
 kill_keepalived_monitor_platform_py: KillFilter, root, /usr/libexec/platform-python, -15
 kill_keepalived_monitor_platform_py36: KillFilter, root, /usr/libexec/platform-python3.6, -15
+# neutron-keepalived-state-change-monitor kill script filter
+kill_neutron-keepalived-state-change-monitor_script: CommandFilter, neutron-keepalived-state-change-monitor-kill, root
