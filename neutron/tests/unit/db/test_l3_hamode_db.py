@@ -26,6 +26,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.exceptions import l3_ext_ha_mode as l3ha_exc
@@ -595,7 +596,7 @@ class L3HATestCase(L3HATestFramework):
 
     def test_add_ha_port_subtransactions_blocked(self):
         ctx = self.admin_ctx
-        with ctx.session.begin():
+        with db_api.CONTEXT_WRITER.using(ctx):
             self.assertRaises(RuntimeError, self.plugin.add_ha_port,
                               ctx, 'id', 'id', 'id')
 

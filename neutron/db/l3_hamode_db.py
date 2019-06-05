@@ -126,7 +126,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             try:
                 # NOTE(kevinbenton): we disallow subtransactions because the
                 # retry logic will bust any parent transactions
-                with context.session.begin():
+                with db_api.CONTEXT_WRITER.using(context):
                     if router_db.extra_attributes.ha_vr_id:
                         LOG.debug(
                             "Router %(router_id)s has already been "
@@ -259,15 +259,14 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
     @db_api.retry_if_session_inactive()
     def _create_ha_port_binding(self, context, router_id, port_id):
         try:
-            with context.session.begin():
-                l3_obj.RouterPort(
-                    context,
-                    port_id=port_id,
-                    router_id=router_id,
-                    port_type=constants.DEVICE_OWNER_ROUTER_HA_INTF).create()
-                portbinding = l3_hamode.L3HARouterAgentPortBinding(
-                    context, port_id=port_id, router_id=router_id)
-                portbinding.create()
+            l3_obj.RouterPort(
+                context,
+                port_id=port_id,
+                router_id=router_id,
+                port_type=constants.DEVICE_OWNER_ROUTER_HA_INTF).create()
+            portbinding = l3_hamode.L3HARouterAgentPortBinding(
+                context, port_id=port_id, router_id=router_id)
+            portbinding.create()
 
             return portbinding
         except db_exc.DBReferenceError as e:
@@ -571,7 +570,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
            states on this agent.
 
         """
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             bindings = self.get_ha_router_port_bindings(context, [router_id])
             router_active_agents_dead = []
             router_standby_agents_dead = []
@@ -688,6 +687,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
     def _set_router_states(cls, context, bindings, states):
         for binding in bindings:
             try:
+                # NOTE(ralonsoh): to be migrated to the new facade.
                 with context.session.begin(subtransactions=True):
                     binding.state = states[binding.router_id]
             except (orm.exc.StaleDataError, orm.exc.ObjectDeletedError):
