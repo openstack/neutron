@@ -25,6 +25,7 @@ from alembic.operations import ops as alembic_ops
 from alembic import script as alembic_script
 import fixtures
 import mock
+from neutron_lib import fixture as lib_fixtures
 from neutron_lib.utils import helpers
 from oslo_utils import fileutils
 import pkg_resources
@@ -409,10 +410,10 @@ class TestCli(base.BaseTestCase):
                     heads[1]: FakeRevision(labels=cli.EXPAND_BRANCH)}
             fc.return_value.get_revision.side_effect = revs.__getitem__
             mock_open_con = self.useFixture(
-                tools.OpenFixture(cli._get_contract_head_file_path(
+                lib_fixtures.OpenFixture(cli._get_contract_head_file_path(
                     fake_config), contract_head + '\n')).mock_open
             mock_open_ex = self.useFixture(
-                tools.OpenFixture(cli._get_expand_head_file_path(
+                lib_fixtures.OpenFixture(cli._get_expand_head_file_path(
                     fake_config), expand_head + '\n')).mock_open
 
             if contract_head in heads and expand_head in heads:
@@ -452,10 +453,10 @@ class TestCli(base.BaseTestCase):
     def test_update_head_files_success(self, *mocks):
         heads = ['a', 'b']
         mock_open_con = self.useFixture(
-                    tools.OpenFixture(cli._get_contract_head_file_path(
+                    lib_fixtures.OpenFixture(cli._get_contract_head_file_path(
                         self.configs[0]))).mock_open
         mock_open_ex = self.useFixture(
-            tools.OpenFixture(cli._get_expand_head_file_path(
+            lib_fixtures.OpenFixture(cli._get_expand_head_file_path(
                 self.configs[0]))).mock_open
         with mock.patch('alembic.script.ScriptDirectory.from_config') as fc:
             fc.return_value.get_heads.return_value = heads

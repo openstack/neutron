@@ -20,11 +20,11 @@ import sys
 
 import mock
 from neutron_lib import exceptions
+from neutron_lib import fixture as lib_fixtures
 import testtools
 
 from neutron.agent.linux import daemon
 from neutron.tests import base
-from neutron.tests import tools
 
 FAKE_FD = 8
 
@@ -194,7 +194,7 @@ class TestPidfile(base.BaseTestCase):
 
     def test_is_running(self):
         mock_open = self.useFixture(
-            tools.OpenFixture('/proc/34/cmdline', 'python')).mock_open
+            lib_fixtures.OpenFixture('/proc/34/cmdline', 'python')).mock_open
         p = daemon.Pidfile('thefile', 'python')
 
         with mock.patch.object(p, 'read') as read:
@@ -205,7 +205,8 @@ class TestPidfile(base.BaseTestCase):
 
     def test_is_running_uuid_true(self):
         mock_open = self.useFixture(
-            tools.OpenFixture('/proc/34/cmdline', 'python 1234')).mock_open
+            lib_fixtures.OpenFixture(
+                '/proc/34/cmdline', 'python 1234')).mock_open
         p = daemon.Pidfile('thefile', 'python', uuid='1234')
 
         with mock.patch.object(p, 'read') as read:
@@ -216,7 +217,8 @@ class TestPidfile(base.BaseTestCase):
 
     def test_is_running_uuid_false(self):
         mock_open = self.useFixture(
-            tools.OpenFixture('/proc/34/cmdline', 'python 1234')).mock_open
+            lib_fixtures.OpenFixture(
+                '/proc/34/cmdline', 'python 1234')).mock_open
         p = daemon.Pidfile('thefile', 'python', uuid='6789')
 
         with mock.patch.object(p, 'read') as read:

@@ -16,12 +16,12 @@ import itertools
 
 from neutron_lib import constants as const
 from neutron_lib.db import constants as db_const
+from neutron_lib.tests import tools
 from neutron_lib.utils import net
 from oslo_serialization import jsonutils
 
 from neutron.objects import common_types
 from neutron.tests import base as test_base
-from neutron.tests import tools
 
 
 class TestField(object):

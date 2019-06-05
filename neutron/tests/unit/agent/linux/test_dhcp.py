@@ -20,6 +20,7 @@ import netaddr
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib import constants
 from neutron_lib import exceptions
+from neutron_lib import fixture as lib_fixtures
 from oslo_config import cfg
 import oslo_messaging
 from oslo_utils import fileutils
@@ -31,7 +32,6 @@ from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_config
 from neutron.conf import common as base_config
 from neutron.tests import base
-from neutron.tests import tools
 
 
 class FakeIPAllocation(object):
@@ -1226,7 +1226,7 @@ class TestDhcpLocalProcess(TestBase):
     def test_get_interface_name(self):
         net = FakeDualNetwork()
         path = '/dhcp/%s/interface' % net.id
-        self.useFixture(tools.OpenFixture(path, 'tap0'))
+        self.useFixture(lib_fixtures.OpenFixture(path, 'tap0'))
         lp = LocalChild(self.conf, net)
         self.assertEqual(lp.interface_name, 'tap0')
 
@@ -2005,7 +2005,7 @@ class TestDnsmasq(TestBase):
     def test_reload_allocations_no_interface(self):
         net = FakeDualNetwork()
         ipath = '/dhcp/%s/interface' % net.id
-        self.useFixture(tools.OpenFixture(ipath))
+        self.useFixture(lib_fixtures.OpenFixture(ipath))
         test_pm = mock.Mock()
         dm = self._get_dnsmasq(net, test_pm)
         dm.reload_allocations()
@@ -2019,8 +2019,8 @@ class TestDnsmasq(TestBase):
         net = FakeDualNetwork()
         hpath = '/dhcp/%s/host' % net.id
         ipath = '/dhcp/%s/interface' % net.id
-        self.useFixture(tools.OpenFixture(hpath))
-        self.useFixture(tools.OpenFixture(ipath, 'tapdancingmice'))
+        self.useFixture(lib_fixtures.OpenFixture(hpath))
+        self.useFixture(lib_fixtures.OpenFixture(ipath, 'tapdancingmice'))
         test_pm = mock.Mock()
         dm = self._get_dnsmasq(net, test_pm)
         dm.reload_allocations()
@@ -2437,7 +2437,7 @@ class TestDnsmasq(TestBase):
         lines = ["00:00:80:aa:bb:cc,inst-name,192.168.0.1",
                  "00:00:80:aa:bb:cc,inst-name,[fdca:3ba5:a17a::1]"]
         mock_open = self.useFixture(
-            tools.OpenFixture(filename, '\n'.join(lines))).mock_open
+            lib_fixtures.OpenFixture(filename, '\n'.join(lines))).mock_open
         dnsmasq = self._get_dnsmasq(FakeDualNetwork())
         leases = dnsmasq._read_hosts_file_leases(filename)
 
@@ -2452,7 +2452,7 @@ class TestDnsmasq(TestBase):
                  "00:00:80:aa:bb:cc,id:client2,inst-name,"
                  "[fdca:3ba5:a17a::1]"]
         mock_open = self.useFixture(
-            tools.OpenFixture(filename, '\n'.join(lines))).mock_open
+            lib_fixtures.OpenFixture(filename, '\n'.join(lines))).mock_open
         dnsmasq = self._get_dnsmasq(FakeDualNetwork())
         leases = dnsmasq._read_hosts_file_leases(filename)
 
@@ -2497,7 +2497,7 @@ class TestDnsmasq(TestBase):
             lines.append(bad_line)
 
         mock_open = self.useFixture(
-            tools.OpenFixture(filename, '\n'.join(lines))).mock_open
+            lib_fixtures.OpenFixture(filename, '\n'.join(lines))).mock_open
 
         dnsmasq = self._get_dnsmasq(FakeDualNetwork())
         with mock.patch('os.path.exists', return_value=True), \

@@ -24,11 +24,11 @@ from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import dvr as dvr_exc
 from neutron_lib import fixture
 from neutron_lib.plugins import directory
+from neutron_lib.tests import tools
 from neutron_lib.utils import net
 
 from neutron.db import dvr_mac_db
 from neutron.objects import router
-from neutron.tests import tools
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 

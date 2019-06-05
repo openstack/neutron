@@ -25,6 +25,7 @@ from neutron_lib.db import model_query
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.objects import utils as obj_utils
+from neutron_lib.tests import tools as lib_test_tools
 from neutron_lib.utils import helpers
 from oslo_db import exception as obj_exc
 from oslo_db.sqlalchemy import utils as db_utils
@@ -452,7 +453,7 @@ def get_random_dscp_mark():
 
 def get_list_of_random_networks(num=10):
     for i in range(5):
-        res = [tools.get_random_ip_network() for i in range(num)]
+        res = [lib_test_tools.get_random_ip_network() for i in range(num)]
         # make sure there are no duplicates
         if len(set(res)) == num:
             return res
@@ -511,13 +512,13 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     common_types.FlowDirectionEnumField: tools.get_random_flow_direction,
     common_types.HARouterEnumField: tools.get_random_ha_states,
     common_types.IpamAllocationStatusEnumField: tools.get_random_ipam_status,
-    common_types.IPNetworkField: tools.get_random_ip_network,
+    common_types.IPNetworkField: lib_test_tools.get_random_ip_network,
     common_types.IPNetworkPrefixLenField: tools.get_random_prefixlen,
     common_types.IPV6ModeEnumField: tools.get_random_ipv6_mode,
     common_types.IPVersionEnumField: tools.get_random_ip_version,
     common_types.IpProtocolEnumField: tools.get_random_ip_protocol,
     common_types.ListOfIPNetworksField: get_list_of_random_networks,
-    common_types.MACAddressField: tools.get_random_EUI,
+    common_types.MACAddressField: lib_test_tools.get_random_EUI,
     common_types.NetworkSegmentRangeNetworkTypeEnumField:
         tools.get_random_network_segment_range_network_type,
     common_types.PortBindingStatusEnumField:

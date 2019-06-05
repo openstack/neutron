@@ -17,13 +17,13 @@ import signal
 
 import mock
 from neutron_lib import constants as n_consts
+from neutron_lib import fixture as lib_fixtures
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import router_info
 from neutron.tests import base
 from neutron.tests.common import l3_test_common
-from neutron.tests import tools
 
 _uuid = uuidutils.generate_uuid
 
@@ -131,7 +131,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ri.keepalived_manager.get_full_config_file_path.return_value = (
             'ha_state')
         self.mock_open = self.useFixture(
-            tools.OpenFixture('ha_state', read_return)).mock_open
+            lib_fixtures.OpenFixture('ha_state', read_return)).mock_open
         self.assertEqual(expected, ri.ha_state)
 
     def test_ha_state_master(self):
