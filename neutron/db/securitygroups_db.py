@@ -447,10 +447,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             protocol = constants.IP_PROTOCOL_NAME_ALIASES[protocol]
         return int(constants.IP_PROTOCOL_MAP.get(protocol, protocol))
 
-    def _get_ip_proto_name_and_num(self, protocol):
+    def _get_ip_proto_name_and_num(self, protocol, ethertype=None):
         if protocol is None:
             return
         protocol = str(protocol)
+        # Force all legacy IPv6 ICMP protocol names to be 'ipv6-icmp'
+        if (ethertype == constants.IPv6 and
+                protocol in const.IPV6_ICMP_LEGACY_PROTO_LIST):
+            protocol = constants.PROTO_NAME_IPV6_ICMP
         if protocol in constants.IP_PROTOCOL_MAP:
             return [protocol, str(constants.IP_PROTOCOL_MAP.get(protocol))]
         elif protocol in constants.IP_PROTOCOL_NUM_TO_NAME_MAP:
@@ -542,8 +546,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                 raise ext_sg.SecurityGroupRulesNotSingleTenant()
         return sg_groups.pop()
 
+    def _make_canonical_ipv6_icmp_protocol(self, rule):
+        if (rule.get('ethertype') == constants.IPv6 and
+                rule.get('protocol') in const.IPV6_ICMP_LEGACY_PROTO_LIST):
+            rule['protocol'] = constants.PROTO_NAME_IPV6_ICMP
+
     def _validate_security_group_rule(self, context, security_group_rule):
         rule = security_group_rule['security_group_rule']
+        self._make_canonical_ipv6_icmp_protocol(rule)
         self._validate_port_range(rule)
         self._validate_ip_prefix(rule)
         self._validate_ethertype_and_protocol(rule)
@@ -599,7 +609,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             elif value is None:
                 return none_char
             elif key == 'protocol':
-                return str(self._get_ip_proto_name_and_num(value))
+                return str(self._get_ip_proto_name_and_num(
+                               value, ethertype=rule.get('ethertype')))
             return str(value)
 
         comparison_keys = [
