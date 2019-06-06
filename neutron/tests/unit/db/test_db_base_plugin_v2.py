@@ -5233,6 +5233,19 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 self._test_list_resources('subnet', [],
                                           query_params=query_params)
 
+    def test_list_subnets_filtering_by_cidr_used_on_create(self):
+        with self.network() as network:
+            with self.subnet(network=network,
+                             gateway_ip='10.0.0.1',
+                             cidr='10.0.0.11/24') as v1,\
+                    self.subnet(network=network,
+                                gateway_ip='10.0.1.1',
+                                cidr='10.0.1.11/24') as v2:
+                subnets = (v1, v2)
+                query_params = ('cidr=10.0.0.11/24&cidr=10.0.1.11/24')
+                self._test_list_resources('subnet', subnets,
+                                          query_params=query_params)
+
     def test_list_subnets_filtering_by_unknown_filter(self):
         if self._skip_filter_validation:
             self.skipTest("Plugin does not support filter validation")
