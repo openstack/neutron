@@ -388,3 +388,12 @@ class TcFilterTestCase(base.BaseTestCase):
                'key': '0x89ab0000/0xffff0000+14'}
         self.assertEqual(high, keys[0])
         self.assertEqual(low, keys[1])
+
+    @mock.patch.object(priv_tc_lib, 'add_tc_filter_match32')
+    def test_add_tc_filter_vxlan(self, mock_add_filter):
+        tc_lib.add_tc_filter_vxlan('device', 'parent', 'classid',
+                                   '12:34:56:78:90:ab', 52, namespace='ns')
+        keys = ['0x3400/0xffffff00+32', '0x12345678/0xffffffff+42',
+                '0x90ab0000/0xffff0000+46']
+        mock_add_filter.assert_called_once_with(
+            'device', 'parent', 1, 'classid', keys, namespace='ns')
