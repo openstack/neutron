@@ -19,6 +19,7 @@ from neutron_lib.callbacks import events
 from neutron_lib import constants
 from neutron_lib import context
 from oslo_utils import uuidutils
+import testtools
 
 from neutron.db.db_base_plugin_v2 import NeutronDbPluginV2 as db_plugin_v2
 from neutron.db import rbac_db_models
@@ -72,6 +73,20 @@ class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
                                             'access_as_external')
             self.plugin.create_rbac_policy(self.context, policy)
             self._assert_external_net_state(net_id, is_external=True)
+
+    def test_create_network_rbac_shared_existing(self):
+        tenant = 'test-tenant'
+        with self.network() as net:
+            policy = self._make_networkrbac(net,
+                                            tenant,
+                                            rbac_db_models.ACCESS_SHARED)
+            self.plugin.create_rbac_policy(self.context, policy)
+            # Give server maximum of 10 seconds to make sure we don't hit DB
+            # retry mechanism when resource already exists
+            with self.assert_max_execution_time(10):
+                with testtools.ExpectedException(
+                        ext_rbac.DuplicateRbacPolicy):
+                    self.plugin.create_rbac_policy(self.context, policy)
 
     def test_update_network_rbac_external_valid(self):
         orig_target = 'test-tenant-2'
