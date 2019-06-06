@@ -21,6 +21,7 @@ from neutron_lib import exceptions
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
+from oslo_messaging.rpc import dispatcher as rpc_dispatcher
 
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.common import utils
@@ -306,12 +307,9 @@ class TestDhcpRpcCallback(base.BaseTestCase):
 
         self.plugin.get_port.return_value = {
             'device_id': 'other_id'}
-        self.assertRaises(exceptions.DhcpPortInUse,
-                          self.callbacks.update_dhcp_port,
-                          mock.Mock(),
-                          host='foo_host',
-                          port_id='foo_port_id',
-                          port=port)
+        res = self.callbacks.update_dhcp_port(mock.Mock(), host='foo_host',
+                                        port_id='foo_port_id', port=port)
+        self.assertIsNone(res)
 
     def test_update_dhcp_port(self):
         port = {'port': {'network_id': 'foo_network_id',
@@ -342,7 +340,7 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         self.plugin.get_port.return_value = {
             'device_id': constants.DEVICE_ID_RESERVED_DHCP_PORT}
         self.mock_agent_hosting_network.return_value = False
-        self.assertRaises(exceptions.DhcpPortInUse,
+        self.assertRaises(rpc_dispatcher.ExpectedException,
                           self.callbacks.update_dhcp_port,
                           mock.Mock(),
                           host='foo_host',
