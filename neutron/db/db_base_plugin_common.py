@@ -15,6 +15,8 @@
 
 import functools
 
+import netaddr
+
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import subnet as subnet_def
@@ -277,6 +279,10 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                      page_reverse=False):
         pager = base_obj.Pager(sorts, limit, page_reverse, marker)
         filters = filters or {}
+        # turn the CIDRs into a proper subnets
+        if filters.get('cidr'):
+            filters.update(
+                {'cidr': [netaddr.IPNetwork(x).cidr for x in filters['cidr']]})
         return subnet_obj.Subnet.get_objects(context, _pager=pager,
                                              validate_filters=False,
                                              **filters)
