@@ -285,6 +285,10 @@ class DbBasePluginCommon(object):
                      page_reverse=False):
         pager = base_obj.Pager(sorts, limit, page_reverse, marker)
         filters = filters or {}
+        # turn the CIDRs into a proper subnets
+        if filters.get('cidr'):
+            filters.update(
+                {'cidr': [netaddr.IPNetwork(x).cidr for x in filters['cidr']]})
         # TODO(ihrachys) remove explicit reader usage when subnet OVO switches
         # to engine facade by default
         with db_api.CONTEXT_READER.using(context):
