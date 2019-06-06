@@ -67,6 +67,8 @@ class Route(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
+    new_facade = True
+
     db_model = models_v2.SubnetRoute
 
     primary_keys = ['destination', 'nexthop', 'subnet_id']
