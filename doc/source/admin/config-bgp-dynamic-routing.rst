@@ -88,11 +88,11 @@ Agent nodes
     .. code-block:: ini
 
        [BGP]
-       bgp_speaker_driver = neutron_dynamic_routing.services.bgp.agent.driver.ryu.driver.RyuBgpDriver
+       bgp_speaker_driver = neutron_dynamic_routing.services.bgp.agent.driver.os_ken.driver.OsKenBgpDriver
 
     .. note::
 
-       The agent currently only supports the Ryu BGP driver.
+       The agent currently only supports the os-ken BGP driver.
 
   * Configure the router ID.
 
