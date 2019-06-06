@@ -20,7 +20,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib.db import api as db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
-from oslo_db import exception as db_exc
+from neutron_lib.objects import exceptions as o_exc
 
 from neutron.db import common_db_mixin
 from neutron.extensions import rbac as ext_rbac
@@ -52,7 +52,7 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
                          'target_tenant': e['target_tenant']}
             _rbac_obj = rbac_class(context, **rbac_args)
             _rbac_obj.create()
-        except db_exc.DBDuplicateEntry:
+        except o_exc.NeutronDbObjectDuplicateEntry:
             raise ext_rbac.DuplicateRbacPolicy()
         return self._make_rbac_policy_dict(_rbac_obj)
 
