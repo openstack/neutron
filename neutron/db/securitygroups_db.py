@@ -28,6 +28,7 @@ from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net
+from oslo_log import log as logging
 from oslo_utils import uuidutils
 import six
 from sqlalchemy.orm import scoped_session
@@ -41,6 +42,9 @@ from neutron.extensions import securitygroup as ext_sg
 from neutron.objects import base as base_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import securitygroup as sg_obj
+
+
+LOG = logging.getLogger(__name__)
 
 
 @resource_extend.has_resource_extenders
@@ -550,6 +554,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         if (rule.get('ethertype') == constants.IPv6 and
                 rule.get('protocol') in const.IPV6_ICMP_LEGACY_PROTO_LIST):
             rule['protocol'] = constants.PROTO_NAME_IPV6_ICMP
+            LOG.info('Project %(project)s added a security group rule with '
+                     'legacy IPv6 ICMP protocol name %(protocol)s, '
+                     '%(new_protocol)s should be used instead. It was '
+                     'automatically converted.',
+                     {'project': rule['tenant_id'],
+                      'protocol': rule['protocol'],
+                      'new_protocol': constants.PROTO_NAME_IPV6_ICMP})
 
     def _validate_security_group_rule(self, context, security_group_rule):
         rule = security_group_rule['security_group_rule']
