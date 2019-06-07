@@ -673,6 +673,26 @@ SQLAlchemy model, not an object. This is achieved by capturing the
 corresponding database model on :code:`get_***/create/update`, and exposing it
 via :code:`<object>.db_obj`
 
+Removal of downgrade checks over time
+-------------------------------------
+While the code to check object versions is meant to remain for a long period of
+time, in the interest of not accruing too much cruft over time, they are not
+intended to be permanent.  OVO downgrade code should account for code that is
+within the upgrade window of any major OpenStack distribution.  The longest
+currently known is for Ubuntu Cloud Archive which is to upgrade four versions,
+meaning during the upgrade the control nodes would be running a release that is
+four releases newer than what is running on the computes.
+
+Known fast forward upgrade windows are:
+
+* Red Hat OpenStack Platform (RHOSP): X -> X+3 [#]_
+* SuSE OpenStack Cloud (SOC): X -> X+2 [#]_
+* Ubuntu Cloud Archive: X -> X+4 [#]_
+
+Therefore removal of OVO version downgrade code should be removed in the fifth
+cycle after the code was introduced.  For example, if an object version was
+introduced in Ocata then it can be removed in Train.
+
 Backward compatibility for tenant_id
 ------------------------------------
 All objects can support :code:`tenant_id` and :code:`project_id` filters and
@@ -711,4 +731,7 @@ References
 .. [#] https://opendev.org/openstack/neutron/tree/neutron/objects/base.py?h=stable/ocata#n542
 .. [#] https://docs.openstack.org/neutron/latest/contributor/internals/db_layer.html#the-standard-attribute-table
 .. [#] https://opendev.org/openstack/neutron/tree/neutron/objects/rbac_db.py?h=stable/ocata#n291
+.. [#] https://access.redhat.com/support/policy/updates/openstack/platform/
+.. [#] https://www.suse.com/releasenotes/x86_64/SUSE-OPENSTACK-CLOUD/8/#Upgrade
+.. [#] https://www.ubuntu.com/about/release-cycle
 .. [#] https://opendev.org/openstack/neutron-lib/tree/neutron_lib/objects/utils.py
