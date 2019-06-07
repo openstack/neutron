@@ -242,3 +242,7 @@ PORT_BINDING_STATUSES = (PORT_BINDING_STATUS_ACTIVE,
 # for the restart success rate.
 # [1] http://paste.openstack.org/show/745685/
 AGENT_RES_PROCESSING_STEP = 100
+
+# IPtables version to support --random-fully option.
+# Do not move this constant to neutron-lib, since it is temporary
+IPTABLES_RANDOM_FULLY_VERSION = '1.6.2'
