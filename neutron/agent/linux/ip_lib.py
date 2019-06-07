@@ -24,6 +24,7 @@ from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
+from pyroute2.netlink import exceptions as netlink_exceptions
 from pyroute2.netlink import rtnl
 from pyroute2.netlink.rtnl import ifaddrmsg
 from pyroute2.netlink.rtnl import ifinfmsg
@@ -64,6 +65,9 @@ IP_ADDRESS_SCOPE = {rtnl.rtscopes['RT_SCOPE_UNIVERSE']: 'global',
                     rtnl.rtscopes['RT_SCOPE_HOST']: 'host'}
 
 IP_ADDRESS_SCOPE_NAME = {v: k for k, v in IP_ADDRESS_SCOPE.items()}
+
+IP_ADDRESS_EVENTS = {'RTM_NEWADDR': 'added',
+                     'RTM_DELADDR': 'removed'}
 
 SYS_NET_PATH = '/sys/class/net'
 DEFAULT_GW_PATTERN = re.compile(r"via (\S+)")
@@ -1374,6 +1378,26 @@ def get_attr(pyroute2_obj, attr_name):
         return attr[1]
 
 
+def _parse_ip_address(pyroute2_address, device_name):
+    ip = get_attr(pyroute2_address, 'IFA_ADDRESS')
+    ip_length = pyroute2_address['prefixlen']
+    event = IP_ADDRESS_EVENTS.get(pyroute2_address.get('event'))
+    cidr = common_utils.ip_to_cidr(ip, prefix=ip_length)
+    flags = get_attr(pyroute2_address, 'IFA_FLAGS')
+    dynamic = not bool(flags & ifaddrmsg.IFA_F_PERMANENT)
+    tentative = bool(flags & ifaddrmsg.IFA_F_TENTATIVE)
+    dadfailed = bool(flags & ifaddrmsg.IFA_F_DADFAILED)
+    scope = IP_ADDRESS_SCOPE[pyroute2_address['scope']]
+    return {'name': device_name,
+            'cidr': cidr,
+            'scope': scope,
+            'broadcast': get_attr(pyroute2_address, 'IFA_BROADCAST'),
+            'dynamic': dynamic,
+            'tentative': tentative,
+            'dadfailed': dadfailed,
+            'event': event}
+
+
 def _parse_link_device(namespace, device, **kwargs):
     """Parse pytoute2 link device information
 
@@ -1387,21 +1411,7 @@ def _parse_link_device(namespace, device, **kwargs):
                                                index=device['index'],
                                                **kwargs)
     for ip_address in ip_addresses:
-        ip = get_attr(ip_address, 'IFA_ADDRESS')
-        ip_length = ip_address['prefixlen']
-        cidr = common_utils.ip_to_cidr(ip, prefix=ip_length)
-        flags = get_attr(ip_address, 'IFA_FLAGS')
-        dynamic = not bool(flags & ifaddrmsg.IFA_F_PERMANENT)
-        tentative = bool(flags & ifaddrmsg.IFA_F_TENTATIVE)
-        dadfailed = bool(flags & ifaddrmsg.IFA_F_DADFAILED)
-        scope = IP_ADDRESS_SCOPE[ip_address['scope']]
-        retval.append({'name': name,
-                       'cidr': cidr,
-                       'scope': scope,
-                       'broadcast': get_attr(ip_address, 'IFA_BROADCAST'),
-                       'dynamic': dynamic,
-                       'tentative': tentative,
-                       'dadfailed': dadfailed})
+        retval.append(_parse_ip_address(ip_address, name))
     return retval
 
 
@@ -1455,3 +1465,53 @@ def get_devices_info(namespace, **kwargs):
                 retval[device['vxlan_link_index']]['name'])
 
     return list(retval.values())
+
+
+def ip_monitor(namespace, queue, event_stop, event_started):
+    """Monitor IP address changes
+
+    If namespace is not None, this function must be executed as root user, but
+    cannot use privsep because is a blocking function and can exhaust the
+    number of working threads.
+    """
+    def get_device_name(ip, index):
+        try:
+            device = ip.link('get', index=index)
+            if device:
+                attrs = device[0].get('attrs', [])
+                for attr in (attr for attr in attrs
+                             if attr[0] == 'IFLA_IFNAME'):
+                    return attr[1]
+        except netlink_exceptions.NetlinkError as e:
+            if e.code == errno.ENODEV:
+                return
+            raise
+
+    try:
+        with privileged.get_iproute(namespace) as ip:
+            ip.bind()
+            cache_devices = {}
+            for device in ip.get_links():
+                cache_devices[device['index']] = get_attr(device,
+                                                          'IFLA_IFNAME')
+            event_started.send()
+            while not event_stop.ready():
+                eventlet.sleep(0)
+                ip_address = []
+                with common_utils.Timer(timeout=2, raise_exception=False):
+                    ip_address = ip.get()
+                if not ip_address:
+                    continue
+                if 'index' in ip_address[0] and 'prefixlen' in ip_address[0]:
+                    index = ip_address[0]['index']
+                    name = (get_device_name(ip, index) or
+                            cache_devices.get(index))
+                    if not name:
+                        continue
+
+                    cache_devices[index] = name
+                    queue.put(_parse_ip_address(ip_address[0], name))
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise privileged.NetworkNamespaceNotFound(netns_name=namespace)
+        raise

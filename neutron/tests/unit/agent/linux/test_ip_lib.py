@@ -1890,20 +1890,21 @@ class ParseLinkDeviceTestCase(base.BaseTestCase):
     def test_parse_link_devices(self):
         device = ({'index': 1, 'attrs': [['IFLA_IFNAME', 'int_name']]})
         self.mock_get_ip_addresses.return_value = [
-            {'prefixlen': 24, 'scope': 200, 'attrs': [
+            {'prefixlen': 24, 'scope': 200, 'event': 'RTM_NEWADDR', 'attrs': [
                 ['IFA_ADDRESS', '192.168.10.20'],
                 ['IFA_FLAGS', ifaddrmsg.IFA_F_PERMANENT]]},
-            {'prefixlen': 64, 'scope': 200, 'attrs': [
+            {'prefixlen': 64, 'scope': 200, 'event': 'RTM_DELADDR', 'attrs': [
                 ['IFA_ADDRESS', '2001:db8::1'],
                 ['IFA_FLAGS', ifaddrmsg.IFA_F_PERMANENT]]}]
 
         retval = ip_lib._parse_link_device('namespace', device)
         expected = [{'scope': 'site', 'cidr': '192.168.10.20/24',
                      'dynamic': False, 'dadfailed': False, 'name': 'int_name',
-                     'broadcast': None, 'tentative': False},
+                     'broadcast': None, 'tentative': False, 'event': 'added'},
                     {'scope': 'site', 'cidr': '2001:db8::1/64',
                      'dynamic': False, 'dadfailed': False, 'name': 'int_name',
-                     'broadcast': None, 'tentative': False}]
+                     'broadcast': None, 'tentative': False,
+                     'event': 'removed'}]
         self.assertEqual(expected, retval)
 
 
