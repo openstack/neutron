@@ -693,6 +693,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         return mock.call(conf=cfg.CONF,
                          uuid=FAKE_NETWORK_UUID,
                          namespace=ns,
+                         service='haproxy',
                          default_cmd_callback=mock.ANY)
 
     def _enable_dhcp_helper(self, network, enable_isolated_metadata=False,

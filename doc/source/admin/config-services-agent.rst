@@ -43,3 +43,36 @@ vary between hosts in a neutron deployment such as the ``local_ip`` for an L2
 agent. If any agent requires access to additional external services beyond the
 neutron RPC, those endpoints should be defined in the agent-specific
 configuration file (for example, nova metadata for metadata agent).
+
+External processes run by agents
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some neutron agents, like DHCP, Metadata or L3, often run external
+processes to provide some of their functionalities. It may be keepalived,
+dnsmasq, haproxy or some other process.
+Neutron agents are responsible for spawning and killing such processes when
+necessary.  By default, to kill such processes, agents use a simple ``kill``
+command, but in some cases, like for example when those additional services
+are running inside containers, it may be not a good solution.
+To address this problem, operators should use the ``AGENT`` config group option
+``kill_scripts_path`` to configure a path to where ``kill scripts`` for such
+processes live. By default, it is set to ``/etc/neutron/kill_scripts/``.
+If option ``kill_scripts_path`` is changed in the config to the different
+location, ``exec_dirs`` in ``/etc/rootwrap.conf`` should be changed accordingly.
+If ``kill_scripts_path`` is set, every time neutron has to kill a process,
+for example ``dnsmasq``, it will look in this directory for a file with the name
+``<process_name>-kill``. So for ``dnsmasq`` process it will look for a
+``dnsmasq-kill`` script. If such a file exists there, it will be called
+instead of using the ``kill`` command.
+
+Kill scripts are called with two parameters:
+
+.. code-block::
+
+    <process>-kill <sig> <pid>
+
+where: ``<sig>`` is the signal, same as with the ``kill`` command, for example
+``9`` or ``SIGKILL``; and ``<pid>`` is pid of the process to kill.
+
+This external script should then handle killing of the given process as neutron
+will not call the ``kill`` command for it anymore.

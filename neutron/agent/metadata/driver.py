@@ -35,6 +35,7 @@ from neutron.common import constants
 LOG = logging.getLogger(__name__)
 
 METADATA_SERVICE_NAME = 'metadata-proxy'
+HAPROXY_SERVICE = 'haproxy'
 
 PROXY_CONFIG_DIR = "ns-metadata-proxy"
 _HAPROXY_CONFIG_TEMPLATE = """
@@ -220,7 +221,7 @@ class MetadataDriver(object):
                                           conf.state_path,
                                           pid_file)
             haproxy.create_config_file()
-            proxy_cmd = ['haproxy',
+            proxy_cmd = [HAPROXY_SERVICE,
                          '-f', haproxy.cfg_path]
             return proxy_cmd
 
@@ -260,6 +261,7 @@ class MetadataDriver(object):
             conf=conf,
             uuid=router_id,
             namespace=ns_name,
+            service=HAPROXY_SERVICE,
             default_cmd_callback=callback)
 
 

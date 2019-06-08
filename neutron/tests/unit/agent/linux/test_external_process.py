@@ -15,6 +15,7 @@
 import os.path
 
 import mock
+from oslo_config import cfg
 from oslo_utils import fileutils
 import psutil
 
@@ -243,6 +244,48 @@ class TestProcessManager(base.BaseTestCase):
                     manager = ep.ProcessManager(self.conf, 'uuid')
                     manager.disable()
                     debug.assert_called_once_with(mock.ANY, mock.ANY)
+
+    def _test_disable_custom_kill_script(self, kill_script_exists, namespace,
+                                         kill_scripts_path='test-path/'):
+        cfg.CONF.set_override("kill_scripts_path", kill_scripts_path, "AGENT")
+        if kill_script_exists:
+            expected_cmd = ['test-service-kill', '9', 4]
+        else:
+            expected_cmd = ['kill', '-9', 4]
+
+        with mock.patch.object(ep.ProcessManager, 'pid') as pid:
+            pid.__get__ = mock.Mock(return_value=4)
+            with mock.patch.object(ep.ProcessManager, 'active') as active:
+                active.__get__ = mock.Mock(return_value=True)
+                manager = ep.ProcessManager(
+                    self.conf, 'uuid', namespace=namespace,
+                    service='test-service')
+                with mock.patch.object(ep, 'utils') as utils, \
+                        mock.patch.object(os.path, 'isfile',
+                                          return_value=kill_script_exists):
+                    manager.disable()
+                    utils.execute.assert_called_with(
+                        expected_cmd, run_as_root=bool(namespace))
+
+    def test_disable_custom_kill_script_no_namespace(self):
+        self._test_disable_custom_kill_script(
+            kill_script_exists=True, namespace=None)
+
+    def test_disable_custom_kill_script_namespace(self):
+        self._test_disable_custom_kill_script(
+            kill_script_exists=True, namespace="ns")
+
+    def test_disable_custom_kill_script_no_kill_script_no_namespace(self):
+        self._test_disable_custom_kill_script(
+            kill_script_exists=False, namespace=None)
+
+    def test_disable_custom_kill_script_no_kill_script_namespace(self):
+        self._test_disable_custom_kill_script(
+            kill_script_exists=False, namespace="ns")
+
+    def test_disable_custom_kill_script_namespace_no_path(self):
+        self._test_disable_custom_kill_script(
+            kill_script_exists=False, namespace="ns", kill_scripts_path=None)
 
     def test_get_pid_file_name_default(self):
         manager = ep.ProcessManager(self.conf, 'uuid')
