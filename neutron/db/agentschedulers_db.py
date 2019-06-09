@@ -65,8 +65,14 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
             #                   filter is set, only agents which are 'up'
             #                   (i.e. have a recent heartbeat timestamp)
             #                   are eligible, even if active is False
-            return not agent_utils.is_agent_down(
-                agent['heartbeat_timestamp'])
+            if agent_utils.is_agent_down(agent['heartbeat_timestamp']):
+                LOG.warning('Agent %(agent)s is down. Type: %(type)s, host: '
+                            '%(host)s, heartbeat: %(heartbeat)s',
+                            {'agent': agent['id'], 'type': agent['agent_type'],
+                             'host': agent['host'],
+                             'heartbeat': agent['heartbeat_timestamp']})
+                return False
+            return True
 
     def update_agent(self, context, id, agent):
         original_agent = self.get_agent(context, id)

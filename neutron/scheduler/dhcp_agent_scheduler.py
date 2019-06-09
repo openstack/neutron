@@ -280,8 +280,17 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
             plugin, context, network, hostable_dhcp_agents)
 
         if not hostable_dhcp_agents:
-            return {'n_agents': 0, 'hostable_agents': [],
-                    'hosted_agents': hosted_agents}
-        n_agents = min(len(hostable_dhcp_agents), n_agents)
-        return {'n_agents': n_agents, 'hostable_agents': hostable_dhcp_agents,
-                'hosted_agents': hosted_agents}
+            result = {'n_agents': 0, 'hostable_agents': [],
+                      'hosted_agents': hosted_agents}
+        else:
+            result = {'n_agents': min(len(hostable_dhcp_agents), n_agents),
+                      'hostable_agents': hostable_dhcp_agents,
+                      'hosted_agents': hosted_agents}
+        hostable_agents_ids = [a['id'] for a in result['hostable_agents']]
+        hosted_agents_ids = [a['id'] for a in result['hosted_agents']]
+        LOG.debug('Network hostable DHCP agents. Network: %(network)s, '
+                  'hostable agents: %(hostable_agents)s, hosted agents: '
+                  '%(hosted_agents)s', {'network': network['id'],
+                                        'hostable_agents': hostable_agents_ids,
+                                        'hosted_agents': hosted_agents_ids})
+        return result
