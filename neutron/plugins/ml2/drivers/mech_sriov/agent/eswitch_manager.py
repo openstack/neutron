@@ -33,6 +33,7 @@ class PciOsWrapper(object):
 
     DEVICE_PATH = "/sys/class/net/%s/device"
     PCI_PATH = "/sys/class/net/%s/device/virtfn%s/net"
+    NUMVFS_PATH = "/sys/class/net/%s/device/sriov_numvfs"
     VIRTFN_FORMAT = r"^virtfn(?P<vf_index>\d+)"
     VIRTFN_REG_EX = re.compile(VIRTFN_FORMAT)
 
@@ -102,6 +103,25 @@ class PciOsWrapper(object):
                 return True
         return False
 
+    @classmethod
+    def get_numvfs(cls, dev_name):
+        """Get configured number of VFs on device
+
+        @param dev_name: pf network device name
+        @return: integer number of VFs or -1
+        if sriov_numvfs file not found (device doesn't support this config)
+        """
+        try:
+            with open(cls.NUMVFS_PATH % dev_name) as f:
+                numvfs = int(f.read())
+                LOG.debug("Number of VFs configured on device %s: %s",
+                    dev_name, numvfs)
+                return numvfs
+        except IOError:
+            LOG.warning("Error reading sriov_numvfs file for device %s, "
+                        "probably not supported by this device", dev_name)
+            return -1
+
 
 class EmbSwitch(object):
     """Class to manage logical embedded switch entity.
@@ -122,6 +142,7 @@ class EmbSwitch(object):
         """
         self.dev_name = dev_name
         self.pci_slot_map = {}
+        self.scanned_pci_list = []
         self.pci_dev_wrapper = pci_lib.PciDeviceIPWrapper(dev_name)
 
         self._load_devices(exclude_devices)
@@ -131,8 +152,8 @@ class EmbSwitch(object):
 
         @param exclude_devices: excluded devices mapping device_name: pci slots
         """
-        scanned_pci_list = PciOsWrapper.scan_vf_devices(self.dev_name)
-        for pci_slot, vf_index in scanned_pci_list:
+        self.scanned_pci_list = PciOsWrapper.scan_vf_devices(self.dev_name)
+        for pci_slot, vf_index in self.scanned_pci_list:
             if pci_slot not in exclude_devices:
                 self.pci_slot_map[pci_slot] = vf_index
 
@@ -257,6 +278,7 @@ class ESwitchManager(object):
             cls._instance = super(ESwitchManager, cls).__new__(cls)
             cls.emb_switches_map = {}
             cls.pci_slot_map = {}
+            cls.skipped_devices = set()
         return cls._instance
 
     def device_exists(self, device_mac, pci_slot):
@@ -395,9 +417,33 @@ class ESwitchManager(object):
 
     def _create_emb_switch(self, phys_net, dev_name, exclude_devices):
         embedded_switch = EmbSwitch(dev_name, exclude_devices)
+        numvfs = PciOsWrapper.get_numvfs(dev_name)
+        if numvfs == 0:
+            # numvfs might be 0 on pre-up state of a device
+            # giving such devices one more chance to initialize
+            if dev_name not in self.skipped_devices:
+                self.skipped_devices.add(dev_name)
+                LOG.info("Device %s has 0 VFs configured. Skipping "
+                         "for now to let the device initialize", dev_name)
+                return
+            else:
+                # looks like device indeed has 0 VFs configured
+                # it is probably used just as direct-physical
+                LOG.info("Device %s has 0 VFs configured", dev_name)
+
+        numvfs_cur = len(embedded_switch.scanned_pci_list)
+        if numvfs >= 0 and numvfs > numvfs_cur:
+            LOG.info("Not all VFs were initialized on device %(device)s: "
+                     "expected - %(expected)s, actual - %(actual)s. Skipping.",
+                     {'device': dev_name, 'expected': numvfs,
+                      'actual': numvfs_cur})
+            self.skipped_devices.add(dev_name)
+            return
+
         self.emb_switches_map.setdefault(phys_net, []).append(embedded_switch)
         for pci_slot in embedded_switch.get_pci_slot_list():
             self.pci_slot_map[pci_slot] = embedded_switch
+        self.skipped_devices.discard(dev_name)
 
     def _get_emb_eswitch(self, device_mac, pci_slot):
         """Get embedded switch.
