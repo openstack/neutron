@@ -1,0 +1,12 @@
+---
+fixes:
+  - |
+    A previous bug fix changed the behaviour of the DHCP agent to use a
+    network's ``dns_domain`` as the search path provided to instances
+    overriding the ``dns_domain`` configuration option used by both the DHCP
+    agent and the main server process when generate port DNS assignments.
+    This broke the original design intent of the ``dns_domain`` attribute of
+    a network which was for integration with external DNS systems such as
+    Designate rather than for use in Neutron's internal DNS support.
+    This incorrect change in behaviour has now been reverted - the DHCP
+    agent will only ever use the ``dns_domain`` configuration option.
