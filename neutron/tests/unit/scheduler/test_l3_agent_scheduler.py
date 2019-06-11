@@ -1261,13 +1261,7 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
                            '.L3AgentNotifyAPI'),\
                 mock.patch.object(
                         self.dut, 'get_l3_agents',
-                        return_value=[agent_on_host]) as get_l3_agents,\
-                mock.patch.object(
-                        self.dut, 'get_hosts_to_notify',
-                        return_value=['other_host', 'host1']),\
-                mock.patch.object(
-                        self.dut, '_check_dvr_serviceable_ports_on_host',
-                        return_value=True):
+                        return_value=[agent_on_host]) as get_l3_agents:
 
             self.dut.dvr_handle_new_service_port(
                 self.adminContext, port)
@@ -1275,10 +1269,9 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
             get_l3_agents.assert_called_once_with(
                 self.adminContext,
                 filters={'host': [port[portbindings.HOST_ID]]})
-            self.dut.l3_rpc_notifier.routers_updated_on_host.assert_has_calls(
-                [mock.call(self.adminContext, {'r1', 'r2'}, 'host1'),
-                 mock.call(self.adminContext, {'r1', 'r2'}, 'other_host')],
-                any_order=True)
+            self.dut.l3_rpc_notifier.routers_updated_on_host.\
+                assert_called_once_with(self.adminContext,
+                                        {'r1', 'r2'}, 'host1')
             self.assertFalse(self.dut.l3_rpc_notifier.routers_updated.called)
 
     def test_get_dvr_routers_by_subnet_ids(self):
