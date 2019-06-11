@@ -13,13 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.objects.logapi import event_types
 from neutron_lib.services.logapi import constants as log_const
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import loggingapi as log_db
 from neutron.objects import base
 from neutron.objects import common_types
-from neutron.objects.logapi import event_types
 
 
 @base.NeutronObjectRegistry.register
