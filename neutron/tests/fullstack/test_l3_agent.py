@@ -24,7 +24,6 @@ from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
-from neutron.tests import base as tests_base
 from neutron.tests.common.exclusive_resources import ip_network
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
@@ -370,7 +369,6 @@ class TestHAL3Agent(TestL3Agent):
                 "master",
                 self._get_keepalived_state(keepalived_state_file))
 
-    @tests_base.unstable_test("bug 1798475")
     def test_ha_router_restart_agents_no_packet_lost(self):
         tenant_id = uuidutils.generate_uuid()
         ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
@@ -393,15 +391,17 @@ class TestHAL3Agent(TestL3Agent):
 
         router_ip = router['external_gateway_info'][
             'external_fixed_ips'][0]['ip_address']
-        # Let's check first if connectivity from external_vm to router's
-        # external gateway IP is possible before we restart agents
-        external_vm.block_until_ping(router_ip)
 
         l3_agents = [host.agents['l3'] for host in self.environment.hosts]
         l3_standby_agents = self._get_l3_agents_with_ha_state(
             l3_agents, router['id'], 'standby')
         l3_active_agents = self._get_l3_agents_with_ha_state(
             l3_agents, router['id'], 'active')
+        self.assertEqual(1, len(l3_active_agents))
+
+        # Let's check first if connectivity from external_vm to router's
+        # external gateway IP is possible before we restart agents
+        external_vm.block_until_ping(router_ip)
 
         self._assert_ping_during_agents_restart(
             l3_standby_agents, external_vm.namespace, [router_ip], count=60)
