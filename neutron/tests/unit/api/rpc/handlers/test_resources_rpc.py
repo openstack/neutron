@@ -16,6 +16,7 @@
 import mock
 from neutron_lib.agent import topics
 from neutron_lib import context
+from neutron_lib.objects import common_types
 from oslo_utils import uuidutils
 from oslo_versionedobjects import fields as obj_fields
 import testtools
@@ -24,7 +25,6 @@ from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.callbacks import version_manager
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.objects import base as objects_base
-from neutron.objects import common_types
 from neutron.tests import base
 from neutron.tests.unit.objects import test_base as objects_test_base
 

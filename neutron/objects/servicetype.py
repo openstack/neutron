@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import servicetype as models
 from neutron.objects import base
-from neutron.objects import common_types
 
 
 @base.NeutronObjectRegistry.register

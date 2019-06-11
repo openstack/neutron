@@ -16,6 +16,7 @@
 import itertools
 
 from neutron_lib.exceptions import qos as qos_exc
+from neutron_lib.objects import common_types
 from oslo_db import exception as db_exc
 from oslo_utils import versionutils
 from oslo_versionedobjects import exception
@@ -26,7 +27,6 @@ from neutron.db import models_v2
 from neutron.db.qos import models as qos_db_model
 from neutron.db import rbac_db_models
 from neutron.objects import base as base_db
-from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.objects.qos import binding
 from neutron.objects.qos import rule as rule_obj_impl

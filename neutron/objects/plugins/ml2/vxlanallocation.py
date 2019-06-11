@@ -12,11 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models.plugins.ml2 import vxlanallocation as vxlan_model
 from neutron.objects import base
-from neutron.objects import common_types
 from neutron.objects.plugins.ml2 import base as ml2_base
 
 

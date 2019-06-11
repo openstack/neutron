@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 import sqlalchemy as sa
 from sqlalchemy.orm import joinedload
@@ -20,7 +21,6 @@ from neutron.db.models import agent as agent_model
 from neutron.db.models import l3_attrs
 from neutron.db.models import l3agent
 from neutron.objects import base
-from neutron.objects import common_types
 
 
 @base.NeutronObjectRegistry.register

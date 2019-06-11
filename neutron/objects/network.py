@@ -15,6 +15,7 @@
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.validators import availability_zone as az_validator
 from neutron_lib import constants
+from neutron_lib.objects import common_types
 from oslo_utils import versionutils
 from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
@@ -29,7 +30,6 @@ from neutron.db.port_security import models as ps_models
 from neutron.db import rbac_db_models
 from neutron.objects import agent as agent_obj
 from neutron.objects import base
-from neutron.objects import common_types
 from neutron.objects.extensions import port_security as base_ps
 from neutron.objects.qos import binding
 from neutron.objects import rbac

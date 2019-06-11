@@ -17,6 +17,7 @@ import abc
 import sys
 
 from neutron_lib import constants
+from neutron_lib.objects import common_types
 from neutron_lib.services.qos import constants as qos_consts
 from neutron_lib.utils import helpers
 from oslo_utils import versionutils
@@ -26,7 +27,6 @@ import six
 
 from neutron.db.qos import models as qos_db_model
 from neutron.objects import base
-from neutron.objects import common_types
 
 DSCP_MARK = 'dscp_mark'
 

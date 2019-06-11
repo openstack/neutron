@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.objects import common_types
 from neutron_lib.utils import net as net_utils
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
@@ -17,7 +18,6 @@ from oslo_versionedobjects import fields as obj_fields
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import rbac_db_models
 from neutron.objects import base
-from neutron.objects import common_types
 from neutron.objects import ports
 from neutron.objects import rbac
 from neutron.objects import rbac_db

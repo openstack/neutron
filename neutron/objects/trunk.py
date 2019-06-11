@@ -14,13 +14,13 @@
 #    under the License.
 
 from neutron_lib import exceptions as n_exc
+from neutron_lib.objects import common_types
 from neutron_lib.objects import exceptions as o_exc
 from oslo_db import exception as o_db_exc
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.objects import base
-from neutron.objects import common_types
 from neutron.services.trunk import exceptions as t_exc
 from neutron.services.trunk import models
 
