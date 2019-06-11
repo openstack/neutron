@@ -766,7 +766,6 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 expected_routers_updated_calls = [
                     mock.call(self.context, mock.ANY, 'host0'),
                     mock.call(self.context, mock.ANY, HOST1),
-                    mock.call(self.context, mock.ANY, HOST1),
                     mock.call(self.context, mock.ANY, HOST2)]
                 l3_notifier.routers_updated_on_host.assert_has_calls(
                         expected_routers_updated_calls, any_order=True)
@@ -1088,7 +1087,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                      {'port': {
                          'allowed_address_pairs': allowed_address_pairs}})
                 self.assertEqual(
-                    3, l3_notifier.routers_updated_on_host.call_count)
+                    2, l3_notifier.routers_updated_on_host.call_count)
                 updated_vm_port1 = self.core_plugin.get_port(
                     self.context, vm_port['id'])
                 updated_vm_port2 = self.core_plugin.get_port(
@@ -1138,7 +1137,6 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 expected_routers_updated_calls = [
                         mock.call(self.context, mock.ANY, HOST1),
                         mock.call(self.context, mock.ANY, HOST2),
-                        mock.call(self.context, mock.ANY, HOST1),
                         mock.call(self.context, mock.ANY, 'host0')]
                 l3_notifier.routers_updated_on_host.assert_has_calls(
                         expected_routers_updated_calls, any_order=True)
