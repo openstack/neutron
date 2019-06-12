@@ -19,6 +19,7 @@ import itertools
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import exceptions as o_exc
+from neutron_lib.objects.extensions import standardattributes
 from oslo_db import exception as obj_exc
 from oslo_db.sqlalchemy import enginefacade
 from oslo_db.sqlalchemy import utils as db_utils
@@ -34,7 +35,6 @@ from sqlalchemy import orm
 from neutron._i18n import _
 from neutron.db import standard_attr
 from neutron.objects.db import api as obj_db_api
-from neutron.objects.extensions import standardattributes
 
 
 LOG = logging.getLogger(__name__)
