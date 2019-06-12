@@ -1474,43 +1474,64 @@ def ip_monitor(namespace, queue, event_stop, event_started):
     cannot use privsep because is a blocking function and can exhaust the
     number of working threads.
     """
-    def get_device_name(ip, index):
+    def get_device_name(index):
         try:
-            device = ip.link('get', index=index)
-            if device:
-                attrs = device[0].get('attrs', [])
-                for attr in (attr for attr in attrs
-                             if attr[0] == 'IFLA_IFNAME'):
-                    return attr[1]
+            with privileged.get_iproute(namespace) as ip:
+                device = ip.link('get', index=index)
+                if device:
+                    attrs = device[0].get('attrs', [])
+                    for attr in (attr for attr in attrs
+                                 if attr[0] == 'IFLA_IFNAME'):
+                        return attr[1]
         except netlink_exceptions.NetlinkError as e:
             if e.code == errno.ENODEV:
                 return
             raise
 
-    try:
+    def read_ip_updates(_queue):
+        """Read Pyroute2.IPRoute input socket
+
+        The aim of this function is to open and bind an IPRoute socket only for
+        reading the netlink changes; no other operations are done with this
+        opened socket. This function is executed in a separate thread,
+        dedicated only to this task.
+        """
         with privileged.get_iproute(namespace) as ip:
             ip.bind()
-            cache_devices = {}
+            while True:
+                eventlet.sleep(0)
+                ip_addresses = ip.get()
+                for ip_address in ip_addresses:
+                    _queue.put(ip_address)
+
+    _queue = eventlet.Queue()
+    try:
+        cache_devices = {}
+        with privileged.get_iproute(namespace) as ip:
             for device in ip.get_links():
                 cache_devices[device['index']] = get_attr(device,
                                                           'IFLA_IFNAME')
-            event_started.send()
-            while not event_stop.ready():
-                eventlet.sleep(0)
-                ip_address = []
-                with common_utils.Timer(timeout=2, raise_exception=False):
-                    ip_address = ip.get()
-                if not ip_address:
+        pool = eventlet.GreenPool(1)
+        ip_updates_thread = pool.spawn(read_ip_updates, _queue)
+        event_started.send()
+        while not event_stop.ready():
+            eventlet.sleep(0)
+            try:
+                ip_address = _queue.get(timeout=2)
+            except eventlet.queue.Empty:
+                continue
+            if 'index' in ip_address and 'prefixlen' in ip_address:
+                index = ip_address['index']
+                name = (get_device_name(index) or
+                        cache_devices.get(index))
+                if not name:
                     continue
-                if 'index' in ip_address[0] and 'prefixlen' in ip_address[0]:
-                    index = ip_address[0]['index']
-                    name = (get_device_name(ip, index) or
-                            cache_devices.get(index))
-                    if not name:
-                        continue
 
-                    cache_devices[index] = name
-                    queue.put(_parse_ip_address(ip_address[0], name))
+                cache_devices[index] = name
+                queue.put(_parse_ip_address(ip_address, name))
+
+        ip_updates_thread.kill()
+
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise privileged.NetworkNamespaceNotFound(netns_name=namespace)

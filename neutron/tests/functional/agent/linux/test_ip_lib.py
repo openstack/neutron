@@ -788,17 +788,39 @@ class IpMonitorTestCase(testscenarios.WithScenarios,
             self.ip_wrapper.add_dummy(device)
         utils.wait_until_true(lambda: self._read_file({}), timeout=30)
         ip_addresses = [
-            {'cidr': '192.168.250.21/24', 'event': 'added',
+            {'cidr': '192.168.251.21/24', 'event': 'added',
              'name': self.devices[0]},
-            {'cidr': '192.168.250.22/24', 'event': 'added',
+            {'cidr': '192.168.251.22/24', 'event': 'added',
              'name': self.devices[1]}]
 
         self._handle_ip_addresses('added', ip_addresses)
         self._check_read_file(ip_addresses)
 
         self.ip_wrapper.add_dummy(self.devices[-1])
-        ip_addresses.append({'cidr': '192.168.250.23/24', 'event': 'added',
+        ip_addresses.append({'cidr': '192.168.251.23/24', 'event': 'added',
                              'name': self.devices[-1]})
 
         self._handle_ip_addresses('added', [ip_addresses[-1]])
+        self._check_read_file(ip_addresses)
+
+    def test_add_and_remove_multiple_ips(self):
+        # NOTE(ralonsoh): testing [1], adding multiple IPs.
+        # [1] https://bugs.launchpad.net/neutron/+bug/1832307
+        utils.wait_until_true(lambda: self._read_file({}), timeout=30)
+        self.ip_wrapper.add_dummy(self.devices[0])
+        ip_addresses = []
+        for i in range(250):
+            _cidr = str(netaddr.IPNetwork('192.168.252.1/32').ip + i) + '/32'
+            ip_addresses.append({'cidr': _cidr, 'event': 'added',
+                                 'name': self.devices[0]})
+
+        self._handle_ip_addresses('added', ip_addresses)
+        self._check_read_file(ip_addresses)
+
+        for i in range(250):
+            _cidr = str(netaddr.IPNetwork('192.168.252.1/32').ip + i) + '/32'
+            ip_addresses.append({'cidr': _cidr, 'event': 'removed',
+                                 'name': self.devices[0]})
+
+        self._handle_ip_addresses('removed', ip_addresses)
         self._check_read_file(ip_addresses)
