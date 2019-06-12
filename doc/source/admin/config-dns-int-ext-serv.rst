@@ -99,9 +99,6 @@ In each of the use cases described below:
   ``example.org.`` was created previously.
 * The PTR records will be created in zones owned by the project specified
   for ``project_name`` above.
-* Despite officially being deprecated, using the neutron CLI is still necessary
-  for some of the tasks, as the corresponding features are not yet implemented
-  for the openstack client.
 
 Use case 1: Floating IPs are published with associated port DNS attributes
 --------------------------------------------------------------------------
@@ -124,8 +121,7 @@ Following is an example of these steps:
 
 .. code-block:: console
 
-   $ neutron net-update 38c5e950-b450-4c30-83d4-ee181c28aad3 --dns_domain example.org.
-   Updated network: 38c5e950-b450-4c30-83d4-ee181c28aad3
+   $ openstack network set --dns-domain example.org. 38c5e950-b450-4c30-83d4-ee181c28aad3
 
    $ openstack network show 38c5e950-b450-4c30-83d4-ee181c28aad3
    +---------------------------+--------------------------------------+
@@ -451,24 +447,29 @@ allocated for the instance:
    | 10a36008-6ecf-47c3-b321-05652a929b04 | example.org.       | SOA  | ns1.devstack.org. malavall.us.ibm.com. 1455565110 3532 600 86400 3600 | ACTIVE | NONE   |
    +--------------------------------------+--------------------+------+-----------------------------------------------------------------------+--------+--------+
 
-   $ neutron floatingip-create 41fa3995-9e4a-4cd9-bb51-3e5424f2ff2a \
-     --dns_domain example.org. --dns_name my-floatingip
-   Created a new floatingip:
+   $ openstack floating ip create --dns-domain example.org. --dns-name my-floatingip 41fa3995-9e4a-4cd9-bb51-3e5424f2ff2a
    +---------------------+--------------------------------------+
    | Field               | Value                                |
    +---------------------+--------------------------------------+
+   | created_at          | 2019-06-12T15:54:45Z                 |
+   | description         |                                      |
    | dns_domain          | example.org.                         |
    | dns_name            | my-floatingip                        |
-   | fixed_ip_address    |                                      |
+   | fixed_ip_address    | None                                 |
    | floating_ip_address | 198.51.100.5                         |
    | floating_network_id | 41fa3995-9e4a-4cd9-bb51-3e5424f2ff2a |
-   | id                  | 9f23a9c6-eceb-42eb-9f45-beb58c473728 |
-   | port_id             |                                      |
-   | revision_number     | 1                                    |
-   | router_id           |                                      |
+   | id                  | 3ae82f53-3349-4aac-810e-ed2a8f6374b8 |
+   | name                | 198.51.100.53                        |
+   | port_details        | None                                 |
+   | port_id             | None                                 |
+   | project_id          | d5660cb1e6934612a01b4fb2fb630725     |
+   | qos_policy_id       | None                                 |
+   | revision_number     | 0                                    |
+   | router_id           | None                                 |
    | status              | DOWN                                 |
+   | subnet_id           | None                                 |
    | tags                | []                                   |
-   | tenant_id           | d5660cb1e6934612a01b4fb2fb630725     |
+   | updated_at          | 2019-06-12T15:54:45Z                 |
    +---------------------+--------------------------------------+
 
    $ openstack recordset list example.org.
@@ -543,8 +544,7 @@ external DNS service. This is an example:
    | 38c5e950-b450-4c30-83d4-ee181c28aad3 | private  | 43414c53-62ae-49bc-aa6c-c9dd7705818a, 5b9282a1-0be1-4ade-b478-7868ad2a16ff  |
    +--------------------------------------+----------+-----------------------------------------------------------------------------+
 
-   $ neutron net-update 37aaff3a-6047-45ac-bf4f-a825e56fd2b3 --dns_domain example.org.
-   Updated network: 37aaff3a-6047-45ac-bf4f-a825e56fd2b3
+   $ openstack network set --dns-domain example.org. 37aaff3a-6047-45ac-bf4f-a825e56fd2b3
 
    $ openstack network show 37aaff3a-6047-45ac-bf4f-a825e56fd2b3
    +---------------------------+----------------------------------------------------------------------------+
@@ -716,40 +716,45 @@ the user can create a port specifying a non-blank value in its
 
 .. code-block:: console
 
-   $ neutron port-create 37aaff3a-6047-45ac-bf4f-a825e56fd2b3 \
-     --dns-name my-vm --dns_domain port-domain.org.
-   Created a new port:
-   +-----------------------+---------------------------------------------------------------------------------------+
-   | Field                 | Value                                                                                 |
-   +-----------------------+---------------------------------------------------------------------------------------+
-   | admin_state_up        | True                                                                                  |
-   | allowed_address_pairs |                                                                                       |
-   | binding:vnic_type     | normal                                                                                |
-   | created_at            | 2017-08-16T22:05:57Z                                                                  |
-   | description           |                                                                                       |
-   | device_id             |                                                                                       |
-   | device_owner          |                                                                                       |
-   | dns_assignment        | {"hostname": "my-vm", "ip_address": "203.0.113.9", "fqdn": "my-vm.example.org."}      |
-   |                       | {"hostname": "my-vm", "ip_address": "2001:db8:10::9", "fqdn": "my-vm.example.org."}   |
-   | dns_domain            | port-domain.org.                                                                      |
-   | dns_name              | my-vm                                                                                 |
-   | extra_dhcp_opts       |                                                                                       |
-   | fixed_ips             | {"subnet_id": "277eca5d-9869-474b-960e-6da5951d09f7", "ip_address": "203.0.113.9"}    |
-   |                       | {"subnet_id": "eab47748-3f0a-4775-a09f-b0c24bb64bc4", "ip_address": "2001:db8:10::9"} |
-   | id                    | 422134a8-1088-458d-adbd-880863d8c07c                                                  |
-   | ip_allocation         | immediate                                                                             |
-   | mac_address           | fa:16:3e:fb:d6:24                                                                     |
-   | name                  |                                                                                       |
-   | network_id            | 37aaff3a-6047-45ac-bf4f-a825e56fd2b3                                                  |
-   | port_security_enabled | True                                                                                  |
-   | project_id            | d5660cb1e6934612a01b4fb2fb630725                                                      |
-   | revision_number       | 5                                                                                     |
-   | security_groups       | 07b21ad4-edb6-420b-bd76-9bb4aab0d135                                                  |
-   | status                | DOWN                                                                                  |
-   | tags                  |                                                                                       |
-   | tenant_id             | d5660cb1e6934612a01b4fb2fb630725                                                      |
-   | updated_at            | 2017-08-16T22:05:58Z                                                                  |
-   +-----------------------+---------------------------------------------------------------------------------------+
+   $ openstack port create --network 37aaff3a-6047-45ac-bf4f-a825e56fd2b3 --dns-name my-vm --dns-domain port-domain.org. test
+   +-------------------------+-------------------------------------------------------------------------------+
+   | Field                   | Value                                                                         |
+   +-------------------------+-------------------------------------------------------------------------------+
+   | admin_state_up          | UP                                                                            |
+   | allowed_address_pairs   |                                                                               |
+   | binding_host_id         | None                                                                          |
+   | binding_profile         | None                                                                          |
+   | binding_vif_details     | None                                                                          |
+   | binding_vif_type        | None                                                                          |
+   | binding_vnic_type       | normal                                                                        |
+   | created_at              | 2019-06-12T15:43:29Z                                                          |
+   | data_plane_status       | None                                                                          |
+   | description             |                                                                               |
+   | device_id               |                                                                               |
+   | device_owner            |                                                                               |
+   | dns_assignment          | fqdn='my-vm.example.org.', hostname='my-vm', ip_address='203.0.113.9'         |
+   |                         | fqdn='my-vm.example.org.', hostname='my-vm', ip_address='2001:db8:10::9'      |
+   | dns_domain              | port-domain.org.                                                              |
+   | dns_name                | my-vm                                                                         |
+   | extra_dhcp_opts         |                                                                               |
+   | fixed_ips               | ip_address='203.0.113.9', subnet_id='277eca5d-9869-474b-960e-6da5951d09f7'    |
+   |                         | ip_address='2001:db8:10::9', subnet_id='eab47748-3f0a-4775-a09f-b0c24bb64bc4' |
+   | id                      | 57541c27-f8a9-41f1-8dde-eb10155496e6                                          |
+   | mac_address             | fa:16:3e:55:d6:c7                                                             |
+   | name                    | test                                                                          |
+   | network_id              | 37aaff3a-6047-45ac-bf4f-a825e56fd2b3                                          |
+   | port_security_enabled   | True                                                                          |
+   | project_id              | 07b21ad4-edb6-420b-bd76-9bb4aab0d135                                          |
+   | propagate_uplink_status | None                                                                          |
+   | qos_policy_id           | None                                                                          |
+   | resource_request        | None                                                                          |
+   | revision_number         | 1                                                                             |
+   | security_group_ids      | 82227b10-d135-4bca-b41f-63c1f2286b3e                                          |
+   | status                  | DOWN                                                                          |
+   | tags                    |                                                                               |
+   | trunk_details           | None                                                                          |
+   | updated_at              | 2019-06-12T15:43:29Z                                                          |
+   +-------------------------+-------------------------------------------------------------------------------+
 
 In this case, the port's ``dns_name`` (``my-vm``) will be published in the
 ``port-domain.org.`` zone, as shown here:
