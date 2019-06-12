@@ -199,7 +199,7 @@ ironic_opts = [
                 help=_("Send notification events to ironic. (For example on "
                        "relevant port status changes.)")),
     cfg.StrOpt('region_name',
-               help=_('Name of region used to get Ironic endpoints. Useful if'
+               help=_('Name of region used to get Ironic endpoints. Useful if '
                       'keystone manages more than one region.')),
     cfg.StrOpt('endpoint_type',
                default='public',
