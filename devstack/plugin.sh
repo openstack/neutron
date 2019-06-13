@@ -5,6 +5,7 @@ source $LIBDIR/flavors
 source $LIBDIR/l2_agent
 source $LIBDIR/l2_agent_sriovnicswitch
 source $LIBDIR/l3_agent
+source $LIBDIR/l3_conntrack_helper
 source $LIBDIR/ml2
 source $LIBDIR/network_segment_range
 source $LIBDIR/qos
@@ -84,6 +85,9 @@ if [[ "$1" == "stack" ]]; then
                 fi
                 if is_service_enabled q-port-forwarding neutron-port-forwarding; then
                     configure_port_forwarding
+                fi
+                if is_service_enabled q-conntrack-helper neutron-conntrack-helper; then
+                    configure_l3_conntrack_helper
                 fi
                 configure_l3_agent
             fi
