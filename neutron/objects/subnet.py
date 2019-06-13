@@ -193,6 +193,7 @@ class Subnet(base.NeutronDbObject):
     VERSION = '1.0'
 
     db_model = models_v2.Subnet
+    new_facade = True
 
     fields = {
         'id': common_types.UUIDField(),
