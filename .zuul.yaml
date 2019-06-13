@@ -284,6 +284,7 @@
               enable_distributed_routing: True
               l2_population: True
               tunnel_types: vxlan
+              arp_responder: True
             ovs:
               tunnel_bridge: br-tun
               bridge_mappings: public:br-ex
@@ -316,6 +317,7 @@
                 enable_distributed_routing: True
                 l2_population: True
                 tunnel_types: vxlan
+                arp_responder: True
               ovs:
                 tunnel_bridge: br-tun
                 bridge_mappings: public:br-ex
@@ -363,6 +365,7 @@
               enable_distributed_routing: True
               l2_population: True
               tunnel_types: vxlan,gre
+              arp_responder: True
             securitygroup:
               firewall_driver: iptables_hybrid
           $NEUTRON_L3_CONF:
