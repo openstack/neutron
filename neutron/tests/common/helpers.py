@@ -72,7 +72,7 @@ def _register_agent(agent, plugin=None):
     if not plugin:
         plugin = FakePlugin()
     admin_context = context.get_admin_context()
-    plugin.create_or_update_agent(admin_context, agent)
+    plugin.create_or_update_agent(admin_context, agent, timeutils.utcnow())
     return plugin._get_agent_by_type_and_host(
         admin_context, agent['agent_type'], agent['host'])
 
