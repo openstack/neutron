@@ -81,7 +81,8 @@ class NeutronConfigFixture(ConfigFixture):
                 'policy_file': self._generate_policy_json(),
             },
             'agent': {
-                'report_interval': str(env_desc.agent_down_time / 2.0)
+                'report_interval': str(env_desc.agent_down_time / 2.0),
+                'log_agent_heartbeats': 'True',
             },
         })
         # Set root_helper/root_helper_daemon only when env var is set
