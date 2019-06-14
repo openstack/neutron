@@ -132,11 +132,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             return
         super(OpenvswitchMechanismDriver, self).bind_port(context)
 
-    def get_vif_type(self, context, agent, segment):
-        if (context.current.get(portbindings.VNIC_TYPE) ==
-                portbindings.VNIC_DIRECT):
-            return portbindings.VIF_TYPE_OVS
-
+    def get_supported_vif_type(self, agent):
         caps = agent['configurations'].get('ovs_capabilities', {})
         if (any(x in caps.get('iface_types', []) for x
                 in [a_const.OVS_DPDK_VHOST_USER,
@@ -145,6 +141,12 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                 a_const.OVS_DATAPATH_NETDEV):
             return portbindings.VIF_TYPE_VHOST_USER
         return self.vif_type
+
+    def get_vif_type(self, context, agent, segment):
+        if (context.current.get(portbindings.VNIC_TYPE) ==
+                portbindings.VNIC_DIRECT):
+            return portbindings.VIF_TYPE_OVS
+        return self.get_supported_vif_type(agent)
 
     def get_vhost_mode(self, iface_types):
         # NOTE(sean-k-mooney): this function converts the ovs vhost user

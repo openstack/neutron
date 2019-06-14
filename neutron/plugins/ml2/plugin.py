@@ -846,8 +846,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 agents = self.get_agents(
                     context, filters={'agent_type': [agent_type]})
                 for agent in agents:
-                    vif_types.append(mech_driver.obj.get_vif_type(
-                        context, agent, segments[0]))
+                    vif_types.append(
+                        mech_driver.obj.get_supported_vif_type(agent))
 
         filter_obj = obj_utils.NotIn(vif_types)
         filters = {portbindings.VIF_TYPE:

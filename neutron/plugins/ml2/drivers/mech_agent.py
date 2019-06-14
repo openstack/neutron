@@ -279,6 +279,10 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
     def get_vif_details(self, context, agent, segment):
         return self.vif_details
 
+    def get_supported_vif_type(self, agent):
+        """Return supported vif type appropriate for the agent."""
+        return self.vif_type
+
     def get_vif_type(self, context, agent, segment):
         """Return the vif type appropriate for the agent and segment."""
         return self.vif_type
