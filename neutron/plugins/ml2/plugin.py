@@ -63,7 +63,6 @@ from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import allowedaddresspairs as addr_exc
 from neutron_lib.exceptions import port_security as psec_exc
-from neutron_lib.objects import utils as obj_utils
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
@@ -849,12 +848,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     vif_types.append(
                         mech_driver.obj.get_supported_vif_type(agent))
 
-        filter_obj = obj_utils.NotIn(vif_types)
-        filters = {portbindings.VIF_TYPE:
-                   filter_obj.filter(models.PortBinding.vif_type),
-                   'network_id': [network['id']]}
-        if super(Ml2Plugin, self).get_ports_count(context,
-                                                  filters=filters):
+        if ports_obj.Port.check_network_ports_by_binding_types(
+                context, network['id'], vif_types, negative_search=True):
             msg = (_('Provider network attribute %(attr)s cannot be updated '
                      'if any port in the network has not the following '
                      '%(vif_field)s: %(vif_types)s') %

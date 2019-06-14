@@ -541,3 +541,27 @@ class Port(base.NeutronDbObject):
             ml2_models.PortBinding.vnic_type == vnic_type,
             ml2_models.PortBinding.host == host)
         return [cls._load_object(context, db_obj) for db_obj in query.all()]
+
+    @classmethod
+    def check_network_ports_by_binding_types(
+            cls, context, network_id, binding_types, negative_search=False):
+        """This method is to check whether networks have ports with given
+        binding_types.
+
+        :param context:
+        :param network_id: ID of network to check
+        :param binding_types: list of binding types to look for
+        :param negative_search: if set to true, ports with with binding_type
+                                other than "binding_types" will be counted
+        :return: True if any port is found, False otherwise
+        """
+        query = context.session.query(models_v2.Port).join(
+            ml2_models.PortBinding)
+        query = query.filter(models_v2.Port.network_id == network_id)
+        if negative_search:
+            query = query.filter(
+                ml2_models.PortBinding.vif_type.notin_(binding_types))
+        else:
+            query = query.filter(
+                ml2_models.PortBinding.vif_type.in_(binding_types))
+        return bool(query.count())

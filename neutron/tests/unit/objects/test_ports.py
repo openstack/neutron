@@ -495,3 +495,28 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         self.assertEqual(1, len(
             ports.Port.get_ports_by_vnic_type_and_host(
                 self.context, 'vnic_type1', 'host1')))
+
+    def test_check_network_ports_by_binding_types(self):
+        port1 = self._create_test_port()
+        network_id = port1.network_id
+        ports.PortBinding(
+            self.context,
+            host='host1', port_id=port1.id, status='ACTIVE',
+            vnic_type='vnic_type1', vif_type='vif_type1').create()
+
+        port2 = self._create_test_port(network_id=network_id)
+        ports.PortBinding(
+            self.context,
+            host='host2', port_id=port2.id, status='ACTIVE',
+            vnic_type='vnic_type2', vif_type='vif_type2').create()
+
+        self.assertTrue(
+            ports.Port.check_network_ports_by_binding_types(
+                self.context, network_id,
+                binding_types=['vif_type1', 'vif_type2']))
+
+        self.assertFalse(
+            ports.Port.check_network_ports_by_binding_types(
+                self.context, network_id,
+                binding_types=['vif_type1', 'vif_type2'],
+                negative_search=True))
