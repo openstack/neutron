@@ -242,7 +242,7 @@ def cidr_to_ip(ip_cidr):
 def cidr_mask(ip_cidr):
     """Returns the subnet mask length from a cidr
 
-    :param: An ipv4 or ipv6 cidr mask length
+    :param ip_cidr: An ipv4 or ipv6 cidr mask length
     """
     return netaddr.IPNetwork(ip_cidr).netmask.netmask_bits()
 
