@@ -92,7 +92,8 @@ class NeutronConfigFixture(ConfigFixture):
                 'lock_path': '$state_path/lock',
             },
             'agent': {
-                'report_interval': str(env_desc.agent_down_time // 2)
+                'report_interval': str(env_desc.agent_down_time // 2),
+                'log_agent_heartbeats': 'True',
             },
         })
         policy_file = self._generate_policy_json()
