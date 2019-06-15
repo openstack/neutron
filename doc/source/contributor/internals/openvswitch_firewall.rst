@@ -207,6 +207,8 @@ identifying the port (for egress traffic based on the switch port number, and
 for ingress traffic based on the network id and destination MAC address);
 ``register 6`` contains a value identifying the network (which is also the
 OVSDB port tag) to isolate connections into separate conntrack zones.
+For VLAN networks, the physical VLAN tag will be used to act as an extra
+match rule to do such identifying work as well.
 
 ::
 
