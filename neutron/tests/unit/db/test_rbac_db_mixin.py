@@ -54,6 +54,7 @@ class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
                               'admin_state_up': True,
                               'device_id': 'device_id',
                               'device_owner': 'device_owner',
+                              'project_id': target_tenant,
                               'tenant_id': target_tenant}}
 
         port = self.plugin.create_port(self.context, test_port)

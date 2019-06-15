@@ -1401,11 +1401,18 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             for port in port_list:
                 # Set up the port request dict
                 pdata = port.get('port')
+                project_id = pdata.get('project_id') or pdata.get('tenant_id')
+                security_group_ids = pdata.get('security_groups')
+                if security_group_ids is const.ATTR_NOT_SPECIFIED:
+                    security_group_ids = None
+                else:
+                    security_group_ids = set(security_group_ids)
                 if pdata.get('device_owner'):
                     self._enforce_device_owner_not_router_intf_or_device_id(
                         context, pdata.get('device_owner'),
-                        pdata.get('device_id'), pdata.get('tenant_id'))
-                bulk_port_data = dict(project_id=pdata.get('project_id'),
+                        pdata.get('device_id'), project_id)
+                bulk_port_data = dict(
+                    project_id=project_id,
                     name=pdata.get('name'),
                     network_id=pdata.get('network_id'),
                     admin_state_up=pdata.get('admin_state_up'),
@@ -1413,7 +1420,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         const.PORT_STATUS_ACTIVE),
                     device_id=pdata.get('device_id'),
                     device_owner=pdata.get('device_owner'),
-                    security_groups=pdata.get('security_groups'),
+                    security_group_ids=security_group_ids,
                     description=pdata.get('description'))
 
                 # Ensure that the networks exist.
@@ -1434,6 +1441,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                               mac=raw_mac_address)
                 eui_mac_address = netaddr.EUI(raw_mac_address,
                                               dialect=eui48.mac_unix_expanded)
+                port['port']['mac_address'] = str(eui_mac_address)
 
                 # Create the Port object
                 db_port_obj = ports_obj.Port(context,
@@ -1441,26 +1449,41 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                             id=uuidutils.generate_uuid(),
                                             **bulk_port_data)
                 db_port_obj.create()
-                port_dict = self._make_port_dict(db_port_obj,
-                                                 process_extensions=False)
-                port_compat = {'port': port_dict}
 
                 # Call IPAM to allocate IP addresses
                 try:
                     # TODO(njohnston): IPAM allocation needs to be revamped to
                     # be bulk-friendly.
-                    self.ipam.allocate_ips_for_port_and_store(
-                        context, db_port_obj, db_port_obj['id'])
+                    ips = self.ipam.allocate_ips_for_port_and_store(
+                            context, port, db_port_obj['id'])
+                    ipam_fixed_ips = []
+                    for ip in ips:
+                        fixed_ip = ports_obj.IPAllocation(
+                                port_id=db_port_obj['id'],
+                                subnet_id=ip['subnet_id'],
+                                network_id=network_id,
+                                ip_address=ip['ip_address'])
+                        ipam_fixed_ips.append(fixed_ip)
+
+                    db_port_obj['fixed_ips'] = ipam_fixed_ips
                     db_port_obj['ip_allocation'] = (ipalloc_apidef.
                                                 IP_ALLOCATION_IMMEDIATE)
                 except ipam_exc.DeferIpam:
                     db_port_obj['ip_allocation'] = (ipalloc_apidef.
                                                 IP_ALLOCATION_DEFERRED)
+
                 fixed_ips = pdata.get('fixed_ips')
                 if validators.is_attr_set(fixed_ips) and not fixed_ips:
                     # [] was passed explicitly as fixed_ips: unaddressed port.
                     db_port_obj['ip_allocation'] = (ipalloc_apidef.
                                                     IP_ALLOCATION_NONE)
+
+                # Make port dict
+                port_dict = self._make_port_dict(db_port_obj,
+                                                 process_extensions=False)
+                port_dict[portbindings.HOST_ID] = pdata.get(
+                    portbindings.HOST_ID)
+                port_compat = {'port': port_dict}
 
                 # Activities immediately post-port-creation
                 self.extension_manager.process_create_port(context, port_dict,
@@ -1475,6 +1498,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
                 # process port binding
                 binding = db.add_port_binding(context, port_dict['id'])
+                binding_host = pdata.get(
+                    portbindings.HOST_ID, const.ATTR_NOT_SPECIFIED)
+                if binding_host != const.ATTR_NOT_SPECIFIED:
+                    binding["host"] = binding_host
                 mech_context = driver_context.PortContext(self, context,
                                                           port_dict, network,
                                                           binding, None)

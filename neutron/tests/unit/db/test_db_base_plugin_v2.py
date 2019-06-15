@@ -586,6 +586,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         if neutron_context:
             # create a specific auth context for this request
             req.environ['neutron.context'] = neutron_context
+        elif hasattr(self, 'tenant_id'):
+            req.environ['neutron.context'] = context.Context('',
+                                                             self.tenant_id)
         return req.get_response(self._api_for_resource(resource))
 
     def _show(self, resource, id,

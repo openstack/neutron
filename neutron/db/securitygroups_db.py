@@ -771,7 +771,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             tenant_id = kwargs['original_' + resource]['tenant_id']
         else:
             tenant_id = kwargs[resource]['tenant_id']
-        self._ensure_default_security_group(context, tenant_id)
+        if tenant_id:
+            self._ensure_default_security_group(context, tenant_id)
 
     def _ensure_default_security_group(self, context, tenant_id):
         """Create a default security group if one doesn't exist.
