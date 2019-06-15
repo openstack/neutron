@@ -320,6 +320,18 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                 new_mac=port['mac_address'])
         return mac_change
 
+    def _reset_mac_for_direct_physical(self, orig_port, port, binding):
+        # when unbinding direct-physical port we need to free
+        # physical device MAC address so that other ports may reuse it
+        if (binding.vnic_type == portbindings.VNIC_DIRECT_PHYSICAL and
+                port.get('device_id') == '' and
+                port.get('device_owner') == '' and
+                orig_port['device_id'] != ''):
+            port['mac_address'] = self._generate_mac()
+            return True
+        else:
+            return False
+
     @registry.receives(resources.AGENT, [events.AFTER_UPDATE])
     def _retry_binding_revived_agents(self, resource, event, trigger,
                                       **kwargs):
@@ -1351,6 +1363,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if not binding:
                 raise exc.PortNotFound(port_id=id)
             mac_address_updated = self._check_mac_update_allowed(
+                port_db, attrs, binding)
+            mac_address_updated |= self._reset_mac_for_direct_physical(
                 port_db, attrs, binding)
             need_port_update_notify |= mac_address_updated
             original_port = self._make_port_dict(port_db)
