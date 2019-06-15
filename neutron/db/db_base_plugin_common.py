@@ -213,7 +213,7 @@ class DbBasePluginCommon(object):
                "admin_state_up": port["admin_state_up"],
                "status": port["status"],
                "fixed_ips": [{'subnet_id': ip["subnet_id"],
-                              'ip_address': ip["ip_address"]}
+                              'ip_address': str(ip["ip_address"])}
                              for ip in port["fixed_ips"]],
                "device_id": port["device_id"],
                "device_owner": port["device_owner"]}

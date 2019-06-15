@@ -66,6 +66,7 @@ class FakeL3PluginWithAgents(l3_hamode_db.L3_HA_NAT_db_mixin,
 
 class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
     _mechanism_drivers = ['openvswitch', 'fake_agent', 'l2population']
+    tenant = 'tenant'
 
     def setUp(self):
         super(TestL2PopulationRpcTestCase, self).setUp()
@@ -363,13 +364,15 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                              enable_dhcp=False) as snet:
                 with self.port(
                         subnet=snet,
+                        project_id=self.tenant,
                         device_owner=constants.DEVICE_OWNER_DVR_INTERFACE)\
                             as port:
                     port_id = port['port']['id']
                     plugin.update_distributed_port_binding(self.adminContext,
                         port_id, {'port': {portbindings.HOST_ID: HOST_4,
                         'device_id': router['id']}})
-                    port = self._show('ports', port_id)
+                    port = self._show('ports', port_id,
+                            neutron_context=self.adminContext)
                     self.assertEqual(portbindings.VIF_TYPE_DISTRIBUTED,
                                     port['port'][portbindings.VIF_TYPE])
                     self.callbacks.update_device_up(
