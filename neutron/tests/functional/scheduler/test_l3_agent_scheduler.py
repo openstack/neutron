@@ -53,8 +53,7 @@ class L3SchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _create_l3_agent(self, host, context, agent_mode='legacy',
                          state=True, ext_net_id=''):
-        agent = helpers.register_l3_agent(host, agent_mode,
-                                          ext_net_id=ext_net_id)
+        agent = helpers.register_l3_agent(host, agent_mode)
         helpers.set_agent_admin_state(agent.id, state)
         return agent
 

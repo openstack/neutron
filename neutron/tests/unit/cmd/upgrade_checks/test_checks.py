@@ -79,3 +79,30 @@ class TestChecks(base.BaseTestCase):
             self.assertIn('Host B', result.details)
             self.assertNotIn('Host A', result.details)
             self.assertNotIn('Host C', result.details)
+
+    def test_gateway_external_network_check_good(self):
+        agents = [
+            {'host': 'Host A', 'configurations': '{}'},
+            {'host': 'Host B',
+             'configurations': '{"gateway_external_network_id": ""}'}
+        ]
+        with mock.patch.object(checks, "get_l3_agents", return_value=agents):
+            result = checks.CoreChecks.gateway_external_network_check(
+                mock.Mock())
+            self.assertEqual(Code.SUCCESS, result.code)
+
+    def test_gateway_external_network_check_bad(self):
+        agents = [
+            {'host': 'Host A', 'configurations': '{}'},
+            {'host': 'Host B',
+             'configurations': '{"gateway_external_network_id": "net-uuid"}'},
+            {'host': 'Host C',
+             'configurations': '{"gateway_external_network_id": ""}'}
+        ]
+        with mock.patch.object(checks, "get_l3_agents", return_value=agents):
+            result = checks.CoreChecks.gateway_external_network_check(
+                mock.Mock())
+            self.assertEqual(Code.WARNING, result.code)
+            self.assertIn('Host B', result.details)
+            self.assertNotIn('Host A', result.details)
+            self.assertNotIn('Host C', result.details)

@@ -58,7 +58,6 @@ from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.services.revisions import revision_plugin
 from neutron.tests import base
-from neutron.tests.common import helpers
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -4017,18 +4016,12 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
 
 class L3BaseForIntTests(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
-    mock_rescheduling = True
-
     def setUp(self, plugin=None, ext_mgr=None, service_plugins=None):
         if not plugin:
             plugin = 'neutron.tests.unit.extensions.test_l3.TestL3NatIntPlugin'
         # for these tests we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
         ext_mgr = ext_mgr or L3TestExtensionManager()
-
-        if self.mock_rescheduling:
-            mock.patch('%s._check_router_needs_rescheduling' % plugin,
-                       new=lambda *a: False).start()
 
         super(L3BaseForIntTests, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
                                              service_plugins=service_plugins)
@@ -4067,7 +4060,6 @@ class L3NatDBIntAgentSchedulingTestCase(L3BaseForIntTests,
     def setUp(self, plugin='neutron.tests.unit.extensions.test_l3.'
                            'TestL3NatIntAgentSchedulingPlugin',
               ext_mgr=None, service_plugins=None):
-        self.mock_rescheduling = False
         super(L3NatDBIntAgentSchedulingTestCase, self).setUp(
             plugin, ext_mgr, service_plugins)
         self.adminContext = context.get_admin_context()
@@ -4078,55 +4070,6 @@ class L3NatDBIntAgentSchedulingTestCase(L3BaseForIntTests,
             self.adminContext, router_id)['agents']
         self.assertEqual(1, len(agents))
         self.assertEqual(agents[0]['host'], agent_host)
-
-    def test_update_gateway_agent_exists_supporting_network(self):
-        with self.router() as r, self.subnet() as s1, self.subnet() as s2:
-            self._set_net_external(s1['subnet']['network_id'])
-            l3_rpc_cb = l3_rpc.L3RpcCallback()
-            helpers.register_l3_agent(
-                host='host1',
-                ext_net_id=s1['subnet']['network_id'])
-            helpers.register_l3_agent(
-                host='host2', internal_only=False,
-                ext_net_id=s2['subnet']['network_id'])
-            l3_rpc_cb.get_router_ids(self.adminContext,
-                                     host='host1')
-            self._assert_router_on_agent(r['router']['id'], 'host1')
-
-            self._add_external_gateway_to_router(
-                r['router']['id'],
-                s1['subnet']['network_id'])
-            self._assert_router_on_agent(r['router']['id'], 'host1')
-
-            self._set_net_external(s2['subnet']['network_id'])
-            self._add_external_gateway_to_router(
-                r['router']['id'],
-                s2['subnet']['network_id'])
-            self._assert_router_on_agent(r['router']['id'], 'host2')
-
-    def test_update_gateway_agent_exists_supporting_multiple_network(self):
-        with self.router() as r, self.subnet() as s1, self.subnet() as s2:
-            self._set_net_external(s1['subnet']['network_id'])
-            l3_rpc_cb = l3_rpc.L3RpcCallback()
-            helpers.register_l3_agent(
-                host='host1',
-                ext_net_id=s1['subnet']['network_id'])
-            helpers.register_l3_agent(
-                host='host2', internal_only=False, ext_net_id='')
-            l3_rpc_cb.get_router_ids(self.adminContext,
-                                     host='host1')
-            self._assert_router_on_agent(r['router']['id'], 'host1')
-
-            self._add_external_gateway_to_router(
-                r['router']['id'],
-                s1['subnet']['network_id'])
-            self._assert_router_on_agent(r['router']['id'], 'host1')
-
-            self._set_net_external(s2['subnet']['network_id'])
-            self._add_external_gateway_to_router(
-                r['router']['id'],
-                s2['subnet']['network_id'])
-            self._assert_router_on_agent(r['router']['id'], 'host2')
 
     def test_router_update_gateway_scheduling_not_supported(self):
         plugin = directory.get_plugin(plugin_constants.L3)
@@ -4143,17 +4086,6 @@ class L3NatDBIntAgentSchedulingTestCase(L3BaseForIntTests,
                     self._add_external_gateway_to_router(
                         r['router']['id'],
                         s1['subnet']['network_id'])
-
-    def test_router_update_gateway_no_eligible_l3_agent(self):
-        with self.router() as r:
-            with self.subnet() as s1:
-                with self.subnet() as s2:
-                    self._set_net_external(s1['subnet']['network_id'])
-                    self._set_net_external(s2['subnet']['network_id'])
-                    self._add_external_gateway_to_router(
-                        r['router']['id'],
-                        s1['subnet']['network_id'],
-                        expected_code=exc.HTTPBadRequest.code)
 
 
 class L3RpcCallbackTestCase(base.BaseTestCase):

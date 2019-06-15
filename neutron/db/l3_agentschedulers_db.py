@@ -467,14 +467,10 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
             handle_internal_only_routers = agent_conf.get(
                 'handle_internal_only_routers', True)
-            gateway_external_network_id = agent_conf.get(
-                'gateway_external_network_id', None)
 
             ex_net_id = (sync_router['external_gateway_info'] or {}).get(
                 'network_id')
-            if ((not ex_net_id and not handle_internal_only_routers) or
-                (ex_net_id and gateway_external_network_id and
-                 ex_net_id != gateway_external_network_id)):
+            if not ex_net_id and not handle_internal_only_routers:
                 continue
 
             candidates.append(l3_agent)
