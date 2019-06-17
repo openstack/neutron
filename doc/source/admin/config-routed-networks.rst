@@ -382,13 +382,13 @@ segment contains one IPv4 subnet and one IPv6 subnet.
 
    .. code-block:: console
 
-      $ neutron dhcp-agent-list-hosting-net multisegment1
-      +--------------------------------------+-------------+----------------+-------+
-      | id                                   | host        | admin_state_up | alive |
-      +--------------------------------------+-------------+----------------+-------+
-      | c904ed10-922c-4c1a-84fd-d928abaf8f55 | compute0001 | True           | :-)   |
-      | e0b22cc0-d2a6-4f1c-b17c-27558e20b454 | compute0101 | True           | :-)   |
-      +--------------------------------------+-------------+----------------+-------+
+      $ openstack network agent list --agent-type dhcp --network multisegment1
+      +--------------------------------------+------------+-------------+-------------------+-------+-------+--------------------+
+      | ID                                   | Agent Type | Host        | Availability Zone | Alive | State | Binary             |
+      +--------------------------------------+------------+-------------+-------------------+-------+-------+--------------------+
+      | c904ed10-922c-4c1a-84fd-d928abaf8f55 | DHCP agent | compute0001 | nova              | :-)   | UP    | neutron-dhcp-agent |
+      | e0b22cc0-d2a6-4f1c-b17c-27558e20b454 | DHCP agent | compute0101 | nova              | :-)   | UP    | neutron-dhcp-agent |
+      +--------------------------------------+------------+-------------+-------------------+-------+-------+--------------------+
 
 #. Verify that inventories were created for each segment IPv4 subnet in the
    Compute service placement API (for the sake of brevity, only one of the
