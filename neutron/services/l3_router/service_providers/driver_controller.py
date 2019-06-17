@@ -17,6 +17,7 @@ from neutron_lib.callbacks import priority_group
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_const
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
@@ -160,7 +161,7 @@ class DriverController(object):
                                             'new': new_drv})
             _ensure_driver_supports_request(new_drv, payload.request_body)
             # TODO(kevinbenton): notify old driver explicitly of driver change
-            with payload.context.session.begin(subtransactions=True):
+            with db_api.CONTEXT_WRITER.using(payload.context):
                 registry.publish(
                     resources.ROUTER_CONTROLLER,
                     events.PRECOMMIT_DELETE_ASSOCIATIONS,
