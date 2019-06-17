@@ -112,50 +112,33 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
     # TODO(ihrachys): stop overriding those test cases, instead base test cases
     # should be expanded if there are missing bits there to support QoS objects
     def test_get_objects(self):
-        admin_context = self.context.elevated()
-        with mock.patch.object(self.context, 'elevated',
-                               return_value=admin_context) as context_mock:
-            objs = self._test_class.get_objects(self.context)
-        context_mock.assert_called_once_with()
+        objs = self._test_class.get_objects(self.context)
         self.get_objects_mock.assert_any_call(
-            self._test_class, admin_context, _pager=None)
+            self._test_class, self.context, _pager=None)
         self.assertItemsEqual(
             [test_base.get_obj_persistent_fields(obj) for obj in self.objs],
             [test_base.get_obj_persistent_fields(obj) for obj in objs])
 
     def test_get_objects_valid_fields(self):
-        admin_context = self.context.elevated()
-
         with mock.patch.object(
             db_api, 'get_objects',
             return_value=[self.db_objs[0]]) as get_objects_mock:
-
-            with mock.patch.object(
-                    self.context,
-                    'elevated',
-                    return_value=admin_context) as context_mock:
-
-                objs = self._test_class.get_objects(
-                    self.context,
-                    **self.valid_field_filter)
-                context_mock.assert_called_once_with()
+            objs = self._test_class.get_objects(
+                self.context,
+                **self.valid_field_filter)
             get_objects_mock.assert_any_call(
-                self._test_class, admin_context, _pager=None,
+                self._test_class, self.context, _pager=None,
                 **self.valid_field_filter)
         self._check_equal(self.objs[0], objs[0])
 
     def test_get_object(self):
-        admin_context = self.context.elevated()
         with mock.patch.object(db_api, 'get_object',
-                return_value=self.db_objs[0]) as get_object_mock, \
-                mock.patch.object(self.context, 'elevated',
-                return_value=admin_context) as context_mock:
+                return_value=self.db_objs[0]) as get_object_mock:
             obj = self._test_class.get_object(self.context, id='fake_id')
             self.assertTrue(self._is_test_class(obj))
             self._check_equal(self.objs[0], obj)
-            context_mock.assert_called_once_with()
             get_object_mock.assert_called_once_with(
-                self._test_class, admin_context, id='fake_id')
+                self._test_class, self.context, id='fake_id')
 
     def test_to_dict_makes_primitive_field_value(self):
         # is_shared_with_tenant requires DB
