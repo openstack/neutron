@@ -4,10 +4,6 @@
 IPAM configuration
 ==================
 
-.. note::
-
-   Experimental feature or incomplete documentation.
-
 Starting with the Liberty release, OpenStack Networking includes a pluggable
 interface for the IP Address Management (IPAM) function. This interface creates
 a driver framework for the allocation and de-allocation of subnets and IP

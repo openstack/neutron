@@ -33,11 +33,6 @@ to select a new master router.
    Therefore, we recommend that you upgrade to ``keepalived`` v1.2.16
    or greater when using this feature.
 
-.. note::
-
-   Experimental feature or incomplete documentation.
-
-
 Configuration example
 ~~~~~~~~~~~~~~~~~~~~~
 
