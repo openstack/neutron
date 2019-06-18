@@ -1388,8 +1388,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             fip_gw_port.return_value = agent_gateway_port[0]
             ri.create_dvr_external_gateway_on_agent(ext_gw_port)
             ri.connect_rtr_2_fip()
-            ri._get_floatingips_bound_to_host = mock.Mock(
-                return_value=True)
             self.assertTrue(fip_gw_port.called)
             self.assertTrue(create_fip.called)
             self.assertEqual(agent_gateway_port[0],
@@ -1643,8 +1641,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             fip_gw_port.return_value = agent_gateway_port[0]
             ri.create_dvr_external_gateway_on_agent(ext_gw_port)
             ri.connect_rtr_2_fip()
-            ri._get_floatingips_bound_to_host = mock.Mock(
-                return_value=True)
             self.assertTrue(fip_gw_port.called)
             self.assertEqual(agent_gateway_port[0],
                              ri.fip_ns.agent_gateway_port)
@@ -1694,8 +1690,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             fip_gw_port.return_value = agent_gateway_port[0]
             ri.create_dvr_external_gateway_on_agent(ext_gw_port)
             ri.connect_rtr_2_fip()
-            ri._get_floatingips_bound_to_host = mock.Mock(
-                return_value=True)
             self.assertTrue(fip_gw_port.called)
             self.assertEqual(agent_gateway_port[0],
                              ri.fip_ns.agent_gateway_port)
