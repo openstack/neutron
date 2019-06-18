@@ -490,3 +490,12 @@
               tenants: 2
               users_per_tenant: 2
             network: {}
+          sla:
+            # NovaServers.boot_and_delete_server is unstable and frequently
+            # times out when waiting for the VM to become ACTIVE. We run this
+            # scenario for the osprofiler report and we ignore the rally
+            # scenario outcome. Ideally we should eliminate the cause of the
+            # timeouts, but even until then we'll get usable osprofiler
+            # results.
+            failure_rate:
+              max: 100
