@@ -15,6 +15,7 @@
 
 import abc
 
+from neutron_lib.db import api as db_api
 import six
 
 
@@ -27,7 +28,7 @@ class BaseResourceFilter(object):
 
     def bind(self, context, agents, resource_id):
         """Bind the resource to the agents."""
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             for agent in agents:
                 # Load is being incremented here to reflect latest agent load
                 # even within the agent report interval. This will be very
