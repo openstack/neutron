@@ -19,6 +19,7 @@ import mock
 from neutron_lib.api.definitions import dhcpagentscheduler as das_apidef
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib import rpc as n_rpc
@@ -683,22 +684,20 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
     def _take_down_agent_and_run_reschedule(self, host):
         # take down the agent on host A and ensure B is alive
-        self.adminContext.session.begin(subtransactions=True)
-        query = self.adminContext.session.query(agent_model.Agent)
-        agt = query.filter_by(host=host).first()
-        agt.heartbeat_timestamp = (
-            agt.heartbeat_timestamp - datetime.timedelta(hours=1))
-        self.adminContext.session.commit()
+        with db_api.CONTEXT_WRITER.using(self.adminContext):
+            query = self.adminContext.session.query(agent_model.Agent)
+            agt = query.filter_by(host=host).first()
+            agt.heartbeat_timestamp = (
+                agt.heartbeat_timestamp - datetime.timedelta(hours=1))
 
         plugin = directory.get_plugin(plugin_constants.L3)
         plugin.reschedule_routers_from_down_agents()
 
     def _set_agent_admin_state_up(self, host, state):
-        self.adminContext.session.begin(subtransactions=True)
-        query = self.adminContext.session.query(agent_model.Agent)
-        agt_db = query.filter_by(host=host).first()
-        agt_db.admin_state_up = state
-        self.adminContext.session.commit()
+        with db_api.CONTEXT_WRITER.using(self.adminContext):
+            query = self.adminContext.session.query(agent_model.Agent)
+            agt_db = query.filter_by(host=host).first()
+            agt_db.admin_state_up = state
 
     def test_router_rescheduler_catches_rpc_db_and_reschedule_exceptions(self):
         with self.router():

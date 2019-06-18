@@ -19,6 +19,7 @@ from operator import itemgetter
 
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -41,7 +42,9 @@ class AutoScheduler(object):
         agents_per_network = cfg.CONF.dhcp_agents_per_network
         # a list of (agent, net_ids) tuples
         bindings_to_add = []
-        with context.session.begin(subtransactions=True):
+        # NOTE(ralonsoh) use writer manager to call get_network. See
+        # https://review.opendev.org/#/c/483518/. Must be changed to READER.
+        with db_api.CONTEXT_WRITER.using(context):
             fields = ['network_id', 'enable_dhcp', 'segment_id']
             subnets = plugin.get_subnets(context, fields=fields)
             net_ids = {}
@@ -230,7 +233,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         agents_per_network = cfg.CONF.dhcp_agents_per_network
         # TODO(gongysh) don't schedule the networks with only
         # subnets whose enable_dhcp is false
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_READER.using(context):
             network_hosted_agents = plugin.get_dhcp_agents_hosting_networks(
                 context, [network['id']], hosts=network.get('candidate_hosts'))
             if len(network_hosted_agents) >= agents_per_network:
@@ -241,7 +244,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
 
     def _get_active_agents(self, plugin, context, az_hints):
         """Return a list of active dhcp agents."""
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_READER.using(context):
             filters = {'agent_type': [constants.AGENT_TYPE_DHCP],
                        'admin_state_up': [True]}
             if az_hints:

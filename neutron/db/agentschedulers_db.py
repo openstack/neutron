@@ -19,6 +19,7 @@ import time
 
 from neutron_lib import constants
 from neutron_lib import context as ncontext
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.exceptions import dhcpagentscheduler as das_exc
@@ -378,7 +379,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
 
     def add_network_to_dhcp_agent(self, context, id, network_id):
         self._get_network(context, network_id)
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             agent_db = self._get_agent(context, id)
             if (agent_db['agent_type'] != constants.AGENT_TYPE_DHCP or
                     not services_available(agent_db['admin_state_up'])):

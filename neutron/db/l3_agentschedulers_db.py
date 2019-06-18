@@ -15,6 +15,7 @@
 
 from neutron_lib.api import extensions
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
@@ -159,7 +160,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         if not self.router_supports_scheduling(context, router_id):
             raise l3agentscheduler.RouterDoesntSupportScheduling(
                 router_id=router_id)
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             router = self.get_router(context, router_id)
             agent = self._get_agent(context, agent_id)
             self.validate_agent_router_combination(context, agent, router)
@@ -226,7 +227,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 context, router_id=router_id, l3_agent_id=agent_id)
 
     def _unschedule_router(self, context, router_id, agents_ids):
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             for agent_id in agents_ids:
                 self._unbind_router(context, router_id, agent_id)
 
@@ -238,7 +239,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         """
         cur_agents = self.list_l3_agents_hosting_router(
             context, router_id)['agents']
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             cur_agents_ids = [agent['id'] for agent in cur_agents]
             self._unschedule_router(context, router_id, cur_agents_ids)
 
@@ -390,7 +391,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 context, router_ids))
 
     def list_l3_agents_hosting_router(self, context, router_id):
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_READER.using(context):
             agents = self._get_l3_agents_hosting_routers(
                 context, [router_id])
         return {'agents': [self._make_agent_dict(agent)
