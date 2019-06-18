@@ -374,6 +374,5 @@ software load balancer. See the `Octavia project
 FWaaS
 ^^^^^
 
-The Firewall-as-a-Service (FWaaS) API is an experimental API that
-enables early adopters and vendors to test their networking
-implementations.
+The Firewall-as-a-Service (FWaaS) API allows to apply firewalls to OpenStack
+objects such as projects, routers, and router ports.

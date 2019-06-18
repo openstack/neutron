@@ -4,10 +4,6 @@
 Native Open vSwitch firewall driver
 ===================================
 
-.. note::
-
-   Experimental feature or incomplete documentation.
-
 Historically, Open vSwitch (OVS) could not interact directly with *iptables*
 to implement security groups. Thus, the OVS agent and Compute service use
 a Linux bridge between each instance (VM) and the OVS integration bridge
