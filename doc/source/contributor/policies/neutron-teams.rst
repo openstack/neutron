@@ -94,7 +94,7 @@ Some notes on the above:
   agents and ML2.
 * The client includes commands installed server side.
 * L3 includes the L3 agent, DVR, Dynamic routing and IPAM.
-* Services includes FWaaS, LBaaS, and VPNaaS.
+* Services includes FWaaS and VPNaaS.
 * Note these areas may change as the project evolves due to code refactoring,
   new feature areas, and libification of certain pieces of code.
 * Infra means interactions with infra from a neutron perspective

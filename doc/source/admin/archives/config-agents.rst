@@ -5,8 +5,8 @@ Configure neutron agents
 Plug-ins typically have requirements for particular software that must
 be run on each node that handles data packets. This includes any node
 that runs nova-compute and nodes that run dedicated OpenStack Networking
-service agents such as ``neutron-dhcp-agent``, ``neutron-l3-agent``,
-``neutron-metering-agent`` or ``neutron-lbaasv2-agent``.
+service agents such as ``neutron-dhcp-agent``, ``neutron-l3-agent`` or
+``neutron-metering-agent``.
 
 A data-forwarding node typically has a network interface with an IP
 address on the management network and another interface on the data
@@ -46,7 +46,7 @@ agent on each node.
 #. Use the NSX Administrator Guide to add the node as a Hypervisor
    by using the NSX Manager GUI. Even if your forwarding node has no
    VMs and is only used for services agents like ``neutron-dhcp-agent``
-   or ``neutron-lbaas-agent``, it should still be added to NSX as a
+   , it should still be added to NSX as a
    Hypervisor.
 
 #. After following the NSX Administrator Guide, use the page for this
@@ -347,76 +347,6 @@ The Neutron Metering agent resides beside neutron-l3-agent.
    .. code-block:: ini
 
       service_plugins = router,metering
-
-Configure Load-Balancer-as-a-Service (LBaaS v2)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. warning::
-   Neutron-lbaas is deprecated as of Queens. Load-Balancer-as-a-Service
-   (LBaaS v2) is now provided by the `Octavia project
-   <https://docs.openstack.org/octavia/latest/>`_. Please see the FAQ:
-   https://wiki.openstack.org/wiki/Neutron/LBaaS/Deprecation
-
-For the back end, use either ``Octavia`` or ``HAProxy``.
-This example uses Octavia.
-
-**To configure LBaaS V2**
-
-#. Install Octavia using your distribution's package manager.
-
-
-#. Edit the ``/etc/neutron/neutron_lbaas.conf`` file and change
-   the ``service_provider`` parameter to enable Octavia:
-
-   .. code-block:: ini
-
-      service_provider = LOADBALANCERV2:Octavia:neutron_lbaas.drivers.octavia.driver.OctaviaDriver:default
-
-
-#. Edit the ``/etc/neutron/neutron.conf`` file and add the
-   ``service_plugins`` parameter to enable the load-balancing plug-in:
-
-   .. code-block:: ini
-
-      service_plugins = neutron_lbaas.services.loadbalancer.plugin.LoadBalancerPluginv2
-
-   If this option is already defined, add the load-balancing plug-in to
-   the list using a comma as a separator. For example:
-
-   .. code-block:: ini
-
-      service_plugins = [already defined plugins],neutron_lbaas.services.loadbalancer.plugin.LoadBalancerPluginv2
-
-
-
-#. Create the required tables in the database:
-
-   .. code-block:: console
-
-      # neutron-db-manage --subproject neutron-lbaas upgrade head
-
-#. Restart the ``neutron-server`` service.
-
-
-#. Enable load balancing in the Project section of the dashboard.
-
-   .. warning::
-
-      Horizon panels are enabled only for LBaaSV1. LBaaSV2 panels are still
-      being developed.
-
-   By default, the ``enable_lb`` option is ``True`` in the `local_settings.py`
-   file.
-
-   .. code-block:: python
-
-      OPENSTACK_NEUTRON_NETWORK = {
-          'enable_lb': True,
-          ...
-      }
-
-   Apply the settings by restarting the web server. You can now view the
-   Load Balancer management options in the Project view in the dashboard.
 
 Configure Hyper-V L2 agent
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

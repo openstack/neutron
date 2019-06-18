@@ -60,20 +60,20 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
                     svc_type=service_type))
 
     def test_service_provider_driver_not_unique(self):
-        self._set_override([constants.LOADBALANCER + ':lbaas:driver'])
-        prov = {'service_type': constants.LOADBALANCER,
+        self._set_override([constants.FIREWALL + ':fwaas:driver'])
+        prov = {'service_type': constants.FIREWALL,
                 'name': 'name2',
                 'driver': 'driver',
                 'default': False}
         self.assertRaises(
             n_exc.Invalid,
-            self.manager.config['LOADBALANCER'].add_provider, prov)
+            self.manager.config['FIREWALL'].add_provider, prov)
 
     def test_get_service_providers(self):
         """Test that get_service_providers filters correctly."""
         self._set_override(
-            [constants.LOADBALANCER +
-             ':lbaas:driver_path1',
+            [constants.VPN +
+             ':vpnaas:driver_path1',
              constants.FIREWALL +
              ':fwaas:driver_path2'])
         ctx = context.get_admin_context()
@@ -82,7 +82,7 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
 
         res = self.manager.get_service_providers(
             ctx,
-            filters=dict(service_type=[constants.LOADBALANCER])
+            filters=dict(service_type=[constants.FIREWALL])
         )
         self.assertEqual(1, len(res))
 
@@ -96,21 +96,21 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
         self.assertRaises(
             n_exc.Invalid,
             self._set_override,
-            [constants.LOADBALANCER +
-            ':lbaas1:driver_path:default',
-            constants.LOADBALANCER +
-            ':lbaas2:driver_path:default'])
+            [constants.FIREWALL +
+            ':fwaas1:driver_path:default',
+            constants.FIREWALL +
+            ':fwaas2:driver_path:default'])
 
     def test_get_default_provider(self):
-        self._set_override([constants.LOADBALANCER +
-                            ':lbaas1:driver_path:default',
+        self._set_override([constants.FIREWALL +
+                            ':fwaas1:driver_path:default',
                             dp.DUMMY_SERVICE_TYPE +
-                            ':lbaas2:driver_path2'])
+                            ':fwaas2:driver_path2'])
         # can pass None as a context
         p = self.manager.get_default_service_provider(None,
-                                                      constants.LOADBALANCER)
-        self.assertEqual({'service_type': constants.LOADBALANCER,
-                          'name': 'lbaas1',
+                                                      constants.FIREWALL)
+        self.assertEqual({'service_type': constants.FIREWALL,
+                          'name': 'fwaas1',
                           'driver': 'driver_path',
                           'default': True}, p)
 
@@ -148,24 +148,24 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
                           for td in test_data}, names_by_id)
 
     def test_add_resource_association(self):
-        self._set_override([constants.LOADBALANCER +
-                            ':lbaas1:driver_path:default',
+        self._set_override([constants.FIREWALL +
+                            ':fwaas1:driver_path:default',
                             dp.DUMMY_SERVICE_TYPE +
-                            ':lbaas2:driver_path2'])
+                            ':fwaas2:driver_path2'])
         ctx = context.get_admin_context()
         self.manager.add_resource_association(ctx,
-                                              constants.LOADBALANCER,
-                                              'lbaas1',
+                                              constants.FIREWALL,
+                                              'fwaas1',
                                               uuidutils.generate_uuid())
         self.assertEqual(
             1, servicetype_obj.ProviderResourceAssociation.count(ctx))
         servicetype_obj.ProviderResourceAssociation.delete_objects(ctx)
 
     def test_invalid_resource_association(self):
-        self._set_override([constants.LOADBALANCER +
-                            ':lbaas1:driver_path:default',
+        self._set_override([constants.FIREWALL +
+                            ':fwaas1:driver_path:default',
                             dp.DUMMY_SERVICE_TYPE +
-                            ':lbaas2:driver_path2'])
+                            ':fwaas2:driver_path2'])
         ctx = context.get_admin_context()
         self.assertRaises(provconf.ServiceProviderNotFound,
                           self.manager.add_resource_association,
@@ -232,7 +232,7 @@ class ServiceTypeManagerExtTestCase(ServiceTypeExtensionTestCaseBase):
         self.service_providers = mock.patch.object(
             provconf.NeutronModule, 'service_providers').start()
         service_providers = [
-            constants.LOADBALANCER + ':lbaas:driver_path',
+            constants.FIREWALL + ':fwaas:driver_path',
             dp.DUMMY_SERVICE_TYPE + ':dummy:dummy_dr'
         ]
         self.service_providers.return_value = service_providers

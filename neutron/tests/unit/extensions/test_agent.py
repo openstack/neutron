@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
-from datetime import datetime
 import time
 
 from neutron_lib.api.definitions import agent as agent_apidef
@@ -38,8 +36,6 @@ L3_HOSTA = 'hosta'
 DHCP_HOSTA = 'hosta'
 L3_HOSTB = 'hostb'
 DHCP_HOSTC = 'hostc'
-LBAAS_HOSTA = 'hosta'
-LBAAS_HOSTB = 'hostb'
 
 
 class AgentTestExtensionManager(object):
@@ -72,7 +68,7 @@ class AgentDBTestMixIn(object):
             self.assertEqual(expected_res_status, agent_res.status_int)
         return agent_res
 
-    def _register_agent_states(self, lbaas_agents=False):
+    def _register_agent_states(self):
         """Register two L3 agents and two DHCP agents."""
         l3_hosta = helpers._get_l3_agent_dict(
             L3_HOSTA, constants.L3_AGENT_MODE_LEGACY)
@@ -85,28 +81,7 @@ class AgentDBTestMixIn(object):
         helpers.register_dhcp_agent(host=DHCP_HOSTA)
         helpers.register_dhcp_agent(host=DHCP_HOSTC)
 
-        res = [l3_hosta, l3_hostb, dhcp_hosta, dhcp_hostc]
-        if lbaas_agents:
-            lbaas_hosta = {
-                'binary': 'neutron-loadbalancer-agent',
-                'host': LBAAS_HOSTA,
-                'topic': 'LOADBALANCER_AGENT',
-                'configurations': {'device_drivers': ['haproxy_ns']},
-                'agent_type': constants.AGENT_TYPE_LOADBALANCER}
-            lbaas_hostb = copy.deepcopy(lbaas_hosta)
-            lbaas_hostb['host'] = LBAAS_HOSTB
-            callback = agents_db.AgentExtRpcCallback()
-            callback.report_state(
-                self.adminContext,
-                agent_state={'agent_state': lbaas_hosta},
-                time=datetime.utcnow().strftime(constants.ISO8601_TIME_FORMAT))
-            callback.report_state(
-                self.adminContext,
-                agent_state={'agent_state': lbaas_hostb},
-                time=datetime.utcnow().strftime(constants.ISO8601_TIME_FORMAT))
-            res += [lbaas_hosta, lbaas_hostb]
-
-        return res
+        return [l3_hosta, l3_hostb, dhcp_hosta, dhcp_hostc]
 
     def _register_dvr_agents(self):
         dvr_snat_agent = helpers.register_l3_agent(

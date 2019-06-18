@@ -1,0 +1,6 @@
+---
+deprecations:
+  - |
+    Neutron LBaaS has now been retired. References to neutron-lbaas have been
+    removed from neutron. For more information see
+    https://wiki.openstack.org/wiki/Neutron/LBaaS/Deprecation

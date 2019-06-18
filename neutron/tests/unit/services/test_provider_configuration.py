@@ -40,10 +40,10 @@ class ParseServiceProviderConfigurationTestCase(base.BaseTestCase):
         self.assertEqual([], providers)
 
     def test_parse_single_service_provider_opt(self):
-        self._set_override([constants.LOADBALANCER +
-                           ':lbaas:driver_path'])
-        expected = {'service_type': constants.LOADBALANCER,
-                    'name': 'lbaas',
+        self._set_override([constants.FIREWALL +
+                           ':fwaas:driver_path'])
+        expected = {'service_type': constants.FIREWALL,
+                    'name': 'fwaas',
                     'driver': 'driver_path',
                     'default': False}
         res = provconf.parse_service_provider_opt()
@@ -51,10 +51,10 @@ class ParseServiceProviderConfigurationTestCase(base.BaseTestCase):
         self.assertEqual([expected], res)
 
     def test_parse_single_default_service_provider_opt(self):
-        self._set_override([constants.LOADBALANCER +
-                           ':lbaas:driver_path:default'])
-        expected = {'service_type': constants.LOADBALANCER,
-                    'name': 'lbaas',
+        self._set_override([constants.FIREWALL +
+                           ':fwaas:driver_path:default'])
+        expected = {'service_type': constants.FIREWALL,
+                    'name': 'fwaas',
                     'driver': 'driver_path',
                     'default': True}
         res = provconf.parse_service_provider_opt()
@@ -62,10 +62,10 @@ class ParseServiceProviderConfigurationTestCase(base.BaseTestCase):
         self.assertEqual([expected], res)
 
     def test_parse_multi_service_provider_opt(self):
-        self._set_override([constants.LOADBALANCER +
-                            ':lbaas:driver_path',
-                            constants.LOADBALANCER + ':name1:path1',
-                            constants.LOADBALANCER +
+        self._set_override([constants.FIREWALL +
+                            ':fwaas:driver_path',
+                            constants.FIREWALL + ':name1:path1',
+                            constants.FIREWALL +
                             ':name2:path2:default'])
         res = provconf.parse_service_provider_opt()
         # This parsing crosses repos if additional projects are installed,
@@ -73,18 +73,18 @@ class ParseServiceProviderConfigurationTestCase(base.BaseTestCase):
         self.assertGreaterEqual(len(res), 3)
 
     def test_parse_service_provider_invalid_format(self):
-        self._set_override([constants.LOADBALANCER +
-                           ':lbaas:driver_path',
+        self._set_override([constants.FIREWALL +
+                           ':fwaas:driver_path',
                            'svc_type:name1:path1:def'])
         self.assertRaises(n_exc.Invalid, provconf.parse_service_provider_opt)
-        self._set_override([constants.LOADBALANCER +
+        self._set_override([constants.FIREWALL +
                            ':',
                            'svc_type:name1:path1:def'])
         self.assertRaises(n_exc.Invalid, provconf.parse_service_provider_opt)
 
     def test_parse_service_provider_name_too_long(self):
         name = 'a' * 256
-        self._set_override([constants.LOADBALANCER +
+        self._set_override([constants.FIREWALL +
                            ':' + name + ':driver_path',
                            'svc_type:name1:path1:def'])
         self.assertRaises(n_exc.Invalid, provconf.parse_service_provider_opt)
@@ -121,20 +121,20 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
 
     def test_add_provider(self):
         pconf = provconf.ProviderConfiguration()
-        prov = {'service_type': constants.LOADBALANCER,
+        prov = {'service_type': constants.FIREWALL,
                 'name': 'name',
                 'driver': 'path',
                 'default': False}
         pconf.add_provider(prov)
         self.assertEqual(1, len(pconf.providers))
-        self.assertEqual([(constants.LOADBALANCER, 'name')],
+        self.assertEqual([(constants.FIREWALL, 'name')],
                          list(pconf.providers.keys()))
         self.assertEqual([{'driver': 'path', 'default': False}],
                          list(pconf.providers.values()))
 
     def test_add_duplicate_provider(self):
         pconf = provconf.ProviderConfiguration()
-        prov = {'service_type': constants.LOADBALANCER,
+        prov = {'service_type': constants.FIREWALL,
                 'name': 'name',
                 'driver': 'path',
                 'default': False}
@@ -143,15 +143,15 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
         self.assertEqual(1, len(pconf.providers))
 
     def test_get_service_providers(self):
-        self._set_override([constants.LOADBALANCER + ':name:path',
-                            constants.LOADBALANCER + ':name2:path2',
+        self._set_override([constants.FIREWALL + ':name:path',
+                            constants.FIREWALL + ':name2:path2',
                             'st2:name:driver:default',
                             'st3:name2:driver2:default'])
-        provs = [{'service_type': constants.LOADBALANCER,
+        provs = [{'service_type': constants.FIREWALL,
                   'name': 'name',
                   'driver': 'path',
                   'default': False},
-                 {'service_type': constants.LOADBALANCER,
+                 {'service_type': constants.FIREWALL,
                   'name': 'name2',
                   'driver': 'path2',
                   'default': False},
@@ -173,13 +173,13 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
             self.assertEqual([prov], p)
 
     def test_get_service_providers_with_fields(self):
-        self._set_override([constants.LOADBALANCER + ":name:path",
-                            constants.LOADBALANCER + ":name2:path2"])
-        provs = [{'service_type': constants.LOADBALANCER,
+        self._set_override([constants.FIREWALL + ":name:path",
+                            constants.FIREWALL + ":name2:path2"])
+        provs = [{'service_type': constants.FIREWALL,
                   'name': 'name',
                   'driver': 'path',
                   'default': False},
-                 {'service_type': constants.LOADBALANCER,
+                 {'service_type': constants.FIREWALL,
                   'name': 'name2',
                   'driver': 'path2',
                   'default': False}]

@@ -19,8 +19,6 @@ from neutron_lib.plugins import constants as p_const
 # Maps extension alias to service type that
 # can be implemented by the core plugin.
 EXT_TO_SERVICE_MAPPING = {
-    'lbaas': p_const.LOADBALANCER,
-    'lbaasv2': p_const.LOADBALANCERV2,
     'fwaas': p_const.FIREWALL,
     'vpnaas': p_const.VPN,
     'metering': p_const.METERING,

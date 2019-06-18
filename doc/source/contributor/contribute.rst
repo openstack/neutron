@@ -540,7 +540,7 @@ Extensions can be loaded in two ways:
 Service Providers
 ~~~~~~~~~~~~~~~~~
 
-If your project uses service provider(s) the same way VPNAAS and LBAAS do, you
+If your project uses service provider(s) the same way VPNAAS does, you
 specify your service provider in your ``project_name.conf`` file like so::
 
     [service_providers]

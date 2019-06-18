@@ -33,7 +33,7 @@ netns_opts = [
                 default=False,
                 help=_('Delete the namespace by removing all devices.')),
     cfg.StrOpt('agent-type',
-               choices=['dhcp', 'l3', 'lbaas'],
+               choices=['dhcp', 'l3'],
                help=_('Cleanup resources of a specific agent type only.')),
 ]
 

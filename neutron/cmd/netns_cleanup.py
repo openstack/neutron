@@ -37,12 +37,10 @@ from neutron.conf.agent import common as agent_config
 from neutron.conf.agent import dhcp as dhcp_config
 
 LOG = logging.getLogger(__name__)
-LB_NS_PREFIX = 'qlbaas-'
 NS_PREFIXES = {
     'dhcp': [dhcp.NS_PREFIX],
     'l3': [namespaces.NS_PREFIX, dvr_snat_ns.SNAT_NS_PREFIX,
            dvr_fip_ns.FIP_NS_PREFIX],
-    'lbaas': [LB_NS_PREFIX],
 }
 SIGTERM_WAITTIME = 10
 NETSTAT_PIDS_REGEX = re.compile(r'.* (?P<pid>\d{2,6})/.*')

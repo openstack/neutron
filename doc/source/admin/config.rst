@@ -21,7 +21,6 @@ Configuration
    config-fip-port-forwardings
    config-ipam
    config-ipv6
-   config-lbaas
    config-logging
    config-macvtap
    config-mtu

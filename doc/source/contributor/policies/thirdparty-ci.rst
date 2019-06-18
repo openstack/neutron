@@ -29,8 +29,8 @@ You can see a programmatic example of the exceptions here [3]_.
 If your code is in a neutron-\*aas repo, you should run against the tests
 for that repo. You may also run against every neutron change, if your service
 driver is using neutron interfaces that are not provided by your service
-plugin (e.g. loadbalancer/plugin.py). If you are using only plugin interfaces,
-it should be safe to test against only the service repo tests.
+plugin (e.g. firewall/fwaas_plugin_v2.py). If you are using only plugin
+interfaces, it should be safe to test against only the service repo tests.
 
 What Tests To Run
 -----------------
@@ -46,11 +46,6 @@ example tempest setup for devstack-gate::
 
    export DEVSTACK_GATE_NEUTRON=1
    export DEVSTACK_GATE_TEMPEST_REGEX='(?!.*\[.*\bslow\b.*\])((network)|(neutron))'
-
-An example setup for LBaaS::
-
-   export DEVSTACK_GATE_NEUTRON=1
-   export DEVSTACK_GATE_TEMPEST_REGEX='(?!.*\[.*\bslow\b.*\])(alancer|SimpleReadOnlyNeutron|tempest.api.network)'
 
 Third Party CI Voting
 ---------------------
