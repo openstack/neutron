@@ -1633,6 +1633,37 @@ class TestMl2PluginOnly(Ml2PluginV2TestCase):
         with testtools.ExpectedException(exc.PortBound):
             self._test_check_mac_update_allowed(portbindings.VIF_TYPE_OVS)
 
+    def _test_reset_mac_for_direct_physical(self, direct_physical=True,
+                                            unbinding=True):
+        plugin = directory.get_plugin()
+        port = {'device_id': '123', 'device_owner': 'compute:nova'}
+        new_attrs = ({'device_id': '', 'device_owner': ''} if unbinding else
+            {'name': 'new'})
+        binding = mock.Mock()
+        binding.vnic_type = (
+            portbindings.VNIC_DIRECT_PHYSICAL if direct_physical else
+            portbindings.VNIC_NORMAL)
+        new_mac = plugin._reset_mac_for_direct_physical(
+            port, new_attrs, binding)
+        if direct_physical and unbinding:
+            self.assertTrue(new_mac)
+            self.assertIsNotNone(new_attrs.get('mac_address'))
+        else:
+            self.assertFalse(new_mac)
+            self.assertIsNone(new_attrs.get('mac_address'))
+
+    def test_reset_mac_for_direct_physical(self):
+        self._test_reset_mac_for_direct_physical()
+
+    def test_reset_mac_for_direct_physical_not_physycal(self):
+        self._test_reset_mac_for_direct_physical(False, True)
+
+    def test_reset_mac_for_direct_physical_no_unbinding(self):
+        self._test_reset_mac_for_direct_physical(True, False)
+
+    def test_reset_mac_for_direct_physical_no_unbinding_not_physical(self):
+        self._test_reset_mac_for_direct_physical(False, False)
+
     def test__device_to_port_id_prefix_names(self):
         input_output = [('sg-abcdefg', 'abcdefg'),
                         ('tap123456', '123456'),
