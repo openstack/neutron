@@ -31,6 +31,7 @@ class SubPort(base.NeutronDbObject):
     VERSION = '1.0'
 
     db_model = models.SubPort
+    new_facade = True
 
     primary_keys = ['port_id']
     foreign_keys = {'Trunk': {'trunk_id': 'id'}}
@@ -51,33 +52,35 @@ class SubPort(base.NeutronDbObject):
         return _dict
 
     def create(self):
-        with self.db_context_writer(self.obj_context):
-            try:
+        try:
+            with self.db_context_writer(self.obj_context):
                 super(SubPort, self).create()
-            except o_db_exc.DBReferenceError as ex:
-                if ex.key_table is None:
-                    # NOTE(ivc): 'key_table' is provided by 'oslo.db' [1]
-                    # only for a limited set of database backends (i.e.
-                    # MySQL and PostgreSQL). Other database backends
-                    # (including SQLite) would have 'key_table' set to None.
-                    # We emulate the 'key_table' support for such database
-                    # backends.
-                    #
-                    # [1] https://github.com/openstack/oslo.db/blob/3fadd5a
-                    #     /oslo_db/sqlalchemy/exc_filters.py#L190-L203
+        except o_db_exc.DBReferenceError as ex:
+            if ex.key_table is None:
+                # NOTE(ivc): 'key_table' is provided by 'oslo.db' [1]
+                # only for a limited set of database backends (i.e.
+                # MySQL and PostgreSQL). Other database backends
+                # (including SQLite) would have 'key_table' set to None.
+                # We emulate the 'key_table' support for such database
+                # backends.
+                #
+                # [1] https://github.com/openstack/oslo.db/blob/3fadd5a
+                #     /oslo_db/sqlalchemy/exc_filters.py#L190-L203
+                self.obj_context.session.rollback()
+                with self.db_context_reader(self.obj_context):
                     if not Trunk.get_object(self.obj_context,
                                             id=self.trunk_id):
                         ex.key_table = Trunk.db_model.__tablename__
 
-                if ex.key_table == Trunk.db_model.__tablename__:
-                    raise t_exc.TrunkNotFound(trunk_id=self.trunk_id)
+            if ex.key_table == Trunk.db_model.__tablename__:
+                raise t_exc.TrunkNotFound(trunk_id=self.trunk_id)
 
-                raise n_exc.PortNotFound(port_id=self.port_id)
-            except o_exc.NeutronDbObjectDuplicateEntry:
-                raise t_exc.DuplicateSubPort(
-                    segmentation_type=self.segmentation_type,
-                    segmentation_id=self.segmentation_id,
-                    trunk_id=self.trunk_id)
+            raise n_exc.PortNotFound(port_id=self.port_id)
+        except o_exc.NeutronDbObjectDuplicateEntry:
+            raise t_exc.DuplicateSubPort(
+                segmentation_type=self.segmentation_type,
+                segmentation_id=self.segmentation_id,
+                trunk_id=self.trunk_id)
 
 
 @base.NeutronObjectRegistry.register
@@ -87,6 +90,7 @@ class Trunk(base.NeutronDbObject):
     VERSION = '1.1'
 
     db_model = models.Trunk
+    new_facade = True
 
     fields = {
         'admin_state_up': obj_fields.BooleanField(),
