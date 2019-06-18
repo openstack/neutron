@@ -846,7 +846,17 @@ class IpRouteCommandTestCase(functional_base.BaseSudoTestCase):
         self.cidrs = ['192.168.0.0/24', '10.0.0.0/8', '2001::/64', 'faaa::/96']
 
     def _assert_route(self, ip_version, table=None, source_prefix=None,
-                      cidr=None, scope=None, via=None, metric=None):
+                      cidr=None, scope=None, via=None, metric=None,
+                      not_in=False):
+        if not_in:
+            fn = lambda: cmp not in self.device.route.list_routes(ip_version,
+                                                                  table=table)
+            msg = 'Route found: %s'
+        else:
+            fn = lambda: cmp in self.device.route.list_routes(ip_version,
+                                                              table=table)
+            msg = 'Route not found: %s'
+
         if cidr:
             ip_version = utils.get_ip_version(cidr)
         else:
@@ -868,11 +878,9 @@ class IpRouteCommandTestCase(functional_base.BaseSudoTestCase):
                'via': via,
                'priority': metric}
         try:
-            utils.wait_until_true(lambda: cmp in self.device.route.list_routes(
-                ip_version, table=table), timeout=5)
+            utils.wait_until_true(fn, timeout=5)
         except utils.WaitTimeout:
-            raise self.fail('Route not found: %s' % cmp)
-        return True
+            raise self.fail(msg % cmp)
 
     def test_add_route_table(self):
         tables = (None, 1, 253, 254, 255)
@@ -929,7 +937,7 @@ class IpRouteCommandTestCase(functional_base.BaseSudoTestCase):
         routes = self.device.route.list_onlink_routes(constants.IP_VERSION_4)
         self.assertEqual(len(cidr_ipv4), len(routes))
 
-    def test_get_gateway(self):
+    def test_get_and_delete_gateway(self):
         gateways = (str(netaddr.IPNetwork(self.device_cidr_ipv4).ip),
                     str(netaddr.IPNetwork(self.device_cidr_ipv6).ip + 1))
         scopes = ('global', 'site', 'link')
@@ -944,4 +952,33 @@ class IpRouteCommandTestCase(functional_base.BaseSudoTestCase):
                                metric=metric, table=table)
             self.assertEqual(gateway, self.device.route.get_gateway(
                 ip_version=ip_version, table=table)['via'])
-            self.device.route.delete_gateway(gateway, table=table)
+
+            self.device.route.delete_gateway(gateway, table=table, scope=scope)
+            self.assertIsNone(self.device.route.get_gateway(
+                ip_version=ip_version, table=table))
+
+    def test_delete_route(self):
+        scopes = ('global', 'site', 'link')
+        tables = (None, 1, 254, 255)
+        for cidr, scope, table in itertools.product(
+                self.cidrs, scopes, tables):
+            ip_version = utils.get_ip_version(cidr)
+            self.device.route.add_route(cidr, table=table, scope=scope)
+            self._assert_route(ip_version, cidr=cidr, scope=scope, table=table)
+
+            self.device.route.delete_route(cidr, table=table, scope=scope)
+            self._assert_route(ip_version, cidr=cidr, scope=scope, table=table,
+                               not_in=True)
+
+    def test_flush(self):
+        tables = (None, 1, 200)
+        ip_versions = (constants.IP_VERSION_4, constants.IP_VERSION_6)
+        for cidr, table in itertools.product(self.cidrs, tables):
+            self.device.route.add_route(cidr, table=table)
+
+        for ip_version, table in itertools.product(ip_versions, tables):
+            routes = self.device.route.list_routes(ip_version, table=table)
+            self.assertGreater(len(routes), 0)
+            self.device.route.flush(ip_version, table=table)
+            routes = self.device.route.list_routes(ip_version, table=table)
+            self.assertEqual([], routes)

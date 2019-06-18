@@ -17,7 +17,6 @@ import collections
 
 import netaddr
 from neutron_lib import constants as lib_constants
-from neutron_lib import exceptions
 from oslo_log import log as logging
 from oslo_utils import excutils
 import six
@@ -26,6 +25,7 @@ from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_router_base
 from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
+from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 
 LOG = logging.getLogger(__name__)
 # xor-folding mask used for IPv6 rule index
@@ -180,7 +180,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
             device = ip_lib.IPDevice(fip_2_rtr_name, namespace=fip_ns_name)
 
-            device.route.delete_route(fip_cidr, str(rtr_2_fip.ip))
+            device.route.delete_route(fip_cidr, via=str(rtr_2_fip.ip))
             return device
 
     def floating_ip_moved_dist(self, fip):
@@ -322,7 +322,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                                          snat_idx):
         try:
             ns_ip_device.route.delete_gateway(gw_ip_addr, table=snat_idx)
-        except exceptions.DeviceNotFoundError:
+        except priv_ip_lib.NetworkInterfaceNotFound:
             pass
 
     def _stale_ip_rule_cleanup(self, namespace, ns_ipd, ip_version):
@@ -676,7 +676,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 return
             for subnet in router_port['subnets']:
                 rtr_port_cidr = subnet['cidr']
-                device.route.delete_route(rtr_port_cidr, str(rtr_2_fip_ip))
+                device.route.delete_route(rtr_port_cidr, via=str(rtr_2_fip_ip))
 
     def _add_interface_route_to_fip_ns(self, router_port):
         rtr_2_fip_ip, fip_2_rtr_name = self.get_rtr_fip_ip_and_interface_name()

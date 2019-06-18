@@ -650,29 +650,56 @@ def delete_ip_rule(namespace, **kwargs):
         raise
 
 
+def _make_pyroute2_route_args(namespace, ip_version, cidr, device, via, table,
+                              metric, scope, protocol):
+    """Returns a dictionary of arguments to be used in pyroute route commands
+
+    :param namespace: (string) name of the namespace
+    :param ip_version: (int) [4, 6]
+    :param cidr: (string) source IP or CIDR address (IPv4, IPv6)
+    :param device: (string) input interface name
+    :param via: (string) gateway IP address
+    :param table: (string, int) table number or name
+    :param metric: (int) route metric
+    :param scope: (int) route scope
+    :param protocol: (string) protocol name (pyroute2.netlink.rtnl.rt_proto)
+    :return: a dictionary with the kwargs needed in pyroute rule commands
+    """
+    args = {'family': _IP_VERSION_FAMILY_MAP[ip_version]}
+    if not scope:
+        scope = 'global' if via else 'link'
+    scope = _get_scope_name(scope)
+    if scope:
+        args['scope'] = scope
+    if cidr:
+        args['dst'] = cidr
+    if device:
+        args['oif'] = get_link_id(device, namespace)
+    if via:
+        args['gateway'] = via
+    if table:
+        args['table'] = int(table)
+    if metric:
+        args['priority'] = int(metric)
+    if protocol:
+        args['proto'] = protocol
+    return args
+
+
 @privileged.default.entrypoint
+# NOTE(slaweq): Because of issue with pyroute2.NetNS objects running in threads
+# we need to lock this function to workaround this issue.
+# For details please check https://bugs.launchpad.net/neutron/+bug/1811515
 @lockutils.synchronized("privileged-ip-lib")
 def add_ip_route(namespace, cidr, ip_version, device=None, via=None,
                  table=None, metric=None, scope=None, **kwargs):
     """Add an IP route"""
+    kwargs.update(_make_pyroute2_route_args(
+        namespace, ip_version, cidr, device, via, table, metric, scope,
+        'static'))
     try:
         with get_iproute(namespace) as ip:
-            family = _IP_VERSION_FAMILY_MAP[ip_version]
-            if not scope:
-                scope = 'global' if via else 'link'
-            scope = _get_scope_name(scope)
-            if cidr:
-                kwargs['dst'] = cidr
-            if via:
-                kwargs['gateway'] = via
-            if table:
-                kwargs['table'] = int(table)
-            if device:
-                kwargs['oif'] = get_link_id(device, namespace)
-            if metric:
-                kwargs['priority'] = int(metric)
-            ip.route('replace', family=family, scope=scope, proto='static',
-                     **kwargs)
+            ip.route('replace', **kwargs)
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -680,17 +707,36 @@ def add_ip_route(namespace, cidr, ip_version, device=None, via=None,
 
 
 @privileged.default.entrypoint
+# NOTE(slaweq): Because of issue with pyroute2.NetNS objects running in threads
+# we need to lock this function to workaround this issue.
+# For details please check https://bugs.launchpad.net/neutron/+bug/1811515
 @lockutils.synchronized("privileged-ip-lib")
 def list_ip_routes(namespace, ip_version, device=None, table=None, **kwargs):
     """List IP routes"""
+    kwargs.update(_make_pyroute2_route_args(
+        namespace, ip_version, None, device, None, table, None, None, None))
     try:
         with get_iproute(namespace) as ip:
-            family = _IP_VERSION_FAMILY_MAP[ip_version]
-            if table:
-                kwargs['table'] = table
-            if device:
-                kwargs['oif'] = get_link_id(device, namespace)
-            return make_serializable(ip.route('show', family=family, **kwargs))
+            return make_serializable(ip.route('show', **kwargs))
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+
+
+@privileged.default.entrypoint
+# NOTE(slaweq): Because of issue with pyroute2.NetNS objects running in threads
+# we need to lock this function to workaround this issue.
+# For details please check https://bugs.launchpad.net/neutron/+bug/1811515
+@lockutils.synchronized("privileged-ip-lib")
+def delete_ip_route(namespace, cidr, ip_version, device=None, via=None,
+                    table=None, scope=None, **kwargs):
+    """Delete an IP route"""
+    kwargs.update(_make_pyroute2_route_args(
+        namespace, ip_version, cidr, device, via, table, None, scope, None))
+    try:
+        with get_iproute(namespace) as ip:
+            ip.route('del', **kwargs)
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
