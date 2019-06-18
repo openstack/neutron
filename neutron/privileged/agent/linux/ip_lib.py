@@ -394,7 +394,8 @@ def get_link_attributes(device, namespace):
         'brd': link.get_attr('IFLA_BROADCAST'),
         'link/ether': link.get_attr('IFLA_ADDRESS'),
         'alias': link.get_attr('IFLA_IFALIAS'),
-        'allmulticast': bool(link['flags'] & ifinfmsg.IFF_ALLMULTI)
+        'allmulticast': bool(link['flags'] & ifinfmsg.IFF_ALLMULTI),
+        'link_kind': link.get_nested('IFLA_LINKINFO', 'IFLA_INFO_KIND')
     }
 
 

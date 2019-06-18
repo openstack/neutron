@@ -500,6 +500,10 @@ class IpLinkCommand(IpDeviceCommandBase):
         return self.attributes.get('alias')
 
     @property
+    def link_kind(self):
+        return self.attributes.get('link_kind')
+
+    @property
     def attributes(self):
         return privileged.get_link_attributes(self.name,
                                               self._parent.namespace)
