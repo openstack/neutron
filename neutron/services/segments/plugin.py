@@ -217,9 +217,10 @@ class NovaSegmentNotifier(object):
             ipv4_inventory = self.p_client.get_inventory(event.segment_id,
                                                          IPV4_RESOURCE_CLASS)
             if event.total:
-                ipv4_inventory['total'] += event.total
+                ipv4_inventory[IPV4_RESOURCE_CLASS]['total'] += event.total
             if event.reserved:
-                ipv4_inventory['reserved'] += event.reserved
+                ipv4_inventory[IPV4_RESOURCE_CLASS]['reserved'] += \
+                    event.reserved
             try:
                 self.p_client.update_resource_provider_inventory(
                     event.segment_id, ipv4_inventory, IPV4_RESOURCE_CLASS)
@@ -251,10 +252,12 @@ class NovaSegmentNotifier(object):
         self.p_client.associate_aggregates(segment_id, [aggregate_uuid])
         for mapping in segment_host_mappings:
             self.n_client.aggregates.add_host(aggregate.id, mapping.host)
-        ipv4_inventory = {'total': total, 'reserved': reserved,
-                          'min_unit': 1, 'max_unit': 1, 'step_size': 1,
-                          'allocation_ratio': 1.0,
-                          'resource_class': IPV4_RESOURCE_CLASS}
+        ipv4_inventory = {
+            IPV4_RESOURCE_CLASS: {
+                'total': total, 'reserved': reserved, 'min_unit': 1,
+                'max_unit': 1, 'step_size': 1, 'allocation_ratio': 1.0,
+            }
+        }
         self.p_client.update_resource_provider_inventories(
             segment_id, ipv4_inventory)
 
