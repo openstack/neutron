@@ -70,10 +70,11 @@ class DhcpRpcCallback(object):
     #     1.6 - Removed get_active_networks. It's not used by reference
     #           DHCP agent since Havana, so similar rationale for not bumping
     #           the major version as above applies here too.
+    #     1.7 - Add get_networks
 
     target = oslo_messaging.Target(
         namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
-        version='1.6')
+        version='1.7')
 
     def _get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active networks."""
@@ -318,3 +319,12 @@ class DhcpRpcCallback(object):
             provisioning_blocks.provisioning_complete(
                 context, port_id, resources.PORT,
                 provisioning_blocks.DHCP_ENTITY)
+
+    def get_networks(self, context, filters=None, fields=None):
+        """Retrieve and return a list of networks."""
+        # NOTE(adrianc): This RPC is being used by out of tree interface
+        # drivers, MultiInterfaceDriver and IPoIBInterfaceDriver, located in
+        # networking-mlnx.
+        plugin = directory.get_plugin()
+        return plugin.get_networks(
+            context, filters=filters, fields=fields)

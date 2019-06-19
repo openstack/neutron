@@ -717,6 +717,7 @@ class DhcpPluginApi(object):
         1.1 - Added get_active_networks_info, create_dhcp_port,
               and update_dhcp_port methods.
         1.5 - Added dhcp_ready_on_ports
+        1.7 - Added get_networks
 
     """
 
@@ -780,6 +781,20 @@ class DhcpPluginApi(object):
         cctxt = self.client.prepare(version='1.5')
         return cctxt.call(self.context, 'dhcp_ready_on_ports',
                           port_ids=port_ids)
+
+    def get_networks(self, filters=None, fields=None):
+        """Get networks.
+
+        :param filters: The filters to apply.
+                        E.g {"id" : ["<uuid of a network>", ...]}
+        :param fields: A list of fields to collect, e.g ["id", "subnets"].
+        :return: A list of NetModel where each object represent a network.
+        """
+
+        cctxt = self.client.prepare(version='1.7')
+        nets = cctxt.call(self.context, 'get_networks', filters=filters,
+                          fields=fields)
+        return [dhcp.NetModel(net) for net in nets]
 
 
 class NetworkCache(object):

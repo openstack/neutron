@@ -46,7 +46,8 @@ class L3RpcCallback(object):
     # 1.9 Added get_router_ids
     # 1.10 Added update_all_ha_network_port_statuses
     # 1.11 Added get_host_ha_router_count
-    target = oslo_messaging.Target(version='1.11')
+    # 1.12 Added get_networks
+    target = oslo_messaging.Target(version='1.12')
 
     @property
     def plugin(self):
@@ -348,3 +349,11 @@ class L3RpcCallback(object):
         admin_ctx = neutron_context.get_admin_context()
         self.l3plugin.delete_floatingip_agent_gateway_port(
             admin_ctx, host, network_id)
+
+    def get_networks(self, context, filters=None, fields=None):
+        """Retrieve and return a list of networks."""
+        # NOTE(adrianc): This RPC is being used by out of tree interface
+        # drivers, MultiInterfaceDriver and IPoIBInterfaceDriver, located in
+        # networking-mlnx.
+        return self.plugin.get_networks(
+            context, filters=filters, fields=fields)

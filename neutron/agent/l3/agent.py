@@ -112,6 +112,7 @@ class L3PluginApi(object):
         1.9 - Added get_router_ids
         1.10 Added update_all_ha_network_port_statuses
         1.11 Added get_host_ha_router_count
+        1.12 Added get_networks
     """
 
     def __init__(self, topic, host):
@@ -203,6 +204,20 @@ class L3PluginApi(object):
         """Make a call to get the count of HA router."""
         cctxt = self.client.prepare(version='1.11')
         return cctxt.call(context, 'get_host_ha_router_count', host=self.host)
+
+    def get_networks(self, context, filters=None, fields=None):
+        """Get networks.
+
+        :param context: Security context
+        :param filters: The filters to apply.
+                        E.g {"id" : ["<uuid of a network>", ...]}
+        :param fields: A list of fields to collect, e.g ["id", "subnets"].
+        :return: A list of dicts where each dict represent a network object.
+        """
+
+        cctxt = self.client.prepare(version='1.12')
+        return cctxt.call(
+            context, 'get_networks', filters=filters, fields=fields)
 
 
 class RouterFactory(object):
