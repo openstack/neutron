@@ -157,7 +157,8 @@ class NovaSegmentNotifier(object):
             cfg.CONF.send_events_interval, self._send_notifications)
 
     def _get_clients(self):
-        p_client = placement_client.PlacementAPIClient(cfg.CONF)
+        p_client = placement_client.PlacementAPIClient(
+            cfg.CONF, openstack_api_version='placement 1.1')
 
         n_auth = ks_loading.load_auth_from_conf_options(cfg.CONF, 'nova')
         n_session = ks_loading.load_session_from_conf_options(
