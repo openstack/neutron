@@ -356,18 +356,20 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
         """
         return candidate_hosts
 
-    def _log_heartbeat(self, state, agent_db, agent_conf):
+    def _log_heartbeat(self, state, agent_db, agent_conf, agent_timestamp):
         if agent_conf.get('log_agent_heartbeats'):
             delta = timeutils.utcnow() - agent_db.heartbeat_timestamp
             LOG.info("Heartbeat received from %(type)s agent on "
-                     "host %(host)s, uuid %(uuid)s after %(delta)s",
+                     "host %(host)s, uuid %(uuid)s after %(delta)s, sent at "
+                     "%(agent_timestamp)s",
                      {'type': agent_db.agent_type,
                       'host': agent_db.host,
                       'uuid': state.get('uuid'),
-                      'delta': delta})
+                      'delta': delta,
+                      'agent_timestamp': agent_timestamp})
 
     @db_api.retry_if_session_inactive()
-    def create_or_update_agent(self, context, agent_state):
+    def create_or_update_agent(self, context, agent_state, agent_timestamp):
         """Registers new agent in the database or updates existing.
 
         Returns tuple of agent status and state.
@@ -405,7 +407,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                 if agent_state.get('start_flag'):
                     res['started_at'] = current_time
                 greenthread.sleep(0)
-                self._log_heartbeat(agent_state, agent, configurations_dict)
+                self._log_heartbeat(agent_state, agent, configurations_dict,
+                                    agent_timestamp)
                 agent.update_fields(res)
                 agent.update()
                 event_type = events.AFTER_UPDATE
@@ -420,7 +423,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                 greenthread.sleep(0)
                 agent.create()
                 event_type = events.AFTER_CREATE
-                self._log_heartbeat(agent_state, agent, configurations_dict)
+                self._log_heartbeat(agent_state, agent, configurations_dict,
+                                    agent_timestamp)
                 status = agent_consts.AGENT_NEW
             greenthread.sleep(0)
 
@@ -513,7 +517,7 @@ class AgentExtRpcCallback(object):
         if not self.plugin:
             self.plugin = directory.get_plugin()
         agent_status, agent_state = self.plugin.create_or_update_agent(
-            context, agent_state)
+            context, agent_state, time)
         self._update_local_agent_resource_versions(context, agent_state)
         return agent_status
 
