@@ -415,7 +415,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                n_const.TYPE_VXLAN: {}}
 
     def _update_network_segmentation_id(self, network):
-        if network[provider_net.NETWORK_TYPE] != n_const.TYPE_VLAN:
+        if network.get(provider_net.NETWORK_TYPE) != n_const.TYPE_VLAN:
             return
 
         try:
