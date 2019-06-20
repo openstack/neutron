@@ -218,6 +218,8 @@ def list_l3_agent_opts():
          ),
         ('agent',
          neutron.conf.agent.agent_extensions_manager.AGENT_EXT_MANAGER_OPTS),
+        ('network_log',
+         neutron.conf.services.logging.log_driver_opts)
     ]
 
 
