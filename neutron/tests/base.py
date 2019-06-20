@@ -40,6 +40,7 @@ from oslo_utils import excutils
 from oslo_utils import fileutils
 from oslo_utils import strutils
 from oslotest import base
+from osprofiler import profiler
 import six
 from sqlalchemy import exc as sqlalchemy_exc
 import testtools
@@ -381,6 +382,7 @@ class BaseTestCase(DietTestCase):
         self.addCleanup(db_api.sqla_remove_all)
         self.addCleanup(rpc_consumer_reg.clear)
         self.addCleanup(rpc_producer_reg.clear)
+        self.addCleanup(profiler.clean)
 
     def get_new_temp_dir(self):
         """Create a new temporary directory.

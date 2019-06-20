@@ -20,10 +20,12 @@ import time
 
 import ddt
 import eventlet
+from eventlet import queue
 import mock
 import netaddr
 from neutron_lib import constants
 from oslo_log import log as logging
+from osprofiler import profiler
 import six
 import testscenarios
 import testtools
@@ -570,3 +572,55 @@ class TimerTestCase(base.BaseTestCase):
     def test_delta_time_sec(self):
         with utils.Timer() as timer:
             self.assertIsInstance(timer.delta_time_sec, float)
+
+
+class SpawnWithOrWithoutProfilerTestCase(
+        testscenarios.WithScenarios, base.BaseTestCase):
+
+    scenarios = [
+        ('spawn', {'spawn_variant': utils.spawn}),
+        ('spawn_n', {'spawn_variant': utils.spawn_n}),
+    ]
+
+    def _compare_profilers_in_parent_and_in_child(self, init_profiler):
+
+        q = queue.Queue()
+
+        def is_profiler_initialized(where):
+            # Instead of returning a single boolean add information so we can
+            # identify which thread produced the result without depending on
+            # queue order.
+            return {where: bool(profiler.get())}
+
+        def thread_with_no_leaked_profiler():
+            if init_profiler:
+                profiler.init(hmac_key='fake secret')
+
+            self.spawn_variant(
+                lambda: q.put(is_profiler_initialized('in-child')))
+            q.put(is_profiler_initialized('in-parent'))
+
+        # Make sure in parent we start with an uninitialized profiler by
+        # eventlet.spawn()-ing a new thread. Otherwise the unit test runner
+        # thread may leak an initialized profiler from one test to another.
+        eventlet.spawn(thread_with_no_leaked_profiler)
+
+        # In order to have some global protection against leaking initialized
+        # profilers neutron.test.base.BaseTestCase.setup() also calls
+        # addCleanup(profiler.clean)
+
+        # Merge the results independently of queue order.
+        results = {}
+        results.update(q.get())
+        results.update(q.get())
+
+        self.assertEqual(
+            {'in-parent': init_profiler,
+             'in-child': init_profiler},
+            results)
+
+    def test_spawn_with_profiler(self):
+        self._compare_profilers_in_parent_and_in_child(init_profiler=True)
+
+    def test_spawn_without_profiler(self):
+        self._compare_profilers_in_parent_and_in_child(init_profiler=False)
