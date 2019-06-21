@@ -150,13 +150,20 @@ class TestNeutronServer(base.BaseLoggingTestCase):
                              os.stat(self.temp_file).st_size ==
                              expected_size)
 
-        utils.wait_until_true(
-            condition, timeout=5, sleep=0.1,
-            exception=RuntimeError(
-                "Timed out waiting for file %(filename)s to be created and "
-                "its size become equal to %(size)s." %
-                {'filename': self.temp_file,
-                 'size': expected_size}))
+        try:
+            utils.wait_until_true(condition, timeout=5, sleep=1)
+        except utils.TimerTimeout:
+            if not os.path.isfile(self.temp_file):
+                raise RuntimeError(
+                    "Timed out waiting for file %(filename)s to be created" %
+                    {'filename': self.temp_file})
+            else:
+                raise RuntimeError(
+                    "Expected size for file %(filename)s: %(size)s, current "
+                    "size: %(current_size)s" %
+                    {'filename': self.temp_file,
+                     'size': expected_size,
+                     'current_size': os.stat(self.temp_file).st_size})
 
         # Verify that start has been called twice for each worker (one for
         # initial start, and the second one on SIGHUP after children were
