@@ -125,7 +125,7 @@ class TestDhcpAgentNoHA(BaseDhcpAgentTest):
 class TestDhcpAgentHA(BaseDhcpAgentTest):
 
     number_of_hosts = 2
-    agent_down_time = 10
+    agent_down_time = 30
 
     def _wait_until_network_rescheduled(self, old_agent):
         def _agent_rescheduled():
