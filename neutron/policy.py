@@ -367,9 +367,11 @@ class FieldCheck(policy.Check):
                           "%(target_dict)s",
                           {'field': self.field, 'target_dict': target_dict})
                 return
+            project_id = target_dict.get('project_id')
+            ctx = (context.Context(tenant_id=project_id) if project_id
+                   else context.get_admin_context())
             plugin = directory.get_plugin()
-            network = plugin.get_network(
-                context.get_admin_context(), target_network_id)
+            network = plugin.get_network(ctx, target_network_id)
             target_value = network.get(self.field)
         if target_value is None:
             LOG.debug("Unable to find requested field: %(field)s in target: "
