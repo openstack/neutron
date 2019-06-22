@@ -683,3 +683,37 @@ class IptablesDriverTestCase(base.BaseTestCase):
         self.assertIn(expected_label_id, counters)
         self.assertEqual(1, counters[expected_label_id]['pkts'])
         self.assertEqual(8, counters[expected_label_id]['bytes'])
+
+    def test_sync_router_namespaces(self):
+        routers = TEST_DVR_ROUTER[:1]
+
+        self.metering._process_ns_specific_metering_label = mock.Mock()
+        self.namespace_exists.return_value = False
+        self.metering.add_metering_label(None, routers)
+        rm = self.metering.routers[routers[0]['id']]
+        self.assertEqual(
+            0, self.metering._process_ns_specific_metering_label.call_count)
+        self.assertIsNone(rm.snat_iptables_manager)
+        self.assertIsNone(rm.iptables_manager)
+
+        self.namespace_exists.side_effect = [True, False]
+        self.metering.sync_router_namespaces(None, routers)
+        self.assertIsNotNone(rm.snat_iptables_manager)
+        self.assertIsNone(rm.iptables_manager)
+        self.assertEqual(
+            1, self.metering._process_ns_specific_metering_label.call_count)
+
+        self.namespace_exists.side_effect = [True]
+        self.metering.sync_router_namespaces(None, routers)
+        self.assertIsNotNone(rm.snat_iptables_manager)
+        self.assertIsNotNone(rm.iptables_manager)
+        self.assertEqual(
+            3, self.metering._process_ns_specific_metering_label.call_count)
+
+        # syncing again should have no effect
+        self.namespace_exists.side_effect = [RuntimeError('Unexpected call')]
+        self.metering.sync_router_namespaces(None, routers)
+        self.assertIsNotNone(rm.snat_iptables_manager)
+        self.assertIsNotNone(rm.iptables_manager)
+        self.assertEqual(
+            3, self.metering._process_ns_specific_metering_label.call_count)

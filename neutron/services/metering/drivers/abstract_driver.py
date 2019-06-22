@@ -47,3 +47,7 @@ class MeteringAbstractDriver(object):
     @abc.abstractmethod
     def get_traffic_counters(self, context, routers):
         pass
+
+    @abc.abstractmethod
+    def sync_router_namespaces(self, context, routers):
+        pass
