@@ -149,6 +149,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
             self._add_metering_info(label_id, acc['pkts'], acc['bytes'])
 
     def _metering_loop(self):
+        self._sync_router_namespaces(self.context, self.routers.values())
         self._add_metering_infos()
 
         ts = timeutils.utcnow_ts()
@@ -214,6 +215,10 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
     def _get_traffic_counters(self, context, routers):
         LOG.debug("Get router traffic counters")
         return self._invoke_driver(context, routers, 'get_traffic_counters')
+
+    def _sync_router_namespaces(self, context, routers):
+        LOG.debug("Sync router namespaces")
+        return self._invoke_driver(context, routers, 'sync_router_namespaces')
 
     def add_metering_label_rule(self, context, routers):
         return self._invoke_driver(context, routers,
