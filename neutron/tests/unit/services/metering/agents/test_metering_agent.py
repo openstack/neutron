@@ -103,6 +103,10 @@ class TestMeteringOperations(base.BaseTestCase):
         self.agent._get_traffic_counters(None, ROUTERS)
         self.assertEqual(1, self.driver.get_traffic_counters.call_count)
 
+    def test_sync_router_namespaces(self):
+        self.agent._sync_router_namespaces(None, ROUTERS)
+        self.assertEqual(1, self.driver.sync_router_namespaces.call_count)
+
     def test_notification_report(self):
         self.agent.routers_updated(None, ROUTERS)
 

@@ -50,3 +50,7 @@ class NoopMeteringDriver(abstract_driver.MeteringAbstractDriver):
     @log_helpers.log_method_call
     def get_traffic_counters(self, context, routers):
         pass
+
+    @log_helpers.log_method_call
+    def sync_router_namespaces(self, context, routers):
+        pass
