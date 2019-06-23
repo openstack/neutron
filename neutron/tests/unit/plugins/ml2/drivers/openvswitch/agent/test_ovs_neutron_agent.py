@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
 import sys
 import time
 
@@ -1238,6 +1239,12 @@ class TestOvsNeutronAgent(object):
         self.agent.port_delete(context=None, port_id=TEST_PORT_ID1)
         self.agent.sg_agent = mock.Mock()
         self.agent.int_br = mock.Mock()
+
+        @contextlib.contextmanager
+        def bridge_deferred(*args, **kwargs):
+            yield
+
+        self.agent.int_br.deferred = mock.Mock(side_effect=bridge_deferred)
         self.agent.process_deleted_ports(port_info={})
         self.assertEqual(set(), self.agent.network_ports[TEST_NETWORK_ID1])
 
