@@ -70,6 +70,17 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 match=ofpp.OFPMatch(vlan_vid=4095),
                 priority=65535,
                 table_id=0)),
+            call._send_msg(ofpp.OFPFlowMod(dp,
+                cookie=self.stamp,
+                instructions=[
+                    ofpp.OFPInstructionActions(
+                        ofp.OFPIT_APPLY_ACTIONS, [
+                            ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0)
+                        ]),
+                ],
+                match=ofpp.OFPMatch(),
+                priority=3,
+                table_id=61)),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -174,7 +185,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
-                priority=4,
+                priority=20,
                 table_id=1)),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
@@ -187,7 +198,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
-                priority=4,
+                priority=20,
                 table_id=60)),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
@@ -203,14 +214,14 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         expected = [
             call.uninstall_flows(
                 strict=True,
-                priority=4,
+                priority=20,
                 table_id=1,
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT)),
             call.uninstall_flows(
                 strict=True,
-                priority=4,
+                priority=20,
                 table_id=60,
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
@@ -242,7 +253,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
-                priority=4,
+                priority=20,
                 table_id=2)),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
@@ -255,7 +266,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
-                priority=4,
+                priority=20,
                 table_id=60)),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
@@ -271,14 +282,14 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         expected = [
             call.uninstall_flows(
                 strict=True,
-                priority=4,
+                priority=20,
                 table_id=2,
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT)),
             call.uninstall_flows(
                 strict=True,
-                priority=4,
+                priority=20,
                 table_id=60,
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
