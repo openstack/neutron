@@ -1,0 +1,20 @@
+---
+fixes:
+  - |
+    Bug https://bugs.launchpad.net/neutron/+bug/1732067 described a flooding
+    issue on the neutron-ovs-agent integration bridge. And bug
+    https://bugs.launchpad.net/neutron/+bug/1841622 proposed a solution for
+    it. The accepted egress packets will be taken care in the final egress
+    tables (61 when openflow firewall is not enabled, table 94 otherwise) with
+    direct output flows for unicast traffic with a minimum influence on the
+    existing cloud networking.
+    A new config option ``explicitly_egress_direct``, with default value False,
+    was added for the aim of distinguishing clouds which are running the
+    network node mixed with compute services, upstream neutron CI should be
+    an example. In such situation, this ``explicitly_egress_direct`` should be
+    set to False, because there are numerous cases from HA routers which can
+    not be covered, particularly when you have centralized floating IPs running
+    in such mixed hosts.
+    Otherwise, set ``explicitly_egress_direct`` to True to avoid the flooding.
+    One more note is if your network nodes are for networing services only, we
+    recommand you disable all the security_group to get a higher performance.

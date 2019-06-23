@@ -56,6 +56,7 @@ MAC_SPOOF_TABLE = 25
 
 # Table to decide whether further filtering is needed
 TRANSIENT_TABLE = 60
+TRANSIENT_EGRESS_TABLE = 61
 
 # Tables used for ovs firewall
 BASE_EGRESS_TABLE = 71
@@ -86,6 +87,7 @@ INT_BR_ALL_TABLES = (
     ARP_SPOOF_TABLE,
     MAC_SPOOF_TABLE,
     TRANSIENT_TABLE,
+    TRANSIENT_EGRESS_TABLE,
     BASE_EGRESS_TABLE,
     RULES_EGRESS_TABLE,
     ACCEPT_OR_INGRESS_TABLE,
