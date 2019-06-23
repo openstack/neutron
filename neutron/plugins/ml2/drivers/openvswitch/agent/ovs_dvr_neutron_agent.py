@@ -17,11 +17,13 @@ import sys
 
 import netaddr
 from neutron_lib import constants as n_const
+from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import excutils
 from osprofiler import profiler
 
+from neutron.agent.linux.openvswitch_firewall import firewall as ovs_firewall
 from neutron.common import utils as n_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 
@@ -137,6 +139,11 @@ class OVSDVRNeutronAgent(object):
         self.arp_responder_enabled = arp_responder_enabled
         if self.enable_distributed_routing:
             self.get_dvr_mac_address()
+        self.conf = cfg.CONF
+        self.firewall = None
+
+    def set_firewall(self, firewall=None):
+        self.firewall = firewall
 
     def setup_dvr_flows(self):
         self.setup_dvr_flows_on_integ_br()
@@ -392,6 +399,15 @@ class OVSDVRNeutronAgent(object):
 
         subnet_info = ldm.get_subnet_info()
         ip_version = subnet_info['ip_version']
+
+        if self.firewall and isinstance(self.firewall,
+                                        ovs_firewall.OVSFirewallDriver):
+            tunnel_direct_info = {"network_type": lvm.network_type,
+                                  "physical_network": lvm.physical_network}
+            self.firewall.install_accepted_egress_direct_flow(
+                subnet_info['gateway_mac'], lvm.vlan, port.ofport,
+                tunnel_direct_info=tunnel_direct_info)
+
         local_compute_ports = (
             self.plugin_rpc.get_ports_on_host_by_subnet(
                 self.context, self.host, subnet_uuid))
@@ -656,6 +672,11 @@ class OVSDVRNeutronAgent(object):
                 br.delete_dvr_process_ipv6(
                     vlan_tag=lvm.vlan, gateway_mac=subnet_info['gateway_mac'])
             ovsport.remove_subnet(sub_uuid)
+
+            if self.firewall and isinstance(self.firewall,
+                                            ovs_firewall.OVSFirewallDriver):
+                self.firewall.delete_accepted_egress_direct_flow(
+                    subnet_info['gateway_mac'], lvm.vlan)
 
         if lvm.network_type == n_const.TYPE_VLAN:
             br = self.phys_brs[physical_network]
