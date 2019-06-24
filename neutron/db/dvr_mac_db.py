@@ -15,7 +15,6 @@
 
 import netaddr
 
-from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -37,6 +36,7 @@ from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.extensions import dvr as ext_dvr
 from neutron.objects import router
+from neutron.plugins.ml2 import models as ml2_models
 
 
 LOG = logging.getLogger(__name__)
@@ -44,6 +44,18 @@ LOG = logging.getLogger(__name__)
 
 dvr_mac_db.register_db_dvr_mac_opts()
 l3_dvr_db.register_db_l3_dvr_opts()
+
+
+def get_ports_query_by_subnet_and_ip(context, subnet, ip_addresses=None):
+    query = context.session.query(models_v2.Port)
+    query = query.join(models_v2.IPAllocation)
+    query = query.filter(
+        models_v2.Port.id == models_v2.IPAllocation.port_id,
+        models_v2.IPAllocation.subnet_id == subnet)
+    if ip_addresses:
+        query = query.filter(
+            models_v2.IPAllocation.ip_address.in_(ip_addresses))
+    return query
 
 
 @registry.has_registry_receivers
@@ -147,18 +159,28 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         :param subnet: subnet id to match and extract ports of interest
         :returns: list -- Ports on the given subnet in the input host
         """
+
         host_dvr_for_dhcp = cfg.CONF.host_dvr_for_dhcp
-        filters = {'fixed_ips': {'subnet_id': [subnet]},
-                   portbindings.HOST_ID: [host]}
-        ports_query = self.plugin._get_ports_query(context, filters=filters)
+
+        query = context.session.query(models_v2.Port)
+        query = query.join(ml2_models.PortBinding)
+        query = query.join(models_v2.IPAllocation)
+        query = query.filter(
+            models_v2.Port.id == ml2_models.PortBinding.port_id,
+            models_v2.Port.id == models_v2.IPAllocation.port_id,
+            ml2_models.PortBinding.host == host,
+            models_v2.IPAllocation.subnet_id == subnet)
         owner_filter = or_(
             models_v2.Port.device_owner.startswith(
                 constants.DEVICE_OWNER_COMPUTE_PREFIX),
             models_v2.Port.device_owner.in_(
                 utils.get_other_dvr_serviced_device_owners(host_dvr_for_dhcp)))
-        ports_query = ports_query.filter(owner_filter)
+
+        ports_query = query.filter(owner_filter)
+
         ports = [
-            self.plugin._make_port_dict(port, process_extensions=False)
+            self.plugin._make_port_dict(port, process_extensions=False,
+                                        with_fixed_ips=False)
             for port in ports_query.all()
         ]
         LOG.debug("Returning list of dvr serviced ports on host %(host)s"
@@ -186,11 +208,10 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
             else:
                 ip_address = subnet_info['gateway_ip']
 
-            filter = {'fixed_ips': {'subnet_id': [subnet],
-                                    'ip_address': [ip_address]}}
+            query = get_ports_query_by_subnet_and_ip(
+                context, subnet, [ip_address])
+            internal_gateway_ports = query.all()
 
-            internal_gateway_ports = self.plugin.get_ports(
-                context, filters=filter)
             if not internal_gateway_ports:
                 LOG.error("Could not retrieve gateway port "
                           "for subnet %s", subnet_info)
