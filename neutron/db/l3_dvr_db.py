@@ -41,6 +41,7 @@ from neutron._i18n import _
 from neutron.common import constants as l3_const
 from neutron.common import utils as n_utils
 from neutron.conf.db import l3_dvr_db
+from neutron.db import dvr_mac_db
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db.models import allowed_address_pair as aap_models
@@ -1238,6 +1239,14 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
             return is_distributed_router(
                 self.get_router(context.elevated(), router_id))
         return False
+
+    def get_ports_under_dvr_connected_subnet(self, context, subnet_id):
+        query = dvr_mac_db.get_ports_query_by_subnet_and_ip(context, subnet_id)
+        return [
+            self.l3plugin._core_plugin._make_port_dict(
+                port, process_extensions=False)
+            for port in query.all()
+        ]
 
 
 def is_distributed_router(router):
