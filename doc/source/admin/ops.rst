@@ -10,3 +10,4 @@ Operations
    ops-ip-availability
    ops-resource-tags
    ops-resource-purge
+   ops-quotas
