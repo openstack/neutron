@@ -96,7 +96,6 @@ def has_zero_prefixlen_address(ip_addresses):
     return any(netaddr.IPNetwork(ip).prefixlen == 0 for ip in ip_addresses)
 
 
-@profiler.trace_cls("rpc")
 class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                       dvr_rpc.DVRAgentRpcCallbackMixin):
     '''Implements OVS-based tunneling, VLANs and flat networks.
@@ -479,6 +478,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                                      consumers,
                                                      start_listening=False)
 
+    @profiler.trace("rpc")
     def port_update(self, context, **kwargs):
         port = kwargs.get('port')
         agent_restarted = kwargs.pop("agent_restarted", False)
@@ -568,11 +568,13 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 'iface_id': port_data['id'],
                 'vif_type': port_binding['vif_type']})
 
+    @profiler.trace("rpc")
     def port_delete(self, context, **kwargs):
         port_id = kwargs.get('port_id')
         self.deleted_ports.add(port_id)
         self.updated_ports.discard(port_id)
 
+    @profiler.trace("rpc")
     def network_update(self, context, **kwargs):
         network_id = kwargs['network']['id']
         network = self.plugin_rpc.get_network_details(
@@ -588,12 +590,14 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                   {'network_id': network_id,
                    'ports': self.network_ports[network_id]})
 
+    @profiler.trace("rpc")
     def binding_deactivate(self, context, **kwargs):
         if kwargs.get('host') != self.conf.host:
             return
         port_id = kwargs.get('port_id')
         self.deactivated_bindings.add(port_id)
 
+    @profiler.trace("rpc")
     def binding_activate(self, context, **kwargs):
         if kwargs.get('host') != self.conf.host:
             return
@@ -661,6 +665,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # ...and treat them as just added
         port_info['added'] |= activated_bindings_copy
 
+    @profiler.trace("rpc")
     def tunnel_update(self, context, **kwargs):
         LOG.debug("tunnel_update received")
         if not self.enable_tunneling:
@@ -684,6 +689,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                     tunnel_type)
             self._setup_tunnel_flood_flow(self.tun_br, tunnel_type)
 
+    @profiler.trace("rpc")
     def tunnel_delete(self, context, **kwargs):
         LOG.debug("tunnel_delete received")
         if not self.enable_tunneling:
