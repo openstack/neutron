@@ -301,12 +301,26 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
             raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
                                      msg=message)
 
+    def _check_port_has_binding_floating_ip(self, context, port_forwarding):
+        port_id = port_forwarding['internal_port_id']
+        floatingip_objs = router.FloatingIP.get_objects(
+            context.elevated(),
+            fixed_port_id=port_id)
+        if floatingip_objs:
+            floating_ip_address = floatingip_objs[0].floating_ip_address
+            raise pf_exc.PortHasBindingFloatingIP(
+                floating_ip_address=floating_ip_address,
+                fip_id=floatingip_objs[0].id,
+                port_id=port_id,
+                fixed_ip=port_forwarding['internal_ip_address'])
+
     @db_base_plugin_common.convert_result_to_dict
     def create_floatingip_port_forwarding(self, context, floatingip_id,
                                           port_forwarding):
         port_forwarding = port_forwarding.get(apidef.RESOURCE_NAME)
         port_forwarding['floatingip_id'] = floatingip_id
 
+        self._check_port_has_binding_floating_ip(context, port_forwarding)
         with db_api.context_manager.writer.using(context):
             fip_obj = self._get_fip_obj(context, floatingip_id)
             if fip_obj.fixed_port_id:
@@ -353,6 +367,8 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         new_internal_port_id = None
         if port_forwarding and port_forwarding.get('internal_port_id'):
             new_internal_port_id = port_forwarding.get('internal_port_id')
+            self._check_port_has_binding_floating_ip(context, port_forwarding)
+
         try:
             with db_api.context_manager.writer.using(context):
                 fip_obj = self._get_fip_obj(context, floatingip_id)
