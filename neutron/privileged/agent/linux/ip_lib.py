@@ -487,10 +487,6 @@ def dump_neigh_entries(ip_version, device, namespace, **kwargs):
 
 
 @privileged.default.entrypoint
-# NOTE(slaweq): Because of issue with pyroute2.NetNS objects running in threads
-# we need to lock this function to workaround this issue.
-# For details please check https://bugs.launchpad.net/neutron/+bug/1811515
-@lockutils.synchronized("privileged-ip-lib")
 def create_netns(name, **kwargs):
     """Create a network namespace.
 
@@ -504,10 +500,6 @@ def create_netns(name, **kwargs):
 
 
 @privileged.default.entrypoint
-# NOTE(slaweq): Because of issue with pyroute2.NetNS objects running in threads
-# we need to lock this function to workaround this issue.
-# For details please check https://bugs.launchpad.net/neutron/+bug/1811515
-@lockutils.synchronized("privileged-ip-lib")
 def remove_netns(name, **kwargs):
     """Remove a network namespace.
 
@@ -521,10 +513,6 @@ def remove_netns(name, **kwargs):
 
 
 @privileged.default.entrypoint
-# NOTE(slaweq): Because of issue with pyroute2.NetNS objects running in threads
-# we need to lock this function to workaround this issue.
-# For details please check https://bugs.launchpad.net/neutron/+bug/1811515
-@lockutils.synchronized("privileged-ip-lib")
 def list_netns(**kwargs):
     """List network namespaces.
 
