@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    When different subnet pools participate in the same address scope, the
+    constraints disallowing subnets to be allocated from different pools on
+    the same network have been relaxed. As long as subnet pools participate
+    in the same address scope, subnets can now be created from different
+    subnet pools when multiple subnets are created on a network. When
+    address scopes are not used, subnets with the same ``ip_version`` on the
+    same network must still be allocated from the same subnet pool.
+    For more information, see bug
+    `1830240 <https://bugs.launchpad.net/neutron/+bug/1830240>`_.

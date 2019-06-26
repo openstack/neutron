@@ -22,6 +22,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.plugins import directory
 import webob.exc
 
 from neutron.db import address_scope_db
@@ -516,3 +517,175 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                 res = req.get_response(api)
                 self.assertEqual(webob.exc.HTTPBadRequest.code,
                                  res.status_int)
+
+    def test_create_two_subnets_different_subnetpools_same_network(self):
+        with self.address_scope(constants.IP_VERSION_4,
+                                name='foo-address-scope') as addr_scope:
+            addr_scope = addr_scope['address_scope']
+            with self.subnetpool(
+                        ['10.10.0.0/16'],
+                        name='subnetpool_a',
+                        tenant_id=addr_scope['tenant_id'],
+                        default_prefixlen=24,
+                        address_scope_id=addr_scope['id']) as subnetpool_a,\
+                self.subnetpool(
+                         ['10.20.0.0/16'],
+                         name='subnetpool_b',
+                         tenant_id=addr_scope['tenant_id'],
+                         default_prefixlen=24,
+                         address_scope_id=addr_scope['id']) as subnetpool_b:
+                subnetpool_a = subnetpool_a['subnetpool']
+                subnetpool_b = subnetpool_b['subnetpool']
+
+                with self.network(
+                        tenant_id=addr_scope['tenant_id']) as network:
+                    subnet_a = self._make_subnet(
+                        self.fmt,
+                        network,
+                        constants.ATTR_NOT_SPECIFIED,
+                        None,
+                        subnetpool_id=subnetpool_a['id'],
+                        ip_version=constants.IP_VERSION_4,
+                        tenant_id=addr_scope['tenant_id'])
+                    subnet_b = self._make_subnet(
+                        self.fmt,
+                        network,
+                        constants.ATTR_NOT_SPECIFIED,
+                        None,
+                        subnetpool_id=subnetpool_b['id'],
+                        ip_version=constants.IP_VERSION_4,
+                        tenant_id=addr_scope['tenant_id'])
+
+                    # Look up subnet counts and perform assertions
+                    ctx = context.Context('', addr_scope['tenant_id'])
+                    pl = directory.get_plugin()
+                    total_count = pl.get_subnets_count(
+                        ctx,
+                        filters={'network_id':
+                                 [network['network']['id']]})
+                    subnets_pool_a_count = pl.get_subnets_count(
+                        ctx,
+                        filters={'id': [subnet_a['subnet']['id']],
+                                 'subnetpool_id': [subnetpool_a['id']],
+                                 'network_id': [network['network']['id']]})
+                    subnets_pool_b_count = pl.get_subnets_count(
+                        ctx,
+                        filters={'id': [subnet_b['subnet']['id']],
+                                 'subnetpool_id': [subnetpool_b['id']],
+                                 'network_id': [network['network']['id']]})
+                    self.assertEqual(2, total_count)
+                    self.assertEqual(1, subnets_pool_a_count)
+                    self.assertEqual(1, subnets_pool_b_count)
+
+    def test_block_update_subnetpool_network_affinity(self):
+        with self.address_scope(constants.IP_VERSION_4,
+                                name='scope-a') as scope_a,\
+            self.address_scope(constants.IP_VERSION_4,
+                               name='scope-b') as scope_b:
+            scope_a = scope_a['address_scope']
+            scope_b = scope_b['address_scope']
+
+            with self.subnetpool(
+                        ['10.10.0.0/16'],
+                        name='subnetpool_a',
+                        tenant_id=scope_a['tenant_id'],
+                        default_prefixlen=24,
+                        address_scope_id=scope_a['id']) as subnetpool_a,\
+                self.subnetpool(
+                         ['10.20.0.0/16'],
+                         name='subnetpool_b',
+                         tenant_id=scope_a['tenant_id'],
+                         default_prefixlen=24,
+                         address_scope_id=scope_a['id']) as subnetpool_b:
+                subnetpool_a = subnetpool_a['subnetpool']
+                subnetpool_b = subnetpool_b['subnetpool']
+
+                with self.network(
+                        tenant_id=scope_a['tenant_id']) as network:
+                    self._make_subnet(
+                        self.fmt,
+                        network,
+                        constants.ATTR_NOT_SPECIFIED,
+                        None,
+                        subnetpool_id=subnetpool_a['id'],
+                        ip_version=constants.IP_VERSION_4,
+                        tenant_id=scope_a['tenant_id'])
+                    self._make_subnet(
+                        self.fmt,
+                        network,
+                        constants.ATTR_NOT_SPECIFIED,
+                        None,
+                        subnetpool_id=subnetpool_b['id'],
+                        ip_version=constants.IP_VERSION_4,
+                        tenant_id=scope_a['tenant_id'])
+
+                    # Attempt to update subnetpool_b's address scope and
+                    # assert failure.
+                    data = {'subnetpool': {'address_scope_id':
+                                           scope_b['id']}}
+                    req = self.new_update_request('subnetpools', data,
+                                                  subnetpool_b['id'])
+                    api = self._api_for_resource('subnetpools')
+                    res = req.get_response(api)
+                    self.assertEqual(webob.exc.HTTPBadRequest.code,
+                                     res.status_int)
+
+    def test_ipv6_pd_add_non_pd_subnet_to_same_network(self):
+        with self.address_scope(constants.IP_VERSION_6,
+                                name='foo-address-scope') as addr_scope:
+            addr_scope = addr_scope['address_scope']
+            with self.subnetpool(
+                        ['2001:db8:1234::/48'],
+                        name='non_pd_pool',
+                        tenant_id=addr_scope['tenant_id'],
+                        default_prefixlen=64,
+                        address_scope_id=addr_scope['id']) as non_pd_pool:
+                non_pd_pool = non_pd_pool['subnetpool']
+
+                with self.network(
+                        tenant_id=addr_scope['tenant_id']) as network:
+                    with self.subnet(cidr=None,
+                                     network=network,
+                                     ip_version=constants.IP_VERSION_6,
+                                     subnetpool_id=constants.IPV6_PD_POOL_ID,
+                                     ipv6_ra_mode=constants.IPV6_SLAAC,
+                                     ipv6_address_mode=constants.IPV6_SLAAC):
+                        res = self._create_subnet(
+                            self.fmt,
+                            cidr=None,
+                            net_id=network['network']['id'],
+                            subnetpool_id=non_pd_pool['id'],
+                            tenant_id=addr_scope['tenant_id'],
+                            ip_version=constants.IP_VERSION_6)
+                        self.assertEqual(webob.exc.HTTPBadRequest.code,
+                                         res.status_int)
+
+    def test_ipv6_non_pd_add_pd_subnet_to_same_network(self):
+        with self.address_scope(constants.IP_VERSION_6,
+                                name='foo-address-scope') as addr_scope:
+            addr_scope = addr_scope['address_scope']
+            with self.subnetpool(
+                        ['2001:db8:1234::/48'],
+                        name='non_pd_pool',
+                        tenant_id=addr_scope['tenant_id'],
+                        default_prefixlen=64,
+                        address_scope_id=addr_scope['id']) as non_pd_pool:
+                non_pd_pool = non_pd_pool['subnetpool']
+
+                with self.network(
+                        tenant_id=addr_scope['tenant_id']) as network:
+                    with self.subnet(cidr=None,
+                                     network=network,
+                                     ip_version=constants.IP_VERSION_6,
+                                     subnetpool_id=non_pd_pool['id']):
+                        res = self._create_subnet(
+                            self.fmt,
+                            cidr=None,
+                            net_id=network['network']['id'],
+                            tenant_id=addr_scope['tenant_id'],
+                            subnetpool_id=constants.IPV6_PD_POOL_ID,
+                            ip_version=constants.IP_VERSION_6,
+                            ipv6_ra_mode=constants.IPV6_SLAAC,
+                            ipv6_address_mode=constants.IPV6_SLAAC)
+                        self.assertEqual(webob.exc.HTTPBadRequest.code,
+                                         res.status_int)

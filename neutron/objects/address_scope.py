@@ -15,6 +15,7 @@
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import address_scope as models
+from neutron.db import models_v2
 from neutron.objects import base
 from neutron.objects import common_types
 
@@ -33,3 +34,20 @@ class AddressScope(base.NeutronDbObject):
         'shared': obj_fields.BooleanField(),
         'ip_version': common_types.IPVersionEnumField(),
     }
+
+    @classmethod
+    def get_network_address_scope(cls, context, network_id, ip_version):
+        query = context.session.query(cls.db_model)
+        query = query.join(
+            models_v2.SubnetPool,
+            models_v2.SubnetPool.address_scope_id == cls.db_model.id)
+        query = query.filter(
+            cls.db_model.ip_version == ip_version,
+            models_v2.Subnet.subnetpool_id == models_v2.SubnetPool.id,
+            models_v2.Subnet.network_id == network_id)
+        scope_model_obj = query.one_or_none()
+
+        if scope_model_obj:
+            return cls._load_object(context, scope_model_obj)
+
+        return None
