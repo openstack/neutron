@@ -277,6 +277,9 @@ class TestMechanismDriverWithAgent(mech_agent.AgentMechanismDriverBase,
         self.bound_ports = set()
         self._agent_type = 'test_mechanism_driver_agent'
 
+    def get_supported_vif_type(self, agent):
+        return VIF_TYPE_TEST
+
     def get_vif_type(self, context, agent, segment):
         return VIF_TYPE_TEST
 
