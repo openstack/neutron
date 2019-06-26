@@ -12,9 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.utils import net as net_utils
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron.common import utils
 from neutron.db.models import metering as metering_models
 from neutron.objects import base
 from neutron.objects import common_types
@@ -43,7 +43,7 @@ class MeteringLabelRule(base.NeutronDbObject):
     def modify_fields_from_db(cls, db_obj):
         result = super(MeteringLabelRule, cls).modify_fields_from_db(db_obj)
         if 'remote_ip_prefix' in result:
-            result['remote_ip_prefix'] = utils.AuthenticIPNetwork(
+            result['remote_ip_prefix'] = net_utils.AuthenticIPNetwork(
                 result['remote_ip_prefix'])
         return result
 

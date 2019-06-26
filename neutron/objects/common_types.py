@@ -18,13 +18,13 @@ import netaddr
 from neutron_lib import constants
 from neutron_lib.db import constants as lib_db_const
 from neutron_lib.objects import exceptions as o_exc
+from neutron_lib.utils import net as net_utils
 
 from oslo_serialization import jsonutils
 from oslo_versionedobjects import fields as obj_fields
 import six
 
 from neutron._i18n import _
-from neutron.common import utils
 
 
 class HARouterEnumField(obj_fields.AutoTypedField):
@@ -215,7 +215,7 @@ class MACAddress(obj_fields.FieldType):
     @staticmethod
     def from_primitive(obj, attr, value):
         try:
-            return utils.AuthenticEUI(value)
+            return net_utils.AuthenticEUI(value)
         except Exception:
             msg = _("Field value %s is not a netaddr.EUI") % value
             raise ValueError(msg)
@@ -286,7 +286,7 @@ class IPNetwork(obj_fields.FieldType):
     @staticmethod
     def from_primitive(obj, attr, value):
         try:
-            return utils.AuthenticIPNetwork(value)
+            return net_utils.AuthenticIPNetwork(value)
         except Exception:
             msg = _("Field value %s is not a netaddr.IPNetwork") % value
             raise ValueError(msg)

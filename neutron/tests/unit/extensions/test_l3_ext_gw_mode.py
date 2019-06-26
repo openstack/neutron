@@ -23,6 +23,7 @@ from neutron_lib import constants
 from neutron_lib import context as nctx
 from neutron_lib.db import api as db_api
 from neutron_lib.plugins import directory
+from neutron_lib.utils import net as net_utils
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_serialization import jsonutils
@@ -30,7 +31,6 @@ from oslo_utils import uuidutils
 import testscenarios
 from webob import exc
 
-from neutron.common import utils
 from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
 from neutron.db.models import l3 as l3_models
@@ -186,7 +186,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
             id=self.int_sub_id,
             project_id=self.tenant_id,
             ip_version=constants.IP_VERSION_4,
-            cidr=utils.AuthenticIPNetwork('3.3.3.0/24'),
+            cidr=net_utils.AuthenticIPNetwork('3.3.3.0/24'),
             gateway_ip=netaddr.IPAddress('3.3.3.1'),
             network_id=self.int_net_id)
         self.router_port = port_obj.Port(

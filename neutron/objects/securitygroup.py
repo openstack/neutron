@@ -10,10 +10,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.utils import net as net_utils
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron.common import utils
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import rbac_db_models
 from neutron.objects import base
@@ -153,5 +153,5 @@ class SecurityGroupRule(base.NeutronDbObject):
         fields = super(SecurityGroupRule, cls).modify_fields_from_db(db_obj)
         if 'remote_ip_prefix' in fields:
             fields['remote_ip_prefix'] = (
-                utils.AuthenticIPNetwork(fields['remote_ip_prefix']))
+                net_utils.AuthenticIPNetwork(fields['remote_ip_prefix']))
         return fields

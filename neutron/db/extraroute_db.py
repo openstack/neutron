@@ -23,11 +23,11 @@ from neutron_lib.callbacks import resources
 from neutron_lib.db import resource_extend
 from neutron_lib.exceptions import extraroute as xroute_exc
 from neutron_lib.utils import helpers
+from neutron_lib.utils import net as net_utils
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _
-from neutron.common import utils
 from neutron.conf.db import extraroute_db
 from neutron.db import l3_db
 from neutron.objects import router as l3_obj
@@ -117,7 +117,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
             l3_obj.RouterRoute(
                 context,
                 router_id=router['id'],
-                destination=utils.AuthenticIPNetwork(route['destination']),
+                destination=net_utils.AuthenticIPNetwork(route['destination']),
                 nexthop=netaddr.IPAddress(route['nexthop'])).create()
 
         LOG.debug('Removed routes are %s', removed)

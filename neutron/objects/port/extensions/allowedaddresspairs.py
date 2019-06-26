@@ -10,8 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.utils import net as net_utils
 
-from neutron.common import utils
 from neutron.db.models import allowed_address_pair as models
 from neutron.objects import base
 from neutron.objects import common_types
@@ -54,10 +54,10 @@ class AllowedAddressPair(base.NeutronDbObject):
         fields = super(AllowedAddressPair, cls).modify_fields_from_db(db_obj)
         if 'ip_address' in fields:
             # retain string format as stored in the database
-            fields['ip_address'] = utils.AuthenticIPNetwork(
+            fields['ip_address'] = net_utils.AuthenticIPNetwork(
                 fields['ip_address'])
         if 'mac_address' in fields:
             # retain string format as stored in the database
-            fields['mac_address'] = utils.AuthenticEUI(
+            fields['mac_address'] = net_utils.AuthenticEUI(
                 fields['mac_address'])
         return fields

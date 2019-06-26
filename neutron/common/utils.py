@@ -44,7 +44,6 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
 import pkg_resources
-import six
 
 import neutron
 from neutron._i18n import _
@@ -701,44 +700,6 @@ def wait_until_true(predicate, timeout=60, sleep=1, exception=None):
             # pylint: disable=raising-bad-type
             raise exception
         raise WaitTimeout(_("Timed out after %d seconds") % timeout)
-
-
-class _AuthenticBase(object):
-    def __init__(self, addr, **kwargs):
-        super(_AuthenticBase, self).__init__(addr, **kwargs)
-        self._initial_value = addr
-
-    def __str__(self):
-        if isinstance(self._initial_value, six.string_types):
-            return self._initial_value
-        return super(_AuthenticBase, self).__str__()
-
-    # NOTE(ihrachys): override deepcopy because netaddr.* classes are
-    # slot-based and hence would not copy _initial_value
-    def __deepcopy__(self, memo):
-        return self.__class__(self._initial_value)
-
-
-class AuthenticEUI(_AuthenticBase, netaddr.EUI):
-    '''AuthenticEUI class
-
-    This class retains the format of the MAC address string passed during
-    initialization.
-
-    This is useful when we want to make sure that we retain the format passed
-    by a user through API.
-    '''
-
-
-class AuthenticIPNetwork(_AuthenticBase, netaddr.IPNetwork):
-    '''AuthenticIPNetwork class
-
-    This class retains the format of the IP network string passed during
-    initialization.
-
-    This is useful when we want to make sure that we retain the format passed
-    by a user through API.
-    '''
 
 
 class classproperty(object):

@@ -17,9 +17,9 @@ import mock
 from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib.services.logapi import constants as log_const
+from neutron_lib.utils import net as net_utils
 from oslo_utils import uuidutils
 
-from neutron.common import utils
 from neutron.objects.logapi import logging_resource as log_object
 from neutron.services.logapi.common import db_api
 from neutron.services.logapi.common import validators
@@ -224,7 +224,8 @@ class LoggingRpcCallbackTestCase(test_sg.SecurityGroupDBTestCase):
                                  'ethertype': u'IPv4',
                                  'protocol': u'tcp',
                                  'dest_ip_prefix':
-                                     utils.AuthenticIPNetwork('10.0.0.1/32'),
+                                     net_utils.AuthenticIPNetwork(
+                                         '10.0.0.1/32'),
                                  'security_group_id': sg_id}]
                         }],
                         'project_id': tenant_id
@@ -294,7 +295,7 @@ class LoggingRpcCallbackTestCase(test_sg.SecurityGroupDBTestCase):
                                      'port_range_min': 11,
                                      'protocol': u'tcp',
                                      'source_ip_prefix':
-                                         utils.AuthenticIPNetwork(
+                                         net_utils.AuthenticIPNetwork(
                                              '10.0.0.1/32'),
                                      'security_group_id': sg_id},
                                     {'direction': 'egress',
