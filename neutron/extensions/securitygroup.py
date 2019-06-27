@@ -294,6 +294,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
                                'convert_to':
                                    converters.convert_none_to_empty_list,
                                'validate': {'type:uuid_list': None},
+                               'enforce_policy': True,
                                'default': const.ATTR_NOT_SPECIFIED}}}
 
 # Register the configuration options
