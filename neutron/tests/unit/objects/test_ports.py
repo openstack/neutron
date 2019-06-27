@@ -354,6 +354,25 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             self.context, policy_id=old_policy_id)
         self.assertEqual(0, len(qos_binding_obj))
 
+    @mock.patch.object(policy.QosPolicy, 'unset_default')
+    def test_qos_network_policy_id(self, *mocks):
+        policy_obj = policy.QosPolicy(self.context)
+        policy_obj.create()
+
+        obj = self._make_object(self.obj_fields[0])
+        obj.create()
+        obj = ports.Port.get_object(self.context, id=obj.id)
+        self.assertIsNone(obj.qos_network_policy_id)
+        self.assertIsNone(obj.qos_policy_id)
+
+        network = self._create_test_network(qos_policy_id=policy_obj.id)
+        self.update_obj_fields({'network_id': network.id})
+        obj = self._make_object(self.obj_fields[1])
+        obj.create()
+        obj = ports.Port.get_object(self.context, id=obj.id)
+        self.assertEqual(policy_obj.id, obj.qos_network_policy_id)
+        self.assertIsNone(obj.qos_policy_id)
+
     def test_get_objects_queries_constant(self):
         self.skipTest(
             'Port object loads segment info without relationships')
@@ -460,6 +479,12 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         primitive['versioned_object.data'].pop('bindings')
         port_v1_4_no_binding = port_v1_4.obj_from_primitive(primitive)
         port_v1_4_no_binding.obj_to_primitive(target_version='1.3')
+
+    def test_v1_5_to_v1_4_drops_qos_network_policy_id(self):
+        port_new = self._create_test_port()
+        port_v1_4 = port_new.obj_to_primitive(target_version='1.4')
+        self.assertNotIn('qos_network_policy_id',
+                         port_v1_4['versioned_object.data'])
 
     def test_get_ports_ids_by_security_groups_except_router(self):
         sg_id = self._create_test_security_group_id()

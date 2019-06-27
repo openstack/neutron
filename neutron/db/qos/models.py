@@ -54,6 +54,12 @@ class QosNetworkPolicyBinding(model_base.BASEV2):
         models_v2.Network, load_on_pending=True,
         backref=sa.orm.backref("qos_policy_binding", uselist=False,
                                cascade='delete', lazy='joined'))
+    port = sa.orm.relationship(
+        models_v2.Port,
+        primaryjoin='QosNetworkPolicyBinding.network_id == Port.network_id',
+        foreign_keys=network_id,
+        backref=sa.orm.backref('qos_network_policy_binding', uselist=False,
+                               viewonly=True))
 
 
 class QosFIPPolicyBinding(model_base.BASEV2):
