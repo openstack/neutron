@@ -116,41 +116,34 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.assertIsInstance(call_args[2], policy_object.QosPolicy)
 
     def _create_and_extend_port(self, bw_rules, physical_network='public',
-                                has_qos_policy=True, network_qos=None):
+                                has_qos_policy=True, has_net_qos_policy=False):
         network_id = uuidutils.generate_uuid()
 
-        if has_qos_policy or network_qos:
-            policy = self.policy
-            policy_id = self.policy.id
-            self.policy.rules = bw_rules
-            for rule in bw_rules:
-                rule.qos_policy_id = self.policy.id
-        else:
-            policy = None
-            policy_id = None
-
-        port_res = {
-            "id": uuidutils.generate_uuid(),
-            "qos_policy_id": policy_id,
-            "network_id": network_id,
-            "binding:vnic_type": "normal",
+        self.port_data = {
+            'port': {'id': uuidutils.generate_uuid(),
+                     'network_id': network_id}
         }
-        network_mock = mock.MagicMock(id=network_id, qos_policy_id=policy_id)
+
+        if has_qos_policy:
+            self.port_data['port']['qos_policy_id'] = self.policy.id
+            self.policy.rules = bw_rules
+        elif has_net_qos_policy:
+            self.port_data['port']['qos_network_policy_id'] = self.policy.id
+            self.policy.rules = bw_rules
+
+        self.port = ports_object.Port(
+            self.ctxt, **self.port_data['port'])
+
+        port_res = {"binding:vnic_type": "normal"}
         segment_mock = mock.MagicMock(network_id=network_id,
                                       physical_network=physical_network)
 
-        with mock.patch(
-            'neutron.objects.network.Network.get_object',
-            return_value=network_mock
-        ), mock.patch(
-            'neutron.objects.network.NetworkSegment.get_objects',
-            return_value=[segment_mock]
-        ), mock.patch(
-            'neutron.objects.qos.policy.QosPolicy.get_port_policy',
-            return_value=policy
-        ):
+        with mock.patch('neutron.objects.network.NetworkSegment.get_objects',
+                        return_value=[segment_mock]), \
+                mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                           return_value=self.policy):
             return qos_plugin.QoSPlugin._extend_port_resource_request(
-                port_res, {})
+                port_res, self.port)
 
     def test__extend_port_resource_request_min_bw_rule(self):
         self.min_rule.direction = lib_constants.EGRESS_DIRECTION
@@ -211,7 +204,7 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.min_rule.qos_policy_id = self.policy.id
 
         port = self._create_and_extend_port([self.min_rule],
-                                            network_qos=self.policy)
+                                            has_net_qos_policy=True)
         self.assertEqual(
             ['CUSTOM_PHYSNET_PUBLIC', 'CUSTOM_VNIC_TYPE_NORMAL'],
             port['resource_request']['required']
