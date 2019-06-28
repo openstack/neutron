@@ -369,7 +369,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                       'agent_timestamp': agent_timestamp})
 
     @db_api.retry_if_session_inactive()
-    def create_or_update_agent(self, context, agent_state, agent_timestamp):
+    def create_or_update_agent(self, context, agent_state,
+                               agent_timestamp=None):
         """Registers new agent in the database or updates existing.
 
         Returns tuple of agent status and state.
