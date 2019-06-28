@@ -31,7 +31,6 @@ find: RegExpFilter, find, root, find, /sys/class/net, -maxdepth, 1, -type, l, -p
 ip_exec: IpNetnsExecFilter, ip, root
 
 # l3_tc_lib
-l3_tc_show_qdisc: RegExpFilter, tc, root, tc, qdisc, show, dev, .+
 l3_tc_add_qdisc_ingress: RegExpFilter, tc, root, tc, qdisc, add, dev, .+, ingress
 l3_tc_add_qdisc_egress: RegExpFilter, tc, root, tc, qdisc, add, dev, .+, root, handle, 1:, htb
 l3_tc_show_filters: RegExpFilter, tc, root, tc, -p, -s, -d, filter, show, dev, .+, parent, .+, prio, 1
