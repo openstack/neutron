@@ -54,7 +54,6 @@
         - tempest-slow-py3:
             irrelevant-files: *tempest-irrelevant-files
         - networking-ovn-tempest-dsvm-ovs-release:
-            voting: false
             irrelevant-files: *tempest-irrelevant-files
         - networking-midonet-tempest-aio-ml2-centos-7:
             voting: false
