@@ -112,12 +112,12 @@ Verify service operation
 
    .. code-block:: console
 
-      $ neutron agent-list --agent-type="BGP dynamic routing agent"
-      +--------------------------------------+---------------------------+------------+-------------------+-------+----------------+---------------------------+
-      | id                                   | agent_type                | host       | availability_zone | alive | admin_state_up | binary                    |
-      +--------------------------------------+---------------------------+------------+-------------------+-------+----------------+---------------------------+
-      | 37729181-2224-48d8-89ef-16eca8e2f77e | BGP dynamic routing agent | controller |                   | :-)   | True           | neutron-bgp-dragent       |
-      +--------------------------------------+---------------------------+------------+-------------------+-------+----------------+---------------------------+
+      $ openstack network agent list --agent-type bgp
+      +--------------------------------------+---------------------------+------------+-------------------+-------+-------+---------------------+
+      | ID                                   | Agent Type                | Host       | Availability Zone | Alive | State | Binary              |
+      +--------------------------------------+---------------------------+------------+-------------------+-------+-------+---------------------+
+      | 37729181-2224-48d8-89ef-16eca8e2f77e | BGP dynamic routing agent | controller | None              | :-)   | UP    | neutron-bgp-dragent |
+      +--------------------------------------+---------------------------+------------+-------------------+-------+-------+---------------------+
 
 Create the address scope and subnet pools
 -----------------------------------------
@@ -575,7 +575,7 @@ networks and floating IP addresses for instances using those networks.
 
    .. code-block:: console
 
-      $ neutron bgp-speaker-create --ip-version 4 \
+      $ openstack bgp speaker create --ip-version 4 \
         --local-as LOCAL_AS bgpspeaker
       Created a new bgp_speaker:
       +-----------------------------------+--------------------------------------+
@@ -604,14 +604,14 @@ networks and floating IP addresses for instances using those networks.
 
    .. code-block:: console
 
-      $ neutron bgp-speaker-network-add bgpspeaker provider
+      $ openstack bgp speaker add network bgpspeaker provider
       Added network provider to BGP speaker bgpspeaker.
 
 #. Verify association of the provider network with the BGP speaker.
 
    .. code-block:: console
 
-      $ neutron bgp-speaker-show bgpspeaker
+      $ openstack bgp speaker show bgpspeaker
       +-----------------------------------+--------------------------------------+
       | Field                             | Value                                |
       +-----------------------------------+--------------------------------------+
@@ -631,9 +631,9 @@ networks and floating IP addresses for instances using those networks.
 
    .. code-block:: console
 
-      $ neutron bgp-speaker-advertiseroute-list bgpspeaker
+      $ openstack bgp speaker list advertised routes bgpspeaker
       +-----------------+--------------+
-      | destination     | next_hop     |
+      | Destination     | Nexthop      |
       +-----------------+--------------+
       | 192.0.2.0/25    | 203.0.113.11 |
       | 192.0.2.128/25  | 203.0.113.12 |
@@ -643,7 +643,7 @@ networks and floating IP addresses for instances using those networks.
 
    .. code-block:: console
 
-      $ neutron bgp-peer-create --peer-ip 192.0.2.1 \
+      $ openstack bgp peer create --peer-ip 192.0.2.1 \
         --remote-as REMOTE_AS bgppeer
       Created a new bgp_peer:
       +-----------+--------------------------------------+
@@ -669,14 +669,14 @@ networks and floating IP addresses for instances using those networks.
 
    .. code-block:: console
 
-      $ neutron bgp-speaker-peer-add bgpspeaker bgppeer
+      $ openstack bgp speaker add peer bgpspeaker bgppeer
       Added BGP peer bgppeer to BGP speaker bgpspeaker.
 
 #. Verify addition of the BGP peer to the BGP speaker.
 
    .. code-block:: console
 
-      $ neutron bgp-speaker-show bgpspeaker
+      $ openstack bgp speaker show bgpspeaker
       +-----------------------------------+--------------------------------------+
       | Field                             | Value                                |
       +-----------------------------------+--------------------------------------+
@@ -706,26 +706,19 @@ Schedule the BGP speaker to an agent
 
    .. code-block:: console
 
-    $ neutron bgp-dragent-speaker-add 37729181-2224-48d8-89ef-16eca8e2f77e bgpspeaker
+    $ openstack bgp dragent add speaker 37729181-2224-48d8-89ef-16eca8e2f77e bgpspeaker
     Associated BGP speaker bgpspeaker to the Dynamic Routing agent.
 
 #. Verify scheduling of the BGP speaker to the agent.
 
    .. code-block:: console
 
-      $ neutron bgp-dragent-list-hosting-speaker bgpspeaker
-      +--------------------------------------+------------+----------------+-------+
-      | id                                   | host       | admin_state_up | alive |
-      +--------------------------------------+------------+----------------+-------+
-      | 37729181-2224-48d8-89ef-16eca8e2f77e | controller | True           | :-)   |
-      +--------------------------------------+------------+----------------+-------+
-
-      $ neutron bgp-speaker-list-on-dragent 37729181-2224-48d8-89ef-16eca8e2f77e
-      +--------------------------------------+------------+----------+------------+
-      | id                                   | name       | local_as | ip_version |
-      +--------------------------------------+------------+----------+------------+
-      | 5f227f14-4f46-4eca-9524-fc5a1eabc358 | bgpspeaker |     1234 |          4 |
-      +--------------------------------------+------------+----------+------------+
+      $ openstack bgp speaker show dragents bgpspeaker
+      +--------------------------------------+------------+-------+-------+
+      | ID                                   | Host       | State | Alive |
+      +--------------------------------------+------------+-------+-------+
+      | 37729181-2224-48d8-89ef-16eca8e2f77e | controller | True  | :-)   |
+      +--------------------------------------+------------+-------+-------+
 
 Prefix advertisement
 ~~~~~~~~~~~~~~~~~~~~
@@ -765,12 +758,10 @@ conditions:
 Operation with Distributed Virtual Routers (DVR)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In deployments using DVR, the BGP speaker advertises floating IP
-addresses and self-service networks differently. For floating IP
-addresses, the BGP speaker advertises the floating IP agent gateway
-on the corresponding compute node as the next-hop IP address. For
-self-service networks using SNAT, the BGP speaker advertises the
-DVR SNAT node as the next-hop IP address.
+For both floating IP and IPv4 fixed IP addresses, the BGP speaker advertises
+the floating IP agent gateway on the corresponding compute node as the
+next-hop IP address. When using IPv6 fixed IP addresses, the BGP speaker
+advertises the DVR SNAT node as the next-hop IP address.
 
 For example, consider the following components:
 
@@ -778,6 +769,8 @@ For example, consider the following components:
    floating IP addresses 203.0.113.101, 203.0.113.102, and 203.0.113.103.
 
 #. A self-service network using IP address range 198.51.100.0/24.
+
+#. Instances with fixed IP's 198.51.100.11, 198.51.100.12, and 198.51.100.13
 
 #. The SNAT gateway resides on 203.0.113.11.
 
@@ -787,11 +780,13 @@ For example, consider the following components:
 #. Three instances, one per compute node, each with a floating IP
    address.
 
+#. ``advertise_tenant_networks`` is set to ``False`` on the BGP speaker
+
 .. code-block:: console
 
-    $ neutron bgp-speaker-advertiseroute-list bgpspeaker
+    $ openstack bgp speaker list advertised routes bgpspeaker
     +------------------+--------------+
-    | destination      | next_hop     |
+    | Destination      | Nexthop      |
     +------------------+--------------+
     | 198.51.100.0/24  | 203.0.113.11 |
     | 203.0.113.101/32 | 203.0.113.12 |
@@ -799,11 +794,20 @@ For example, consider the following components:
     | 203.0.113.103/32 | 203.0.113.14 |
     +------------------+--------------+
 
-.. note::
+When floating IP's are disassociated and ``advertise_tenant_networks`` is
+set to ``True``, the following routes will be advertised:
 
-   DVR lacks support for routing directly to a fixed IP address via the
-   floating IP agent gateway port and thus prevents the BGP speaker from
-   advertising fixed IP addresses.
+.. code-block:: console
+
+    $ openstack bgp speaker list advertised routes bgpspeaker
+    +------------------+--------------+
+    | Destination      | Nexthop      |
+    +------------------+--------------+
+    | 198.51.100.0/24  | 203.0.113.11 |
+    | 198.51.100.11/32 | 203.0.113.12 |
+    | 198.51.100.12/32 | 203.0.113.13 |
+    | 198.51.100.13/32 | 203.0.113.14 |
+    +------------------+--------------+
 
 You can also identify floating IP agent gateways in your environment to
 assist with verifying operation of the BGP speaker.
@@ -832,7 +836,9 @@ BGP dynamic routing supports peering via IPv6 and advertising IPv6 prefixes.
 
 .. note::
 
-   DVR with IPv6 functions similarly to DVR with IPv4.
+  DVR lacks support for routing directly to a fixed IPv6 address via the
+  floating IP agent gateway port and thus prevents the BGP speaker from
+  advertising /128 host routes.
 
 High availability
 ~~~~~~~~~~~~~~~~~
@@ -846,42 +852,28 @@ more operational agents.
 
    .. code-block:: console
 
-      $ neutron agent-list --agent-type="BGP dynamic routing agent"
-      +--------------------------------------+---------------------------+----------+-------------------+-------+----------------+---------------------------+
-      | id                                   | agent_type                | host     | availability_zone | alive | admin_state_up | binary                    |
-      +--------------------------------------+---------------------------+----------+-------------------+-------+----------------+---------------------------+
-      | 37729181-2224-48d8-89ef-16eca8e2f77e | BGP dynamic routing agent | bgp-ha1  |                   | :-)   | True           | neutron-bgp-dragent       |
-      | 1a2d33bb-9321-30a2-76ab-22eff3d2f56a | BGP dynamic routing agent | bgp-ha2  |                   | :-)   | True           | neutron-bgp-dragent       |
-      +--------------------------------------+---------------------------+----------+-------------------+-------+----------------+---------------------------+
+      $ openstack network agent list --agent-type bgp
+      +--------------------------------------+---------------------------+------- --+-------------------+-------+-------+---------------------------+
+      | ID                                   | Agent Type                | Host     | Availability Zone | Alive | State | Binary                    |
+      +--------------------------------------+---------------------------+----------+-------------------+-------+-------+---------------------------+
+      | 37729181-2224-48d8-89ef-16eca8e2f77e | BGP dynamic routing agent | bgp-ha1  | None              | :-)   | UP    | neutron-bgp-dragent       |
+      | 1a2d33bb-9321-30a2-76ab-22eff3d2f56a | BGP dynamic routing agent | bgp-ha2  | None              | :-)   | UP    | neutron-bgp-dragent       |
+      +--------------------------------------+---------------------------+----------+-------------------+-------+-------+---------------------------+
 
 #. Schedule BGP speaker to multiple agents.
 
    .. code-block:: console
 
-      $ neutron bgp-dragent-speaker-add 37729181-2224-48d8-89ef-16eca8e2f77e bgpspeaker
+      $ openstack bgp dragent add speaker 37729181-2224-48d8-89ef-16eca8e2f77e bgpspeaker
       Associated BGP speaker bgpspeaker to the Dynamic Routing agent.
 
-      $ neutron bgp-dragent-speaker-add 1a2d33bb-9321-30a2-76ab-22eff3d2f56a bgpspeaker
+      $ openstack bgp dragent add speaker 1a2d33bb-9321-30a2-76ab-22eff3d2f56a bgpspeaker
       Associated BGP speaker bgpspeaker to the Dynamic Routing agent.
 
-      $ neutron bgp-dragent-list-hosting-speaker bgpspeaker
-      +--------------------------------------+---------+----------------+-------+
-      | id                                   | host    | admin_state_up | alive |
-      +--------------------------------------+---------+----------------+-------+
-      | 37729181-2224-48d8-89ef-16eca8e2f77e | bgp-ha1 | True           | :-)   |
-      | 1a2d33bb-9321-30a2-76ab-22eff3d2f56a | bgp-ha2 | True           | :-)   |
-      +--------------------------------------+---------+----------------+-------+
-
-      $ neutron bgp-speaker-list-on-dragent 37729181-2224-48d8-89ef-16eca8e2f77e
-      +--------------------------------------+------------+----------+------------+
-      | id                                   | name       | local_as | ip_version |
-      +--------------------------------------+------------+----------+------------+
-      | 5f227f14-4f46-4eca-9524-fc5a1eabc358 | bgpspeaker |     1234 |          4 |
-      +--------------------------------------+------------+----------+------------+
-
-      $ neutron bgp-speaker-list-on-dragent 1a2d33bb-9321-30a2-76ab-22eff3d2f56a
-      +--------------------------------------+------------+----------+------------+
-      | id                                   | name       | local_as | ip_version |
-      +--------------------------------------+------------+----------+------------+
-      | 5f227f14-4f46-4eca-9524-fc5a1eabc358 | bgpspeaker |     1234 |          4 |
-      +--------------------------------------+------------+----------+------------+
+      $ openstack bgp speaker show dragents bgpspeaker
+      +--------------------------------------+---------+-------+-------+
+      | ID                                   | Host    | State | Alive |
+      +--------------------------------------+---------+-------+-------+
+      | 37729181-2224-48d8-89ef-16eca8e2f77e | bgp-ha1 | True  | :-)   |
+      | 1a2d33bb-9321-30a2-76ab-22eff3d2f56a | bgp-ha2 | True  | :-)   |
+      +--------------------------------------+---------+-------+-------+
