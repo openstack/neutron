@@ -104,24 +104,19 @@ ovs_opts = [
     cfg.StrOpt('vhostuser_socket_dir', default=constants.VHOST_USER_SOCKET_DIR,
                help=_("OVS vhost-user socket directory.")),
     cfg.IPOpt('of_listen_address', default='127.0.0.1',
-              help=_("Address to listen on for OpenFlow connections. "
-                     "Used only for 'native' driver.")),
+              help=_("Address to listen on for OpenFlow connections.")),
     cfg.PortOpt('of_listen_port', default=6633,
-                help=_("Port to listen on for OpenFlow connections. "
-                       "Used only for 'native' driver.")),
+                help=_("Port to listen on for OpenFlow connections.")),
     cfg.IntOpt('of_connect_timeout', default=300,
                help=_("Timeout in seconds to wait for "
-                      "the local switch connecting the controller. "
-                      "Used only for 'native' driver.")),
+                      "the local switch connecting the controller.")),
     cfg.IntOpt('of_request_timeout', default=300,
                help=_("Timeout in seconds to wait for a single "
-                      "OpenFlow request. "
-                      "Used only for 'native' driver.")),
+                      "OpenFlow request.")),
     cfg.IntOpt('of_inactivity_probe', default=10,
                help=_("The inactivity_probe interval in seconds for the local "
                       "switch connection to the controller. "
-                      "A value of 0 disables inactivity probes. "
-                      "Used only for 'native' driver.")),
+                      "A value of 0 disables inactivity probes.")),
 ]
 
 agent_opts = [
