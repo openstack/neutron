@@ -180,6 +180,10 @@ agent_opts = [
 ]
 
 dhcp_opts = [
+    cfg.BoolOpt('enable_ipv6', default=True,
+                help=_("When set to True, the OVS agent DHCP "
+                       "extension will add related flows for "
+                       "DHCPv6 packets.")),
     cfg.IntOpt('renewal_time', default=0,
                help=_("DHCP renewal time T1 (in seconds). If set to 0, it "
                       "will default to half of the lease time.")),

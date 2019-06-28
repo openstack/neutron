@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    Added a new OVS agent extension ``dhcp`` to support distributed
+    DHCP for VMs in compute nodes directly. To enable this just
+    set ``extensions=dhcp`` to OVS agent config file under ``[agent]``
+    section. We also add a new config section ``[dhcp]`` which
+    has options ``enable_ipv6 = True/False`` for indicating whether
+    enable the DHCPv6 for VM ports.

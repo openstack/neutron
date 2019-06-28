@@ -159,6 +159,7 @@ class TestOvsNeutronAgent(object):
                 mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
                            'has_alive_neutron_server'):
             ext_manager = mock.Mock()
+            ext_manager.names = mock.Mock(return_value=[])
             agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
                                                    ext_manager, cfg.CONF)
             agent.tun_br = self.br_tun_cls(br_name='br-tun')
@@ -237,6 +238,7 @@ class TestOvsNeutronAgent(object):
                                   expected,
                                   group='OVS')
             ext_manager = mock.Mock()
+            ext_manager.names = mock.Mock(return_value=[])
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
                                                         ext_manager, cfg.CONF)
             self.assertEqual(expected, self.agent.int_br.datapath_type)
@@ -2904,6 +2906,7 @@ class AncillaryBridgesTest(object):
                 mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
                            'has_alive_neutron_server'):
             ext_manager = mock.Mock()
+            ext_manager.names = mock.Mock(return_value=[])
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
                                                         ext_manager, cfg.CONF)
             self.assertEqual(len(ancillary), len(self.agent.ancillary_brs))
@@ -2944,6 +2947,7 @@ class AncillaryBridgesTest(object):
                 mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
                            'has_alive_neutron_server'):
             ext_manager = mock.Mock()
+            ext_manager.names = mock.Mock(return_value=[])
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
                                                         ext_manager, cfg.CONF)
             return self.agent.scan_ancillary_ports(registered_ports, sync)
@@ -3017,6 +3021,7 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
                            'has_alive_neutron_server'):
             ext_manager = mock.Mock()
+            ext_manager.names = mock.Mock(return_value=[])
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
                                                        ext_manager, cfg.CONF)
             self.agent.tun_br = self.br_tun_cls(br_name='br-tun')

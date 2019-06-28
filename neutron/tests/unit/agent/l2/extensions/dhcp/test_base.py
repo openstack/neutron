@@ -109,10 +109,14 @@ class DHCPResponderBaseTestCase(base.BaseTestCase):
         super(DHCPResponderBaseTestCase, self).setUp()
         self.int_br = mock.Mock()
         self.tun_br = mock.Mock()
+        self.plugin_rpc = mock.Mock()
+        self.remote_resource_cache = mock.Mock()
+        self.plugin_rpc.remote_resource_cache = self.remote_resource_cache
         self.agent_api = ovs_ext_api.OVSAgentExtensionAPI(
             self.int_br,
             self.tun_br,
-            phys_brs=None)
+            phys_brs=None,
+            plugin_rpc=self.plugin_rpc)
         self.ext_api = mock.Mock()
         self.base_responer = dhcp_resp_base.DHCPResponderBase(self.agent_api,
                                                               self.ext_api)

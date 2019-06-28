@@ -21,6 +21,7 @@
 
 import netaddr
 
+from neutron_lib import constants as lib_consts
 from os_ken.lib.packet import ether_types
 from os_ken.lib.packet import icmpv6
 from os_ken.lib.packet import in_proto
@@ -35,6 +36,12 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
 
 LOG = logging.getLogger(__name__)
 
+# TODO(liuyulong): move to neutron-lib.
+IPV4_NETWORK_BROADCAST = "255.255.255.255"
+# All_DHCP_Relay_Agents_and_Servers
+# [RFC8415] https://datatracker.ietf.org/doc/html/rfc8415
+IPV6_All_DHCP_RELAY_AGENYS_AND_SERVERS = "ff02::1:2"
+
 
 class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                            br_dvr_process.OVSDVRInterfaceMixin):
@@ -42,10 +49,13 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
 
     of_tables = constants.INT_BR_ALL_TABLES
 
-    def setup_default_table(self):
+    def setup_default_table(self, enable_openflow_dhcp=False,
+                            enable_dhcpv6=False):
         self.setup_canary_table()
         self.install_goto(dest_table_id=constants.TRANSIENT_TABLE)
         self.install_normal(table_id=constants.TRANSIENT_TABLE, priority=3)
+        self.init_dhcp(enable_openflow_dhcp=enable_openflow_dhcp,
+                       enable_dhcpv6=enable_dhcpv6)
         self.install_drop(table_id=constants.ARP_SPOOF_TABLE)
         self.install_drop(table_id=constants.LOCAL_SWITCHING,
                           priority=constants.OPENFLOW_MAX_PRIORITY,
@@ -54,6 +64,87 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
         # deal with all egress flow.
         self.install_normal(table_id=constants.TRANSIENT_EGRESS_TABLE,
                             priority=3)
+
+    def init_dhcp(self, enable_openflow_dhcp=False, enable_dhcpv6=False):
+        if not enable_openflow_dhcp:
+            return
+        # DHCP IPv4
+        self.install_goto(dest_table_id=constants.DHCP_IPV4_TABLE,
+                          table_id=constants.TRANSIENT_TABLE,
+                          priority=101,
+                          eth_type=ether_types.ETH_TYPE_IP,
+                          ip_proto=in_proto.IPPROTO_UDP,
+                          ipv4_dst=IPV4_NETWORK_BROADCAST,
+                          udp_src=lib_consts.DHCP_CLIENT_PORT,
+                          udp_dst=lib_consts.DHCP_RESPONSE_PORT)
+        self.install_drop(table_id=constants.DHCP_IPV4_TABLE)
+
+        if not enable_dhcpv6:
+            return
+        # DHCP IPv6
+        self.install_goto(dest_table_id=constants.DHCP_IPV6_TABLE,
+                          table_id=constants.TRANSIENT_TABLE,
+                          priority=101,
+                          eth_type=ether_types.ETH_TYPE_IPV6,
+                          ip_proto=in_proto.IPPROTO_UDP,
+                          ipv6_dst=IPV6_All_DHCP_RELAY_AGENYS_AND_SERVERS,
+                          udp_src=lib_consts.DHCPV6_CLIENT_PORT,
+                          udp_dst=lib_consts.DHCPV6_RESPONSE_PORT)
+        self.install_drop(table_id=constants.DHCP_IPV6_TABLE)
+
+    def add_dhcp_ipv4_flow(self, port_id, ofport, port_mac):
+        (_dp, ofp, ofpp) = self._get_dp()
+        match = ofpp.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
+                              ip_proto=in_proto.IPPROTO_UDP,
+                              in_port=ofport,
+                              eth_src=port_mac,
+                              udp_src=68,
+                              udp_dst=67)
+        actions = [
+            ofpp.OFPActionOutput(ofp.OFPP_CONTROLLER, 0),
+        ]
+        instructions = [
+            ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
+        ]
+        self.install_instructions(table_id=constants.DHCP_IPV4_TABLE,
+                                  priority=100,
+                                  instructions=instructions,
+                                  match=match)
+
+    def add_dhcp_ipv6_flow(self, port_id, ofport, port_mac):
+        (_dp, ofp, ofpp) = self._get_dp()
+        match = ofpp.OFPMatch(eth_type=ether_types.ETH_TYPE_IPV6,
+                              ip_proto=in_proto.IPPROTO_UDP,
+                              in_port=ofport,
+                              eth_src=port_mac,
+                              udp_src=546,
+                              udp_dst=547)
+        actions = [
+            ofpp.OFPActionOutput(ofp.OFPP_CONTROLLER, 0),
+        ]
+        instructions = [
+            ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
+        ]
+        self.install_instructions(table_id=constants.DHCP_IPV6_TABLE,
+                                  priority=100,
+                                  instructions=instructions,
+                                  match=match)
+
+    def del_dhcp_flow(self, ofport, port_mac):
+        self.uninstall_flows(table_id=constants.DHCP_IPV4_TABLE,
+                             eth_type=ether_types.ETH_TYPE_IP,
+                             ip_proto=in_proto.IPPROTO_UDP,
+                             in_port=ofport,
+                             eth_src=port_mac,
+                             udp_src=68,
+                             udp_dst=67)
+        self.uninstall_flows(table_id=constants.DHCP_IPV6_TABLE,
+                             eth_type=ether_types.ETH_TYPE_IPV6,
+                             ip_proto=in_proto.IPPROTO_UDP,
+                             in_port=ofport,
+                             eth_src=port_mac,
+                             udp_src=546,
+                             udp_dst=547)
 
     def setup_canary_table(self):
         self.install_drop(constants.CANARY_TABLE)
