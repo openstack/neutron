@@ -22,6 +22,7 @@ from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
 from neutron_lib.callbacks import resources as callbacks_resources
 from neutron_lib import constants as lib_const
+from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import netutils
 
@@ -395,6 +396,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                                    applied
 
         """
+        self.permitted_ethertypes = cfg.CONF.SECURITYGROUP.permitted_ethertypes
         self.int_br = self.initialize_bridge(integration_bridge)
         self.sg_port_map = SGPortMap()
         self.conj_ip_manager = ConjIPFlowManager(self)
@@ -999,6 +1001,26 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             reg_port=port.ofport,
             actions='output:{:d}'.format(port.ofport)
         )
+
+        # Allow custom ethertypes
+        for permitted_ethertype in self.permitted_ethertypes:
+            if permitted_ethertype[:2] == '0x':
+                try:
+                    hex_ethertype = hex(int(permitted_ethertype, base=16))
+                    self._add_flow(
+                        table=ovs_consts.BASE_INGRESS_TABLE,
+                        priority=100,
+                        dl_type=hex_ethertype,
+                        reg_port=port.ofport,
+                        actions='output:{:d}'.format(port.ofport)
+                    )
+                    continue
+                except ValueError:
+                    pass
+            LOG.warning("Custom ethertype %(permitted_ethertype)s is not "
+                        "a hexadecimal number.",
+                        {'permitted_ethertype': permitted_ethertype})
+
         self._initialize_ingress_ipv6_icmp(port)
 
         # DHCP offers
