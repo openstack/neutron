@@ -36,7 +36,13 @@ security_group_opts = [
         default=True,
         help=_('Use ipset to speed-up the iptables based security groups. '
                'Enabling ipset support requires that ipset is installed on L2 '
-               'agent node.'))
+               'agent node.')),
+    cfg.ListOpt(
+        'permitted_ethertypes',
+        default=[],
+        help=_('Comma-separated list of ethertypes to be permitted, in '
+               'hexadecimal (starting with "0x"). For example, "0x4008" '
+               'to permit InfiniBand.'))
 ]
 
 
