@@ -674,7 +674,11 @@ class Controller(object):
             msg = _('The resource could not be found.')
             raise webob.exc.HTTPNotFound(msg)
 
-        obj_updater = getattr(self._plugin, action)
+        if self._native_bulk and hasattr(self._plugin, "%s_bulk" % action):
+            obj_updater = getattr(self._plugin, "%s_bulk" % action)
+        else:
+            obj_updater = getattr(self._plugin, action)
+
         kwargs = {self._resource: body}
         if parent_id:
             kwargs[self._parent_id_name] = parent_id
