@@ -846,9 +846,8 @@ class RouterInfo(object):
 
     def _prevent_snat_for_internal_traffic_rule(self, interface_name):
         return (
-            'POSTROUTING', '! -i %(interface_name)s '
-                           '! -o %(interface_name)s -m conntrack ! '
-                           '--ctstate DNAT -j ACCEPT' %
+            'POSTROUTING', '! -o %(interface_name)s -m conntrack '
+                           '! --ctstate DNAT -j ACCEPT' %
                            {'interface_name': interface_name})
 
     def external_gateway_nat_fip_rules(self, ex_gw_ip, interface_name):
