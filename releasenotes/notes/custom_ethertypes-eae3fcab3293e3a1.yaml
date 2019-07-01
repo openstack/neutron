@@ -1,0 +1,9 @@
+---
+security:
+  - |
+    The OVS Firewall blocks traffic that does not have either the IPv4 or IPv6
+    ethertypes at present. This is a behavior change compared to the
+    iptables_hybrid firewall, which only operates on IP packets and thus does
+    not address other ethertypes.  There is now a configuration option in the
+    neutron openvswitch agent configuration file for permitted ethertypes and
+    then ensures that the requested ethertypes are permitted on initialization.
