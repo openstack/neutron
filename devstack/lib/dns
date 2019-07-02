@@ -4,7 +4,7 @@ function configure_dns_extension {
 function configure_dns_integration {
     iniset $NEUTRON_CONF DEFAULT external_dns_driver designate
     iniset $NEUTRON_CONF designate url "$DESIGNATE_SERVICE_PROTOCOL://$DESIGNATE_SERVICE_HOST:$DESIGNATE_SERVICE_PORT/v2"
-    configure_auth_token_middleware $NEUTRON_CONF designate $NEUTRON_AUTH_CACHE_DIR designate
+    configure_keystone_authtoken_middleware $NEUTRON_CONF designate designate
 }
 function post_config_dns_extension {
     iniset $NEUTRON_CONF DEFAULT dns_domain openstackgate.local
