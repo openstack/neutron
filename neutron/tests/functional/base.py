@@ -48,6 +48,7 @@ class BaseLoggingTestCase(base.BaseTestCase):
         warnings.simplefilter("ignore")
         base.setup_test_logging(
             cfg.CONF, DEFAULT_LOG_DIR, "%s.txt" % self.id())
+        cfg.CONF.set_override('use_helper_for_ns_read', False, group='AGENT')
 
 
 class BaseSudoTestCase(BaseLoggingTestCase):
