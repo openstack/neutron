@@ -260,7 +260,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _update_router_db(self, context, router_id, data):
         """Update the DB object."""
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             router_db = self._get_router(context, router_id)
             old_router = self._make_router_dict(router_db)
             if data:
