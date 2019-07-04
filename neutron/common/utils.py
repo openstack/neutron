@@ -43,6 +43,8 @@ from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
+from oslo_utils import timeutils
+from oslo_utils import uuidutils
 from osprofiler import profiler
 import pkg_resources
 
@@ -962,3 +964,17 @@ def spawn_n(func, *args, **kwargs):
         return func(*args, **kwargs)
 
     return eventlet.spawn_n(wrapper, *args, **kwargs)
+
+
+def timecost(f):
+    call_id = uuidutils.generate_uuid()
+    message_base = ("Time-cost: call %(call_id)s function %(fname)s ") % {
+                    "call_id": call_id, "fname": f.__name__}
+    end_message = (message_base + "took %(seconds).3fs seconds to run")
+
+    @timeutils.time_it(LOG, message=end_message, min_duration=None)
+    def wrapper(*args, **kwargs):
+        LOG.debug(message_base + "start")
+        ret = f(*args, **kwargs)
+        return ret
+    return wrapper

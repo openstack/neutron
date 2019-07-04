@@ -119,23 +119,27 @@ class L3PluginApi(object):
         target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
+    @utils.timecost
     def get_routers(self, context, router_ids=None):
         """Make a remote process call to retrieve the sync data for routers."""
         cctxt = self.client.prepare()
         return cctxt.call(context, 'sync_routers', host=self.host,
                           router_ids=router_ids)
 
+    @utils.timecost
     def update_all_ha_network_port_statuses(self, context):
         """Make a remote process call to update HA network port status."""
         cctxt = self.client.prepare(version='1.10')
         return cctxt.call(context, 'update_all_ha_network_port_statuses',
                           host=self.host)
 
+    @utils.timecost
     def get_router_ids(self, context):
         """Make a remote process call to retrieve scheduled routers ids."""
         cctxt = self.client.prepare(version='1.9')
         return cctxt.call(context, 'get_router_ids', host=self.host)
 
+    @utils.timecost
     def get_external_network_id(self, context):
         """Make a remote process call to retrieve the external network id.
 
@@ -146,47 +150,55 @@ class L3PluginApi(object):
         cctxt = self.client.prepare()
         return cctxt.call(context, 'get_external_network_id', host=self.host)
 
+    @utils.timecost
     def update_floatingip_statuses(self, context, router_id, fip_statuses):
         """Call the plugin update floating IPs's operational status."""
         cctxt = self.client.prepare(version='1.1')
         return cctxt.call(context, 'update_floatingip_statuses',
                           router_id=router_id, fip_statuses=fip_statuses)
 
+    @utils.timecost
     def get_ports_by_subnet(self, context, subnet_id):
         """Retrieve ports by subnet id."""
         cctxt = self.client.prepare(version='1.2')
         return cctxt.call(context, 'get_ports_by_subnet', host=self.host,
                           subnet_id=subnet_id)
 
+    @utils.timecost
     def get_agent_gateway_port(self, context, fip_net):
         """Get or create an agent_gateway_port."""
         cctxt = self.client.prepare(version='1.2')
         return cctxt.call(context, 'get_agent_gateway_port',
                           network_id=fip_net, host=self.host)
 
+    @utils.timecost
     def get_service_plugin_list(self, context):
         """Make a call to get the list of activated services."""
         cctxt = self.client.prepare(version='1.3')
         return cctxt.call(context, 'get_service_plugin_list')
 
+    @utils.timecost
     def update_ha_routers_states(self, context, states):
         """Update HA routers states."""
         cctxt = self.client.prepare(version='1.5')
         return cctxt.cast(context, 'update_ha_routers_states',
                           host=self.host, states=states)
 
+    @utils.timecost
     def process_prefix_update(self, context, prefix_update):
         """Process prefix update whenever prefixes get changed."""
         cctxt = self.client.prepare(version='1.6')
         return cctxt.call(context, 'process_prefix_update',
                           subnets=prefix_update)
 
+    @utils.timecost
     def delete_agent_gateway_port(self, context, fip_net):
         """Delete Floatingip_agent_gateway_port."""
         cctxt = self.client.prepare(version='1.7')
         return cctxt.call(context, 'delete_agent_gateway_port',
                           host=self.host, network_id=fip_net)
 
+    @utils.timecost
     def get_host_ha_router_count(self, context):
         """Make a call to get the count of HA router."""
         cctxt = self.client.prepare(version='1.11')
