@@ -90,7 +90,7 @@ function _init {
 
     GetDistro
     source $DEVSTACK_PATH/tools/fixup_stuff.sh
-    fixup_uca
+    fixup_ubuntu
 }
 
 function _install_base_deps {
