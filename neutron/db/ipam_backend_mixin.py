@@ -350,9 +350,24 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                         subnet_cidr=subnet_cidr)
 
     def _validate_segment(self, context, network_id, segment_id, action=None,
-                          old_segment_id=None):
-        segments = subnet_obj.Subnet.get_values(
-            context, 'segment_id', network_id=network_id)
+                          old_segment_id=None, requested_service_types=None,
+                          subnet_id=None):
+        # NOTE(zigo): If we're creating a network:routed subnet (here written
+        # as: const.DEVICE_OWNER_ROUTED), then the created subnet must be
+        # removed from the segment list, otherwise its segment ID will be
+        # returned as None, and SubnetsNotAllAssociatedWithSegments will be
+        # raised.
+        if (action == 'create' and requested_service_types and
+                const.DEVICE_OWNER_ROUTED in requested_service_types):
+            to_create_subnet_id = subnet_id
+        else:
+            to_create_subnet_id = None
+
+        segments = subnet_obj.Subnet.get_subnet_segment_ids(
+                    context, network_id,
+                    ignored_service_type=const.DEVICE_OWNER_ROUTED,
+                    subnet_id=to_create_subnet_id)
+
         associated_segments = set(segments)
         if None in associated_segments and len(associated_segments) > 1:
             raise segment_exc.SubnetsNotAllAssociatedWithSegments(
@@ -581,7 +596,10 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         # TODO(slaweq): when check is segment exists will be integrated in
         # self._validate_segment() method, it should be moved to be done before
         # subnet object is created
-        self._validate_segment(context, network['id'], segment_id)
+        self._validate_segment(context, network['id'], segment_id,
+                               action='create',
+                               requested_service_types=service_types,
+                               subnet_id=subnet.id)
 
         # NOTE(changzhi) Store DNS nameservers with order into DB one
         # by one when create subnet with DNS nameservers

@@ -37,6 +37,7 @@ Configuration
    config-subnet-pools
    config-subnet-onboard
    config-service-subnets
+   config-bgp-floating-ip-over-l2-segmented-network
    config-trunking
    config-wsgi
 

@@ -130,7 +130,8 @@ class SegmentTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     __native_sorting_support = True
 
     supported_extension_aliases = [seg_apidef.ALIAS, portbindings.ALIAS,
-                                   ipalloc_apidef.ALIAS]
+                                   ipalloc_apidef.ALIAS,
+                                   "subnet-service-types"]
 
     def get_plugin_description(self):
         return "Network Segments"
@@ -500,6 +501,25 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
                                   cidr='10.0.1.0/24',
                                   segment_id=segment['segment']['id'])
         self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+
+    def test_only_some_subnets_associated_allowed_with_routed_network(self):
+        with self.network() as network:
+            net = network['network']
+
+        segment = self._test_create_segment(network_id=net['id'],
+                                            segmentation_id=200)
+        segment_id = segment['segment']['id']
+
+        with self.subnet(network=network, segment_id=segment_id) as subnet:
+            subnet = subnet['subnet']
+
+        res = self._create_subnet(self.fmt,
+                                 net_id=net['id'],
+                                 tenant_id=net['tenant_id'],
+                                 gateway_ip=constants.ATTR_NOT_SPECIFIED,
+                                 cidr='10.0.1.0/24',
+                                 service_types=[constants.DEVICE_OWNER_ROUTED])
+        self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
 
     def test_association_to_dynamic_segment_not_allowed(self):
         cxt = context.get_admin_context()

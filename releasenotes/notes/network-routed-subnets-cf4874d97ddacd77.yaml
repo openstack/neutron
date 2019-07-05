@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    A new subnet of type ``network:routed`` has been added. If such a subnet is
+    used, the IPs of that subnet will be advertized with BGP over a provider
+    network, which itself can use segments. This basically achieves a
+    BGP-to-the-rack feature, where the L2 connectivity can be confined to a
+    rack only, and all external routing is done by the switches, using BGP.
+    In this mode, it is still possible to use VXLAN connectivity between the
+    compute nodes, and only floating IPs and router gateways are using BGP
+    routing.
