@@ -52,6 +52,7 @@ from neutron.db import ipam_pluggable_backend
 from neutron.db import models_v2
 from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.db import standardattrdescription_db as stattr_db
+from neutron.extensions import subnetpool_prefix_ops
 from neutron import ipam
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import subnet_alloc
@@ -1568,3 +1569,58 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                             device_id=device_id)
                 if tenant_id != router['tenant_id']:
                     raise exc.DeviceIDNotOwnedByTenant(device_id=device_id)
+
+    @db_api.retry_if_session_inactive()
+    def add_prefixes(self, context, subnetpool_id, body):
+        prefixes = subnetpool_prefix_ops.get_operation_request_body(body)
+        with db_api.CONTEXT_WRITER.using(context):
+            subnetpool = subnetpool_obj.SubnetPool.get_object(
+                context, id=subnetpool_id)
+
+            if not subnetpool:
+                raise exc.SubnetPoolNotFound(subnetpool_id=id)
+            if len(prefixes) == 0:
+                # No prefixes were included in the request, simply return
+                return {'prefixes': subnetpool.prefixes}
+
+            new_sp_prefixes = subnetpool.prefixes + prefixes
+            sp_update_req = {'subnetpool': {'prefixes': new_sp_prefixes}}
+            sp = self.update_subnetpool(context, subnetpool_id, sp_update_req)
+            return {'prefixes': sp['prefixes']}
+
+    @db_api.retry_if_session_inactive()
+    def remove_prefixes(self, context, subnetpool_id, body):
+        prefixes = subnetpool_prefix_ops.get_operation_request_body(body)
+        with db_api.CONTEXT_WRITER.using(context):
+            subnetpool = subnetpool_obj.SubnetPool.get_object(
+                context, id=subnetpool_id)
+            if not subnetpool:
+                raise exc.SubnetPoolNotFound(subnetpool_id=id)
+            if len(prefixes) == 0:
+                # No prefixes were included in the request, simply return
+                return {'prefixes': subnetpool.prefixes}
+
+            all_prefix_set = netaddr.IPSet(subnetpool.prefixes)
+            removal_prefix_set = netaddr.IPSet([x for x in prefixes])
+            if all_prefix_set.isdisjoint(removal_prefix_set):
+                # The prefixes requested for removal are not in the prefix
+                # list making this a no-op, so simply return.
+                return {'prefixes': subnetpool.prefixes}
+
+            subnets = subnet_obj.Subnet.get_objects(
+                context, subnetpool_id=subnetpool_id)
+            allocated_prefix_set = netaddr.IPSet([x.cidr for x in subnets])
+
+            if not allocated_prefix_set.isdisjoint(removal_prefix_set):
+                # One or more of the prefixes requested for removal have
+                # been allocated by a real subnet, raise an exception to
+                # indicate this.
+                msg = _("One or more the prefixes to be removed is in use "
+                        "by a subnet.")
+                raise exc.IllegalSubnetPoolPrefixUpdate(msg=msg)
+
+            new_prefixes = all_prefix_set.difference(removal_prefix_set)
+            new_prefixes.compact()
+            subnetpool.prefixes = [str(x) for x in new_prefixes.iter_cidrs()]
+            subnetpool.update()
+            return {'prefixes': subnetpool.prefixes}

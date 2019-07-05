@@ -18,6 +18,8 @@ from neutron.conf.policies import base
 COLLECTION_PATH = '/subnetpools'
 RESOURCE_PATH = '/subnetpools/{id}'
 ONBOARD_PATH = '/subnetpools/{id}/onboard_network_subnets'
+ADD_PREFIXES_PATH = '/subnetpools/{id}/add_prefixes'
+REMOVE_PREFIXES_PATH = '/subnetpools/{id}/remove_prefixes'
 
 
 rules = [
@@ -116,6 +118,28 @@ rules = [
             {
                 'method': 'Put',
                 'path': ONBOARD_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'add_prefixes',
+        base.RULE_ADMIN_OR_OWNER,
+        'Add prefixes to a subnetpool',
+        [
+            {
+                'method': 'Put',
+                'path': ADD_PREFIXES_PATH,
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        'remove_prefixes',
+        base.RULE_ADMIN_OR_OWNER,
+        'Remove unallocated prefixes from a subnetpool',
+        [
+            {
+                'method': 'Put',
+                'path': REMOVE_PREFIXES_PATH,
             },
         ]
     ),
