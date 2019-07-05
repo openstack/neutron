@@ -52,7 +52,10 @@ filters_pattern = re.compile(r"police \w+ rate (\w+) burst (\w+)")
 tbf_pattern = re.compile(
     r"qdisc (\w+) \w+: \w+ refcnt \d rate (\w+) burst (\w+) \w*")
 
-TC_QDISC_TYPES = ['htb', 'tbf', 'ingress']
+TC_QDISC_TYPE_HTB = 'htb'
+TC_QDISC_TYPE_TBF = 'tbf'
+TC_QDISC_TYPE_INGRESS = 'ingress'
+TC_QDISC_TYPES = [TC_QDISC_TYPE_HTB, TC_QDISC_TYPE_TBF, TC_QDISC_TYPE_INGRESS]
 
 TC_QDISC_PARENT = {'root': rtnl.TC_H_ROOT,
                    'ingress': rtnl.TC_H_INGRESS}

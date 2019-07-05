@@ -21,8 +21,6 @@ from neutron.agent.linux import tc_lib
 
 LOG = logging.getLogger(__name__)
 
-QDISC_IN_REGEX = re.compile(r"qdisc ingress (\w+:) *")
-QDISC_OUT_REGEX = re.compile(r"qdisc htb (\w+:) *")
 # NOTE(slaweq): in iproute 4.15 chain value was added to filter output and this
 # needs to be included in REGEX
 FILTER_ID_REGEX = re.compile(
@@ -37,20 +35,13 @@ class FloatingIPTcCommandBase(ip_lib.IPDevice):
         ip_wrapper = ip_lib.IPWrapper(self.namespace)
         return ip_wrapper.netns.execute(cmd, run_as_root=True, **kwargs)
 
-    def _get_qdiscs(self):
-        cmd = ['qdisc', 'show', 'dev', self.name]
-        return self._execute_tc_cmd(cmd)
-
     def _get_qdisc_id_for_filter(self, direction):
-        qdisc_results = self._get_qdiscs().split('\n')
-        for qdisc in qdisc_results:
-            pattern = (QDISC_OUT_REGEX
-                       if direction == constants.EGRESS_DIRECTION
-                       else QDISC_IN_REGEX)
-            m = pattern.match(qdisc)
-            if m:
-                # No chance to get multiple qdiscs
-                return m.group(1)
+        qdiscs = tc_lib.list_tc_qdiscs(self.name, namespace=self.namespace)
+        qdisc_type = (tc_lib.TC_QDISC_TYPE_HTB
+                      if direction == constants.EGRESS_DIRECTION
+                      else tc_lib.TC_QDISC_TYPE_INGRESS)
+        for qdisc in (qd for qd in qdiscs if qd['qdisc_type'] == qdisc_type):
+            return qdisc['handle']
 
     def _add_qdisc(self, direction):
         if direction == constants.EGRESS_DIRECTION:
