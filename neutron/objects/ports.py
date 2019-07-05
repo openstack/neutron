@@ -265,7 +265,8 @@ class Port(base.NeutronDbObject):
     # Version 1.2: Added segment_id to binding_levels
     # Version 1.3: distributed_binding -> distributed_bindings
     # Version 1.4: Attribute binding becomes ListOfObjectsField
-    VERSION = '1.4'
+    # Version 1.5: Added qos_network_policy_id field
+    VERSION = '1.5'
 
     db_model = models_v2.Port
 
@@ -309,6 +310,8 @@ class Port(base.NeutronDbObject):
             default=None,
         ),
         'qos_policy_id': common_types.UUIDField(nullable=True, default=None),
+        'qos_network_policy_id': common_types.UUIDField(nullable=True,
+                                                        default=None),
 
         'binding_levels': obj_fields.ListOfObjectsField(
             'PortBindingLevel', nullable=True
@@ -332,6 +335,7 @@ class Port(base.NeutronDbObject):
         'dns',
         'fixed_ips',
         'qos_policy_id',
+        'qos_network_policy_id',
         'security',
         'security_group_ids',
     ]
@@ -461,16 +465,18 @@ class Port(base.NeutronDbObject):
             }
         else:
             self.security_group_ids = set()
-        self.obj_reset_changes(['security_group_ids'])
+        fields_to_change = ['security_group_ids']
 
         # extract qos policy binding
         if db_obj.get('qos_policy_binding'):
-            self.qos_policy_id = (
-                db_obj.qos_policy_binding.policy_id
-            )
-        else:
-            self.qos_policy_id = None
-        self.obj_reset_changes(['qos_policy_id'])
+            self.qos_policy_id = db_obj.qos_policy_binding.policy_id
+            fields_to_change.append('qos_policy_id')
+        if db_obj.get('qos_network_policy_binding'):
+            self.qos_network_policy_id = (
+                db_obj.qos_network_policy_binding.policy_id)
+            fields_to_change.append('qos_network_policy_binding')
+
+        self.obj_reset_changes(fields_to_change)
 
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
@@ -498,6 +504,8 @@ class Port(base.NeutronDbObject):
                             constants.ACTIVE):
                         primitive['binding'] = a_binding
                         break
+        if _target_version < (1, 5):
+            primitive.pop('qos_network_policy_id', None)
 
     @classmethod
     def get_ports_by_router(cls, context, router_id, owner, subnet):
