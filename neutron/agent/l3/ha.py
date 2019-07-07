@@ -113,13 +113,15 @@ class AgentMixin(object):
         return self.conf.ha_vrrp_advert_int
 
     def enqueue_state_change(self, router_id, state):
-        state_change_data = {"router_id": router_id, "state": state}
-        LOG.info('Router %(router_id)s transitioned to %(state)s',
-                 state_change_data)
-
         ri = self._get_router_info(router_id)
         if ri is None:
             return
+
+        state_change_data = {"router_id": router_id, "state": state,
+                             "host": ri.agent.host}
+        LOG.info('Router %(router_id)s transitioned to %(state)s on '
+                 'agent %(host)s',
+                 state_change_data)
 
         # TODO(dalvarez): Fix bug 1677279 by moving the IPv6 parameters
         # configuration to keepalived-state-change in order to remove the
