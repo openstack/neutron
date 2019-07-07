@@ -45,11 +45,11 @@ class FloatingIPTcCommandBase(ip_lib.IPDevice):
 
     def _add_qdisc(self, direction):
         if direction == constants.EGRESS_DIRECTION:
-            args = ['root', 'handle', '1:', 'htb']
+            tc_lib.add_tc_qdisc(
+                self.name, 'htb', parent='root', namespace=self.namespace)
         else:
-            args = ['ingress']
-        cmd = ['qdisc', 'add', 'dev', self.name] + args
-        self._execute_tc_cmd(cmd)
+            tc_lib.add_tc_qdisc(
+                self.name, 'ingress', namespace=self.namespace)
 
     def _get_filters(self, qdisc_id):
         cmd = ['-p', '-s', '-d', 'filter', 'show', 'dev', self.name,
