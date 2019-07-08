@@ -326,11 +326,13 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         # and so we don't need to update it again here. But, l2pop did not
         # handle DVR ports while restart neutron-*-agent, we need to handle
         # it here.
-        if agent_restarted is None:
-            agent_restarted = l2pop_driver.obj.agent_restarted(port_context)
-        if (port['device_owner'] == n_const.DEVICE_OWNER_DVR_INTERFACE and
-                not agent_restarted):
-            return
+        if port['device_owner'] == n_const.DEVICE_OWNER_DVR_INTERFACE:
+            if agent_restarted is None:
+                agent_restarted = l2pop_driver.obj.agent_restarted(
+                    port_context)
+            if not agent_restarted:
+                return
+
         port = port_context.current
         if (port['device_owner'] != n_const.DEVICE_OWNER_DVR_INTERFACE and
                 status == n_const.PORT_STATUS_ACTIVE and
@@ -362,9 +364,9 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                         rpc_context,
                         device=device,
                         **kwargs)
-                except Exception:
+                except Exception as e:
                     failed_devices_up.append(device)
-                    LOG.error("Failed to update device %s up", device)
+                    LOG.error("Failed to update device %s up: %s", device, e)
                 else:
                     devices_up.append(device)
 
@@ -376,9 +378,9 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                         rpc_context,
                         device=device,
                         **kwargs)
-                except Exception:
+                except Exception as e:
                     failed_devices_down.append(device)
-                    LOG.error("Failed to update device %s down", device)
+                    LOG.error("Failed to update device %s down: %s", device, e)
                 else:
                     devices_down.append(dev)
 

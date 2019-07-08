@@ -259,6 +259,16 @@ class RpcCallbacksTestCase(base.BaseTestCase):
             mock.ANY, 'fake_port_id', constants.PORT_STATUS_DOWN,
             'fake_host')
 
+    def test_notify_l2pop_port_wiring_non_dvr_port(self):
+        port = {'device_owner': constants.DEVICE_OWNER_COMPUTE_PREFIX}
+        l2pop_driver = (
+            self.plugin.mechanism_manager.mech_drivers.get.return_value)
+        with mock.patch.object(ml2_db, 'get_port') as ml2_db_get_port:
+            ml2_db_get_port.return_value = port
+            self.callbacks.notify_l2pop_port_wiring(
+                'port_id', mock.Mock(), 'DOWN', 'host', agent_restarted=None)
+            self.assertFalse(l2pop_driver.obj.agent_restarted.called)
+
     def test_update_device_down_call_update_port_status_failed(self):
         self.plugin.update_port_status.side_effect = exc.StaleDataError
         self.assertEqual({'device': 'fake_device', 'exists': False},
