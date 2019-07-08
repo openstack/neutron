@@ -180,7 +180,8 @@ class OVSConfigFixture(ConfigFixture):
             'agent': {
                 'l2_population': str(self.env_desc.l2_pop),
                 'arp_responder': str(self.env_desc.arp_responder),
-                'debug_iptables_rules': str(env_desc.debug_iptables)
+                'debug_iptables_rules': str(env_desc.debug_iptables),
+                'use_helper_for_ns_read': 'False',
             }
         })
 
@@ -291,7 +292,8 @@ class LinuxBridgeConfigFixture(ConfigFixture):
                 'firewall_driver': host_desc.firewall_driver,
             },
             'AGENT': {
-                'debug_iptables_rules': str(env_desc.debug_iptables)
+                'debug_iptables_rules': str(env_desc.debug_iptables),
+                'use_helper_for_ns_read': 'False',
             }
         })
         if env_desc.qos:
@@ -338,6 +340,9 @@ class L3ConfigFixture(ConfigFixture):
             'debug': 'True',
             'test_namespace_suffix': self._generate_namespace_suffix(),
         })
+        self.config.update({
+            'agent': {'use_helper_for_ns_read': 'False'}
+        })
         if host_desc.availability_zone:
             self.config['agent'].update({
                 'availability_zone': host_desc.availability_zone
@@ -376,8 +381,11 @@ class DhcpConfigFixture(ConfigFixture):
             'dhcp_confs': self._generate_dhcp_path(),
             'test_namespace_suffix': self._generate_namespace_suffix()
         })
+        self.config.update({
+            'AGENT': {'use_helper_for_ns_read': 'False'}
+        })
         if host_desc.availability_zone:
-            self.config['agent'].update({
+            self.config['AGENT'].update({
                 'availability_zone': host_desc.availability_zone
             })
 
