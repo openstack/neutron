@@ -19,6 +19,7 @@ from neutron_lib import constants
 from neutron_lib.db import constants as db_consts
 from neutron_lib import rpc as n_rpc
 from neutron_lib.services.qos import constants as qos_consts
+from oslo_concurrency import lockutils
 from oslo_log import log as logging
 
 from neutron.agent.linux import l3_tc_lib as tc_lib
@@ -51,23 +52,44 @@ IP_DEFAULT_BURST = 0
 
 class RateLimitMaps(object):
 
-    def __init__(self):
+    def __init__(self, lock_name):
         self.qos_policy_resources = collections.defaultdict(dict)
         self.known_policies = {}
         self.resource_policies = {}
+        self.lock_name = lock_name
 
     def update_policy(self, policy):
-        self.known_policies[policy.id] = policy
+
+        @lockutils.synchronized(self.lock_name)
+        def _update_policy():
+            self.known_policies[policy.id] = policy
+
+        return _update_policy()
 
     def get_policy(self, policy_id):
-        return self.known_policies.get(policy_id)
+
+        @lockutils.synchronized(self.lock_name)
+        def _get_policy():
+            return self.known_policies.get(policy_id)
+
+        return _get_policy()
 
     def get_resources(self, policy):
-        return self.qos_policy_resources[policy.id].values()
+
+        @lockutils.synchronized(self.lock_name)
+        def _get_resources():
+            return self.qos_policy_resources[policy.id].values()
+
+        return _get_resources()
 
     def get_resource_policy(self, resource):
-        policy_id = self.resource_policies.get(resource)
-        return self.get_policy(policy_id)
+
+        @lockutils.synchronized(self.lock_name)
+        def _get_resource_policy():
+            policy_id = self.resource_policies.get(resource)
+            return self.known_policies.get(policy_id)
+
+        return _get_resource_policy()
 
     def set_resource_policy(self, resource, policy):
         """Attach a resource to policy
@@ -75,12 +97,17 @@ class RateLimitMaps(object):
         and return any previous policy on resource.
         """
 
-        old_policy = self.get_resource_policy(resource)
-        self.update_policy(policy)
-        self.resource_policies[resource] = policy.id
-        self.qos_policy_resources[policy.id][resource] = resource
-        if old_policy and old_policy.id != policy.id:
-            del self.qos_policy_resources[old_policy.id][resource]
+        @lockutils.synchronized(self.lock_name)
+        def _set_resource_policy():
+            policy_id = self.resource_policies.get(resource)
+            old_policy = self.known_policies.get(policy_id)
+            self.known_policies[policy.id] = policy
+            self.resource_policies[resource] = policy.id
+            self.qos_policy_resources[policy.id][resource] = resource
+            if old_policy and old_policy.id != policy.id:
+                del self.qos_policy_resources[old_policy.id][resource]
+
+        _set_resource_policy()
 
     def clean_by_resource(self, resource):
         """Detach resource from policy
@@ -88,16 +115,21 @@ class RateLimitMaps(object):
         and cleanup data we don't need anymore.
         """
 
-        if resource in self.resource_policies:
-            del self.resource_policies[resource]
-            for qos_policy_id, res_dict in self.qos_policy_resources.items():
-                if resource in res_dict:
-                    del res_dict[resource]
-                    if not res_dict:
-                        self._clean_policy_info(qos_policy_id)
-                    return
-        LOG.debug("L3 QoS extension did not have "
-                  "information on floating IP %s", resource)
+        @lockutils.synchronized(self.lock_name)
+        def _clean_by_resource():
+            if resource in self.resource_policies:
+                del self.resource_policies[resource]
+                for (qos_policy_id,
+                     res_dict) in self.qos_policy_resources.items():
+                    if resource in res_dict:
+                        del res_dict[resource]
+                        if not res_dict:
+                            self._clean_policy_info(qos_policy_id)
+                        return
+            LOG.debug("L3 QoS extension did not have "
+                      "information on floating IP %s", resource)
+
+        _clean_by_resource()
 
     def _clean_policy_info(self, qos_policy_id):
         del self.qos_policy_resources[qos_policy_id]

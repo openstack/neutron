@@ -17,7 +17,6 @@ import netaddr
 
 from neutron_lib.agent import l3_extension
 from neutron_lib import constants
-from oslo_concurrency import lockutils
 from oslo_log import log as logging
 
 
@@ -26,6 +25,7 @@ from neutron.agent.linux import ip_lib
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import coordination
 
 LOG = logging.getLogger(__name__)
 
@@ -37,9 +37,9 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
         """Initialize agent extension."""
         self.resource_rpc = resources_rpc.ResourcesPullRpcApi()
         self._register_rpc_consumers()
-        self.gateway_ip_qos_map = qos_base.RateLimitMaps()
+        self.gateway_ip_qos_map = qos_base.RateLimitMaps(
+            "gateway-ip-qos-cache")
 
-    @lockutils.synchronized('qos-gateway-ip')
     def _handle_notification(self, context, resource_type,
                              qos_policies, event_type):
         if event_type == events.UPDATED:
@@ -81,13 +81,11 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
                         router_id, qos_policy)
             self.gateway_ip_qos_map.update_policy(qos_policy)
 
-    @lockutils.synchronized('qos-gateway-ip')
     def add_router(self, context, data):
         router_info = self._get_router_info(data['id'])
         if router_info:
             self.process_gateway_rate_limit(context, router_info)
 
-    @lockutils.synchronized('qos-gateway-ip')
     def update_router(self, context, data):
         router_info = self._get_router_info(data['id'])
         if router_info:
@@ -120,6 +118,7 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
 
         self._handle_router_gateway_rate_limit(context, router_info)
 
+    @coordination.synchronized('qos-gateway-ip-{router_info.router_id}')
     def _empty_router_gateway_rate_limits(self, router_info, tc_wrapper):
         self.gateway_ip_qos_map.clean_by_resource(router_info.router_id)
         for ip in router_info.qos_gateway_ips:
@@ -172,6 +171,7 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
             router_info.router_id, policy)
         return self.get_policy_rates(policy)
 
+    @coordination.synchronized('qos-gateway-ip-{router_info.router_id}')
     def _set_gateway_tc_rules(self, router_info, tc_wrapper,
                               ex_gw_port, rates):
         for ip_addr in ex_gw_port['fixed_ips']:
