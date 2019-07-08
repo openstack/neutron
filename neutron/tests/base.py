@@ -55,7 +55,6 @@ from neutron import manager
 from neutron import policy
 from neutron.quota import resource_registry
 from neutron.tests import post_mortem_debug
-from neutron.tests import tools
 
 
 CONF = cfg.CONF
@@ -230,7 +229,7 @@ class DietTestCase(base.BaseTestCase):
                 debugger))
 
         # Make sure we see all relevant deprecation warnings when running tests
-        self.useFixture(tools.WarningsFixture())
+            self.useFixture(fixture.WarningsFixture(module_re=['^neutron\\.']))
 
         self.useFixture(fixture.DBQueryHooksFixture())
 

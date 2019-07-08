@@ -15,7 +15,6 @@
 
 import datetime
 import random
-import warnings
 
 import fixtures
 import netaddr
@@ -37,20 +36,6 @@ try:
     from neutron_lib.callbacks import priority_group  # noqa
 except ImportError as e:
     _CALLBACK_PRIORITY_SUPPORTED = False
-
-
-class WarningsFixture(fixtures.Fixture):
-    """Filters out warnings during test runs."""
-
-    warning_types = (
-        DeprecationWarning, PendingDeprecationWarning, ImportWarning
-    )
-
-    def _setUp(self):
-        self.addCleanup(warnings.resetwarnings)
-        for wtype in self.warning_types:
-            warnings.filterwarnings(
-                "once", category=wtype, module='^neutron\\.')
 
 
 class SafeCleanupFixture(fixtures.Fixture):
