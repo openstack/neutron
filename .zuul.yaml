@@ -13,7 +13,7 @@
       - periodic-stable-jobs
       - check-requirements
       - integrated-gate
-      - integrated-gate-py3
+      - integrated-gate-networking
       - release-notes-jobs-python3
     check:
       jobs:
