@@ -23,7 +23,6 @@ from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_utils import excutils
 from pyroute2.netlink import exceptions as netlink_exceptions
 from pyroute2.netlink import rtnl
 from pyroute2.netlink.rtnl import ifaddrmsg
@@ -586,38 +585,13 @@ class IpRouteCommand(IpDeviceCommandBase):
         super(IpRouteCommand, self).__init__(parent)
         self._table = table
 
-    def table(self, table):
-        """Return an instance of IpRouteCommand which works on given table"""
-        return IpRouteCommand(self._parent, table)
-
-    def _table_args(self, override=None):
-        if override:
-            return ['table', override]
-        return ['table', self._table] if self._table else []
-
-    def _dev_args(self):
-        return ['dev', self.name] if self.name else []
-
     def add_gateway(self, gateway, metric=None, table=None, scope='global'):
         self.add_route(None, via=gateway, table=table, metric=metric,
                        scope=scope)
 
-    def _run_as_root_detect_device_not_found(self, options, args):
-        try:
-            return self._as_root(options, tuple(args))
-        except RuntimeError as rte:
-            with excutils.save_and_reraise_exception() as ctx:
-                if "Cannot find device" in str(rte):
-                    ctx.reraise = False
-                    raise exceptions.DeviceNotFoundError(device_name=self.name)
-
-    def delete_gateway(self, gateway, table=None):
-        ip_version = common_utils.get_ip_version(gateway)
-        args = ['del', 'default',
-                'via', gateway]
-        args += self._dev_args()
-        args += self._table_args(table)
-        self._run_as_root_detect_device_not_found([ip_version], args)
+    def delete_gateway(self, gateway, table=None, scope=None):
+        self.delete_route(None, device=self.name, via=gateway, table=table,
+                          scope=scope)
 
     def list_routes(self, ip_version, scope=None, via=None, table=None,
                     **kwargs):
@@ -633,7 +607,7 @@ class IpRouteCommand(IpDeviceCommandBase):
         self.add_route(cidr, scope='link')
 
     def delete_onlink_route(self, cidr):
-        self.delete_route(cidr, scope='link')
+        self.delete_route(cidr, device=self.name, scope='link')
 
     def get_gateway(self, scope=None, table=None,
                     ip_version=constants.IP_VERSION_4):
@@ -643,11 +617,9 @@ class IpRouteCommand(IpDeviceCommandBase):
                 return route
 
     def flush(self, ip_version, table=None, **kwargs):
-        args = ['flush']
-        args += self._table_args(table)
-        for k, v in kwargs.items():
-            args += [k, v]
-        self._as_root([ip_version], tuple(args))
+        for route in self.list_routes(ip_version, table=table):
+            self.delete_route(route['cidr'], device=route['device'],
+                              via=route['via'], table=table, **kwargs)
 
     def add_route(self, cidr, via=None, table=None, metric=None, scope=None,
                   **kwargs):
@@ -655,16 +627,11 @@ class IpRouteCommand(IpDeviceCommandBase):
         add_ip_route(self._parent.namespace, cidr, device=self.name, via=via,
                      table=table, metric=metric, scope=scope, **kwargs)
 
-    def delete_route(self, cidr, via=None, table=None, **kwargs):
-        ip_version = common_utils.get_ip_version(cidr)
-        args = ['del', cidr]
-        if via:
-            args += ['via', via]
-        args += self._dev_args()
-        args += self._table_args(table)
-        for k, v in kwargs.items():
-            args += [k, v]
-        self._run_as_root_detect_device_not_found([ip_version], args)
+    def delete_route(self, cidr, device=None, via=None, table=None, scope=None,
+                     **kwargs):
+        table = table or self._table
+        delete_ip_route(self._parent.namespace, cidr, device=device, via=via,
+                        table=table, scope=scope, **kwargs)
 
 
 class IPRoute(SubProcessBase):
@@ -1531,3 +1498,14 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
         ret = [route for route in ret if route['via'] == via]
 
     return ret
+
+
+def delete_ip_route(namespace, cidr, device=None, via=None, table=None,
+                    scope=None, **kwargs):
+    """Delete an IP route"""
+    if table:
+        table = IP_RULE_TABLES.get(table, table)
+    ip_version = common_utils.get_ip_version(cidr or via)
+    privileged.delete_ip_route(namespace, cidr, ip_version,
+                               device=device, via=via, table=table,
+                               scope=scope, **kwargs)
