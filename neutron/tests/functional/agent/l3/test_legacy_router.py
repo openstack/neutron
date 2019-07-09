@@ -98,7 +98,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         gw_port = router.get_ex_gw_port()
         interface_name = router.get_external_device_name(gw_port['id'])
         device = ip_lib.IPDevice(interface_name, namespace=router.ns_name)
-        self.assertIn('gateway', device.route.get_gateway())
+        self.assertIn('via', device.route.get_gateway())
 
         # Make this copy, so that the agent will think there is change in
         # external gateway port.

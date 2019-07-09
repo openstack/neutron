@@ -871,40 +871,6 @@ class TestIpRouteCommand(TestIPCmdBase):
                            {'sample': GATEWAY_SAMPLE7,
                             'expected': {'metric': 1}}]
 
-    def test_add_gateway(self):
-        self.route_cmd.add_gateway(self.gateway, self.metric, self.table)
-        self._assert_sudo([self.ip_version],
-                          ('replace', 'default',
-                           'via', self.gateway,
-                           'metric', self.metric,
-                           'dev', self.parent.name,
-                           'table', self.table))
-
-    def test_add_gateway_subtable(self):
-        self.route_cmd.table(self.table).add_gateway(self.gateway, self.metric)
-        self._assert_sudo([self.ip_version],
-                          ('replace', 'default',
-                           'via', self.gateway,
-                           'metric', self.metric,
-                           'dev', self.parent.name,
-                           'table', self.table))
-
-    def test_del_gateway_success(self):
-        self.route_cmd.delete_gateway(self.gateway, table=self.table)
-        self._assert_sudo([self.ip_version],
-                          ('del', 'default',
-                           'via', self.gateway,
-                           'dev', self.parent.name,
-                           'table', self.table))
-
-    def test_del_gateway_success_subtable(self):
-        self.route_cmd.table(table=self.table).delete_gateway(self.gateway)
-        self._assert_sudo([self.ip_version],
-                          ('del', 'default',
-                           'via', self.gateway,
-                           'dev', self.parent.name,
-                           'table', self.table))
-
     def test_del_gateway_cannot_find_device(self):
         self.parent._as_root.side_effect = RuntimeError("Cannot find device")
 
@@ -919,43 +885,9 @@ class TestIpRouteCommand(TestIPCmdBase):
         self.assertRaises(RuntimeError, self.route_cmd.delete_gateway,
                           self.gateway, table=self.table)
 
-    def test_get_gateway(self):
-        for test_case in self.test_cases:
-            self.parent._run = mock.Mock(return_value=test_case['sample'])
-            self.assertEqual(self.route_cmd.get_gateway(),
-                             test_case['expected'])
-
     def test_flush_route_table(self):
         self.route_cmd.flush(self.ip_version, self.table)
         self._assert_sudo([self.ip_version], ('flush', 'table', self.table))
-
-    def test_add_route(self):
-        self.route_cmd.add_route(self.cidr, self.ip, self.table)
-        self._assert_sudo([self.ip_version],
-                          ('replace', self.cidr,
-                           'via', self.ip,
-                           'dev', self.parent.name,
-                           'table', self.table))
-
-    def test_add_route_no_via(self):
-        self.route_cmd.add_route(self.cidr, table=self.table)
-        self._assert_sudo([self.ip_version],
-                          ('replace', self.cidr,
-                           'dev', self.parent.name,
-                           'table', self.table))
-
-    def test_add_route_with_scope(self):
-        self.route_cmd.add_route(self.cidr, scope='link')
-        self._assert_sudo([self.ip_version],
-                          ('replace', self.cidr,
-                           'dev', self.parent.name,
-                           'scope', 'link'))
-
-    def test_add_route_no_device(self):
-        self.parent._as_root.side_effect = RuntimeError("Cannot find device")
-        self.assertRaises(exceptions.DeviceNotFoundError,
-                          self.route_cmd.add_route,
-                          self.cidr, self.ip, self.table)
 
     def test_delete_route(self):
         self.route_cmd.delete_route(self.cidr, self.ip, self.table)
@@ -985,54 +917,6 @@ class TestIpRouteCommand(TestIPCmdBase):
                           self.route_cmd.delete_route,
                           self.cidr, self.ip, self.table)
 
-    def test_list_routes(self):
-        self.parent._run.return_value = (
-            "default via 172.124.4.1 dev eth0 metric 100\n"
-            "10.0.0.0/22 dev eth0 scope link\n"
-            "172.24.4.0/24 dev eth0 proto kernel src 172.24.4.2\n")
-        routes = self.route_cmd.table(self.table).list_routes(self.ip_version)
-        self.assertEqual([{'cidr': '0.0.0.0/0',
-                           'dev': 'eth0',
-                           'metric': '100',
-                           'table': 14,
-                           'via': '172.124.4.1'},
-                          {'cidr': '10.0.0.0/22',
-                           'dev': 'eth0',
-                           'scope': 'link',
-                           'table': 14},
-                          {'cidr': '172.24.4.0/24',
-                           'dev': 'eth0',
-                           'proto': 'kernel',
-                           'src': '172.24.4.2',
-                           'table': 14}], routes)
-
-    def test_list_onlink_routes_subtable(self):
-        self.parent._run.return_value = (
-            "10.0.0.0/22\n"
-            "172.24.4.0/24 proto kernel src 172.24.4.2\n")
-        routes = self.route_cmd.table(self.table).list_onlink_routes(
-            self.ip_version)
-        self.assertEqual(['10.0.0.0/22'], [r['cidr'] for r in routes])
-        self._assert_call([self.ip_version],
-                          ('list', 'dev', self.parent.name,
-                           'table', self.table, 'scope', 'link'))
-
-    def test_add_onlink_route_subtable(self):
-        self.route_cmd.table(self.table).add_onlink_route(self.cidr)
-        self._assert_sudo([self.ip_version],
-                          ('replace', self.cidr,
-                           'dev', self.parent.name,
-                           'table', self.table,
-                           'scope', 'link'))
-
-    def test_delete_onlink_route_subtable(self):
-        self.route_cmd.table(self.table).delete_onlink_route(self.cidr)
-        self._assert_sudo([self.ip_version],
-                          ('del', self.cidr,
-                           'dev', self.parent.name,
-                           'table', self.table,
-                           'scope', 'link'))
-
 
 class TestIPv6IpRouteCommand(TestIpRouteCommand):
     def setUp(self):
@@ -1058,63 +942,6 @@ class TestIPv6IpRouteCommand(TestIpRouteCommand):
                             'expected':
                             {'gateway': '2001:470:9:1224:4508:b885:5fb:740b',
                              'metric': 1024}}]
-
-    def test_list_routes(self):
-        self.parent._run.return_value = (
-            "default via 2001:db8::1 dev eth0 metric 100\n"
-            "2001:db8::/64 dev eth0 proto kernel src 2001:db8::2\n")
-        routes = self.route_cmd.table(self.table).list_routes(self.ip_version)
-        self.assertEqual([{'cidr': '::/0',
-                           'dev': 'eth0',
-                           'metric': '100',
-                           'table': 14,
-                           'via': '2001:db8::1'},
-                          {'cidr': '2001:db8::/64',
-                           'dev': 'eth0',
-                           'proto': 'kernel',
-                           'src': '2001:db8::2',
-                           'table': 14}], routes)
-
-
-class TestIPRoute(TestIpRouteCommand):
-    """Leverage existing tests for IpRouteCommand for IPRoute
-
-    This test leverages the tests written for IpRouteCommand.  The difference
-    is that the 'dev' argument should not be passed for each of the commands.
-    So, this test removes the dev argument from the expected arguments in each
-    assert.
-    """
-    def setUp(self):
-        super(TestIPRoute, self).setUp()
-        self.parent = ip_lib.IPRoute()
-        self.parent._run = mock.Mock()
-        self.parent._as_root = mock.Mock()
-        self.route_cmd = self.parent.route
-        self.check_dev_args = False
-
-    def _remove_dev_args(self, args):
-        def args_without_dev():
-            previous = None
-            for arg in args:
-                if 'dev' not in (arg, previous):
-                    yield arg
-                previous = arg
-
-        return tuple(arg for arg in args_without_dev())
-
-    def _assert_call(self, options, args):
-        if not self.check_dev_args:
-            args = self._remove_dev_args(args)
-        super(TestIPRoute, self)._assert_call(options, args)
-
-    def _assert_sudo(self, options, args, use_root_namespace=False):
-        if not self.check_dev_args:
-            args = self._remove_dev_args(args)
-        super(TestIPRoute, self)._assert_sudo(options, args)
-
-    def test_del_gateway_cannot_find_device(self):
-        # This test doesn't make sense for this case since dev won't be passed
-        pass
 
 
 class TestIpNetnsCommand(TestIPCmdBase):

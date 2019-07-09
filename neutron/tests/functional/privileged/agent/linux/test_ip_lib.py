@@ -12,12 +12,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
+from neutron_lib import constants as n_cons
 from oslo_utils import uuidutils
+from pyroute2.ipdb import routes as ipdb_routes
+from pyroute2.iproute import linux as iproute_linux
 import testtools
 
 from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
 from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
+from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base
 
 
@@ -450,3 +455,140 @@ class GetIpAddressesTestCase(functional_base.BaseSudoTestCase):
             self.assertEqual(interfaces[int_name]['cidr'], cidr)
             self.assertEqual(interfaces[int_name]['scope'],
                              ip_lib.IP_ADDRESS_SCOPE[ip_address['scope']])
+
+
+class RouteTestCase(functional_base.BaseSudoTestCase):
+
+    def setUp(self):
+        super(RouteTestCase, self).setUp()
+        self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
+        self.device_name = 'test_device'
+        ip_lib.IPWrapper(self.namespace).add_dummy(self.device_name)
+        self.device = ip_lib.IPDevice(self.device_name, self.namespace)
+        self.device.link.set_up()
+
+    def _check_routes(self, cidrs, table=None, gateway=None, metric=None,
+                      scope=None):
+        table = table or iproute_linux.DEFAULT_TABLE
+        if not scope:
+            scope = 'universe' if gateway else 'link'
+        scope = priv_ip_lib._get_scope_name(scope)
+        for cidr in cidrs:
+            ip_version = common_utils.get_ip_version(cidr)
+            if ip_version == n_cons.IP_VERSION_6 and not metric:
+                metric = ipdb_routes.IP6_RT_PRIO_USER
+            if ip_version == n_cons.IP_VERSION_6:
+                scope = 0
+            routes = priv_ip_lib.list_ip_routes(self.namespace, ip_version)
+            for route in routes:
+                ip = ip_lib.get_attr(route, 'RTA_DST')
+                mask = route['dst_len']
+                if not (ip == str(netaddr.IPNetwork(cidr).ip) and
+                        mask == netaddr.IPNetwork(cidr).cidr.prefixlen):
+                    continue
+                self.assertEqual(table, route['table'])
+                self.assertEqual(
+                    priv_ip_lib._IP_VERSION_FAMILY_MAP[ip_version],
+                    route['family'])
+                self.assertEqual(gateway,
+                                 ip_lib.get_attr(route, 'RTA_GATEWAY'))
+                self.assertEqual(metric,
+                                 ip_lib.get_attr(route, 'RTA_PRIORITY'))
+                self.assertEqual(scope, route['scope'])
+                break
+            else:
+                self.fail('CIDR %s not found in the list of routes' % cidr)
+
+    def _check_gateway(self, gateway, table=None, metric=None):
+        table = table or iproute_linux.DEFAULT_TABLE
+        ip_version = common_utils.get_ip_version(gateway)
+        if ip_version == n_cons.IP_VERSION_6 and not metric:
+            metric = ipdb_routes.IP6_RT_PRIO_USER
+        scope = 0
+        routes = priv_ip_lib.list_ip_routes(self.namespace, ip_version)
+        for route in routes:
+            if not (ip_lib.get_attr(route, 'RTA_GATEWAY') == gateway):
+                continue
+            self.assertEqual(table, route['table'])
+            self.assertEqual(
+                priv_ip_lib._IP_VERSION_FAMILY_MAP[ip_version],
+                route['family'])
+            self.assertEqual(gateway,
+                             ip_lib.get_attr(route, 'RTA_GATEWAY'))
+            self.assertEqual(scope, route['scope'])
+            self.assertEqual(0, route['dst_len'])
+            self.assertEqual(metric,
+                             ip_lib.get_attr(route, 'RTA_PRIORITY'))
+            break
+        else:
+            self.fail('Default gateway %s not found in the list of routes'
+                      % gateway)
+
+    def _add_route_device_and_check(self, table=None, metric=None,
+                                    scope='link'):
+        cidrs = ['192.168.0.0/24', '172.90.0.0/16', '10.0.0.0/8',
+                 '2001:db8::/64']
+        for cidr in cidrs:
+            ip_version = common_utils.get_ip_version(cidr)
+            priv_ip_lib.add_ip_route(self.namespace, cidr, ip_version,
+                                     device=self.device_name, table=table,
+                                     metric=metric, scope=scope)
+
+        self._check_routes(cidrs, table=table, metric=metric, scope=scope)
+
+    def test_add_route_device(self):
+        self._add_route_device_and_check(table=None)
+
+    def test_add_route_device_table(self):
+        self._add_route_device_and_check(table=100)
+
+    def test_add_route_device_metric(self):
+        self._add_route_device_and_check(metric=50)
+
+    def test_add_route_device_table_metric(self):
+        self._add_route_device_and_check(table=200, metric=30)
+
+    def test_add_route_device_scope_global(self):
+        self._add_route_device_and_check(scope='global')
+
+    def test_add_route_device_scope_site(self):
+        self._add_route_device_and_check(scope='site')
+
+    def test_add_route_device_scope_host(self):
+        self._add_route_device_and_check(scope='host')
+
+    def test_add_route_via_ipv4(self):
+        cidrs = ['192.168.0.0/24', '172.90.0.0/16', '10.0.0.0/8']
+        int_cidr = '192.168.20.1/24'
+        int_ip_address = str(netaddr.IPNetwork(int_cidr).ip)
+        self.device.addr.add(int_cidr)
+        for cidr in cidrs:
+            ip_version = common_utils.get_ip_version(cidr)
+            priv_ip_lib.add_ip_route(self.namespace, cidr, ip_version,
+                                     via=int_ip_address)
+        self._check_routes(cidrs, gateway=int_ip_address)
+
+    def test_add_route_via_ipv6(self):
+        cidrs = ['2001:db8::/64', 'faaa::/96']
+        int_cidr = 'fd00::1/64'
+        via_ip = 'fd00::2'
+        self.device.addr.add(int_cidr)
+        for cidr in cidrs:
+            ip_version = common_utils.get_ip_version(cidr)
+            priv_ip_lib.add_ip_route(self.namespace, cidr, ip_version,
+                                     via=via_ip)
+        self._check_routes(cidrs, gateway=via_ip)
+
+    def test_add_default(self):
+        ip_addresses = ['192.168.0.1/24', '172.90.0.1/16', '10.0.0.1/8',
+                        '2001:db8::1/64', 'faaa::1/96']
+        for ip_address in ip_addresses:
+            ip_version = common_utils.get_ip_version(ip_address)
+            if ip_version == n_cons.IP_VERSION_4:
+                _ip = str(netaddr.IPNetwork(ip_address).ip)
+            else:
+                _ip = str(netaddr.IPNetwork(ip_address).ip + 1)
+            self.device.addr.add(ip_address)
+            priv_ip_lib.add_ip_route(self.namespace, None, ip_version,
+                                     device=self.device_name, via=_ip)
+            self._check_gateway(_ip)

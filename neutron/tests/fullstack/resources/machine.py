@@ -180,7 +180,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
         gateway_info = self.port.route.get_gateway()
         if not gateway_info:
             return False
-        return gateway_info.get('gateway') == self.gateway_ip
+        return gateway_info.get('via') == self.gateway_ip
 
     def block_until_boot(self):
         utils.wait_until_true(
