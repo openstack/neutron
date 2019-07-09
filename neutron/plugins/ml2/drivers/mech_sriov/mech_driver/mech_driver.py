@@ -55,7 +55,9 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def __init__(self,
                  agent_type=constants.AGENT_TYPE_NIC_SWITCH,
-                 vif_details={portbindings.CAP_PORT_FILTER: False},
+                 vif_details={portbindings.CAP_PORT_FILTER: False,
+                              portbindings.VIF_DETAILS_CONNECTIVITY:
+                                  portbindings.CONNECTIVITY_L2},
                  supported_vnic_types=[portbindings.VNIC_DIRECT,
                                        portbindings.VNIC_MACVTAP,
                                        portbindings.VNIC_DIRECT_PHYSICAL]):

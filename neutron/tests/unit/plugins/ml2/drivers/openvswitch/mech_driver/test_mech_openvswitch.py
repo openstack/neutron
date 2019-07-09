@@ -34,7 +34,9 @@ class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
     VIF_DETAILS = {'bridge_name': 'br-int',
                    portbindings.OVS_DATAPATH_TYPE: 'system',
                    portbindings.CAP_PORT_FILTER: True,
-                   portbindings.OVS_HYBRID_PLUG: True}
+                   portbindings.OVS_HYBRID_PLUG: True,
+                   portbindings.VIF_DETAILS_CONNECTIVITY:
+                       portbindings.CONNECTIVITY_L2}
     AGENT_TYPE = constants.AGENT_TYPE_OVS
 
     GOOD_MAPPINGS = {'fake_physical_network': 'fake_bridge'}
@@ -112,7 +114,9 @@ class OpenvswitchMechanismSGDisabledBaseTestCase(
     VIF_DETAILS = {'bridge_name': 'br-int',
                    portbindings.OVS_DATAPATH_TYPE: 'system',
                    portbindings.CAP_PORT_FILTER: False,
-                   portbindings.OVS_HYBRID_PLUG: False}
+                   portbindings.OVS_HYBRID_PLUG: False,
+                   portbindings.VIF_DETAILS_CONNECTIVITY:
+                       portbindings.CONNECTIVITY_L2}
 
     def setUp(self):
         cfg.CONF.set_override('enable_security_group',
@@ -217,11 +221,6 @@ class OpenvswitchMechanismSGDisabledLocalTestCase(
 
 class OpenvswitchMechanismFirewallUndefinedTestCase(
     OpenvswitchMechanismBaseTestCase, base.AgentMechanismLocalTestCase):
-
-    VIF_DETAILS = {'bridge_name': 'br-int',
-                   portbindings.OVS_DATAPATH_TYPE: 'system',
-                   portbindings.CAP_PORT_FILTER: True,
-                   portbindings.OVS_HYBRID_PLUG: True}
 
     def setUp(self):
         # this simple test case just ensures backward compatibility where
