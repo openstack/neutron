@@ -164,7 +164,7 @@ GRANT ALL PRIVILEGES ON *.* TO 'openstack_citest'@'localhost';
 GRANT ALL PRIVILEGES ON *.* TO 'openstack_citest';
 FLUSH PRIVILEGES;
 EOF
-    /usr/bin/mysql -u root < $tmp_dir/mysql.sql
+    /usr/bin/mysql -u root -p"$MYSQL_PASSWORD" < $tmp_dir/mysql.sql
 
     if [[ "$install_pg" == "True" ]]; then
         cat << EOF > $tmp_dir/postgresql.sql
