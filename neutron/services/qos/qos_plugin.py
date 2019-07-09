@@ -161,10 +161,8 @@ class QoSPlugin(qos.QoSPluginBase):
         context = kwargs['context']
         port_id = kwargs['port']['id']
         port = ports_object.Port.get_object(context, id=port_id)
-        network = network_object.Network.get_object(context,
-                                                    id=port.network_id)
 
-        policy_id = port.qos_policy_id or network.qos_policy_id
+        policy_id = port.qos_policy_id or port.qos_network_policy_id
         if policy_id is None:
             return
 
