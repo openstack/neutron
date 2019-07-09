@@ -36,7 +36,6 @@ from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exc
 from neutron_lib import fixture
-from neutron_lib.objects import utils as obj_utils
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api as driver_api
@@ -50,7 +49,6 @@ import webob
 from neutron._i18n import _
 from neutron.common import utils
 from neutron.db import agents_db
-from neutron.db import db_base_plugin_v2
 from neutron.db import provisioning_blocks
 from neutron.db import securitygroups_db as sg_db
 from neutron.db import segments_db
@@ -466,9 +464,9 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
     def test__update_segmentation_id_ports_wrong_vif_type(self):
         plugin = directory.get_plugin()
         with self.network() as net:
-            with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
-                                   'get_ports_count') as mock_get_ports_count:
-                mock_get_ports_count.return_value = 1
+            with mock.patch.object(
+                    port_obj.Port, 'check_network_ports_by_binding_types',
+                    return_value=True):
                 self.assertRaises(
                     exc.InvalidInput, plugin._update_segmentation_id,
                     self.context, net['network'], {})
@@ -486,25 +484,22 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
 
         with self.network(**{'arg_list': (mpnet_apidef.SEGMENTS, ),
                              mpnet_apidef.SEGMENTS: segments}) as net, \
-                mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
-                                  'get_ports_count') as mock_get_ports_count, \
+                mock.patch.object(
+                    port_obj.Port, 'check_network_ports_by_binding_types',
+                    return_value=False) as check_network_ports_mock, \
                 mock.patch.object(plugin.type_manager,
                                   'update_network_segment'), \
-                mock.patch.object(plugin, 'get_agents') as mock_get_agents, \
-                mock.patch.object(obj_utils, 'NotIn') as mock_not_in:
-            mock_get_ports_count.return_value = 0
+                mock.patch.object(plugin, 'get_agents') as mock_get_agents:
             net_data = {pnet.SEGMENTATION_ID: 1000}
             plugin._update_segmentation_id(self.context, net['network'],
                                            net_data)
 
             mock_get_agents.assert_not_called()
-            mock_not_in.assert_called_once_with([
-                portbindings.VIF_TYPE_UNBOUND,
-                portbindings.VIF_TYPE_BINDING_FAILED])
-            filters = {portbindings.VIF_TYPE: mock.ANY,
-                       'network_id': [net['network']['id']]}
-            mock_get_ports_count.assert_called_once_with(
-                self.context, filters=filters)
+            check_network_ports_mock.assert_called_once_with(
+                self.context, net['network']['id'],
+                [portbindings.VIF_TYPE_UNBOUND,
+                 portbindings.VIF_TYPE_BINDING_FAILED],
+                negative_search=True)
 
 
 class TestMl2NetworksV2AgentMechDrivers(Ml2PluginV2TestCase):
@@ -518,26 +513,23 @@ class TestMl2NetworksV2AgentMechDrivers(Ml2PluginV2TestCase):
                      pnet.SEGMENTATION_ID: 1}]
         with self.network(**{'arg_list': (mpnet_apidef.SEGMENTS, ),
                              mpnet_apidef.SEGMENTS: segments}) as net, \
-                mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
-                                  'get_ports_count') as mock_get_ports_count, \
+                mock.patch.object(
+                    port_obj.Port, 'check_network_ports_by_binding_types',
+                    return_value=False) as check_network_ports_mock, \
                 mock.patch.object(plugin.type_manager,
                                   'update_network_segment'), \
                 mock.patch.object(plugin, 'get_agents',
-                                  return_value=[mock.ANY]), \
-                mock.patch.object(obj_utils, 'NotIn') as mock_not_in:
-            mock_get_ports_count.return_value = 0
+                                  return_value=[mock.ANY]):
             net_data = {pnet.SEGMENTATION_ID: 1000}
             plugin._update_segmentation_id(self.context, net['network'],
                                            net_data)
 
-            mock_not_in.assert_called_once_with([
-                portbindings.VIF_TYPE_UNBOUND,
-                portbindings.VIF_TYPE_BINDING_FAILED,
-                mech_test.VIF_TYPE_TEST])
-            filters = {portbindings.VIF_TYPE: mock.ANY,
-                       'network_id': [net['network']['id']]}
-            mock_get_ports_count.assert_called_once_with(
-                self.context, filters=filters)
+            check_network_ports_mock.assert_called_once_with(
+                self.context, net['network']['id'],
+                [portbindings.VIF_TYPE_UNBOUND,
+                 portbindings.VIF_TYPE_BINDING_FAILED,
+                 mech_test.VIF_TYPE_TEST],
+                negative_search=True)
 
 
 class TestExternalNetwork(Ml2PluginV2TestCase):
