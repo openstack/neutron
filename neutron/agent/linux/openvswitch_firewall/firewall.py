@@ -510,6 +510,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             raise exceptions.OVSFWPortNotFound(port_id=port_id)
         return ovs_port
 
+    def get_ovs_ports(self, port_ids):
+        return self.int_br.br.get_vifs_by_ids(port_ids)
+
     def _get_port_vlan_tag(self, port_name):
         return get_tag_from_other_config(self.int_br.br, port_name)
 
@@ -671,8 +674,10 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
     def process_trusted_ports(self, port_ids):
         """Pass packets from these ports directly to ingress pipeline."""
+        ovs_ports = self.get_ovs_ports(port_ids)
         for port_id in port_ids:
-            self._initialize_egress_no_port_security(port_id)
+            self._initialize_egress_no_port_security(port_id,
+                                                     ovs_ports=ovs_ports)
             # yield to let other greenthreads proceed
             eventlet.sleep(0)
 
@@ -752,9 +757,14 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                     ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
             )
 
-    def _initialize_egress_no_port_security(self, port_id):
+    def _initialize_egress_no_port_security(self, port_id, ovs_ports=None):
         try:
-            ovs_port = self.get_ovs_port(port_id)
+            if ovs_ports is not None:
+                ovs_port = ovs_ports.get(port_id)
+                if not ovs_port:
+                    raise exceptions.OVSFWPortNotFound(port_id=port_id)
+            else:
+                ovs_port = self.get_ovs_port(port_id)
             vlan_tag = self._get_port_vlan_tag(ovs_port.port_name)
         except exceptions.OVSFWTagNotFound:
             # It's a patch port, don't set anything
