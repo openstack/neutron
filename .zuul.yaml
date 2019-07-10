@@ -68,6 +68,7 @@
             voting: false
         - neutron-tempest-with-uwsgi:
             voting: false
+        - tripleo-ci-centos-7-scenario007-standalone
     gate:
       jobs:
         - neutron-functional
@@ -450,3 +451,16 @@
         USE_PYTHON3: true
         NEUTRON_DEPLOY_MOD_WSGI: true
     irrelevant-files: *tempest-irrelevant-files
+
+- job:
+    name: tripleo-ci-centos-7-scenario007-standalone
+    parent: tripleo-ci-base-standalone
+    nodeset: single-centos-7-node
+    voting: false
+    vars:
+      featureset: '052'
+      featureset_override:
+        standalone_environment_files:
+          - 'environments/services/neutron-ovs.yaml'
+        tempest_test_whitelist:
+          - 'tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_network_basic_ops'
