@@ -435,8 +435,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                  resource_id=router_id))
 
     def _update_current_gw_port(self, context, router_id, router, ext_ips):
-        self._core_plugin.update_port(context, router.gw_port['id'], {'port':
-                                      {'fixed_ips': ext_ips}})
+        self._core_plugin.update_port(context.elevated(), router.gw_port['id'],
+                                      {'port': {'fixed_ips': ext_ips}})
         context.session.expire(router.gw_port)
 
     def _update_router_gw_info(self, context, router_id, info, router=None):
