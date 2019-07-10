@@ -721,15 +721,21 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             self.firewall._remove_egress_no_port_security('foo')
 
     def test_process_trusted_ports_caches_port_id(self):
-        self.firewall.process_trusted_ports(['port_id'])
-        self.assertIn('port_id', self.firewall.sg_port_map.unfiltered)
+        vif_port = ovs_lib.VifPort('name', 1, 'id', 'mac', mock.ANY)
+        with mock.patch.object(self.firewall.int_br.br, 'get_vifs_by_ids',
+                               return_value={'port_id': vif_port}):
+            self.firewall.process_trusted_ports(['port_id'])
+            self.assertEqual(1, len(self.firewall.sg_port_map.unfiltered))
+            self.assertEqual(vif_port.ofport,
+                             self.firewall.sg_port_map.unfiltered['port_id'])
 
     def test_process_trusted_ports_port_not_found(self):
         """Check that exception is not propagated outside."""
-        self.mock_bridge.br.get_vif_port_by_id.return_value = None
-        self.firewall.process_trusted_ports(['port_id'])
-        # Processing should have failed so port is not cached
-        self.assertNotIn('port_id', self.firewall.sg_port_map.unfiltered)
+        with mock.patch.object(self.firewall.int_br.br, 'get_vifs_by_ids',
+                               return_value={}):
+            self.firewall.process_trusted_ports(['port_id'])
+            # Processing should have failed so port is not cached
+            self.assertEqual(0, len(self.firewall.sg_port_map.unfiltered))
 
     def test_remove_trusted_ports_clears_cached_port_id(self):
         self.firewall.sg_port_map.unfiltered['port_id'] = 1
