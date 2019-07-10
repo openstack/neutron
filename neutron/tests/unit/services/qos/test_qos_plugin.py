@@ -13,6 +13,7 @@
 import copy
 
 import mock
+import netaddr
 from neutron_lib.api.definitions import qos
 from neutron_lib.callbacks import events
 from neutron_lib import constants as lib_constants
@@ -24,6 +25,7 @@ from neutron_lib.placement import constants as pl_constants
 from neutron_lib.plugins import constants as plugins_constants
 from neutron_lib.plugins import directory
 from neutron_lib.services.qos import constants as qos_consts
+from neutron_lib.utils import net as net_utils
 from oslo_config import cfg
 from oslo_utils import uuidutils
 import webob.exc
@@ -240,60 +242,6 @@ class TestQosPlugin(base.BaseQosTestCase):
                 len(expected_ports), len(policy_ports))
             for port in expected_ports:
                 self.assertIn(port, policy_ports)
-
-    def _test_validate_create_port_callback(self, policy_id=None,
-                                            network_policy_id=None):
-        port_id = uuidutils.generate_uuid()
-        kwargs = {
-            "context": self.ctxt,
-            "port": {"id": port_id}
-        }
-        port_mock = mock.MagicMock(id=port_id, qos_policy_id=policy_id)
-        network_mock = mock.MagicMock(
-            id=uuidutils.generate_uuid(), qos_policy_id=network_policy_id)
-        policy_mock = mock.MagicMock(id=policy_id)
-        admin_ctxt = mock.Mock()
-        expected_policy_id = policy_id or network_policy_id
-        with mock.patch(
-            'neutron.objects.ports.Port.get_object',
-            return_value=port_mock
-        ), mock.patch(
-            'neutron.objects.network.Network.get_object',
-            return_value=network_mock
-        ), mock.patch(
-            'neutron.objects.qos.policy.QosPolicy.get_object',
-            return_value=policy_mock
-        ) as get_policy, mock.patch.object(
-            self.qos_plugin, "validate_policy_for_port"
-        ) as validate_policy_for_port, mock.patch.object(
-            self.ctxt, "elevated", return_value=admin_ctxt
-        ):
-            self.qos_plugin._validate_create_port_callback(
-                "PORT", "precommit_create", "test_plugin", **kwargs)
-            if policy_id or network_policy_id:
-                get_policy.assert_called_once_with(admin_ctxt,
-                                                   id=expected_policy_id)
-                validate_policy_for_port.assert_called_once_with(
-                    self.ctxt, policy_mock, port_mock)
-            else:
-                get_policy.assert_not_called()
-                validate_policy_for_port.assert_not_called()
-
-    def test_validate_create_port_callback_policy_on_port(self):
-        self._test_validate_create_port_callback(
-            policy_id=uuidutils.generate_uuid())
-
-    def test_validate_create_port_callback_policy_on_port_and_network(self):
-        self._test_validate_create_port_callback(
-            policy_id=uuidutils.generate_uuid(),
-            network_policy_id=uuidutils.generate_uuid())
-
-    def test_validate_create_port_callback_policy_on_network(self):
-        self._test_validate_create_port_callback(
-            network_policy_id=uuidutils.generate_uuid())
-
-    def test_validate_create_port_callback_no_policy(self):
-        self._test_validate_create_port_callback()
 
     def _test_validate_update_port_callback(self, policy_id=None,
                                             original_policy_id=None):
@@ -1304,3 +1252,84 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 request = self.new_show_request(resource, rule_id, self.fmt)
                 res = request.get_response(self.ext_api)
                 self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
+
+
+class TestQosPluginDB(base.BaseQosTestCase):
+
+    def setUp(self):
+        super(TestQosPluginDB, self).setUp()
+        self.setup_coreplugin(load_plugins=False)
+        cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
+        cfg.CONF.set_override("service_plugins", ["qos"])
+
+        manager.init()
+        self.qos_plugin = directory.get_plugin(plugins_constants.QOS)
+        self.qos_plugin.driver_manager = mock.Mock()
+        self.rpc_push = mock.patch('neutron.api.rpc.handlers.resources_rpc'
+                                   '.ResourcesPushRpcApi.push').start()
+        self.context = context.get_admin_context()
+        self.project_id = uuidutils.generate_uuid()
+
+    def _make_qos_policy(self):
+        qos_policy = policy_object.QosPolicy(
+            self.context, project_id=self.project_id, shared=False,
+            is_default=False)
+        qos_policy.create()
+        return qos_policy
+
+    def _make_port(self, network_id, qos_policy_id=None):
+        base_mac = ['aa', 'bb', 'cc', 'dd', 'ee', 'ff']
+        mac = netaddr.EUI(next(net_utils.random_mac_generator(base_mac)))
+        port = ports_object.Port(
+            self.context, network_id=network_id, device_owner='3',
+            project_id=self.project_id, admin_state_up=True, status='DOWN',
+            device_id='2', qos_policy_id=qos_policy_id, mac_address=mac)
+        port.create()
+        return port
+
+    def _make_network(self, qos_policy_id=None):
+        network = network_object.Network(self.context,
+                                         qos_policy_id=qos_policy_id)
+        network.create()
+        return network
+
+    def _test_validate_create_port_callback(self, port_qos=False,
+                                            network_qos=False):
+        net_qos_obj = self._make_qos_policy()
+        port_qos_obj = self._make_qos_policy()
+        net_qos_id = net_qos_obj.id if network_qos else None
+        port_qos_id = port_qos_obj.id if port_qos else None
+        network = self._make_network(qos_policy_id=net_qos_id)
+        port = self._make_port(network.id, qos_policy_id=port_qos_id)
+        kwargs = {"context": self.context,
+                  "port": {"id": port.id}}
+
+        with mock.patch.object(self.qos_plugin, 'validate_policy_for_port') \
+                as mock_validate_policy:
+            self.qos_plugin._validate_create_port_callback(
+                'PORT', 'precommit_create', 'test_plugin', **kwargs)
+
+        qos_policy = None
+        if port_qos:
+            qos_policy = port_qos_obj
+        elif network_qos:
+            qos_policy = net_qos_obj
+
+        if qos_policy:
+            mock_validate_policy.assert_called_once_with(
+                self.context, qos_policy, port)
+        else:
+            mock_validate_policy.assert_not_called()
+
+    def test_validate_create_port_callback_policy_on_port(self):
+        self._test_validate_create_port_callback(port_qos=True)
+
+    def test_validate_create_port_callback_policy_on_port_and_network(self):
+        self._test_validate_create_port_callback(port_qos=True,
+                                                 network_qos=True)
+
+    def test_validate_create_port_callback_policy_on_network(self):
+        self._test_validate_create_port_callback(network_qos=True)
+
+    def test_validate_create_port_callback_no_policy(self):
+        self._test_validate_create_port_callback()
