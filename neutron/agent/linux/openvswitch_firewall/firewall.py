@@ -15,6 +15,7 @@
 
 import collections
 
+import eventlet
 import netaddr
 from neutron_lib import constants as lib_const
 from oslo_log import log as logging
@@ -568,6 +569,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         """Pass packets from these ports directly to ingress pipeline."""
         for port_id in port_ids:
             self._initialize_egress_no_port_security(port_id)
+            # yield to let other greenthreads proceed
+            eventlet.sleep(0)
 
     def remove_trusted_ports(self, port_ids):
         for port_id in port_ids:
