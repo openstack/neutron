@@ -17,6 +17,7 @@ import collections
 import contextlib
 import copy
 
+import eventlet
 import netaddr
 from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
@@ -664,6 +665,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         """Pass packets from these ports directly to ingress pipeline."""
         for port_id in port_ids:
             self._initialize_egress_no_port_security(port_id)
+            # yield to let other greenthreads proceed
+            eventlet.sleep(0)
 
     def remove_trusted_ports(self, port_ids):
         for port_id in port_ids:
