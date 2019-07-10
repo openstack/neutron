@@ -217,10 +217,9 @@ class NovaSegmentNotifier(object):
             ipv4_inventory = self.p_client.get_inventory(event.segment_id,
                                                          IPV4_RESOURCE_CLASS)
             if event.total:
-                ipv4_inventory[IPV4_RESOURCE_CLASS]['total'] += event.total
+                ipv4_inventory['total'] += event.total
             if event.reserved:
-                ipv4_inventory[IPV4_RESOURCE_CLASS]['reserved'] += \
-                    event.reserved
+                ipv4_inventory['reserved'] += event.reserved
             try:
                 self.p_client.update_resource_provider_inventory(
                     event.segment_id, ipv4_inventory, IPV4_RESOURCE_CLASS)

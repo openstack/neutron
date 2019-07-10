@@ -1714,17 +1714,17 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         total, reserved = self._calculate_inventory_total_and_reserved(
             subnet['subnet'])
         inventory, _ = self._get_inventory(total, reserved)
-        inventory_dict = inventory[seg_plugin.IPV4_RESOURCE_CLASS]
+        ipv4_classname = seg_plugin.IPV4_RESOURCE_CLASS
         self.mock_p_client.update_resource_provider_inventories.\
-            assert_called_with(segment_id, inventory)
+            assert_called_with(segment_id, {ipv4_classname: inventory})
         self.assertEqual(
-            inventory_dict['total'],
+            inventory['total'],
             self.mock_p_client.update_resource_provider_inventories.
-            call_args[0][1][seg_plugin.IPV4_RESOURCE_CLASS]['total'])
+            call_args[0][1][ipv4_classname]['total'])
         self.assertEqual(
-            inventory_dict['reserved'],
+            inventory['reserved'],
             self.mock_p_client.update_resource_provider_inventories.
-            call_args[0][1][seg_plugin.IPV4_RESOURCE_CLASS]['reserved'])
+            call_args[0][1][ipv4_classname]['reserved'])
         self.mock_p_client.reset_mock()
         self.mock_p_client.get_inventory.side_effect = None
         self.mock_n_client.reset_mock()
@@ -1789,29 +1789,25 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         if subnet:
             total, reserved = self._calculate_inventory_total_and_reserved(
                 subnet)
-        ipv4_classname = seg_plugin.IPV4_RESOURCE_CLASS
-        inventory[ipv4_classname]['total'] += total - original_total
-        inventory[ipv4_classname]['reserved'] += reserved - original_reserved
+        inventory['total'] += total - original_total
+        inventory['reserved'] += reserved - original_reserved
         self.mock_p_client.update_resource_provider_inventory.\
             assert_called_with(segment_id, inventory,
                                seg_plugin.IPV4_RESOURCE_CLASS)
         self.assertEqual(
-            inventory[ipv4_classname]['total'],
+            inventory['total'],
             self.mock_p_client.update_resource_provider_inventory.
-            call_args[0][1][ipv4_classname]['total'])
+            call_args[0][1]['total'])
         self.assertEqual(
-            inventory[ipv4_classname]['reserved'],
+            inventory['reserved'],
             self.mock_p_client.update_resource_provider_inventory.
-            call_args[0][1][ipv4_classname]['reserved'])
+            call_args[0][1]['reserved'])
         self.mock_p_client.reset_mock()
         self.mock_n_client.reset_mock()
 
     def _get_inventory(self, total, reserved):
-        inventory = {
-            seg_plugin.IPV4_RESOURCE_CLASS: {
-                'total': total, 'reserved': reserved, 'min_unit': 1,
-                'max_unit': 1, 'step_size': 1, 'allocation_ratio': 1.0
-            }}
+        inventory = {'total': total, 'reserved': reserved, 'min_unit': 1,
+                     'max_unit': 1, 'step_size': 1, 'allocation_ratio': 1.0}
         return inventory, copy.deepcopy(inventory)
 
     def _test_second_subnet_association_with_segment(self):
@@ -2050,20 +2046,20 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
 
     def _assert_inventory_update_port(self, segment_id, inventory,
                                       num_fixed_ips):
-        inventory[seg_plugin.IPV4_RESOURCE_CLASS]['reserved'] += num_fixed_ips
+        inventory['reserved'] += num_fixed_ips
         self.mock_p_client.get_inventory.assert_called_with(
             segment_id, seg_plugin.IPV4_RESOURCE_CLASS)
         self.mock_p_client.update_resource_provider_inventory.\
             assert_called_with(segment_id, inventory,
                                seg_plugin.IPV4_RESOURCE_CLASS)
         self.assertEqual(
-            inventory[seg_plugin.IPV4_RESOURCE_CLASS]['total'],
+            inventory['total'],
             self.mock_p_client.update_resource_provider_inventory.
-            call_args[0][1][seg_plugin.IPV4_RESOURCE_CLASS]['total'])
+            call_args[0][1]['total'])
         self.assertEqual(
-            inventory[seg_plugin.IPV4_RESOURCE_CLASS]['reserved'],
+            inventory['reserved'],
             self.mock_p_client.update_resource_provider_inventory.
-            call_args[0][1][seg_plugin.IPV4_RESOURCE_CLASS]['reserved'])
+            call_args[0][1]['reserved'])
         self.mock_p_client.reset_mock()
         self.mock_n_client.reset_mock()
 
@@ -2117,10 +2113,9 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         segment_id, before_create_inventory, port = self._test_create_port(
             **kwargs)
         self.mock_p_client.reset_mock()
-        ipv4_classname = seg_plugin.IPV4_RESOURCE_CLASS
         inventory, original_inventory = self._get_inventory(
-            before_create_inventory[ipv4_classname]['total'],
-            before_create_inventory[ipv4_classname]['reserved'] + 1)
+            before_create_inventory['total'],
+            before_create_inventory['reserved'] + 1)
         self.mock_p_client.get_inventory.return_value = inventory
         self._delete('ports', port['port']['id'])
         self.batch_notifier._notify()
