@@ -84,7 +84,7 @@ oslo.upgradecheck==0.1.0
 oslo.utils==3.33.0
 oslo.versionedobjects==1.35.1
 oslotest==3.2.0
-osprofiler==1.4.0
+osprofiler==2.3.0
 ovs==2.8.0
 ovsdbapp==0.9.1
 Paste==2.0.2

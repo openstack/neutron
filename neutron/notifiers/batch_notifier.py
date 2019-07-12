@@ -14,6 +14,8 @@ import eventlet
 from neutron_lib.utils import runtime
 from oslo_utils import uuidutils
 
+from neutron.common import utils
+
 
 class BatchNotifier(object):
     def __init__(self, batch_interval, callback):
@@ -53,7 +55,7 @@ class BatchNotifier(object):
             # events to batch up
             eventlet.sleep(self.batch_interval)
 
-        eventlet.spawn_n(synced_send)
+        utils.spawn_n(synced_send)
 
     def _notify(self):
         if not self.pending_events:
