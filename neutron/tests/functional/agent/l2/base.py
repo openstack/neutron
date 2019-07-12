@@ -287,7 +287,8 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
                 'failed_devices_down': []}
 
     def setup_agent_rpc_mocks(self, agent, unplug_ports):
-        def mock_device_details(context, devices, agent_id, host=None):
+        def mock_device_details(context, devices, agent_id, host=None,
+                                agent_restarted=False):
             details = []
             for port in self.ports:
                 if port['id'] in devices:
@@ -379,6 +380,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         self.ports = port_dicts
         self.agent = self.create_agent(create_tunnels=create_tunnels,
                                        ancillary_bridge=ancillary_bridge)
+        self.agent.iter_num += 1
         self.polling_manager = self.start_agent(self.agent, ports=self.ports)
         self.network = network or self._create_test_network_dict()
         if trigger_resync:
