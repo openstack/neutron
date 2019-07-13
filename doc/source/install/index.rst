@@ -1,8 +1,8 @@
 .. _networking:
 
-==================
-Networking service
-==================
+=====================================
+Networking service Installation Guide
+=====================================
 
 .. toctree::
    :maxdepth: 1

@@ -1,8 +1,8 @@
 .. This file is manually generated, unlike many of the other chapters.
 
-==================================
-neutron-status command-line client
-==================================
+==============
+neutron-status
+==============
 
 The :command:`neutron-status` provides routines for checking the status of
 Neutron deployment.

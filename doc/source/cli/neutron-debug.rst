@@ -1,8 +1,8 @@
 .. This file is manually generated, unlike many of the other chapters.
 
-=================================
-neutron-debug command-line client
-=================================
+=============
+neutron-debug
+=============
 
 The :command:`neutron-debug` client is an extension to the :command:`neutron`
 command-line interface (CLI) for the OpenStack neutron-debug tool.
