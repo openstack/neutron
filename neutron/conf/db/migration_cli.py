@@ -29,14 +29,7 @@ CORE_OPTS = [
                choices=INSTALLED_SUBPROJECTS,
                help=(_("The subproject to execute the command against. "
                        "Can be one of: '%s'.")
-                     % "', '".join(INSTALLED_SUBPROJECTS))),
-    cfg.BoolOpt('split_branches',
-                default=True,
-                deprecated_for_removal=True,
-                help=_("DEPRECATED in newton, will be removed in ocata."
-                       "Alembic environments integrating with "
-                       "Neutron must implement split (contract and expand) "
-                       "branches file structure."))
+                     % "', '".join(INSTALLED_SUBPROJECTS)))
 ]
 
 DB_OPTS = [
