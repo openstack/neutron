@@ -2808,7 +2808,8 @@ class TestDeviceManager(TestConfBase):
             mock_IPDevice.return_value = device
             device.route.get_gateway.return_value = None
             mgr = dhcp.DeviceManager(self.conf, plugin)
-            load_interface_driver.assert_called_with(self.conf)
+            load_interface_driver.assert_called_with(
+                self.conf, get_networks_callback=plugin.get_networks)
 
             # Setup with no existing DHCP port - expect a new DHCP port to
             # be created.
@@ -2891,7 +2892,8 @@ class TestDeviceManager(TestConfBase):
             mock_IPDevice.return_value = device
             device.route.get_gateway.return_value = None
             mgr = dhcp.DeviceManager(self.conf, plugin)
-            self.mock_load_interface_driver.assert_called_with(self.conf)
+            self.mock_load_interface_driver.assert_called_with(
+                self.conf, get_networks_callback=plugin.get_networks)
 
             # Setup with a reserved DHCP port.
             network = FakeDualNetworkReserved()
@@ -2959,7 +2961,8 @@ class TestDeviceManager(TestConfBase):
             mock_IPDevice.return_value = device
             device.route.get_gateway.return_value = None
             mgr = dhcp.DeviceManager(self.conf, plugin)
-            self.mock_load_interface_driver.assert_called_with(self.conf)
+            self.mock_load_interface_driver.assert_called_with(
+                self.conf, get_networks_callback=plugin.get_networks)
 
             # Setup with a reserved DHCP port.
             network = FakeDualNetworkReserved2()

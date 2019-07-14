@@ -41,7 +41,7 @@ class LinuxInterfaceDriver(object):
     DEV_NAME_LEN = constants.LINUX_DEV_LEN
     DEV_NAME_PREFIX = constants.TAP_DEVICE_PREFIX
 
-    def __init__(self, conf):
+    def __init__(self, conf, **kwargs):
         self.conf = conf
         self._mtu_update_warn_logged = False
 
@@ -314,8 +314,8 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
 
     DEV_NAME_PREFIX = constants.TAP_DEVICE_PREFIX
 
-    def __init__(self, conf):
-        super(OVSInterfaceDriver, self).__init__(conf)
+    def __init__(self, conf, **kwargs):
+        super(OVSInterfaceDriver, self).__init__(conf, **kwargs)
         if self.conf.ovs_use_veth:
             self.DEV_NAME_PREFIX = 'ns-'
 
