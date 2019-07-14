@@ -19,10 +19,13 @@ from sqlalchemy import orm
 
 from neutron.db.models import l3
 from neutron.db import models_v2
+from neutron.db import standard_attr
+from neutron_lib.api.definitions import fip_pf_description as apidef
 from neutron_lib.db import constants as db_const
 
 
-class PortForwarding(model_base.BASEV2, model_base.HasId):
+class PortForwarding(standard_attr.HasStandardAttributes,
+                     model_base.BASEV2, model_base.HasId):
 
     __table_args__ = (
         sa.UniqueConstraint('floatingip_id', 'external_port', 'protocol',
@@ -58,3 +61,4 @@ class PortForwarding(model_base.BASEV2, model_base.HasId):
                             cascade='delete')
     )
     revises_on_change = ('floating_ip', 'port',)
+    api_collections = [apidef.ALIAS]

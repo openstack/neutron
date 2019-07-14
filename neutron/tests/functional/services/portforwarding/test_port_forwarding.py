@@ -11,6 +11,7 @@
 #    under the License.
 
 import mock
+from neutron_lib.api.definitions import fip_pf_description as ext_apidef
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
 from neutron_lib.callbacks import exceptions as c_exc
 from neutron_lib import exceptions as lib_exc
@@ -121,6 +122,7 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
                  apidef.INTERNAL_PORT: 25,
                  apidef.INTERNAL_PORT_ID: self.port['id'],
                  apidef.PROTOCOL: "tcp",
+                 ext_apidef.DESCRIPTION_FIELD: 'Some description',
                  apidef.INTERNAL_IP_ADDRESS:
                      self.port['fixed_ips'][0]['ip_address']}}
 
@@ -143,6 +145,9 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
             'id': mock.ANY,
             'router_id': self.router['id'],
             'floating_ip_address': self.fip['floating_ip_address'],
+            'description': 'Some description',
+            'revision_number': 0,
+            'created_at': mock.ANY,
             'floatingip_id': self.fip['id']}
         self.assertEqual(expect, res)
 
@@ -202,6 +207,9 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
             'id': mock.ANY,
             'router_id': self.router['id'],
             'floating_ip_address': self.fip['floating_ip_address'],
+            'description': 'Some description',
+            'revision_number': 0,
+            'created_at': mock.ANY,
             'floatingip_id': self.fip['id']}
         self.assertEqual(expect, res)
 
@@ -240,6 +248,9 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
             'id': res['id'],
             'router_id': self.router['id'],
             'floating_ip_address': self.fip['floating_ip_address'],
+            'description': 'Some description',
+            'revision_number': 0,
+            'created_at': mock.ANY,
             'floatingip_id': self.fip['id']}
         self.assertEqual(expect, update_res)
 
@@ -265,6 +276,9 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
             'id': res['id'],
             'router_id': self.router['id'],
             'floating_ip_address': self.fip['floating_ip_address'],
+            'description': 'Some description',
+            'revision_number': 0,
+            'created_at': mock.ANY,
             'floatingip_id': self.fip['id']}
         self.assertEqual(expect, update_res)
 
@@ -448,6 +462,9 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
             'id': mock.ANY,
             'router_id': self.router['id'],
             'floating_ip_address': self.fip['floating_ip_address'],
+            'description': 'Some description',
+            'revision_number': 0,
+            'created_at': mock.ANY,
             'floatingip_id': self.fip['id']}
         self.assertEqual(expected, res)
 
