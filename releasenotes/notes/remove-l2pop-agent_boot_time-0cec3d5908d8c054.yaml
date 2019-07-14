@@ -1,0 +1,5 @@
+---
+upgrade:
+  - |
+    The deprecated L2 population ``agent_boot_time`` config option was removed and
+    is no longer needed as of the Stein release.

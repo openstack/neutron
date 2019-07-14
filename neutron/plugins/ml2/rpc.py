@@ -263,7 +263,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
     def update_device_up(self, rpc_context, **kwargs):
         """Device is up on agent."""
-        agent_restarted = kwargs.pop('agent_restarted', None)
+        agent_restarted = kwargs.pop('agent_restarted', False)
         agent_id, host, device = self._get_request_details(kwargs)
         LOG.debug("Device %(device)s up at agent %(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
@@ -316,7 +316,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                 provisioning_blocks.L2_AGENT_ENTITY)
 
     def notify_l2pop_port_wiring(self, port_id, rpc_context,
-                                 status, host, agent_restarted=None):
+                                 status, host, agent_restarted=False):
         """Notify the L2pop driver that a port has been wired/unwired.
 
         The L2pop driver uses this notification to broadcast forwarding
@@ -339,8 +339,6 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         # and so we don't need to update it again here. But, l2pop did not
         # handle DVR ports while restart neutron-*-agent, we need to handle
         # it here.
-        if agent_restarted is None:
-            agent_restarted = l2pop_driver.obj.agent_restarted(port_context)
         if (port['device_owner'] == n_const.DEVICE_OWNER_DVR_INTERFACE and
                 not agent_restarted):
             return
