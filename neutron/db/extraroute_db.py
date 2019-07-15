@@ -151,6 +151,88 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                 raise xroute_exc.RouterInterfaceInUseByRoute(
                     router_id=router_id, subnet_id=subnet_id)
 
+    @staticmethod
+    def _add_extra_routes(old, add):
+        """Add two lists of extra routes.
+
+        Exact duplicates (both destination and nexthop) in old and add are
+        merged into one item.
+        Same destinations with different nexthops are accepted and all of
+        them are returned.
+        Overlapping destinations are accepted and all of them are returned.
+        """
+        routes_dict = {}  # its values are sets of nexthops
+        for r in old + add:
+            dst = r['destination']
+            nexthop = r['nexthop']
+            if dst not in routes_dict:
+                routes_dict[dst] = set()
+            routes_dict[dst].add(nexthop)
+        routes_list = []
+        for dst, nexthops in routes_dict.items():
+            for nexthop in nexthops:
+                routes_list.append({'destination': dst, 'nexthop': nexthop})
+        return routes_list
+
+    @staticmethod
+    def _remove_extra_routes(old, remove):
+        """Remove the 2nd list of extra routes from the first.
+
+        Since we care about the end state if an extra route to be removed
+        is already missing from old, that's not an error, but accepted.
+        """
+        routes_dict = {}  # its values are sets of nexthops
+        for r in old:
+            dst = r['destination']
+            nexthop = r['nexthop']
+            if dst not in routes_dict:
+                routes_dict[dst] = set()
+            routes_dict[dst].add(nexthop)
+        for r in remove:
+            dst = r['destination']
+            nexthop = r['nexthop']
+            if dst in routes_dict:
+                routes_dict[dst].discard(nexthop)
+        routes_list = []
+        for dst, nexthops in routes_dict.items():
+            for nexthop in nexthops:
+                routes_list.append({'destination': dst, 'nexthop': nexthop})
+        return routes_list
+
+    @db_api.retry_if_session_inactive()
+    def add_extraroutes(self, context, router_id, body=None):
+        # NOTE(bence romsics): The input validation is delayed until
+        # update_router() validates the whole set of routes. Until then
+        # do not trust 'routes'.
+        routes = body['router']['routes']
+        with db_api.CONTEXT_WRITER.using(context):
+            old_routes = self._get_extra_routes_by_router_id(
+                context, router_id)
+            router = self.update_router(
+                context,
+                router_id,
+                {'router':
+                    {'routes':
+                        self._add_extra_routes(old_routes, routes)}})
+            return {'router': router}
+
+    @db_api.retry_if_session_inactive()
+    def remove_extraroutes(self, context, router_id, body=None):
+        # NOTE(bence romsics): The input validation is delayed until
+        # update_router() validates the whole set of routes. Until then
+        # do not trust 'routes'.
+        routes = body['router']['routes']
+        with db_api.CONTEXT_WRITER.using(context):
+            old_routes = self._get_extra_routes_by_router_id(
+                context, router_id)
+            router = self.update_router(
+                context,
+                router_id,
+                {'router':
+                    {'routes':
+                        self._remove_extra_routes(old_routes, routes)}})
+            return {'router': router}
+
 
 class ExtraRoute_db_mixin(ExtraRoute_dbonly_mixin, l3_db.L3_NAT_db_mixin):
     """Mixin class to support extra route configuration on router with rpc."""
