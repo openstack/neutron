@@ -24,6 +24,7 @@ from neutron.agent.common import utils
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
+from neutron.conf.agent import securitygroups_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
@@ -359,6 +360,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         super(TestOVSFirewallDriver, self).setUp()
         mock_bridge = mock.patch.object(
             ovs_lib, 'OVSBridge', autospec=True).start()
+        securitygroups_rpc.register_securitygroups_opts()
         self.firewall = ovsfw.OVSFirewallDriver(mock_bridge)
         self.mock_bridge = self.firewall.int_br
         self.mock_bridge.reset_mock()
@@ -758,6 +760,7 @@ class TestCookieContext(base.BaseTestCase):
             return_value=bridge.deferred(
                 full_ordered=True, use_bundle=True)).start()
 
+        securitygroups_rpc.register_securitygroups_opts()
         self.firewall = ovsfw.OVSFirewallDriver(bridge)
         # Remove calls from firewall initialization
         self.execute.reset_mock()
