@@ -454,10 +454,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         if protocol is None:
             return
         protocol = str(protocol)
-        # Force all legacy IPv6 ICMP protocol names to be 'ipv6-icmp'
-        if (ethertype == constants.IPv6 and
-                protocol in const.IPV6_ICMP_LEGACY_PROTO_LIST):
-            protocol = constants.PROTO_NAME_IPV6_ICMP
+        # Force all legacy IPv6 ICMP protocol names to be 'ipv6-icmp', and
+        # protocol number 1 to be 58
+        if ethertype == constants.IPv6:
+            if protocol in const.IPV6_ICMP_LEGACY_PROTO_LIST:
+                protocol = constants.PROTO_NAME_IPV6_ICMP
+            elif protocol == str(constants.PROTO_NUM_ICMP):
+                protocol = str(constants.PROTO_NUM_IPV6_ICMP)
         if protocol in constants.IP_PROTOCOL_MAP:
             return [protocol, str(constants.IP_PROTOCOL_MAP.get(protocol))]
         elif protocol in constants.IP_PROTOCOL_NUM_TO_NAME_MAP:
@@ -550,16 +553,25 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         return sg_groups.pop()
 
     def _make_canonical_ipv6_icmp_protocol(self, rule):
-        if (rule.get('ethertype') == constants.IPv6 and
-                rule.get('protocol') in const.IPV6_ICMP_LEGACY_PROTO_LIST):
-            rule['protocol'] = constants.PROTO_NAME_IPV6_ICMP
-            LOG.info('Project %(project)s added a security group rule with '
-                     'legacy IPv6 ICMP protocol name %(protocol)s, '
-                     '%(new_protocol)s should be used instead. It was '
-                     'automatically converted.',
-                     {'project': rule['tenant_id'],
-                      'protocol': rule['protocol'],
-                      'new_protocol': constants.PROTO_NAME_IPV6_ICMP})
+        if rule.get('ethertype') == constants.IPv6:
+            if rule.get('protocol') in const.IPV6_ICMP_LEGACY_PROTO_LIST:
+                LOG.info('Project %(project)s added a security group rule '
+                         'with legacy IPv6 ICMP protocol name %(protocol)s, '
+                         '%(new_protocol)s should be used instead. It was '
+                         'automatically converted.',
+                         {'project': rule['tenant_id'],
+                          'protocol': rule['protocol'],
+                          'new_protocol': constants.PROTO_NAME_IPV6_ICMP})
+                rule['protocol'] = constants.PROTO_NAME_IPV6_ICMP
+            elif rule.get('protocol') == str(constants.PROTO_NUM_ICMP):
+                LOG.info('Project %(project)s added a security group rule '
+                         'with legacy IPv6 ICMP protocol number %(protocol)s, '
+                         '%(new_protocol)s should be used instead. It was '
+                         'automatically converted.',
+                         {'project': rule['tenant_id'],
+                          'protocol': rule['protocol'],
+                          'new_protocol': str(constants.PROTO_NUM_IPV6_ICMP)})
+                rule['protocol'] = str(constants.PROTO_NUM_IPV6_ICMP)
 
     def _validate_security_group_rule(self, context, security_group_rule):
         rule = security_group_rule['security_group_rule']
