@@ -51,6 +51,8 @@ DEFAULT_PRIORITY = 255
 DHCP_PROCESS_GREENLET_MAX = 32
 DHCP_PROCESS_GREENLET_MIN = 8
 
+DHCP_READY_PORTS_SYNC_MAX = 64
+
 
 def _sync_lock(f):
     """Decorator to block all operations for a global sync call."""
@@ -243,8 +245,11 @@ class DhcpAgent(manager.Manager):
             # this is just watching a set so we can do it really frequently
             eventlet.sleep(0.1)
             if self.dhcp_ready_ports:
-                ports_to_send = self.dhcp_ready_ports
-                self.dhcp_ready_ports = set()
+                ports_to_send = set()
+                for port_count in range(min(len(self.dhcp_ready_ports),
+                                            DHCP_READY_PORTS_SYNC_MAX)):
+                    ports_to_send.add(self.dhcp_ready_ports.pop())
+
                 try:
                     self.plugin_rpc.dhcp_ready_on_ports(ports_to_send)
                     continue
