@@ -16,6 +16,7 @@ import random
 
 import mock
 from neutron_lib import constants
+from neutron_lib import exceptions as n_exc
 from neutron_lib.utils import helpers
 from oslo_utils import uuidutils
 
@@ -136,3 +137,32 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             maximum=max(list(alloc_mapping.keys())))
         ret_alloc_mapping = self._test_class._get_used_allocation_mapping(obj)
         self.assertDictEqual(alloc_mapping, ret_alloc_mapping)
+
+    def _define_network_segment_range(self, shared=False,
+                                      remove_project_id=False):
+        attrs = self.get_random_object_fields(obj_cls=self._test_class)
+        obj = self._test_class(self.context, **attrs)
+        obj.shared = shared
+        obj.project_id = None if remove_project_id else obj.project_id
+        return obj
+
+    def test_create_not_shared_with_project_id(self):
+        obj = self._define_network_segment_range()
+        obj.create()
+
+    def test_create_not_shared_without_project_id(self):
+        obj = self._define_network_segment_range(remove_project_id=True)
+        self.assertRaises(n_exc.ObjectActionError, obj.create)
+
+    def test_update_not_shared_with_project_id(self):
+        obj = self._define_network_segment_range(shared=True)
+        obj.create()
+        obj.shared = False
+        obj.update()
+
+    def test_update_not_shared_without_project_id(self):
+        obj = self._define_network_segment_range(shared=True,
+                                                 remove_project_id=True)
+        obj.create()
+        obj.shared = False
+        self.assertRaises(n_exc.ObjectActionError, obj.update)
