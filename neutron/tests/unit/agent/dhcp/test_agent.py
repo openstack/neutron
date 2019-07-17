@@ -25,6 +25,7 @@ from neutron_lib import constants as const
 from neutron_lib import exceptions
 from oslo_config import cfg
 import oslo_messaging
+from oslo_utils import timeutils
 import testtools
 
 from neutron.agent.dhcp import agent as dhcp_agent
@@ -1306,7 +1307,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.cache.assert_has_calls(
                 [mock.call.get_port_by_id(fake_port2.id),
                  mock.call.get_port_by_id(fake_port2.id),
-                 mock.call.deleted_ports.add(fake_port2.id),
+                 mock.call.add_to_deleted_ports(fake_port2.id),
                  mock.call.get_network_by_id(fake_network.id),
                  mock.call.remove_port(fake_port2)])
             self.call_driver.assert_has_calls(
@@ -1325,7 +1326,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.dhcp._process_resource_update()
             self.cache.assert_has_calls(
                 [mock.call.get_port_by_id(fake_port2.id),
-                 mock.call.deleted_ports.add(fake_port2.id),
+                 mock.call.add_to_deleted_ports(fake_port2.id),
                  mock.call.get_network_by_id(fake_network.id),
                  mock.call.remove_port(fake_port2)])
             self.call_driver.assert_has_calls(
@@ -1400,83 +1401,75 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
 
 class TestNetworkCache(base.BaseTestCase):
 
+    def setUp(self):
+        super(TestNetworkCache, self).setUp()
+        self.nc = dhcp_agent.NetworkCache()
+
     def test_update_of_deleted_port_ignored(self):
-        nc = dhcp_agent.NetworkCache()
-        nc.put(fake_network)
-        nc.deleted_ports.add(fake_port2['id'])
-        self.assertTrue(nc.is_port_message_stale(fake_port2))
+        self.nc.put(fake_network)
+        self.nc.add_to_deleted_ports(fake_port2['id'])
+        self.assertTrue(self.nc.is_port_message_stale(fake_port2))
 
     def test_stale_update_ignored(self):
-        nc = dhcp_agent.NetworkCache()
-        nc.put(fake_network)
-        nc.put_port(fake_port2)
+        self.nc.put(fake_network)
+        self.nc.put_port(fake_port2)
         stale = copy.copy(fake_port2)
         stale['revision_number'] = 2
-        self.assertTrue(nc.is_port_message_stale(stale))
+        self.assertTrue(self.nc.is_port_message_stale(stale))
 
     def test_put_network(self):
-        nc = dhcp_agent.NetworkCache()
-        nc.put(fake_network)
-        self.assertEqual(nc.cache,
+        self.nc.put(fake_network)
+        self.assertEqual(self.nc.cache,
                          {fake_network.id: fake_network})
-        self.assertEqual(nc.subnet_lookup,
+        self.assertEqual(self.nc.subnet_lookup,
                          {fake_subnet1.id: fake_network.id,
                           fake_subnet2.id: fake_network.id})
-        self.assertEqual(nc.port_lookup,
+        self.assertEqual(self.nc.port_lookup,
                          {fake_port1.id: fake_network.id})
 
     def test_put_network_existing(self):
         prev_network_info = mock.Mock()
-        nc = dhcp_agent.NetworkCache()
-        with mock.patch.object(nc, 'remove') as remove:
-            nc.cache[fake_network.id] = prev_network_info
+        with mock.patch.object(self.nc, 'remove') as remove:
+            self.nc.cache[fake_network.id] = prev_network_info
 
-            nc.put(fake_network)
+            self.nc.put(fake_network)
             remove.assert_called_once_with(prev_network_info)
-        self.assertEqual(nc.cache,
+        self.assertEqual(self.nc.cache,
                          {fake_network.id: fake_network})
-        self.assertEqual(nc.subnet_lookup,
+        self.assertEqual(self.nc.subnet_lookup,
                          {fake_subnet1.id: fake_network.id,
                           fake_subnet2.id: fake_network.id})
-        self.assertEqual(nc.port_lookup,
+        self.assertEqual(self.nc.port_lookup,
                          {fake_port1.id: fake_network.id})
 
     def test_remove_network(self):
-        nc = dhcp_agent.NetworkCache()
-        nc.cache = {fake_network.id: fake_network}
-        nc.subnet_lookup = {fake_subnet1.id: fake_network.id,
+        self.nc.cache = {fake_network.id: fake_network}
+        self.nc.subnet_lookup = {fake_subnet1.id: fake_network.id,
                             fake_subnet2.id: fake_network.id}
-        nc.port_lookup = {fake_port1.id: fake_network.id}
-        nc.remove(fake_network)
+        self.nc.port_lookup = {fake_port1.id: fake_network.id}
+        self.nc.remove(fake_network)
 
-        self.assertEqual(0, len(nc.cache))
-        self.assertEqual(0, len(nc.subnet_lookup))
-        self.assertEqual(0, len(nc.port_lookup))
+        self.assertEqual(0, len(self.nc.cache))
+        self.assertEqual(0, len(self.nc.subnet_lookup))
+        self.assertEqual(0, len(self.nc.port_lookup))
 
     def test_get_network_by_id(self):
-        nc = dhcp_agent.NetworkCache()
-        nc.put(fake_network)
-
-        self.assertEqual(nc.get_network_by_id(fake_network.id), fake_network)
+        self.nc.put(fake_network)
+        self.assertEqual(self.nc.get_network_by_id(fake_network.id),
+                         fake_network)
 
     def test_get_network_ids(self):
-        nc = dhcp_agent.NetworkCache()
-        nc.put(fake_network)
-
-        self.assertEqual(list(nc.get_network_ids()), [fake_network.id])
+        self.nc.put(fake_network)
+        self.assertEqual(list(self.nc.get_network_ids()), [fake_network.id])
 
     def test_get_network_by_subnet_id(self):
-        nc = dhcp_agent.NetworkCache()
-        nc.put(fake_network)
-
-        self.assertEqual(nc.get_network_by_subnet_id(fake_subnet1.id),
+        self.nc.put(fake_network)
+        self.assertEqual(self.nc.get_network_by_subnet_id(fake_subnet1.id),
                          fake_network)
 
     def test_get_network_by_port_id(self):
-        nc = dhcp_agent.NetworkCache()
-        nc.put(fake_network)
-
-        self.assertEqual(nc.get_network_by_port_id(fake_port1.id),
+        self.nc.put(fake_network)
+        self.assertEqual(self.nc.get_network_by_port_id(fake_port1.id),
                          fake_network)
 
     def test_get_port_ids(self):
@@ -1485,11 +1478,10 @@ class TestNetworkCache(base.BaseTestCase):
                  tenant_id=FAKE_TENANT_ID,
                  subnets=[fake_subnet1],
                  ports=[fake_port1]))
-        nc = dhcp_agent.NetworkCache()
-        nc.put(fake_net)
-        nc.put_port(fake_port2)
+        self.nc.put(fake_net)
+        self.nc.put_port(fake_port2)
         self.assertEqual(set([fake_port1['id'], fake_port2['id']]),
-                         set(nc.get_port_ids()))
+                         set(self.nc.get_port_ids()))
 
     def test_get_port_ids_limited_nets(self):
         fake_net = dhcp.NetModel(
@@ -1505,15 +1497,15 @@ class TestNetworkCache(base.BaseTestCase):
                  tenant_id=FAKE_TENANT_ID,
                  subnets=[fake_subnet1],
                  ports=[fake_port2]))
-        nc = dhcp_agent.NetworkCache()
-        nc.put(fake_net)
-        nc.put(fake_net2)
+        self.nc.put(fake_net)
+        self.nc.put(fake_net2)
         self.assertEqual(set([fake_port1['id']]),
-                         set(nc.get_port_ids([fake_net.id, 'net2'])))
+                         set(self.nc.get_port_ids([fake_net.id, 'net2'])))
         self.assertEqual(set(),
-                         set(nc.get_port_ids(['net2'])))
+                         set(self.nc.get_port_ids(['net2'])))
         self.assertEqual(set([fake_port2['id']]),
-                         set(nc.get_port_ids([fake_port2.network_id, 'net2'])))
+                         set(self.nc.get_port_ids([fake_port2.network_id,
+                                                   'net2'])))
 
     def test_put_port(self):
         fake_net = dhcp.NetModel(
@@ -1521,10 +1513,9 @@ class TestNetworkCache(base.BaseTestCase):
                  tenant_id=FAKE_TENANT_ID,
                  subnets=[fake_subnet1],
                  ports=[fake_port1]))
-        nc = dhcp_agent.NetworkCache()
-        nc.put(fake_net)
-        nc.put_port(fake_port2)
-        self.assertEqual(2, len(nc.port_lookup))
+        self.nc.put(fake_net)
+        self.nc.put_port(fake_port2)
+        self.assertEqual(2, len(self.nc.port_lookup))
         self.assertIn(fake_port2, fake_net.ports)
 
     def test_put_port_existing(self):
@@ -1533,11 +1524,10 @@ class TestNetworkCache(base.BaseTestCase):
                  tenant_id=FAKE_TENANT_ID,
                  subnets=[fake_subnet1],
                  ports=[fake_port1, fake_port2]))
-        nc = dhcp_agent.NetworkCache()
-        nc.put(fake_net)
-        nc.put_port(fake_port2)
+        self.nc.put(fake_net)
+        self.nc.put_port(fake_port2)
 
-        self.assertEqual(2, len(nc.port_lookup))
+        self.assertEqual(2, len(self.nc.port_lookup))
         self.assertIn(fake_port2, fake_net.ports)
 
     def test_remove_port_existing(self):
@@ -1546,17 +1536,70 @@ class TestNetworkCache(base.BaseTestCase):
                  tenant_id=FAKE_TENANT_ID,
                  subnets=[fake_subnet1],
                  ports=[fake_port1, fake_port2]))
-        nc = dhcp_agent.NetworkCache()
-        nc.put(fake_net)
-        nc.remove_port(fake_port2)
+        self.nc.put(fake_net)
+        self.nc.remove_port(fake_port2)
 
-        self.assertEqual(1, len(nc.port_lookup))
+        self.assertEqual(1, len(self.nc.port_lookup))
         self.assertNotIn(fake_port2, fake_net.ports)
 
     def test_get_port_by_id(self):
+        self.nc.put(fake_network)
+        self.assertEqual(self.nc.get_port_by_id(fake_port1.id), fake_port1)
+
+    def _reset_deleted_port_max_age(self, old_value):
+        dhcp_agent.DELETED_PORT_MAX_AGE = old_value
+
+    def test_cleanup_deleted_ports(self):
+        self.addCleanup(self._reset_deleted_port_max_age,
+                        dhcp_agent.DELETED_PORT_MAX_AGE)
+        dhcp_agent.DELETED_PORT_MAX_AGE = 10
+        with mock.patch.object(timeutils, 'utcnow_ts') as mock_utcnow:
+            mock_utcnow.side_effect = [1, 2, 11]
+            self.nc.add_to_deleted_ports(fake_port1.id)
+            self.nc.add_to_deleted_ports(fake_port2.id)
+            self.nc.add_to_deleted_ports(fake_port2.id)
+            self.assertEqual({fake_port1.id, fake_port2.id},
+                             self.nc._deleted_ports)
+            self.assertEqual([(1, fake_port1.id), (2, fake_port2.id)],
+                             self.nc._deleted_ports_ts)
+
+            self.nc.cleanup_deleted_ports()
+            self.assertEqual({fake_port2.id}, self.nc._deleted_ports)
+            self.assertEqual([(2, fake_port2.id)], self.nc._deleted_ports_ts)
+
+    def test_cleanup_deleted_ports_no_old_ports(self):
+        self.addCleanup(self._reset_deleted_port_max_age,
+                        dhcp_agent.DELETED_PORT_MAX_AGE)
+        dhcp_agent.DELETED_PORT_MAX_AGE = 10
+        with mock.patch.object(timeutils, 'utcnow_ts') as mock_utcnow:
+            mock_utcnow.side_effect = [1, 2, 3]
+            self.nc.add_to_deleted_ports(fake_port1.id)
+            self.nc.add_to_deleted_ports(fake_port2.id)
+            self.assertEqual({fake_port1.id, fake_port2.id},
+                             self.nc._deleted_ports)
+            self.assertEqual([(1, fake_port1.id), (2, fake_port2.id)],
+                             self.nc._deleted_ports_ts)
+
+            self.nc.cleanup_deleted_ports()
+            self.assertEqual({fake_port1.id, fake_port2.id},
+                             self.nc._deleted_ports)
+            self.assertEqual([(1, fake_port1.id), (2, fake_port2.id)],
+                             self.nc._deleted_ports_ts)
+
+    def test_cleanup_deleted_ports_no_ports(self):
+        self.assertEqual(set(), self.nc._deleted_ports)
+        self.assertEqual([], self.nc._deleted_ports_ts)
+        self.nc.cleanup_deleted_ports()
+        self.assertEqual(set(), self.nc._deleted_ports)
+        self.assertEqual([], self.nc._deleted_ports_ts)
+
+    def test_cleanup_deleted_ports_loop_call(self):
+        self.addCleanup(self._reset_deleted_port_max_age,
+                        dhcp_agent.DELETED_PORT_MAX_AGE)
+        dhcp_agent.DELETED_PORT_MAX_AGE = 2
         nc = dhcp_agent.NetworkCache()
-        nc.put(fake_network)
-        self.assertEqual(nc.get_port_by_id(fake_port1.id), fake_port1)
+        nc.add_to_deleted_ports(fake_port1.id)
+        utils.wait_until_true(lambda: nc._deleted_ports == set(), timeout=7)
 
 
 class FakePort1(object):

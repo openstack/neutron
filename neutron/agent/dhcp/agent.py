@@ -31,6 +31,7 @@ import oslo_messaging
 from oslo_service import loopingcall
 from oslo_utils import fileutils
 from oslo_utils import importutils
+from oslo_utils import timeutils
 import six
 
 from neutron._i18n import _
@@ -49,6 +50,7 @@ DEFAULT_PRIORITY = 255
 
 DHCP_PROCESS_GREENLET_MAX = 32
 DHCP_PROCESS_GREENLET_MIN = 8
+DELETED_PORT_MAX_AGE = 86400
 
 DHCP_READY_PORTS_SYNC_MAX = 64
 
@@ -626,7 +628,7 @@ class DhcpAgent(manager.Manager):
             return
         port_id = payload['port_id']
         port = self.cache.get_port_by_id(port_id)
-        self.cache.deleted_ports.add(port_id)
+        self.cache.add_to_deleted_ports(port_id)
         if not port:
             return
         network = self.cache.get_network_by_id(port.network_id)
@@ -786,13 +788,18 @@ class NetworkCache(object):
         self.cache = {}
         self.subnet_lookup = {}
         self.port_lookup = {}
-        self.deleted_ports = set()
+        self._deleted_ports = set()
+        self._deleted_ports_ts = []
+        self.cleanup_loop = loopingcall.FixedIntervalLoopingCall(
+            self.cleanup_deleted_ports)
+        self.cleanup_loop.start(DELETED_PORT_MAX_AGE,
+                                initial_delay=DELETED_PORT_MAX_AGE)
 
     def is_port_message_stale(self, payload):
         orig = self.get_port_by_id(payload['id']) or {}
         if orig.get('revision_number', 0) > payload.get('revision_number', 0):
             return True
-        if payload['id'] in self.deleted_ports:
+        if payload['id'] in self._deleted_ports:
             return True
         return False
 
@@ -878,6 +885,29 @@ class NetworkCache(object):
         return {'networks': num_nets,
                 'subnets': num_subnets,
                 'ports': num_ports}
+
+    def add_to_deleted_ports(self, port_id):
+        if port_id not in self._deleted_ports:
+            self._deleted_ports.add(port_id)
+            self._deleted_ports_ts.append((timeutils.utcnow_ts(), port_id))
+
+    def cleanup_deleted_ports(self):
+        """Cleanup the "self._deleted_ports" set based on the current TS
+
+        The variable "self._deleted_ports_ts" contains a timestamp
+        ordered list of tuples (timestamp, port_id). Every port older than the
+        current timestamp minus "timestamp_delta" will be deleted from
+        "self._deleted_ports" and "self._deleted_ports_ts".
+        """
+        timestamp_min = timeutils.utcnow_ts() - DELETED_PORT_MAX_AGE
+        idx = None
+        for idx, (ts, port_id) in enumerate(self._deleted_ports_ts):
+            if ts > timestamp_min:
+                break
+            self._deleted_ports.remove(port_id)
+
+        if idx:
+            self._deleted_ports_ts = self._deleted_ports_ts[idx:]
 
 
 class DhcpAgentWithStateReport(DhcpAgent):
