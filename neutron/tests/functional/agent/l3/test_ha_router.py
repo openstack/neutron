@@ -45,11 +45,12 @@ class L3HATestCase(framework.L3AgentTestFramework):
         self.fail_ha_router(router)
         common_utils.wait_until_true(lambda: router.ha_state == 'backup')
 
-        common_utils.wait_until_true(lambda: enqueue_mock.call_count == 3)
+        common_utils.wait_until_true(lambda:
+            (enqueue_mock.call_count == 3 or enqueue_mock.call_count == 4))
         calls = [args[0] for args in enqueue_mock.call_args_list]
         self.assertEqual((router.router_id, 'backup'), calls[0])
         self.assertEqual((router.router_id, 'master'), calls[1])
-        self.assertEqual((router.router_id, 'backup'), calls[2])
+        self.assertEqual((router.router_id, 'backup'), calls[-1])
 
     def _expected_rpc_report(self, expected):
         calls = (args[0][1] for args in
