@@ -1081,6 +1081,38 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         protocol = const.PROTO_NAME_IPV6_ICMP_LEGACY
         self._test_create_security_group_rule_legacy_protocol_name(protocol)
 
+    def _test_create_security_group_rule_legacy_protocol_num(self, protocol):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            direction = "ingress"
+            ethertype = const.IPv6
+            remote_ip_prefix = "2001::f401:56ff:fefe:d3dc/128"
+            keys = [('remote_ip_prefix', remote_ip_prefix),
+                    ('security_group_id', security_group_id),
+                    ('direction', direction),
+                    ('ethertype', ethertype),
+                    ('protocol', protocol)]
+            with self.security_group_rule(security_group_id, direction,
+                                          protocol, None, None,
+                                          remote_ip_prefix,
+                                          None, None,
+                                          ethertype) as rule:
+                for k, v, in keys:
+                    # IPv6 ICMP protocol will always be '58'
+                    if k == 'protocol':
+                        v = str(const.PROTO_NUM_IPV6_ICMP)
+                    self.assertEqual(rule['security_group_rule'][k], v)
+
+    def test_create_security_group_rule_ipv6_icmp_legacy_protocol_num(self):
+        protocol = const.PROTO_NUM_ICMP
+        self._test_create_security_group_rule_legacy_protocol_num(protocol)
+
+    def test_create_security_group_rule_ipv6_icmp_protocol_num(self):
+        protocol = const.PROTO_NUM_IPV6_ICMP
+        self._test_create_security_group_rule_legacy_protocol_num(protocol)
+
     def test_create_security_group_source_group_ip_and_ip_prefix(self):
         security_group_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"
         direction = "ingress"
