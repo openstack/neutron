@@ -78,6 +78,21 @@ class NetworkSegmentRange(base.NeutronDbObject):
             pass
         return db_utils.resource_fields(_dict, fields)
 
+    def _check_shared_project_id(self, action):
+        if self.shared is False and not self.project_id:
+            raise n_exc.ObjectActionError(
+                action=action,
+                reason='if NetworkSegmentRange is not shared, it must have a '
+                       'project_id')
+
+    def create(self):
+        self._check_shared_project_id('create')
+        super(NetworkSegmentRange, self).create()
+
+    def update(self):
+        self._check_shared_project_id('update')
+        super(NetworkSegmentRange, self).update()
+
     def _get_allocation_model_details(self):
         model = models_map.get(self.network_type)
         if model is not None:
