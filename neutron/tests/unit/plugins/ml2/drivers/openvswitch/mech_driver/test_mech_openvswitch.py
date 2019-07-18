@@ -110,7 +110,7 @@ class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
 
 
 class OpenvswitchMechanismSGDisabledBaseTestCase(
-    OpenvswitchMechanismBaseTestCase):
+        OpenvswitchMechanismBaseTestCase):
     VIF_DETAILS = {'bridge_name': 'br-int',
                    portbindings.OVS_DATAPATH_TYPE: 'system',
                    portbindings.CAP_PORT_FILTER: False,
@@ -214,13 +214,13 @@ class OpenvswitchMechanismGreTestCase(OpenvswitchMechanismBaseTestCase,
 
 
 class OpenvswitchMechanismSGDisabledLocalTestCase(
-    OpenvswitchMechanismSGDisabledBaseTestCase,
-    base.AgentMechanismLocalTestCase):
+        OpenvswitchMechanismSGDisabledBaseTestCase,
+        base.AgentMechanismLocalTestCase):
     pass
 
 
 class OpenvswitchMechanismFirewallUndefinedTestCase(
-    OpenvswitchMechanismBaseTestCase, base.AgentMechanismLocalTestCase):
+        OpenvswitchMechanismBaseTestCase, base.AgentMechanismLocalTestCase):
 
     def setUp(self):
         # this simple test case just ensures backward compatibility where

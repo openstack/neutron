@@ -65,7 +65,7 @@ class DataPlaneStatusExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
 
 class DataPlaneStatusExtensionTestCase(
-    test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
+        test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def setUp(self):
         plugin = ('neutron.tests.unit.extensions.test_data_plane_status.'

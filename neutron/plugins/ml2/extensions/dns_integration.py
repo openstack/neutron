@@ -491,7 +491,7 @@ def _update_port_in_external_dns_service(resource, event, trigger, **kwargs):
     dns_data_db = port_obj.PortDNS.get_object(
         context, port_id=updated_port['id'])
     if not (dns_data_db and (dns_data_db['previous_dns_name'] or dns_data_db[
-        'current_dns_name'])):
+            'current_dns_name'])):
         return
     if dns_data_db['previous_dns_name']:
         _remove_data_from_external_dns_service(

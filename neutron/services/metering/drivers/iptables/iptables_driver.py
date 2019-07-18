@@ -346,8 +346,8 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
         rm.iptables_manager.ipv4['filter'].add_rule(
             label_chain, '', wrap=False)
 
-    def _process_metering_rule_action_based_on_ns(
-        self, router, action, ext_dev, im):
+    def _process_metering_rule_action_based_on_ns(self, router, action,
+                                                  ext_dev, im):
         '''Process metering rule actions based specific namespaces.'''
         rm = self.routers.get(router['id'])
         with IptablesManagerTransaction(im):

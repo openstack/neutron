@@ -97,7 +97,7 @@ def remove_provisioning_component(context, object_id, object_type, entity,
     if not standard_attr_id:
         return False
     if pb_obj.ProvisioningBlock.delete_objects(
-        context, standard_attr_id=standard_attr_id, entity=entity):
+            context, standard_attr_id=standard_attr_id, entity=entity):
         return True
     else:
         return False

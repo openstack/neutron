@@ -30,8 +30,8 @@ class PortSecurityDbCommon(object):
             response_data[psec.PORTSECURITY] = (
                                 db_data['port_security'][psec.PORTSECURITY])
 
-    def _process_port_security_create(
-        self, context, obj_cls, res_name, req, res):
+    def _process_port_security_create(self, context, obj_cls, res_name, req,
+                                      res):
         obj = obj_cls(
             context,
             id=res['id'],
@@ -41,14 +41,13 @@ class PortSecurityDbCommon(object):
         res[psec.PORTSECURITY] = req[psec.PORTSECURITY]
         return self._make_port_security_dict(obj, res_name)
 
-    def _process_port_port_security_create(
-        self, context, port_req, port_res):
+    def _process_port_port_security_create(self, context, port_req, port_res):
         self._process_port_security_create(
             context, p_ps.PortSecurity, 'port',
             port_req, port_res)
 
-    def _process_network_port_security_create(
-        self, context, network_req, network_res):
+    def _process_network_port_security_create(self, context, network_req,
+                                              network_res):
         self._process_port_security_create(
             context, network.NetworkPortSecurity, 'network',
             network_req, network_res)
@@ -66,19 +65,18 @@ class PortSecurityDbCommon(object):
     def _get_port_security_binding(self, context, port_id):
         return self._get_security_binding(context, p_ps.PortSecurity, port_id)
 
-    def _process_port_port_security_update(
-        self, context, port_req, port_res):
+    def _process_port_port_security_update(self, context, port_req, port_res):
         self._process_port_security_update(
             context, p_ps.PortSecurity, 'port', port_req, port_res)
 
-    def _process_network_port_security_update(
-        self, context, network_req, network_res):
+    def _process_network_port_security_update(self, context, network_req,
+                                              network_res):
         self._process_port_security_update(
             context, network.NetworkPortSecurity, 'network',
             network_req, network_res)
 
-    def _process_port_security_update(
-        self, context, obj_cls, res_name, req, res):
+    def _process_port_security_update(self, context, obj_cls, res_name, req,
+                                      res):
         if psec.PORTSECURITY not in req:
             return
         port_security_enabled = req[psec.PORTSECURITY]

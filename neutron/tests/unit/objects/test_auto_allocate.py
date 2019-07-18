@@ -18,7 +18,7 @@ from neutron.tests.unit import testlib_api
 
 
 class AutoAllocateTopologyIfaceObjectTestCase(
-    obj_test_base.BaseObjectIfaceTestCase):
+        obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = auto_allocate.AutoAllocatedTopology
 

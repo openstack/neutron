@@ -25,7 +25,7 @@ from neutron.tests.unit import testlib_api
 
 
 class IPAllocationPoolObjectIfaceTestCase(
-    obj_test_base.BaseObjectIfaceTestCase):
+        obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = subnet.IPAllocationPool
 
@@ -106,7 +106,7 @@ class RouteDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
 
 class SubnetServiceTypeObjectIfaceTestCase(
-    obj_test_base.BaseObjectIfaceTestCase):
+        obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = subnet.SubnetServiceType
 

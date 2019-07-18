@@ -707,8 +707,7 @@ class TestPciOsWrapper(base.BaseTestCase):
     @mock.patch("os.listdir", return_value=["eth0", "eth1"])
     @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
                 "PciDeviceIPWrapper.is_macvtap_assigned", return_value=True)
-    def test_is_assigned_vf_macvtap(
-        self, mock_is_macvtap_assigned, *args):
+    def test_is_assigned_vf_macvtap(self, mock_is_macvtap_assigned, *args):
         esm.PciOsWrapper.is_assigned_vf(self.DEV_NAME, self.VF_INDEX, '')
         mock_is_macvtap_assigned.called_with(self.VF_INDEX, "eth0")
 
@@ -716,8 +715,8 @@ class TestPciOsWrapper(base.BaseTestCase):
     @mock.patch("os.listdir", side_effect=OSError())
     @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
                 "PciDeviceIPWrapper.is_macvtap_assigned")
-    def test_is_assigned_vf_macvtap_failure(
-        self, mock_is_macvtap_assigned, *args):
+    def test_is_assigned_vf_macvtap_failure(self, mock_is_macvtap_assigned,
+                                            *args):
         esm.PciOsWrapper.is_assigned_vf(self.DEV_NAME, self.VF_INDEX, '')
         self.assertFalse(mock_is_macvtap_assigned.called)
 

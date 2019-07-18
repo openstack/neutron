@@ -32,7 +32,7 @@ class IpamSubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
 
 class IpamAllocationPoolObjectIfaceTestCase(
-    obj_test_base.BaseObjectIfaceTestCase):
+        obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = ipam.IpamAllocationPool
 

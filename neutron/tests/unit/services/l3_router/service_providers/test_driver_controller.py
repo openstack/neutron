@@ -101,8 +101,8 @@ class TestDriverController(testlib_api.SqlTestCase):
         with mock.patch.object(registry, "publish") as mock_cb:
             with mock.patch.object(test_dc, "get_provider_for_router"):
                 with mock.patch.object(
-                    driver_controller,
-                    "_ensure_driver_supports_request") as _ensure:
+                        driver_controller,
+                        "_ensure_driver_supports_request") as _ensure:
                     _ensure.side_effect = lib_exc.InvalidInput(
                         error_message='message')
                     self.assertRaises(
@@ -119,8 +119,8 @@ class TestDriverController(testlib_api.SqlTestCase):
         with mock.patch.object(registry, "publish"):
             with mock.patch.object(test_dc, "get_provider_for_router"):
                 with mock.patch.object(
-                    driver_controller,
-                    "_ensure_driver_supports_request") as _ensure:
+                        driver_controller,
+                        "_ensure_driver_supports_request") as _ensure:
                     _ensure.side_effect = lib_exc.InvalidInput(
                         error_message='message')
                     with mock.patch(

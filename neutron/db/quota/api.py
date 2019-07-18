@@ -26,7 +26,7 @@ def utcnow():
 
 
 class QuotaUsageInfo(collections.namedtuple(
-    'QuotaUsageInfo', ['resource', 'tenant_id', 'used', 'dirty'])):
+        'QuotaUsageInfo', ['resource', 'tenant_id', 'used', 'dirty'])):
     """Information about resource quota usage."""
 
 

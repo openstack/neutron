@@ -35,9 +35,8 @@ DB_PLUGIN_KLASS = ('neutron.tests.unit.extensions.test_portsecurity.'
                    'PortSecurityTestPlugin')
 
 
-class PortSecurityTestCase(
-    test_securitygroup.SecurityGroupsTestCase,
-    test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
+class PortSecurityTestCase(test_securitygroup.SecurityGroupsTestCase,
+                           test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def setUp(self, plugin=None):
         self._backup = copy.deepcopy(ext_sg.RESOURCE_ATTRIBUTE_MAP)

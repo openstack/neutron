@@ -1208,7 +1208,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                                '_get_changed_persistent_fields',
                                return_value=fields_to_update):
             with mock.patch.object(obj_db_api, 'get_objects',
-                side_effect=self.fake_get_objects):
+                                   side_effect=self.fake_get_objects):
                 obj = self._test_class(self.context, **self.obj_fields[0])
                 # get new values and fix keys
                 update_mock.return_value = self.db_objs[1]
@@ -1251,9 +1251,8 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 with mock.patch.object(base.NeutronDbObject,
                                        '_get_changed_persistent_fields',
                                        return_value=fields_to_update):
-                    with mock.patch.object(
-                        obj_db_api, 'get_objects',
-                        side_effect=self.fake_get_objects):
+                    with mock.patch.object(obj_db_api, 'get_objects',
+                                           side_effect=self.fake_get_objects):
                         obj.update()
                 self._check_equal(self.objs[0], obj)
 

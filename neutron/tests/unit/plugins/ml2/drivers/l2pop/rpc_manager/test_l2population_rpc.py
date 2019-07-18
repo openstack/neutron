@@ -22,7 +22,7 @@ from neutron.tests.unit.plugins.ml2.drivers.l2pop.rpc_manager \
 
 
 class TestL2populationRpcCallBackTunnelMixin(
-    l2population_rpc_base.TestL2populationRpcCallBackTunnelMixinBase):
+        l2population_rpc_base.TestL2populationRpcCallBackTunnelMixinBase):
 
     def test_get_agent_ports_no_data(self):
         # Make sure vlan manager has no mappings that were added in setUp()
@@ -127,8 +127,8 @@ class TestL2populationRpcCallBackTunnelMixin(
                          sorted(mock_add_fdb_flow.call_args_list))
 
     def test_fdb_remove_tun(self):
-        with mock.patch.object(
-            self.fakeagent, 'del_fdb_flow') as mock_del_fdb_flow:
+        with mock.patch.object(self.fakeagent,
+                               'del_fdb_flow') as mock_del_fdb_flow:
             self.fakeagent.fdb_remove_tun('context', self.fakebr, self.lvm0,
                                           self.agent_ports,
                                           self._tunnel_port_lookup)
@@ -168,8 +168,8 @@ class TestL2populationRpcCallBackTunnelMixin(
 
     def test_fdb_remove_tun_non_existence_key_in_ofports(self):
         del self.ofports[self.type_gre][self.ports[1].ip]
-        with mock.patch.object(
-            self.fakeagent, 'del_fdb_flow') as mock_del_fdb_flow:
+        with mock.patch.object(self.fakeagent,
+                               'del_fdb_flow') as mock_del_fdb_flow:
             self.fakeagent.fdb_remove_tun('context', self.fakebr, self.lvm0,
                                           self.agent_ports,
                                           self._tunnel_port_lookup)

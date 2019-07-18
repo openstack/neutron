@@ -91,7 +91,7 @@ class ExtraRouteDBTestCaseBase(object):
     def test_route_update_with_external_route(self):
         my_tenant = 'tenant1'
         with self.subnet(cidr='10.0.1.0/24', tenant_id='notme') as ext_subnet,\
-            self.port(subnet=ext_subnet) as nexthop_port:
+                self.port(subnet=ext_subnet) as nexthop_port:
             nexthop_ip = nexthop_port['port']['fixed_ips'][0]['ip_address']
             routes = [{'destination': '135.207.0.0/16',
                        'nexthop': nexthop_ip}]
@@ -107,7 +107,7 @@ class ExtraRouteDBTestCaseBase(object):
     def test_route_update_with_route_via_another_tenant_subnet(self):
         my_tenant = 'tenant1'
         with self.subnet(cidr='10.0.1.0/24', tenant_id='notme') as subnet,\
-            self.port(subnet=subnet) as nexthop_port:
+                self.port(subnet=subnet) as nexthop_port:
             nexthop_ip = nexthop_port['port']['fixed_ips'][0]['ip_address']
             routes = [{'destination': '135.207.0.0/16',
                        'nexthop': nexthop_ip}]

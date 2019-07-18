@@ -63,7 +63,7 @@ class ResourceCallbacksManagerTestCaseMixin(object):
 
 
 class ProducerResourceCallbacksManagerTestCase(
-    base.BaseQosTestCase, ResourceCallbacksManagerTestCaseMixin):
+        base.BaseQosTestCase, ResourceCallbacksManagerTestCaseMixin):
 
     def setUp(self):
         super(ProducerResourceCallbacksManagerTestCase, self).setUp()
@@ -105,7 +105,7 @@ class ProducerResourceCallbacksManagerTestCase(
 
 
 class ConsumerResourceCallbacksManagerTestCase(
-    base.BaseQosTestCase, ResourceCallbacksManagerTestCaseMixin):
+        base.BaseQosTestCase, ResourceCallbacksManagerTestCaseMixin):
 
     def setUp(self):
         super(ConsumerResourceCallbacksManagerTestCase, self).setUp()
@@ -125,8 +125,7 @@ class ConsumerResourceCallbacksManagerTestCase(
         self.mgr.register(callback2, 'TYPE')
 
     @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
-    def test_get_callbacks_fails_on_unregistered_callback(
-        self, *mocks):
+    def test_get_callbacks_fails_on_unregistered_callback(self, *mocks):
         self.assertRaises(
             rpc_exc.CallbackNotFound,
             self.mgr.get_callbacks, 'TYPE')

@@ -355,7 +355,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             fixed = fip['fixed_ip_address']
             fip_ip = fip['floating_ip_address']
             for chain, rule in self._centralized_floating_forward_rules(
-                fip_ip, fixed):
+                    fip_ip, fixed):
                 self.snat_iptables_manager.ipv4['nat'].add_rule(
                     chain, rule, tag='floating_ip')
 

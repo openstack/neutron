@@ -200,8 +200,8 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
                 tag=self._dscp_rule_tag(self.port['device'])
             )
         ]
-        with mock.patch.object(
-            self.qos_driver, "iptables_manager") as iptables_manager:
+        with mock.patch.object(self.qos_driver,
+                               "iptables_manager") as iptables_manager:
 
             iptables_manager.ip4['mangle'] = mock.Mock()
             iptables_manager.ip6['mangle'] = mock.Mock()
@@ -225,8 +225,8 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
                 tag=self._dscp_rule_tag(self.port['device'])
             )
         ]
-        with mock.patch.object(
-            self.qos_driver, "iptables_manager") as iptables_manager:
+        with mock.patch.object(self.qos_driver,
+                               "iptables_manager") as iptables_manager:
 
             iptables_manager.ip4['mangle'] = mock.Mock()
             iptables_manager.ip6['mangle'] = mock.Mock()
@@ -243,8 +243,8 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
             mock.call.remove_chain(
                 dscp_chain_name),
         ]
-        with mock.patch.object(
-            self.qos_driver, "iptables_manager") as iptables_manager:
+        with mock.patch.object(self.qos_driver,
+                               "iptables_manager") as iptables_manager:
 
             iptables_manager.ip4['mangle'] = mock.Mock()
             iptables_manager.ip6['mangle'] = mock.Mock()
@@ -265,8 +265,8 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
             mock.call.clear_rules_by_tag(
                 self._dscp_rule_tag(self.port['device'])),
         ]
-        with mock.patch.object(
-            self.qos_driver, "iptables_manager") as iptables_manager:
+        with mock.patch.object(self.qos_driver,
+                               "iptables_manager") as iptables_manager:
 
             iptables_manager.ip4['mangle'] = mock.Mock()
             iptables_manager.ip6['mangle'] = mock.Mock()

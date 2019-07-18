@@ -262,7 +262,7 @@ class TestDhcpAgent(base.BaseTestCase):
         # message.
         with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
             with testtools.ExpectedException(
-                exceptions.InvalidConfigurationOption):
+                    exceptions.InvalidConfigurationOption):
                 dhcp_agent.DhcpAgent(HOSTNAME)
             log.assert_any_call("DHCP agent must have resync_throttle <= "
                                 "resync_interval")
@@ -534,7 +534,7 @@ class TestDhcpAgent(base.BaseTestCase):
         dhcp = dhcp_agent.DhcpAgentWithStateReport(HOSTNAME)
         with mock.patch.object(dhcp.state_rpc,
                                'report_state') as report_state,\
-            mock.patch.object(dhcp, "run"):
+                mock.patch.object(dhcp, "run"):
             report_state.return_value = agent_consts.AGENT_ALIVE
             dhcp._report_state()
             self.assertEqual({}, dhcp.needs_resync_reasons)
@@ -793,8 +793,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.plugin.get_network_info.return_value = fake_network_ipv6_ipv4
         self.call_driver.return_value = False
         cfg.CONF.set_override('enable_isolated_metadata', True)
-        with mock.patch.object(
-            self.dhcp, 'enable_isolated_metadata_proxy') as enable_metadata:
+        with mock.patch.object(self.dhcp,
+                'enable_isolated_metadata_proxy') as enable_metadata:
             self.dhcp.enable_dhcp_helper(fake_network_ipv6_ipv4.id)
             self.plugin.assert_has_calls(
                 [mock.call.get_network_info(fake_network_ipv6_ipv4.id)])

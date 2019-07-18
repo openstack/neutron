@@ -79,13 +79,13 @@ class NetworkRBACIfaceOjectTestCase(_NetworkRBACBase,
 
 
 class NetworkDhcpAgentBindingObjectIfaceTestCase(
-    obj_test_base.BaseObjectIfaceTestCase):
+        obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = network.NetworkDhcpAgentBinding
 
 
 class NetworkDhcpAgentBindingDbObjectTestCase(
-    obj_test_base.BaseDbObjectTestCase, testlib_api.SqlTestCase):
+        obj_test_base.BaseDbObjectTestCase, testlib_api.SqlTestCase):
 
     _test_class = network.NetworkDhcpAgentBinding
 
@@ -263,7 +263,7 @@ class NetworkDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
 
 class SegmentHostMappingIfaceObjectTestCase(
-    obj_test_base.BaseObjectIfaceTestCase):
+        obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = network.SegmentHostMapping
 
@@ -297,7 +297,7 @@ class NetworkDNSDomainDbObjectTestcase(obj_test_base.BaseDbObjectTestCase,
 
 
 class ExternalNetworkIfaceObjectTestCase(
-    obj_test_base.BaseObjectIfaceTestCase):
+        obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = network.ExternalNetwork
 

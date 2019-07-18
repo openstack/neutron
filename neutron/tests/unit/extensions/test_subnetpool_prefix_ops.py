@@ -166,10 +166,8 @@ class SubnetpoolPrefixOpsTestBase(object):
                              default_prefixlen=self.default_prefixlen,
                              min_prefixlen=self.default_prefixlen,
                              prefixes=self.subnetpool_prefixes) as subnetpool:
-            with self.subnet(
-                cidr=None,
-                subnetpool_id=subnetpool['id'],
-                ip_version=self.ip_version) as subnet:
+            with self.subnet(cidr=None, subnetpool_id=subnetpool['id'],
+                             ip_version=self.ip_version) as subnet:
                 subnet = subnet['subnet']
                 prefixes_to_remove = [subnet['cidr']]
                 self.assertRaises(
@@ -185,10 +183,8 @@ class SubnetpoolPrefixOpsTestBase(object):
                         default_prefixlen=self.default_prefixlen,
                         min_prefixlen=self.default_prefixlen,
                         prefixes=[self.subnetpool_prefixes[0]]) as subnetpool:
-            with self.subnet(
-                cidr=None,
-                subnetpool_id=subnetpool['id'],
-                ip_version=self.ip_version) as subnet:
+            with self.subnet(cidr=None, subnetpool_id=subnetpool['id'],
+                             ip_version=self.ip_version) as subnet:
                 subnet = subnet['subnet']
                 prefixes_to_remove = [self.overlapping_cidr]
                 self.assertRaises(

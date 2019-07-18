@@ -1933,8 +1933,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self._post_delete_port(
             context, port, router_ids, bound_mech_contexts)
 
-    def _post_delete_port(
-        self, context, port, router_ids, bound_mech_contexts):
+    def _post_delete_port(self, context, port, router_ids,
+                          bound_mech_contexts):
         kwargs = {
             'context': context,
             'port': port,

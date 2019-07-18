@@ -41,7 +41,7 @@ HOSTNAME = 'testhost'
 
 
 class PortForwardingExtensionBaseTestCase(
-    test_agent.BasicRouterOperationsFramework):
+        test_agent.BasicRouterOperationsFramework):
 
     def setUp(self):
         super(PortForwardingExtensionBaseTestCase, self).setUp()

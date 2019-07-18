@@ -966,8 +966,7 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
         self.assertFalse(self.agent.firewall.defer_apply.called)
 
 
-class SecurityGroupAgentEnhancedRpcTestCase(
-    BaseSecurityGroupAgentRpcTestCase):
+class SecurityGroupAgentEnhancedRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
 
     def setUp(self, defer_refresh_firewall=False):
         super(SecurityGroupAgentEnhancedRpcTestCase, self).setUp(
@@ -1089,7 +1088,7 @@ class SecurityGroupAgentEnhancedRpcTestCase(
 
 
 class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
-    SecurityGroupAgentRpcTestCase):
+        SecurityGroupAgentRpcTestCase):
 
     def setUp(self):
         super(SecurityGroupAgentRpcWithDeferredRefreshTestCase, self).setUp(
@@ -2911,7 +2910,7 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
 
 
 class TestSecurityGroupAgentEnhancedRpcWithIptables(
-    TestSecurityGroupAgentWithIptables):
+        TestSecurityGroupAgentWithIptables):
     def setUp(self, defer_refresh_firewall=False):
         super(TestSecurityGroupAgentEnhancedRpcWithIptables, self).setUp(
             defer_refresh_firewall=defer_refresh_firewall, test_rpc_v1_1=False)

@@ -867,7 +867,7 @@ class TestOvsNeutronAgent(object):
             details, mock.Mock(), 'treat_vif_port'))
 
     def test_treat_devices_added_updated_sends_vif_port_into_extension_manager(
-        self, *args):
+            self, *args):
         details = mock.MagicMock()
         details.__contains__.side_effect = lambda x: True
         port = mock.MagicMock()
@@ -2206,8 +2206,8 @@ class TestOvsNeutronAgent(object):
             self.assertFalse(cleanup.called)
 
     def test_set_rpc_timeout(self):
-        with mock.patch.object(
-            n_rpc.BackingOffClient, 'set_max_timeout') as smt:
+        with mock.patch.object(n_rpc.BackingOffClient,
+                               'set_max_timeout') as smt:
             self.agent._handle_sigterm(None, None)
             for rpc_client in (self.agent.plugin_rpc.client,
                                self.agent.sg_plugin_rpc.client,

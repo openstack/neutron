@@ -1133,7 +1133,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             bridge.set_allowed_macs_for_port(port=vif.ofport, allow_all=True)
             return
         if port_details['device_owner'].startswith(
-            n_const.DEVICE_OWNER_NETWORK_PREFIX):
+                n_const.DEVICE_OWNER_NETWORK_PREFIX):
             LOG.debug("Skipping ARP spoofing rules for network owned port "
                       "'%s'.", vif.port_name)
             bridge.delete_arp_spoofing_protection(port=vif.ofport)
@@ -2300,8 +2300,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # REVISIT (rossella_s) Define a method "reset" in
         # BasePollingManager that will be implemented by AlwaysPoll as
         # no action and by InterfacePollingMinimizer as start/stop
-        if isinstance(
-            polling_manager, polling.InterfacePollingMinimizer):
+        if isinstance(polling_manager, polling.InterfacePollingMinimizer):
             polling_manager.stop()
             polling_manager.start()
 

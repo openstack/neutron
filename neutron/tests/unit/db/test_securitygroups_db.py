@@ -77,7 +77,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             mock_publish.side_effect = exceptions.CallbackFailure(Exception())
             secgroup = {'security_group': mock.ANY}
             with testtools.ExpectedException(
-                securitygroup.SecurityGroupConflict):
+                    securitygroup.SecurityGroupConflict):
                 self.mixin.create_security_group(self.ctx, secgroup)
 
     def test_delete_security_group_in_use(self):
@@ -86,8 +86,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 mock.patch.object(self.mixin, '_get_security_group'),\
                 mock.patch.object(registry, "notify") as mock_notify:
             mock_notify.side_effect = exceptions.CallbackFailure(Exception())
-            with testtools.ExpectedException(
-                securitygroup.SecurityGroupInUse):
+            with testtools.ExpectedException(securitygroup.SecurityGroupInUse):
                 self.mixin.delete_security_group(self.ctx, mock.ANY)
 
     def test_update_security_group_conflict(self):
@@ -95,7 +94,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             mock_notify.side_effect = exceptions.CallbackFailure(Exception())
             secgroup = {'security_group': mock.ANY}
             with testtools.ExpectedException(
-                securitygroup.SecurityGroupConflict):
+                    securitygroup.SecurityGroupConflict):
                 self.mixin.update_security_group(self.ctx, 'foo_id', secgroup)
 
     def test_create_security_group_rule_conflict(self):
@@ -105,7 +104,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 mock.patch.object(registry, "notify") as mock_notify:
             mock_notify.side_effect = exceptions.CallbackFailure(Exception())
             with testtools.ExpectedException(
-                securitygroup.SecurityGroupConflict):
+                    securitygroup.SecurityGroupConflict):
                 self.mixin.create_security_group_rule(
                     self.ctx, mock.MagicMock())
 
@@ -182,12 +181,12 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         with mock.patch.object(registry, "notify") as mock_notify:
             mock_notify.side_effect = exceptions.CallbackFailure(Exception())
             with testtools.ExpectedException(
-                securitygroup.SecurityGroupRuleInUse):
+                    securitygroup.SecurityGroupRuleInUse):
                 self.mixin.delete_security_group_rule(self.ctx, mock.ANY)
 
     def test_delete_security_group_rule_raise_error_on_not_found(self):
         with testtools.ExpectedException(
-            securitygroup.SecurityGroupRuleNotFound):
+                securitygroup.SecurityGroupRuleNotFound):
             self.mixin.delete_security_group_rule(self.ctx, 'foo_rule')
 
     def test_validate_ethertype_and_protocol(self):
@@ -220,14 +219,14 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         # test wrong protocols
         for rule in fake_ipv4_rules:
             with testtools.ExpectedException(
-                securitygroup.SecurityGroupEthertypeConflictWithProtocol):
+                    securitygroup.SecurityGroupEthertypeConflictWithProtocol):
                 self.mixin._validate_ethertype_and_protocol(rule)
 
     def test_security_group_precommit_create_event_fail(self):
         registry.subscribe(fake_callback, resources.SECURITY_GROUP,
                            events.PRECOMMIT_CREATE)
         with mock.patch.object(sqlalchemy.orm.session.SessionTransaction,
-                              'rollback') as mock_rollback:
+                               'rollback') as mock_rollback:
             self.assertRaises(securitygroup.SecurityGroupConflict,
                               self.mixin.create_security_group,
                               self.ctx, FAKE_SECGROUP)
@@ -359,8 +358,8 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         fake_rule = FAKE_SECGROUP_RULE
         fake_rule['security_group_rule']['security_group_id'] = sg_dict['id']
         with mock.patch.object(sqlalchemy.orm.session.SessionTransaction,
-                              'rollback') as mock_rollback,\
-            mock.patch.object(self.mixin, '_get_security_group'):
+                               'rollback') as mock_rollback,\
+                mock.patch.object(self.mixin, '_get_security_group'):
             self.assertRaises(securitygroup.SecurityGroupConflict,
                               self.mixin.create_security_group_rule,
                               self.ctx, fake_rule)
@@ -373,8 +372,8 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         fake_rule = FAKE_SECGROUP_RULE
         fake_rule['security_group_rule']['security_group_id'] = sg_dict['id']
         with mock.patch.object(sqlalchemy.orm.session.SessionTransaction,
-                              'rollback') as mock_rollback,\
-            mock.patch.object(self.mixin, '_get_security_group'):
+                               'rollback') as mock_rollback,\
+                mock.patch.object(self.mixin, '_get_security_group'):
             sg_rule_dict = self.mixin.create_security_group_rule(self.ctx,
                    fake_rule)
             self.assertRaises(securitygroup.SecurityGroupRuleInUse,
@@ -387,7 +386,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         fake_rule = FAKE_SECGROUP_RULE
         fake_rule['security_group_rule']['security_group_id'] = sg_dict['id']
         with mock.patch.object(registry, "notify") as mock_notify, \
-            mock.patch.object(self.mixin, '_get_security_group'):
+                mock.patch.object(self.mixin, '_get_security_group'):
             mock_notify.assert_has_calls([mock.call('security_group_rule',
                 'precommit_create', mock.ANY, context=mock.ANY,
                 security_group_rule=self.mixin.create_security_group_rule(
@@ -398,7 +397,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         fake_rule = FAKE_SECGROUP_RULE
         fake_rule['security_group_rule']['security_group_id'] = sg_dict['id']
         with mock.patch.object(registry, "notify") as mock_notify, \
-            mock.patch.object(self.mixin, '_get_security_group'):
+                mock.patch.object(self.mixin, '_get_security_group'):
             sg_rule_dict = self.mixin.create_security_group_rule(self.ctx,
                    fake_rule)
             self.mixin.delete_security_group_rule(self.ctx,

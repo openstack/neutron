@@ -243,7 +243,7 @@ class DriverController(object):
 
 
 class _LegacyPlusProviderConfiguration(
-    provider_configuration.ProviderConfiguration):
+        provider_configuration.ProviderConfiguration):
 
     def __init__(self):
         # loads up ha, dvr, and single_node service providers automatically.

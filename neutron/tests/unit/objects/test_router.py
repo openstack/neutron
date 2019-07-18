@@ -19,8 +19,7 @@ from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
 
 
-class RouterRouteIfaceObjectTestCase(
-    obj_test_base.BaseObjectIfaceTestCase):
+class RouterRouteIfaceObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = router.RouterRoute
 

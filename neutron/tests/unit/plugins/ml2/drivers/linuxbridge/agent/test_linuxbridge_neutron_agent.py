@@ -450,15 +450,14 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         with mock.patch.object(ip_lib, 'device_exists', return_value=False):
             vxlan_dev = mock.Mock()
             with mock.patch.object(vxlan_dev, 'disable_ipv6') as dv6_fn,\
-                mock.patch.object(self.lbm.ip, 'add_vxlan',
-                    return_value=vxlan_dev) as add_vxlan_fn,\
-                mock.patch.object(
-                    vxlan_dev.link, 'set_mtu',
-                    side_effect=ip_lib.InvalidArgument(
-                        parameter="MTU", value=mtu)),\
-                mock.patch.object(ip_lib, 'get_device_mtu',
-                    return_value=physical_mtu),\
-                mock.patch.object(vxlan_dev.link, 'delete') as delete_dev:
+                    mock.patch.object(self.lbm.ip, 'add_vxlan',
+                        return_value=vxlan_dev) as add_vxlan_fn,\
+                    mock.patch.object(vxlan_dev.link, 'set_mtu',
+                        side_effect=ip_lib.InvalidArgument(
+                            parameter="MTU", value=mtu)),\
+                    mock.patch.object(ip_lib, 'get_device_mtu',
+                        return_value=physical_mtu),\
+                    mock.patch.object(vxlan_dev.link, 'delete') as delete_dev:
 
                 self.assertFalse(
                     self.lbm.ensure_vxlan(seg_id, mtu=mtu))

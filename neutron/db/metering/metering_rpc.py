@@ -38,7 +38,7 @@ class MeteringRpcCallbacks(object):
         metering_data = self.meter_plugin.get_sync_data_metering(context)
         host = kwargs.get('host')
         if not extensions.is_extension_supported(
-            l3_plugin, consts.L3_AGENT_SCHEDULER_EXT_ALIAS) or not host:
+                l3_plugin, consts.L3_AGENT_SCHEDULER_EXT_ALIAS) or not host:
             return metering_data
         else:
             agents = l3_plugin.get_l3_agents(context, filters={'host': [host]})

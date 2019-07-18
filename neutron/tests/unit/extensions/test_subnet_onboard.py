@@ -112,13 +112,11 @@ class SubnetOnboardTestsBase(object):
             with self.subnetpool(self.ip_version,
                                  prefixes=[self.cidr_to_onboard],
                                  address_scope_id=addr_scope['id']) as source:
-                with self.subnetpool(
-                    self.ip_version,
-                    address_scope_id=addr_scope['id'],
-                    prefixes=self.subnetpool_prefixes) as target:
-                    with self.subnet(
-                        cidr=self.cidr_to_onboard,
-                        ip_version=self.ip_version) as subnet_to_onboard:
+                with self.subnetpool(self.ip_version,
+                        address_scope_id=addr_scope['id'],
+                        prefixes=self.subnetpool_prefixes) as target:
+                    with self.subnet(cidr=self.cidr_to_onboard,
+                            ip_version=self.ip_version) as subnet_to_onboard:
                         subnet_to_onboard = subnet_to_onboard['subnet']
 
                         # Onboard subnet into an initial subnet pool
@@ -139,9 +137,8 @@ class SubnetOnboardTestsBase(object):
                              prefixes=self.subnetpool_prefixes) as source:
             with self.subnetpool(self.ip_version,
                                  prefixes=self.subnetpool_prefixes) as target:
-                with self.subnet(
-                    cidr=self.cidr_to_onboard,
-                    ip_version=self.ip_version) as subnet_to_onboard:
+                with self.subnet(cidr=self.cidr_to_onboard,
+                        ip_version=self.ip_version) as subnet_to_onboard:
                     subnet_to_onboard = subnet_to_onboard['subnet']
 
                     # Onboard subnet into an initial subnet pool

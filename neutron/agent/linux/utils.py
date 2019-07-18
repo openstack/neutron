@@ -56,8 +56,8 @@ class RootwrapDaemonHelper(object):
     def get_client(cls):
         with cls.__lock:
             if cls.__client is None:
-                if xenapi_root_helper.ROOT_HELPER_DAEMON_TOKEN == \
-                    cfg.CONF.AGENT.root_helper_daemon:
+                if (xenapi_root_helper.ROOT_HELPER_DAEMON_TOKEN ==
+                        cfg.CONF.AGENT.root_helper_daemon):
                     cls.__client = xenapi_root_helper.XenAPIClient()
                 else:
                     cls.__client = client.Client(

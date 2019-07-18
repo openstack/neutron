@@ -163,7 +163,6 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
                 self.assertFalse(self.was_active)
 
 
-class TestMl2SGServerRpcCallBack(
-    Ml2SecurityGroupsTestCase,
-    test_sg_rpc.SGServerRpcCallBackTestCase):
+class TestMl2SGServerRpcCallBack(Ml2SecurityGroupsTestCase,
+                                 test_sg_rpc.SGServerRpcCallBackTestCase):
     pass

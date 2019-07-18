@@ -311,47 +311,46 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertEqual(201, res.status_code)
 
     def test_create_port_multiple_v4_v6_subnets_pqdn_and_dns_domain_no_period(
-        self):
+            self):
         cfg.CONF.set_override('dns_domain', 'example.com')
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets(
             dns_name='vm1')
         self.assertEqual(201, res.status_code)
 
     def test_create_port_multiple_v4_v6_subnets_pqdn_and_dns_domain_period(
-        self):
+            self):
         cfg.CONF.set_override('dns_domain', 'example.com.')
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets(
             dns_name='vm1')
         self.assertEqual(201, res.status_code)
 
     def test_create_port_multiple_v4_v6_subnets_pqdn_and_no_dns_domain(
-        self):
+            self):
         cfg.CONF.set_override('dns_domain', '')
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets()
         self.assertEqual(201, res.status_code)
 
     def test_create_port_multiple_v4_v6_subnets_fqdn_and_dns_domain_no_period(
-        self):
+            self):
         cfg.CONF.set_override('dns_domain', 'example.com')
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets(
             dns_name='vm1.example.com.')
         self.assertEqual(201, res.status_code)
 
     def test_create_port_multiple_v4_v6_subnets_fqdn_and_dns_domain_period(
-        self):
+            self):
         cfg.CONF.set_override('dns_domain', 'example.com.')
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets(
             dns_name='vm1.example.com.')
         self.assertEqual(201, res.status_code)
 
     def test_create_port_multiple_v4_v6_subnets_fqdn_default_domain_period(
-        self):
+            self):
         cfg.CONF.set_override('dns_domain', 'openstacklocal.')
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets()
         self.assertEqual(201, res.status_code)
 
-    def test_create_port_multiple_v4_v6_subnets_bad_fqdn_and_dns_domain(
-        self):
+    def test_create_port_multiple_v4_v6_subnets_bad_fqdn_and_dns_domain(self):
         cfg.CONF.set_override('dns_domain', 'example.com')
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets(
             dns_name='vm1.bad-domain.com.')
@@ -361,8 +360,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
                           'neutron.conf')
         self.assertIn(expected_error, res.text)
 
-    def test_create_port_multiple_v4_v6_subnets_bad_pqdn_and_dns_domain(
-        self):
+    def test_create_port_multiple_v4_v6_subnets_bad_pqdn_and_dns_domain(self):
         cfg.CONF.set_override('dns_domain', 'example.com')
         num_labels = int(
             math.floor(db_const.FQDN_FIELD_SIZE / constants.DNS_LABEL_MAX_LEN))
@@ -508,7 +506,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
 
 
 class DnsExtensionTestNetworkDnsDomain(
-    test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
+        test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def setUp(self):
         plugin = ('neutron.tests.unit.extensions.test_dns.' +
                   'DnsExtensionTestPlugin')

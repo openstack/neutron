@@ -128,8 +128,8 @@ class External_net_db_mixin(object):
             # (and thus, possible floating IPs) on this network before
             # allow it to be update to external=False
             if context.session.query(models_v2.Port.id).filter_by(
-                device_owner=constants.DEVICE_OWNER_ROUTER_GW,
-                network_id=net_data['id']).first():
+                    device_owner=constants.DEVICE_OWNER_ROUTER_GW,
+                    network_id=net_data['id']).first():
                 raise extnet_exc.ExternalNetworkInUse(net_id=net_id)
 
             net_obj.ExternalNetwork.delete_objects(

@@ -119,8 +119,8 @@ class TestDvrFipNs(base.BaseTestCase):
     @mock.patch.object(ip_lib, 'send_ip_addr_adv_notif')
     @mock.patch.object(dvr_fip_ns.FipNamespace, 'subscribe')
     @mock.patch.object(dvr_fip_ns.FipNamespace, '_add_default_gateway_for_fip')
-    def test_update_gateway_port(
-        self, def_gw, fip_sub, send_adv_notif, IPDevice):
+    def test_update_gateway_port(self, def_gw, fip_sub, send_adv_notif,
+                                 IPDevice):
         fip_sub.return_value = False
         self.fip_ns._check_for_gateway_ip_change = mock.Mock(return_value=True)
         agent_gw_port = self._get_agent_gw_port()
@@ -142,8 +142,8 @@ class TestDvrFipNs(base.BaseTestCase):
     @mock.patch.object(dvr_fip_ns.FipNamespace, 'subscribe')
     @mock.patch.object(dvr_fip_ns.FipNamespace, 'delete')
     @mock.patch.object(dvr_fip_ns.FipNamespace, 'unsubscribe')
-    def test_update_gateway_port_raises_exception(
-        self, fip_unsub, fip_delete, fip_sub, exists):
+    def test_update_gateway_port_raises_exception(self, fip_unsub, fip_delete,
+                                                  fip_sub, exists):
         agent_gw_port = self._get_agent_gw_port()
         self.fip_ns._create_gateway_port = mock.Mock()
         self.fip_ns.create_or_update_gateway_port(agent_gw_port)

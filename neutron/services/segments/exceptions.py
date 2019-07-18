@@ -23,8 +23,7 @@ class SegmentNotFound(exceptions.NotFound):
     message = _("Segment %(segment_id)s could not be found.")
 
 
-class NoUpdateSubnetWhenMultipleSegmentsOnNetwork(
-    exceptions.BadRequest):
+class NoUpdateSubnetWhenMultipleSegmentsOnNetwork(exceptions.BadRequest):
     message = _("The network '%(network_id)s' has multiple segments, it is "
                 "only possible to associate an existing subnet with a segment "
                 "on networks with a single segment.")

@@ -420,7 +420,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                               original_ips=original_ips)
 
     def _assert_update_fixed_ips_no_effect_after_clearing_dns_attribute(
-        self, dns_data_db, dns_data_db_1, dns_data_db_2):
+            self, dns_data_db, dns_data_db_1, dns_data_db_2):
         self.assertEqual('', dns_data_db_2['current_dns_name'])
         self.assertEqual('', dns_data_db_2['current_dns_domain'])
         self.assertEqual(dns_data_db_1['current_dns_name'],

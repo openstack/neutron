@@ -18,7 +18,7 @@ from neutron.tests.unit import testlib_api
 
 
 class L3HARouterAgentPortBindingIfaceObjectTestCase(
-    base.BaseObjectIfaceTestCase):
+        base.BaseObjectIfaceTestCase):
 
     _test_class = l3_hamode.L3HARouterAgentPortBinding
 
@@ -58,7 +58,7 @@ class L3HARouterNetworkDbObjectTestCase(base.BaseDbObjectTestCase,
 
 
 class L3HARouterVRIdAllocationIfaceObjectTestCase(
-    base.BaseObjectIfaceTestCase):
+        base.BaseObjectIfaceTestCase):
 
     _test_class = l3_hamode.L3HARouterVRIdAllocation
 

@@ -1192,7 +1192,7 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
                     1,
                     l3plugin.delete_arp_entry_for_dvr_service_port.call_count)
             if fip and is_distributed and not (routers_to_remove and
-                fip['router_id'] is routers_to_remove[0]['router_id']):
+                    fip['router_id'] is routers_to_remove[0]['router_id']):
                 (l3plugin.l3_rpc_notifier.routers_updated_on_host.
                  assert_called_once_with(mock.ANY, ['router_id'], source_host))
             self.assertEqual(

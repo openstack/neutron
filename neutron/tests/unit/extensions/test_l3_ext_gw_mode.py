@@ -464,9 +464,9 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                                 'external_fixed_ips': [{
                                     'ip_address': mock.ANY,
                                     'subnet_id': s['subnet']['id']}]})]
-            with self.router(
-                name=name, admin_state_up=True, tenant_id=tenant_id,
-                external_gateway_info=input_value) as router:
+            with self.router(name=name, admin_state_up=True,
+                             tenant_id=tenant_id,
+                             external_gateway_info=input_value) as router:
                 res = self._show('routers', router['router']['id'])
                 for k, v in expected_value:
                     self.assertEqual(res['router'][k], v)

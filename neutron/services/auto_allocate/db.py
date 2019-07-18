@@ -307,8 +307,9 @@ class AutoAllocatedTopologyMixin(object):
             network_id = network['id'] if network else None
             raise exceptions.UnknownProvisioningError(e, network_id=network_id)
 
-    def _provision_external_connectivity(
-        self, context, default_external_network, subnets, tenant_id):
+    def _provision_external_connectivity(self, context,
+                                         default_external_network, subnets,
+                                         tenant_id):
         """Uplink tenant subnet(s) to external network."""
         router_args = {
             'name': 'auto_allocated_router',

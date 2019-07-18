@@ -591,7 +591,7 @@ class TestMl2NetworksWithVlanTransparencyBase(TestMl2NetworksV2):
 
 
 class TestMl2NetworksWithVlanTransparency(
-    TestMl2NetworksWithVlanTransparencyBase):
+        TestMl2NetworksWithVlanTransparencyBase):
     _mechanism_drivers = ['test']
 
     def test_create_network_vlan_transparent_fail(self):
@@ -617,7 +617,7 @@ class TestMl2NetworksWithVlanTransparency(
 
 
 class TestMl2NetworksWithVlanTransparencyAndMTU(
-    TestMl2NetworksWithVlanTransparencyBase):
+        TestMl2NetworksWithVlanTransparencyBase):
     _mechanism_drivers = ['test']
 
     def test_create_network_vlan_transparent_and_mtu(self):
@@ -2414,8 +2414,8 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             'id': 'foo_port_id',
             portbindings.HOST_ID: 'foo_host',
         }
-        with mock.patch.object(
-            ml2_db, 'ensure_distributed_port_binding') as mock_dist:
+        with mock.patch.object(ml2_db,
+                               'ensure_distributed_port_binding') as mock_dist:
             plugin.update_distributed_port_binding(
                 self.context, 'foo_port_id', {'port': port})
         self.assertFalse(mock_dist.called)
@@ -3288,8 +3288,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
     def test_create_network_mtu_on_precommit(self):
         with mock.patch.object(mech_test.TestMechanismDriver,
                         'create_network_precommit') as bmp:
-            with mock.patch.object(
-                self.driver, '_get_network_mtu') as mtu:
+            with mock.patch.object(self.driver, '_get_network_mtu') as mtu:
                 mtu.return_value = 1100
                 with self.network() as network:
                     self.assertIn('mtu', network['network'])
@@ -3310,8 +3309,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
     def test_reserve_segment_update_network_mtu(self):
         with self.network() as network:
             network_id = network['network']['id']
-            with mock.patch.object(
-                self.driver, '_get_network_mtu') as mtu:
+            with mock.patch.object(self.driver, '_get_network_mtu') as mtu:
                 mtu.return_value = 100
                 self._reserve_segment(network)
                 updated_network = self.driver.get_network(self.context,
