@@ -254,7 +254,7 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         self.assertEqual(1, self.mock_fanout.call_count)
 
     def test__cast_message(self):
-        self.notifier._cast_message(mock.ANY, mock.ANY, mock.ANY)
+        self.notifier._cast_message(mock.ANY, mock.ANY, mock.ANY, mock.ANY)
         self.assertEqual(1, self.mock_cast.call_count)
 
     def test__native_notification_unsubscribes(self):
