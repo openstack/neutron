@@ -61,7 +61,7 @@
             voting: false
         - neutron-tempest-with-uwsgi:
             voting: false
-        - tripleo-ci-centos-7-scenario007-standalone
+        - neutron-centos-7-tripleo-standalone
     gate:
       jobs:
         - neutron-functional
@@ -437,7 +437,7 @@
     irrelevant-files: *tempest-irrelevant-files
 
 - job:
-    name: tripleo-ci-centos-7-scenario007-standalone
+    name: neutron-centos-7-tripleo-standalone
     parent: tripleo-ci-base-standalone
     nodeset: single-centos-7-node
     voting: false
