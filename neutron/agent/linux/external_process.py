@@ -112,11 +112,13 @@ class ProcessManager(MonitoredProcess):
                 if sig == '9':
                     fileutils.delete_if_exists(self.get_pid_file_name())
         elif pid:
-            LOG.debug('Process for %(uuid)s pid %(pid)d is stale, ignoring '
-                      'signal %(signal)s', {'uuid': self.uuid, 'pid': pid,
-                                            'signal': sig})
+            LOG.debug('%{service}s process for %(uuid)s pid %(pid)d is stale, '
+                      'ignoring signal %(signal)s',
+                      {'service': self.service, 'uuid': self.uuid,
+                       'pid': pid, 'signal': sig})
         else:
-            LOG.debug('No process started for %s', self.uuid)
+            LOG.debug('No %(service)s process started for %(uuid)s',
+                      {'service': self.service, 'uuid': self.uuid})
 
     def get_kill_cmd(self, sig, pid):
         if self.kill_scripts_path:
