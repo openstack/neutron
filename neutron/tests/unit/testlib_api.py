@@ -13,19 +13,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import fixtures
 import six
 import testresources
 import testscenarios
 import testtools
 
 from neutron_lib.db import api as db_api
-from neutron_lib.db import model_base
+from neutron_lib import fixture as lib_fixtures
 from oslo_config import cfg
 from oslo_db import exception as oslodb_exception
-from oslo_db.sqlalchemy import enginefacade
 from oslo_db.sqlalchemy import provision
-from oslo_db.sqlalchemy import session
 
 from neutron.db.migration import cli as migration
 # Import all data models
@@ -68,112 +65,7 @@ def create_request(path, body, content_type, method='GET',
     return req
 
 
-class SqlFixture(fixtures.Fixture):
-    """Base of a fixture which can create a schema and delete from
-    its tables.
-
-    """
-
-    @classmethod
-    def _generate_schema(cls, engine):
-        model_base.BASEV2.metadata.create_all(engine)
-
-    def _delete_from_schema(self, engine):
-        with engine.begin() as conn:
-            for table in reversed(
-                    model_base.BASEV2.metadata.sorted_tables):
-                conn.execute(table.delete())
-
-    def _init_resources(self):
-        raise NotImplementedError()
-
-    def _setUp(self):
-        self._init_resources()
-
-        # check if the fixtures failed to get
-        # an engine.  The test setUp() itself should also be checking
-        # this and raising skipTest.
-        if not hasattr(self, 'engine'):
-            return
-
-        engine = self.engine
-        self.addCleanup(lambda: self._delete_from_schema(engine))
-
-        self.sessionmaker = session.get_maker(engine)
-
-        _restore_factory = db_api.get_context_manager()._root_factory
-
-        self.enginefacade_factory = enginefacade._TestTransactionFactory(
-            self.engine, self.sessionmaker, from_factory=_restore_factory,
-            apply_global=False)
-
-        db_api.get_context_manager()._root_factory = self.enginefacade_factory
-
-        engine = db_api.CONTEXT_WRITER.get_engine()
-
-        self.addCleanup(
-            lambda: setattr(
-                db_api.get_context_manager(),
-                "_root_factory", _restore_factory))
-
-        self.useFixture(EnableSQLiteFKsFixture(engine))
-
-
-class EnableSQLiteFKsFixture(fixtures.Fixture):
-    """Turn SQLite PRAGMA foreign keys on and off for tests.
-
-    FIXME(zzzeek): figure out some way to get oslo.db test_base to honor
-    oslo_db.engines.create_engine() arguments like sqlite_fks as well
-    as handling that it needs to be turned off during drops.
-
-    """
-
-    def __init__(self, engine):
-        self.engine = engine
-
-    def _setUp(self):
-        if self.engine.name == 'sqlite':
-            self.engine.execute("PRAGMA foreign_keys=ON")
-
-            def disable_fks():
-                with self.engine.connect() as conn:
-                    conn.connection.rollback()
-                    conn.execute("PRAGMA foreign_keys=OFF")
-            self.addCleanup(disable_fks)
-
-
-class StaticSqlFixture(SqlFixture):
-    """Fixture which keeps a single sqlite memory database at the global
-    scope.
-
-    """
-
-    _GLOBAL_RESOURCES = False
-
-    @classmethod
-    def _init_resources(cls):
-        # this is a classlevel version of what testresources
-        # does w/ the resources attribute as well as the
-        # setUpResources() step (which requires a test instance, that
-        # SqlFixture does not have).  Because this is a SQLite memory
-        # database, we don't actually tear it down, so we can keep
-        # it running throughout all tests.
-        if cls._GLOBAL_RESOURCES:
-            return
-        else:
-            cls._GLOBAL_RESOURCES = True
-            cls.schema_resource = provision.SchemaResource(
-                provision.DatabaseResource(
-                    "sqlite", db_api.get_context_manager()),
-                cls._generate_schema, teardown=False)
-            dependency_resources = {}
-            for name, resource in cls.schema_resource.resources:
-                dependency_resources[name] = resource.getResource()
-            cls.schema_resource.make(dependency_resources)
-            cls.engine = dependency_resources['database'].engine
-
-
-class StaticSqlFixtureNoSchema(SqlFixture):
+class StaticSqlFixtureNoSchema(lib_fixtures.SqlFixture):
     """Fixture which keeps a single sqlite memory database at the global
     scope
 
@@ -198,7 +90,7 @@ class StaticSqlFixtureNoSchema(SqlFixture):
         pass
 
 
-class OpportunisticSqlFixture(SqlFixture):
+class OpportunisticSqlFixture(lib_fixtures.SqlFixture):
     """Fixture which uses testresources with oslo_db provisioning to
     check for available backends and optimize test runs.
 
@@ -293,7 +185,7 @@ class BaseSqlTestCase(object):
 
     def _setup_database_fixtures(self):
         if self.BUILD_SCHEMA:
-            fixture = StaticSqlFixture()
+            fixture = lib_fixtures.StaticSqlFixture()
         else:
             fixture = StaticSqlFixtureNoSchema()
         self.useFixture(fixture)
