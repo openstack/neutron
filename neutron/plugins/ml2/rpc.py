@@ -25,6 +25,7 @@ from neutron_lib import rpc as n_rpc
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log
 import oslo_messaging
+from osprofiler import profiler
 from sqlalchemy.orm import exc
 
 from neutron.api.rpc.handlers import dvr_rpc
@@ -230,6 +231,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         plugin = directory.get_plugin()
         return plugin.get_network(rpc_context, network)
 
+    @profiler.trace("rpc")
     def update_device_down(self, rpc_context, **kwargs):
         """Device no longer exists on agent."""
         # TODO(garyk) - live migration and port status
@@ -261,6 +263,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         return {'device': device,
                 'exists': port_exists}
 
+    @profiler.trace("rpc")
     def update_device_up(self, rpc_context, **kwargs):
         """Device is up on agent."""
         agent_restarted = kwargs.pop('agent_restarted', False)
@@ -360,6 +363,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         else:
             l2pop_driver.obj.update_port_down(port_context)
 
+    @profiler.trace("rpc")
     def update_device_list(self, rpc_context, **kwargs):
         devices_up = []
         failed_devices_up = []
