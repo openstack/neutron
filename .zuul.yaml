@@ -182,7 +182,7 @@
 
 - job:
     name: neutron-tempest-dvr
-    parent: tempest-full-py3
+    parent: tempest-integrated-networking
     timeout: 10800
     required-projects:
       - openstack/devstack-gate
@@ -196,7 +196,7 @@
 
 - job:
     name: neutron-tempest-linuxbridge
-    parent: tempest-full-py3
+    parent: tempest-integrated-networking
     timeout: 10800
     required-projects:
       - openstack/devstack-gate
@@ -318,7 +318,7 @@
 
 - job:
     name: neutron-tempest-iptables_hybrid
-    parent: tempest-full-py3
+    parent: tempest-integrated-networking
     timeout: 10800
     required-projects:
       - openstack/devstack-gate
@@ -428,16 +428,11 @@
 
 - job:
     name: neutron-tempest-with-uwsgi
-    parent: devstack-tempest
+    parent: tempest-integrated-networking
     description: Run neutron Tempest tests with uwsgi
     timeout: 8400
-    required-projects:
-      - openstack/neutron
-      - openstack/tempest
     vars:
-      tox_envlist: full
       devstack_localrc:
-        USE_PYTHON3: true
         NEUTRON_DEPLOY_MOD_WSGI: true
     irrelevant-files: *tempest-irrelevant-files
 

@@ -54,9 +54,13 @@ Below is a summary of those jobs.
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-dvr                           |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | dvr_snat | False | True   | True       | Yes         |
     |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
+    |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-linuxbridge                   |tempest.api (without slow tests)  |   3.6   |   1   | linuxbridge | iptables        | legacy   | False | False  | True       | Yes         |
     |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
+    |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |tempest-multinode-full-py3                    |tempest.api (without slow tests)  |   3.6   |   2   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
     |(non-voting)                                  |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
@@ -67,14 +71,20 @@ Below is a summary of those jobs.
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-iptables_hybrid               |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | iptables_hybrid | legacy   | False | False  | True       | Yes         |
     |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
+    |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-iptables_hybrid-fedora        |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | iptables_hybrid | legacy   | False | False  | True       | No          |
     |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
+    |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |tempest-slow-py3                              |tempest slow tests                |   3.6   |   2   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-with-uwsgi                    |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
-    |(non-voting)                                  |                                  |         |       |             |                 |          |       |        |            |             |
+    |(non-voting)                                  |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
+    |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
 
 Grenade jobs running in Neutron CI
