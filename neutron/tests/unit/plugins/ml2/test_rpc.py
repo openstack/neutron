@@ -346,7 +346,7 @@ class RpcApiTestCase(base.BaseTestCase):
             expected = 'foo'
 
         ctxt = oslo_context.RequestContext(user_id='fake_user',
-                                           tenant='fake_project')
+                                           project_id='fake_project')
         expected_retval = expected if rpc_method == 'call' else None
         expected_version = kwargs.pop('version', None)
         fanout = kwargs.pop('fanout', False)
