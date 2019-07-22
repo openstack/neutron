@@ -680,8 +680,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             self._assert_ip_address_on_interface(namespace, interface,
                                                  ip_address)
 
-    def _assert_ip_address_not_on_interface(
-        self, namespace, interface, ip_address):
+    def _assert_ip_address_not_on_interface(self,
+                                            namespace, interface, ip_address):
         self.assertNotIn(
             ip_address, self._get_addresses_on_device(namespace, interface))
 
@@ -690,8 +690,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         self.assertIn(
             ip_address, self._get_addresses_on_device(namespace, interface))
 
-    def _assert_ping_reply_from_expected_address(
-        self, ping_result, expected_address):
+    def _assert_ping_reply_from_expected_address(self, ping_result,
+                                                 expected_address):
         ping_results = ping_result.split('\n')
         self.assertGreater(
             len(ping_results), 1,

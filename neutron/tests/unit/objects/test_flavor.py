@@ -19,13 +19,13 @@ from neutron.tests.unit import testlib_api
 
 
 class FlavorServiceProfileBindingIfaceObjectTestCase(
-    obj_test_base.BaseObjectIfaceTestCase):
+        obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = flavor.FlavorServiceProfileBinding
 
 
 class FlavorServiceProfileBindingDbObjectTestCase(
-    obj_test_base.BaseDbObjectTestCase, testlib_api.SqlTestCase):
+        obj_test_base.BaseDbObjectTestCase, testlib_api.SqlTestCase):
 
     _test_class = flavor.FlavorServiceProfileBinding
 

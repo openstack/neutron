@@ -196,7 +196,8 @@ class TestRouterInfo(base.BaseTestCase):
         ri = router_info.RouterInfo(mock.Mock(), _uuid(), {}, **self.ri_kwargs)
         ri.router = {'id': _uuid()}
         with mock.patch.object(ri, '_process_internal_ports') as p_i_p,\
-            mock.patch.object(ri, '_process_external_on_delete') as p_e_o_d:
+                mock.patch.object(ri,
+                                  '_process_external_on_delete') as p_e_o_d:
             self.mock_ip.netns.exists.return_value = False
             ri.process_delete()
             self.assertFalse(p_i_p.called)

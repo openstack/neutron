@@ -254,8 +254,9 @@ class L2populationMechanismDriver(api.MechanismDriver):
         agent_host = context.host
         l3plugin = directory.get_plugin(plugin_constants.L3)
         # when agent transitions to backup, don't remove flood flows
-        if agent_host and l3plugin and getattr(
-            l3plugin, "list_router_ids_on_host", None):
+        if agent_host and l3plugin and getattr(l3plugin,
+                                               "list_router_ids_on_host",
+                                               None):
             admin_context = n_context.get_admin_context()
             port_context = context._plugin_context
             fdb_entries = self._get_agent_fdb(

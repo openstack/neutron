@@ -149,8 +149,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
         router_id = 'router-id'
         ports = [{'network_id': 'network_id1', 'something': 42}]
         expected_networks = ('network_id1',)
-        with mock.patch(
-            'oslo_utils.timeutils.utcnow_ts', return_value=0):
+        with mock.patch('oslo_utils.timeutils.utcnow_ts', return_value=0):
             mock_get_ports = self.handler.plugin_rpc.get_ports
             mock_get_ports.return_value = ports
             networks = self.handler._get_router_networks(router_id)

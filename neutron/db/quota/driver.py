@@ -118,8 +118,7 @@ class DbQuotaDriver(object):
         Raise a "not found" error if the quota for the given tenant was
         never defined.
         """
-        if quota_obj.Quota.delete_objects(
-            context, project_id=tenant_id) < 1:
+        if quota_obj.Quota.delete_objects(context, project_id=tenant_id) < 1:
             # No record deleted means the quota was not found
             raise exceptions.TenantQuotaNotFound(tenant_id=tenant_id)
 

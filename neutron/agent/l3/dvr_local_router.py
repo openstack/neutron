@@ -622,7 +622,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
     def process_external(self):
         if self.agent_conf.agent_mode != (
-            lib_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL):
+                lib_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL):
             ex_gw_port = self.get_ex_gw_port()
             if ex_gw_port:
                 self.create_dvr_external_gateway_on_agent(ex_gw_port)
@@ -756,8 +756,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                     operation, route, fip_ns_name, tbl_index)
         super(DvrLocalRouter, self).update_routing_table(operation, route)
 
-    def _update_fip_route_table_with_next_hop_routes(
-        self, operation, route, fip_ns_name, tbl_index):
+    def _update_fip_route_table_with_next_hop_routes(self, operation, route,
+                                                     fip_ns_name, tbl_index):
         cmd = ['ip', 'route', operation, 'to', route['destination'],
                'via', route['nexthop'], 'table', tbl_index]
         ip_wrapper = ip_lib.IPWrapper(namespace=fip_ns_name)
@@ -768,8 +768,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                       "router %(id)s",
                       {'ns': fip_ns_name, 'id': self.router_id})
 
-    def _check_if_route_applicable_to_fip_namespace(
-        self, route, agent_gateway_port):
+    def _check_if_route_applicable_to_fip_namespace(self, route,
+                                                    agent_gateway_port):
         ip_cidrs = common_utils.fixed_ip_cidrs(agent_gateway_port['fixed_ips'])
         nexthop_cidr = netaddr.IPAddress(route['nexthop'])
         for gw_cidr in ip_cidrs:

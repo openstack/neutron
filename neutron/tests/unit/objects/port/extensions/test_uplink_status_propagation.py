@@ -16,14 +16,13 @@ from neutron.tests.unit import testlib_api
 
 
 class UplinkStatusPropagationIfaceObjectTestCase(
-    obj_test_base.BaseObjectIfaceTestCase):
+        obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = uplink_status_propagation.PortUplinkStatusPropagation
 
 
 class UplinkStatusPropagationDbObjectTestCase(
-    obj_test_base.BaseDbObjectTestCase,
-    testlib_api.SqlTestCase):
+        obj_test_base.BaseDbObjectTestCase, testlib_api.SqlTestCase):
 
     _test_class = uplink_status_propagation.PortUplinkStatusPropagation
 

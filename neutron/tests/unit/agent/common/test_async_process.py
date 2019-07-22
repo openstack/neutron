@@ -282,7 +282,7 @@ class TestAsyncProcessLogging(base.BaseTestCase):
     def _test__read_stdout_logging(self, enable):
         proc = async_process.AsyncProcess(['fakecmd'], log_output=enable)
         with mock.patch.object(proc, '_read', return_value='fakedata'),\
-            mock.patch.object(proc, '_process'):
+                mock.patch.object(proc, '_process'):
             proc._read_stdout()
         self.assertEqual(enable, self.log_mock.debug.called)
 

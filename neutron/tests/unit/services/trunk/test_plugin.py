@@ -105,7 +105,7 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
 
             trunk_port_validator = rules.TrunkPortValidator(trunk['port_id'])
             if not trunk_port_validator.can_be_trunked_or_untrunked(
-                self.context):
+                    self.context):
                 self.assertRaises(trunk_exc.TrunkInUse,
                               self.trunk_plugin.delete_trunk,
                               self.context, trunk['id'])

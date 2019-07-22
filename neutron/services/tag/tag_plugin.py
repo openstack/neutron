@@ -116,5 +116,5 @@ class TagPlugin(tagging.TagPluginBase):
     def delete_tag(self, context, resource, resource_id, tag):
         res = self._get_resource(context, resource, resource_id)
         if not tag_obj.Tag.delete_objects(
-            context, tag=tag, standard_attr_id=res.standard_attr_id):
+                context, tag=tag, standard_attr_id=res.standard_attr_id):
             raise tagging.TagNotFound(tag=tag)

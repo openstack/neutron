@@ -80,7 +80,7 @@ class TestMacvtapManager(base.BaseTestCase):
         good_mapping = {'physnet1': 'eth1', 'physnet2': 'eth2'}
         self.mgr.interface_mappings = good_mapping
         with mock.patch.object(ip_lib, 'device_exists', return_value=True)\
-            as mock_de:
+                as mock_de:
             self.mgr.validate_interface_mappings()
             mock_de.assert_any_call('eth1')
             mock_de.assert_any_call('eth2')
@@ -90,7 +90,7 @@ class TestMacvtapManager(base.BaseTestCase):
         bad_mapping = {'physnet1': 'foo'}
         self.mgr.interface_mappings = bad_mapping
         with mock.patch.object(ip_lib, 'device_exists', return_value=False)\
-            as mock_de, mock.patch.object(sys, 'exit') as mock_exit:
+                as mock_de, mock.patch.object(sys, 'exit') as mock_exit:
             self.mgr.validate_interface_mappings()
             mock_de.assert_called_with('foo')
             mock_exit.assert_called_once_with(1)
@@ -116,9 +116,9 @@ class TestMacvtapManager(base.BaseTestCase):
         listing = ['foo', 'macvtap0', 'macvtap1', 'bar']
         # set some mac mappings to make sure they are cleaned up
         self.mgr.mac_device_name_mappings = {'foo': 'bar'}
-        with mock.patch.object(os, 'listdir', return_value=listing)\
-            as mock_ld,\
-            mock.patch.object(ip_lib, 'get_device_mac') as mock_gdn:
+        with mock.patch.object(os, 'listdir',
+                               return_value=listing) as mock_ld,\
+                mock.patch.object(ip_lib, 'get_device_mac') as mock_gdn:
             mock_gdn.side_effect = ['mac0', 'mac1']
 
             result = self.mgr.get_all_devices()
@@ -143,7 +143,7 @@ class TestMacvtapManager(base.BaseTestCase):
         mock_devices = []
         with mock.patch.object(ip_lib.IPWrapper, 'get_devices',
                                return_value=mock_devices),\
-            mock.patch.object(sys, 'exit') as mock_exit:
+                mock.patch.object(sys, 'exit') as mock_exit:
             self.mgr.get_agent_id()
             mock_exit.assert_called_once_with(1)
 
@@ -177,7 +177,7 @@ class TestMacvtapManager(base.BaseTestCase):
     def test_plug_interface(self):
         self.mgr.mac_device_name_mappings['mac1'] = 'macvtap0'
         with mock.patch.object(ip_lib.IpLinkCommand, 'set_allmulticast_on')\
-            as mock_sao:
+                as mock_sao:
             self.mgr.plug_interface('network_id', 'network_segment', 'mac1',
                                     'device_owner')
             self.assertTrue(mock_sao.called)
@@ -197,7 +197,7 @@ class TestMacvtapMain(base.BaseTestCase):
                               'macvtap')
         with mock.patch.object(helpers, 'parse_mappings',
                                side_effect=ValueError('bad mapping')),\
-            mock.patch.object(sys, 'exit') as mock_exit:
+                mock.patch.object(sys, 'exit') as mock_exit:
             macvtap_neutron_agent.parse_interface_mappings()
             mock_exit.assert_called_with(1)
 

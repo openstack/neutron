@@ -256,8 +256,8 @@ class SubPortsValidator(object):
         if subport['port_id'] == self.trunk_port_id:
             raise trunk_exc.ParentPortInUse(port_id=subport['port_id'])
 
-    def _raise_subport_invalid_mtu(
-        self, context, subport, trunk_port_mtu, subport_mtus):
+    def _raise_subport_invalid_mtu(self, context, subport, trunk_port_mtu,
+                                   subport_mtus):
         # Check MTU sanity - subport MTU must not exceed trunk MTU.
         # If for whatever reason trunk_port_mtu is not available,
         # the MTU sanity check cannot be enforced.

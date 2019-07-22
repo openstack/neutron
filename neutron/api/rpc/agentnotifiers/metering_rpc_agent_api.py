@@ -82,7 +82,7 @@ class MeteringAgentNotifyAPI(object):
         """Notify all the agents that are hosting the routers."""
         plugin = directory.get_plugin(plugin_constants.L3)
         if extensions.is_extension_supported(
-            plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
+                plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             self._agent_notification(context, method, routers)
         else:
             cctxt = self.client.prepare(fanout=True)

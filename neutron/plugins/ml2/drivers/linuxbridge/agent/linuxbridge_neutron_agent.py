@@ -557,7 +557,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         if not device_owner.startswith(constants.DEVICE_OWNER_COMPUTE_PREFIX):
             # Check if device needs to be added to bridge
             if not bridge_lib.BridgeDevice.get_interface_bridge(
-                tap_device_name):
+                    tap_device_name):
                 data = {'tap_device_name': tap_device_name,
                         'bridge_name': bridge_name}
                 LOG.debug("Adding device %(tap_device_name)s to bridge "
@@ -874,10 +874,9 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         return lconst.EXTENSION_DRIVER_TYPE
 
 
-class LinuxBridgeRpcCallbacks(
-    sg_rpc.SecurityGroupAgentRpcCallbackMixin,
-    l2pop_rpc.L2populationRpcCallBackMixin,
-    amb.CommonAgentManagerRpcCallBackBase):
+class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
+                              l2pop_rpc.L2populationRpcCallBackMixin,
+                              amb.CommonAgentManagerRpcCallBackBase):
 
     # Set RPC API version to 1.0 by default.
     # history

@@ -310,7 +310,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             'foo_host')
 
     def _setup_delete_current_gw_port_deletes_dvr_internal_ports(
-        self, port=None, gw_port=True, new_network_id='ext_net_id_2'):
+            self, port=None, gw_port=True, new_network_id='ext_net_id_2'):
         router_db = {
             'name': 'foo_router',
             'admin_state_up': True,
@@ -459,8 +459,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self.assertIn(const.FLOATINGIP_KEY, router)
         self.assertIn(fip, router[const.FLOATINGIP_KEY])
 
-    def _setup_test_create_floatingip(
-        self, fip, floatingip_db, router_db):
+    def _setup_test_create_floatingip(self, fip, floatingip_db, router_db):
         port = {
             'id': '1234',
             portbindings.HOST_ID: 'myhost',
@@ -863,7 +862,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 'router', 'before_update', self.mixin, **kwargs)
 
     def test_validate_add_router_interface_by_subnet_notify_advanced_services(
-        self):
+            self):
         router = {'name': 'foo_router', 'admin_state_up': False}
         router_db = self._create_router(router)
         with self.network() as net, \
@@ -879,7 +878,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                                 interface_info=interface_info)
 
     def test_validate_add_router_interface_by_port_notify_advanced_services(
-        self):
+            self):
         router = {'name': 'foo_router', 'admin_state_up': False}
         router_db = self._create_router(router)
         with self.network() as net, \
@@ -975,8 +974,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 self.ctx, router['id'],
                 {'router': {'external_gateway_info':
                             {'network_id': ext_net_id}}})
-            with mock.patch.object(
-                self.mixin, '_add_csnat_router_interface_port') as f:
+            with mock.patch.object(self.mixin,
+                                   '_add_csnat_router_interface_port') as f:
                 f.side_effect = RuntimeError()
                 self.assertRaises(
                     l3_exc.RouterInterfaceAttachmentConflict,
@@ -1006,8 +1005,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 {'router': {'external_gateway_info':
                             {'network_id': ext_net_id}}})
             net_id = subnet['subnet']['network_id']
-            with mock.patch.object(
-                router_obj.RouterPort, 'create') as rtrport_update:
+            with mock.patch.object(router_obj.RouterPort,
+                                   'create') as rtrport_update:
                 rtrport_update.side_effect = Exception()
                 self.assertRaises(
                     l3_exc.RouterInterfaceAttachmentConflict,

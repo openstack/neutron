@@ -570,7 +570,7 @@ class TestAZAwareWeightScheduler(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
 
 
 class TestDHCPSchedulerWithNetworkAccessibility(
-    test_plugin.Ml2PluginV2TestCase):
+        test_plugin.Ml2PluginV2TestCase):
 
     _mechanism_drivers = ['openvswitch']
 

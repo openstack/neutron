@@ -62,7 +62,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         }
         with mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin'
                         '._device_to_port_id'),\
-            mock.patch.object(self.callbacks, 'notify_l2pop_port_wiring'):
+                mock.patch.object(self.callbacks, 'notify_l2pop_port_wiring'):
             with mock.patch('neutron.db.provisioning_blocks.'
                             'provisioning_complete') as pc:
                 self.callbacks.update_device_up(mock.Mock(), **kwargs)

@@ -234,7 +234,7 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
             'fixed_ips': [{'ip_address': '1.1.1.1', 'subnet_id': '4'}]}
         with mock.patch.object(l3_obj.FloatingIP, 'objects_exist',
                                return_value=mock.Mock()),\
-            testtools.ExpectedException(n_exc.ServicePortInUse):
+                testtools.ExpectedException(n_exc.ServicePortInUse):
 
             self.db.prevent_l3_port_deletion(ctx, None)
 
@@ -337,14 +337,15 @@ class L3_NAT_db_mixin(base.BaseTestCase):
 
         with mock.patch.object(l3_db.L3_NAT_dbonly_mixin, '_create_router_db',
                                return_value=router_db) as crd,\
-            mock.patch.object(l3_db.L3_NAT_dbonly_mixin, '_make_router_dict',
-                              return_value=router_dict),\
-            mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
-                              '_update_router_gw_info') as urgi,\
-            mock.patch.object(l3_db.L3_NAT_dbonly_mixin, '_get_router',
-                              return_value=router_db),\
-            mock.patch.object(l3_db.L3_NAT_db_mixin, 'notify_router_updated')\
-            as nru:
+                mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
+                                  '_make_router_dict',
+                                  return_value=router_dict),\
+                mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
+                                  '_update_router_gw_info') as urgi,\
+                mock.patch.object(l3_db.L3_NAT_dbonly_mixin, '_get_router',
+                                  return_value=router_db),\
+                mock.patch.object(l3_db.L3_NAT_db_mixin,
+                                  'notify_router_updated') as nru:
 
             self.db.create_router(mock.Mock(), router_input)
             self.assertTrue(crd.called)

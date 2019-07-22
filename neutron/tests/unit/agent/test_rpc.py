@@ -134,8 +134,8 @@ class AgentPluginReportState(base.BaseTestCase):
 
 class AgentRPCMethods(base.BaseTestCase):
 
-    def _test_create_consumers(
-        self, endpoints, method, expected, topics, listen):
+    def _test_create_consumers(self, endpoints, method, expected, topics,
+                               listen):
         with mock.patch.object(n_rpc, 'Connection') as create_connection:
             rpc.create_consumers(
                 endpoints, method, topics, start_listening=listen)

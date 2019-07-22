@@ -309,7 +309,7 @@ class RequestDeserializerTest(testtools.TestCase):
     def test_deserialize(self):
         """Test RequestDeserializer.deserialize."""
         with mock.patch.object(
-            self.deserializer, 'get_action_args') as mock_method:
+                self.deserializer, 'get_action_args') as mock_method:
             mock_method.return_value = {'action': 'create'}
             request = wsgi.Request.blank('/')
             request.headers['Accept'] = 'application/json'

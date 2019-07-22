@@ -147,9 +147,9 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                                 # allocated, update_objects will return 0 so we
                                 # don't delete.
                                 if vlanalloc.VlanAllocation.update_objects(
-                                    ctx, values={'allocated': False},
-                                    allocated=False, vlan_id=alloc.vlan_id,
-                                    physical_network=physical_network):
+                                        ctx, values={'allocated': False},
+                                        allocated=False, vlan_id=alloc.vlan_id,
+                                        physical_network=physical_network):
                                     alloc.delete()
                     del allocations[physical_network]
 

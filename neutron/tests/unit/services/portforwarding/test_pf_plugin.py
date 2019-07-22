@@ -48,8 +48,8 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         super(TestPortForwardingPlugin, self).setUp()
 
         with mock.patch.object(
-            resource_manager.ResourceCallbacksManager, '_singleton',
-            new_callable=mock.PropertyMock(return_value=False)):
+                resource_manager.ResourceCallbacksManager, '_singleton',
+                new_callable=mock.PropertyMock(return_value=False)):
 
             self.cons_mgr = resource_manager.ConsumerResourceCallbacksManager()
             self.prod_mgr = resource_manager.ProducerResourceCallbacksManager()

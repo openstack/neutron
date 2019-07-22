@@ -120,9 +120,8 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
             [test_base.get_obj_persistent_fields(obj) for obj in objs])
 
     def test_get_objects_valid_fields(self):
-        with mock.patch.object(
-            db_api, 'get_objects',
-            return_value=[self.db_objs[0]]) as get_objects_mock:
+        with mock.patch.object(db_api, 'get_objects',
+                return_value=[self.db_objs[0]]) as get_objects_mock:
             objs = self._test_class.get_objects(
                 self.context,
                 **self.valid_field_filter)

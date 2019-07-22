@@ -56,9 +56,8 @@ class PortAllocationTestCase(base.DietTestCase):
         for p in range(1024, 32767):
             ss_output2 += ss_output_template % p
 
-        with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') \
-            as ipwrapper, \
-            mock.patch('neutron.agent.linux.utils.execute') as ex:
+        with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ipwrapper, \
+                mock.patch('neutron.agent.linux.utils.execute') as ex:
             m = mock.MagicMock()
             m.netns.execute.return_value = ss_output2
             ipwrapper.return_value = m

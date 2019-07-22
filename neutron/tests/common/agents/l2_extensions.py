@@ -88,8 +88,8 @@ def wait_until_dscp_marking_rule_applied_ovs(bridge, port_vif, rule):
     common_utils.wait_until_true(_dscp_marking_rule_applied)
 
 
-def wait_until_dscp_marking_rule_applied_linuxbridge(
-    namespace, port_vif, expected_rule):
+def wait_until_dscp_marking_rule_applied_linuxbridge(namespace, port_vif,
+                                                     expected_rule):
 
     iptables = iptables_manager.IptablesManager(
         namespace=namespace)

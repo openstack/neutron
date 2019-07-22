@@ -370,8 +370,8 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
         self.assertIsNone(self.qos_ext.policy_map.get_port_policy(port))
 
     def test__handle_notification_ignores_all_event_types_except_updated(self):
-        with mock.patch.object(
-            self.qos_ext, '_process_update_policy') as update_mock:
+        with mock.patch.object(self.qos_ext,
+                               '_process_update_policy') as update_mock:
 
             for event_type in set(events.VALID) - {events.UPDATED}:
                 self.qos_ext._handle_notification(mock.Mock(), 'QOS',
@@ -379,8 +379,8 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
                 self.assertFalse(update_mock.called)
 
     def test__handle_notification_passes_update_events(self):
-        with mock.patch.object(
-            self.qos_ext, '_process_update_policy') as update_mock:
+        with mock.patch.object(self.qos_ext,
+                               '_process_update_policy') as update_mock:
 
             policy_obj = mock.Mock()
             self.qos_ext._handle_notification(mock.Mock(), 'QOS',

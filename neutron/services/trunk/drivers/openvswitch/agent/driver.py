@@ -75,8 +75,7 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
                     {'event': event_type, 'subports': subports, 'err': e})
 
     @local_registry.receives(resources.TRUNK, [local_events.BEFORE_CREATE])
-    def check_trunk_dependencies(
-        self, resource, event, trigger, **kwargs):
+    def check_trunk_dependencies(self, resource, event, trigger, **kwargs):
         # The OVS trunk driver does not work with iptables firewall and QoS.
         # We should validate the environment configuration and signal that
         # something might be wrong.

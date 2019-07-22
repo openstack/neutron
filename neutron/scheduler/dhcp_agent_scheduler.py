@@ -68,8 +68,7 @@ class AutoScheduler(object):
             segments_on_host = {s.segment_id for s in segment_host_mapping}
 
             for dhcp_agent in dhcp_agents:
-                if agent_utils.is_agent_down(
-                    dhcp_agent.heartbeat_timestamp):
+                if agent_utils.is_agent_down(dhcp_agent.heartbeat_timestamp):
                     LOG.warning('DHCP agent %s is not active', dhcp_agent.id)
                     continue
                 for net_id, is_routed_network in net_ids.items():

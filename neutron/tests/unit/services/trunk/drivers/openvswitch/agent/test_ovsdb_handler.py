@@ -230,7 +230,7 @@ class TestOVSDBHandler(base.BaseTestCase):
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
     def test_unwire_subports_for_trunk_trunk_manager_failure(self, br):
         with mock.patch.object(
-            self.ovsdb_handler, '_update_trunk_metadata') as f:
+                self.ovsdb_handler, '_update_trunk_metadata') as f:
             self.trunk_manager.remove_sub_port.side_effect = (
                 trunk_manager.TrunkManagerError(error='error'))
             status = self.ovsdb_handler.unwire_subports_for_trunk(

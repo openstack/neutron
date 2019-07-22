@@ -517,7 +517,7 @@ class TestCli(base.BaseTestCase):
 
     @mock.patch.object(cli, '_compare_labels')
     def test__validate_single_revision_labels_branchless_fail_different_labels(
-        self, compare_mock):
+            self, compare_mock):
 
         fake_down_revision = FakeRevision()
         fake_revision = FakeRevision(down_revision=fake_down_revision)
@@ -535,7 +535,7 @@ class TestCli(base.BaseTestCase):
 
     @mock.patch.object(cli, '_compare_labels')
     def test__validate_single_revision_labels_branches_fail_different_labels(
-        self, compare_mock):
+            self, compare_mock):
 
         fake_down_revision = FakeRevision()
         fake_revision = FakeRevision(down_revision=fake_down_revision)
@@ -563,7 +563,7 @@ class TestCli(base.BaseTestCase):
 
     @mock.patch.object(cli, '_validate_single_revision_labels')
     def test__validate_revision_validates_branchless_migrations(
-        self, validate_mock):
+            self, validate_mock):
 
         script_dir = mock.Mock()
         fake_revision = FakeRevision()
@@ -573,7 +573,7 @@ class TestCli(base.BaseTestCase):
     @mock.patch.object(cli, '_validate_revision')
     @mock.patch('alembic.script.ScriptDirectory.walk_revisions')
     def test_validate_revisions_walks_thru_all_revisions(
-        self, walk_mock, validate_mock):
+            self, walk_mock, validate_mock):
 
         revisions = [FakeRevision() for i in range(10)]
         walk_mock.return_value = revisions
@@ -585,7 +585,7 @@ class TestCli(base.BaseTestCase):
     @mock.patch.object(cli, '_validate_revision')
     @mock.patch('alembic.script.ScriptDirectory.walk_revisions')
     def test_validate_revisions_fails_on_multiple_branch_points(
-        self, walk_mock, validate_mock):
+            self, walk_mock, validate_mock):
 
         revisions = [FakeRevision(is_branch_point=True) for i in range(2)]
         walk_mock.return_value = revisions

@@ -21,8 +21,7 @@ from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
 
 
-class ResourceDeltaObjectIfaceTestCase(
-    obj_test_base.BaseObjectIfaceTestCase):
+class ResourceDeltaObjectIfaceTestCase(obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = quota.ResourceDelta
 
@@ -42,8 +41,7 @@ class ResourceDeltaDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         self._reservation.create()
 
 
-class ReservationObjectIfaceTestCase(
-    obj_test_base.BaseObjectIfaceTestCase):
+class ReservationObjectIfaceTestCase(obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = quota.Reservation
 

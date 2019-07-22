@@ -187,7 +187,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self._setup_create_dvr_fip_interfaces_for_setting_routing_rules()
 
     def _setup_create_dvr_fip_interfaces_for_setting_routing_rules(
-        self, address_scopes_match=False):
+            self, address_scopes_match=False):
         ri = self._create_router()
         ri.get_floating_agent_gw_interface = mock.Mock()
         ri.fip_ns = mock.Mock()

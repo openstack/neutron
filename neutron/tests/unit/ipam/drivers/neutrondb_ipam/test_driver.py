@@ -231,9 +231,9 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
     """
 
     def _create_and_allocate_ipam_subnet(
-        self, cidr, allocation_pools=constants.ATTR_NOT_SPECIFIED,
-        ip_version=constants.IP_VERSION_4, v6_auto_address=False,
-        tenant_id=None):
+            self, cidr, allocation_pools=constants.ATTR_NOT_SPECIFIED,
+            ip_version=constants.IP_VERSION_4, v6_auto_address=False,
+            tenant_id=None):
         v6_address_mode = constants.ATTR_NOT_SPECIFIED
         if v6_auto_address:
             # set ip version to 6 regardless of what's been passed to the

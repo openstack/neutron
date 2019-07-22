@@ -958,8 +958,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertIsNotNone(ri.snat_namespace)
         self.assertEqual(ri.snat_namespace.name, ri.get_gw_ns_name())
 
-    def test_ext_gw_updated_calling_snat_ns_delete_if_gw_port_host_none(
-        self):
+    def test_ext_gw_updated_calling_snat_ns_delete_if_gw_port_host_none(self):
         """Test to check the impact of snat_namespace object.
 
         This function specifically checks the impact of the snat
@@ -982,7 +981,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     @mock.patch.object(namespaces.Namespace, 'delete')
     def test_snat_ns_delete_not_called_when_snat_namespace_does_not_exist(
-        self, mock_ns_del):
+            self, mock_ns_del):
         """Test to check the impact of snat_namespace object.
 
         This function specifically checks the impact of the snat
@@ -1409,8 +1408,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertEqual(1, ri.fip_ns.create_rtr_2_fip_link.call_count)
 
     @mock.patch.object(lla.LinkLocalAllocator, '_write')
-    def test_floating_ip_not_configured_if_no_host_or_dest_host(
-        self, lla_write):
+    def test_floating_ip_not_configured_if_no_host_or_dest_host(self,
+                                                                lla_write):
         fake_network_id = _uuid()
         subnet_id = _uuid()
         fake_floatingips = {'floatingips': [
@@ -2269,9 +2268,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_floatingip_disabled(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        with mock.patch.object(
-            agent.plugin_rpc,
-            'update_floatingip_statuses') as mock_update_fip_status:
+        with mock.patch.object(agent.plugin_rpc,
+                'update_floatingip_statuses') as mock_update_fip_status:
             fip_id = _uuid()
             router = l3_test_common.prepare_router_data(num_internal_ports=1)
             router[lib_constants.FLOATINGIP_KEY] = [
@@ -2302,9 +2300,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_floatingip_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        with mock.patch.object(
-            agent.plugin_rpc,
-            'update_floatingip_statuses') as mock_update_fip_status:
+        with mock.patch.object(agent.plugin_rpc,
+                'update_floatingip_statuses') as mock_update_fip_status:
             fip_id = _uuid()
             router = l3_test_common.prepare_router_data(num_internal_ports=1)
             router[lib_constants.FLOATINGIP_KEY] = [
@@ -2327,9 +2324,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_external_iptables_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        with mock.patch.object(
-            agent.plugin_rpc,
-            'update_floatingip_statuses') as mock_update_fip_status:
+        with mock.patch.object(agent.plugin_rpc,
+                'update_floatingip_statuses') as mock_update_fip_status:
             fip_id = _uuid()
             router = l3_test_common.prepare_router_data(num_internal_ports=1)
             router[lib_constants.FLOATINGIP_KEY] = [
@@ -2628,9 +2624,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                   'distributed': False}
         driver = metadata_driver.MetadataDriver
         with mock.patch.object(
-            driver, 'destroy_monitored_metadata_proxy') as destroy_proxy:
+                driver, 'destroy_monitored_metadata_proxy') as destroy_proxy:
             with mock.patch.object(
-                driver, 'spawn_monitored_metadata_proxy') as spawn_proxy:
+                    driver, 'spawn_monitored_metadata_proxy') as spawn_proxy:
                 agent._process_added_router(router)
                 if enableflag:
                     spawn_proxy.assert_called_with(

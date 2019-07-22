@@ -1447,7 +1447,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             ct_zone=10)
 
     def test_remove_conntrack_entries_for_port_sec_group_change_no_ct_zone(
-        self):
+            self):
 
         self._test_remove_conntrack_entries_for_port_sec_group_change(
             ct_zone=None)
@@ -1497,7 +1497,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'IPv4', direction, ct_zone=10)
 
     def test_remove_conntrack_entries_for_sg_member_changed_ipv4_no_ct_zone(
-        self):
+            self):
         for direction in ['ingress', 'egress']:
             self._test_remove_conntrack_entries_sg_member_changed(
                 'IPv4', direction, ct_zone=None)
@@ -1508,7 +1508,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'IPv6', direction, ct_zone=10)
 
     def test_remove_conntrack_entries_for_sg_member_changed_ipv6_no_ct_zone(
-        self):
+            self):
         for direction in ['ingress', 'egress']:
             self._test_remove_conntrack_entries_sg_member_changed(
                 'IPv6', direction, ct_zone=None)
@@ -2375,7 +2375,7 @@ class OVSHybridIptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
         # fill it up and then make sure an extra throws an error
         for i in range(ip_conntrack.ZONE_START,
-            ip_conntrack.MAX_CONNTRACK_ZONES):
+                       ip_conntrack.MAX_CONNTRACK_ZONES):
             self.firewall.ipconntrack._device_zone_map['dev-%s' % i] = i
         with testtools.ExpectedException(exceptions.CTZoneExhaustedError):
             self.firewall.ipconntrack._find_open_zone()

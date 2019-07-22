@@ -74,7 +74,7 @@ class L3RpcCallback(object):
         calling update_device_up.
         """
         if not extensions.is_extension_supported(
-            self.plugin, constants.PORT_BINDING_EXT_ALIAS):
+                self.plugin, constants.PORT_BINDING_EXT_ALIAS):
             return
         device_filter = {
             'device_owner': [constants.DEVICE_OWNER_ROUTER_HA_INTF],
@@ -117,7 +117,7 @@ class L3RpcCallback(object):
         context = neutron_context.get_admin_context()
         routers = self._routers_to_sync(context, router_ids, host)
         if extensions.is_extension_supported(
-            self.plugin, constants.PORT_BINDING_EXT_ALIAS):
+                self.plugin, constants.PORT_BINDING_EXT_ALIAS):
             self._ensure_host_set_on_ports(context, host, routers)
             # refresh the data structure after ports are bound
             routers = self._routers_to_sync(context, router_ids, host)
@@ -128,7 +128,7 @@ class L3RpcCallback(object):
 
     def _routers_to_sync(self, context, router_ids, host=None):
         if extensions.is_extension_supported(
-            self.l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
+                self.l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             routers = (
                 self.l3plugin.list_active_sync_routers_on_active_l3_agent(
                     context, host, router_ids))

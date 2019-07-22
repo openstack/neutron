@@ -128,7 +128,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertEqual(2, interface_rules_list_count)
 
     def test_dvr_update_gateway_port_no_fip_fg_port_recovers_itself_with_fpr(
-        self):
+            self):
         self.agent.conf.agent_mode = 'dvr'
         # Create the router with external net
         router_info = self.generate_dvr_router_info()
@@ -232,8 +232,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._assert_fip_namespace_deleted(external_gw_port)
 
     @mock.patch.object(dvr_fip_ns.FipNamespace, 'subscribe')
-    def test_dvr_process_fips_with_no_gw_port_in_namespace(
-        self, fip_subscribe):
+    def test_dvr_process_fips_with_no_gw_port_in_namespace(self,
+                                                           fip_subscribe):
         self.agent.conf.agent_mode = 'dvr'
 
         # Create the router with external net
@@ -584,8 +584,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.agent._register_router_cls(self.agent.router_factory)
         return router
 
-    def _get_fip_agent_gw_port_for_router(
-        self, external_gw_port):
+    def _get_fip_agent_gw_port_for_router(self, external_gw_port):
         # Add fip agent gateway port information to the router_info
         if external_gw_port:
             # Get values from external gateway port
@@ -915,16 +914,16 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertFalse(self._fixed_ip_rule_exists(router_ns, fixed_ip))
         self.assertTrue(self._fixed_ip_rule_exists(router_ns, new_fixed_ip))
 
-    def _assert_iptables_rules_exist(
-        self, router_iptables_manager, table_name, expected_rules):
+    def _assert_iptables_rules_exist(self, router_iptables_manager,
+                                     table_name, expected_rules):
         rules = router_iptables_manager.get_rules_for_table(table_name)
         for rule in expected_rules:
             self.assertIn(
                 str(iptables_manager.IptablesRule(rule[0], rule[1])), rules)
         return True
 
-    def _assert_iptables_rules_not_exist(
-        self, router_iptables_manager, table_name, expected_rules):
+    def _assert_iptables_rules_not_exist(self, router_iptables_manager,
+                                         table_name, expected_rules):
         rules = router_iptables_manager.get_rules_for_table(table_name)
         for rule in expected_rules:
             self.assertNotIn(
@@ -1092,8 +1091,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             router.router_id)
         self.assertTrue(self._namespace_exists(namespace))
 
-    def _get_dvr_snat_namespace_device_status(
-        self, router, internal_dev_name=None):
+    def _get_dvr_snat_namespace_device_status(self, router,
+                                              internal_dev_name=None):
         """Function returns the internal and external device status."""
         snat_ns = dvr_snat_ns.SnatNamespace.get_snat_ns_name(
             router.router_id)
@@ -1451,7 +1450,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
     @mock.patch.object(
         dvr_ha_router.DvrEdgeHaRouter, 'get_centralized_fip_cidr_set')
     def test_dvr_ha_router_with_centralized_fip_calls_keepalived_cidr(
-        self, connect_rtr_2_fip_mock, fip_cidr_centralized_mock):
+            self, connect_rtr_2_fip_mock, fip_cidr_centralized_mock):
 
         self._setup_dvr_ha_agents()
         self._setup_dvr_ha_bridges()
@@ -1470,7 +1469,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
     @mock.patch.object(
         dvr_edge_router.DvrEdgeRouter, 'get_centralized_fip_cidr_set')
     def test_dvr_router_with_centralized_fip_calls_keepalived_cidr(
-        self, connect_rtr_2_fip_mock, fip_cidr_centralized_mock):
+            self, connect_rtr_2_fip_mock, fip_cidr_centralized_mock):
 
         router_info = self.generate_dvr_router_info(
             enable_gw=True, enable_centralized_fip=True, snat_bound_fip=True)
@@ -1626,9 +1625,9 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.failover_agent._process_updated_router(router2.router)
         self.assertFalse(r2_chsfr.called)
 
-    def _setup_dvr_router_static_routes(
-        self, router_namespace=True,
-        check_fpr_int_rule_delete=False, enable_ha=False):
+    def _setup_dvr_router_static_routes(self, router_namespace=True,
+                                        check_fpr_int_rule_delete=False,
+                                        enable_ha=False):
         """Test to validate the extra routes on dvr routers."""
         self.agent.conf.agent_mode = 'dvr_snat'
         router_info = self.generate_dvr_router_info(
@@ -1739,20 +1738,20 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._setup_dvr_router_static_routes(router_namespace=False)
 
     def test_dvr_router_static_routes_in_snat_namespace_and_router_namespace(
-        self):
+            self):
         self._setup_dvr_router_static_routes()
 
     def test_dvr_ha_rtr_static_routes_in_rtr_namespace(self):
         self._setup_dvr_router_static_routes(enable_ha=True)
 
-    def test_dvr_router_rule_and_route_table_cleared_when_fip_removed(
-        self):
+    def test_dvr_router_rule_and_route_table_cleared_when_fip_removed(self):
         self._setup_dvr_router_static_routes(
             router_namespace=False, check_fpr_int_rule_delete=True)
 
-    def _assert_fip_namespace_interface_static_routes(
-        self, address_scopes, fpr_device,
-        router_info, rtr_2_fip, fpr_device_name):
+    def _assert_fip_namespace_interface_static_routes(self, address_scopes,
+                                                      fpr_device, router_info,
+                                                      rtr_2_fip,
+                                                      fpr_device_name):
         fixed_ips_1 = router_info[lib_constants.INTERFACE_KEY][0]['fixed_ips']
         fixed_ips_2 = router_info[lib_constants.INTERFACE_KEY][1]['fixed_ips']
         actual_routes = fpr_device.route.list_routes(
@@ -1790,9 +1789,11 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         else:
             self.assertEqual([], actual_routes)
 
-    def _assert_interface_rules_on_gateway_remove(
-        self, router, agent, address_scopes, agent_gw_port,
-        rfp_device, fpr_device, no_external=False):
+    def _assert_interface_rules_on_gateway_remove(self, router, agent,
+                                                  address_scopes,
+                                                  agent_gw_port, rfp_device,
+                                                  fpr_device,
+                                                  no_external=False):
 
         router.router[lib_constants.SNAT_ROUTER_INTF_KEY] = []
         router.router['gw_port'] = ""
@@ -1889,11 +1890,11 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             rfp_device, fpr_device)
 
     def test_dvr_fip_and_router_namespace_rules_with_address_scopes_match(
-        self):
+            self):
         self._setup_dvr_router_for_fast_path_exit(address_scopes=True)
 
     def test_dvr_fip_and_router_namespace_rules_with_address_scopes_mismatch(
-        self):
+            self):
         self._setup_dvr_router_for_fast_path_exit(address_scopes=False)
 
     @mock.patch.object(dvr_local_router.DvrLocalRouter,
@@ -1901,8 +1902,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
     @mock.patch.object(dvr_local_router.DvrLocalRouter,
                        '_add_interface_route_to_fip_ns')
     def test_dvr_no_external_router_namespace_rules_with_address_scopes_match(
-        self, mock_add_interface_route_rule,
-        mock_add_fip_interface_route_rule):
+            self, mock_add_interface_route_rule,
+            mock_add_fip_interface_route_rule):
         """Test to validate the router namespace routes.
 
         This test validates the router namespace routes
@@ -1978,8 +1979,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertIsNone(ex_gw_device.route.get_gateway())
         self.assertIsNone(fg_device.route.get_gateway())
 
-    def _assert_fip_namespace_deleted(
-        self, ext_gateway_port, assert_ovs_interface=True):
+    def _assert_fip_namespace_deleted(self, ext_gateway_port,
+                                      assert_ovs_interface=True):
         ext_net_id = ext_gateway_port['network_id']
         fip_ns = self.agent.get_fip_ns(ext_net_id)
         fip_ns.unsubscribe = mock.Mock()

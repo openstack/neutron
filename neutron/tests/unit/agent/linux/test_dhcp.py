@@ -2739,7 +2739,8 @@ class TestDnsmasq(TestBase):
             self.conf, FakeDualNetworkDualDHCP()))
 
     def _test__generate_opts_per_subnet_helper(
-        self, config_opts, expected_mdt_ip, network_class=FakeNetworkDhcpPort):
+            self, config_opts, expected_mdt_ip,
+            network_class=FakeNetworkDhcpPort):
         for key, value in config_opts.items():
             self.conf.set_override(key, value)
         dm = self._get_dnsmasq(network_class())

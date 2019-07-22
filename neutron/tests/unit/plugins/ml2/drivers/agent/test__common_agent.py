@@ -64,7 +64,8 @@ class TestCommonAgentLoop(base.BaseTestCase):
         manager.get_agent_configurations.return_value = {}
         manager.get_rpc_consumers.return_value = []
         with mock.patch.object(ca.CommonAgentLoop, '_validate_manager_class'),\
-            mock.patch.object(ca.CommonAgentLoop, '_validate_rpc_endpoints'):
+            mock.patch.object(ca.CommonAgentLoop,
+                              '_validate_rpc_endpoints'):
             self.agent = ca.CommonAgentLoop(manager, 0, 10, 'fake_agent',
                                             'foo-binary')
             with mock.patch.object(self.agent, "daemon_loop"):

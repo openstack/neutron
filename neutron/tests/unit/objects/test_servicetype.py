@@ -19,13 +19,12 @@ from neutron.tests.unit import testlib_api
 
 
 class ProviderResourceAssociationIfaceObjectTestCase(
-    obj_test_base.BaseObjectIfaceTestCase):
+        obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = servicetype.ProviderResourceAssociation
 
 
 class ProviderResourceAssociationDbObjectTestCase(
-    obj_test_base.BaseDbObjectTestCase,
-    testlib_api.SqlTestCase):
+        obj_test_base.BaseDbObjectTestCase, testlib_api.SqlTestCase):
 
     _test_class = servicetype.ProviderResourceAssociation
