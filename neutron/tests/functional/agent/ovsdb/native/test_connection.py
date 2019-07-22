@@ -45,7 +45,7 @@ class WaitForBridgesEvent(event.RowEvent):
         return self.event.wait(self.timeout)
 
 
-class BridgeMonitorTestCase(base.BaseLoggingTestCase):
+class BridgeMonitorTestCase(base.BaseSudoTestCase):
 
     def _delete_bridges(self, bridges):
         for bridge in bridges:

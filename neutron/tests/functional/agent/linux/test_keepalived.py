@@ -26,7 +26,7 @@ from neutron.tests.functional import base
 from neutron.tests.unit.agent.linux import test_keepalived
 
 
-class KeepalivedManagerTestCase(base.BaseLoggingTestCase,
+class KeepalivedManagerTestCase(base.BaseSudoTestCase,
                                 test_keepalived.KeepalivedConfBaseMixin):
 
     def setUp(self):
