@@ -1766,7 +1766,7 @@ class TestOvsNeutronAgent(object):
             self.agent.reclaim_local_vlan('net2')
             tun_br.delete_port.assert_called_once_with('gre-02020202')
 
-    def test_ext_br_recreated(self):
+    def _test_ext_br_recreated(self, setup_bridges_side_effect):
         bridge_mappings = {'physnet0': 'br-ex0',
                            'physnet1': 'br-ex1'}
         ex_br_mocks = [mock.Mock(br_name='br-ex0'),
@@ -1774,6 +1774,9 @@ class TestOvsNeutronAgent(object):
         phys_bridges = {'physnet0': ex_br_mocks[0],
                         'physnet1': ex_br_mocks[1]},
         bm_mock = mock.Mock()
+        bridges_added = ['br-ex0']
+        expected_added_bridges = (
+            bridges_added if setup_bridges_side_effect else [])
         with mock.patch(
             'neutron.agent.linux.ovsdb_monitor.get_bridges_monitor',
             return_value=bm_mock),\
@@ -1792,14 +1795,24 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(
                     self.agent,
                     'setup_physical_bridges') as setup_physical_bridges:
-            bm_mock.bridges_added = ['br-ex0']
+            bm_mock.bridges_added = bridges_added
+            setup_physical_bridges.side_effect = setup_bridges_side_effect
             try:
                 self.agent.rpc_loop(polling_manager=mock.Mock(),
                                     bridges_monitor=bm_mock)
             except TypeError:
                 pass
-        setup_physical_bridges.assert_called_once_with(
-            {'physnet0': 'br-ex0'})
+        # Setup bridges should be called once even if it will raise Runtime
+        # Error because there is raised TypeError in _agent_has_updates to stop
+        # agent after first loop iteration
+        setup_physical_bridges.assert_called_once_with({'physnet0': 'br-ex0'})
+        self.assertEqual(expected_added_bridges, self.agent.added_bridges)
+
+    def test_ext_br_recreated(self):
+        self._test_ext_br_recreated(setup_bridges_side_effect=None)
+
+    def test_ext_br_recreated_fail_setup_physical_bridge(self):
+        self._test_ext_br_recreated(setup_bridges_side_effect=RuntimeError)
 
     def test_daemon_loop_uses_polling_manager(self):
         ex_br_mock = mock.Mock(br_name="br-ex0")
