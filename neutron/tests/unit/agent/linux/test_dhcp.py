@@ -1205,7 +1205,8 @@ class TestDnsmasq(TestBase):
     def _test_spawn(self, extra_options, network=FakeDualNetwork(),
                     max_leases=16777216, lease_duration=86400,
                     has_static=True, no_resolv='--no-resolv',
-                    has_stateless=True, dhcp_t1=0, dhcp_t2=0):
+                    has_stateless=True, dhcp_t1=0, dhcp_t2=0,
+                    bridged=True):
         def mock_get_conf_file_name(kind):
             return '/dhcp/%s/%s' % (network.id, kind)
 
@@ -1225,8 +1226,12 @@ class TestDnsmasq(TestBase):
             '--dhcp-leasefile=/dhcp/%s/leases' % network.id,
             '--dhcp-match=set:ipxe,175',
             '--local-service',
-            '--bind-interfaces',
+            '--bind-dynamic',
         ]
+        if not bridged:
+            expected += [
+                '--bridge-interface=tap0,tap*'
+            ]
 
         seconds = ''
         if lease_duration == -1:
@@ -1299,6 +1304,11 @@ class TestDnsmasq(TestBase):
 
     def test_spawn(self):
         self._test_spawn(['--conf-file=', '--domain=openstacklocal'])
+
+    def test_spawn_not_bridged(self):
+        self.mock_mgr.return_value.driver.bridged = False
+        self._test_spawn(['--conf-file=', '--domain=openstacklocal'],
+                         bridged=False)
 
     def test_spawn_infinite_lease_duration(self):
         self.conf.set_override('dhcp_lease_duration', -1)
