@@ -353,14 +353,10 @@ class Dnsmasq(DhcpLocalProcess):
             '--dhcp-match=set:ipxe,175',
             '--dhcp-userclass=set:ipxe6,iPXE',
             '--local-service',
+            '--bind-dynamic',
         ]
-        if self.device_manager.driver.bridged:
+        if not self.device_manager.driver.bridged:
             cmd += [
-                '--bind-interfaces',
-            ]
-        else:
-            cmd += [
-                '--bind-dynamic',
                 '--bridge-interface=%s,tap*' % self.interface_name,
             ]
 
