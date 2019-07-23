@@ -315,3 +315,29 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
         self.assertNotIn('port_id', entry)
         self.assertNotIn('network_id', entry)
         self.assertIn(constants.NO_ACTIVE_BINDING, entry)
+
+    @mock.patch('neutron.agent.resource_cache.RemoteResourceCache')
+    def test_initialization_with_default_resources(self, rcache_class):
+        rcache_obj = mock.MagicMock()
+        rcache_class.return_value = rcache_obj
+
+        rpc.CacheBackedPluginApi(lib_topics.PLUGIN)
+
+        rcache_class.assert_called_once_with(
+            rpc.CacheBackedPluginApi.RESOURCE_TYPES)
+        rcache_obj.start_watcher.assert_called_once_with()
+
+    @mock.patch('neutron.agent.resource_cache.RemoteResourceCache')
+    def test_initialization_with_custom_resource(self, rcache_class):
+        CUSTOM = 'test'
+        rcache_obj = mock.MagicMock()
+        rcache_class.return_value = rcache_obj
+
+        class CustomCacheBackedPluginApi(rpc.CacheBackedPluginApi):
+            RESOURCE_TYPES = [resources.PORT, CUSTOM]
+
+        CustomCacheBackedPluginApi(lib_topics.PLUGIN)
+
+        rcache_class.assert_called_once_with(
+            CustomCacheBackedPluginApi.RESOURCE_TYPES)
+        rcache_obj.start_watcher.assert_called_once_with()
