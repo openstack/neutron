@@ -69,11 +69,20 @@ class HaRouter(router.RouterInfo):
         self.ha_port = None
         self.keepalived_manager = None
         self.state_change_callback = state_change_callback
+        self._ha_state = None
+        self._ha_state_path = None
 
     def create_router_namespace_object(
             self, router_id, agent_conf, iface_driver, use_ipv6):
         return HaRouterNamespace(
             router_id, agent_conf, iface_driver, use_ipv6)
+
+    @property
+    def ha_state_path(self):
+        if not self._ha_state_path and self.keepalived_manager:
+            self._ha_state_path = (self.keepalived_manager.
+                                   get_full_config_file_path('state'))
+        return self._ha_state_path
 
     @property
     def ha_priority(self):
@@ -85,22 +94,20 @@ class HaRouter(router.RouterInfo):
 
     @property
     def ha_state(self):
-        state = None
-        ha_state_path = self.keepalived_manager.get_full_config_file_path(
-            'state')
+        if self._ha_state:
+            return self._ha_state
         try:
-            with open(ha_state_path, 'r') as f:
-                state = f.read()
+            with open(self.ha_state_path, 'r') as f:
+                self._ha_state = f.read()
         except (OSError, IOError):
             LOG.debug('Error while reading HA state for %s', self.router_id)
-        return state or 'unknown'
+        return self._ha_state or 'unknown'
 
     @ha_state.setter
     def ha_state(self, new_state):
-        ha_state_path = self.keepalived_manager.get_full_config_file_path(
-            'state')
+        self._ha_state = new_state
         try:
-            with open(ha_state_path, 'w') as f:
+            with open(self.ha_state_path, 'w') as f:
                 f.write(new_state)
         except (OSError, IOError):
             LOG.error('Error while writing HA state for %s',

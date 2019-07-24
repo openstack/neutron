@@ -133,6 +133,12 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                                                       enable_pf_floating_ip),
                                                   qos_policy_id=qos_policy_id)
 
+    def change_router_state(self, router_id, state):
+        ri = self.agent.router_info.get(router_id)
+        if not ri:
+            self.fail('Router %s is not present in the L3 agent' % router_id)
+        ri.ha_state = state
+
     def _test_conntrack_disassociate_fip(self, ha):
         '''Test that conntrack immediately drops stateful connection
            that uses floating IP once it's disassociated.
@@ -494,7 +500,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         # so there's no need to check that explicitly.
         self.assertFalse(self._namespace_exists(router.ns_name))
         common_utils.wait_until_true(
-            lambda: not self._metadata_proxy_exists(self.agent.conf, router))
+            lambda: not self._metadata_proxy_exists(self.agent.conf, router),
+            timeout=10)
 
     def _assert_snat_chains(self, router):
         self.assertFalse(router.iptables_manager.is_chain_empty(
