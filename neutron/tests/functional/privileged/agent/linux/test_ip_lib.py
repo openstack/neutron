@@ -612,3 +612,9 @@ class GetLinkAttributesTestCase(functional_base.BaseSudoTestCase):
         ifla_link_kind = ip_lib.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND')
         self.assertEqual('dummy', ifla_link_kind)
         self.assertEqual(ifla_link_kind, self.device.link.link_kind)
+
+    def test_get_link_attributes(self):
+        expected_attr = ['mtu', 'qlen', 'state', 'qdisc', 'brd', 'link/ether',
+                         'alias', 'allmulticast', 'link_kind']
+        attr = self.device.link.attributes
+        self.assertSetEqual(set(expected_attr), set(attr.keys()))
