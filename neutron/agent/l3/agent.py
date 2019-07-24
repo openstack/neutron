@@ -540,6 +540,15 @@ class L3NATAgent(ha.AgentMixin,
         return True
 
     def _router_removed(self, ri, router_id):
+        """Delete the router and stop the auxiliary processes
+
+        This stops the auxiliary processes (keepalived, keepvalived-state-
+        change, radvd, etc) and deletes the router ports and the namespace.
+        The "router_info" cache is updated too at the beginning of the process,
+        to avoid any other concurrent process to handle the router being
+        deleted. If an exception is raised, the "router_info" cache is
+        restored.
+        """
         if ri is None:
             LOG.warning("Info for router %s was not found. "
                         "Performing router cleanup", router_id)
@@ -551,8 +560,12 @@ class L3NATAgent(ha.AgentMixin,
                              self.context, states=(ri,),
                              resource_id=router_id))
 
-        ri.delete()
         del self.router_info[router_id]
+        try:
+            ri.delete()
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                self.router_info[router_id] = ri
 
         registry.notify(resources.ROUTER, events.AFTER_DELETE, self, router=ri)
 
