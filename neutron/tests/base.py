@@ -230,7 +230,7 @@ class DietTestCase(base.BaseTestCase):
                 debugger))
 
         # Make sure we see all relevant deprecation warnings when running tests
-            self.useFixture(fixture.WarningsFixture(module_re=['^neutron\\.']))
+        self.useFixture(fixture.WarningsFixture(module_re=['^neutron\\.']))
 
         self.useFixture(fixture.DBQueryHooksFixture())
 
