@@ -592,3 +592,23 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
             priv_ip_lib.add_ip_route(self.namespace, None, ip_version,
                                      device=self.device_name, via=_ip)
             self._check_gateway(_ip)
+
+
+class GetLinkAttributesTestCase(functional_base.BaseSudoTestCase):
+
+    def setUp(self):
+        super(GetLinkAttributesTestCase, self).setUp()
+        self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
+        self.device_name = 'test_device'
+        ip_lib.IPWrapper(self.namespace).add_dummy(self.device_name)
+        self.device = ip_lib.IPDevice(self.device_name, self.namespace)
+        self.pyroute_dev = priv_ip_lib.get_link_devices(
+            self.namespace, ifname=self.device_name)
+        self.assertEqual(1, len(self.pyroute_dev))
+        self.pyroute_dev = self.pyroute_dev[0]
+
+    def test_get_link_attribute_kind(self):
+        ifla_linkinfo = ip_lib.get_attr(self.pyroute_dev, 'IFLA_LINKINFO')
+        ifla_link_kind = ip_lib.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND')
+        self.assertEqual('dummy', ifla_link_kind)
+        self.assertEqual(ifla_link_kind, self.device.link.link_kind)
