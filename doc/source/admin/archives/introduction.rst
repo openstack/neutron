@@ -12,7 +12,7 @@ firewalls, and IPsec VPN.
 
 For a detailed description of the Networking API abstractions and their
 attributes, see the `OpenStack Networking API v2.0
-Reference <https://developer.openstack.org/api-ref/networking/v2/>`__.
+Reference <https://docs.openstack.org/api-ref/network/v2/>`__.
 
 .. note::
 

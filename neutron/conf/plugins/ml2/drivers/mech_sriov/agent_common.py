@@ -70,7 +70,7 @@ sriov_nic_opts = [
                        "max_unit:int, min_unit:int, "
                        "reserved:int, step_size:int, "
                        "See also: "
-                       "https://developer.openstack.org/api-ref/placement/"
+                       "https://docs.openstack.org/api-ref/placement/"
                        "#update-resource-provider-inventories")),
 ]
 

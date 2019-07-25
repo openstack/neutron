@@ -84,7 +84,7 @@ Limitations
   resize, evacuate, live-migrate and unshelve after shelve-offload) is to be
   implemented later.  For the definitive documentation please refer to the
   `Port with Resource Request chapter
-  <https://developer.openstack.org/api-guide/compute/port_with_resource_request.html>`_
+  <https://docs.openstack.org/api-guide/compute/port_with_resource_request.html>`_
   of the OpenStack Compute API Guide.
 
 * If an SR-IOV physical function is configured for use by the
@@ -202,7 +202,7 @@ per-agent basis by setting
 :oslo.config:option:`ovs.resource_provider_inventory_defaults`.
 Valid values are all the
 `optional parameters of the update resource provider inventory call
-<https://developer.openstack.org/api-ref/placement/?expanded=update-resource-provider-inventory-detail#update-resource-provider-inventory>`_.
+<https://docs.openstack.org/api-ref/placement/?expanded=update-resource-provider-inventory-detail#update-resource-provider-inventory>`_.
 
 ``/etc/neutron/plugins/ml2/ovs_agent.ini`` (on compute and network nodes):
 
@@ -554,7 +554,7 @@ Links
 
 * Nova documentation on using a port with ``resource_request``
 
-  * `API Guide <https://developer.openstack.org/api-guide/compute/port_with_resource_request.html>`_
+  * `API Guide <https://docs.openstack.org/api-guide/compute/port_with_resource_request.html>`_
   * `Admin Guide <https://docs.openstack.org/nova/latest/admin/port_with_resource_request.html>`_
 
 * Neutron spec: QoS minimum bandwidth allocation in Placement API
@@ -571,9 +571,9 @@ Links
 
 * Relevant OpenStack Networking API references
 
-  * https://developer.openstack.org/api-ref/network/v2/#agent-resources-synced-extension
-  * https://developer.openstack.org/api-ref/network/v2/#port-resource-request
-  * https://developer.openstack.org/api-ref/network/v2/#qos-minimum-bandwidth-rules
+  * https://docs.openstack.org/api-ref/network/v2/#agent-resources-synced-extension
+  * https://docs.openstack.org/api-ref/network/v2/#port-resource-request
+  * https://docs.openstack.org/api-ref/network/v2/#qos-minimum-bandwidth-rules
 
 * Microversion histories
 

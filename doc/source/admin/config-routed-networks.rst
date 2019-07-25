@@ -61,7 +61,7 @@ provider networks. We recommend using the following procedure:
    * Segmentation ID
 
    For example, ``provider1``, ``VLAN``, and ``2016``. See the
-   `API reference <https://developer.openstack.org/api-ref/networking/v2/#segments>`__
+   `API reference <https://docs.openstack.org/api-ref/network/v2/#segments>`__
    for more information.
 
    Within a network, use a unique physical network name for each segment which

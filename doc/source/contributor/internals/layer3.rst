@@ -251,5 +251,5 @@ Further Reading
 
 * `Packet Pushers - Neutron Network Implementation on Linux <http://packetpushers.net/openstack-quantum-network-implementation-in-linux/>`_
 * `OpenStack Networking Guide <../../admin/index.html>`_
-* `Neutron - Layer 3 API extension <https://developer.openstack.org/api-ref/networking/v2/index.html#layer-3-networking>`_
+* `Neutron - Layer 3 API extension <https://docs.openstack.org/api-ref/network/v2/index.html#layer-3-networking>`_
 * `Darragh O'Reilly -  The Quantum L3 router and floating IPs <http://techbackground.blogspot.com/2013/05/the-quantum-l3-router-and-floating-ips.html>`_

@@ -88,7 +88,7 @@ ovs_opts = [
                        "max_unit:int, min_unit:int, "
                        "reserved:int, step_size:int, "
                        "See also: "
-                       "https://developer.openstack.org/api-ref/placement/"
+                       "https://docs.openstack.org/api-ref/placement/"
                        "#update-resource-provider-inventories")),
     cfg.BoolOpt('use_veth_interconnection', default=False,
                 help=_("Use veths instead of patch ports to interconnect the "
