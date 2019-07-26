@@ -9,7 +9,7 @@ General Feature Support
 
 This document covers the maturity and support of the Neutron API
 and its API extensions. Details about the API can be found at
-`Networking API v2.0 <http://developer.openstack.org/api-ref/networking/v2/>`_.
+`Networking API v2.0 <https://docs.openstack.org/api-ref/network/v2/>`_.
 
 When considering which capabilities should be marked as mature the
 following general guiding principles were applied:

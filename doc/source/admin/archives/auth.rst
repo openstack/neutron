@@ -11,7 +11,7 @@ to the Networking service must provide an authentication token in
 authenticating with the Identity service endpoint. For more information
 about authentication with the Identity service, see `OpenStack Identity
 service API v3
-Reference <https://developer.openstack.org/api-ref/identity/v3/>`__.
+Reference <https://docs.openstack.org/api-ref/identity/v3/>`__.
 When the Identity service is enabled, it is not mandatory to specify the
 project ID for resources in create requests because the project ID is
 derived from the authentication token.

@@ -80,7 +80,7 @@ mature OpenStack projects:
 * Exhaustive documentation: it is expected that each project will have a
   :doc:`developer </contributor/index>`,
   :doc:`user/operator </admin/index>`
-  and `API <http://developer.openstack.org/api-ref/networking/>`_
+  and `API <https://docs.openstack.org/api-ref/network/>`_
   documentations available.
 
 * Exhaustive OpenStack CI coverage: unit, functional, and tempest coverage
@@ -229,7 +229,7 @@ Checklist
   #. https://review.opendev.org/#/c/359143/
 
 * How to port api-ref over to neutron-lib: to publish the subproject
-  API reference into the `Networking API guide <http://developer.openstack.org/api-ref/networking/>`_
+  API reference into the `Networking API guide <https://docs.openstack.org/api-ref/network/>`_
   you must contribute the API documentation into neutron-lib's api-ref
   directory as done in the `WADL/REST transition patch <https://review.opendev.org/#/c/327510/>`_.
   Once this is done successfully, a link to the subproject API will

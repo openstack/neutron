@@ -65,7 +65,7 @@ Health monitor
 
 LBaaS v2 has multiple implementations via different service plug-ins. The two
 most common implementations use either an agent or the Octavia services. Both
-implementations use the `LBaaS v2 API <https://developer.openstack.org/api-ref/networking/v2/#lbaas-2-0-stable>`_.
+implementations use the `LBaaS v2 API <https://docs.openstack.org/api-ref/network/v2/#lbaas-2-0-stable>`_.
 
 Configurations
 ~~~~~~~~~~~~~~
