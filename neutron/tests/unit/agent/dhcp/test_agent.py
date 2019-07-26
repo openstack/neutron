@@ -458,6 +458,32 @@ class TestDhcpAgent(base.BaseTestCase):
         # should have been called with all ports again after the failure
         ready.assert_has_calls([mock.call(set(range(4)))] * 2)
 
+    def test_dhcp_ready_ports_loop_with_limit_ports_per_call(self):
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        sync_max = dhcp_agent.DHCP_READY_PORTS_SYNC_MAX
+        port_count = sync_max + 1
+        dhcp.dhcp_ready_ports = set(range(port_count))
+
+        with mock.patch.object(dhcp.plugin_rpc,
+                               'dhcp_ready_on_ports') as ready:
+            # exit after 2 iterations
+            with mock.patch.object(dhcp_agent.eventlet, 'sleep',
+                                   side_effect=[0, 0, RuntimeError]):
+                with testtools.ExpectedException(RuntimeError):
+                    dhcp._dhcp_ready_ports_loop()
+
+        # all ports should have been processed
+        self.assertEqual(set(), dhcp.dhcp_ready_ports)
+        # two calls are expected, one with DHCP_READY_PORTS_SYNC_MAX ports,
+        # second one with one port
+        self.assertEqual(2, ready.call_count)
+        self.assertEqual(sync_max, len(ready.call_args_list[0][0][0]))
+        self.assertEqual(1, len(ready.call_args_list[1][0][0]))
+        # all ports need to be ready
+        ports_ready = (ready.call_args_list[0][0][0] |
+                       ready.call_args_list[1][0][0])
+        self.assertEqual(set(range(port_count)), ports_ready)
+
     def test_dhcp_ready_ports_updates_after_enable_dhcp(self):
         dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         self.assertEqual(set(), dhcp.dhcp_ready_ports)
