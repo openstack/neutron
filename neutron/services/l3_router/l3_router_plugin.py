@@ -48,6 +48,7 @@ from neutron.db import l3_gateway_ip_qos
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
 from neutron.db.models import l3 as l3_models
+from neutron.extensions import _admin_state_down_before_update_lib
 from neutron.quota import resource_registry
 from neutron import service
 from neutron.services.l3_router.service_providers import driver_controller
@@ -100,7 +101,8 @@ class L3RouterPlugin(service_base.ServicePluginBase,
                                     fip_port_details.ALIAS,
                                     floatingip_pools.ALIAS,
                                     qos_gateway_ip.ALIAS,
-                                    l3_port_ip_change_not_allowed.ALIAS]
+                                    l3_port_ip_change_not_allowed.ALIAS,
+                                    _admin_state_down_before_update_lib.ALIAS]
 
     __native_pagination_support = True
     __native_sorting_support = True

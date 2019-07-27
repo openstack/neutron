@@ -81,7 +81,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def test_create_router_db_distributed(self):
         self._test__create_router_db(expected=True, distributed=True)
 
-    def test__validate_router_migration_on_router_update(self):
+    def _test__validate_router_migration_on_router_update(self, mock_arg):
         router = {
             'name': 'foo_router',
             'admin_state_up': True,
@@ -91,7 +91,24 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self.assertFalse(self.mixin._validate_router_migration(
             self.ctx, router_db, {'name': 'foo_router_2'}))
 
-    def test__validate_router_migration_raise_error(self):
+    # mock the check function to indicate that the variable
+    # _admin_state_down_necessary set to True
+    @mock.patch('neutron.db.l3_dvr_db.is_admin_state_down_necessary',
+                return_value=True)
+    def test__validate_router_migration_on_router_update_mock(self,
+            mock_arg):
+        # call test with admin_state_down_before_update ENABLED
+        self._test__validate_router_migration_on_router_update(mock_arg)
+
+    # mock the check function to indicate that the variable
+    # _admin_state_down_necessary set to False
+    @mock.patch('neutron.db.l3_dvr_db.is_admin_state_down_necessary',
+                return_value=False)
+    def test__validate_router_migration_on_router_update(self, mock_arg):
+        # call test with admin_state_down_before_update DISABLED
+        self._test__validate_router_migration_on_router_update(mock_arg)
+
+    def _test__validate_router_migration_raise_error(self):
         router = {
             'name': 'foo_router',
             'admin_state_up': True,
@@ -102,10 +119,87 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                           self.mixin._validate_router_migration,
                           self.ctx, router_db, {'distributed': False})
 
-    def test_upgrade_active_router_to_distributed_validation_failure(self):
-        router = {'name': 'foo_router', 'admin_state_up': True}
+    @mock.patch('neutron.db.l3_dvr_db.is_admin_state_down_necessary',
+                return_value=True)
+    def test__validate_router_migration_raise_error_mocked(self, mock_arg):
+        # call test with admin_state_down_before_update ENABLED
+        self._test__validate_router_migration_raise_error()
+
+    @mock.patch('neutron.db.l3_dvr_db.is_admin_state_down_necessary',
+                return_value=False)
+    def test__validate_router_migration_raise_error(self, mock_arg):
+        # call test with admin_state_down_before_update DISABLED
+        self._test__validate_router_migration_raise_error()
+
+    @mock.patch('neutron.db.l3_dvr_db.is_admin_state_down_necessary',
+                return_value=True)
+    def test__validate_router_migration_old_router_up_raise_error(self,
+            mock_arg):
+        # call test with admin_state_down_before_update ENABLED
+        old_router = {
+            'name': 'bar_router',
+            'admin_state_up': True,
+            'distributed': True
+        }
+        new_router = {
+            'name': 'foo_router',
+            'admin_state_up': False,
+            'distributed': False
+        }
+        update = {'distributed': False}
+        router_db = self._create_router(new_router)
+        self.assertRaises(exceptions.BadRequest,
+                          self.mixin._validate_router_migration,
+                          self.ctx, router_db, update,
+                          old_router)
+
+    def _test_upgrade_inactive_router_to_distributed_validation_success(self):
+        router = {'name': 'foo_router', 'admin_state_up': False,
+                 'distributed': False}
         router_db = self._create_router(router)
         update = {'distributed': True}
+        self.assertTrue(self.mixin._validate_router_migration(
+            self.ctx, router_db, update))
+
+    @mock.patch('neutron.db.l3_dvr_db.is_admin_state_down_necessary',
+                return_value=True)
+    def test_upgrade_inactive_router_to_distributed_validation_success_mocked(
+            self, mock_arg):
+        # call test with admin_state_down_before_update ENABLED
+        self._test_upgrade_inactive_router_to_distributed_validation_success()
+
+    @mock.patch('neutron.db.l3_dvr_db.is_admin_state_down_necessary',
+                return_value=False)
+    def test_upgrade_inactive_router_to_distributed_validation_success(self,
+            mock_arg):
+        # call test with admin_state_down_before_update DISABLED
+        self._test_upgrade_inactive_router_to_distributed_validation_success()
+
+    def _test_upgrade_active_router_to_distributed_validation_failure(self):
+        router = {'name': 'foo_router', 'admin_state_up': True,
+                 'distributed': False}
+        router_db = self._create_router(router)
+        update = {'distributed': True}
+        self.assertRaises(exceptions.BadRequest,
+                          self.mixin._validate_router_migration,
+                          self.ctx, router_db, update)
+
+    @mock.patch('neutron.db.l3_dvr_db.is_admin_state_down_necessary',
+                return_value=True)
+    def test_upgrade_active_router_to_distributed_validation_failure(self,
+            mock_arg):
+        # call test with admin_state_down_before_update ENABLED
+        self._test_upgrade_active_router_to_distributed_validation_failure()
+
+    @mock.patch('neutron.db.l3_dvr_db.is_admin_state_down_necessary',
+                return_value=True)
+    def test_downgrade_active_router_to_centralized_validation_failure(self,
+            mock_arg):
+        # call test with admin_state_down_before_update ENABLED
+        router = {'name': 'foo_router', 'admin_state_up': True,
+                'distributed': True}
+        router_db = self._create_router(router)
+        update = {'distributed': False}
         self.assertRaises(exceptions.BadRequest,
                           self.mixin._validate_router_migration,
                           self.ctx, router_db, update)
@@ -557,7 +651,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 fip, floatingip, router))
         self.assertFalse(create_fip.called)
 
-    def test_update_router_gw_info_external_network_change(self):
+    def _test_update_router_gw_info_external_network_change(self):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
                        'distributed': True}
         router = self._create_router(router_dict)
@@ -588,6 +682,19 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             csnat_ports = self.core_plugin.get_ports(
                 self.ctx, filters=csnat_filters)
             self.assertEqual(1, len(csnat_ports))
+
+    @mock.patch('neutron.db.l3_dvr_db.is_admin_state_down_necessary',
+                return_value=True)
+    def test_update_router_gw_info_external_network_change_mocked(self,
+            mock_arg):
+        # call test with admin_state_down_before_update ENABLED
+        self._test_update_router_gw_info_external_network_change()
+
+    @mock.patch('neutron.db.l3_dvr_db.is_admin_state_down_necessary',
+                return_value=False)
+    def test_update_router_gw_info_external_network_change(self, mock_arg):
+        # call test with admin_state_down_before_update DISABLED
+        self._test_update_router_gw_info_external_network_change()
 
     def _test_csnat_ports_removal(self, ha=False):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
@@ -851,7 +958,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self.ctx, filters=dvr_filters)
         self.assertEqual(1, len(dvr_ports))
 
-    def test__validate_router_migration_notify_advanced_services(self):
+    def _test__validate_router_migration_notify_advanced_services(self):
         router = {'name': 'foo_router', 'admin_state_up': False}
         router_db = self._create_router(router)
         with mock.patch.object(l3_dvr_db.registry, 'notify') as mock_notify:
@@ -860,6 +967,14 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             kwargs = {'context': self.ctx, 'router': router_db}
             mock_notify.assert_called_once_with(
                 'router', 'before_update', self.mixin, **kwargs)
+
+    def test__validate_router_migration_notify_advanced_services_mocked(self):
+        # call test with admin_state_down_before_update ENABLED
+        self._test__validate_router_migration_notify_advanced_services()
+
+    def test__validate_router_migration_notify_advanced_services(self):
+        # call test with admin_state_down_before_update DISABLED
+        self._test__validate_router_migration_notify_advanced_services()
 
     def test_validate_add_router_interface_by_subnet_notify_advanced_services(
             self):
