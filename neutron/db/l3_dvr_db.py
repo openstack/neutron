@@ -30,6 +30,7 @@ from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as plugin_utils
+from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import helpers as log_helper
 from oslo_log import log as logging
@@ -966,13 +967,9 @@ class _DVRAgentInterfaceMixin(object):
 
     def create_fip_agent_gw_port_if_not_exists(
         self, context, network_id, host):
-        """Function to return the FIP Agent GW port.
-
-        This function will create a FIP Agent GW port
-        if required. If the port already exists, it
-        will return the existing port and will not
-        create a new one.
-        """
+        # TODO(slaweq): add proper constraint on database level to avoid
+        # creation of duplicated Floating IP gateway ports for same network and
+        # same L3 agent. When this will be done, we can get rid of this lock.
         try:
             l3_agent_db = self._get_agent_by_type_and_host(
                 context, const.AGENT_TYPE_L3, host)
@@ -984,32 +981,48 @@ class _DVRAgentInterfaceMixin(object):
         l3_agent_mode = self._get_agent_mode(l3_agent_db)
         if l3_agent_mode == const.L3_AGENT_MODE_DVR_NO_EXTERNAL:
             return
-        if l3_agent_db:
-            LOG.debug("Agent ID exists: %s", l3_agent_db['id'])
-            agent_port = self._get_agent_gw_ports_exist_for_network(
-                context, network_id, host, l3_agent_db['id'])
-            if not agent_port:
-                LOG.info("Floating IP Agent Gateway port does not exist, "
-                         "creating one")
-                port_data = {'tenant_id': '',
-                             'network_id': network_id,
-                             'device_id': l3_agent_db['id'],
-                             'device_owner': const.DEVICE_OWNER_AGENT_GW,
-                             portbindings.HOST_ID: host,
-                             'admin_state_up': True,
-                             'name': ''}
-                agent_port = plugin_utils.create_port(
-                    self._core_plugin, context, {'port': port_data})
-                if not agent_port:
-                    msg = _("Unable to create Floating IP Agent Gateway port")
-                    raise n_exc.BadRequest(resource='router', msg=msg)
-                LOG.debug("Floating IP Agent Gateway port %(gw)s created "
-                          "for the destination host: %(dest_host)s",
-                          {'gw': agent_port,
-                           'dest_host': host})
+        if not l3_agent_db:
+            return
+        lock_name = 'fip-gw-lock-' + network_id + '-' + host
+        with lockutils.lock(lock_name, external=True):
+            return self._create_fip_agent_gw_port_if_not_exists(
+                context, network_id, host, l3_agent_db)
 
-            self._populate_mtu_and_subnets_for_ports(context, [agent_port])
-            return agent_port
+    def _create_fip_agent_gw_port_if_not_exists(self, context, network_id,
+                                                host, l3_agent_db):
+        """Function to return the FIP Agent GW port.
+
+        This function will create a FIP Agent GW port
+        if required. If the port already exists, it
+        will return the existing port and will not
+        create a new one.
+        """
+        LOG.debug("Agent ID exists: %s", l3_agent_db['id'])
+        agent_port = self._get_agent_gw_ports_exist_for_network(
+            context, network_id, host, l3_agent_db['id'])
+        if not agent_port:
+            LOG.info("Floating IP Agent Gateway port for network %s "
+                     "does not exist on host %s. Creating one.",
+                     network_id, host)
+            port_data = {'tenant_id': '',
+                         'network_id': network_id,
+                         'device_id': l3_agent_db['id'],
+                         'device_owner': const.DEVICE_OWNER_AGENT_GW,
+                         portbindings.HOST_ID: host,
+                         'admin_state_up': True,
+                         'name': ''}
+            agent_port = plugin_utils.create_port(
+                self._core_plugin, context, {'port': port_data})
+            if not agent_port:
+                msg = _("Unable to create Floating IP Agent Gateway port")
+                raise n_exc.BadRequest(resource='router', msg=msg)
+            LOG.debug("Floating IP Agent Gateway port %(gw)s created "
+                      "for the destination host: %(dest_host)s",
+                      {'gw': agent_port,
+                       'dest_host': host})
+
+        self._populate_mtu_and_subnets_for_ports(context, [agent_port])
+        return agent_port
 
     def _generate_arp_table_and_notify_agent(
         self, context, fixed_ip, mac_address, notifier):
