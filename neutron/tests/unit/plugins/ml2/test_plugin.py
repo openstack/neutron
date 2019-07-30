@@ -842,6 +842,14 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                 plugin.update_port_status(ctx, short_id, 'UP')
                 mock_gbl.assert_called_once_with(mock.ANY, port_id, mock.ANY)
 
+    def test_update_port_with_empty_data(self):
+        ctx = context.get_admin_context()
+        plugin = directory.get_plugin()
+        with self.port() as port:
+            port_id = port['port']['id']
+            new_port = plugin.update_port(ctx, port_id, {"port": {}})
+            self.assertEqual(port["port"], new_port)
+
     def _add_fake_dhcp_agent(self):
         agent = mock.Mock()
         plugin = directory.get_plugin()
