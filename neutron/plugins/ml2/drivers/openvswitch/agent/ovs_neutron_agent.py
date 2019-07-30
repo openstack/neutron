@@ -187,6 +187,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # keeps association between ports and ofports to detect ofport change
         self.vifname_to_ofport_map = {}
         self.setup_rpc()
+        # Stores newly created bridges
+        self.added_bridges = list()
         self.bridge_mappings = self._parse_bridge_mappings(
             ovs_conf.bridge_mappings)
         self.rp_bandwidths = place_utils.parse_rp_bandwidths(
@@ -1160,6 +1162,21 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                         self.arp_responder_enabled)
 
     def _reconfigure_physical_bridges(self, bridges):
+        try:
+            sync = self._do_reconfigure_physical_bridges(bridges)
+            self.added_bridges = []
+        except RuntimeError:
+            # If there was error and bridges aren't properly reconfigured,
+            # there is no need to do full sync once again. It will be done when
+            # reconfiguration of physical bridges will be finished without
+            # errors
+            sync = False
+            self.added_bridges = bridges
+            LOG.warning("RuntimeError during setup of physical bridges: %s",
+                        bridges)
+        return sync
+
+    def _do_reconfigure_physical_bridges(self, bridges):
         sync = False
         bridge_mappings = {}
         for bridge in bridges:
@@ -2193,8 +2210,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 self.loop_count_and_wait(start, port_stats)
                 continue
             # Check if any physical bridge wasn't recreated recently
+            added_bridges = idl_monitor.bridges_added + self.added_bridges
             bridges_recreated = self._reconfigure_physical_bridges(
-                idl_monitor.bridges_added)
+                added_bridges)
             sync |= bridges_recreated
             # Notify the plugin of tunnel IP
             if self.enable_tunneling and tunnel_sync:
