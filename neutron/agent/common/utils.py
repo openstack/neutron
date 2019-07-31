@@ -44,17 +44,20 @@ get_root_helper_child_pid = utils.get_root_helper_child_pid
 pid_invoked_with_cmdline = utils.pid_invoked_with_cmdline
 
 
-def load_interface_driver(conf):
+def load_interface_driver(conf, get_networks_callback=None):
     """Load interface driver for agents like DHCP or L3 agent.
 
-    :param conf: driver configuration object
+    :param conf: Driver configuration object
+    :param get_networks_callback: A callback to get network information.
+                                  This will be passed as additional keyword
+                                  argument to the interface driver.
     :raises SystemExit of 1 if driver cannot be loaded
     """
 
     try:
         loaded_class = runtime.load_class_by_alias_or_classname(
                 INTERFACE_NAMESPACE, conf.interface_driver)
-        return loaded_class(conf)
+        return loaded_class(conf, get_networks_callback=get_networks_callback)
     except ImportError:
         LOG.error("Error loading interface driver '%s'",
                   conf.interface_driver)

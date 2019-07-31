@@ -1209,7 +1209,9 @@ class DeviceManager(object):
     def __init__(self, conf, plugin):
         self.conf = conf
         self.plugin = plugin
-        self.driver = agent_common_utils.load_interface_driver(conf)
+        self.driver = agent_common_utils.load_interface_driver(
+            conf,
+            get_networks_callback=self.plugin.get_networks)
 
     def get_interface_name(self, network, port):
         """Return interface(device) name for use by the DHCP process."""

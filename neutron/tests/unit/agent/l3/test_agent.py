@@ -14,6 +14,7 @@
 #    under the License.
 
 import copy
+import functools
 from itertools import chain as iter_chain
 from itertools import combinations as iter_combinations
 
@@ -33,6 +34,7 @@ from oslo_utils import uuidutils
 from testtools import matchers
 
 from neutron.agent.common import resource_processing_queue
+from neutron.agent.common import utils as common_utils
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import dvr_edge_ha_router
 from neutron.agent.l3 import dvr_edge_router as dvr_router
@@ -4013,3 +4015,12 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             floating_ips[0], mock.sentinel.interface_name, device)
         ri.remove_floating_ip.assert_called_once_with(
             device, need_to_remove_fip[0]['cidr'])
+
+    @mock.patch.object(functools, 'partial')
+    @mock.patch.object(common_utils, 'load_interface_driver')
+    def test_interface_driver_init(self, load_driver_mock, funct_partial_mock):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        load_driver_mock.assert_called_once_with(
+                self.conf, get_networks_callback=mock.ANY)
+        funct_partial_mock.assert_called_once_with(
+            self.plugin_api.get_networks, agent.context)

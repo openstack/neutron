@@ -13,6 +13,8 @@
 #    under the License.
 #
 
+import functools
+
 import eventlet
 import netaddr
 from neutron_lib.agent import constants as agent_consts
@@ -292,10 +294,14 @@ class L3NATAgent(ha.AgentMixin,
             config=self.conf,
             resource_type='router')
 
-        self.driver = common_utils.load_interface_driver(self.conf)
-
         self._context = n_context.get_admin_context_without_session()
         self.plugin_rpc = L3PluginApi(topics.L3PLUGIN, host)
+
+        self.driver = common_utils.load_interface_driver(
+            self.conf,
+            get_networks_callback=functools.partial(
+                self.plugin_rpc.get_networks, self.context))
+
         self.fullsync = True
         self.sync_routers_chunk_size = SYNC_ROUTERS_MAX_CHUNK_SIZE
 
