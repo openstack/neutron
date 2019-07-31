@@ -13,6 +13,7 @@
 #    under the License.
 #
 
+from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib.db import api as db_api
@@ -137,9 +138,10 @@ def provisioning_complete(context, object_id, object_type, entity):
             context, standard_attr_id=standard_attr_id):
         LOG.debug("Provisioning complete for %(otype)s %(oid)s triggered by "
                   "entity %(entity)s.", log_dict)
-        registry.notify(object_type, PROVISIONING_COMPLETE,
-                        'neutron.db.provisioning_blocks',
-                        context=context, object_id=object_id)
+        registry.publish(object_type, PROVISIONING_COMPLETE,
+                         'neutron.db.provisioning_blocks',
+                         payload=events.DBEventPayload(
+                             context, resource_id=object_id))
 
 
 @db_api.retry_if_session_inactive()

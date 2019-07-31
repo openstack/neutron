@@ -284,10 +284,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     @registry.receives(resources.PORT,
                        [provisioning_blocks.PROVISIONING_COMPLETE])
-    def _port_provisioned(self, rtype, event, trigger, context, object_id,
-                          **kwargs):
-        port_id = object_id
-        port = db.get_port(context, port_id)
+    def _port_provisioned(self, rtype, event, trigger, payload=None):
+        port_id = payload.resource_id
+        port = db.get_port(payload.context, port_id)
         port_binding = p_utils.get_port_binding_by_status_and_host(
             getattr(port, 'port_bindings', []), const.ACTIVE)
         if not port or not port_binding:
@@ -306,7 +305,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # one last time to detect the case where we were triggered by an
             # unbound port and the port became bound with new provisioning
             # blocks before 'get_port' was called above
-            if provisioning_blocks.is_object_blocked(context, port_id,
+            if provisioning_blocks.is_object_blocked(payload.context, port_id,
                                                      resources.PORT):
                 LOG.debug("Port %s had new provisioning blocks added so it "
                           "will not transition to active.", port_id)
@@ -315,7 +314,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             LOG.debug("Port %s is administratively disabled so it will "
                       "not transition to active.", port_id)
             return
-        self.update_port_status(context, port_id, const.PORT_STATUS_ACTIVE)
+        self.update_port_status(
+            payload.context, port_id, const.PORT_STATUS_ACTIVE)
 
     @log_helpers.log_method_call
     def _start_rpc_notifiers(self):
