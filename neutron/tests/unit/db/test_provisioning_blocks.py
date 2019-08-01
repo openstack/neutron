@@ -91,7 +91,11 @@ class TestStatusBarriers(testlib_api.SqlTestCase):
                                  resources.PORT, 'entity1')
         self.provisioned.assert_called_once_with(
             resources.PORT, pb.PROVISIONING_COMPLETE, mock.ANY,
-            context=self.ctx, object_id=port2.id)
+            payload=mock.ANY)
+
+        payload = self.provisioned.mock_calls[0][2]['payload']
+        self.assertEqual(self.ctx, payload.context)
+        self.assertEqual(port2.id, payload.resource_id)
 
     def test_not_provisioned_when_wrong_component_reports(self):
         pb.add_provisioning_component(self.ctx, self.port.id, resources.PORT,

@@ -974,8 +974,10 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             mock.patch('neutron.plugins.ml2.plugin.db.get_port').start()
             provisioning_blocks.add_provisioning_component(
                 self.context, port['port']['id'], 'port', 'DHCP')
-            plugin._port_provisioned('port', 'evt', 'trigger',
-                                     self.context, port['port']['id'])
+            plugin._port_provisioned(
+                'port', 'evt', 'trigger',
+                payload=events.DBEventPayload(
+                    context, resource_id=port['port']['id']))
         self.assertFalse(ups.called)
 
     def test__port_provisioned_no_binding(self):
@@ -990,8 +992,9 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                 admin_state_up=True, status='ACTIVE',
                 device_id=device_id,
                 device_owner=DEVICE_OWNER_COMPUTE).create()
-        self.assertIsNone(plugin._port_provisioned('port', 'evt', 'trigger',
-                                                   self.context, port_id))
+        self.assertIsNone(plugin._port_provisioned(
+            'port', 'evt', 'trigger', payload=events.DBEventPayload(
+                self.context, resource_id=port_id)))
 
     def test__port_provisioned_port_admin_state_down(self):
         plugin = directory.get_plugin()
@@ -1008,7 +1011,8 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         with mock.patch('neutron.plugins.ml2.plugin.db.get_port',
                         return_value=port):
             plugin._port_provisioned('port', 'evt', 'trigger',
-                                     self.context, port_id)
+                                     payload=events.DBEventPayload(
+                                         self.context, resource_id=port_id))
         self.assertFalse(ups.called)
 
     def test_port_after_create_outside_transaction(self):
