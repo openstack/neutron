@@ -113,8 +113,8 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                                                  FAKE_SECGROUP)
 
     def test_update_security_group_conflict(self):
-        with mock.patch.object(registry, "notify") as mock_notify:
-            mock_notify.side_effect = exceptions.CallbackFailure(Exception())
+        with mock.patch.object(registry, "publish") as mock_publish:
+            mock_publish.side_effect = exceptions.CallbackFailure(Exception())
             secgroup = {'security_group': FAKE_SECGROUP}
             with testtools.ExpectedException(
                     securitygroup.SecurityGroupConflict):
@@ -301,33 +301,48 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             DEFAULT_SECGROUP_DICT.update({
                 'revision_number': mock.ANY,
             })
-        with mock.patch.object(registry, 'publish') as publish, \
-                mock.patch.object(registry, "notify") as mock_notify:
+        with mock.patch.object(registry, 'publish') as publish:
             sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
-            mock_notify.assert_has_calls([
-                mock.call('security_group', 'precommit_create', mock.ANY,
-                          context=mock.ANY, is_default=True,
-                          security_group=DEFAULT_SECGROUP_DICT),
-                mock.call('security_group', 'after_create', mock.ANY,
-                          context=mock.ANY, is_default=True,
-                          security_group=DEFAULT_SECGROUP_DICT),
-                mock.call('security_group', 'precommit_create', mock.ANY,
-                          context=mock.ANY, is_default=False,
-                          security_group=sg_dict),
-                mock.call('security_group', 'after_create', mock.ANY,
-                          context=mock.ANY, is_default=False,
-                          security_group=sg_dict)])
 
             publish.assert_has_calls([
-                mock.call('security_group', 'before_create', mock.ANY,
+                mock.call(resources.SECURITY_GROUP, 'before_create', mock.ANY,
                           payload=mock.ANY),
-                mock.call('security_group', 'before_create', mock.ANY,
+                mock.call(resources.SECURITY_GROUP, 'before_create', mock.ANY,
+                          payload=mock.ANY),
+                mock.call(resources.SECURITY_GROUP, 'precommit_create',
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.SECURITY_GROUP, 'after_create', mock.ANY,
+                          payload=mock.ANY),
+                mock.call(resources.SECURITY_GROUP, 'precommit_create',
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.SECURITY_GROUP, 'after_create', mock.ANY,
                           payload=mock.ANY)])
+
             payload = publish.mock_calls[0][2]['payload']
             self.assertDictEqual(payload.desired_state,
                                  FAKE_SECGROUP['security_group'])
+
             payload = publish.mock_calls[1][2]['payload']
-            self.assertDictEqual(payload.desired_state, DEFAULT_SECGROUP)
+            self.assertDictEqual(payload.desired_state,
+                                 DEFAULT_SECGROUP)
+
+            payload = publish.mock_calls[2][2]['payload']
+            self.assertDictEqual(payload.latest_state,
+                                 DEFAULT_SECGROUP_DICT)
+            self.assertTrue(payload.metadata['is_default'])
+
+            payload = publish.mock_calls[3][2]['payload']
+            self.assertDictEqual(payload.latest_state,
+                                 DEFAULT_SECGROUP_DICT)
+            self.assertTrue(payload.metadata['is_default'])
+
+            payload = publish.mock_calls[4][2]['payload']
+            self.assertDictEqual(payload.latest_state, sg_dict)
+            self.assertFalse(payload.metadata['is_default'])
+
+            payload = publish.mock_calls[5][2]['payload']
+            self.assertDictEqual(payload.latest_state, sg_dict)
+            self.assertFalse(payload.metadata['is_default'])
 
             # Ensure that the result of create is same as get.
             # Especially we want to check the revision number here.
@@ -350,36 +365,45 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         sg_id = original_sg_dict['id']
         with mock.patch.object(self.mixin,
                                '_get_port_security_group_bindings'), \
-                mock.patch.object(registry, "publish") as mock_notify:
+                mock.patch.object(registry, "publish") as mock_publish:
             fake_secgroup = copy.deepcopy(FAKE_SECGROUP)
             fake_secgroup['security_group']['name'] = 'updated_fake'
             fake_secgroup['security_group']['stateful'] = mock.ANY
             sg_dict = self.mixin.update_security_group(
                     self.ctx, sg_id, fake_secgroup)
 
-            mock_notify.assert_has_calls(
-                [mock.call('security_group', 'precommit_update', mock.ANY,
-                           payload=mock.ANY)])
-            payload = mock_notify.call_args[1]['payload']
+            mock_publish.assert_has_calls(
+                [mock.call(resources.SECURITY_GROUP, events.PRECOMMIT_UPDATE,
+                           mock.ANY, payload=mock.ANY)])
+            payload = mock_publish.call_args[1]['payload']
             self.assertEqual(original_sg_dict, payload.states[0])
             self.assertEqual(sg_id, payload.resource_id)
-            self.assertEqual(sg_dict, payload.desired_state)
+            self.assertEqual(sg_dict, payload.latest_state)
 
     def test_security_group_precommit_and_after_delete_event(self):
         sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
-        with mock.patch.object(registry, "notify") as mock_notify:
+        with mock.patch.object(registry, "publish") as mock_publish:
             self.mixin.delete_security_group(self.ctx, sg_dict['id'])
             sg_dict['security_group_rules'] = mock.ANY
-            mock_notify.assert_has_calls(
+            mock_publish.assert_has_calls(
                 [mock.call('security_group', 'precommit_delete',
-                           mock.ANY, context=mock.ANY, security_group=sg_dict,
-                           security_group_id=sg_dict['id'],
-                           security_group_rule_ids=[mock.ANY, mock.ANY]),
+                           mock.ANY, payload=mock.ANY),
                  mock.call('security_group', 'after_delete',
-                           mock.ANY, context=mock.ANY,
-                           security_group_id=sg_dict['id'],
-                           security_group_rule_ids=[mock.ANY, mock.ANY],
-                           name=sg_dict['name'])])
+                           mock.ANY,
+                           payload=mock.ANY)])
+            payload = mock_publish.mock_calls[1][2]['payload']
+            self.assertEqual(mock.ANY, payload.context)
+            self.assertEqual(sg_dict, payload.latest_state)
+            self.assertEqual(sg_dict['id'], payload.resource_id)
+            self.assertEqual([mock.ANY, mock.ANY],
+                payload.metadata.get('security_group_rule_ids'))
+
+            payload = mock_publish.mock_calls[2][2]['payload']
+            self.assertEqual(mock.ANY, payload.context)
+            self.assertEqual(sg_dict, payload.latest_state)
+            self.assertEqual(sg_dict['id'], payload.resource_id)
+            self.assertEqual([mock.ANY, mock.ANY],
+                             payload.metadata.get('security_group_rule_ids'))
 
     def test_security_group_rule_precommit_create_event_fail(self):
         registry.subscribe(fake_callback, resources.SECURITY_GROUP_RULE,

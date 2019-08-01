@@ -206,7 +206,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                                return_value=stateless_supported):
             self.mech_driver._create_security_group(
                 resources.SECURITY_GROUP, events.AFTER_CREATE, {},
-                security_group=self.fake_sg, context=self.context)
+                payload=events.DBEventPayload(
+                    self.context, states=(self.fake_sg,)))
         external_ids = {ovn_const.OVN_SG_EXT_ID_KEY: self.fake_sg['id']}
         pg_name = ovn_utils.ovn_port_group_name(self.fake_sg['id'])
 
@@ -239,7 +240,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def test__delete_security_group(self, mock_del_rev):
         self.mech_driver._delete_security_group(
             resources.SECURITY_GROUP, events.AFTER_CREATE, {},
-            security_group_id=self.fake_sg['id'], context=self.context)
+            payload=events.DBEventPayload(
+                self.context, states=(self.fake_sg,),
+                resource_id=self.fake_sg['id']))
+
         pg_name = ovn_utils.ovn_port_group_name(self.fake_sg['id'])
 
         self.nb_ovn.pg_del.assert_called_once_with(
