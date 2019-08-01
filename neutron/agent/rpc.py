@@ -200,27 +200,18 @@ class PluginApi(object):
                           vnic_type=vnic_type, host=host)
 
 
-def create_cache_for_l2_agent():
-    """Create a push-notifications cache for L2 agent related resources."""
-
-    objects.register_objects()
-    resource_types = [
-        resources.PORT,
-        resources.SECURITYGROUP,
-        resources.SECURITYGROUPRULE,
-        resources.NETWORK,
-        resources.SUBNET
-    ]
-    rcache = resource_cache.RemoteResourceCache(resource_types)
-    rcache.start_watcher()
-    return rcache
-
-
 class CacheBackedPluginApi(PluginApi):
+
+    RESOURCE_TYPES = [resources.PORT,
+                      resources.SECURITYGROUP,
+                      resources.SECURITYGROUPRULE,
+                      resources.NETWORK,
+                      resources.SUBNET]
 
     def __init__(self, *args, **kwargs):
         super(CacheBackedPluginApi, self).__init__(*args, **kwargs)
-        self.remote_resource_cache = create_cache_for_l2_agent()
+        self.remote_resource_cache = None
+        self._create_cache_for_l2_agent()
 
     def register_legacy_notification_callbacks(self, legacy_interface):
         """Emulates the server-side notifications from ml2 AgentNotifierApi.
@@ -380,3 +371,10 @@ class CacheBackedPluginApi(PluginApi):
     def get_devices_details_list(self, context, devices, agent_id, host=None):
         return [self.get_device_details(context, device, agent_id, host)
                 for device in devices]
+
+    def _create_cache_for_l2_agent(self):
+        """Create a push-notifications cache for L2 agent related resources."""
+        objects.register_objects()
+        rcache = resource_cache.RemoteResourceCache(self.RESOURCE_TYPES)
+        rcache.start_watcher()
+        self.remote_resource_cache = rcache
