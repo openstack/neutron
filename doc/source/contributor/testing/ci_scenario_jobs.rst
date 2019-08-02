@@ -47,6 +47,11 @@ Below is a summary of those jobs.
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-plugin-scenario-linuxbridge   |neutron_tempest_plugin.scenario   |   3.6   |   1   | linuxbridge | iptables        | legacy   | False | False  | False      | Yes         |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-tempest-plugin-scenario-openvswitch   |neutron_tempest_plugin.scenario   |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | False      | Yes         |
+    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-tempest-plugin-scenario-openvswitch-\ |neutron_tempest_plugin.scenario   |   3.6   |   1   | openvswitch | iptables_hybrid | legacy   | False | False  | False      | Yes         |
+    |  iptables_hybrid                             |                                  |         |       |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |tempest-integrated-networking                 |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
     |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
