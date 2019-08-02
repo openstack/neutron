@@ -78,7 +78,7 @@ function _init {
     FILES=$DEVSTACK_PATH/files
     TOP_DIR=$DEVSTACK_PATH
 
-    if [ -f source $DEVSTACK_PATH/local.conf ]; then
+    if [ -f $DEVSTACK_PATH/local.conf ]; then
         source $DEVSTACK_PATH/local.conf 2> /dev/null
     fi
 
