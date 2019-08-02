@@ -176,7 +176,7 @@ def _get_rpc_workers(plugin=None):
     workers = cfg.CONF.rpc_workers
     if workers is None:
         # By default, half as many rpc workers as api workers
-        workers = int(_get_worker_count() / 2)
+        workers = int(_get_api_workers() / 2)
     if workers < 1:
         workers = 1
 
