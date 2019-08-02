@@ -3,6 +3,6 @@
   file:
     path: "{{ logdir }}"
     state: directory
-    owner: "{{ ansible_user }}"
+    owner: stack
     group: "{{ ansible_user }}"
     mode: 0775
