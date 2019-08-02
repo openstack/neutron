@@ -6868,7 +6868,10 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
         new_subnetpool_id = None
         self.assertRaises(lib_exc.NetworkSubnetPoolAffinityError,
                           self.plugin.ipam._validate_network_subnetpools,
-                          network, new_subnetpool_id, 4)
+                          network,
+                          constants.IP_VERSION_4,
+                          new_subnetpool_id,
+                          None)
 
 
 class TestNetworks(testlib_api.SqlTestCase):

@@ -25,6 +25,7 @@ from neutron_lib import constants as const
 from neutron_lib.db import api as db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as exc
+from neutron_lib.exceptions import address_scope as addr_scope_exc
 from neutron_lib.utils import net as net_utils
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -37,6 +38,7 @@ from neutron.db import models_v2
 from neutron.extensions import segment
 from neutron.ipam import exceptions as ipam_exceptions
 from neutron.ipam import utils as ipam_utils
+from neutron.objects import address_scope as addr_scope_obj
 from neutron.objects import network as network_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.services.segments import exceptions as segment_exc
@@ -252,15 +254,43 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                           'cidr': subnet.cidr})
                 raise exc.InvalidInput(error_message=err_msg)
 
-    def _validate_network_subnetpools(self, network,
-                                      new_subnetpool_id, ip_version):
+    def _validate_network_subnetpools(self, network, subnet_ip_version,
+                                      new_subnetpool, network_scope):
         """Validate all subnets on the given network have been allocated from
-           the same subnet pool as new_subnetpool_id
+           the same subnet pool as new_subnetpool if no address scope is
+           used. If address scopes are used, validate that all subnets on the
+           given network participate in the same address scope.
         """
+        # 'new_subnetpool' might just be the Prefix Delegation ID
+        ipv6_pd_subnetpool = new_subnetpool == const.IPV6_PD_POOL_ID
+
+        # Check address scope affinities
+        if network_scope:
+            if (ipv6_pd_subnetpool or
+                    new_subnetpool and
+                    new_subnetpool.address_scope_id != network_scope.id):
+                raise addr_scope_exc.NetworkAddressScopeAffinityError()
+
+        # Checks for situations where address scopes aren't involved
         for subnet in network.subnets:
-            if (subnet.ip_version == ip_version and
-                    new_subnetpool_id != subnet.subnetpool_id):
-                raise exc.NetworkSubnetPoolAffinityError()
+            if ipv6_pd_subnetpool:
+                # Check the prefix delegation case.  Since there is no
+                # subnetpool object, we just check against the PD ID.
+                if (subnet.ip_version == const.IP_VERSION_6 and
+                        subnet.subnetpool_id != const.IPV6_PD_POOL_ID):
+                    raise exc.NetworkSubnetPoolAffinityError()
+            else:
+                if new_subnetpool:
+                    # In this case we have the new subnetpool object, so
+                    # we can check the ID and IP version.
+                    if (subnet.subnetpool_id != new_subnetpool.id and
+                            subnet.ip_version == new_subnetpool.ip_version and
+                            not network_scope):
+                        raise exc.NetworkSubnetPoolAffinityError()
+                else:
+                    if (subnet.subnetpool_id and
+                            subnet.ip_version == subnet_ip_version):
+                        raise exc.NetworkSubnetPoolAffinityError()
 
     def validate_allocation_pools(self, ip_pools, subnet_cidr):
         """Validate IP allocation pools.
@@ -517,10 +547,18 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                      dns_nameservers,
                      host_routes,
                      subnet_request):
+        network_scope = addr_scope_obj.AddressScope.get_network_address_scope(
+            context, network.id, subnet_args['ip_version'])
+        # 'subnetpool' is not necessarily an object
+        subnetpool = subnet_args.get('subnetpool_id')
+        if subnetpool and subnetpool != const.IPV6_PD_POOL_ID:
+            subnetpool = self._get_subnetpool(context, subnetpool)
+
         self._validate_subnet_cidr(context, network, subnet_args['cidr'])
         self._validate_network_subnetpools(network,
-                                           subnet_args['subnetpool_id'],
-                                           subnet_args['ip_version'])
+                                           subnet_args['ip_version'],
+                                           subnetpool,
+                                           network_scope)
 
         service_types = subnet_args.pop('service_types', [])
 

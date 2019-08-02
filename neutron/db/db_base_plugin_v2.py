@@ -32,6 +32,7 @@ from neutron_lib.db import model_query
 from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as ndb_utils
 from neutron_lib import exceptions as exc
+from neutron_lib.exceptions import address_scope as addr_scope_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
@@ -1131,6 +1132,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 subnetpool_id=subnetpool_id, address_scope_id=address_scope_id,
                 ip_version=as_ip_version)
 
+        self._check_subnetpool_address_scope_network_affinity(
+            context, subnetpool_id, ip_version)
+
         subnetpools = subnetpool_obj.SubnetPool.get_objects(
             context, address_scope_id=address_scope_id)
 
@@ -1141,6 +1145,44 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             sp_set = netaddr.IPSet(sp.prefixes)
             if sp_set.intersection(new_set):
                 raise exc.AddressScopePrefixConflict()
+
+    def _check_subnetpool_address_scope_network_affinity(self, context,
+                                                         subnetpool_id,
+                                                         ip_version):
+        """Check whether updating a subnet pool's address scope is allowed.
+
+        - Identify the subnets that would be re-scoped
+        - Identify the networks that would be affected by re-scoping
+        - Find all subnets associated with the affected networks
+        - Perform set difference (all - to_be_rescoped)
+        - If the set difference yields non-zero result size, re-scoping the
+        subnet pool will leave subnets in different address scopes and result
+        in address scope / network affinity violations so raise an exception to
+        block the operation.
+        """
+
+        # TODO(tidwellr) potentially lots of subnets here, optimize this code
+        subnets_to_rescope = self._get_subnets_by_subnetpool(context,
+                                                             subnetpool_id)
+        rescoped_subnet_ids = set()
+        affected_source_network_ids = set()
+        for subnet in subnets_to_rescope:
+            rescoped_subnet_ids.add(subnet.id)
+            affected_source_network_ids.add(subnet.network_id)
+
+        all_network_subnets = subnet_obj.Subnet.get_objects(
+            context,
+            network_id=affected_source_network_ids,
+            ip_version=ip_version)
+        all_affected_subnet_ids = set(
+            [subnet.id for subnet in all_network_subnets])
+
+        # Use set difference to identify the subnets that would be
+        # violating address scope affinity constraints if the subnet
+        # pool's address scope was changed.
+        violations = all_affected_subnet_ids.difference(rescoped_subnet_ids)
+        if violations:
+            raise addr_scope_exc.NetworkAddressScopeAffinityError()
 
     def _check_subnetpool_update_allowed(self, context, subnetpool_id,
                                          address_scope_id):
@@ -1178,7 +1220,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             self._check_default_subnetpool_exists(context,
                                                   sp_reader.ip_version)
         self._validate_address_scope_id(context, sp_reader.address_scope_id,
-                                        id, sp_reader.prefixes,
+                                        sp_reader.id, sp_reader.prefixes,
                                         sp_reader.ip_version)
         pool_args = {'project_id': sp['tenant_id'],
                      'id': sp_reader.id,
