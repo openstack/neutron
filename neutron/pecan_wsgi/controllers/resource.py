@@ -59,6 +59,10 @@ class ItemController(utils.NeutronPecanController):
     @utils.when(index, method='PUT')
     def put(self, *args, **kwargs):
         neutron_context = request.context['neutron_context']
+        if "resources" not in request.context:
+            msg = (_("Unable to find '%s' in request body") %
+                   request.context['resource'])
+            raise webob.exc.HTTPBadRequest(msg)
         resources = request.context['resources']
         # Bulk update is not supported, 'resources' always contains a single
         # elemenet
