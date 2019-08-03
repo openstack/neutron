@@ -62,7 +62,8 @@ class TestRunRpcWorkers(base.BaseTestCase):
         self._test_rpc_workers(0, 1)
 
     def test_rpc_workers_default_api_workers_default(self):
-        self._test_rpc_workers(None, int(self.worker_count / 2))
+        workers = max(int(self.worker_count / 2), 1)
+        self._test_rpc_workers(None, workers)
 
     def test_rpc_workers_default_api_workers_set(self):
         cfg.CONF.set_override('api_workers', 18)
