@@ -187,6 +187,12 @@ def open_namespace(namespace):
         pass
 
 
+@privileged.default.entrypoint
+def list_ns_pids(namespace):
+    """List namespace process PIDs"""
+    return netns.ns_pids().get(namespace, [])
+
+
 def _translate_ip_device_exception(e, device=None, namespace=None):
     if e.code == errno.ENODEV:
         raise NetworkInterfaceNotFound(device=device, namespace=namespace)
