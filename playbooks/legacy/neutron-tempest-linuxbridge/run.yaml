@@ -46,7 +46,7 @@
           export DEVSTACK_GATE_TEMPEST_FULL=1
           export DEVSTACK_GATE_NEUTRON=1
           export DEVSTACK_GATE_TLSPROXY=1
-          export DEVSTACK_GATE_TEMPEST_REGEX="'(^tempest\.scenario.*)|(?!.*\[.*\bslow\b.*\])(^tempest\.api)' --blacklist-file=/opt/stack/new/neutron/neutron/tests/contrib/tempest_blacklist.txt"
+          export DEVSTACK_GATE_TEMPEST_REGEX="(^tempest\.scenario.*)|(?!.*\[.*\bslow\b.*\])(^tempest\.api) --blacklist-file=/opt/stack/new/neutron/neutron/tests/contrib/tempest_blacklist.txt"
           export BRANCH_OVERRIDE=default
           if [ "$BRANCH_OVERRIDE" != "default" ] ; then
               export OVERRIDE_ZUUL_BRANCH=$BRANCH_OVERRIDE
