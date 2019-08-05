@@ -437,9 +437,6 @@ class L3NATAgent(ha.AgentMixin,
 
     def _fetch_external_net_id(self, force=False):
         """Find UUID of single external network for this agent."""
-        if self.conf.gateway_external_network_id:
-            return self.conf.gateway_external_network_id
-
         if not force and self.target_ex_net_id:
             return self.target_ex_net_id
 
@@ -450,8 +447,7 @@ class L3NATAgent(ha.AgentMixin,
         except oslo_messaging.RemoteError as e:
             with excutils.save_and_reraise_exception() as ctx:
                 if e.exc_type == 'TooManyExternalNetworks':
-                    # At this point we know gateway_external_network_id is not
-                    # defined. Since there are more than one external network,
+                    # Since there are more than one external network,
                     # we will handle all of them
                     ctx.reraise = False
 
@@ -942,8 +938,6 @@ class L3NATAgentWithStateReport(L3NATAgent):
                 'agent_mode': self.conf.agent_mode,
                 'handle_internal_only_routers':
                 self.conf.handle_internal_only_routers,
-                'gateway_external_network_id':
-                self.conf.gateway_external_network_id,
                 'interface_driver': self.conf.interface_driver,
                 'log_agent_heartbeats': self.conf.AGENT.log_agent_heartbeats},
             'start_flag': True,

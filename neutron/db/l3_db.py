@@ -16,7 +16,6 @@ import functools
 import random
 
 import netaddr
-from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api import extensions
 from neutron_lib.api import validators
@@ -277,84 +276,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         r = router['router']
         gw_info = r.pop(EXTERNAL_GW_INFO, constants.ATTR_NOT_SPECIFIED)
         original = self.get_router(context, id)
-        # check whether router needs and can be rescheduled to the proper
-        # l3 agent (associated with given external network);
-        # do check before update in DB as an exception will be raised
-        # in case no proper l3 agent found
         if gw_info != constants.ATTR_NOT_SPECIFIED:
-            candidates = self._check_router_needs_rescheduling(
-                context, id, gw_info)
             # Update the gateway outside of the DB update since it involves L2
             # calls that don't make sense to rollback and may cause deadlocks
             # in a transaction.
             self._update_router_gw_info(context, id, gw_info)
-        else:
-            candidates = None
         router_db = self._update_router_db(context, id, r)
-        if candidates:
-            l3_plugin = directory.get_plugin(plugin_constants.L3)
-            l3_plugin.reschedule_router(context, id, candidates)
         updated = self._make_router_dict(router_db)
         registry.notify(resources.ROUTER, events.AFTER_UPDATE, self,
                         context=context, router_id=id, old_router=original,
                         router=updated, request_attrs=r, router_db=router_db)
         return updated
-
-    def _check_router_needs_rescheduling(self, context, router_id, gw_info):
-        """Checks whether router's l3 agent can handle the given network
-
-        :return: list of candidate agents if rescheduling needed,
-        None otherwise; raises exception if there is no eligible l3 agent
-        associated with target external network
-        """
-        # TODO(obondarev): rethink placement of this func as l3 db manager is
-        # not really a proper place for agent scheduling stuff
-        network_id = gw_info.get('network_id') if gw_info else None
-        if not network_id:
-            return
-
-        nets = self._core_plugin.get_networks(
-            context, {extnet_apidef.EXTERNAL: [True]})
-        # nothing to do if there is only one external network
-        if len(nets) <= 1:
-            return
-
-        # first get plugin supporting l3 agent scheduling
-        # (either l3 service plugin or core_plugin)
-        l3_plugin = directory.get_plugin(plugin_constants.L3)
-        if (not extensions.is_extension_supported(
-                l3_plugin,
-                constants.L3_AGENT_SCHEDULER_EXT_ALIAS) or
-                l3_plugin.router_scheduler is None):
-            # that might mean that we are dealing with non-agent-based
-            # implementation of l3 services
-            return
-
-        if not l3_plugin.router_supports_scheduling(context, router_id):
-            return
-        cur_agents = l3_plugin.list_l3_agents_hosting_router(
-            context, router_id)['agents']
-        for agent in cur_agents:
-            ext_net_id = agent['configurations'].get(
-                'gateway_external_network_id')
-            if ext_net_id == network_id or not ext_net_id:
-                return
-
-        # otherwise find l3 agent with matching gateway_external_network_id
-        active_agents = l3_plugin.get_l3_agents(context, active=True)
-        router = {
-            'id': router_id,
-            'external_gateway_info': {'network_id': network_id}
-        }
-        candidates = l3_plugin.get_l3_agent_candidates(context,
-                                                       router,
-                                                       active_agents)
-        if not candidates:
-            msg = (_('No eligible l3 agent associated with external network '
-                     '%s found') % network_id)
-            raise n_exc.BadRequest(resource='router', msg=msg)
-
-        return candidates
 
     def _create_router_gw_port(self, context, router, network_id, ext_ips):
         # Port has no 'tenant-id', as it is hidden from user

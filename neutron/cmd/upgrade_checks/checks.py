@@ -37,6 +37,8 @@ class CoreChecks(base.BaseChecks):
 
     def get_checks(self):
         return [
+            (_("Gateway external network"),
+             self.gateway_external_network_check),
             (_("External network bridge"),
              self.external_network_bridge_check),
             (_("Worker counts configured"), self.worker_count_check)
@@ -89,3 +91,35 @@ class CoreChecks(base.BaseChecks):
                 upgradecheck.Code.SUCCESS,
                 _("L3 agents are using integration bridge to connect external "
                   "gateways"))
+
+    @staticmethod
+    def gateway_external_network_check(checker):
+        if not cfg.CONF.database.connection:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("Database connection string is not set. Check of usage of "
+                  "'gateway_external_network_id' config option in L3 agents "
+                  "can't be done"))
+
+        agents_with_gateway_external_net = []
+        for agent in get_l3_agents():
+            config_string = agent.get('configurations')
+            if not config_string:
+                continue
+            config = jsonutils.loads(config_string)
+            if config.get("gateway_external_network_id"):
+                agents_with_gateway_external_net.append(agent.get("host"))
+
+        if agents_with_gateway_external_net:
+            agents_list = ", ".join(agents_with_gateway_external_net)
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("L3 agents on hosts %s are still using "
+                  "'gateway_external_network_id' config option to configure "
+                  "external network used as gateway for routers. "
+                  "This option is now removed and routers on those hosts can "
+                  "use multiple external networks as gateways.") % agents_list)
+        else:
+            return upgradecheck.Result(
+                upgradecheck.Code.SUCCESS,
+                _("L3 agents can use multiple networks as external gateways."))

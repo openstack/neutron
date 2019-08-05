@@ -2954,22 +2954,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent._process_router_if_compatible(router)
         self.assertIn(router['id'], agent.router_info)
 
-    def test_process_router_if_compatible_with_ext_net_in_conf(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.plugin_api.get_external_network_id.return_value = 'aaa'
-
-        router = {'id': _uuid(),
-                  'routes': [],
-                  'admin_state_up': True,
-                  'external_gateway_info': {'network_id': 'bbb'}}
-
-        agent.router_info = {}
-        self.conf.set_override('gateway_external_network_id', 'aaa')
-        self.assertRaises(l3_exc.RouterNotCompatibleWithAgent,
-                          agent._process_router_if_compatible,
-                          router)
-        self.assertNotIn(router['id'], agent.router_info)
-
     def test_nonexistent_interface_driver(self):
         self.conf.set_override('interface_driver', None)
         self.assertRaises(SystemExit, l3_agent.L3NATAgent,
