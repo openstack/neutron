@@ -172,7 +172,7 @@ class TestIronicNotifier(base.BaseTestCase):
             original_port=original_port, port=port, **{})
 
         self.assertEqual(
-            2, len(self.ironic_notifier.batch_notifier.pending_events))
+            2, len(self.ironic_notifier.batch_notifier._pending_events.queue))
         self.assertEqual(2, mock_spawn_n.call_count)
 
     @mock.patch.object(client, 'Client', autospec=False)
