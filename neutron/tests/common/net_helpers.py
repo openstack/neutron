@@ -583,6 +583,8 @@ class NamespaceFixture(fixtures.Fixture):
 
     def destroy(self):
         if self.ip_wrapper.netns.exists(self.name):
+            for pid in ip_lib.list_namespace_pids(self.name):
+                utils.kill_process(pid, signal.SIGKILL, run_as_root=True)
             self.ip_wrapper.netns.delete(self.name)
 
 

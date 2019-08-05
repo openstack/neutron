@@ -1013,6 +1013,15 @@ def network_namespace_exists(namespace, try_is_ready=False, **kwargs):
     return False
 
 
+def list_namespace_pids(namespace):
+    """List namespace process PIDs
+
+    :param namespace: (string) the name of the namespace
+    :return: (tuple)
+    """
+    return privileged.list_ns_pids(namespace)
+
+
 def ensure_device_is_ready(device_name, namespace=None):
     dev = IPDevice(device_name, namespace=namespace)
     try:
