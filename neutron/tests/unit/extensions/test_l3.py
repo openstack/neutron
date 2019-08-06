@@ -1968,7 +1968,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         with self.router() as r:
             with self.network() as n:
                 self._set_net_external(n['network']['id'])
-                with mock.patch.object(registry, 'notify') as notify:
+                with mock.patch.object(registry, 'publish') as notify:
                     errors = [
                         exceptions.NotificationError(
                             'foo_callback_id',
@@ -1982,20 +1982,21 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     notify.assert_called_once_with(
                         resources.ROUTER_GATEWAY,
                         events.BEFORE_CREATE,
-                        mock.ANY,
-                        context=mock.ANY,
-                        router_id=r['router']['id'],
-                        network_id=n['network']['id'],
-                        subnets=[])
+                        mock.ANY, payload=mock.ANY)
+                    payload = notify.mock_calls[0][2]['payload']
+                    self.assertEqual(r['router']['id'], payload.resource_id)
+                    self.assertEqual(n['network']['id'],
+                                     payload.metadata.get('network_id'))
+                    self.assertEqual([], payload.metadata.get('subnets'))
 
     def test_router_add_gateway_notifications(self):
-        call_count_total = 3
+        call_count_total = 4
 
         with self.router() as r:
             with self.network() as n:
                 with self.subnet(network=n) as s:
                     self._set_net_external(n['network']['id'])
-                    with mock.patch.object(registry, 'notify') as notify:
+                    with mock.patch.object(registry, 'publish') as notify:
                         res = self._add_external_gateway_to_router(
                             r['router']['id'], n['network']['id'],
                             ext_ips=[{'subnet_id': s['subnet']['id'],
@@ -2009,11 +2010,15 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         expected = [mock.call(
                                         resources.ROUTER_GATEWAY,
                                         events.AFTER_CREATE, mock.ANY,
-                                        context=mock.ANY,
-                                        gw_ips=expected_gw_ips,
-                                        network_id=n['network']['id'],
-                                        router_id=r['router']['id'])]
+                                        payload=mock.ANY)]
                         notify.assert_has_calls(expected)
+                        payload = notify.mock_calls[1][2]['payload']
+                        self.assertEqual(r['router']['id'],
+                                         payload.resource_id)
+                        self.assertEqual(n['network']['id'],
+                                         payload.metadata.get('network_id'))
+                        self.assertEqual(expected_gw_ips,
+                                         payload.metadata.get('gateway_ips'))
 
     def test_router_remove_interface_inuse_returns_409(self):
         with self.router() as r:

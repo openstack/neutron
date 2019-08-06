@@ -304,7 +304,7 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
                                   return_value=gw_port), \
                 mock.patch.object(ctx.session, 'add'), \
                 mock.patch.object(base_obj.NeutronDbObject, 'create'), \
-                mock.patch.object(l3_db.registry, 'notify') as mock_notify:
+                mock.patch.object(l3_db.registry, 'publish') as mock_notify:
 
             self.db._create_gw_port(ctx, router_id=router_id,
                                     router=router,
@@ -316,10 +316,14 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
             self.assertTrue(cfdrs.called)
             mock_notify.assert_called_with(
                 resources.ROUTER_GATEWAY, events.AFTER_CREATE,
-                self.db._create_gw_port, context=ctx,
-                gw_ips=expected_gw_ips, network_id=new_network_id,
-                router_id=router_id
-            )
+                self.db._create_gw_port, payload=mock.ANY)
+            cb_payload = mock_notify.mock_calls[1][2]['payload']
+            self.assertEqual(ctx, cb_payload.context)
+            self.assertEqual(expected_gw_ips,
+                             cb_payload.metadata.get('gateway_ips'))
+            self.assertEqual(new_network_id,
+                             cb_payload.metadata.get('network_id'))
+            self.assertEqual(router_id, cb_payload.resource_id)
 
 
 class L3_NAT_db_mixin(base.BaseTestCase):
