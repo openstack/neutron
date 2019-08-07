@@ -517,7 +517,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     # Now, the port and its binding state should be committed.
                     context, need_notify, try_again = (
                         self._commit_port_binding(context, bind_context,
-                                                  need_notify, try_again))
+                                                  need_notify))
                 else:
                     context = bind_context
 
@@ -576,8 +576,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return new_context
 
     def _commit_port_binding(self, orig_context, bind_context,
-                             need_notify, try_again,
-                             update_binding_levels=True):
+                             need_notify, update_binding_levels=True):
         port_id = orig_context.current['id']
         plugin_context = orig_context._plugin_context
         orig_binding = orig_context._binding
@@ -2537,7 +2536,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         for count in range(MAX_BIND_TRIES):
             cur_context, _, try_again = self._commit_port_binding(
                 original_context, bind_context, need_notify=True,
-                try_again=True, update_binding_levels=False)
+                update_binding_levels=False)
             if not try_again:
                 self.notifier.binding_deactivate(context, port_id,
                                                  active_binding.host,
