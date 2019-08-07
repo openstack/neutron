@@ -471,7 +471,8 @@ class OVS_Lib_Test(base.BaseTestCase):
                         "options:remote_ip=" + remote_ip,
                         "options:local_ip=" + local_ip,
                         "options:in_key=flow",
-                        "options:out_key=flow"])
+                        "options:out_key=flow",
+                        "options:egress_pkt_mark=0"])
         # Each element is a tuple of (expected mock call, return_value)
         expected_calls_and_values = [
             (self._vsctl_mock(*command), None),
@@ -501,7 +502,8 @@ class OVS_Lib_Test(base.BaseTestCase):
                         "options:remote_ip=" + remote_ip,
                         "options:local_ip=" + local_ip,
                         "options:in_key=flow",
-                        "options:out_key=flow"])
+                        "options:out_key=flow",
+                        "options:egress_pkt_mark=0"])
         # Each element is a tuple of (expected mock call, return_value)
         expected_calls_and_values = [
             (self._vsctl_mock(*command), None),
@@ -535,6 +537,7 @@ class OVS_Lib_Test(base.BaseTestCase):
                         "options:local_ip=" + local_ip,
                         "options:in_key=flow",
                         "options:out_key=flow",
+                        "options:egress_pkt_mark=0",
                         "options:csum=true"])
         # Each element is a tuple of (expected mock call, return_value)
         expected_calls_and_values = [
