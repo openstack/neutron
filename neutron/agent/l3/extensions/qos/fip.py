@@ -79,8 +79,7 @@ class RouterFipRateLimitMaps(qos_base.RateLimitMaps):
 
         @lockutils.synchronized(self.lock_name)
         def _remove_fip_ratelimit_cache():
-            rate_limits_direction = direction + "_ratelimits"
-            rate_limits = getattr(self, rate_limits_direction, {})
+            rate_limits = getattr(self, direction + "_ratelimits")
             rate_limits.pop(fip, None)
 
         _remove_fip_ratelimit_cache()
@@ -89,8 +88,7 @@ class RouterFipRateLimitMaps(qos_base.RateLimitMaps):
 
         @lockutils.synchronized(self.lock_name)
         def _set_fip_ratelimit_cache():
-            rate_limits_direction = direction + "_ratelimits"
-            rate_limits = getattr(self, rate_limits_direction, {})
+            rate_limits = getattr(self, direction + "_ratelimits")
             rate_limits[fip] = (rate, burst)
 
         _set_fip_ratelimit_cache()
@@ -99,8 +97,7 @@ class RouterFipRateLimitMaps(qos_base.RateLimitMaps):
 
         @lockutils.synchronized(self.lock_name)
         def _get_fip_ratelimit_cache():
-            rate_limits_direction = direction + "_ratelimits"
-            rate_limits = getattr(self, rate_limits_direction, {})
+            rate_limits = getattr(self, direction + "_ratelimits")
             rate, burst = rate_limits.get(fip, (qos_base.IP_DEFAULT_RATE,
                                                 qos_base.IP_DEFAULT_BURST))
             return rate, burst
