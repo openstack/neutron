@@ -45,6 +45,7 @@ from oslo_service import loopingcall
 from oslo_service import systemd
 from oslo_utils import netutils
 from osprofiler import profiler
+from ovsdbapp import exceptions as ovs_exceptions
 import six
 
 from neutron._i18n import _
@@ -82,6 +83,8 @@ cfg.CONF.import_group('AGENT', 'neutron.plugins.ml2.drivers.openvswitch.'
                       'agent.common.config')
 cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.agent.'
                       'common.config')
+
+INIT_MAX_TRIES = 3
 
 
 class _mac_mydialect(netaddr.mac_unix):
@@ -2568,10 +2571,22 @@ def main(bridge_classes):
 
     validate_tunnel_config(cfg.CONF.AGENT.tunnel_types, cfg.CONF.OVS.local_ip)
 
-    try:
-        agent = OVSNeutronAgent(bridge_classes, ext_mgr, cfg.CONF)
-        capabilities.notify_init_event(n_const.AGENT_TYPE_OVS, agent)
-    except (RuntimeError, ValueError) as e:
-        LOG.error("%s Agent terminated!", e)
-        sys.exit(1)
+    init_try = 1
+    while True:
+        try:
+            agent = OVSNeutronAgent(bridge_classes, ext_mgr, cfg.CONF)
+            capabilities.notify_init_event(n_const.AGENT_TYPE_OVS, agent)
+            break
+        except ovs_exceptions.TimeoutException as e:
+            if init_try < INIT_MAX_TRIES:
+                LOG.warning("Ovsdb command timeout!")
+                init_try += 1
+            else:
+                LOG.error("%(err)s agent terminated after %(attempts)s "
+                          "initialization attempts!",
+                          {'err': e, 'attempts': init_try})
+                sys.exit(1)
+        except (RuntimeError, ValueError) as e:
+            LOG.error("%s agent terminated!", e)
+            sys.exit(1)
     agent.daemon_loop()
