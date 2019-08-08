@@ -1974,24 +1974,33 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                             'foo_callback_id',
                             n_exc.InvalidInput(error_message='forbidden')),
                     ]
-                    notify.side_effect = exceptions.CallbackFailure(
-                        errors=errors)
+
+                    def failing_publish(resource, event, trigger, payload):
+                        if (resource == resources.ROUTER_GATEWAY and
+                                event == events.BEFORE_CREATE):
+                            raise exceptions.CallbackFailure(
+                                errors=errors)
+                        return mock.DEFAULT
+                    notify.side_effect = failing_publish
                     self._add_external_gateway_to_router(
                         r['router']['id'], n['network']['id'],
                         expected_code=exc.HTTPBadRequest.code)
-                    notify.assert_called_once_with(
+                    notify.assert_any_call(
                         resources.ROUTER_GATEWAY,
                         events.BEFORE_CREATE,
                         mock.ANY, payload=mock.ANY)
-                    payload = notify.mock_calls[0][2]['payload']
+                    # Find the call and look at the payload
+                    calls = [call for call in notify.mock_calls
+                        if call[1][0] == resources.ROUTER_GATEWAY and
+                        call[1][1] == events.BEFORE_CREATE]
+                    self.assertEqual(1, len(calls))
+                    payload = calls[0][2]['payload']
                     self.assertEqual(r['router']['id'], payload.resource_id)
                     self.assertEqual(n['network']['id'],
                                      payload.metadata.get('network_id'))
                     self.assertEqual([], payload.metadata.get('subnets'))
 
     def test_router_add_gateway_notifications(self):
-        call_count_total = 4
-
         with self.router() as r:
             with self.network() as n:
                 with self.subnet(network=n) as s:
@@ -2001,9 +2010,6 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                             r['router']['id'], n['network']['id'],
                             ext_ips=[{'subnet_id': s['subnet']['id'],
                                       'ip_address': '10.0.0.4'}])
-                        self.assertEqual(call_count_total,
-                                         notify.call_count)
-
                         gw_info = res['router']['external_gateway_info']
                         ext_ips = gw_info['external_fixed_ips'][0]
                         expected_gw_ips = [ext_ips['ip_address']]
@@ -2012,7 +2018,12 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                         events.AFTER_CREATE, mock.ANY,
                                         payload=mock.ANY)]
                         notify.assert_has_calls(expected)
-                        payload = notify.mock_calls[1][2]['payload']
+                        # Find the call and look at the payload
+                        calls = [call for call in notify.mock_calls
+                            if call[1][0] == resources.ROUTER_GATEWAY and
+                            call[1][1] == events.AFTER_CREATE]
+                        self.assertEqual(1, len(calls))
+                        payload = calls[0][2]['payload']
                         self.assertEqual(r['router']['id'],
                                          payload.resource_id)
                         self.assertEqual(n['network']['id'],
