@@ -2322,7 +2322,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
                 mock.patch.object(driver_context.PortContext,
                 '_push_binding_level') as pbl_mock:
             plugin._commit_port_binding(
-                    port_context, bound_context, True, False)
+                    port_context, bound_context, True)
             pbl_mock.assert_called_once_with(db_portbinding)
 
     def test_port_binding_profile_not_changed(self):
