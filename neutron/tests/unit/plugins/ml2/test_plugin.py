@@ -501,6 +501,26 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                  portbindings.VIF_TYPE_BINDING_FAILED],
                 negative_search=True)
 
+    def test_update_network_with_empty_body(self):
+        with self.network() as network:
+            network_id = network["network"]["id"]
+            network_req = self.new_update_request("networks", None,
+                                                  network_id)
+            res = network_req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+            self.assertIn("network", res.json['NeutronError']['message'])
+
+    def test_update_network_with_incorrect_resource_body(self):
+        with self.network() as network:
+            network_id = network["network"]["id"]
+            incorrect_body = {"incorrect": {}}
+            network_req = self.new_update_request("networks",
+                                                  incorrect_body,
+                                                  network_id)
+            res = network_req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+            self.assertIn("network", res.json['NeutronError']['message'])
+
 
 class TestMl2NetworksV2AgentMechDrivers(Ml2PluginV2TestCase):
 
@@ -706,6 +726,25 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                     self.assertEqual(1, len(port['fixed_ips']))
                     self.assertEqual(s3['subnet']['id'],
                                      port['fixed_ips'][0]['subnet_id'])
+
+    def test_update_subnet_with_empty_body(self):
+        with self.subnet() as subnet:
+            subnet_id = subnet["subnet"]["id"]
+            subnet_req = self.new_update_request("subnets", None,
+                                                 subnet_id)
+            res = subnet_req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+            self.assertIn("subnet", res.json['NeutronError']['message'])
+
+    def test_update_subnet_with_incorrect_resource_body(self):
+        with self.subnet() as subnet:
+            subnet_id = subnet["subnet"]["id"]
+            incorrect_body = {"incorrect": {}}
+            subnet_req = self.new_update_request("subnets", incorrect_body,
+                                                 subnet_id)
+            res = subnet_req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+            self.assertIn("subnet", res.json['NeutronError']['message'])
 
     def test_subnet_after_update_callback(self):
         after_update = mock.Mock()
@@ -1076,6 +1115,24 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                                   self.context, r['id'], data)
                 res_ports = self._list('ports')['ports']
                 self.assertEqual([], res_ports)
+
+    def test_update_port_with_empty_body(self):
+        with self.port() as port:
+            port_id = port["port"]["id"]
+            port_req = self.new_update_request("ports", None, port_id)
+            res = port_req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+            self.assertIn("port", res.json['NeutronError']['message'])
+
+    def test_update_port_with_incorrect_resource_body(self):
+        with self.port() as port:
+            port_id = port["port"]["id"]
+            incorrect_body = {"incorrect": {}}
+            port_req = self.new_update_request("ports", incorrect_body,
+                                               port_id)
+            res = port_req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+            self.assertIn("port", res.json['NeutronError']['message'])
 
     def test_update_port_status_build(self):
         with self.port() as port:
