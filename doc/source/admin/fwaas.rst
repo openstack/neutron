@@ -53,7 +53,7 @@ The following table compares v1 and v2 features.
 +------------------------------------------+-----+------+
 | Supports L3 firewalling for router ports | NO  | YES  |
 +------------------------------------------+-----+------+
-| Supports L2 firewalling (VM ports)       | NO  | NO** |
+| Supports L2 firewalling (VM ports)       | NO  | NO   |
 +------------------------------------------+-----+------+
 | CLI support                              | YES | YES  |
 +------------------------------------------+-----+------+
@@ -62,8 +62,6 @@ The following table compares v1 and v2 features.
 
 \* A firewall group can be applied to all ports on a given router in order to
 effect this.
-
-\*\* This feature is planned for Ocata.
 
 For further information, see `v1 configuration guide
 <./fwaas-v1-scenario.html>`_ or
