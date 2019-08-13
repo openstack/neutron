@@ -428,7 +428,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             if primitive['description'] is None:
                 # description was not nullable before
                 raise exception.IncompatibleObjectVersion(
-                    objver=target_version, objname='QoSPolicy')
+                    objver=target_version, objname='QosPolicy')
 
         if _target_version < (1, 4):
             primitive['tenant_id'] = primitive.pop('project_id')
