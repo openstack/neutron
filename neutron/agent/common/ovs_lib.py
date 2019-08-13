@@ -372,24 +372,6 @@ class OVSBridge(BaseOVS):
                           port_name)
         return ofport
 
-    def get_port_external_ids(self, port_name):
-        """Get the port's assigned ofport, retrying if not yet assigned."""
-        port_external_ids = dict()
-        try:
-            port_external_ids = self._get_port_val(port_name, "external_ids")
-        except tenacity.RetryError:
-            LOG.exception("Timed out retrieving external_ids on port %s.",
-                          port_name)
-        return port_external_ids
-
-    def get_port_mac(self, port_name):
-        """Get the port's mac address.
-
-        This is especially useful when the port is not a neutron port.
-        E.g. networking-sfc needs the MAC address of "patch-tun
-        """
-        return self.db_get_val("Interface", port_name, "mac_in_use")
-
     @_ovsdb_retry
     def _get_datapath_id(self):
         return self.db_get_val('Bridge', self.br_name, 'datapath_id')
