@@ -143,10 +143,6 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
                             fip, dvr_fip_device, rates, with_cache=False)
             self.fip_qos_map.update_policy(qos_policy)
 
-    def _remove_fip_rate_limit_cache(self, fip):
-        for direction in constants.VALID_DIRECTIONS:
-            self.fip_qos_map.remove_fip_ratelimit_cache(direction, fip)
-
     def _process_reset_fip(self, fip):
         self.fip_qos_map.clean_by_resource(fip)
 
