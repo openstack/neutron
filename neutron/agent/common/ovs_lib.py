@@ -478,6 +478,7 @@ class OVSBridge(BaseOVS):
         options['local_ip'] = local_ip
         options['in_key'] = 'flow'
         options['out_key'] = 'flow'
+        options['egress_pkt_mark'] = '0'
         if tunnel_csum:
             options['csum'] = str(tunnel_csum).lower()
         attrs.append(('options', options))
