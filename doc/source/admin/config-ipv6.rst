@@ -727,9 +727,9 @@ renewed automatically as necessary.
 References
 ----------
 
-The following link provides a great step by step tutorial on setting up IPv6
-with OpenStack: `Tenant IPV6 deployment in OpenStack Kilo release
-<http://www.debug-all.com/?p=52>`_.
+The following presentation from the Barcelona Summit provides a great guide for
+setting up IPv6 with OpenStack: `Deploying IPv6 in OpenStack Environments
+<https://www.youtube.com/watch?v=j5hy11YlSOU>`_.
 
 .. _extra-driver-conf:
 
