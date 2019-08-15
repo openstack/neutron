@@ -75,12 +75,6 @@ class TestSriovAgent(base.BaseTestCase):
         self.agent.scan_devices(set(), set())
         self.assertEqual(2, agent_conf['devices'])
 
-    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
-                "PciDeviceIPWrapper.get_assigned_macs",
-                return_value=[(DEVICE_MAC, PCI_SLOT)])
-    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
-                "eswitch_manager.PciOsWrapper.is_assigned_vf",
-                return_value=True)
     def test_treat_devices_removed_with_existed_device(self, *args):
         agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0, {}, {}, {})
         devices = [(DEVICE_MAC, PCI_SLOT)]
@@ -92,12 +86,6 @@ class TestSriovAgent(base.BaseTestCase):
             self.assertFalse(resync)
             self.assertTrue(fn_udd.called)
 
-    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
-                "PciDeviceIPWrapper.get_assigned_macs",
-                return_value=[(DEVICE_MAC, PCI_SLOT)])
-    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
-                "eswitch_manager.PciOsWrapper.is_assigned_vf",
-                return_value=True)
     def test_treat_devices_removed_with_not_existed_device(self, *args):
         agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0, {}, {}, {})
         devices = [(DEVICE_MAC, PCI_SLOT)]
@@ -112,12 +100,6 @@ class TestSriovAgent(base.BaseTestCase):
                 self.assertFalse(resync)
                 self.assertTrue(fn_udd.called)
 
-    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
-                "PciDeviceIPWrapper.get_assigned_macs",
-                return_value=[(DEVICE_MAC, PCI_SLOT)])
-    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
-                "eswitch_manager.PciOsWrapper.is_assigned_vf",
-                return_value=True)
     def test_treat_devices_removed_failed(self, *args):
         agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0, {}, {}, {})
         devices = [(DEVICE_MAC, PCI_SLOT)]
