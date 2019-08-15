@@ -526,26 +526,6 @@ class OVS_Lib_Test(base.BaseTestCase):
             self.assertRaises(tenacity.RetryError,
                               self.br._get_port_val, '1', 'ofport')
 
-    def test_get_port_external_ids_retry(self):
-        external_ids = [["iface-id", "tap99id"],
-                        ["iface-status", "active"],
-                        ["attached-mac", "de:ad:be:ef:13:37"]]
-        with mock.patch.object(
-                self.br, 'db_get_val',
-                side_effect=[[], [], [], [], external_ids]):
-            self.assertEqual(external_ids,
-                             self.br._get_port_val('1', 'external_ids'))
-
-    def test_get_port_external_ids_retry_fails(self):
-        # reduce timeout for faster execution
-        self.br.ovsdb_timeout = 1
-        # after 7 calls the retry will timeout and raise
-        with mock.patch.object(
-                self.br, 'db_get_val',
-                side_effect=[[] for _ in range(7)]):
-            self.assertRaises(tenacity.RetryError,
-                              self.br._get_port_val, '1', 'external_ids')
-
     def test_set_controller_rate_limit(self):
         with mock.patch.object(
                 self.br, "set_controller_field"
