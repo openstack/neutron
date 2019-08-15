@@ -16,6 +16,8 @@
 from alembic import op
 import sqlalchemy as sa
 
+from neutron.db import migration
+
 
 """subnet force network id
 
@@ -28,6 +30,9 @@ Create Date: 2019-08-19 11:15:14.443244
 # revision identifiers, used by Alembic.
 revision = 'c613d0b82681'
 down_revision = '63fd95af7dcd'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.TRAIN]
 
 
 def upgrade():
