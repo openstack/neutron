@@ -118,6 +118,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         allocated ip addresses.
         """
         allocated = []
+        factory = ipam_driver.get_address_request_factory()
 
         # we need to start with entries that asked for a specific IP in case
         # those IPs happen to be next in the line for allocation for ones that
@@ -132,7 +133,6 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 ip_list = [ip] if isinstance(ip, dict) else ip
                 subnets = [ip_dict['subnet_id'] for ip_dict in ip_list]
                 try:
-                    factory = ipam_driver.get_address_request_factory()
                     ip_request = factory.get_request(context, port, ip_list[0])
                     ipam_allocator = ipam_driver.get_allocator(subnets)
                     ip_address, subnet_id = ipam_allocator.allocate(ip_request)
