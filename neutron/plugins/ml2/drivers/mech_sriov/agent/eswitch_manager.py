@@ -69,29 +69,46 @@ class PciOsWrapper(object):
         return os.path.isdir(cls.DEVICE_PATH % dev_name)
 
     @classmethod
-    def is_assigned_vf(cls, dev_name, vf_index):
+    def is_assigned_vf_direct(cls, dev_name, vf_index):
         """Check if VF is assigned.
 
         Checks if a given vf index of a given device name is assigned
-        by checking the relevant path in the system:
+        as PCI passthrough by checking the relevant path in the system:
         VF is assigned if:
             Direct VF: PCI_PATH does not exist.
+        @param dev_name: pf network device name
+        @param vf_index: vf index
+        @return: True if VF is assigned, False otherwise
+        """
+        path = cls.PCI_PATH % (dev_name, vf_index)
+        return not os.path.isdir(path)
+
+    @classmethod
+    def get_vf_macvtap_upper_devs(cls, dev_name, vf_index):
+        """Retrieve VF netdev upper (macvtap) devices.
+
+        @param dev_name: pf network device name
+        @param vf_index: vf index
+        @return: list of upper net devices associated with the VF
+        """
+        path = cls.PCI_PATH % (dev_name, vf_index)
+        upper_macvtap_path = os.path.join(path, "*", cls.MAC_VTAP_PREFIX)
+        devs = [os.path.basename(dev) for dev in glob.glob(upper_macvtap_path)]
+        # file name is in the format of upper_<netdev_name> extract netdev name
+        return [dev.split('_')[1] for dev in devs]
+
+    @classmethod
+    def is_assigned_vf_macvtap(cls, dev_name, vf_index):
+        """Check if VF is assigned.
+
+        Checks if a given vf index of a given device name is assigned
+        as macvtap by checking the relevant path in the system:
             Macvtap VF: upper_macvtap path exists.
         @param dev_name: pf network device name
         @param vf_index: vf index
+        @return: True if VF is assigned, False otherwise
         """
-
-        if not cls.pf_device_exists(dev_name):
-            # If the root PCI path does not exist, then the VF cannot
-            # actually have been allocated and there is no way we can
-            # manage it.
-            return False
-
-        path = cls.PCI_PATH % (dev_name, vf_index)
-        if not os.path.isdir(path):
-            return True
-        upper_macvtap_path = os.path.join(path, "*", cls.MAC_VTAP_PREFIX)
-        return bool(glob.glob(upper_macvtap_path))
+        return bool(cls.get_vf_macvtap_upper_devs(dev_name, vf_index))
 
     @classmethod
     def get_numvfs(cls, dev_name):
@@ -157,17 +174,10 @@ class EmbSwitch(object):
 
         @return: list of VF pair (mac address, pci slot)
         """
-        vf_to_pci_slot_mapping = {}
         assigned_devices_info = []
         for pci_slot, vf_index in self.pci_slot_map.items():
-            if not PciOsWrapper.is_assigned_vf(self.dev_name, vf_index):
-                continue
-            vf_to_pci_slot_mapping[vf_index] = pci_slot
-        if vf_to_pci_slot_mapping:
-            vf_to_mac_mapping = self.pci_dev_wrapper.get_assigned_macs(
-                list(vf_to_pci_slot_mapping.keys()))
-            for vf_index, mac in vf_to_mac_mapping.items():
-                pci_slot = vf_to_pci_slot_mapping[vf_index]
+            mac = self.get_pci_device(pci_slot)
+            if mac:
                 assigned_devices_info.append((mac, pci_slot))
         return assigned_devices_info
 
@@ -243,18 +253,45 @@ class EmbSwitch(object):
             raise exc.InvalidPciSlotError(pci_slot=pci_slot)
         return self.pci_dev_wrapper.set_vf_spoofcheck(vf_index, enabled)
 
+    def _get_macvtap_mac(self, vf_index):
+        upperdevs = PciOsWrapper.get_vf_macvtap_upper_devs(
+            self.dev_name, vf_index)
+        # NOTE(adrianc) although there can be many macvtap upper
+        # devices, we expect to have excatly one.
+        if len(upperdevs) > 1:
+            LOG.warning("Found more than one macvtap upper device for PF "
+                        "%(pf)s with VF index %(vf_index)s.",
+                        {"pf": self.dev_name, "vf_index": vf_index})
+        upperdev = upperdevs[0]
+        return pci_lib.PciDeviceIPWrapper(
+            upperdev).device(upperdev).link.address
+
     def get_pci_device(self, pci_slot):
         """Get mac address for given Virtual Function address
 
         @param pci_slot: pci slot
         @return: MAC address of virtual function
         """
+        if not PciOsWrapper.pf_device_exists(self.dev_name):
+            # If the root PCI path does not exist, then the VF cannot
+            # actually have been allocated and there is no way we can
+            # manage it.
+            return None
+
         vf_index = self.pci_slot_map.get(pci_slot)
         mac = None
+
         if vf_index is not None:
-            if PciOsWrapper.is_assigned_vf(self.dev_name, vf_index):
+            # NOTE(adrianc) for VF passthrough take administrative mac from PF
+            # netdevice, for macvtap take mac directly from macvtap interface.
+            # This is done to avoid relying on hypervisor [lack of] logic to
+            # keep effective and administrative mac in sync.
+            if PciOsWrapper.is_assigned_vf_direct(self.dev_name, vf_index):
                 macs = self.pci_dev_wrapper.get_assigned_macs([vf_index])
                 mac = macs.get(vf_index)
+            elif PciOsWrapper.is_assigned_vf_macvtap(
+                    self.dev_name, vf_index):
+                mac = self._get_macvtap_mac(vf_index)
         return mac
 
 
