@@ -177,6 +177,20 @@ class TestOvsNeutronAgent(object):
                 "Port", mock.ANY, "other_config", vlan_mapping)
             self.assertTrue(needs_binding)
 
+    def test_setup_physical_bridges_during_agent_initialization(self):
+        with mock.patch.object(
+            self.mod_agent.OVSNeutronAgent,
+            'setup_physical_bridges') as setup_physical_bridges,\
+                mock.patch.object(
+                    self.mod_agent.OVSNeutronAgent, 'setup_rpc') as setup_rpc:
+            setup_rpc.side_effect = oslo_messaging.MessagingException(
+                "Test communication failure")
+            try:
+                self._make_agent()
+            except oslo_messaging.MessagingException:
+                pass
+            setup_physical_bridges.assert_called_once_with(mock.ANY)
+
     def test_datapath_type_system(self):
         # verify kernel datapath is default
         expected = constants.OVS_DATAPATH_SYSTEM

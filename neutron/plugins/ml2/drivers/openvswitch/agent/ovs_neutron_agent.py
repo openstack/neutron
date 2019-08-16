@@ -184,7 +184,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.network_ports = collections.defaultdict(set)
         # keeps association between ports and ofports to detect ofport change
         self.vifname_to_ofport_map = {}
-        self.setup_rpc()
         # Stores newly created bridges
         self.added_bridges = list()
         self.bridge_mappings = self._parse_bridge_mappings(
@@ -217,6 +216,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             # here inside the call to setup_tunnel_br()
             self.setup_tunnel_br(ovs_conf.tunnel_bridge)
             self.setup_tunnel_br_flows()
+
+        self.setup_rpc()
 
         agent_api = ovs_ext_api.OVSAgentExtensionAPI(self.int_br, self.tun_br)
         self.ext_manager.initialize(
