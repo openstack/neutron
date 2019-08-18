@@ -17,6 +17,7 @@ import datetime
 
 import mock
 from neutron_lib.api.definitions import dhcpagentscheduler as das_apidef
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import constants as plugin_constants
@@ -1067,6 +1068,44 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                     l3_agent['id'])
                 # No router will be auto scheduled.
                 self.assertEqual(0, len(host_routers['routers']))
+
+    def test_sync_dvr_router_with_fixedip_on_fip_net(self):
+        l3_rpc_cb = l3_rpc.L3RpcCallback()
+        self._register_dvr_agents()
+
+        with self.subnet() as s:
+            # first create an external network
+            net_id = s['subnet']['network_id']
+            self._set_net_external(net_id)
+            # create router with external gateway
+            router_data = {'name': 'router1',
+                           'external_gateway_info': {'network_id': net_id},
+                           'tenant_id': 'tenant_id',
+                           'admin_state_up': True,
+                           'distributed': True}
+            router = self.l3plugin.create_router(self.adminContext,
+                                                 {'router': router_data})
+            self.l3plugin.schedule_router(self.adminContext, router['id'])
+            with self.port(subnet=s,
+                           device_owner=DEVICE_OWNER_COMPUTE) as port:
+                # bind port to L3_HOSTB
+                updated_port = {
+                    "port": {
+                        portbindings.HOST_ID: L3_HOSTB
+                    }
+                }
+                self.plugin.update_port(
+                    self.adminContext,
+                    port['port']['id'],
+                    updated_port
+                )
+                ret_b = l3_rpc_cb.sync_routers(
+                    self.adminContext,
+                    host=L3_HOSTB,
+                    router_ids=[router['id']])
+
+                router_ids = [r['id'] for r in ret_b]
+                self.assertEqual(0, len(router_ids))
 
     def test_router_without_l3_agents(self):
         with self.subnet() as s:
