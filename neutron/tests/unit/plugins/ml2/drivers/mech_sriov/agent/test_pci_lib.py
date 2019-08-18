@@ -38,17 +38,6 @@ class TestPciLib(base.BaseTestCase):
                       ' checking off, link-state enable')
     VF_LINK_SHOW = '\n'.join((PF_LINK_SHOW, PF_MAC, VF_0_LINK_SHOW,
                               VF_1_LINK_SHOW, VF_2_LINK_SHOW))
-    MACVTAP_LINK_SHOW = ('63: macvtap1@enp129s0f1: <BROADCAST,MULTICAST> mtu '
-                         '1500 qdisc  noop state DOWN mode DEFAULT group '
-                         'default qlen 500 link/ether 4a:9b:6d:de:65:b5 brd '
-                         'ff:ff:ff:ff:ff:ff')
-    MACVTAP_LINK_SHOW2 = ('64: macvtap2@p1p2_1: <BROADCAST,MULTICAST> mtu '
-                          '1500 qdisc  noop state DOWN mode DEFAULT group '
-                          'default qlen 500 link/ether 4a:9b:6d:de:65:b5 brd '
-                          'ff:ff:ff:ff:ff:ff')
-
-    IP_LINK_SHOW_WITH_MACVTAP = '\n'.join((VF_LINK_SHOW, MACVTAP_LINK_SHOW))
-    IP_LINK_SHOW_WITH_MACVTAP2 = '\n'.join((VF_LINK_SHOW, MACVTAP_LINK_SHOW2))
 
     MAC_MAPPING = {
         0: "fa:16:3e:b4:81:ac",
@@ -72,7 +61,7 @@ class TestPciLib(base.BaseTestCase):
         with mock.patch.object(self.pci_wrapper,
                                "_as_root") as mock_as_root:
             mock_as_root.side_effect = Exception()
-            self.assertRaises(exc.IpCommandDeviceError,
+            self.assertRaises(exc.IpCommandError,
                               self.pci_wrapper.get_assigned_macs,
                               [self.VF_INDEX])
 
@@ -94,7 +83,7 @@ class TestPciLib(base.BaseTestCase):
         with mock.patch.object(self.pci_wrapper,
                                "_as_root") as mock_as_root:
             mock_as_root.side_effect = Exception()
-            self.assertRaises(exc.IpCommandDeviceError,
+            self.assertRaises(exc.IpCommandError,
                               self.pci_wrapper.get_vf_state,
                               self.VF_INDEX)
 
@@ -108,7 +97,7 @@ class TestPciLib(base.BaseTestCase):
         with mock.patch.object(self.pci_wrapper,
                                "_as_root") as mock_as_root:
             mock_as_root.side_effect = Exception()
-            self.assertRaises(exc.IpCommandDeviceError,
+            self.assertRaises(exc.IpCommandError,
                               self.pci_wrapper.set_vf_state,
                               self.VF_INDEX,
                               True)
@@ -123,7 +112,7 @@ class TestPciLib(base.BaseTestCase):
         with mock.patch.object(self.pci_wrapper,
                                "_as_root") as mock_as_root:
             mock_as_root.side_effect = Exception()
-            self.assertRaises(exc.IpCommandDeviceError,
+            self.assertRaises(exc.IpCommandError,
                               self.pci_wrapper.set_vf_spoofcheck,
                               self.VF_INDEX,
                               True)
@@ -143,7 +132,7 @@ class TestPciLib(base.BaseTestCase):
         else:
             with mock.patch.object(self.pci_wrapper, "_as_root",
                                    side_effect=Exception()):
-                self.assertRaises(exc.IpCommandDeviceError,
+                self.assertRaises(exc.IpCommandError,
                                   self.pci_wrapper.set_vf_rate,
                                   self.VF_INDEX,
                                   rate,
@@ -174,22 +163,3 @@ class TestPciLib(base.BaseTestCase):
                               self.pci_wrapper.set_vf_state,
                               self.VF_INDEX,
                               state=True)
-
-    def test_is_macvtap_assigned(self):
-        self.assertTrue(pci_lib.PciDeviceIPWrapper.is_macvtap_assigned(
-            'enp129s0f1', self.IP_LINK_SHOW_WITH_MACVTAP))
-
-    def test_is_macvtap_assigned_interface_with_underscore(self):
-        self.assertTrue(pci_lib.PciDeviceIPWrapper.is_macvtap_assigned(
-            'p1p2_1', self.IP_LINK_SHOW_WITH_MACVTAP2))
-
-    def test_is_macvtap_assigned_not_assigned(self):
-        self.assertFalse(pci_lib.PciDeviceIPWrapper.is_macvtap_assigned(
-            'enp129s0f2', self.IP_LINK_SHOW_WITH_MACVTAP))
-
-    def test_link_show_command_failed(self):
-        with mock.patch.object(pci_lib.PciDeviceIPWrapper,
-                               "_as_root") as mock_as_root:
-            mock_as_root.side_effect = Exception()
-            self.assertRaises(exc.IpCommandError,
-                              self.pci_wrapper.link_show)

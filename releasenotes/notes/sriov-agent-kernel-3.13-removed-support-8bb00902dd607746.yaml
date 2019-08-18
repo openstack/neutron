@@ -1,0 +1,8 @@
+---
+upgrade:
+  - |
+    SR-IOV agent code no longer supports old kernels (<3.13) for MacVtap
+    ports. This change is not expected to affect existing deployments since
+    most OS distributions already have the relevant kernel patches.
+    In addition, latest major release of all Supported distributions already
+    have a newer kernel.
