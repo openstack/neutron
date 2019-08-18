@@ -166,12 +166,18 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             router_ids.add(subnet_port['device_id'])
         return router_ids
 
-    def get_subnet_ids_on_router(self, context, router_id):
+    def get_subnet_ids_on_router(self, context, router_id,
+                                 keep_gateway_port=True):
         """Return subnet IDs for interfaces attached to the given router."""
         subnet_ids = set()
         filter_rtr = {'device_id': [router_id]}
         int_ports = self._core_plugin.get_ports(context, filters=filter_rtr)
+
         for int_port in int_ports:
+            if (not keep_gateway_port and
+                    int_port['device_owner'] ==
+                    n_const.DEVICE_OWNER_ROUTER_GW):
+                continue
             int_ips = int_port['fixed_ips']
             if int_ips:
                 int_subnet = int_ips[0]['subnet_id']
@@ -421,7 +427,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             else:
                 for router_id in (router_ids - result_set):
                     subnet_ids = self.get_subnet_ids_on_router(
-                        context, router_id)
+                        context, router_id, keep_gateway_port=False)
                     if (subnet_ids and
                             self._check_dvr_serviceable_ports_on_host(
                                     context, agent_db['host'],
