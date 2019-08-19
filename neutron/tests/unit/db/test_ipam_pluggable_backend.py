@@ -29,6 +29,7 @@ import webob.exc
 from neutron.db import ipam_backend_mixin
 from neutron.db import ipam_pluggable_backend
 from neutron.ipam import requests as ipam_req
+from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import subnet as obj_subnet
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_db_base
@@ -764,11 +765,14 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
     def test_update_db_subnet_unchanged_pools(self, pool_mock):
         old_pools = [{'start': '192.1.1.2', 'end': '192.1.1.254'}]
         context = self.admin_context
+        network_id = uuidutils.generate_uuid()
+        network_obj.Network(context, id=network_id).create()
         subnet = {'id': uuidutils.generate_uuid(),
                   'ip_version': constants.IP_VERSION_4,
                   'cidr': netaddr.IPNetwork('192.1.1.0/24'),
                   'ipv6_address_mode': None,
-                  'ipv6_ra_mode': None}
+                  'ipv6_ra_mode': None,
+                  'network_id': network_id}
         subnet_with_pools = subnet.copy()
         subnet_obj = obj_subnet.Subnet(context, **subnet_with_pools)
         subnet_obj.create()
@@ -782,11 +786,14 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
     def test_update_db_subnet_new_pools(self, pool_mock):
         old_pools = [{'start': '192.1.1.2', 'end': '192.1.1.254'}]
         context = self.admin_context
+        network_id = uuidutils.generate_uuid()
+        network_obj.Network(context, id=network_id).create()
         subnet = {'id': uuidutils.generate_uuid(),
                   'ip_version': constants.IP_VERSION_4,
                   'cidr': netaddr.IPNetwork('192.1.1.0/24'),
                   'ipv6_address_mode': None,
-                  'ipv6_ra_mode': None}
+                  'ipv6_ra_mode': None,
+                  'network_id': network_id}
         # make a copy of subnet for validation, since update_subnet changes
         # incoming subnet dict
         expected_subnet = subnet.copy()
