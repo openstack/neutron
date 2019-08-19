@@ -116,12 +116,19 @@ class L3RpcCallback(object):
         router_ids = kwargs.get('router_ids')
         host = kwargs.get('host')
         context = neutron_context.get_admin_context()
+        LOG.debug('Sync routers for ids %(router_ids)s in %(host)s',
+                  {'router_ids': router_ids,
+                   'host': host})
         routers = self._routers_to_sync(context, router_ids, host)
         if utils.is_extension_supported(
             self.plugin, constants.PORT_BINDING_EXT_ALIAS):
             self._ensure_host_set_on_ports(context, host, routers)
             # refresh the data structure after ports are bound
             routers = self._routers_to_sync(context, router_ids, host)
+        LOG.debug('The sync data for ids %(router_ids)s in %(host)s is: '
+                  '%(routers)s', {'router_ids': router_ids,
+                                  'host': host,
+                                  'routers': routers})
         return routers
 
     def _routers_to_sync(self, context, router_ids, host=None):
