@@ -23,6 +23,7 @@ from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from sqlalchemy import or_
 
@@ -410,6 +411,9 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             context, agent_db, router_ids, with_dvr))
         if not with_dvr:
             return result_set
+        LOG.debug("Routers %(router_ids)s bound to L3 agent in host %(host)s",
+                  {'router_ids': result_set,
+                   'host': agent_db['host']})
         router_ids = set(router_ids or [])
         if router_ids and result_set == router_ids:
             # no need for extra dvr checks if requested routers are
@@ -436,13 +440,21 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                                     list(subnet_ids))):
                         result_set.add(router_id)
 
+            LOG.debug("Routers %(router_ids)s are scheduled or have "
+                      "serviceable ports in host %(host)s",
+                      {'router_ids': result_set,
+                       'host': agent_db['host']})
             for dvr_router in dvr_routers:
                 result_set |= set(
                     self._get_other_dvr_router_ids_connected_router(
                         context, dvr_router))
 
+        LOG.debug("Router IDs %(router_ids)s for agent in host %(host)s",
+                  {'router_ids': result_set,
+                   'host': agent_db['host']})
         return list(result_set)
 
+    @log_helpers.log_method_call
     def _check_dvr_serviceable_ports_on_host(self, context, host, subnet_ids):
         """Check for existence of dvr serviceable ports on host
 
