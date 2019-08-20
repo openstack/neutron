@@ -324,7 +324,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             binding.host = host
             changes = True
 
-        vnic_type = attrs and attrs.get(portbindings.VNIC_TYPE)
+        vnic_type = attrs.get(portbindings.VNIC_TYPE) if attrs else None
         if (validators.is_attr_set(vnic_type) and
             binding.vnic_type != vnic_type):
             binding.vnic_type = vnic_type
