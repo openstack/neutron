@@ -90,7 +90,7 @@ def _ovsdb_retry(fn):
         new_fn = tenacity.retry(
             reraise=True,
             retry=tenacity.retry_if_result(_ovsdb_result_pending),
-            wait=tenacity.wait_exponential(multiplier=0.01, max=1),
+            wait=tenacity.wait_exponential(multiplier=0.02, max=1),
             stop=tenacity.stop_after_delay(
                 self.ovsdb_timeout))(fn)
         return new_fn(*args, **kwargs)

@@ -86,7 +86,7 @@ class OvsIdl(idl.Idl):
         super(OvsIdl, self).__init__(self._ovsdb_connection, helper)
         self.notify_handler = ovsdb_event.RowEventHandler()
 
-    @tenacity.retry(wait=tenacity.wait_exponential(multiplier=0.01),
+    @tenacity.retry(wait=tenacity.wait_exponential(multiplier=0.02),
                     stop=tenacity.stop_after_delay(1),
                     reraise=True)
     def _do_get_schema_helper(self, connection):
