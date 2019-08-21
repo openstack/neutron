@@ -151,18 +151,6 @@
               - ^setup.cfg$
               - ^tools/.*$
               - ^tox.ini$
-        - legacy-tempest-dsvm-neutron-full-opensuse-423:
-            irrelevant-files:
-              - ^(test-|)requirements.txt$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^neutron/tests/unit/.*$
-              - ^releasenotes/.*$
-              - ^setup.cfg$
-              - ^tools/.*$
-              - ^tox.ini$
-
     post:
       jobs:
         - openstack-tox-cover
