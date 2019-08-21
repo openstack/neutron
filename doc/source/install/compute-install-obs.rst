@@ -119,7 +119,6 @@ Configure the Compute service to use the Networking service
 
        [neutron]
        # ...
-       url = http://controller:9696
        auth_url = http://controller:5000
        auth_type = password
        project_domain_name = default
@@ -133,6 +132,10 @@ Configure the Compute service to use the Networking service
 
     Replace ``NEUTRON_PASS`` with the password you chose for the ``neutron``
     user in the Identity service.
+
+    See the :nova-doc:`compute service configuration guide <configuration/config.html#neutron>`
+    for the full set of options including overriding the service catalog
+    endpoint URL if necessary.
 
 Finalize installation
 ---------------------
