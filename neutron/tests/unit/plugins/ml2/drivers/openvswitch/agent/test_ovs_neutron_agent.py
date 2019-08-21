@@ -2410,7 +2410,7 @@ class TestOvsDvrNeutronAgent(object):
         return resp
 
     def _expected_install_dvr_process(self, lvid, port, ip_version,
-                                      gateway_ip, gateway_mac):
+                                      gateway_ip):
         if ip_version == 4:
             ipvx_calls = [
                 mock.call.install_dvr_process_ipv4(
@@ -2421,7 +2421,7 @@ class TestOvsDvrNeutronAgent(object):
             ipvx_calls = [
                 mock.call.install_dvr_process_ipv6(
                     vlan_tag=lvid,
-                    gateway_mac=gateway_mac),
+                    gateway_mac=port.vif_mac),
             ]
         return ipvx_calls + [
             mock.call.install_dvr_process(
@@ -2435,12 +2435,13 @@ class TestOvsDvrNeutronAgent(object):
                                                  ip_version=4):
         self._setup_for_dvr_test()
         if ip_version == 4:
-            gateway_ip = '1.1.1.1'
+            gateway_ip = '1.1.1.10'
             cidr = '1.1.1.0/24'
         else:
             gateway_ip = '2001:100::1'
             cidr = '2001:100::0/64'
-        self._port.vif_mac = gateway_mac = 'aa:bb:cc:11:22:33'
+        self._port.vif_mac = 'aa:bb:cc:11:22:33'
+        gateway_mac = 'aa:bb:cc:66:66:66'
         self._compute_port.vif_mac = '77:88:99:00:11:22'
         physical_network = self._physical_network
         segmentation_id = self._segmentation_id
@@ -2488,8 +2489,7 @@ class TestOvsDvrNeutronAgent(object):
                 port=self._port,
                 lvid=lvid,
                 ip_version=ip_version,
-                gateway_ip=gateway_ip,
-                gateway_mac=gateway_mac)
+                gateway_ip=self._fixed_ips[0]['ip_address'])
             expected_on_int_br = [
                 mock.call.provision_local_vlan(
                     port=int_ofp,
@@ -2577,8 +2577,7 @@ class TestOvsDvrNeutronAgent(object):
                 port=self._port,
                 lvid=lvid,
                 ip_version=ip_version,
-                gateway_ip=gateway_ip,
-                gateway_mac=gateway_mac)
+                gateway_ip=gateway_ip)
             self.assertEqual(expected_on_int_br, int_br.mock_calls)
             self.assertEqual(expected_on_tun_br, tun_br.mock_calls)
             self.assertEqual([], phys_br.mock_calls)
@@ -2830,8 +2829,7 @@ class TestOvsDvrNeutronAgent(object):
                     port=self._port,
                     lvid=lvid,
                     ip_version=ip_version,
-                    gateway_ip=gateway_ip,
-                    gateway_mac=gateway_mac)
+                    gateway_ip=gateway_ip)
                 self.assertEqual(expected_on_tun_br, tun_br.mock_calls)
 
         int_br.reset_mock()
@@ -2931,8 +2929,7 @@ class TestOvsDvrNeutronAgent(object):
                 port=self._port,
                 lvid=lvid,
                 ip_version=ip_version,
-                gateway_ip=gateway_ip,
-                gateway_mac=gateway_mac)
+                gateway_ip=gateway_ip)
             self.assertEqual(expected_on_tun_br, tun_br.mock_calls)
             int_br.reset_mock()
             tun_br.reset_mock()
