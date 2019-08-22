@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
 
@@ -59,9 +61,14 @@ class FakePortContext(api.PortContext):
 
     @property
     def current(self):
-        return {'id': PORT_ID,
-                portbindings.VNIC_TYPE: self._bound_vnic_type,
-                portbindings.PROFILE: self._bound_profile}
+        current_data = {'id': PORT_ID,
+                        portbindings.VNIC_TYPE: self._bound_vnic_type,
+                        portbindings.PROFILE: self._bound_profile}
+        ret_value = current_data
+        if self._original:
+            ret_value = copy.deepcopy(self.original)
+            ret_value.update(current_data)
+        return ret_value
 
     @property
     def original(self):

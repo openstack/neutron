@@ -826,10 +826,19 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                        'host': context.host})
             return False
 
+        drivers = self._check_drivers_connectivity(drivers, context)
+        if not drivers:
+            LOG.error("Port %(port)s does not have an IP address assigned and "
+                      "there are no driver with 'connectivity' = 'l2'. The "
+                      "port cannot be bound.",
+                      {'port': context.current['id']})
+            return False
+
         for driver in drivers:
             if not self._check_driver_to_bind(driver, segments_to_bind,
                                               context._binding_levels):
                 continue
+
             try:
                 context._prepare_to_bind(segments_to_bind)
                 driver.obj.bind_port(context)
@@ -1027,6 +1036,21 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                            "driver": level.driver})
                 return False
         return True
+
+    def _check_drivers_connectivity(self, drivers, port_context):
+        """If port does not have an IP address, driver connectivity must be l2
+
+        A port without an IP address can be bound only to a mech driver with
+        "connectivity" = "l2". "legacy" or "l3" (e.g.: Calico) drivers cannot
+        have a port bound without an IP allocated.
+        """
+        if port_context.current.get('fixed_ips'):
+            return drivers
+
+        return [d for d in drivers if
+                getattr(d.obj, 'vif_details', {}).get(
+                    portbindings.VIF_DETAILS_CONNECTIVITY) ==
+                portbindings.CONNECTIVITY_L2]
 
     def get_workers(self):
         workers = []

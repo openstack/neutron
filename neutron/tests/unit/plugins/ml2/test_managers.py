@@ -41,9 +41,10 @@ class TestManagers(base.BaseTestCase):
                                   'network_type': 'vlan',
                                   'physical_network': 'public',
                                   api.SEGMENTATION_ID: 49}]
-        self.context = FakePortContext(None,
-                                       None,
-                                       self.segments_to_bind)
+        original_port = {'fixed_ips': [{'subnet_id': mock.ANY,
+                                        'ip_address': mock.ANY}]}
+        self.context = FakePortContext(None, None, self.segments_to_bind,
+                                       original=original_port)
         self.context._binding = mock.Mock()
         self.context._binding_levels = []
         self.context._new_bound_segment = self.segment_id
@@ -72,6 +73,26 @@ class TestManagers(base.BaseTestCase):
                                'bind_port') as bind_port:
             manager._bind_port_level(self.context, 0, self.segments_to_bind)
         self.assertEqual(0, bind_port.call_count)
+
+    def _check_drivers_connectivity(self, agents):
+        cfg.CONF.set_override('mechanism_drivers', agents, group='ml2')
+        manager = managers.MechanismManager()
+        return (manager.ordered_mech_drivers,
+                manager._check_drivers_connectivity(
+                    manager.ordered_mech_drivers, self.context))
+
+    def test__check_drivers_connectivity(self):
+        self.assertEqual(*self._check_drivers_connectivity(['fake_agent']))
+
+    def test__check_drivers_connectivity_ip_less_port(self):
+        self.context._original['fixed_ips'] = []
+        self.assertEqual(*self._check_drivers_connectivity(['fake_agent']))
+
+    def test__check_drivers_connectivity_ip_less_port_l3_only_driver(self):
+        self.context._original['fixed_ips'] = []
+        self.assertEqual(
+            [],
+            self._check_drivers_connectivity(['fake_agent_l3'])[1])
 
     def test__infer_driver_from_allocation_positive(self):
         cfg.CONF.set_override(
