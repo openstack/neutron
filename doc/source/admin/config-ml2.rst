@@ -487,7 +487,7 @@ non-L2 neutron agents:
    that is used for binding a port.
 
    More information about L2 population see the
-   `OpenStack Manuals <http://docs.ocselected.org/openstack-manuals/kilo/networking-guide/content/ml2_l2pop_scenarios.html>`__.
+   `OpenStack Manuals <https://networkop.co.uk/blog/2016/05/06/neutron-l2pop/>`_.
 
 
 Buying guide
