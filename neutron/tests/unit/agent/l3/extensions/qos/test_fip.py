@@ -110,15 +110,16 @@ class QosExtensionBaseTestCase(test_agent.BasicRouterOperationsFramework):
                     'port_id': _uuid(),
                     'host': HOSTNAME,
                     'qos_policy_id': self.policy.id}
-        self.router = {'id': _uuid(),
+        self.router_id = _uuid()
+        self.router = {'id': self.router_id,
                        'gw_port': self.ex_gw_port,
                        'ha': False,
                        'distributed': False,
                        lib_const.FLOATINGIP_KEY: [self.fip]}
-        self.router_info = l3router.RouterInfo(self.agent, _uuid(),
+        self.router_info = l3router.RouterInfo(self.agent, self.router_id,
                                                self.router, **self.ri_kwargs)
         self.router_info.ex_gw_port = self.ex_gw_port
-        self.agent.router_info[self.router['id']] = self.router_info
+        self.agent.router_info[self.router_id] = self.router_info
 
         def _mock_get_router_info(router_id):
             return self.router_info
@@ -274,6 +275,31 @@ class FipQosExtensionTestCase(QosExtensionBaseTestCase):
                  mock.call(lib_const.EGRESS_DIRECTION,
                            TEST_QOS_FIP)],
                 any_order=True)
+
+    def test_delete_router(self):
+        tc_wrapper = mock.Mock()
+        with mock.patch.object(self.fip_qos_ext, '_get_tc_wrapper',
+                               return_value=tc_wrapper):
+            self.fip_qos_ext.update_router(self.context, self.router)
+            tc_wrapper.set_ip_rate_limit.assert_has_calls(
+                [mock.call(lib_const.INGRESS_DIRECTION,
+                           TEST_QOS_FIP, 1111, 2222),
+                 mock.call(lib_const.EGRESS_DIRECTION,
+                           TEST_QOS_FIP, 3333, 4444)],
+                any_order=True)
+            self.fip_qos_ext.delete_router(self.context, self.router)
+            self.assertIsNone(
+                self.fip_qos_ext.fip_qos_map.router_floating_ips.get(
+                    self.router_id))
+            self.assertIsNone(
+                self.fip_qos_ext.fip_qos_map.ingress_ratelimits.get(
+                    TEST_QOS_FIP))
+            self.assertIsNone(
+                self.fip_qos_ext.fip_qos_map.egress_ratelimits.get(
+                    TEST_QOS_FIP))
+            self.assertIsNone(
+                self.fip_qos_ext.fip_qos_map.get_resource_policy(
+                    TEST_QOS_FIP))
 
     def test_update_router_fip_removed(self):
         self._test_qos_policy_scenarios()

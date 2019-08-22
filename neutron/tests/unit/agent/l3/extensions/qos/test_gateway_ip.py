@@ -196,6 +196,23 @@ class RouterGatewayIPQosAgentExtensionTestCase(
     def test_update_router(self):
         self._test_gateway_ip_add(self.gw_ip_qos_ext.update_router)
 
+    def test_delete_router(self):
+        tc_wrapper = mock.Mock()
+        with mock.patch.object(self.gw_ip_qos_ext, '_get_tc_wrapper',
+                               return_value=tc_wrapper):
+            self.gw_ip_qos_ext.add_router(self.context, self.router)
+            tc_wrapper.set_ip_rate_limit.assert_has_calls(
+                [mock.call(lib_const.INGRESS_DIRECTION,
+                           TEST_QOS_GW_IP, 1111, 2222),
+                 mock.call(lib_const.EGRESS_DIRECTION,
+                           TEST_QOS_GW_IP, 3333, 4444)],
+                any_order=True)
+
+            self.gw_ip_qos_ext.delete_router(self.context, self.router)
+            self.assertIsNone(
+                self.gw_ip_qos_ext.gateway_ip_qos_map.get_resource_policy(
+                    self.router_info.router_id))
+
     def test__process_update_policy(self):
         tc_wrapper = mock.Mock()
         with mock.patch.object(self.gw_ip_qos_ext, '_get_tc_wrapper',
