@@ -30,12 +30,6 @@ import logging
 import os
 import sys
 
-import eventlet
-
-# module ref generation can cause partial greening resulting in thread issues
-# during the linkcheck builder, so initialize eventlet upfront
-eventlet.monkey_patch()
-
 # NOTE(amotoki): In case of oslo_config.sphinxext is enabled,
 # when resolving automodule neutron.tests.functional.db.test_migrations,
 # sphinx accesses tests/functional/__init__.py is processed,
