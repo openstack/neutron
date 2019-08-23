@@ -21,6 +21,7 @@ from oslo_utils import timeutils
 from oslo_utils import uuidutils
 import six
 
+from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import timestamp
 from neutron import manager
@@ -255,15 +256,25 @@ class TimeStampDBMixinTestCase(TimeStampChangedsinceTestCase):
                         tag=tag).create()
 
     def test_update_timpestamp(self):
+        self._standard_attr_id = None
+
+        def save_network():
+            timenow.reset_mock()
+            self._standard_attr_id = self._save_network(network_id)
+            return 1 == timenow.call_count
+
+        def save_tag():
+            timenow.reset_mock()
+            self._save_tag(tags, self._standard_attr_id)
+            return 0 == timenow.call_count
+
         network_id = uuidutils.generate_uuid()
         tags = ["red", "blue"]
-        with mock.patch('oslo_utils.timeutils.utcnow') as timenow:
+        with mock.patch.object(timeutils, 'utcnow') as timenow:
             timenow.return_value = datetime.datetime(2016, 3, 11, 0, 0)
 
             # Test to update StandardAttribute object
-            standard_attr_id = self._save_network(network_id)
-            self.assertEqual(1, timenow.call_count)
+            utils.wait_until_true(save_network, timeout=5, sleep=0.1)
 
             # Test not to update non StandardAttribute object
-            self._save_tag(tags, standard_attr_id)
-            self.assertEqual(1, timenow.call_count)
+            utils.wait_until_true(save_tag, timeout=5, sleep=0.1)
