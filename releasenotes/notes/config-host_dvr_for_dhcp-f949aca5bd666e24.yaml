@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    A new config option, ``host_dvr_for_dhcp``, was added to neutron.conf
+    for DVR to determine whether to host the DVR local router to the
+    scheduled DHCP node(s).

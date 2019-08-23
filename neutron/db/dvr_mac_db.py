@@ -33,6 +33,7 @@ from sqlalchemy import or_
 
 from neutron.common import utils
 from neutron.conf.db import dvr_mac_db
+from neutron.conf.db import l3_dvr_db
 from neutron.db import models_v2
 from neutron.extensions import dvr as ext_dvr
 from neutron.objects import router
@@ -42,6 +43,7 @@ LOG = logging.getLogger(__name__)
 
 
 dvr_mac_db.register_db_dvr_mac_opts()
+l3_dvr_db.register_db_l3_dvr_opts()
 
 
 @registry.has_registry_receivers
@@ -151,6 +153,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         :param subnet: subnet id to match and extract ports of interest
         :returns: list -- Ports on the given subnet in the input host
         """
+        host_dvr_for_dhcp = cfg.CONF.host_dvr_for_dhcp
         filters = {'fixed_ips': {'subnet_id': [subnet]},
                    portbindings.HOST_ID: [host]}
         ports_query = self.plugin._get_ports_query(context, filters=filters)
@@ -158,7 +161,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
             models_v2.Port.device_owner.startswith(
                 constants.DEVICE_OWNER_COMPUTE_PREFIX),
             models_v2.Port.device_owner.in_(
-                utils.get_other_dvr_serviced_device_owners()))
+                utils.get_other_dvr_serviced_device_owners(host_dvr_for_dhcp)))
         ports_query = ports_query.filter(owner_filter)
         ports = [
             self.plugin._make_port_dict(port, process_extensions=False)

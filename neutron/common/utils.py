@@ -170,16 +170,18 @@ class exception_logger(object):
         return call
 
 
-def get_other_dvr_serviced_device_owners():
+def get_other_dvr_serviced_device_owners(host_dvr_for_dhcp=True):
     """Return device_owner names for ports that should be serviced by DVR
 
     This doesn't return DEVICE_OWNER_COMPUTE_PREFIX since it is a
     prefix, not a complete device_owner name, so should be handled
     separately (see is_dvr_serviced() below)
     """
-    return [n_const.DEVICE_OWNER_LOADBALANCER,
-            n_const.DEVICE_OWNER_LOADBALANCERV2,
-            n_const.DEVICE_OWNER_DHCP]
+    device_owners = [n_const.DEVICE_OWNER_LOADBALANCER,
+                     n_const.DEVICE_OWNER_LOADBALANCERV2]
+    if host_dvr_for_dhcp:
+        device_owners.append(n_const.DEVICE_OWNER_DHCP)
+    return device_owners
 
 
 def get_dvr_allowed_address_pair_device_owners():
