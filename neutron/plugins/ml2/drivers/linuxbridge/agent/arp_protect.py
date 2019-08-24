@@ -222,7 +222,7 @@ NAMESPACE = None
 
 
 @tenacity.retry(
-    wait=tenacity.wait_exponential(multiplier=0.01),
+    wait=tenacity.wait_exponential(multiplier=0.02),
     retry=tenacity.retry_if_exception(lambda e: e.returncode == 255),
     reraise=True
 )
