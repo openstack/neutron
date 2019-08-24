@@ -60,10 +60,12 @@ class PortForwardingObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
         if not fp_obj.db_obj:
             fp_db_attrs = {
                 'floatingip_id': fp_obj.floatingip_id,
-                'external_port': fp_obj.external_port,
+                'external_port_start': fp_obj.external_port,
+                'external_port_end': fp_obj.external_port,
                 'internal_neutron_port_id': fp_obj.internal_port_id,
                 'protocol': fp_obj.protocol,
-                'socket': fp_obj.internal_port,
+                'internal_port_start': fp_obj.internal_port,
+                'internal_port_end': fp_obj.internal_port,
                 'floating_ip': random_generate_fip_db(fp_obj.floatingip_id)
             }
             fp_obj._captured_db_model = (
@@ -134,10 +136,6 @@ class PortForwardingDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
         obj.create()
         self.assertIsNotNone(obj.db_obj)
-        # Make sure the created obj socket field is correct.
-        created_socket = obj.db_obj.socket.split(":")
-        self.assertEqual(created_socket[0], str(obj.internal_ip_address))
-        self.assertEqual(created_socket[1], str(obj.internal_port))
 
         fields_to_update = self.get_updatable_fields(self.obj_fields[1])
         if fields_to_update:
@@ -153,12 +151,6 @@ class PortForwardingDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
                 setattr(obj, key, val)
             obj.update()
             self.assertIsNotNone(obj.db_obj)
-            # Make sure the updated obj socket field is correct.
-            updated_socket = obj.db_obj.socket.split(":")
-            self.assertEqual(updated_socket[0],
-                             str(self.obj_fields[1]['internal_ip_address']))
-            self.assertEqual(updated_socket[1],
-                             str(self.obj_fields[1]['internal_port']))
             # Then check all update fields had been updated.
             for k, v in obj.modify_fields_to_db(fields_to_update).items():
                 self.assertEqual(v, obj.db_obj[k], '%s attribute differs' % k)

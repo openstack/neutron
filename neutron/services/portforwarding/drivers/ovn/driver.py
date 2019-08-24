@@ -35,9 +35,11 @@ class OVNPortForwardingHandler(object):
         return pf_const.LB_PROTOCOL_MAP[pf_obj.protocol]
 
     @staticmethod
-    def lb_name(fip_id, proto):
-        return "{}-{}-{}".format(
-            pf_const.PORT_FORWARDING_PREFIX, fip_id, proto)
+    def lb_name(fip_id, proto, external_port=''):
+        if external_port:
+            external_port = '-%s' % external_port
+        return "{}-{}-{}{}".format(
+            pf_const.PORT_FORWARDING_PREFIX, fip_id, proto, external_port)
 
     @classmethod
     def lb_names(cls, fip_id):
@@ -45,19 +47,23 @@ class OVNPortForwardingHandler(object):
                 for proto in pf_const.LB_PROTOCOL_MAP.values()]
 
     @classmethod
-    def _get_lb_attributes(cls, pf_obj):
+    def _get_lb_attributes(cls, pf_obj, is_range=False):
+        external_port = pf_obj.external_port if is_range else ''
         lb_name = cls.lb_name(pf_obj.floatingip_id,
-                              cls._get_lb_protocol(pf_obj))
+                              cls._get_lb_protocol(pf_obj),
+                              external_port)
         vip = "{}:{}".format(pf_obj.floating_ip_address, pf_obj.external_port)
         internal_ip = "{}:{}".format(pf_obj.internal_ip_address,
                                      pf_obj.internal_port)
         rtr_name = 'neutron-{}'.format(pf_obj.router_id)
         return lb_name, vip, [internal_ip], rtr_name
 
-    def _port_forwarding_created(self, ovn_txn, nb_ovn, pf_obj):
+    def _port_forwarding_created(self, ovn_txn, nb_ovn, pf_obj,
+                                 is_range=False):
         # Add vip to its corresponding load balancer. There can be multiple
         # vips, so load balancer may already be present.
-        lb_name, vip, internal_ips, rtr_name = self._get_lb_attributes(pf_obj)
+        lb_name, vip, internal_ips, rtr_name = self._get_lb_attributes(
+            pf_obj, is_range=is_range)
         external_ids = {
             ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
                 pf_const.PORT_FORWARDING_PLUGIN,
@@ -72,21 +78,34 @@ class OVNPortForwardingHandler(object):
         ovn_txn.add(nb_ovn.lr_lb_add(rtr_name, lb_name, may_exist=True))
 
     def port_forwarding_created(self, ovn_txn, nb_ovn, pf_obj):
-        LOG.info("CREATE for port-forwarding %s vip %s:%s to %s:%s",
-                 pf_obj.protocol,
-                 pf_obj.floating_ip_address, pf_obj.external_port,
-                 pf_obj.internal_ip_address, pf_obj.internal_port)
-        self._port_forwarding_created(ovn_txn, nb_ovn, pf_obj)
+        pf_objs = pf_obj.unroll_port_ranges()
+        is_range = len(pf_objs) > 1
+        for pf_obj in pf_objs:
+            LOG.info("CREATE for port-forwarding %s vip %s:%s to %s:%s",
+                     pf_obj.protocol,
+                     pf_obj.floating_ip_address, pf_obj.external_port,
+                     pf_obj.internal_ip_address, pf_obj.internal_port)
+            self._port_forwarding_created(ovn_txn, nb_ovn, pf_obj,
+                                          is_range=is_range)
 
     def port_forwarding_updated(self, ovn_txn, nb_ovn, pf_obj, orig_pf_obj):
-        LOG.info("UPDATE for port-forwarding %s vip %s:%s to %s:%s",
-                 pf_obj.protocol,
-                 pf_obj.floating_ip_address, pf_obj.external_port,
-                 pf_obj.internal_ip_address, pf_obj.internal_port)
-        self._port_forwarding_deleted(ovn_txn, nb_ovn, orig_pf_obj)
-        self._port_forwarding_created(ovn_txn, nb_ovn, pf_obj)
+        orig_pf_objs = orig_pf_obj.unroll_port_ranges()
+        is_range = len(orig_pf_objs) > 1
+        for orig_pf_obj in orig_pf_objs:
+            self._port_forwarding_deleted(ovn_txn, nb_ovn, orig_pf_obj,
+                                          is_range=is_range)
+        pf_objs = pf_obj.unroll_port_ranges()
+        is_range = len(pf_objs) > 1
+        for pf_obj in pf_objs:
+            LOG.info("UPDATE for port-forwarding %s vip %s:%s to %s:%s",
+                     pf_obj.protocol,
+                     pf_obj.floating_ip_address, pf_obj.external_port,
+                     pf_obj.internal_ip_address, pf_obj.internal_port)
+            self._port_forwarding_created(ovn_txn, nb_ovn, pf_obj,
+                                          is_range=is_range)
 
-    def _port_forwarding_deleted(self, ovn_txn, nb_ovn, pf_obj):
+    def _port_forwarding_deleted(self, ovn_txn, nb_ovn, pf_obj,
+                                 is_range=False):
         # NOTE: load balancer instance is expected to be removed by api once
         #       last vip is removed.
         #       Since router has weak ref to the lb, that gets taken care
@@ -97,15 +116,23 @@ class OVNPortForwardingHandler(object):
         # TODO(flaviof): see about enhancing lb_del so that removal of lb
         # can optionally take a logical router, which explicitly dissociates
         # router from removed lb.
-        lb_name, vip, _internal_ips, _rtr = self._get_lb_attributes(pf_obj)
-        ovn_txn.add(nb_ovn.lb_del(lb_name, vip, if_exists=True))
+        pf_objs = pf_obj.unroll_port_ranges()
+        is_range = is_range or len(pf_objs) > 1
+        for pf_obj in pf_objs:
+            lb_name, vip, _internal_ips, _rtr = self._get_lb_attributes(
+                pf_obj, is_range=is_range)
+            ovn_txn.add(nb_ovn.lb_del(lb_name, vip, if_exists=True))
 
     def port_forwarding_deleted(self, ovn_txn, nb_ovn, pf_obj):
-        LOG.info("DELETE for port-forwarding %s vip %s:%s to %s:%s",
-                 pf_obj.protocol,
-                 pf_obj.floating_ip_address, pf_obj.external_port,
-                 pf_obj.internal_ip_address, pf_obj.internal_port)
-        self._port_forwarding_deleted(ovn_txn, nb_ovn, pf_obj)
+        pf_objs = pf_obj.unroll_port_ranges()
+        is_range = len(pf_objs) > 1
+        for pf_obj in pf_objs:
+            LOG.info("DELETE for port-forwarding %s vip %s:%s to %s:%s",
+                     pf_obj.protocol,
+                     pf_obj.floating_ip_address, pf_obj.external_port,
+                     pf_obj.internal_ip_address, pf_obj.internal_port)
+            self._port_forwarding_deleted(ovn_txn, nb_ovn, pf_obj,
+                                          is_range=is_range)
 
 
 @registry.has_registry_receivers

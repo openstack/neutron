@@ -37,6 +37,8 @@ try:
 except ImportError:
     _CALLBACK_PRIORITY_SUPPORTED = False
 
+LAST_RANDOM_PORT_RANGE_GENERATED = 1
+
 
 class SafeCleanupFixture(fixtures.Fixture):
     """Catch errors in daughter fixture cleanup."""
@@ -196,7 +198,10 @@ def get_random_prefixlen(version=4):
 
 
 def get_random_port(start=constants.PORT_RANGE_MIN):
-    return random.randint(start, constants.PORT_RANGE_MAX)
+    global LAST_RANDOM_PORT_RANGE_GENERATED
+    LAST_RANDOM_PORT_RANGE_GENERATED = random.randint(
+        start, constants.PORT_RANGE_MAX)
+    return LAST_RANDOM_PORT_RANGE_GENERATED
 
 
 def get_random_vlan():

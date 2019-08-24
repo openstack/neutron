@@ -48,21 +48,29 @@ class L3AgentFipPortForwardingExtensionTestFramework(
         self.portforwarding1 = pf_obj.PortForwarding(
             context=None, id=_uuid(), floatingip_id=self.fip_id1,
             external_port=1111, protocol='tcp', internal_port_id=_uuid(),
+            external_port_range='1111:1111',
+            internal_port_range='11111:11111',
             internal_ip_address='1.1.1.1', internal_port=11111,
             floating_ip_address='111.111.111.111', router_id=_uuid())
         self.portforwarding2 = pf_obj.PortForwarding(
             context=None, id=_uuid(), floatingip_id=self.fip_id1,
             external_port=1112, protocol='tcp', internal_port_id=_uuid(),
+            external_port_range='1112:1112',
+            internal_port_range='11112:11112',
             internal_ip_address='1.1.1.2', internal_port=11112,
             floating_ip_address='111.111.111.111', router_id=_uuid())
         self.portforwarding3 = pf_obj.PortForwarding(
             context=None, id=_uuid(), floatingip_id=self.fip_id2,
             external_port=1113, protocol='tcp', internal_port_id=_uuid(),
             internal_ip_address='1.1.1.3', internal_port=11113,
+            external_port_range='1113:1113',
+            internal_port_range='11113:11113',
             floating_ip_address='111.222.111.222', router_id=_uuid())
         self.portforwarding4 = pf_obj.PortForwarding(
             context=None, id=_uuid(), floatingip_id=self.fip_id3,
             external_port=2222, protocol='tcp', internal_port_id=_uuid(),
+            external_port_range='2222:2222',
+            internal_port_range='22222:22222',
             internal_ip_address='2.2.2.2', internal_port=22222,
             floating_ip_address='222.222.222.222', router_id=_uuid())
         self.port_forwardings = [self.portforwarding1, self.portforwarding2,

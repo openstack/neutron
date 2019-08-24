@@ -80,7 +80,7 @@ object_data = {
     'PortBindingLevel': '1.1-50d47f63218f87581b6cd9a62db574e5',
     'PortDataPlaneStatus': '1.0-25be74bda46c749653a10357676c0ab2',
     'PortDNS': '1.1-c5ca2dc172bdd5fafee3fc986d1d7023',
-    'PortForwarding': '1.2-f772f03b82a616603c7f3d4497bf577f',
+    'PortForwarding': '1.3-402b1fb5a754808b82a966c95f468113',
     'PortSecurity': '1.0-b30802391a87945ee9c07582b4ff95e3',
     'PortUplinkStatusPropagation': '1.1-f0a4ca451a941910376c33616dea5de2',
     'ProviderResourceAssociation': '1.0-05ab2d5a3017e5ce9dd381328f285f34',

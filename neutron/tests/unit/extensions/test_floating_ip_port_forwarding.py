@@ -48,15 +48,23 @@ class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
                                     internal_ip_address,
                                     internal_port_id,
                                     tenant_id=None,
-                                    description=None):
+                                    description=None,
+                                    external_port_range=None,
+                                    internal_port_range=None):
         tenant_id = tenant_id or _uuid()
         data = {'port_forwarding': {
-            "external_port": external_port,
-            "internal_port": internal_port,
             "protocol": protocol,
             "internal_ip_address": internal_ip_address,
             "internal_port_id": internal_port_id}
         }
+        if external_port_range and internal_port_range:
+            data['port_forwarding'][
+                'internal_port_range'] = internal_port_range
+            data['port_forwarding'][
+                'external_port_range'] = external_port_range
+        else:
+            data['port_forwarding']['internal_port'] = internal_port
+            data['port_forwarding']['external_port'] = external_port
 
         if description:
             data['port_forwarding']['description'] = description
@@ -151,6 +159,87 @@ class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
                 pf_body = self.deserialize(self.fmt, res)
                 self.assertEqual(
                     "blablablabla", pf_body['port_forwarding']['description'])
+
+    def test_create_floatingip_port_forwarding_with_ranges(self):
+        internal_port_range = '22:24'
+        external_port_range = '2222:2224'
+        with self.network() as ext_net:
+            network_id = ext_net['network']['id']
+            self._set_net_external(network_id)
+            with self.subnet(ext_net, cidr='10.10.10.0/24'), \
+                    self.router() as router, \
+                    self.subnet(cidr='11.0.0.0/24') as private_subnet, \
+                    self.port(private_subnet) as port:
+                self._add_external_gateway_to_router(
+                    router['router']['id'],
+                    network_id)
+                self._router_interface_action(
+                    'add', router['router']['id'],
+                    private_subnet['subnet']['id'],
+                    None)
+                fip = self._make_floatingip(
+                    self.fmt,
+                    network_id)
+                self.assertIsNone(fip['floatingip'].get('port_id'))
+                res = self._create_fip_port_forwarding(
+                    self.fmt, fip['floatingip']['id'],
+                    None, None,
+                    'tcp',
+                    port['port']['fixed_ips'][0]['ip_address'],
+                    port['port']['id'],
+                    internal_port_range=internal_port_range,
+                    external_port_range=external_port_range)
+                self.assertEqual(exc.HTTPCreated.code, res.status_int)
+                pf_body = self.deserialize(self.fmt, res)
+                self.assertEqual(
+                    internal_port_range,
+                    pf_body['port_forwarding']['internal_port_range'])
+                self.assertEqual(
+                    external_port_range,
+                    pf_body['port_forwarding']['external_port_range'])
+
+    def test_create_floatingip_port_forwarding_with_ranges_port_collisions(
+            self):
+        internal_port_range1 = '22:24'
+        internal_port_range2 = '23:25'
+        external_port_range1 = '2222:2224'
+        external_port_range2 = '2223:2225'
+        with self.network() as ext_net:
+            network_id = ext_net['network']['id']
+            self._set_net_external(network_id)
+            with self.subnet(ext_net, cidr='10.10.10.0/24'), \
+                    self.router() as router, \
+                    self.subnet(cidr='11.0.0.0/24') as private_subnet, \
+                    self.port(private_subnet) as port:
+                self._add_external_gateway_to_router(
+                    router['router']['id'],
+                    network_id)
+                self._router_interface_action(
+                    'add', router['router']['id'],
+                    private_subnet['subnet']['id'],
+                    None)
+                fip = self._make_floatingip(
+                    self.fmt,
+                    network_id)
+                self.assertIsNone(fip['floatingip'].get('port_id'))
+                self._create_fip_port_forwarding(
+                    self.fmt, fip['floatingip']['id'],
+                    None, None,
+                    'tcp',
+                    port['port']['fixed_ips'][0]['ip_address'],
+                    port['port']['id'],
+                    internal_port_range=internal_port_range1,
+                    external_port_range=external_port_range1)
+                response = self._create_fip_port_forwarding(
+                    self.fmt, fip['floatingip']['id'],
+                    None, None,
+                    'tcp',
+                    port['port']['fixed_ips'][0]['ip_address'],
+                    port['port']['id'],
+                    internal_port_range=internal_port_range2,
+                    external_port_range=external_port_range2)
+                self.assertEqual(exc.HTTPBadRequest.code,
+                                 response.status_int)
 
     def test_update_floatingip_port_forwarding_with_dup_internal_port(self):
         with self.network() as ext_net:

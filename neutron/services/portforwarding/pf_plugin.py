@@ -19,6 +19,7 @@ import copy
 import netaddr
 from neutron_lib.api.definitions import expose_port_forwarding_in_fip
 from neutron_lib.api.definitions import fip_pf_description
+from neutron_lib.api.definitions import fip_pf_port_range
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
 from neutron_lib.api.definitions import l3
 from neutron_lib.callbacks import events
@@ -90,7 +91,8 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
 
     supported_extension_aliases = [apidef.ALIAS,
                                    expose_port_forwarding_in_fip.ALIAS,
-                                   fip_pf_description.ALIAS]
+                                   fip_pf_description.ALIAS,
+                                   fip_pf_port_range.ALIAS]
 
     __native_pagination_support = True
     __native_sorting_support = True
@@ -352,6 +354,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         port_forwarding = port_forwarding.get(apidef.RESOURCE_NAME)
         port_forwarding['floatingip_id'] = floatingip_id
 
+        self._check_port_collisions(context, floatingip_id, port_forwarding)
         self._check_port_has_binding_floating_ip(context, port_forwarding)
         with db_api.CONTEXT_WRITER.using(context):
             fip_obj = self._get_fip_obj(context, floatingip_id)
@@ -438,6 +441,17 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                     })
                 pf_obj.update_fields(port_forwarding, reset_changes=True)
                 self._check_port_forwarding_update(context, pf_obj)
+
+                port_changed_keys = ['internal_port', 'internal_port_range',
+                                     'external_port', 'external_port_range']
+
+                if [k for k in port_changed_keys if k in port_forwarding]:
+                    self._check_port_collisions(
+                        context, floatingip_id, port_forwarding,
+                        id, pf_obj.get('internal_port_id'),
+                        pf_obj.get('protocol'),
+                        pf_obj.get('internal_ip_address'))
+
                 pf_obj.update()
         except oslo_db_exc.DBDuplicateEntry:
             (__, conflict_params) = self._find_existing_port_forwarding(
@@ -455,6 +469,103 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                              context,
                              states=(original_pf_obj, pf_obj)))
         return pf_obj
+
+    def _check_collision(self, pf_objs, port, port_key, id):
+        for port_forwarding_registry in pf_objs:
+            if id == port_forwarding_registry['id']:
+                continue
+
+            existing_port = port_forwarding_registry.get(port_key)
+            err_msg = _("There is a port collision with the %s. The "
+                        "following ranges collides: %s and %s")
+
+            if self._range_collides(existing_port, port):
+                raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
+                                         msg=err_msg % (
+                                             port_key,
+                                             existing_port,
+                                             port))
+
+    def _check_port_collisions(self, context, floatingip_id, pf_dict,
+                               id=None, internal_port_id=None,
+                               protocol=None, internal_ip_address=None):
+        external_range_pf_dict = pf_dict.get('external_port_range')
+        if not external_range_pf_dict and 'external_port' in pf_dict:
+            external_range_pf_dict = '%(port)s:%(port)s' % {
+                'port': pf_dict.get('external_port')}
+
+        internal_range_pf_dict = pf_dict.get('internal_port_range')
+        if not internal_range_pf_dict and 'internal_port' in pf_dict:
+            internal_range_pf_dict = '%(port)s:%(port)s' % {
+                'port': pf_dict.get('internal_port')}
+
+        internal_port_id = pf_dict.get('internal_port_id') or internal_port_id
+        protocol = pf_dict.get('protocol') or protocol
+        internal_ip_address = pf_dict.get(
+            'internal_ip_address') or internal_ip_address
+        self._validate_ranges(
+            internal_port_range=internal_range_pf_dict,
+            external_port_range=external_range_pf_dict)
+
+        if internal_range_pf_dict:
+            pf_same_internal_port = pf.PortForwarding.get_objects(
+                context, internal_port_id=internal_port_id,
+                protocol=protocol, internal_ip_address=internal_ip_address)
+            self._check_collision(pf_same_internal_port,
+                                  internal_range_pf_dict,
+                                  'internal_port_range',
+                                  id)
+
+        if external_range_pf_dict:
+            pf_same_fips = pf.PortForwarding.get_objects(
+                context, floatingip_id=floatingip_id,
+                protocol=protocol)
+            self._check_collision(pf_same_fips,
+                                  external_range_pf_dict,
+                                  'external_port_range',
+                                  id)
+
+    def _validate_ranges(self, internal_port_range=None,
+                         external_port_range=None):
+        err_invalid_relation = _(
+            "Invalid ranges of internal and/or external ports. "
+            "The relation between internal and external ports "
+            "must be N-N or 1-N")
+
+        internal_dif = self._get_port_range(internal_port_range)
+        external_dif = self._get_port_range(external_port_range)
+
+        if internal_dif > 0 and internal_dif != external_dif:
+            raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
+                                     msg=err_invalid_relation)
+
+    def _get_port_range(self, port_range=None):
+        if not port_range:
+            return 0
+
+        if ':' in port_range:
+            initial_port, final_port = list(map(int,
+                                                str(port_range).split(':')))
+            return final_port - initial_port
+
+        return 0
+
+    def _range_collides(self, range_a, range_b):
+        range_a = list(map(int, str(range_a).split(':')))
+        range_b = list(map(int, str(range_b).split(':')))
+
+        invalid_port = next((port for port in (range_a + range_b)
+                             if 65535 < port or port < 1), None)
+
+        if invalid_port:
+            raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
+                                     msg="Invalid port value, the "
+                                         "port value must be "
+                                         "a value between 1 and 65535.")
+
+        initial_intersection = max(range_a[0], range_b[0])
+        final_intersection = min(range_a[-1], range_b[-1])
+        return initial_intersection <= final_intersection
 
     def _check_router_match(self, context, fip_obj, router_id, pf_dict):
         internal_port_id = pf_dict['internal_port_id']

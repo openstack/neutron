@@ -505,6 +505,11 @@ def get_set_of_random_uuids():
     }
 
 
+def get_random_port_ranges():
+    port = tools.LAST_RANDOM_PORT_RANGE_GENERATED
+    return "%d:%d" % (port, port)
+
+
 # NOTE: The keys in this dictionary have alphabetic order.
 FIELD_TYPE_VALUE_GENERATOR_MAP = {
     common_types.DictOfMiscValuesField: get_random_dict,
@@ -552,7 +557,8 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     port_numa_affinity_policy.NumaAffinityPoliciesEnumField:
         tools.get_random_port_numa_affinity_policy,
     port_device_profile.PortDeviceProfile:
-        lambda: helpers.get_random_string(255)
+        lambda: helpers.get_random_string(255),
+    common_types.PortRangesField: get_random_port_ranges
 }
 
 
