@@ -923,7 +923,7 @@ class Timer(object):
         return (datetime.datetime.now() - self.start).total_seconds()
 
 
-def _collect_profiler_info():
+def collect_profiler_info():
     p = profiler.get()
     if p:
         return {
@@ -942,7 +942,7 @@ def spawn(func, *args, **kwargs):
     but we re-initialize osprofiler in threads spawn()-ed.
     """
 
-    profiler_info = _collect_profiler_info()
+    profiler_info = collect_profiler_info()
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -956,7 +956,7 @@ def spawn(func, *args, **kwargs):
 def spawn_n(func, *args, **kwargs):
     """See spawn() above"""
 
-    profiler_info = _collect_profiler_info()
+    profiler_info = collect_profiler_info()
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
