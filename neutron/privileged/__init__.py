@@ -25,5 +25,6 @@ default = priv_context.PrivContext(
     capabilities=[caps.CAP_SYS_ADMIN,
                   caps.CAP_NET_ADMIN,
                   caps.CAP_DAC_OVERRIDE,
-                  caps.CAP_DAC_READ_SEARCH],
+                  caps.CAP_DAC_READ_SEARCH,
+                  caps.CAP_SYS_PTRACE],
 )
