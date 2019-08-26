@@ -108,14 +108,15 @@ class FdbInterfaceTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
 
     def setUp(self):
         super(FdbInterfaceTestCase, self).setUp()
-        self.device = ('int_' + uuidutils.generate_uuid())[
-                      :constants.DEVICE_NAME_MAX_LEN]
-        self.device_vxlan = ('vxlan_' + uuidutils.generate_uuid())[
-                            :constants.DEVICE_NAME_MAX_LEN]
+        _uuid = uuidutils.generate_uuid()
+        self.device = ('int_' + _uuid)[:constants.DEVICE_NAME_MAX_LEN]
+        self.device_vxlan = ('vxlan_' + _uuid)[:constants.DEVICE_NAME_MAX_LEN]
         self.ip = '10.220.0.1/24'
         self.ip_vxlan = '10.221.0.1/24'
         if self.namespace:
             priv_ip_lib.create_netns(self.namespace)
+        else:
+            self._cleanup()
         self.addCleanup(self._cleanup)
         ip_wrapper = ip_lib.IPWrapper(self.namespace)
         ip_wrapper.add_dummy(self.device)
@@ -131,8 +132,11 @@ class FdbInterfaceTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
         if self.namespace:
             priv_ip_lib.remove_netns(self.namespace)
         else:
-            priv_ip_lib.delete_interface(self.device_vxlan, None)
-            priv_ip_lib.delete_interface(self.device, None)
+            for device in (self.device_vxlan, self.device):
+                try:
+                    priv_ip_lib.delete_interface(device, None)
+                except priv_ip_lib.NetworkInterfaceNotFound:
+                    pass
 
     def _list_fdb_rules(self, device):
         output = bridge_lib.FdbInterface.show(dev=device,
