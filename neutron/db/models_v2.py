@@ -155,7 +155,8 @@ class Subnet(standard_attr.HasStandardAttributes, model_base.BASEV2,
     """
 
     name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
-    network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'))
+    network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'),
+                           nullable=False)
     # Added by the segments service plugin
     segment_id = sa.Column(sa.String(36), sa.ForeignKey('networksegments.id'))
     subnetpool_id = sa.Column(sa.String(36), index=True)

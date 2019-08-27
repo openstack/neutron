@@ -54,7 +54,8 @@ class MigrationToPluggableIpamMixin(object):
                                cidr=cidr,
                                ip_version=ip_version,
                                standard_attr_id=self._gen_attr_id(engine,
-                                                                  'subnets'))
+                                                                  'subnets'),
+                               network_id=network_id)
             engine.execute(subnets.insert().values(subnet_dict))
 
             if data[cidr].get('pools'):
