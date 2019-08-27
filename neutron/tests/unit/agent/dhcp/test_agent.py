@@ -1906,7 +1906,21 @@ class TestDeviceManager(base.BaseTestCase):
                           [{'subnet_id': fake_fixed_ip1.subnet_id}],
                           'device_id': mock.ANY}})])
 
-    def test_create_dhcp_port_update_add_subnet_bug_1627480(self):
+    def test__check_dhcp_port_subnet(self):
+        # this can go away once bug/1627480 is fixed
+        plugin = mock.Mock()
+        fake_port_copy = copy.deepcopy(fake_port1)
+        fake_port_copy.fixed_ips = [fake_fixed_ip1, fake_fixed_ip_subnet2]
+        plugin.get_dhcp_port.return_value = fake_port_copy
+        dh = dhcp.DeviceManager(cfg.CONF, plugin)
+        fake_network_copy = copy.deepcopy(fake_network)
+        fake_network_copy.ports[0].device_id = dh.get_device_id(fake_network)
+        fake_network_copy.subnets[1].enable_dhcp = True
+        plugin.update_dhcp_port.return_value = fake_network.ports[0]
+        dh.setup_dhcp_port(fake_network_copy)
+        self.assertEqual(fake_port_copy, fake_network_copy.ports[0])
+
+    def test__check_dhcp_port_subnet_port_missing_subnet(self):
         # this can go away once bug/1627480 is fixed
         plugin = mock.Mock()
         dh = dhcp.DeviceManager(cfg.CONF, plugin)
@@ -1914,6 +1928,7 @@ class TestDeviceManager(base.BaseTestCase):
         fake_network_copy.ports[0].device_id = dh.get_device_id(fake_network)
         fake_network_copy.subnets[1].enable_dhcp = True
         plugin.update_dhcp_port.return_value = fake_network.ports[0]
+        plugin.get_dhcp_port.return_value = fake_network_copy.ports[0]
         with testtools.ExpectedException(exceptions.SubnetMismatchForPort):
             dh.setup_dhcp_port(fake_network_copy)
 

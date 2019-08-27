@@ -718,7 +718,7 @@ class DhcpPluginApi(object):
               and update_dhcp_port methods.
         1.5 - Added dhcp_ready_on_ports
         1.7 - Added get_networks
-
+        1.8 - Added get_dhcp_port
     """
 
     def __init__(self, topic, host):
@@ -775,6 +775,13 @@ class DhcpPluginApi(object):
         return cctxt.call(self.context, 'release_dhcp_port',
                           network_id=network_id, device_id=device_id,
                           host=self.host)
+
+    def get_dhcp_port(self, port_id):
+        """Make a remote process call to retrieve the dhcp port."""
+        cctxt = self.client.prepare(version='1.8')
+        port = cctxt.call(self.context, 'get_dhcp_port', port_id=port_id)
+        if port:
+            return dhcp.DictModel(port)
 
     def dhcp_ready_on_ports(self, port_ids):
         """Notify the server that DHCP is configured for the port."""

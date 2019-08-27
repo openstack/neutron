@@ -1391,6 +1391,37 @@ class DeviceManager(object):
             fixed_ips=unique_ip_subnets)
         return self.plugin.create_dhcp_port({'port': port_dict})
 
+    def _check_dhcp_port_subnet(self, dhcp_port, dhcp_subnets, network):
+        """Check if DHCP port IPs are in the range of the DHCP subnets
+
+        FIXME(kevinbenton): ensure we have the IPs we actually need.
+        can be removed once bug/1627480 is fixed
+        """
+        if self.driver.use_gateway_ips:
+            return
+
+        expected = set(dhcp_subnets)
+        actual = {fip.subnet_id for fip in dhcp_port.fixed_ips}
+        missing = expected - actual
+        if not missing:
+            return
+
+        LOG.debug('Requested DHCP port with IPs on subnets %(expected)s '
+                  'but only got IPs on subnets %(actual)s.',
+                  {'expected': expected, 'actual': actual})
+        updated_dhcp_port = self.plugin.get_dhcp_port(dhcp_port.id)
+        actual = {fip.subnet_id for fip in updated_dhcp_port.fixed_ips}
+        missing = expected - actual
+        if missing:
+            raise exceptions.SubnetMismatchForPort(
+                port_id=updated_dhcp_port.id, subnet_id=list(missing)[0])
+
+        self._update_dhcp_port(network, updated_dhcp_port)
+        LOG.debug('Previous DHCP port information: %(dhcp_port)s. Updated '
+                  'DHCP port information: %(updated_dhcp_port)s.',
+                  {'dhcp_port': dhcp_port,
+                   'updated_dhcp_port': updated_dhcp_port})
+
     def setup_dhcp_port(self, network):
         """Create/update DHCP port for the host if needed and return port."""
 
@@ -1416,19 +1447,8 @@ class DeviceManager(object):
         else:
             raise exceptions.Conflict()
 
-        # FIXME(kevinbenton): ensure we have the IPs we actually need.
-        # can be removed once bug/1627480 is fixed
-        if not self.driver.use_gateway_ips:
-            expected = set(dhcp_subnets)
-            actual = {fip.subnet_id for fip in dhcp_port.fixed_ips}
-            missing = expected - actual
-            if missing:
-                LOG.debug("Requested DHCP port with IPs on subnets "
-                          "%(expected)s but only got IPs on subnets "
-                          "%(actual)s.", {'expected': expected,
-                                          'actual': actual})
-                raise exceptions.SubnetMismatchForPort(
-                    port_id=dhcp_port.id, subnet_id=list(missing)[0])
+        self._check_dhcp_port_subnet(dhcp_port, dhcp_subnets, network)
+
         # Convert subnet_id to subnet dict
         fixed_ips = [dict(subnet_id=fixed_ip.subnet_id,
                           ip_address=fixed_ip.ip_address,

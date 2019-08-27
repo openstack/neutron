@@ -71,10 +71,11 @@ class DhcpRpcCallback(object):
     #           DHCP agent since Havana, so similar rationale for not bumping
     #           the major version as above applies here too.
     #     1.7 - Add get_networks
+    #     1.8 - Add get_dhcp_port
 
     target = oslo_messaging.Target(
         namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
-        version='1.7')
+        version='1.8')
 
     def _get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active networks."""
@@ -312,6 +313,13 @@ class DhcpRpcCallback(object):
             LOG.debug('Host %(host)s tried to update port '
                       '%(port_id)s which no longer exists.',
                       {'host': host, 'port_id': port['id']})
+
+    @db_api.retry_db_errors
+    def get_dhcp_port(self, context, **kwargs):
+        """Retrieve the DHCP port"""
+        port_id = kwargs.get('port_id')
+        plugin = directory.get_plugin()
+        return plugin.get_port(context, port_id)
 
     @db_api.retry_db_errors
     def dhcp_ready_on_ports(self, context, port_ids):
