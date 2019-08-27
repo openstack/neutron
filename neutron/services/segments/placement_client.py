@@ -39,6 +39,7 @@ class PlacementAPIClient(object):
     """Client class for placement ReST API."""
 
     ks_filter = {'service_type': 'placement',
+                 'interface': cfg.CONF.placement.endpoint_type,
                  'region_name': cfg.CONF.placement.region_name}
 
     def __init__(self):
