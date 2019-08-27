@@ -2364,6 +2364,7 @@ class PlacementAPIClientTestCase(base.DietTestCase):
         self.mock_request.assert_called_once_with(
                 expected_url, 'POST',
                 endpoint_filter={'region_name': mock.ANY,
+                                 'interface': 'public',
                                  'service_type': 'placement'},
                 json=expected_payload)
 
@@ -2374,6 +2375,7 @@ class PlacementAPIClientTestCase(base.DietTestCase):
         self.mock_request.assert_called_once_with(
                 expected_url, 'DELETE',
                 endpoint_filter={'region_name': mock.ANY,
+                                 'interface': 'public',
                                  'service_type': 'placement'})
 
     def test_create_inventory(self):
@@ -2384,6 +2386,7 @@ class PlacementAPIClientTestCase(base.DietTestCase):
         self.mock_request.assert_called_once_with(
                 expected_url, 'POST',
                 endpoint_filter={'region_name': mock.ANY,
+                                 'interface': 'public',
                                  'service_type': 'placement'},
                 json=expected_payload)
 
@@ -2396,6 +2399,7 @@ class PlacementAPIClientTestCase(base.DietTestCase):
         self.mock_request.assert_called_once_with(
                 expected_url, 'GET',
                 endpoint_filter={'region_name': mock.ANY,
+                                 'interface': 'public',
                                  'service_type': 'placement'})
 
     def _test_get_inventory_not_found(self, details, expected_exception):
@@ -2427,6 +2431,7 @@ class PlacementAPIClientTestCase(base.DietTestCase):
         self.mock_request.assert_called_once_with(
                 expected_url, 'PUT',
                 endpoint_filter={'region_name': mock.ANY,
+                                 'interface': 'public',
                                  'service_type': 'placement'},
                 json=expected_payload)
 
@@ -2447,6 +2452,7 @@ class PlacementAPIClientTestCase(base.DietTestCase):
         self.mock_request.assert_called_once_with(
                 expected_url, 'PUT',
                 endpoint_filter={'region_name': mock.ANY,
+                                 'interface': 'public',
                                  'service_type': 'placement'},
                 json=expected_payload,
                 headers={'openstack-api-version': 'placement 1.1'})
@@ -2458,6 +2464,7 @@ class PlacementAPIClientTestCase(base.DietTestCase):
         self.mock_request.assert_called_once_with(
                 expected_url, 'GET',
                 endpoint_filter={'region_name': mock.ANY,
+                                 'interface': 'public',
                                  'service_type': 'placement'},
                 headers={'openstack-api-version': 'placement 1.1'})
 
