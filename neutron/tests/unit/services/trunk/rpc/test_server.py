@@ -13,6 +13,7 @@
 
 import mock
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.db import api as db_api
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 import oslo_messaging
@@ -186,7 +187,9 @@ class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
                 test_obj.update_subport_bindings,
                 self.context,
                 subports=subports)
-            self.assertEqual(3, mock_trunk_obj.update.call_count)
+            self.assertEqual(
+                db_api.MAX_RETRIES,
+                mock_trunk_obj.update.call_count)
 
     def test_udate_subport_bindings_noretryerror(self):
         with self.port() as _parent_port:
