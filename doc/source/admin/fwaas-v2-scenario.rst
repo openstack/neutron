@@ -35,14 +35,27 @@ Enable FWaaS v2
       [AGENT]
       extensions = fwaas_v2
 
+#. Configure the ML2 plugin agent extension.
+
+   Add the following statements to ``ml2_conf.ini``, this file is usually
+   located at ``/etc/neutron/plugins/ml2/ml2_conf.ini``:
+
+   .. code-block:: ini
+
+      [agent]
+      extensions = fwaas_v2
+
+      [fwaas]
+      firewall_l2_driver = noop
+
 #. Create the required tables in the database:
 
    .. code-block:: console
 
       # neutron-db-manage --subproject neutron-fwaas upgrade head
 
-#. Restart the ``neutron-l3-agent`` and ``neutron-server`` services
-   to apply the settings.
+#. Restart the ``neutron-l3-agent``, ``neutron-openvswitch-agent`` and
+   ``neutron-server`` services to apply the settings.
 
    .. note::
 
@@ -99,7 +112,7 @@ Then, create a firewall that applies the policy.
       of each policy. Consequently, a firewall policy with no rules blocks
       all traffic by default.
 
-#. Create a firewall:
+#. Create a firewall group:
 
    .. code-block:: console
 
