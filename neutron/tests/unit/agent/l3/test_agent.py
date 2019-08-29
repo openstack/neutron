@@ -231,17 +231,52 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # Make sure the exceptional code path has coverage
         agent.enqueue_state_change(non_existent_router, 'master')
 
+    def _enqueue_state_change_transitions(self, transitions, num_called):
+        self.conf.set_override('ha_vrrp_advert_int', 1)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent._update_transition_state('router_id')
+        with mock.patch.object(agent, '_get_router_info', return_value=None) \
+                as mock_get_router_info:
+            for state in transitions:
+                agent.enqueue_state_change('router_id', state)
+                eventlet.sleep(0.2)
+            # NOTE(ralonsoh): the wait process should be done inside the mock
+            # context, to allow the spawned thread to call the mocked function
+            # before the context ends.
+            eventlet.sleep(self.conf.ha_vrrp_advert_int + 2)
+
+        if num_called:
+            mock_get_router_info.assert_has_calls(
+                [mock.call('router_id') for _ in range(num_called)])
+        else:
+            mock_get_router_info.assert_not_called()
+
+    def test_enqueue_state_change_from_none_to_master(self):
+        self._enqueue_state_change_transitions(['master'], 1)
+
+    def test_enqueue_state_change_from_none_to_backup(self):
+        self._enqueue_state_change_transitions(['backup'], 1)
+
+    def test_enqueue_state_change_from_none_to_master_to_backup(self):
+        self._enqueue_state_change_transitions(['master', 'backup'], 0)
+
+    def test_enqueue_state_change_from_none_to_backup_to_master(self):
+        self._enqueue_state_change_transitions(['backup', 'master'], 2)
+
     def test_enqueue_state_change_metadata_disable(self):
         self.conf.set_override('enable_metadata_proxy', False)
+        self.conf.set_override('ha_vrrp_advert_int', 1)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = mock.Mock()
         router_info = mock.MagicMock()
         agent.router_info[router.id] = router_info
         agent._update_metadata_proxy = mock.Mock()
         agent.enqueue_state_change(router.id, 'master')
+        eventlet.sleep(self.conf.ha_vrrp_advert_int + 2)
         self.assertFalse(agent._update_metadata_proxy.call_count)
 
     def test_enqueue_state_change_l3_extension(self):
+        self.conf.set_override('ha_vrrp_advert_int', 1)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = mock.Mock()
         router_info = mock.MagicMock()
@@ -249,6 +284,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent.router_info[router.id] = router_info
         agent.l3_ext_manager.ha_state_change = mock.Mock()
         agent.enqueue_state_change(router.id, 'master')
+        eventlet.sleep(self.conf.ha_vrrp_advert_int + 2)
         agent.l3_ext_manager.ha_state_change.assert_called_once_with(
             agent.context,
             {'router_id': router.id, 'state': 'master',
