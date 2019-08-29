@@ -116,8 +116,7 @@ class TrunkSkeleton(object):
         trunk_port = self.core_plugin.get_port(context, trunk_port_id)
         trunk_host = trunk_port.get(portbindings.HOST_ID)
 
-        tries = 3
-        for try_cnt in range(tries):
+        for try_cnt in range(db_api.MAX_RETRIES):
             try:
                 # NOTE(status_police) Set the trunk in BUILD state before
                 # processing subport bindings. The trunk will stay in BUILD
@@ -127,7 +126,7 @@ class TrunkSkeleton(object):
                 trunk.update(status=trunk_consts.TRUNK_BUILD_STATUS)
                 break
             except exc.StaleDataError as e:
-                if try_cnt < tries - 1:
+                if try_cnt < db_api.MAX_RETRIES - 1:
                     LOG.debug("Got StaleDataError exception: %s", e)
                     continue
                 else:
