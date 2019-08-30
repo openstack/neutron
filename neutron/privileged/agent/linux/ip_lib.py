@@ -12,6 +12,7 @@
 
 import errno
 import functools
+import os
 import socket
 
 from neutron_lib import constants
@@ -31,6 +32,8 @@ from neutron import privileged
 
 
 _IP_VERSION_FAMILY_MAP = {4: socket.AF_INET, 6: socket.AF_INET6}
+
+NETNS_RUN_DIR = '/var/run/netns'
 
 
 @lockutils.synchronized("privileged-ip-lib")
@@ -200,6 +203,33 @@ def open_namespace(namespace):
     """Open namespace to test if the namespace is ready to be manipulated"""
     with pyroute2.NetNS(namespace, flags=0):
         pass
+
+
+@privileged.default.entrypoint
+def list_ns_pids(namespace):
+    """List namespace process PIDs
+
+    Based on Pyroute2.netns.ns_pids(). Remove when
+    https://github.com/svinota/pyroute2/issues/633 is fixed.
+    """
+    ns_pids = []
+    try:
+        ns_path = os.path.join(NETNS_RUN_DIR, namespace)
+        ns_inode = os.stat(ns_path).st_ino
+    except OSError:
+        return ns_pids
+
+    for pid in os.listdir('/proc'):
+        if not pid.isdigit():
+            continue
+        try:
+            pid_path = os.path.join('/proc', pid, 'ns', 'net')
+            if os.stat(pid_path).st_ino == ns_inode:
+                ns_pids.append(int(pid))
+        except OSError:
+            continue
+
+    return ns_pids
 
 
 def _translate_ip_device_exception(e, device=None, namespace=None):
