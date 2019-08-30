@@ -188,6 +188,19 @@ class DVRResourceOperationHandler(object):
 
     @registry.receives(resources.ROUTER, [events.AFTER_UPDATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
+    def _delete_distributed_port_bindings_after_change(self, resource, event,
+                                                       trigger, context,
+                                                       router_id, router,
+                                                       request_attrs,
+                                                       router_db, **kwargs):
+        old_router = kwargs['old_router']
+        if (old_router and old_router['distributed'] and not
+                router['distributed']):
+            self._core_plugin.delete_distributed_port_bindings_by_router_id(
+                context.elevated(), router_db['id'])
+
+    @registry.receives(resources.ROUTER, [events.AFTER_UPDATE],
+                       priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     def _delete_snat_interfaces_after_change(self, resource, event, trigger,
                                              context, router_id, router,
                                              request_attrs, router_db,
