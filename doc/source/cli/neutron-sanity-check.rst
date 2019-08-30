@@ -1,8 +1,8 @@
 .. This file is manually generated, unlike many of the other chapters.
 
-========================================
-neutron-sanity-check command-line client
-========================================
+====================
+neutron-sanity-check
+====================
 
 The :command:`neutron-sanity-check` client is a tool that checks various
 sanity about the Networking service.

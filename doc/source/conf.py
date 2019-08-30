@@ -229,7 +229,7 @@ htmlhelp_basename = 'neutrondoc'
 # (source start file, target name, title, author,
 # documentclass [howto/manual]).
 latex_documents = [
-    ('index', 'Neutron.tex', u'Neutron Documentation',
+    ('pdf-index', 'neutron.tex', u'Neutron Documentation',
      u'Neutron development team', 'manual'),
 ]
 
@@ -241,14 +241,22 @@ latex_documents = [
 # not chapters.
 #latex_use_parts = False
 
-# Additional stuff for the LaTeX preamble.
-#latex_preamble = ''
-
 # Documents to append as an appendix to all manuals.
 #latex_appendices = []
 
 # If false, no module index is generated.
 #latex_use_modindex = True
+
+# Disable usage of xindy https://bugzilla.redhat.com/show_bug.cgi?id=1643664
+latex_use_xindy = False
+
+latex_domain_indices = False
+
+latex_elements = {
+    'makeindex': '',
+    'printindex': '',
+    'preamble': r'\setcounter{tocdepth}{3}',
+}
 
 # -- Options for oslo_config.sphinxconfiggen ---------------------------------
 
