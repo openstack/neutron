@@ -1157,7 +1157,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # called inside of a transaction.
         return super(Ml2Plugin, self).delete_network(context, id)
 
-    @registry.receives(resources.NETWORK, [events.PRECOMMIT_DELETE])
+    # NOTE(mgoddard): Use a priority of zero to ensure this handler runs before
+    # other precommit handlers. This is necessary to ensure we avoid another
+    # handler deleting a subresource of the network, e.g. segments.
+    @registry.receives(resources.NETWORK, [events.PRECOMMIT_DELETE],
+                       priority=0)
     def _network_delete_precommit_handler(self, rtype, event, trigger,
                                           context, network_id, **kwargs):
         network = self.get_network(context, network_id)
@@ -1268,7 +1272,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # called inside of a transaction.
         return super(Ml2Plugin, self).delete_subnet(context, id)
 
-    @registry.receives(resources.SUBNET, [events.PRECOMMIT_DELETE])
+    # NOTE(mgoddard): Use a priority of zero to ensure this handler runs before
+    # other precommit handlers. This is necessary to ensure we avoid another
+    # handler deleting a subresource of the subnet.
+    @registry.receives(resources.SUBNET, [events.PRECOMMIT_DELETE], priority=0)
     def _subnet_delete_precommit_handler(self, rtype, event, trigger,
                                          context, subnet_id, **kwargs):
         subnet_obj = self._get_subnet_object(context, subnet_id)
