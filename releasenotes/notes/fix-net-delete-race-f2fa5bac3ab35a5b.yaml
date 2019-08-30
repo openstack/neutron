@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Fixes an issue where deletion of a provider network could result in ML2
+    mechanism drivers not being passed information about the network's provider
+    fields. The consequences of this depend on the mechanism driver in use, but
+    could result in the event being ignored, leading to an incorrectly
+    configured network. See `bug 1841967
+    <https://bugs.launchpad.net/neutron/+bug/1841967>`__ for details.
