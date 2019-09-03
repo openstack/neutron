@@ -256,34 +256,6 @@ class TestOvsNeutronAgent(object):
         for tag in exception:
             self.assertNotIn(tag, available_vlan)
 
-    def test_agent_type_alt(self):
-        with mock.patch.object(self.mod_agent.OVSNeutronAgent,
-                               'setup_integration_br'),\
-            mock.patch.object(self.mod_agent.OVSNeutronAgent,
-                              'setup_ancillary_bridges',
-                              return_value=[]), \
-            mock.patch('neutron.agent.linux.ip_lib.get_device_mac',
-                       return_value='00:00:00:00:00:01'), \
-            mock.patch(
-                'neutron.agent.common.ovs_lib.BaseOVS.get_bridges'), \
-            mock.patch('oslo_service.loopingcall.FixedIntervalLoopingCall',
-                       new=MockFixedIntervalLoopingCall), \
-            mock.patch(
-                'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
-                return_value=[]),\
-            mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
-                       'has_alive_neutron_server'):
-            # validate setting non default agent_type
-            expected = 'alt agent type'
-            cfg.CONF.set_override('agent_type',
-                                  expected,
-                                  group='AGENT')
-            ext_manager = mock.Mock()
-            self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                                                        ext_manager, cfg.CONF)
-            self.assertEqual(expected,
-                             self.agent.agent_state['agent_type'])
-
     def _test_restore_local_vlan_maps(self, tag, segmentation_id='1'):
         port = mock.Mock()
         port.port_name = 'fake_port'

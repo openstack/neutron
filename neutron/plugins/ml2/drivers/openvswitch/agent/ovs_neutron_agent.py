@@ -320,7 +320,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                'baremetal_smartnic':
                                self.conf.AGENT.baremetal_smartnic},
             'resource_versions': resources.LOCAL_RESOURCE_VERSIONS,
-            'agent_type': agent_conf.agent_type,
+            'agent_type': n_const.AGENT_TYPE_OVS,
             'start_flag': True}
 
         report_interval = agent_conf.report_interval
