@@ -30,7 +30,7 @@ ovs_driver_opts = [
                        "Note that direct is supported only from kernel 4.8, "
                        "and from ovs 2.8.0. Bind DIRECT (SR-IOV) port allows "
                        "to offload the OVS flows using tc to the SR-IOV NIC. "
-                       "This allows to  support hardware offload via tc and "
+                       "This allows to support hardware offload via tc and "
                        "that allows us to manage the VF by OpenFlow control "
                        "plane using representor net-device.")),
 ]
