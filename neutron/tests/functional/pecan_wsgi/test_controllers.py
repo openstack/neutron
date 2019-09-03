@@ -492,10 +492,45 @@ class TestResourceController(TestRootController):
                               'tenant_id': 'tenid'}]
                     },
             headers={'X-Project-Id': 'tenid'})
-        self.assertEqual(response.status_int, 201)
+        self.assertEqual(201, response.status_int)
         json_body = jsonutils.loads(response.body)
         self.assertIn('ports', json_body)
-        self.assertEqual(2, len(json_body['ports']))
+        ports = json_body['ports']
+        self.assertEqual(2, len(ports))
+        for port in ports:
+            self.assertEqual(1, len(port['security_groups']))
+
+    def test_bulk_create_with_sg(self):
+        sg_response = self.app.post_json(
+                '/v2.0/security-groups.json',
+                params={'security_group': {
+                    "name": "functest",
+                    "description": "Functional test"}},
+                headers={'X-Project-Id': 'tenid'})
+        self.assertEqual(201, sg_response.status_int)
+        sg_json_body = jsonutils.loads(sg_response.body)
+        self.assertIn('security_group', sg_json_body)
+        sg_id = sg_json_body['security_group']['id']
+
+        port_response = self.app.post_json(
+                '/v2.0/ports.json',
+                params={'ports': [{'network_id': self.port['network_id'],
+                                 'admin_state_up': True,
+                                 'security_groups': [sg_id],
+                                 'tenant_id': 'tenid'},
+                                 {'network_id': self.port['network_id'],
+                                  'admin_state_up': True,
+                                 'security_groups': [sg_id],
+                                  'tenant_id': 'tenid'}]
+                        },
+                headers={'X-Project-Id': 'tenid'})
+        self.assertEqual(201, port_response.status_int)
+        json_body = jsonutils.loads(port_response.body)
+        self.assertIn('ports', json_body)
+        ports = json_body['ports']
+        self.assertEqual(2, len(ports))
+        for port in ports:
+            self.assertEqual(1, len(port['security_groups']))
 
     def test_emulated_bulk_create(self):
         self.plugin._FORCE_EMULATED_BULK = True
