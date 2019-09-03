@@ -19,6 +19,7 @@ from oslo_utils import uuidutils
 from neutron.agent.linux import iptables_firewall
 from neutron.agent.linux import iptables_manager
 from neutron.cmd.sanity import checks
+from neutron.cmd import sanity_check
 from neutron.common import utils as common_utils
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base
@@ -35,6 +36,8 @@ class StatelessRulesNotConfiguredException(Exception):
 
 class OVSVersionChecker(object):
     conntrack_supported = None
+
+    sanity_check.setup_conf()
 
     @classmethod
     def supports_ovsfirewall(cls):
