@@ -229,7 +229,7 @@ htmlhelp_basename = 'neutrondoc'
 # (source start file, target name, title, author,
 # documentclass [howto/manual]).
 latex_documents = [
-    ('pdf-index', 'neutron.tex', u'Neutron Documentation',
+    ('pdf-index', 'doc-neutron.tex', u'Neutron Documentation',
      u'Neutron development team', 'manual'),
 ]
 
