@@ -53,7 +53,7 @@ The following table compares v1 and v2 features.
 +------------------------------------------+-----+------+
 | Supports L3 firewalling for router ports | NO  | YES  |
 +------------------------------------------+-----+------+
-| Supports L2 firewalling (VM ports)       | NO  | NO   |
+| Supports L2 firewalling (VM ports)       | NO  | YES  |
 +------------------------------------------+-----+------+
 | CLI support                              | YES | YES  |
 +------------------------------------------+-----+------+
