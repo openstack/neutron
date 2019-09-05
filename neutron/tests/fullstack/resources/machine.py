@@ -171,7 +171,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
         return self._ip_cidr
 
     def ip_configured(self):
-        for port_ip in self.port.addr.list():
+        for port_ip in self.port.addr.list(ip_version=constants.IP_VERSION_4):
             if port_ip.get('cidr') == self.ip_cidr:
                 return True
         return False
