@@ -976,21 +976,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _remove_interface_by_port(self, context, router_id,
                                   port_id, subnet_id, owner):
-        obj = l3_obj.RouterPort.get_object(
-            context,
-            port_id=port_id,
-            router_id=router_id,
-            port_type=owner
-        )
-        if obj:
-            try:
-                port = self._core_plugin.get_port(context, obj.port_id)
-            except n_exc.PortNotFound:
-                raise l3_exc.RouterInterfaceNotFound(
-                    router_id=router_id, port_id=port_id)
-        else:
+        ports = port_obj.Port.get_ports_by_router_and_port(
+            context, router_id, owner, port_id)
+        if len(ports) < 1:
             raise l3_exc.RouterInterfaceNotFound(
                 router_id=router_id, port_id=port_id)
+
+        port = ports[0]
         port_subnet_ids = [fixed_ip['subnet_id']
                            for fixed_ip in port['fixed_ips']]
         if subnet_id and subnet_id not in port_subnet_ids:
@@ -1003,47 +995,41 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                     context, router_id, port_subnet_id)
         self._core_plugin.delete_port(context, port['id'],
                                       l3_port_check=False)
-        return (port, subnets)
+        return port, subnets
 
     def _remove_interface_by_subnet(self, context,
                                     router_id, subnet_id, owner):
         self._confirm_router_interface_not_in_use(
             context, router_id, subnet_id)
         subnet = self._core_plugin.get_subnet(context, subnet_id)
+        ports = port_obj.Port.get_ports_by_router_and_network(
+            context, router_id, owner, subnet['network_id'])
 
-        try:
-            ports = port_obj.Port.get_ports_by_router(
-                context, router_id, owner, subnet)
-
-            for p in ports:
-                try:
-                    p = self._core_plugin.get_port(context, p.id)
-                except n_exc.PortNotFound:
-                    continue
-                port_subnets = [fip['subnet_id'] for fip in p['fixed_ips']]
-                if subnet_id in port_subnets and len(port_subnets) > 1:
-                    # multiple prefix port - delete prefix from port
-                    fixed_ips = [dict(fip) for fip in p['fixed_ips']
-                                 if fip['subnet_id'] != subnet_id]
-                    self._core_plugin.update_port(context, p['id'],
-                            {'port':
-                                {'fixed_ips': fixed_ips}})
-                    return (p, [subnet])
-                elif subnet_id in port_subnets:
-                    # only one subnet on port - delete the port
-                    self._core_plugin.delete_port(context, p['id'],
-                                                  l3_port_check=False)
-                    return (p, [subnet])
-        except exc.NoResultFound:
-            pass
+        for p in ports:
+            try:
+                p = self._core_plugin.get_port(context, p.id)
+            except n_exc.PortNotFound:
+                continue
+            port_subnets = [fip['subnet_id'] for fip in p['fixed_ips']]
+            if subnet_id in port_subnets and len(port_subnets) > 1:
+                # multiple prefix port - delete prefix from port
+                fixed_ips = [dict(fip) for fip in p['fixed_ips']
+                             if fip['subnet_id'] != subnet_id]
+                self._core_plugin.update_port(
+                    context, p['id'], {'port': {'fixed_ips': fixed_ips}})
+                return (p, [subnet])
+            elif subnet_id in port_subnets:
+                # only one subnet on port - delete the port
+                self._core_plugin.delete_port(context, p['id'],
+                                              l3_port_check=False)
+                return (p, [subnet])
         raise l3_exc.RouterInterfaceNotFoundForSubnet(
             router_id=router_id, subnet_id=subnet_id)
 
     @db_api.retry_if_session_inactive()
     def remove_router_interface(self, context, router_id, interface_info):
-        remove_by_port, remove_by_subnet = (
-            self._validate_interface_info(interface_info, for_removal=True)
-        )
+        remove_by_port, _ = self._validate_interface_info(interface_info,
+                                                          for_removal=True)
         port_id = interface_info.get('port_id')
         subnet_id = interface_info.get('subnet_id')
         device_owner = self._get_device_owner(context, router_id)
@@ -1051,9 +1037,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             port, subnets = self._remove_interface_by_port(context, router_id,
                                                            port_id, subnet_id,
                                                            device_owner)
-        # remove_by_subnet is not used here, because the validation logic of
-        # _validate_interface_info ensures that at least one of remote_by_*
-        # is True.
         else:
             port, subnets = self._remove_interface_by_subnet(
                     context, router_id, subnet_id, device_owner)
