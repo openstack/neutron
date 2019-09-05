@@ -22,14 +22,19 @@ from neutron_lib import constants as n_const
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import l3 as l3_exc
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 import testtools
 
 from neutron.db import l3_db
 from neutron.db.models import l3 as l3_models
+from neutron.objects import network as network_obj
+from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
+from neutron.objects import subnet as subnet_obj
 from neutron.tests import base
+from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
 class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
@@ -332,3 +337,148 @@ class L3_NAT_db_mixin(base.BaseTestCase):
             self.assertRaises(
                 n_exc.BadRequest,
                 self.db.add_router_interface, mock.Mock(), router_db.id)
+
+
+class FakeL3Plugin(l3_db.L3_NAT_dbonly_mixin):
+    pass
+
+
+class L3TestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
+
+    GET_PORTS_BY_ROUTER_MSG = (
+        'The following ports, assigned to router %(router_id)s, do not have a '
+        '"routerport" register: %(port_ids)s')
+
+    def setUp(self, *args, **kwargs):
+        super(L3TestCase, self).setUp(plugin='ml2')
+        self.core_plugin = directory.get_plugin()
+        self.ctx = context.get_admin_context()
+        self.mixin = FakeL3Plugin()
+        directory.add_plugin(plugin_constants.L3, self.mixin)
+        self.network = self.create_network()
+        self.subnets = []
+        self.subnets.append(self.create_subnet(self.network, '1.1.1.1',
+                                               '1.1.1.0/24'))
+        self.subnets.append(self.create_subnet(self.network, '1.1.2.1',
+                                               '1.1.2.0/24'))
+        router = {'router': {'name': 'foo_router', 'admin_state_up': True,
+                             'tenant_id': 'foo_tenant'}}
+        self.router = self.create_router(router)
+        self.ports = []
+        for subnet in self.subnets:
+            ipa = str(netaddr.IPNetwork(subnet['subnet']['cidr']).ip + 10)
+            fixed_ips = [{'subnet_id': subnet['subnet']['id'],
+                          'ip_address': ipa}]
+            self.ports.append(self.create_port(
+                self.network['network']['id'], {'fixed_ips': fixed_ips}))
+        self.addCleanup(self._clean_objs)
+
+    def _clean_objs(self):
+        port_obj.Port.delete_objects(
+            self.ctx, network_id=self.network['network']['id'])
+        subnet_obj.Subnet.delete_objects(
+            self.ctx, network_id=self.network['network']['id'])
+        network_obj.Network.get_object(
+            self.ctx, id=self.network['network']['id']).delete()
+        l3_obj.Router.get_object(self.ctx, id=self.router['id']).delete()
+
+    def create_router(self, router):
+        with self.ctx.session.begin(subtransactions=True):
+            return self.mixin.create_router(self.ctx, router)
+
+    def create_port(self, net_id, port_info):
+        with self.ctx.session.begin(subtransactions=True):
+            return self._make_port(self.fmt, net_id, **port_info)
+
+    def create_network(self, name=None, **kwargs):
+        name = name or 'network1'
+        with self.ctx.session.begin(subtransactions=True):
+            return self._make_network(self.fmt, name, True, **kwargs)
+
+    def create_subnet(self, network, gateway, cidr, **kwargs):
+        with self.ctx.session.begin(subtransactions=True):
+            return self._make_subnet(self.fmt, network, gateway, cidr,
+                                     **kwargs)
+
+    def _add_router_interfaces(self):
+        return [self.mixin.add_router_interface(
+            self.ctx, self.router['id'],
+            interface_info={'port_id': port['port']['id']})
+            for port in self.ports]
+
+    def _check_routerports(self, ri_statuses):
+        port_ids = []
+        for idx, ri_status in enumerate(ri_statuses):
+            rp_obj = l3_obj.RouterPort.get_object(
+                self.ctx, port_id=self.ports[idx]['port']['id'],
+                router_id=self.router['id'])
+            if ri_status:
+                self.assertEqual(self.ports[idx]['port']['id'], rp_obj.port_id)
+                port_ids.append(rp_obj.port_id)
+            else:
+                self.assertIsNone(rp_obj)
+
+        _router_obj = l3_obj.Router.get_object(self.ctx, id=self.router['id'])
+        router_port_ids = [rp.port_id for rp in
+                           _router_obj.db_obj.attached_ports]
+        self.assertEqual(sorted(port_ids), sorted(router_port_ids))
+
+    @mock.patch.object(port_obj, 'LOG')
+    def test_remove_router_interface_by_port(self, mock_log):
+        self._add_router_interfaces()
+        self._check_routerports((True, True))
+
+        interface_info = {'port_id': self.ports[0]['port']['id']}
+        self.mixin.remove_router_interface(self.ctx, self.router['id'],
+                                           interface_info)
+        mock_log.warning.assert_not_called()
+        self._check_routerports((False, True))
+
+    @mock.patch.object(port_obj, 'LOG')
+    def test_remove_router_interface_by_port_removed_rport(self, mock_log):
+        self._add_router_interfaces()
+        self._check_routerports((True, True))
+
+        rp_obj = l3_obj.RouterPort.get_object(
+            self.ctx, router_id=self.router['id'],
+            port_id=self.ports[0]['port']['id'])
+        rp_obj.delete()
+
+        interface_info = {'port_id': self.ports[0]['port']['id']}
+        self.mixin.remove_router_interface(self.ctx, self.router['id'],
+                                           interface_info)
+        msg_vars = {'router_id': self.router['id'],
+                    'port_ids': {self.ports[0]['port']['id']}}
+        mock_log.warning.assert_called_once_with(self.GET_PORTS_BY_ROUTER_MSG,
+                                                 msg_vars)
+        self._check_routerports((False, True))
+
+    @mock.patch.object(port_obj, 'LOG')
+    def test_remove_router_interface_by_subnet(self, mock_log):
+        self._add_router_interfaces()
+        self._check_routerports((True, True))
+
+        interface_info = {'subnet_id': self.subnets[1]['subnet']['id']}
+        self.mixin.remove_router_interface(self.ctx, self.router['id'],
+                                           interface_info)
+        mock_log.warning.not_called_once()
+        self._check_routerports((True, False))
+
+    @mock.patch.object(port_obj, 'LOG')
+    def test_remove_router_interface_by_subnet_removed_rport(self, mock_log):
+        self._add_router_interfaces()
+        self._check_routerports((True, True))
+
+        rp_obj = l3_obj.RouterPort.get_object(
+            self.ctx, router_id=self.router['id'],
+            port_id=self.ports[0]['port']['id'])
+        rp_obj.delete()
+
+        interface_info = {'subnet_id': self.subnets[0]['subnet']['id']}
+        self.mixin.remove_router_interface(self.ctx, self.router['id'],
+                                           interface_info)
+        msg_vars = {'router_id': self.router['id'],
+                    'port_ids': {self.ports[0]['port']['id']}}
+        mock_log.warning.assert_called_once_with(self.GET_PORTS_BY_ROUTER_MSG,
+                                                 msg_vars)
+        self._check_routerports((False, True))
