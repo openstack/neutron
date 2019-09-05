@@ -135,7 +135,8 @@ class RouterPort(base.NeutronDbObject):
 
     primary_keys = ['router_id', 'port_id']
 
-    foreign_keys = {'Router': {'router_id': 'id'}}
+    foreign_keys = {'Router': {'router_id': 'id'},
+                    'Port': {'port_id': 'id'}}
 
     fields = {
         'router_id': common_types.UUIDField(),
