@@ -14,6 +14,7 @@
 
 import netaddr
 from neutron_lib import constants
+from oslo_log import log as logging
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
@@ -27,6 +28,8 @@ from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.objects.qos import binding
 from neutron.plugins.ml2 import models as ml2_models
+
+LOG = logging.getLogger(__name__)
 
 
 class PortBindingBase(base.NeutronDbObject):
@@ -507,15 +510,65 @@ class Port(base.NeutronDbObject):
             primitive.pop('qos_network_policy_id', None)
 
     @classmethod
-    def get_ports_by_router(cls, context, router_id, owner, subnet):
-        rport_qry = context.session.query(models_v2.Port).join(
-            l3.RouterPort)
-        ports = rport_qry.filter(
-            l3.RouterPort.router_id == router_id,
-            l3.RouterPort.port_type == owner,
-            models_v2.Port.network_id == subnet['network_id']
-        )
-        return [cls._load_object(context, db_obj) for db_obj in ports.all()]
+    def get_ports_by_router_and_network(cls, context, router_id, owner,
+                                        network_id):
+        """Returns port objects filtering by router ID, owner and network ID"""
+        rports_filter = (models_v2.Port.network_id == network_id, )
+        router_filter = (models_v2.Port.network_id == network_id, )
+        return cls._get_ports_by_router(context, router_id, owner,
+                                        rports_filter, router_filter)
+
+    @classmethod
+    def get_ports_by_router_and_port(cls, context, router_id, owner, port_id):
+        """Returns port objects filtering by router ID, owner and port ID"""
+        rports_filter = (l3.RouterPort.port_id == port_id, )
+        router_filter = (models_v2.Port.id == port_id, )
+        return cls._get_ports_by_router(context, router_id, owner,
+                                        rports_filter, router_filter)
+
+    @classmethod
+    def _get_ports_by_router(cls, context, router_id, owner, rports_filter,
+                             router_filter):
+        """Returns port objects filtering by router id and owner
+
+        The method will receive extra filters depending of the caller (filter
+        by network or filter by port).
+
+        The ports are retrieved using:
+        - The RouterPort registers. Each time a port is assigned to a router,
+          a new RouterPort register is added to the DB.
+        - The port owner and device_id information.
+
+        Both searches should return the same result. If not, a warning message
+        is logged and the port list to be returned is completed with the
+        missing ones.
+        """
+        rports_filter += (l3.RouterPort.router_id == router_id,
+                          l3.RouterPort.port_type == owner)
+        router_filter += (models_v2.Port.device_id == router_id,
+                          models_v2.Port.device_owner == owner)
+
+        ports = context.session.query(models_v2.Port).join(
+            l3.RouterPort).filter(*rports_filter)
+        ports_rports = [cls._load_object(context, db_obj)
+                        for db_obj in ports.all()]
+
+        ports = context.session.query(models_v2.Port).filter(*router_filter)
+        ports_router = [cls._load_object(context, db_obj)
+                        for db_obj in ports.all()]
+
+        ports_rports_ids = {p.id for p in ports_rports}
+        ports_router_ids = {p.id for p in ports_router}
+        missing_port_ids = ports_router_ids - ports_rports_ids
+        if missing_port_ids:
+            LOG.warning('The following ports, assigned to router '
+                        '%(router_id)s, do not have a "routerport" register: '
+                        '%(port_ids)s', {'router_id': router_id,
+                                         'port_ids': missing_port_ids})
+            port_objs = [p for p in ports_router if p.id in missing_port_ids]
+            ports_rports += port_objs
+
+        return ports_rports
 
     @classmethod
     def get_ports_ids_by_security_groups(cls, context, security_group_ids,
