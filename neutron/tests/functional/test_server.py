@@ -34,9 +34,10 @@ from neutron import wsgi
 
 CONF = cfg.CONF
 
-# This message will be written to temporary file each time
-# start method is called.
+# Those messages will be written to temporary file each time
+# start/reset methods are called.
 FAKE_START_MSG = b"start"
+FAKE_RESET_MSG = b"reset"
 
 TARGET_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
@@ -130,6 +131,10 @@ class TestNeutronServer(base.BaseLoggingTestCase):
         with open(self.temp_file, 'ab') as f:
             f.write(FAKE_START_MSG)
 
+    def _fake_reset(self):
+        with open(self.temp_file, 'ab') as f:
+            f.write(FAKE_RESET_MSG)
+
     def _test_restart_service_on_sighup(self, service, workers=1):
         """Test that a service correctly (re)starts on receiving SIGHUP.
 
@@ -141,7 +146,11 @@ class TestNeutronServer(base.BaseLoggingTestCase):
         self._start_server(callback=service, workers=workers)
         os.kill(self.service_pid, signal.SIGHUP)
 
-        expected_msg = FAKE_START_MSG * workers * 2
+        # After sending SIGHUP it is expected that there will be as many
+        # FAKE_RESET_MSG as number of workers + one additional for main
+        # process
+        expected_msg = (
+            FAKE_START_MSG * workers + FAKE_RESET_MSG * (workers + 1))
 
         # Wait for temp file to be created and its size reaching the expected
         # value
@@ -208,8 +217,10 @@ class TestWsgiServer(TestNeutronServer):
 
         # Mock start method to check that children are started again on
         # receiving SIGHUP.
-        with mock.patch("neutron.wsgi.WorkerService.start") as start_method:
+        with mock.patch("neutron.wsgi.WorkerService.start") as start_method,\
+                mock.patch("neutron.wsgi.WorkerService.reset") as reset_method:
             start_method.side_effect = self._fake_start
+            reset_method.side_effect = self._fake_reset
 
             server = wsgi.Server("Test")
             server.start(self.application, 0, "0.0.0.0",
@@ -241,19 +252,21 @@ class TestRPCServer(TestNeutronServer):
 
         # Mock start method to check that children are started again on
         # receiving SIGHUP.
-        with mock.patch("neutron.service.RpcWorker.start") as start_method:
-            with mock.patch(
-                    "neutron_lib.plugins.directory.get_plugin"
-            ) as get_plugin:
-                start_method.side_effect = self._fake_start
-                get_plugin.return_value = self.plugin
+        with mock.patch("neutron.service.RpcWorker.start") as start_method,\
+                mock.patch(
+                    "neutron.service.RpcWorker.reset") as reset_method,\
+                mock.patch(
+                    "neutron_lib.plugins.directory.get_plugin") as get_plugin:
+            start_method.side_effect = self._fake_start
+            reset_method.side_effect = self._fake_reset
+            get_plugin.return_value = self.plugin
 
-                CONF.set_override("rpc_workers", workers)
-                # not interested in state report workers specifically
-                CONF.set_override("rpc_state_report_workers", 0)
+            CONF.set_override("rpc_workers", workers)
+            # not interested in state report workers specifically
+            CONF.set_override("rpc_state_report_workers", 0)
 
-                rpc_workers_launcher = service.start_rpc_workers()
-                rpc_workers_launcher.wait()
+            rpc_workers_launcher = service.start_rpc_workers()
+            rpc_workers_launcher.wait()
 
     def test_restart_rpc_on_sighup_multiple_workers(self):
         self._test_restart_service_on_sighup(service=self._serve_rpc,
@@ -292,6 +305,7 @@ class TestPluginWorker(TestNeutronServer):
 
         # Make both ABC happy and ensure 'self' is correct
         FakeWorker.start = self._fake_start
+        FakeWorker.reset = self._fake_reset
         workers = [FakeWorker()]
         self.plugin.return_value.get_workers.return_value = workers
         self._test_restart_service_on_sighup(service=self._start_plugin,

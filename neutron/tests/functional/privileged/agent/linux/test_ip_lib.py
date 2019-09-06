@@ -13,6 +13,7 @@
 #    under the License.
 
 import functools
+import random
 
 import eventlet
 import netaddr
@@ -191,42 +192,45 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
         self.assertEqual(sorted(interfaces_tested),
                          sorted(self.interfaces + vxlan_interfaces))
 
+    def _retrieve_interface(self, interface_name, namespace):
+        for device in priv_ip_lib.get_link_devices(namespace):
+            if interface_name == ip_lib.get_attr(device, 'IFLA_IFNAME'):
+                return device
+        else:
+            self.fail('Interface "%s" not found' % interface_name)
+
     def test_get_devices_info_veth_different_namespaces(self):
         namespace2 = 'ns_test-' + uuidutils.generate_uuid()
         priv_ip_lib.create_netns(namespace2)
         self.addCleanup(self._remove_ns, namespace2)
+        # Create a random number of dummy interfaces in namespace2, in order
+        # to increase the 'veth1_2' interface index in its namespace.
+        for idx in range(5, random.randint(15, 20)):
+            priv_ip_lib.create_interface('int_%s' % idx, namespace2, 'dummy')
+
         ip_wrapper = ip_lib.IPWrapper(self.namespace)
         ip_wrapper.add_veth('veth1_1', 'veth1_2', namespace2)
 
-        devices = priv_ip_lib.get_link_devices(self.namespace)
-        for device in devices:
-            name = ip_lib.get_attr(device, 'IFLA_IFNAME')
-            if name == 'veth1_1':
-                veth1_1 = device
-                break
-        else:
-            self.fail('Interface "veth1_1" not found')
+        veth1_1 = self._retrieve_interface('veth1_1', self.namespace)
+        veth1_2 = self._retrieve_interface('veth1_2', namespace2)
 
         ifla_linkinfo = ip_lib.get_attr(veth1_1, 'IFLA_LINKINFO')
         self.assertEqual(ip_lib.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND'),
                          'veth')
-        self.assertIsNone(ip_lib.get_attr(veth1_1, 'IFLA_LINK'))
+        # NOTE(ralonsoh): since kernel_version=4.15.0-60-generic, iproute2
+        # provides the veth pair index, even if the pair interface is in other
+        # namespace. In previous versions, the parameter 'IFLA_LINK' was not
+        # present. We need to handle both cases.
+        self.assertIn(ip_lib.get_attr(veth1_1, 'IFLA_LINK'),
+                      [None, veth1_2['index']])
 
     def test_get_devices_info_veth_same_namespaces(self):
         ip_wrapper = ip_lib.IPWrapper(self.namespace)
         ip_wrapper.add_veth('veth1_1', 'veth1_2')
 
-        devices = priv_ip_lib.get_link_devices(self.namespace)
-        veth1_1 = veth1_2 = None
-        for device in devices:
-            name = ip_lib.get_attr(device, 'IFLA_IFNAME')
-            if name == 'veth1_1':
-                veth1_1 = device
-            elif name == 'veth1_2':
-                veth1_2 = device
+        veth1_1 = self._retrieve_interface('veth1_1', self.namespace)
+        veth1_2 = self._retrieve_interface('veth1_2', self.namespace)
 
-        self.assertIsNotNone(veth1_1)
-        self.assertIsNotNone(veth1_2)
         veth1_1_link = ip_lib.get_attr(veth1_1, 'IFLA_LINK')
         veth1_2_link = ip_lib.get_attr(veth1_2, 'IFLA_LINK')
         self.assertEqual(veth1_1['index'], veth1_2_link)
