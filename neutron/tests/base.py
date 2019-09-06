@@ -23,6 +23,7 @@ import inspect
 import logging
 import os
 import os.path
+import threading
 
 import eventlet.timeout
 import fixtures
@@ -478,6 +479,49 @@ class BaseTestCase(DietTestCase):
                     root_helper=get_rootwrap_cmd())
         self.config(group='AGENT',
                     root_helper_daemon=get_rootwrap_daemon_cmd())
+
+    def _simulate_concurrent_requests_process_and_raise(self, calls, args):
+
+        class SimpleThread(threading.Thread):
+            def __init__(self, q):
+                super(SimpleThread, self).__init__()
+                self.q = q
+                self.exception = None
+
+            def run(self):
+                try:
+                    while not self.q.empty():
+                        item = None
+                        try:
+                            item = self.q.get(False)
+                            func, func_args = item[0], item[1]
+                            func(*func_args)
+                        except six.moves.queue.Empty:
+                            pass
+                        finally:
+                            if item:
+                                self.q.task_done()
+                except Exception as e:
+                    self.exception = e
+
+            def get_exception(self):
+                return self.exception
+
+        q = six.moves.queue.Queue()
+        for func, func_args in zip(calls, args):
+            q.put_nowait((func, func_args))
+
+        threads = []
+        for z in range(len(calls)):
+            t = SimpleThread(q)
+            threads.append(t)
+            t.start()
+        q.join()
+
+        for t in threads:
+            e = t.get_exception()
+            if e:
+                raise e
 
 
 class PluginFixture(fixtures.Fixture):

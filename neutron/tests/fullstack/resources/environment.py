@@ -39,7 +39,8 @@ class EnvironmentDescription(object):
                  agent_down_time=75, router_scheduler=None,
                  global_mtu=constants.DEFAULT_NETWORK_MTU,
                  debug_iptables=False, log=False, report_bandwidths=False,
-                 has_placement=False, placement_port=None):
+                 has_placement=False, placement_port=None,
+                 dhcp_scheduler_class=None,):
         self.network_type = network_type
         self.l2_pop = l2_pop
         self.qos = qos
@@ -55,6 +56,7 @@ class EnvironmentDescription(object):
         self.report_bandwidths = report_bandwidths
         self.has_placement = has_placement
         self.placement_port = placement_port
+        self.dhcp_scheduler_class = dhcp_scheduler_class
         if self.qos:
             self.service_plugins += ',qos'
         if self.log:

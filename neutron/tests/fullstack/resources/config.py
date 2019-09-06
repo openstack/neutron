@@ -122,6 +122,10 @@ class NeutronConfigFixture(ConfigFixture):
                     env_desc.placement_port
                 }
             })
+        if env_desc.dhcp_scheduler_class:
+            self.config['DEFAULT']['dhcp_agents_per_network'] = '1'
+            self.config['DEFAULT']['network_scheduler_driver'] = (
+                env_desc.dhcp_scheduler_class)
 
         net_helpers.set_local_port_range(CLIENT_CONN_PORT_START,
                                          CLIENT_CONN_PORT_END)
