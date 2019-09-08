@@ -34,7 +34,7 @@ function load_module {
 # prepare_for_compilation() - Fetch ovs git repository and install packages needed for
 #                             compilation.
 function prepare_for_compilation {
-    local build_modules=${1:-True}
+    local build_modules=${1:-False}
     OVS_DIR=$DEST/$OVS_REPO_NAME
 
     if [ ! -d $OVS_DIR ] ; then
@@ -101,13 +101,13 @@ function reload_kernel_modules {
 
 # compile_ovs() - Compile OVS from source and load needed modules.
 #                 Accepts two parameters:
-#                   - first one is True by default and means that modules are built and installed.
+#                   - first one is False by default and means that modules are not built and installed.
 #                   - second optional parameter defines prefix for ovs compilation
 #                   - third optional parameter defines localstatedir for ovs single machine runtime
 #                 Env variables OVS_REPO_NAME, OVS_REPO and OVS_BRANCH must be set
 function compile_ovs {
     local _pwd=$PWD
-    local build_modules=${1:-True}
+    local build_modules=${1:-False}
     local prefix=$2
     local localstatedir=$3
 

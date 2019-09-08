@@ -28,7 +28,7 @@ if [[ "$1" == "stack" ]]; then
             if [[ "$NEUTRON_AGENT" == "openvswitch" ]] && \
                [[ "$Q_BUILD_OVS_FROM_GIT" == "True" ]]; then
                 remove_ovs_packages
-                compile_ovs True /usr /var
+                compile_ovs False /usr /var
                 load_conntrack_gre_module
                 start_new_ovs
             fi
