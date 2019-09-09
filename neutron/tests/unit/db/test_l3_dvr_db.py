@@ -605,7 +605,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                             context=mock.Mock(), router_id=router_db['id'],
                             fixed_port_id=port['id'], floating_ip_id=fip['id'],
                             floating_network_id=fip['floating_network_id'],
-                            fixed_ip_address='1.2.3.4')
+                            fixed_ip_address='1.2.3.4', association_event=True)
             return c_fip
 
     def test_create_floatingip_agent_gw_port_with_dvr_router(self):

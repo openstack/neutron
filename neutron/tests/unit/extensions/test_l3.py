@@ -2668,7 +2668,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                            floating_network_id=fip_network_id,
                                            last_known_router_id=None,
                                            floating_ip_id=fip_id,
-                                           router_id=router_id)
+                                           router_id=router_id,
+                                           association_event=True)
 
     def test_floatingip_disassociate_notification(self):
         with self.port() as p:
@@ -2697,7 +2698,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                            floating_network_id=fip_network_id,
                                            last_known_router_id=router_id,
                                            floating_ip_id=fip_id,
-                                           router_id=None)
+                                           router_id=None,
+                                           association_event=False)
 
     def test_floatingip_association_on_unowned_router(self):
         # create a router owned by one tenant and associate the FIP with a

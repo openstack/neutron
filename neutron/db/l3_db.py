@@ -1239,10 +1239,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # {'port_id': null}, then the floating IP cloud also be dissociated.
         return port_id, internal_ip_address, router_id
 
-    def _update_fip_assoc(self, context, fip, floatingip_obj, external_port):
+    def _update_fip_assoc(self, context, fip, floatingip_obj):
         previous_router_id = floatingip_obj.router_id
         port_id, internal_ip_address, router_id = (
             self._check_and_get_fip_assoc(context, fip, floatingip_obj))
+        association_event = None
+        if floatingip_obj.fixed_port_id != port_id:
+            association_event = bool(port_id)
         floatingip_obj.fixed_ip_address = (
             netaddr.IPAddress(internal_ip_address)
             if internal_ip_address else None)
@@ -1260,7 +1263,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 'floating_ip_address': floating_ip_address,
                 'floating_network_id': floatingip_obj.floating_network_id,
                 'floating_ip_id': floatingip_obj.id,
-                'context': context}
+                'context': context,
+                'association_event': association_event}
 
     def _is_ipv4_network(self, context, net_id):
         net = self._core_plugin._get_network(context, net_id)
@@ -1339,8 +1343,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 description=fip.get('description'))
             # Update association with internal port
             # and define external IP address
-            assoc_result = self._update_fip_assoc(
-                context, fip, floatingip_obj, external_port)
+            assoc_result = self._update_fip_assoc(context, fip, floatingip_obj)
             floatingip_obj.create()
             floatingip_dict = self._make_floatingip_dict(
                 floatingip_obj, process_extensions=False)
@@ -1366,7 +1369,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         events.AFTER_UPDATE,
                         self._update_fip_assoc,
                         **assoc_result)
-        if assoc_result['fixed_ip_address'] and assoc_result['fixed_port_id']:
+        if assoc_result['association_event']:
             LOG.info(FIP_ASSOC_MSG,
                      {'fip_id': assoc_result['floating_ip_id'],
                       'ext_ip': assoc_result['floating_ip_address'],
@@ -1402,11 +1405,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         with context.session.begin(subtransactions=True):
             floatingip_obj = self._get_floatingip(context, id)
             old_floatingip = self._make_floatingip_dict(floatingip_obj)
-            fip_port_id = floatingip_obj.floating_port_id
             old_fixed_port_id = floatingip_obj.fixed_port_id
-            assoc_result = self._update_fip_assoc(
-                context, fip, floatingip_obj,
-                self._core_plugin.get_port(context.elevated(), fip_port_id))
+            assoc_result = self._update_fip_assoc(context, fip, floatingip_obj)
 
             floatingip_obj.update()
             floatingip_dict = self._make_floatingip_dict(floatingip_obj)
@@ -1433,10 +1433,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         events.AFTER_UPDATE,
                         self._update_fip_assoc,
                         **assoc_result)
-        if old_fixed_port_id != assoc_result['fixed_port_id']:
-            assoc = ('associated' if assoc_result['fixed_port_id']
-                     else 'disassociated')
+        if assoc_result['association_event'] is not None:
             port_id = old_fixed_port_id or assoc_result['fixed_port_id']
+            assoc = ('associated' if assoc_result['association_event']
+                     else 'disassociated')
             LOG.info(FIP_ASSOC_MSG,
                      {'fip_id': assoc_result['floating_ip_id'],
                       'ext_ip': assoc_result['floating_ip_address'],
@@ -1625,6 +1625,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 'floating_ip_id': fip.id,
                 'context': context,
                 'router_ids': router_ids,
+                'association_event': False,
             }
             registry.notify(resources.FLOATING_IP, events.AFTER_UPDATE, self,
                             **assoc_result)

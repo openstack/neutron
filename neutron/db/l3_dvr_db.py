@@ -391,14 +391,13 @@ class DVRResourceOperationHandler(object):
     def _create_dvr_floating_gw_port(self, resource, event, trigger, context,
                                      router_id, fixed_port_id, floating_ip_id,
                                      floating_network_id, fixed_ip_address,
-                                     **kwargs):
+                                     association_event, **kwargs):
         """Create floating agent gw port for DVR.
 
         Floating IP Agent gateway port will be created when a
         floatingIP association happens.
         """
-        associate_fip = fixed_port_id and floating_ip_id
-        if associate_fip and router_id:
+        if association_event and router_id:
             admin_ctx = context.elevated()
             router_dict = self.get_router(admin_ctx, router_id)
             # Check if distributed router and then create the
