@@ -20,6 +20,7 @@ from neutron_lib import constants as n_const
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from neutron_lib.services.qos import constants as qos_consts
+from oslo_config import cfg
 from oslo_log import log
 import oslo_messaging
 from sqlalchemy.orm import exc
@@ -262,7 +263,12 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             else:
                 if port.device_owner.startswith(
                         n_const.DEVICE_OWNER_COMPUTE_PREFIX):
-                    plugin.nova_notifier.notify_port_active_direct(port)
+                    # NOTE(haleyb): It is possible for a test to override a
+                    # config option after the plugin has been initialized so
+                    # the nova_notifier attribute is not set on the plugin.
+                    if (cfg.CONF.notify_nova_on_port_status_changes and
+                            hasattr(plugin, 'nova_notifier')):
+                        plugin.nova_notifier.notify_port_active_direct(port)
                     return
         else:
             self.update_port_status_to_active(port, rpc_context, port_id, host)
