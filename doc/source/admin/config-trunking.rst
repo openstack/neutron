@@ -320,5 +320,10 @@ Trunk states
 Limitations and issues
 ~~~~~~~~~~~~~~~~~~~~~~
 
+* In ``neutron-ovs-agent`` the use of ``iptables_hybrid`` firewall driver and
+  trunk ports are not compatible with each other. The ``iptables_hybrid``
+  firewall is not going to filter the traffic of subports.
+  Instead use other firewall drivers like ``openvswitch``.
+
 * See `bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=trunk>`__ for
   more information.
