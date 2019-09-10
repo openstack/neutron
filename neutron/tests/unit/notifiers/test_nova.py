@@ -294,7 +294,7 @@ class TestNovaNotify(base.BaseTestCase):
         self.nova_notifier.send_network_change(
             'update_floatingip', original_obj, returned_obj)
         self.assertEqual(
-            2, len(self.nova_notifier.batch_notifier.pending_events))
+            2, len(self.nova_notifier.batch_notifier._pending_events.queue))
 
         returned_obj_non = {'floatingip': {'port_id': None}}
         event_dis = self.nova_notifier.create_port_changed_event(
@@ -302,9 +302,10 @@ class TestNovaNotify(base.BaseTestCase):
         event_assoc = self.nova_notifier.create_port_changed_event(
             'update_floatingip', original_obj, returned_obj)
         self.assertEqual(
-            self.nova_notifier.batch_notifier.pending_events[0], event_dis)
+            self.nova_notifier.batch_notifier._pending_events.get(), event_dis)
         self.assertEqual(
-            self.nova_notifier.batch_notifier.pending_events[1], event_assoc)
+            self.nova_notifier.batch_notifier._pending_events.get(),
+            event_assoc)
 
     def test_delete_port_notify(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
@@ -365,6 +366,7 @@ class TestNovaNotify(base.BaseTestCase):
         self.nova_notifier.notify_port_active_direct(port)
 
         self.assertEqual(
-            1, len(self.nova_notifier.batch_notifier.pending_events))
-        self.assertEqual(expected_event,
-                         self.nova_notifier.batch_notifier.pending_events[0])
+            1, len(self.nova_notifier.batch_notifier._pending_events.queue))
+        self.assertEqual(
+            expected_event,
+            self.nova_notifier.batch_notifier._pending_events.get())

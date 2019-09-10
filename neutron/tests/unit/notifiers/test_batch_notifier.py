@@ -16,6 +16,7 @@
 import eventlet
 import mock
 
+from neutron.common import utils
 from neutron.notifiers import batch_notifier
 from neutron.tests import base
 
@@ -23,41 +24,54 @@ from neutron.tests import base
 class TestBatchNotifier(base.BaseTestCase):
     def setUp(self):
         super(TestBatchNotifier, self).setUp()
-        self.notifier = batch_notifier.BatchNotifier(0.1, lambda x: x)
-        self.spawn_n_p = mock.patch('eventlet.spawn_n')
-        self.spawn_n = self.spawn_n_p.start()
+        self._received_events = eventlet.Queue()
+        self.notifier = batch_notifier.BatchNotifier(2, self._queue_events)
+        self.spawn_n_p = mock.patch.object(eventlet, 'spawn_n')
+
+    def _queue_events(self, events):
+        for event in events:
+            self._received_events.put(event)
 
     def test_queue_event_no_event(self):
+        spawn_n = self.spawn_n_p.start()
         self.notifier.queue_event(None)
-        self.assertEqual(0, len(self.notifier.pending_events))
-        self.assertEqual(0, self.spawn_n.call_count)
+        self.assertEqual(0, len(self.notifier._pending_events.queue))
+        self.assertEqual(0, spawn_n.call_count)
 
     def test_queue_event_first_event(self):
+        spawn_n = self.spawn_n_p.start()
         self.notifier.queue_event(mock.Mock())
-        self.assertEqual(1, len(self.notifier.pending_events))
-        self.assertEqual(1, self.spawn_n.call_count)
+        self.assertEqual(1, len(self.notifier._pending_events.queue))
+        self.assertEqual(1, spawn_n.call_count)
 
-    def test_queue_event_multiple_events(self):
-        self.spawn_n_p.stop()
-        c_mock = mock.patch.object(self.notifier, 'callback').start()
-        events = 6
-        for i in range(0, events):
-            self.notifier.queue_event(mock.Mock())
+    def test_queue_event_multiple_events_notify_method(self):
+        def _batch_notifier_dequeue():
+            while not self.notifier._pending_events.empty():
+                self.notifier._pending_events.get()
+
+        c_mock = mock.patch.object(self.notifier, '_notify',
+                                   side_effect=_batch_notifier_dequeue).start()
+        events = 20
+        for i in range(events):
+            self.notifier.queue_event('Event %s' % i)
             eventlet.sleep(0)  # yield to let coro execute
 
-        while self.notifier.pending_events:
-            # wait for coroutines to finish
-            eventlet.sleep(0.1)
+        utils.wait_until_true(self.notifier._pending_events.empty,
+                              timeout=5)
+        # Called twice: when the first thread calls "synced_send" and then,
+        # in the same loop, when self._pending_events is not empty(). All
+        # self.notifier.queue_event calls are done in just one
+        # "batch_interval" (2 secs).
         self.assertEqual(2, c_mock.call_count)
-        self.assertEqual(6, sum(len(c[0][0]) for c in c_mock.call_args_list))
-        self.assertEqual(0, len(self.notifier.pending_events))
 
-    def test_queue_event_call_send_events(self):
-        with mock.patch.object(self.notifier,
-                               'callback') as send_events:
-            self.spawn_n.side_effect = lambda func: func()
-            self.notifier.queue_event(mock.Mock())
-            while self.notifier.pending_events:
-                # wait for coroutines to finish
-                eventlet.sleep(0.1)
-            self.assertTrue(send_events.called)
+    def test_queue_event_multiple_events_callback_method(self):
+        events = 20
+        for i in range(events):
+            self.notifier.queue_event('Event %s' % i)
+            eventlet.sleep(0)  # yield to let coro execute
+
+        utils.wait_until_true(self.notifier._pending_events.empty,
+                              timeout=5)
+        expected = ['Event %s' % i for i in range(events)]
+        # Check the events have been handled in the same input order.
+        self.assertEqual(expected, list(self._received_events.queue))
