@@ -1422,6 +1422,12 @@ fixed_ips=ip_address_substr%%3D%s&fixed_ips=subnet_id%%3D%s
                fixed_ips['subnet_id'])
             self._test_list_resources('port', [],
                                       query_params=query_params)
+            query_params = """
+fixed_ips=ip_address_substr%%3D%s&fixed_ips=subnet_id%%3D%s&limit=1
+""".strip() % ('192.168.',
+               fixed_ips['subnet_id'])
+            self._test_list_resources('port', [],
+                                      query_params=query_params)
 
     def test_list_ports_filtered_by_fixed_ip_substring_dual_stack(self):
         with self.subnet() as subnet:
@@ -1471,6 +1477,12 @@ fixed_ips=ip_address_substr%%3D%s&fixed_ips=ip_address%%3D%s
             self.assertEqual(set([port1['port']['id'], port2['port']['id']]),
                              set([port['id'] for port in ports_data['ports']]))
             self.assertEqual(2, len(ports_data['ports']))
+            query_params = "security_groups=%s&limit=1" % (
+                           port1['port']['security_groups'][0])
+            ports_data = self._list('ports', query_params=query_params)
+            self.assertIn(ports_data['ports'][0]['id'],
+                          [port1['port']['id'], port2['port']['id']])
+            self.assertEqual(1, len(ports_data['ports']))
             query_params = "security_groups=%s&id=%s" % (
                            port1['port']['security_groups'][0],
                            port1['port']['id'])
