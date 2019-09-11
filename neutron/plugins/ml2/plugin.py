@@ -1445,6 +1445,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return bound_context.current
 
+    def _ensure_security_groups_on_port(self, context, port_dict):
+        port_compat = {'port': port_dict}
+        sgids = self._get_security_groups_on_port(context, port_compat)
+        self._process_port_create_security_group(context, port_dict, sgids)
+
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def create_port_bulk(self, context, ports):
@@ -1550,10 +1555,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self._portsec_ext_port_create_processing(context, port_dict,
                                                          port_compat)
 
-                # sgids must be got after portsec checked with security group
-                sgids = self._get_security_groups_on_port(context, port_compat)
-                self._process_port_create_security_group(context, port_dict,
-                                                         sgids)
+                # Ensure the default security group is assigned, unless one was
+                # specifically requested
+                if security_group_ids is None:
+                    self._ensure_security_groups_on_port(context, port_dict)
 
                 # process port binding
                 binding = db.add_port_binding(context, port_dict['id'])
@@ -1597,6 +1602,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # Perform actions after the transaction is committed
         completed_ports = []
         for port in port_data:
+            # Ensure security groups are assigned to the port, if
+            # specifically requested
+            port_dict = port['port_dict']
+            if port_dict.get('security_group_ids') is not None:
+                with db_api.CONTEXT_WRITER.using(context):
+                    self._ensure_security_groups_on_port(context, port_dict)
+
             resource_extend.apply_funcs('ports',
                                         port['port_dict'],
                                         port['port_obj'].db_obj)
