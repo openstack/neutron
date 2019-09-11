@@ -13,6 +13,7 @@
 #    under the License.
 
 import signal
+import sys
 
 import eventlet.event
 from eventlet.green import subprocess
@@ -319,7 +320,7 @@ class TestFailingAsyncProcess(base.BaseTestCase):
     def setUp(self):
         super(TestFailingAsyncProcess, self).setUp()
         path = self.get_temp_file_path('async.tmp', self.get_new_temp_dir())
-        self.process = async_process.AsyncProcess(['python3',
+        self.process = async_process.AsyncProcess([sys.executable,
                                                    failing_process.__file__,
                                                    path],
                                                   respawn_interval=0)

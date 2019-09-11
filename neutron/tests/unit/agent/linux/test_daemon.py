@@ -153,7 +153,7 @@ class TestPidfile(base.BaseTestCase):
         self.os.O_CREAT = os.O_CREAT
         self.os.O_RDWR = os.O_RDWR
 
-        daemon.Pidfile('thefile', 'python')
+        daemon.Pidfile('thefile', sys.executable)
         self.os.open.assert_called_once_with('thefile', os.O_CREAT | os.O_RDWR)
         self.fcntl.flock.assert_called_once_with(FAKE_FD, self.fcntl.LOCK_EX |
                                                  self.fcntl.LOCK_NB)
@@ -163,14 +163,14 @@ class TestPidfile(base.BaseTestCase):
 
         with mock.patch.object(daemon.sys, 'stderr'):
             with testtools.ExpectedException(SystemExit):
-                daemon.Pidfile('thefile', 'python')
+                daemon.Pidfile('thefile', sys.executable)
                 sys.assert_has_calls([
                     mock.call.stderr.write(mock.ANY),
                     mock.call.exit(1)]
                 )
 
     def test_unlock(self):
-        p = daemon.Pidfile('thefile', 'python')
+        p = daemon.Pidfile('thefile', sys.executable)
         p.unlock()
         self.fcntl.flock.assert_has_calls([
             mock.call(FAKE_FD, self.fcntl.LOCK_EX | self.fcntl.LOCK_NB),
@@ -178,7 +178,7 @@ class TestPidfile(base.BaseTestCase):
         )
 
     def test_write(self):
-        p = daemon.Pidfile('thefile', 'python')
+        p = daemon.Pidfile('thefile', sys.executable)
         p.write(34)
 
         self.os.assert_has_calls([
@@ -189,13 +189,14 @@ class TestPidfile(base.BaseTestCase):
 
     def test_read(self):
         self.os.read.return_value = '34'
-        p = daemon.Pidfile('thefile', 'python')
+        p = daemon.Pidfile('thefile', sys.executable)
         self.assertEqual(34, p.read())
 
     def test_is_running(self):
         mock_open = self.useFixture(
-            lib_fixtures.OpenFixture('/proc/34/cmdline', 'python')).mock_open
-        p = daemon.Pidfile('thefile', 'python')
+            lib_fixtures.OpenFixture('/proc/34/cmdline',
+                                     sys.executable)).mock_open
+        p = daemon.Pidfile('thefile', sys.executable)
 
         with mock.patch.object(p, 'read') as read:
             read.return_value = 34
@@ -206,8 +207,9 @@ class TestPidfile(base.BaseTestCase):
     def test_is_running_uuid_true(self):
         mock_open = self.useFixture(
             lib_fixtures.OpenFixture(
-                '/proc/34/cmdline', 'python 1234')).mock_open
-        p = daemon.Pidfile('thefile', 'python', uuid='1234')
+                '/proc/34/cmdline', '{} 1234'.format(
+                    sys.executable))).mock_open
+        p = daemon.Pidfile('thefile', sys.executable, uuid='1234')
 
         with mock.patch.object(p, 'read') as read:
             read.return_value = 34
@@ -218,8 +220,9 @@ class TestPidfile(base.BaseTestCase):
     def test_is_running_uuid_false(self):
         mock_open = self.useFixture(
             lib_fixtures.OpenFixture(
-                '/proc/34/cmdline', 'python 1234')).mock_open
-        p = daemon.Pidfile('thefile', 'python', uuid='6789')
+                '/proc/34/cmdline', '{} 1234'.format(
+                    sys.executable))).mock_open
+        p = daemon.Pidfile('thefile', sys.executable, uuid='6789')
 
         with mock.patch.object(p, 'read') as read:
             read.return_value = 34
@@ -239,11 +242,11 @@ class TestDaemon(base.BaseTestCase):
 
     def test_init(self):
         d = daemon.Daemon('pidfile')
-        self.assertEqual(d.procname, 'python')
+        self.assertEqual(d.procname, sys.executable)
 
     def test_init_nopidfile(self):
         d = daemon.Daemon(pidfile=None)
-        self.assertEqual(d.procname, 'python')
+        self.assertEqual(d.procname, sys.executable)
         self.assertFalse(self.pidfile.called)
 
     def test_fork_parent(self):
