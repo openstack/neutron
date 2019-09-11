@@ -42,6 +42,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import uuidutils
 from sqlalchemy import exc as sql_exc
+from sqlalchemy import func
 from sqlalchemy import not_
 
 from neutron._i18n import _
@@ -1540,6 +1541,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         limit = kwargs.pop('limit', None)
         filters = filters or {}
         fixed_ips = filters.pop('fixed_ips', {})
+        mac_address = filters.pop('mac_address', {})
         vif_type = filters.pop(portbindings_def.VIF_TYPE, None)
         query = model_query.get_collection_query(context, Port,
                                                  filters=filters,
@@ -1548,6 +1550,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         subnet_ids = fixed_ips.get('subnet_id')
         if vif_type is not None:
             query = query.filter(Port.port_bindings.any(vif_type=vif_type))
+        if mac_address:
+            lowered_macs = [x.lower() for x in mac_address]
+            query = query.filter(func.lower(Port.mac_address).in_(
+                                                    lowered_macs))
         if ip_addresses:
             query = query.filter(
                 Port.fixed_ips.any(IPAllocation.ip_address.in_(ip_addresses)))
