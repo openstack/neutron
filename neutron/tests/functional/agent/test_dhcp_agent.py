@@ -15,6 +15,7 @@
 
 import copy
 import os.path
+import signal
 from unittest import mock
 
 import eventlet
@@ -325,7 +326,7 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         pm, network = self._spawn_network_metadata_proxy()
         old_pid = pm.pid
 
-        utils.execute(['kill', '-9', old_pid], run_as_root=True)
+        utils.kill_process(old_pid, signal.SIGKILL, run_as_root=True)
         common_utils.wait_until_true(
             lambda: pm.active and pm.pid != old_pid,
             timeout=5,

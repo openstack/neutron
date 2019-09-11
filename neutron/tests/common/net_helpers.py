@@ -16,6 +16,7 @@
 import abc
 from concurrent import futures
 import contextlib
+import errno
 import os
 import random
 import re
@@ -307,7 +308,10 @@ class RootHelperProcess(subprocess.Popen):
 
     def kill(self, sig=signal.SIGKILL):
         pid = self.child_pid or str(self.pid)
-        utils.execute(['kill', '-%d' % sig, pid], run_as_root=True)
+        if utils.kill_process(pid, sig, run_as_root=True,
+                              extra_ok_codes=[errno.ESRCH]):
+            LOG.debug('Process %s did not exists already so it could not be '
+                      'killed', pid)
 
     def read_stdout(self, timeout=None):
         return self._read_stream(self.stdout, timeout)
@@ -625,7 +629,8 @@ class NamespaceFixture(fixtures.Fixture):
                 if self.ip_wrapper.netns.exists(self.name):
                     for pid in ip_lib.list_namespace_pids(self.name):
                         utils.kill_process(pid, signal.SIGKILL,
-                                           run_as_root=True)
+                                           run_as_root=True,
+                                           extra_ok_codes=[errno.ESRCH])
                     self.ip_wrapper.netns.delete(self.name)
             except helpers.TestTimerTimeout:
                 LOG.warning('Namespace %s was not deleted due to a timeout.',

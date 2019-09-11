@@ -214,14 +214,33 @@ def find_fork_top_parent(pid):
             return pid
 
 
-def kill_process(pid, signal, run_as_root=False):
-    """Kill the process with the given pid using the given signal."""
+def kill_process(pid, signal, run_as_root=False, extra_ok_codes=None,
+                 raise_exception=True):
+    """Kill the process with the given pid using the given signal.
+
+    :param pid: (str, int) process PID
+    :param signal: (str, int) signal to send
+    :param run_as_root: (bool) execute the command as root user
+    :param extra_ok_codes: (list of int) list of "errno" codes
+    :param raise_exception: (bool) if True, if an exception occurs, it is
+                            raised
+    :return: 0 if OK, "errno" code in case of muted exception (see
+             "extra_ok_codes")
+    """
     try:
-        execute(['kill', '-%d' % signal, pid], run_as_root=run_as_root,
-                privsep_exec=True)
-    except exceptions.ProcessExecutionError:
-        if process_is_running(pid):
-            raise
+        LOG.debug("Start killing process %s, signal %s", pid, signal)
+        if run_as_root:
+            priv_utils.kill_process(pid, signal)
+        else:
+            os.kill(int(pid), int(signal))
+        LOG.debug("Finish killing process %s, signal %s", pid, signal)
+    except OSError as exc:
+        with excutils.save_and_reraise_exception() as ctxt:
+            extra_ok_codes = extra_ok_codes or []
+            if exc.errno in extra_ok_codes or not raise_exception:
+                ctxt.reraise = False
+                return exc.errno
+    return 0
 
 
 def _get_conf_base(cfg_root, uuid, ensure_conf_dir):

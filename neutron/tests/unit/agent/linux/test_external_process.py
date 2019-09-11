@@ -13,6 +13,7 @@
 #    under the License.
 
 import os.path
+import signal
 from unittest import mock
 
 from neutron_lib import fixture as lib_fixtures
@@ -193,7 +194,7 @@ class TestProcessManager(base.BaseTestCase):
         with mock.patch.object(ep.ProcessManager, 'disable') as disable:
             manager = ep.ProcessManager(self.conf, 'uuid', namespace='ns')
             manager.reload_cfg()
-            disable.assert_called_once_with('HUP')
+            disable.assert_called_once_with(signal.SIGHUP)
 
     def test_reload_cfg_with_custom_reload_callback(self):
         reload_callback = mock.sentinel.callback
@@ -227,10 +228,8 @@ class TestProcessManager(base.BaseTestCase):
 
                 with mock.patch.object(ep, 'utils') as utils:
                     manager.disable()
-                    utils.assert_has_calls([
-                        mock.call.execute(['kill', '-9', 4],
-                                          run_as_root=False,
-                                          privsep_exec=True)])
+                    utils.kill_process.assert_has_calls([
+                        mock.call(4, int(signal.SIGKILL), run_as_root=False)])
 
     def test_disable_namespace(self):
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:
@@ -242,10 +241,23 @@ class TestProcessManager(base.BaseTestCase):
 
                 with mock.patch.object(ep, 'utils') as utils:
                     manager.disable()
-                    utils.assert_has_calls([
-                        mock.call.execute(['kill', '-9', 4],
-                                          run_as_root=True,
-                                          privsep_exec=True)])
+                    utils.kill_process.assert_has_calls([
+                        mock.call(4, int(signal.SIGKILL), run_as_root=True)])
+
+    def test_disable_with_and_without_namespace(self):
+        namespaces = ['ns', None]
+        for namespace in namespaces:
+            with mock.patch.object(ep.ProcessManager, 'pid') as pid:
+                pid.__get__ = mock.Mock(return_value=4)
+                with mock.patch.object(ep.ProcessManager, 'active') as active:
+                    active.__get__ = mock.Mock(return_value=True)
+                    manager = ep.ProcessManager(self.conf, 'uuid',
+                                                namespace=namespace)
+                    with mock.patch.object(ep, 'utils') as utils:
+                        manager.disable()
+                        call = mock.call(4, int(signal.SIGKILL),
+                                         run_as_root=bool(namespace))
+                        utils.kill_process.assert_has_calls([call])
 
     def test_disable_not_active(self):
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:
@@ -270,13 +282,10 @@ class TestProcessManager(base.BaseTestCase):
     def _test_disable_custom_kill_script(self, kill_script_exists, namespace,
                                          kill_scripts_path='test-path/'):
         cfg.CONF.set_override("kill_scripts_path", kill_scripts_path, "AGENT")
-        if kill_script_exists:
-            expected_cmd = ['test-service-kill', '9', 4]
-        else:
-            expected_cmd = ['kill', '-9', 4]
+        process_pid = 4
 
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:
-            pid.__get__ = mock.Mock(return_value=4)
+            pid.__get__ = mock.Mock(return_value=process_pid)
             with mock.patch.object(ep.ProcessManager, 'active') as active:
                 active.__get__ = mock.Mock(return_value=True)
                 manager = ep.ProcessManager(
@@ -286,9 +295,15 @@ class TestProcessManager(base.BaseTestCase):
                         mock.patch.object(os.path, 'isfile',
                                           return_value=kill_script_exists):
                     manager.disable()
-                    utils.execute.assert_called_with(
-                        expected_cmd, run_as_root=bool(namespace),
-                        privsep_exec=True)
+                    if kill_script_exists:
+                        expected_cmd = ['test-service-kill',
+                                        signal.SIGKILL, process_pid]
+                        utils.execute.assert_called_with(
+                            expected_cmd, run_as_root=bool(namespace))
+                    else:
+                        utils.kill_process.assert_called_once_with(
+                            process_pid, signal.SIGKILL,
+                            run_as_root=bool(namespace))
 
     def test_disable_custom_kill_script_no_namespace(self):
         self._test_disable_custom_kill_script(
