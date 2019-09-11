@@ -161,7 +161,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
                          expected_code=exc.HTTPPreconditionFailed.code)
 
     def test_port_ip_update_revises(self):
-        with self.port() as port:
+        with self.subnet() as subnet, self.port(subnet=subnet) as port:
             rev = port['port']['revision_number']
             new = {'port': {'fixed_ips': port['port']['fixed_ips']}}
             # ensure adding an IP allocation updates the port
