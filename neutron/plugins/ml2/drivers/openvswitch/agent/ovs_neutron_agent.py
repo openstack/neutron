@@ -908,14 +908,17 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 cur_info = info_by_port[port.port_name]
             except KeyError:
                 continue
+            str_vlan = str(lvm.vlan)
             other_config = cur_info['other_config']
             if (cur_info['tag'] != lvm.vlan or
-                    other_config.get('tag') != lvm.vlan):
-                other_config['tag'] = str(lvm.vlan)
+                    other_config.get('tag') != str_vlan):
+                other_config['tag'] = str_vlan
                 self.int_br.set_db_attribute(
                     "Port", port.port_name, "other_config", other_config)
                 # Uninitialized port has tag set to []
                 if cur_info['tag']:
+                    LOG.warning("Uninstall flows of ofport %s due to "
+                                "local vlan change.", port.ofport)
                     self.int_br.uninstall_flows(in_port=port.ofport)
 
     def _bind_devices(self, need_binding_ports):
