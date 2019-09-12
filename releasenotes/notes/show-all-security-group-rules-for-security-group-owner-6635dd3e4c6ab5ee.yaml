@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Owners of security groups now see all security group rules which belong to
+    the security group, even if the rule was created by the admin user.
+    Fixes bug `1824248 <https://bugs.launchpad.net/neutron/+bug/1824248>`_.
