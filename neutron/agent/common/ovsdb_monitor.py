@@ -52,12 +52,12 @@ class OvsdbMonitor(async_process.AsyncProcess):
                                            respawn_interval=respawn_interval,
                                            log_output=True,
                                            die_on_error=False)
-        self.new_events = {'added': [], 'removed': []}
+        self.new_events = {'added': [], 'removed': [], 'modified': []}
 
     def get_events(self):
         self.process_events()
         events = self.new_events
-        self.new_events = {'added': [], 'removed': []}
+        self.new_events = {'added': [], 'removed': [], 'modified': []}
         return events
 
     def start(self, block=False, timeout=5):
@@ -95,11 +95,14 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
             LOG.error("%s monitor is not active", self.table_name)
         else:
             self.process_events()
-        return bool(self.new_events['added'] or self.new_events['removed'])
+        return bool(self.new_events['added'] or
+                    self.new_events['removed'] or
+                    self.new_events['modified'])
 
     def process_events(self):
         devices_added = []
         devices_removed = []
+        devices_modified = []
         dev_to_ofport = {}
         for row in self.iter_stdout():
             json = jsonutils.loads(row).get('data')
@@ -116,10 +119,17 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
                 elif action == OVSDB_ACTION_DELETE:
                     devices_removed.append(device)
                 elif action == OVSDB_ACTION_NEW:
+                    # We'll receive this event for "initial", "insert"
+                    # and "modify" actions. If ever needed, the old state
+                    # can also be included in the processed event as per
+                    # https://tools.ietf.org/html/rfc7047#section-4.1.6
+                    if device not in devices_added:
+                        devices_modified.append(device)
                     dev_to_ofport[name] = ofport
 
         self.new_events['added'].extend(devices_added)
         self.new_events['removed'].extend(devices_removed)
+        self.new_events['modified'].extend(devices_modified)
         # update any events with ofports received from 'new' action
         for event in self.new_events['added']:
             event['ofport'] = dev_to_ofport.get(event['name'], event['ofport'])
