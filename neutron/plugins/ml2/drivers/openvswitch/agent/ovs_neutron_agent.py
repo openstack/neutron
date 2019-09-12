@@ -1466,11 +1466,15 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         ancillary_port_info = PortInfo(current=ancillary_ports)
 
         ports_not_ready_yet = set()
+        if updated_ports is None:
+            updated_ports = set()
+
         # if a port was added and then removed or viceversa since the agent
         # can't know the order of the operations, check the status of the port
         # to determine if the port was added or deleted
         added_ports = {p['name'] for p in events['added']}
         removed_ports = {p['name'] for p in events['removed']}
+        updated_ports.update({p['name'] for p in events['modified']})
 
         ports_re_added = added_ports & removed_ports
         for p in ports_re_added:
@@ -1533,8 +1537,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self._update_port_info_failed_devices_stats(ancillary_port_info,
                                                     failed_ancillary_devices)
 
-        if updated_ports is None:
-            updated_ports = set()
         updated_ports.update(self.check_changed_vlans())
 
         if updated_ports:
