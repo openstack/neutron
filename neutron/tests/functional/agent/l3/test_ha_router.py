@@ -37,7 +37,8 @@ class L3HATestCase(framework.L3AgentTestFramework):
 
     def test_keepalived_state_change_notification(self):
         enqueue_mock = mock.patch.object(
-            self.agent, 'enqueue_state_change').start()
+            self.agent, 'enqueue_state_change',
+            side_effect=self.change_router_state).start()
         router_info = self.generate_router_info(enable_ha=True)
         router = self.manage_router(self.agent, router_info)
         common_utils.wait_until_true(lambda: router.ha_state == 'master')
