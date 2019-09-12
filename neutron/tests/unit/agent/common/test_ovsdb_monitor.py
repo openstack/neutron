@@ -13,6 +13,7 @@
 #    under the License.
 
 import mock
+from oslo_serialization import jsonutils
 
 from neutron.agent.common import async_process
 from neutron.agent.common import ovs_lib
@@ -70,18 +71,42 @@ class TestSimpleInterfaceMonitor(base.BaseTestCase):
     def test_has_updates_after_calling_get_events_is_false(self):
         with mock.patch.object(
                 self.monitor, 'process_events') as process_events:
-            self.monitor.new_events = {'added': ['foo'], 'removed': ['foo1']}
+            self.monitor.new_events = {'added': ['foo'], 'removed': ['foo1'],
+                                       'modified': []}
             self.assertTrue(self.monitor.has_updates)
             self.monitor.get_events()
             self.assertTrue(process_events.called)
             self.assertFalse(self.monitor.has_updates)
 
+    def _get_event(self, ovs_id='e040fbec-0579-4990-8324-d338da33ae88',
+                   action="insert", name="fake_dev", ofport=10,
+                   external_ids=None, as_string=True):
+        event = {"data": [[ovs_id, action, name, ["set", [ofport]],
+                          ["map", external_ids or []]]]}
+        if as_string:
+            event = jsonutils.dumps(event)
+        return event
+
     def process_event_unassigned_of_port(self):
-        output = '{"data":[["e040fbec-0579-4990-8324-d338da33ae88","insert",'
-        output += '"m50",["set",[]],["map",[]]]],"headings":["row","action",'
-        output += '"name","ofport","external_ids"]}'
+        output = self._get_event()
         with mock.patch.object(
                 self.monitor, 'iter_stdout', return_value=[output]):
             self.monitor.process_events()
             self.assertEqual(self.monitor.new_events['added'][0]['ofport'],
                              ovs_lib.UNASSIGNED_OFPORT)
+
+    def test_process_changed_of_port(self):
+        event0 = self._get_event(action="old", ofport=-1)
+        event1 = self._get_event(action="new", ofport=10)
+
+        expected_dev = {
+            'name': 'fake_dev',
+            'ofport': [10],
+            'external_ids': {}
+        }
+
+        with mock.patch.object(
+                self.monitor, 'iter_stdout', return_value=[event0, event1]):
+            self.monitor.process_events()
+            self.assertIn(expected_dev,
+                          self.monitor.new_events['modified'])
