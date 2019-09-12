@@ -613,6 +613,21 @@ to look if your test is failing.
 The fullstack test suite assumes 240.0.0.0/4 (Class E) range in the root
 namespace of the test machine is available for its usage.
 
+Fullstack tests execute a custom dhclient-script. From kernel version 4.14 onward,
+apparmor on certain distros could deny the execution of this script. To be sure,
+check journalctl ::
+
+    sudo journalctl | grep DENIED | grep fullstack-dhclient-script
+
+To execute these tests, the easiest workaround is to disable apparmor ::
+
+    sudo systemctl stop apparmor
+    sudo systemctl disable apparmor
+
+A more granular solution could be to disable apparmor only for dhclient ::
+
+    sudo ln -s /etc/apparmor.d/sbin.dhclient /etc/apparmor.d/disable/
+
 API & Scenario Tests
 ~~~~~~~~~~~~~~~~~~~~
 
