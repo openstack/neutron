@@ -40,11 +40,13 @@ def get_fake_port():
 class TestIronicNotifier(base.BaseTestCase):
     def setUp(self):
         super(TestIronicNotifier, self).setUp()
-        self.ironic_notifier = ironic.Notifier()
 
     @mock.patch.object(batch_notifier.BatchNotifier, 'queue_event',
                        autospec=True)
-    def test_process_port_update_event_bind_port(self, mock_queue_event):
+    @mock.patch.object(client, 'Client', autospec=False)
+    def test_process_port_update_event_bind_port(self, mock_client,
+                                                 mock_queue_event):
+        self.ironic_notifier = ironic.Notifier()
         port = get_fake_port()
         port.update({'status': n_const.PORT_STATUS_ACTIVE})
         original_port = get_fake_port()
@@ -64,7 +66,10 @@ class TestIronicNotifier(base.BaseTestCase):
 
     @mock.patch.object(batch_notifier.BatchNotifier, 'queue_event',
                        autospec=True)
-    def test_process_port_update_event_bind_port_err(self, mock_queue_event):
+    @mock.patch.object(client, 'Client', autospec=False)
+    def test_process_port_update_event_bind_port_err(self, mock_client,
+                                                     mock_queue_event):
+        self.ironic_notifier = ironic.Notifier()
         port = get_fake_port()
         port.update({'status': n_const.PORT_STATUS_ERROR})
         original_port = get_fake_port()
@@ -84,7 +89,10 @@ class TestIronicNotifier(base.BaseTestCase):
 
     @mock.patch.object(batch_notifier.BatchNotifier, 'queue_event',
                        autospec=True)
-    def test_process_port_update_event_unbind_port(self, mock_queue_event):
+    @mock.patch.object(client, 'Client', autospec=False)
+    def test_process_port_update_event_unbind_port(self, mock_client,
+                                                   mock_queue_event):
+        self.ironic_notifier = ironic.Notifier()
         port = get_fake_port()
         port.update({'status': n_const.PORT_STATUS_DOWN})
         original_port = get_fake_port()
@@ -104,7 +112,10 @@ class TestIronicNotifier(base.BaseTestCase):
 
     @mock.patch.object(batch_notifier.BatchNotifier, 'queue_event',
                        autospec=True)
-    def test_process_port_update_event_unbind_port_err(self, mock_queue_event):
+    @mock.patch.object(client, 'Client', autospec=False)
+    def test_process_port_update_event_unbind_port_err(self, mock_client,
+                                                       mock_queue_event):
+        self.ironic_notifier = ironic.Notifier()
         port = get_fake_port()
         port.update({'status': n_const.PORT_STATUS_ERROR})
         original_port = get_fake_port()
@@ -124,7 +135,9 @@ class TestIronicNotifier(base.BaseTestCase):
 
     @mock.patch.object(batch_notifier.BatchNotifier, 'queue_event',
                        autospec=True)
-    def test_process_port_delete_event(self, mock_queue_event):
+    @mock.patch.object(client, 'Client', autospec=False)
+    def test_process_port_delete_event(self, mock_client, mock_queue_event):
+        self.ironic_notifier = ironic.Notifier()
         port = get_fake_port()
         self.ironic_notifier.process_port_delete_event(
             'fake_resource', 'fake_event', 'fake_trigger', original_port=None,
@@ -141,7 +154,10 @@ class TestIronicNotifier(base.BaseTestCase):
 
     @mock.patch.object(batch_notifier.BatchNotifier, 'queue_event',
                        autospec=True)
-    def test_process_port_event_empty_uuid_field(self, mock_queue_event):
+    @mock.patch.object(client, 'Client', autospec=False)
+    def test_process_port_event_empty_uuid_field(self, mock_client,
+                                                 mock_queue_event):
+        self.ironic_notifier = ironic.Notifier()
         port = get_fake_port()
         port.update({'device_id': ''})
         self.ironic_notifier.process_port_delete_event(
@@ -157,7 +173,9 @@ class TestIronicNotifier(base.BaseTestCase):
              'status': 'DELETED'})
 
     @mock.patch.object(eventlet, 'spawn_n', autospec=True)
-    def test_queue_events(self, mock_spawn_n):
+    @mock.patch.object(client, 'Client', autospec=False)
+    def test_queue_events(self, mock_client, mock_spawn_n):
+        self.ironic_notifier = ironic.Notifier()
         port = get_fake_port()
         self.ironic_notifier.process_port_delete_event(
             'fake_resource', 'fake_event', 'fake_trigger', original_port=None,
@@ -177,6 +195,7 @@ class TestIronicNotifier(base.BaseTestCase):
 
     @mock.patch.object(client, 'Client', autospec=False)
     def test_send_events(self, mock_client):
+        self.ironic_notifier = ironic.Notifier()
         self.ironic_notifier.irclient = mock_client
         self.ironic_notifier.send_events(['test', 'events'])
         mock_client.events.create.assert_called_with(events=['test', 'events'])
@@ -184,6 +203,7 @@ class TestIronicNotifier(base.BaseTestCase):
     @mock.patch.object(ironic.LOG, 'error', autospec=True)
     @mock.patch.object(client, 'Client', autospec=False)
     def test_send_event_method_not_found(self, mock_client, mock_log):
+        self.ironic_notifier = ironic.Notifier()
         self.ironic_notifier.irclient = mock_client
         exception = ironic_exc.NotFound()
         mock_client.events.create.side_effect = exception
@@ -196,6 +216,7 @@ class TestIronicNotifier(base.BaseTestCase):
     @mock.patch.object(ironic.LOG, 'error', autospec=True)
     @mock.patch.object(client, 'Client', autospec=False)
     def test_send_event_exception(self, mock_client, mock_log):
+        self.ironic_notifier = ironic.Notifier()
         self.ironic_notifier.irclient = mock_client
         mock_client.events.create.side_effect = Exception()
         self.ironic_notifier.send_events(['test', 'events'])
