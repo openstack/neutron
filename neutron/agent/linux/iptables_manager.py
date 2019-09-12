@@ -464,6 +464,7 @@ class IptablesManager(object):
             first = self._apply_synchronized()
             if not cfg.CONF.AGENT.debug_iptables_rules:
                 return first
+            LOG.debug('List of IPTables Rules applied: %s', '\n'.join(first))
             second = self._apply_synchronized()
             if second:
                 msg = (_("IPTables Rules did not converge. Diff: %s") %

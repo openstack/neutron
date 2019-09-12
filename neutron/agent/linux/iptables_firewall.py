@@ -30,6 +30,7 @@ from neutron.agent.linux import ip_conntrack
 from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
+from neutron.agent.linux import utils as a_utils
 from neutron.common import _constants as const
 from neutron.common import ipv6_utils
 from neutron.common import utils as c_utils
@@ -94,6 +95,36 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.updated_sg_members = set()
         self.devices_with_updated_sg_members = collections.defaultdict(list)
         self._iptables_protocol_name_map = {}
+        self._check_netfilter_for_bridges()
+
+    @staticmethod
+    def _check_netfilter_for_bridges():
+        """Check if br_netfilter is loaded and the needed flags for IPtables"""
+        log_warning = False
+        if not a_utils.execute(
+                ['sysctl', '-N', 'net.bridge'], run_as_root=True,
+                log_fail_as_error=False, check_exit_code=False):
+            LOG.warning('Kernel module br_netfilter is not loaded.')
+            log_warning = True
+        if not log_warning:
+            for proto in ('arp', 'ip', 'ip6'):
+                key = 'net.bridge.bridge-nf-call-%stables' % proto
+                enabled = a_utils.execute(
+                    ['sysctl', '-b', key], run_as_root=True,
+                    log_fail_as_error=False, check_exit_code=False)
+                if enabled == '1':
+                    status = 'enabled'
+                    log_method = LOG.debug
+                else:
+                    status = 'disabled'
+                    log_method = LOG.warning
+                    log_warning = True
+                log_method('Key %(key)s is %(status)s',
+                           {'key': key, 'status': status})
+
+        if log_warning:
+            LOG.warning('Please ensure that netfilter options for bridge are '
+                        'enabled to provide working security groups.')
 
     @property
     def ports(self):
