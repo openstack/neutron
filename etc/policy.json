@@ -13,6 +13,8 @@
     "shared_address_scopes": "field:address_scopes:shared=True",
     "external": "field:networks:router:external=True",
     "default": "rule:admin_or_owner",
+    "admin_or_sg_owner": "rule:context_is_admin or tenant_id:%(security_group:tenant_id)s",
+    "admin_owner_or_sg_owner": "rule:owner or rule:admin_or_sg_owner",
 
     "create_subnet": "rule:admin_or_network_owner",
     "create_subnet:segment_id": "rule:admin_only",
@@ -230,7 +232,7 @@
     "update_security_group": "rule:admin_or_owner",
     "delete_security_group": "rule:admin_or_owner",
     "get_security_group_rules": "rule:admin_or_owner",
-    "get_security_group_rule": "rule:admin_or_owner",
+    "get_security_group_rule": "rule:admin_owner_or_sg_owner",
     "create_security_group_rule": "rule:admin_or_owner",
     "delete_security_group_rule": "rule:admin_or_owner",
 
