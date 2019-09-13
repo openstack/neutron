@@ -63,7 +63,8 @@ class IPDevice(object):
             return False
 
         addresses = [ip_addr['addr'] for ip_addr in
-                     device_addresses.get(netifaces.AF_INET, [])]
+                     device_addresses.get(netifaces.AF_INET, []) +
+                     device_addresses.get(netifaces.AF_INET6, [])]
         return ip in addresses
 
 
