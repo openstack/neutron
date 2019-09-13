@@ -45,7 +45,10 @@ class FakeAgentMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     def __init__(self):
         sg_enabled = securitygroups_rpc.is_firewall_enabled()
         vif_details = {portbindings.CAP_PORT_FILTER: sg_enabled,
-                       portbindings.OVS_HYBRID_PLUG: sg_enabled}
+                       portbindings.OVS_HYBRID_PLUG: sg_enabled,
+                       portbindings.VIF_DETAILS_CONNECTIVITY:
+                           portbindings.CONNECTIVITY_L2,
+                       }
         super(FakeAgentMechanismDriver, self).__init__(
             # NOTE(yamamoto): l2pop driver has a hardcoded list of
             # supported agent types.
@@ -64,3 +67,12 @@ class FakeAgentMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
 class AnotherFakeAgentMechanismDriver(FakeAgentMechanismDriver):
     pass
+
+
+class FakeAgentMechanismDriverL3(FakeAgentMechanismDriver):
+    """ML2 mechanism driver for testing, with L3 connectivity only"""
+
+    def __init__(self):
+        super(FakeAgentMechanismDriverL3, self).__init__()
+        self.vif_details[portbindings.VIF_DETAILS_CONNECTIVITY] = (
+            portbindings.CONNECTIVITY_L3)
