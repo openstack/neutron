@@ -77,6 +77,8 @@ ks_loading.register_auth_conf_options(cfg.CONF,
                                       common_config.IRONIC_CONF_SECTION)
 ks_loading.register_session_conf_options(cfg.CONF,
                                          common_config.IRONIC_CONF_SECTION)
+ks_loading.register_adapter_conf_options(cfg.CONF,
+                                         common_config.IRONIC_CONF_SECTION)
 common_config.register_ironic_opts()
 
 

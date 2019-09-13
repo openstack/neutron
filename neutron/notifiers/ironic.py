@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from ironicclient import client
-from ironicclient import exc as ironic_exc
 from keystoneauth1 import loading as ks_loading
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings as portbindings_def
@@ -22,6 +20,8 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
+from openstack import connection
+from openstack import exceptions as os_exc
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -61,33 +61,23 @@ class Notifier(object):
     def _get_ironic_client(self):
         """Get Ironic client instance."""
 
-        # NOTE: To support standalone ironic without keystone
-        if cfg.CONF.ironic.auth_strategy == 'noauth':
-            args = {'token': 'noauth',
-                    'endpoint': cfg.CONF.ironic.ironic_url}
-        else:
-            global IRONIC_SESSION
-            if not IRONIC_SESSION:
-                IRONIC_SESSION = self._get_session(IRONIC_CONF_SECTION)
-            args = {'session': IRONIC_SESSION,
-                    'region_name': cfg.CONF.ironic.region_name,
-                    'endpoint_type': cfg.CONF.ironic.endpoint_type}
-        args['os_ironic_api_version'] = IRONIC_API_VERSION
-        args['max_retries'] = cfg.CONF.ironic.max_retries
-        args['retry_interval'] = cfg.CONF.ironic.retry_interval
-        return client.Client(IRONIC_CLIENT_VERSION, **args)
+        global IRONIC_SESSION
+
+        if not IRONIC_SESSION:
+            IRONIC_SESSION = self._get_session(IRONIC_CONF_SECTION)
+
+        return connection.Connection(
+            session=IRONIC_SESSION, oslo_conf=cfg.CONF).baremetal
 
     def send_events(self, batched_events):
-        # NOTE(TheJulia): Friendly exception handling so operators
-        # can decouple updates.
         try:
-            self.irclient.events.create(events=batched_events)
-        except ironic_exc.NotFound:
-            LOG.error('The ironic API appears to not support posting events. '
-                      'The API likely needs to be upgraded.')
+            response = self.irclient.post('/events',
+                                          json={'events': batched_events},
+                                          microversion='1.54')
+            os_exc.raise_from_response(response)
         except Exception as e:
-            LOG.error('Unknown error encountered posting the event to '
-                      'ironic. {error}'.format(error=e))
+            LOG.exception('Error encountered posting the event to '
+                          'ironic. {error}'.format(error=e))
 
     @registry.receives(resources.PORT, [events.AFTER_UPDATE])
     def process_port_update_event(self, resource, event, trigger,
