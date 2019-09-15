@@ -1183,10 +1183,8 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
         self.agent.devices_to_refilter = set()
-        self.agent.global_refresh_firewall = False
         self.agent.setup_port_filters(set(['fake_new_device']), set())
         self.assertFalse(self.agent.devices_to_refilter)
-        self.assertFalse(self.agent.global_refresh_firewall)
         self.agent.prepare_devices_filter.assert_called_once_with(
             set(['fake_new_device']))
         self.assertFalse(self.agent.refresh_firewall.called)
@@ -1196,10 +1194,8 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
         self.agent.devices_to_refilter = set()
-        self.agent.global_refresh_firewall = False
         self.agent.setup_port_filters(set(), set(['fake_updated_device']))
         self.assertFalse(self.agent.devices_to_refilter)
-        self.assertFalse(self.agent.global_refresh_firewall)
         self.agent.refresh_firewall.assert_called_once_with(
             set(['fake_updated_device']))
         self.assertFalse(self.agent.prepare_devices_filter.called)
@@ -1209,11 +1205,9 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
         self.agent.devices_to_refilter = set()
-        self.agent.global_refresh_firewall = False
         self.agent.setup_port_filters(set(['fake_new_device']),
                                       set(['fake_updated_device']))
         self.assertFalse(self.agent.devices_to_refilter)
-        self.assertFalse(self.agent.global_refresh_firewall)
         self.agent.prepare_devices_filter.assert_called_once_with(
             set(['fake_new_device']))
         self.agent.refresh_firewall.assert_called_once_with(
@@ -1224,10 +1218,8 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
         self.agent.devices_to_refilter = set(['fake_device'])
-        self.agent.global_refresh_firewall = False
         self.agent.setup_port_filters(set(), set())
         self.assertFalse(self.agent.devices_to_refilter)
-        self.assertFalse(self.agent.global_refresh_firewall)
         self.agent.refresh_firewall.assert_called_once_with(
             set(['fake_device']))
         self.assertFalse(self.agent.prepare_devices_filter.called)
@@ -1237,10 +1229,8 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
         self.agent.devices_to_refilter = set(['fake_device'])
-        self.agent.global_refresh_firewall = False
         self.agent.setup_port_filters(set(['fake_new_device']), set())
         self.assertFalse(self.agent.devices_to_refilter)
-        self.assertFalse(self.agent.global_refresh_firewall)
         self.agent.prepare_devices_filter.assert_called_once_with(
             set(['fake_new_device']))
         self.agent.refresh_firewall.assert_called_once_with(
@@ -1258,11 +1248,9 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.agent.prepare_devices_filter = self._test_prepare_devices_filter
         self.agent.refresh_firewall = mock.Mock()
         self.agent.devices_to_refilter = set(['new_device', 'fake_device'])
-        self.agent.global_refresh_firewall = False
         self.agent.setup_port_filters(set(['new_device']), set())
         self.assertEqual(self.agent.devices_to_refilter,
                          set(['fake_new_device']))
-        self.assertFalse(self.agent.global_refresh_firewall)
         self.agent.refresh_firewall.assert_called_once_with(
             set(['fake_device']))
         self.assertFalse(self.firewall.security_group_updated.called)
@@ -1271,11 +1259,9 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
         self.agent.devices_to_refilter = set(['fake_device', 'fake_device_2'])
-        self.agent.global_refresh_firewall = False
         self.agent.setup_port_filters(
             set(), set(['fake_device', 'fake_updated_device']))
         self.assertFalse(self.agent.devices_to_refilter)
-        self.assertFalse(self.agent.global_refresh_firewall)
         self.agent.refresh_firewall.assert_called_once_with(
             set(['fake_device', 'fake_device_2', 'fake_updated_device']))
         self.assertFalse(self.agent.prepare_devices_filter.called)
@@ -1285,12 +1271,10 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
         self.agent.devices_to_refilter = set(['fake_device', 'fake_device_2'])
-        self.agent.global_refresh_firewall = False
         self.agent.setup_port_filters(
             set(['fake_new_device']),
             set(['fake_device', 'fake_updated_device']))
         self.assertFalse(self.agent.devices_to_refilter)
-        self.assertFalse(self.agent.global_refresh_firewall)
         self.agent.prepare_devices_filter.assert_called_once_with(
             set(['fake_new_device']))
         self.agent.refresh_firewall.assert_called_once_with(
@@ -1301,23 +1285,9 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
         self.agent.devices_to_refilter = set()
-        self.agent.global_refresh_firewall = False
         self.agent.setup_port_filters(set(), set())
         self.assertFalse(self.agent.devices_to_refilter)
-        self.assertFalse(self.agent.global_refresh_firewall)
         self.assertFalse(self.agent.refresh_firewall.called)
-        self.assertFalse(self.agent.prepare_devices_filter.called)
-        self.assertFalse(self.firewall.security_group_updated.called)
-
-    def test_setup_port_filters_with_global_refresh(self):
-        self.agent.prepare_devices_filter = mock.Mock()
-        self.agent.refresh_firewall = mock.Mock()
-        self.agent.devices_to_refilter = set()
-        self.agent.global_refresh_firewall = True
-        self.agent.setup_port_filters(set(), set())
-        self.assertFalse(self.agent.devices_to_refilter)
-        self.assertFalse(self.agent.global_refresh_firewall)
-        self.agent.refresh_firewall.assert_called_once_with()
         self.assertFalse(self.agent.prepare_devices_filter.called)
         self.assertFalse(self.firewall.security_group_updated.called)
 

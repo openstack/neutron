@@ -89,8 +89,6 @@ class SecurityGroupAgentRpc(object):
         # Stores devices for which firewall should be refreshed when
         # deferred refresh is enabled.
         self.devices_to_refilter = set()
-        # Flag raised when a global refresh is needed
-        self.global_refresh_firewall = False
         self._use_enhanced_rpc = None
 
     @property
@@ -229,7 +227,7 @@ class SecurityGroupAgentRpc(object):
         self._apply_port_filter(device_ids, update_filter=True)
 
     def firewall_refresh_needed(self):
-        return self.global_refresh_firewall or self.devices_to_refilter
+        return self.devices_to_refilter
 
     def setup_port_filters(self, new_devices, updated_devices):
         """Configure port filters for devices.
@@ -245,9 +243,7 @@ class SecurityGroupAgentRpc(object):
         # These data structures are cleared here in order to avoid
         # losing updates occurring during firewall refresh
         devices_to_refilter = self.devices_to_refilter
-        global_refresh_firewall = self.global_refresh_firewall
         self.devices_to_refilter = set()
-        self.global_refresh_firewall = False
         # We must call prepare_devices_filter() after we've grabbed
         # self.devices_to_refilter since an update for a new port
         # could arrive while we're processing, and we need to make
@@ -256,21 +252,14 @@ class SecurityGroupAgentRpc(object):
             LOG.debug("Preparing device filters for %d new devices",
                       len(new_devices))
             self.prepare_devices_filter(new_devices)
-        # TODO(salv-orlando): Avoid if possible ever performing the global
-        # refresh providing a precise list of devices for which firewall
-        # should be refreshed
-        if global_refresh_firewall:
-            LOG.debug("Refreshing firewall for all filtered devices")
-            self.refresh_firewall()
-        else:
-            if self.use_enhanced_rpc and updated_devices:
-                self.firewall.security_group_updated('sg_member', [],
-                                                     updated_devices)
-            # If a device is both in new and updated devices
-            # avoid reprocessing it
-            updated_devices = ((updated_devices | devices_to_refilter) -
-                               new_devices)
-            if updated_devices:
-                LOG.debug("Refreshing firewall for %d devices",
-                          len(updated_devices))
-                self.refresh_firewall(updated_devices)
+        if self.use_enhanced_rpc and updated_devices:
+            self.firewall.security_group_updated('sg_member', [],
+                                                 updated_devices)
+        # If a device is both in new and updated devices
+        # avoid reprocessing it
+        updated_devices = ((updated_devices | devices_to_refilter) -
+                           new_devices)
+        if updated_devices:
+            LOG.debug("Refreshing firewall for %d devices",
+                      len(updated_devices))
+            self.refresh_firewall(updated_devices)
