@@ -71,6 +71,8 @@ EXTERNAL_GW_INFO = l3_apidef.EXTERNAL_GW_INFO
 # Useful to keep the filtering between API and Database.
 API_TO_DB_COLUMN_MAP = {'port_id': 'fixed_port_id'}
 CORE_ROUTER_ATTRS = ('id', 'name', 'tenant_id', 'admin_state_up', 'status')
+FIP_ASSOC_MSG = ('Floating IP %(fip_id)s %(assoc)s. External IP: %(ext_ip)s, '
+                 'port: %(port_id)s.')
 
 
 @registry.has_registry_receivers
@@ -1364,6 +1366,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         events.AFTER_UPDATE,
                         self._update_fip_assoc,
                         **assoc_result)
+        if assoc_result['fixed_ip_address'] and assoc_result['fixed_port_id']:
+            LOG.info(FIP_ASSOC_MSG,
+                     {'fip_id': assoc_result['floating_ip_id'],
+                      'ext_ip': assoc_result['floating_ip_address'],
+                      'port_id': assoc_result['fixed_port_id'],
+                      'assoc': 'associated'})
 
         if self._is_dns_integration_supported:
             self._process_dns_floatingip_create_postcommit(context,
@@ -1395,9 +1403,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             floatingip_obj = self._get_floatingip(context, id)
             old_floatingip = self._make_floatingip_dict(floatingip_obj)
             fip_port_id = floatingip_obj.floating_port_id
+            old_fixed_port_id = floatingip_obj.fixed_port_id
             assoc_result = self._update_fip_assoc(
                 context, fip, floatingip_obj,
                 self._core_plugin.get_port(context.elevated(), fip_port_id))
+
             floatingip_obj.update()
             floatingip_dict = self._make_floatingip_dict(floatingip_obj)
             if self._is_dns_integration_supported:
@@ -1423,6 +1433,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         events.AFTER_UPDATE,
                         self._update_fip_assoc,
                         **assoc_result)
+        if old_fixed_port_id != assoc_result['fixed_port_id']:
+            assoc = ('associated' if assoc_result['fixed_port_id']
+                     else 'disassociated')
+            port_id = old_fixed_port_id or assoc_result['fixed_port_id']
+            LOG.info(FIP_ASSOC_MSG,
+                     {'fip_id': assoc_result['floating_ip_id'],
+                      'ext_ip': assoc_result['floating_ip_address'],
+                      'port_id': port_id, 'assoc': assoc})
 
         if self._is_dns_integration_supported:
             self._process_dns_floatingip_update_postcommit(context,
@@ -1610,6 +1628,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             }
             registry.notify(resources.FLOATING_IP, events.AFTER_UPDATE, self,
                             **assoc_result)
+        for fip in old_fips.values():
+            LOG.info(FIP_ASSOC_MSG,
+                     {'fip_id': fip['id'],
+                      'ext_ip': fip['floating_ip_address'],
+                      'port_id': fip['fixed_port_id'],
+                      'assoc': 'disassociated'})
         return router_ids
 
     def _get_floatingips_by_port_id(self, context, port_id):

@@ -4553,3 +4553,55 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
         self.mock_admin_client.recordsets.create.assert_not_called()
         self.assertEqual(self.DNS_DOMAIN, floatingip['dns_domain'])
         self.assertEqual(self.DNS_NAME, floatingip['dns_name'])
+
+
+class L3DBFloatingIpTestCaseLogging(L3BaseForSepTests, L3NatTestCaseMixin):
+
+    def setUp(self, *args, **kwargs):
+        ext_mgr = L3TestExtensionManagerWithDNS()
+        plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
+        super(L3DBFloatingIpTestCaseLogging, self).setUp(plugin=plugin,
+                                                         ext_mgr=ext_mgr)
+        self.mock_log = mock.patch.object(l3_db, 'LOG').start()
+
+    def test_create_floatingip_event_logging_port_assoc(self):
+        with self.floatingip_with_assoc() as fip:
+            msg_vars = {'fip_id': fip['floatingip']['id'],
+                        'ext_ip': fip['floatingip']['floating_ip_address'],
+                        'port_id': fip['floatingip']['port_id'],
+                        'assoc': 'associated'}
+            self.mock_log.info.assert_called_once_with(l3_db.FIP_ASSOC_MSG,
+                                                       msg_vars)
+
+    def test_update_floatingip_event_logging(self):
+        with self.port() as port:
+            private_subnet = {'subnet': {
+                'id': port['port']['fixed_ips'][0]['subnet_id']}}
+            with self.floatingip_no_assoc(private_subnet) as fip:
+                self.mock_log.info.assert_not_called()
+                fip_id = fip['floatingip']['id']
+                data = {'floatingip': {'port_id': port['port']['id']}}
+                req = self.new_update_request('floatingips', data, fip_id)
+                res = req.get_response(self._api_for_resource('floatingip'))
+                self.assertEqual(200, res.status_code)
+                msg_vars = {'fip_id': fip['floatingip']['id'],
+                            'ext_ip': fip['floatingip']['floating_ip_address'],
+                            'port_id': port['port']['id'],
+                            'assoc': 'associated'}
+                self.mock_log.info.assert_called_once_with(l3_db.FIP_ASSOC_MSG,
+                                                           msg_vars)
+
+    def test_update_floatingip_event_logging_disassociate(self):
+        with self.floatingip_with_assoc() as fip:
+            self.mock_log.reset_mock()
+            fip_id = fip['floatingip']['id']
+            data = {'floatingip': {'port_id': None}}
+            req = self.new_update_request('floatingips', data, fip_id)
+            res = req.get_response(self._api_for_resource('floatingip'))
+            self.assertEqual(200, res.status_code)
+            msg_vars = {'fip_id': fip['floatingip']['id'],
+                        'ext_ip': fip['floatingip']['floating_ip_address'],
+                        'port_id': fip['floatingip']['port_id'],
+                        'assoc': 'disassociated'}
+            self.mock_log.info.assert_called_once_with(l3_db.FIP_ASSOC_MSG,
+                                                       msg_vars)
