@@ -43,7 +43,145 @@ from neutron.tests.functional.agent.l3 import framework
 DEVICE_OWNER_COMPUTE = lib_constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 
 
-class TestDvrRouter(framework.L3AgentTestFramework):
+class DvrRouterTestFramework(framework.L3AgentTestFramework):
+
+    def generate_dvr_router_info(self,
+                                 enable_ha=False,
+                                 enable_snat=False,
+                                 enable_gw=True,
+                                 snat_bound_fip=False,
+                                 agent=None,
+                                 extra_routes=False,
+                                 enable_floating_ip=True,
+                                 enable_centralized_fip=False,
+                                 vrrp_id=None,
+                                 **kwargs):
+        if not agent:
+            agent = self.agent
+        router = l3_test_common.prepare_router_data(
+            enable_snat=enable_snat,
+            enable_floating_ip=enable_floating_ip,
+            enable_ha=enable_ha,
+            extra_routes=extra_routes,
+            num_internal_ports=2,
+            enable_gw=enable_gw,
+            snat_bound_fip=snat_bound_fip,
+            vrrp_id=vrrp_id,
+            **kwargs)
+        internal_ports = router.get(lib_constants.INTERFACE_KEY, [])
+        router['distributed'] = True
+        router['gw_port_host'] = agent.conf.host
+        if enable_floating_ip:
+            for floating_ip in router[lib_constants.FLOATINGIP_KEY]:
+                floating_ip['host'] = agent.conf.host
+
+        if enable_floating_ip and enable_centralized_fip:
+            # For centralizing the fip, we are emulating the legacy
+            # router behavior were the fip dict does not contain any
+            # host information.
+            router[lib_constants.FLOATINGIP_KEY][0]['host'] = None
+
+        # In order to test the mixed dvr_snat and compute scenario, we create
+        # two floating IPs, one is distributed, another is centralized.
+        # The distributed floating IP should have the host, which was
+        # just set to None above, then we set it back. The centralized
+        # floating IP has host None, and this IP will be used to test
+        # migration from centralized to distributed.
+        if snat_bound_fip:
+            router[lib_constants.FLOATINGIP_KEY][0]['host'] = agent.conf.host
+            router[lib_constants.FLOATINGIP_KEY][1][
+                lib_constants.DVR_SNAT_BOUND] = True
+            router[lib_constants.FLOATINGIP_KEY][1]['host'] = None
+
+        if enable_gw:
+            external_gw_port = router['gw_port']
+            router['gw_port'][portbindings.HOST_ID] = agent.conf.host
+            self._add_snat_port_info_to_router(router, internal_ports)
+            # FIP has a dependency on external gateway. So we need to create
+            # the snat_port info and fip_agent_gw_port_info irrespective of
+            # the agent type the dvr supports. The namespace creation is
+            # dependent on the agent_type.
+            if enable_floating_ip:
+                for index, floating_ip in enumerate(router['_floatingips']):
+                    floating_ip['floating_network_id'] = (
+                        external_gw_port['network_id'])
+                    floating_ip['port_id'] = internal_ports[index]['id']
+                    floating_ip['status'] = 'ACTIVE'
+
+            self._add_fip_agent_gw_port_info_to_router(router,
+                                                       external_gw_port)
+        # Router creation is delegated to router_factory. We have to
+        # re-register here so that factory can find override agent mode
+        # normally.
+        self.agent._register_router_cls(self.agent.router_factory)
+        return router
+
+    def _add_fip_agent_gw_port_info_to_router(self, router, external_gw_port):
+        # Add fip agent gateway port information to the router_info
+        fip_gw_port_list = router.get(
+            lib_constants.FLOATINGIP_AGENT_INTF_KEY, [])
+        if not fip_gw_port_list and external_gw_port:
+            # Get values from external gateway port
+            fixed_ip = external_gw_port['fixed_ips'][0]
+            float_subnet = external_gw_port['subnets'][0]
+            port_ip = fixed_ip['ip_address']
+            # Pick an ip address which is not the same as port_ip
+            fip_gw_port_ip = str(netaddr.IPAddress(port_ip) + 5)
+            # Add floatingip agent gateway port info to router
+            prefixlen = netaddr.IPNetwork(float_subnet['cidr']).prefixlen
+            router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = [
+                {'subnets': [
+                    {'cidr': float_subnet['cidr'],
+                     'gateway_ip': float_subnet['gateway_ip'],
+                     'id': fixed_ip['subnet_id']}],
+                 'extra_subnets': external_gw_port['extra_subnets'],
+                 'network_id': external_gw_port['network_id'],
+                 'device_owner': lib_constants.DEVICE_OWNER_AGENT_GW,
+                 'mac_address': 'fa:16:3e:80:8d:89',
+                 portbindings.HOST_ID: self.agent.conf.host,
+                 'fixed_ips': [{'subnet_id': fixed_ip['subnet_id'],
+                                'ip_address': fip_gw_port_ip,
+                                'prefixlen': prefixlen}],
+                 'id': framework._uuid(),
+                 'device_id': framework._uuid()}
+            ]
+
+    def _add_snat_port_info_to_router(self, router, internal_ports):
+        # Add snat port information to the router
+        snat_port_list = router.get(lib_constants.SNAT_ROUTER_INTF_KEY, [])
+        if not snat_port_list and internal_ports:
+            router[lib_constants.SNAT_ROUTER_INTF_KEY] = []
+            for port in internal_ports:
+                # Get values from internal port
+                fixed_ip = port['fixed_ips'][0]
+                snat_subnet = port['subnets'][0]
+                port_ip = fixed_ip['ip_address']
+                # Pick an ip address which is not the same as port_ip
+                snat_ip = str(netaddr.IPAddress(port_ip) + 5)
+                # Add the info to router as the first snat port
+                # in the list of snat ports
+                prefixlen = netaddr.IPNetwork(snat_subnet['cidr']).prefixlen
+                snat_router_port = {
+                    'subnets': [
+                        {'cidr': snat_subnet['cidr'],
+                         'gateway_ip': snat_subnet['gateway_ip'],
+                         'id': fixed_ip['subnet_id']}],
+                    'network_id': port['network_id'],
+                    'device_owner': lib_constants.DEVICE_OWNER_ROUTER_SNAT,
+                    'mac_address': 'fa:16:3e:80:8d:89',
+                    'fixed_ips': [{'subnet_id': fixed_ip['subnet_id'],
+                                   'ip_address': snat_ip,
+                                   'prefixlen': prefixlen}],
+                    'id': framework._uuid(),
+                    'device_id': framework._uuid()}
+                # Get the address scope if there is any
+                if 'address_scopes' in port:
+                    snat_router_port['address_scopes'] = port['address_scopes']
+                router[lib_constants.SNAT_ROUTER_INTF_KEY].append(
+                    snat_router_port)
+
+
+class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
     def manage_router(self, agent, router):
         def _safe_fipnamespace_delete_on_ext_net(ext_net_id):
             try:
@@ -513,77 +651,6 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._assert_router_does_not_exist(router)
         self._assert_snat_namespace_does_not_exist(router)
 
-    def generate_dvr_router_info(self,
-                                 enable_ha=False,
-                                 enable_snat=False,
-                                 enable_gw=True,
-                                 snat_bound_fip=False,
-                                 agent=None,
-                                 extra_routes=False,
-                                 enable_floating_ip=True,
-                                 enable_centralized_fip=False,
-                                 vrrp_id=None,
-                                 **kwargs):
-        if not agent:
-            agent = self.agent
-        router = l3_test_common.prepare_router_data(
-            enable_snat=enable_snat,
-            enable_floating_ip=enable_floating_ip,
-            enable_ha=enable_ha,
-            extra_routes=extra_routes,
-            num_internal_ports=2,
-            enable_gw=enable_gw,
-            snat_bound_fip=snat_bound_fip,
-            vrrp_id=vrrp_id,
-            **kwargs)
-        internal_ports = router.get(lib_constants.INTERFACE_KEY, [])
-        router['distributed'] = True
-        router['gw_port_host'] = agent.conf.host
-        if enable_floating_ip:
-            for floating_ip in router[lib_constants.FLOATINGIP_KEY]:
-                floating_ip['host'] = agent.conf.host
-
-        if enable_floating_ip and enable_centralized_fip:
-            # For centralizing the fip, we are emulating the legacy
-            # router behavior were the fip dict does not contain any
-            # host information.
-            router[lib_constants.FLOATINGIP_KEY][0]['host'] = None
-
-        # In order to test the mixed dvr_snat and compute scenario, we create
-        # two floating IPs, one is distributed, another is centralized.
-        # The distributed floating IP should have the host, which was
-        # just set to None above, then we set it back. The centralized
-        # floating IP has host None, and this IP will be used to test
-        # migration from centralized to distributed.
-        if snat_bound_fip:
-            router[lib_constants.FLOATINGIP_KEY][0]['host'] = agent.conf.host
-            router[lib_constants.FLOATINGIP_KEY][1][
-                lib_constants.DVR_SNAT_BOUND] = True
-            router[lib_constants.FLOATINGIP_KEY][1]['host'] = None
-
-        if enable_gw:
-            external_gw_port = router['gw_port']
-            router['gw_port'][portbindings.HOST_ID] = agent.conf.host
-            self._add_snat_port_info_to_router(router, internal_ports)
-            # FIP has a dependency on external gateway. So we need to create
-            # the snat_port info and fip_agent_gw_port_info irrespective of
-            # the agent type the dvr supports. The namespace creation is
-            # dependent on the agent_type.
-            if enable_floating_ip:
-                for index, floating_ip in enumerate(router['_floatingips']):
-                    floating_ip['floating_network_id'] = (
-                        external_gw_port['network_id'])
-                    floating_ip['port_id'] = internal_ports[index]['id']
-                    floating_ip['status'] = 'ACTIVE'
-
-            self._add_fip_agent_gw_port_info_to_router(router,
-                                                       external_gw_port)
-        # Router creation is delegated to router_factory. We have to
-        # re-register here so that factory can find override agent mode
-        # normally.
-        self.agent._register_router_cls(self.agent.router_factory)
-        return router
-
     def _get_fip_agent_gw_port_for_router(self, external_gw_port):
         # Add fip agent gateway port information to the router_info
         if external_gw_port:
@@ -612,70 +679,6 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                 'device_id': framework._uuid()
             }
             return fip_agent_gw_port_info
-
-    def _add_fip_agent_gw_port_info_to_router(self, router, external_gw_port):
-        # Add fip agent gateway port information to the router_info
-        fip_gw_port_list = router.get(
-            lib_constants.FLOATINGIP_AGENT_INTF_KEY, [])
-        if not fip_gw_port_list and external_gw_port:
-            # Get values from external gateway port
-            fixed_ip = external_gw_port['fixed_ips'][0]
-            float_subnet = external_gw_port['subnets'][0]
-            port_ip = fixed_ip['ip_address']
-            # Pick an ip address which is not the same as port_ip
-            fip_gw_port_ip = str(netaddr.IPAddress(port_ip) + 5)
-            # Add floatingip agent gateway port info to router
-            prefixlen = netaddr.IPNetwork(float_subnet['cidr']).prefixlen
-            router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = [
-                {'subnets': [
-                    {'cidr': float_subnet['cidr'],
-                     'gateway_ip': float_subnet['gateway_ip'],
-                     'id': fixed_ip['subnet_id']}],
-                 'extra_subnets': external_gw_port['extra_subnets'],
-                 'network_id': external_gw_port['network_id'],
-                 'device_owner': lib_constants.DEVICE_OWNER_AGENT_GW,
-                 'mac_address': 'fa:16:3e:80:8d:89',
-                 portbindings.HOST_ID: self.agent.conf.host,
-                 'fixed_ips': [{'subnet_id': fixed_ip['subnet_id'],
-                                'ip_address': fip_gw_port_ip,
-                                'prefixlen': prefixlen}],
-                 'id': framework._uuid(),
-                 'device_id': framework._uuid()}
-            ]
-
-    def _add_snat_port_info_to_router(self, router, internal_ports):
-        # Add snat port information to the router
-        snat_port_list = router.get(lib_constants.SNAT_ROUTER_INTF_KEY, [])
-        if not snat_port_list and internal_ports:
-            router[lib_constants.SNAT_ROUTER_INTF_KEY] = []
-            for port in internal_ports:
-                # Get values from internal port
-                fixed_ip = port['fixed_ips'][0]
-                snat_subnet = port['subnets'][0]
-                port_ip = fixed_ip['ip_address']
-                # Pick an ip address which is not the same as port_ip
-                snat_ip = str(netaddr.IPAddress(port_ip) + 5)
-                # Add the info to router as the first snat port
-                # in the list of snat ports
-                prefixlen = netaddr.IPNetwork(snat_subnet['cidr']).prefixlen
-                snat_router_port = {
-                    'subnets': [
-                        {'cidr': snat_subnet['cidr'],
-                         'gateway_ip': snat_subnet['gateway_ip'],
-                         'id': fixed_ip['subnet_id']}],
-                    'network_id': port['network_id'],
-                    'device_owner': lib_constants.DEVICE_OWNER_ROUTER_SNAT,
-                    'mac_address': 'fa:16:3e:80:8d:89',
-                    'fixed_ips': [{'subnet_id': fixed_ip['subnet_id'],
-                                   'ip_address': snat_ip,
-                                   'prefixlen': prefixlen}],
-                    'id': framework._uuid(),
-                    'device_id': framework._uuid()}
-                # Get the address scope if there is any
-                if 'address_scopes' in port:
-                    snat_router_port['address_scopes'] = port['address_scopes']
-                router[lib_constants.SNAT_ROUTER_INTF_KEY].append(
-                    snat_router_port)
 
     def _assert_dvr_external_device(self, router):
         external_port = router.get_ex_gw_port()
