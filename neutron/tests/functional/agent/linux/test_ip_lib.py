@@ -21,6 +21,7 @@ from neutron_lib.utils import net
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
+from oslo_utils import uuidutils
 import testtools
 
 from neutron.agent.linux import ip_lib
@@ -634,3 +635,29 @@ class TestSetIpNonlocalBind(functional_base.BaseSudoTestCase):
 
             self.assertFalse(failed)
             self.assertEqual(expected, observed)
+
+
+class NamespaceTestCase(functional_base.BaseSudoTestCase):
+
+    def setUp(self):
+        super(NamespaceTestCase, self).setUp()
+        self.namespace = 'test_ns_' + uuidutils.generate_uuid()
+        ip_lib.create_network_namespace(self.namespace)
+        self.addCleanup(self._delete_namespace)
+
+    def _delete_namespace(self):
+        ip_lib.delete_network_namespace(self.namespace)
+
+    def test_network_namespace_exists_ns_exists(self):
+        self.assertTrue(ip_lib.network_namespace_exists(self.namespace))
+
+    def test_network_namespace_exists_ns_doesnt_exists(self):
+        self.assertFalse(ip_lib.network_namespace_exists('another_ns'))
+
+    def test_network_namespace_exists_ns_exists_try_is_ready(self):
+        self.assertTrue(ip_lib.network_namespace_exists(self.namespace,
+                                                        try_is_ready=True))
+
+    def test_network_namespace_exists_ns_doesnt_exists_try_is_ready(self):
+        self.assertFalse(ip_lib.network_namespace_exists('another_ns',
+                                                         try_is_ready=True))
