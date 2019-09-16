@@ -25,7 +25,6 @@ import netaddr
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants
-from neutron_lib.exceptions import l3 as l3_exc
 from oslo_config import cfg
 from oslo_log import log
 import oslo_messaging
@@ -2818,27 +2817,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertEqual(l3_agent.PRIORITY_RELATED_ROUTER,
                              events_queue[0].priority)
 
-    def test_process_routers_if_compatible_router_not_compatible(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router = {'id': _uuid()}
-        agent.router_info = [router['id']]
-        self.plugin_api.get_routers.return_value = [router]
-        update = resource_processing_queue.ResourceUpdate(
-            router['id'], l3_agent.PRIORITY_RPC, resource=router)
-
-        with mock.patch.object(
-            agent, "_process_router_if_compatible",
-            side_effect=l3_exc.RouterNotCompatibleWithAgent(
-                router_id=router['id'])
-        ) as process_router_if_compatible, mock.patch.object(
-            agent, "_safe_router_removed"
-        ) as safe_router_removed:
-            self.assertTrue(
-                agent._process_routers_if_compatible([router], update))
-            process_router_if_compatible.assert_called_once_with(
-                router)
-            safe_router_removed.assert_called_once_with(router['id'])
-
     def test_process_dvr_routers_ha_on_update_when_router_unbound(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.conf.agent_mode = 'dvr_snat'
@@ -2932,50 +2910,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertIn(router['id'], agent.router_info)
             self.assertFalse(chsfr.called)
 
-    def test_process_router_if_compatible_with_no_ext_net_in_conf(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.plugin_api.get_external_network_id.return_value = 'aaa'
-
-        router = {'id': _uuid(),
-                  'routes': [],
-                  'admin_state_up': True,
-                  'external_gateway_info': {'network_id': 'aaa'}}
-
-        agent._process_router_if_compatible(router)
-        self.assertIn(router['id'], agent.router_info)
-        self.plugin_api.get_external_network_id.assert_called_with(
-            agent.context)
-
-    def test_process_router_if_compatible_with_cached_ext_net(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.plugin_api.get_external_network_id.return_value = 'aaa'
-        agent.target_ex_net_id = 'aaa'
-
-        router = {'id': _uuid(),
-                  'routes': [],
-                  'admin_state_up': True,
-                  'external_gateway_info': {'network_id': 'aaa'}}
-
-        agent._process_router_if_compatible(router)
-        self.assertIn(router['id'], agent.router_info)
-        self.assertFalse(self.plugin_api.get_external_network_id.called)
-
-    def test_process_router_if_compatible_with_stale_cached_ext_net(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.plugin_api.get_external_network_id.return_value = 'aaa'
-        agent.target_ex_net_id = 'bbb'
-
-        router = {'id': _uuid(),
-                  'routes': [],
-                  'admin_state_up': True,
-                  'external_gateway_info': {'network_id': 'aaa'}}
-
-        agent._process_router_if_compatible(router)
-        self.assertIn(router['id'], agent.router_info)
-        self.plugin_api.get_external_network_id.assert_called_with(
-            agent.context)
-
-    def test_process_router_if_compatible_w_no_ext_net_and_2_net_plugin(self):
+    def test_process_router_if_compatible(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
         router = {'id': _uuid(),
@@ -2983,10 +2918,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                   'admin_state_up': True,
                   'external_gateway_info': {'network_id': 'aaa'}}
 
-        agent.router_info = {}
-        e = oslo_messaging.RemoteError()
-        e.exc_type = 'TooManyExternalNetworks'
-        agent.plugin_rpc.get_external_network_id.side_effect = e
         agent._process_router_if_compatible(router)
         self.assertIn(router['id'], agent.router_info)
 

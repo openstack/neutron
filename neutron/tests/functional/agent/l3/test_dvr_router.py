@@ -225,8 +225,6 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
             self, agent_mode, **dvr_router_kwargs):
         self.agent.conf.agent_mode = agent_mode
         router_info = self.generate_dvr_router_info(**dvr_router_kwargs)
-        self.mock_plugin_api.get_external_network_id.return_value = (
-            router_info['_floatingips'][0]['floating_network_id'])
         router = self.manage_router(self.agent, router_info)
         fip_ns = router.fip_ns.get_name()
         return router, fip_ns
@@ -271,8 +269,6 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         # Create the router with external net
         router_info = self.generate_dvr_router_info()
         external_gw_port = router_info['gw_port']
-        ext_net_id = router_info['_floatingips'][0]['floating_network_id']
-        self.mock_plugin_api.get_external_network_id.return_value = ext_net_id
         router = self.manage_router(self.agent, router_info)
         fg_port = router.fip_ns.agent_gateway_port
         fg_port_name = router.fip_ns.get_ext_device_name(fg_port['id'])
@@ -325,8 +321,6 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         # Create the router with external net
         router_info = self.generate_dvr_router_info()
         external_gw_port = router_info['gw_port']
-        ext_net_id = router_info['_floatingips'][0]['floating_network_id']
-        self.mock_plugin_api.get_external_network_id.return_value = ext_net_id
         router = self.manage_router(self.agent, router_info)
         fg_port = router.fip_ns.agent_gateway_port
         fg_port_name = router.fip_ns.get_ext_device_name(fg_port['id'])
@@ -378,7 +372,6 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         router_info = self.generate_dvr_router_info()
         external_gw_port = router_info['gw_port']
         ext_net_id = router_info['_floatingips'][0]['floating_network_id']
-        self.mock_plugin_api.get_external_network_id.return_value = ext_net_id
 
         # Create the fip namespace up front
         fip_ns = dvr_fip_ns.FipNamespace(ext_net_id,
@@ -425,7 +418,6 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         router_info = self.generate_dvr_router_info(**dvr_router_kwargs)
         external_gw_port = router_info['gw_port']
         ext_net_id = router_info['_floatingips'][0]['floating_network_id']
-        self.mock_plugin_api.get_external_network_id.return_value(ext_net_id)
 
         # Create the fip namespace up front
         stale_fip_ns = dvr_fip_ns.FipNamespace(ext_net_id,
@@ -584,11 +576,6 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
             router_info['gw_port'])
         self.mock_plugin_api.get_agent_gateway_port.return_value = (
             fip_agent_gw_port)
-
-        # We also need to mock the get_external_network_id method to
-        # get the correct fip namespace.
-        self.mock_plugin_api.get_external_network_id.return_value = (
-            router_info['_floatingips'][0]['floating_network_id'])
 
         # With all that set we can now ask the l3_agent to
         # manage the router (create it, create namespaces,
