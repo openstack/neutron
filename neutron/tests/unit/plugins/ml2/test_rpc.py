@@ -250,6 +250,12 @@ class RpcCallbacksTestCase(base.BaseTestCase):
             (self.plugin.nova_notifier.notify_port_active_direct.
              assert_called_once_with(port))
 
+    def test_update_device_up_with_device_not_bound_to_host_no_notify(self):
+        cfg.CONF.set_override('notify_nova_on_port_status_changes', False)
+        self.assertIsNone(self._test_update_device_not_bound_to_host(
+            self.callbacks.update_device_up))
+        self.plugin.nova_notifier.notify_port_active_direct.assert_not_called()
+
     def test_update_device_down_with_device_not_bound_to_host(self):
         self.assertEqual(
             {'device': 'fake_device', 'exists': True},
