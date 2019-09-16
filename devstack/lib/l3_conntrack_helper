@@ -1,0 +1,4 @@
+function configure_l3_conntrack_helper {
+    neutron_service_plugin_class_add "conntrack_helper"
+    plugin_agent_add_l3_agent_extension "conntrack_helper"
+}
