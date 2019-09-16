@@ -295,7 +295,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         try:
             subnets = self._ipam_get_subnets(
                 context, network_id=port['network_id'], host=host,
-                service_type=port.get('device_owner'))
+                service_type=port.get('device_owner'), fixed_configured=True)
         except ipam_exc.DeferIpam:
             subnets = []
 

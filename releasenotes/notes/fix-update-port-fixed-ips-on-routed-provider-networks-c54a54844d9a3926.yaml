@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    When updating the fixed-ips of a port residing on a routed provider
+    network the port update would always fail if *host* was not set.
+    See bug: `1844124 <https://bugs.launchpad.net/tripleo/+bug/1844124>`_.
+
