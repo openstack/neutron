@@ -1173,8 +1173,8 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         self.assertEqual(segment_exc.HostConnectedToMultipleSegments.__name__,
                          res['NeutronError']['type'])
 
-    def test_port_update_excludes_hosts_on_segments(self):
-        """No binding information is provided, subnets on segments"""
+    def test_port_update_with_fixed_ips_ok_if_no_binding_host(self):
+        """No binding host information is provided, subnets on segments"""
         with self.network() as network:
             segment = self._test_create_segment(
                 network_id=network['network']['id'],
@@ -1194,7 +1194,33 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
             port_req = self.new_update_request('ports', data, port_id)
             response = port_req.get_response(self.api)
 
-        # Gets bad request because there are no eligible subnets.
+        # The IP is allocated since there is no binding host info any
+        # subnet can be used for allocation.
+        self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
+
+    def test_port_update_with_fixed_ips_fail_if_host_not_on_segment(self):
+        """Binding information is provided, subnets on segments. Update to
+        subnet on different segment fails.
+        """
+        network, segments, subnets = self._create_test_segments_with_subnets(2)
+
+        # Setup host mappings
+        self._setup_host_mappings([(segments[0]['segment']['id'], 'fakehost')])
+
+        # Create a port and validate immediate ip allocation
+        res = self._create_port_and_show(network,
+                                         arg_list=(portbindings.HOST_ID,),
+                                         **{portbindings.HOST_ID: 'fakehost'})
+        self._validate_immediate_ip_allocation(res['port']['id'])
+
+        # Try requesting an new IP, but the subnet does not match host segment
+        port_id = res['port']['id']
+        data = {'port': {
+            'fixed_ips': [{'subnet_id': subnets[1]['subnet']['id']}]}}
+        port_req = self.new_update_request('ports', data, port_id)
+        response = port_req.get_response(self.api)
+
+        # Port update fails.
         self.assertEqual(webob.exc.HTTPBadRequest.code, response.status_int)
 
     def _create_port_and_show(self, network, **kwargs):
