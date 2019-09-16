@@ -73,3 +73,85 @@ class TestExtraRouteDb(testlib_api.SqlTestCase):
         self.assertItemsEqual(updated_router['routes'], routes)
         got_router = self._plugin.get_router(ctx, router_id)
         self.assertItemsEqual(got_router['routes'], routes)
+
+    def assertEqualRoutes(self, a, b):
+        """Compare a list of routes without caring for the list order."""
+        return self.assertSetEqual(
+            set(frozenset(r.items()) for r in a),
+            set(frozenset(r.items()) for r in b))
+
+    def test_add_extra_routes(self):
+        self.assertEqual(
+            [],
+            self._plugin._add_extra_routes([], []),
+        )
+
+        old = [{"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"}]
+        add = []
+        self.assertEqual(old, self._plugin._add_extra_routes(old, add))
+
+        old = []
+        add = [{"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"}]
+        self.assertEqual(add, self._plugin._add_extra_routes(old, add))
+
+        old = [{"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"}]
+        add = [{"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"}]
+        self.assertEqual(old, self._plugin._add_extra_routes(old, add))
+
+        old = [{"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"}]
+        add = [{"destination": "10.0.10.0/24", "nexthop": "10.0.0.11"}]
+        self.assertEqualRoutes(
+            old + add, self._plugin._add_extra_routes(old, add))
+
+    def test_remove_extra_routes(self):
+        old = []
+        remove = []
+        self.assertEqual(old, self._plugin._remove_extra_routes(old, remove))
+
+        old = [{"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"}]
+        remove = []
+        self.assertEqual(old, self._plugin._remove_extra_routes(old, remove))
+
+        old = []
+        remove = [{"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"}]
+        self.assertEqual(old, self._plugin._remove_extra_routes(old, remove))
+
+        old = [{"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"}]
+        remove = [{"destination": "10.0.10.0/24", "nexthop": "10.0.0.11"}]
+        self.assertEqual(old, self._plugin._remove_extra_routes(old, remove))
+
+        old = [{"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"}]
+        remove = old
+        self.assertEqual([], self._plugin._remove_extra_routes(old, remove))
+
+        old = [
+            {"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"},
+            {"destination": "10.0.11.0/24", "nexthop": "10.0.0.11"},
+        ]
+        remove = old[1:]
+        self.assertEqual(
+            old[:1], self._plugin._remove_extra_routes(old, remove))
+
+        old = [
+            {"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"},
+            {"destination": "10.0.10.0/24", "nexthop": "10.0.0.11"},
+        ]
+        remove = old[1:]
+        self.assertEqual(
+            old[:1], self._plugin._remove_extra_routes(old, remove))
+
+        old = []
+        remove = [
+            {"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"},
+            {"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"},
+        ]
+        self.assertEqual([], self._plugin._remove_extra_routes(old, remove))
+
+        old = [
+            {"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"},
+        ]
+        remove = [
+            {"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"},
+            {"destination": "10.0.10.0/24", "nexthop": "10.0.0.10"},
+        ]
+        self.assertEqual([], self._plugin._remove_extra_routes(old, remove))
