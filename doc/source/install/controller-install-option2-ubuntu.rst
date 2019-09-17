@@ -324,8 +324,7 @@ self-service virtual networks.
 * Edit the ``/etc/neutron/l3_agent.ini`` file and complete the following
   actions:
 
-  * In the ``[DEFAULT]`` section, configure the Linux bridge interface driver
-    and external network bridge:
+  * In the ``[DEFAULT]`` section, configure the Linux bridge interface driver:
 
     .. path /etc/neutron/l3_agent.ini
     .. code-block:: ini
