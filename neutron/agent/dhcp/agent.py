@@ -253,6 +253,8 @@ class DhcpAgent(manager.Manager):
 
                 try:
                     self.plugin_rpc.dhcp_ready_on_ports(ports_to_send)
+                    LOG.info("DHCP configuration for ports %s is completed",
+                             ports_to_send)
                     continue
                 except oslo_messaging.MessagingTimeout:
                     LOG.error("Timeout notifying server of ports ready. "
