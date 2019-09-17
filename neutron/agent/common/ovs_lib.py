@@ -281,6 +281,18 @@ class OVSBridge(BaseOVS):
                                             key=version_from_protocol)
         self.initial_protocols.add(self._highest_protocol_needed)
 
+    def set_igmp_snooping_state(self, state):
+        state = bool(state)
+        other_config = {
+            'mcast-snooping-disable-flood-unregistered': str(state)}
+        with self.ovsdb.transaction() as txn:
+            txn.add(
+                self.ovsdb.db_set('Bridge', self.br_name,
+                                  ('mcast_snooping_enable', state)))
+            txn.add(
+                self.ovsdb.db_set('Bridge', self.br_name,
+                                  ('other_config', other_config)))
+
     def create(self, secure_mode=False):
         other_config = {
             'mac-table-size': str(cfg.CONF.OVS.bridge_mac_table_size)}
