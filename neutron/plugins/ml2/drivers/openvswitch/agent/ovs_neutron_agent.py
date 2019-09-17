@@ -1101,6 +1101,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.int_br.create()
         self.int_br.set_secure_mode()
         self.int_br.setup_controllers(self.conf)
+        self.int_br.set_igmp_snooping_state(self.conf.OVS.igmp_snooping_enable)
 
         if self.conf.AGENT.drop_flows_on_start:
             # Delete the patch port between br-int and br-tun if we're deleting
