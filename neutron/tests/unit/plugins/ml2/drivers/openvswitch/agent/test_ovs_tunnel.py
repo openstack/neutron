@@ -196,7 +196,7 @@ class TunnelTest(object):
             '_check_bridge_datapath_id').start()
         self._define_expected_calls()
 
-    def _define_expected_calls(self, arp_responder=False):
+    def _define_expected_calls(self, arp_responder=False, igmp_snooping=False):
         self.mock_int_bridge_cls_expected = [
             mock.call(self.INT_BRIDGE,
                       datapath_type=mock.ANY),
@@ -215,6 +215,7 @@ class TunnelTest(object):
             mock.call.create(),
             mock.call.set_secure_mode(),
             mock.call.setup_controllers(mock.ANY),
+            mock.call.set_igmp_snooping_state(igmp_snooping),
             mock.call.setup_default_table(),
         ]
 
@@ -350,7 +351,13 @@ class TunnelTest(object):
     #                 The next two tests use l2_pop flag to test ARP responder
     def test_construct_with_arp_responder(self):
         self._build_agent(l2_population=True, arp_responder=True)
-        self._define_expected_calls(True)
+        self._define_expected_calls(arp_responder=True)
+        self._verify_mock_calls()
+
+    def test_construct_with_igmp_snooping(self):
+        cfg.CONF.set_override('igmp_snooping_enable', True, 'OVS')
+        self._build_agent()
+        self._define_expected_calls(igmp_snooping=True)
         self._verify_mock_calls()
 
     def test_construct_without_arp_responder(self):
@@ -666,7 +673,7 @@ class TunnelTestOSKen(TunnelTest, ovs_test_base.OVSOSKenTestBase):
 class TunnelTestUseVethInterco(TunnelTest):
     USE_VETH_INTERCONNECTION = True
 
-    def _define_expected_calls(self, arp_responder=False):
+    def _define_expected_calls(self, arp_responder=False, igmp_snooping=False):
         self.mock_int_bridge_cls_expected = [
             mock.call(self.INT_BRIDGE,
                       datapath_type=mock.ANY),
@@ -684,6 +691,7 @@ class TunnelTestUseVethInterco(TunnelTest):
             mock.call.create(),
             mock.call.set_secure_mode(),
             mock.call.setup_controllers(mock.ANY),
+            mock.call.set_igmp_snooping_state(igmp_snooping),
             mock.call.setup_default_table(),
         ]
 
@@ -765,8 +773,9 @@ class TunnelTestUseVethIntercoOSKen(TunnelTestUseVethInterco,
 class TunnelTestWithMTU(TunnelTestUseVethInterco):
     VETH_MTU = 1500
 
-    def _define_expected_calls(self, arp_responder=False):
-        super(TunnelTestWithMTU, self)._define_expected_calls(arp_responder)
+    def _define_expected_calls(self, arp_responder=False, igmp_snooping=False):
+        super(TunnelTestWithMTU, self)._define_expected_calls(
+            arp_responder, igmp_snooping)
         self.inta_expected.append(mock.call.link.set_mtu(self.VETH_MTU))
         self.intb_expected.append(mock.call.link.set_mtu(self.VETH_MTU))
 

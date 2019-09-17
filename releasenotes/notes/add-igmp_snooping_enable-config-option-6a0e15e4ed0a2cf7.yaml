@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Add new configuration option ``igmp_snooping_enable``. New option is in
+    ``OVS`` config section and is used by openvswitch agent.
+    This option is used to enable support for Internet Group Management
+    Protocol (IGMP) in integration bridge.
