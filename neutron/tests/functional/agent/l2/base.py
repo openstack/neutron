@@ -30,6 +30,7 @@ from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent.linux import interface
 from neutron.common import utils
 from neutron.conf.agent import common as agent_config
+from neutron.conf.agent import ovs_conf as ovs_agent_config
 from neutron.conf import common as common_config
 from neutron.conf.plugins.ml2.drivers import agent
 from neutron.conf.plugins.ml2.drivers import ovs_conf
@@ -137,6 +138,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase, OVSOFControllerHelper):
         agent_config.register_interface_opts(config)
         agent_config.register_interface_driver_opts_helper(config)
         agent_config.register_agent_state_opts_helper(config)
+        ovs_agent_config.register_ovs_agent_opts(config)
         ext_manager.register_opts(config)
         return config
 
