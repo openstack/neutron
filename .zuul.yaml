@@ -115,6 +115,7 @@
     required-projects:
       - opendev.org/openstack/devstack
       - openstack/neutron
+      - openstack/requirements
     roles:
       - zuul: openstack/devstack
     pre-run: playbooks/configure_functional_job.yaml
@@ -135,6 +136,7 @@
         DATABASE_PASSWORD: stackdb
       tox_envlist: dsvm-functional
       tox_install_siblings: false
+      tox_constraints_file: '{{ ansible_user_dir }}/src/opendev.org/openstack/requirements/upper-constraints.txt'
       zuul_copy_output:
         # We need to copy directory with logs to have it in job artifacts also,
         # /opt/stack/logs is default logs directory defined in neutron's
