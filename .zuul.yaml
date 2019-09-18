@@ -97,7 +97,7 @@
             irrelevant-files: *tempest-irrelevant-files
         - legacy-tempest-dsvm-neutron-dvr-multinode-full:
             irrelevant-files: *tempest-irrelevant-files
-        - tempest-full-py3-opensuse150:
+        - tempest-full-py3-opensuse15:
             irrelevant-files: *tempest-irrelevant-files
 
 - job:
