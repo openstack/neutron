@@ -61,6 +61,7 @@ class QuotaEnforcementHook(hooks.PecanHook):
         # retrieved in the 'after' hook
         state.request.context['reservations'] = reservations
 
+    @db_api.retry_db_errors
     def after(self, state):
         neutron_context = state.request.context.get('neutron_context')
         if not neutron_context:
