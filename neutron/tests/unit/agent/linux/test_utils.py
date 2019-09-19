@@ -336,6 +336,16 @@ class TestGetCmdlineFromPid(base.BaseTestCase):
         mock_open.assert_not_called()
         self.assertEqual([], cmdline)
 
+    def test_cmdline_process_disappearing(self):
+        self.process_is_running_mock.return_value = True
+        mock_open = self.useFixture(
+            lib_fixtures.OpenFixture('/proc/%s/cmdline' % self.pid, 'process')
+        ).mock_open
+        mock_open.side_effect = IOError()
+        cmdline = utils.get_cmdline_from_pid(self.pid)
+        mock_open.assert_called_once_with('/proc/%s/cmdline' % self.pid, 'r')
+        self.assertEqual([], cmdline)
+
 
 class TestFindChildPids(base.BaseTestCase):
 
