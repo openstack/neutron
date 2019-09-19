@@ -1579,7 +1579,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 return
         elif not self._router_exists(context, port['device_id']):
             LOG.debug("Router %(router_id)s corresponding to port "
-                      "%(port_id)s  no longer exists, allowing deletion.",
+                      "%(port_id)s no longer exists, allowing deletion.",
                       {'router_id': port['device_id'],
                        'port_id': port['id']})
             return
