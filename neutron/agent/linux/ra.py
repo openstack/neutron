@@ -150,8 +150,12 @@ class DaemonMonitor(object):
 
     def _spawn_radvd(self, radvd_conf):
         def callback(pid_file):
-            # drop radvd daemon privileges and run as the neutron user
-            radvd_user = pwd.getpwuid(os.geteuid()).pw_name
+            if not self._agent_conf.radvd_user:
+                radvd_user = pwd.getpwuid(os.geteuid()).pw_name
+            elif self._agent_conf.radvd_user == 'root':
+                radvd_user = None
+            else:
+                radvd_user = self._agent_conf.radvd_user
             # we need to use -m syslog and f.e. not -m stderr (the default)
             # or -m stderr_syslog so that radvd 2.0+ will close stderr and
             # exit after daemonization; otherwise, the current thread will
@@ -160,8 +164,9 @@ class DaemonMonitor(object):
             radvd_cmd = [RADVD_SERVICE_CMD,
                          '-C', '%s' % radvd_conf,
                          '-p', '%s' % pid_file,
-                         '-u', '%s' % radvd_user,
                          '-m', 'syslog']
+            if radvd_user:
+                radvd_cmd += ['-u', '%s' % radvd_user]
             return radvd_cmd
 
         pm = self._get_radvd_process_manager(callback)

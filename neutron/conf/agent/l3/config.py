@@ -92,6 +92,14 @@ OPTS = [
                help=_('Iptables mangle mark used to mark ingress from '
                       'external network. This mark will be masked with '
                       '0xffff so that only the lower 16 bits will be used.')),
+    cfg.StrOpt('radvd_user',
+               default='',
+               help=_('The username passed to radvd, used to drop root '
+                      'privileges and change user ID to username and group ID '
+                      'to the primary group of username. If no user specified '
+                      '(by default), the user executing the L3 agent will be '
+                      'passed. If "root" specified, because radvd is spawned '
+                      'as root, no "username" parameter will be passed.')),
 ]
 
 
