@@ -16,6 +16,8 @@
 import copy
 from itertools import chain as iter_chain
 from itertools import combinations as iter_combinations
+import os
+import pwd
 
 import eventlet
 import fixtures
@@ -3093,10 +3095,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         self.assertFalse(ri.remove_floating_ip.called)
 
-    @mock.patch('os.geteuid', return_value='490')
-    @mock.patch('pwd.getpwuid', return_value=FakeUser('neutron'))
-    def test_spawn_radvd(self, geteuid, getpwuid):
-        router = l3_test_common.prepare_router_data(ip_version=6)
+    @mock.patch.object(os, 'geteuid', return_value=mock.ANY)
+    @mock.patch.object(pwd, 'getpwuid')
+    def test_spawn_radvd(self, mock_getpwuid, *args):
+        router = l3_test_common.prepare_router_data(
+            ip_version=lib_constants.IP_VERSION_6)
 
         conffile = '/fake/radvd.conf'
         pidfile = '/fake/radvd.pid'
@@ -3122,19 +3125,25 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             agent.process_monitor,
             l3_test_common.FakeDev,
             self.conf)
-        radvd.enable(router['_interfaces'])
 
-        cmd = execute.call_args[0][0]
-
-        self.assertIn('radvd', cmd)
-
-        _join = lambda *args: ' '.join(args)
-
-        cmd = _join(*cmd)
-        self.assertIn(_join('-C', conffile), cmd)
-        self.assertIn(_join('-p', pidfile), cmd)
-        self.assertIn(_join('-u', 'neutron'), cmd)
-        self.assertIn(_join('-m', 'syslog'), cmd)
+        test_users = [('', 'stack', '-u stack'),
+                      ('neutron', mock.ANY, '-u neutron'),
+                      ('root', mock.ANY, None)]
+        for radvd_user, os_user, to_check in test_users:
+            self.conf.set_override('radvd_user', radvd_user)
+            mock_getpwuid.return_value = FakeUser(os_user)
+            radvd.enable(router['_interfaces'])
+            cmd = execute.call_args[0][0]
+            _join = lambda *args: ' '.join(args)
+            cmd = _join(*cmd)
+            self.assertIn('radvd', cmd)
+            self.assertIn(_join('-C', conffile), cmd)
+            self.assertIn(_join('-p', pidfile), cmd)
+            self.assertIn(_join('-m', 'syslog'), cmd)
+            if to_check:
+                self.assertIn(to_check, cmd)
+            else:
+                self.assertNotIn('-u', cmd)
 
     def test_generate_radvd_mtu_conf(self):
         router = l3_test_common.prepare_router_data()
