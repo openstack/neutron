@@ -97,6 +97,13 @@ class VlanTypeTest(testlib_api.SqlTestCase):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN}
         self.driver.validate_provider_segment(segment)
 
+    def test_validate_provider_segment_no_phys_network_seg_id_0(self):
+        segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
+                   api.SEGMENTATION_ID: 0}
+        self.assertRaises(exc.InvalidInput,
+                          self.driver.validate_provider_segment,
+                          segment)
+
     def test_validate_provider_segment_with_missing_physical_network(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
                    api.SEGMENTATION_ID: 1}
@@ -114,11 +121,15 @@ class VlanTypeTest(testlib_api.SqlTestCase):
 
     def test_validate_provider_segment_with_invalid_segmentation_id(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
-                   api.PHYSICAL_NETWORK: PROVIDER_NET,
-                   api.SEGMENTATION_ID: 5000}
-        self.assertRaises(exc.InvalidInput,
-                          self.driver.validate_provider_segment,
-                          segment)
+                   api.PHYSICAL_NETWORK: PROVIDER_NET}
+        segmentation_ids = [
+            p_const.MIN_VLAN_TAG - 1,
+            p_const.MAX_VLAN_TAG + 1]
+        for segmentation_id in segmentation_ids:
+            segment[api.SEGMENTATION_ID] = segmentation_id
+            self.assertRaises(exc.InvalidInput,
+                              self.driver.validate_provider_segment,
+                              segment)
 
     def test_validate_provider_segment_with_invalid_input(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
