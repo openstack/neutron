@@ -61,11 +61,6 @@ def set_resources_dirty(context):
     dirty status is True, sets the dirty bit to True in the database
     for the appropriate tenants.
 
-    Please note that this routine begins a nested transaction, and it
-    is not recommended that this transaction begins within another
-    transaction. For this reason the function will raise a SqlAlchemy
-    exception if such an attempt is made.
-
     :param context: a Neutron request context with a DB session
     """
     if not cfg.CONF.QUOTAS.track_quota_usage:

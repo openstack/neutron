@@ -15,6 +15,7 @@
 
 import collections
 
+from neutron_lib.db import api as nlib_db_api
 from oslo_log import log as logging
 from pecan import hooks
 
@@ -61,6 +62,7 @@ class QuotaEnforcementHook(hooks.PecanHook):
         # retrieved in the 'after' hook
         state.request.context['reservations'] = reservations
 
+    @nlib_db_api.retry_db_errors
     def after(self, state):
         neutron_context = state.request.context.get('neutron_context')
         if not neutron_context:
