@@ -150,7 +150,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                 msg = (_("physical_network '%s' unknown "
                          "for VLAN provider network") % physical_network)
                 raise exc.InvalidInput(error_message=msg)
-            if segmentation_id:
+            if segmentation_id is not None:
                 if not plugin_utils.is_valid_vlan_tag(segmentation_id):
                     msg = (_("segmentation_id out of range (%(min)s through "
                              "%(max)s)") %
@@ -163,7 +163,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                              "to be specified when creating a provider "
                              "network") % physical_network)
                     raise exc.InvalidInput(error_message=msg)
-        elif segmentation_id:
+        elif segmentation_id is not None:
             msg = _("segmentation_id requires physical_network for VLAN "
                     "provider network")
             raise exc.InvalidInput(error_message=msg)
