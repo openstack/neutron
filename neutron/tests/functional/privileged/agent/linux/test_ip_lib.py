@@ -14,8 +14,8 @@
 
 import functools
 import random
+import threading
 
-import eventlet
 import netaddr
 from neutron_lib import constants as n_cons
 from oslo_utils import uuidutils
@@ -632,11 +632,12 @@ class ListNamespacePids(functional_base.BaseSudoTestCase):
     def setUp(self):
         super(ListNamespacePids, self).setUp()
         self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
+        self.timeout = 3
 
     @staticmethod
-    def _run_sleep(namespace):
+    def _run_sleep(namespace, timeout):
         ip_wrapper = ip_lib.IPWrapper(namespace=namespace)
-        ip_wrapper.netns.execute(['sleep', '100'], check_exit_code=False)
+        ip_wrapper.netns.execute(['sleep', timeout], check_exit_code=False)
 
     def _check_pids(self, num_pids, namespace=None):
         namespace = self.namespace if not namespace else namespace
@@ -644,13 +645,15 @@ class ListNamespacePids(functional_base.BaseSudoTestCase):
         return len(self.pids) == num_pids
 
     def test_list_namespace_pids(self):
-        eventlet.spawn_n(self._run_sleep, self.namespace)
-
+        thread = threading.Thread(target=self._run_sleep,
+                                  args=(self.namespace, self.timeout))
+        thread.start()
         try:
             check_pids = functools.partial(self._check_pids, 1)
-            common_utils.wait_until_true(check_pids, timeout=5)
+            common_utils.wait_until_true(check_pids, timeout=self.timeout)
         except common_utils.WaitTimeout:
             self.fail('Process no found in namespace %s' % self.namespace)
+        thread.join(timeout=self.timeout)
 
     def test_list_namespace_pids_nothing_running_inside(self):
         self.assertTrue(self._check_pids(0))
