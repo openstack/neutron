@@ -22,7 +22,7 @@
 
 # oslo.privsep default neutron context
 privsep: PathFilter, privsep-helper, root,
- --config-file, /etc,
+ --config-file, /etc/(?!\.\.).*,
  --privsep_context, neutron.privileged.default,
  --privsep_sock_path, /
 
