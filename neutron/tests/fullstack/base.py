@@ -13,7 +13,9 @@
 #    under the License.
 
 from concurrent import futures
+import itertools
 import os
+import random
 
 import netaddr
 from neutron_lib.tests import tools
@@ -127,18 +129,17 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
 
     def _find_available_ips(self, network, subnet, num):
         ports = self.safe_client.list_ports(network_id=network['id'])
-        used_ips = [ip['ip_address']
-                    for port in ports for ip in port['fixed_ips']]
-        used_ips.append(subnet['gateway_ip'])
-        available_ips = []
-        for ip in netaddr.IPNetwork(subnet['cidr']).iter_hosts():
-            ip = str(ip)
-            if ip not in used_ips:
-                available_ips.append(ip)
-                if len(available_ips) >= num:
-                    return available_ips
-
-        self.fail("Cannot find enough free IP addresses.")
+        used_ips = netaddr.IPSet(
+            [netaddr.IPAddress(ip['ip_address'])
+             for port in ports for ip in port['fixed_ips']])
+        used_ips.add(netaddr.IPAddress(subnet['gateway_ip']))
+        valid_ips = netaddr.IPSet(netaddr.IPNetwork(subnet['cidr']))
+        valid_ips = valid_ips.difference(used_ips)
+        if valid_ips.size < num:
+            self.fail("Cannot find enough free IP addresses.")
+        initial = random.randint(0, min(valid_ips.size - num, 1000))
+        available_ips = itertools.islice(valid_ips, initial, initial + num)
+        return [str(available_ip) for available_ip in available_ips]
 
     def _create_external_vm(self, network, subnet):
         vm = self.useFixture(
