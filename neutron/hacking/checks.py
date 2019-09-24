@@ -140,11 +140,11 @@ def check_oslo_i18n_wrapper(logical_line, filename, noqa):
     """N340 - Check for neutron.i18n usage.
 
     Okay(neutron/foo/bar.py): from neutron._i18n import _
-    Okay(neutron_lbaas/foo/bar.py): from neutron_lbaas._i18n import _
+    Okay(neutron_fwaas/foo/bar.py): from neutron_fwaas._i18n import _
     N340(neutron/foo/bar.py): from neutron.i18n import _
-    N340(neutron_lbaas/foo/bar.py): from neutron_lbaas.i18n import _
-    N340(neutron_lbaas/foo/bar.py): from neutron.i18n import _
-    N340(neutron_lbaas/foo/bar.py): from neutron._i18n import _
+    N340(neutron_fwaas/foo/bar.py): from neutron_fwaas.i18n import _
+    N340(neutron_fwaas/foo/bar.py): from neutron.i18n import _
+    N340(neutron_fwaas/foo/bar.py): from neutron._i18n import _
     Okay(neutron/foo/bar.py): from neutron.i18n import _  # noqa
     """
 

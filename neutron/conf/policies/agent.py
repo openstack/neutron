@@ -145,31 +145,6 @@ rules = [
             },
         ]
     ),
-    # TODO(amotoki): Remove LBaaS related policies once neutron-lbaas
-    # is retired.
-    policy.DocumentedRuleDefault(
-        'get_agent-loadbalancers',
-        base.RULE_ADMIN_ONLY,
-        'List load balancers on an LBaaS v2 agent',
-        [
-            {
-                'method': 'GET',
-                'path': '/agents/{agent_id}/agent-loadbalancers',
-            },
-        ]
-    ),
-    policy.DocumentedRuleDefault(
-        'get_loadbalancer-hosting-agent',
-        base.RULE_ADMIN_ONLY,
-        'List LBaaS v2 agents hosting a load balancer',
-        [
-            {
-                'method': 'GET',
-                'path': ('/lbaas/loadbalancers/{load_balancer_id}/'
-                         'loadbalancer-hosting-agent'),
-            },
-        ]
-    ),
 ]
 
 

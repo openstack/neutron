@@ -84,7 +84,7 @@ class DummyServicePlugin(service_base.ServicePluginBase):
     """This is a simple plugin for managing instances of a fictional 'dummy'
         service. This plugin is provided as a proof-of-concept of how
         advanced service might leverage the service type extension.
-        Ideally, instances of real advanced services, such as load balancing
+        Ideally, instances of real advanced services, such as firewall
         or VPN will adopt a similar solution.
     """
 

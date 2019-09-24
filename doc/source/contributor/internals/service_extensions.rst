@@ -27,9 +27,6 @@ Service Extensions
 Historically, Neutron supported the following advanced services:
 
 #. **FWaaS** (*Firewall-as-a-Service*): runs as part of the L3 agent.
-#. **LBaaS** (*Load-Balancer-as-a-Service*): implemented purely inside
-   neutron-server, does not interact directly with agents. **Deprecated as of
-   Queens**.
 #. **VPNaaS** (*VPN-as-a-Service*): derives from L3 agent to add
    VPNaaS functionality.
 
@@ -47,7 +44,6 @@ consider adding an entry to the dictionary, please be kind and
 reach out to your PTL or a member of the drivers team for approval.
 
 #. http://opendev.org/openstack/neutron-fwaas/
-#. http://opendev.org/openstack/neutron-lbaas/
 #. http://opendev.org/openstack/neutron-vpnaas/
 
 

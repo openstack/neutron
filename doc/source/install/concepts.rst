@@ -6,7 +6,7 @@ Virtual Networking Infrastructure (VNI) and the access layer aspects
 of the Physical Networking Infrastructure (PNI) in your OpenStack
 environment. OpenStack Networking enables projects to create advanced
 virtual network topologies which may include services such as a
-firewall, a load balancer, and a virtual private network (VPN).
+firewall, and a virtual private network (VPN).
 
 Networking provides networks, subnets, and routers as object abstractions.
 Each abstraction has functionality that mimics its physical counterpart:
@@ -49,5 +49,5 @@ Each plug-in that Networking uses has its own concepts. While not vital
 to operating the VNI and OpenStack environment, understanding these
 concepts can help you set up Networking. All Networking installations
 use a core plug-in and a security group plug-in (or just the No-Op
-security group plug-in). Additionally, Firewall-as-a-Service (FWaaS) and
-Load-Balancer-as-a-Service (LBaaS) plug-ins are available.
+security group plug-in). Additionally, Firewall-as-a-Service (FWaaS)
+is available.

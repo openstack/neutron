@@ -121,7 +121,7 @@ class V2Controller(object):
         # if collection exists in the extension to service plugins map then
         # we are assuming that collection is the service plugin and
         # needs to be remapped.
-        # Example: https://neutron.endpoint/v2.0/lbaas/loadbalancers
+        # Example: https://neutron.endpoint/v2.0/fwaas/firewall_groups
         if (remainder and
                 manager.NeutronManager.get_resources_for_path_prefix(
                     collection)):

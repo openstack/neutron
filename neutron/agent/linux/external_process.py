@@ -167,7 +167,7 @@ class ProcessMonitor(object):
 
         :param config: oslo config object with the agent configuration.
         :type config: oslo_config.ConfigOpts
-        :param resource_type: can be dhcp, router, load_balancer, etc.
+        :param resource_type: can be dhcp, router, etc.
         :type resource_type: str
         """
         self._config = config

@@ -18,6 +18,8 @@ VPNAAS_TABLES = ['vpnservices', 'ipsecpolicies', 'ipsecpeercidrs',
                  'ipsec_site_connections', 'cisco_csr_identifier_map',
                  'ikepolicies']
 
+# Neutron-lbaas is retired, but we need to keep this for the models until
+# we decide to remove the tables.
 LBAAS_TABLES = ['vips', 'sessionpersistences', 'pools', 'healthmonitors',
                 'poolstatisticss', 'members', 'poolloadbalanceragentbindings',
                 'poolmonitorassociations']

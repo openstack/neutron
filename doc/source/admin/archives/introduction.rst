@@ -7,8 +7,7 @@ you define network connectivity and addressing in the cloud. The
 Networking service enables operators to leverage different networking
 technologies to power their cloud networking. The Networking service
 also provides an API to configure and manage a variety of network
-services ranging from L3 forwarding and NAT to load balancing, edge
-firewalls, and IPsec VPN.
+services ranging from L3 forwarding and NAT to edge firewalls, and IPsec VPN.
 
 For a detailed description of the Networking API abstractions and their
 attributes, see the `OpenStack Networking API v2.0
@@ -104,60 +103,6 @@ Set these options to configure SSL:
 
 ``backlog = 4096``
     Number of backlog requests with which to configure the socket.
-
-Load-Balancer-as-a-Service (LBaaS) overview
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. warning::
-   Neutron-lbaas is deprecated as of Queens. Load-Balancer-as-a-Service
-   (LBaaS v2) is now provided by the `Octavia project
-   <https://docs.openstack.org/octavia/latest/>`_. Please see the FAQ:
-   https://wiki.openstack.org/wiki/Neutron/LBaaS/Deprecation
-
-Load-Balancer-as-a-Service (LBaaS) enables Networking to distribute
-incoming requests evenly among designated instances. This distribution
-ensures that the workload is shared predictably among instances and
-enables more effective use of system resources. Use one of these load
-balancing methods to distribute incoming requests:
-
-Round robin
-    Rotates requests evenly between multiple instances.
-
-Source IP
-    Requests from a unique source IP address are consistently directed
-    to the same instance.
-
-Least connections
-    Allocates requests to the instance with the least number of active
-    connections.
-
-+-------------------------+---------------------------------------------------+
-| Feature                 | Description                                       |
-+=========================+===================================================+
-| **Monitors**            | LBaaS provides availability monitoring with the   |
-|                         | ``ping``, TCP, HTTP and HTTPS GET methods.        |
-|                         | Monitors are implemented to determine whether     |
-|                         | pool members are available to handle requests.    |
-+-------------------------+---------------------------------------------------+
-| **Management**          | LBaaS is managed using a variety of tool sets.    |
-|                         | The REST API is available for programmatic        |
-|                         | administration and scripting. Users perform       |
-|                         | administrative management of load balancers       |
-|                         | through either the CLI (``neutron``) or the       |
-|                         | OpenStack Dashboard.                              |
-+-------------------------+---------------------------------------------------+
-| **Connection limits**   | Ingress traffic can be shaped with *connection    |
-|                         | limits*. This feature allows workload control,    |
-|                         | and can also assist with mitigating DoS (Denial   |
-|                         | of Service) attacks.                              |
-+-------------------------+---------------------------------------------------+
-| **Session persistence** | LBaaS supports session persistence by ensuring    |
-|                         | incoming requests are routed to the same instance |
-|                         | within a pool of multiple instances. LBaaS        |
-|                         | supports routing decisions based on cookies and   |
-|                         | source IP address.                                |
-+-------------------------+---------------------------------------------------+
-
 
 Firewall-as-a-Service (FWaaS) overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -127,7 +127,7 @@ network or a port, making all rules of the policy applied to the corresponding
 Neutron resource.
 
 When applied through a network association, policy rules could apply or not
-to neutron internal ports (like router, dhcp, load balancer, etc..). The QosRule
+to neutron internal ports (like router, dhcp, etc..). The QosRule
 base object provides a default should_apply_to_port method which could be
 overridden. In the future we may want to have a flag in QoSNetworkPolicyBinding
 or QosRule to enforce such type of application (for example when limiting all

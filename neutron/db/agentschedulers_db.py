@@ -53,7 +53,6 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
     agent_notifiers = {
         constants.AGENT_TYPE_DHCP: None,
         constants.AGENT_TYPE_L3: None,
-        constants.AGENT_TYPE_LOADBALANCER: None,
     }
 
     @staticmethod
