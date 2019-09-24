@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    The new API extension ``extraroute-atomic`` introduces two new member
+    actions on routers to add/remove routes atomically on the server side.
+    The use of these new member actions
+    (``PUT /v2.0/routers/ROUTER-ID/add_extraroutes`` and
+    ``PUT /v2.0/routers/ROUTER-ID/remove_extraroutes``) is always preferred
+    to the old way (``PUT /v2.0/routers/ROUTER-ID``) when multiple clients
+    edit the extra routes of a router since the old way is prone to race
+    conditions between concurrent clients and therefore to possible lost
+    updates.
