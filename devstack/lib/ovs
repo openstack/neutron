@@ -27,7 +27,7 @@ function load_module {
     if [ "$(trueorfalse True fatal)" == "True" ]; then
         sudo modprobe $module || (dmesg && die $LINENO "FAILED TO LOAD $module")
     else
-        sudo modprobe $module || (echo "FAILED TO LOAD vport_geneve" && dmesg)
+        sudo modprobe $module || (echo "FAILED TO LOAD $module" && dmesg)
     fi
 }
 
@@ -85,6 +85,12 @@ function prepare_for_compilation {
     fi
 }
 
+# load_kernel_modules() - load openvswitch kernel module
+function load_kernel_modules {
+    load_module openvswitch
+    load_module vport-geneve False
+    dmesg | tail
+}
 
 # reload_kernel_modules() - reload openvswitch kernel module
 function reload_kernel_modules {
@@ -94,9 +100,7 @@ function reload_kernel_modules {
     fi
     sudo modprobe -r vport_geneve
     sudo modprobe -r openvswitch
-    load_module openvswitch
-    load_module vport-geneve False
-    dmesg | tail
+    load_kernel_modules
 }
 
 # compile_ovs() - Compile OVS from source and load needed modules.
@@ -136,6 +140,8 @@ function compile_ovs {
     if [[ "$build_modules" == "True" ]]; then
         sudo make INSTALL_MOD_DIR=kernel/net/openvswitch modules_install
         reload_kernel_modules
+    else
+        load_kernel_modules
     fi
 
     cd $_pwd
