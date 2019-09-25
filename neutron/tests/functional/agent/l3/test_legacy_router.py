@@ -212,8 +212,6 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         # Mock the plugin RPC API so a known external network id is returned
         # when the router updates are processed by the agent
         external_network_id = framework._uuid()
-        self.mock_plugin_api.get_external_network_id.return_value = (
-            external_network_id)
 
         # Plug external_gateway_info in the routers that are not going to be
         # deleted by the agent when it processes the updates. Otherwise,
