@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import random
 import re
 
 import netaddr
@@ -118,9 +119,10 @@ class FdbInterfaceTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
         else:
             self._cleanup()
         self.addCleanup(self._cleanup)
+        vni = random.randint(1, 2**24 - 1)
         ip_wrapper = ip_lib.IPWrapper(self.namespace)
         ip_wrapper.add_dummy(self.device)
-        ip_wrapper.add_vxlan(self.device_vxlan, 100, dev=self.device)
+        ip_wrapper.add_vxlan(self.device_vxlan, vni, dev=self.device)
         ip_device = ip_lib.IPDevice(self.device, self.namespace)
         ip_device.link.set_up()
         ip_device.addr.add(self.ip)
