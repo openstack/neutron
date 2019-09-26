@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    When listing ports using the
+    ``openstack port list --mac-address A:B:C:D:E:F`` command we
+    might not return any result when trying to list ports by MAC
+    address if the cases differ. This fix makes the search based
+    on MAC address case insensitive. For more information see
+    `bug 1843428 <https://bugs.launchpad.net/neutron/+bug/1843428>`_.
