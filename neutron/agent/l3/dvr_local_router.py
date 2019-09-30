@@ -223,12 +223,15 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
     def _process_arp_cache_for_internal_port(self, subnet_id):
         """Function to process the cached arp entries."""
         arp_remove = set()
+        device, device_exists = self.get_arp_related_dev(subnet_id)
         for arp_entry in self._pending_arp_set:
             if subnet_id == arp_entry.subnet_id:
                 try:
                     state = self._update_arp_entry(
                         arp_entry.ip, arp_entry.mac,
-                        arp_entry.subnet_id, arp_entry.operation)
+                        arp_entry.subnet_id, arp_entry.operation,
+                        device=device,
+                        device_exists=device_exists)
                 except Exception:
                     state = False
                 if state:
@@ -246,18 +249,13 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 arp_delete.add(arp_entry)
         self._pending_arp_set -= arp_delete
 
-    def _update_arp_entry(self, ip, mac, subnet_id, operation):
+    def _update_arp_entry(
+            self, ip, mac, subnet_id, operation, device,
+            device_exists=True):
         """Add or delete arp entry into router namespace for the subnet."""
-        port = self._get_internal_port(subnet_id)
-        # update arp entry only if the subnet is attached to the router
-        if not port:
-            return False
 
         try:
-            # TODO(mrsmith): optimize the calls below for bulk calls
-            interface_name = self.get_internal_device_name(port['id'])
-            device = ip_lib.IPDevice(interface_name, namespace=self.ns_name)
-            if device.exists():
+            if device_exists:
                 if operation == 'add':
                     device.neigh.add(ip, mac)
                 elif operation == 'delete':
@@ -276,6 +274,16 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             with excutils.save_and_reraise_exception():
                 LOG.exception("DVR: Failed updating arp entry")
 
+    def get_arp_related_dev(self, subnet_id):
+        port = self._get_internal_port(subnet_id)
+        # update arp entry only if the subnet is attached to the router
+        if not port:
+            return None, False
+        interface_name = self.get_internal_device_name(port['id'])
+        device = ip_lib.IPDevice(interface_name, namespace=self.ns_name)
+        device_exists = device.exists()
+        return device, device_exists
+
     def _set_subnet_arp_info(self, subnet_id):
         """Set ARP info retrieved from Plugin for existing ports."""
         # TODO(Carl) Can we eliminate the need to make this RPC while
@@ -284,6 +292,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         ignored_device_owners = (
             lib_constants.ROUTER_INTERFACE_OWNERS +
             tuple(common_utils.get_dvr_allowed_address_pair_device_owners()))
+        device, device_exists = self.get_arp_related_dev(subnet_id)
 
         for p in subnet_ports:
             if p['device_owner'] not in ignored_device_owners:
@@ -291,7 +300,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                     self._update_arp_entry(fixed_ip['ip_address'],
                                            p['mac_address'],
                                            subnet_id,
-                                           'add')
+                                           'add',
+                                           device=device,
+                                           device_exists=device_exists)
         self._process_arp_cache_for_internal_port(subnet_id)
 
     @staticmethod
@@ -525,10 +536,14 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         self.enable_snat_redirect_rules(ex_gw_port)
         for port in self.get_snat_interfaces():
             for ip in port['fixed_ips']:
+                subnet_id = ip['subnet_id']
+                device, device_exists = self.get_arp_related_dev(subnet_id)
                 self._update_arp_entry(ip['ip_address'],
                                        port['mac_address'],
-                                       ip['subnet_id'],
-                                       'add')
+                                       subnet_id,
+                                       'add',
+                                       device=device,
+                                       device_exists=device_exists)
 
     def external_gateway_updated(self, ex_gw_port, interface_name):
         pass
