@@ -73,9 +73,9 @@ The following are the current Neutron Lieutenants.
 +------------------------+---------------------------+----------------------+
 | Client                 | Akihiro Motoki            | amotoki              |
 +------------------------+---------------------------+----------------------+
-| Docs                   | Boden Russell             | boden                |
+| Docs                   | Akihiro Motoki            | amotoki              |
 +------------------------+---------------------------+----------------------+
-| Infra                  | Slawek Kaplonski          | slawek               |
+| Infra                  | Rodolfo Alonso Hernandez  | ralonsoh             |
 |                        +---------------------------+----------------------+
 |                        | YAMAMOTO Takashi          | yamamoto             |
 +------------------------+---------------------------+----------------------+
@@ -85,7 +85,7 @@ The following are the current Neutron Lieutenants.
 |                        +---------------------------+----------------------+
 |                        | Yulong Liu                | liuyulong            |
 +------------------------+---------------------------+----------------------+
-| Testing                | Hongbin Lu                | hongbin              |
+| Testing                | Rodolfo Alonso Hernandez  | ralonsoh             |
 +------------------------+---------------------------+----------------------+
 
 Some notes on the above:
@@ -105,29 +105,29 @@ Lieutenants are also named for these sub-projects to identify a clear point of
 contact and leader for that area.  The Lieutenant is also responsible for
 updating the core review team for the sub-project's repositories.
 
-+------------------------+---------------------------+----------------------+
-| Area                   | Lieutenant                | IRC nick             |
-+========================+===========================+======================+
-| networking-bgpvpn      | Mathieu Rohon             | matrohon             |
-| networking-bagpipe     +---------------------------+----------------------+
-|                        | Thomas Morin              | tmorin               |
-+------------------------+---------------------------+----------------------+
-| net...-dynamic-routing | Ryan Tidwell              | tidwellr             |
-|                        +---------------------------+----------------------+
-|                        | Vikram Choudhary          | vikram               |
-+------------------------+---------------------------+----------------------+
-| neutron-fwaas          | Sridar Kandaswamy         | SridarK              |
-+------------------------+---------------------------+----------------------+
-| networking-midonet     | Ryu Ishimoto              | ryu25                |
-|                        +---------------------------+----------------------+
-|                        | YAMAMOTO Takashi          | yamamoto             |
-+------------------------+---------------------------+----------------------+
-| networking-odl         | Isaku Yamahata            | yamahata             |
-+------------------------+---------------------------+----------------------+
-| networking-ovn         | Russell Bryant            | russellb             |
-+------------------------+---------------------------+----------------------+
-| networking-sfc         | Cathy Zhang               | cathy                |
-+------------------------+---------------------------+----------------------+
++-------------------------+-----------------------------+-------------------+
+| Area                    | Lieutenant                  | IRC nick          |
++=========================+=============================+===================+
+| networking-bgpvpn       | Mathieu Rohon               | matrohon          |
+| networking-bagpipe      +-----------------------------+-------------------+
+|                         | Thomas Morin                | tmorin            |
++-------------------------+-----------------------------+-------------------+
+| neutron-dynamic-routing | Ryan Tidwell                | tidwellr          |
++-------------------------+-----------------------------+-------------------+
+| neutron-fwaas           | Nate Johnston               | njohnston         |
++-------------------------+-----------------------------+-------------------+
+| neutron-vpnaas          | YAMAMOTO Takashi            | yamamoto          |
++-------------------------+-----------------------------+-------------------+
+| networking-midonet      | Ryu Ishimoto                | ryu25             |
+|                         +-----------------------------+-------------------+
+|                         | YAMAMOTO Takashi            | yamamoto          |
++-------------------------+-----------------------------+-------------------+
+| networking-odl          | Lajos Katona                | lajoskatona       |
++-------------------------+-----------------------------+-------------------+
+| networking-ovn          | Lucas Alvares Gomes         | lucasagomes       |
++-------------------------+-----------------------------+-------------------+
+| networking-sfc          | N/A                         | N/A               |
++-------------------------+-----------------------------+-------------------+
 
 Existing Core Reviewers
 -----------------------
