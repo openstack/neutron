@@ -95,6 +95,11 @@ In addition to that, the following rules are to follow:
   ensure that correct HTTP error is returned when wrong data is provided,
   will be added where it is appropriate.
 
+* It is usually enough for any "mechanical" changes, like e.g. translation
+  imports or imports of updated CI templates, to have only one +2 Code-Review
+  vote to be approved. If there is any uncertainty about a specific patch, it is
+  better to wait for review from another core reviewer before approving the patch.
+
 .. _spec-review-practices:
 
 Neutron Spec Review Practices
