@@ -11,17 +11,16 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 # HYUNGBAI PARK <openstack.make@gmail.com>, 2016. #zanata
 # jtjang <jang.jitae@gmail.com>, 2016. #zanata
-# Heetae Ahn <heetae82.ahn@samsung.com>, 2017. #zanata
 msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2018-03-02 16:32+0000\n"
+"POT-Creation-Date: 2019-09-30 23:37+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2017-07-18 04:28+0000\n"
-"Last-Translator: Heetae Ahn <heetae82.ahn@samsung.com>\n"
+"PO-Revision-Date: 2016-08-17 10:52+0000\n"
+"Last-Translator: HYUNGBAI PARK <openstack.make@gmail.com>\n"
 "Language: ko_KR\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
@@ -53,10 +52,6 @@ msgstr ""
 "%(head)s"
 
 #, python-format
-msgid "%(id)s is not a valid %(type)s identifier"
-msgstr "%(id)s이(가) 올바른 %(type)s ID가 아님"
-
-#, python-format
 msgid ""
 "%(invalid_dirs)s is invalid value for sort_dirs, valid value is '%(asc)s' "
 "and '%(desc)s'"
@@ -80,10 +75,6 @@ msgstr "%s은(는) 오프라인 모드 중 호출할 수 없습니다. "
 #, python-format
 msgid "%s is invalid attribute for sort_keys"
 msgstr "%s이(는) sort_keys에 대해 올바르지 않은 속성입니다. "
-
-#, python-format
-msgid "%s is not a valid VLAN tag"
-msgstr "%s이(가) 올바른 VLAN 태그가 아님"
 
 #, python-format
 msgid "%s must implement get_port_from_device or get_ports_from_devices."
@@ -144,12 +135,6 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr "측정 드라이버를 지정해야 함"
 
-msgid "API for retrieving service providers for Neutron advanced services"
-msgstr "Neutron 고급 서비스에 대한 서비스 제공자를 검색하기 위한 API"
-
-msgid "Aborting periodic_sync_routers_task due to an error."
-msgstr "오류로 인해 periodic_sync_routers_task를 중단합니다."
-
 msgid "Access to this resource was denied."
 msgstr "이 자원에 대한 액세스가 거부되었습니다."
 
@@ -168,21 +153,12 @@ msgstr ""
 msgid "Address not present on interface"
 msgstr "인터페이스에 주소가 없음"
 
-msgid ""
-"Address to listen on for OpenFlow connections. Used only for 'native' driver."
-msgstr ""
-"OpenFlow 연결을 위해 청취할 주소입니다. '네이티브' 드라이버에만 사용됩니다. "
-
 msgid "Adds test attributes to core resources."
 msgstr "코어 자원에 테스트 속성을 추가합니다."
 
 #, python-format
 msgid "Agent %(id)s is not a L3 Agent or has been disabled"
 msgstr "%(id)s 에이전트가 L3 에이전트가 아니거나 사용 안함 상태임"
-
-#, python-format
-msgid "Agent %(id)s is not a valid DHCP Agent or has been disabled"
-msgstr "%(id)s 에이전트가 올바른 DHCP 에이전트가 아니거나 사용 안함 상태임"
 
 msgid ""
 "Agent starts with admin_state_up=False when enable_new_agents=False. In the "
@@ -246,9 +222,6 @@ msgstr "해당 값의 RBAC 정책이 이미 있습니다."
 msgid "An identifier must be specified when updating a subnet"
 msgstr "서브넷을 업데이트할 때 ID를 지정해야 함"
 
-msgid "An interface driver must be specified"
-msgstr "인터페이스 드라이버가 지정되어야 함"
-
 msgid ""
 "An ordered list of extension driver entrypoints to be loaded from the "
 "neutron.ml2.extension_drivers namespace. For example: extension_drivers = "
@@ -303,13 +276,6 @@ msgstr ""
 
 msgid "Body contains invalid data"
 msgstr "본문에 올바르지 않은 데이터가 포함되어 있음"
-
-msgid "Both network_id and router_id are None. One must be provided."
-msgstr "network_id 및 router_id가 모두 None입니다. 하나가 제공되어야 합니다. "
-
-#, python-format
-msgid "Bridge %(bridge)s does not exist."
-msgstr "%(bridge)s 브릿지가 존재하지 않습니다. "
 
 msgid "Bulk operation not supported"
 msgstr "벌크 오퍼레이션은 지원되지 않음"
@@ -366,9 +332,6 @@ msgstr ""
 "레거시 L3 에이전트 %(agent_id)s에서 분산된 라우터 %(router_id)s을(를) 호스팅"
 "할 수 업습니다."
 
-msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool."
-msgstr "서브넷 풀에서 IPv4 및 IPv6 접두부를 혼합하여 사용할 수 없습니다."
-
 msgid "Cannot specify both subnet-id and port-id"
 msgstr "subnet-id와 port-id를 둘 다 지정할 수 없음"
 
@@ -381,11 +344,6 @@ msgstr "읽기 전용 속성 %s을(를) 업데이트할 수 없음"
 
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr "ssl용 인증 기관 공개 키(CA cert) 파일 "
-
-#, python-format
-msgid ""
-"Change would make usage less than 0 for the following resources: %(unders)s."
-msgstr "변경하면 다음 자원에 대한 사용량이 0보다 작아짐: %(unders)s."
 
 msgid "Check ebtables installation"
 msgstr "ebtables 설치 확인"
@@ -544,14 +502,6 @@ msgstr "%(time)d후 시도한 다음 %(host)s:%(port)s에 바인딩할 수 없�
 msgid "Could not deserialize data"
 msgstr "데이터를 직렬화 해제할 수 없음"
 
-#, python-format
-msgid ""
-"Current gateway ip %(ip_address)s already in use by port %(port_id)s. Unable "
-"to update."
-msgstr ""
-"현재 게이트웨이 ip %(ip_address)s을(를) 포트 %(port_id)s에서 이미 사용하고 있"
-"습니다.업데이트할 수 없습니다."
-
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
 "lease times."
@@ -655,10 +605,6 @@ msgstr "모든 IPset를 영구 삭제하십시오. "
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
 msgstr "%(mapping)s 맵핑의 %(dev_name)s 디바이스가 고유하지 않음"
 
-#, python-format
-msgid "Device name %(dev_name)s is missing from physical_device_mappings"
-msgstr "physical_device_mappings에서 디바이스 이름 %(dev_name)s이(가) 누락됨"
-
 msgid "Device not found"
 msgstr "디바이스를 찾을 수 없음"
 
@@ -709,9 +655,6 @@ msgstr "POST에 중복 보안 그룹 규칙이 있습니다. "
 msgid "Duplicate address detected"
 msgstr "중복 주소 발견"
 
-msgid "Duplicate segment entry in request."
-msgstr "요청에 중복되는 세그먼트 항목이 있음."
-
 #, python-format
 msgid "ERROR: %s"
 msgstr "오류: %s"
@@ -732,12 +675,6 @@ msgstr ""
 
 msgid "Either subnet_id or port_id must be specified"
 msgstr "subnet_id 또는 port_id 중 하나를 지정해야 함"
-
-msgid "Empty physical network name."
-msgstr "실제 네트워크 이름이 비어 있습니다."
-
-msgid "Empty subnet pool prefix list."
-msgstr "서브넷 풀 접두부 목록이 비어 있습니다."
 
 msgid "Enable HA mode for virtual routers."
 msgstr "가상 라우터에 대해 HA 모드를 사용합니다."
@@ -801,12 +738,6 @@ msgstr ""
 "resolv' 옵션을 효과적으로 제거합니다. 사용자 정의 DNS 분석기를 "
 "'dnsmasq_dns_servers' 옵션에 추가하면 이 기능이 사용되지 않습니다."
 
-msgid "End of VLAN range is less than start of VLAN range"
-msgstr "VLAN 범위의 끝이 VLAN 범위의 시작보다 작습니다. "
-
-msgid "End of tunnel range is less than start of tunnel range"
-msgstr "터널 범위의 끝이 터널 범위의 시작보다 작음"
-
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
 msgstr "조작 시도 중 오류 %(reason)s이(가) 발생했습니다. "
@@ -863,10 +794,6 @@ msgid "Extensions list to use"
 msgstr "사용할 확장 목록"
 
 #, python-format
-msgid "Extensions not found: %(extensions)s."
-msgstr "확장기능을 찾을 수 없음: %(extensions)s."
-
-#, python-format
 msgid "External IP %s is the same as the gateway IP"
 msgstr "외부 IP %s이(가) 게이트웨이 IP와 같음"
 
@@ -883,17 +810,6 @@ msgstr ""
 "다. "
 
 #, python-format
-msgid "Failed to allocate subnet: %(reason)s."
-msgstr "서브넷 할당 실패: %(reason)s."
-
-msgid ""
-"Failed to associate address scope: subnetpools within an address scope must "
-"have unique prefixes."
-msgstr ""
-"주소 범위를 연관시키는 데 실패: 주소 범위의 subnetpool에는 고유한 접두어가 있"
-"어야 합니다."
-
-#, python-format
 msgid ""
 "Failed to create port on network %(network_id)s, because fixed_ips included "
 "invalid subnet %(subnet_id)s"
@@ -904,13 +820,6 @@ msgstr ""
 #, python-format
 msgid "Failed to locate source for %s."
 msgstr "%s에 대한 소스를 찾지 못했습니다. "
-
-#, python-format
-msgid ""
-"Failed to remove provided policy %(policy_id)s because you are not "
-"authorized."
-msgstr ""
-"당신은 권한이 없기 때문에 제공하는 정책 %(policy_id)s을 제거할 수 없습니다."
 
 msgid "Failed to remove supplemental groups"
 msgstr "보조 그룹을 제거하지 못함"
@@ -943,22 +852,8 @@ msgstr "TCP/UDP 프로토콜의 경우 port_range_min은 port_range_max 이하�
 msgid "Force ip_lib calls to use the root helper"
 msgstr "루트 헬퍼를 사용하는 ip_lib 호출을 강제합니다"
 
-#, python-format
-msgid "Found duplicate extension: %(alias)s."
-msgstr "중복 확장 발견: %(alias)s."
-
-#, python-format
-msgid ""
-"Found overlapping allocation pools: %(pool_1)s %(pool_2)s for subnet "
-"%(subnet_cidr)s."
-msgstr "겹치는 할당 풀 발견: 서브넷 %(subnet_cidr)s의 %(pool_1)s %(pool_2)s."
-
 msgid "Gateway IP version inconsistent with allocation pool version"
 msgstr "게이트웨이 IP 버전이 할당 풀 버전과 일치하지 않음"
-
-#, python-format
-msgid "Gateway ip %(ip_address)s conflicts with allocation pool %(pool)s."
-msgstr "게이트웨이 IP %(ip_address)s이(가) 할당 풀 %(pool)s과(와) 충돌합니다. "
 
 msgid "Gateway is not valid on subnet"
 msgstr "게이트웨이가 서브넷에서 올바르지 않음"
@@ -1041,11 +936,6 @@ msgstr ""
 "IPTablesManager.apply가 다음 iptables 규칙 세트를 적용하지 못함:\n"
 "%s"
 
-msgid "IPtables conntrack zones exhausted, iptables rules cannot be applied."
-msgstr ""
-"IPtables conntrack 구역이 소진되었습니다. iptables 규칙을 적용할 수 없습니"
-"다. "
-
 msgid "IPv6 Address Mode must be SLAAC or Stateless for Prefix Delegation."
 msgstr "IPv6 주소 모드는 접두부 위임에 대해 Stateless 또는 SLAAC여야 합니다. "
 
@@ -1077,40 +967,6 @@ msgstr ""
 
 msgid "Illegal IP version number"
 msgstr "올바르지 않은 IP 버전 번호"
-
-#, python-format
-msgid ""
-"Illegal prefix bounds: %(prefix_type)s=%(prefixlen)s, %(base_prefix_type)s="
-"%(base_prefixlen)s."
-msgstr ""
-"잘못된 접두부 바운드: %(prefix_type)s=%(prefixlen)s, %(base_prefix_type)s="
-"%(base_prefixlen)s."
-
-#, python-format
-msgid ""
-"Illegal subnetpool association: subnetpool %(subnetpool_id)s cannot "
-"associate with address scope %(address_scope_id)s because subnetpool "
-"ip_version is not %(ip_version)s."
-msgstr ""
-"잘못된 subnetpool 연관: subnetpool ip_version이 %(ip_version)s이(가) 아니므"
-"로 subnetpool %(subnetpool_id)s을(를) 주소 범위 %(address_scope_id)s과(와) 연"
-"관시킬 수 없습니다."
-
-#, python-format
-msgid ""
-"Illegal subnetpool association: subnetpool %(subnetpool_id)s cannot be "
-"associated with address scope %(address_scope_id)s."
-msgstr ""
-"잘못된 subnetpool 연관: subnetpool %(subnetpool_id)s을(를) 주소 범위 "
-"%(address_scope_id)s과(와) 연관시킬 수 없습니다."
-
-#, python-format
-msgid "Illegal subnetpool update : %(reason)s."
-msgstr "잘못된 subnetpool 업데이트 : %(reason)s."
-
-#, python-format
-msgid "Illegal update to prefixes: %(msg)s."
-msgstr "잘못된 접두부 업데이트: %(msg)s."
 
 msgid ""
 "In some cases the Neutron router is not present to provide the metadata IP "
@@ -1174,10 +1030,6 @@ msgid "Interval between two metering reports"
 msgstr "2개의 측정 보고서 간의 간격"
 
 #, python-format
-msgid "Invalid CIDR %(input)s given as IP prefix."
-msgstr "IP 접두부로 지정된 CIDR %(input)s이(가) 올바르지 않습니다."
-
-#, python-format
 msgid "Invalid Device %(dev_name)s: %(reason)s"
 msgstr "올바르지 않은 디바이스 %(dev_name)s: %(reason)s"
 
@@ -1214,14 +1066,6 @@ msgstr ""
 #, python-format
 msgid "Invalid mapping: '%s'"
 msgstr "올바르지 않은 맵핑: '%s'"
-
-#, python-format
-msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'."
-msgstr "올바르지 않은 네트워크 VLAN 범위: '%(vlan_range)s' - '%(error)s'."
-
-#, python-format
-msgid "Invalid network VXLAN port range: '%(vxlan_range)s'."
-msgstr "올바르지 않은 네트워크 VXLAN 포트 범위: '%(vxlan_range)s'."
 
 #, python-format
 msgid "Invalid pci slot %(pci_slot)s"
@@ -1337,9 +1181,6 @@ msgstr "IPv6 RA 구성 파일을 저장할 위치"
 msgid "Location to store child pid files"
 msgstr "하위 pid 파일을 저장할 위치"
 
-msgid "Location to store keepalived/conntrackd config files"
-msgstr "keepalived/conntrackd 구성 파일을 저장할 위치"
-
 msgid "Log agent heartbeats"
 msgstr "로그 에이전트 하트비트"
 
@@ -1364,10 +1205,6 @@ msgstr "l2 에이전트를 DVR 모드에서 실행하십시오."
 
 msgid "Malformed request body"
 msgstr "형식이 틀린 요청 본문"
-
-#, python-format
-msgid "Malformed request body: %(reason)s."
-msgstr "형식이 잘못된 요청 본문: %(reason)s."
 
 msgid "MaxRtrAdvInterval setting for radvd.conf"
 msgstr "radvd.conf의 MaxRtrAdvInterval 설정"
@@ -1447,10 +1284,6 @@ msgid "Multiple default providers for service %s"
 msgstr "%s 서비스에 대한 다중 기본 제공자 "
 
 #, python-format
-msgid "Multiple plugins for service %s were configured"
-msgstr "%s 서비스에 대한 다중 플러그인이 구성되었음"
-
-#, python-format
 msgid "Multiple providers specified for service %s"
 msgstr "%s 서비스에 대해 다중 제공자가 지정됨"
 
@@ -1520,12 +1353,6 @@ msgstr "네트워크 유형 값 '%s'이(가) 지원되지 않음"
 msgid "Network type value needed by the ML2 plugin"
 msgstr "ML2 플러그인에 네트워크 유형 값이 필요함"
 
-msgid "Network types supported by the agent (gre and/or vxlan)."
-msgstr "에이전트에서 지원하는 네트워크 유형(gre 및/또는 vxlan)입니다."
-
-msgid "Neutron Service Type Management"
-msgstr "Neutron 서비스 유형 관리"
-
 msgid "Neutron core_plugin not configured!"
 msgstr "Neutron core_plugin이 구성되지 않았습니다"
 
@@ -1538,10 +1365,6 @@ msgstr "IPv%s의 기본 subnetpool이 없음"
 
 msgid "No default subnetpools defined"
 msgstr "기본 subnetpools가 정의되지 않음"
-
-#, python-format
-msgid "No eligible l3 agent associated with external network %s found"
-msgstr "외부 네트워크 %s과(와) 연관된 적합한 l3 에이전트를 찾을 수 없음"
 
 #, python-format
 msgid "No more IP addresses available for subnet %(subnet_id)s."
@@ -1629,13 +1452,6 @@ msgid ""
 msgstr "테넌트당 허용된 보안 규칙 수입니다. 음수 값은 무제한을 의미합니다."
 
 msgid ""
-"Number of separate API worker processes for service. If not specified, the "
-"default is equal to the number of CPUs available for best performance."
-msgstr ""
-"서비스에 대한 별도의 API 작업자 프로세스 수입니다. 지정되지 않은 경우 기본값"
-"은 최적 성능을 위해 사용 가능한 CPU 수와 동일합니다. "
-
-msgid ""
 "Number of separate worker processes for metadata server (defaults to half of "
 "the number of CPUs)"
 msgstr ""
@@ -1665,10 +1481,6 @@ msgstr ""
 msgid "OVS vhost-user socket directory."
 msgstr "OVS vhost-사용자 소켓 디렉토리."
 
-#, python-format
-msgid "Object action %(action)s failed because: %(reason)s."
-msgstr "%(action)s 오브젝트 조치가 실패함. 이유: %(reason)s."
-
 msgid "Only admin can view or configure quota"
 msgstr "관리자만이 할당량을 보거나 구성할 수 있습니다. "
 
@@ -1683,17 +1495,6 @@ msgstr "한 번에 하나의 보안 프로파일에 대한 규칙만 업데이�
 
 msgid "Only remote_ip_prefix or remote_group_id may be provided."
 msgstr "remote_ip_prefix 또는 remote_group_id만이 제공될 수 있습니다. "
-
-msgid "OpenFlow interface to use."
-msgstr "사용할 OpenFlow 인터페이스입니다. "
-
-#, python-format
-msgid ""
-"Operation %(op)s is not supported for device_owner %(device_owner)s on port "
-"%(port_id)s."
-msgstr ""
-"다음 포트의 device_owner %(device_owner)s에 대해 조작 %(op)s이(가) 지원되지 "
-"않음. 포트: %(port_id)s."
 
 #, python-format
 msgid "Operation not supported on device %(dev_name)s"
@@ -1739,25 +1540,15 @@ msgstr "터널 브릿지에 대한 통합 브릿지에 있는 피어 패치 포�
 msgid "Peer patch port in tunnel bridge for integration bridge."
 msgstr "통합 브릿지에 대한 터널 브릿지에 있는 피어 패치 포트입니다."
 
-msgid "Per-tenant subnet pool prefix quota exceeded."
-msgstr "테넌트당 서브넷 풀 접두부 할당량이 초과되었습니다."
-
 msgid "Phase upgrade options do not accept revision specification"
 msgstr "단계 업그레이드 옵션이 개정 스펙을 승인하지 않음"
 
 msgid "Ping timeout"
 msgstr "Ping 제한시간 초과"
 
-msgid "Plugin does not support updating provider attributes"
-msgstr "플러그인이 제공자 속성 업데이트를 지원하지 않음"
-
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr "%(id)s 포트가 고정 IP %(address)s을(를) 갖지 않음"
-
-#, python-format
-msgid "Port %(port_id)s is already acquired by another DHCP agent"
-msgstr "다른 DHCP 에이전트에가 이미 포트 %(port_id)s을(를) 확보했습니다."
 
 #, python-format
 msgid ""
@@ -1766,15 +1557,6 @@ msgid ""
 msgstr ""
 "포트 %s에 다중 고정 IPv4 주소가 있습니다. 부동 IP를 지정하는 경우에는 특정 "
 "IPv4 주소를 제공해야 합니다. "
-
-msgid ""
-"Port to listen on for OpenFlow connections. Used only for 'native' driver."
-msgstr ""
-"OpenFlow 연결을 위해 청취할 포트입니다. '네이티브' 드라이버에만 사용됩니다. "
-
-#, python-format
-msgid "Prefix '%(prefix)s' not supported in IPv%(version)s pool."
-msgstr "IPv%(version)s 풀에서 접두부 '%(prefix)s'이(가) 지원되지 않습니다."
 
 msgid "Prefix Delegation can only be used with IPv6 subnets."
 msgstr "접두부 위임은 IPv6 서브넷에만 사용할 수 있습니다. "
@@ -1802,33 +1584,6 @@ msgstr "nova 메타데이터에 액세스하기 위한 프로토콜, http 또는
 #, python-format
 msgid "Provider name %(name)s is limited by %(len)s characters"
 msgstr "제공자 이름 %(name)s은(는) %(len)s자로 제한됨"
-
-#, python-format
-msgid "QoS Policy %(policy_id)s is used by %(object_type)s %(object_id)s."
-msgstr ""
-"QoS 정책 %(policy_id)s이(가) %(object_type)s %(object_id)s에 의해 사용됩니"
-"다. "
-
-#, python-format
-msgid ""
-"QoS binding for network %(net_id)s and policy %(policy_id)s could not be "
-"found."
-msgstr ""
-"네트워크 %(net_id)s 및 정책 %(policy_id)s의 QoS 바인딩을 찾을 수 없습니다."
-
-#, python-format
-msgid ""
-"QoS binding for port %(port_id)s and policy %(policy_id)s could not be found."
-msgstr ""
-"포트 %(port_id)s 및 정책 %(policy_id)s의 QoS 바인딩을 찾을 수 없습니다."
-
-#, python-format
-msgid "QoS policy %(policy_id)s could not be found."
-msgstr "QoS 정책 %(policy_id)s을(를) 찾을 수 없습니다."
-
-#, python-format
-msgid "QoS rule %(rule_id)s for policy %(policy_id)s could not be found."
-msgstr "정책 %(policy_id)s의 QoS 규칙 %(rule_id)s을(를) 찾을 수 없습니다."
 
 #, python-format
 msgid "RBAC policy of type %(object_type)s with ID %(id)s not found"
@@ -1859,29 +1614,6 @@ msgstr "범위는 netaddr.IPRange여야 함"
 
 msgid "Ranges must not overlap"
 msgstr "범위는 중첩되지 않아야 함"
-
-#, python-format
-msgid ""
-"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.EUI type."
-msgstr ""
-"유형 '%(type)s' 및 값 '%(value)s'을(를) 수신했습니다. netaddr.EUI 유형이 필요"
-"합니다."
-
-#, python-format
-msgid ""
-"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.IPAddress "
-"type."
-msgstr ""
-"유형 '%(type)s' 및 값 '%(value)s'을(를) 수신했습니다. netaddr.IPAddress 유형"
-"이 필요합니다."
-
-#, python-format
-msgid ""
-"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.IPNetwork "
-"type."
-msgstr ""
-"유형 '%(type)s' 및 값 '%(value)s'을(를) 수신했습니다. netaddr.IPNetwork 유형"
-"이 필요합니다."
 
 #, python-format
 msgid ""
@@ -1966,10 +1698,6 @@ msgid "Root permissions are required to drop privileges."
 msgstr "권한을 삭제하려면 루트 권한이 필요합니다."
 
 #, python-format
-msgid "Router '%(router_id)s' is not compatible with this agent."
-msgstr "라우터 '%(router_id)s'이(가) 이 에이전트와 호환되지 않습니다."
-
-#, python-format
 msgid "Router already has a port on subnet %s"
 msgstr "라우터가 이미 %s 서브넷에 포트를 갖고 있음"
 
@@ -2034,12 +1762,6 @@ msgstr ""
 "보안 그룹 규칙 프로토콜 %(protocol)s이(가) 지원되지 않습니다. 프로토콜 값 "
 "%(values)s 및 정수 표시 [0 - 255]만 지원됩니다. "
 
-msgid "Segments and provider values cannot both be set."
-msgstr "세그먼트 및 제공자 값을 모두 설정할 수 없습니다."
-
-msgid "Selects the Agent Type reported"
-msgstr "보고된 에이전트 유형을 선택함"
-
 msgid ""
 "Send notification to nova when port data (fixed_ips/floatingip) changes so "
 "nova can update its cache."
@@ -2079,13 +1801,6 @@ msgstr ""
 "GRE/VXLAN 터널을 전송하는 발신 IP 패킷에 DF(Don't Fragment) 비트를 설정하거"
 "나 설정 해제하십시오."
 
-msgid ""
-"Set or un-set the tunnel header checksum  on outgoing IP packet carrying GRE/"
-"VXLAN tunnel."
-msgstr ""
-"GRE/VXLAN 터널을 전달하는 발신 IP 패킷에서 터널 헤더 체크섬을 설정하거나 설"
-"정 해제하십시오. "
-
 msgid "Shared address scope can't be unshared"
 msgstr "공유 주소 범위는 공유 해제할 수 없음"
 
@@ -2099,21 +1814,11 @@ msgstr "하위 프로젝트 %s이(가) 설치되지 않았습니다. "
 msgid "Subnet for router interface must have a gateway IP"
 msgstr "라우터 인터페이스에 대한 서브넷은 게이트웨이 IP를 가져야 함"
 
-#, python-format
-msgid "Subnet pool %(subnetpool_id)s could not be found."
-msgstr "서브넷 풀 %(subnetpool_id)s을(를) 찾을 수 없습니다."
-
 msgid "Subnet pool has existing allocations"
 msgstr "서브넷 풀에 기존 할당이 있음"
 
 msgid "Subnet used for the l3 HA admin network."
 msgstr "l3 HA 관리 네트워크에 사용된 서브넷입니다."
-
-msgid ""
-"Subnets hosted on the same network must be allocated from the same subnet "
-"pool."
-msgstr ""
-"동일한 네트워크에서 호스트되는 서브넷을 동일한 서브넷 풀에서 할당해야 합니다."
 
 msgid ""
 "System-wide flag to determine the type of router that tenants can create. "
@@ -2147,27 +1852,6 @@ msgstr "관리 컨텍스트에서 지정하기 위해 연결할 테넌트 ID"
 msgid "Tenant name for connecting to designate in admin context"
 msgstr "관리 컨텍스트에서 지정하기 위해 연결할 테넌트 이름"
 
-msgid "Tenant network creation is not enabled."
-msgstr "테넌트 네트워크 작성은 사용되지 않습니다. "
-
-msgid "Tenant-id was missing from quota request."
-msgstr "테넌트 ID가 할당량 요청에서 누락되었습니다. "
-
-msgid ""
-"The 'gateway_external_network_id' option must be configured for this agent "
-"as Neutron has more than one external network."
-msgstr ""
-"'gateway_external_network_id' 옵션은 Neutron이 두 개 이상의 외부 네트워크를 "
-"가지므로 이 에이전트에 대해 구성되어야 합니다. "
-
-msgid ""
-"The DHCP agent will resync its state with Neutron to recover from any "
-"transient notification or RPC errors. The interval is number of seconds "
-"between attempts."
-msgstr ""
-"DHCP 에이전트가 임시 알림 또는 RPC 오류로부터 복구하기 위해 해당 상태를 "
-"Neutron과 다시 동기화합니다. 간격은 시도 사이의 초 수입니다."
-
 msgid ""
 "The DHCP server can assist with providing metadata support on isolated "
 "networks. Setting this value to True will cause the DHCP server to append "
@@ -2193,16 +1877,6 @@ msgstr "다음 원인으로 인해 주소 할당 요청을 충족할 수 없음:
 
 msgid "The advertisement interval in seconds"
 msgstr "광고 간격(초)"
-
-#, python-format
-msgid "The allocation pool %(pool)s is not valid."
-msgstr "할당 풀 %(pool)s이(가) 올바르지 않습니다. "
-
-#, python-format
-msgid ""
-"The allocation pool %(pool)s spans beyond the subnet cidr %(subnet_cidr)s."
-msgstr ""
-"할당 풀 %(pool)s이(가) 서브넷 cidr %(subnet_cidr)s 이상으로 확장합니다. "
 
 msgid ""
 "The base MAC address Neutron will use for VIFs. The first 3 octets will "
@@ -2243,38 +1917,12 @@ msgstr ""
 "PTR 구역을 작성할 때 사용할 이메일 주소입니다. 지정되지 않은 경우 이메일 주소"
 "는 admin@<dns_domain>입니다."
 
-#, python-format
-msgid ""
-"The following device_id %(device_id)s is not owned by your tenant or matches "
-"another tenants router."
-msgstr ""
-"device_id %(device_id)s이(가) 사용자 테넌트의 소유가 아니거나 다른 테넌트 라"
-"우터와 일치합니다."
-
-msgid "The interface for interacting with the OVSDB"
-msgstr "OVSDB와 상호작용하는 데 필요한 인터페이스"
-
 msgid ""
 "The maximum number of items returned in a single response, value was "
 "'infinite' or negative integer means no limit"
 msgstr ""
 "단일 응답으로 최대 항목 수가 리턴되었습니다. 값이 'infinite' 또는 음수인 경"
 "우 제한이 없다는 의미입니다. "
-
-#, python-format
-msgid ""
-"The network %(network_id)s has been already hosted by the DHCP Agent "
-"%(agent_id)s."
-msgstr ""
-"DHCP 에이전트 %(agent_id)s에서 %(network_id)s 네트워크를 이미 호스트하고 있습"
-"니다. "
-
-#, python-format
-msgid ""
-"The network %(network_id)s is not hosted by the DHCP agent %(agent_id)s."
-msgstr ""
-"DHCP 에이전트 %(agent_id)s에서 %(network_id)s 네트워크를 호스트하지 않습니"
-"다. "
 
 msgid ""
 "The network type to use when creating the HA network for an HA router. By "
@@ -2363,27 +2011,6 @@ msgstr ""
 "이 필요합니다."
 
 msgid ""
-"Timeout in seconds to wait for a single OpenFlow request. Used only for "
-"'native' driver."
-msgstr ""
-"단일 OpenFlow 요청을 기다리는 제한시간(초)입니다. '네이티브' 드라이버에만 사"
-"용됩니다. "
-
-msgid ""
-"Timeout in seconds to wait for the local switch connecting the controller. "
-"Used only for 'native' driver."
-msgstr ""
-"제어기에 연결되는 로컬 스위치를 기다리는 제한시간(초)입니다. '네이티브' 드라"
-"이버에만 사용됩니다. "
-
-msgid ""
-"Too long prefix provided. New name would exceed given length for an "
-"interface name."
-msgstr ""
-"너무 긴 접두어가 제공되었습니다. 새 이름이 인터페이스 이름에 지정된 길이를 초"
-"과합니다."
-
-msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
 "ports created by Neutron on integration and external network bridges."
 msgstr ""
@@ -2414,69 +2041,15 @@ msgid "Unable to access %s"
 msgstr "%s에 액세스할 수 없음"
 
 #, python-format
-msgid ""
-"Unable to allocate subnet with prefix length %(prefixlen)s, maximum allowed "
-"prefix is %(max_prefixlen)s."
-msgstr ""
-"접두부 길이가 %(prefixlen)s인 서브넷을 할당할 수 없습니다. 허용되는 최대 접두"
-"부 길이는 %(max_prefixlen)s입니다. "
-
-#, python-format
-msgid ""
-"Unable to allocate subnet with prefix length %(prefixlen)s, minimum allowed "
-"prefix is %(min_prefixlen)s."
-msgstr ""
-"접두부 길이가 %(prefixlen)s인 서브넷을 할당할 수 없습니다. 허용되는 최소 접두"
-"부 길이는 %(min_prefixlen)s입니다. "
-
-#, python-format
 msgid "Unable to calculate %(address_type)s address because of:%(reason)s"
 msgstr "다음 원인으로 인해 %(address_type)s 주소를 계산할 수 없음: %(reason)s"
-
-#, python-format
-msgid ""
-"Unable to complete operation for %(subnet_id)s. The number of DNS "
-"nameservers exceeds the limit %(quota)s."
-msgstr ""
-"%(subnet_id)s에 대한 조작을 완료할 수 없습니다. DNS 네임서버 수가 %(quota)s "
-"한계를 초과했습니다. "
-
-#, python-format
-msgid ""
-"Unable to complete operation for %(subnet_id)s. The number of host routes "
-"exceeds the limit %(quota)s."
-msgstr ""
-"%(subnet_id)s에 대한 조작을 완료할 수 없습니다. 호스트 라우트 수가 %(quota)s "
-"한계를 초과했습니다. "
 
 #, python-format
 msgid "Unable to convert value in %s"
 msgstr "%s의 값을 변환할 수 없음"
 
-msgid "Unable to create the Agent Gateway Port"
-msgstr "에이전트 게이트웨이 포트를 작성할 수 없음"
-
 msgid "Unable to create the SNAT Interface Port"
 msgstr "SNAT 인터페이스 포트를 작성할 수 없음"
-
-#, python-format
-msgid ""
-"Unable to create the flat network. Physical network %(physical_network)s is "
-"in use."
-msgstr ""
-"일반 네트워크를 작성할 수 없습니다. 실제 네트워크 %(physical_network)s이(가) "
-"사용 중입니다. "
-
-msgid ""
-"Unable to create the network. No available network found in maximum allowed "
-"attempts."
-msgstr ""
-"네트워크를 작성할 수 없습니다. 허용되는 최대 시도 수만큼 시도한 후 사용 가능"
-"한 네트워크를 찾을 수 없습니다."
-
-#, python-format
-msgid "Unable to delete subnet pool: %(reason)s."
-msgstr "서브넷 풀을 삭제할 수 없음: %(reason)s."
 
 #, python-format
 msgid "Unable to determine mac address for %s"
@@ -2495,10 +2068,6 @@ msgid "Unable to find resource name in %s"
 msgstr "%s에서 자원 이름을 찾을 수 없음"
 
 #, python-format
-msgid "Unable to generate unique mac on network %(net_id)s."
-msgstr "%(net_id)s 네트워크에 고유 MAC을 생성할 수 없습니다. "
-
-#, python-format
 msgid ""
 "Unable to identify a target field from:%s. Match should be in the form "
 "%%(<field_name>)s"
@@ -2511,14 +2080,6 @@ msgstr "외부 연결을 제공할 수 없음"
 
 msgid "Unable to provide tenant private network"
 msgstr "테넌트 개인 네트워크를 제공할 수 없음"
-
-#, python-format
-msgid ""
-"Unable to reconfigure sharing settings for network %(network)s. Multiple "
-"tenants are using it."
-msgstr ""
-"%(network)s 네트워크에 대한 공유 설정을 재구성할 수 없습니다. 여러 개의 테넌"
-"트가 이를 사용 중입니다. "
 
 #, python-format
 msgid ""
@@ -2563,19 +2124,11 @@ msgstr "알 수 없는 체인: %r"
 msgid "Unknown network type %(network_type)s."
 msgstr "알 수 없는 네트워크 유형 %(network_type)s."
 
-#, python-format
-msgid "Unknown quota resources %(unknown)s."
-msgstr "알 수 없는 할당량 자원 %(unknown)s."
-
 msgid "Unmapped error"
 msgstr "맵핑되지 않은 오류"
 
 msgid "Unrecognized action"
 msgstr "인식되지 않는 조치"
-
-#, python-format
-msgid "Unrecognized attribute(s) '%s'"
-msgstr "인식되지 않는 속성 '%s'"
 
 msgid "Unrecognized field"
 msgstr "인식되지 않는 필드"
@@ -2586,10 +2139,6 @@ msgstr "지원되지 않는 Content-Type"
 #, python-format
 msgid "Unsupported network type %(net_type)s."
 msgstr "지원되지 않는 네트워크 유형 %(net_type)s입니다."
-
-#, python-format
-msgid "Unsupported port state: %(port_state)s."
-msgstr "지원되지 않는 포트 상태: %(port_state)s"
 
 msgid "Unsupported request type"
 msgstr "지원되지 않는 요청 유형"
@@ -2653,9 +2202,6 @@ msgstr "VRRP 인증 비밀번호"
 msgid "VRRP authentication type"
 msgstr "VRRP 인증 유형"
 
-msgid "VXLAN network unsupported."
-msgstr "VXLAN 네트워크가 지원되지 않습니다."
-
 msgid ""
 "Value of host kernel tick rate (hz) for calculating minimum burst value in "
 "bandwidth limit rules for a port with QoS. See kernel configuration file for "
@@ -2671,18 +2217,6 @@ msgid ""
 msgstr ""
 "QoS가 있는 포트의 큐 크기를 계산하기 위한 지연 시간 값(ms)입니다. 자세한 정보"
 "는 tc-tbf 매뉴얼을 참조하십시오."
-
-msgid ""
-"When external_network_bridge is set, each L3 agent can be associated with no "
-"more than one external network. This value should be set to the UUID of that "
-"external network. To allow L3 agent support multiple external networks, both "
-"the external_network_bridge and gateway_external_network_id must be left "
-"empty."
-msgstr ""
-"external_network_bridge가 설정되면 각 L3 에이전트가 두 개 이상의 외부 네트워"
-"크와 연결될 수 없습니다. 이 값은 외부 네트워크의 UUID로 설정되어야 합니다. "
-"L3 에이전트에서 여러 외부 네트워크를 지원할 수 있으려면 "
-"external_network_bridge와 gateway_external_network_id가 비어 있어야 합니다."
 
 msgid ""
 "When proxying metadata requests, Neutron signs the Instance-ID header with a "
@@ -2766,11 +2300,6 @@ msgstr "%(reason)s(으)로 인해 %(event)s을(를) 수행할 수 없음"
 
 msgid "cidr and prefixlen must not be supplied together"
 msgstr "cidr 및 prefixlen을 함께 입력하지 않아야 함"
-
-#, python-format
-msgid "dhcp_agents_per_network must be >= 1. '%s' is invalid."
-msgstr ""
-"dhcp_agents_per_network는 1 이상이어야 합니다. '%s'은(는) 올바르지 않습니다. "
 
 msgid "dns_domain cannot be specified without a dns_name"
 msgstr "dns_name 없이 dns_domain을 지정할 수 없음"
