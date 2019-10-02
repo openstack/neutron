@@ -518,15 +518,24 @@ def make_serializable(value):
     This function converts 'netlink.nla_slot' object (key, value) in a list
     of two elements.
     """
+    def _ensure_string(value):
+        # NOTE(ralonsoh): once support for PY2 is dropped, the str()
+        # conversion will be no needed and six.binary_type --> bytes.
+        return (str(value.decode('utf-8'))
+                if isinstance(value, six.binary_type) else value)
+
     if isinstance(value, list):
         return [make_serializable(item) for item in value]
-    elif isinstance(value, dict):
-        return {key: make_serializable(data) for key, data in value.items()}
     elif isinstance(value, netlink.nla_slot):
         return [value[0], make_serializable(value[1])]
+    elif isinstance(value, netlink.nla_base) and six.PY3:
+        return make_serializable(value.dump())
+    elif isinstance(value, dict):
+        return {_ensure_string(key): make_serializable(data)
+                for key, data in value.items()}
     elif isinstance(value, tuple):
         return tuple(make_serializable(item) for item in value)
-    return value
+    return _ensure_string(value)
 
 
 @_sync
@@ -582,8 +591,9 @@ def list_ip_rules(namespace, ip_version, match=None, **kwargs):
     """List all IP rules"""
     try:
         with get_iproute(namespace) as ip:
-            rules = ip.get_rules(family=_IP_VERSION_FAMILY_MAP[ip_version],
-                                 match=match, **kwargs)
+            rules = make_serializable(ip.get_rules(
+                family=_IP_VERSION_FAMILY_MAP[ip_version],
+                match=match, **kwargs))
             for rule in rules:
                 rule['attrs'] = {
                     key: value for key, value
