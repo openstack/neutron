@@ -11,11 +11,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2019-09-26 18:00+0000\n"
+"POT-Creation-Date: 2019-09-27 21:00+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2019-09-26 09:24+0000\n"
+"PO-Revision-Date: 2019-10-01 06:21+0000\n"
 "Last-Translator: Andreas Jaeger <jaegerandi@gmail.com>\n"
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -335,6 +335,13 @@ msgid "Cannot allocate requested subnet from the available set of prefixes"
 msgstr ""
 "Das angeforderte Teilnetz kann nicht aus der verfügbaren Gruppe mit Präfixen "
 "zugeordnet werden"
+
+msgid ""
+"Cannot change HA attribute of active routers. Please set router "
+"admin_state_up to False prior to upgrade"
+msgstr ""
+"HA-Attribut der aktiven Router kann nicht geändert werden. Setzen Sie die "
+"Routereigenschaft 'admin_state_up' vor der Aktualisierung auf 'False'"
 
 msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr ""
@@ -1146,6 +1153,14 @@ msgid "Interval between two metering reports"
 msgstr "Intervall zwischen zwei Messungsberichten"
 
 #, python-format
+msgid ""
+"Invalid CIDR %s for IPv6 address mode. OpenStack uses the EUI-64 address "
+"format, which requires the prefix to be /64"
+msgstr ""
+"Ungültiges CIDR %s für IPv6-Adressenmodus. OpenStack verwendet das EUI-64-"
+"Adressformat, für das das Präfix /64 lauten muss"
+
+#, python-format
 msgid "Invalid Device %(dev_name)s: %(reason)s"
 msgstr "Ungültige Einheit %(dev_name)s: %(reason)s"
 
@@ -1268,6 +1283,10 @@ msgstr "L3-Agentenfehler bei der NAT-Konfiguration für Floating IPs."
 msgid "L3 agent failure to setup floating IPs"
 msgstr "L3-Agentenfehler bei der Konfiguration von Floating IPs."
 
+#, python-format
+msgid "Limit must be an integer 0 or greater and not '%s'"
+msgstr "Limit muss eine Ganzzahl 0 oder größer sein und nicht '%s'"
+
 msgid "Limit number of leases to prevent a denial-of-service."
 msgstr "Anzahl von Leases begrenzen, um eine Dienstverweigerung zu verhindern."
 
@@ -1319,6 +1338,9 @@ msgstr "Position zum Speichern von IPv6-RA-Konfigurationsdateien"
 
 msgid "Location to store child pid files"
 msgstr "Position zum Speichern von untergeordneten PID-Dateien"
+
+msgid "Location to store keepalived config files"
+msgstr "Position zum Speichern von keepalived-Konfigurationsdateien"
 
 msgid "Log agent heartbeats"
 msgstr "Überwachungssignale von Agenten protokollieren"
@@ -1387,6 +1409,11 @@ msgstr ""
 msgid "Metering driver"
 msgstr "Messungstreiber"
 
+#, python-format
+msgid "Method %s cannot be called within a transaction."
+msgstr ""
+"Die Methode %s kann nicht aus einer Transaktion heraus aufgerufen werden."
+
 msgid "MinRtrAdvInterval setting for radvd.conf"
 msgstr "MinRtrAdvInterval-Einstellung für radvd.conf"
 
@@ -1452,6 +1479,13 @@ msgid ""
 "Name of nova region to use. Useful if keystone manages more than one region."
 msgstr ""
 "Name der zu verwendenden Nova-Region. Nützlich, wenn Keystone mehrere "
+"Regionen verwaltet. "
+
+msgid ""
+"Name of placement region to use. Useful if keystone manages more than one "
+"region."
+msgstr ""
+"Name der zu verwendenden Placement-Region. Nützlich, wenn Keystone mehrere "
 "Regionen verwaltet. "
 
 msgid "Namespace of the router"
@@ -1666,6 +1700,10 @@ msgstr ""
 
 msgid "OVS vhost-user socket directory."
 msgstr "OVS-vhost-user-Socketverzeichnis."
+
+#, python-format
+msgid "Object '%s' contains invalid data"
+msgstr "Objekt '%s' enthält ungültige Daten"
 
 msgid "Only admin can view or configure quota"
 msgstr "Nur Admins können Kontingente anzeigen oder konfigurieren"
@@ -2016,6 +2054,13 @@ msgstr ""
 "DF-Bit (Don't Fragment) auf GRE/VXLAN-Tunnel für abgehende IP-Pakete "
 "festlegen oder die Festlegung aufheben."
 
+msgid ""
+"Set or un-set the tunnel header checksum on outgoing IP packet carrying GRE/"
+"VXLAN tunnel."
+msgstr ""
+"Kontrollsumme für Tunnelheader auf GRE/VXLAN-Tunnel für abgehende IP-Pakete "
+"festlegen oder die Festlegung aufheben."
+
 msgid "Shared address scope can't be unshared"
 msgstr ""
 "Freigabe des gemeinsam genutzten Adressbereichs kann nicht aufgehoben werden"
@@ -2143,6 +2188,9 @@ msgstr ""
 "Die beim Erstellen PTR-Zoenen zu verwendende E-Mail-Adresse. Ohne Angabe "
 "einer E-Mail-Adresse wird die E-Mail-Adresse admin@<dns_domain> verwendet."
 
+msgid "The host IP to bind to."
+msgstr "Die Host-IP, an die gebunden werden soll."
+
 msgid ""
 "The maximum number of items returned in a single response, value was "
 "'infinite' or negative integer means no limit"
@@ -2248,6 +2296,24 @@ msgstr ""
 "Richtlinie abhängig sind."
 
 msgid ""
+"Timeout in seconds for ovsdb commands. If the timeout expires, ovsdb "
+"commands will fail with ALARMCLOCK error."
+msgstr ""
+"Zeitlimit in Sekunden für ovsdb-Befehle. Wenn das Zeitlimit abgelaufen ist, "
+"schlagen ovsdb-Befehle mit einem Fehler vom Typ ALARMCLOCK fehl."
+
+msgid "Timeout in seconds to wait for a single OpenFlow request."
+msgstr ""
+"Zeitlimit in Sekunden für die Wartezeit auf eine einzelne OpenFlow-"
+"Anforderung."
+
+msgid ""
+"Timeout in seconds to wait for the local switch connecting the controller."
+msgstr ""
+"Zeitlimit in Sekunden für die Wartezeit, in der der lokale Switch die "
+"Verbindung mit dem Controller hergestellt haben muss."
+
+msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
 "ports created by Neutron on integration and external network bridges."
 msgstr ""
@@ -2267,6 +2333,14 @@ msgid ""
 msgstr ""
 "Typ des zu verwendenden Nova-Endpunkts. Dieser Endpunkt wird im Keystone-"
 "Katalog gesucht und muss vom Typ 'public', 'internal' oder 'admin' sein."
+
+msgid ""
+"Type of the placement endpoint to use.  This endpoint will be looked up in "
+"the keystone catalog and should be one of public, internal or admin."
+msgstr ""
+"Typ des zu verwendenden Placement-Endpunkts. Dieser Endpunkt wird im "
+"Keystone-Katalog gesucht und muss vom Typ 'public', 'internal' oder 'admin' "
+"sein."
 
 msgid "URL for connecting to designate"
 msgstr "URL zum Herstellen einer Verbindung zu Designate. "
@@ -2627,6 +2701,10 @@ msgstr "network_type-Wert '%s' wird nicht unterstützt"
 
 msgid "new subnet"
 msgstr "Neues Teilnetz"
+
+#, python-format
+msgid "physical_network '%s' unknown for VLAN provider network"
+msgstr "physical_network '%s' unbekannt für VLAN-Provider-Netz"
 
 #, python-format
 msgid "physical_network '%s' unknown for flat provider network"
