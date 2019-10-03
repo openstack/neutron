@@ -1,5 +1,5 @@
 function configure_dns_extension {
-    neutron_ml2_extension_driver_add "subnet_dns_publish_fixed_ip"
+    neutron_ml2_extension_driver_add "dns_domain_keywords"
 }
 function configure_dns_integration {
     iniset $NEUTRON_CONF DEFAULT external_dns_driver designate

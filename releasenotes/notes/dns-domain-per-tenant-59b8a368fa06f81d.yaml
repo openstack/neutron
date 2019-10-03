@@ -1,0 +1,15 @@
+---
+features:
+  - |
+    Special keywords ``<project_id>``, ``<project_name>``, ``<user_name>``
+    and ``<user_id>`` can be used in the network's, port's and floating IP's
+    ``dns_domain`` attribute.
+    Those special keywords will be replaced by the corresponding data from the
+    request context.
+    With that cloud admin can define dns_domain for shared network and ports
+    which belongs to the other projects in the way that each project can use
+    separate DNS zones which needs to be pre-created by users.
+    To enable this feature ``dns_domain_keywords`` ML2 plugin extension has to
+    be enabled in the Neutron config.
+    Enabling multiple dns_integration extensions at the same time leads to an
+    error.
