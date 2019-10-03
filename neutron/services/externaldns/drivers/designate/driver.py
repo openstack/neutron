@@ -57,7 +57,8 @@ def get_clients(context):
             password=CONF.designate.admin_password,
             tenant_name=CONF.designate.admin_tenant_name,
             tenant_id=CONF.designate.admin_tenant_id)
-    admin_client = d_client.Client(session=_SESSION, auth=admin_auth)
+    admin_client = d_client.Client(session=_SESSION, auth=admin_auth,
+                                   endpoint_override=CONF.designate.url)
     return client, admin_client
 
 
