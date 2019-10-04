@@ -65,7 +65,6 @@ keepalived_state_change: CommandFilter, neutron-keepalived-state-change, root
 # TODO(mlavalle) These kill filters will be updated once we come up with a
 # mechanism to kill using the name of the script being executed by Python
 kill_keepalived_monitor_py: KillFilter, root, python, -15
-kill_keepalived_monitor_py27: KillFilter, root, python2.7, -15
 kill_keepalived_monitor_py3: KillFilter, root, python3, -15
 kill_keepalived_monitor_py35: KillFilter, root, python3.5, -15
 kill_keepalived_monitor_py36: KillFilter, root, python3.6, -15

@@ -7,7 +7,6 @@
       - neutron-tempest-plugin-jobs
       - openstack-cover-jobs
       - openstack-lower-constraints-jobs
-      - openstack-python-jobs
       - openstack-python3-ussuri-jobs
       - publish-openstack-docs-pti
       - periodic-stable-jobs
@@ -17,8 +16,6 @@
     check:
       jobs:
         - neutron-functional
-        # TODO(ralonsoh): until the bug 1848944 is fixed or PY2 removed
-        #- neutron-functional-python27:
         - neutron-fullstack
         - neutron-rally-task
         - neutron-tempest-dvr
@@ -68,8 +65,6 @@
     gate:
       jobs:
         - neutron-functional
-        # TODO(ralonsoh): until the bug 1848944 is fixed or PY2 removed
-        #- neutron-functional-python27:
         - neutron-fullstack
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
@@ -138,15 +133,6 @@
         # /opt/stack/logs is default logs directory defined in neutron's
         # tox.ini file
         '{{ devstack_base_dir }}/logs/dsvm-functional-logs': logs
-
-- job:
-    name: neutron-functional-python27
-    parent: neutron-functional
-    description: Run neutron functional tests with Python 2.7
-    vars:
-      devstack_localrc:
-        USE_PYTHON3: false
-      tox_envlist: dsvm-functional-python27
 
 - job:
     name: neutron-fullstack

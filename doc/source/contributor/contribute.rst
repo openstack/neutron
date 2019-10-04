@@ -315,7 +315,7 @@ be the bare minimum you have to complete in order to get you off the ground.
   <http://docs.openstack.org/infra/manual/creators.html#update-the-gerrit-group-members>`_.
 * Fix, fix, fix: at this point you have an external base to work on. You can
   develop against the new opendev.org project, the same way you work with
-  any other OpenStack project: you have pep8, docs, and python27 CI jobs that
+  any other OpenStack project: you have pep8, docs, and python CI jobs that
   validate your patches when posted to Gerrit. For instance, one thing you
   would need to do is to define an entry point for your plugin or driver in
   your own setup.cfg similarly as to how it is done in the `setup.cfg for ODL
