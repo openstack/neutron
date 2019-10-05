@@ -13,12 +13,10 @@
 import random
 
 import mock
-from neutron_lib import constants as n_const
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 from oslo_versionedobjects import exception
-import testtools
 
 from neutron.objects.db import api as db_api
 from neutron.objects import network as net_obj
@@ -453,110 +451,10 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         obj.detach_port(self._port['id'])
         obj.delete()
 
-    @staticmethod
-    def _policy_through_version(obj, version):
-        primitive = obj.obj_to_primitive(target_version=version)
-        return policy.QosPolicy.clean_obj_from_primitive(primitive)
-
-    def test_object_version(self):
-        policy_obj, rule_objs = self._create_test_policy_with_rules(
-            RULE_OBJ_CLS.keys(), reload_rules=True)
-
-        policy_obj_v1_5 = self._policy_through_version(
-            policy_obj, policy.QosPolicy.VERSION)
-
-        for rule_obj in rule_objs:
-            self.assertIn(rule_obj, policy_obj_v1_5.rules)
-
-    def test_object_version_degradation_1_3_to_1_2_null_description(self):
+    def test_object_version_degradation_less_than_1_8(self):
         policy_obj = self._create_test_policy()
-        policy_obj.description = None
-        with testtools.ExpectedException(exception.IncompatibleObjectVersion):
-            policy_obj.obj_to_primitive('1.2')
-
-    def test_object_version_degradation_to_1_0(self):
-        # NOTE(mangelajo): we should not check .VERSION, since that's the
-        #                  local version on the class definition
-        policy_obj, rule_objs = self._create_test_policy_with_rules(
-            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
-             qos_consts.RULE_TYPE_DSCP_MARKING,
-             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH],
-            reload_rules=True, bwlimit_direction=n_const.EGRESS_DIRECTION)
-
-        policy_obj_v1_0 = self._policy_through_version(policy_obj, '1.0')
-
-        self.assertIn(rule_objs[0], policy_obj_v1_0.rules)
-        self.assertNotIn(rule_objs[1], policy_obj_v1_0.rules)
-        self.assertNotIn(rule_objs[2], policy_obj_v1_0.rules)
-
-    def test_object_version_degradation_1_2_to_1_1(self):
-        # NOTE(mangelajo): we should not check .VERSION, since that's the
-        #                  local version on the class definition
-        policy_obj, rule_objs = self._create_test_policy_with_rules(
-            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
-             qos_consts.RULE_TYPE_DSCP_MARKING,
-             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH],
-            reload_rules=True, bwlimit_direction=n_const.EGRESS_DIRECTION)
-
-        policy_obj_v1_1 = self._policy_through_version(policy_obj, '1.1')
-
-        self.assertIn(rule_objs[0], policy_obj_v1_1.rules)
-        self.assertIn(rule_objs[1], policy_obj_v1_1.rules)
-        self.assertNotIn(rule_objs[2], policy_obj_v1_1.rules)
-
-    def test_object_version_degradation_1_3_to_1_2(self):
-        # NOTE(mangelajo): we should not check .VERSION, since that's the
-        #                  local version on the class definition
-        policy_obj, rule_objs = self._create_test_policy_with_rules(
-            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
-             qos_consts.RULE_TYPE_DSCP_MARKING,
-             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH],
-            reload_rules=True, bwlimit_direction=n_const.EGRESS_DIRECTION)
-
-        policy_obj_v1_2 = self._policy_through_version(policy_obj, '1.2')
-
-        self.assertIn(rule_objs[0], policy_obj_v1_2.rules)
-        self.assertIn(rule_objs[1], policy_obj_v1_2.rules)
-        self.assertIn(rule_objs[2], policy_obj_v1_2.rules)
-
-    def test_v1_4_to_v1_3_drops_project_id(self):
-        policy_new = self._create_test_policy()
-
-        policy_v1_3 = policy_new.obj_to_primitive(target_version='1.3')
-        self.assertNotIn('project_id', policy_v1_3['versioned_object.data'])
-        self.assertIn('tenant_id', policy_v1_3['versioned_object.data'])
-
-    def test_object_version_degradation_1_5_to_1_4_ingress_direction(self):
-        policy_obj, rule_objs = self._create_test_policy_with_rules(
-            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
-             qos_consts.RULE_TYPE_DSCP_MARKING,
-             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH],
-            reload_rules=True, bwlimit_direction=n_const.INGRESS_DIRECTION)
-
-        policy_obj_v1_4 = self._policy_through_version(policy_obj, '1.4')
-
-        self.assertNotIn(rule_objs[0], policy_obj_v1_4.rules)
-        self.assertIn(rule_objs[1], policy_obj_v1_4.rules)
-        self.assertIn(rule_objs[2], policy_obj_v1_4.rules)
-
-    def test_object_version_degradation_1_5_to_1_4_egress_direction(self):
-        policy_obj, rule_objs = self._create_test_policy_with_rules(
-            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
-             qos_consts.RULE_TYPE_DSCP_MARKING,
-             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH],
-            reload_rules=True, bwlimit_direction=n_const.EGRESS_DIRECTION)
-
-        policy_obj_v1_4 = self._policy_through_version(policy_obj, '1.4')
-
-        self.assertIn(rule_objs[0], policy_obj_v1_4.rules)
-        self.assertIn(rule_objs[1], policy_obj_v1_4.rules)
-        self.assertIn(rule_objs[2], policy_obj_v1_4.rules)
-
-    def test_v1_6_to_v1_5_drops_is_default(self):
-        policy_new = self._create_test_policy()
-
-        policy_v1_5 = policy_new.obj_to_primitive(target_version='1.5')
-        self.assertNotIn('is_default', policy_v1_5['versioned_object.data'])
+        self.assertRaises(exception.IncompatibleObjectVersion,
+                          policy_obj.obj_to_primitive, '1.7')
 
     @mock.patch.object(policy.QosPolicy, 'unset_default')
     def test_filter_by_shared(self, *mocks):
