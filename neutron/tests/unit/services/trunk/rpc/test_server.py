@@ -21,6 +21,7 @@ from sqlalchemy.orm import exc
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.db import api as db_api
 from neutron.objects import trunk as trunk_obj
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.services.trunk import constants
@@ -186,7 +187,9 @@ class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
                 test_obj.update_subport_bindings,
                 self.context,
                 subports=subports)
-            self.assertEqual(3, mock_trunk_obj.update.call_count)
+            self.assertEqual(
+                db_api.MAX_RETRIES,
+                mock_trunk_obj.update.call_count)
 
     def test_udate_subport_bindings_noretryerror(self):
         with self.port() as _parent_port:
