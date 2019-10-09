@@ -503,7 +503,8 @@ class TestOvsNeutronAgent(object):
                 [{'ofport': 2,
                   'external_ids': {'iface-id': port_id,
                                    'attached-mac': 'fa:16:3e:f6:1b:fb'},
-                  'name': 'qvof6f104bd-37'}]
+                  'name': 'qvof6f104bd-37'}],
+            'modified': []
         }
         registered_ports = {port_id}
         expected_ancillary = dict(current=set(), added=set(), removed=set())
@@ -529,7 +530,7 @@ class TestOvsNeutronAgent(object):
                                             expected_ancillary)
 
     def test_process_ports_events_returns_current_for_unchanged_ports(self):
-        events = {'added': [], 'removed': []}
+        events = {'added': [], 'removed': [], 'modified': []}
         registered_ports = {1, 3}
         ancillary_ports = {2, 5}
         expected_ports = {'current': registered_ports, 'added': set(),
@@ -541,7 +542,7 @@ class TestOvsNeutronAgent(object):
                                         expected_ancillary)
 
     def test_process_port_events_no_vif_changes_return_updated_port_only(self):
-        events = {'added': [], 'removed': []}
+        events = {'added': [], 'removed': [], 'modified': []}
         registered_ports = {1, 2, 3}
         updated_ports = {2}
         expected_ports = dict(current=registered_ports, updated={2},
@@ -552,7 +553,7 @@ class TestOvsNeutronAgent(object):
                                         expected_ancillary, updated_ports)
 
     def test_process_port_events_ignores_removed_port_if_never_added(self):
-        events = {'added': [],
+        events = {'added': [], 'modified': [],
                   'removed': [{'name': 'port2', 'ofport': 2,
                                'external_ids': {'attached-mac': 'test-mac'}}]}
         registered_ports = {1}
@@ -578,7 +579,7 @@ class TestOvsNeutronAgent(object):
     def test_process_port_events_port_not_ready_yet(self):
         events = {'added': [{'name': 'port5', 'ofport': [],
                   'external_ids': {'attached-mac': 'test-mac'}}],
-                  'removed': []}
+                  'removed': [], 'modified': []}
         old_devices_not_ready = {'port4'}
         registered_ports = set([1, 2, 3])
         expected_ports = dict(current=set([1, 2, 3, 4]),
@@ -612,7 +613,8 @@ class TestOvsNeutronAgent(object):
                   'removed': [{'name': 'port2', 'ofport': 2,
                                'external_ids': {'attached-mac': 'test-mac'}},
                               {'name': 'qg-port1', 'ofport': 5,
-                               'external_ids': {'attached-mac': 'test-mac'}}]}
+                               'external_ids': {'attached-mac': 'test-mac'}}],
+                  'modified': []}
         registered_ports = {1, 2, 4}
         ancillary_ports = {5, 8}
         expected_ports = dict(current={1, 3, 4}, added={3}, removed={2})
@@ -2210,10 +2212,12 @@ class TestOvsNeutronAgent(object):
                 pass
 
             process_p_events.assert_has_calls([
-                mock.call({'removed': [], 'added': []}, set(), set(), set(),
+                mock.call({'removed': [], 'added': [], 'modified': []},
+                          set(), set(), set(),
                           failed_devices, failed_ancillary_devices,
                           set()),
-                mock.call({'removed': [], 'added': []}, set(['tap0']), set(),
+                mock.call({'removed': [], 'added': [], 'modified': []},
+                          set(['tap0']), set(),
                           set(), failed_devices, failed_ancillary_devices,
                           set())
             ])

@@ -206,7 +206,8 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase, OVSOFControllerHelper):
                     # because it keeps finding not ready ports that are created
                     # by other tests)
                     filtered_ports.append(dev)
-            return {'added': filtered_ports, 'removed': events['removed']}
+            return {'added': filtered_ports, 'removed': events['removed'],
+                    'modified': []}
         polling_manager.get_events = mock.Mock(side_effect=filter_events)
 
     def stop_agent(self, agent, rpc_loop_thread):
