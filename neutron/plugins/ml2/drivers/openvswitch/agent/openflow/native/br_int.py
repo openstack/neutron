@@ -96,6 +96,42 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
         self.uninstall_flows(match=match)
 
     @staticmethod
+    def _arp_dvr_dst_mac_match(ofp, ofpp, vlan, dvr_mac):
+        # If eth_dst is equal to the dvr mac of this host, then
+        # flag it as matched.
+        return ofpp.OFPMatch(vlan_vid=vlan | ofp.OFPVID_PRESENT,
+                             eth_dst=dvr_mac)
+
+    @staticmethod
+    def _dvr_dst_mac_table_id(network_type):
+        if network_type == p_const.TYPE_VLAN:
+            return constants.ARP_DVR_MAC_TO_DST_MAC_VLAN
+        else:
+            return constants.ARP_DVR_MAC_TO_DST_MAC
+
+    def install_dvr_dst_mac_for_arp(self, network_type,
+                                    vlan_tag, gateway_mac, dvr_mac, rtr_port):
+        table_id = self._dvr_dst_mac_table_id(network_type)
+        # Match the destination MAC with the DVR MAC
+        (_dp, ofp, ofpp) = self._get_dp()
+        match = self._arp_dvr_dst_mac_match(ofp, ofpp, vlan_tag, dvr_mac)
+        # Incoming packet will come with destination MAC of DVR host MAC from
+        # the ARP Responder. The Source MAC in this case will have the source
+        # MAC of the port MAC that responded from the ARP responder.
+        # So just remove the DVR host MAC from the 'eth_dst' and replace it
+        # with the gateway-mac. The packet should end up in the right the table
+        # for the packet to reach the router interface.
+        actions = [
+            ofpp.OFPActionSetField(eth_dst=gateway_mac),
+            ofpp.OFPActionPopVlan(),
+            ofpp.OFPActionOutput(rtr_port, 0)
+        ]
+        self.install_apply_actions(table_id=table_id,
+                                   priority=5,
+                                   match=match,
+                                   actions=actions)
+
+    @staticmethod
     def _dvr_to_src_mac_match(ofp, ofpp, vlan_tag, dst_mac):
         return ofpp.OFPMatch(vlan_vid=vlan_tag | ofp.OFPVID_PRESENT,
                              eth_dst=dst_mac)
@@ -164,6 +200,37 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
     def remove_dvr_mac_tun(self, mac, port):
         self.uninstall_flows(table_id=constants.LOCAL_SWITCHING,
                              in_port=port, eth_src=mac)
+
+    def delete_dvr_dst_mac_for_arp(self, network_type,
+                                   vlan_tag, gateway_mac, dvr_mac, rtr_port):
+        table_id = self._dvr_to_src_mac_table_id(network_type)
+        (_dp, ofp, ofpp) = self._get_dp()
+        match = self._arp_dvr_dst_mac_match(ofp, ofpp, vlan_tag, dvr_mac)
+        for table in table_id:
+            self.uninstall_flows(
+                strict=True, priority=5, table_id=table, match=match)
+
+    def add_dvr_gateway_mac_arp_vlan(self, mac, port):
+        self.install_goto(table_id=constants.LOCAL_SWITCHING,
+                          priority=5,
+                          in_port=port,
+                          eth_dst=mac,
+                          dest_table_id=constants.ARP_DVR_MAC_TO_DST_MAC_VLAN)
+
+    def remove_dvr_gateway_mac_arp_vlan(self, mac, port):
+        self.uninstall_flows(table_id=constants.LOCAL_SWITCHING,
+                             eth_dst=mac)
+
+    def add_dvr_gateway_mac_arp_tun(self, mac, port):
+        self.install_goto(table_id=constants.LOCAL_SWITCHING,
+                          priority=5,
+                          in_port=port,
+                          eth_dst=mac,
+                          dest_table_id=constants.ARP_DVR_MAC_TO_DST_MAC)
+
+    def remove_dvr_gateway_mac_arp_tun(self, mac, port):
+        self.uninstall_flows(table_id=constants.LOCAL_SWITCHING,
+                             eth_dst=mac)
 
     @staticmethod
     def _arp_reply_match(ofp, ofpp, port):

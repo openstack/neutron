@@ -44,7 +44,8 @@ LOCAL_SWITCHING = 0
 # Various tables for DVR use of integration bridge flows
 DVR_TO_SRC_MAC = 1
 DVR_TO_SRC_MAC_VLAN = 2
-
+ARP_DVR_MAC_TO_DST_MAC = 3
+ARP_DVR_MAC_TO_DST_MAC_VLAN = 4
 CANARY_TABLE = 23
 
 # Table for ARP poison/spoofing prevention rules

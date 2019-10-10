@@ -18,6 +18,8 @@ from os_ken.lib.packet import ether_types
 from os_ken.lib.packet import icmpv6
 from os_ken.lib.packet import in_proto
 
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
+
 
 class OVSDVRProcessMixin(object):
     """Common logic for br-tun and br-phys' DVR_PROCESS tables.
@@ -37,7 +39,7 @@ class OVSDVRProcessMixin(object):
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._dvr_process_ipv4_match(ofp, ofpp, vlan_tag=vlan_tag,
                                              gateway_ip=gateway_ip)
-        self.install_drop(table_id=self.dvr_process_table_id,
+        self.install_drop(table_id=constants.FLOOD_TO_TUN,
                           priority=3,
                           match=match)
 
@@ -45,7 +47,7 @@ class OVSDVRProcessMixin(object):
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._dvr_process_ipv4_match(ofp, ofpp, vlan_tag=vlan_tag,
                                              gateway_ip=gateway_ip)
-        self.uninstall_flows(table_id=self.dvr_process_table_id,
+        self.uninstall_flows(table_id=constants.FLOOD_TO_TUN,
                              match=match)
 
     @staticmethod
@@ -61,14 +63,14 @@ class OVSDVRProcessMixin(object):
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._dvr_process_ipv6_match(ofp, ofpp, vlan_tag=vlan_tag,
                                              gateway_mac=gateway_mac)
-        self.install_drop(table_id=self.dvr_process_table_id, priority=3,
+        self.install_drop(table_id=constants.FLOOD_TO_TUN, priority=3,
                           match=match)
 
     def delete_dvr_process_ipv6(self, vlan_tag, gateway_mac):
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._dvr_process_ipv6_match(ofp, ofpp, vlan_tag=vlan_tag,
                                              gateway_mac=gateway_mac)
-        self.uninstall_flows(table_id=self.dvr_process_table_id,
+        self.uninstall_flows(table_id=constants.FLOOD_TO_TUN,
                              match=match)
 
     @staticmethod
