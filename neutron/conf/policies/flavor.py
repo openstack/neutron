@@ -122,6 +122,14 @@ rules = [
         ]
     ),
 
+    policy.RuleDefault(
+        'get_flavor_service_profile',
+        base.RULE_ANY,
+        ('Get a flavor associated with a given service profiles. '
+         'There is no corresponding GET operations in API currently. '
+         'This rule is currently referred only in the DELETE '
+         'of flavor_service_profile.')
+    ),
     policy.DocumentedRuleDefault(
         'create_flavor_service_profile',
         base.RULE_ADMIN_ONLY,
@@ -144,15 +152,6 @@ rules = [
             },
         ]
     ),
-    # TODO(amotoki): GET /flavors/{flavor_id}/service_profiles/{profile_id}
-    # does not work and leads to an internal server error.
-    # It is not defined in the API reference either.
-    # It needs investigation and temporarily commented out.
-    # policy.RuleDefault(
-    #     'get_flavor_service_profile',
-    #     base.RULE_ANY,
-    #     'Get a flavor associate with a given service profiles',
-    # ),
 ]
 
 
