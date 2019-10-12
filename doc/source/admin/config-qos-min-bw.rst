@@ -78,12 +78,13 @@ Limitations
 
 * The Guaranteed Minimum Bandwidth feature is not complete in the Stein
   release. Not all Nova server lifecycle operations can be executed on a
-  server with bandwidth guarantees. In Stein (Nova API microversion 2.72+)
-  you can boot and delete a server with a guarantee and detach a port with
-  a guarantee. Support for server move operations (for example migrate,
-  resize, evacuate, live-migrate and unshelve after shelve-offload) is to be
-  implemented later.  For the definitive documentation please refer to the
-  `Port with Resource Request chapter
+  server with bandwidth guarantees. Since Stein (Nova API microversion
+  2.72+) you can boot and delete a server with a guarantee and detach
+  a port with a guarantee. Since Train you can also migrate and resize
+  a server with a guarantee. Support for further server move operations
+  (for example evacuate, live-migrate and unshelve after shelve-offload)
+  is to be implemented later. For the definitive documentation please
+  refer to the `Port with Resource Request chapter
   <https://docs.openstack.org/api-guide/compute/port_with_resource_request.html>`_
   of the OpenStack Compute API Guide.
 
