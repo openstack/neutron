@@ -19,6 +19,7 @@ from oslo_utils import excutils
 
 from neutron._i18n import _
 from neutron.agent.common import ovs_lib
+from neutron.common import ipv6_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow \
@@ -70,12 +71,9 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
                     self._cached_dpid = new_dpid
 
     def setup_controllers(self, conf):
-        controllers = [
-            "tcp:%(address)s:%(port)s" % {
-                "address": conf.OVS.of_listen_address,
-                "port": conf.OVS.of_listen_port,
-            }
-        ]
+        url = ipv6_utils.valid_ipv6_url(conf.OVS.of_listen_address,
+                                        conf.OVS.of_listen_port)
+        controllers = ["tcp:" + url]
         self.add_protocols(ovs_consts.OPENFLOW13)
         self.set_controller(controllers)
 
