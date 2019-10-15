@@ -25,6 +25,7 @@ from neutron_lib import exceptions
 from neutron_lib.services.qos import constants as qos_constants
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import excutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 
@@ -1085,6 +1086,21 @@ class OVSBridge(BaseOVS):
             self.ovsdb.db_destroy('Queue', queue_id).execute(check_error=True)
         except idlutils.RowNotFound:
             LOG.info('OVS Queue %s was already deleted', queue_id)
+        except RuntimeError as exc:
+            with excutils.save_and_reraise_exception():
+                if 'referential integrity violation' not in str(exc):
+                    return
+                qos_regs = self._list_qos()
+                qos_uuids = []
+                for qos_reg in qos_regs:
+                    queue_nums = [num for num, q in qos_reg['queues'].items()
+                                  if q.uuid == queue_id]
+                    if queue_nums:
+                        qos_uuids.append(str(qos_reg['_uuid']))
+                LOG.error('Queue %(queue)s was still in use by the following '
+                          'QoS rules: %(qoses)s',
+                          {'queue': str(queue_id),
+                           'qoses': ', '.join(sorted(qos_uuids))})
 
     def _update_qos(self, qos_id=None, queues=None):
         queues = queues or {}

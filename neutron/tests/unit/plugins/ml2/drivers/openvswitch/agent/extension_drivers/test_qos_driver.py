@@ -15,6 +15,7 @@ import copy
 import mock
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 
 from neutron.objects.qos import policy
@@ -209,9 +210,16 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         with mock.patch.object(self.qos_driver.br_int,
                                'delete_minimum_bandwidth_queue') \
                 as mock_delete_minimum_bandwidth_queue:
-            self.qos_driver.delete_minimum_bandwidth({'port_id': 'port_id'})
-            mock_delete_minimum_bandwidth_queue.assert_called_once_with(
-                'port_id')
+            self.qos_driver.ports['p_id'] = {}
+            self.qos_driver.delete_minimum_bandwidth({'port_id': 'p_id'})
+            mock_delete_minimum_bandwidth_queue.assert_not_called()
+
+            mock_delete_minimum_bandwidth_queue.reset_mock()
+            self.qos_driver.ports['p_id'] = {
+                (qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
+                 constants.EGRESS_DIRECTION): 'rule_port'}
+            self.qos_driver.delete_minimum_bandwidth({'port_id': 'p_id'})
+            mock_delete_minimum_bandwidth_queue.assert_called_once_with('p_id')
 
     def test_update_minimum_bandwidth_no_vif_port(self):
         with mock.patch.object(self.qos_driver.br_int,
