@@ -875,7 +875,6 @@ class Timer(object):
     finishes without rising TimerTimeout.
     """
     def __init__(self, timeout=None, raise_exception=True):
-        super(Timer, self).__init__()
         self.start = self.delta = None
         self._timeout = int(timeout) if timeout else None
         self._timeout_flag = False
