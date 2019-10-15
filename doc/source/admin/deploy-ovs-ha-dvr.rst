@@ -91,7 +91,7 @@ Controller node
 Network node
 ------------
 
-#. In the ``openswitch_agent.ini`` file, enable distributed routing.
+#. In the ``openvswitch_agent.ini`` file, enable distributed routing.
 
    .. code-block:: ini
 
