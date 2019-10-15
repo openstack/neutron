@@ -676,10 +676,22 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
             self.fail('"%s" direction not implemented'
                       % constants.INGRESS_DIRECTION)
 
-    def test_bw_limit_qos_port_removed(self):
-        """Test if rate limit config is properly removed when whole port is
-        removed.
-        """
+    def _find_agent_qos_and_queue(self, vm):
+        # NOTE(ralonsoh): the "_min_bw_qos_id" in vm.bridge is not the same as
+        # the ID in the agent br_int instance. We need first to find the QoS
+        # register and the Queue assigned to vm.neutron_port['id']
+        queue = vm.bridge._find_queue(vm.neutron_port['id'])
+        queue_num = int(queue['external_ids']['queue-num'])
+        qoses = vm.bridge._list_qos()
+        for qos in qoses:
+            qos_queue = qos['queues'].get(queue_num)
+            if qos_queue and qos_queue.uuid == queue['_uuid']:
+                return qos, qos_queue
+
+        self.fail('QoS register not found with queue-num %s' % queue_num)
+
+    def test_min_bw_qos_port_removed(self):
+        """Test if min BW limit config is properly removed when port removed"""
         # Create port with qos policy attached
         vm, qos_policy = self._prepare_vm_with_qos_policy(
             [functools.partial(
@@ -687,9 +699,15 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
         self._wait_for_min_bw_rule_applied(
             vm, MIN_BANDWIDTH, self.direction)
 
+        qos, queue = self._find_agent_qos_and_queue(vm)
+        self.assertEqual({'min-rate': str(MIN_BANDWIDTH * 1000)},
+                         queue.other_config)
+        queues = vm.bridge._list_queues(port=vm.neutron_port['id'])
+        self.assertEqual(1, len(queues))
+        self.assertEqual(queue.uuid, queues[0]['_uuid'])
+
         # Delete port with qos policy attached
         vm.destroy()
         self._wait_for_min_bw_rule_removed(vm, self.direction)
-        self.assertIsNone(vm.bridge.find_qos(vm.port.name))
-        self.assertIsNone(vm.bridge.find_queue(vm.port.name,
-                                               ovs_lib.QOS_DEFAULT_QUEUE))
+        self.assertEqual([],
+                         vm.bridge._list_queues(port=vm.neutron_port['id']))
