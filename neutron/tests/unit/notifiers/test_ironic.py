@@ -19,6 +19,7 @@ import mock
 from neutron_lib.api.definitions import portbindings as portbindings_def
 from neutron_lib import constants as n_const
 from openstack import connection
+from openstack import exceptions as os_exc
 
 from neutron.notifiers import batch_notifier
 from neutron.notifiers import ironic
@@ -176,8 +177,9 @@ class TestIronicNotifier(base.BaseTestCase):
             2, len(self.ironic_notifier.batch_notifier._pending_events.queue))
         self.assertEqual(2, mock_spawn_n.call_count)
 
+    @mock.patch.object(os_exc, 'raise_from_response', return_value=None)
     @mock.patch.object(connection.Connection, 'baremetal', autospec=True)
-    def test_send_events(self, mock_client):
+    def test_send_events(self, mock_client, mock_os_raise_exc):
         self.ironic_notifier.irclient = mock_client
         self.ironic_notifier.send_events(['test', 'events'])
         mock_client.post.assert_called_with(
