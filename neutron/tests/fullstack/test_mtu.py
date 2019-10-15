@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-# from neutronclient.common import exceptions
+from neutronclient.common import exceptions
 from oslo_utils import uuidutils
 
 from neutron.tests.fullstack import base
@@ -44,11 +44,19 @@ class MTUNetworkTestSetup(base.BaseFullStackTestCase):
 
 class TestMTUScenarios(MTUNetworkTestSetup):
 
-    def test_mtu_update_delete_network(self):
+    def test_mtu_update_network_neg(self):
         network = self.safe_client.create_network(self.tenant_id,
                                                   name='mtu-test-network',
                                                   mtu=1450)
-        self.safe_client.update_network(network['id'], mtu=9000)
+        self.assertRaises(exceptions.BadRequest,
+                          self.safe_client.update_network,
+                          network['id'], mtu=9000)
+
+    def test_mtu_update_delete_network(self):
+        network = self.safe_client.create_network(self.tenant_id,
+                                                  name='mtu-test-network',
+                                                  mtu=1200)
+        self.safe_client.update_network(network['id'], mtu=1450)
         res = self.safe_client.delete_network(network['id'])
         self.assertEqual((), res)
 
