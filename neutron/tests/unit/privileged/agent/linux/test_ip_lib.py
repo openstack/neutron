@@ -16,6 +16,8 @@ import errno
 
 import mock
 import pyroute2
+from pyroute2 import netlink
+from pyroute2.netlink.rtnl import ifinfmsg
 
 from neutron.privileged.agent.linux import ip_lib as priv_lib
 from neutron.tests import base
@@ -210,3 +212,18 @@ class IpLibTestCase(base.BaseTestCase):
                 self.fail("OSError exception not raised")
             except OSError as e:
                 self.assertEqual(errno.EINVAL, e.errno)
+
+
+class MakeSerializableTestCase(base.BaseTestCase):
+
+    NLA_DATA = ifinfmsg.ifinfbase.state(data=b'54321')
+    INPUT_1 = {'key1': 'value1', b'key2': b'value2', 'key3': ('a', 2),
+               'key4': [1, 2, 'c'],
+               'key5': netlink.nla_slot('nla_name', NLA_DATA)}
+    OUTPUT_1 = {'key1': 'value1', 'key2': 'value2', 'key3': ('a', 2),
+                'key4': [1, 2, 'c'],
+                'key5': ['nla_name', '54321']}
+
+    def test_make_serializable(self):
+        self.assertEqual(self.OUTPUT_1,
+                         priv_lib.make_serializable(self.INPUT_1))
