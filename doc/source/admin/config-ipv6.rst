@@ -432,9 +432,21 @@ they might not be able to communicate properly on the network. For example,
 in Linux guests, these are controlled via these two ``sysctl`` variables:
 
 - ``net.ipv6.conf.*.use_tempaddr`` (Privacy Extensions)
-- ``net.ipv6.conf.*.addr_gen_mode`` (link-local and autoconf address generation)
 
-Both of these settings should be disabled (zero).
+This allows the use of non-changing interface identifiers for IPv6 addresses
+according to RFC3041 semantics. It should be disabled (zero) so that stateless
+addresses are constructed using a stable, EUI64-based value.
+
+- ``net.ipv6.conf.*.addr_gen_mode``
+
+This defines how link-local and auto-configured IPv6 addresses are
+generated. It should be set to zero (default) so that IPv6
+addresses are generated using an EUI64-based value.
+
+.. note::
+
+   Support for ``addr_gen_mode`` was added in kernel version 4.11.
+
 
 Other types of guests might have similar configuration options, please
 consult your distribution documentation for more information.
