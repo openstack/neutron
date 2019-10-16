@@ -28,6 +28,7 @@ from neutron_lib.utils import file as file_utils
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import fileutils
+from oslo_utils import netutils
 from oslo_utils import uuidutils
 import six
 
@@ -37,7 +38,6 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.cmd import runtime_checks as checks
-from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.ipam import utils as ipam_utils
 
@@ -1523,7 +1523,7 @@ class DeviceManager(object):
             ip_lib.IPWrapper().ensure_namespace(network.namespace)
             ip_lib.set_ip_nonlocal_bind_for_namespace(network.namespace, 1,
                                                       root_namespace=True)
-        if ipv6_utils.is_enabled_and_bind_by_default():
+        if netutils.is_ipv6_enabled():
             self.driver.configure_ipv6_ra(network.namespace, 'default',
                                           constants.ACCEPT_RA_DISABLED)
 

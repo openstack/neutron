@@ -21,12 +21,12 @@ import mock
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exception
 from oslo_config import cfg
+from oslo_utils import netutils
 from six.moves import urllib
 import testtools
 import webob
 import webob.exc
 
-from neutron.common import ipv6_utils
 from neutron.tests import base
 from neutron.tests.common import helpers
 from neutron import wsgi
@@ -111,7 +111,7 @@ class TestWSGIServer(base.BaseTestCase):
         launcher.wait.assert_called_once_with()
 
     @testtools.skipIf(
-        not ipv6_utils.is_enabled_and_bind_by_default(),
+        not netutils.is_ipv6_enabled(),
         'IPv6 support disabled on host')
     def test_start_random_port_with_ipv6(self):
         server = wsgi.Server("test_random_port")

@@ -21,6 +21,7 @@ import mock
 import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions
+from oslo_utils import netutils
 from oslo_utils import uuidutils
 import pyroute2
 from pyroute2.netlink.rtnl import ifaddrmsg
@@ -1447,9 +1448,7 @@ class TestSysctl(base.BaseTestCase):
 
     def test_disable_ipv6_when_ipv6_globally_enabled(self):
         dev = ip_lib.IPDevice('tap0', 'ns1')
-        with mock.patch.object(ip_lib.ipv6_utils,
-                               'is_enabled_and_bind_by_default',
-                               return_value=True):
+        with mock.patch.object(netutils, 'is_ipv6_enabled', return_value=True):
             dev.disable_ipv6()
             self.execute.assert_called_once_with(
                 ['sysctl', '-w', 'net.ipv6.conf.tap0.disable_ipv6=1'],
@@ -1457,8 +1456,7 @@ class TestSysctl(base.BaseTestCase):
 
     def test_disable_ipv6_when_ipv6_globally_disabled(self):
         dev = ip_lib.IPDevice('tap0', 'ns1')
-        with mock.patch.object(ip_lib.ipv6_utils,
-                               'is_enabled_and_bind_by_default',
+        with mock.patch.object(netutils, 'is_ipv6_enabled',
                                return_value=False):
             dev.disable_ipv6()
             self.assertFalse(self.execute.called)
