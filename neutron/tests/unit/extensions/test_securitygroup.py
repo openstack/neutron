@@ -967,6 +967,27 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     for k, v, in keys:
                         self.assertEqual(v, rule['security_group_rule'][k])
 
+    def test_create_security_group_rule_port_range_min_max_limits(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            direction = "ingress"
+            protocol = const.PROTO_NAME_TCP
+            port_range_min = const.PORT_RANGE_MIN
+            port_range_max = const.PORT_RANGE_MAX
+            # The returned rule should have port range min/max as None
+            keys = [('security_group_id', security_group_id),
+                    ('direction', direction),
+                    ('protocol', protocol),
+                    ('port_range_min', None),
+                    ('port_range_max', None)]
+            with self.security_group_rule(security_group_id, direction,
+                                          protocol, port_range_min,
+                                          port_range_max) as rule:
+                for k, v, in keys:
+                    self.assertEqual(v, rule['security_group_rule'][k])
+
     def test_create_security_group_rule_icmp_with_type_and_code(self):
         name = 'webservers'
         description = 'my webservers'
