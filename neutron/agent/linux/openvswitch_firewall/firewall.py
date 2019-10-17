@@ -1141,6 +1141,13 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                                                rule['remote_group_id'],
                                                direction, ethertype,
                                                priority_offset)
+            LOG.debug("Created conjunction %(conj_id)s for SG %(sg_id)s "
+                      "referencing remote SG ID %(remote_sg_id)s on port "
+                      "%(port_id)s.",
+                      {'conj_id': conj_id,
+                       'sg_id': sec_group_id,
+                       'remote_sg_id': rule['remote_group_id'],
+                       'port_id': port.id})
 
             rule1 = rule.copy()
             del rule1['remote_group_id']
