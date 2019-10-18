@@ -316,7 +316,8 @@ class Dnsmasq(DhcpLocalProcess):
              [(UDP, DNS_PORT), (TCP, DNS_PORT), (UDP, DHCPV6_PORT)],
              }
 
-    _TAG_PREFIX = 'tag%d'
+    _SUBNET_TAG_PREFIX = 'subnet-%s'
+    _PORT_TAG_PREFIX = 'port-%s'
 
     _ID = 'id:'
 
@@ -363,7 +364,7 @@ class Dnsmasq(DhcpLocalProcess):
             ]
 
         possible_leases = 0
-        for i, subnet in enumerate(self._get_all_subnets(self.network)):
+        for subnet in self._get_all_subnets(self.network):
             mode = None
             # if a subnet is specified to have dhcp disabled
             if not subnet.enable_dhcp:
@@ -391,7 +392,7 @@ class Dnsmasq(DhcpLocalProcess):
             if mode:
                 if subnet.ip_version == 4:
                     cmd.append('--dhcp-range=%s%s,%s,%s,%s,%s' %
-                               ('set:', self._TAG_PREFIX % i,
+                               ('set:', self._SUBNET_TAG_PREFIX % subnet.id,
                                 cidr.network, mode, cidr.netmask, lease))
                 else:
                     if cidr.prefixlen < 64:
@@ -400,7 +401,7 @@ class Dnsmasq(DhcpLocalProcess):
                                   {'subnet': subnet.id, 'cidr': cidr})
                         continue
                     cmd.append('--dhcp-range=%s%s,%s,%s,%d,%s' %
-                               ('set:', self._TAG_PREFIX % i,
+                               ('set:', self._SUBNET_TAG_PREFIX % subnet.id,
                                 cidr.network, mode,
                                 cidr.prefixlen, lease))
                 possible_leases += cidr.size
@@ -708,8 +709,9 @@ class Dnsmasq(DhcpLocalProcess):
             port, alloc, hostname, name, no_dhcp, no_opts = host_tuple
             if no_dhcp:
                 if not no_opts and self._get_port_extra_dhcp_opts(port):
-                    buf.write('%s,%s%s\n' %
-                              (port.mac_address, 'set:', port.id))
+                    buf.write('%s,%s%s\n' % (
+                        port.mac_address,
+                        'set:', self._PORT_TAG_PREFIX % port.id))
                 continue
 
             # don't write ip address which belongs to a dhcp disabled subnet.
@@ -723,7 +725,8 @@ class Dnsmasq(DhcpLocalProcess):
                 if client_id and len(port.extra_dhcp_opts) > 1:
                     buf.write('%s,%s%s,%s,%s,%s%s\n' %
                               (port.mac_address, self._ID, client_id, name,
-                               ip_address, 'set:', port.id))
+                               ip_address, 'set:',
+                               self._PORT_TAG_PREFIX % port.id))
                 elif client_id and len(port.extra_dhcp_opts) == 1:
                     buf.write('%s,%s%s,%s,%s\n' %
                           (port.mac_address, self._ID, client_id, name,
@@ -731,7 +734,7 @@ class Dnsmasq(DhcpLocalProcess):
                 else:
                     buf.write('%s,%s,%s,%s%s\n' %
                               (port.mac_address, name, ip_address,
-                               'set:', port.id))
+                               'set:', self._PORT_TAG_PREFIX % port.id))
             else:
                 buf.write('%s,%s,%s\n' %
                           (port.mac_address, name, ip_address))
@@ -948,11 +951,11 @@ class Dnsmasq(DhcpLocalProcess):
 
     def _generate_opts_per_subnet(self):
         options = []
-        subnet_index_map = {}
+        subnets_without_nameservers = set()
         if self.conf.enable_isolated_metadata or self.conf.force_metadata:
             subnet_to_interface_ip = self._make_subnet_interface_ip_map()
         isolated_subnets = self.get_isolated_subnets(self.network)
-        for i, subnet in enumerate(self._get_all_subnets(self.network)):
+        for subnet in self._get_all_subnets(self.network):
             addr_mode = getattr(subnet, 'ipv6_address_mode', None)
             segment_id = getattr(subnet, 'segment_id', None)
             if (not subnet.enable_dhcp or
@@ -967,23 +970,30 @@ class Dnsmasq(DhcpLocalProcess):
                     # Special case: Do not announce DNS servers
                     options.append(
                         self._format_option(
-                            subnet.ip_version, i, 'dns-server'))
+                            subnet.ip_version,
+                            self._SUBNET_TAG_PREFIX % subnet.id,
+                            'dns-server'))
                 else:
                     options.append(
                         self._format_option(
-                            subnet.ip_version, i, 'dns-server',
-                            ','.join(
+                            subnet.ip_version,
+                            self._SUBNET_TAG_PREFIX % subnet.id,
+                            'dns-server', ','.join(
                                 Dnsmasq._convert_to_literal_addrs(
                                     subnet.ip_version,
                                     subnet.dns_nameservers))))
             else:
                 # use the dnsmasq ip as nameservers only if there is no
                 # dns-server submitted by the server
-                subnet_index_map[subnet.id] = i
+                # Here is something to check still
+                subnets_without_nameservers.add(subnet.id)
 
             if self.conf.dns_domain and subnet.ip_version == 6:
-                options.append('tag:tag%s,option6:domain-search,%s' %
-                               (i, ''.join(self.conf.dns_domain)))
+                # This should be change also
+                options.append(
+                    self._format_option(
+                        subnet.ip_version, self._SUBNET_TAG_PREFIX % subnet.id,
+                        "domain-search", ''.join(self.conf.dns_domain)))
 
             gateway = subnet.gateway_ip
             host_routes = []
@@ -1023,24 +1033,29 @@ class Dnsmasq(DhcpLocalProcess):
                         host_routes.append("%s,%s" % (constants.IPv4_ANY,
                                                       gateway))
                     options.append(
-                        self._format_option(subnet.ip_version, i,
-                                            'classless-static-route',
-                                            ','.join(host_routes)))
+                        self._format_option(
+                            subnet.ip_version,
+                            self._SUBNET_TAG_PREFIX % subnet.id,
+                            'classless-static-route',
+                            ','.join(host_routes)))
                     options.append(
-                        self._format_option(subnet.ip_version, i,
-                                            WIN2k3_STATIC_DNS,
-                                            ','.join(host_routes)))
+                        self._format_option(
+                            subnet.ip_version,
+                            self._SUBNET_TAG_PREFIX % subnet.id,
+                            WIN2k3_STATIC_DNS,
+                            ','.join(host_routes)))
 
                 if gateway:
-                    options.append(self._format_option(subnet.ip_version,
-                                                       i, 'router',
-                                                       gateway))
+                    options.append(self._format_option(
+                        subnet.ip_version, self._SUBNET_TAG_PREFIX % subnet.id,
+                        'router', gateway))
                 else:
-                    options.append(self._format_option(subnet.ip_version,
-                                                       i, 'router'))
-        return options, subnet_index_map
+                    options.append(self._format_option(
+                        subnet.ip_version, self._SUBNET_TAG_PREFIX % subnet.id,
+                        'router'))
+        return options, subnets_without_nameservers
 
-    def _generate_opts_per_port(self, subnet_index_map):
+    def _generate_opts_per_port(self, subnets_without_nameservers):
         options = []
         dhcp_ips = collections.defaultdict(list)
         for port in self.network.ports:
@@ -1055,8 +1070,10 @@ class Dnsmasq(DhcpLocalProcess):
                     opt_ip_version = opt.ip_version
                     if opt_ip_version in port_ip_versions:
                         options.append(
-                            self._format_option(opt_ip_version, port.id,
-                                                opt.opt_name, opt.opt_value))
+                            self._format_option(
+                                opt_ip_version,
+                                self._PORT_TAG_PREFIX % port.id,
+                                opt.opt_name, opt.opt_value))
                     else:
                         LOG.info("Cannot apply dhcp option %(opt)s "
                                  "because it's ip_version %(version)d "
@@ -1069,19 +1086,19 @@ class Dnsmasq(DhcpLocalProcess):
             # by the server
             if port.device_owner == constants.DEVICE_OWNER_DHCP:
                 for ip in port.fixed_ips:
-                    i = subnet_index_map.get(ip.subnet_id)
-                    if i is None:
+                    if ip.subnet_id not in subnets_without_nameservers:
                         continue
-                    dhcp_ips[i].append(ip.ip_address)
+                    dhcp_ips[ip.subnet_id].append(ip.ip_address)
 
-        for i, ips in dhcp_ips.items():
+        for subnet_id, ips in dhcp_ips.items():
             for ip_version in (4, 6):
                 vx_ips = [ip for ip in ips
                           if netaddr.IPAddress(ip).version == ip_version]
                 if len(vx_ips) > 1:
                     options.append(
                         self._format_option(
-                            ip_version, i, 'dns-server',
+                            ip_version, self._SUBNET_TAG_PREFIX % subnet_id,
+                            'dns-server',
                             ','.join(
                                 Dnsmasq._convert_to_literal_addrs(ip_version,
                                                                   vx_ips))))
@@ -1113,9 +1130,6 @@ class Dnsmasq(DhcpLocalProcess):
         matches = re.match(pattern, option)
         extra_tag = matches.groups()[0]
         option = matches.groups()[2]
-
-        if isinstance(tag, int):
-            tag = self._TAG_PREFIX % tag
 
         if not option.isdigit():
             if ip_version == 4:

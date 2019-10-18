@@ -308,7 +308,7 @@ class FakeRouterPort2(object):
         self.device_owner = constants.DEVICE_OWNER_ROUTER_INTF
         self.fixed_ips = [
             FakeIPAllocation('192.168.1.1',
-                             'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+                             'cccccccc-cccc-cccc-cccc-cccccccccccc')]
         self.dns_assignment = [FakeDNSAssignment('192.168.1.1')]
         self.mac_address = '00:00:0f:rr:rr:r2'
         self.device_id = 'fake_router_port2'
@@ -396,6 +396,7 @@ class FakeV4Subnet(Dictable):
 class FakeV4Subnet2(FakeV4Subnet):
     def __init__(self):
         super(FakeV4Subnet2, self).__init__()
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.cidr = '192.168.1.0/24'
         self.gateway_ip = '192.168.1.1'
         self.host_routes = []
@@ -1239,23 +1240,23 @@ class TestDnsmasq(TestBase):
         else:
             seconds = 's'
         if has_static:
-            prefix = '--dhcp-range=set:tag%d,%s,static,%s,%s%s'
-            prefix6 = '--dhcp-range=set:tag%d,%s,static,%s,%s%s'
+            prefix = '--dhcp-range=set:subnet-%s,%s,static,%s,%s%s'
+            prefix6 = '--dhcp-range=set:subnet-%s,%s,static,%s,%s%s'
         elif has_stateless:
-            prefix = '--dhcp-range=set:tag%d,%s,%s,%s%s'
-            prefix6 = '--dhcp-range=set:tag%d,%s,%s,%s%s'
+            prefix = '--dhcp-range=set:subnet-%s,%s,%s,%s%s'
+            prefix6 = '--dhcp-range=set:subnet-%s,%s,%s,%s%s'
         possible_leases = 0
-        for i, s in enumerate(network.subnets):
+        for s in network.subnets:
             if (s.ip_version != 6
                 or s.ipv6_address_mode == constants.DHCPV6_STATEFUL):
                 if s.ip_version == 4:
                     expected.extend([prefix % (
-                        i, s.cidr.split('/')[0],
+                        s.id, s.cidr.split('/')[0],
                         netaddr.IPNetwork(s.cidr).netmask, lease_duration,
                         seconds)])
                 else:
                     expected.extend([prefix6 % (
-                        i, s.cidr.split('/')[0], s.cidr.split('/')[1],
+                        s.id, s.cidr.split('/')[0], s.cidr.split('/')[1],
                         lease_duration, seconds)])
                 possible_leases += netaddr.IPNetwork(s.cidr).size
 
@@ -1455,184 +1456,248 @@ class TestDnsmasq(TestBase):
     def test_output_opts_file(self):
         fake_v6 = '2001:0200:feed:7ac0::1'
         expected = (
-            'tag:tag0,option:dns-server,8.8.8.8\n'
-            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,20.0.0.1/24,20.0.0.1,'
             '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,20.0.0.1/24,20.0.0.1,'
-            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,option:router,192.168.0.1\n'
-            'tag:tag1,option6:dns-server,%s\n'
-            'tag:tag1,option6:domain-search,openstacklocal').lstrip() % (
-                '[' + fake_v6 + ']')
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,20.0.0.1/24,20.0.0.1,169.254.169.254/32,192.168.0.1,'
+            '0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1\n'
+            'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'option6:dns-server,%s\n'
+            'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'option6:domain-search,openstacklocal'
+        ).lstrip() % ('[' + fake_v6 + ']')
 
         self._test_output_opts_file(expected, FakeDualNetwork())
 
     def test_output_opts_file_gateway_route(self):
         fake_v6 = '2001:0200:feed:7ac0::1'
-        expected = ('tag:tag0,option:dns-server,8.8.8.8\n'
-                    'tag:tag0,option:classless-static-route,'
-                    '169.254.169.254/32,192.168.0.1,0.0.0.0/0,'
-                    '192.168.0.1\ntag:tag0,249,169.254.169.254/32,'
-                    '192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-                    'tag:tag0,option:router,192.168.0.1\n'
-                    'tag:tag1,option6:dns-server,%s\n'
-                    'tag:tag1,option6:domain-search,'
-                    'openstacklocal').lstrip() % ('[' + fake_v6 + ']')
+        expected = (
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,'
+            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1\n'
+            'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'option6:dns-server,%s\n'
+            'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'option6:domain-search,openstacklocal'
+        ).lstrip() % ('[' + fake_v6 + ']')
 
         self._test_output_opts_file(expected, FakeDualNetworkGatewayRoute())
 
     def test_output_opts_file_multiple_agents_without_dns_provided(self):
-        expected = ('tag:tag0,option:classless-static-route,'
-                    '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-                    'tag:tag0,249,169.254.169.254/32,192.168.0.1,0.0.0.0/0,'
-                    '192.168.0.1\ntag:tag0,option:router,192.168.0.1\n'
-                    'tag:tag0,option:dns-server,192.168.0.5,'
-                    '192.168.0.6').lstrip()
+        expected = (
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,'
+            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,192.168.0.5,192.168.0.6').lstrip()
 
         self._test_output_opts_file(expected,
                                     FakeV4MultipleAgentsWithoutDnsProvided())
 
     def test_output_opts_file_agent_dns_provided(self):
-        expected = ('tag:tag0,option:classless-static-route,'
-                    '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-                    'tag:tag0,249,169.254.169.254/32,192.168.0.1,0.0.0.0/0,'
-                    '192.168.0.1\ntag:tag0,option:router,192.168.0.1'
-                    ).lstrip()
+        expected = (
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,'
+            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1').lstrip()
 
         self._test_output_opts_file(expected,
                                     FakeV4AgentWithoutDnsProvided())
 
     def test_output_opts_file_agent_with_many_dns_provided(self):
-        expected = ('tag:tag0,'
-                    'option:dns-server,2.2.2.2,9.9.9.9,1.1.1.1,3.3.3.3\n'
-                    'tag:tag0,option:classless-static-route,'
-                    '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-                    'tag:tag0,249,169.254.169.254/32,192.168.0.1,0.0.0.0/0,'
-                    '192.168.0.1\n'
-                    'tag:tag0,option:router,192.168.0.1').lstrip()
+        expected = (
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,2.2.2.2,9.9.9.9,1.1.1.1,3.3.3.3\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,'
+            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1').lstrip()
 
         self._test_output_opts_file(expected,
                                     FakeV4AgentWithManyDnsProvided())
 
     def test_output_opts_file_agent_with_no_dns_provided(self):
-        expected = ('tag:tag0,'
-                    'option:dns-server\n'
-                    'tag:tag0,option:classless-static-route,'
-                    '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-                    'tag:tag0,249,169.254.169.254/32,192.168.0.1,0.0.0.0/0,'
-                    '192.168.0.1\n'
-                    'tag:tag0,option:router,192.168.0.1').lstrip()
+        expected = (
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,'
+            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1').lstrip()
 
         self._test_output_opts_file(expected,
                                     FakeV4AgentWithNoDnsProvided())
 
     def test_output_opts_file_multiple_agents_with_dns_provided(self):
-        expected = ('tag:tag0,option:dns-server,8.8.8.8\n'
-                    'tag:tag0,option:classless-static-route,'
-                    '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-                    'tag:tag0,249,169.254.169.254/32,192.168.0.1,0.0.0.0/0,'
-                    '192.168.0.1\n'
-                    'tag:tag0,option:router,192.168.0.1').lstrip()
+        expected = (
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,'
+            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1').lstrip()
 
         self._test_output_opts_file(expected,
                                     FakeV4MultipleAgentsWithDnsProvided())
 
     def test_output_opts_file_single_dhcp(self):
         expected = (
-            'tag:tag0,option:dns-server,8.8.8.8\n'
-            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
-            '169.254.169.254/32,192.168.0.1,'
-            '192.168.1.0/24,0.0.0.0,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,20.0.0.1/24,20.0.0.1,'
-            '169.254.169.254/32,192.168.0.1,192.168.1.0/24,0.0.0.0,'
-            '0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,option:router,192.168.0.1').lstrip()
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            '169.254.169.254/32,192.168.0.1,192.168.1.0/24,'
+            '0.0.0.0,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,20.0.0.1/24,20.0.0.1,169.254.169.254/32,'
+            '192.168.0.1,192.168.1.0/24,0.0.0.0,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1').lstrip()
 
         self._test_output_opts_file(expected, FakeDualNetworkSingleDHCP())
 
     def test_output_opts_file_single_dhcp_both_not_isolated(self):
         expected = (
-            'tag:tag0,option:dns-server,8.8.8.8\n'
-            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,20.0.0.1/24,20.0.0.1,'
             '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,20.0.0.1/24,20.0.0.1,'
-            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,option:router,192.168.0.1').lstrip()
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,20.0.0.1/24,20.0.0.1,169.254.169.254/32,192.168.0.1,'
+            '0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1').lstrip()
 
         self._test_output_opts_file(expected,
                                     FakeDualNetworkSingleDHCPBothAttaced())
 
     def test_output_opts_file_dual_dhcp_rfc3442(self):
         expected = (
-            'tag:tag0,option:dns-server,8.8.8.8\n'
-            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
-            '169.254.169.254/32,192.168.0.1,'
-            '192.168.1.0/24,0.0.0.0,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,20.0.0.1/24,20.0.0.1,'
-            '169.254.169.254/32,192.168.0.1,192.168.1.0/24,0.0.0.0,'
-            '0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,option:router,192.168.0.1\n'
-            'tag:tag1,option:dns-server,8.8.8.8\n'
-            'tag:tag1,option:classless-static-route,'
-            '169.254.169.254/32,192.168.1.1,'
-            '192.168.0.0/24,0.0.0.0,0.0.0.0/0,192.168.1.1\n'
-            'tag:tag1,249,169.254.169.254/32,192.168.1.1,'
-            '192.168.0.0/24,0.0.0.0,0.0.0.0/0,192.168.1.1\n'
-            'tag:tag1,option:router,192.168.1.1').lstrip()
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            '169.254.169.254/32,192.168.0.1,192.168.1.0/24,'
+            '0.0.0.0,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,20.0.0.1/24,20.0.0.1,169.254.169.254/32,'
+            '192.168.0.1,192.168.1.0/24,0.0.0.0,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1\n'
+            'tag:subnet-cccccccc-cccc-cccc-cccc-cccccccccccc,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-cccccccc-cccc-cccc-cccc-cccccccccccc,'
+            'option:classless-static-route,169.254.169.254/32,'
+            '192.168.1.1,192.168.0.0/24,0.0.0.0,0.0.0.0/0,'
+            '192.168.1.1\n'
+            'tag:subnet-cccccccc-cccc-cccc-cccc-cccccccccccc,'
+            '249,169.254.169.254/32,192.168.1.1,192.168.0.0/24,'
+            '0.0.0.0,0.0.0.0/0,192.168.1.1\n'
+            'tag:subnet-cccccccc-cccc-cccc-cccc-cccccccccccc,'
+            'option:router,192.168.1.1').lstrip()
 
         self._test_output_opts_file(expected, FakeDualNetworkDualDHCP())
 
     def test_output_opts_file_dual_dhcp_rfc3442_no_on_link_subnet_routes(self):
         expected = (
-            'tag:tag0,option:dns-server,8.8.8.8\n'
-            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,20.0.0.1/24,20.0.0.1,'
             '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,20.0.0.1/24,20.0.0.1,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,20.0.0.1/24,20.0.0.1,'
             '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,option:router,192.168.0.1\n'
-            'tag:tag1,option:dns-server,8.8.8.8\n'
-            'tag:tag1,option:classless-static-route,'
-            '169.254.169.254/32,192.168.2.1,0.0.0.0/0,192.168.2.1\n'
-            'tag:tag1,249,169.254.169.254/32,192.168.2.1,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1\n'
+            'tag:subnet-iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii,'
+            'option:classless-static-route,169.254.169.254/32,192.168.2.1,'
             '0.0.0.0/0,192.168.2.1\n'
-            'tag:tag1,option:router,192.168.2.1').lstrip()
+            'tag:subnet-iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii,'
+            '249,169.254.169.254/32,192.168.2.1,0.0.0.0/0,192.168.2.1\n'
+            'tag:subnet-iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii,'
+            'option:router,192.168.2.1').lstrip()
 
         self._test_output_opts_file(expected,
             FakeDualNetworkDualDHCPOnLinkSubnetRoutesDisabled())
 
     def test_output_opts_file_dual_dhcp_rfc3442_one_on_link_subnet_route(self):
         expected = (
-            'tag:tag0,option:dns-server,8.8.8.8\n'
-            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
-            '169.254.169.254/32,192.168.0.1,'
-            '192.168.1.0/24,0.0.0.0,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,20.0.0.1/24,20.0.0.1,'
-            '169.254.169.254/32,192.168.0.1,192.168.1.0/24,0.0.0.0,'
-            '0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,option:router,192.168.0.1\n'
-            'tag:tag1,option:dns-server,8.8.8.8\n'
-            'tag:tag1,option:classless-static-route,'
-            '169.254.169.254/32,192.168.1.1,'
-            '192.168.0.0/24,0.0.0.0,0.0.0.0/0,192.168.1.1\n'
-            'tag:tag1,249,169.254.169.254/32,192.168.1.1,'
-            '192.168.0.0/24,0.0.0.0,0.0.0.0/0,192.168.1.1\n'
-            'tag:tag1,option:router,192.168.1.1\n'
-            'tag:tag2,option:dns-server,8.8.8.8\n'
-            'tag:tag2,option:classless-static-route,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            '169.254.169.254/32,192.168.0.1,192.168.1.0/24,'
+            '0.0.0.0,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,20.0.0.1/24,20.0.0.1,'
+            '169.254.169.254/32,192.168.0.1,192.168.1.0/24,'
+            '0.0.0.0,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1\n'
+            'tag:subnet-cccccccc-cccc-cccc-cccc-cccccccccccc,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-cccccccc-cccc-cccc-cccc-cccccccccccc,'
+            'option:classless-static-route,'
+            '169.254.169.254/32,192.168.1.1,192.168.0.0/24,'
+            '0.0.0.0,0.0.0.0/0,192.168.1.1\n'
+            'tag:subnet-cccccccc-cccc-cccc-cccc-cccccccccccc,'
+            '249,169.254.169.254/32,192.168.1.1,192.168.0.0/24,'
+            '0.0.0.0,0.0.0.0/0,192.168.1.1\n'
+            'tag:subnet-cccccccc-cccc-cccc-cccc-cccccccccccc,'
+            'option:router,192.168.1.1\n'
+            'tag:subnet-iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii,'
+            'option:classless-static-route,'
             '169.254.169.254/32,192.168.2.1,0.0.0.0/0,192.168.2.1\n'
-            'tag:tag2,249,169.254.169.254/32,192.168.2.1,'
+            'tag:subnet-iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii,'
+            '249,169.254.169.254/32,192.168.2.1,'
             '0.0.0.0/0,192.168.2.1\n'
-            'tag:tag2,option:router,192.168.2.1').lstrip()
+            'tag:subnet-iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii,'
+            'option:router,192.168.2.1').lstrip()
 
         self._test_output_opts_file(expected,
             FakeDualNetworkTriDHCPOneOnLinkSubnetRoute())
 
     def test_output_opts_file_no_gateway(self):
         expected = (
-            'tag:tag0,option:classless-static-route,'
-            '169.254.169.254/32,192.168.1.1\n'
-            'tag:tag0,249,169.254.169.254/32,192.168.1.1\n'
-            'tag:tag0,option:router').lstrip()
+            'tag:subnet-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'option:classless-static-route,169.254.169.254/32,192.168.1.1\n'
+            'tag:subnet-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            '249,169.254.169.254/32,192.168.1.1\n'
+            'tag:subnet-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'option:router').lstrip()
 
         ipm_retval = {FakeV4SubnetNoGateway().id: '192.168.1.1'}
         self._test_output_opts_file(expected, FakeV4NoGatewayNetwork(),
@@ -1640,28 +1705,37 @@ class TestDnsmasq(TestBase):
 
     def test_non_local_subnets(self):
         expected = (
-            'tag:tag0,option:dns-server,8.8.8.8\n'
-            'tag:tag0,option:classless-static-route,'
-            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,169.254.169.254/32,192.168.0.1,'
-            '0.0.0.0/0,192.168.0.1\ntag:tag0,option:router,192.168.0.1\n'
-            'tag:tag1,option:dns-server,8.8.8.8\n'
-            'tag:tag1,option:classless-static-route,'
-            '169.254.169.254/32,192.168.2.1,0.0.0.0/0,192.168.2.1\n'
-            'tag:tag1,249,169.254.169.254/32,192.168.2.1,'
+            'tag:subnet-jjjjjjjj-jjjj-jjjj-jjjj-jjjjjjjjjjjj,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-jjjjjjjj-jjjj-jjjj-jjjj-jjjjjjjjjjjj,'
+            'option:classless-static-route,169.254.169.254/32,192.168.0.1,'
+            '0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-jjjjjjjj-jjjj-jjjj-jjjj-jjjjjjjjjjjj,'
+            '249,169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-jjjjjjjj-jjjj-jjjj-jjjj-jjjjjjjjjjjj,'
+            'option:router,192.168.0.1\n'
+            'tag:subnet-iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii,'
+            'option:classless-static-route,169.254.169.254/32,192.168.2.1,'
             '0.0.0.0/0,192.168.2.1\n'
-            'tag:tag1,option:router,192.168.2.1').lstrip()
+            'tag:subnet-iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii,'
+            '249,169.254.169.254/32,192.168.2.1,0.0.0.0/0,192.168.2.1\n'
+            'tag:subnet-iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii,'
+            'option:router,192.168.2.1').lstrip()
         ipm_retval = {FakeV4SubnetSegmentID2().id: '192.168.0.1'}
         self._test_output_opts_file(expected, FakeNonLocalSubnets(),
                                     ipm_retval=ipm_retval)
 
     def test_output_opts_file_no_neutron_router_on_subnet(self):
         expected = (
-            'tag:tag0,option:classless-static-route,'
+            'tag:subnet-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'option:classless-static-route,'
             '169.254.169.254/32,192.168.1.2,0.0.0.0/0,192.168.1.1\n'
-            'tag:tag0,249,169.254.169.254/32,192.168.1.2,'
-            '0.0.0.0/0,192.168.1.1\n'
-            'tag:tag0,option:router,192.168.1.1').lstrip()
+            'tag:subnet-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            '249,169.254.169.254/32,192.168.1.2,0.0.0.0/0,192.168.1.1\n'
+            'tag:subnet-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'option:router,192.168.1.1').lstrip()
 
         ipm_retval = {FakeV4SubnetNoRouter().id: '192.168.1.2'}
         self._test_output_opts_file(expected, FakeV4NetworkNoRouter(),
@@ -1669,12 +1743,16 @@ class TestDnsmasq(TestBase):
 
     def test_output_opts_file_dist_neutron_router_on_subnet(self):
         expected = (
-            'tag:tag0,option:dns-server,8.8.8.8\n'
-            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,20.0.0.1/24,20.0.0.1,'
             '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,20.0.0.1/24,20.0.0.1,'
-            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,option:router,192.168.0.1').lstrip()
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,20.0.0.1/24,20.0.0.1,169.254.169.254/32,192.168.0.1,'
+            '0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1').lstrip()
 
         ipm_retval = {FakeV4Subnet().id: '192.168.0.1'}
         self._test_output_opts_file(expected, FakeV4NetworkDistRouter(),
@@ -1682,46 +1760,54 @@ class TestDnsmasq(TestBase):
 
     def test_output_opts_file_pxe_2port_1net(self):
         expected = (
-            'tag:tag0,option:dns-server,8.8.8.8\n'
-            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,20.0.0.1/24,20.0.0.1,'
             '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,20.0.0.1/24,20.0.0.1,'
-            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,option:router,192.168.0.1\n'
-            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,20.0.0.1/24,20.0.0.1,169.254.169.254/32,192.168.0.1,'
+            '0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1\n'
+            'tag:port-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
             'option:tftp-server,192.168.0.3\n'
-            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'tag:port-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
             'option:server-ip-address,192.168.0.2\n'
-            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'tag:port-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
             'option:bootfile-name,pxelinux.0\n'
-            'tag:ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'tag:port-ffffffff-ffff-ffff-ffff-ffffffffffff,'
             'option:tftp-server,192.168.0.3\n'
-            'tag:ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'tag:port-ffffffff-ffff-ffff-ffff-ffffffffffff,'
             'option:server-ip-address,192.168.0.2\n'
-            'tag:ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'tag:port-ffffffff-ffff-ffff-ffff-ffffffffffff,'
             'option:bootfile-name,pxelinux.0').lstrip()
 
         self._test_output_opts_file(expected, FakeV4NetworkPxe2Ports())
 
     def test_output_opts_file_pxe_2port_1net_diff_details(self):
         expected = (
-            'tag:tag0,option:dns-server,8.8.8.8\n'
-            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,20.0.0.1/24,20.0.0.1,'
             '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,20.0.0.1/24,20.0.0.1,'
-            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,option:router,192.168.0.1\n'
-            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,20.0.0.1/24,20.0.0.1,169.254.169.254/32,192.168.0.1,'
+            '0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1\n'
+            'tag:port-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
             'option:tftp-server,192.168.0.3\n'
-            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'tag:port-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
             'option:server-ip-address,192.168.0.2\n'
-            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'tag:port-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
             'option:bootfile-name,pxelinux.0\n'
-            'tag:ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'tag:port-ffffffff-ffff-ffff-ffff-ffffffffffff,'
             'option:tftp-server,192.168.0.5\n'
-            'tag:ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'tag:port-ffffffff-ffff-ffff-ffff-ffffffffffff,'
             'option:server-ip-address,192.168.0.5\n'
-            'tag:ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'tag:port-ffffffff-ffff-ffff-ffff-ffffffffffff,'
             'option:bootfile-name,pxelinux.0').lstrip()
 
         self._test_output_opts_file(expected,
@@ -1729,44 +1815,51 @@ class TestDnsmasq(TestBase):
 
     def test_output_opts_file_pxe_3port_2net(self):
         expected = (
-            'tag:tag0,option:dns-server,8.8.8.8\n'
-            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
-            '169.254.169.254/32,192.168.0.1,'
-            '192.168.1.0/24,0.0.0.0,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,20.0.0.1/24,20.0.0.1,'
-            '169.254.169.254/32,192.168.0.1,192.168.1.0/24,0.0.0.0,'
-            '0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,option:router,192.168.0.1\n'
-            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            '169.254.169.254/32,192.168.0.1,192.168.1.0/24,'
+            '0.0.0.0,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,20.0.0.1/24,20.0.0.1,169.254.169.254/32,'
+            '192.168.0.1,192.168.1.0/24,0.0.0.0,0.0.0.0/0,192.168.0.1\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1\n'
+            'tag:port-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
             'option:tftp-server,192.168.0.3\n'
-            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'tag:port-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
             'option:server-ip-address,192.168.0.2\n'
-            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'tag:port-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
             'option:bootfile-name,pxelinux.0\n'
-            'tag:ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'tag:port-ffffffff-ffff-ffff-ffff-ffffffffffff,'
             'option:tftp-server,192.168.1.3\n'
-            'tag:ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'tag:port-ffffffff-ffff-ffff-ffff-ffffffffffff,'
             'option:server-ip-address,192.168.1.2\n'
-            'tag:ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'tag:port-ffffffff-ffff-ffff-ffff-ffffffffffff,'
             'option:bootfile-name,pxelinux2.0\n'
-            'tag:44444444-4444-4444-4444-444444444444,'
+            'tag:port-44444444-4444-4444-4444-444444444444,'
             'option:tftp-server,192.168.1.3\n'
-            'tag:44444444-4444-4444-4444-444444444444,'
+            'tag:port-44444444-4444-4444-4444-444444444444,'
             'option:server-ip-address,192.168.1.2\n'
-            'tag:44444444-4444-4444-4444-444444444444,'
+            'tag:port-44444444-4444-4444-4444-444444444444,'
             'option:bootfile-name,pxelinux3.0').lstrip()
 
         self._test_output_opts_file(expected, FakeDualV4Pxe3Ports())
 
     def test_output_opts_file_multiple_tags(self):
         expected = (
-            'tag:tag0,option:dns-server,8.8.8.8\n'
-            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,20.0.0.1/24,20.0.0.1,'
             '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,20.0.0.1/24,20.0.0.1,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,20.0.0.1/24,20.0.0.1,'
             '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,option:router,192.168.0.1\n'
-            'tag:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1\n'
+            'tag:port-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
             'tag:ipxe,option:bootfile-name,pxelinux.0')
         expected = expected.lstrip()
 
@@ -1782,11 +1875,13 @@ class TestDnsmasq(TestBase):
     def test_output_opts_file_pxe_ipv6_port_with_ipv6_opt(self,
                                                           mock_get_conf_fn):
         expected = (
-            'tag:tag0,option6:dns-server,[2001:0200:feed:7ac0::1]\n'
-            'tag:tag0,option6:domain-search,openstacklocal\n'
-            'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
+            'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'option6:dns-server,[2001:0200:feed:7ac0::1]\n'
+            'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'option6:domain-search,openstacklocal\n'
+            'tag:port-hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
             'option6:tftp-server,2001:192:168::1\n'
-            'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
+            'tag:port-hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
             'option6:bootfile-name,pxelinux.0')
         expected = expected.lstrip()
 
@@ -1800,9 +1895,11 @@ class TestDnsmasq(TestBase):
     def test_output_opts_file_pxe_ipv6_port_with_ipv4_opt(self,
                                                           mock_get_conf_fn):
         expected = (
-            'tag:tag0,option6:dns-server,[2001:0200:feed:7ac0::1]\n'
-            'tag:tag0,option6:domain-search,openstacklocal\n'
-            'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
+            'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'option6:dns-server,[2001:0200:feed:7ac0::1]\n'
+            'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'option6:domain-search,openstacklocal\n'
+            'tag:port-hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
             'option6:bootfile-name,pxelinux.0')
         expected = expected.lstrip()
 
@@ -1814,8 +1911,10 @@ class TestDnsmasq(TestBase):
     def test_output_opts_file_ipv6_address_mode_unset(self):
         fake_v6 = '2001:0200:feed:7ac0::1'
         expected = (
-            'tag:tag0,option6:dns-server,%s\n'
-            'tag:tag0,option6:domain-search,openstacklocal').lstrip() % (
+            'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'option6:dns-server,%s\n'
+            'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'option6:domain-search,openstacklocal').lstrip() % (
                 '[' + fake_v6 + ']')
 
         self._test_output_opts_file(expected, FakeV6Network())
@@ -1823,8 +1922,10 @@ class TestDnsmasq(TestBase):
     def test_output_opts_file_ipv6_address_force_metadata(self):
         fake_v6 = '2001:0200:feed:7ac0::1'
         expected = (
-            'tag:tag0,option6:dns-server,%s\n'
-            'tag:tag0,option6:domain-search,openstacklocal').lstrip() % (
+            'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'option6:dns-server,%s\n'
+            'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'option6:domain-search,openstacklocal').lstrip() % (
                 '[' + fake_v6 + ']')
         self.conf.force_metadata = True
         self._test_output_opts_file(expected, FakeV6Network())
@@ -1893,14 +1994,20 @@ class TestDnsmasq(TestBase):
         exp_opt_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts'
         fake_v6 = '2001:0200:feed:7ac0::1'
         exp_opt_data = (
-            'tag:tag0,option:dns-server,8.8.8.8\n'
-            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,20.0.0.1/24,20.0.0.1,'
             '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,249,20.0.0.1/24,20.0.0.1,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,20.0.0.1/24,20.0.0.1,'
             '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag0,option:router,192.168.0.1\n'
-            'tag:tag1,option6:dns-server,%s\n'
-            'tag:tag1,option6:domain-search,openstacklocal').lstrip() % (
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1\n'
+            'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'option6:dns-server,%s\n'
+            'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+            'option6:domain-search,openstacklocal').lstrip() % (
             '[' + fake_v6 + ']')
         return (exp_host_name, exp_host_data,
                 exp_addn_name, exp_addn_data,
@@ -2542,14 +2649,15 @@ class TestDnsmasq(TestBase):
 
     def test_only_populates_dhcp_client_id(self):
         exp_host_name = '/dhcp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/host'
-        exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal.,'
-                         '192.168.0.2\n'
-                         '00:00:0f:aa:bb:55,id:test5,'
-                         'host-192-168-0-5.openstacklocal.,'
-                         '192.168.0.5\n'
-                         '00:00:0f:aa:bb:66,id:test6,'
-                         'host-192-168-0-6.openstacklocal.,192.168.0.6,'
-                         'set:ccccccccc-cccc-cccc-cccc-ccccccccc\n').lstrip()
+        exp_host_data = (
+            '00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal.,'
+            '192.168.0.2\n'
+            '00:00:0f:aa:bb:55,id:test5,'
+            'host-192-168-0-5.openstacklocal.,'
+            '192.168.0.5\n'
+            '00:00:0f:aa:bb:66,id:test6,'
+            'host-192-168-0-6.openstacklocal.,192.168.0.6,'
+            'set:port-ccccccccc-cccc-cccc-cccc-ccccccccc\n').lstrip()
 
         dm = self._get_dnsmasq(FakeV4NetworkClientId())
         dm._output_hosts_file()
@@ -2573,11 +2681,13 @@ class TestDnsmasq(TestBase):
 
     def test_host_and_opts_file_on_stateless_dhcpv6_network(self):
         exp_host_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/host'
-        exp_host_data = ('00:16:3e:c2:77:1d,'
-                         'set:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh\n').lstrip()
+        exp_host_data = (
+            '00:16:3e:c2:77:1d,'
+            'set:port-hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh\n').lstrip()
         exp_opt_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/opts'
-        exp_opt_data = ('tag:tag0,option6:domain-search,openstacklocal\n'
-                        'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
+        exp_opt_data = ('tag:subnet-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+                        'option6:domain-search,openstacklocal\n'
+                        'tag:port-hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
                         'option6:dns-server,ffea:3ba5:a17a:4ba3::100').lstrip()
         dm = self._get_dnsmasq(FakeV6NetworkStatelessDHCP())
         dm._output_hosts_file()
@@ -2588,8 +2698,9 @@ class TestDnsmasq(TestBase):
     def test_host_and_opts_file_on_stateless_dhcpv6_network_no_dns(self):
         exp_host_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/host'
         exp_opt_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/opts'
-        exp_opt_data = ('tag:tag0,option6:dns-server\n'
-                        'tag:tag0,'
+        exp_opt_data = ('tag:subnet-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+                        'option6:dns-server\n'
+                        'tag:subnet-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
                         'option6:domain-search,openstacklocal').lstrip()
         dm = self._get_dnsmasq(FakeV6NetworkStatelessDHCPNoDnsProvided())
         dm._output_hosts_file()
@@ -2601,11 +2712,11 @@ class TestDnsmasq(TestBase):
         exp_host_name = '/dhcp/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee/host'
         exp_host_data = (
             '00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal.,192.168.0.2,'
-            'set:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee\n'
+            'set:port-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee\n'
             '00:16:3E:C2:77:1D,host-192-168-0-4.openstacklocal.,192.168.0.4,'
-            'set:gggggggg-gggg-gggg-gggg-gggggggggggg\n00:00:0f:rr:rr:rr,'
+            'set:port-gggggggg-gggg-gggg-gggg-gggggggggggg\n00:00:0f:rr:rr:rr,'
             'host-192-168-0-1.openstacklocal.,192.168.0.1,'
-            'set:rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr\n').lstrip()
+            'set:port-rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr\n').lstrip()
         dm = self._get_dnsmasq(FakeDualStackNetworkingSingleDHCPTags())
         dm._output_hosts_file()
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data)])
@@ -2614,21 +2725,26 @@ class TestDnsmasq(TestBase):
                                                                     self):
         exp_host_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/host'
         exp_host_data = (
-            '00:16:3e:c2:77:1d,set:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh\n'
+            '00:16:3e:c2:77:1d,set:port-hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh\n'
             '00:16:3e:c2:77:1d,host-192-168-0-3.openstacklocal.,'
-            '192.168.0.3,set:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh\n'
+            '192.168.0.3,set:port-hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh\n'
             '00:00:0f:rr:rr:rr,'
             'host-192-168-0-1.openstacklocal.,192.168.0.1\n').lstrip()
         exp_opt_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/opts'
         exp_opt_data = (
-            'tag:tag0,option6:domain-search,openstacklocal\n'
-            'tag:tag1,option:dns-server,8.8.8.8\n'
-            'tag:tag1,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            'tag:subnet-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
+            'option6:domain-search,openstacklocal\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:dns-server,8.8.8.8\n'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:classless-static-route,20.0.0.1/24,20.0.0.1,'
             '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag1,249,20.0.0.1/24,20.0.0.1,169.254.169.254/32,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            '249,20.0.0.1/24,20.0.0.1,169.254.169.254/32,'
             '192.168.0.1,0.0.0.0/0,192.168.0.1\n'
-            'tag:tag1,option:router,192.168.0.1\n'
-            'tag:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
+            'tag:subnet-dddddddd-dddd-dddd-dddd-dddddddddddd,'
+            'option:router,192.168.0.1\n'
+            'tag:port-hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
             'option6:dns-server,ffea:3ba5:a17a:4ba3::100').lstrip()
 
         dm = self._get_dnsmasq(FakeNetworkWithV6SatelessAndV4DHCPSubnets())
