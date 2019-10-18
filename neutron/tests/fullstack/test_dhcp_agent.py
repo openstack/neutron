@@ -135,7 +135,7 @@ class TestDhcpAgentHA(BaseDhcpAgentTest):
                 return network_agents[0]['id'] != old_agent['id']
             return False
 
-        common_utils.wait_until_true(_agent_rescheduled)
+        common_utils.wait_until_true(_agent_rescheduled, timeout=120)
 
     def _kill_dhcp_agent(self, agent):
         for host in self.environment.hosts:
