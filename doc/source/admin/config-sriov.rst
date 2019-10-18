@@ -342,7 +342,7 @@ Configure nova-scheduler (Controller)
    .. code-block:: ini
 
       [filter_scheduler]
-      enabled_filters = RetryFilter, AvailabilityZoneFilter, ComputeFilter, ComputeCapabilitiesFilter, ImagePropertiesFilter, ServerGroupAntiAffinityFilter, ServerGroupAffinityFilter, PciPassthroughFilter
+      enabled_filters = AvailabilityZoneFilter, ComputeFilter, ComputeCapabilitiesFilter, ImagePropertiesFilter, ServerGroupAntiAffinityFilter, ServerGroupAffinityFilter, PciPassthroughFilter
       available_filters = nova.scheduler.filters.all_filters
 
 #. Restart the ``nova-scheduler`` service.
