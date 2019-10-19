@@ -94,6 +94,7 @@ class BaseIptablesFirewallTestCase(base.BaseTestCase):
         self.iptables_inst.get_rules_for_table.return_value = (
             RAW_TABLE_OUTPUT.splitlines())
         self.firewall = iptables_firewall.IptablesFirewallDriver()
+        self.utils_exec.reset_mock()
         self.firewall.iptables = self.iptables_inst
         # don't mess with sysctl knobs in unit tests
         self.firewall._enabled_netfilter_for_bridges = True
