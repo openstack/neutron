@@ -40,11 +40,15 @@ class TestL3Agent(base.BaseFullStackTestCase):
     def _create_external_network_and_subnet(self, tenant_id):
         network = self.safe_client.create_network(
             tenant_id, name='public', external=True)
+        subnet = self._create_external_subnet(tenant_id, network['id'])
+        return network, subnet
+
+    def _create_external_subnet(self, tenant_id, network_id):
         cidr = self.useFixture(
             ip_network.ExclusiveIPNetwork(
                 "240.0.0.0", "240.255.255.255", "24")).network
-        subnet = self.safe_client.create_subnet(tenant_id, network['id'], cidr)
-        return network, subnet
+        subnet = self.safe_client.create_subnet(tenant_id, network_id, cidr)
+        return subnet
 
     def block_until_port_status_active(self, port_id):
         def is_port_status_active():
@@ -115,6 +119,51 @@ class TestL3Agent(base.BaseFullStackTestCase):
 
         # ping router old gateway IP, should fail now
         external_vm.block_until_no_ping(old_gw_ip)
+
+    def _test_external_subnet_changed(self):
+        tenant_id = uuidutils.generate_uuid()
+        ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
+        external_vm = self._create_external_vm(ext_net, ext_sub)
+
+        router = self.safe_client.create_router(tenant_id,
+                                                external_network=ext_net['id'])
+
+        vm = self._create_net_subnet_and_vm(
+            tenant_id, ['20.0.0.0/24', '2001:db8:aaaa::/64'],
+            self.environment.hosts[1], router)
+        # ping external vm to test snat
+        vm.block_until_ping(external_vm.ip)
+
+        # ping router gateway IP
+        gw_ip = router['external_gateway_info'][
+            'external_fixed_ips'][0]['ip_address']
+        external_vm.block_until_ping(gw_ip)
+
+        # create second external subnet and external vm on it
+        ext_sub_2 = self._create_external_subnet(tenant_id, ext_net['id'])
+        external_vm_2 = self._create_external_vm(ext_net, ext_sub_2)
+
+        # move original router gateway IP to be on second subnet
+        ip_1, ip_2 = self._find_available_ips(ext_net, ext_sub_2, 2)
+        ext_info = {
+            'network_id': ext_net['id'],
+            'external_fixed_ips':
+                [{'ip_address': ip_2, 'subnet_id': ext_sub_2['id']}]}
+        self.safe_client.update_router(router['id'],
+                                       external_gateway_info=ext_info)
+
+        # ping external vm_2 to test snat
+        vm.block_until_ping(external_vm_2.ip)
+
+        # ping router gateway new IP
+        external_vm_2.block_until_ping(ip_2)
+
+        # ping original router old gateway IP, should fail now
+        external_vm.block_until_no_ping(gw_ip)
+
+        # clear the external gateway so ext_sub_2 can be deleted
+        self.safe_client.update_router(router['id'],
+                                       external_gateway_info={})
 
     def _get_namespace(self, router_id, agent=None):
         namespace = namespaces.build_ns_name(namespaces.NS_PREFIX, router_id)
@@ -352,6 +401,9 @@ class TestLegacyL3Agent(TestL3Agent):
     def test_gateway_ip_changed(self):
         self._test_gateway_ip_changed()
 
+    def test_external_subnet_changed(self):
+        self._test_external_subnet_changed()
+
     def test_router_fip_qos_after_admin_state_down_up(self):
         self._router_fip_qos_after_admin_state_down_up()
 
@@ -498,6 +550,9 @@ class TestHAL3Agent(TestL3Agent):
 
     def test_gateway_ip_changed(self):
         self._test_gateway_ip_changed()
+
+    def test_external_subnet_changed(self):
+        self._test_external_subnet_changed()
 
     def test_router_fip_qos_after_admin_state_down_up(self):
         self._router_fip_qos_after_admin_state_down_up(ha=True)

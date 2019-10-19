@@ -63,13 +63,16 @@ class ClientFixture(fixtures.Fixture):
         return delete(id)
 
     def create_router(self, tenant_id, name=None, ha=False,
-                      external_network=None):
+                      external_network=None, external_subnet=None):
         resource_type = 'router'
 
         name = name or utils.get_rand_name(prefix=resource_type)
         spec = {'tenant_id': tenant_id, 'name': name, 'ha': ha}
         if external_network:
             spec['external_gateway_info'] = {"network_id": external_network}
+            if external_subnet:
+                spec['external_gateway_info']['external_fixed_ips'] = (
+                    [{"subnet_id": external_subnet}])
 
         return self._create_resource(resource_type, spec)
 
