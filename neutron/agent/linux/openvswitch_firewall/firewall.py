@@ -549,14 +549,23 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self._initialize_egress_no_port_security(port['device'])
             return
 
-        old_of_port = self.get_ofport(port)
-        of_port = self.get_or_create_ofport(port)
-        if old_of_port:
-            LOG.info("Initializing port %s that was already initialized.",
-                     port['device'])
-            self._update_flows_for_port(of_port, old_of_port)
-        else:
-            self._set_port_filters(of_port)
+        try:
+            old_of_port = self.get_ofport(port)
+            of_port = self.get_or_create_ofport(port)
+            if old_of_port:
+                LOG.info("Initializing port %s that was already initialized.",
+                         port['device'])
+                self._update_flows_for_port(of_port, old_of_port)
+            else:
+                self._set_port_filters(of_port)
+        except exceptions.OVSFWPortNotFound as not_found_error:
+            LOG.info("port %(port_id)s does not exist in ovsdb: %(err)s.",
+                     {'port_id': port['device'],
+                      'err': not_found_error})
+        except exceptions.OVSFWTagNotFound as tag_not_found:
+            LOG.info("Tag was not found for port %(port_id)s: %(err)s.",
+                     {'port_id': port['device'],
+                      'err': tag_not_found})
 
     def update_port_filter(self, port):
         """Update rules for given port
