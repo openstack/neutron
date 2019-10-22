@@ -694,7 +694,7 @@ class IpMonitorTestCase(testscenarios.WithScenarios,
         self.proc = self._run_ip_monitor(ip_monitor)
 
     def _cleanup(self):
-        self.proc.stop(block=True, kill_signal=signal.SIGTERM)
+        self.proc.stop(kill_timeout=10, kill_signal=signal.SIGTERM)
         if self.namespace:
             priv_ip_lib.remove_netns(self.namespace)
         else:
@@ -814,7 +814,7 @@ class IpMonitorTestCase(testscenarios.WithScenarios,
         utils.wait_until_true(lambda: self._read_file({}), timeout=30)
         self.ip_wrapper.add_dummy(self.devices[0])
         ip_addresses = []
-        for i in range(250):
+        for i in range(100):
             _cidr = str(netaddr.IPNetwork('192.168.252.1/32').ip + i) + '/32'
             ip_addresses.append({'cidr': _cidr, 'event': 'added',
                                  'name': self.devices[0]})
@@ -822,7 +822,7 @@ class IpMonitorTestCase(testscenarios.WithScenarios,
         self._handle_ip_addresses('added', ip_addresses)
         self._check_read_file(ip_addresses)
 
-        for i in range(250):
+        for i in range(100):
             _cidr = str(netaddr.IPNetwork('192.168.252.1/32').ip + i) + '/32'
             ip_addresses.append({'cidr': _cidr, 'event': 'removed',
                                  'name': self.devices[0]})
