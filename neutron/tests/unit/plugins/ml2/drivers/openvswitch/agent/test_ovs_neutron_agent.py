@@ -40,6 +40,8 @@ from neutron.objects.ports import Port
 from neutron.objects.ports import PortBinding
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
+from neutron.plugins.ml2.drivers.openvswitch.agent \
+    import ovs_dvr_neutron_agent
 from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_neutron_agent \
     as ovs_agent
 from neutron.tests import base
@@ -415,24 +417,23 @@ class TestOvsNeutronAgent(object):
     def test_scan_ports_returns_current_only_for_unchanged_ports(self):
         vif_port_set = set([1, 3])
         registered_ports = set([1, 3])
-        expected = {'current': vif_port_set,
-                    'added': set(),
-                    'removed': set()}
+        expected = ovs_agent.PortInfo(current=vif_port_set)
         actual = self.mock_scan_ports(vif_port_set, registered_ports)
         self.assertEqual(expected, actual)
 
     def test_scan_ports_returns_port_changes(self):
         vif_port_set = set([1, 3])
         registered_ports = set([1, 2])
-        expected = dict(current=vif_port_set, added=set([3]), removed=set([2]))
+        expected = ovs_agent.PortInfo(current=vif_port_set, added=set([3]),
+                                      removed=set([2]))
         actual = self.mock_scan_ports(vif_port_set, registered_ports)
         self.assertEqual(expected, actual)
 
     def test_scan_ports_returns_port_changes_with_sync(self):
         vif_port_set = set([1, 3])
         registered_ports = set([1, 2])
-        expected = dict(current=vif_port_set, added=vif_port_set,
-                        removed=set([2]))
+        expected = ovs_agent.PortInfo(current=vif_port_set, added=vif_port_set,
+                                      removed=set([2]))
         actual = self.mock_scan_ports(vif_port_set, registered_ports,
                                       sync=True)
         self.assertEqual(expected, actual)
@@ -440,8 +441,8 @@ class TestOvsNeutronAgent(object):
     def _test_scan_ports_with_updated_ports(self, updated_ports):
         vif_port_set = set([1, 3, 4])
         registered_ports = set([1, 2, 4])
-        expected = dict(current=vif_port_set, added=set([3]),
-                        removed=set([2]), updated=set([4]))
+        expected = ovs_agent.PortInfo(current=vif_port_set, added={3},
+                                      removed={2}, updated={4})
         actual = self.mock_scan_ports(vif_port_set, registered_ports,
                                       updated_ports)
         self.assertEqual(expected, actual)
@@ -458,8 +459,8 @@ class TestOvsNeutronAgent(object):
         vif_port_set = set([1, 3])
         registered_ports = set([1, 2])
         updated_ports = set([1, 2])
-        expected = dict(current=vif_port_set, added=set([3]),
-                        removed=set([2]), updated=set([1]))
+        expected = ovs_agent.PortInfo(current=vif_port_set, added=set([3]),
+                                      removed=set([2]), updated=set([1]))
         actual = self.mock_scan_ports(vif_port_set, registered_ports,
                                       updated_ports)
         self.assertEqual(expected, actual)
@@ -468,8 +469,7 @@ class TestOvsNeutronAgent(object):
         vif_port_set = set([1, 2, 3])
         registered_ports = set([1, 2, 3])
         updated_ports = set([2])
-        expected = dict(current=vif_port_set, updated=set([2]),
-                        added=set(), removed=set())
+        expected = ovs_agent.PortInfo(current=vif_port_set, updated=set([2]))
         actual = self.mock_scan_ports(vif_port_set, registered_ports,
                                       updated_ports)
         self.assertEqual(expected, actual)
@@ -507,12 +507,11 @@ class TestOvsNeutronAgent(object):
                   'name': 'qvof6f104bd-37'}]
         }
         registered_ports = {port_id}
-        expected_ancillary = dict(current=set(), added=set(), removed=set())
+        expected_ancillary = ovs_agent.PortInfo()
 
         # port was removed and then added
-        expected_ports = dict(current={port_id},
-                              added={port_id},
-                              removed=set())
+        expected_ports = ovs_agent.PortInfo(current={port_id}, added={port_id},
+                                            re_added={port_id})
         with mock.patch.object(ovs_lib.BaseOVS, "port_exists",
                                return_value=True):
             self._test_process_ports_events(events.copy(), registered_ports,
@@ -520,9 +519,7 @@ class TestOvsNeutronAgent(object):
                                             expected_ancillary)
 
         # port was added and then removed
-        expected_ports = dict(current=set(),
-                              added=set(),
-                              removed={port_id})
+        expected_ports = ovs_agent.PortInfo(removed={port_id})
         with mock.patch.object(ovs_lib.BaseOVS, "port_exists",
                                return_value=False):
             self._test_process_ports_events(events.copy(), registered_ports,
@@ -533,10 +530,8 @@ class TestOvsNeutronAgent(object):
         events = {'added': [], 'removed': []}
         registered_ports = {1, 3}
         ancillary_ports = {2, 5}
-        expected_ports = {'current': registered_ports, 'added': set(),
-                          'removed': set()}
-        expected_ancillary = {'current': ancillary_ports, 'added': set(),
-                              'removed': set()}
+        expected_ports = ovs_agent.PortInfo(current=registered_ports)
+        expected_ancillary = ovs_agent.PortInfo(current=ancillary_ports)
         self._test_process_ports_events(events, registered_ports,
                                         ancillary_ports, expected_ports,
                                         expected_ancillary)
@@ -545,9 +540,9 @@ class TestOvsNeutronAgent(object):
         events = {'added': [], 'removed': []}
         registered_ports = {1, 2, 3}
         updated_ports = {2}
-        expected_ports = dict(current=registered_ports, updated={2},
-                              added=set(), removed=set())
-        expected_ancillary = dict(current=set(), added=set(), removed=set())
+        expected_ports = ovs_agent.PortInfo(current=registered_ports,
+                                            updated={2})
+        expected_ancillary = ovs_agent.PortInfo()
         self._test_process_ports_events(events, registered_ports,
                                         set(), expected_ports,
                                         expected_ancillary, updated_ports)
@@ -557,9 +552,8 @@ class TestOvsNeutronAgent(object):
                   'removed': [{'name': 'port2', 'ofport': 2,
                                'external_ids': {'attached-mac': 'test-mac'}}]}
         registered_ports = {1}
-        expected_ports = dict(current=registered_ports, added=set(),
-                              removed=set())
-        expected_ancillary = dict(current=set(), added=set(), removed=set())
+        expected_ports = ovs_agent.PortInfo(current=registered_ports)
+        expected_ancillary = ovs_agent.PortInfo()
         devices_not_ready_yet = set()
         with mock.patch.object(self.agent.int_br, 'portid_from_external_ids',
                                side_effect=[2]), \
@@ -581,11 +575,11 @@ class TestOvsNeutronAgent(object):
                   'external_ids': {'attached-mac': 'test-mac'}}],
                   'removed': []}
         old_devices_not_ready = {'port4'}
-        registered_ports = set([1, 2, 3])
-        expected_ports = dict(current=set([1, 2, 3, 4]),
-                              added=set([4]), removed=set())
+        registered_ports = {1, 2, 3}
+        expected_ports = ovs_agent.PortInfo(current={1, 2, 3, 4}, added={4},
+                                            removed=set())
         self.agent.ancillary_brs = []
-        expected_ancillary = dict(current=set(), added=set(), removed=set())
+        expected_ancillary = ovs_agent.PortInfo()
         with mock.patch.object(self.agent.int_br, 'portid_from_external_ids',
                                side_effect=[5, 4]), \
             mock.patch.object(self.agent, 'check_changed_vlans',
@@ -616,11 +610,10 @@ class TestOvsNeutronAgent(object):
                                'external_ids': {'attached-mac': 'test-mac'}}]}
         registered_ports = {1, 2, 4}
         ancillary_ports = {5, 8}
-        expected_ports = dict(current={1, 3, 4}, added={3}, removed={2})
-        if updated_ports:
-            expected_ports['updated'] = updated_ports
-        expected_ancillary = dict(current={6, 8}, added={6},
-                                  removed={5})
+        expected_ports = ovs_agent.PortInfo(current={1, 3, 4}, added={3},
+                                            removed={2}, updated=updated_ports)
+        expected_ancillary = ovs_agent.PortInfo(current={6, 8}, added={6},
+                                                removed={5})
         ancillary_bridge = mock.Mock()
         ancillary_bridge.get_vif_port_set.return_value = {5, 6, 8}
         self.agent.ancillary_brs = [ancillary_bridge]
@@ -664,10 +657,8 @@ class TestOvsNeutronAgent(object):
         vif_port_set = set([1, 3])
         registered_ports = set([1, 2])
         port_tags_dict = {1: []}
-        expected = dict(
-            added=set([3]), current=vif_port_set,
-            removed=set([2]), updated=set([1])
-        )
+        expected = ovs_agent.PortInfo(added={3}, current=vif_port_set,
+                                      removed={2}, updated={1})
         with mock.patch.object(self.agent, 'tun_br', autospec=True), \
                 mock.patch.object(self.agent.plugin_rpc,
                                   'update_device_list') as upd_l:
@@ -872,7 +863,7 @@ class TestOvsNeutronAgent(object):
                     return_value={}),\
                 mock.patch.object(self.agent, func_name) as func:
             skip_devs, _, need_bound_devices, _ = (
-                self.agent.treat_devices_added_or_updated([], False))
+                self.agent.treat_devices_added_or_updated([], False, set()))
             # The function should not raise
             self.assertFalse(skip_devs)
             return func.called
@@ -890,7 +881,7 @@ class TestOvsNeutronAgent(object):
                                   return_value={details['device']: port}),\
                 mock.patch.object(self.agent, 'port_dead') as func:
             skip_devs, binding_no_activated_devices, _, _ = (
-                self.agent.treat_devices_added_or_updated([], False))
+                self.agent.treat_devices_added_or_updated([], False, set()))
             self.assertFalse(skip_devs)
             self.assertTrue(func.called)
             self.assertIn('id', binding_no_activated_devices)
@@ -943,7 +934,7 @@ class TestOvsNeutronAgent(object):
             mock.patch.object(self.agent, 'treat_vif_port',
                               return_value=False):
 
-            self.agent.treat_devices_added_or_updated([], False)
+            self.agent.treat_devices_added_or_updated([], False, set())
 
     def test_treat_devices_added_updated_skips_if_port_not_found(self):
         dev_mock = mock.MagicMock()
@@ -962,7 +953,8 @@ class TestOvsNeutronAgent(object):
                                   "delete_port") as ext_mgr_delete_port,\
                 mock.patch.object(self.agent,
                                   'treat_vif_port') as treat_vif_port:
-            skip_devs = self.agent.treat_devices_added_or_updated([], False)
+            skip_devs = self.agent.treat_devices_added_or_updated(
+                [], False, set())
             # The function should return False for resync and no device
             # processed
             self.assertEqual((['the_skipped_one'], set(), [], set()),
@@ -984,7 +976,7 @@ class TestOvsNeutronAgent(object):
                                   'treat_vif_port') as treat_vif_port:
             failed_devices = {'added': set(), 'removed': set()}
             (_, _, _, failed_devices['added']) = (
-                self.agent.treat_devices_added_or_updated([], False))
+                self.agent.treat_devices_added_or_updated([], False, set()))
             # The function should return False for resync and no device
             # processed
             self.assertEqual(set([dev_mock]), failed_devices.get('added'))
@@ -1015,7 +1007,7 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(self.agent,
                                   'treat_vif_port') as treat_vif_port:
             skip_devs, _, need_bound_devices, _ = (
-                self.agent.treat_devices_added_or_updated([], False))
+                self.agent.treat_devices_added_or_updated([], False, set()))
             # The function should return False for resync
             self.assertFalse(skip_devs)
             self.assertTrue(treat_vif_port.called)
@@ -1146,7 +1138,7 @@ class TestOvsNeutronAgent(object):
                                      port_info.get('updated', set()))
             if devices_added_updated:
                 device_added_updated.assert_called_once_with(
-                    devices_added_updated, False)
+                    devices_added_updated, False, set())
             if port_info.get('removed', set()):
                 device_removed.assert_called_once_with(port_info['removed'])
             if skipped_devices:
@@ -2820,24 +2812,23 @@ class AncillaryBridgesTest(object):
     def test_scan_ancillary_ports_returns_cur_only_for_unchanged_ports(self):
         vif_port_set = set([1, 2])
         registered_ports = set([1, 2])
-        expected = dict(current=vif_port_set,
-                        added=set(),
-                        removed=set())
+        expected = ovs_agent.PortInfo(current=vif_port_set)
         actual = self.mock_scan_ancillary_ports(vif_port_set, registered_ports)
         self.assertEqual(expected, actual)
 
     def test_scan_ancillary_ports_returns_port_changes(self):
         vif_port_set = set([1, 3])
         registered_ports = set([1, 2])
-        expected = dict(current=vif_port_set, added=set([3]), removed=set([2]))
+        expected = ovs_agent.PortInfo(current=vif_port_set, added={3},
+                                      removed={2})
         actual = self.mock_scan_ancillary_ports(vif_port_set, registered_ports)
         self.assertEqual(expected, actual)
 
     def test_scan_ancillary_ports_returns_port_changes_with_sync(self):
         vif_port_set = set([1, 3])
         registered_ports = set([1, 2])
-        expected = dict(current=vif_port_set, added=vif_port_set,
-                        removed=set([2]))
+        expected = ovs_agent.PortInfo(current=vif_port_set, added=vif_port_set,
+                                      removed={2})
         actual = self.mock_scan_ancillary_ports(vif_port_set, registered_ports,
                                                 sync=True)
         self.assertEqual(expected, actual)
@@ -3676,7 +3667,8 @@ class TestOvsDvrNeutronAgent(object):
                                'get_dvr_mac_address_by_host',
                                side_effect=oslo_messaging.RemoteError),\
                 mock.patch.object(self.agent, 'int_br', new=int_br),\
-                mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br):
+                mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br),\
+                mock.patch.object(ovs_dvr_neutron_agent.LOG, 'error'):
             with testtools.ExpectedException(SystemExit):
                 self.agent.dvr_agent.get_dvr_mac_address()
                 self.assertIsNone(self.agent.dvr_agent.dvr_mac_address)
