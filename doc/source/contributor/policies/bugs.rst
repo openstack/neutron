@@ -372,105 +372,102 @@ with an identified go-to contact or :ref:`Lieutenant <core-review-hierarchy>`,
 who can provide further insight. Bug queries are provided below for convenience,
 more will be added over time if needed.
 
-+-------------------------------+-----------------------------------------+----------------------+
-| Tag                           | Description                             | Contact              |
-+===============================+=========================================+======================+
-| access-control_               | A bug affecting RBAC and policy.json    | Miguel Lavalle       |
-+-------------------------------+-----------------------------------------+----------------------+
-| api_                          | A bug affecting the API layer           | Akihiro Motoki       |
-+-------------------------------+-----------------------------------------+----------------------+
-| api-ref_                      | A bug affecting the API reference       | Akihiro Motoki       |
-+-------------------------------+-----------------------------------------+----------------------+
-| auto-allocated-topology_      | A bug affecting get-me-a-network        | Armando Migliaccio   |
-+-------------------------------+-----------------------------------------+----------------------+
-| baremetal_                    | A bug affecting Ironic support          | Sukhdev Kapur        |
-+-------------------------------+-----------------------------------------+----------------------+
-| db_                           | A bug affecting the DB layer            | Ann Taraday/         |
-|                               |                                         | Nate Johnston        |
-+-------------------------------+-----------------------------------------+----------------------+
-| deprecation_                  | To track config/feature deprecations    | Neutron PTL/drivers  |
-+-------------------------------+-----------------------------------------+----------------------+
-| dns_                          | A bug affecting DNS integration         | Miguel Lavalle       |
-+-------------------------------+-----------------------------------------+----------------------+
-| doc_                          | A bug affecting in-tree doc             | Boden Russell        |
-+-------------------------------+-----------------------------------------+----------------------+
-| fullstack_                    | A bug in the fullstack subtree          | Hongbin Lu           |
-+-------------------------------+-----------------------------------------+----------------------+
-| functional-tests_             | A bug in the functional tests subtree   | Hongbin Lu           |
-+-------------------------------+-----------------------------------------+----------------------+
-| fwaas_                        | A bug affecting neutron-fwaas           | Sridar K.            |
-+-------------------------------+-----------------------------------------+----------------------+
-| gate-failure_                 | A bug affecting gate stability          | Slawek Kaplonski     |
-+-------------------------------+-----------------------------------------+----------------------+
-| ipv6_                         | A bug affecting IPv6 support            | Brian Haley          |
-+-------------------------------+-----------------------------------------+----------------------+
-| l2-pop_                       | A bug in L2 Population mech driver      | Miguel Lavalle       |
-+-------------------------------+-----------------------------------------+----------------------+
-| l3-bgp_                       | A bug affecting neutron-dynamic-routing | Vikram Choudhary     |
-+-------------------------------+-----------------------------------------+----------------------+
-| l3-dvr-backlog_               | A bug affecting distributed routing     | Swami V./            |
-|                               |                                         | Brian Haley/         |
-|                               |                                         | Yulong Liu           |
-+-------------------------------+-----------------------------------------+----------------------+
-| l3-ha_                        | A bug affecting L3 HA (vrrp)            | Brian Haley          |
-+-------------------------------+-----------------------------------------+----------------------+
-| l3-ipam-dhcp_                 | A bug affecting L3/DHCP/metadata        | Miguel Lavalle       |
-+-------------------------------+-----------------------------------------+----------------------+
-| lib_                          | An issue affecting neutron-lib          | Boden Russell        |
-+-------------------------------+-----------------------------------------+----------------------+
-| linuxbridge_                  | A bug affecting ML2/linuxbridge         | N/A                  |
-+-------------------------------+-----------------------------------------+----------------------+
-| loadimpact_                   | Performance penalty/improvements        | Miguel Lavalle       |
-+-------------------------------+-----------------------------------------+----------------------+
-| logging_                      | An issue with logging guidelines        | Matt Riedemann       |
-+-------------------------------+-----------------------------------------+----------------------+
-| low-hanging-fruit_            | Starter bugs for new contributors       | Miguel Lavalle       |
-+-------------------------------+-----------------------------------------+----------------------+
-| metering_                     | A bug affecting the metering layer      | ?                    |
-+-------------------------------+-----------------------------------------+----------------------+
-| needs-attention_              | A bug that needs further screening      | PTL/Bug Deputy       |
-+-------------------------------+-----------------------------------------+----------------------+
-| opnfv_                        | Reported by/affecting OPNFV initiative  | Drivers team         |
-+-------------------------------+-----------------------------------------+----------------------+
-| ops_                          | Reported by or affecting operators      | Drivers Team         |
-+-------------------------------+-----------------------------------------+----------------------+
-| oslo_                         | An interop/cross-project issue          | N/A                  |
-+-------------------------------+-----------------------------------------+----------------------+
-| ovs_                          | A bug affecting ML2/OVS                 | Miguel Lavalle       |
-+-------------------------------+-----------------------------------------+----------------------+
-| ovs-fw_                       | A bug affecting OVS firewall            | Miguel Lavalle       |
-+-------------------------------+-----------------------------------------+----------------------+
-| ovs-lib_                      | A bug affecting OVS Lib                 | Terry Wilson         |
-+-------------------------------+-----------------------------------------+----------------------+
-| py3_                          | Issues affecting the Python 3 porting   | Nate Johnston        |
-+-------------------------------+-----------------------------------------+----------------------+
-| qos_                          | A bug affecting ML2/QoS                 | Slawek Kaplonski     |
-+-------------------------------+-----------------------------------------+----------------------+
-| rfe_                          | Feature enhancements being screened     | Drivers Team         |
-+-------------------------------+-----------------------------------------+----------------------+
-| rfe-confirmed_                | Confirmed feature enhancements          | Drivers Team         |
-+-------------------------------+-----------------------------------------+----------------------+
-| rfe-triaged_                  | Triaged feature enhancements            | Drivers Team         |
-+-------------------------------+-----------------------------------------+----------------------+
-| rfe-approved_                 | Approved feature enhancements           | Drivers Team         |
-+-------------------------------+-----------------------------------------+----------------------+
-| rfe-postponed_                | Postponed feature enhancements          | Drivers Team         |
-+-------------------------------+-----------------------------------------+----------------------+
-| sg-fw_                        | A bug affecting security groups         | Brian Haley          |
-+-------------------------------+-----------------------------------------+----------------------+
-| sriov-pci-pt_                 | A bug affecting Sriov/PCI PassThrough   | Moshe Levi           |
-+-------------------------------+-----------------------------------------+----------------------+
-| tempest_                      | A bug in tempest subtree tests          | Hongbin Lu           |
-+-------------------------------+-----------------------------------------+----------------------+
-| troubleshooting_              | An issue affecting ease of debugging    | Boden Russell        |
-+-------------------------------+-----------------------------------------+----------------------+
-| unittest_                     | A bug affecting the unit test subtree   | Hongbin Lu           |
-+-------------------------------+-----------------------------------------+----------------------+
-| usability_                    | UX, interoperability, feature parity    | PTL/Drivers Team     |
-+-------------------------------+-----------------------------------------+----------------------+
-| xxx-backport-potential_       | Cherry-pick request for stable team     | Bernard Cafarelli/   |
-|                               |                                         | Brian Haley          |
-+-------------------------------+-----------------------------------------+----------------------+
++-------------------------------+-----------------------------------------+--------------------------+
+| Tag                           | Description                             | Contact                  |
++===============================+=========================================+==========================+
+| access-control_               | A bug affecting RBAC and policy.json    | Miguel Lavalle           |
++-------------------------------+-----------------------------------------+--------------------------+
+| api_                          | A bug affecting the API layer           | Akihiro Motoki           |
++-------------------------------+-----------------------------------------+--------------------------+
+| api-ref_                      | A bug affecting the API reference       | Akihiro Motoki           |
++-------------------------------+-----------------------------------------+--------------------------+
+| auto-allocated-topology_      | A bug affecting get-me-a-network        | N/A                      |
++-------------------------------+-----------------------------------------+--------------------------+
+| baremetal_                    | A bug affecting Ironic support          | N/A                      |
++-------------------------------+-----------------------------------------+--------------------------+
+| db_                           | A bug affecting the DB layer            | Nate Johnston            |
++-------------------------------+-----------------------------------------+--------------------------+
+| deprecation_                  | To track config/feature deprecations    | Neutron PTL/drivers      |
++-------------------------------+-----------------------------------------+--------------------------+
+| dns_                          | A bug affecting DNS integration         | Miguel Lavalle           |
++-------------------------------+-----------------------------------------+--------------------------+
+| doc_                          | A bug affecting in-tree doc             | Akihiro Motoki           |
++-------------------------------+-----------------------------------------+--------------------------+
+| fullstack_                    | A bug in the fullstack subtree          | Rodolfo Alonso Hernandez |
++-------------------------------+-----------------------------------------+--------------------------+
+| functional-tests_             | A bug in the functional tests subtree   | Rodolfo Alonso Hernandez |
++-------------------------------+-----------------------------------------+--------------------------+
+| fwaas_                        | A bug affecting neutron-fwaas           | Nate Johnston            |
++-------------------------------+-----------------------------------------+--------------------------+
+| gate-failure_                 | A bug affecting gate stability          | Slawek Kaplonski         |
++-------------------------------+-----------------------------------------+--------------------------+
+| ipv6_                         | A bug affecting IPv6 support            | Brian Haley              |
++-------------------------------+-----------------------------------------+--------------------------+
+| l2-pop_                       | A bug in L2 Population mech driver      | Miguel Lavalle           |
++-------------------------------+-----------------------------------------+--------------------------+
+| l3-bgp_                       | A bug affecting neutron-dynamic-routing | Ryan Tidwell             |
++-------------------------------+-----------------------------------------+--------------------------+
+| l3-dvr-backlog_               | A bug affecting distributed routing     | Yulong Liu/              |
+|                               |                                         | Brian Haley              |
++-------------------------------+-----------------------------------------+--------------------------+
+| l3-ha_                        | A bug affecting L3 HA (vrrp)            | Brian Haley              |
++-------------------------------+-----------------------------------------+--------------------------+
+| l3-ipam-dhcp_                 | A bug affecting L3/DHCP/metadata        | Miguel Lavalle           |
++-------------------------------+-----------------------------------------+--------------------------+
+| lib_                          | An issue affecting neutron-lib          | Neutron PTL              |
++-------------------------------+-----------------------------------------+--------------------------+
+| linuxbridge_                  | A bug affecting ML2/linuxbridge         | N/A                      |
++-------------------------------+-----------------------------------------+--------------------------+
+| loadimpact_                   | Performance penalty/improvements        | Miguel Lavalle           |
++-------------------------------+-----------------------------------------+--------------------------+
+| logging_                      | An issue with logging guidelines        | Matt Riedemann           |
++-------------------------------+-----------------------------------------+--------------------------+
+| low-hanging-fruit_            | Starter bugs for new contributors       | Miguel Lavalle           |
++-------------------------------+-----------------------------------------+--------------------------+
+| metering_                     | A bug affecting the metering layer      | N/A                      |
++-------------------------------+-----------------------------------------+--------------------------+
+| needs-attention_              | A bug that needs further screening      | PTL/Bug Deputy           |
++-------------------------------+-----------------------------------------+--------------------------+
+| opnfv_                        | Reported by/affecting OPNFV initiative  | Drivers team             |
++-------------------------------+-----------------------------------------+--------------------------+
+| ops_                          | Reported by or affecting operators      | Drivers Team             |
++-------------------------------+-----------------------------------------+--------------------------+
+| oslo_                         | An interop/cross-project issue          | Bernard Cafarelli/       |
+|                               |                                         | Rodolfo Alonso Hernandez |
++-------------------------------+-----------------------------------------+--------------------------+
+| ovs_                          | A bug affecting ML2/OVS                 | Miguel Lavalle           |
++-------------------------------+-----------------------------------------+--------------------------+
+| ovs-fw_                       | A bug affecting OVS firewall            | Miguel Lavalle           |
++-------------------------------+-----------------------------------------+--------------------------+
+| ovsdb-lib_                    | A bug affecting OVSDB library           | Terry Wilson             |
++-------------------------------+-----------------------------------------+--------------------------+
+| qos_                          | A bug affecting ML2/QoS                 | Slawek Kaplonski         |
++-------------------------------+-----------------------------------------+--------------------------+
+| rfe_                          | Feature enhancements being screened     | Drivers Team             |
++-------------------------------+-----------------------------------------+--------------------------+
+| rfe-confirmed_                | Confirmed feature enhancements          | Drivers Team             |
++-------------------------------+-----------------------------------------+--------------------------+
+| rfe-triaged_                  | Triaged feature enhancements            | Drivers Team             |
++-------------------------------+-----------------------------------------+--------------------------+
+| rfe-approved_                 | Approved feature enhancements           | Drivers Team             |
++-------------------------------+-----------------------------------------+--------------------------+
+| rfe-postponed_                | Postponed feature enhancements          | Drivers Team             |
++-------------------------------+-----------------------------------------+--------------------------+
+| sg-fw_                        | A bug affecting security groups         | Brian Haley              |
++-------------------------------+-----------------------------------------+--------------------------+
+| sriov-pci-pt_                 | A bug affecting Sriov/PCI PassThrough   | Moshe Levi               |
++-------------------------------+-----------------------------------------+--------------------------+
+| tempest_                      | A bug in tempest subtree tests          | Rodolfo Alonso Hernandez |
++-------------------------------+-----------------------------------------+--------------------------+
+| troubleshooting_              | An issue affecting ease of debugging    | Nate Johnston            |
++-------------------------------+-----------------------------------------+--------------------------+
+| unittest_                     | A bug affecting the unit test subtree   | Rodolfo Alonso Hernandez |
++-------------------------------+-----------------------------------------+--------------------------+
+| usability_                    | UX, interoperability, feature parity    | PTL/Drivers Team         |
++-------------------------------+-----------------------------------------+--------------------------+
+| xxx-backport-potential_       | Cherry-pick request for stable team     | Bernard Cafarelli/       |
+|                               |                                         | Brian Haley              |
++-------------------------------+-----------------------------------------+--------------------------+
 
 .. _access-control:
 
@@ -717,21 +714,13 @@ OVS Firewall
 * `OVS Firewall - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=ovs-fw>`_
 * `OVS Firewall - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=ovs-fw>`_
 
-.. _ovs-lib:
+.. _ovsdb-lib:
 
-OVS Lib
-+++++++
+OVSDB Lib
++++++++++
 
-* `OVS Lib - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=ovs-lib>`_
-* `OVS Lib - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=ovs-lib>`_
-
-.. _py3:
-
-PY3
-+++
-
-* `Py3 - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=py3>`_
-* `Py3 - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=py3>`_
+* `OVSDB Lib - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=ovsdb-lib>`_
+* `OVSDB Lib - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=ovsdb-lib>`_
 
 .. _qos:
 
