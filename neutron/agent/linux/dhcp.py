@@ -470,7 +470,7 @@ class Dnsmasq(DhcpLocalProcess):
         pm = self._get_process_manager(
             cmd_callback=self._build_cmdline_callback)
 
-        pm.enable(reload_cfg=reload_with_HUP)
+        pm.enable(reload_cfg=reload_with_HUP, ensure_active=True)
 
         self.process_monitor.register(uuid=self.network.id,
                                       service_name=DNSMASQ_SERVICE_NAME,
