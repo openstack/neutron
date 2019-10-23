@@ -21,6 +21,7 @@ from oslo_utils import fileutils
 import psutil
 
 from neutron.agent.linux import external_process as ep
+from neutron.common import utils as common_utils
 from neutron.tests import base
 
 
@@ -168,6 +169,24 @@ class TestProcessManager(base.BaseTestCase):
             with mock.patch.object(ep, 'ip_lib'):
                 manager.enable(callback)
                 self.assertFalse(callback.called)
+
+    def test_enable_with_ensure_active(self):
+        def _create_cmd(*args):
+            return ['sleep', 0]
+
+        pm = ep.ProcessManager(self.conf, 'uuid', pid_file='pid_file',
+                               default_cmd_callback=_create_cmd)
+        with mock.patch.object(psutil, 'Process') as mock_psutil_process, \
+                mock.patch.object(ep.ProcessManager, 'pid',
+                                  new_callable=mock.PropertyMock) as mock_pid:
+            mock_pid.return_value = 'pid_value'
+            mock_process = mock.Mock()
+            mock_process.cmdline.side_effect = [[], ['the', 'cmd', 'uuid']]
+            mock_psutil_process.return_value = mock_process
+            try:
+                pm.enable(ensure_active=True)
+            except common_utils.WaitTimeout:
+                self.fail('ProcessManager.enable() raised WaitTimeout')
 
     def test_reload_cfg_without_custom_reload_callback(self):
         with mock.patch.object(ep.ProcessManager, 'disable') as disable:
