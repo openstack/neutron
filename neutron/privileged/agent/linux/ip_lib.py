@@ -241,11 +241,11 @@ def _translate_ip_device_exception(e, device=None, namespace=None):
 
 
 def get_link_id(device, namespace):
-    try:
-        with get_iproute(namespace) as ip:
-            return ip.link_lookup(ifname=device)[0]
-    except IndexError:
+    with get_iproute(namespace) as ip:
+        link_id = ip.link_lookup(ifname=device)
+    if not link_id or len(link_id) < 1:
         raise NetworkInterfaceNotFound(device=device, namespace=namespace)
+    return link_id[0]
 
 
 def _run_iproute_link(command, device, namespace=None, **kwargs):
