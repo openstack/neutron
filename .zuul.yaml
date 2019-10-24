@@ -17,7 +17,8 @@
     check:
       jobs:
         - neutron-functional
-        - neutron-functional-python27
+        # TODO(ralonsoh): until the bug 1848944 is fixed or PY2 removed
+        #- neutron-functional-python27:
         - neutron-fullstack
         - neutron-rally-task
         - neutron-tempest-dvr
@@ -67,7 +68,8 @@
     gate:
       jobs:
         - neutron-functional
-        - neutron-functional-python27
+        # TODO(ralonsoh): until the bug 1848944 is fixed or PY2 removed
+        #- neutron-functional-python27:
         - neutron-fullstack
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
