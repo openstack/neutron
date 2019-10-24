@@ -143,13 +143,6 @@ class External_net_db_mixin(object):
         if l3plugin:
             l3plugin.delete_disassociated_floatingips(context, network_id)
 
-    def get_external_network_id(self, context):
-        nets = self.get_networks(context, {extnet_apidef.EXTERNAL: [True]})
-        if len(nets) > 1:
-            raise n_exc.TooManyExternalNetworks()
-        else:
-            return nets[0]['id'] if nets else None
-
     @registry.receives(resources.RBAC_POLICY, [events.BEFORE_CREATE])
     def _process_ext_policy_create(self, resource, event, trigger,
                                    payload=None):

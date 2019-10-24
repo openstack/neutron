@@ -250,18 +250,6 @@ class L3RpcCallback(object):
                 {'port': {portbindings.HOST_ID: host,
                           'device_id': router_id}})
 
-    def get_external_network_id(self, context, **kwargs):
-        """Get one external network id for l3 agent.
-
-        l3 agent expects only one external network when it performs
-        this query.
-        """
-        context = neutron_context.get_admin_context()
-        net_id = self.plugin.get_external_network_id(context)
-        LOG.debug("External network ID returned to l3 agent: %s",
-                  net_id)
-        return net_id
-
     def get_service_plugin_list(self, context, **kwargs):
         return directory.get_plugins().keys()
 
