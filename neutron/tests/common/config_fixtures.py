@@ -68,5 +68,15 @@ class ConfigFileFixture(fixtures.Fixture):
             if section != 'DEFAULT':
                 config_parser.add_section(section)
             for option, value in section_dict.items():
-                config_parser.set(section, option, value)
+                try:
+                    config_parser.set(section, option, value)
+                except TypeError as te:
+                    raise TypeError(
+                        "%(msg)s: section %(section)s, option %(option)s, "
+                        "value: %(value)s" % {
+                            'msg': te.args[0],
+                            'section': section,
+                            'option': option,
+                            'value': value,
+                        })
         return config_parser
