@@ -25,6 +25,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.common import utils as agent_utils
+from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.objects import agent as agent_obj
 from neutron.objects import network
 from neutron.scheduler import base_resource_filter
@@ -89,12 +90,15 @@ class AutoScheduler(object):
                     if (az_hints and
                             dhcp_agent['availability_zone'] not in az_hints):
                         continue
-                    bindings_to_add.append((dhcp_agent, net_id))
+                    bindings_to_add.append(
+                        (dhcp_agent, net_id, is_routed_network))
         # do it outside transaction so particular scheduling results don't
         # make other to fail
         debug_data = []
-        for agent, net_id in bindings_to_add:
-            self.resource_filter.bind(context, [agent], net_id)
+        for agent, net_id, is_routed_network in bindings_to_add:
+            self.resource_filter.bind(
+                context, [agent], net_id,
+                force_scheduling=is_routed_network)
             debug_data.append('(%s, %s, %s)' % (agent['agent_type'],
                                                 agent['host'], net_id))
         LOG.debug('Resources bound (agent type, host, resource id): %s',
@@ -174,26 +178,72 @@ class AZAwareWeightScheduler(WeightScheduler):
 
 class DhcpFilter(base_resource_filter.BaseResourceFilter):
 
-    def bind(self, context, agents, network_id):
+    def get_vacant_network_dhcp_agent_binding_index(
+            self, context, network_id, force_scheduling):
+        """Return a vacant binding_index to use and whether or not it exists.
+
+        Each NetworkDhcpAgentBinding has a binding_index which is unique per
+        network_id, and when creating a single binding we require to find a
+        'vacant' binding_index which isn't yet used - for example if we have
+        bindings with indices 1 and 3, then clearly binding_index == 2 is free.
+
+        :returns: binding_index.
+        """
+        num_agents = agent_obj.Agent.count(
+            context, agent_type=constants.AGENT_TYPE_DHCP)
+        num_agents = min(num_agents, cfg.CONF.dhcp_agents_per_network)
+
+        bindings = network.NetworkDhcpAgentBinding.get_objects(
+            context, network_id=network_id)
+
+        binding_indices = [b.binding_index for b in bindings]
+        all_indices = set(range(ndab_model.LOWEST_BINDING_INDEX,
+                                num_agents + 1))
+        open_slots = sorted(list(all_indices - set(binding_indices)))
+
+        if open_slots:
+            return open_slots[0]
+
+        # Last chance: if this is a manual scheduling, we're gonna allow
+        # creation of a binding_index even if it will exceed
+        # max_l3_agents_per_router.
+        if force_scheduling:
+            return max(all_indices) + 1
+
+        return -1
+
+    def bind(self, context, agents, network_id, force_scheduling=False):
         """Bind the network to the agents."""
         # customize the bind logic
         bound_agents = agents[:]
         for agent in agents:
+            binding_index = self.get_vacant_network_dhcp_agent_binding_index(
+                context, network_id, force_scheduling)
+            if binding_index < ndab_model.LOWEST_BINDING_INDEX:
+                LOG.debug('Unable to find a vacant binding_index for '
+                          'network %(network_id)s and agent %(agent_id)s',
+                          {'network_id': network_id,
+                           'agent_id': agent.id})
+                continue
+
             # saving agent_id to use it after rollback to avoid
             # DetachedInstanceError
             agent_id = agent.id
             try:
                 network.NetworkDhcpAgentBinding(
                      context, dhcp_agent_id=agent_id,
-                     network_id=network_id).create()
+                     network_id=network_id,
+                     binding_index=binding_index).create()
             except exceptions.NeutronDbObjectDuplicateEntry:
                 # it's totally ok, someone just did our job!
                 bound_agents.remove(agent)
                 LOG.info('Agent %s already present', agent_id)
             LOG.debug('Network %(network_id)s is scheduled to be '
-                      'hosted by DHCP agent %(agent_id)s',
+                      'hosted by DHCP agent %(agent_id)s with binding_index '
+                      '%(binding_index)d',
                       {'network_id': network_id,
-                       'agent_id': agent_id})
+                       'agent_id': agent_id,
+                       'binding_index': binding_index})
         super(DhcpFilter, self).bind(context, bound_agents, network_id)
 
     def filter_agents(self, plugin, context, network):

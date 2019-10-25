@@ -71,6 +71,7 @@ class TestDhcpSchedulerBaseTestCase(testlib_api.SqlTestCase):
             network_obj.Network(self.ctx, id=network_id).create()
 
     def _test_schedule_bind_network(self, agents, network_id):
+        cfg.CONF.set_override('dhcp_agents_per_network', len(agents))
         scheduler = dhcp_agent_scheduler.ChanceScheduler()
         scheduler.resource_filter.bind(self.ctx, agents, network_id)
         binding_objs = network_obj.NetworkDhcpAgentBinding.get_objects(
@@ -93,7 +94,7 @@ class TestDhcpScheduler(TestDhcpSchedulerBaseTestCase):
     def test_schedule_bind_network_multi_agent_fail_one(self):
         agents = self._create_and_set_agents_down(['host-a'])
         self._test_schedule_bind_network(agents, self.network_id)
-        with mock.patch.object(dhcp_agent_scheduler.LOG, 'info') as fake_log:
+        with mock.patch.object(dhcp_agent_scheduler.LOG, 'debug') as fake_log:
             self._test_schedule_bind_network(agents, self.network_id)
             self.assertEqual(1, fake_log.call_count)
 
@@ -138,8 +139,7 @@ class TestDhcpScheduler(TestDhcpSchedulerBaseTestCase):
         return network_obj.NetworkDhcpAgentBinding.get_objects(
             self.ctx, dhcp_agent_id=agent[0].id)
 
-    def _test_auto_reschedule_vs_network_on_dead_agent(self,
-                                                       active_hosts_only):
+    def test_auto_reschedule_vs_network_on_dead_agent(self):
         dead_agent, alive_agent, scheduler = (
             self._test_get_agents_and_scheduler_for_dead_agent())
         plugin = mock.Mock()
@@ -147,10 +147,7 @@ class TestDhcpScheduler(TestDhcpSchedulerBaseTestCase):
                                             "enable_dhcp": True,
                                             "segment_id": None}]
         plugin.get_network.return_value = self.network
-        if active_hosts_only:
-            plugin.get_dhcp_agents_hosting_networks.return_value = []
-        else:
-            plugin.get_dhcp_agents_hosting_networks.return_value = dead_agent
+        plugin.get_dhcp_agents_hosting_networks.return_value = dead_agent
         network_assigned_to_dead_agent = (
             self._get_agent_binding_from_db(dead_agent))
         self.assertEqual(1, len(network_assigned_to_dead_agent))
@@ -162,16 +159,9 @@ class TestDhcpScheduler(TestDhcpSchedulerBaseTestCase):
         network_assigned_to_alive_agent = (
             self._get_agent_binding_from_db(alive_agent))
         self.assertEqual(1, len(network_assigned_to_dead_agent))
-        if active_hosts_only:
-            self.assertEqual(1, len(network_assigned_to_alive_agent))
-        else:
-            self.assertEqual(0, len(network_assigned_to_alive_agent))
-
-    def test_network_auto_rescheduled_when_db_returns_active_hosts(self):
-        self._test_auto_reschedule_vs_network_on_dead_agent(True)
-
-    def test_network_not_auto_rescheduled_when_db_returns_all_hosts(self):
-        self._test_auto_reschedule_vs_network_on_dead_agent(False)
+        # network won't be scheduled to new agent unless removed from
+        # dead agent
+        self.assertEqual(0, len(network_assigned_to_alive_agent))
 
 
 class TestAutoScheduleNetworks(TestDhcpSchedulerBaseTestCase):
@@ -406,6 +396,27 @@ class TestAutoScheduleSegments(test_plugin.Ml2PluginV2TestCase,
 
 class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
                            sched_db.DhcpAgentSchedulerDbMixin):
+    def test_auto_schedule_network_excess_agents(self):
+        plugin = mock.MagicMock()
+        plugin.get_subnets.return_value = (
+            [{"network_id": self.network_id, "enable_dhcp": True}])
+        plugin.get_network.return_value = {'availability_zone_hints': ['nova']}
+        scheduler = dhcp_agent_scheduler.ChanceScheduler()
+        dhcpfilter = 'neutron.scheduler.dhcp_agent_scheduler.DhcpFilter'
+        self._create_and_set_agents_down(['host-a', 'host-b'])
+        expected_hosted_agents = 1
+        binding_index = 1
+        scheduler.auto_schedule_networks(plugin, self.ctx, 'host-a')
+        with mock.patch(
+                dhcpfilter + '.get_vacant_network_dhcp_agent_binding_index',
+                context=self.ctx, network_id=self.network_id) as ndab:
+            ndab.return_value = binding_index
+            scheduler.auto_schedule_networks(plugin, self.ctx, 'host-b')
+            self.assertTrue(ndab.called)
+        num_hosted_agents = network_obj.NetworkDhcpAgentBinding.count(
+            self.ctx, network_id=self.network_id)
+        self.assertEqual(expected_hosted_agents, num_hosted_agents)
+
     def test_reschedule_network_from_down_agent(self):
         net_id = uuidutils.generate_uuid()
         agents = self._create_and_set_agents_down(['host-a', 'host-b'], 1)
@@ -722,6 +733,7 @@ class DHCPAgentWeightSchedulerTestCase(test_plugin.Ml2PluginV2TestCase):
 class TestDhcpSchedulerFilter(TestDhcpSchedulerBaseTestCase,
                               sched_db.DhcpAgentSchedulerDbMixin):
     def _test_get_dhcp_agents_hosting_networks(self, expected, **kwargs):
+        cfg.CONF.set_override('dhcp_agents_per_network', 4)
         agents = self._create_and_set_agents_down(['host-a', 'host-b'], 1)
         agents += self._create_and_set_agents_down(['host-c', 'host-d'], 1,
                                                    admin_state_up=False)
