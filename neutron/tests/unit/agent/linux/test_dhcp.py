@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import os
 
 import mock
@@ -24,6 +25,7 @@ from neutron_lib import fixture as lib_fixtures
 from oslo_config import cfg
 import oslo_messaging
 from oslo_utils import fileutils
+from oslo_utils import uuidutils
 import testtools
 
 from neutron.agent.linux import dhcp
@@ -3129,6 +3131,34 @@ class TestDeviceManager(TestConfBase):
 
 class TestDictModel(base.BaseTestCase):
 
+    def setUp(self):
+        super(TestDictModel, self).setUp()
+        self._a = uuidutils.generate_uuid()
+        self._b = uuidutils.generate_uuid()
+        self.dm = dhcp.DictModel(a=self._a, b=self._b)
+
+    def test_basic_dict(self):
+        d = dict(a=1, b=2)
+        m = dhcp.DictModel(d)
+        self.assertEqual(1, m.a)
+        self.assertEqual(2, m.b)
+
+    def test_dict_has_sub_dict(self):
+        d = dict(a=dict(b=2))
+        m = dhcp.DictModel(d)
+        self.assertEqual(2, m.a.b)
+
+    def test_dict_contains_list(self):
+        d = dict(a=[1, 2])
+        m = dhcp.DictModel(d)
+        self.assertEqual([1, 2], m.a)
+
+    def test_dict_contains_list_of_dicts(self):
+        d = dict(a=[dict(b=2), dict(c=3)])
+        m = dhcp.DictModel(d)
+        self.assertEqual(2, m.a[0].b)
+        self.assertEqual(3, m.a[1].c)
+
     def test_string_representation_port(self):
         port = dhcp.DictModel({'id': 'id', 'network_id': 'net_id'})
         self.assertEqual('id=id, network_id=net_id', str(port))
@@ -3136,3 +3166,67 @@ class TestDictModel(base.BaseTestCase):
     def test_string_representation_network(self):
         net = dhcp.DictModel({'id': 'id', 'name': 'myname'})
         self.assertEqual('id=id, name=myname', str(net))
+
+    def test__init_parameters(self):
+        self.assertEqual(self._a, self.dm.a)
+        self.assertEqual(self._b, self.dm.b)
+
+    def test__init_dictmodel(self):
+        dm2 = dhcp.DictModel(self.dm)
+        self.assertEqual(self._a, dm2.a)
+        self.assertEqual(self._b, dm2.b)
+        dm2.a = 'new_value'
+        self.assertEqual('new_value', dm2.a)
+        self.assertEqual(self._a, self.dm.a)
+
+    def test__getattr(self):
+        self.assertEqual({'a': self._a, 'b': self._b},
+                         self.dm._dictmodel_internal_storage)
+        try:
+            self.dm.z
+        except AttributeError:
+            pass
+        except Exception:
+            self.fail('Getting a non existing attribute from a DictModel '
+                      'object should raise AttributeError')
+
+    def test__setattr(self):
+        self.dm.c = 'c_value'
+        self.assertEqual('c_value', self.dm.c)
+
+    def test__delattr(self):
+        del self.dm.a
+        self.assertIsNone(self.dm.get('a'))
+
+    def test__str(self):
+        reference = 'a=%s, b=%s' % (self._a, self._b)
+        self.assertEqual(reference, str(self.dm))
+
+    def test__getitem(self):
+        self.assertEqual(self._a, self.dm['a'])
+        self.assertEqual(self._b, self.dm['b'])
+
+    def test__setitem(self):
+        self.dm['a'] = 'a_new_value'
+        self.assertEqual('a_new_value', self.dm.a)
+        self.assertEqual('a_new_value', self.dm['a'])
+        self.assertEqual(self._b, self.dm.b)
+
+    def test__iter(self):
+        list_keys = sorted(list(self.dm))
+        self.assertEqual(['a', 'b'], list_keys)
+
+    def test__len(self):
+        self.assertEqual(2, len(self.dm))
+
+    def test__copy_and_deepcopy(self):
+        for method in (copy.copy, copy.deepcopy):
+            self.dm._tuple = (10, 11)
+            self.dm._list = [20, 21]
+            dm2 = method(self.dm)
+            dm2._tuple = (30, 31)
+            dm2._list[0] = 200
+            self.assertEqual((10, 11), self.dm._tuple)
+            self.assertEqual([20, 21], self.dm._list)
+            self.assertEqual((30, 31), dm2._tuple)
+            self.assertEqual([200, 21], dm2._list)
