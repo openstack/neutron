@@ -6503,7 +6503,8 @@ class DbModelMixin(object):
         with db_api.CONTEXT_WRITER.using(ctx):
             network = models_v2.Network(name="net_net", status="OK",
                                         admin_state_up=True,
-                                        project_id='fake_project')
+                                        project_id='fake_project',
+                                        mtu=1500)
             ctx.session.add(network)
             with db_api.autonested_transaction(ctx.session):
                 sg = sg_models.SecurityGroup(name='sg', description='sg')
@@ -6516,7 +6517,8 @@ class DbModelMixin(object):
                 project_id=network.project_id,
                 target_tenant='*').create()
             net2 = models_v2.Network(name="net_net2", status="OK",
-                                     admin_state_up=True)
+                                     admin_state_up=True,
+                                     mtu=1500)
             ctx.session.add(net2)
         pl = db_base_plugin_common.DbBasePluginCommon()
         self.assertTrue(pl._make_network_dict(network, context=ctx)['shared'])

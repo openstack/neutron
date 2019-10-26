@@ -1144,12 +1144,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with db_api.CONTEXT_WRITER.using(context):
             net_db = self._get_network(context, id)
 
-            # NOTE(ihrachys) pre Pike networks may have null mtus; update them
-            # in database if needed
-            # TODO(ihrachys) remove in Queens+ when mtu is not nullable
-            if net_db.mtu is None:
-                net_db.mtu = self._get_network_mtu(net_db, validate=False)
-
             net_data = self._make_network_dict(net_db, context=context)
             self.type_manager.extend_network_dict_provider(context, net_data)
 
@@ -1164,13 +1158,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             nets_db = super(Ml2Plugin, self)._get_networks(
                 context, filters, None, sorts, limit, marker, page_reverse)
 
-            # NOTE(ihrachys) pre Pike networks may have null mtus; update them
-            # in database if needed
-            # TODO(ihrachys) remove in Queens+ when mtu is not nullable
             net_data = []
             for net in nets_db:
-                if net.mtu is None:
-                    net.mtu = self._get_network_mtu(net, validate=False)
                 net_data.append(self._make_network_dict(net, context=context))
 
             self.type_manager.extend_networks_dict_provider(context, net_data)
@@ -1240,12 +1229,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with db_api.CONTEXT_WRITER.using(context):
             result, net_db, ipam_sub = self._create_subnet_precommit(
                 context, subnet)
-
-            # NOTE(ihrachys) pre Pike networks may have null mtus; update them
-            # in database if needed
-            # TODO(ihrachys) remove in Queens+ when mtu is not nullable
-            if net_db['mtu'] is None:
-                net_db['mtu'] = self._get_network_mtu(net_db, validate=False)
 
             self.extension_manager.process_create_subnet(
                 context, subnet[subnet_def.RESOURCE_NAME], result)

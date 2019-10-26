@@ -14,7 +14,9 @@
 
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.validators import availability_zone as az_validator
+from neutron_lib import constants
 from oslo_utils import versionutils
+from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 import sqlalchemy as sa
 
@@ -214,7 +216,8 @@ class ExternalNetwork(base.NeutronDbObject):
 @base.NeutronObjectRegistry.register
 class Network(rbac_db.NeutronRbacObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Changed 'mtu' to be not nullable
+    VERSION = '1.1'
 
     rbac_db_cls = NetworkRBAC
     db_model = models_v2.Network
@@ -231,7 +234,7 @@ class Network(rbac_db.NeutronRbacObject):
             nullable=True),
         'shared': obj_fields.BooleanField(default=False),
 
-        'mtu': obj_fields.IntegerField(nullable=True),
+        'mtu': obj_fields.IntegerField(default=constants.DEFAULT_NETWORK_MTU),
 
         # TODO(ihrachys): consider exposing availability zones
 
@@ -343,6 +346,14 @@ class Network(rbac_db.NeutronRbacObject):
     def get_bound_tenant_ids(cls, context, policy_id):
         # TODO(ihrachys): provide actual implementation
         return set()
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version >= (1, 1):
+            if primitive['mtu'] is None:
+                # mtu will not be nullable after
+                raise exception.IncompatibleObjectVersion(
+                    objver=target_version, objname=self.__class__.__name__)
 
 
 @base.NeutronObjectRegistry.register
