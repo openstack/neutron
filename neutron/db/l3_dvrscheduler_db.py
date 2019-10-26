@@ -432,10 +432,10 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                       "serviceable ports in host %(host)s",
                       {'router_ids': result_set,
                        'host': agent_db['host']})
-            for dvr_router in dvr_routers:
+            for router_id in router_ids:
                 result_set |= set(
                     self._get_other_dvr_router_ids_connected_router(
-                        context, dvr_router))
+                        context, router_id))
 
         LOG.debug("Router IDs %(router_ids)s for agent in host %(host)s",
                   {'router_ids': result_set,
