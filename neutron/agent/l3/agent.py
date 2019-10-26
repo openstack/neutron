@@ -35,6 +35,7 @@ from oslo_serialization import jsonutils
 from oslo_service import loopingcall
 from oslo_service import periodic_task
 from oslo_utils import excutils
+from oslo_utils import netutils
 from oslo_utils import timeutils
 from osprofiler import profiler
 
@@ -55,7 +56,6 @@ from neutron.agent.linux import pd
 from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
-from neutron.common import ipv6_utils
 from neutron.common import utils
 from neutron import manager
 
@@ -330,7 +330,7 @@ class L3NATAgent(ha.AgentMixin,
         super(L3NATAgent, self).__init__(host=self.conf.host)
 
         self.target_ex_net_id = None
-        self.use_ipv6 = ipv6_utils.is_enabled_and_bind_by_default()
+        self.use_ipv6 = netutils.is_ipv6_enabled()
 
         self.pd = pd.PrefixDelegation(self.context, self.process_monitor,
                                       self.driver,

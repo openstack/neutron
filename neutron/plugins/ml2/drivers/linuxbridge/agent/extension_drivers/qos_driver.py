@@ -16,11 +16,11 @@ from neutron_lib import constants as const
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log
+from oslo_utils import netutils
 
 from neutron.agent.l2.extensions import qos_linux as qos
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import tc_lib
-from neutron.common import ipv6_utils
 from neutron.services.qos.drivers.linuxbridge import driver
 
 LOG = log.getLogger(__name__)
@@ -58,7 +58,7 @@ class QosLinuxbridgeAgentDriver(qos.QosLinuxAgentDriver):
             # created here for extension needs
             self.iptables_manager = iptables_manager.IptablesManager(
                 state_less=True,
-                use_ipv6=ipv6_utils.is_enabled_and_bind_by_default())
+                use_ipv6=netutils.is_ipv6_enabled())
         self.iptables_manager.initialize_mangle_table()
 
     def _dscp_chain_name(self, direction, device):

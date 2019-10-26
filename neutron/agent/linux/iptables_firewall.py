@@ -32,7 +32,6 @@ from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils as a_utils
 from neutron.common import _constants as const
-from neutron.common import ipv6_utils
 from neutron.common import utils as c_utils
 
 
@@ -66,7 +65,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def __init__(self, namespace=None):
         self.iptables = iptables_manager.IptablesManager(
             state_less=True,
-            use_ipv6=ipv6_utils.is_enabled_and_bind_by_default(),
+            use_ipv6=netutils.is_ipv6_enabled(),
             namespace=namespace)
         # TODO(majopela, shihanzhang): refactor out ipset to a separate
         # driver composed over this one

@@ -16,6 +16,7 @@
 #    under the License.
 
 import mock
+from oslo_utils import netutils
 
 from neutron.agent.linux import bridge_lib
 from neutron.privileged.agent.linux import ip_lib as priv_lib
@@ -30,9 +31,8 @@ class BridgeLibTest(base.BaseTestCase):
 
     def setUp(self):
         super(BridgeLibTest, self).setUp()
-        mock.patch(
-            'neutron.common.ipv6_utils.is_enabled_and_bind_by_default',
-            return_value=True).start()
+        mock.patch.object(netutils, 'is_ipv6_enabled',
+                          return_value=True).start()
         ip_wrapper = mock.patch('neutron.agent.linux.ip_lib.IPWrapper').start()
         self.execute = ip_wrapper.return_value.netns.execute
         self.create_p = mock.patch.object(priv_lib, 'create_interface')

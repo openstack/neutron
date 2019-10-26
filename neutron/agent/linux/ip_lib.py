@@ -23,6 +23,7 @@ from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import netutils
 from pyroute2.netlink import exceptions as netlink_exceptions
 from pyroute2.netlink import rtnl
 from pyroute2.netlink.rtnl import ifaddrmsg
@@ -32,7 +33,6 @@ from pyroute2 import netns
 
 from neutron._i18n import _
 from neutron.agent.common import utils
-from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.privileged.agent.linux import ip_lib as privileged
 
@@ -379,7 +379,7 @@ class IPDevice(SubProcessBase):
                                                      'port': dport})
 
     def disable_ipv6(self):
-        if not ipv6_utils.is_enabled_and_bind_by_default():
+        if not netutils.is_ipv6_enabled():
             return
         sysctl_name = re.sub(r'\.', '/', self.name)
         cmd = ['net.ipv6.conf.%s.disable_ipv6=1' % sysctl_name]

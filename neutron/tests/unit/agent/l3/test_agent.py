@@ -30,6 +30,7 @@ from neutron_lib import constants as lib_constants
 from oslo_config import cfg
 from oslo_log import log
 import oslo_messaging
+from oslo_utils import netutils
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from testtools import matchers
@@ -331,9 +332,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         destroy_metadata_proxy.assert_not_called()
 
     def _test__configure_ipv6_params_helper(self, state, gw_port_id):
-        with mock.patch(
-                'neutron.common.ipv6_utils.is_enabled_and_bind_by_default',
-                return_value=True):
+        with mock.patch.object(netutils, 'is_ipv6_enabled', return_value=True):
             agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
         router_info = l3router.RouterInfo(agent, _uuid(), {}, **self.ri_kwargs)

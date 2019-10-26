@@ -25,6 +25,7 @@ from neutron_lib import constants as const
 from neutron_lib import exceptions
 from oslo_config import cfg
 import oslo_messaging
+from oslo_utils import netutils
 from oslo_utils import timeutils
 import testtools
 
@@ -1743,8 +1744,8 @@ class TestDeviceManager(base.BaseTestCase):
                                             "IPWrapper")
         self.mock_ip_wrapper = self.mock_ip_wrapper_p.start()
 
-        self.mock_ipv6_enabled_p = mock.patch('neutron.common.ipv6_utils.'
-                                              'is_enabled_and_bind_by_default')
+        self.mock_ipv6_enabled_p = mock.patch.object(netutils,
+                                                     'is_ipv6_enabled')
         self.mock_ipv6_enabled = self.mock_ipv6_enabled_p.start()
         self.mock_ipv6_enabled.return_value = True
 

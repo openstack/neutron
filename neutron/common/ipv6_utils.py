@@ -16,37 +16,12 @@
 """
 IPv6-related utilities and helper functions.
 """
-import os
-
 import netaddr
 from neutron_lib import constants as const
 from oslo_log import log
 
 
 LOG = log.getLogger(__name__)
-_IS_IPV6_ENABLED = None
-
-
-def is_enabled_and_bind_by_default():
-    """Check if host has the IPv6 support and is configured to bind IPv6
-    address to new interfaces by default.
-    """
-    global _IS_IPV6_ENABLED
-
-    if _IS_IPV6_ENABLED is None:
-        disabled_ipv6_path = "/proc/sys/net/ipv6/conf/default/disable_ipv6"
-        if os.path.exists(disabled_ipv6_path):
-            with open(disabled_ipv6_path, 'r') as f:
-                disabled = f.read().strip()
-            _IS_IPV6_ENABLED = disabled == "0"
-        else:
-            _IS_IPV6_ENABLED = False
-        if not _IS_IPV6_ENABLED:
-            LOG.info("IPv6 not present or configured not to bind to new "
-                     "interfaces on this system. Please ensure IPv6 is "
-                     "enabled and /proc/sys/net/ipv6/conf/default/"
-                     "disable_ipv6 is set to 0 to enable IPv6.")
-    return _IS_IPV6_ENABLED
 
 
 def is_auto_address_subnet(subnet):

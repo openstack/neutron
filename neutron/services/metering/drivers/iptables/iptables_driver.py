@@ -16,13 +16,13 @@ from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
+from oslo_utils import netutils
 
 from neutron.agent.common import utils as common_utils
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
-from neutron.common import ipv6_utils
 from neutron.conf.agent import common as config
 from neutron.services.metering.drivers import abstract_driver
 
@@ -97,7 +97,7 @@ class RouterWithMetering(object):
                     namespace=snat_ns_name,
                     binary_name=WRAP_NAME,
                     state_less=True,
-                    use_ipv6=ipv6_utils.is_enabled_and_bind_by_default())
+                    use_ipv6=netutils.is_ipv6_enabled())
 
                 created = True
 
@@ -112,7 +112,7 @@ class RouterWithMetering(object):
                     namespace=self.ns_name,
                     binary_name=WRAP_NAME,
                     state_less=True,
-                    use_ipv6=ipv6_utils.is_enabled_and_bind_by_default())
+                    use_ipv6=netutils.is_ipv6_enabled())
 
                 created = True
 

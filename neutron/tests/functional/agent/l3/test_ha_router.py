@@ -17,12 +17,12 @@ import copy
 
 import mock
 from neutron_lib import constants
+from oslo_utils import netutils
 import testtools
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.linux import ip_lib
-from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import net_helpers
@@ -127,8 +127,7 @@ class L3HATestCase(framework.L3AgentTestFramework):
         self._assert_ipv6_forwarding(router, expected_forwarding,
                                      True)
 
-    @testtools.skipUnless(ipv6_utils.is_enabled_and_bind_by_default(),
-                          "IPv6 is not enabled")
+    @testtools.skipUnless(netutils.is_ipv6_enabled(), "IPv6 is not enabled")
     def test_ipv6_router_advts_and_fwd_after_router_state_change_master(self):
         # Check that RA and forwarding are enabled when there's no IPv6
         # gateway.
@@ -143,8 +142,7 @@ class L3HATestCase(framework.L3AgentTestFramework):
                                                     expected_ra=False,
                                                     expected_forwarding=True)
 
-    @testtools.skipUnless(ipv6_utils.is_enabled_and_bind_by_default(),
-                          "IPv6 is not enabled")
+    @testtools.skipUnless(netutils.is_ipv6_enabled(), "IPv6 is not enabled")
     def test_ipv6_router_advts_and_fwd_after_router_state_change_backup(self):
         # Check that both RA and forwarding are disabled on backup instances
         self._test_ipv6_router_advts_and_fwd_helper('backup',
@@ -347,8 +345,7 @@ class L3HATestCase(framework.L3AgentTestFramework):
             raise
         self.assertEqual(0, ip_nonlocal_bind_value)
 
-    @testtools.skipUnless(ipv6_utils.is_enabled_and_bind_by_default(),
-                          "IPv6 is not enabled")
+    @testtools.skipUnless(netutils.is_ipv6_enabled(), "IPv6 is not enabled")
     def test_ha_router_namespace_has_ipv6_forwarding_disabled(self):
         router_info = self.generate_router_info(enable_ha=True)
         router_info[constants.HA_INTERFACE_KEY]['status'] = (
@@ -369,8 +366,7 @@ class L3HATestCase(framework.L3AgentTestFramework):
         self._wait_until_ipv6_forwarding_has_state(
             router.ns_name, external_device_name, 1)
 
-    @testtools.skipUnless(ipv6_utils.is_enabled_and_bind_by_default(),
-                          "IPv6 is not enabled")
+    @testtools.skipUnless(netutils.is_ipv6_enabled(), "IPv6 is not enabled")
     def test_ha_router_without_gw_ipv6_forwarding_state(self):
         router_info = self.generate_router_info(
             enable_ha=True, enable_gw=False)
