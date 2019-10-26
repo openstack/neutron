@@ -1,0 +1,11 @@
+---
+other:
+  - |
+    A new config option, ``radvd_user``, was added to l3_agent.ini for the L3
+    agent. This option defines the username passed to radvd, used to drop
+    "root" privileges and change user ID to username and group ID to the
+    primary group of the user. If no user specified (by default), the user
+    executing the L3 agent will be passed. If "root" specified, because radvd
+    is spawned as root, no "username" parameter will be passed.
+    (For more information see bug `1844688
+    <https://bugs.launchpad.net/neutron/+bug/1844688>`_.)
