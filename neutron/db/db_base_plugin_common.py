@@ -298,9 +298,8 @@ class DbBasePluginCommon(object):
         return subnet_obj.Subnet.get_objects(context,
                                              subnetpool_id=subnetpool_id)
 
-    def _get_subnets(self, context, filters=None, fields=None,
-                     sorts=None, limit=None, marker=None,
-                     page_reverse=False):
+    def _get_subnets(self, context, filters=None, sorts=None, limit=None,
+                     marker=None, page_reverse=False):
         pager = base_obj.Pager(sorts, limit, page_reverse, marker)
         filters = filters or {}
         # turn the CIDRs into a proper subnets
