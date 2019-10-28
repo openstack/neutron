@@ -22,8 +22,6 @@ from neutron_lib.agent import topics
 from neutron_lib import constants
 from neutron_lib import context
 from oslo_utils import timeutils
-import six
-import testtools
 
 import neutron
 from neutron.agent.common import ovs_lib
@@ -205,14 +203,6 @@ def register_sriovnicswitch_agent(host=HOST,
     agent = _get_l2_agent_dict(host, agent_type, binary,
                                device_mappings=device_mappings)
     return _register_agent(agent, plugin)
-
-
-def requires_py2(testcase):
-    return testtools.skipUnless(six.PY2, "requires python 2.x")(testcase)
-
-
-def requires_py3(testcase):
-    return testtools.skipUnless(six.PY3, "requires python 3.x")(testcase)
 
 
 def get_not_used_vlan(bridge, vlan_range):

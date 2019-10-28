@@ -132,7 +132,7 @@ __ file-based-sqlite_
 
 .. code-block:: shell
 
-    $ OS_TEST_DBAPI_ADMIN_CONNECTION=sqlite:///sqlite.db .tox/py27/bin/python -m \
+    $ OS_TEST_DBAPI_ADMIN_CONNECTION=sqlite:///sqlite.db .tox/py37/bin/python -m \
         testtools.run neutron.tests.unit...
     ...
     (Pdb) self.engine.url
@@ -507,7 +507,7 @@ To restrict the pylint check to only the files altered by the latest patch chang
 
 To run only the unit tests::
 
-    tox -e py27
+    tox -e py37
 
 Many changes span across both the neutron and neutron-lib repos, and tox
 will always build the test environment using the published module versions
@@ -520,7 +520,7 @@ For example, to run against the 'master' branch of neutron-lib::
     cd $SRC
     git clone https://opendev.org/openstack/neutron-lib
     cd $NEUTRON_DIR
-    env TOX_ENV_SRC_MODULES=$SRC/neutron-lib tox -r -e pep8,py27
+    env TOX_ENV_SRC_MODULES=$SRC/neutron-lib tox -r -e pep8,py37
 
 To run against a change of your own, repeat the same steps, but use the
 directory with your changes, not a fresh clone.
@@ -533,7 +533,7 @@ desired gerrit refs for this example)::
     cd neutron-lib
     git fetch https://opendev.org/openstack/neutron-lib refs/changes/13/635313/6 && git checkout FETCH_HEAD
     cd $NEUTRON_DIR
-    env TOX_ENV_SRC_MODULES=$SRC/neutron-lib tox -r -e pep8,py27
+    env TOX_ENV_SRC_MODULES=$SRC/neutron-lib tox -r -e pep8,py37
 
 Note that the '-r' is needed to re-create the tox virtual envs, and will also
 be needed to restore them to standard when not using this method.
@@ -542,7 +542,7 @@ Any pip installable package can be overriden with this environment variable,
 not just neutron-lib. To specify multiple packages to override, specify them
 as a space separated list to TOX_ENV_SRC_MODULES. Example::
 
-    env TOX_ENV_SRC_MODULES="$SRC/neutron-lib $SRC/oslo.db" tox -r -e pep8,py27
+    env TOX_ENV_SRC_MODULES="$SRC/neutron-lib $SRC/oslo.db" tox -r -e pep8,py37
 
 Functional Tests
 ~~~~~~~~~~~~~~~~
@@ -664,13 +664,13 @@ the dot-separated path you want as an argument to it.
 
 For example, the following would run only a single test or test case::
 
-      $ tox -e py27 neutron.tests.unit.test_manager
-      $ tox -e py27 neutron.tests.unit.test_manager.NeutronManagerTestCase
-      $ tox -e py27 neutron.tests.unit.test_manager.NeutronManagerTestCase.test_service_plugin_is_loaded
+      $ tox -e py37 neutron.tests.unit.test_manager
+      $ tox -e py37 neutron.tests.unit.test_manager.NeutronManagerTestCase
+      $ tox -e py37 neutron.tests.unit.test_manager.NeutronManagerTestCase.test_service_plugin_is_loaded
 
 If you want to pass other arguments to stestr, you can do the following::
 
-      $ tox -e py27 -- neutron.tests.unit.test_manager --serial
+      $ tox -e py37 -- neutron.tests.unit.test_manager --serial
 
 
 Coverage

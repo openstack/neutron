@@ -147,7 +147,6 @@ traceback2==1.4.0
 unittest2==1.1.0
 vine==1.1.4
 waitress==1.1.0
-weakrefmethod==1.0.2
 WebOb==1.8.2
 WebTest==2.0.27
 wrapt==1.7.0

@@ -28,7 +28,6 @@ import webob
 import webob.exc
 
 from neutron.tests import base
-from neutron.tests.common import helpers
 from neutron import wsgi
 
 CONF = cfg.CONF
@@ -514,18 +513,6 @@ class JSONDictSerializerTest(base.BaseTestCase):
     def test_json(self):
         input_dict = dict(servers=dict(a=(2, 3)))
         expected_json = b'{"servers":{"a":[2,3]}}'
-        serializer = wsgi.JSONDictSerializer()
-        result = serializer.serialize(input_dict)
-        result = result.replace(b'\n', b'').replace(b' ', b'')
-
-        self.assertEqual(expected_json, result)
-
-    # The tested behaviour is only meant to be witnessed in Python 2, so it is
-    # OK to skip this test with Python 3.
-    @helpers.requires_py2
-    def test_json_with_utf8(self):
-        input_dict = dict(servers=dict(a=(2, '\xe7\xbd\x91\xe7\xbb\x9c')))
-        expected_json = b'{"servers":{"a":[2,"\\u7f51\\u7edc"]}}'
         serializer = wsgi.JSONDictSerializer()
         result = serializer.serialize(input_dict)
         result = result.replace(b'\n', b'').replace(b' ', b'')
