@@ -22,6 +22,7 @@ from oslo_upgradecheck import upgradecheck
 from neutron._i18n import _
 from neutron.cmd.upgrade_checks import base
 from neutron.db.models import agent as agent_model
+from neutron.db import models_v2
 
 
 def get_l3_agents():
@@ -30,6 +31,13 @@ def get_l3_agents():
     query = model_query.get_collection_query(ctx,
                                              agent_model.Agent,
                                              filters=filters)
+    return query.all()
+
+
+def get_networks():
+    ctx = context.get_admin_context()
+    query = model_query.get_collection_query(ctx,
+                                             models_v2.Network)
     return query.all()
 
 
@@ -123,3 +131,28 @@ class CoreChecks(base.BaseChecks):
             return upgradecheck.Result(
                 upgradecheck.Code.SUCCESS,
                 _("L3 agents can use multiple networks as external gateways."))
+
+    @staticmethod
+    def network_mtu_check(checker):
+        if not cfg.CONF.database.connection:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("Database connection string is not set. Check of 'mtu' in "
+                  "networks can't be done"))
+
+        networks_with_empty_mtu_attr = []
+        for network in get_networks():
+            mtu = network.get('mtu', None)
+            if not mtu:
+                networks_with_empty_mtu_attr.append(network.get("id"))
+
+        if networks_with_empty_mtu_attr:
+            networks_list = ", ".join(networks_with_empty_mtu_attr)
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("The 'mtu' attribute of networks %s are not set "
+                  "This attribute can't be null now.") % networks_list)
+        else:
+            return upgradecheck.Result(
+                upgradecheck.Code.SUCCESS,
+                _("The 'mtu' attribute of all networks are set."))

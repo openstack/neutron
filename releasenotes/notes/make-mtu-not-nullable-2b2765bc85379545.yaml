@@ -1,0 +1,5 @@
+---
+upgrade:
+  - |
+    The network ``mtu`` attribute is set to be non-nullable. If the ``mtu`` is
+    empty(create before Pike version), it is set to the default value of 1500.

@@ -106,3 +106,25 @@ class TestChecks(base.BaseTestCase):
             self.assertIn('Host B', result.details)
             self.assertNotIn('Host A', result.details)
             self.assertNotIn('Host C', result.details)
+
+    def test_network_mtu_check_good(self):
+        networks = [
+            {'id': 'net-uuid-a', 'mtu': 1500},
+            {'id': 'net-uuid-b', 'mtu': 1450}
+        ]
+        with mock.patch.object(checks, "get_networks", return_value=networks):
+            result = checks.CoreChecks.network_mtu_check(
+                mock.Mock())
+            self.assertEqual(Code.SUCCESS, result.code)
+
+    def test_network_mtu_check_bad(self):
+        networks = [
+            {'id': 'net-uuid-a', 'mtu': None},
+            {'id': 'net-uuid-b', 'mtu': 1500},
+        ]
+        with mock.patch.object(checks, "get_networks", return_value=networks):
+            result = checks.CoreChecks.network_mtu_check(
+                mock.Mock())
+            self.assertEqual(Code.WARNING, result.code)
+            self.assertIn('net-uuid-a', result.details)
+            self.assertNotIn('net-uuid-b', result.details)
