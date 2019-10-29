@@ -1343,7 +1343,7 @@ class TestDnsmasq(TestBase):
 
             self.assertTrue(test_pm.register.called)
             self.external_process().enable.assert_called_once_with(
-                reload_cfg=False)
+                ensure_active=True, reload_cfg=False)
             call_kwargs = self.external_process.mock_calls[0][2]
             cmd_callback = call_kwargs['default_cmd_callback']
 
@@ -2108,7 +2108,7 @@ class TestDnsmasq(TestBase):
         dm.reload_allocations()
         self.assertTrue(test_pm.register.called)
         self.external_process().enable.assert_called_once_with(
-            reload_cfg=True)
+            ensure_active=True, reload_cfg=True)
 
         self.safe.assert_has_calls([
             mock.call(exp_host_name, exp_host_data),
