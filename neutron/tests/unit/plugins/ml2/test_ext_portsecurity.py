@@ -41,6 +41,7 @@ class PSExtDriverTestCase(test_plugin.Ml2PluginV2TestCase,
                  'shared': False,
                  'admin_state_up': True,
                  'status': 'ACTIVE'}}
+        network = None
         try:
             network = _core_plugin.create_network(admin_ctx, args)
             _value = network[psec.PORTSECURITY]
