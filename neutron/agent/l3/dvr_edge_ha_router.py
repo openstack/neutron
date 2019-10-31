@@ -112,10 +112,6 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
         ha_router.HaRouter.external_gateway_updated(self, ex_gw_port,
                                                     interface_name)
 
-    def initialize(self, process_monitor):
-        self._create_snat_namespace()
-        super(DvrEdgeHaRouter, self).initialize(process_monitor)
-
     def _external_gateway_added(self, ex_gw_port, interface_name,
                                 ns_name, preserve_ips):
         self._plug_external_gateway(ex_gw_port, interface_name, ns_name)
