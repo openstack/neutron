@@ -646,7 +646,8 @@ class RouterInfo(object):
         return [common_utils.ip_to_cidr(ip['floating_ip_address'])
                 for ip in floating_ips]
 
-    def _plug_external_gateway(self, ex_gw_port, interface_name, ns_name):
+    def _plug_external_gateway(self, ex_gw_port, interface_name, ns_name,
+                               link_up=True):
         self.driver.plug(ex_gw_port['network_id'],
                          ex_gw_port['id'],
                          interface_name,
@@ -654,7 +655,8 @@ class RouterInfo(object):
                          bridge=self.agent_conf.external_network_bridge,
                          namespace=ns_name,
                          prefix=EXTERNAL_DEV_PREFIX,
-                         mtu=ex_gw_port.get('mtu'))
+                         mtu=ex_gw_port.get('mtu'),
+                         link_up=link_up)
         if self.agent_conf.external_network_bridge:
             # NOTE(slaweq): for OVS implementations remove the DEAD VLAN tag
             # on ports. DEAD VLAN tag is added to each newly created port
@@ -722,7 +724,11 @@ class RouterInfo(object):
         LOG.debug("External gateway added: port(%s), interface(%s), ns(%s)",
                   ex_gw_port, interface_name, ns_name)
         self._plug_external_gateway(ex_gw_port, interface_name, ns_name)
+        self._external_gateway_settings(ex_gw_port, interface_name,
+                                        ns_name, preserve_ips)
 
+    def _external_gateway_settings(self, ex_gw_port, interface_name,
+                                   ns_name, preserve_ips):
         # Build up the interface and gateway IP addresses that
         # will be added to the interface.
         ip_cidrs = common_utils.fixed_ip_cidrs(ex_gw_port['fixed_ips'])
@@ -767,15 +773,18 @@ class RouterInfo(object):
         return any(netaddr.IPAddress(gw_ip).version == 6
                    for gw_ip in gateway_ips)
 
-    def external_gateway_added(self, ex_gw_port, interface_name):
+    def get_router_preserve_ips(self):
         preserve_ips = self._list_floating_ip_cidrs()
         preserve_ips.extend(self.agent.pd.get_preserve_ips(self.router_id))
+        return preserve_ips
+
+    def external_gateway_added(self, ex_gw_port, interface_name):
+        preserve_ips = self.get_router_preserve_ips()
         self._external_gateway_added(
             ex_gw_port, interface_name, self.ns_name, preserve_ips)
 
     def external_gateway_updated(self, ex_gw_port, interface_name):
-        preserve_ips = self._list_floating_ip_cidrs()
-        preserve_ips.extend(self.agent.pd.get_preserve_ips(self.router_id))
+        preserve_ips = self.get_router_preserve_ips()
         self._external_gateway_added(
             ex_gw_port, interface_name, self.ns_name, preserve_ips)
 
