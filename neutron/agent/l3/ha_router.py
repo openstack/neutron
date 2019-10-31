@@ -92,6 +92,15 @@ class HaRouter(router.RouterInfo):
     def ha_vr_id(self):
         return self.router.get('ha_vr_id')
 
+    def _check_and_set_real_state(self):
+        # When the physical host was down/up, the 'master' router may still
+        # have its original state in the _ha_state_path file. We directly
+        # reset it to 'backup'.
+        if (not self.keepalived_manager.check_processes() and
+                os.path.exists(self.ha_state_path) and
+                self.ha_state == 'master'):
+            self.ha_state = 'backup'
+
     @property
     def ha_state(self):
         if self._ha_state:
@@ -137,6 +146,7 @@ class HaRouter(router.RouterInfo):
 
         self.set_ha_port()
         self._init_keepalived_manager(process_monitor)
+        self._check_and_set_real_state()
         self.ha_network_added()
         self.update_initial_state(self.state_change_callback)
         self.spawn_state_change_monitor(process_monitor)
@@ -431,7 +441,9 @@ class HaRouter(router.RouterInfo):
         return port1_filtered == port2_filtered
 
     def external_gateway_added(self, ex_gw_port, interface_name):
-        self._plug_external_gateway(ex_gw_port, interface_name, self.ns_name)
+        link_up = self.external_gateway_link_up()
+        self._plug_external_gateway(ex_gw_port, interface_name,
+                                    self.ns_name, link_up=link_up)
         self._add_gateway_vip(ex_gw_port, interface_name)
         self._disable_ipv6_addressing_on_interface(interface_name)
 
@@ -495,3 +507,27 @@ class HaRouter(router.RouterInfo):
         if (self.keepalived_manager.get_process().active and
                 self.ha_state == 'master'):
             super(HaRouter, self).enable_radvd(internal_ports)
+
+    def external_gateway_link_up(self):
+        # Check HA router ha_state for its gateway port link state.
+        # 'backup' instance will not link up the gateway port.
+        return self.ha_state == 'master'
+
+    def set_external_gw_port_link_status(self, link_up, set_gw=False):
+        link_state = "up" if link_up else "down"
+        LOG.info('Set router %s gateway device link state to %s.',
+                 self.router_id, link_state)
+
+        ex_gw_port = self.get_ex_gw_port()
+        ex_gw_port_id = (ex_gw_port and ex_gw_port['id'] or
+                         self.ex_gw_port and self.ex_gw_port['id'])
+        if ex_gw_port_id:
+            interface_name = self.get_external_device_name(ex_gw_port_id)
+            ns_name = self.get_gw_ns_name()
+            self.driver.set_link_status(interface_name, ns_name,
+                                        link_up=link_up)
+            if link_up and set_gw:
+                preserve_ips = self.get_router_preserve_ips()
+                self._external_gateway_settings(ex_gw_port, interface_name,
+                                                ns_name, preserve_ips)
+                self.routes_updated([], self.routes)
