@@ -255,9 +255,6 @@ class DhcpAgent(manager.Manager):
                     LOG.info("DHCP configuration for ports %s is completed",
                              ports_to_send)
                     continue
-                except oslo_messaging.MessagingTimeout:
-                    LOG.error("Timeout notifying server of ports ready. "
-                              "Retrying...")
                 except Exception:
                     LOG.exception("Failure notifying DHCP server of "
                                   "ready DHCP ports. Will retry on next "
@@ -779,8 +776,8 @@ class DhcpPluginApi(object):
     def dhcp_ready_on_ports(self, port_ids):
         """Notify the server that DHCP is configured for the port."""
         cctxt = self.client.prepare(version='1.5')
-        return cctxt.call(self.context, 'dhcp_ready_on_ports',
-                          port_ids=port_ids)
+        cctxt.cast(self.context, 'dhcp_ready_on_ports',
+                   port_ids=port_ids)
 
 
 class NetworkCache(object):
