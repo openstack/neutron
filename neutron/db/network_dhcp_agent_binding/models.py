@@ -39,5 +39,4 @@ class NetworkDhcpAgentBinding(model_base.BASEV2):
                                             ondelete='CASCADE'),
                               primary_key=True)
     binding_index = sa.Column(sa.Integer, nullable=False,
-                              server_default=str(LOWEST_BINDING_INDEX),
-                              autoincrement=True)
+                              server_default=str(LOWEST_BINDING_INDEX))

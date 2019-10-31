@@ -93,9 +93,11 @@ class NetworkDhcpAgentBindingDbObjectTestCase(
         super(NetworkDhcpAgentBindingDbObjectTestCase, self).setUp()
         self._network = self._create_test_network()
 
+        index = iter(range(1, len(self.objs) + 2))
         self.update_obj_fields(
             {'network_id': self._network.id,
-             'dhcp_agent_id': lambda: self._create_test_agent_id()})
+             'dhcp_agent_id': lambda: self._create_test_agent_id(),
+             'binding_index': lambda: next(index)})
 
 
 class NetworkPortSecurityIfaceObjTestCase(
