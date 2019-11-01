@@ -47,9 +47,7 @@ geneve_opts = [
                help=_("Geneve encapsulation header size is dynamic, this "
                       "value is used to calculate the maximum MTU "
                       "for the driver. "
-                      "This is the sum of the sizes of the outer "
-                      "ETH + IP + UDP + GENEVE header sizes. "
-                      "The default size for this field is 50, which is the "
+                      "The default size for this field is 30, which is the "
                       "size of the Geneve header without any additional "
                       "option headers.")),
 ]
