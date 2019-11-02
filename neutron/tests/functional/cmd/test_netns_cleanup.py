@@ -151,7 +151,6 @@ class TestNETNSCLIConfig(basetest.BaseTestCase):
 
     def test_netns_opts_registration(self):
         self.assertFalse(self.conf.force)
-        self.assertIsNone(self.conf.get('agent_type'))
         # to unregister opts
         self.conf.reset()
         self.conf.unregister_opts(cmd.netns_opts)
