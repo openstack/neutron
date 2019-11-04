@@ -19,7 +19,7 @@ IPv6-related utilities and helper functions.
 import netaddr
 from neutron_lib import constants as const
 from oslo_log import log
-
+from oslo_utils import netutils
 
 LOG = log.getLogger(__name__)
 
@@ -51,7 +51,7 @@ def valid_ipv6_url(host, port):
        RFC2732 https://tools.ietf.org/html/rfc2732
        square brackets always required in ipv6 URI.
     """
-    if netaddr.valid_ipv6(host):
+    if netutils.is_valid_ipv6(host):
         uri = '[%s]:%s' % (host, port)
     else:
         uri = '%s:%s' % (host, port)
