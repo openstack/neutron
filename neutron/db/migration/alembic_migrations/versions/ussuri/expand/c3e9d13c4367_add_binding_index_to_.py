@@ -22,7 +22,7 @@ import sqlalchemy as sa
 """Add binding index to NetworkDhcpAgentBindings
 
 Revision ID: c3e9d13c4367
-Revises: 63fd95af7dcd
+Revises: c613d0b82681
 Create Date: 2019-08-20 18:42:39.647676
 
 """
@@ -38,7 +38,7 @@ NETWORK_DHCP_AGENT_BINDING = 'networkdhcpagentbindings'
 def upgrade():
     op.add_column(NETWORK_DHCP_AGENT_BINDING,
                   sa.Column('binding_index', sa.Integer(), nullable=False,
-                            server_default='1', autoincrement=True))
+                            server_default='1'))
 
     bindings_table = sa.Table(
         NETWORK_DHCP_AGENT_BINDING,
