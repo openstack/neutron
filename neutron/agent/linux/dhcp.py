@@ -214,7 +214,7 @@ class DhcpLocalProcess(DhcpBase):
     def enable(self):
         """Enables DHCP for this network by spawning a local process."""
         try:
-            common_utils.wait_until_true(self._enable)
+            common_utils.wait_until_true(self._enable, timeout=300)
         except common_utils.WaitTimeout:
             LOG.error("Failed to start DHCP process for network %s",
                       self.network.id)
