@@ -33,6 +33,17 @@ OPTS = [
                       'outside a reasonable range (10 to 1,000,000) might be '
                       'overridden by Open vSwitch according to the '
                       'documentation.')),
+    cfg.BoolOpt('igmp_snooping_enable', default=False,
+                help=_('Enable IGMP snooping for integration bridge. If this '
+                       'option is set to True, support for Internet Group '
+                       'Management Protocol (IGMP) is enabled in integration '
+                       'bridge. '
+                       'Setting this option to True will also enable Open '
+                       'vSwitch mcast-snooping-disable-flood-unregistered '
+                       'flag. This option will disable flooding of '
+                       'unregistered multicast packets to all ports. '
+                       'The switch will send unregistered multicast packets '
+                       'only to ports connected to multicast routers.')),
 ]
 
 
