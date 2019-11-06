@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import itertools
+
 import mock
 from neutron_lib import context
 from neutron_lib.exceptions import qos as qos_exc
@@ -26,9 +28,14 @@ from neutron.objects.qos import policy
 from neutron.tests import base
 
 
-def _get_test_dbdata(qos_policy_id):
-    return {'id': None, 'qos_policy_binding': {'policy_id': qos_policy_id,
-                                               'network_id': 'fake_net_id'}}
+def _get_test_dbdata(qos_policy_id, qos_network_policy_id=None):
+    retval = {'id': None,
+              'qos_policy_binding': {'policy_id': qos_policy_id,
+                                     'network_id': 'fake_net_id'}}
+    if qos_network_policy_id:
+        retval['qos_network_policy_binding'] = {
+            'policy_id': qos_network_policy_id}
+    return retval
 
 
 class QosCoreResourceExtensionTestCase(base.BaseTestCase):
@@ -313,18 +320,23 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
             fields = self.core_extension.extract_fields(None, None)
             self.assertEqual({}, fields)
 
-    def _test_extract_fields_for_port(self, qos_policy_id):
+    def _test_extract_fields_for_port(self, qos_policy_id,
+                                      qos_network_policy_id=None):
         with self._mock_plugin_loaded(True):
             fields = self.core_extension.extract_fields(
-                base_core.PORT, _get_test_dbdata(qos_policy_id))
-            self.assertEqual({qos_consts.QOS_POLICY_ID: qos_policy_id}, fields)
+                base_core.PORT, _get_test_dbdata(qos_policy_id,
+                                                 qos_network_policy_id))
+            expected = {
+                qos_consts.QOS_POLICY_ID: qos_policy_id,
+                qos_consts.QOS_NETWORK_POLICY_ID: qos_network_policy_id}
+            self.assertEqual(expected, fields)
 
-    def test_extract_fields_no_port_policy(self):
-        self._test_extract_fields_for_port(None)
-
-    def test_extract_fields_port_policy_exists(self):
-        qos_policy_id = mock.Mock()
-        self._test_extract_fields_for_port(qos_policy_id)
+    def test_extract_fields_for_port(self):
+        port_qos_policies = [None, uuidutils.generate_uuid()]
+        network_qos_policies = [None, uuidutils.generate_uuid()]
+        for port_qos, net_qos in itertools.product(port_qos_policies,
+                                                   network_qos_policies):
+            self._test_extract_fields_for_port(port_qos, net_qos)
 
     def _test_extract_fields_for_network(self, qos_policy_id):
         with self._mock_plugin_loaded(True):
