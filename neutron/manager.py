@@ -72,6 +72,13 @@ class Manager(periodic_task.PeriodicTasks):
         """
         pass
 
+    def stop(self):
+        """Handle stop.
+
+        Child classes can override this method.
+        """
+        pass
+
 
 def validate_pre_plugin_load():
     """Checks if the configuration variables are valid.

@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    A new configuration option, ``cleanup_on_shutdown``, was added to the
+    L3 agent. If set to True the L3 agent will explicitly delete all routers
+    on shutdown. For L3 HA routers it includes a graceful shutdown of
+    keepalived and the state change monitor, which will allow a faster failover
+    in certain conditions. The default value of ``cleanup_on_shutdown`` is
+    False to maintain backward compatibility. Setting to True could affect
+    the data plane when stopping or restarting the L3 agent.

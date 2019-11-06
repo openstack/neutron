@@ -3982,3 +3982,20 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 self.conf, get_networks_callback=mock.ANY)
         funct_partial_mock.assert_called_once_with(
             self.plugin_api.get_networks, agent.context)
+
+    def test_stop_no_cleanup(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = mock.Mock()
+        agent.router_info[1] = router
+        agent.stop()
+        self.assertFalse(router.delete.called)
+
+    def test_stop_cleanup(self):
+        self.conf.set_override('cleanup_on_shutdown', True)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = mock.Mock()
+        agent.router_info[1] = router
+        self.assertFalse(agent._exiting)
+        agent.stop()
+        self.assertTrue(router.delete.called)
+        self.assertTrue(agent._exiting)

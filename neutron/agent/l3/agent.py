@@ -274,6 +274,7 @@ class L3NATAgent(ha.AgentMixin,
             self.conf = conf
         else:
             self.conf = cfg.CONF
+        self.check_config()
         self.router_info = {}
         self.router_factory = RouterFactory()
         self._register_router_cls(self.router_factory)
@@ -294,6 +295,7 @@ class L3NATAgent(ha.AgentMixin,
 
         self.fullsync = True
         self.sync_routers_chunk_size = SYNC_ROUTERS_MAX_CHUNK_SIZE
+        self._exiting = False
 
         # Get the HA router count from Neutron Server
         # This is the first place where we contact neutron-server on startup
@@ -343,6 +345,12 @@ class L3NATAgent(ha.AgentMixin,
         agent_rpc.create_consumers([self], topics.AGENT, consumers)
 
         self._check_ha_router_process_status()
+
+    def check_config(self):
+        if self.conf.cleanup_on_shutdown:
+            LOG.warning("cleanup_on_shutdown is set to True, so L3 agent will "
+                        "cleanup all its routers when exiting, "
+                        "data-plane will be affected.")
 
     def _check_ha_router_process_status(self):
         """Check HA router VRRP process status in network node.
@@ -668,6 +676,9 @@ class L3NATAgent(ha.AgentMixin,
         self._queue.add(router_update)
 
     def _process_router_update(self):
+        if self._exiting:
+            return
+
         for rp, update in self._queue.each_update_to_next_resource():
             LOG.info("Starting router update for %s, action %s, priority %s, "
                      "update_id %s. Wait time elapsed: %.3f",
@@ -777,7 +788,7 @@ class L3NATAgent(ha.AgentMixin,
 
     def _process_routers_loop(self):
         LOG.debug("Starting _process_routers_loop")
-        while True:
+        while not self._exiting:
             self._pool.spawn_n(self._process_router_update)
 
     # NOTE(kevinbenton): this is set to 1 second because the actual interval
@@ -891,6 +902,13 @@ class L3NATAgent(ha.AgentMixin,
         # L3NATAgent.
         eventlet.spawn_n(self._process_routers_loop)
         LOG.info("L3 agent started")
+
+    def stop(self):
+        LOG.info("Stopping L3 agent")
+        if self.conf.cleanup_on_shutdown:
+            self._exiting = True
+            for router in self.router_info.values():
+                router.delete()
 
     def create_pd_router_update(self):
         router_id = None
