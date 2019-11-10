@@ -83,20 +83,6 @@
         - neutron-functional
         - neutron-tempest-postgres-full
         - neutron-tempest-with-os-ken-master
-    experimental:
-      jobs:
-
-        # TODO(slaweq): we should consider to convert this job to "non-legacy"
-        # one and move it to check queue, at least as non-voting
-        - legacy-grenade-dsvm-neutron-linuxbridge-multinode:
-            irrelevant-files: *tempest-irrelevant-files
-
-        - legacy-tempest-dsvm-neutron-full-centos-7:
-            irrelevant-files: *tempest-irrelevant-files
-        - legacy-tempest-dsvm-neutron-dvr-multinode-full:
-            irrelevant-files: *tempest-irrelevant-files
-        - tempest-full-py3-opensuse15:
-            irrelevant-files: *tempest-irrelevant-files
 
 - job:
     name: neutron-functional
