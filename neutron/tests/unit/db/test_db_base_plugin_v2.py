@@ -2466,7 +2466,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 net_id = port['port']['network_id']
                 res = self._create_port(self.fmt, net_id=net_id, **kwargs)
                 port2 = self.deserialize(self.fmt, res)
-                self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
+                self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
                 # Test invalid IP address on specified subnet_id
                 kwargs = {"fixed_ips":
