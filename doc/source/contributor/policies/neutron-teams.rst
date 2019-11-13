@@ -126,7 +126,7 @@ updating the core review team for the sub-project's repositories.
 +-------------------------+-----------------------------+-------------------+
 | networking-ovn          | Lucas Alvares Gomes         | lucasagomes       |
 +-------------------------+-----------------------------+-------------------+
-| networking-sfc          | N/A                         | N/A               |
+| networking-sfc          | Dharmendra Kushwaha         | dkushwaha         |
 +-------------------------+-----------------------------+-------------------+
 
 Existing Core Reviewers
