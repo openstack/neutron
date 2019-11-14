@@ -73,7 +73,19 @@ class RouterWithMetering(object):
         self.ns_name = NS_PREFIX + self.id
         self.iptables_manager = None
         self.snat_iptables_manager = None
-        if self.router['distributed']:
+        self.metering_labels = {}
+
+        self.create_iptables_managers()
+
+    def create_iptables_managers(self):
+        """Creates iptables managers if the are not already created
+
+        Returns True if any manager is created
+        """
+
+        created = False
+
+        if self.router['distributed'] and self.snat_iptables_manager is None:
             # If distributed routers then we need to apply the
             # metering agent label rules in the snat namespace as well.
             snat_ns_name = dvr_snat_ns.SnatNamespace.get_snat_ns_name(
@@ -86,17 +98,25 @@ class RouterWithMetering(object):
                     binary_name=WRAP_NAME,
                     state_less=True,
                     use_ipv6=ipv6_utils.is_enabled_and_bind_by_default())
-        # Check of namespace existence before we assign the iptables_manager
-        # NOTE(Swami): If distributed routers, all external traffic on a
-        # compute node will flow through the rfp interface in the router
-        # namespace.
-        if ip_lib.network_namespace_exists(self.ns_name):
-            self.iptables_manager = iptables_manager.IptablesManager(
-                namespace=self.ns_name,
-                binary_name=WRAP_NAME,
-                state_less=True,
-                use_ipv6=ipv6_utils.is_enabled_and_bind_by_default())
-        self.metering_labels = {}
+
+                created = True
+
+        if self.iptables_manager is None:
+            # Check of namespace existence before we assign the
+            # iptables_manager
+            # NOTE(Swami): If distributed routers, all external traffic on a
+            # compute node will flow through the rfp interface in the router
+            # namespace.
+            if ip_lib.network_namespace_exists(self.ns_name):
+                self.iptables_manager = iptables_manager.IptablesManager(
+                    namespace=self.ns_name,
+                    binary_name=WRAP_NAME,
+                    state_less=True,
+                    use_ipv6=ipv6_utils.is_enabled_and_bind_by_default())
+
+                created = True
+
+        return created
 
 
 class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
@@ -109,8 +129,11 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
         self.driver = common_utils.load_interface_driver(self.conf)
 
     def _update_router(self, router):
-        r = self.routers.get(router['id'],
-                             RouterWithMetering(self.conf, router))
+        r = self.routers.get(router['id'])
+
+        if r is None:
+            r = RouterWithMetering(self.conf, router)
+
         r.router = router
         self.routers[r.id] = r
 
@@ -138,10 +161,17 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
                     else:
                         old_rm_im = old_rm.iptables_manager
 
-                    with IptablesManagerTransaction(old_rm_im):
-                        self._process_disassociate_metering_label(router)
-                        if gw_port_id:
-                            self._process_associate_metering_label(router)
+                    # In case the selected manager is None pick another one.
+                    # This is not ideal sometimes.
+                    old_rm_im = (old_rm_im or
+                                 old_rm.snat_iptables_manager or
+                                 old_rm.iptables_manager)
+
+                    if old_rm_im:
+                        with IptablesManagerTransaction(old_rm_im):
+                            self._process_disassociate_metering_label(router)
+                            if gw_port_id:
+                                self._process_associate_metering_label(router)
                 elif gw_port_id:
                     self._process_associate_metering_label(router)
 
@@ -430,3 +460,18 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
             del self.routers[router_id]
 
         return accs
+
+    @log_helpers.log_method_call
+    def sync_router_namespaces(self, context, routers):
+        for router in routers:
+            rm = self.routers.get(router['id'])
+            if not rm:
+                continue
+
+            # NOTE(bno1): Sometimes a router is added before its namespaces are
+            # created. The metering agent has to periodically check if the
+            # namespaces for the missing iptables managers have appearead and
+            # create the managers for them. When a new manager is created, the
+            # metering rules have to be added to it.
+            if rm.create_iptables_managers():
+                self._process_associate_metering_label(router)
