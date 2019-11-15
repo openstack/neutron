@@ -1,3 +1,7 @@
+======================
+Neutron Team Structure
+======================
+
 Neutron Core Reviewers
 ======================
 
@@ -60,6 +64,9 @@ end with merging code. They are responsible for bug triage and gate issues
 among other things. Lieutenants have an increased responsibility to ensure
 gate and bug triage for their area of focus is under control.
 
+Neutron Lieutenants
+~~~~~~~~~~~~~~~~~~~
+
 The following are the current Neutron Lieutenants.
 
 +------------------------+---------------------------+----------------------+
@@ -94,10 +101,12 @@ Some notes on the above:
   agents and ML2.
 * The client includes commands installed server side.
 * L3 includes the L3 agent, DVR, Dynamic routing and IPAM.
-* Services includes FWaaS and VPNaaS.
 * Note these areas may change as the project evolves due to code refactoring,
   new feature areas, and libification of certain pieces of code.
 * Infra means interactions with infra from a neutron perspective
+
+Sub-project Lieutenants
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Neutron also consists of several plugins, drivers, and agents that are developed
 effectively as sub-projects within Neutron in their own git repositories.
@@ -108,7 +117,7 @@ updating the core review team for the sub-project's repositories.
 +-------------------------+-----------------------------+-------------------+
 | Area                    | Lieutenant                  | IRC nick          |
 +=========================+=============================+===================+
-| networking-bgpvpn       | Mathieu Rohon               | matrohon          |
+| networking-bgpvpn /     | Mathieu Rohon               | matrohon          |
 | networking-bagpipe      +-----------------------------+-------------------+
 |                         | Thomas Morin                | tmorin            |
 +-------------------------+-----------------------------+-------------------+
@@ -173,8 +182,8 @@ Please note that as we adopt to the system above with core specialty in
 particular areas, we expect this broad core team to shrink as people naturally
 evolve into an area of specialization.
 
-Neutron Core Reviewer Teams for Plugins and Drivers
----------------------------------------------------
+Core Reviewer Teams for Plugins and Drivers
+-------------------------------------------
 The plugin decomposition effort has led to having many drivers with code in
 separate repositories with their own core reviewer teams. For each one of
 these repositories in the following repository list, there is a core team

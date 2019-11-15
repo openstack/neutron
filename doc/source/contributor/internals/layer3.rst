@@ -244,7 +244,10 @@ Provider Networking
 
 Neutron can also be configured to create `provider networks <../../admin/archives/adv-features.html#provider-networks>`_.
 
-.. include:: l3_agent_extensions.rst
+L3 agent extensions
+-------------------
+
+See :doc:`l3_agent_extensions`.
 
 Further Reading
 ---------------
