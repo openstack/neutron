@@ -8,13 +8,13 @@ bandit==1.1.0
 bashate==0.5.1
 beautifulsoup4==4.6.0
 cachetools==2.0.0
-cffi==1.7.0
+cffi==1.13.2
 cliff==2.8.0
 cmd2==0.8.0
 contextlib2==0.4.0
 coverage==4.0
 ddt==1.0.1
-debtcollector==1.2.0
+debtcollector==1.19.0
 decorator==3.4.0
 deprecation==1.0
 doc8==0.6.0
@@ -41,7 +41,7 @@ jmespath==0.9.0
 jsonpatch==1.16
 jsonpointer==1.13
 jsonschema==2.6.0
-keystoneauth1==3.4.0
+keystoneauth1==3.14.0
 keystonemiddleware==4.17.0
 kombu==4.0.0
 linecache2==1.0.0
@@ -62,7 +62,7 @@ openstackdocstheme==1.30.0
 openstacksdk==0.31.2
 os-client-config==1.28.0
 os-ken==0.3.0
-os-service-types==1.2.0
+os-service-types==1.7.0
 os-vif==1.15.1
 os-xenapi==0.3.1
 osc-lib==1.8.0
