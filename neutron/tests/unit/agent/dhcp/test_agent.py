@@ -456,20 +456,6 @@ class TestDhcpAgent(base.BaseTestCase):
             dhcp.start_ready_ports_loop()
             spawn.assert_called_once_with(dhcp._dhcp_ready_ports_loop)
 
-    def test__dhcp_ready_ports_doesnt_log_exception_on_timeout(self):
-        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-        dhcp.dhcp_ready_ports = set(range(4))
-
-        with mock.patch.object(dhcp.plugin_rpc, 'dhcp_ready_on_ports',
-                               side_effect=oslo_messaging.MessagingTimeout):
-            # exit after 2 iterations
-            with mock.patch.object(dhcp_agent.eventlet, 'sleep',
-                                   side_effect=[0, 0, RuntimeError]):
-                with mock.patch.object(dhcp_agent.LOG, 'exception') as lex:
-                    with testtools.ExpectedException(RuntimeError):
-                        dhcp._dhcp_ready_ports_loop()
-        self.assertFalse(lex.called)
-
     def test__dhcp_ready_ports_loop(self):
         dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         dhcp.dhcp_ready_ports = set(range(4))
