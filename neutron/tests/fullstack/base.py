@@ -133,7 +133,13 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
             [netaddr.IPAddress(ip['ip_address'])
              for port in ports for ip in port['fixed_ips']])
         used_ips.add(netaddr.IPAddress(subnet['gateway_ip']))
-        valid_ips = netaddr.IPSet(netaddr.IPNetwork(subnet['cidr']))
+        # Note(lajoskatona): Suppose that we have 1 allocation pool for the
+        # subnet, that should be quite good assumption for testing.
+        valid_ip_pool = subnet['allocation_pools'][0]
+        valid_ips = netaddr.IPSet(netaddr.IPRange(
+            valid_ip_pool['start'],
+            valid_ip_pool['end'])
+        )
         valid_ips = valid_ips.difference(used_ips)
         if valid_ips.size < num:
             self.fail("Cannot find enough free IP addresses.")
