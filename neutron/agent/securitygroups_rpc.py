@@ -227,7 +227,7 @@ class SecurityGroupAgentRpc(object):
         self._apply_port_filter(device_ids, update_filter=True)
 
     def firewall_refresh_needed(self):
-        return self.devices_to_refilter
+        return bool(self.devices_to_refilter)
 
     def setup_port_filters(self, new_devices, updated_devices):
         """Configure port filters for devices.
