@@ -15,14 +15,12 @@
 
 import re
 import signal
-import time
 
 from oslo_log import log as logging
 
 from neutron.agent.common import async_process
 from neutron.agent.linux import iptables_manager
 from neutron.common import utils as common_utils
-from neutron.tests.common import net_helpers
 
 LOG = logging.getLogger(__name__)
 
@@ -112,9 +110,7 @@ def wait_for_dscp_marked_packet(sender_vm, receiver_vm, dscp_mark):
                                                namespace=receiver_vm.namespace)
     tcpdump_async.start(block=True)
 
-    with net_helpers.async_ping(sender_vm.namespace, [receiver_vm.ip]) as done:
-        while not done():
-            time.sleep(0.25)
+    sender_vm.block_until_ping(receiver_vm.ip)
 
     try:
         tcpdump_async.stop(kill_signal=signal.SIGINT)
