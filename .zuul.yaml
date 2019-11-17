@@ -160,6 +160,11 @@
         neutron: https://opendev.org/openstack/neutron
       devstack_services:
         neutron-trunk: true
+      devstack_local_conf:
+        post-config:
+          $NEUTRON_CONF:
+            DEFAULT:
+              enable_code_profiling: True
     required-projects:
       - openstack/rally
       - openstack/rally-openstack

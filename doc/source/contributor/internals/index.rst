@@ -35,6 +35,7 @@ Neutron Internals
    api_extensions
    api_layer
    calling_ml2_plugin
+   code_profiling
    db_layer
    db_models
    dns_order
