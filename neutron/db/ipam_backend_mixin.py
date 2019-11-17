@@ -379,7 +379,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             if segment.is_dynamic:
                 raise segment_exc.SubnetCantAssociateToDynamicSegment()
 
-    def _get_subnet_for_fixed_ip(self, context, fixed, subnets):
+    def _get_subnet_for_fixed_ip(self, fixed, subnets, network_id):
         # Subnets are all the subnets belonging to the same network.
         if not subnets:
             msg = _('IP allocation requires subnets for network')
@@ -392,12 +392,10 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                         return subnet
             subnet = get_matching_subnet()
             if not subnet:
-                subnet_obj = self._get_subnet_object(context,
-                                                     fixed['subnet_id'])
                 msg = (_("Failed to create port on network %(network_id)s"
                          ", because fixed_ips included invalid subnet "
                          "%(subnet_id)s") %
-                       {'network_id': subnet_obj.network_id,
+                       {'network_id': network_id,
                         'subnet_id': fixed['subnet_id']})
                 raise exc.InvalidInput(error_message=msg)
             # Ensure that the IP is valid on the subnet

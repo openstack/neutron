@@ -720,12 +720,15 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                     req = self.new_delete_request('subnets',
                                                   s1['subnet']['id'])
                     res = req.get_response(self.api)
-                    self.assertEqual(204, res.status_int)
-                    # ensure port only has 1 IP on s3
+                    self.assertEqual(webob.exc.HTTPBadRequest.code,
+                                     res.status_int)
+                    # ensure port has IP on s1 and s3
                     port = self._show('ports', p['port']['id'])['port']
-                    self.assertEqual(1, len(port['fixed_ips']))
-                    self.assertEqual(s3['subnet']['id'],
-                                     port['fixed_ips'][0]['subnet_id'])
+                    self.assertEqual(2, len(port['fixed_ips']))
+                    port_subnet_id = [port['fixed_ips'][0]['subnet_id'],
+                                      port['fixed_ips'][1]['subnet_id']]
+                    self.assertIn(s1['subnet']['id'], port_subnet_id)
+                    self.assertIn(s3['subnet']['id'], port_subnet_id)
 
     def test_update_subnet_with_empty_body(self):
         with self.subnet() as subnet:
