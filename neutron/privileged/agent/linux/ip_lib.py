@@ -216,7 +216,7 @@ def list_ns_pids(namespace):
     try:
         ns_path = os.path.join(NETNS_RUN_DIR, namespace)
         ns_inode = os.stat(ns_path).st_ino
-    except OSError:
+    except (OSError, FileNotFoundError):
         return ns_pids
 
     for pid in os.listdir('/proc'):
@@ -226,7 +226,7 @@ def list_ns_pids(namespace):
             pid_path = os.path.join('/proc', pid, 'ns', 'net')
             if os.stat(pid_path).st_ino == ns_inode:
                 ns_pids.append(int(pid))
-        except OSError:
+        except (OSError, FileNotFoundError):
             continue
 
     return ns_pids
