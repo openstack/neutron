@@ -30,13 +30,26 @@ LAST_NETWORKING_OVN_EXPAND_HEAD = "e55d09277410"
 LAST_NETWORKING_OVN_CONTRACT_HEAD = "1d271ead4eb6"
 
 
-def get_l3_agents():
-    filters = {'agent_type': [constants.AGENT_TYPE_L3]}
+def get_agents(agt_type):
+    """Get agent information from Database
+
+    :param agt_type: agent type, one of constants.AGENT_TYPE_*
+    :return: list of database query results
+    """
+    filters = {'agent_type': [agt_type]}
     ctx = context.get_admin_context()
     query = model_query.get_collection_query(ctx,
                                              agent_model.Agent,
                                              filters=filters)
     return query.all()
+
+
+def get_l3_agents():
+    return get_agents(constants.AGENT_TYPE_L3)
+
+
+def get_nic_switch_agents():
+    return get_agents(constants.AGENT_TYPE_NIC_SWITCH)
 
 
 def get_networks():
@@ -67,7 +80,10 @@ class CoreChecks(base.BaseChecks):
             (_("External network bridge"),
              self.external_network_bridge_check),
             (_("Worker counts configured"), self.worker_count_check),
-            (_("Networking-ovn database revision"), self.ovn_db_revision_check)
+            (_("Networking-ovn database revision"),
+             self.ovn_db_revision_check),
+            (_("NIC Switch agent check kernel"),
+             self.nic_switch_agent_min_kernel_check)
         ]
 
     @staticmethod
@@ -198,3 +214,29 @@ class CoreChecks(base.BaseChecks):
         return upgradecheck.Result(
             upgradecheck.Code.SUCCESS,
             _("Networking-ovn database tables are up to date."))
+
+    @staticmethod
+    def nic_switch_agent_min_kernel_check(checker):
+        # TODO(adrianc): This was introduced in U release, consider removing
+        # in 1-2 cycles.
+        # Background: Issue with old kernel is appernet in CentOS 7 and older.
+        # U release is the first release that moves from CentOS-7 to CentOS-8,
+        # this was added as a "heads-up" for operators to make sure min kernel
+        # requirement is fullfiled.
+        if not cfg.CONF.database.connection:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("Database connection string is not set. "
+                  "Check for NIC Switch agent can't be done."))
+
+        agents = get_nic_switch_agents()
+        if len(agents):
+            hosts = ','.join([agent.get("host") for agent in agents])
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("NIC Switch agents detected on hosts %s, please ensure the "
+                  "hosts run with a kernel version 3.13 or newer.") % hosts)
+        else:
+            return upgradecheck.Result(
+                upgradecheck.Code.SUCCESS,
+                _("No NIC Switch agents detected."))

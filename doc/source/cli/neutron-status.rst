@@ -59,3 +59,11 @@ Command details
          upgrade.
      * - 255
        - An unexpected error occurred.
+
+  **History of Checks**
+
+  **21.0.0 (Ussuri)**
+
+  * A Check was added for NIC Switch agents to ensure nodes are running with
+    kernel 3.13 or newer. This check serves as a notification for operators
+    to ensure this requirement is fullfiled on relevant nodes.

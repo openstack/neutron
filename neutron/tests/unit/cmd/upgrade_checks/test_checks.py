@@ -158,3 +158,23 @@ class TestChecks(base.BaseTestCase):
             result = checks.CoreChecks.ovn_db_revision_check(mock.Mock())
             self.assertEqual(Code.FAILURE, result.code)
             get_ovn_db_revisions.assert_called_once_with()
+
+    def test_nic_switch_agent_min_kernel_check_no_nic_switch_agents(self):
+        with mock.patch.object(checks, "get_nic_switch_agents",
+                               return_value=[]):
+            result = checks.CoreChecks.nic_switch_agent_min_kernel_check(
+                mock.Mock())
+            self.assertEqual(Code.SUCCESS, result.code)
+
+    def test_nic_switch_agent_min_kernel_check(self):
+        agents = [
+            {'host': 'Host A'},
+            {'host': 'Host B'}
+        ]
+        with mock.patch.object(checks, "get_nic_switch_agents",
+                               return_value=agents):
+            result = checks.CoreChecks.nic_switch_agent_min_kernel_check(
+                mock.Mock())
+            self.assertEqual(Code.WARNING, result.code)
+            self.assertIn('Host A', result.details)
+            self.assertIn('Host B', result.details)
