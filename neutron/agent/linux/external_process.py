@@ -26,6 +26,7 @@ import six
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.common import utils as common_utils
 from neutron.conf.agent import common as agent_cfg
 
 
@@ -78,7 +79,7 @@ class ProcessManager(MonitoredProcess):
         fileutils.ensure_tree(os.path.dirname(self.get_pid_file_name()),
                               mode=0o755)
 
-    def enable(self, cmd_callback=None, reload_cfg=False):
+    def enable(self, cmd_callback=None, reload_cfg=False, ensure_active=False):
         if not self.active:
             if not cmd_callback:
                 cmd_callback = self.default_cmd_callback
@@ -89,6 +90,8 @@ class ProcessManager(MonitoredProcess):
                                      run_as_root=self.run_as_root)
         elif reload_cfg:
             self.reload_cfg()
+        if ensure_active:
+            common_utils.wait_until_true(lambda: self.active)
 
     def reload_cfg(self):
         if self.custom_reload_callback:
