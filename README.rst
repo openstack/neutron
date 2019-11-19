@@ -1,14 +1,15 @@
-========================
-Team and repository tags
-========================
+=================
+OpenStack Neutron
+=================
 
 .. image:: https://governance.openstack.org/tc/badges/neutron.svg
     :target: https://governance.openstack.org/tc/reference/tags/index.html
 
 .. Change things from this point on
 
-Welcome!
-========
+Neutron is an OpenStack project to provide "network connectivity as a service"
+between interface devices (e.g., vNICs) managed by other OpenStack services
+(e.g., Nova).
 
 To learn more about neutron:
 
@@ -21,6 +22,4 @@ To learn more about neutron:
 Get in touch via `email <mailto:openstack-discuss@lists.openstack.org>`_. Use
 [Neutron] in your subject.
 
-To learn how to contribute:
-
-  CONTRIBUTING.rst
+To learn how to contribute, please read the CONTRIBUTING.rst file.
