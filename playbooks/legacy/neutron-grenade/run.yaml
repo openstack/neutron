@@ -43,6 +43,7 @@
           set -x
           export PROJECTS="openstack/grenade $PROJECTS"
           export PYTHONUNBUFFERED=true
+          export DEVSTACK_GATE_USE_PYTHON3=False
           export DEVSTACK_GATE_TEMPEST=1
           export DEVSTACK_GATE_GRENADE=pullup
           export DEVSTACK_GATE_NEUTRON=1
