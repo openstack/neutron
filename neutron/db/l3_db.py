@@ -1654,6 +1654,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 'context': context,
                 'router_ids': router_ids,
             }
+            # Process DNS record removal after committing the transaction
+            if self._is_dns_integration_supported:
+                self._process_dns_floatingip_delete(context, fip.to_dict())
             registry.notify(resources.FLOATING_IP, events.AFTER_UPDATE, self,
                             **assoc_result)
         return router_ids
