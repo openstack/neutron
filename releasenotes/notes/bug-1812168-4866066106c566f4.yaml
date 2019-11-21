@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    [`bug 1812168 <https://bugs.launchpad.net/neutron/+bug/1812168>`_]
+    Remove Floating IP DNS record upon associated port deletion.
+
