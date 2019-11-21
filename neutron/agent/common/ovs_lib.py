@@ -27,6 +27,8 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
+
+import debtcollector
 import six
 import tenacity
 
@@ -341,6 +343,8 @@ class OVSBridge(BaseOVS):
         self.ovsdb.del_port(port_name, self.br_name).execute()
 
     def run_ofctl(self, cmd, args, process_input=None):
+        debtcollector.deprecate("Use of run_ofctl is "
+            "deprecated", removal_version='V')
         full_args = ["ovs-ofctl", cmd,
                      "-O", self._highest_protocol_needed,
                      self.br_name] + args

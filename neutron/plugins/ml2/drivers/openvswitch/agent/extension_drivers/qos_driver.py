@@ -117,37 +117,9 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
                       "vif_port was not found. It seems that port is already "
                       "deleted", port_id)
             return
-        port_name = vif_port.port_name
-        port = self.br_int.get_port_ofport(port_name)
-        mark = rule.dscp_mark
-        # mark needs to be bit shifted 2 left to not overwrite the
-        # lower 2 bits of type of service packet header.
-        # source: man ovs-ofctl (/mod_nw_tos)
-        mark = str(mark << 2)
-
-        # reg2 is a metadata field that does not alter packets.
-        # By loading a value into this field and checking if the value is
-        # altered it allows the packet to be resubmitted and go through
-        # the flow table again to be identified by other flows.
-        flows = self.br_int.dump_flows_for(cookie=self.cookie, table=0,
-                                           in_port=port, reg2=0)
-        if not flows:
-            actions = ("mod_nw_tos:" + mark + ",load:55->NXM_NX_REG2[0..5]," +
-                       "resubmit(,0)")
-            self.br_int.add_flow(in_port=port, table=0, priority=65535,
-                                 reg2=0, actions=actions)
-        else:
-            for flow in flows:
-                actions = str(flow).partition("actions=")[2]
-                acts = actions.split(',')
-                # mod_nw_tos = modify type of service header
-                # This is the second byte of the IPv4 packet header.
-                # DSCP makes up the upper 6 bits of this header field.
-                actions = "mod_nw_tos:" + mark + ","
-                actions += ','.join([act for act in acts
-                                     if "mod_nw_tos:" not in act])
-                self.br_int.mod_flow(reg2=0, in_port=port, table=0,
-                                     actions=actions)
+        port = self.br_int.get_port_ofport(vif_port.port_name)
+        self.br_int.install_dscp_marking_rule(port=port,
+                                              dscp_mark=rule.dscp_mark)
 
     def delete_dscp_marking(self, port):
         vif_port = port.get('vif_port')

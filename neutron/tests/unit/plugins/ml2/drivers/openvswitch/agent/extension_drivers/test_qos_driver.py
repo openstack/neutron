@@ -52,11 +52,13 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.qos_driver.consume_api(self.agent_api)
         self.qos_driver.initialize()
         self.qos_driver.br_int = mock.Mock()
+        self.qos_driver.br_int.get_dp = mock.Mock(return_value=(mock.Mock(),
+                                                                mock.Mock(),
+                                                                mock.Mock()))
         self.qos_driver.br_int.get_egress_bw_limit_for_port = mock.Mock(
             return_value=(1000, 10))
         self.get_egress = self.qos_driver.br_int.get_egress_bw_limit_for_port
         self.get_ingress = self.qos_driver.br_int.get_ingress_bw_limit_for_port
-        self.qos_driver.br_int.dump_flows_for = mock.Mock(return_value=None)
         self.qos_driver.br_int.del_egress_bw_limit_for_port = mock.Mock()
         self.delete_egress = (
             self.qos_driver.br_int.delete_egress_bw_limit_for_port)
@@ -188,14 +190,13 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
             self.rules[1].max_burst_kbps)
 
     def _assert_dscp_rule_create_updated(self):
-        # Assert add_flow is the last call
+        # Assert install_instructions is the last call
         self.assertEqual(
-            'add_flow',
+            'install_dscp_marking_rule',
             self.qos_driver.br_int.method_calls[-1][0])
 
-        self.qos_driver.br_int.add_flow.assert_called_once_with(
-            actions='mod_nw_tos:128,load:55->NXM_NX_REG2[0..5],resubmit(,0)',
-            in_port=mock.ANY, priority=65535, reg2=0, table=0)
+        self.qos_driver.br_int.install_dscp_marking_rule.\
+            assert_called_once_with(dscp_mark=mock.ANY, port=mock.ANY)
 
     def test_create_minimum_bandwidth(self):
         with mock.patch.object(self.qos_driver, 'update_minimum_bandwidth') \
