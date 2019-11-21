@@ -411,3 +411,30 @@ class Subnet(base.NeutronDbObject):
             # subnets. Happens on routed networks when host isn't known.
             raise ipam_exceptions.DeferIpam()
         return False
+
+
+@base.NeutronObjectRegistry.register
+class NetworkSubnetLock(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = models_v2.NetworkSubnetLock
+    new_facade = True
+    primary_keys = ['network_id']
+
+    fields = {
+        'network_id': common_types.UUIDField(),
+        'subnet_id': common_types.UUIDField(nullable=True)
+    }
+
+    @classmethod
+    def lock_subnet(cls, context, network_id, subnet_id):
+        subnet_lock = super(NetworkSubnetLock, cls).get_object(
+            context, network_id=network_id)
+        if subnet_lock:
+            subnet_lock.subnet_id = subnet_id
+            subnet_lock.update()
+        else:
+            subnet_lock = NetworkSubnetLock(context, network_id=network_id,
+                                            subnet_id=subnet_id)
+            subnet_lock.create()
