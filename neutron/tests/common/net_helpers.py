@@ -28,6 +28,7 @@ import time
 import fixtures
 import netaddr
 from neutron_lib import constants as n_const
+from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -554,13 +555,22 @@ class NetcatTester(object):
         proc = RootHelperProcess(cmd, namespace=namespace)
         return proc
 
-    def stop_processes(self):
+    def stop_processes(self, skip_errors=None):
+        skip_errors = (['No such process'] if skip_errors is None
+                       else skip_errors)
         for proc_attr in ('_client_process', '_server_process'):
             proc = getattr(self, proc_attr)
             if proc:
-                if proc.poll() is None:
-                    proc.kill()
-                    proc.wait()
+                try:
+                    if proc.poll() is None:
+                        proc.kill()
+                        proc.wait()
+                except n_exc.ProcessExecutionError as exc:
+                    for skip_error in skip_errors:
+                        if skip_error in str(exc):
+                            break
+                    else:
+                        raise exc
                 setattr(self, proc_attr, None)
 
 
