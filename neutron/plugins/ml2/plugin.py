@@ -1139,9 +1139,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     @db_api.retry_if_session_inactive()
     def get_network(self, context, id, fields=None):
-        # NOTE(ihrachys) use writer manager to be able to update mtu
-        # TODO(ihrachys) remove in Queens+ when mtu is not nullable
-        with db_api.CONTEXT_WRITER.using(context):
+        with db_api.CONTEXT_READER.using(context):
             net_db = self._get_network(context, id)
 
             net_data = self._make_network_dict(net_db, context=context)
