@@ -11,16 +11,17 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 # HYUNGBAI PARK <openstack.make@gmail.com>, 2016. #zanata
 # jtjang <jang.jitae@gmail.com>, 2016. #zanata
+# Hongjae Kim <neo415ha@gmail.com>, 2019. #zanata
 msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2019-09-26 18:00+0000\n"
+"POT-Creation-Date: 2019-11-21 15:58+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-08-17 10:52+0000\n"
-"Last-Translator: HYUNGBAI PARK <openstack.make@gmail.com>\n"
+"PO-Revision-Date: 2019-11-19 08:06+0000\n"
+"Last-Translator: Hongjae Kim <neo415ha@gmail.com>\n"
 "Language: ko_KR\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
@@ -132,8 +133,32 @@ msgstr ""
 "이 IP 제품군의 기본 subnetpool이 이미 설정되었습니다. IP 제품군당 기본값은 하"
 "나만 있을 수 있습니다."
 
+msgid "A driver can't require a feature and not support it."
+msgstr "운전자와 정책을 지지하지 않는 특징이 필요할 수 없다."
+
+#, python-format
+msgid ""
+"A duplicate port forwarding entry with same attributes already exists, "
+"conflicting values are %s"
+msgstr ""
+"동일한 속성을 가진 중복 포트 전달 항목이 이미 있으며 충돌하는 값은 %s임"
+
 msgid "A metering driver must be specified"
 msgstr "측정 드라이버를 지정해야 함"
+
+msgid ""
+"A misconfiguration in the environment prevents the operation from "
+"completing, please, contact the admin."
+msgstr ""
+"환경 구성이 잘못되어 작업이 완료되지 않습니다, 관리자에게 문의하십시오."
+
+msgid "A subnet cannot be associated with a dynamic segment."
+msgstr "서브넷은 동적 세그먼트와 연결할 수 없다."
+
+msgid ""
+"A subnet that is already associated with a segment cannot have its segment "
+"association changed."
+msgstr "세그먼트와 이미 연결된 서브넷은 세그먼트 연결을 변경할 수 없다."
 
 msgid "Access to this resource was denied."
 msgstr "이 자원에 대한 액세스가 거부되었습니다."
@@ -332,6 +357,18 @@ msgstr ""
 "레거시 L3 에이전트 %(agent_id)s에서 분산된 라우터 %(router_id)s을(를) 호스팅"
 "할 수 업습니다."
 
+msgid ""
+"Cannot load trunk plugin: no compatible core plugin configuration is found."
+msgstr ""
+"트렁크 플러그인을 로드할 수 없음: 호환되는 코어 플러그인을 찾을 수 없음"
+
+msgid ""
+"Cannot load trunk plugin: no compatible segmentation type configuration can "
+"be found amongst list of loaded drivers."
+msgstr ""
+"트렁크 플러그인을 로드할 수 없음: 로드된 드라이버 목록에서 호환되는 분할 유"
+"형 구성을 찾을 수 없음"
+
 msgid "Cannot specify both subnet-id and port-id"
 msgstr "subnet-id와 port-id를 둘 다 지정할 수 없음"
 
@@ -344,6 +381,11 @@ msgstr "읽기 전용 속성 %s을(를) 업데이트할 수 없음"
 
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr "ssl용 인증 기관 공개 키(CA cert) 파일 "
+
+msgid ""
+"Changing the 'ha' and 'distributed' attributes on a router associated with a "
+"flavor is not supported"
+msgstr "맛과 연결된 라우터에서 'ha' 및 'distributed' 속성을 변경할 수 없음"
 
 msgid "Check ebtables installation"
 msgstr "ebtables 설치 확인"
@@ -501,6 +543,9 @@ msgstr "%(time)d후 시도한 다음 %(host)s:%(port)s에 바인딩할 수 없�
 
 msgid "Could not deserialize data"
 msgstr "데이터를 직렬화 해제할 수 없음"
+
+msgid "Couldn't find resource ID in callback event"
+msgstr "콜백 이벤트에서 리소스 ID를 찾을 수 없음"
 
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
@@ -756,6 +801,9 @@ msgid ""
 msgstr ""
 "주소가 임시 상태를 벗어날 때까지 대기하는 동안 %s초 제한이 초과되어씃ㅂ니다."
 
+msgid "Exception used to signal that IP allocation is deferred"
+msgstr "IP 할당이 연기된다는 신호에 사용되는 예외"
+
 msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr "기존 접두부는 새 접두부의 서브넷이어야 함"
 
@@ -820,6 +868,9 @@ msgstr ""
 #, python-format
 msgid "Failed to locate source for %s."
 msgstr "%s에 대한 소스를 찾지 못했습니다. "
+
+msgid "Failed to open new conntrack handler"
+msgstr "새 Conntrack 처리기를 열지 못함"
 
 msgid "Failed to remove supplemental groups"
 msgstr "보조 그룹을 제거하지 못함"
@@ -1585,6 +1636,11 @@ msgstr "nova 메타데이터에 액세스하기 위한 프로토콜, http 또는
 msgid "Provider name %(name)s is limited by %(len)s characters"
 msgstr "제공자 이름 %(name)s은(는) %(len)s자로 제한됨"
 
+msgid ""
+"Provider network attributes can be updated only in provider networks with a "
+"single segment."
+msgstr "공급자 네트워크 속성은 단일 공급자 네트워크에서만 업데이트 가능"
+
 #, python-format
 msgid "RBAC policy of type %(object_type)s with ID %(id)s not found"
 msgstr "ID가 %(id)s인 %(object_type)s 유형의 RBAC 정책을 찾을 수 없음"
@@ -1819,6 +1875,9 @@ msgstr "서브넷 풀에 기존 할당이 있음"
 
 msgid "Subnet used for the l3 HA admin network."
 msgstr "l3 HA 관리 네트워크에 사용된 서브넷입니다."
+
+msgid "Switch connection timeout"
+msgstr "스위치 연결 시간 초과"
 
 msgid ""
 "System-wide flag to determine the type of router that tenants can create. "
