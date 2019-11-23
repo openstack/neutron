@@ -117,7 +117,7 @@ updating the core review team for the sub-project's repositories.
 +-------------------------+-----------------------------+-------------------+
 | Area                    | Lieutenant                  | IRC nick          |
 +=========================+=============================+===================+
-| networking-bgpvpn /     | Mathieu Rohon               | matrohon          |
+| networking-bgpvpn /     | Lajos Katona                | lajoskatona       |
 | networking-bagpipe      +-----------------------------+-------------------+
 |                         | Thomas Morin                | tmorin            |
 +-------------------------+-----------------------------+-------------------+
