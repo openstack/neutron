@@ -1085,7 +1085,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def get_subnets(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None,
                     page_reverse=False):
-        subnet_objs = self._get_subnets(context, filters, fields, sorts, limit,
+        subnet_objs = self._get_subnets(context, filters, sorts, limit,
                                         marker, page_reverse)
         return [
             self._make_subnet_dict(subnet_object, fields, context)
