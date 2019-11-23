@@ -10,8 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import threading
-
 import mock
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
 from neutron_lib.callbacks import exceptions as c_exc
@@ -20,7 +18,6 @@ from neutron_lib.exceptions import l3 as lib_l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
-from six.moves import queue
 
 from neutron.services.portforwarding.common import exceptions as pf_exc
 from neutron.services.portforwarding import pf_plugin
@@ -374,49 +371,6 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         self.assertRaises(pf_exc.PortForwardingNotFound,
                           self.pf_plugin.delete_floatingip_port_forwarding,
                           self.context, res['id'], uuidutils.generate_uuid())
-
-    def _simulate_concurrent_requests_process_and_raise(
-            self, funcs, args_list):
-
-        class SimpleThread(threading.Thread):
-            def __init__(self, q):
-                super(SimpleThread, self).__init__()
-                self.q = q
-                self.exception = None
-
-            def run(self):
-                try:
-                    while not self.q.empty():
-                        item = None
-                        try:
-                            item = self.q.get(False)
-                            func, func_args = item[0], item[1]
-                            func(*func_args)
-                        except queue.Empty:
-                            pass
-                        finally:
-                            if item:
-                                self.q.task_done()
-                except Exception as e:
-                    self.exception = e
-
-            def get_exception(self):
-                return self.exception
-
-        q = queue.Queue()
-        for func, func_args in zip(funcs, args_list):
-            q.put_nowait((func, func_args))
-        threads = []
-        for _ in range(len(funcs)):
-            t = SimpleThread(q)
-            threads.append(t)
-            t.start()
-        q.join()
-
-        for t in threads:
-            e = t.get_exception()
-            if e:
-                raise e
 
     def test_concurrent_create_port_forwarding_delete_fip(self):
 

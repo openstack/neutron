@@ -36,6 +36,8 @@ class BaseDhcpAgentTest(base.BaseFullStackTestCase):
         (constants.AGENT_TYPE_LINUXBRIDGE,
          {'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE})
     ]
+    boot_vm_for_test = True
+    dhcp_scheduler_class = None
 
     def setUp(self):
         host_descriptions = [
@@ -48,12 +50,15 @@ class BaseDhcpAgentTest(base.BaseFullStackTestCase):
             environment.EnvironmentDescription(
                 l2_pop=False,
                 arp_responder=False,
-                agent_down_time=self.agent_down_time),
+                agent_down_time=self.agent_down_time,
+                dhcp_scheduler_class=self.dhcp_scheduler_class,
+            ),
             host_descriptions)
 
         super(BaseDhcpAgentTest, self).setUp(env)
         self.project_id = uuidutils.generate_uuid()
-        self._create_network_subnet_and_vm()
+        if self.boot_vm_for_test:
+            self._create_network_subnet_and_vm()
 
     def _spawn_vm(self):
         host = random.choice(self.environment.hosts)
@@ -193,3 +198,34 @@ class TestDhcpAgentHA(BaseDhcpAgentTest):
         # check if new vm will get IP from DHCP agent which is still alive
         new_vm = self._spawn_vm()
         new_vm.block_until_dhcp_config_done()
+
+
+class TestDhcpAgentHARaceCondition(BaseDhcpAgentTest):
+
+    agent_down_time = 30
+    number_of_hosts = 2
+    boot_vm_for_test = False
+    dhcp_scheduler_class = ('neutron.tests.fullstack.schedulers.dhcp.'
+                            'AlwaysTheOtherAgentScheduler')
+
+    def setUp(self):
+        super(TestDhcpAgentHARaceCondition, self).setUp()
+        self._create_network_with_multiple_subnets()
+
+    def _create_network_with_multiple_subnets(self):
+        self.network = self.safe_client.create_network(self.project_id)
+
+        funcs = []
+        args = []
+        for i in range(4):
+            funcs.append(self.safe_client.create_subnet)
+            args.append((
+                self.project_id, self.network['id'], '10.0.%s.0/24' % i,
+                '10.0.%s.1' % i, 'subnet-test-%s' % i, True
+            ))
+        self._simulate_concurrent_requests_process_and_raise(funcs, args)
+
+    def test_dhcp_agent_ha_with_race_condition(self):
+        network_dhcp_agents = self.client.list_dhcp_agent_hosting_networks(
+            self.network['id'])['agents']
+        self.assertEqual(1, len(network_dhcp_agents))
