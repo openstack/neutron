@@ -37,7 +37,6 @@
               - ^tox.ini$
         - neutron-tempest-dvr-ha-multinode-full
         - neutron-tempest-iptables_hybrid
-        - neutron-grenade
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             voting: false
             irrelevant-files: *tempest-irrelevant-files
@@ -70,7 +69,6 @@
         - neutron-tempest-iptables_hybrid
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
-        - neutron-grenade
         - tempest-slow-py3:
             irrelevant-files: *tempest-irrelevant-files
         - grenade-py3:
@@ -357,6 +355,8 @@
     irrelevant-files: *tempest-irrelevant-files
 
 - job:
+    # TODO(slaweq): remove this job definition when all other projects will use
+    # grenade-py3 instead
     name: neutron-grenade
     parent: legacy-dsvm-base
     run: playbooks/legacy/neutron-grenade/run.yaml
