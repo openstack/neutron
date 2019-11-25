@@ -384,14 +384,13 @@
 
 - job:
     name: neutron-tempest-with-os-ken-master
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-tempest-with-os-ken-master/run.yaml
-    post-run: playbooks/legacy/neutron-tempest-with-os-ken-master/post.yaml
+    parent: tempest-integrated-networking
     timeout: 7800
     required-projects:
       - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
+      - openstack/os-ken
 
 - job:
     name: neutron-fullstack-with-uwsgi
