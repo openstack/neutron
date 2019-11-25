@@ -15,7 +15,9 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants as p_const
 
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import ovs_bridge_test_base
 
@@ -471,3 +473,36 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
             call.uninstall_flows(table_id=24, in_port=port),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
+
+    def _test_delete_dvr_dst_mac_for_arp(self, network_type):
+        if network_type == p_const.TYPE_VLAN:
+            table_id = constants.DVR_TO_SRC_MAC_VLAN
+        else:
+            table_id = constants.DVR_TO_SRC_MAC
+
+        vlan_tag = 1111
+        gateway_mac = '00:02:b3:13:fe:3e'
+        dvr_mac = '00:02:b3:13:fe:3f'
+        rtr_port = 8888
+        self.br.delete_dvr_dst_mac_for_arp(network_type=network_type,
+                                           vlan_tag=vlan_tag,
+                                           gateway_mac=gateway_mac,
+                                           dvr_mac=dvr_mac,
+                                           rtr_port=rtr_port)
+        (dp, ofp, ofpp) = self._get_dp()
+        expected = [
+            call.uninstall_flows(
+                strict=True,
+                priority=5,
+                table_id=table_id,
+                match=ofpp.OFPMatch(
+                    eth_dst=dvr_mac,
+                    vlan_vid=vlan_tag | ofp.OFPVID_PRESENT)),
+        ]
+        self.assertEqual(expected, self.mock.mock_calls)
+
+    def test_delete_dvr_dst_mac_for_arp_vlan(self):
+        self._test_delete_dvr_dst_mac_for_arp(network_type='vlan')
+
+    def test_delete_dvr_dst_mac_for_arp_tunnel(self):
+        self._test_delete_dvr_dst_mac_for_arp(network_type='vxlan')
