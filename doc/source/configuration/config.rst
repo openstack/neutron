@@ -32,6 +32,7 @@ arbitrary file names.
    macvtap-agent.rst
    openvswitch-agent.rst
    sriov-agent.rst
+   ovn.rst
 
 .. toctree::
    :maxdepth: 1
