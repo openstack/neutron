@@ -517,6 +517,19 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                 raise ext_sg.SecurityGroupInvalidProtocolForPort(
                     protocol=ip_proto, valid_port_protocols=port_protocols)
 
+    def _make_canonical_port_range(self, rule):
+        if (rule['port_range_min'] == constants.PORT_RANGE_MIN and
+                rule['port_range_max'] == constants.PORT_RANGE_MAX):
+            LOG.info('Project %(project)s added a security group rule '
+                     'specifying the entire port range (%(min)s - '
+                     '%(max)s). It was automatically converted to not '
+                     'have a range to better optimize it for the backend '
+                     'security group implementation(s).',
+                     {'project': rule['tenant_id'],
+                      'min': rule['port_range_min'],
+                      'max': rule['port_range_max']})
+            rule['port_range_min'] = rule['port_range_max'] = None
+
     def _validate_ethertype_and_protocol(self, rule):
         """Check if given ethertype and  protocol are valid or not"""
         if rule['protocol'] in [constants.PROTO_NAME_IPV6_ENCAP,
@@ -576,6 +589,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
     def _validate_security_group_rule(self, context, security_group_rule):
         rule = security_group_rule['security_group_rule']
         self._make_canonical_ipv6_icmp_protocol(rule)
+        self._make_canonical_port_range(rule)
         self._validate_port_range(rule)
         self._validate_ip_prefix(rule)
         self._validate_ethertype_and_protocol(rule)

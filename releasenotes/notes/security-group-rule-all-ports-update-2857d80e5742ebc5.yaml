@@ -1,0 +1,10 @@
+---
+upgrade:
+  - |
+    A security group rule added for the entire port range, for example,
+    TCP ports 1-65535, is not optimal for backends that implement the
+    rule. Rules like this will now automatically be converted to apply
+    to the procotol itself, in other words, all TCP - the port ranges
+    will be ignored.
+    See bug `1848213 <https://bugs.launchpad.net/neutron/+bug/1848213>`_
+    for more details.
