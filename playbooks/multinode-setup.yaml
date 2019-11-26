@@ -1,0 +1,4 @@
+- hosts: all
+  roles:
+    - multi-node-bridge
+    - multi-node-setup

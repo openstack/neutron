@@ -1,0 +1,84 @@
+- hosts: all
+  name: Autoconverted job legacy-grenade-dsvm-networking-ovn from old job gate-grenade-dsvm-networking-ovn-ubuntu-xenial-nv
+  tasks:
+
+    - name: Ensure legacy workspace directory
+      file:
+        path: '{{ ansible_user_dir }}/workspace'
+        state: directory
+
+    - shell:
+        cmd: |
+          set -e
+          set -x
+          cat > clonemap.yaml << EOF
+          clonemap:
+            - name: openstack/devstack-gate
+              dest: devstack-gate
+          EOF
+          /usr/zuul-env/bin/zuul-cloner -m clonemap.yaml --cache-dir /opt/git \
+              https://opendev.org \
+              openstack/devstack-gate
+        executable: /bin/bash
+        chdir: '{{ ansible_user_dir }}/workspace'
+      environment: '{{ zuul | zuul_legacy_vars }}'
+
+    - shell:
+        cmd: |
+          set -e
+          set -x
+          cat << 'EOF' >>"/tmp/dg-local.conf"
+          [[local|localrc]]
+          enable_plugin neutron-tempest-plugin https://opendev.org/openstack/neutron-tempest-plugin
+
+          EOF
+        executable: /bin/bash
+        chdir: '{{ ansible_user_dir }}/workspace'
+      environment: '{{ zuul | zuul_legacy_vars }}'
+
+    - shell:
+        cmd: |
+          set -e
+          set -x
+          export PYTHONUNBUFFERED=true
+          # Because we are testing a non standard project, add
+          # our project repository. This makes zuul do the right
+          # reference magic for testing changes.
+          export PROJECTS="openstack/networking-ovn openstack/neutron-tempest-plugin openstack/grenade $PROJECTS"
+
+          # TODO(slaweq): this should be probably moved to the grenade repo or
+          # to the neutron devstack plugin
+          export GRENADE_PLUGINRC="enable_grenade_plugin networking-ovn https://opendev.org/openstack/networking-ovn"
+          export DEVSTACK_GATE_GRENADE=pullup
+
+          export DEVSTACK_GATE_NEUTRON=1
+          export DEVSTACK_GATE_TEMPEST=1
+          export DEVSTACK_GATE_TEMPEST_ALL_PLUGINS=1
+
+          export BRANCH_OVERRIDE=default
+          if [ "$BRANCH_OVERRIDE" != "default" ] ; then
+              export OVERRIDE_ZUUL_BRANCH=$BRANCH_OVERRIDE
+          fi
+          # Keep localrc to be able to set some vars in pre_test_hook
+          export KEEP_LOCALRC=1
+
+          function pre_test_hook {
+              if [ -f $BASE/new/networking-ovn/devstack/pre_test_hook.sh ] ; then
+                  . $BASE/new/networking-ovn/devstack/pre_test_hook.sh
+              fi
+          }
+          export -f pre_test_hook
+
+          function post_test_hook {
+              if [ -f $BASE/new/networking-ovn/devstack/post_test_hook.sh ] ; then
+                  . $BASE/new/networking-ovn/devstack/post_test_hook.sh
+              fi
+          }
+          export -f post_test_hook
+
+          export DEVSTACK_GATE_SETTINGS=/opt/stack/new/networking-ovn/devstack/devstackgaterc
+          cp devstack-gate/devstack-vm-gate-wrap.sh ./safe-devstack-vm-gate-wrap.sh
+          ./safe-devstack-vm-gate-wrap.sh
+        executable: /bin/bash
+        chdir: '{{ ansible_user_dir }}/workspace'
+      environment: '{{ zuul | zuul_legacy_vars }}'
