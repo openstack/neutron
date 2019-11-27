@@ -14,6 +14,7 @@
 #    under the License.
 
 import os
+import socket
 
 from neutron_lib.utils import runtime
 from oslo_config import cfg
@@ -67,3 +68,27 @@ def load_interface_driver(conf, get_networks_callback=None):
 def is_agent_down(heart_beat_time):
     return timeutils.is_older_than(heart_beat_time,
                                    cfg.CONF.agent_down_time)
+
+
+# TODO(bence romsics): rehome this to neutron_lib.placement.utils
+def default_rp_hypervisors(hypervisors, device_mappings):
+    """Fill config option 'resource_provider_hypervisors' with defaults.
+
+    Default hypervisor names to socket.gethostname(). Since libvirt knows
+    itself by the same name, the default is good for libvirt.
+
+    :param hypervisors: Config option 'resource_provider_hypervisors'
+        as parsed by oslo.config, that is a dict with keys of physical devices
+        and values of hypervisor names.
+    :param device_mappings: Device mappings standardized to the list-valued
+        format.
+    """
+    default_hypervisor = socket.gethostname()
+    rv = {}
+    for _physnet, devices in device_mappings.items():
+        for device in devices:
+            if device in hypervisors:
+                rv[device] = hypervisors[device]
+            else:
+                rv[device] = default_hypervisor
+    return rv

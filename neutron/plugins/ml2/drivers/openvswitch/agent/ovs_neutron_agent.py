@@ -222,6 +222,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                       br_set)
         self.rp_inventory_defaults = place_utils.parse_rp_inventory_defaults(
             ovs_conf.resource_provider_inventory_defaults)
+        self.rp_hypervisors = utils.default_rp_hypervisors(
+            ovs_conf.resource_provider_hypervisors,
+            {k: [v] for k, v in self.bridge_mappings.items()}
+        )
 
         self.setup_physical_bridges(self.bridge_mappings)
         self.vlan_manager = vlanmanager.LocalVlanManager()
@@ -314,6 +318,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                n_const.RP_BANDWIDTHS: self.rp_bandwidths,
                                n_const.RP_INVENTORY_DEFAULTS:
                                    self.rp_inventory_defaults,
+                               'resource_provider_hypervisors':
+                               self.rp_hypervisors,
                                'integration_bridge':
                                ovs_conf.integration_bridge,
                                'tunnel_types': self.tunnel_types,
