@@ -128,3 +128,33 @@ class TestChecks(base.BaseTestCase):
             self.assertEqual(Code.WARNING, result.code)
             self.assertIn('net-uuid-a', result.details)
             self.assertNotIn('net-uuid-b', result.details)
+
+    def test_ovn_db_revision_check_no_networking_ovn_installed(self):
+        with mock.patch.object(checks, "table_exists", return_value=False),\
+                mock.patch.object(
+                    checks, "get_ovn_db_revisions") as get_ovn_db_revisions:
+            result = checks.CoreChecks.ovn_db_revision_check(mock.Mock())
+            self.assertEqual(Code.SUCCESS, result.code)
+            get_ovn_db_revisions.assert_not_called()
+
+    def test_ovn_db_revision_check_networking_ovn_latest_revision(self):
+        revisions = [
+            checks.LAST_NETWORKING_OVN_EXPAND_HEAD,
+            checks.LAST_NETWORKING_OVN_CONTRACT_HEAD]
+        with mock.patch.object(checks, "table_exists", return_value=True),\
+                mock.patch.object(
+                    checks, "get_ovn_db_revisions",
+                    return_value=revisions) as get_ovn_db_revisions:
+            result = checks.CoreChecks.ovn_db_revision_check(mock.Mock())
+            self.assertEqual(Code.SUCCESS, result.code)
+            get_ovn_db_revisions.assert_called_once_with()
+
+    def test_ovn_db_revision_check_networking_ovn_not_latest_revision(self):
+        revisions = ["some_older_revision"]
+        with mock.patch.object(checks, "table_exists", return_value=True),\
+                mock.patch.object(
+                    checks, "get_ovn_db_revisions",
+                    return_value=revisions) as get_ovn_db_revisions:
+            result = checks.CoreChecks.ovn_db_revision_check(mock.Mock())
+            self.assertEqual(Code.FAILURE, result.code)
+            get_ovn_db_revisions.assert_called_once_with()
