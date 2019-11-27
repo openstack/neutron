@@ -603,6 +603,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             LOG.info("port %(port_id)s does not exist in ovsdb: %(err)s.",
                      {'port_id': port['device'],
                       'err': not_found_error})
+            # If port doesn't exist in ovsdb, lets ensure that there are no
+            # leftovers
+            self.remove_port_filter(port)
         except exceptions.OVSFWTagNotFound as tag_not_found:
             LOG.info("Tag was not found for port %(port_id)s: %(err)s.",
                      {'port_id': port['device'],
