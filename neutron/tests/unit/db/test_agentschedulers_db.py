@@ -1354,6 +1354,35 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         self._list_networks_hosted_by_dhcp_agent(invalid_agentid,
                                                  exc.HTTPNotFound.code)
 
+    def test_network_no_reschedule(self):
+        cfg.CONF.set_override('allow_overlapping_ips', True)
+        cfg.CONF.set_override('network_auto_schedule', False)
+        with self.subnet() as sb1, self.subnet():
+            network1_id = sb1['subnet']['network_id']
+            dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
+            self._register_agent_states()
+            hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
+                                          DHCP_HOSTA)
+            hostc_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
+                                          DHCP_HOSTC)
+            dhcp_rpc_cb.get_active_networks_info(
+                self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks_info(
+                self.adminContext, host=DHCP_HOSTC)
+            networks = self._list_networks_hosted_by_dhcp_agent(hostc_id)
+            num_hostc_nets = len(networks['networks'])
+            networks = self._list_networks_hosted_by_dhcp_agent(hosta_id)
+            num_hosta_nets = len(networks['networks'])
+            self.assertEqual(0, num_hosta_nets)
+            self.assertEqual(0, num_hostc_nets)
+            # After this patch, network which requires DHCP
+            # has to be manually mapped
+            self._add_network_to_dhcp_agent(hosta_id,
+                                            network1_id)
+            networks = self._list_networks_hosted_by_dhcp_agent(hosta_id)
+            num_hosta_nets = len(networks['networks'])
+            self.assertEqual(1, num_hosta_nets)
+
 
 class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                                    AgentSchedulerTestMixIn,

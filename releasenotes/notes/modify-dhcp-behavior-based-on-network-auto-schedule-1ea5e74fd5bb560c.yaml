@@ -1,0 +1,14 @@
+---
+fixes:
+  - |
+    Neutron currently does not fully respect the network-auto-schedule
+    configuration option. If the network-auto-schedule option is set to
+    False, the network -
+    a) Is still scheduled on the DHCP agent when it is created
+    b) Is scheduled on a new DHCP agent if the old DHCP mapping is removed
+    by the user/admin.
+    It is especially necessary where the Network Backends provide DHCP
+    directly. This has been fixed now and if the network-auto-schedule
+    is set to False in the config file, networks would not be automatically
+    scheduled to the DHCP Agents. If mapping/scheduling is required, it can
+    be done manually or by setting the network-auto-schedule to True.

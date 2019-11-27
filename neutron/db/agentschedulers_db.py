@@ -475,7 +475,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             return {'agents': []}
 
     def schedule_network(self, context, created_network):
-        if self.network_scheduler:
+        if self.network_scheduler and cfg.CONF.network_auto_schedule:
             return self.network_scheduler.schedule(
                 self, context, created_network)
 
