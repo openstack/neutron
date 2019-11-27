@@ -1,0 +1,32 @@
+- job:
+    name: neutron-centos-7-tripleo-standalone
+    parent: tripleo-ci-base-standalone
+    nodeset: single-centos-7-node
+    voting: false
+    vars:
+      featureset: '052'
+      featureset_override:
+        standalone_environment_files:
+          - 'environments/services/neutron-ovs.yaml'
+        tempest_test_whitelist:
+          - 'tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_network_basic_ops'
+    irrelevant-files: &irrelevant-files
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+      - ^vagrant/.*$
+      - ^migration/.*$
+
+- job:
+    name: neutron-ovn-tripleo-ci-centos-7-containers-multinode
+    parent: tripleo-ci-base-multinode
+    vars:
+      nodes: 1ctlr
+      featureset: '010'
+    irrelevant-files: *irrelevant-files

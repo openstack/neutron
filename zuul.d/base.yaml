@@ -1,0 +1,59 @@
+- job:
+    name: neutron-functional
+    parent: devstack-minimal
+    description: Run neutron functional tests
+    timeout: 7800
+    required-projects:
+      - opendev.org/openstack/devstack
+      - openstack/neutron
+      - openstack/requirements
+    roles:
+      - zuul: openstack/devstack
+    pre-run: playbooks/configure_functional_job.yaml
+    run: playbooks/run_functional_job.yaml
+    post-run: playbooks/post_functional_job.yaml
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^releasenotes/.*$
+    vars:
+      devstack_services:
+        # Ignore any default set by devstack. Emit a "disable_all_services".
+        base: false
+      devstack_localrc:
+        INSTALL_TESTONLY_PACKAGES: true
+        DATABASE_PASSWORD: stackdb
+      tox_envlist: dsvm-functional
+      tox_install_siblings: false
+      tox_constraints_file: '{{ ansible_user_dir }}/src/opendev.org/openstack/requirements/upper-constraints.txt'
+      zuul_copy_output:
+        # We need to copy directory with logs to have it in job artifacts also,
+        # /opt/stack/logs is default logs directory defined in neutron's
+        # tox.ini file
+        '{{ devstack_base_dir }}/logs/dsvm-functional-logs': logs
+
+- job:
+    name: neutron-fullstack
+    parent: neutron-functional
+    vars:
+      tox_envlist: dsvm-fullstack
+      zuul_copy_output:
+        # We need to copy directory with logs to have it in job artifacts also,
+        # /opt/stack/logs is default logs directory defined in neutron's
+        # tox.ini file
+        '{{ devstack_base_dir }}/logs/dsvm-fullstack-logs': logs
+
+- job:
+    name: neutron-fullstack-with-uwsgi
+    parent: neutron-fullstack
+    vars:
+      devstack_localrc:
+        NEUTRON_DEPLOY_MOD_WSGI: true
+
+- job:
+    name: neutron-functional-with-uwsgi
+    parent: neutron-functional
+    vars:
+      devstack_localrc:
+        NEUTRON_DEPLOY_MOD_WSGI: true

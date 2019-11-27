@@ -1,0 +1,84 @@
+- job:
+    name: neutron-rally-task
+    parent: rally-task-neutron
+    timeout: 10800
+    vars:
+      devstack_localrc:
+        USE_PYTHON3: true
+        OSPROFILER_COLLECTOR: redis
+        OSPROFILER_HMAC_KEYS: "neutron-hmac-key-used-in-zuul-ci"
+      rally_task: rally-jobs/task-neutron.yaml
+      devstack_plugins:
+        osprofiler: https://opendev.org/openstack/osprofiler
+        rally-openstack: https://opendev.org/openstack/rally-openstack
+        neutron: https://opendev.org/openstack/neutron
+      devstack_services:
+        neutron-trunk: true
+      devstack_local_conf:
+        post-config:
+          $NEUTRON_CONF:
+            DEFAULT:
+              enable_code_profiling: True
+    required-projects:
+      - openstack/rally
+      - openstack/rally-openstack
+      - openstack/osprofiler
+    irrelevant-files: &irrelevant-files
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+      - ^vagrant/.*$
+      - ^migration/.*$
+
+- job:
+    name: neutron-ovn-rally-task
+    parent: rally-task-at-devstack
+    required-projects:
+      - name: openstack/devstack
+      - name: openstack/devstack-gate
+      - name: openstack/rally
+      - name: openstack/rally-openstack
+      - name: openstack/networking-ovn
+    irrelevant-files: *irrelevant-files
+    vars:
+      devstack_plugins:
+        rally-openstack: https://opendev.org/openstack/rally-openstack
+        networking-ovn: https://opendev.org/openstack/networking-ovn
+      zuul_copy_output:
+        '{{ devstack_base_dir }}/data/ovs': 'logs'
+      extensions_to_txt:
+        db: true
+      devstack_services:
+        ovn-northd: true
+        ovn-controller: true
+        ovs-vswitchd: true
+        ovsdb-server: true
+        networking-ovn-metadata-agent: true
+        br-ex-tcpdump: true
+        br-int-flows: true
+        q-dhcp: false
+        q-l3: false
+        q-agt: false
+        q-meta: false
+        q-metering: false
+      devstack_localrc:
+        USE_PYTHON3: true
+        PHYSICAL_NETWORK: public
+        Q_USE_PROVIDERNET_FOR_PUBLIC: true
+        ENABLE_CHASSIS_AS_GW: true
+        OVN_L3_CREATE_PUBLIC_NETWORK: true
+        OVN_BRANCH: master
+      devstack_local_conf:
+        post-config:
+          "${RALLY_CONF_DIR}/${RALLY_CONF_FILE}":
+            openstack:
+              neutron_bind_l2_agent_types: "OVN Controller Gateway agent"
+      rally_task: rally-jobs/task-neutron.yaml
+    timeout: 7800
+
