@@ -293,7 +293,7 @@ class ConjIPFlowManager(object):
         addr_to_conj = collections.defaultdict(list)
         for remote_id, conj_id_set in sg_conj_id_map.items():
             remote_group = self.driver.sg_port_map.get_sg(remote_id)
-            if not remote_group:
+            if not remote_group or not remote_group.ports:
                 LOG.debug('No member for SG %s', remote_id)
                 continue
             for addr in remote_group.get_ethertype_filtered_addresses(
