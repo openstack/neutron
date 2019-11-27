@@ -51,7 +51,9 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
         # looking all good
         agent = {
             'agent_type': 'test_mechanism_driver_agent',
-            'configurations': {'resource_provider_bandwidths': {}},
+            'configurations': {
+                'resource_provider_bandwidths': {'some iface': ''},
+            },
             'host': 'fake host',
         }
         agent_db = mock.Mock()
@@ -74,7 +76,8 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
         # looking all good
         agent = {
             'agent_type': 'test_mechanism_driver_agent',
-            'configurations': {'resource_provider_bandwidths': {}},
+            'configurations': {
+                'resource_provider_bandwidths': {'some iface': ''}},
             'host': 'fake host',
         }
         agent_db = mock.Mock()
@@ -199,7 +202,7 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
             self.assertEqual(1, mock_get_agent.call_count)
             self.assertEqual(1, mock_sync.call_count)
 
-    def test__sync_placement_state(self):
+    def test__sync_placement_state_legacy(self):
         agent = {
             'agent_type': 'test_mechanism_driver_agent',
             'configurations': {
@@ -219,6 +222,30 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
             self.service_plugin._sync_placement_state(agent, agent_db)
 
             self.assertEqual(1, mock_queue_event.call_count)
+
+    def test__sync_placement_state_rp_hypervisors(self):
+        agent = {
+            'agent_type': 'test_mechanism_driver_agent',
+            'configurations': {
+                'resource_provider_bandwidths': {},
+                'resource_provider_inventory_defaults': {},
+                'resource_provider_hypervisors': {'eth0': 'hypervisor0'},
+            },
+            'host': 'fake host',
+        }
+        agent_db = mock.Mock()
+
+        with mock.patch.object(self.service_plugin._batch_notifier,
+                'queue_event') as mock_queue_event, \
+            mock.patch.object(self.service_plugin._placement_client,
+               'list_resource_providers',
+               return_value={'resource_providers': [
+                   {'uuid': 'fake uuid'}]}) as mock_list_rps:
+
+            self.service_plugin._sync_placement_state(agent, agent_db)
+
+            self.assertEqual(1, mock_queue_event.call_count)
+            mock_list_rps.assert_called_once_with(name='hypervisor0')
 
 
 class PlacementReporterAgentsTestCases(test_plugin.Ml2PluginV2TestCase):
