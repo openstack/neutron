@@ -34,6 +34,7 @@ from osprofiler import profiler
 import six
 
 from neutron._i18n import _
+from neutron.agent.common import utils
 from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as agent_sg_rpc
@@ -133,7 +134,8 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 @profiler.trace_cls("rpc")
 class SriovNicSwitchAgent(object):
     def __init__(self, physical_devices_mappings, exclude_devices,
-                 polling_interval, rp_bandwidths, rp_inventory_defaults):
+                 polling_interval, rp_bandwidths, rp_inventory_defaults,
+                 rp_hypervisors):
 
         self.polling_interval = polling_interval
         self.network_ports = collections.defaultdict(list)
@@ -162,6 +164,7 @@ class SriovNicSwitchAgent(object):
                           n_constants.RP_BANDWIDTHS: rp_bandwidths,
                           n_constants.RP_INVENTORY_DEFAULTS:
                               rp_inventory_defaults,
+                          'resource_provider_hypervisors': rp_hypervisors,
                           'extensions': self.ext_manager.names()}
 
         # TODO(mangelajo): optimize resource_versions (see ovs agent)
@@ -514,6 +517,10 @@ class SriovNicAgentConfigParser(object):
             cfg.CONF.SRIOV_NIC.resource_provider_bandwidths)
         self.rp_inventory_defaults = place_utils.parse_rp_inventory_defaults(
             cfg.CONF.SRIOV_NIC.resource_provider_inventory_defaults)
+        self.rp_hypervisors = utils.default_rp_hypervisors(
+            cfg.CONF.SRIOV_NIC.resource_provider_hypervisors,
+            self.device_mappings
+        )
         self._validate()
 
     def _validate(self):
@@ -546,6 +553,7 @@ def main():
         exclude_devices = config_parser.exclude_devices
         rp_bandwidths = config_parser.rp_bandwidths
         rp_inventory_defaults = config_parser.rp_inventory_defaults
+        rp_hypervisors = config_parser.rp_hypervisors
 
     except ValueError:
         LOG.exception("Failed on Agent configuration parse. "
@@ -560,7 +568,8 @@ def main():
                                     exclude_devices,
                                     polling_interval,
                                     rp_bandwidths,
-                                    rp_inventory_defaults)
+                                    rp_inventory_defaults,
+                                    rp_hypervisors)
     except exc.SriovNicError:
         LOG.exception("Agent Initialization Failed")
         raise SystemExit(1)

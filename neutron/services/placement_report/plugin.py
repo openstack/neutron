@@ -76,6 +76,25 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
         uuid_ns = mech_driver.resource_provider_uuid5_namespace
         supported_vnic_types = mech_driver.supported_vnic_types
         device_mappings = mech_driver.get_standard_device_mappings(agent)
+        if 'resource_provider_hypervisors' in configurations:
+            # When the agent has the fix for
+            # https://bugs.launchpad.net/neutron/+bug/1853840
+            # it sends us hypervisor names (compute nodes in nova terminology).
+            hypervisors = configurations['resource_provider_hypervisors']
+        else:
+            # For older agents without the fix we have to assume the old
+            # buggy behavior. There we assumed DEFAULT.host is the same as the
+            # hypervisor name, which is true in many deployments, but not
+            # always. (In nova terminology: The compute host's DEFAULT.host is
+            # not neccessarily the same as the compute node name. We may even
+            # have multiple compute nodes behind a compute host.)
+            # TODO(bence romsics): This else branch can be removed when we no
+            # longer want to support pre-Ussuri agents.
+            hypervisors = {
+                device: agent['host']
+                for device
+                in configurations['resource_provider_bandwidths'].keys()
+            }
 
         log_msg = (
             'Synchronization of resources '
@@ -84,8 +103,16 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
             'to placement %(result)s.')
 
         try:
-            agent_host_rp_uuid = self._get_rp_by_name(
-                name=agent['host'])['uuid']
+            name2uuid = {}
+            for name in hypervisors.values():
+                name2uuid[name] = self._get_rp_by_name(name=name)['uuid']
+
+            hypervisor_rps = {}
+            for device, hypervisor in hypervisors.items():
+                hypervisor_rps[device] = {
+                    'name': hypervisor,
+                    'uuid': name2uuid[hypervisor],
+                }
         except (IndexError, ks_exc.HttpError, ks_exc.ClientException):
             agent_db.resources_synced = False
             agent_db.update()
@@ -105,8 +132,7 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
                 'resource_provider_inventory_defaults'],
             driver_uuid_namespace=uuid_ns,
             agent_type=agent['agent_type'],
-            agent_host=agent['host'],
-            agent_host_rp_uuid=agent_host_rp_uuid,
+            hypervisor_rps=hypervisor_rps,
             device_mappings=device_mappings,
             supported_vnic_types=supported_vnic_types,
             client=self._placement_client)

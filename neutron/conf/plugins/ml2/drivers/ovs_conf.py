@@ -76,6 +76,15 @@ ovs_opts = [
                        "placement nor report inventories against. An omitted "
                        "direction means we do not report an inventory for the "
                        "corresponding class.")),
+    cfg.DictOpt('resource_provider_hypervisors',
+                default={},
+                help=_("Mapping of bridges to hypervisors: "
+                       "<bridge>:<hypervisor>,... "
+                       "hypervisor name is used to locate the parent of the "
+                       "resource provider tree. Only needs to be set in the "
+                       "rare case when the hypervisor name is different from "
+                       "the DEFAULT.host config option value as known by the "
+                       "nova-compute managing that hypervisor.")),
     cfg.DictOpt('resource_provider_inventory_defaults',
                 default={'allocation_ratio': 1.0,
                          'min_unit': 1,
