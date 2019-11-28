@@ -25,6 +25,11 @@ from neutron.db.models import agent as agent_model
 from neutron.db import models_v2
 
 
+OVN_ALEMBIC_TABLE_NAME = "ovn_alembic_version"
+LAST_NETWORKING_OVN_EXPAND_HEAD = "e55d09277410"
+LAST_NETWORKING_OVN_CONTRACT_HEAD = "1d271ead4eb6"
+
+
 def get_l3_agents():
     filters = {'agent_type': [constants.AGENT_TYPE_L3]}
     ctx = context.get_admin_context()
@@ -41,6 +46,18 @@ def get_networks():
     return query.all()
 
 
+def table_exists(table_name):
+    ctx = context.get_admin_context()
+    tables = [t[0] for t in ctx.session.execute("SHOW TABLES;")]
+    return table_name in tables
+
+
+def get_ovn_db_revisions():
+    ctx = context.get_admin_context()
+    return [row[0] for row in ctx.session.execute(
+        "SELECT version_num from %s;" % OVN_ALEMBIC_TABLE_NAME)]  # nosec
+
+
 class CoreChecks(base.BaseChecks):
 
     def get_checks(self):
@@ -49,7 +66,8 @@ class CoreChecks(base.BaseChecks):
              self.gateway_external_network_check),
             (_("External network bridge"),
              self.external_network_bridge_check),
-            (_("Worker counts configured"), self.worker_count_check)
+            (_("Worker counts configured"), self.worker_count_check),
+            (_("Networking-ovn database revision"), self.ovn_db_revision_check)
         ]
 
     @staticmethod
@@ -156,3 +174,27 @@ class CoreChecks(base.BaseChecks):
             return upgradecheck.Result(
                 upgradecheck.Code.SUCCESS,
                 _("The 'mtu' attribute of all networks are set."))
+
+    @staticmethod
+    def ovn_db_revision_check(checker):
+        if not cfg.CONF.database.connection:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("Database connection string is not set. Check of "
+                  "networking-ovn database revision can't be done."))
+        if not table_exists(OVN_ALEMBIC_TABLE_NAME):
+            return upgradecheck.Result(
+                upgradecheck.Code.SUCCESS,
+                _("Networking-ovn alembic version table don't exists in "
+                  "the database yet."))
+        revisions = get_ovn_db_revisions()
+        if (LAST_NETWORKING_OVN_EXPAND_HEAD not in revisions or
+                LAST_NETWORKING_OVN_CONTRACT_HEAD not in revisions):
+            return upgradecheck.Result(
+                upgradecheck.Code.FAILURE,
+                _("Networking-ovn database tables are not up to date. "
+                  "Please firts update networking-ovn to the latest version "
+                  "from Train release."))
+        return upgradecheck.Result(
+            upgradecheck.Code.SUCCESS,
+            _("Networking-ovn database tables are up to date."))
