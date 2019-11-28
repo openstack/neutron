@@ -240,7 +240,8 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             context, subnets)
 
         if fixed_configured:
-            ips = self._test_fixed_ips_for_port(p["network_id"],
+            ips = self._test_fixed_ips_for_port(context,
+                                                p["network_id"],
                                                 p['fixed_ips'],
                                                 p['device_owner'],
                                                 subnets)
@@ -274,7 +275,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                 'mac': port['mac_address']})
         return ips
 
-    def _test_fixed_ips_for_port(self, network_id, fixed_ips,
+    def _test_fixed_ips_for_port(self, context, network_id, fixed_ips,
                                  device_owner, subnets):
         """Test fixed IPs for port.
 
@@ -288,7 +289,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         fixed_ip_list = []
         for fixed in fixed_ips:
             fixed['device_owner'] = device_owner
-            subnet = self._get_subnet_for_fixed_ip(fixed, subnets, network_id)
+            subnet = self._get_subnet_for_fixed_ip(context, fixed, subnets)
 
             is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
             if ('ip_address' in fixed and
@@ -350,7 +351,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
 
         # Check if the IP's to add are OK
         to_add = self._test_fixed_ips_for_port(
-            port['network_id'], changes.add,
+            context, port['network_id'], changes.add,
             port['device_owner'], subnets)
 
         if port['device_owner'] not in constants.ROUTER_INTERFACE_OWNERS:

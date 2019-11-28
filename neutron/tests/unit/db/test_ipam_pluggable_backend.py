@@ -368,6 +368,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         mocks['subnets'].allocate.assert_called_once_with(mock.ANY)
 
     def test_test_fixed_ips_for_port_pd_gateway(self):
+        context = mock.Mock()
         pluggable_backend = ipam_pluggable_backend.IpamPluggableBackend()
         with self.subnet(cidr=constants.PROVISIONAL_IPV6_PD_PREFIX,
                          ip_version=constants.IP_VERSION_6) as subnet:
@@ -375,7 +376,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
             fixed_ips = [{'subnet_id': subnet['id'],
                          'ip_address': '::1'}]
             filtered_ips = (pluggable_backend.
-                            _test_fixed_ips_for_port(
+                            _test_fixed_ips_for_port(context,
                                 subnet['network_id'],
                                 fixed_ips,
                                 constants.DEVICE_OWNER_ROUTER_INTF,
