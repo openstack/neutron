@@ -44,7 +44,7 @@
             irrelevant-files: *tempest-irrelevant-files
         - tempest-slow-py3:
             irrelevant-files: *tempest-irrelevant-files
-        - neutron-ovn-tempest-ovs-release
+        #- neutron-ovn-tempest-ovs-release
         - networking-midonet-tempest-aio-ml2-centos-7:
             voting: false
             irrelevant-files: *tempest-irrelevant-files
@@ -61,7 +61,7 @@
         - neutron-tempest-with-uwsgi:
             voting: false
         - neutron-centos-7-tripleo-standalone
-        - neutron-ovn-rally-task
+       #- neutron-ovn-rally-task
         # TripleO jobs that deploy OVN.
         # Note we don't use a project-template here, so it's easier
         # to disable voting on one specific job if things go wrong.
@@ -69,7 +69,7 @@
         # networking-ovn-tripleo-ci-centos-7-containers-multinode.
         # If you need any support to debug these jobs in case of
         # failures, please reach us on #tripleo IRC channel.
-        - neutron-ovn-tripleo-ci-centos-7-containers-multinode
+       #- neutron-ovn-tripleo-ci-centos-7-containers-multinode
         - neutron-ovn-tempest-slow:
             voting: false
         - neutron-ovn-tempest-full-multinode-ovs-master:
@@ -89,9 +89,9 @@
             irrelevant-files: *tempest-irrelevant-files
         - tempest-ipv6-only:
             irrelevant-files: *tempest-irrelevant-files
-        - neutron-ovn-tempest-ovs-release
-        - neutron-ovn-rally-task
-        - neutron-ovn-tripleo-ci-centos-7-containers-multinode
+       #- neutron-ovn-tempest-ovs-release
+       #- neutron-ovn-rally-task
+       #- neutron-ovn-tripleo-ci-centos-7-containers-multinode
 
     experimental:
       jobs:
