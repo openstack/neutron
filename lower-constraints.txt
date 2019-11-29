@@ -17,6 +17,7 @@ ddt==1.0.1
 debtcollector==1.2.0
 decorator==3.4.0
 deprecation==1.0
+doc8==0.6.0
 docutils==0.11
 dogpile.cache==0.6.2
 dulwich==0.15.0
@@ -86,7 +87,7 @@ oslo.versionedobjects==1.35.1
 oslotest==3.2.0
 osprofiler==2.3.0
 ovs==2.8.0
-ovsdbapp==0.9.1
+ovsdbapp==0.17.0
 Paste==2.0.2
 PasteDeploy==1.5.0
 pbr==4.0.0
@@ -137,11 +138,12 @@ statsd==3.2.1
 stestr==1.0.0
 stevedore==1.20.0
 Tempita==0.5.2
-tenacity==3.2.1
+tenacity==4.4.0
 testrepository==0.0.18
 testresources==2.0.0
 testscenarios==0.4
 testtools==2.2.0
+tooz==1.58.0
 tinyrpc==0.6
 traceback2==1.4.0
 unittest2==1.1.0
