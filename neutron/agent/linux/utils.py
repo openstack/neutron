@@ -313,19 +313,24 @@ def process_is_running(pid):
 def get_cmdline_from_pid(pid):
     if not process_is_running(pid):
         return []
-    with open('/proc/%s/cmdline' % pid, 'r') as f:
-        cmdline = f.readline().split('\0')[:-1]
+    # NOTE(jh): Even after the above check, the process may terminate
+    # before the open below happens
+    try:
+        with open('/proc/%s/cmdline' % pid, 'r') as f:
+            cmdline = f.readline().split('\0')[:-1]
+    except IOError:
+        return []
 
-        # NOTE(slaweq): sometimes it may happen that values in
-        # /proc/{pid}/cmdline are separated by space instead of NUL char,
-        # in such case we would have everything in one element of cmdline_args
-        # list and it would not match to expected cmd so we need to try to
-        # split it by spaces
-        if len(cmdline) == 1:
-            cmdline = cmdline[0].split(' ')
+    # NOTE(slaweq): sometimes it may happen that values in
+    # /proc/{pid}/cmdline are separated by space instead of NUL char,
+    # in such case we would have everything in one element of cmdline_args
+    # list and it would not match to expected cmd so we need to try to
+    # split it by spaces
+    if len(cmdline) == 1:
+        cmdline = cmdline[0].split(' ')
 
-        LOG.debug("Found cmdline %s for process with PID %s.", cmdline, pid)
-        return cmdline
+    LOG.debug("Found cmdline %s for process with PID %s.", cmdline, pid)
+    return cmdline
 
 
 def cmd_matches_expected(cmd, expected_cmd):
