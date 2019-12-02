@@ -601,6 +601,10 @@ class IpLinkCommand(IpDeviceCommandBase):
         return privileged.get_link_attributes(self.name,
                                               self._parent.namespace)
 
+    @property
+    def exists(self):
+        return privileged.interface_exists(self.name, self._parent.namespace)
+
 
 class IpAddrCommand(IpDeviceCommandBase):
     COMMAND = 'addr'
@@ -1147,8 +1151,8 @@ def ensure_device_is_ready(device_name, namespace=None):
     dev = IPDevice(device_name, namespace=namespace)
     try:
         # Ensure the device has a MAC address and is up, even if it is already
-        # up. If the device doesn't exist, a RuntimeError will be raised.
-        if not dev.link.address:
+        # up.
+        if not dev.link.exists or not dev.link.address:
             LOG.error("Device %s cannot be used as it has no MAC "
                       "address", device_name)
             return False

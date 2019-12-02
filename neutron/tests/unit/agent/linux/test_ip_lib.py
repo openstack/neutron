@@ -1336,14 +1336,20 @@ class TestDeviceExists(base.BaseTestCase):
 
     def test_ensure_device_is_ready_no_link_address(self):
         with mock.patch.object(
-            priv_lib, 'get_link_attributes'
-        ) as get_link_attributes, mock.patch.object(
-            priv_lib, 'set_link_attribute'
-        ) as set_link_attribute:
+                priv_lib, 'get_link_attributes') as get_link_attributes, \
+                mock.patch.object(priv_lib, 'set_link_attribute') as \
+                set_link_attribute, \
+                mock.patch.object(priv_lib, 'interface_exists',
+                                  return_value=True):
             get_link_attributes.return_value = {}
             self.assertFalse(ip_lib.ensure_device_is_ready("lo"))
             get_link_attributes.assert_called_once_with("lo", None)
             set_link_attribute.assert_not_called()
+
+    def test_ensure_device_is_ready_no_device(self):
+        with mock.patch.object(priv_lib, 'interface_exists',
+                               return_value=False):
+            self.assertFalse(ip_lib.ensure_device_is_ready("lo"))
 
 
 class TestGetRoutingTable(base.BaseTestCase):

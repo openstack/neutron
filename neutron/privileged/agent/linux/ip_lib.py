@@ -14,6 +14,7 @@ import errno
 import socket
 
 from neutron_lib import constants
+from oslo_log import log as logging
 import pyroute2
 from pyroute2.netlink import rtnl
 from pyroute2.netlink.rtnl import ifinfmsg
@@ -24,6 +25,8 @@ from pyroute2 import netns
 from neutron._i18n import _
 from neutron import privileged
 
+
+LOG = logging.getLogger(__name__)
 
 _IP_VERSION_FAMILY_MAP = {4: socket.AF_INET, 6: socket.AF_INET6}
 
@@ -146,12 +149,17 @@ def _translate_ip_device_exception(e, device=None, namespace=None):
                                              namespace=namespace)
 
 
-def _get_link_id(device, namespace):
-    try:
-        with _get_iproute(namespace) as ip:
-            return ip.link_lookup(ifname=device)[0]
-    except IndexError:
-        raise NetworkInterfaceNotFound(device=device, namespace=namespace)
+def _get_link_id(device, namespace, raise_exception=True):
+    with _get_iproute(namespace) as ip:
+        link_id = ip.link_lookup(ifname=device)
+    if not link_id or len(link_id) < 1:
+        if raise_exception:
+            raise NetworkInterfaceNotFound(device=device, namespace=namespace)
+        else:
+            LOG.debug('Interface %(dev)s not found in namespace %(namespace)s',
+                      {'dev': device, 'namespace': namespace})
+            return None
+    return link_id[0]
 
 
 def _run_iproute_link(command, device, namespace=None, **kwargs):
@@ -272,10 +280,8 @@ def delete_interface(ifname, namespace, **kwargs):
 @privileged.default.entrypoint
 def interface_exists(ifname, namespace):
     try:
-        idx = _get_link_id(ifname, namespace)
+        idx = _get_link_id(ifname, namespace, raise_exception=False)
         return bool(idx)
-    except NetworkInterfaceNotFound:
-        return False
     except OSError as e:
         if e.errno == errno.ENOENT:
             return False
