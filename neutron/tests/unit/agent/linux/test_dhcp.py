@@ -1019,9 +1019,6 @@ class LocalChild(dhcp.DhcpLocalProcess):
     def reload_allocations(self):
         self.called.append('reload')
 
-    def restart(self):
-        self.called.append('restart')
-
     def spawn_process(self):
         self.called.append('spawn')
 
@@ -1120,12 +1117,13 @@ class TestDhcpLocalProcess(TestBase):
 
     def test_enable_already_active(self):
         with mock.patch.object(LocalChild, 'active') as patched:
-            patched.__get__ = mock.Mock(return_value=True)
+            patched.__get__ = mock.Mock(side_effect=[True, False])
             lp = LocalChild(self.conf, FakeV4Network())
-            lp.enable()
+            with mock.patch.object(ip_lib, 'delete_network_namespace'):
+                lp.enable()
 
-            self.assertEqual(lp.called, ['restart'])
-            self.assertFalse(self.mock_mgr.return_value.setup.called)
+            self.assertEqual(lp.called, ['spawn'])
+            self.assertTrue(self.mock_mgr.return_value.setup.called)
 
     @mock.patch.object(fileutils, 'ensure_tree')
     def test_enable(self, ensure_dir):
