@@ -266,3 +266,43 @@ class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         obj1 = self._make_object(self.obj_fields[0])
         self.assertEqual([service_type_obj.service_type],
                          obj1.service_types)
+
+
+class NetworkSubnetLockTestCase(obj_test_base.BaseObjectIfaceTestCase):
+
+    _test_class = subnet.NetworkSubnetLock
+
+
+class NetworkSubnetLockDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
+                                        testlib_api.SqlTestCase):
+
+    _test_class = subnet.NetworkSubnetLock
+
+    def setUp(self):
+        super(NetworkSubnetLockDbObjectTestCase, self).setUp()
+        self.update_obj_fields(
+            {'network_id': lambda: self._create_test_network_id()})
+
+    def test_lock_subnet_update(self):
+        obj = self._make_object(self.obj_fields[0])
+        obj.create()
+        subnet_id = self._create_test_subnet_id(network_id=obj.network_id)
+        subnet.NetworkSubnetLock.lock_subnet(self.context, obj.network_id,
+                                             subnet_id)
+        obj = subnet.NetworkSubnetLock.get_object(self.context,
+                                                  network_id=obj.network_id)
+        self.assertEqual(subnet_id, obj.subnet_id)
+
+    def test_lock_subnet_create(self):
+        network_id = self._create_test_network_id()
+        subnet_id = self._create_test_subnet_id(network_id=network_id)
+        obj = subnet.NetworkSubnetLock.get_object(self.context,
+                                                  network_id=network_id)
+        self.assertIsNone(obj)
+
+        subnet.NetworkSubnetLock.lock_subnet(self.context, network_id,
+                                             subnet_id)
+        obj = subnet.NetworkSubnetLock.get_object(self.context,
+                                                  network_id=network_id)
+        self.assertEqual(network_id, obj.network_id)
+        self.assertEqual(subnet_id, obj.subnet_id)

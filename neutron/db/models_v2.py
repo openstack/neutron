@@ -277,3 +277,20 @@ class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
     api_collections = [net_def.COLLECTION_NAME]
     collection_resource_map = {net_def.COLLECTION_NAME: net_def.RESOURCE_NAME}
     tag_support = True
+
+
+class NetworkSubnetLock(model_base.BASEV2):
+    """Auxiliary table to lock each network subnet updates.
+
+    This table is used to synchronize the subnet creation per network. If
+    several requests to create subnets on a network are processed at the same
+    time (even in different servers), this database lock will prevent the
+    creation of several subnets with overlapping CIDRs by updating the network
+    register in the table each time a subnet is created.
+    """
+    __tablename__ = 'network_subnet_lock'
+
+    network_id = sa.Column(sa.String(36),
+                           sa.ForeignKey('networks.id', ondelete='CASCADE'),
+                           primary_key=True)
+    subnet_id = sa.Column(sa.String(36))

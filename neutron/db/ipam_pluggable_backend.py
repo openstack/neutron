@@ -596,6 +596,8 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                        subnet['dns_nameservers'],
                                        subnet['host_routes'],
                                        subnet_request)
+            obj_subnet.NetworkSubnetLock.lock_subnet(context, network.id,
+                                                     subnet.id)
         except Exception:
             # Note(pbondar): Third-party ipam servers can't rely
             # on transaction rollback, so explicit rollback call needed.
