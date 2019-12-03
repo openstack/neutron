@@ -14,6 +14,7 @@ from neutron_lib.db import constants
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
+from sqlalchemy import sql
 
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
@@ -97,3 +98,25 @@ class PortDNS(model_base.BASEV2):
                                                 uselist=False,
                                                 cascade='delete'))
     revises_on_change = ('port', )
+
+
+class SubnetDNSPublishFixedIP(model_base.BASEV2):
+    __tablename__ = "subnet_dns_publish_fixed_ips"
+
+    subnet_id = sa.Column(sa.String(constants.UUID_FIELD_SIZE),
+                          sa.ForeignKey('subnets.id', ondelete="CASCADE"),
+                          primary_key=True,
+                          index=True)
+    dns_publish_fixed_ip = sa.Column(sa.Boolean(),
+                                     nullable=False,
+                                     server_default=sql.false())
+
+    # Add a relationship to the Subnet model in order to instruct
+    # SQLAlchemy to eagerly load this association
+    subnet = orm.relationship(models_v2.Subnet,
+                              load_on_pending=True,
+                              backref=orm.backref("dns_publish_fixed_ip",
+                                                  lazy='joined',
+                                                  uselist=False,
+                                                  cascade='delete'))
+    revises_on_change = ('subnet', )

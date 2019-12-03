@@ -5,13 +5,10 @@ DNS integration
 ===============
 
 This page serves as a guide for how to use the DNS integration functionality of
-the Networking service. The functionality described covers DNS from two points
-of view:
+the Networking service and its interaction with the Compute service.
 
-* The internal DNS functionality offered by the Networking service and its
-  interaction with the Compute service.
-* Integration of the Compute service and the Networking service with an
-  external DNSaaS (DNS-as-a-Service).
+The integration of the Networking service with an external DNSaaS
+(DNS-as-a-Service) is described in :ref:`config-dns-int-ext-serv`.
 
 Users can control the behavior of the Networking service in regards to DNS
 using two attributes associated with ports, networks, and floating IPs. The
@@ -71,7 +68,7 @@ the internal DNS. To enable this functionality, do the following:
    ``[ml2]`` section of ``/etc/neutron/plugins/ml2/ml2_conf.ini``. The
    following is an example:
 
-   .. code-block:: console
+   .. code-block:: ini
 
       [ml2]
       extension_drivers = port_security,dns_domain_ports
