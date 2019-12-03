@@ -15,11 +15,11 @@
 import itertools
 
 import netaddr
+from neutron_lib.objects import common_types
 
 from neutron.db.models import l3
 from neutron.db.models import port_forwarding as models
 from neutron.objects import base
-from neutron.objects import common_types
 from neutron.objects import router
 from neutron_lib import constants as lib_const
 from oslo_versionedobjects import fields as obj_fields

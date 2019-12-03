@@ -13,12 +13,12 @@
 #    under the License.
 
 from neutron_lib import constants
+from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import agent as agent_model
 from neutron.db.models import l3ha
 from neutron.objects import base
-from neutron.objects import common_types
 
 
 @base.NeutronObjectRegistry.register

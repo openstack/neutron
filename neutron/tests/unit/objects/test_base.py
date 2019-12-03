@@ -23,6 +23,7 @@ from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib.db import model_query
 from neutron_lib import exceptions as n_exc
+from neutron_lib.objects import common_types
 from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.objects.logapi import event_types
 from neutron_lib.objects import utils as obj_utils
@@ -40,7 +41,6 @@ import testtools
 from neutron import objects
 from neutron.objects import agent
 from neutron.objects import base
-from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import flavor
 from neutron.objects import network as net_obj

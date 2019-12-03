@@ -16,13 +16,13 @@ from neutron_lib.callbacks import events
 from neutron_lib import context as n_context
 from neutron_lib.db import model_base
 from neutron_lib import exceptions as n_exc
+from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 import sqlalchemy as sa
 
 from neutron.db import rbac_db_models
 from neutron.extensions import rbac as ext_rbac
 from neutron.objects import base
-from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import rbac_db
 from neutron.tests.unit.objects import test_rbac

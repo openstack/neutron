@@ -14,6 +14,7 @@ import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib.db import model_query
+from neutron_lib.objects import common_types
 from neutron_lib.utils import net as net_utils
 
 from oslo_versionedobjects import fields as obj_fields
@@ -24,7 +25,6 @@ from neutron.db.models import subnet_service_type
 from neutron.db import models_v2
 from neutron.ipam import exceptions as ipam_exceptions
 from neutron.objects import base
-from neutron.objects import common_types
 from neutron.objects import network
 from neutron.objects import rbac_db
 from neutron.services.segments import exceptions as segment_exc

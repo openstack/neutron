@@ -14,11 +14,11 @@
 #    under the License.
 
 import netaddr
+from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.ipam.drivers.neutrondb_ipam import db_models
 from neutron.objects import base
-from neutron.objects import common_types
 
 
 @base.NeutronObjectRegistry.register

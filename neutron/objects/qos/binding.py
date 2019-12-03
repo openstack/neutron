@@ -13,10 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.objects import common_types
 
 from neutron.db.qos import models as qos_db_model
 from neutron.objects import base
-from neutron.objects import common_types
 
 
 @base.NeutronObjectRegistry.register

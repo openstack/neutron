@@ -11,10 +11,10 @@
 #    under the License.
 
 from neutron_lib.api.definitions import port_security
+from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.objects import base
-from neutron.objects import common_types
 
 
 class _PortSecurity(base.NeutronDbObject):

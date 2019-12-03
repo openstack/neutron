@@ -15,6 +15,7 @@
 from neutron_lib import constants
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
+from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import and_
 from sqlalchemy import not_
@@ -30,7 +31,6 @@ from neutron.db.models.plugins.ml2 import vxlanallocation as vxlan_alloc_model
 from neutron.db.models import segment as segments_model
 from neutron.db import models_v2
 from neutron.objects import base
-from neutron.objects import common_types
 
 
 models_map = {

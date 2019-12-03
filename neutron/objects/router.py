@@ -17,6 +17,7 @@ import netaddr
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.validators import availability_zone as az_validator
 from neutron_lib import constants as n_const
+from neutron_lib.objects import common_types
 from neutron_lib.utils import net as net_utils
 from oslo_versionedobjects import fields as obj_fields
 import six
@@ -28,7 +29,6 @@ from neutron.db.models import l3_attrs
 from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
 from neutron.objects import base
-from neutron.objects import common_types
 
 
 @base.NeutronObjectRegistry.register

@@ -15,13 +15,13 @@
 
 import abc
 
+from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 from six import add_metaclass
 from sqlalchemy import and_
 
 from neutron.db import rbac_db_models as models
 from neutron.objects import base
-from neutron.objects import common_types
 
 
 @add_metaclass(abc.ABCMeta)

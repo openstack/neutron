@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.objects import common_types
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from neutron_lib.services.qos import constants as qos_consts
@@ -18,7 +19,6 @@ from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.objects import base
-from neutron.objects import common_types
 
 
 class RuleTypeField(obj_fields.BaseEnumField):
