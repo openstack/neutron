@@ -743,6 +743,16 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             self.firewall.update_port_filter(port_dict)
         self.assertEqual(2, self.mock_bridge.apply_flows.call_count)
 
+    def test_update_port_filter_clean_when_port_not_found(self):
+        """Check flows are cleaned if port is not found in the bridge."""
+        port_dict = {'device': 'port-id',
+                     'security_groups': [1]}
+        self._prepare_security_group()
+        self.firewall.prepare_port_filter(port_dict)
+        self.mock_bridge.br.get_vif_port_by_id.return_value = None
+        self.firewall.update_port_filter(port_dict)
+        self.assertTrue(self.mock_bridge.br.delete_flows.called)
+
     def test_remove_port_filter(self):
         port_dict = {'device': 'port-id',
                      'security_groups': [1]}
