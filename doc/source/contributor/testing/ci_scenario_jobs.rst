@@ -109,8 +109,6 @@ Below is summary of those jobs.
     | Job name                       | python  | nodes | L2 agent    | firewall    | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
     |                                | version |       |             | driver      | mode     |       |        |            | queue       |
     +================================+=========+=======+=============+=============+==========+=======+========+============+=============+
-    | grenade-py3                    |   3.6   |   1   | openvswitch | openvswitch | legacy   | False | False  | True       | Yes         |
-    +--------------------------------+---------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
     | neutron-grenade-multinode      |   3.6   |   2   | openvswitch | openvswitch | legacy   | False | False  | True       | Yes         |
     +--------------------------------+---------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
     | neutron-grenade-dvr-multinode  |   3.6   |   2   | openvswitch | openvswitch | dvr      | False | False  | True       | Yes         |
