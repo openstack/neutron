@@ -601,6 +601,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             LOG.info("port %(port_id)s does not exist in ovsdb: %(err)s.",
                      {'port_id': port['device'],
                       'err': not_found_error})
+            # If port doesn't exist in ovsdb, lets ensure that there are no
+            # leftovers
+            self.remove_port_filter(port)
 
     def _set_port_filters(self, of_port):
         self.initialize_port_flows(of_port)
