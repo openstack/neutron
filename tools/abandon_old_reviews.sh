@@ -140,13 +140,13 @@ for review in $blocked_reviews; do
     abandon_review $review $blocked_msg
 done
 
-# then purge all the reviews that are > 4w with no changes and Jenkins has -1ed
+# then purge all the reviews that are > 4w with no changes and Zuul has -1ed
 
 failing_reviews=$(ssh review.opendev.org "gerrit query  --current-patch-set --format json $PROJECTS status:open age:4w NOT label:Verified>=1,Zuul" | jq .currentPatchSet.revision | grep -v null | sed 's/"//g')
 
 failing_msg=$(cat <<EOF
 
-This review is > 4 weeks without comment, and failed Jenkins the last
+This review is > 4 weeks without comment, and failed Zuul jobs the last
 time it was checked. We are abandoning this for now.
 
 Feel free to reactivate the review by pressing the restore button and
