@@ -42,8 +42,7 @@ ovs_opts = [
                 default=False,
                 help=_('True to delete all ports on all the OpenvSwitch '
                        'bridges. False to delete ports created by '
-                       'Neutron on integration and external network '
-                       'bridges.'))
+                       'Neutron and Nova on the integration bridge.'))
 ]
 
 
