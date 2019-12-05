@@ -140,9 +140,10 @@ def subprocess_popen(args, stdin=None, stdout=None, stderr=None, shell=False,
             # This is set on import to the hard ulimit. if its defined we
             # already have imported it, so we need to update it to the new
             # limit.
-            if (hasattr(subprocess, 'MAXFD') and
-                    subprocess.MAXFD > sensible_fd_limit):
-                subprocess.MAXFD = sensible_fd_limit
+            sp_orig = subprocess.subprocess_orig
+            if (hasattr(sp_orig, 'MAXFD') and
+                    sp_orig.MAXFD > sensible_fd_limit):
+                sp_orig.MAXFD = sensible_fd_limit
                 subprocess_popen._ccloud_fd_patch = True
         else:
             subprocess_popen._ccloud_fd_patch = True
