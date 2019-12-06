@@ -257,8 +257,9 @@ def get_value_from_file(filename, converter=None):
                 return converter(f.read()) if converter else f.read()
             except ValueError:
                 LOG.error('Unable to convert value in %s', filename)
-    except IOError:
-        LOG.debug('Unable to access %s', filename)
+    except IOError as error:
+        LOG.debug('Unable to access %(filename)s; Error: %(error)s',
+                  {'filename': filename, 'error': error})
 
 
 def remove_conf_files(cfg_root, uuid):
