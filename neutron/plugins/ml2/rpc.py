@@ -55,7 +55,10 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
     #       get_devices_details_list_and_failed_devices
     #   1.6 Support get_network_details
     #   1.7 Support get_ports_by_vnic_type_and_host
-    target = oslo_messaging.Target(version='1.7')
+    #   1.8 Rename agent_restarted to refresh_tunnels in
+    #       update_device_list to reflect its expanded purpose
+
+    target = oslo_messaging.Target(version='1.8')
 
     def __init__(self, notifier, type_manager):
         self.setup_tunnel_callback_mixin(notifier, type_manager)
@@ -267,7 +270,10 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
     @profiler.trace("rpc")
     def update_device_up(self, rpc_context, **kwargs):
         """Device is up on agent."""
-        agent_restarted = kwargs.pop('agent_restarted', False)
+        refresh_tunnels = kwargs.pop('refresh_tunnels', False)
+        if not refresh_tunnels:
+            # For backward compatibility with older agents
+            refresh_tunnels = kwargs.pop('agent_restarted', False)
         agent_id, host, device = self._get_request_details(kwargs)
         LOG.debug("Device %(device)s up at agent %(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
@@ -301,7 +307,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             self.update_port_status_to_active(port, rpc_context, port_id, host)
         self.notify_l2pop_port_wiring(port_id, rpc_context,
                                       n_const.PORT_STATUS_ACTIVE, host,
-                                      agent_restarted)
+                                      refresh_tunnels)
 
     def update_port_status_to_active(self, port, rpc_context, port_id, host):
         plugin = directory.get_plugin()
@@ -325,7 +331,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                 provisioning_blocks.L2_AGENT_ENTITY)
 
     def notify_l2pop_port_wiring(self, port_id, rpc_context,
-                                 status, host, agent_restarted=False):
+                                 status, host, refresh_tunnels=False):
         """Notify the L2pop driver that a port has been wired/unwired.
 
         The L2pop driver uses this notification to broadcast forwarding
@@ -349,7 +355,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         # handle DVR ports while restart neutron-*-agent, we need to handle
         # it here.
         if (port['device_owner'] == n_const.DEVICE_OWNER_DVR_INTERFACE and
-                not agent_restarted):
+                not refresh_tunnels):
             return
         port = port_context.current
         if (port['device_owner'] != n_const.DEVICE_OWNER_DVR_INTERFACE and
@@ -365,7 +371,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         port_context.current['status'] = status
         port_context.current[portbindings.HOST_ID] = host
         if status == n_const.PORT_STATUS_ACTIVE:
-            l2pop_driver.obj.update_port_up(port_context, agent_restarted)
+            l2pop_driver.obj.update_port_up(port_context, refresh_tunnels)
         else:
             l2pop_driver.obj.update_port_down(port_context)
 

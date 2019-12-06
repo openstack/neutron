@@ -774,7 +774,41 @@ class TestOvsNeutronAgent(object):
             update_devices.assert_called_once_with(mock.ANY, devices_up,
                                                    devices_down,
                                                    mock.ANY, mock.ANY,
-                                                   agent_restarted=True)
+                                                   refresh_tunnels=True)
+
+    def _test_bind_devices_sets_refresh_tunnels(self, tun_ofports, expected):
+        self.agent.iter_num = 3
+        self.agent.prevent_arp_spoofing = False
+        self.agent.vlan_manager.add('fake_network', 1,
+                                    n_const.TYPE_VXLAN, None, 1)
+        ovs_db_list = [{'name': 'fake_device', 'tag': []}]
+        self.agent.vlan_manager.get('fake_network').tun_ofports = tun_ofports
+        vif_port = mock.Mock()
+        vif_port.port_name = 'fake_device'
+        vif_port.ofport = 1
+        need_binding_ports = [{'network_id': 'fake_network',
+                               'vif_port': vif_port,
+                               'device': 'fake_device',
+                               'admin_state_up': True}]
+        with mock.patch.object(
+            self.agent.plugin_rpc, 'update_device_list',
+            return_value={'devices_up': [],
+                          'devices_down': [],
+                          'failed_devices_up': [],
+                          'failed_devices_down': []}) as update_devices, \
+                mock.patch.object(self.agent,
+                                  'int_br') as int_br:
+            int_br.get_ports_attributes.return_value = ovs_db_list
+            self.agent._bind_devices(need_binding_ports)
+            update_devices.assert_called_once_with(mock.ANY, ['fake_device'],
+                                                   [], mock.ANY, mock.ANY,
+                                                   refresh_tunnels=expected)
+
+    def test_bind_devices_sets_refresh_tunnels_if_tunnels_missing(self):
+        self._test_bind_devices_sets_refresh_tunnels([], True)
+
+    def test_bind_devices_does_not_set_refresh_tunnels_if_tunnels_exist(self):
+        self._test_bind_devices_sets_refresh_tunnels([1, 2, 3], False)
 
     def _test_arp_spoofing(self, enable_prevent_arp_spoofing):
         self.agent.prevent_arp_spoofing = enable_prevent_arp_spoofing

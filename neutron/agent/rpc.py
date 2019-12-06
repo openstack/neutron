@@ -114,6 +114,8 @@ class PluginApi(object):
               get_devices_details_list_and_failed_devices
         1.6 - Support get_network_details
         1.7 - Support get_ports_by_vnic_type_and_host
+        1.8 - Rename agent_restarted to refresh_tunnels in
+              update_device_list to reflect its expanded purpose
     '''
 
     def __init__(self, topic):
@@ -161,8 +163,8 @@ class PluginApi(object):
                           agent_id=agent_id, host=host)
 
     def update_device_list(self, context, devices_up, devices_down,
-                           agent_id, host, agent_restarted=False):
-        cctxt = self.client.prepare(version='1.5')
+                           agent_id, host, refresh_tunnels=False):
+        cctxt = self.client.prepare(version='1.8')
 
         ret_devices_up = []
         failed_devices_up = []
@@ -178,7 +180,7 @@ class PluginApi(object):
                              devices_up=devices_up[i:i + step],
                              devices_down=devices_down[i:i + step],
                              agent_id=agent_id, host=host,
-                             agent_restarted=agent_restarted)
+                             refresh_tunnels=refresh_tunnels)
             ret_devices_up.extend(ret.get("devices_up", []))
             failed_devices_up.extend(ret.get("failed_devices_up", []))
             ret_devices_down.extend(ret.get("devices_down", []))
