@@ -164,6 +164,7 @@ class FakeOvsdbSbOvnIdl(object):
         self.get_gateway_chassis_from_cms_options = mock.Mock()
         self.is_col_present = mock.Mock()
         self.is_col_present.return_value = False
+        self.db_set = mock.Mock()
 
 
 class FakeOvsdbTransaction(object):
