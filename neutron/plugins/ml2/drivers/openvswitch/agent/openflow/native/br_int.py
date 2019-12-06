@@ -332,3 +332,22 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
     def delete_arp_spoofing_allow_rules(self, port):
         self.uninstall_flows(table_id=constants.ARP_SPOOF_TABLE,
                              in_port=port)
+
+    def install_dscp_marking_rule(self, port, dscp_mark):
+        # reg2 is a metadata field that does not alter packets.
+        # By loading a value into this field and checking if the value is
+        # altered it allows the packet to be resubmitted and go through
+        # the flow table again to be identified by other flows.
+        (dp, ofp, ofpp) = self._get_dp()
+        actions = [ofpp.OFPActionSetField(reg2=1),
+                   ofpp.OFPActionSetField(ip_dscp=dscp_mark),
+                   ofpp.NXActionResubmit(in_port=port)]
+        instructions = [
+            ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
+        ]
+        self.install_instructions(instructions, table_id=0,
+                                  priority=65535, in_port=port, reg2=0,
+                                  eth_type=0x0800)
+        self.install_instructions(instructions, table_id=0,
+                                  priority=65535, in_port=port, reg2=0,
+                                  eth_type=0x86DD)

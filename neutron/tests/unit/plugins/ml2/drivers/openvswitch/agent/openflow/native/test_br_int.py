@@ -506,3 +506,33 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
 
     def test_delete_dvr_dst_mac_for_arp_tunnel(self):
         self._test_delete_dvr_dst_mac_for_arp(network_type='vxlan')
+
+    def test_install_dscp_marking_rule(self):
+        test_port = 8888
+        test_mark = 38
+        self.br.install_dscp_marking_rule(port=test_port, dscp_mark=test_mark)
+
+        (dp, ofp, ofpp) = self._get_dp()
+        expected = [
+            call._send_msg(ofpp.OFPFlowMod(dp, cookie=self.br.default_cookie,
+                           instructions=[ofpp.OFPInstructionActions(
+                               ofp.OFPIT_APPLY_ACTIONS,
+                               [ofpp.OFPActionSetField(reg2=1),
+                                ofpp.OFPActionSetField(ip_dscp=38),
+                                ofpp.NXActionResubmit(in_port=8888)])],
+                               match=ofpp.OFPMatch(eth_type=0x0800,
+                                                   in_port=8888, reg2=0),
+                               priority=65535, table_id=0),
+                           active_bundle=None),
+            call._send_msg(ofpp.OFPFlowMod(dp, cookie=self.br.default_cookie,
+                           instructions=[ofpp.OFPInstructionActions(
+                               ofp.OFPIT_APPLY_ACTIONS,
+                               [ofpp.OFPActionSetField(reg2=1),
+                                ofpp.OFPActionSetField(ip_dscp=38),
+                                ofpp.NXActionResubmit(in_port=8888)])],
+                               match=ofpp.OFPMatch(eth_type=0x86DD,
+                                                   in_port=8888, reg2=0),
+                               priority=65535, table_id=0),
+                           active_bundle=None)
+        ]
+        self.assertEqual(expected, self.mock.mock_calls)
