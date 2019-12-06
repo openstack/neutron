@@ -72,6 +72,7 @@ class NeutronDebugAgent(object):
     def _get_network(self, network_id):
         network_dict = self.client.show_network(network_id)['network']
         network = dhcp.DictModel(network_dict)
+        # pylint: disable=assigning-non-slot
         network.external = network_dict.get('router:external')
         obj_subnet = [self._get_subnet(s_id) for s_id in network.subnets]
         network.subnets = obj_subnet
@@ -166,6 +167,7 @@ class NeutronDebugAgent(object):
                                        for s in network.subnets]}}
         port_dict = self.client.create_port(body)['port']
         port = dhcp.DictModel(port_dict)
+        # pylint: disable=assigning-non-slot
         port.network = network
         for fixed_ip in port.fixed_ips:
             fixed_ip.subnet = self._get_subnet(fixed_ip.subnet_id)

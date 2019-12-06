@@ -107,18 +107,17 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
         cidr = self._IP_ADDRS[ip_version]['cidr']
         if prefix_override is not None:
             cidr = '/'.join((cidr.split('/')[0], str(prefix_override)))
-        sn_dict = dhcp.DictModel({
-            "id": uuidutils.generate_uuid(),
-            "network_id": net_id,
-            "ip_version": ip_version,
-            "cidr": cidr,
-            "gateway_ip": (self.
-                _IP_ADDRS[ip_version]['gateway']),
-            "enable_dhcp": dhcp_enabled,
-            "dns_nameservers": [],
-            "host_routes": [],
-            "ipv6_ra_mode": None,
-            "ipv6_address_mode": None})
+        sn_dict = dhcp.DictModel(
+            id=uuidutils.generate_uuid(),
+            network_id=net_id,
+            ip_version=ip_version,
+            cidr=cidr,
+            gateway_ip=self._IP_ADDRS[ip_version]['gateway'],
+            enable_dhcp=dhcp_enabled,
+            dns_nameservers=[],
+            host_routes=[],
+            ipv6_ra_mode=None,
+            ipv6_address_mode=None)
         if ip_version == lib_const.IP_VERSION_6:
             sn_dict['ipv6_address_mode'] = lib_const.DHCPV6_STATEFUL
         return sn_dict
@@ -127,16 +126,15 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
                          ip_version=lib_const.IP_VERSION_4, ip_address=None):
         ip_address = (self._IP_ADDRS[ip_version]['addr']
             if not ip_address else ip_address)
-        port_dict = dhcp.DictModel({
-            "id": uuidutils.generate_uuid(),
-            "name": "foo",
-            "mac_address": mac_address,
-            "network_id": network_id,
-            "admin_state_up": True,
-            "device_id": uuidutils.generate_uuid(),
-            "device_owner": "foo",
-            "fixed_ips": [{"subnet_id": subnet_id,
-                           "ip_address": ip_address}], })
+        port_dict = dhcp.DictModel(id=uuidutils.generate_uuid(),
+                                   name="foo",
+                                   mac_address=mac_address,
+                                   network_id=network_id,
+                                   admin_state_up=True,
+                                   device_id=uuidutils.generate_uuid(),
+                                   device_owner="foo",
+                                   fixed_ips=[{"subnet_id": subnet_id,
+                                               "ip_address": ip_address}])
         return port_dict
 
     def create_network_dict(self, net_id, subnets=None, ports=None,
@@ -144,13 +142,12 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
         subnets = [] if not subnets else subnets
         ports = [] if not ports else ports
         non_local_subnets = [] if not non_local_subnets else non_local_subnets
-        net_dict = dhcp.NetModel(d={
-            "id": net_id,
-            "subnets": subnets,
-            "non_local_subnets": non_local_subnets,
-            "ports": ports,
-            "admin_state_up": True,
-            "tenant_id": uuidutils.generate_uuid(), })
+        net_dict = dhcp.NetModel(id=net_id,
+                                 subnets=subnets,
+                                 non_local_subnets=non_local_subnets,
+                                 ports=ports,
+                                 admin_state_up=True,
+                                 tenant_id=uuidutils.generate_uuid())
         return net_dict
 
     def get_interface_name(self, network, port):
