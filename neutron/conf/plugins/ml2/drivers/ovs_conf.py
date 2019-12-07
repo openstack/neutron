@@ -143,7 +143,11 @@ agent_opts = [
                        "Requires OVS 2.1 and ML2 l2population driver. "
                        "Allows the switch (when supporting an overlay) "
                        "to respond to an ARP request locally without "
-                       "performing a costly ARP broadcast into the overlay.")),
+                       "performing a costly ARP broadcast into the overlay. "
+                       "NOTE: If enable_distributed_routing is set to True "
+                       "then arp_responder will automatically be set to True "
+                       "in the agent, regardless of the setting in the config "
+                       "file.")),
     cfg.BoolOpt('dont_fragment', default=True,
                 help=_("Set or un-set the don't fragment (DF) bit on "
                        "outgoing IP packet carrying GRE/VXLAN tunnel.")),

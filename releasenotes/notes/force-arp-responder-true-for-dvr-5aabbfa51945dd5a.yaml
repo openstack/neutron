@@ -1,0 +1,8 @@
+---
+other:
+  - |
+    When the ``enable_distributed_routing`` (DVR) configuration option is set
+    to ``True`` and tunneling is enabled, the ``arp_responder`` option will
+    be forced to ``True`` since it is now required in order for ARP to work
+    properly. For more information, see bug
+    `1774459 <https://bugs.launchpad.net/neutron/+bug/1774459>`_.
