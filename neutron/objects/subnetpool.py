@@ -21,7 +21,7 @@ from neutron.objects import base
 from neutron.objects import common_types
 
 
-@Base.NeutronObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class SubnetPoolRBAC(rbac.RBACBaseObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

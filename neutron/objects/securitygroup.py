@@ -23,7 +23,7 @@ from neutron.objects import rbac
 from neutron.objects import rbac_db
 
 
-@Base.NeutronObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class SecurityGroupRBAC(rbac.RBACBaseObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
