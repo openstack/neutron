@@ -19,6 +19,8 @@ from oslo_versionedobjects import fields as obj_fields
 from neutron.db import models_v2 as models
 from neutron.objects import base
 from neutron.objects import common_types
+from neutron.objects import rbac
+from neutron.objects import rbac_db
 
 
 @base.NeutronObjectRegistry.register
