@@ -1,0 +1,752 @@
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+#
+
+import collections
+import copy
+
+import mock
+from neutron_lib.api.definitions import l3
+from oslo_utils import uuidutils
+
+from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import utils as ovn_utils
+
+
+class FakeOvsdbNbOvnIdl(object):
+
+    def __init__(self, **kwargs):
+        self.lswitch_table = FakeOvsdbTable.create_one_ovsdb_table()
+        self.lsp_table = FakeOvsdbTable.create_one_ovsdb_table()
+        self.lrouter_table = FakeOvsdbTable.create_one_ovsdb_table()
+        self.lrouter_static_route_table = \
+            FakeOvsdbTable.create_one_ovsdb_table()
+        self.lrp_table = FakeOvsdbTable.create_one_ovsdb_table()
+        self.addrset_table = FakeOvsdbTable.create_one_ovsdb_table()
+        self.acl_table = FakeOvsdbTable.create_one_ovsdb_table()
+        self.dhcp_options_table = FakeOvsdbTable.create_one_ovsdb_table()
+        self.nat_table = FakeOvsdbTable.create_one_ovsdb_table()
+        self.port_group_table = FakeOvsdbTable.create_one_ovsdb_table()
+        self._tables = {}
+        self._tables['Logical_Switch'] = self.lswitch_table
+        self._tables['Logical_Switch_Port'] = self.lsp_table
+        self._tables['Logical_Router'] = self.lrouter_table
+        self._tables['Logical_Router_Port'] = self.lrp_table
+        self._tables['Logical_Router_Static_Route'] = \
+            self.lrouter_static_route_table
+        self._tables['ACL'] = self.acl_table
+        self._tables['Address_Set'] = self.addrset_table
+        self._tables['DHCP_Options'] = self.dhcp_options_table
+        self._tables['NAT'] = self.nat_table
+        self._tables['Port_Group'] = self.port_group_table
+        self.transaction = mock.MagicMock()
+        self.ls_add = mock.Mock()
+        self.set_lswitch_ext_ids = mock.Mock()
+        self.ls_del = mock.Mock()
+        self.create_lswitch_port = mock.Mock()
+        self.set_lswitch_port = mock.Mock()
+        self.delete_lswitch_port = mock.Mock()
+        self.get_acls_for_lswitches = mock.Mock()
+        self.create_lrouter = mock.Mock()
+        self.lrp_del = mock.Mock()
+        self.update_lrouter = mock.Mock()
+        self.delete_lrouter = mock.Mock()
+        self.add_lrouter_port = mock.Mock()
+        self.update_lrouter_port = mock.Mock()
+        self.delete_lrouter_port = mock.Mock()
+        self.set_lrouter_port_in_lswitch_port = mock.Mock()
+        self.add_acl = mock.Mock()
+        self.delete_acl = mock.Mock()
+        self.update_acls = mock.Mock()
+        self.idl = mock.Mock()
+        self.add_static_route = mock.Mock()
+        self.delete_static_route = mock.Mock()
+        self.create_address_set = mock.Mock()
+        self.update_address_set_ext_ids = mock.Mock()
+        self.delete_address_set = mock.Mock()
+        self.update_address_set = mock.Mock()
+        self.get_all_chassis_gateway_bindings = mock.Mock()
+        self.get_gateway_chassis_binding = mock.Mock()
+        self.get_unhosted_gateways = mock.Mock()
+        self.add_dhcp_options = mock.Mock()
+        self.delete_dhcp_options = mock.Mock()
+        self.get_subnet_dhcp_options = mock.Mock()
+        self.get_subnet_dhcp_options.return_value = {
+            'subnet': None, 'ports': []}
+        self.get_subnets_dhcp_options = mock.Mock()
+        self.get_subnets_dhcp_options.return_value = []
+        self.get_all_dhcp_options = mock.Mock()
+        self.get_router_port_options = mock.MagicMock()
+        self.get_router_port_options.return_value = {}
+        self.add_nat_rule_in_lrouter = mock.Mock()
+        self.delete_nat_rule_in_lrouter = mock.Mock()
+        self.get_lrouter_nat_rules = mock.Mock()
+        self.get_lrouter_nat_rules.return_value = []
+        self.set_nat_rule_in_lrouter = mock.Mock()
+        self.check_for_row_by_value_and_retry = mock.Mock()
+        self.get_parent_port = mock.Mock()
+        self.get_parent_port.return_value = []
+        self.dns_add = mock.Mock()
+        self.get_lswitch = mock.Mock()
+        fake_ovs_row = FakeOvsdbRow.create_one_ovsdb_row()
+        self.get_lswitch.return_value = fake_ovs_row
+        self.get_lswitch_port = mock.Mock()
+        self.get_lswitch_port.return_value = fake_ovs_row
+        self.get_ls_and_dns_record = mock.Mock()
+        self.get_ls_and_dns_record.return_value = (fake_ovs_row, None)
+        self.ls_set_dns_records = mock.Mock()
+        self.get_floatingip = mock.Mock()
+        self.get_floatingip.return_value = None
+        self.check_revision_number = mock.Mock()
+        self.lookup = mock.MagicMock()
+        # TODO(lucasagomes): The get_floatingip_by_ips() method is part
+        # of a backwards compatibility layer for the Pike -> Queens release,
+        # remove it in the Rocky release.
+        self.get_floatingip_by_ips = mock.Mock()
+        self.get_floatingip_by_ips.return_value = None
+        self.is_col_present = mock.Mock()
+        self.is_col_present.return_value = False
+        self.get_lrouter = mock.Mock()
+        self.get_lrouter.return_value = None
+        self.delete_lrouter_ext_gw = mock.Mock()
+        self.delete_lrouter_ext_gw.return_value = None
+        self.is_port_groups_supported = mock.Mock()
+        # TODO(lucasagomes): Flip this return value to True at some point,
+        # port groups should be the default method used by networking-ovn
+        self.is_port_groups_supported.return_value = False
+        self.get_address_set = mock.Mock()
+        self.get_address_set.return_value = None
+        self.pg_acl_add = mock.Mock()
+        self.pg_acl_del = mock.Mock()
+        self.pg_del = mock.Mock()
+        self.pg_add = mock.Mock()
+        self.get_port_group = mock.Mock()
+        self.pg_add_ports = mock.Mock()
+        self.pg_del_ports = mock.Mock()
+        self.lsp_get_up = mock.Mock()
+        self.nb_global = mock.Mock()
+        self.db_list_rows = mock.Mock()
+        self.lsp_list = mock.MagicMock()
+        self.db_find = mock.Mock()
+        self.db_set = mock.Mock()
+        self.db_clear = mock.Mock()
+        self.db_remove = mock.Mock()
+        self.set_lswitch_port_to_virtual_type = mock.Mock()
+        self.unset_lswitch_port_to_virtual_type = mock.Mock()
+        self.ls_get = mock.Mock()
+
+
+class FakeOvsdbSbOvnIdl(object):
+
+    def __init__(self, **kwargs):
+        self.chassis_exists = mock.Mock()
+        self.chassis_exists.return_value = True
+        self.get_chassis_hostname_and_physnets = mock.Mock()
+        self.get_chassis_hostname_and_physnets.return_value = {}
+        self.get_all_chassis = mock.Mock()
+        self.get_chassis_data_for_ml2_bind_port = mock.Mock()
+        self.get_chassis_data_for_ml2_bind_port.return_value = \
+            ('fake', '', ['fake-physnet'])
+        self.get_logical_port_chassis_and_datapath = mock.Mock()
+        self.get_logical_port_chassis_and_datapath.return_value = \
+            ('fake', 'fake-dp')
+        self.get_chassis_and_physnets = mock.Mock()
+        self.get_gateway_chassis_from_cms_options = mock.Mock()
+        self.is_col_present = mock.Mock()
+        self.is_col_present.return_value = False
+
+
+class FakeOvsdbTransaction(object):
+    def __init__(self, **kwargs):
+        self.insert = mock.Mock()
+
+
+class FakePlugin(object):
+
+    def __init__(self, **kwargs):
+        self.get_ports = mock.Mock()
+        self._get_port_security_group_bindings = mock.Mock()
+
+
+class FakeResource(dict):
+
+    def __init__(self, manager=None, info=None, loaded=False, methods=None):
+        """Set attributes and methods for a resource.
+
+        :param manager:
+            The resource manager
+        :param Dictionary info:
+            A dictionary with all attributes
+        :param bool loaded:
+            True if the resource is loaded in memory
+        :param Dictionary methods:
+            A dictionary with all methods
+        """
+        info = info or {}
+        super(FakeResource, self).__init__(info)
+        methods = methods or {}
+
+        self.__name__ = type(self).__name__
+        self.manager = manager
+        self._info = info
+        self._add_details(info)
+        self._add_methods(methods)
+        self._loaded = loaded
+        # Add a revision number by default
+        setattr(self, 'revision_number', 1)
+
+    @property
+    def db_obj(self):
+        return self
+
+    def _add_details(self, info):
+        for (k, v) in info.items():
+            setattr(self, k, v)
+
+    def _add_methods(self, methods):
+        """Fake methods with MagicMock objects.
+
+        For each <@key, @value> pairs in methods, add an callable MagicMock
+        object named @key as an attribute, and set the mock's return_value to
+        @value. When users access the attribute with (), @value will be
+        returned, which looks like a function call.
+        """
+        for (name, ret) in methods.items():
+            method = mock.MagicMock(return_value=ret)
+            setattr(self, name, method)
+
+    def __repr__(self):
+        reprkeys = sorted(k for k in self.__dict__.keys() if k[0] != '_' and
+                          k != 'manager')
+        info = ", ".join("%s=%s" % (k, getattr(self, k)) for k in reprkeys)
+        return "<%s %s>" % (self.__class__.__name__, info)
+
+    def keys(self):
+        return self._info.keys()
+
+    def info(self):
+        return self._info
+
+    def update(self, info):
+        super(FakeResource, self).update(info)
+        self._add_details(info)
+
+
+class FakeNetwork(object):
+    """Fake one or more networks."""
+
+    @staticmethod
+    def create_one_network(attrs=None):
+        """Create a fake network.
+
+        :param Dictionary attrs:
+            A dictionary with all attributes
+        :return:
+            A FakeResource object faking the network
+        """
+        attrs = attrs or {}
+
+        # Set default attributes.
+        fake_uuid = uuidutils.generate_uuid()
+        network_attrs = {
+            'id': 'network-id-' + fake_uuid,
+            'name': 'network-name-' + fake_uuid,
+            'status': 'ACTIVE',
+            'tenant_id': 'project-id-' + fake_uuid,
+            'admin_state_up': True,
+            'shared': False,
+            'subnets': [],
+            'provider:network_type': 'geneve',
+            'provider:physical_network': None,
+            'provider:segmentation_id': 10,
+            'router:external': False,
+            'availability_zones': [],
+            'availability_zone_hints': [],
+            'is_default': False,
+        }
+
+        # Overwrite default attributes.
+        network_attrs.update(attrs)
+
+        return FakeResource(info=copy.deepcopy(network_attrs),
+                            loaded=True)
+
+
+class FakeNetworkContext(object):
+    def __init__(self, network, segments):
+        self.fake_network = network
+        self.fake_segments = segments
+        self._plugin_context = mock.MagicMock()
+
+    @property
+    def current(self):
+        return self.fake_network
+
+    @property
+    def original(self):
+        return None
+
+    @property
+    def network_segments(self):
+        return self.fake_segments
+
+
+class FakeSubnetContext(object):
+    def __init__(self, subnet, original_subnet=None, network=None):
+        self.fake_subnet = subnet
+        self.fake_original_subnet = original_subnet
+        self.fake_network = FakeNetworkContext(network, None)
+
+    @property
+    def current(self):
+        return self.fake_subnet
+
+    @property
+    def original(self):
+        return self.fake_original_subnet
+
+    @property
+    def network(self):
+        return self.fake_network
+
+
+class FakeOvsdbRow(FakeResource):
+    """Fake one or more OVSDB rows."""
+
+    @staticmethod
+    def create_one_ovsdb_row(attrs=None, methods=None):
+        """Create a fake OVSDB row.
+
+        :param Dictionary attrs:
+            A dictionary with all attributes
+        :param Dictionary methods:
+            A dictionary with all methods
+        :return:
+            A FakeResource object faking the OVSDB row
+        """
+        attrs = attrs or {}
+        methods = methods or {}
+
+        # Set default attributes.
+        fake_uuid = uuidutils.generate_uuid()
+        ovsdb_row_attrs = {
+            'uuid': fake_uuid,
+            'name': 'name-' + fake_uuid,
+            'external_ids': {},
+        }
+
+        # Set default methods.
+        ovsdb_row_methods = {
+            'addvalue': None,
+            'delete': None,
+            'delvalue': None,
+            'verify': None,
+            'setkey': None,
+        }
+
+        # Overwrite default attributes and methods.
+        ovsdb_row_attrs.update(attrs)
+        ovsdb_row_methods.update(methods)
+
+        return FakeResource(info=copy.deepcopy(ovsdb_row_attrs),
+                            loaded=True,
+                            methods=copy.deepcopy(ovsdb_row_methods))
+
+
+class FakeOvsdbTable(FakeResource):
+    """Fake one or more OVSDB tables."""
+
+    @staticmethod
+    def create_one_ovsdb_table(attrs=None):
+        """Create a fake OVSDB table.
+
+        :param Dictionary attrs:
+            A dictionary with all attributes
+        :return:
+            A FakeResource object faking the OVSDB table
+        """
+        attrs = attrs or {}
+
+        # Set default attributes.
+        ovsdb_table_attrs = {
+            'rows': {},
+            'columns': {},
+        }
+
+        # Overwrite default attributes.
+        ovsdb_table_attrs.update(attrs)
+
+        return FakeResource(info=copy.deepcopy(ovsdb_table_attrs),
+                            loaded=True)
+
+
+class FakePort(object):
+    """Fake one or more ports."""
+
+    @staticmethod
+    def create_one_port(attrs=None):
+        """Create a fake port.
+
+        :param Dictionary attrs:
+            A dictionary with all attributes
+        :return:
+            A FakeResource object faking the port
+        """
+        attrs = attrs or {}
+
+        # Set default attributes.
+        fake_uuid = uuidutils.generate_uuid()
+        port_attrs = {
+            'admin_state_up': True,
+            'allowed_address_pairs': [{}],
+            'binding:host_id': 'binding-host-id-' + fake_uuid,
+            'binding:profile': {},
+            'binding:vif_details': {},
+            'binding:vif_type': 'ovs',
+            'binding:vnic_type': 'normal',
+            'device_id': 'device-id-' + fake_uuid,
+            'device_owner': 'compute:nova',
+            'dns_assignment': [{}],
+            'dns_name': 'dns-name-' + fake_uuid,
+            'extra_dhcp_opts': [{}],
+            'fixed_ips': [{'subnet_id': 'subnet-id-' + fake_uuid,
+                           'ip_address': '10.10.10.20'}],
+            'id': 'port-id-' + fake_uuid,
+            'mac_address': 'fa:16:3e:a9:4e:72',
+            'name': 'port-name-' + fake_uuid,
+            'network_id': 'network-id-' + fake_uuid,
+            'port_security_enabled': True,
+            'security_groups': [],
+            'status': 'ACTIVE',
+            'tenant_id': 'project-id-' + fake_uuid,
+        }
+
+        # Overwrite default attributes.
+        port_attrs.update(attrs)
+
+        return FakeResource(info=copy.deepcopy(port_attrs),
+                            loaded=True)
+
+
+class FakePortContext(object):
+    def __init__(self, port, host, segments_to_bind):
+        self.fake_port = port
+        self.fake_host = host
+        self.fake_segments_to_bind = segments_to_bind
+        self.set_binding = mock.Mock()
+
+    @property
+    def current(self):
+        return self.fake_port
+
+    @property
+    def host(self):
+        return self.fake_host
+
+    @property
+    def segments_to_bind(self):
+        return self.fake_segments_to_bind
+
+
+class FakeSecurityGroup(object):
+    """Fake one or more security groups."""
+
+    @staticmethod
+    def create_one_security_group(attrs=None):
+        """Create a fake security group.
+
+        :param Dictionary attrs:
+            A dictionary with all attributes
+        :return:
+            A FakeResource object faking the security group
+        """
+        attrs = attrs or {}
+
+        # Set default attributes.
+        fake_uuid = uuidutils.generate_uuid()
+        security_group_attrs = {
+            'id': 'security-group-id-' + fake_uuid,
+            'name': 'security-group-name-' + fake_uuid,
+            'description': 'security-group-description-' + fake_uuid,
+            'tenant_id': 'project-id-' + fake_uuid,
+            'security_group_rules': [],
+        }
+
+        # Overwrite default attributes.
+        security_group_attrs.update(attrs)
+
+        return FakeResource(info=copy.deepcopy(security_group_attrs),
+                            loaded=True)
+
+
+class FakeSecurityGroupRule(object):
+    """Fake one or more security group rules."""
+
+    @staticmethod
+    def create_one_security_group_rule(attrs=None):
+        """Create a fake security group rule.
+
+        :param Dictionary attrs:
+            A dictionary with all attributes
+        :return:
+            A FakeResource object faking the security group rule
+        """
+        attrs = attrs or {}
+
+        # Set default attributes.
+        fake_uuid = uuidutils.generate_uuid()
+        security_group_rule_attrs = {
+            'direction': 'ingress',
+            'ethertype': 'IPv4',
+            'id': 'security-group-rule-id-' + fake_uuid,
+            'port_range_max': 22,
+            'port_range_min': 22,
+            'protocol': 'tcp',
+            'remote_group_id': None,
+            'remote_ip_prefix': '0.0.0.0/0',
+            'security_group_id': 'security-group-id-' + fake_uuid,
+            'tenant_id': 'project-id-' + fake_uuid,
+        }
+
+        # Overwrite default attributes.
+        security_group_rule_attrs.update(attrs)
+
+        return FakeResource(info=copy.deepcopy(security_group_rule_attrs),
+                            loaded=True)
+
+
+class FakeSegment(object):
+    """Fake one or more segments."""
+
+    @staticmethod
+    def create_one_segment(attrs=None):
+        """Create a fake segment.
+
+        :param Dictionary attrs:
+            A dictionary with all attributes
+        :return:
+            A FakeResource object faking the segment
+        """
+        attrs = attrs or {}
+
+        # Set default attributes.
+        fake_uuid = uuidutils.generate_uuid()
+        segment_attrs = {
+            'id': 'segment-id-' + fake_uuid,
+            'network_type': 'geneve',
+            'physical_network': None,
+            'segmentation_id': 10,
+        }
+
+        # Overwrite default attributes.
+        segment_attrs.update(attrs)
+
+        return FakeResource(info=copy.deepcopy(segment_attrs),
+                            loaded=True)
+
+
+class FakeSubnet(object):
+    """Fake one or more subnets."""
+
+    @staticmethod
+    def create_one_subnet(attrs=None):
+        """Create a fake subnet.
+
+        :param Dictionary attrs:
+            A dictionary with all attributes
+        :return:
+            A FakeResource object faking the subnet
+        """
+        attrs = attrs or {}
+
+        # Set default attributes.
+        fake_uuid = uuidutils.generate_uuid()
+        subnet_attrs = {
+            'id': 'subnet-id-' + fake_uuid,
+            'name': 'subnet-name-' + fake_uuid,
+            'network_id': 'network-id-' + fake_uuid,
+            'cidr': '10.10.10.0/24',
+            'tenant_id': 'project-id-' + fake_uuid,
+            'enable_dhcp': True,
+            'dns_nameservers': [],
+            'allocation_pools': [],
+            'host_routes': [],
+            'ip_version': 4,
+            'gateway_ip': '10.10.10.1',
+            'ipv6_address_mode': 'None',
+            'ipv6_ra_mode': 'None',
+            'subnetpool_id': None,
+        }
+
+        # Overwrite default attributes.
+        subnet_attrs.update(attrs)
+
+        return FakeResource(info=copy.deepcopy(subnet_attrs),
+                            loaded=True)
+
+
+class FakeFloatingIp(object):
+    """Fake one or more floating ips."""
+
+    @staticmethod
+    def create_one_fip(attrs=None):
+        """Create a fake floating ip.
+
+        :param Dictionary attrs:
+            A dictionary with all attributes
+        :return:
+            A FakeResource object faking the floating ip
+        """
+        attrs = attrs or {}
+
+        # Set default attributes.
+        fake_uuid = uuidutils.generate_uuid()
+        fip_attrs = {
+            'id': 'fip-id-' + fake_uuid,
+            'tenant_id': '',
+            'fixed_ip_address': '10.0.0.10',
+            'floating_ip_address': '172.21.0.100',
+            'router_id': 'router-id',
+            'port_id': 'port_id',
+            'fixed_port_id': 'port_id',
+            'floating_port_id': 'fip-port-id',
+            'status': 'Active',
+            'floating_network_id': 'fip-net-id',
+            'dns': '',
+            'dns_domain': '',
+            'dns_name': '',
+            'project_id': '',
+        }
+
+        # Overwrite default attributes.
+        fip_attrs.update(attrs)
+
+        return FakeResource(info=copy.deepcopy(fip_attrs),
+                            loaded=True)
+
+
+class FakeOVNPort(object):
+    """Fake one or more ports."""
+
+    @staticmethod
+    def create_one_port(attrs=None):
+        """Create a fake ovn port.
+
+        :param Dictionary attrs:
+            A dictionary with all attributes
+        :return:
+            A FakeResource object faking the port
+        """
+        attrs = attrs or {}
+
+        # Set default attributes.
+        fake_uuid = uuidutils.generate_uuid()
+        port_attrs = {
+            'addresses': [],
+            'dhcpv4_options': '',
+            'dhcpv6_options': [],
+            'enabled': True,
+            'external_ids': {},
+            'name': fake_uuid,
+            'options': {},
+            'parent_name': [],
+            'port_security': [],
+            'tag': [],
+            'tag_request': [],
+            'type': '',
+            'up': False,
+        }
+
+        # Overwrite default attributes.
+        port_attrs.update(attrs)
+        return type('Logical_Switch_Port', (object, ), port_attrs)
+
+    @staticmethod
+    def from_neutron_port(port):
+        """Create a fake ovn port based on a neutron port."""
+        external_ids = {
+            ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
+                ovn_utils.ovn_name(port['network_id']),
+            ovn_const.OVN_SG_IDS_EXT_ID_KEY:
+                ' '.join(port['security_groups']),
+            ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
+                port.get('device_owner', '')}
+        addresses = [port['mac_address'], ]
+        addresses += [x['ip_address'] for x in port.get('fixed_ips', [])]
+        port_security = (
+            addresses + [x['ip_address'] for x in
+                         port.get('allowed_address_pairs', [])])
+        return FakeOVNPort.create_one_port(
+            {'external_ids': external_ids, 'addresses': addresses,
+             'port_security': port_security})
+
+
+FakeStaticRoute = collections.namedtuple(
+    'Static_Routes', ['ip_prefix', 'nexthop', 'external_ids'])
+
+
+class FakeOVNRouter(object):
+
+    @staticmethod
+    def create_one_router(attrs=None):
+        router_attrs = {
+            'enabled': False,
+            'external_ids': {},
+            'load_balancer': [],
+            'name': '',
+            'nat': [],
+            'options': {},
+            'ports': [],
+            'static_routes': [],
+        }
+
+        # Overwrite default attributes.
+        router_attrs.update(attrs)
+        return type('Logical_Router', (object, ), router_attrs)
+
+    @staticmethod
+    def from_neutron_router(router):
+
+        def _get_subnet_id(gw_info):
+            subnet_id = ''
+            ext_ips = gw_info.get('external_fixed_ips', [])
+            if ext_ips:
+                subnet_id = ext_ips[0]['subnet_id']
+            return subnet_id
+
+        external_ids = {
+            ovn_const.OVN_GW_PORT_EXT_ID_KEY: router.get('gw_port_id') or '',
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                router.get('name', 'no_router_name')}
+
+        # Get the routes
+        routes = []
+        for r in router.get('routes', []):
+            routes.append(FakeStaticRoute(ip_prefix=r['destination'],
+                                          nexthop=r['nexthop'],
+                                          external_ids={}))
+
+        gw_info = router.get(l3.EXTERNAL_GW_INFO)
+        if gw_info:
+            external_ids = {
+                ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
+                ovn_const.OVN_SUBNET_EXT_ID_KEY: _get_subnet_id(gw_info)}
+            routes.append(FakeStaticRoute(
+                ip_prefix='0.0.0.0/0', nexthop='',
+                external_ids=external_ids))
+
+        return FakeOVNRouter.create_one_router(
+            {'external_ids': external_ids,
+             'enabled': router.get('admin_state_up') or False,
+             'name': ovn_utils.ovn_name(router['id']),
+             'static_routes': routes})
