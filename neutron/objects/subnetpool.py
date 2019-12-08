@@ -21,11 +21,39 @@ from neutron.objects import base
 from neutron.objects import common_types
 
 
-@base.NeutronObjectRegistry.register
-class SubnetPool(base.NeutronDbObject):
+@Base.NeutronObjectRegistry.register
+class SubnetPoolRBAC(rbac.RBACBaseObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
+    db_model = rbac_db_models.SubnetPoolRBAC
+
+    @classmethod
+    def get_projects(cls, context, object_id=None, action=None,
+                     target_tenant=None):
+        clauses = []
+        if object_id:
+            clauses.append(rbac_db_models.SubnetPoolRBAC.object_id == object_id)
+        if action:
+            clauses.append(rbac_db_models.SubnetPoolRBAC.action == action)
+        if target_tenant:
+            clauses.append(rbac_db_models.SubnetPoolRBAC.target_tenant ==
+                           target_tenant)
+        query = context.session.query(
+            rbac_db_models.SubnetPoolRBAC.target_tenant)
+        if clauses:
+            query = query.filter(sa.and_(*clauses))
+        return [data[0] for data in query]
+
+
+@base.NeutronObjectRegistry.register
+class SubnetPool(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    # Version 1.1: Add RBAC support
+    VERSION = '1.1'
+
+    # required by RbacNeutronMetaclass
+    rbac_db_cls = SubnetPoolRBAC
     db_model = models.SubnetPool
 
     fields = {
@@ -82,6 +110,17 @@ class SubnetPool(base.NeutronDbObject):
             super(SubnetPool, self).update()
             if 'prefixes' in fields:
                 self._attach_prefixes(fields['prefixes'])
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):
+            primitive.pop('shared')
+
+    @classmethod
+    def get_bound_tenant_ids(cls, context, obj_id):
+        port_objs = ports.Port.get_objects(context,
+                                           security_group_ids=[obj_id])
+        return {port.tenant_id for port in port_objs}
 
 
 @base.NeutronObjectRegistry.register

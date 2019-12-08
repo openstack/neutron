@@ -126,3 +126,14 @@ class SecurityGroupRBAC(RBACColumns, model_base.BASEV2):
     @staticmethod
     def get_valid_actions():
         return (ACCESS_SHARED,)
+
+
+class SubnetPoolRBAC(RBACColumns, model_base.BASEV2):
+    """RBAC table for security groups."""
+
+    object_id = _object_id_column('subnetpool.id')
+    object_type = 'subnet_pool'
+
+    @staticmethod
+    def get_valid_actions():
+        return (ACCESS_SHARED,)
