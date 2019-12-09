@@ -10,6 +10,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import ctypes
+from ctypes import util as ctypes_util
 import errno
 import socket
 
@@ -25,6 +27,15 @@ from neutron import privileged
 
 
 _IP_VERSION_FAMILY_MAP = {4: socket.AF_INET, 6: socket.AF_INET6}
+
+_CDLL = None
+
+
+def _get_cdll():
+    global _CDLL
+    if not _CDLL:
+        _CDLL = ctypes.CDLL(ctypes_util.find_library('c'), use_errno=True)
+    return _CDLL
 
 
 def _get_scope_name(scope):
@@ -318,7 +329,7 @@ def create_netns(name, **kwargs):
     :param name: The name of the namespace to create
     """
     try:
-        netns.create(name, **kwargs)
+        netns.create(name, libc=_get_cdll())
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
@@ -332,6 +343,7 @@ def remove_netns(name, **kwargs):
     """
     try:
         netns.remove(name, **kwargs)
+        netns.remove(name, libc=_get_cdll())
     except OSError as e:
         if e.errno != errno.ENOENT:
             raise
