@@ -578,6 +578,27 @@ class OVS_Lib_Test(base.BaseTestCase):
             set_ctrl_field_mock.assert_called_once_with(
                 'controller_burst_limit', ovs_lib.CTRL_BURST_LIMIT_MIN)
 
+    def test_hw_offload_enabled_false(self):
+        config_mock1 = mock.PropertyMock(return_value={"other_config": {}})
+        config_mock2 = mock.PropertyMock(
+            return_value={"other_config": {"hw-offload": "false"}})
+        config_mock3 = mock.PropertyMock(
+            return_value={"other_config": {"hw-offload": "False"}})
+        for config_mock in (config_mock1, config_mock2, config_mock3):
+            with mock.patch("neutron.agent.common.ovs_lib.OVSBridge.config",
+                            new_callable=config_mock):
+                self.assertFalse(self.br.is_hw_offload_enabled)
+
+    def test_hw_offload_enabled_true(self):
+        config_mock1 = mock.PropertyMock(
+            return_value={"other_config": {"hw-offload": "true"}})
+        config_mock2 = mock.PropertyMock(
+            return_value={"other_config": {"hw-offload": "True"}})
+        for config_mock in (config_mock1, config_mock2):
+            with mock.patch("neutron.agent.common.ovs_lib.OVSBridge.config",
+                            new_callable=config_mock):
+                self.assertTrue(self.br.is_hw_offload_enabled)
+
 
 class TestDeferredOVSBridge(base.BaseTestCase):
 

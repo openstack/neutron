@@ -118,6 +118,7 @@ class BaseOVS(object):
     def __init__(self):
         self.ovsdb_timeout = cfg.CONF.OVS.ovsdb_timeout
         self.ovsdb = impl_idl.api_factory()
+        self._hw_offload = None
 
     def add_manager(self, connection_uri, timeout=_SENTINEL):
         """Have ovsdb-server listen for manager connections
@@ -197,6 +198,13 @@ class BaseOVS(object):
     def capabilities(self):
         _cfg = self.config
         return {k: _cfg.get(k, OVS_DEFAULT_CAPS[k]) for k in OVS_DEFAULT_CAPS}
+
+    @property
+    def is_hw_offload_enabled(self):
+        if self._hw_offload is None:
+            self._hw_offload = self.config.get('other_config',
+                                   {}).get('hw-offload', '').lower() == 'true'
+        return self._hw_offload
 
 
 # Map from version string to on-the-wire protocol version encoding:
@@ -508,7 +516,11 @@ class OVSBridge(BaseOVS):
         options['local_ip'] = local_ip
         options['in_key'] = 'flow'
         options['out_key'] = 'flow'
-        options['egress_pkt_mark'] = '0'
+        # NOTE(moshele): pkt_mark is not upported when using ovs hw-offload,
+        # therefore avoid clear mark on encapsulating packets when it's
+        # enabled
+        if not self.is_hw_offload_enabled:
+            options['egress_pkt_mark'] = '0'
         if tunnel_csum:
             options['csum'] = str(tunnel_csum).lower()
         if tos:
