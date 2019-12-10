@@ -399,9 +399,9 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             metric = 100
             if 'metric' in gateway:
                 metric = gateway['metric'] - 1
-            dst_device.route.add_gateway(gateway=gateway['gateway'],
+            dst_device.route.add_gateway(gateway=gateway['via'],
                                          metric=metric)
-            src_device.route.delete_gateway(gateway=gateway['gateway'])
+            src_device.route.delete_gateway(gateway=gateway['via'])
 
         # Remove IP's from interface
         if ips:
