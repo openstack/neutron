@@ -308,12 +308,14 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         self.assertEqual([call(port_name)], delete_port.mock_calls)
 
     def test_add_tunnel_port(self):
+        self.br._hw_offload = False
         self._mock_add_tunnel_port()
 
     def test_delete_port(self):
         self._mock_delete_port()
 
     def test_deferred_br_add_tunnel_port(self):
+        self.br._hw_offload = False
         self._mock_add_tunnel_port(True)
 
     def test_deferred_br_delete_port(self):

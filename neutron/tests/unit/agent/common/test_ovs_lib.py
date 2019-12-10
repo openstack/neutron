@@ -460,6 +460,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.assertEqual(1, self.execute.call_count)
 
     def test_add_tunnel_port(self):
+        self.br._hw_offload = False
         pname = "tap99"
         local_ip = "1.1.1.1"
         remote_ip = "9.9.9.9"
@@ -488,6 +489,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def test_add_vxlan_fragmented_tunnel_port(self):
+        self.br._hw_offload = False
         pname = "tap99"
         local_ip = "1.1.1.1"
         remote_ip = "9.9.9.9"
@@ -521,6 +523,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def test_add_vxlan_csum_tunnel_port(self):
+        self.br._hw_offload = False
         pname = "tap99"
         local_ip = "1.1.1.1"
         remote_ip = "9.9.9.9"
@@ -929,6 +932,27 @@ class OVS_Lib_Test(base.BaseTestCase):
                 side_effect=[[] for _ in range(7)]):
             self.assertRaises(tenacity.RetryError,
                               self.br._get_port_val, '1', 'external_ids')
+
+    def test_hw_offload_enabled_false(self):
+        config_mock1 = mock.PropertyMock(return_value={"other_config": {}})
+        config_mock2 = mock.PropertyMock(
+            return_value={"other_config": {"hw-offload": "false"}})
+        config_mock3 = mock.PropertyMock(
+            return_value={"other_config": {"hw-offload": "False"}})
+        for config_mock in (config_mock1, config_mock2, config_mock3):
+            with mock.patch("neutron.agent.common.ovs_lib.OVSBridge.config",
+                            new_callable=config_mock):
+                self.assertFalse(self.br.is_hw_offload_enabled)
+
+    def test_hw_offload_enabled_true(self):
+        config_mock1 = mock.PropertyMock(
+            return_value={"other_config": {"hw-offload": "true"}})
+        config_mock2 = mock.PropertyMock(
+            return_value={"other_config": {"hw-offload": "True"}})
+        for config_mock in (config_mock1, config_mock2):
+            with mock.patch("neutron.agent.common.ovs_lib.OVSBridge.config",
+                            new_callable=config_mock):
+                self.assertTrue(self.br.is_hw_offload_enabled)
 
 
 class TestDeferredOVSBridge(base.BaseTestCase):
