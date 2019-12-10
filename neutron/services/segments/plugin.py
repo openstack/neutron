@@ -224,7 +224,7 @@ class NovaSegmentNotifier(object):
                 self.p_client.update_resource_provider_inventory(
                     event.segment_id, ipv4_inventory, IPV4_RESOURCE_CLASS)
                 return
-            except placement_exc.PlacementInventoryUpdateConflict:
+            except placement_exc.PlacementResourceProviderGenerationConflict:
                 LOG.debug('Re-trying to update Nova IPv4 inventory for '
                           'routed network segment: %s', event.segment_id)
         LOG.error('Failed to update Nova IPv4 inventory for routed '

@@ -2258,9 +2258,9 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
                 self.mock_p_client.get_inventory.return_value = inventory
                 self.mock_p_client.update_resource_provider_inventory.\
                     side_effect = (
-                        placement_exc.PlacementInventoryUpdateConflict(
-                            resource_provider=mock.ANY,
-                            resource_class=seg_plugin.IPV4_RESOURCE_CLASS))
+                        placement_exc.
+                        PlacementResourceProviderGenerationConflict(
+                            resource_provider=mock.ANY, generation=1))
                 self.segments_plugin.nova_updater._update_nova_inventory(event)
                 self.assertEqual(seg_plugin.MAX_INVENTORY_UPDATE_RETRIES,
                                  self.mock_p_client.get_inventory.call_count)
