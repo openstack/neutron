@@ -19,6 +19,7 @@ import socket
 
 from neutron_lib import constants
 from oslo_concurrency import lockutils
+from oslo_log import log as logging
 import pyroute2
 from pyroute2 import netlink
 from pyroute2.netlink import exceptions as netlink_exceptions
@@ -32,6 +33,8 @@ import six
 from neutron._i18n import _
 from neutron import privileged
 
+
+LOG = logging.getLogger(__name__)
 
 _IP_VERSION_FAMILY_MAP = {4: socket.AF_INET, 6: socket.AF_INET6}
 
@@ -251,11 +254,16 @@ def _translate_ip_device_exception(e, device=None, namespace=None):
                                              namespace=namespace)
 
 
-def get_link_id(device, namespace):
+def get_link_id(device, namespace, raise_exception=True):
     with get_iproute(namespace) as ip:
         link_id = ip.link_lookup(ifname=device)
     if not link_id or len(link_id) < 1:
-        raise NetworkInterfaceNotFound(device=device, namespace=namespace)
+        if raise_exception:
+            raise NetworkInterfaceNotFound(device=device, namespace=namespace)
+        else:
+            LOG.debug('Interface %(dev)s not found in namespace %(namespace)s',
+                      {'dev': device, 'namespace': namespace})
+            return None
     return link_id[0]
 
 
@@ -387,10 +395,8 @@ def delete_interface(ifname, namespace, **kwargs):
 @privileged.default.entrypoint
 def interface_exists(ifname, namespace):
     try:
-        idx = get_link_id(ifname, namespace)
+        idx = get_link_id(ifname, namespace, raise_exception=False)
         return bool(idx)
-    except NetworkInterfaceNotFound:
-        return False
     except OSError as e:
         if e.errno == errno.ENOENT:
             return False
