@@ -14,11 +14,41 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from os_ken.lib.packet import arp
 from os_ken.lib.packet import ether_types
 from os_ken.lib.packet import icmpv6
 from os_ken.lib.packet import in_proto
 
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
+
+
+class OVSDVRInterfaceMixin(object):
+
+    def change_arp_destination_mac(self, target_mac_address,
+                                   orig_mac_address):
+        """Change destination MAC from dvr_host_mac to internal gateway MAC.
+        """
+        (_dp, ofp, ofpp) = self._get_dp()
+        # TODO(liuyulong): except ARP, reconsider if we can change all IPv4
+        # packet's destination MAC to internal gateway MAC based
+        # on the match rule nw_dst=gateway_ip.
+        match = ofpp.OFPMatch(eth_dst=orig_mac_address,
+                              eth_type=ether_types.ETH_TYPE_ARP,
+                              arp_tha=target_mac_address,
+                              arp_op=arp.ARP_REPLY)
+
+        # dst_mac: dvr_host_mac -> qr_dev_mac
+        actions = [
+            ofpp.OFPActionSetField(eth_dst=target_mac_address),
+        ]
+        instructions = [
+            ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
+            ofpp.OFPInstructionGotoTable(table_id=constants.TRANSIENT_TABLE)]
+
+        self.install_instructions(table_id=constants.LOCAL_SWITCHING,
+                                  priority=99,
+                                  match=match,
+                                  instructions=instructions)
 
 
 class OVSDVRProcessMixin(object):

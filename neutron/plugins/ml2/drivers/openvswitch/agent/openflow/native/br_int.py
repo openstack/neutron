@@ -28,13 +28,16 @@ from oslo_log import log as logging
 
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
+    import br_dvr_process
+from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import ovs_bridge
 
 
 LOG = logging.getLogger(__name__)
 
 
-class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
+class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
+                           br_dvr_process.OVSDVRInterfaceMixin):
     """openvswitch agent br-int specific logic."""
 
     of_tables = constants.INT_BR_ALL_TABLES
