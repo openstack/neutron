@@ -341,7 +341,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
                  bridge=None, namespace=None, prefix=None, mtu=None):
         """Plug in the interface."""
         if not bridge:
-            bridge = self.conf.ovs_integration_bridge
+            bridge = self.conf.OVS.integration_bridge
 
         self.check_bridge_exists(bridge)
 
@@ -407,7 +407,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""
         if not bridge:
-            bridge = self.conf.ovs_integration_bridge
+            bridge = self.conf.OVS.integration_bridge
 
         tap_name = self._get_tap_name(device_name, prefix)
         self.check_bridge_exists(bridge)

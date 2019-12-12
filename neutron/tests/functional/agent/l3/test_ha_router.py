@@ -410,7 +410,7 @@ class L3HATestFailover(framework.L3AgentTestFramework):
         # enough because same IP address is also configured on
         # ovs_integration_bridge device from second router and it will still
         # respond to ping
-        r_br = ovs_lib.OVSBridge(router.driver.conf.ovs_integration_bridge)
+        r_br = ovs_lib.OVSBridge(router.driver.conf.OVS.integration_bridge)
         external_port = router.get_ex_gw_port()
         for subnet in external_port['subnets']:
             r_br.add_flow(
@@ -418,7 +418,7 @@ class L3HATestFailover(framework.L3AgentTestFramework):
 
     @staticmethod
     def restore_gw_router_port(router):
-        r_br = ovs_lib.OVSBridge(router.driver.conf.ovs_integration_bridge)
+        r_br = ovs_lib.OVSBridge(router.driver.conf.OVS.integration_bridge)
         external_port = router.get_ex_gw_port()
         for subnet in external_port['subnets']:
             r_br.delete_flows(proto='ip', nw_dst=subnet['gateway_ip'])

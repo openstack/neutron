@@ -34,7 +34,7 @@ class TestOVSCLIConfig(base.BaseOVSLinuxTestCase):
 
     def test_do_main_default_options(self):
         int_br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
-        self.conf.set_override("ovs_integration_bridge", int_br.br_name)
+        self.conf.set_override("integration_bridge", int_br.br_name, 'OVS')
         self.conf.set_override("ovs_all_ports", False)
 
         noskip = collections.defaultdict(list)

@@ -23,6 +23,7 @@ from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.conf.agent import common as config
+from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron.tests import base
 
 
@@ -60,6 +61,7 @@ class TestBase(base.BaseTestCase):
     def setUp(self):
         super(TestBase, self).setUp()
         self.conf = config.setup_conf()
+        ovs_conf.register_ovs_opts(self.conf)
         config.register_interface_opts(self.conf)
         self.ip_dev_p = mock.patch.object(ip_lib, 'IPDevice')
         self.ip_dev = self.ip_dev_p.start()
@@ -395,8 +397,8 @@ class TestOVSInterfaceDriver(TestBase):
     def test_plug_configured_bridge(self):
         br = 'br-v'
         self.conf.set_override('ovs_use_veth', False)
-        self.conf.set_override('ovs_integration_bridge', br)
-        self.assertEqual(self.conf.ovs_integration_bridge, br)
+        self.conf.set_override('integration_bridge', br, 'OVS')
+        self.assertEqual(self.conf.OVS.integration_bridge, br)
 
         def device_exists(dev, namespace=None):
             return dev == br

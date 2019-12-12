@@ -22,6 +22,7 @@ from neutron.common import utils as common_utils
 from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_conf
 from neutron.conf import common as common_conf
+from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron.tests import base as tests_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base
@@ -35,11 +36,12 @@ class TestDhcp(functional_base.BaseSudoTestCase):
         config.register_interface_opts(conf)
         conf.register_opts(common_conf.core_opts)
         conf.register_opts(dhcp_conf.DHCP_AGENT_OPTS)
+        ovs_conf.register_ovs_opts(conf)
         conf.set_override('interface_driver', 'openvswitch')
         conf.set_override('host', 'foo-host')
         self.conf = conf
         br_int = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
-        self.conf.set_override('ovs_integration_bridge', br_int.br_name)
+        self.conf.set_override('integration_bridge', br_int.br_name, 'OVS')
 
     def test_cleanup_stale_devices(self):
         plugin = mock.MagicMock()

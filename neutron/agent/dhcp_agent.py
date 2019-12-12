@@ -24,6 +24,7 @@ from neutron.common import config as common_config
 from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_config
 from neutron.conf.agent.metadata import config as meta_conf
+from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron import service as neutron_service
 
 
@@ -35,6 +36,7 @@ def register_options(conf):
     meta_conf.register_meta_conf_opts(meta_conf.SHARED_OPTS, conf)
     config.register_interface_opts(conf)
     config.register_root_helper(conf)
+    ovs_conf.register_ovs_opts(conf)
 
 
 def main():

@@ -25,6 +25,7 @@ from neutron.conf.agent import common as config
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.conf.agent.metadata import config as meta_conf
+from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron import service as neutron_service
 
 
@@ -39,6 +40,7 @@ def register_opts(conf):
     config.register_pddriver_opts(conf)
     config.register_ra_opts(conf)
     config.register_availability_zone_opts_helper(conf)
+    ovs_conf.register_ovs_opts(conf)
 
 
 def main(manager='neutron.agent.l3.agent.L3NATAgentWithStateReport'):

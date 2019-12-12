@@ -74,7 +74,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
             'neutron.agent.linux.interface.OVSInterfaceDriver')
         self.conf.set_override('report_interval', 0, 'AGENT')
         br_int = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
-        self.conf.set_override('ovs_integration_bridge', br_int.br_name)
+        self.conf.set_override('integration_bridge', br_int.br_name, 'OVS')
 
         self.mock_plugin_api = mock.patch(
             'neutron.agent.dhcp.agent.DhcpPluginApi').start().return_value
@@ -193,7 +193,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
         vif_name = self.get_interface_name(network.id, port)
 
         self.ovs_driver.plug(network.id, port.id, vif_name, port.mac_address,
-                             self.conf['ovs_integration_bridge'],
+                             self.conf.OVS.integration_bridge,
                              namespace=namespace)
 
     def _ip_list_for_vif(self, vif_name, namespace):

@@ -406,7 +406,9 @@ class L3ConfigFixture(ConfigFixture):
             'DEFAULT': {
                 'interface_driver': ('neutron.agent.linux.interface.'
                                      'OVSInterfaceDriver'),
-                'ovs_integration_bridge': integration_bridge,
+            },
+            'OVS': {
+                'integration_bridge': integration_bridge,
             }
         })
 
@@ -450,7 +452,9 @@ class DhcpConfigFixture(ConfigFixture):
         self.config.update({
             'DEFAULT': {
                 'interface_driver': 'openvswitch',
-                'ovs_integration_bridge': integration_bridge,
+            },
+            'OVS': {
+                'integration_bridge': integration_bridge,
             }
         })
 
