@@ -67,7 +67,7 @@ instead of using the ``kill`` command.
 
 Kill scripts are called with two parameters:
 
-.. code-block::
+.. code-block:: none
 
     <process>-kill <sig> <pid>
 
