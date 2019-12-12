@@ -1,0 +1,105 @@
+# NOTE: In doc/source/contributor/testing/ci_scenario_jobs.rst file there is
+# document with summary of all tempest, neutron-tempest-plugin and grenade jobs
+# summary.
+# Please update this document always when any changes to jobs are made.
+- project:
+    templates:
+      - neutron-tempest-plugin-jobs
+      - openstack-cover-jobs
+      - openstack-lower-constraints-jobs
+      - openstack-python3-ussuri-jobs
+      - publish-openstack-docs-pti
+      - periodic-stable-jobs
+      - check-requirements
+      - release-notes-jobs-python3
+    check:
+      jobs:
+        - neutron-functional
+        - neutron-fullstack
+        - neutron-rally-task
+        - neutron-tempest-dvr
+        - neutron-tempest-linuxbridge
+        - neutron-grenade-multinode
+        - neutron-grenade-dvr-multinode
+        - tempest-integrated-networking:
+            # We don't run the job on things like neutron docs-only changes
+            irrelevant-files: &irrelevant-files
+              - ^(test-|)requirements.txt$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^neutron/locale/.*$
+              - ^neutron/tests/unit/.*$
+              - ^releasenotes/.*$
+              - ^setup.cfg$
+              - ^tools/.*$
+              - ^tox.ini$
+              - ^vagrant/.*$
+              - ^migration/.*$
+        - tempest-multinode-full-py3:
+            voting: false
+            irrelevant-files: *irrelevant-files
+        - neutron-tempest-dvr-ha-multinode-full
+        - neutron-tempest-iptables_hybrid
+        - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
+            voting: false
+            irrelevant-files: *irrelevant-files
+        - tempest-slow-py3:
+            irrelevant-files: *irrelevant-files
+        #- neutron-ovn-tempest-ovs-release
+        - networking-midonet-tempest-aio-ml2-centos-7:
+            voting: false
+            irrelevant-files: *irrelevant-files
+        - tempest-ipv6-only:
+            irrelevant-files: *irrelevant-files
+        - openstacksdk-functional-devstack-networking:
+            voting: false
+        - neutron-functional-with-uwsgi:
+            voting: false
+        - neutron-fullstack-with-uwsgi:
+            voting: false
+        - neutron-tempest-with-uwsgi:
+            voting: false
+        - neutron-centos-7-tripleo-standalone
+       #- neutron-ovn-rally-task
+        # TripleO jobs that deploy OVN.
+        # Note we don't use a project-template here, so it's easier
+        # to disable voting on one specific job if things go wrong.
+        # In Stein and beyond, fs010 will run using
+        # networking-ovn-tripleo-ci-centos-7-containers-multinode.
+        # If you need any support to debug these jobs in case of
+        # failures, please reach us on #tripleo IRC channel.
+       #- neutron-ovn-tripleo-ci-centos-7-containers-multinode
+        - neutron-ovn-tempest-slow:
+            voting: false
+        - neutron-ovn-tempest-full-multinode-ovs-master:
+            voting: false
+    gate:
+      jobs:
+        - neutron-functional
+        - neutron-fullstack
+        - tempest-integrated-networking
+        - neutron-tempest-dvr
+        - neutron-tempest-linuxbridge
+        - neutron-tempest-iptables_hybrid
+        - neutron-grenade-multinode
+        - neutron-grenade-dvr-multinode
+        - tempest-slow-py3:
+            irrelevant-files: *irrelevant-files
+        - tempest-ipv6-only:
+            irrelevant-files: *irrelevant-files
+       #- neutron-ovn-tempest-ovs-release
+       #- neutron-ovn-rally-task
+       #- neutron-ovn-tripleo-ci-centos-7-containers-multinode
+
+    experimental:
+      jobs:
+        - neutron-ovn-tempest-ovs-master
+        - neutron-ovn-grenade
+
+    periodic:
+      jobs:
+        - neutron-functional
+        - neutron-tempest-postgres-full
+        - neutron-tempest-mariadb-full
+        - neutron-tempest-with-os-ken-master
+        - neutron-ovn-tempest-ovs-master-fedora

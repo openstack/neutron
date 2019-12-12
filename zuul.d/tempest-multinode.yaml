@@ -1,0 +1,235 @@
+- job:
+    name: neutron-tempest-dvr-ha-multinode-full
+    parent: tempest-multinode-full-py3
+    nodeset: openstack-three-node-bionic
+    timeout: 10800
+    roles:
+      - zuul: openstack/neutron-tempest-plugin
+    required-projects:
+      - openstack/devstack-gate
+      - openstack/neutron
+      - openstack/tempest
+    pre-run: playbooks/dvr-multinode-scenario-pre-run.yaml
+    irrelevant-files: &irrelevant-files
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+      - ^vagrant/.*$
+      - ^migration/.*$
+    voting: false
+    vars:
+      devstack_local_conf:
+        post-config:
+          $NEUTRON_CONF:
+            DEFAULT:
+              router_distributed: True
+              l3_ha: True
+          # NOTE(slaweq): We can get rid of this hardcoded absolute path when
+          # devstack-tempest job will be switched to use lib/neutron instead of
+          # lib/neutron-legacy
+          "/$NEUTRON_CORE_PLUGIN_CONF":
+            ml2:
+              mechanism_drivers: openvswitch,l2population
+            agent:
+              enable_distributed_routing: True
+              l2_population: True
+              tunnel_types: vxlan
+              arp_responder: True
+            ovs:
+              tunnel_bridge: br-tun
+              bridge_mappings: public:br-ex
+          $NEUTRON_L3_CONF:
+            DEFAULT:
+              agent_mode: dvr
+            agent:
+              availability_zone: nova
+          $NEUTRON_DHCP_CONF:
+            agent:
+              availability_zone: nova
+    group-vars:
+      subnode:
+        devstack_services:
+          q-agt: true
+          q-l3: true
+          q-meta: true
+        devstack_local_conf:
+          post-config:
+            $NEUTRON_CONF:
+              DEFAULT:
+                router_distributed: True
+            # NOTE(slaweq): We can get rid of this hardcoded absolute path when
+            # devstack-tempest job will be switched to use lib/neutron instead of
+            # lib/neutron-legacy
+            "/$NEUTRON_CORE_PLUGIN_CONF":
+              agent:
+                enable_distributed_routing: True
+                l2_population: True
+                tunnel_types: vxlan
+                arp_responder: True
+              ovs:
+                tunnel_bridge: br-tun
+                bridge_mappings: public:br-ex
+            $NEUTRON_L3_CONF:
+              DEFAULT:
+                agent_mode: dvr_snat
+              agent:
+                availability_zone: nova
+
+- job:
+    name: neutron-ovn-multinode-base
+    description: Base multinode job for devstack/tempest to test Neutron with ovn driver.
+    abstract: true
+    parent: tempest-multinode-full-py3
+    timeout: 10800
+    required-projects:
+      - openstack/devstack-gate
+      - openstack/networking-ovn
+      - openstack/neutron
+      - openstack/neutron-tempest-plugin
+      - openstack/octavia
+      - openstack/tempest
+    irrelevant-files: *irrelevant-files
+    roles:
+      - zuul: zuul/zuul-jobs
+      - zuul: openstack/neutron-tempest-plugin
+    pre-run: playbooks/multinode-setup.yaml
+    vars:
+      devstack_localrc:
+        Q_USE_PROVIDERNET_FOR_PUBLIC: true
+        PHYSICAL_NETWORK: public
+        ENABLE_CHASSIS_AS_GW: true
+        OVN_L3_CREATE_PUBLIC_NETWORK: true
+        OVN_DBS_LOG_LEVEL: dbg
+        DOWNLOAD_DEFAULT_IMAGES: false
+        IMAGE_URLS: "http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img,https://cloud-images.ubuntu.com/releases/xenial/release/ubuntu-16.04-server-cloudimg-amd64-disk1.img"
+        DEFAULT_IMAGE_NAME: cirros-0.4.0-x86_64-disk
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.4.0-x86_64-disk.img
+        ADVANCED_IMAGE_NAME: ubuntu-16.04-server-cloudimg-amd64-disk1
+        ADVANCED_INSTANCE_TYPE: ds512M
+        ADVANCED_INSTANCE_USER: ubuntu
+        BUILD_TIMEOUT: 784
+      devstack_plugins:
+        networking-ovn: https://opendev.org/openstack/networking-ovn
+        neutron-tempest-plugin: https://opendev.org/openstack/neutron-tempest-plugin
+        octavia: https://opendev.org/openstack/octavia
+      zuul_copy_output:
+        '{{ devstack_base_dir }}/data/ovs': 'logs'
+      extensions_to_txt:
+        db: true
+      devstack_services:
+        c-bak: false
+        etcd: false
+        br-ex-tcpdump: true
+        br-int-flows: true
+        networking-ovn-metadata-agent: true
+        o-api: true
+        o-hk: true
+        ovn-controller: true
+        ovn-northd: true
+        ovn-octavia: true
+        ovs-vswitchd: true
+        ovsdb-server: true
+        placement-api: true
+        peakmem_tracker: false
+        q-svc: true
+        q-agt: false
+        q-dhcp: false
+        q-l3: false
+        q-meta: false
+        q-metering: false
+        # When running python3 Swift should be disabled for now
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
+    group-vars:
+      subnode:
+        devstack_services:
+          ovn-controller: true
+          ovn-northd: false
+          ovn-octavia: false
+          ovs-vswitchd: true
+          ovsdb-server: true
+          # NOTE(slaweq): it's just to check if this will force devstack to
+          # configure neutron and ML2 plugin on subnodes
+          q-fake: true
+          q-svc: false
+          q-agt: false
+          q-dhcp: false
+          q-l3: false
+          q-meta: false
+          q-metering: false
+          networking-ovn-metadata-agent: true
+        devstack_localrc:
+          Q_USE_PROVIDERNET_FOR_PUBLIC: true
+          PHYSICAL_NETWORK: public
+          ENABLE_CHASSIS_AS_GW: false
+          OVN_DBS_LOG_LEVEL: dbg
+          USE_PYTHON3: True
+
+
+- job:
+    name: neutron-ovn-tempest-slow
+    parent: neutron-ovn-multinode-base
+    vars:
+      tox_envlist: slow-serial
+      tempest_test_regex: ""
+      # TODO(slaweq): remove test_port_security_macspoofing_port test from
+      # blacklist when bug https://bugs.launchpad.net/tempest/+bug/1728886
+      # will be fixed
+      tempest_black_regex: "(?:tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port)"
+
+- job:
+    # TODO(slaweq): propose job with ovs-release and move -master one to
+    # experimental queue
+    name: neutron-ovn-tempest-full-multinode-ovs-master
+    parent: neutron-ovn-multinode-base
+    vars:
+      tox_envlist: all-plugin
+      tempest_test_regex: "^(?!.*\
+          (?:.*\\[.*slow.*\\])|\
+          (?:tempest.api.network.admin.test_quotas.QuotasTest.test_lbaas_quotas.*)|\
+          (?:tempest.api.network.test_load_balancer.*)|\
+          (?:tempest.scenario.test_load_balancer.*)|\
+          (?:tempest.api.network.admin.test_load_balancer.*)|\
+          (?:tempest.api.network.admin.test_lbaas.*)|\
+          (?:tempest.api.network.test_fwaas_extensions.*)|\
+          (?:tempest.api.network.test_metering_extensions.*)|\
+          (?:tempest.thirdparty.boto.test_s3.*)|\
+          (?:tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port)|\
+          (?:tempest.api.identity*)|\
+          (?:tempest.api.image*)|\
+          (?:tempest.api.volume*)|\
+          (?:tempest.api.compute.images*)|\
+          (?:tempest.api.compute.keypairs*)|\
+          (?:tempest.api.compute.certificates*)|\
+          (?:tempest.api.compute.flavors*)|\
+          (?:tempest.api.compute.test_quotas*)|\
+          (?:tempest.api.compute.test_versions*)|\
+          (?:tempest.api.compute.volumes*)|\
+          (?:tempest.api.compute.admin.test_flavor*)|\
+          (?:tempest.api.compute.admin.test_volume*)|\
+          (?:tempest.api.compute.admin.test_hypervisor*)|\
+          (?:tempest.api.compute.admin.test_aggregate*)|\
+          (?:tempest.api.compute.admin.test_quota*)|\
+          (?:tempest.scenario.test_volume*))\
+          ((^neutron_tempest_plugin.api)|\
+          (^neutron_tempest_plugin.scenario)|\
+          (tempest.(api|scenario|thirdparty))).*$"
+      # TODO(slaweq): live_migration related test from the blacklist when bug
+      # https://bugzilla.redhat.com/show_bug.cgi?id=1716335 will be fixed
+      tempest_black_regex: "\
+          (^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test)|\
+          (^tempest.api.compute.admin.test_live_migration.LiveMigrationTest)"
+      devstack_localrc:
+        OVN_BRANCH: master
+    group-vars:
+      subnode:
+        devstack_localrc:
+          OVN_BRANCH: master
