@@ -102,28 +102,10 @@ class TrunkSkeleton(object):
 
         return updated_ports
 
-    def update_trunk_status(self, context, trunk_id, status):
-        """Update the trunk status to reflect outcome of data plane wiring."""
-        with db_api.CONTEXT_WRITER.using(context):
-            trunk = trunk_objects.Trunk.get_object(context, id=trunk_id)
-            if trunk:
-                trunk.update(status=status)
-
-    def _process_trunk_subport_bindings(self, context, trunk, port_ids):
-        """Process port bindings for subports on the given trunk."""
-        updated_ports = []
-        trunk_port_id = trunk.port_id
-        trunk_port = self.core_plugin.get_port(context, trunk_port_id)
-        trunk_host = trunk_port.get(portbindings.HOST_ID)
-
+    def _safe_update_trunk(self, trunk, **kwargs):
         for try_cnt in range(db_api.MAX_RETRIES):
             try:
-                # NOTE(status_police) Set the trunk in BUILD state before
-                # processing subport bindings. The trunk will stay in BUILD
-                # state until an attempt has been made to bind all subports
-                # passed here and the agent acknowledges the operation was
-                # successful.
-                trunk.update(status=trunk_consts.TRUNK_BUILD_STATUS)
+                trunk.update(**kwargs)
                 break
             except exc.StaleDataError as e:
                 if try_cnt < db_api.MAX_RETRIES - 1:
@@ -132,6 +114,28 @@ class TrunkSkeleton(object):
                 else:
                     # re-raise when all tries failed
                     raise
+
+    def update_trunk_status(self, context, trunk_id, status):
+        """Update the trunk status to reflect outcome of data plane wiring."""
+        with db_api.CONTEXT_WRITER.using(context):
+            trunk = trunk_objects.Trunk.get_object(context, id=trunk_id)
+            if trunk:
+                self._safe_update_trunk(trunk, status=status)
+
+    def _process_trunk_subport_bindings(self, context, trunk, port_ids):
+        """Process port bindings for subports on the given trunk."""
+        updated_ports = []
+        trunk_port_id = trunk.port_id
+        trunk_port = self.core_plugin.get_port(context, trunk_port_id)
+        trunk_host = trunk_port.get(portbindings.HOST_ID)
+
+        # NOTE(status_police) Set the trunk in BUILD state before
+        # processing subport bindings. The trunk will stay in BUILD
+        # state until an attempt has been made to bind all subports
+        # passed here and the agent acknowledges the operation was
+        # successful.
+        self._safe_update_trunk(
+            trunk, status=trunk_consts.TRUNK_BUILD_STATUS)
 
         for port_id in port_ids:
             try:
@@ -146,7 +150,8 @@ class TrunkSkeleton(object):
                 # NOTE(status_police) The subport binding has failed in a
                 # manner in which we cannot proceed and the user must take
                 # action to bring the trunk back to a sane state.
-                trunk.update(status=trunk_consts.TRUNK_ERROR_STATUS)
+                self._safe_update_trunk(
+                    trunk, status=trunk_consts.TRUNK_ERROR_STATUS)
                 return []
             except Exception as e:
                 msg = ("Failed to bind subport port %(port)s on trunk "
@@ -154,7 +159,8 @@ class TrunkSkeleton(object):
                 LOG.error(msg, {'port': port_id, 'trunk': trunk.id, 'exc': e})
 
         if len(port_ids) != len(updated_ports):
-            trunk.update(status=trunk_consts.TRUNK_DEGRADED_STATUS)
+            self._safe_update_trunk(
+                trunk, status=trunk_consts.TRUNK_DEGRADED_STATUS)
 
         return updated_ports
 
