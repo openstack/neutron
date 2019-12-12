@@ -45,7 +45,10 @@ ADVSVC_CTX_POLICY = 'context_is_advsvc'
 
 # Identify the attribute used by a resource to reference another resource
 _RESOURCE_FOREIGN_KEYS = {
-    net_apidef.COLLECTION_NAME: 'network_id'
+    net_apidef.COLLECTION_NAME: 'network_id',
+    # TODO(slaweq): use SECURITYGROUPS constant from api def when
+    # securitygroups api def will be moved to neutron-lib
+    'security_groups': 'security_group_id'
 }
 
 
