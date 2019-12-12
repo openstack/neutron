@@ -18,13 +18,14 @@ import os
 import eventlet
 import mock
 import netaddr
-from oslo_config import fixture as fixture_config
 from oslo_utils import uuidutils
 
-from neutron.agent.l3 import keepalived_state_change
+from neutron.agent.l3 import ha
+from neutron.agent.l3 import ha_router
+from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils
-from neutron.conf.agent.l3 import keepalived as kd
 from neutron.tests.common import machine_fixtures as mf
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
@@ -37,104 +38,71 @@ def has_expected_arp_entry(device_name, namespace, ip, mac):
     return entry != []
 
 
-class TestKeepalivedStateChange(base.BaseSudoTestCase):
-    def setUp(self):
-        super(TestKeepalivedStateChange, self).setUp()
-        self.conf_fixture = self.useFixture(fixture_config.Config())
-        kd.register_l3_agent_keepalived_opts(self.conf_fixture)
-        self.router_id = uuidutils.generate_uuid()
-        self.conf_dir = self.get_default_temp_dir().path
-        self.cidr = '169.254.128.1/24'
-        self.interface_name = utils.get_rand_name()
-        self.monitor = keepalived_state_change.MonitorDaemon(
-            self.get_temp_file_path('monitor.pid'),
-            self.router_id,
-            1,
-            2,
-            utils.get_rand_name(),
-            self.conf_dir,
-            self.interface_name,
-            self.cidr)
-        mock.patch.object(self.monitor, 'notify_agent').start()
-        self.line = '1: %s    inet %s' % (self.interface_name, self.cidr)
-
-    def test_parse_and_handle_event_wrong_device_completes_without_error(self):
-        self.monitor.parse_and_handle_event(
-            '1: wrong_device    inet wrong_cidr')
-
-    def _get_state(self):
-        with open(os.path.join(self.monitor.conf_dir, 'state')) as state_file:
-            return state_file.read()
-
-    def test_parse_and_handle_event_writes_to_file(self):
-        self.monitor.parse_and_handle_event('Deleted %s' % self.line)
-        self.assertEqual('backup', self._get_state())
-
-        self.monitor.parse_and_handle_event(self.line)
-        self.assertEqual('master', self._get_state())
-
-    def test_parse_and_handle_event_fails_writing_state(self):
-        with mock.patch.object(
-                self.monitor, 'write_state_change', side_effect=OSError):
-            self.monitor.parse_and_handle_event(self.line)
-
-    def test_parse_and_handle_event_fails_notifying_agent(self):
-        with mock.patch.object(
-                self.monitor, 'notify_agent', side_effect=Exception):
-            self.monitor.parse_and_handle_event(self.line)
-
-    def test_handle_initial_state_backup(self):
-        ip = ip_lib.IPWrapper(namespace=self.monitor.namespace)
-        ip.netns.add(self.monitor.namespace)
-        self.addCleanup(ip.netns.delete, self.monitor.namespace)
-        ip.add_dummy(self.interface_name)
-
-        with mock.patch.object(
-                self.monitor, 'write_state_change') as write_state_change,\
-                mock.patch.object(
-                    self.monitor, 'notify_agent') as notify_agent:
-
-            self.monitor.handle_initial_state()
-            write_state_change.assert_not_called()
-            notify_agent.assert_not_called()
-
-    def test_handle_initial_state_master(self):
-        ip = ip_lib.IPWrapper(namespace=self.monitor.namespace)
-        ip.netns.add(self.monitor.namespace)
-        self.addCleanup(ip.netns.delete, self.monitor.namespace)
-        ha_interface = ip.add_dummy(self.interface_name)
-
-        ha_interface.addr.add(self.cidr)
-
-        self.monitor.handle_initial_state()
-        self.assertEqual('master', self._get_state())
-
-
-class TestMonitorDaemon(base.BaseSudoTestCase):
+class TestMonitorDaemon(base.BaseLoggingTestCase):
     def setUp(self):
         super(TestMonitorDaemon, self).setUp()
+        self.conf_dir = self.get_default_temp_dir().path
+        self.pid_file = os.path.join(self.conf_dir, 'pid_file')
+        self.log_file = os.path.join(self.conf_dir, 'log_file')
+        self.state_file = os.path.join(self.conf_dir,
+                                       'keepalived-state-change')
+        self.cidr = '169.254.151.1/24'
         bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         self.machines = self.useFixture(mf.PeerMachines(bridge))
         self.router, self.peer = self.machines.machines[:2]
+        self.router_id = uuidutils.generate_uuid()
 
-        conf_dir = self.get_default_temp_dir().path
-        monitor = keepalived_state_change.MonitorDaemon(
-            self.get_temp_file_path('monitor.pid'),
-            uuidutils.generate_uuid(),
-            1,
-            2,
-            self.router.namespace,
-            conf_dir,
-            'foo-iface',
-            self.machines.ip_cidr
-        )
-        eventlet.spawn_n(monitor.run, run_as_root=True)
-        monitor_started = functools.partial(
-            lambda mon: mon.monitor is not None, monitor)
-        utils.wait_until_true(monitor_started)
-        self.addCleanup(monitor.monitor.stop)
+        self.cmd_opts = [
+            ha_router.STATE_CHANGE_PROC_NAME,
+            '--router_id=%s' % self.router_id,
+            '--namespace=%s' % self.router.namespace,
+            '--conf_dir=%s' % self.conf_dir,
+            '--log-file=%s' % self.log_file,
+            '--monitor_interface=%s' % self.router.port.name,
+            '--monitor_cidr=%s' % self.cidr,
+            '--pid_file=%s' % self.pid_file,
+            '--state_path=%s' % self.conf_dir,
+            '--user=%s' % os.geteuid(),
+            '--group=%s' % os.getegid()
+        ]
+        self.ext_process = external_process.ProcessManager(
+            None, '%s.monitor' % self.pid_file, None, service='test_ip_mon',
+            pids_path=self.conf_dir, default_cmd_callback=self._callback,
+            run_as_root=True)
+
+        server = linux_utils.UnixDomainWSGIServer(
+            'neutron-keepalived-state-change', num_threads=1)
+        server.start(ha.KeepalivedStateChangeHandler(mock.Mock()),
+                     self.state_file, workers=0,
+                     backlog=ha.KEEPALIVED_STATE_CHANGE_SERVER_BACKLOG)
+        self.addCleanup(server.stop)
+
+    def _run_monitor(self):
+        self.ext_process.enable()
+        self.addCleanup(self.ext_process.disable)
+        eventlet.sleep(5)
+
+    def _callback(self, *args):
+        return self.cmd_opts
+
+    def _search_in_file(self, file_name, text):
+        def text_in_file():
+            try:
+                return text in open(file_name).read()
+            except FileNotFoundError:
+                return False
+        try:
+            utils.wait_until_true(text_in_file, timeout=15)
+        except utils.WaitTimeout:
+            # NOTE: we need to read here the content of the file.
+            raise RuntimeError(
+                'Text not found in file %(file_name)s: "%(text)s". File '
+                'content: %(file_content)s' %
+                {'file_name': file_name, 'text': text,
+                 'file_content': open(file_name).read()})
 
     def test_new_fip_sends_garp(self):
+        self._run_monitor()
         next_ip_cidr = net_helpers.increment_ip_cidr(self.machines.ip_cidr, 2)
         expected_ip = str(netaddr.IPNetwork(next_ip_cidr).ip)
         # Create incomplete ARP entry
@@ -159,6 +127,42 @@ class TestMonitorDaemon(base.BaseSudoTestCase):
                 self.peer.namespace,
                 expected_ip,
                 self.router.port.link.address))
-        utils.wait_until_true(
-            has_arp_entry_predicate,
-            exception=exc)
+        utils.wait_until_true(has_arp_entry_predicate, timeout=15,
+                              exception=exc)
+
+    def test_read_queue_change_state(self):
+        self._run_monitor()
+        msg = 'Wrote router %s state %s'
+        self.router.port.addr.add(self.cidr)
+        self._search_in_file(self.log_file, msg % (self.router_id, 'master'))
+        self.router.port.addr.delete(self.cidr)
+        self._search_in_file(self.log_file, msg % (self.router_id, 'backup'))
+
+    def test_read_queue_send_garp(self):
+        self._run_monitor()
+        dev_dummy = 'dev_dummy'
+        ip_wrapper = ip_lib.IPWrapper(namespace=self.router.namespace)
+        ip_wrapper.add_dummy(dev_dummy)
+        ip_device = ip_lib.IPDevice(dev_dummy, namespace=self.router.namespace)
+        ip_device.link.set_up()
+        msg = 'Sent GARP to %(ip_address)s from %(device_name)s'
+        for idx in range(2, 20):
+            next_cidr = net_helpers.increment_ip_cidr(self.cidr, idx)
+            ip_device.addr.add(next_cidr)
+            msg_args = {'ip_address': str(netaddr.IPNetwork(next_cidr).ip),
+                        'device_name': dev_dummy}
+            self._search_in_file(self.log_file, msg % msg_args)
+            ip_device.addr.delete(next_cidr)
+
+    def test_handle_initial_state_backup(self):
+        # No tracked IP (self.cidr) is configured in the monitored interface
+        # (self.router.port)
+        self._run_monitor()
+        msg = 'Initial status of router %s is %s' % (self.router_id, 'backup')
+        self._search_in_file(self.log_file, msg)
+
+    def test_handle_initial_state_master(self):
+        self.router.port.addr.add(self.cidr)
+        self._run_monitor()
+        msg = 'Initial status of router %s is %s' % (self.router_id, 'master')
+        self._search_in_file(self.log_file, msg)
