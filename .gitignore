@@ -45,6 +45,7 @@ nosetests.xml
 
 etc/*.sample
 etc/neutron/plugins/ml2/*.sample
+etc/neutron/*.sample
 
 # Complexity
 output/*.html
