@@ -408,7 +408,7 @@ class OVSBridge(BaseOVS):
         strict = kwargs_list[0].get('strict', False)
 
         for kw in kwargs_list:
-            if action is 'del':
+            if action == 'del':
                 if kw.get('cookie') == COOKIE_ANY:
                     # special value COOKIE_ANY was provided, unset
                     # cookie to match flows whatever their cookie is

@@ -370,7 +370,7 @@ class OVSDBHandler(object):
             parent_port_id = (
                 self.trunk_manager.get_port_uuid_from_external_ids(port))
             trunk = self.trunk_rpc.get_trunk_details(ctx, parent_port_id)
-        except tman.TrunkManagerError as te:
+        except tman.TrunkManagerError:
             LOG.error("Can't obtain parent port ID from port %s",
                       port['name'])
             return

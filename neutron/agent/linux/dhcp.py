@@ -891,7 +891,7 @@ class Dnsmasq(DhcpLocalProcess):
             if netaddr.IPAddress(k).version == constants.IP_VERSION_4:
                 # treat '*' as None, see note in _read_leases_file_leases()
                 client_id = v['client_id']
-                if client_id is '*':
+                if client_id == '*':
                     client_id = None
                 v4_leases.add((k, v['iaid'], client_id))
 

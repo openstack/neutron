@@ -34,7 +34,7 @@ import unittest2
 _CALLBACK_PRIORITY_SUPPORTED = True
 try:
     from neutron_lib.callbacks import priority_group  # noqa
-except ImportError as e:
+except ImportError:
     _CALLBACK_PRIORITY_SUPPORTED = False
 
 

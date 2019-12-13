@@ -151,7 +151,7 @@ class SubnetAllocator(driver.Pool):
             cidr = request.subnet_cidr
             available = self._get_available_prefix_list()
             matched = netaddr.all_matching_cidrs(cidr, available)
-            if len(matched) is 1 and matched[0].prefixlen <= cidr.prefixlen:
+            if len(matched) == 1 and matched[0].prefixlen <= cidr.prefixlen:
                 return IpamSubnet(request.tenant_id,
                                   request.subnet_id,
                                   cidr,
