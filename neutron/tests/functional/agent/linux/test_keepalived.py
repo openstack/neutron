@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import signal
+
 from oslo_config import cfg
 
 from neutron._i18n import _
@@ -44,7 +46,15 @@ class KeepalivedManagerTestCase(base.BaseSudoTestCase,
             'router1', self.expected_config, self.process_monitor,
             conf_path=cfg.CONF.state_path,
             namespace=self.namespace)
-        self.addCleanup(self.manager.disable)
+        self.addCleanup(self._stop_keepalived_manager)
+
+    def _stop_keepalived_manager(self):
+        self.manager.disable()
+        try:
+            common_utils.wait_until_true(
+                lambda: not self.manager.get_process().active, timeout=5)
+        except common_utils.WaitTimeout:
+            self.manager.get_process().disable(sig=signal.SIGKILL)
 
     def _prepare_devices(self):
         # NOTE(slaweq): those are devices used in keepalived config file,
