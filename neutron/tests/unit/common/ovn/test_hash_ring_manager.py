@@ -37,7 +37,7 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
         self.admin_ctx = context.get_admin_context()
 
     def _verify_hashes(self, hash_dict):
-        for target_node, uuid_ in hash_dict.items():
+        for uuid_, target_node in hash_dict.items():
             self.assertEqual(target_node,
                              self.hash_ring_manager.get_node(uuid_))
 
@@ -48,8 +48,8 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
         node_2_uuid = db_hash_ring.add_node(
             self.admin_ctx, HASH_RING_TEST_GROUP, 'node-2')
 
-        hash_dict_before = {node_1_uuid: 'fake-uuid',
-                            node_2_uuid: 'fake-uuid-0'}
+        hash_dict_before = {'fake-uuid': node_1_uuid,
+                            'fake-uuid-0': node_2_uuid}
         self._verify_hashes(hash_dict_before)
 
     def test_get_node_no_active_nodes(self):
@@ -75,9 +75,9 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
         self.assertEqual(3, len(self.hash_ring_manager._hash_ring.nodes))
 
         # Hash certain values against the nodes
-        hash_dict_before = {node_1_uuid: 'fake-uuid',
-                            node_2_uuid: 'fake-uuid-0',
-                            another_host_node: 'fake-uuid-ABCDE'}
+        hash_dict_before = {'fake-uuid': node_1_uuid,
+                            'fake-uuid-0': node_2_uuid,
+                            'fake-uuid-ABCDE': another_host_node}
         self._verify_hashes(hash_dict_before)
 
         # Mock utcnow() as the HASH_RING_NODES_TIMEOUT have expired
@@ -96,11 +96,10 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
                          list(self.hash_ring_manager._hash_ring.nodes.keys()))
 
         # Now only "another_host_node" is alive, all values should hash to it
-        # NOTE(haleyb) needs further work, need to ask lucasgomes
-        # hash_dict_after_rebalance = {another_host_node: 'fake-uuid',
-        #                              another_host_node: 'fake-uuid-0',
-        #                              another_host_node: 'fake-uuid-ABCDE'}
-        # self._verify_hashes(hash_dict_after_rebalance)
+        hash_dict_after_rebalance = {'fake-uuid': another_host_node,
+                                     'fake-uuid-0': another_host_node,
+                                     'fake-uuid-ABCDE': another_host_node}
+        self._verify_hashes(hash_dict_after_rebalance)
 
         # Now touch the nodes so they appear active again
         db_hash_ring.touch_nodes_from_host(
