@@ -1452,6 +1452,6 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
             test_router_update_gateway_upon_subnet_create_max_ips_ipv6()
         add_static_route_calls = [
             mock.call(mock.ANY, ip_prefix='0.0.0.0/0', nexthop='10.0.0.1'),
-            mock.call(mock.ANY, ip_prefix='::/0', nexthop='2001:db8::1')]
+            mock.call(mock.ANY, ip_prefix='::/0', nexthop='2001:db8::')]
         self.l3_inst._ovn.add_static_route.assert_has_calls(
             add_static_route_calls, any_order=True)

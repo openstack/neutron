@@ -17,7 +17,7 @@ import netaddr
 from neutron_lib import constants
 
 
-def check_subnet_ip(cidr, ip_address, port_owner=None):
+def check_subnet_ip(cidr, ip_address, port_owner=''):
     """Validate that the IP address is on the subnet."""
     ip = netaddr.IPAddress(ip_address)
     net = netaddr.IPNetwork(cidr)
@@ -25,16 +25,12 @@ def check_subnet_ip(cidr, ip_address, port_owner=None):
     # network or the broadcast address
     if net.version == constants.IP_VERSION_6:
         # NOTE(njohnston): In some cases the code cannot know the owner of the
-        # port.  In these cases port_owner should be None, and we pass it
-        # through here.
-        return ((port_owner in constants.ROUTER_PORT_OWNERS or
-                 port_owner is None or
-                 ip != net.network) and
-                net.netmask & ip == net.network)
+        # port. In these cases port_owner should an empty string, and we pass
+        # it through here.
+        return (port_owner in (constants.ROUTER_PORT_OWNERS + ('', )) and
+                ip in net)
     else:
-        return (ip != net.network and
-                ip != net[-1] and
-                net.netmask & ip == net.network)
+        return ip != net.network and ip != net.broadcast and ip in net
 
 
 def check_gateway_invalid_in_subnet(cidr, gateway):
