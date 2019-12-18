@@ -15,8 +15,8 @@
 
 import mock
 from neutron_lib import constants
-from neutron_lib import exceptions
 from oslo_utils import excutils
+from pyroute2.netlink import exceptions as pyroute2_exc
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import interface
@@ -476,20 +476,22 @@ class TestOVSInterfaceDriver(TestBase):
                     reraise = mock.patch.object(
                         excutils, 'save_and_reraise_exception')
                     reraise.start()
-                    proEr = exceptions.ProcessExecutionError('', 2)
-                    processExecutionError = mock.Mock(side_effect=proEr)
-                    ip = self.ip.return_value
-                    ip.ensure_namespace.side_effect = processExecutionError
-                    ovs.plug_new(
-                        '01234567-1234-1234-99',
-                        'port-1234',
-                        'tap0',
-                        'aa:bb:cc:dd:ee:ff',
-                        bridge=bridge,
-                        namespace=namespace,
-                        prefix='veth',
-                        mtu=9000)
-                    delete_port.assert_called_once_with('tap0')
+                    ip_wrapper = mock.Mock()
+                    for exception in (OSError(),
+                                      pyroute2_exc.NetlinkError(22)):
+                        ip_wrapper.ensure_namespace.side_effect = exception
+                        self.ip.return_value = ip_wrapper
+                        delete_port.reset_mock()
+                        ovs.plug_new(
+                            '01234567-1234-1234-99',
+                            'port-1234',
+                            'tap0',
+                            'aa:bb:cc:dd:ee:ff',
+                            bridge=bridge,
+                            namespace=namespace,
+                            prefix='veth',
+                            mtu=9000)
+                        delete_port.assert_called_once_with('tap0')
 
     def test_unplug(self):
         with mock.patch('neutron.agent.common.ovs_lib.OVSBridge') as ovs_br:

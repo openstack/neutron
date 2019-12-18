@@ -21,6 +21,7 @@ from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_log import log as logging
 from oslo_utils import excutils
+from pyroute2.netlink import exceptions as pyroute2_exc
 import six
 
 from neutron.agent.common import ovs_lib
@@ -379,13 +380,11 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
             try:
                 namespace_obj = ip.ensure_namespace(namespace)
                 namespace_obj.add_device_to_namespace(ns_dev)
-            except exceptions.ProcessExecutionError:
-                # To prevent the namespace failure from blasting
-                # ovs, the ovs port created should be reverted
-                # When the namespace is corrupted, the ProcessExecutionError
-                # has execption message as:
-                # Exit code: 2; Stdin: ; Stdout: ; Stderr: RTNETLINK
-                # answers: Invalid argument
+            except (pyroute2_exc.NetlinkError, OSError):
+                # To prevent the namespace failure from blasting OVS, the OVS
+                # port creation should be reverted. Possible exceptions:
+                # - NetlinkError in case of duplicated interface
+                # - OSError in case of corrupted namespace
                 LOG.warning("Failed to plug interface %s into bridge %s, "
                             "cleaning up", device_name, bridge)
                 with excutils.save_and_reraise_exception():
