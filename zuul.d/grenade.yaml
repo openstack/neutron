@@ -34,20 +34,6 @@
     irrelevant-files: *irrelevant-files
 
 - job:
-    # TODO(slaweq): remove this job definition when all other projects will use
-    # grenade-py3 instead
-    name: neutron-grenade
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-grenade/run.yaml
-    post-run: playbooks/legacy/neutron-grenade/post.yaml
-    timeout: 10800
-    required-projects:
-      - openstack/grenade
-      - openstack/devstack-gate
-      - openstack/neutron
-    irrelevant-files: *irrelevant-files
-
-- job:
     name: neutron-ovn-grenade
     parent: legacy-dsvm-base
     run: playbooks/legacy/neutron-ovn-grenade/run.yaml
