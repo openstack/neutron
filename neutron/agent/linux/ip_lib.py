@@ -1508,7 +1508,7 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
             'scope': IP_ADDRESS_SCOPE[int(route['scope'])],
             'device': get_device(int(get_attr(route, 'RTA_OIF')), devices),
             'via': get_attr(route, 'RTA_GATEWAY'),
-            'priority': get_attr(route, 'RTA_PRIORITY'),
+            'metric': get_attr(route, 'RTA_PRIORITY'),
         }
 
         ret.append(value)

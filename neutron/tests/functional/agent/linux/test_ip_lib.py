@@ -323,10 +323,10 @@ class IpLibTestCase(IpLibTestFramework):
         }
         expected_gateways = {
             constants.IP_VERSION_4: {
-                'priority': metric,
+                'metric': metric,
                 'via': gateways[constants.IP_VERSION_4]},
             constants.IP_VERSION_6: {
-                'priority': metric,
+                'metric': metric,
                 'via': gateways[constants.IP_VERSION_6]}}
 
         for ip_version, gateway_ip in gateways.items():
@@ -876,7 +876,7 @@ class IpRouteCommandTestCase(functional_base.BaseSudoTestCase):
                'scope': scope,
                'device': 'test_device',
                'via': via,
-               'priority': metric}
+               'metric': metric}
         try:
             utils.wait_until_true(fn, timeout=5)
         except utils.WaitTimeout:
