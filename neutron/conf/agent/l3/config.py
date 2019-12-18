@@ -100,6 +100,12 @@ OPTS = [
                       '(by default), the user executing the L3 agent will be '
                       'passed. If "root" specified, because radvd is spawned '
                       'as root, no "username" parameter will be passed.')),
+    cfg.BoolOpt('cleanup_on_shutdown', default=False,
+                help=_('Delete all routers on L3 agent shutdown. For L3 HA '
+                       'routers it includes a shutdown of keepalived and '
+                       'the state change monitor. NOTE: Setting to True '
+                       'could affect the data plane when stopping or '
+                       'restarting the L3 agent.')),
 ]
 
 
