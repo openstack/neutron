@@ -491,13 +491,11 @@ class TestOVSInterfaceDriver(TestBase):
                         mtu=9000)
                     delete_port.assert_called_once_with('tap0')
 
-    def test_unplug(self, bridge=None):
-        if not bridge:
-            bridge = 'br-int'
+    def test_unplug(self):
         with mock.patch('neutron.agent.common.ovs_lib.OVSBridge') as ovs_br:
             ovs = interface.OVSInterfaceDriver(self.conf)
             ovs.unplug('tap0')
-            ovs_br.assert_has_calls([mock.call(bridge),
+            ovs_br.assert_has_calls([mock.call('br-int'),
                                      mock.call().delete_port('tap0')])
 
 
@@ -567,15 +565,14 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
             root_dev.assert_has_calls([mock.call.link.set_up()])
             ns_dev.assert_has_calls([mock.call.link.set_up()])
 
-    def test_plug_new(self, bridge=None, namespace=None):
+    def test_plug_new(self):
         # The purpose of test_plug_new in parent class(TestOVSInterfaceDriver)
         # is to test exception(exceptions.ProcessExecutionError), method here
         # would not go through that code, So just pass
         pass
 
-    def test_unplug(self, bridge=None):
-        if not bridge:
-            bridge = 'br-int'
+    def test_unplug(self):
+        bridge = 'br-int'
         with mock.patch('neutron.agent.common.ovs_lib.OVSBridge') as ovs_br:
             ovs = interface.OVSInterfaceDriver(self.conf)
             ovs.unplug('ns-0', bridge=bridge)
