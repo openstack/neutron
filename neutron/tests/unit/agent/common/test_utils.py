@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import socket
+
 import mock
 
 from neutron.agent.common import utils
@@ -75,3 +77,26 @@ class TestLoadInterfaceDriver(base.BaseTestCase):
         self.conf.set_override('interface_driver', 'openvswitchXX')
         with testlib_api.ExpectedException(SystemExit):
             utils.load_interface_driver(self.conf)
+
+
+# TODO(bence romsics): rehome this to neutron_lib
+class TestDefaultRpHypervisors(base.BaseTestCase):
+
+    def test_defaults(self):
+        this_host = socket.gethostname()
+
+        self.assertEqual(
+            {'eth0': this_host, 'eth1': this_host},
+            utils.default_rp_hypervisors(
+                hypervisors={},
+                device_mappings={'physnet0': ['eth0', 'eth1']},
+            )
+        )
+
+        self.assertEqual(
+            {'eth0': 'thathost', 'eth1': this_host},
+            utils.default_rp_hypervisors(
+                hypervisors={'eth0': 'thathost'},
+                device_mappings={'physnet0': ['eth0', 'eth1']},
+            )
+        )

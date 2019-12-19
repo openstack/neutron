@@ -83,8 +83,7 @@ class PlacementState(object):
                  rp_inventory_defaults,
                  driver_uuid_namespace,
                  agent_type,
-                 agent_host,
-                 agent_host_rp_uuid,
+                 hypervisor_rps,
                  device_mappings,
                  supported_vnic_types,
                  client):
@@ -92,8 +91,7 @@ class PlacementState(object):
         self._rp_inventory_defaults = rp_inventory_defaults
         self._driver_uuid_namespace = driver_uuid_namespace
         self._agent_type = agent_type
-        self._agent_host = agent_host
-        self._agent_host_rp_uuid = agent_host_rp_uuid
+        self._hypervisor_rps = hypervisor_rps
         self._device_mappings = device_mappings
         self._supported_vnic_types = supported_vnic_types
         self._client = client
@@ -124,44 +122,49 @@ class PlacementState(object):
         traits += self._deferred_update_vnic_type_traits()
         return traits
 
-    def _deferred_create_agent_rp(self):
-        agent_rp_name = '%s:%s' % (self._agent_host, self._agent_type)
-        agent_rp_uuid = place_utils.agent_resource_provider_uuid(
-            self._driver_uuid_namespace, self._agent_host)
-        agent_rp = DeferredCall(
-            self._client.ensure_resource_provider,
-            resource_provider={
-                'name': agent_rp_name,
-                'uuid': agent_rp_uuid,
-                'parent_provider_uuid': self._agent_host_rp_uuid})
-        return agent_rp
+    def _deferred_create_agent_rps(self):
+        # While an instance of this class represents a single agent,
+        # that agent is allowed to handle devices of multiple hypervisors.
+        # Since each hypervisor has its own root resource provider
+        # we must create an agent RP under each hypervisor RP.
+        rps = []
+        for hypervisor in self._hypervisor_rps.values():
+            agent_rp_name = '%s:%s' % (hypervisor['name'], self._agent_type)
+            agent_rp_uuid = place_utils.agent_resource_provider_uuid(
+                self._driver_uuid_namespace, hypervisor['name'])
+            rps.append(
+                DeferredCall(
+                    self._client.ensure_resource_provider,
+                    resource_provider={
+                        'name': agent_rp_name,
+                        'uuid': agent_rp_uuid,
+                        'parent_provider_uuid': hypervisor['uuid']}))
+        return rps
 
-    def _deferred_create_device_rps(self, agent_rp):
+    def _deferred_create_device_rps(self):
         rps = []
         for device in self._rp_bandwidths:
-            rp_name = '%s:%s' % (agent_rp['resource_provider']['name'], device)
+            hypervisor = self._hypervisor_rps[device]
+            rp_name = '%s:%s:%s' % (
+                hypervisor['name'], self._agent_type, device)
             rp_uuid = place_utils.device_resource_provider_uuid(
                 self._driver_uuid_namespace,
-                self._agent_host,
+                hypervisor['name'],
                 device)
             rps.append(
                 DeferredCall(
                     self._client.ensure_resource_provider,
                     {'name': rp_name,
                      'uuid': rp_uuid,
-                     'parent_provider_uuid': agent_rp[
-                         'resource_provider']['uuid']}))
+                     'parent_provider_uuid': hypervisor['uuid']}))
         return rps
 
     def deferred_create_resource_providers(self):
-        agent_rp = self._deferred_create_agent_rp()
-        # XXX(bence romsics): I don't like digging in the deferred agent
-        # object, but without proper Promises I don't see a significantly
-        # nicer solution.
-        device_rps = self._deferred_create_device_rps(agent_rp=agent_rp.kwargs)
+        agent_rps = self._deferred_create_agent_rps()
+        device_rps = self._deferred_create_device_rps()
 
         rps = []
-        rps.append(agent_rp)
+        rps.extend(agent_rps)
         rps.extend(device_rps)
         return rps
 
@@ -179,7 +182,7 @@ class PlacementState(object):
         for device in self._rp_bandwidths:
             rp_uuid = place_utils.device_resource_provider_uuid(
                 self._driver_uuid_namespace,
-                self._agent_host,
+                self._hypervisor_rps[device]['name'],
                 device)
             traits = []
             traits.append(physnet_trait_mappings[device])
@@ -198,7 +201,7 @@ class PlacementState(object):
         for device, bw_values in self._rp_bandwidths.items():
             rp_uuid = place_utils.device_resource_provider_uuid(
                 self._driver_uuid_namespace,
-                self._agent_host,
+                self._hypervisor_rps[device]['name'],
                 device)
 
             inventories = {}

@@ -1,0 +1,23 @@
+---
+fixes:
+  - |
+    Neutron now locates the root resource provider of the resource provider
+    tree it creates by using the hypervisor name instead of the hostname.
+    These are different in rare cases only. The hypervisor name can be set
+    per physical network device in config option
+    ``resource_provider_hypervisors`` which is located in the ``[ovs]``
+    ini-section for ``ovs-agent`` and ``[sriov_nic]`` ini-section for
+    ``sriov-agent``. Hypervisor names default to ``socket.gethostname()``
+    which works out of the box with ``libvirt`` even when the ``DEFAULT.host``
+    config option is set to a non-default value. We believe this change fixes
+    `bug 696600 <https://launchpad.net/bugs/1853840>`_.
+upgrade:
+  - |
+    For users affected by `bug 696600
+    <https://launchpad.net/bugs/1853840>`_ the hypervisor name
+    now can be set per physical network device in config option
+    ``resource_provider_hypervisors`` which is located in the ``[ovs]``
+    ini-section for ``ovs-agent`` and ``[sriov_nic]`` ini-section for
+    ``sriov-agent``. Hypervisor names default to ``socket.gethostname()``
+    which works out of the box with ``libvirt`` even when the
+    ``DEFAULT.host`` config option is set to a non-default value.
