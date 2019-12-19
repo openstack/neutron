@@ -23,6 +23,7 @@ from oslo_utils import timeutils
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
 
+from neutron.common.ovn import utils as ovn_utils
 from neutron.db.models import l3  # noqa
 from neutron.db.models import ovn as ovn_models
 from neutron.db.models import securitygroup  # noqa
@@ -87,13 +88,6 @@ class UnknownResourceType(n_exc.NeutronException):
     message = 'Uknown resource type: %(resource_type)s'
 
 
-def get_revision_number(resource, resource_type):
-    """Get the resource's revision number based on its type."""
-    if resource_type in _TYPES_PRIORITY_ORDER:
-        return resource['revision_number']
-    raise UnknownResourceType(resource_type=resource_type)
-
-
 def _get_standard_attr_id(context, resource_uuid, resource_type):
     try:
         row = context.session.query(STD_ATTR_MAP[resource_type]).filter_by(
@@ -110,20 +104,19 @@ def create_initial_revision(context, resource_uuid, resource_type,
     LOG.debug('create_initial_revision uuid=%s, type=%s, rev=%s',
               resource_uuid, resource_type, revision_number)
     db_func = context.session.merge if may_exist else context.session.add
-    with db_api.CONTEXT_WRITER.using(context):
+    with context.session.begin(subtransactions=True):
         std_attr_id = _get_standard_attr_id(
             context, resource_uuid, resource_type)
         row = ovn_models.OVNRevisionNumbers(
             resource_uuid=resource_uuid, resource_type=resource_type,
             standard_attr_id=std_attr_id, revision_number=revision_number)
         db_func(row)
-        context.session.flush()
 
 
 @db_api.retry_if_session_inactive()
 def delete_revision(context, resource_uuid, resource_type):
     LOG.debug('delete_revision(%s)', resource_uuid)
-    with db_api.CONTEXT_WRITER.using(context):
+    with context.session.begin(subtransactions=True):
         row = context.session.query(ovn_models.OVNRevisionNumbers).filter_by(
             resource_uuid=resource_uuid,
             resource_type=resource_type).one_or_none()
@@ -143,7 +136,7 @@ def _ensure_revision_row_exist(context, resource, resource_type):
     # deal with objects that already existed before the sync work. I believe
     # that we can remove this method after few development cycles. Or,
     # if we decide to make a migration script as well.
-    with db_api.CONTEXT_WRITER.using(context):
+    with context.session.begin(subtransactions=True):
         if not context.session.query(ovn_models.OVNRevisionNumbers).filter_by(
                 resource_uuid=resource['id'],
                 resource_type=resource_type).one_or_none():
@@ -158,7 +151,7 @@ def _ensure_revision_row_exist(context, resource, resource_type):
 @db_api.retry_if_session_inactive()
 def get_revision_row(context, resource_uuid):
     try:
-        with db_api.CONTEXT_READER.using(context):
+        with context.session.begin(subtransactions=True):
             return context.session.query(
                 ovn_models.OVNRevisionNumbers).filter_by(
                 resource_uuid=resource_uuid).one()
@@ -168,8 +161,8 @@ def get_revision_row(context, resource_uuid):
 
 @db_api.retry_if_session_inactive()
 def bump_revision(context, resource, resource_type):
-    revision_number = get_revision_number(resource, resource_type)
-    with db_api.CONTEXT_WRITER.using(context):
+    revision_number = ovn_utils.get_revision_number(resource, resource_type)
+    with context.session.begin(subtransactions=True):
         _ensure_revision_row_exist(context, resource, resource_type)
         std_attr_id = _get_standard_attr_id(
             context, resource['id'], resource_type)
@@ -202,7 +195,7 @@ def get_inconsistent_resources(context):
                          whens=MAINTENANCE_CREATE_UPDATE_TYPE_ORDER)
     time_ = (timeutils.utcnow() -
              datetime.timedelta(seconds=INCONSISTENCIES_OLDER_THAN))
-    with db_api.CONTEXT_READER.using(context):
+    with context.session.begin(subtransactions=True):
         query = context.session.query(ovn_models.OVNRevisionNumbers).join(
             standard_attr.StandardAttribute,
             ovn_models.OVNRevisionNumbers.standard_attr_id ==
@@ -231,6 +224,6 @@ def get_deleted_resources(context):
     """
     sort_order = sa.case(value=ovn_models.OVNRevisionNumbers.resource_type,
                          whens=MAINTENANCE_DELETE_TYPE_ORDER)
-    with db_api.CONTEXT_READER.using(context):
+    with context.session.begin(subtransactions=True):
         return context.session.query(ovn_models.OVNRevisionNumbers).filter_by(
             standard_attr_id=None).order_by(sort_order).all()
