@@ -45,7 +45,8 @@ ADVSVC_CTX_POLICY = 'context_is_advsvc'
 
 # Identify the attribute used by a resource to reference another resource
 _RESOURCE_FOREIGN_KEYS = {
-    net_apidef.COLLECTION_NAME: 'network_id'
+    net_apidef.COLLECTION_NAME: 'network_id',
+    'security_groups': 'security_group_id'
 }
 
 
