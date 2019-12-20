@@ -94,7 +94,7 @@ In each of the use cases described below:
 * The examples assume the OpenStack DNS service as the external DNS.
 * A, AAAA and PTR records will be created in the DNS service.
 * Before executing any of the use cases, the user must create in the DNS
-  service under his project a DNS zone where the A and AAAA records will be
+  service under their project a DNS zone where the A and AAAA records will be
   created. For the description of the use cases below, it is assumed the zone
   ``example.org.`` was created previously.
 * The PTR records will be created in zones owned by the project specified
@@ -495,7 +495,8 @@ Note that in this use case:
 
 Following are the PTR records created for this example. Note that for
 IPv4, the value of ``ipv4_ptr_zone_prefix_size`` is 24. Also, since the zone
-for the PTR records is created in the ``service`` project, you need to use
+for the PTR records is created in the project specified in the ``[designate]``
+section in the config above, usually the ``service`` project, you need to use
 admin credentials in order to be able to view it.
 
 
@@ -516,7 +517,195 @@ Use case 3: Ports are published directly in the external DNS service
 --------------------------------------------------------------------
 
 In this case, the user is creating ports or booting instances on a network
-that is accessible externally. If the user wants to publish a port in the
+that is accessible externally. There are multiple possible scenarios here
+depending on which of the DNS extensions is enabled in the Neutron
+configuration. These extensions are described in the following in
+descending order of priority.
+
+Use case 3a: The ``subnet_dns_publish_fixed_ips`` extension
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When the ``subnet_dns_publish_fixed_ips`` extension is enabled, it is possible
+to make a selection per subnet whether DNS records should be published for
+fixed IPs that are assigned to ports from that subnet. This happens via the
+``dns_publish_fixed_ips`` attribute that this extension adds to the
+definition of the subnet resource.
+It is a boolean flag with a default value of ``False`` but it can be set
+to ``True`` when creating or updating subnets. When the flag is ``True``,
+all fixed IPs from this subnet are published in the external DNS service,
+while at the same time IPs from other subnets having the flag set to
+``False`` are not published, even if they otherwise would meet the
+criteria from the other use cases below.
+
+A typical scenario for this use case is a dual stack deployment, where a
+tenant network would be configured with both an IPv4 and an IPv6 subnet.
+The IPv4 subnet will usually be using some RFC1918 address space and being
+NATted towards the outside on the attached router, therefore the fixed IPs
+from this subnet will not be globally routed and they also should not be
+published in the DNS service. (One can still bind floating IPs to these
+fixed IPs and DNS records for those floating IPs can still be published
+as described above in use cases 1 and 2).
+
+But for the IPv6 subnet, no NAT will happen, instead the subnet will be
+configured with some globally routable prefix and thus the user will want
+to publish DNS records for fixed IPs from this subnet. This can be
+achieved by setting the ``dns_publish_fixed_ips`` attribute for the
+IPv6 subnet to ``True`` while leaving the flag set to ``False`` for
+the IPv4 subnet. Example:
+
+.. code-block:: console
+
+   $ openstack network create dualstack
+   ... output omitted ...
+   $ openstack subnet create --network dualstack dualstackv4 --subnet-range 192.0.2.0/24
+   ... output omitted ...
+   $ openstack subnet create --network dualstack dualstackv6 --protocol ipv6 --subnet-range 2001:db8:42:42::/64 --dns-publish-fixed-ip
+   ... output omitted ...
+   $ openstack zone create example.org. --email mail@example.org
+   ... output omitted ...
+   $ openstack recordset list example.org.
+   +--------------------------------------+--------------+------+--------------------------------------------------------------------+--------+--------+
+   | id                                   | name         | type | records                                                            | status | action |
+   +--------------------------------------+--------------+------+--------------------------------------------------------------------+--------+--------+
+   | 404e9846-1482-433b-8bbc-67677e587d28 | example.org. | NS   | ns1.devstack.org.                                                  | ACTIVE | NONE   |
+   | de73576a-f9c7-4892-934c-259b77ff02c0 | example.org. | SOA  | ns1.devstack.org. mail.example.org. 1575897792 3559 600 86400 3600 | ACTIVE | NONE   |
+   +--------------------------------------+--------------+------+--------------------------------------------------------------------+--------+--------+
+   $ openstack port create port1 --dns-domain example.org. --dns-name port1 --network dualstack
+   +-------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | Field                   | Value                                                                                                                                                                   |
+   +-------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | admin_state_up          | UP                                                                                                                                                                      |
+   | allowed_address_pairs   |                                                                                                                                                                         |
+   | binding_host_id         | None                                                                                                                                                                    |
+   | binding_profile         | None                                                                                                                                                                    |
+   | binding_vif_details     | None                                                                                                                                                                    |
+   | binding_vif_type        | None                                                                                                                                                                    |
+   | binding_vnic_type       | normal                                                                                                                                                                  |
+   | created_at              | 2019-12-09T13:23:52Z                                                                                                                                                    |
+   | data_plane_status       | None                                                                                                                                                                    |
+   | description             |                                                                                                                                                                         |
+   | device_id               |                                                                                                                                                                         |
+   | device_owner            |                                                                                                                                                                         |
+   | dns_assignment          | fqdn='port1.openstackgate.local.', hostname='port1', ip_address='192.0.2.100'                                                                                           |
+   |                         | fqdn='port1.openstackgate.local.', hostname='port1', ip_address='2001:db8:42:42::2a2'                                                                                   |
+   | dns_domain              | example.org.                                                                                                                                                            |
+   | dns_name                | port1                                                                                                                                                                   |
+   | extra_dhcp_opts         |                                                                                                                                                                         |
+   | fixed_ips               | ip_address='192.0.2.100', subnet_id='47cc9a39-c88b-4082-a52c-1237c2a1d479'                                                                                              |
+   |                         | ip_address='2001:db8:42:42::2a2', subnet_id='f9c04195-1000-4575-a203-3c174772617f'                                                                                      |
+   | id                      | f8bc991b-1f84-435a-a5f8-814bd8b9ae9f                                                                                                                                    |
+   | location                | cloud='devstack', project.domain_id='default', project.domain_name=, project.id='86de4dab952d48f79e625b106f7a75f7', project.name='demo', region_name='RegionOne', zone= |
+   | mac_address             | fa:16:3e:13:7a:56                                                                                                                                                       |
+   | name                    | port1                                                                                                                                                                   |
+   | network_id              | fa8118ed-b7c2-41b8-89bc-97e46f0491ac                                                                                                                                    |
+   | port_security_enabled   | True                                                                                                                                                                    |
+   | project_id              | 86de4dab952d48f79e625b106f7a75f7                                                                                                                                        |
+   | propagate_uplink_status | None                                                                                                                                                                    |
+   | qos_policy_id           | None                                                                                                                                                                    |
+   | resource_request        | None                                                                                                                                                                    |
+   | revision_number         | 1                                                                                                                                                                       |
+   | security_group_ids      | f0b02df0-a0b9-4ce8-b067-8b61a8679e9d                                                                                                                                    |
+   | status                  | DOWN                                                                                                                                                                    |
+   | tags                    |                                                                                                                                                                         |
+   | trunk_details           | None                                                                                                                                                                    |
+   | updated_at              | 2019-12-09T13:23:53Z                                                                                                                                                    |
+   +-------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   $ openstack recordset list example.org.
+   +--------------------------------------+--------------------+------+--------------------------------------------------------------------+--------+--------+
+   | id                                   | name               | type | records                                                            | status | action |
+   +--------------------------------------+--------------------+------+--------------------------------------------------------------------+--------+--------+
+   | 404e9846-1482-433b-8bbc-67677e587d28 | example.org.       | NS   | ns1.devstack.org.                                                  | ACTIVE | NONE   |
+   | de73576a-f9c7-4892-934c-259b77ff02c0 | example.org.       | SOA  | ns1.devstack.org. mail.example.org. 1575897833 3559 600 86400 3600 | ACTIVE | NONE   |
+   | 85ce74a5-7dd6-42d3-932c-c9a029dea05e | port1.example.org. | AAAA | 2001:db8:42:42::2a2                                                | ACTIVE | NONE   |
+   +--------------------------------------+--------------------+------+--------------------------------------------------------------------+--------+--------+
+
+
+Use case 3b: The ``dns_domain_ports`` extension
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the ``dns_domain for ports`` extension has been configured,
+the user can create a port specifying a non-blank value in its
+``dns_domain`` attribute. If the port is created in an externally
+accessible network, DNS records will be published for this port:
+
+.. code-block:: console
+
+   $ openstack port create --network 37aaff3a-6047-45ac-bf4f-a825e56fd2b3 --dns-name my-vm --dns-domain port-domain.org. test
+   +-------------------------+-------------------------------------------------------------------------------+
+   | Field                   | Value                                                                         |
+   +-------------------------+-------------------------------------------------------------------------------+
+   | admin_state_up          | UP                                                                            |
+   | allowed_address_pairs   |                                                                               |
+   | binding_host_id         | None                                                                          |
+   | binding_profile         | None                                                                          |
+   | binding_vif_details     | None                                                                          |
+   | binding_vif_type        | None                                                                          |
+   | binding_vnic_type       | normal                                                                        |
+   | created_at              | 2019-06-12T15:43:29Z                                                          |
+   | data_plane_status       | None                                                                          |
+   | description             |                                                                               |
+   | device_id               |                                                                               |
+   | device_owner            |                                                                               |
+   | dns_assignment          | fqdn='my-vm.example.org.', hostname='my-vm', ip_address='203.0.113.9'         |
+   |                         | fqdn='my-vm.example.org.', hostname='my-vm', ip_address='2001:db8:10::9'      |
+   | dns_domain              | port-domain.org.                                                              |
+   | dns_name                | my-vm                                                                         |
+   | extra_dhcp_opts         |                                                                               |
+   | fixed_ips               | ip_address='203.0.113.9', subnet_id='277eca5d-9869-474b-960e-6da5951d09f7'    |
+   |                         | ip_address='2001:db8:10::9', subnet_id='eab47748-3f0a-4775-a09f-b0c24bb64bc4' |
+   | id                      | 57541c27-f8a9-41f1-8dde-eb10155496e6                                          |
+   | mac_address             | fa:16:3e:55:d6:c7                                                             |
+   | name                    | test                                                                          |
+   | network_id              | 37aaff3a-6047-45ac-bf4f-a825e56fd2b3                                          |
+   | port_security_enabled   | True                                                                          |
+   | project_id              | 07b21ad4-edb6-420b-bd76-9bb4aab0d135                                          |
+   | propagate_uplink_status | None                                                                          |
+   | qos_policy_id           | None                                                                          |
+   | resource_request        | None                                                                          |
+   | revision_number         | 1                                                                             |
+   | security_group_ids      | 82227b10-d135-4bca-b41f-63c1f2286b3e                                          |
+   | status                  | DOWN                                                                          |
+   | tags                    |                                                                               |
+   | trunk_details           | None                                                                          |
+   | updated_at              | 2019-06-12T15:43:29Z                                                          |
+   +-------------------------+-------------------------------------------------------------------------------+
+
+In this case, the port's ``dns_name`` (``my-vm``) will be published in the
+``port-domain.org.`` zone, as shown here:
+
+.. code-block:: console
+
+   $ openstack recordset list port-domain.org.
+   +--------------------------------------+-------------------------+------+-----------------------------------------------------------------------+--------+--------+
+   | id                                   | name                    | type | records                                                               | status | action |
+   +--------------------------------------+-------------------------+------+-----------------------------------------------------------------------+--------+--------+
+   | 03e5a35b-d984-4d10-942a-2de8ccb9b941 | port-domain.org.        | SOA  | ns1.devstack.org. malavall.us.ibm.com. 1503272259 3549 600 86400 3600 | ACTIVE | NONE   |
+   | d2dd1dfe-531d-4fea-8c0e-f5b559942ac5 | port-domain.org.        | NS   | ns1.devstack.org.                                                     | ACTIVE | NONE   |
+   | 67a8e83d-7e3c-4fb1-9261-0481318bb7b5 | my-vm.port-domain.org.  | A    | 203.0.113.9                                                           | ACTIVE | NONE   |
+   | 5a4f671c-9969-47aa-82e1-e05754021852 | my-vm.port-domain.org.  | AAAA | 2001:db8:10::9                                                        | ACTIVE | NONE   |
+   +--------------------------------------+-------------------------+------+-----------------------------------------------------------------------+--------+--------+
+
+.. note::
+   If both the port and its network have a valid non-blank string assigned to
+   their ``dns_domain`` attributes, the port's ``dns_domain`` takes precedence
+   over the network's.
+
+.. note::
+   The name assigned to the port's ``dns_domain`` attribute must end with a
+   period (``.``).
+
+.. note::
+   In the above example, the ``port-domain.org.`` zone must be created before
+   Neutron can publish any port data to it.
+
+.. note::
+   See :ref:`config-dns-int-ext-serv-net` for detailed instructions on how
+   to create the externally accessible network.
+
+Use case 3c: The ``dns`` extension
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the user wants to publish a port in the
 external DNS service in a zone specified by the ``dns_domain`` attribute of the
 network, these are the steps to be taken:
 
@@ -684,8 +873,8 @@ an instance. Notice that:
   the potential performance impact associated with this use case.
 
 Following are the PTR records created for this example. Note that for
-IPv4, the value of ipv4_ptr_zone_prefix_size is 24. In the case of IPv6, the
-value of ipv6_ptr_zone_prefix_size is 116.
+IPv4, the value of ``ipv4_ptr_zone_prefix_size`` is 24. In the case of IPv6, the
+value of ``ipv6_ptr_zone_prefix_size`` is 116.
 
 .. code-block:: console
 
@@ -710,80 +899,6 @@ value of ipv6_ptr_zone_prefix_size is 116.
 See :ref:`config-dns-int-ext-serv-net` for detailed instructions on how
 to create the externally accessible network.
 
-Alternatively, if the ``dns_domain for ports`` extension has been configured,
-the user can create a port specifying a non-blank value in its
-``dns_domain`` attribute, as shown here:
-
-.. code-block:: console
-
-   $ openstack port create --network 37aaff3a-6047-45ac-bf4f-a825e56fd2b3 --dns-name my-vm --dns-domain port-domain.org. test
-   +-------------------------+-------------------------------------------------------------------------------+
-   | Field                   | Value                                                                         |
-   +-------------------------+-------------------------------------------------------------------------------+
-   | admin_state_up          | UP                                                                            |
-   | allowed_address_pairs   |                                                                               |
-   | binding_host_id         | None                                                                          |
-   | binding_profile         | None                                                                          |
-   | binding_vif_details     | None                                                                          |
-   | binding_vif_type        | None                                                                          |
-   | binding_vnic_type       | normal                                                                        |
-   | created_at              | 2019-06-12T15:43:29Z                                                          |
-   | data_plane_status       | None                                                                          |
-   | description             |                                                                               |
-   | device_id               |                                                                               |
-   | device_owner            |                                                                               |
-   | dns_assignment          | fqdn='my-vm.example.org.', hostname='my-vm', ip_address='203.0.113.9'         |
-   |                         | fqdn='my-vm.example.org.', hostname='my-vm', ip_address='2001:db8:10::9'      |
-   | dns_domain              | port-domain.org.                                                              |
-   | dns_name                | my-vm                                                                         |
-   | extra_dhcp_opts         |                                                                               |
-   | fixed_ips               | ip_address='203.0.113.9', subnet_id='277eca5d-9869-474b-960e-6da5951d09f7'    |
-   |                         | ip_address='2001:db8:10::9', subnet_id='eab47748-3f0a-4775-a09f-b0c24bb64bc4' |
-   | id                      | 57541c27-f8a9-41f1-8dde-eb10155496e6                                          |
-   | mac_address             | fa:16:3e:55:d6:c7                                                             |
-   | name                    | test                                                                          |
-   | network_id              | 37aaff3a-6047-45ac-bf4f-a825e56fd2b3                                          |
-   | port_security_enabled   | True                                                                          |
-   | project_id              | 07b21ad4-edb6-420b-bd76-9bb4aab0d135                                          |
-   | propagate_uplink_status | None                                                                          |
-   | qos_policy_id           | None                                                                          |
-   | resource_request        | None                                                                          |
-   | revision_number         | 1                                                                             |
-   | security_group_ids      | 82227b10-d135-4bca-b41f-63c1f2286b3e                                          |
-   | status                  | DOWN                                                                          |
-   | tags                    |                                                                               |
-   | trunk_details           | None                                                                          |
-   | updated_at              | 2019-06-12T15:43:29Z                                                          |
-   +-------------------------+-------------------------------------------------------------------------------+
-
-In this case, the port's ``dns_name`` (``my-vm``) will be published in the
-``port-domain.org.`` zone, as shown here:
-
-.. code-block:: console
-
-   $ openstack recordset list port-domain.org.
-   +--------------------------------------+-------------------------+------+-----------------------------------------------------------------------+--------+--------+
-   | id                                   | name                    | type | records                                                               | status | action |
-   +--------------------------------------+-------------------------+------+-----------------------------------------------------------------------+--------+--------+
-   | 03e5a35b-d984-4d10-942a-2de8ccb9b941 | port-domain.org.        | SOA  | ns1.devstack.org. malavall.us.ibm.com. 1503272259 3549 600 86400 3600 | ACTIVE | NONE   |
-   | d2dd1dfe-531d-4fea-8c0e-f5b559942ac5 | port-domain.org.        | NS   | ns1.devstack.org.                                                     | ACTIVE | NONE   |
-   | 67a8e83d-7e3c-4fb1-9261-0481318bb7b5 | my-vm.port-domain.org.  | A    | 203.0.113.9                                                           | ACTIVE | NONE   |
-   | 5a4f671c-9969-47aa-82e1-e05754021852 | my-vm.port-domain.org.  | AAAA | 2001:db8:10::9                                                        | ACTIVE | NONE   |
-   +--------------------------------------+-------------------------+------+-----------------------------------------------------------------------+--------+--------+
-
-.. note::
-   If both the port and its network have a valid non-blank string assigned to
-   their ``dns_domain`` attributes, the port's ``dns_domain`` takes precedence
-   over the network's.
-
-.. note::
-   The name assigned to the port's ``dns_domain`` attribute must end with a
-   period (``.``).
-
-.. note::
-   In the above example, the ``port-domain.org.`` zone must be created before
-   Neutron can publish any port data to it.
-
 .. _config-dns-performance-considerations:
 
 Performance considerations
@@ -798,10 +913,10 @@ use case.
 
 .. _config-dns-int-ext-serv-net:
 
-Configuration of the externally accessible network for use case 3
------------------------------------------------------------------
+Configuration of the externally accessible network for use cases 3b and 3c
+--------------------------------------------------------------------------
 
-In :ref:`config-dns-use-case-3`, the externally accessible network must
+For use cases 3b and 3c, the externally accessible network must
 meet the following requirements:
 
 * The network may not have attribute ``router:external`` set to ``True``.
@@ -809,6 +924,6 @@ meet the following requirements:
 * For network types VLAN, GRE, VXLAN or GENEVE, the segmentation ID must be
   outside the ranges assigned to project networks.
 
-This usually implies that this use case only works for networks specifically
-created for this purpose by an admin, it does not work for networks
-which tenants can create.
+This usually implies that these use cases only work for networks specifically
+created for this purpose by an admin, they do not work for networks
+which tenants can create on their own.

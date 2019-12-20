@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    The ``subnet-dns-publish-fixed-ip`` extension adds a new attribute to
+    the definition of the subnet resource.
+    When set to ``true`` it will allow publishing DNS records for
+    fixed IPs from that subnet independent of the restrictions described
+    in the `DNS integration with an external service
+    <https://docs.openstack.org/neutron/latest/admin/config-dns-int-ext-serv.html#configuration-of-the-externally-accessible-network-for-use-case-3>`_
+    documentation.

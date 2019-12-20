@@ -30,6 +30,7 @@ from oslo_log import log as logging
 from neutron.db import segments_db
 from neutron.objects import network as net_obj
 from neutron.objects import ports as port_obj
+from neutron.objects import subnet as subnet_obj
 from neutron.services.externaldns import driver
 
 LOG = logging.getLogger(__name__)
@@ -88,18 +89,19 @@ class DNSExtensionDriver(api.ExtensionDriver):
             request_data)
         if is_dns_domain_default:
             return
-        network = self._get_network(plugin_context, db_data['network_id'])
+        network, subnets = self._get_details(plugin_context,
+                                             db_data['network_id'])
         self._create_port_dns_record(plugin_context, request_data, db_data,
-                                     network, dns_name)
+                                     network, subnets, dns_name)
 
     def _create_port_dns_record(self, plugin_context, request_data, db_data,
-                                network, dns_name):
+                                network, subnets, dns_name):
         external_dns_domain = (request_data.get(dns_apidef.DNSDOMAIN) or
                                network.get(dns_apidef.DNSDOMAIN))
+        flag = self.external_dns_not_needed(plugin_context, network, subnets)
         current_dns_name, current_dns_domain = (
             self._calculate_current_dns_name_and_domain(
-                dns_name, external_dns_domain,
-                self.external_dns_not_needed(plugin_context, network)))
+                dns_name, external_dns_domain, flag))
 
         dns_data_obj = port_obj.PortDNS(
             plugin_context,
@@ -131,7 +133,8 @@ class DNSExtensionDriver(api.ExtensionDriver):
             return '', ''
         return dns_name, external_dns_domain
 
-    def _update_dns_db(self, plugin_context, request_data, db_data, network):
+    def _update_dns_db(self, plugin_context, request_data, db_data, network,
+                       subnets):
         dns_name = request_data.get(dns_apidef.DNSNAME)
         dns_domain = request_data.get(dns_apidef.DNSDOMAIN)
         has_fixed_ips = 'fixed_ips' in request_data
@@ -162,7 +165,8 @@ class DNSExtensionDriver(api.ExtensionDriver):
             return dns_data_db
         if dns_name or dns_domain:
             dns_data_db = self._create_port_dns_record(
-                plugin_context, request_data, db_data, network, dns_name or '')
+                plugin_context, request_data, db_data, network, subnets,
+                dns_name or '')
         return dns_data_db
 
     def _populate_previous_external_dns_data(self, dns_data_db):
@@ -206,9 +210,10 @@ class DNSExtensionDriver(api.ExtensionDriver):
             self._extend_port_dict(plugin_context.session, db_data,
                                    db_data, None)
             return
-        network = self._get_network(plugin_context, db_data['network_id'])
+        network, subnets = self._get_details(plugin_context,
+                                             db_data['network_id'])
         dns_data_db = None
-        if self.external_dns_not_needed(plugin_context, network):
+        if self.external_dns_not_needed(plugin_context, network, subnets):
             # No need to update external DNS service. Only process the port's
             # dns_name or dns_domain attributes if necessary
             if has_dns_name or has_dns_domain:
@@ -216,7 +221,7 @@ class DNSExtensionDriver(api.ExtensionDriver):
                     plugin_context, request_data, db_data)
         else:
             dns_data_db = self._update_dns_db(plugin_context, request_data,
-                                              db_data, network)
+                                              db_data, network, subnets)
         self._extend_port_dict(plugin_context.session, db_data, db_data,
                                dns_data_db)
 
@@ -247,14 +252,15 @@ class DNSExtensionDriver(api.ExtensionDriver):
         dns_data_db.create()
         return dns_data_db
 
-    def external_dns_not_needed(self, context, network):
+    def external_dns_not_needed(self, context, network, subnets):
         """Decide if ports in network need to be sent to the DNS service.
 
         :param context: plugin request context
         :param network: network dictionary
+        :param subnets: list of subnets in network
         :return: True or False
         """
-        pass
+        return False
 
     def extend_network_dict(self, session, db_data, response_data):
         response_data[dns_apidef.DNSDOMAIN] = ''
@@ -324,9 +330,11 @@ class DNSExtensionDriver(api.ExtensionDriver):
         return self._extend_port_dict(session, db_data, response_data,
                                       dns_data_db)
 
-    def _get_network(self, context, network_id):
+    def _get_details(self, context, network_id):
         plugin = directory.get_plugin()
-        return plugin.get_network(context, network_id)
+        network = plugin.get_network(context, network_id)
+        subnets = plugin.get_subnets_by_network(context, network_id)
+        return network, subnets
 
 
 class DNSExtensionDriverML2(DNSExtensionDriver):
@@ -361,10 +369,13 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
             if vlan_range[0] <= segmentation_id <= vlan_range[1]:
                 return True
 
-    def external_dns_not_needed(self, context, network):
+    def external_dns_not_needed(self, context, network, subnets):
         dns_driver = _get_dns_driver()
         if not dns_driver:
             return True
+        for subnet in subnets:
+            if subnet.get('dns_publish_fixed_ip'):
+                return False
         if network['router:external']:
             return True
         segments = segments_db.get_network_segments(context, network['id'])
@@ -424,6 +435,24 @@ def _get_dns_driver():
             driver=cfg.CONF.external_dns_driver)
 
 
+def _filter_by_subnet(context, fixed_ips):
+    subnet_filtered = []
+    filter_fixed_ips = False
+    for ip in fixed_ips:
+        # TODO(slaweq): This might be a performance issue if ports have lots
+        # of fixed_ips attached, possibly collect subnets first and do a
+        # single get_objects call instead
+        subnet = subnet_obj.Subnet.get_object(
+            context, id=ip['subnet_id'])
+        if subnet.get('dns_publish_fixed_ip'):
+            filter_fixed_ips = True
+            subnet_filtered.append(str(ip['ip_address']))
+    if filter_fixed_ips:
+        return subnet_filtered
+    else:
+        return [str(ip['ip_address']) for ip in fixed_ips]
+
+
 def _create_port_in_external_dns_service(resource, event, trigger, **kwargs):
     dns_driver = _get_dns_driver()
     if not dns_driver:
@@ -434,7 +463,7 @@ def _create_port_in_external_dns_service(resource, event, trigger, **kwargs):
         context, port_id=port['id'])
     if not (dns_data_db and dns_data_db['current_dns_name']):
         return
-    records = [ip['ip_address'] for ip in port['fixed_ips']]
+    records = _filter_by_subnet(context, port['fixed_ips'])
     _send_data_to_external_dns_service(context, dns_driver,
                                        dns_data_db['current_dns_domain'],
                                        dns_data_db['current_dns_name'],
@@ -478,8 +507,8 @@ def _update_port_in_external_dns_service(resource, event, trigger, **kwargs):
     original_port = kwargs.get('original_port')
     if not original_port:
         return
-    original_ips = [ip['ip_address'] for ip in original_port['fixed_ips']]
-    updated_ips = [ip['ip_address'] for ip in updated_port['fixed_ips']]
+    original_ips = _filter_by_subnet(context, original_port['fixed_ips'])
+    updated_ips = _filter_by_subnet(context, updated_port['fixed_ips'])
     is_dns_name_changed = (updated_port[dns_apidef.DNSNAME] !=
                            original_port[dns_apidef.DNSNAME])
     is_dns_domain_changed = (dns_apidef.DNSDOMAIN in updated_port and
@@ -518,7 +547,7 @@ def _delete_port_in_external_dns_service(resource, event,
     if dns_data_db['current_dns_name']:
         ip_allocations = port_obj.IPAllocation.get_objects(context,
                                                            port_id=port_id)
-        records = [str(alloc['ip_address']) for alloc in ip_allocations]
+        records = _filter_by_subnet(context, ip_allocations)
         _remove_data_from_external_dns_service(
             context, dns_driver, dns_data_db['current_dns_domain'],
             dns_data_db['current_dns_name'], records)

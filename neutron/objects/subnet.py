@@ -17,9 +17,11 @@ from neutron_lib.db import model_query
 from neutron_lib.objects import common_types
 from neutron_lib.utils import net as net_utils
 
+from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import and_, or_
 
+from neutron.db.models import dns as dns_models
 from neutron.db.models import segment as segment_model
 from neutron.db.models import subnet_service_type
 from neutron.db import models_v2
@@ -190,7 +192,8 @@ class SubnetServiceType(base.NeutronDbObject):
 @base.NeutronObjectRegistry.register
 class Subnet(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Add dns_publish_fixed_ip field
+    VERSION = '1.1'
 
     db_model = models_v2.Subnet
     new_facade = True
@@ -213,13 +216,15 @@ class Subnet(base.NeutronDbObject):
         'shared': obj_fields.BooleanField(nullable=True),
         'dns_nameservers': obj_fields.ListOfObjectsField('DNSNameServer',
                                                          nullable=True),
+        'dns_publish_fixed_ip': obj_fields.BooleanField(nullable=True),
         'host_routes': obj_fields.ListOfObjectsField('Route', nullable=True),
         'ipv6_ra_mode': common_types.IPV6ModeEnumField(nullable=True),
         'ipv6_address_mode': common_types.IPV6ModeEnumField(nullable=True),
         'service_types': obj_fields.ListOfStringsField(nullable=True)
     }
 
-    synthetic_fields = ['allocation_pools', 'dns_nameservers', 'host_routes',
+    synthetic_fields = ['allocation_pools', 'dns_nameservers',
+                        'dns_publish_fixed_ip', 'host_routes',
                         'service_types', 'shared']
 
     foreign_keys = {'Network': {'network_id': 'id'}}
@@ -235,11 +240,28 @@ class Subnet(base.NeutronDbObject):
         self.add_extra_filter_name('shared')
 
     def obj_load_attr(self, attrname):
+        if attrname == 'dns_publish_fixed_ip':
+            return self._load_dns_publish_fixed_ip()
         if attrname == 'shared':
             return self._load_shared()
         if attrname == 'service_types':
             return self._load_service_types()
         super(Subnet, self).obj_load_attr(attrname)
+
+    def _load_dns_publish_fixed_ip(self, db_obj=None):
+        if db_obj:
+            object_data = db_obj.get('dns_publish_fixed_ip', None)
+        else:
+            object_data = SubnetDNSPublishFixedIP.get_objects(
+                    self.obj_context,
+                    subnet_id=self.id)
+
+        dns_publish_fixed_ip = False
+        if object_data:
+            dns_publish_fixed_ip = object_data.get(
+                    'dns_publish_fixed_ip')
+        setattr(self, 'dns_publish_fixed_ip', dns_publish_fixed_ip)
+        self.obj_reset_changes(['dns_publish_fixed_ip'])
 
     def _load_shared(self, db_obj=None):
         if db_obj:
@@ -273,6 +295,7 @@ class Subnet(base.NeutronDbObject):
 
     def from_db_object(self, db_obj):
         super(Subnet, self).from_db_object(db_obj)
+        self._load_dns_publish_fixed_ip(db_obj)
         self._load_shared(db_obj)
         self._load_service_types(db_obj)
 
@@ -412,6 +435,11 @@ class Subnet(base.NeutronDbObject):
             raise ipam_exceptions.DeferIpam()
         return False
 
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):  # version 1.1 adds "dns_publish_fixed_ip"
+            primitive.pop('dns_publish_fixed_ip', None)
+
 
 @base.NeutronObjectRegistry.register
 class NetworkSubnetLock(base.NeutronDbObject):
@@ -438,3 +466,18 @@ class NetworkSubnetLock(base.NeutronDbObject):
             subnet_lock = NetworkSubnetLock(context, network_id=network_id,
                                             subnet_id=subnet_id)
             subnet_lock.create()
+
+
+@base.NeutronObjectRegistry.register
+class SubnetDNSPublishFixedIP(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = dns_models.SubnetDNSPublishFixedIP
+
+    primary_keys = ['subnet_id']
+
+    fields = {
+        'subnet_id': common_types.UUIDField(),
+        'dns_publish_fixed_ip': obj_fields.BooleanField()
+    }
