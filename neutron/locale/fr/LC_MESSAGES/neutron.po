@@ -12,11 +12,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2019-09-30 23:37+0000\n"
+"POT-Creation-Date: 2019-12-20 15:01+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-04-12 06:24+0000\n"
+"PO-Revision-Date: 2016-04-12 05:53+0000\n"
 "Last-Translator: Copied by Zanata <copied-by-zanata@zanata.org>\n"
 "Language: fr\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
@@ -733,17 +733,6 @@ msgstr ""
 "le plug-in ml2 utilisant le pilote de mécanisme linuxbridge"
 
 msgid ""
-"Enable local ARP responder if it is supported. Requires OVS 2.1 and ML2 "
-"l2population driver. Allows the switch (when supporting an overlay) to "
-"respond to an ARP request locally without performing a costly ARP broadcast "
-"into the overlay."
-msgstr ""
-"Activez le canal répondeur ARP local s'il est pris en charge. Requiert le "
-"pilote l2population OVS 2.1 et ML2. Permet au commutateur (lors de la prise "
-"en charge d'une superposition) de répondre à une demande ARP locale sans "
-"effectuer de diffusion ARP coûteuse dans le réseau Overlay."
-
-msgid ""
 "Enable services on an agent with admin_state_up False. If this option is "
 "False, when admin_state_up of an agent is turned False, services on it will "
 "be disabled. Agents with admin_state_up False are not selected for automatic "
@@ -895,10 +884,6 @@ msgstr ""
 "Echec lors de l'attente du passage de l'adresse %(address)s à l'état prêt : "
 "%(reason)s"
 
-#, python-format
-msgid "Field value %s is invalid"
-msgstr "La valeur du champs %s est non valide."
-
 msgid "Flat provider networks are disabled"
 msgstr "Les réseaux de fournisseurs centralisés sont désactivés"
 
@@ -914,18 +899,6 @@ msgstr ""
 
 msgid "Gateway is not valid on subnet"
 msgstr "La passerelle n'est pas valide sur le sous-réseau."
-
-msgid ""
-"Geneve encapsulation header size is dynamic, this value is used to calculate "
-"the maximum MTU for the driver. This is the sum of the sizes of the outer "
-"ETH + IP + UDP + GENEVE header sizes. The default size for this field is 50, "
-"which is the size of the Geneve header without any additional option headers."
-msgstr ""
-"La taille de l'en-tête d'encapsulation Geneve  est dynamique. Cette valeur "
-"est utilisée pour calculer la valeur MTU maximum du pilote. Il s'agit de la "
-"somme des tailles des en-têtes ETH + IP + UDP + GENEVE externes. La taille "
-"par défaut pour ce champ est de 50, taille de l'en-tête Geneve sans aucun en-"
-"tête d'option supplémentaire."
 
 msgid ""
 "Group (gid or name) running metadata proxy after its initialization (if "
@@ -1666,6 +1639,10 @@ msgstr "Délai d'expiration de la commande ping"
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr "Le port %(id)s ne dispose pas de l'adresse IP fixe %(address)s."
+
+#, python-format
+msgid "Port %s does not exist"
+msgstr "Le port %s est inexistant."
 
 #, python-format
 msgid ""
@@ -2498,10 +2475,6 @@ msgstr "utilisé"
 #, python-format
 msgid "ip command failed on device %(dev_name)s: %(reason)s"
 msgstr "Echec de la commande sur le périphérique %(dev_name)s : %(reason)s"
-
-#, python-format
-msgid "ip command failed: %(reason)s"
-msgstr "Échec de commande IP : %(reason)s"
 
 #, python-format
 msgid "ip link capability %(capability)s is not supported"
