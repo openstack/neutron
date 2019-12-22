@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2019-09-30 23:37+0000\n"
+"POT-Creation-Date: 2019-12-20 15:01+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -772,18 +772,6 @@ msgstr ""
 "ml2-Plug-in mithilfe eines Linuxbridge-Mechanismus-Treibers verwaltet wird"
 
 msgid ""
-"Enable local ARP responder if it is supported. Requires OVS 2.1 and ML2 "
-"l2population driver. Allows the switch (when supporting an overlay) to "
-"respond to an ARP request locally without performing a costly ARP broadcast "
-"into the overlay."
-msgstr ""
-"Aktivieren Sie den lokalen ARP-Responder, wenn dies unterstützt wird. Dies "
-"erfordert OVS 2.1 und einen ML2-l2population-Treiber. Dadurch wird es dem "
-"Switch (bei Unterstützung eines Overlay) ermöglicht, lokal auf eine ARP-"
-"Anforderung zu reagieren, ohne einen aufwändigen ARP-Broadcast in das "
-"Overlay durchzuführen."
-
-msgid ""
 "Enable local ARP responder which provides local responses instead of "
 "performing ARP broadcast into the overlay. Enabling local ARP responder is "
 "not fully compatible with the allowed-address-pairs extension."
@@ -961,18 +949,6 @@ msgstr ""
 
 msgid "Gateway is not valid on subnet"
 msgstr "Gateway ist auf Teilnetz nicht gültig"
-
-msgid ""
-"Geneve encapsulation header size is dynamic, this value is used to calculate "
-"the maximum MTU for the driver. This is the sum of the sizes of the outer "
-"ETH + IP + UDP + GENEVE header sizes. The default size for this field is 50, "
-"which is the size of the Geneve header without any additional option headers."
-msgstr ""
-"Die Größe des Geneve-Kapselungsheaders ist dynamisch. Dieser Wert wird "
-"verwendet, um den maximalen MTU-Wert für den Treiber zu berechnen.  Dies ist "
-"die Summe aus den Größen der äußeren Headergrößen für ETH + IP + UDP + "
-"GENEVE. Die Standardgröße für dieses Feld ist 50 und entspricht der Größe "
-"des Geneve-Headers ohne zusätzliche Optionsheader."
 
 msgid ""
 "Group (gid or name) running metadata proxy after its initialization (if "
@@ -1771,6 +1747,10 @@ msgstr "Port %(id)s verfügt nicht über statische IP-Adresse %(address)s"
 #, python-format
 msgid "Port %(port_id)s is not managed by this agent."
 msgstr "Der Port %(port_id)s wird nicht von diesem Agenten verwaltet."
+
+#, python-format
+msgid "Port %s does not exist"
+msgstr "Der Port %s ist nicht vorhanden."
 
 #, python-format
 msgid ""
@@ -2630,10 +2610,6 @@ msgstr "im Gebrauch"
 #, python-format
 msgid "ip command failed on device %(dev_name)s: %(reason)s"
 msgstr "IP-Befehl fehlgeschlagen auf Einheit %(dev_name)s: %(reason)s"
-
-#, python-format
-msgid "ip command failed: %(reason)s"
-msgstr "IP-Befehl fehlgeschlagen: %(reason)s"
 
 #, python-format
 msgid "ip link capability %(capability)s is not supported"

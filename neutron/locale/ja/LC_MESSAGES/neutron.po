@@ -17,7 +17,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2019-09-30 23:37+0000\n"
+"POT-Creation-Date: 2019-12-20 15:01+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -722,17 +722,6 @@ msgstr ""
 "効にできます"
 
 msgid ""
-"Enable local ARP responder if it is supported. Requires OVS 2.1 and ML2 "
-"l2population driver. Allows the switch (when supporting an overlay) to "
-"respond to an ARP request locally without performing a costly ARP broadcast "
-"into the overlay."
-msgstr ""
-"ローカルでの ARP 応答がサポートされている場合、これを有効にします。OVS 2.1 お"
-"よび ML2 l2population ドライバーが必要です。スイッチが、コストのかかる、オー"
-"バーレイへの ARP ブロードキャストを実行せずに、ARP 要求にローカルで応答するよ"
-"うにします (オーバーレイがサポートされている場合)。"
-
-msgid ""
 "Enable services on an agent with admin_state_up False. If this option is "
 "False, when admin_state_up of an agent is turned False, services on it will "
 "be disabled. Agents with admin_state_up False are not selected for automatic "
@@ -898,17 +887,6 @@ msgstr ""
 
 msgid "Gateway is not valid on subnet"
 msgstr "ゲートウェイがサブネット上で無効です"
-
-msgid ""
-"Geneve encapsulation header size is dynamic, this value is used to calculate "
-"the maximum MTU for the driver. This is the sum of the sizes of the outer "
-"ETH + IP + UDP + GENEVE header sizes. The default size for this field is 50, "
-"which is the size of the Geneve header without any additional option headers."
-msgstr ""
-"Geneve のカプセル化のヘッダーサイズは動的なため、この値を使用してドライバー"
-"の MTU を計算することができます。この値は外部の ETH、IP、UDP、GENEVE のヘッ"
-"ダーサイズの合計です。このフィールドのデフォルトのサイズは 50 であり、これは"
-"追加のオプションヘッダーを使用しない Geneve のヘッダーのサイズです。"
 
 msgid ""
 "Group (gid or name) running metadata proxy after its initialization (if "
@@ -1613,6 +1591,10 @@ msgstr "ping タイムアウト"
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr "ポート %(id)s に Fixed IP %(address)s がありません"
+
+#, python-format
+msgid "Port %s does not exist"
+msgstr "ポート %s は存在しません"
 
 #, python-format
 msgid ""
@@ -2409,10 +2391,6 @@ msgstr "使用されています"
 #, python-format
 msgid "ip command failed on device %(dev_name)s: %(reason)s"
 msgstr "ip コマンドがデバイス %(dev_name)s で失敗しました: %(reason)s"
-
-#, python-format
-msgid "ip command failed: %(reason)s"
-msgstr "IP コマンドが失敗しました: %(reason)s"
 
 #, python-format
 msgid "ip link capability %(capability)s is not supported"
