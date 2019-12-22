@@ -1097,8 +1097,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # removed in Queens when we populate all mtu attributes and
                 # enforce it's not nullable on database level
                     db_network.mtu is None):
-                db_network.mtu = self._get_network_mtu(db_network,
-                                                       validate=False)
+                db_network.mtu = self._get_network_mtu(db_network)
                 # agents should now update all ports to reflect new MTU
                 need_network_update_notify = True
 
