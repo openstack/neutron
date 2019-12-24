@@ -630,7 +630,11 @@ class UpdateACLsCommand(command.BaseCommand):
             # Delete old ACLs.
             if acl_del_objs:
                 for acl_del_obj in acl_del_objs:
-                    acl_del_obj.delete()
+                    try:
+                        acl_del_obj.delete()
+                    except AssertionError:
+                        # If we try to delete a row twice, just continue
+                        pass
 
             # Add new ACLs.
             acl_add_objs = None
