@@ -13,12 +13,10 @@
 import ctypes
 from ctypes import util as ctypes_util
 import errno
-import functools
 import os
 import socket
 
 from neutron_lib import constants
-from oslo_concurrency import lockutils
 from oslo_log import log as logging
 import pyroute2
 from pyroute2 import netlink
@@ -48,25 +46,6 @@ def _get_cdll():
     if not _CDLL:
         _CDLL = ctypes.CDLL(ctypes_util.find_library('c'), use_errno=True)
     return _CDLL
-
-
-@lockutils.synchronized("privileged-ip-lib")
-# NOTE(slaweq): Because of issue with pyroute2.NetNS objects running in threads
-# we need to lock this function to workaround this issue.
-# For details please check https://bugs.launchpad.net/neutron/+bug/1811515
-def _sync(input_func):
-    # NOTE(ralonsoh): this is needed because PY2 functools.update_wrapper do
-    # not handle correctly partial functions (nested decorators). This could be
-    # removed once we abandon support for PY2.
-    if six.PY2 and isinstance(input_func, functools.partial):
-        for asig in functools.WRAPPER_ASSIGNMENTS:
-            setattr(input_func, asig, '')
-
-    @six.wraps(input_func)
-    def sync_inner(*args, **kwargs):
-        return input_func(*args, **kwargs)
-
-    return sync_inner
 
 
 def _get_scope_name(scope):
@@ -151,7 +130,6 @@ def _make_route_dict(destination, nexthop, device, scope):
             'scope': scope}
 
 
-@_sync
 @privileged.default.entrypoint
 def get_routing_table(ip_version, namespace=None):
     """Return a list of dictionaries, each representing a route.
@@ -211,7 +189,6 @@ def get_iproute(namespace):
         return pyroute2.IPRoute()
 
 
-@_sync
 @privileged.default.entrypoint
 def open_namespace(namespace):
     """Open namespace to test if the namespace is ready to be manipulated"""
@@ -309,7 +286,6 @@ def _run_iproute_addr(command, device, namespace, **kwargs):
         raise
 
 
-@_sync
 @privileged.default.entrypoint
 def add_ip_address(ip_version, ip, prefixlen, device, namespace, scope,
                    broadcast=None):
@@ -329,7 +305,6 @@ def add_ip_address(ip_version, ip, prefixlen, device, namespace, scope,
         raise
 
 
-@_sync
 @privileged.default.entrypoint
 def delete_ip_address(ip_version, ip, prefixlen, device, namespace):
     family = _IP_VERSION_FAMILY_MAP[ip_version]
@@ -350,7 +325,6 @@ def delete_ip_address(ip_version, ip, prefixlen, device, namespace):
         raise
 
 
-@_sync
 @privileged.default.entrypoint
 def flush_ip_addresses(ip_version, device, namespace):
     family = _IP_VERSION_FAMILY_MAP[ip_version]
@@ -364,7 +338,6 @@ def flush_ip_addresses(ip_version, device, namespace):
         raise
 
 
-@_sync
 @privileged.default.entrypoint
 def create_interface(ifname, namespace, kind, **kwargs):
     ifname = ifname[:constants.DEVICE_NAME_MAX_LEN]
@@ -385,13 +358,11 @@ def create_interface(ifname, namespace, kind, **kwargs):
         raise
 
 
-@_sync
 @privileged.default.entrypoint
 def delete_interface(ifname, namespace, **kwargs):
     _run_iproute_link("del", ifname, namespace, **kwargs)
 
 
-@_sync
 @privileged.default.entrypoint
 def interface_exists(ifname, namespace):
     try:
@@ -403,7 +374,6 @@ def interface_exists(ifname, namespace):
         raise
 
 
-@_sync
 @privileged.default.entrypoint
 def set_link_flags(device, namespace, flags):
     link = _run_iproute_link("get", device, namespace)[0]
@@ -411,13 +381,11 @@ def set_link_flags(device, namespace, flags):
     return _run_iproute_link("set", device, namespace, flags=new_flags)
 
 
-@_sync
 @privileged.default.entrypoint
 def set_link_attribute(device, namespace, **attributes):
     return _run_iproute_link("set", device, namespace, **attributes)
 
 
-@_sync
 @privileged.default.entrypoint
 def get_link_attributes(device, namespace):
     link = _run_iproute_link("get", device, namespace)[0]
@@ -434,7 +402,6 @@ def get_link_attributes(device, namespace):
     }
 
 
-@_sync
 @privileged.default.entrypoint
 def add_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
                     **kwargs):
@@ -456,7 +423,6 @@ def add_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
                        **kwargs)
 
 
-@_sync
 @privileged.default.entrypoint
 def delete_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
                        **kwargs):
@@ -483,7 +449,6 @@ def delete_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
         raise
 
 
-@_sync
 @privileged.default.entrypoint
 def dump_neigh_entries(ip_version, device, namespace, **kwargs):
     """Dump all neighbour entries.
@@ -574,7 +539,6 @@ def make_serializable(value):
     return _ensure_string(value)
 
 
-@_sync
 @privileged.default.entrypoint
 def get_link_devices(namespace, **kwargs):
     """List interfaces in a namespace
@@ -605,7 +569,6 @@ def get_device_names(namespace, **kwargs):
     return device_names
 
 
-@_sync
 @privileged.default.entrypoint
 def get_ip_addresses(namespace, **kwargs):
     """List of IP addresses in a namespace
@@ -621,7 +584,6 @@ def get_ip_addresses(namespace, **kwargs):
         raise
 
 
-@_sync
 @privileged.default.entrypoint
 def list_ip_rules(namespace, ip_version, match=None, **kwargs):
     """List all IP rules"""
@@ -642,7 +604,6 @@ def list_ip_rules(namespace, ip_version, match=None, **kwargs):
         raise
 
 
-@_sync
 @privileged.default.entrypoint
 def add_ip_rule(namespace, **kwargs):
     """Add a new IP rule"""
@@ -659,7 +620,6 @@ def add_ip_rule(namespace, **kwargs):
         raise
 
 
-@_sync
 @privileged.default.entrypoint
 def delete_ip_rule(namespace, **kwargs):
     """Delete an IP rule"""
@@ -708,7 +668,6 @@ def _make_pyroute2_route_args(namespace, ip_version, cidr, device, via, table,
     return args
 
 
-@_sync
 @privileged.default.entrypoint
 def add_ip_route(namespace, cidr, ip_version, device=None, via=None,
                  table=None, metric=None, scope=None, **kwargs):
@@ -725,7 +684,6 @@ def add_ip_route(namespace, cidr, ip_version, device=None, via=None,
         raise
 
 
-@_sync
 @privileged.default.entrypoint
 def list_ip_routes(namespace, ip_version, device=None, table=None, **kwargs):
     """List IP routes"""
@@ -740,7 +698,6 @@ def list_ip_routes(namespace, ip_version, device=None, table=None, **kwargs):
         raise
 
 
-@_sync
 @privileged.default.entrypoint
 def delete_ip_route(namespace, cidr, ip_version, device=None, via=None,
                     table=None, scope=None, **kwargs):
