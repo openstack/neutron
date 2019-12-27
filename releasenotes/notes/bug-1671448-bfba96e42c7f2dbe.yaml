@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    `1671448 <https://bugs.launchpad.net/neutron/+bug/1671448>`_
+    Access for Neutron quotas now governed using standard configurable
+    RBAC policies: 'get_quota', 'update_quota',  'delete_quota'
