@@ -90,10 +90,13 @@ class TagPlugin(tagging.TagPluginBase):
                         if tag_db.tag in tags_removed
                     ]
                 )
-            for tag in tags_added:
-                tag_obj.Tag(context, standard_attr_id=res.standard_attr_id,
-                            tag=tag).create()
+            self.add_tags(context, res.standard_attr_id, tags_added)
         return body
+
+    def add_tags(self, context, standard_attr_id, tags):
+        for tag in tags:
+            tag_obj.Tag(context, standard_attr_id=standard_attr_id,
+                        tag=tag).create()
 
     @log_helpers.log_method_call
     def update_tag(self, context, resource, resource_id, tag):
