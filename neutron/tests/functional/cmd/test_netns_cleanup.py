@@ -15,6 +15,7 @@
 
 import os
 
+import eventlet
 import mock
 from neutron_lib import constants as n_const
 
@@ -71,10 +72,19 @@ class NetnsCleanupTest(base.BaseSudoTestCase):
         # killed during cleanup
         procs_launched = self._launch_processes([l3_namespace, dhcp_namespace])
         self.assertIsNot(procs_launched, 0)
-        common_utils.wait_until_true(
-            lambda: self._get_num_spawned_procs() == procs_launched,
-            timeout=15,
-            exception=Exception("Didn't spawn expected number of processes"))
+        try:
+            common_utils.wait_until_true(
+                lambda: self._get_num_spawned_procs() == procs_launched,
+                timeout=15)
+        except eventlet.Timeout:
+            num_spawned_procs = self._get_num_spawned_procs()
+            err_str = ("Expected number/spawned number: {0}/{1}\nProcess "
+                       "information:\n".format(num_spawned_procs,
+                                               procs_launched))
+            cmd = ['ps', '-f', '-u', 'root']
+            err_str += utils.execute(cmd, run_as_root=True)
+
+            raise Exception(err_str)
 
         netns_cleanup.cleanup_network_namespaces(self.conf)
 
