@@ -1752,7 +1752,8 @@ class OVNClient(object):
             if option in ovn_const.GLOBAL_DHCP_OPTS_BLACKLIST[ip_version]:
                 # This option is not allowed to be set with a global setting
                 LOG.debug('DHCP option %s is not permitted to be set in '
-                          'global options. This option will be ignored.')
+                          'global options. This option will be ignored.',
+                          option)
                 continue
             # If the value is null (i.e. config ntp_server:), treat it as
             # a request to remove the option
