@@ -1091,12 +1091,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # relationship can be updated.
             context.session.expire(db_network)
 
-            if (mtuw_apidef.MTU in net_data or
-                # NOTE(ihrachys) mtu may be null for existing networks,
-                # calculate and update it as needed; the conditional can be
-                # removed in Queens when we populate all mtu attributes and
-                # enforce it's not nullable on database level
-                    db_network.mtu is None):
+            if mtuw_apidef.MTU in net_data:
                 db_network.mtu = self._get_network_mtu(db_network)
                 # agents should now update all ports to reflect new MTU
                 need_network_update_notify = True
