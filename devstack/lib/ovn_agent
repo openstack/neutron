@@ -38,11 +38,17 @@ OVS_REPO_NAME=$(basename ${OVS_REPO} | cut -f1 -d'.')
 OVS_REPO_NAME=${OVS_REPO_NAME:-ovs}
 OVS_BRANCH=${OVS_BRANCH:-master}
 
+if is_service_enabled tls-proxy; then
+    OVN_PROTO=ssl
+else
+    OVN_PROTO=tcp
+fi
+
 # How to connect to ovsdb-server hosting the OVN SB database.
-OVN_SB_REMOTE=${OVN_SB_REMOTE:-tcp:$SERVICE_HOST:6642}
+OVN_SB_REMOTE=${OVN_SB_REMOTE:-$OVN_PROTO:$SERVICE_HOST:6642}
 
 # How to connect to ovsdb-server hosting the OVN NB database
-OVN_NB_REMOTE=${OVN_NB_REMOTE:-tcp:$SERVICE_HOST:6641}
+OVN_NB_REMOTE=${OVN_NB_REMOTE:-$OVN_PROTO:$SERVICE_HOST:6641}
 
 # ml2/config for neutron_sync_mode
 OVN_NEUTRON_SYNC_MODE=${OVN_NEUTRON_SYNC_MODE:-log}
@@ -495,6 +501,14 @@ function configure_ovn_plugin {
         populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_geneve max_header_size=$OVN_GENEVE_OVERHEAD
         populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_nb_connection="$OVN_NB_REMOTE"
         populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_sb_connection="$OVN_SB_REMOTE"
+        if is_service_enabled tls-proxy; then
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_sb_ca_cert="$INT_CA_DIR/ca-chain.pem"
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_sb_certificate="$INT_CA_DIR/$DEVSTACK_CERT_NAME.crt"
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_sb_private_key="$INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key"
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_nb_ca_cert="$INT_CA_DIR/ca-chain.pem"
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_nb_certificate="$INT_CA_DIR/$DEVSTACK_CERT_NAME.crt"
+            populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_nb_private_key="$INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key"
+        fi
         populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn neutron_sync_mode="$OVN_NEUTRON_SYNC_MODE"
         populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_l3_scheduler="$OVN_L3_SCHEDULER"
         populate_ml2_config /$Q_PLUGIN_CONF_FILE securitygroup enable_security_group="$Q_USE_SECGROUP"
@@ -553,6 +567,14 @@ function configure_ovn {
         iniset $OVN_META_CONF DEFAULT state_path $NEUTRON_STATE_PATH
         iniset $OVN_META_CONF ovs ovsdb_connection unix:$OVS_RUNDIR/db.sock
         iniset $OVN_META_CONF ovn ovn_sb_connection $OVN_SB_REMOTE
+        if is_service_enabled tls-proxy; then
+            iniset $OVN_META_CONF ovn \
+                ovn_sb_ca_cert $INT_CA_DIR/ca-chain.pem
+            iniset $OVN_META_CONF ovn \
+                ovn_sb_certificate $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt
+            iniset $OVN_META_CONF ovn \
+                ovn_sb_private_key $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key
+        fi
     fi
 }
 
@@ -601,6 +623,12 @@ function _start_ovs {
         _run_process ovsdb-server "$dbcmd"
 
         echo "Configuring OVSDB"
+        if is_service_enabled tls-proxy; then
+            ovs-vsctl --no-wait set-ssl \
+                $INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key \
+                $INT_CA_DIR/$DEVSTACK_CERT_NAME.crt \
+                $INT_CA_DIR/ca-chain.pem
+        fi
         ovs-vsctl --no-wait set open_vswitch . system-type="devstack"
         ovs-vsctl --no-wait set open_vswitch . external-ids:system-id="$OVN_UUID"
         ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-remote="$OVN_SB_REMOTE"
@@ -672,12 +700,24 @@ function start_ovn {
     fi
 
     if is_service_enabled ovn-northd ; then
-        local cmd="/bin/bash $SCRIPTDIR/ovn-ctl --no-monitor start_northd"
+        if is_service_enabled tls-proxy; then
+            local tls_args="\
+                --ovn-nb-db-ssl-ca-cert=$INT_CA_DIR/ca-chain.pem \
+                --ovn-nb-db-ssl-cert=$INT_CA_DIR/$DEVSTACK_CERT_NAME.crt \
+                --ovn-nb-db-ssl-key=$INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key \
+                --ovn-sb-db-ssl-ca-cert=$INT_CA_DIR/ca-chain.pem \
+                --ovn-sb-db-ssl-cert=$INT_CA_DIR/$DEVSTACK_CERT_NAME.crt \
+                --ovn-sb-db-ssl-key=$INT_CA_DIR/private/$DEVSTACK_CERT_NAME.key \
+                "
+        else
+            local tls_args=""
+        fi
+        local cmd="/bin/bash $SCRIPTDIR/ovn-ctl --no-monitor $tls_args start_northd"
         local stop_cmd="/bin/bash $SCRIPTDIR/ovn-ctl stop_northd"
 
         _run_process ovn-northd "$cmd" "$stop_cmd"
-        ovn-nbctl --db=unix:$OVS_RUNDIR/ovnnb_db.sock set-connection ptcp:6641:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
-        ovn-sbctl --db=unix:$OVS_RUNDIR/ovnsb_db.sock set-connection ptcp:6642:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
+        ovn-nbctl --db=unix:$OVS_RUNDIR/ovnnb_db.sock set-connection p${OVN_PROTO}:6641:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
+        ovn-sbctl --db=unix:$OVS_RUNDIR/ovnsb_db.sock set-connection p${OVN_PROTO}:6642:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
         sudo ovs-appctl -t $OVS_RUNDIR/ovnnb_db.ctl vlog/set console:off syslog:$OVN_DBS_LOG_LEVEL file:$OVN_DBS_LOG_LEVEL
         sudo ovs-appctl -t $OVS_RUNDIR/ovnsb_db.ctl vlog/set console:off syslog:$OVN_DBS_LOG_LEVEL file:$OVN_DBS_LOG_LEVEL
     fi

@@ -117,6 +117,7 @@
         ADVANCED_INSTANCE_TYPE: ds512M
         ADVANCED_INSTANCE_USER: ubuntu
         BUILD_TIMEOUT: 784
+        ENABLE_TLS: True
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron
         neutron-tempest-plugin: https://opendev.org/openstack/neutron-tempest-plugin
@@ -152,6 +153,7 @@
         s-container: false
         s-object: false
         s-proxy: false
+        tls-proxy: true
     group-vars:
       subnode:
         devstack_services:
@@ -170,6 +172,7 @@
           q-meta: false
           q-metering: false
           q-ovn-metadata-agent: true
+          tls-proxy: true
         devstack_localrc:
           Q_AGENT: ovn
           Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
@@ -179,6 +182,7 @@
           ENABLE_CHASSIS_AS_GW: false
           OVN_DBS_LOG_LEVEL: dbg
           USE_PYTHON3: True
+          ENABLE_TLS: True
 
 
 - job:
