@@ -45,7 +45,7 @@
             irrelevant-files: *irrelevant-files
         - tempest-slow-py3:
             irrelevant-files: *irrelevant-files
-        #- neutron-ovn-tempest-ovs-release
+        - neutron-ovn-tempest-ovs-release
         - networking-midonet-tempest-aio-ml2-centos-7:
             voting: false
             irrelevant-files: *irrelevant-files
@@ -87,7 +87,7 @@
             irrelevant-files: *irrelevant-files
         - tempest-ipv6-only:
             irrelevant-files: *irrelevant-files
-       #- neutron-ovn-tempest-ovs-release
+        - neutron-ovn-tempest-ovs-release
        #- neutron-ovn-rally-task
        #- neutron-ovn-tripleo-ci-centos-7-containers-multinode
 
