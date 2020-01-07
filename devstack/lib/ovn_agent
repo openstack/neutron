@@ -26,12 +26,6 @@ source $TOP_DIR/lib/neutron_plugins/openvswitch_agent
 # Defaults
 # --------
 
-# TODO(lucasagomes): Remove this after the networking-ovn code is
-# merged into Neutron
-# networking-ovn neutron driver
-NETWORKING_OVN_REPO=${NETWORKING_OVN_REPO:-${GIT_BASE}/openstack/networking-ovn.git}
-NETWORKING_OVN_BRANCH=${NETWORKING_OVN_BRANCH:-$TARGET_BRANCH}
-
 # Set variables for building OVN from source
 OVN_REPO=${OVN_REPO:-https://github.com/ovn-org/ovn.git}
 OVN_REPO_NAME=$(basename ${OVN_REPO} | cut -f1 -d'.')
@@ -84,7 +78,7 @@ OVN_GENEVE_OVERHEAD=${OVN_GENEVE_OVERHEAD:-38}
 # The log level of the OVN databases (north and south)
 OVN_DBS_LOG_LEVEL=${OVN_DBS_LOG_LEVEL:-info}
 
-OVN_META_CONF=$NEUTRON_CONF_DIR/networking_ovn_metadata_agent.ini
+OVN_META_CONF=$NEUTRON_CONF_DIR/neutron_ovn_metadata_agent.ini
 
 OVS_PREFIX=/usr/local
 OVS_SBINDIR=$OVS_PREFIX/sbin
@@ -99,11 +93,8 @@ OVN_SHAREDIR=$OVS_PREFIX/share/ovn
 OVN_SCRIPTDIR=$OVN_SHAREDIR/scripts
 OVN_RUNDIR=$OVS_PREFIX/var/run/ovn
 
-# TODO(lucasagomes): These paths will change once the networking-ovn
-# code is merged into Neutron
-NETWORKING_OVN_BIN_DIR=$(get_python_exec_prefix)
-NETWORKING_OVN_METADATA_BINARY="networking-ovn-metadata-agent"
-NETWORKING_OVN_DIR=$DEST/networking-ovn
+NEUTRON_OVN_BIN_DIR=$(get_python_exec_prefix)
+NEUTRON_OVN_METADATA_BINARY="neutron-ovn-metadata-agent"
 
 
 # Libs from source
@@ -125,9 +116,7 @@ Q_ML2_PLUGIN_TYPE_DRIVERS=${Q_ML2_PLUGIN_TYPE_DRIVERS:-local,flat,vlan,geneve}
 Q_ML2_TENANT_NETWORK_TYPE=${Q_ML2_TENANT_NETWORK_TYPE:-"geneve"}
 Q_ML2_PLUGIN_GENEVE_TYPE_OPTIONS=${Q_ML2_PLUGIN_GENEVE_TYPE_OPTIONS:-"vni_ranges=1:65536"}
 Q_ML2_PLUGIN_EXT_DRIVERS=${Q_ML2_PLUGIN_EXT_DRIVERS:-port_security,dns}
-# TODO(lucasagomes): Modify this after the networking-ovn code is
-# merged into Neutron
-ML2_L3_PLUGIN="networking_ovn.l3.l3_ovn.OVNL3RouterPlugin,trunk"
+ML2_L3_PLUGIN="ovn-router,trunk"
 
 
 # Utility Functions
@@ -473,11 +462,6 @@ function install_ovn {
         setup_dev_lib "ovsdbapp"
     fi
 
-    # TODO(lucasagomes): Remove this after the networking-ovn code is
-    # merged into Neutron
-    git_clone $NETWORKING_OVN_REPO $NETWORKING_OVN_DIR $NETWORKING_OVN_BRANCH
-    setup_develop $NETWORKING_OVN_DIR
-
     # Install ovs python module from ovs source.
     if [[ "$OVN_INSTALL_OVS_PYTHON_MODULE" == "True" ]]; then
         sudo pip uninstall -y ovs
@@ -506,7 +490,7 @@ function configure_ovn_plugin {
         populate_ml2_config /$Q_PLUGIN_CONF_FILE securitygroup enable_security_group="$Q_USE_SECGROUP"
         inicomment /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver
 
-        if is_service_enabled networking-ovn-metadata-agent; then
+        if is_service_enabled neutron-ovn-metadata-agent; then
             populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_metadata_enabled=True
         else
             populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_metadata_enabled=False
@@ -525,7 +509,7 @@ function configure_ovn_plugin {
     fi
 
     if is_service_enabled n-api-meta ; then
-        if is_service_enabled networking-ovn-metadata-agent ; then
+        if is_service_enabled neutron-ovn-metadata-agent ; then
             iniset $NOVA_CONF neutron service_metadata_proxy True
         fi
     fi
@@ -544,13 +528,13 @@ function configure_ovn {
     fi
 
     # Metadata
-    if is_service_enabled networking-ovn-metadata-agent && is_service_enabled ovn-controller; then
+    if is_service_enabled neutron-ovn-metadata-agent && is_service_enabled ovn-controller; then
         sudo install -d -o $STACK_USER $NEUTRON_CONF_DIR
 
-        mkdir -p $NETWORKING_OVN_DIR/etc/neutron/plugins/ml2
-        (cd $NETWORKING_OVN_DIR && exec ./tools/generate_config_file_samples.sh)
+        mkdir -p $NEUTRON_DIR/etc/neutron/plugins/ml2
+        (cd $NEUTRON_DIR && exec ./tools/generate_config_file_samples.sh)
 
-        cp $NETWORKING_OVN_DIR/etc/networking_ovn_metadata_agent.ini.sample $OVN_META_CONF
+        cp $NEUTRON_DIR/etc/neutron_ovn_metadata_agent.ini.sample $OVN_META_CONF
         configure_root_helper_options $OVN_META_CONF
 
         iniset $OVN_META_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
@@ -661,8 +645,8 @@ function _start_ovn_services {
     if is_service_enabled ovn-controller-vtep ; then
         _start_process "devstack@ovn-controller-vtep.service"
     fi
-    if is_service_enabled networking-ovn-metadata-agent; then
-        _start_process "devstack@networking-ovn-metadata-agent.service"
+    if is_service_enabled neutron-ovn-metadata-agent; then
+        _start_process "devstack@neutron-ovn-metadata-agent.service"
     fi
 }
 
@@ -701,8 +685,8 @@ function start_ovn {
         _run_process ovn-controller-vtep "$cmd" "" "$STACK_USER" "root"
     fi
 
-    if is_service_enabled networking-ovn-metadata-agent; then
-        run_process networking-ovn-metadata-agent "$NETWORKING_OVN_BIN_DIR/$NETWORKING_OVN_METADATA_BINARY --config-file $OVN_META_CONF"
+    if is_service_enabled neutron-ovn-metadata-agent; then
+        run_process neutron-ovn-metadata-agent "$NEUTRON_OVN_BIN_DIR/$NEUTRON_OVN_METADATA_BINARY --config-file $OVN_META_CONF"
         # Format logging
         setup_logging $OVN_META_CONF
     fi
@@ -735,9 +719,9 @@ function _stop_ovs_dp {
 }
 
 function stop_ovn {
-    if is_service_enabled networking-ovn-metadata-agent; then
+    if is_service_enabled neutron-ovn-metadata-agent; then
         sudo pkill -9 -f haproxy || :
-        stop_process networking-ovn-metadata-agent
+        stop_process neutron-ovn-metadata-agent
     fi
     if is_service_enabled ovn-controller-vtep ; then
         stop_process ovn-controller-vtep
