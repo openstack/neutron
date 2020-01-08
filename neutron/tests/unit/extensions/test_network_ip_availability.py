@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import netaddr
 from neutron_lib import constants
 
 import neutron.api.extensions as api_ext
@@ -215,9 +216,11 @@ class TestNetworkIPAvailabilityAPI(
                 self.assertEqual(0, len(response[IP_AVAILS_KEY]))
 
     def test_usages_query_ip_version_v6(self):
+        cidr_ipv6 = '2001:db8:1002:51::/64'
+        cidr_ipv6_net = netaddr.IPNetwork(cidr_ipv6)
         with self.network() as net:
             with self.subnet(
-                    network=net, cidr='2607:f0d0:1002:51::/64',
+                    network=net, cidr=cidr_ipv6,
                     ip_version=constants.IP_VERSION_6,
                     ipv6_address_mode=constants.DHCPV6_STATELESS):
                 # Get IPv6
@@ -227,7 +230,7 @@ class TestNetworkIPAvailabilityAPI(
                                             request.get_response(self.ext_api))
                 self.assertEqual(1, len(response[IP_AVAILS_KEY]))
                 self._validate_from_availabilities(
-                        response[IP_AVAILS_KEY], net, 0, 18446744073709551614)
+                    response[IP_AVAILS_KEY], net, 0, cidr_ipv6_net.size - 1)
 
                 # Get IPv4 should return empty array
                 params = 'ip_version=%s' % constants.IP_VERSION_4
@@ -237,9 +240,11 @@ class TestNetworkIPAvailabilityAPI(
                 self.assertEqual(0, len(response[IP_AVAILS_KEY]))
 
     def test_usages_ports_consumed_v6(self):
+        cidr_ipv6 = '2001:db8:1002:51::/64'
+        cidr_ipv6_net = netaddr.IPNetwork(cidr_ipv6)
         with self.network() as net:
             with self.subnet(
-                    network=net, cidr='2607:f0d0:1002:51::/64',
+                    network=net, cidr=cidr_ipv6,
                     ip_version=constants.IP_VERSION_6,
                     ipv6_address_mode=constants.DHCPV6_STATELESS) as subnet:
                 request = self.new_list_request(API_RESOURCE)
@@ -252,7 +257,7 @@ class TestNetworkIPAvailabilityAPI(
 
                     self._validate_from_availabilities(response[IP_AVAILS_KEY],
                                                        net, 3,
-                                                       18446744073709551614)
+                                                       cidr_ipv6_net.size - 1)
 
     def test_usages_query_network_id(self):
         with self.network() as net:
@@ -345,14 +350,16 @@ class TestNetworkIPAvailabilityAPI(
 
     def test_usages_multi_net_multi_subnet_46(self):
         # Setup mixed v4/v6 networks with IPs consumed on each
+        cidr_ipv6 = '2001:db8:1003:52::/64'
+        cidr_ipv6_net = netaddr.IPNetwork(cidr_ipv6)
         with self.network(name='net-v6-1') as net_v6_1, \
                 self.network(name='net-v6-2') as net_v6_2, \
                 self.network(name='net-v4-1') as net_v4_1, \
                 self.network(name='net-v4-2') as net_v4_2:
-            with self.subnet(network=net_v6_1, cidr='2607:f0d0:1002:51::/64',
+            with self.subnet(network=net_v6_1, cidr='2001:db8:1002:51::/64',
                              ip_version=constants.IP_VERSION_6) as s61, \
                     self.subnet(network=net_v6_2,
-                                cidr='2607:f0d0:1003:52::/64',
+                                cidr=cidr_ipv6,
                                 ip_version=constants.IP_VERSION_6) as s62, \
                     self.subnet(network=net_v4_1, cidr='10.0.0.0/24') as s41, \
                     self.subnet(network=net_v4_2, cidr='10.0.1.0/24') as s42:
@@ -367,9 +374,9 @@ class TestNetworkIPAvailabilityAPI(
                         self.fmt, request.get_response(self.ext_api))
                     avails_list = response[IP_AVAILS_KEY]
                     self._validate_from_availabilities(
-                            avails_list, net_v6_1, 1, 18446744073709551614)
+                            avails_list, net_v6_1, 1, cidr_ipv6_net.size - 1)
                     self._validate_from_availabilities(
-                            avails_list, net_v6_2, 2, 18446744073709551614)
+                            avails_list, net_v6_2, 2, cidr_ipv6_net.size - 1)
                     self._validate_from_availabilities(
                             avails_list, net_v4_1, 1, 253)
                     self._validate_from_availabilities(
@@ -397,6 +404,6 @@ class TestNetworkIPAvailabilityAPI(
                         self.fmt, request.get_response(self.ext_api))
                     avails_list = response[IP_AVAILS_KEY]
                     self._validate_from_availabilities(
-                            avails_list, net_v6_2, 2, 18446744073709551614)
+                            avails_list, net_v6_2, 2, cidr_ipv6_net.size - 1)
                     self._validate_from_availabilities(
                             avails_list, net_v4_2, 2, 253)

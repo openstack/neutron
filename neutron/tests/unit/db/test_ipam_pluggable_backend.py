@@ -406,7 +406,9 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         mocks = self._prepare_mocks_with_pool_mock(pool_mock)
         cfg.CONF.set_override('ipv6_pd_enabled', True)
         cidr = constants.PROVISIONAL_IPV6_PD_PREFIX
-        allocation_pools = [netaddr.IPRange('::2', '::ffff:ffff:ffff:ffff')]
+        cidr_network = netaddr.IPNetwork(cidr)
+        allocation_pools = [netaddr.IPRange(cidr_network.ip + 1,
+                                            cidr_network.last)]
         with self.subnet(cidr=None, ip_version=constants.IP_VERSION_6,
                          subnetpool_id=constants.IPV6_PD_POOL_ID,
                          ipv6_ra_mode=constants.IPV6_SLAAC,
