@@ -41,6 +41,7 @@ from neutron.extensions import securitygroup as ext_sg
 from neutron.objects import base as base_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import securitygroup as sg_obj
+from neutron import quota
 
 
 @resource_extend.has_resource_extenders
@@ -108,6 +109,12 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                 name=s['name'], is_default=default_sg)
             sg.create()
 
+            delta = len(ext_sg.sg_supported_ethertypes)
+            delta = delta * 2 if default_sg else delta
+            reservation = quota.QUOTAS.make_reservation(
+                context, tenant_id, {'security_group_rule': delta},
+                self)
+
             for ethertype in ext_sg.sg_supported_ethertypes:
                 if default_sg:
                     # Allow intercommunication
@@ -126,6 +133,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                 egress_rule.create()
                 sg.rules.append(egress_rule)
             sg.obj_reset_changes(['rules'])
+
+            quota.QUOTAS.commit_reservation(context,
+                                            reservation.reservation_id)
 
             # fetch sg from db to load the sg rules with sg model.
             sg = sg_obj.SecurityGroup.get_object(context, id=sg.id)

@@ -26,6 +26,7 @@ import testtools
 from neutron.db import common_db_mixin
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup
+from neutron import quota
 from neutron.services.revisions import revision_plugin
 from neutron.tests.unit import testlib_api
 
@@ -73,6 +74,10 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         self.setup_coreplugin(core_plugin=DB_PLUGIN_KLASS)
         self.ctx = context.get_admin_context()
         self.mixin = SecurityGroupDbMixinImpl()
+        make_res = mock.patch.object(quota.QuotaEngine, 'make_reservation')
+        self.mock_quota_make_res = make_res.start()
+        commit_res = mock.patch.object(quota.QuotaEngine, 'commit_reservation')
+        self.mock_quota_commit_res = commit_res.start()
 
     def test_create_security_group_conflict(self):
         with mock.patch.object(registry, "publish") as mock_publish:
