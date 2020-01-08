@@ -342,3 +342,6 @@ class ClientFixture(fixtures.Fixture):
         self.addCleanup(
             _safe_method(self.client.delete_network_log), net_log['log']['id'])
         return net_log
+
+    def update_quota(self, project_id, tracked_resource, quota):
+        self._update_resource('quota', project_id, {tracked_resource: quota})
