@@ -25,6 +25,7 @@
    admin/index
    configuration/index
    cli/index
+   ovn/index
    reference/rest-api
    feature_classification/index
    contributor/index

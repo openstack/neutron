@@ -61,6 +61,7 @@ the developer guide includes information about Neutron testing infrastructure.
 
    effective_neutron
    development_environment
+   ovn_vagrant/index
    contribute
    neutron_api
    client_command_extensions

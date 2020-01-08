@@ -13,6 +13,7 @@ Networking service Installation Guide
    install-obs.rst
    install-rdo.rst
    install-ubuntu.rst
+   ovn/index.rst
 
 This chapter explains how to install and configure the Networking
 service (neutron) using the :ref:`provider networks <network1>` or

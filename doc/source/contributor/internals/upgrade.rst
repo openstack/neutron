@@ -28,8 +28,7 @@
     considerations specific to that choice of backend. For example, OVN does
     not use Neutron agents, but does have a local controller that runs on each
     compute node. OVN supports rolling upgrades, but information about how that
-    works should be covered in the documentation for networking-ovn, the OVN
-    Neutron plugin.
+    works should be covered in the documentation for the OVN Neutron plugin.
 
 Upgrade strategy
 ================
