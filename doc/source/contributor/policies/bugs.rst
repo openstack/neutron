@@ -465,6 +465,8 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+--------------------------+
 | usability_                    | UX, interoperability, feature parity    | PTL/Drivers Team         |
 +-------------------------------+-----------------------------------------+--------------------------+
+| vpnaas_                       | A bug affecting neutron-vpnaas          | Dongcan Ye               |
++-------------------------------+-----------------------------------------+--------------------------+
 | xxx-backport-potential_       | Cherry-pick request for stable team     | Bernard Cafarelli/       |
 |                               |                                         | Brian Haley              |
 +-------------------------------+-----------------------------------------+--------------------------+

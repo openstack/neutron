@@ -126,6 +126,8 @@ updating the core review team for the sub-project's repositories.
 | neutron-fwaas           | Nate Johnston               | njohnston         |
 +-------------------------+-----------------------------+-------------------+
 | neutron-vpnaas          | YAMAMOTO Takashi            | yamamoto          |
+|                         +-----------------------------+-------------------+
+|                         | Dongcan Ye                  | yedongcan         |
 +-------------------------+-----------------------------+-------------------+
 | networking-midonet      | Ryu Ishimoto                | ryu25             |
 |                         +-----------------------------+-------------------+
