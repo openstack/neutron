@@ -1,0 +1,46 @@
+# This file provides a list of tuples that represent how the files
+# in Networking-OVN repo are mapped to/from Neutron repo, as part of the blue
+# print documented in:
+#
+# https://review.opendev.org/#/c/658414/  (specs/ussuri/ml2ovs-ovn-convergence.rst)
+#
+# Also see:
+# https://ethercalc.openstack.org/networking-ovn-migration
+# https://review.opendev.org/#/q/topic:bp/neutron-ovn-merge+-is:abandoned
+#
+# Empty lines and anything after # are ignored.
+# The 2 columns in this tile are added as a tuple in a list of
+# files and directories to be mapped. More specific lines must be listed
+# above less specific lines as the mapping stops on the first match.
+#
+#           Networking-OVN                        Neutron
+
+devstack/lib/ovn                        devstack/lib/ovn_agent
+networking_ovn/ovsdb/impl_idl_ovn.py    neutron/ovsdb/impl_idl_ovn.py
+networking_ovn/ovsdb                    neutron/ovsdb/ovn
+networking_ovn/ovn_db_sync.py           neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/ovn_db_sync.py
+networking_ovn/agent/metadata           neutron/agent/ovn/metadata
+networking_ovn/cmd                      neutron/cmd
+networking_ovn/common/config.py         neutron/conf/ovn.py
+networking_ovn/common/acl.py            neutron/plugins/ml2/drivers/ovn/common/acl.py
+networking_ovn/common/constants.py      neutron/common/ovn/constants.py
+networking_ovn/common/exceptions.py     neutron/common/ovn/exceptions.py
+networking_ovn/common/hash_ring_manager.py  neutron/common/ovn/hash_ring_manager.py
+networking_ovn/common/maintanance.py    neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/maintenance.py
+networking_ovn/common/ovn_client.py     neutron/plugins/ml2/drivers/ovn/common/client.py
+networking_ovn/common/utils.py          neutron/common/ovn/utils.py
+networking_ovn/conf/agent/metadata      neutron/conf/agent/ovn/metadata.py
+networking_ovn/db                       neutron/db
+networking_ovn/ml2/mech_driver.py       neutron/plugins/ml2/drivers/ovn/mech_driver/mech_driver.py
+networking_ovn/ml2/qos_driver.py        neutron/services/qos/drivers/ovn/driver.py
+networking_ovn/ml2/trunk_driver.py      neutron/services/trunk/drivers/ovn/trunk_driver.py
+networking_ovn/l3/l3_ovn.py             neutron/services/ovn_l3/l3_ovn.py
+networking_ovn/l3/l3_ovn_scheduler.py   neutron/scheduler/ovn_l3_scheduler.py
+networking_ovn/tests/unit/ml2/test_mech_driver.py neutron/tests/unit/plugins/ml2/drivers/ovn/mech_driver/test_mech_driver.py
+networking_ovn/tests/unit/ml2/test_qos_driver.py neutron/tests/unit/services/qos/drivers/ovn/test_driver.py
+networking_ovn/tests/unit/ml2/test_trunk_driver.py neutron/tests/unit/services/trunk/drivers/ovn/test_trunk_driver.py
+networking_ovn/tests                    neutron/tests
+networking_ovn/common/extensions.py     neutron/extensions/ovn.py
+networking_ovn/tests/unit/fakes.py      neutron/tests/unit/fake_resources.py
+migration                               tools/migration_to_ovn
+
