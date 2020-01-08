@@ -21,6 +21,7 @@ from oslo_utils import uuidutils
 
 from neutron.objects import network as network_obj
 from neutron.plugins.ml2 import plugin as ml2_plugin
+from neutron import quota
 from neutron.tests.unit import testlib_api
 
 
@@ -43,6 +44,10 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
         self.subnet_1_id = uuidutils.generate_uuid()
         self.subnet_2_id = uuidutils.generate_uuid()
         self.port_id = uuidutils.generate_uuid()
+        make_res = mock.patch.object(quota.QuotaEngine, 'make_reservation')
+        self.mock_quota_make_res = make_res.start()
+        commit_res = mock.patch.object(quota.QuotaEngine, 'commit_reservation')
+        self.mock_quota_commit_res = commit_res.start()
 
     def _create_network(self, tenant_id, network_id, shared, external=False):
         network = {'tenant_id': tenant_id,

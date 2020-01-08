@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib import constants
+from neutronclient.common import exceptions as nc_exc
 from oslo_utils import uuidutils
 
 from neutron.cmd.sanity import checks
@@ -536,3 +537,27 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
                 vm1, vm2, net_helpers.NetcatTester.TCP, port + 1)
             self.verify_no_connectivity_between_vms(
                 vm2, vm1, net_helpers.NetcatTester.TCP, port + 1)
+
+
+class SecurityGroupRulesTest(base.BaseFullStackTestCase):
+
+    def setUp(self):
+        host_descriptions = [environment.HostDescription()]
+        env = environment.Environment(environment.EnvironmentDescription(),
+                                      host_descriptions)
+        super(SecurityGroupRulesTest, self).setUp(env)
+
+    def test_security_group_rule_quota(self):
+        project_id = uuidutils.generate_uuid()
+        quota = self.client.show_quota_details(project_id)
+        sg_rules_used = quota['quota']['security_group_rule']['used']
+        self.assertEqual(0, sg_rules_used)
+
+        self.safe_client.create_security_group(project_id)
+        quota = self.client.show_quota_details(project_id)
+        sg_rules_used = quota['quota']['security_group_rule']['used']
+        self.safe_client.update_quota(project_id, 'security_group_rule',
+                                      sg_rules_used)
+
+        self.assertRaises(nc_exc.OverQuotaClient,
+                          self.safe_client.create_security_group, project_id)
