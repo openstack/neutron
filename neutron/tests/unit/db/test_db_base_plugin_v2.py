@@ -574,7 +574,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         return self.deserialize(fmt, res)
 
     def _api_for_resource(self, resource):
-        if resource in ['networks', 'subnets', 'ports', 'subnetpools']:
+        if resource in ['networks', 'subnets', 'ports', 'subnetpools',
+                        'security-groups']:
             return self.api
         else:
             return self.ext_api
