@@ -28,6 +28,7 @@ from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
 from neutron_lib.services.trunk import constants
 from oslo_log import log as logging
+from oslo_utils import excutils
 from oslo_utils import uuidutils
 
 from neutron.db import db_base_plugin_common
@@ -270,12 +271,21 @@ class TrunkPlugin(service_base.ServicePluginBase):
                 # object disappears from the datastore, therefore there is no
                 # status transition involved. If PRECOMMIT failures occur,
                 # the trunk remains in the status where it was.
-                trunk.delete()
+                try:
+                    trunk.delete()
+                except Exception as e:
+                    with excutils.save_and_reraise_exception():
+                        LOG.warning('Trunk driver raised exception when '
+                                    'deleting trunk port %s: %s', trunk_id,
+                                    str(e))
                 payload = callbacks.TrunkPayload(context, trunk_id,
                                                  original_trunk=trunk)
-                registry.notify(resources.TRUNK, events.PRECOMMIT_DELETE, self,
-                                payload=payload)
+                registry.notify(resources.TRUNK,
+                                events.PRECOMMIT_DELETE,
+                                self, payload=payload)
             else:
+                LOG.info('Trunk driver does not consider trunk %s '
+                         'untrunkable', trunk_id)
                 raise trunk_exc.TrunkInUse(trunk_id=trunk_id)
         registry.notify(resources.TRUNK, events.AFTER_DELETE, self,
                         payload=payload)
