@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2018-03-02 16:32+0000\n"
+"POT-Creation-Date: 2020-01-10 03:19+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -40,10 +40,6 @@ msgstr ""
 "Stderr: %(stderr)s"
 
 #, python-format
-msgid "%(id)s is not a valid %(type)s identifier"
-msgstr "%(id)s geçerli bir %(type)s tanımlayıcı değil"
-
-#, python-format
 msgid ""
 "%(invalid_dirs)s is invalid value for sort_dirs, valid value is '%(asc)s' "
 "and '%(desc)s'"
@@ -66,10 +62,6 @@ msgstr "%s çevrim dışı kipte çağrılamaz"
 #, python-format
 msgid "%s is invalid attribute for sort_keys"
 msgstr "%s sort_keys için geçersiz öznitelik"
-
-#, python-format
-msgid "%s is not a valid VLAN tag"
-msgstr "%s geçerli bir VLAN etiketi değil"
 
 #, python-format
 msgid "%s must implement get_port_from_device or get_ports_from_devices."
@@ -96,9 +88,6 @@ msgstr "Alt ağ havuzu olmadığında bir cidr belirtilmelidir"
 msgid "A metering driver must be specified"
 msgstr "Bir ölçme sürücüsü belirtilmeli"
 
-msgid "API for retrieving service providers for Neutron advanced services"
-msgstr "Neutron gelişmiş servisleri için servis sağlayıcıları alma API'si"
-
 msgid "Access to this resource was denied."
 msgstr "Bu kaynağa erişime izin verilmiyor."
 
@@ -114,10 +103,6 @@ msgstr "Çekirdek kaynaklara test özniteliklerini ekler."
 #, python-format
 msgid "Agent %(id)s is not a L3 Agent or has been disabled"
 msgstr "Ajan %(id)s bir L3 Ajanı değil ya da kapalı"
-
-#, python-format
-msgid "Agent %(id)s is not a valid DHCP Agent or has been disabled"
-msgstr "Ajan %(id)s geçerli bir DHCP Ajanı değil veya kapalı"
 
 #, python-format
 msgid "Agent updated: %(payload)s"
@@ -140,9 +125,6 @@ msgstr "Toplu API'nin kullanımına izin ver"
 
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr "Nova metadata'ya güvensiz SSL (https) istekleri yapmaya izin ver"
-
-msgid "An interface driver must be specified"
-msgstr "Bir arayüz sürücüsü belirtmeniz gerekmektedir"
 
 msgid ""
 "An ordered list of networking mechanism driver entrypoints to be loaded from "
@@ -172,10 +154,6 @@ msgstr "Taban MAC: %s"
 
 msgid "Body contains invalid data"
 msgstr "Gövde geçersiz veri içeriyor"
-
-#, python-format
-msgid "Bridge %(bridge)s does not exist."
-msgstr "Köprü %(bridge)s mevcut değil."
 
 msgid "Bulk operation not supported"
 msgstr "Toplu işlem desteklenmiyor"
@@ -312,14 +290,6 @@ msgstr "%(time)d  saniye denedikten sonra %(host)s:%(port)s'a bağlanamadı"
 msgid "Could not deserialize data"
 msgstr "Veri serisi çözülemedi"
 
-#, python-format
-msgid ""
-"Current gateway ip %(ip_address)s already in use by port %(port_id)s. Unable "
-"to update."
-msgstr ""
-"Mevcut geçit ip'si %(ip_address)s %(port_id)s bağlantı noktası tarafından "
-"zaten kullanılıyor. Güncellenemiyor."
-
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
 "lease times."
@@ -386,10 +356,6 @@ msgstr "Tüm IPset'leri sil."
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
 msgstr "%(mapping)s eşleştirmesindeki aygıt %(dev_name)s benzersiz"
 
-#, python-format
-msgid "Device name %(dev_name)s is missing from physical_device_mappings"
-msgstr "Aygıt ismi %(dev_name)s physical_device_mappings'de eksik"
-
 msgid "Device not found"
 msgstr "Aygıt bulunamadı"
 
@@ -415,9 +381,6 @@ msgstr "Yönlendiriciyi bir L3 ajanına zamanlamak için gerekli sürücü"
 msgid "Duplicate Security Group Rule in POST."
 msgstr "POST'da Kopya Güvenlik Grubu Kuralı."
 
-msgid "Duplicate segment entry in request."
-msgstr "İstekte kopya dilim girdisi."
-
 #, python-format
 msgid "ERROR: %s"
 msgstr "HATA: %s"
@@ -438,9 +401,6 @@ msgstr ""
 
 msgid "Either subnet_id or port_id must be specified"
 msgstr "subnet_id veya port_id belirtilmeli"
-
-msgid "Empty physical network name."
-msgstr "Boş fiziksel ağ ismi."
 
 msgid "Enable HA mode for virtual routers."
 msgstr "Sanal yönlendiriciler için HA kipini etkinleştir."
@@ -478,12 +438,6 @@ msgstr ""
 "üzerindeki servisler kapatılacaktır. admin_state_up False olan ajanlar bu "
 "seçeneğe bakılmaksızın otomatik zamanlama için seçilmezler. Ama bu seçenek "
 "True ise bu tür ajanlara elle zamanlama yapılabilir."
-
-msgid "End of VLAN range is less than start of VLAN range"
-msgstr "VLAN aralığı sonu VLAN aralığı başından daha küçük"
-
-msgid "End of tunnel range is less than start of tunnel range"
-msgstr "Tünel aralığı sonu tünel aralığı başından daha küçük"
 
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
@@ -569,14 +523,6 @@ msgstr ""
 
 msgid "Force ip_lib calls to use the root helper"
 msgstr "ip_lib çağrılarını kök yardımcıyı kullanmaya zorla"
-
-#, python-format
-msgid ""
-"Found overlapping allocation pools: %(pool_1)s %(pool_2)s for subnet "
-"%(subnet_cidr)s."
-msgstr ""
-"%(subnet_cidr)s alt ağı için çakışan ayırma havuzları: %(pool_1)s %(pool_2)s "
-"bulundu."
 
 msgid "Gateway is not valid on subnet"
 msgstr "Geçit alt ağda geçerli değil"
@@ -765,9 +711,6 @@ msgstr "IPv6 RA yapılandırma dosyalarının kaydedileceği konum"
 msgid "Location to store child pid files"
 msgstr "Alt süreç dosyalarının kaydedileceği konum"
 
-msgid "Location to store keepalived/conntrackd config files"
-msgstr "Keepalived/conntrackd yapılandırma dosyalarının tutulacağı konum"
-
 msgid "Log agent heartbeats"
 msgstr "Ajan kalp atışlarını kaydet"
 
@@ -800,10 +743,6 @@ msgstr "Eşleştirmede anahtar eksik: '%s'"
 #, python-format
 msgid "Multiple default providers for service %s"
 msgstr "%s servisi için birden fazla varsayılan sağlayıcı"
-
-#, python-format
-msgid "Multiple plugins for service %s were configured"
-msgstr "%s servisi için birden fazla eklenti yapılandırılmış"
 
 #, python-format
 msgid "Multiple providers specified for service %s"
@@ -860,12 +799,6 @@ msgstr "Ağ türü değeri '%s' desteklenmiyor"
 
 msgid "Network type value needed by the ML2 plugin"
 msgstr "ML2 eklentisi ağ türü değerine ihtiyaç duyuyor"
-
-msgid "Network types supported by the agent (gre and/or vxlan)."
-msgstr "Ajan tarafından desteklenen ağ türleri (gre ve/veya vxlan)."
-
-msgid "Neutron Service Type Management"
-msgstr "Neutron Servis Türü Yönetimi"
 
 msgid "Neutron core_plugin not configured!"
 msgstr "Neutron core_plugin yapılandırılmamış!"
@@ -939,13 +872,6 @@ msgstr ""
 "sınırsız demektir."
 
 msgid ""
-"Number of separate API worker processes for service. If not specified, the "
-"default is equal to the number of CPUs available for best performance."
-msgstr ""
-"Servis için ayrı API işçi süreçlerinin sayısı. Belirtilmezse, varsayılan "
-"olarak en iyi performans için CPU sayısına eşit değerdir."
-
-msgid ""
 "Number of separate worker processes for metadata server (defaults to half of "
 "the number of CPUs)"
 msgstr ""
@@ -976,14 +902,6 @@ msgstr "Yalnızca remote_ip_prefix veya remote_group_id sağlanabilir."
 msgid "OpenFlow interface to use."
 msgstr "Kullanılacak OpenFlow arayüzü."
 
-#, python-format
-msgid ""
-"Operation %(op)s is not supported for device_owner %(device_owner)s on port "
-"%(port_id)s."
-msgstr ""
-"İşlem %(op)s %(port_id)s bağlantı noktası üzerinde %(device_owner)s "
-"device_owner için  desteklenmiyor."
-
 msgid "Owner type of the device: network/compute"
 msgstr "Aygıt sahip türü: ağ/hesap"
 
@@ -1008,9 +926,6 @@ msgstr "Tümleştirme köprüsü için tünel köprüsündeki eş yama bağlant�
 
 msgid "Ping timeout"
 msgstr "Ping zaman aşımı"
-
-msgid "Plugin does not support updating provider attributes"
-msgstr "Eklenti sağlayıcı özniteliklerini güncellemeyi desteklemiyor"
 
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
@@ -1135,9 +1050,6 @@ msgstr ""
 "iletişim kuralı değerleri %(values)s ve tam sayı temsilleri [0 dan 255 e]  "
 "destekleniyor."
 
-msgid "Segments and provider values cannot both be set."
-msgstr "Dilimler ve sağlayıcı değerleri aynı anda ayarlanamaz."
-
 msgid ""
 "Send notification to nova when port data (fixed_ips/floatingip) changes so "
 "nova can update its cache."
@@ -1211,16 +1123,6 @@ msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr ""
 "Kiracı %(tenant_id)s'in bu ağda %(resource)s oluşturmasına izin verilmiyor"
 
-msgid "Tenant network creation is not enabled."
-msgstr "Kiracı ağ oluşturma etkin değil."
-
-msgid ""
-"The 'gateway_external_network_id' option must be configured for this agent "
-"as Neutron has more than one external network."
-msgstr ""
-"Neutron birden fazla harici ağa sahip olduğundan "
-"'gateway_external_network_id' seçeneği bu ajan için yapılandırılmalıdır."
-
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr "VXLAN tünelleri için kullanılacak UDP bağlantı noktası."
 
@@ -1232,16 +1134,6 @@ msgstr "Adres ayırma isteği sağlanamadı çünkü: %(reason)s"
 msgid "The advertisement interval in seconds"
 msgstr "Saniye cinsinden duyuru aralığı"
 
-#, python-format
-msgid "The allocation pool %(pool)s is not valid."
-msgstr "Ayırma havuzu %(pool)s geçerli değil."
-
-#, python-format
-msgid ""
-"The allocation pool %(pool)s spans beyond the subnet cidr %(subnet_cidr)s."
-msgstr ""
-"Ayırma havuzu %(pool)s %(subnet_cidr)s alt ağ cidr'inin ötesine uzanıyor."
-
 msgid "The core plugin Neutron will use"
 msgstr "Neutron'un kullanacağı çekirdek eklenti"
 
@@ -1251,34 +1143,12 @@ msgstr "DHCP sunucusunu yönetmek için kullanılan sürücü."
 msgid "The driver used to manage the virtual interface."
 msgstr "Sanal arayüzü yönetmek için kullanılan sürücü."
 
-#, python-format
-msgid ""
-"The following device_id %(device_id)s is not owned by your tenant or matches "
-"another tenants router."
-msgstr ""
-"device_id %(device_id)s sizin kiracınıza ait değil veya başka bir kiracının "
-"yönlendiricisiyle eşleşiyor."
-
-msgid "The interface for interacting with the OVSDB"
-msgstr "OVSDB ile etkileşim için arayüz"
-
 msgid ""
 "The maximum number of items returned in a single response, value was "
 "'infinite' or negative integer means no limit"
 msgstr ""
 "Tek bir yanıtta döndürülecek azami öğe sayısı, 'infinite' değeri ya da "
 "negatif tam sayı sınır yok demektir"
-
-#, python-format
-msgid ""
-"The network %(network_id)s has been already hosted by the DHCP Agent "
-"%(agent_id)s."
-msgstr "Ağ %(network_id)s zaten %(agent_id)s DHCP Ajanı tarafından sunuluyor."
-
-#, python-format
-msgid ""
-"The network %(network_id)s is not hosted by the DHCP agent %(agent_id)s."
-msgstr "Ağ %(network_id)s %(agent_id)s DHCP ajanı tarafından sunulmuyor."
 
 msgid ""
 "The number of seconds the agent will wait between polling for local device "
@@ -1361,43 +1231,11 @@ msgid "Unable to calculate %(address_type)s address because of:%(reason)s"
 msgstr "%(reason)s sebebiyle %(address_type)s adresi hesaplanamıyor"
 
 #, python-format
-msgid ""
-"Unable to complete operation for %(subnet_id)s. The number of DNS "
-"nameservers exceeds the limit %(quota)s."
-msgstr ""
-"%(subnet_id)s için işlem tamamlanamadı. DNS isim sunucuları sayısı %(quota)s "
-"sayısını aşıyor."
-
-#, python-format
-msgid ""
-"Unable to complete operation for %(subnet_id)s. The number of host routes "
-"exceeds the limit %(quota)s."
-msgstr ""
-"%(subnet_id)s için işlem tamamlanamadı. İstemci rotaları sayısı %(quota)s "
-"sınırını aşıyor."
-
-#, python-format
 msgid "Unable to convert value in %s"
 msgstr "%s degeri dönüştürülemiyor"
 
-msgid "Unable to create the Agent Gateway Port"
-msgstr "Ajan Geçit Bağlantı Noktası oluşturulamıyor"
-
 msgid "Unable to create the SNAT Interface Port"
 msgstr "SNAT Arayüz Bağlantı Noktası oluşturulamıyor"
-
-#, python-format
-msgid ""
-"Unable to create the flat network. Physical network %(physical_network)s is "
-"in use."
-msgstr "Düz ağ oluşturulamıyor. Fiziksel ağ %(physical_network)s kullanımda."
-
-msgid ""
-"Unable to create the network. No available network found in maximum allowed "
-"attempts."
-msgstr ""
-"Ağ oluşturulamıyor. İzin verilen azami deneme içinde kullanılabilir ağ "
-"bulunamadı."
 
 #, python-format
 msgid "Unable to determine mac address for %s"
@@ -1414,10 +1252,6 @@ msgstr "%(subnet_id)s alt ağında %(ip_address)s IP adresi bulunamıyor"
 #, python-format
 msgid "Unable to find resource name in %s"
 msgstr "%s içinde kaynak ismi bulunamadı"
-
-#, python-format
-msgid "Unable to generate unique mac on network %(net_id)s."
-msgstr "%(net_id)s ağı üzerinde benzersiz mac üretilemedi."
 
 #, python-format
 msgid ""
@@ -1453,19 +1287,11 @@ msgstr "Bilinmeyen öznitelik '%s'."
 msgid "Unknown chain: %r"
 msgstr "Tanınmayan zincir: %r"
 
-#, python-format
-msgid "Unknown quota resources %(unknown)s."
-msgstr "Bilinmeyen kota kaynakları %(unknown)s."
-
 msgid "Unmapped error"
 msgstr "Unmapped hata"
 
 msgid "Unrecognized action"
 msgstr "Tanınmayan eylem"
-
-#, python-format
-msgid "Unrecognized attribute(s) '%s'"
-msgstr "Tanınmayan öznitelik(ler) '%s'"
 
 msgid "Unsupported Content-Type"
 msgstr "Desteklenmeyen içerik türü"

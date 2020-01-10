@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2018-03-02 16:32+0000\n"
+"POT-Creation-Date: 2020-01-10 03:19+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -43,10 +43,6 @@ msgid ""
 msgstr "%(branch)s HEAD 檔與移轉時間表表頭不符，預期為：%(head)s"
 
 #, python-format
-msgid "%(id)s is not a valid %(type)s identifier"
-msgstr "%(id)s 不是有效的 %(type)s ID"
-
-#, python-format
 msgid ""
 "%(invalid_dirs)s is invalid value for sort_dirs, valid value is '%(asc)s' "
 "and '%(desc)s'"
@@ -69,10 +65,6 @@ msgstr "當 %s 處於離線模式時，無法對其進行呼叫"
 #, python-format
 msgid "%s is invalid attribute for sort_keys"
 msgstr "對於 sort_key 來說，%s 是無效的屬性"
-
-#, python-format
-msgid "%s is not a valid VLAN tag"
-msgstr "%s 不是有效的 VLAN 標籤"
 
 #, python-format
 msgid "%s must implement get_port_from_device or get_ports_from_devices."
@@ -128,12 +120,6 @@ msgstr "已經設定了此 IP 系列的預設子網路儲存區。每個 IP 系�
 msgid "A metering driver must be specified"
 msgstr "必須指定計量驅動程式"
 
-msgid "API for retrieving service providers for Neutron advanced services"
-msgstr "此 API 用於擷取 Neutron 進階服務的服務提供者"
-
-msgid "Aborting periodic_sync_routers_task due to an error."
-msgstr "由於發生錯誤，正在中斷 periodic_sync_routers_task。"
-
 msgid "Access to this resource was denied."
 msgstr "拒絕存取此資源。"
 
@@ -161,10 +147,6 @@ msgstr "將測試屬性新增至核心資源。"
 #, python-format
 msgid "Agent %(id)s is not a L3 Agent or has been disabled"
 msgstr "代理程式 %(id)s 不是 L3 代理程式或者已停用"
-
-#, python-format
-msgid "Agent %(id)s is not a valid DHCP Agent or has been disabled"
-msgstr "代理程式 %(id)s 不是有效的 DHCP 代理程式或者已停用"
 
 msgid ""
 "Agent starts with admin_state_up=False when enable_new_agents=False. In the "
@@ -228,9 +210,6 @@ msgstr "包含那些值的 RBAC 原則已經存在。"
 msgid "An identifier must be specified when updating a subnet"
 msgstr "更新子網路時，必須提供 ID"
 
-msgid "An interface driver must be specified"
-msgstr "必須指定介面驅動程式"
-
 msgid ""
 "An ordered list of extension driver entrypoints to be loaded from the "
 "neutron.ml2.extension_drivers namespace. For example: extension_drivers = "
@@ -284,13 +263,6 @@ msgstr ""
 msgid "Body contains invalid data"
 msgstr "內文包含無效資料"
 
-msgid "Both network_id and router_id are None. One must be provided."
-msgstr "network_id 及 router_id 皆為 None。必須提供其中一個。"
-
-#, python-format
-msgid "Bridge %(bridge)s does not exist."
-msgstr "橋接器 %(bridge)s 不存在。"
-
 msgid "Bulk operation not supported"
 msgstr "不支援主體作業"
 
@@ -343,9 +315,6 @@ msgid ""
 "Cannot host distributed router %(router_id)s on legacy L3 agent %(agent_id)s."
 msgstr "無法在舊式 L3 代理程式 %(agent_id)s 上管理分散式路由器 %(router_id)s。"
 
-msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool."
-msgstr "不能在一個子網路儲存區中混合 IPv4 與 IPv6 字首。"
-
 msgid "Cannot specify both subnet-id and port-id"
 msgstr "無法同時指定 subnet-id 及 port-id"
 
@@ -358,11 +327,6 @@ msgstr "無法更新唯讀屬性 %s"
 
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr "用於 SSL 的「憑證管理中心」公開金鑰（CA 憑證）檔案"
-
-#, python-format
-msgid ""
-"Change would make usage less than 0 for the following resources: %(unders)s."
-msgstr "變更會使下列資源的用量小於 0：%(unders)s。"
 
 msgid "Check ebtables installation"
 msgstr "檢查 ebtables 安裝"
@@ -519,12 +483,6 @@ msgstr "嘗試 %(time)d 秒後仍無法連結至 %(host)s:%(port)s"
 msgid "Could not deserialize data"
 msgstr "無法解除序列化資料"
 
-#, python-format
-msgid ""
-"Current gateway ip %(ip_address)s already in use by port %(port_id)s. Unable "
-"to update."
-msgstr "埠 %(port_id)s 已在使用現行閘道 IP %(ip_address)s。無法更新。"
-
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
 "lease times."
@@ -620,10 +578,6 @@ msgstr "毀損所有 IPset。"
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
 msgstr "對映 %(mapping)s 中的裝置 %(dev_name)s 不是唯一的"
 
-#, python-format
-msgid "Device name %(dev_name)s is missing from physical_device_mappings"
-msgstr "physical_device_mappings 中遺漏了裝置名稱 %(dev_name)s"
-
 msgid "Device not found"
 msgstr "找不到裝置"
 
@@ -672,9 +626,6 @@ msgstr "POST 中的安全群組規則重複。"
 msgid "Duplicate address detected"
 msgstr "偵測到重複位址"
 
-msgid "Duplicate segment entry in request."
-msgstr "要求中的區段項目重複。"
-
 #, python-format
 msgid "ERROR: %s"
 msgstr "錯誤：%s"
@@ -693,12 +644,6 @@ msgstr "必須將 network_id 或 router_id 中的一個參數傳遞至_get_ports
 
 msgid "Either subnet_id or port_id must be specified"
 msgstr "必須指定 subnet_id 或 port_id"
-
-msgid "Empty physical network name."
-msgstr "空的實體網路名稱。"
-
-msgid "Empty subnet pool prefix list."
-msgstr "空的子網路儲存區字首清單。"
 
 msgid "Enable HA mode for virtual routers."
 msgstr "啟用虛擬路由器的 HA 模式。"
@@ -758,12 +703,6 @@ msgstr ""
 "解析。從 dnsmasq 程序引數中有效地移除 '--no-resolv' 選項。將自訂 DNS 解析器新"
 "增至 'dnsmasq_dns_servers' 選項會停用此功能。"
 
-msgid "End of VLAN range is less than start of VLAN range"
-msgstr "VLAN 範圍的終止值小於 VLAN 範圍的起始值"
-
-msgid "End of tunnel range is less than start of tunnel range"
-msgstr "通道範圍的終止值小於通道範圍的起始值"
-
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
 msgstr "嘗試執行作業時發生錯誤 %(reason)s。"
@@ -817,10 +756,6 @@ msgid "Extensions list to use"
 msgstr "要使用的延伸清單"
 
 #, python-format
-msgid "Extensions not found: %(extensions)s."
-msgstr "找不到延伸：%(extensions)s。"
-
-#, python-format
 msgid "External IP %s is the same as the gateway IP"
 msgstr "外部 IP %s 與閘道 IP 相同"
 
@@ -831,15 +766,6 @@ msgstr "無法重新排定路由器 %(router_id)s：找不到適用的 L3 代理
 #, python-format
 msgid "Failed scheduling router %(router_id)s to the L3 Agent %(agent_id)s."
 msgstr "無法將路由器 %(router_id)s 排程到 L3 代理程式 %(agent_id)s。"
-
-#, python-format
-msgid "Failed to allocate subnet: %(reason)s."
-msgstr "無法配置子網路：%(reason)s。"
-
-msgid ""
-"Failed to associate address scope: subnetpools within an address scope must "
-"have unique prefixes."
-msgstr "無法與位址範圍建立關聯：位址範圍內的子網路儲存區必須具有唯一字首。"
 
 #, python-format
 msgid ""
@@ -884,23 +810,8 @@ msgstr "對於 TCP/UDP 通訊協定，port_range_min 必須 <= port_range_max"
 msgid "Force ip_lib calls to use the root helper"
 msgstr "強制 ip_lib 呼叫使用根說明程式"
 
-#, python-format
-msgid "Found duplicate extension: %(alias)s."
-msgstr "發現重複延伸：%(alias)s。"
-
-#, python-format
-msgid ""
-"Found overlapping allocation pools: %(pool_1)s %(pool_2)s for subnet "
-"%(subnet_cidr)s."
-msgstr ""
-"發現以下子網路的配置儲存區 %(pool_1)s %(pool_2)s重疊：%(subnet_cidr)s。"
-
 msgid "Gateway IP version inconsistent with allocation pool version"
 msgstr "閘道 IP 版本與配置儲存區版本不一致"
-
-#, python-format
-msgid "Gateway ip %(ip_address)s conflicts with allocation pool %(pool)s."
-msgstr "閘道 IP %(ip_address)s 與配置儲存區 %(pool)s 相衝突。"
 
 msgid "Gateway is not valid on subnet"
 msgstr "閘道在子網路上無效"
@@ -978,9 +889,6 @@ msgstr ""
 "IPTablesManager.apply 無法套用下列 iptables 規則集：\n"
 "%s"
 
-msgid "IPtables conntrack zones exhausted, iptables rules cannot be applied."
-msgstr "iptables conntrack 區域已用盡，無法套用 iptables 規則。"
-
 msgid "IPv6 Address Mode must be SLAAC or Stateless for Prefix Delegation."
 msgstr "針對字首委派，IPv6 位址模式必須是 SLAAC 或 Stateless。"
 
@@ -1009,40 +917,6 @@ msgstr "如果為 True，則容許支援它的外掛程式建立 VLAN 透通網�
 
 msgid "Illegal IP version number"
 msgstr "無效的 IP 版本號碼"
-
-#, python-format
-msgid ""
-"Illegal prefix bounds: %(prefix_type)s=%(prefixlen)s, %(base_prefix_type)s="
-"%(base_prefixlen)s."
-msgstr ""
-"無效的字首範圍：%(prefix_type)s=%(prefixlen)s，%(base_prefix_type)s="
-"%(base_prefixlen)s。"
-
-#, python-format
-msgid ""
-"Illegal subnetpool association: subnetpool %(subnetpool_id)s cannot "
-"associate with address scope %(address_scope_id)s because subnetpool "
-"ip_version is not %(ip_version)s."
-msgstr ""
-"子網路儲存區關聯無效：無法將子網路儲存區 %(subnetpool_id)s 與位址範圍 "
-"%(address_scope_id)s 建立關聯，因為子網路儲存區 ip_version 不是 "
-"%(ip_version)s。"
-
-#, python-format
-msgid ""
-"Illegal subnetpool association: subnetpool %(subnetpool_id)s cannot be "
-"associated with address scope %(address_scope_id)s."
-msgstr ""
-"子網路儲存區關聯無效：無法將子網路儲存區 %(subnetpool_id)s 與位址範圍 "
-"%(address_scope_id)s 建立關聯。"
-
-#, python-format
-msgid "Illegal subnetpool update : %(reason)s."
-msgstr "子網路儲存區更新無效：%(reason)s。"
-
-#, python-format
-msgid "Illegal update to prefixes: %(msg)s."
-msgstr "字首更新無效：%(msg)s。"
 
 msgid ""
 "In some cases the Neutron router is not present to provide the metadata IP "
@@ -1101,10 +975,6 @@ msgid "Interval between two metering reports"
 msgstr "兩次計量報告之間的間隔"
 
 #, python-format
-msgid "Invalid CIDR %(input)s given as IP prefix."
-msgstr "作為 IP 字首而提供的 CIDR %(input)s 無效。"
-
-#, python-format
 msgid "Invalid Device %(dev_name)s: %(reason)s"
 msgstr "無效的裝置 %(dev_name)s：%(reason)s"
 
@@ -1137,14 +1007,6 @@ msgstr "無效的實例狀態：%(state)s，有效的狀態為：%(valid_states)
 #, python-format
 msgid "Invalid mapping: '%s'"
 msgstr "無效的對映：'%s'"
-
-#, python-format
-msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'."
-msgstr "無效的網路 VLAN 範圍：'%(vlan_range)s' - '%(error)s'。"
-
-#, python-format
-msgid "Invalid network VXLAN port range: '%(vxlan_range)s'."
-msgstr "無效的網路 VXLAN 埠範圍：'%(vxlan_range)s'。"
 
 #, python-format
 msgid "Invalid pci slot %(pci_slot)s"
@@ -1254,9 +1116,6 @@ msgstr "用於儲存 IPv6 RA 配置檔的位置"
 msgid "Location to store child pid files"
 msgstr "子項 PID 檔案的儲存位置"
 
-msgid "Location to store keepalived/conntrackd config files"
-msgstr "用於儲存 keepalived/conntrackd 配置檔的位置"
-
 msgid "Log agent heartbeats"
 msgstr "日誌代理程式活動訊號"
 
@@ -1280,10 +1139,6 @@ msgstr "讓 L2 代理程式在 DVR 模式下執行。"
 
 msgid "Malformed request body"
 msgstr "要求內文的格式不正確"
-
-#, python-format
-msgid "Malformed request body: %(reason)s."
-msgstr "要求內文的格式不正確：%(reason)s。"
 
 msgid "MaxRtrAdvInterval setting for radvd.conf"
 msgstr "radvd.conf 的 MaxRtrAdvInterval 設定"
@@ -1361,10 +1216,6 @@ msgid "Multiple default providers for service %s"
 msgstr "服務 %s 的多個預設提供者"
 
 #, python-format
-msgid "Multiple plugins for service %s were configured"
-msgstr "已給服務 %s 配置多個外掛程式"
-
-#, python-format
 msgid "Multiple providers specified for service %s"
 msgstr "給服務 %s 指定了多個提供者"
 
@@ -1431,12 +1282,6 @@ msgstr "不支援網路類型值 '%s'"
 
 msgid "Network type value needed by the ML2 plugin"
 msgstr "ML2 外掛程式需要的網路類型值"
-
-msgid "Network types supported by the agent (gre and/or vxlan)."
-msgstr "代理程式支援的網路類型（GRE 及/或 VXLAN）。"
-
-msgid "Neutron Service Type Management"
-msgstr "Neutron 服務類型管理"
 
 msgid "Neutron core_plugin not configured!"
 msgstr "未配置 Neutron core_plugin！"
@@ -1535,13 +1380,6 @@ msgid ""
 msgstr "每個承租人所容許的安全規則數目。負數值表示無限制。"
 
 msgid ""
-"Number of separate API worker processes for service. If not specified, the "
-"default is equal to the number of CPUs available for best performance."
-msgstr ""
-"適用於服務的獨立 API 工作者處理程序數目。如果未指定，則預設值為可用於最佳效能"
-"的 CPU 數目。"
-
-msgid ""
 "Number of separate worker processes for metadata server (defaults to half of "
 "the number of CPUs)"
 msgstr "meta 資料伺服器的獨立工作者處理程序數目（預設為CPU 數目的一半）"
@@ -1568,10 +1406,6 @@ msgstr ""
 msgid "OVS vhost-user socket directory."
 msgstr "OVS vhost 使用者 Socket 目錄。"
 
-#, python-format
-msgid "Object action %(action)s failed because: %(reason)s."
-msgstr "物件動作 %(action)s 失敗，原因：%(reason)s。"
-
 msgid "Only admin can view or configure quota"
 msgstr "只有管理者才能檢視或配置配額"
 
@@ -1589,12 +1423,6 @@ msgstr "只能提供 remote_ip_prefix 或 remote_group_id。"
 
 msgid "OpenFlow interface to use."
 msgstr "要使用的 OpenFlow 介面。"
-
-#, python-format
-msgid ""
-"Operation %(op)s is not supported for device_owner %(device_owner)s on port "
-"%(port_id)s."
-msgstr "埠 %(port_id)s 上的裝置擁有者 %(device_owner)s 不支援作業 %(op)s。"
 
 #, python-format
 msgid "Operation not supported on device %(dev_name)s"
@@ -1640,25 +1468,15 @@ msgstr "整合橋接器中用於通道橋接器的同層級修補程式埠。"
 msgid "Peer patch port in tunnel bridge for integration bridge."
 msgstr "通道橋接器中用於整合橋接器的同層級修補程式埠。"
 
-msgid "Per-tenant subnet pool prefix quota exceeded."
-msgstr "已超出每個租戶的子網路儲存區字首配額。"
-
 msgid "Phase upgrade options do not accept revision specification"
 msgstr "階段升級選項不接受修訂規格"
 
 msgid "Ping timeout"
 msgstr "連通測試逾時值"
 
-msgid "Plugin does not support updating provider attributes"
-msgstr "外掛程式不支援更新提供者屬性"
-
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr "埠 %(id)s 沒有固定 IP %(address)s"
-
-#, python-format
-msgid "Port %(port_id)s is already acquired by another DHCP agent"
-msgstr "另一個 DHCP 代理程式已經獲得了埠 %(port_id)s"
 
 #, python-format
 msgid ""
@@ -1669,10 +1487,6 @@ msgstr "埠 %s 具有多個固定 IPv4 位址。指派浮動 IP 時，必須提�
 msgid ""
 "Port to listen on for OpenFlow connections. Used only for 'native' driver."
 msgstr "用於接聽 OpenFlow 連線的埠。僅用於 'native' 驅動程式。"
-
-#, python-format
-msgid "Prefix '%(prefix)s' not supported in IPv%(version)s pool."
-msgstr "字首 '%(prefix)s' 在 IPv%(version)s 儲存區中不受支援。"
 
 msgid "Prefix Delegation can only be used with IPv6 subnets."
 msgstr "字首委派只能與 IPv6 子網路搭配使用。"
@@ -1702,29 +1516,6 @@ msgid "Provider name %(name)s is limited by %(len)s characters"
 msgstr "提供者名稱 %(name)s 最多只能包含 %(len)s 個字元"
 
 #, python-format
-msgid "QoS Policy %(policy_id)s is used by %(object_type)s %(object_id)s."
-msgstr "服務品質原則 %(policy_id)s 由 %(object_type)s %(object_id)s 使用。"
-
-#, python-format
-msgid ""
-"QoS binding for network %(net_id)s and policy %(policy_id)s could not be "
-"found."
-msgstr "找不到網路 %(net_id)s 和原則 %(policy_id)s 的服務品質連結。"
-
-#, python-format
-msgid ""
-"QoS binding for port %(port_id)s and policy %(policy_id)s could not be found."
-msgstr "找不到埠 %(port_id)s 和原則 %(policy_id)s 的服務品質連結。"
-
-#, python-format
-msgid "QoS policy %(policy_id)s could not be found."
-msgstr "找不到服務品質原則 %(policy_id)s。"
-
-#, python-format
-msgid "QoS rule %(rule_id)s for policy %(policy_id)s could not be found."
-msgstr "找不到原則 %(policy_id)s 的服務品質規則 %(rule_id)s。"
-
-#, python-format
 msgid "RBAC policy of type %(object_type)s with ID %(id)s not found"
 msgstr "找不到 ID 為 %(id)s 且類型為 %(object_type)s 的 RBAC 原則"
 
@@ -1751,25 +1542,6 @@ msgstr "範圍必須是 netaddr.IPRange"
 
 msgid "Ranges must not overlap"
 msgstr "範圍不得重疊"
-
-#, python-format
-msgid ""
-"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.EUI type."
-msgstr "接收到類型 '%(type)s' 和值 '%(value)s'。預期為 netaddr.EUI 類型。"
-
-#, python-format
-msgid ""
-"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.IPAddress "
-"type."
-msgstr ""
-"接收到類型 '%(type)s' 和值 '%(value)s'。預期為 netaddr.IPAddress 類型。"
-
-#, python-format
-msgid ""
-"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.IPNetwork "
-"type."
-msgstr ""
-"接收到類型 '%(type)s' 和值 '%(value)s'。預期為 netaddr.IPNetwork 類型。"
 
 #, python-format
 msgid ""
@@ -1849,10 +1621,6 @@ msgid "Root permissions are required to drop privileges."
 msgstr "需要 root 權限才能捨棄專用權。"
 
 #, python-format
-msgid "Router '%(router_id)s' is not compatible with this agent."
-msgstr "路由器 '%(router_id)s' 與此代理程式不相容。"
-
-#, python-format
 msgid "Router already has a port on subnet %s"
 msgstr "路由器在子網路 %s 上已經有埠"
 
@@ -1916,9 +1684,6 @@ msgstr ""
 "不支援安全群組規則通訊協定 %(protocol)s。僅支援通訊協定值 %(values)s 和整數表"
 "示法 [0 到 255]。"
 
-msgid "Segments and provider values cannot both be set."
-msgstr "無法同時設定區段及提供者值。"
-
 msgid "Selects the Agent Type reported"
 msgstr "選取報告的代理程式類型"
 
@@ -1978,20 +1743,11 @@ msgstr "未安裝子專案 %s。"
 msgid "Subnet for router interface must have a gateway IP"
 msgstr "路由器介面的子網路必須具有閘道 IP"
 
-#, python-format
-msgid "Subnet pool %(subnetpool_id)s could not be found."
-msgstr "找不到子網路儲存區 %(subnetpool_id)s。"
-
 msgid "Subnet pool has existing allocations"
 msgstr "子網路儲存區具有現有的配置"
 
 msgid "Subnet used for the l3 HA admin network."
 msgstr "用於 l3 HA 管理網路的子網路。"
-
-msgid ""
-"Subnets hosted on the same network must be allocated from the same subnet "
-"pool."
-msgstr "在同一網路上管理的子網路必須從同一子網路儲存區中進行配置。"
 
 msgid ""
 "System-wide flag to determine the type of router that tenants can create. "
@@ -2021,27 +1777,6 @@ msgstr "用於連接以在管理環境定義中指定的租戶 ID"
 msgid "Tenant name for connecting to designate in admin context"
 msgstr "用於連接以在管理環境定義中指定的租戶名稱"
 
-msgid "Tenant network creation is not enabled."
-msgstr "未啟用 Tenant 網路建立作業。"
-
-msgid "Tenant-id was missing from quota request."
-msgstr "配額要求中遺漏了 Tenant-id。"
-
-msgid ""
-"The 'gateway_external_network_id' option must be configured for this agent "
-"as Neutron has more than one external network."
-msgstr ""
-"必須為此代理程式配置 'gateway_external_network_id' 選項，因為 Neutron 具有多"
-"個外部網路。"
-
-msgid ""
-"The DHCP agent will resync its state with Neutron to recover from any "
-"transient notification or RPC errors. The interval is number of seconds "
-"between attempts."
-msgstr ""
-"DHCP 代理程式會將自己的狀態與 Neutron 進行同步，以從任何暫時性通知或 RPC 錯誤"
-"進行回復。間隔為兩次嘗試之間的秒數。"
-
 msgid ""
 "The DHCP server can assist with providing metadata support on isolated "
 "networks. Setting this value to True will cause the DHCP server to append "
@@ -2065,15 +1800,6 @@ msgstr "無法滿足位址配置要求，原因：%(reason)s"
 
 msgid "The advertisement interval in seconds"
 msgstr "廣告間隔（以秒為單位）"
-
-#, python-format
-msgid "The allocation pool %(pool)s is not valid."
-msgstr "配置儲存區 %(pool)s 無效。"
-
-#, python-format
-msgid ""
-"The allocation pool %(pool)s spans beyond the subnet cidr %(subnet_cidr)s."
-msgstr "配置儲存區 %(pool)s 跨越了子網路 CIDR %(subnet_cidr)s。"
 
 msgid ""
 "The base MAC address Neutron will use for VIFs. The first 3 octets will "
@@ -2113,32 +1839,10 @@ msgstr ""
 "建立 PTR 區域時，要使用的電子郵件位址。如果未指定，則電子郵件位址將是 "
 "admin@<dns_domain>"
 
-#, python-format
-msgid ""
-"The following device_id %(device_id)s is not owned by your tenant or matches "
-"another tenants router."
-msgstr ""
-"下列 device_id %(device_id)s 不是由您的承租人所擁有者，或者與另一個承租人路由"
-"器相符。"
-
-msgid "The interface for interacting with the OVSDB"
-msgstr "用於與 OVSDB 互動的介面"
-
 msgid ""
 "The maximum number of items returned in a single response, value was "
 "'infinite' or negative integer means no limit"
 msgstr "在單一回應中傳回的項目數上限，值為 'infinite' 或負整數時表示無限制"
-
-#, python-format
-msgid ""
-"The network %(network_id)s has been already hosted by the DHCP Agent "
-"%(agent_id)s."
-msgstr "網路 %(network_id)s 已經由 DHCP 代理程式 %(agent_id)s 管理。"
-
-#, python-format
-msgid ""
-"The network %(network_id)s is not hosted by the DHCP agent %(agent_id)s."
-msgstr "網路 %(network_id)s 不是由 DHCP 代理程式 %(agent_id)s 管理。"
 
 msgid ""
 "The network type to use when creating the HA network for an HA router. By "
@@ -2234,11 +1938,6 @@ msgstr ""
 "等待本端交換器連接控制器時的逾時值（以秒為單位）。僅用於 'native' 驅動程式。"
 
 msgid ""
-"Too long prefix provided. New name would exceed given length for an "
-"interface name."
-msgstr "所提供的字首太長。新名稱將超過介面名稱的給定長度。"
-
-msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
 "ports created by Neutron on integration and external network bridges."
 msgstr ""
@@ -2269,62 +1968,15 @@ msgid "Unable to access %s"
 msgstr "無法存取 %s"
 
 #, python-format
-msgid ""
-"Unable to allocate subnet with prefix length %(prefixlen)s, maximum allowed "
-"prefix is %(max_prefixlen)s."
-msgstr ""
-"無法配置字首長度為 %(prefixlen)s 的子網路，容許的字首上限"
-"為%(max_prefixlen)s。"
-
-#, python-format
-msgid ""
-"Unable to allocate subnet with prefix length %(prefixlen)s, minimum allowed "
-"prefix is %(min_prefixlen)s."
-msgstr ""
-"無法配置字首長度為 %(prefixlen)s 的子網路，容許的字首下限"
-"為%(min_prefixlen)s。"
-
-#, python-format
 msgid "Unable to calculate %(address_type)s address because of:%(reason)s"
 msgstr "無法計算 %(address_type)s 位址，原因：%(reason)s"
-
-#, python-format
-msgid ""
-"Unable to complete operation for %(subnet_id)s. The number of DNS "
-"nameservers exceeds the limit %(quota)s."
-msgstr ""
-"無法對 %(subnet_id)s 完成作業。DNS 名稱伺服器的數目超出限制 %(quota)s。"
-
-#, python-format
-msgid ""
-"Unable to complete operation for %(subnet_id)s. The number of host routes "
-"exceeds the limit %(quota)s."
-msgstr "無法對 %(subnet_id)s 完成作業。主機路徑數目超出限制 %(quota)s。"
 
 #, python-format
 msgid "Unable to convert value in %s"
 msgstr "無法轉換 %s 中的值"
 
-msgid "Unable to create the Agent Gateway Port"
-msgstr "無法建立「代理程式閘道埠」"
-
 msgid "Unable to create the SNAT Interface Port"
 msgstr "無法建立「SNAT 介面埠」"
-
-#, python-format
-msgid ""
-"Unable to create the flat network. Physical network %(physical_network)s is "
-"in use."
-msgstr "無法建立平面網路。實體網路 %(physical_network)s 正在使用中。"
-
-msgid ""
-"Unable to create the network. No available network found in maximum allowed "
-"attempts."
-msgstr "無法建立網路。在所容許的嘗試次數上限內，找不到可用的網路。"
-
-#, python-format
-msgid "Unable to delete subnet pool: %(reason)s."
-msgstr "無法刪除子網路儲存區：%(reason)s。"
 
 #, python-format
 msgid "Unable to determine mac address for %s"
@@ -2343,10 +1995,6 @@ msgid "Unable to find resource name in %s"
 msgstr "在 %s 中找不到資源名稱"
 
 #, python-format
-msgid "Unable to generate unique mac on network %(net_id)s."
-msgstr "無法在網路 %(net_id)s 上產生唯一 MAC 位址。"
-
-#, python-format
 msgid ""
 "Unable to identify a target field from:%s. Match should be in the form "
 "%%(<field_name>)s"
@@ -2357,12 +2005,6 @@ msgstr "無法提供外部連線功能"
 
 msgid "Unable to provide tenant private network"
 msgstr "無法提供租戶專用網路"
-
-#, python-format
-msgid ""
-"Unable to reconfigure sharing settings for network %(network)s. Multiple "
-"tenants are using it."
-msgstr "無法重新配置網路 %(network)s 的共用設定。多個租戶正在使用該網路。"
 
 #, python-format
 msgid ""
@@ -2406,19 +2048,11 @@ msgstr "不明鏈：%r"
 msgid "Unknown network type %(network_type)s."
 msgstr "不明的網路類型 %(network_type)s。"
 
-#, python-format
-msgid "Unknown quota resources %(unknown)s."
-msgstr "不明的配額資源 %(unknown)s。"
-
 msgid "Unmapped error"
 msgstr "「未對映」錯誤"
 
 msgid "Unrecognized action"
 msgstr "無法辨識的動作"
-
-#, python-format
-msgid "Unrecognized attribute(s) '%s'"
-msgstr "無法辨識屬性 '%s'"
 
 msgid "Unrecognized field"
 msgstr "無法辨識的欄位"
@@ -2429,10 +2063,6 @@ msgstr "不支援的內容類型"
 #, python-format
 msgid "Unsupported network type %(net_type)s."
 msgstr "不支援網路類型 %(net_type)s。"
-
-#, python-format
-msgid "Unsupported port state: %(port_state)s."
-msgstr "不支援的埠狀態：%(port_state)s。"
 
 msgid "Unsupported request type"
 msgstr "不受支援的要求類型"
@@ -2495,9 +2125,6 @@ msgstr "VRRP 鑑別密碼"
 msgid "VRRP authentication type"
 msgstr "VRRP 鑑別類型"
 
-msgid "VXLAN network unsupported."
-msgstr "不支援 VXLAN 網路。"
-
 msgid ""
 "Value of host kernel tick rate (hz) for calculating minimum burst value in "
 "bandwidth limit rules for a port with QoS. See kernel configuration file for "
@@ -2512,18 +2139,6 @@ msgid ""
 msgstr ""
 "透過服務品質來計算埠的佇列大小時的延遲值（毫秒）。如需相關資訊，請參閱 tc-"
 "tbf 手冊。"
-
-msgid ""
-"When external_network_bridge is set, each L3 agent can be associated with no "
-"more than one external network. This value should be set to the UUID of that "
-"external network. To allow L3 agent support multiple external networks, both "
-"the external_network_bridge and gateway_external_network_id must be left "
-"empty."
-msgstr ""
-"當設定了 external_network_bridge 時，每一個 L3 代理程式只能與不超過 1 個外部"
-"網路建立關聯。此值應該設為該外部網路的 UUID。如果要容許 L3 代理程式支援多個外"
-"部網路，則必須將 external_network_bridge 和 gateway_external_network_id 留"
-"空。"
 
 msgid ""
 "When proxying metadata requests, Neutron signs the Instance-ID header with a "
