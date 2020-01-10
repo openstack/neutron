@@ -15,6 +15,7 @@
 
 import datetime
 import random
+import unittest
 
 import fixtures
 import netaddr
@@ -24,7 +25,6 @@ from neutron_lib.utils import helpers
 from neutron_lib.utils import net
 from oslo_utils import netutils
 from oslo_utils import timeutils
-import unittest2
 
 
 # NOTE(yamahata): from neutron-lib 1.9.1, callback priority was added and
@@ -159,7 +159,7 @@ def fail(msg=None):
     This method is equivalent to TestCase.fail without requiring a
     testcase instance (usefully for reducing coupling).
     """
-    raise unittest2.TestCase.failureException(msg)
+    raise unittest.TestCase.failureException(msg)
 
 
 def get_random_string_list(i=3, n=5):
