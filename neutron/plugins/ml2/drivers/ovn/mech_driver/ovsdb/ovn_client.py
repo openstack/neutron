@@ -1609,8 +1609,7 @@ class OVNClient(object):
         self.create_metadata_port(admin_context, network)
         return network
 
-    def delete_network(self, network_id):
-        admin_context = n_context.get_admin_context()
+    def delete_network(self, context, network_id):
         with self._nb_idl.transaction(check_error=True) as txn:
             ls, ls_dns_record = self._nb_idl.get_ls_and_dns_record(
                 utils.ovn_name(network_id))
@@ -1620,7 +1619,7 @@ class OVNClient(object):
             if ls_dns_record:
                 txn.add(self._nb_idl.dns_del(ls_dns_record.uuid))
         db_rev.delete_revision(
-            admin_context, network_id, ovn_const.TYPE_NETWORKS)
+            context, network_id, ovn_const.TYPE_NETWORKS)
 
     def _is_qos_update_required(self, network):
         # Is qos service enabled
@@ -2045,8 +2044,7 @@ class OVNClient(object):
         if self._nb_idl.get_port_group(pg_name):
             txn.add(self._nb_idl.pg_del_ports(pg_name, port))
 
-    def delete_security_group(self, security_group_id):
-        admin_context = n_context.get_admin_context()
+    def delete_security_group(self, context, security_group_id):
         with self._nb_idl.transaction(check_error=True) as txn:
             if self._nb_idl.is_port_groups_supported():
                 name = utils.ovn_port_group_name(security_group_id)
@@ -2056,7 +2054,7 @@ class OVNClient(object):
                     name = utils.ovn_addrset_name(security_group_id,
                                                   ip_version)
                     txn.add(self._nb_idl.delete_address_set(name=name))
-        db_rev.delete_revision(admin_context, security_group_id,
+        db_rev.delete_revision(context, security_group_id,
                                ovn_const.TYPE_SECURITY_GROUPS)
 
     def _process_security_group_rule(self, rule, is_add_acl=True):
@@ -2071,11 +2069,10 @@ class OVNClient(object):
         db_rev.bump_revision(
             admin_context, rule, ovn_const.TYPE_SECURITY_GROUP_RULES)
 
-    def delete_security_group_rule(self, rule):
-        admin_context = n_context.get_admin_context()
+    def delete_security_group_rule(self, context, rule):
         self._process_security_group_rule(rule, is_add_acl=False)
         db_rev.delete_revision(
-            admin_context, rule['id'], ovn_const.TYPE_SECURITY_GROUP_RULES)
+            context, rule['id'], ovn_const.TYPE_SECURITY_GROUP_RULES)
 
     def _find_metadata_port(self, context, network_id):
         if not ovn_conf.is_ovn_metadata_enabled():

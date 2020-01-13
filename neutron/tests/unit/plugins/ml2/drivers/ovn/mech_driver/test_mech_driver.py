@@ -127,7 +127,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
     def test__delete_security_group(self):
         self.mech_driver._delete_security_group(
             resources.SECURITY_GROUP, events.AFTER_CREATE, {},
-            security_group_id=self.fake_sg['id'])
+            security_group_id=self.fake_sg['id'], context=self.context)
         ip4_name = ovn_utils.ovn_addrset_name(self.fake_sg['id'], 'ip4')
         ip6_name = ovn_utils.ovn_addrset_name(self.fake_sg['id'], 'ip6')
         delete_address_set_calls = [mock.call(name=name)
@@ -160,7 +160,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                                   return_value=rule):
             self.mech_driver._process_sg_rule_notification(
                 resources.SECURITY_GROUP_RULE, events.BEFORE_DELETE, {},
-                security_group_rule=rule)
+                security_group_rule=rule, context=self.context)
             ovn_acl_up.assert_called_once_with(
                 mock.ANY, mock.ANY, mock.ANY,
                 'sg_id', rule, is_add_acl=False)

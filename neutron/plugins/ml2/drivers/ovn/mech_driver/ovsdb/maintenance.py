@@ -189,7 +189,7 @@ class DBInconsistenciesPeriodics(object):
             revision_numbers_db.delete_revision(
                 context, row.resource_uuid, row.resource_type)
         else:
-            res_map['ovn_delete'](row.resource_uuid)
+            res_map['ovn_delete'](context, row.resource_uuid)
 
     def _fix_create_update_subnet(self, context, row):
         # Get the lasted version of the port in Neutron DB
