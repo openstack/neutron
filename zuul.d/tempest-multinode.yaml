@@ -180,10 +180,6 @@
     vars:
       tox_envlist: slow-serial
       tempest_test_regex: ""
-      # TODO(slaweq): remove test_port_security_macspoofing_port test from
-      # blacklist when bug https://bugs.launchpad.net/tempest/+bug/1728886
-      # will be fixed
-      tempest_black_regex: "(?:tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port)"
 
 - job:
     # TODO(slaweq): propose job with ovs-release and move -master one to
@@ -202,7 +198,6 @@
           (?:tempest.api.network.test_fwaas_extensions.*)|\
           (?:tempest.api.network.test_metering_extensions.*)|\
           (?:tempest.thirdparty.boto.test_s3.*)|\
-          (?:tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port)|\
           (?:tempest.api.identity*)|\
           (?:tempest.api.image*)|\
           (?:tempest.api.volume*)|\
