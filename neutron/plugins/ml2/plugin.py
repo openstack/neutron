@@ -1144,9 +1144,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @db_api.retry_if_session_inactive()
     def get_networks(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None, page_reverse=False):
-        # NOTE(ihrachys) use writer manager to be able to update mtu
-        # TODO(ihrachys) remove in Queens when mtu is not nullable
-        with db_api.CONTEXT_WRITER.using(context):
+        with db_api.CONTEXT_READER.using(context):
             nets_db = super(Ml2Plugin, self)._get_networks(
                 context, filters, None, sorts, limit, marker, page_reverse)
 
@@ -1959,10 +1957,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @db_api.retry_if_session_inactive(context_var_name='plugin_context')
     def get_bound_port_context(self, plugin_context, port_id, host=None,
                                cached_networks=None):
-        # NOTE(ihrachys) use writer manager to be able to update mtu when
-        # fetching network
-        # TODO(ihrachys) remove in Queens+ when mtu is not nullable
-        with db_api.CONTEXT_WRITER.using(plugin_context) as session:
+        with db_api.CONTEXT_READER.using(plugin_context) as session:
             try:
                 port_db = (session.query(models_v2.Port).
                            enable_eagerloads(False).
@@ -2016,10 +2011,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @db_api.retry_if_session_inactive(context_var_name='plugin_context')
     def get_bound_ports_contexts(self, plugin_context, dev_ids, host=None):
         result = {}
-        # NOTE(ihrachys) use writer manager to be able to update mtu when
-        # fetching network
-        # TODO(ihrachys) remove in Queens+ when mtu is not nullable
-        with db_api.CONTEXT_WRITER.using(plugin_context):
+        with db_api.CONTEXT_READER.using(plugin_context):
             dev_to_full_pids = db.partial_port_ids_to_full_ids(
                 plugin_context, dev_ids)
             # get all port objects for IDs

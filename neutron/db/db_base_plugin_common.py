@@ -306,12 +306,9 @@ class DbBasePluginCommon(object):
         if filters.get('cidr'):
             filters.update(
                 {'cidr': [netaddr.IPNetwork(x).cidr for x in filters['cidr']]})
-        # TODO(ihrachys) remove explicit reader usage when subnet OVO switches
-        # to engine facade by default
-        with db_api.CONTEXT_READER.using(context):
-            return subnet_obj.Subnet.get_objects(context, _pager=pager,
-                                                 validate_filters=False,
-                                                 **filters)
+        return subnet_obj.Subnet.get_objects(context, _pager=pager,
+                                             validate_filters=False,
+                                             **filters)
 
     def _make_network_dict(self, network, fields=None,
                            process_extensions=True, context=None):
