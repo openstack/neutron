@@ -35,6 +35,7 @@ object_data = {
     'DistributedPortBinding': '1.0-39c0d17b281991dcb66716fee5a8bef2',
     'DNSNameServer': '1.0-bf87a85327e2d812d1666ede99d9918b',
     'ExternalNetwork': '1.0-53d885e033cb931f9bb3bdd6bbe3f0ce',
+    'DvrFipGatewayPortAgentBinding': '1.0-ee2af3296265a5463de0bc3695b35b51',
     'DVRMacAddress': '1.0-d3c61a8338d20da74db2364d4d6554f2',
     'ExtraDhcpOpt': '1.0-632f689cbeb36328995a7aed1d0a78d3',
     'FlatAllocation': '1.0-bf666f24f4642b047eeca62311fbcb41',

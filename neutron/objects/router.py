@@ -309,3 +309,19 @@ class FloatingIP(base.NeutronDbObject):
         for key, value in group_iterator:
             row = [r for r in six.next(value)]
             yield (cls._load_object(context, row[0]), row[1])
+
+
+@base.NeutronObjectRegistry.register
+class DvrFipGatewayPortAgentBinding(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = dvr_models.DvrFipGatewayPortAgentBinding
+    new_facade = True
+
+    primary_keys = ['network_id', 'agent_id']
+
+    fields = {
+        'network_id': common_types.UUIDField(),
+        'agent_id': common_types.UUIDField(),
+    }
