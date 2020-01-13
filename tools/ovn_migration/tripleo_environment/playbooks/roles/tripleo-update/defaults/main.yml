@@ -1,0 +1,4 @@
+---
+
+generate_ovn_extras: generate-ovn-extras.sh.j2
+ovn_migration_temp_dir: "{{ working_dir }}/temp_files"

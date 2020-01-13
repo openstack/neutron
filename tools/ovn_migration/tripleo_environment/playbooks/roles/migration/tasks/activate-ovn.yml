@@ -1,0 +1,15 @@
+---
+- name: Generate OVN activation script
+  template:
+    src: "activate-ovn.sh.j2"
+    dest: "/tmp/activate-ovn.sh"
+    mode: 0744
+
+- name: Run OVN activation script
+  shell: >
+    /tmp/activate-ovn.sh 2>&1 > /tmp/activate-ovn.sh.log
+
+- name: Delete OVN activate script
+  file:
+    state: absent
+    path: /tmp/activate-ovn.sh

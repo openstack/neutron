@@ -1,0 +1,5 @@
+---
+
+create_migration_resource_script: create-resources.sh.j2
+resource_suffix: "pre"
+ovn_migration_temp_dir: "{{ working_dir }}/{{ resource_suffix }}_migration_resources"

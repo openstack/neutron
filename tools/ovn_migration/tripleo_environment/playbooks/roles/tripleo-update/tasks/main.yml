@@ -1,0 +1,24 @@
+---
+
+- name : Create temp file directory if not present
+  file:
+    state: directory
+    path: "{{ ovn_migration_temp_dir }}"
+
+- name: Create ovn-extras generation script
+  template:
+    src: "{{ generate_ovn_extras }}"
+    dest: "{{ ovn_migration_temp_dir }}/generate-ovn-extras.sh"
+    mode: 0755
+
+- name: Generate ovn-extras environment file
+  shell: >
+    set -o pipefail &&
+    {{ ovn_migration_temp_dir }}/generate-ovn-extras.sh
+  changed_when: False
+
+- name: Updating the overcloud stack with OVN services
+  shell: >
+    set -o pipefail &&
+    {{ overcloud_ovn_deploy_script }} 2>&1 > {{ overcloud_ovn_deploy_script }}.log
+  changed_when: true

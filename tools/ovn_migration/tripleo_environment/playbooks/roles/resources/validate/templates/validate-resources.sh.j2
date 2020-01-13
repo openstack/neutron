@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -x
+set -e
+
+source {{ overcloudrc }}
+
+# This script validates the resources create by the resources/create role.
+# It pings to the floating ip of the server and ssh into the server.
+
+server_ip=`cat {{ ovn_migration_temp_dir }}/server_public_ip`
+
+echo "Running ping test with -c 3 to the server ip - $server_ip"
+ping -c 3 $server_ip
+
+ssh -i {{ ovn_migration_temp_dir }}/ovn_migration_ssh_key -o StrictHostKeyChecking=no \
+-o UserKnownHostsFile=/dev/null  cirros@$server_ip date
+
+echo "Done with the validation"

@@ -1,0 +1,24 @@
+---
+
+- hosts: overcloud-controllers
+  tasks:
+  - name: Update dhcp_agent configuration file option 'dhcp_renewal_time'
+    ini_file:
+      path=/var/lib/config-data/puppet-generated/neutron/etc/neutron/dhcp_agent.ini
+      section=DEFAULT
+      backup=yes
+      option=dhcp_renewal_time
+      value={{ renewal_time }}
+      create=no
+    ignore_errors: yes
+
+  - block:
+    - name: Get the neutron dhcp agent docker id
+      shell:
+        docker ps | grep neutron_dhcp | awk '{print $1}'
+      register: dhcp_agent_docker_id
+      ignore_errors: yes
+
+    - name: Restart neutron dhcp agent
+      command: docker restart {{ dhcp_agent_docker_id.stdout }}
+      ignore_errors: yes

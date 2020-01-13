@@ -1,0 +1,26 @@
+---
+
+- name : Create temp file directory if not present
+  file:
+    state: directory
+    path: "{{ ovn_migration_temp_dir }}"
+
+- name: Generate cleanup script
+  template:
+    src: "{{ cleanup_resource_script }}"
+    dest: "{{ ovn_migration_temp_dir }}/cleanup-resources.sh"
+    mode: 0744
+
+- name: Cleaning up the migration resources (verbose)
+  shell: >
+    set -o pipefail &&
+    {{ ovn_migration_temp_dir }}/cleanup-resources.sh 2>&1 | tee
+    {{ ovn_migration_temp_dir }}/cleanup-resources.sh.log
+
+  when: not silent_cleanup
+
+- name: Cleaning up the migration resources (silent)
+  shell: >
+    {{ ovn_migration_temp_dir }}/cleanup-resources.sh >/dev/null 2>&1
+  when: silent_cleanup
+

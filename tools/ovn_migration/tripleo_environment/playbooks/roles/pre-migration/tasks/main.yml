@@ -1,0 +1,17 @@
+# Delete any existing resources to make sure we don't conflict on a second run
+- name: Delete any existing pre migration resources (preventive)
+  include_role:
+    name: resources/cleanup
+  vars:
+      silent_cleanup: true
+  when: validate_migration|bool
+
+- name: Create the pre migration resource stack
+  include_role:
+    name: resources/create
+  when: validate_migration|bool
+
+- name: Validate the pre migration resources
+  include_role:
+    name: resources/validate
+  when: validate_migration|bool

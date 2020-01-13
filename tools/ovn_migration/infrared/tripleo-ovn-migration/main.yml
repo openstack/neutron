@@ -1,0 +1,194 @@
+# Playbook which preps migration and then invokes the migration script.
+- name: Install migration tool
+  hosts: undercloud
+  become: true
+  tasks:
+      - name: Install python 3 virtualenv and neutron ovn migration tool
+        yum:
+            name:
+              - python3-virtualenv
+              - python3-neutron-ovn-migration-tool
+            state: present
+
+      - name: Set host_key_checking to False in ansible.cfg
+        ini_file:
+            path=/etc/ansible/ansible.cfg
+            section=defaults
+            option=host_key_checking
+            value=False
+        ignore_errors: yes
+
+- name: Prepare for migration
+  hosts: undercloud
+  tasks:
+      - name: Set ovn migration working dir
+        set_fact:
+            ovn_migration_working_dir: /home/stack/ovn_migration
+
+      - name: Delete temp file directory if present
+        file:
+            state: absent
+            path: "{{ ovn_migration_working_dir }}"
+
+      - name : Create temp file directory if not present
+        file:
+            state: directory
+            path: "{{ ovn_migration_working_dir }}"
+
+      - name: Set the docker registry information
+        block:
+            - name: Get the docker registry info (infrared deployment)
+              block:
+                  - name: Set is_infrard deployment
+                    set_fact:
+                        is_infrared: True
+
+                  - name: Save the docker reg
+                    set_fact:
+                        container_image_prepare:
+                            namespace: "{{ install.get('registry', {}).namespace|default(False)|ternary(install.get('registry', {}).namespace, install.get('registry', {}).mirror + '/' + 'rhosp' +  install.version) }}"
+                            prefix: "{{ install.registry.prefix|default('openstack') }}"
+                            tag: "{{ install.registry.tag|default('') }}"
+                            local_namespace: "{{ install.registry.local|default('') }}"
+                            is_dvr: "{{ install.dvr }}"
+              when:
+                  - install is defined
+
+            - name: Get the docker registry info (tripleo deployment)
+              block:
+                  - name: Set is_infrard deployment
+                    set_fact:
+                        is_infrared: False
+
+                  - name: Save the docker reg
+                    set_fact:
+                        container_image_prepare:
+                            namespace: "{{ registry_namespace }}"
+                            local_namespace: "{{ registry_localnamespace }}"
+                            prefix: "{{ registry_prefix }}"
+                            tag: "{{ registry_tag }}"
+                            is_dvr: "{{ dvr }}"
+              when:
+                  - install is not defined
+
+      - name: Prepare for migration
+        include_role:
+           name: prepare-migration
+        vars:
+           infrared_deployment: "{{ is_infrared }}"
+           registry_namespace: "{{ container_image_prepare['namespace'] }}"
+           image_prefix: "{{ container_image_prepare['prefix'] }}"
+           image_tag: "{{ container_image_prepare['tag'] }}"
+           local_namespace: "{{ container_image_prepare['local_namespace'] }}"
+           is_dvr: "{{ container_image_prepare['is_dvr'] }}"
+
+- name: Boot few VMs to measure downtime
+  hosts: undercloud
+  tasks:
+      - name: Check if need to create resources
+        block:
+            - name: Set create_vms (infrared)
+              set_fact:
+                  create_vms: "{{ install.create_resources }}"
+              when:
+                - install is defined
+
+            - name: Set create_vms (tripleo deployment)
+              set_fact:
+                  create_vms: "{{ create_resources }}"
+              when:
+                - install is not defined
+
+      - name: Create few resources
+        block:
+            - name: Set the public network name (infrared deployment)
+              set_fact:
+                  public_net: "{{ install.external_network }}"
+              when: install is defined
+
+            - name: Set the public network name (Tripleo deployment)
+              set_fact:
+                  public_net: "{{ external_network }}"
+              when: install is not defined
+
+            - name: Set the image name (infrared deployment)
+              set_fact:
+                  image_to_boot: "{{ install.image_name }}"
+              when: install is defined
+
+            - name: Set the image name(Tripleo deployment)
+              set_fact:
+                  image_to_boot: "{{ image_name }}"
+              when: install is not defined
+
+            - name: Create resources
+              include_role:
+                  name: create-resources
+              vars:
+                  public_network_name: "{{ public_net }}"
+                  image_name: "{{ image_to_boot }}"
+                  ovn_migration_temp_dir: /home/stack/ovn_migration
+                  overcloudrc: /home/stack/overcloudrc
+        when:
+            - create_vms|bool
+
+- name: Kick start the migration
+  hosts: undercloud
+  tasks:
+      #TODO: Get the working dir from the param
+      - name: Starting migration block
+        block:
+            - name: Set ovn migration working dir
+              set_fact:
+                  ovn_migration_working_dir: /home/stack/ovn_migration
+
+            - name: Copy the playbook files into ovn_migration working dir
+              command: cp -rf /usr/share/ansible/neutron-ovn-migration/playbooks {{ ovn_migration_working_dir }}
+
+            - name: Set the public network name (infrared deployment)
+              set_fact:
+                  public_network: "{{ install.external_network }}"
+              when: install is defined
+
+            - name: Set the public network name (Tripleo deployment)
+              set_fact:
+                  public_network: "{{ external_network }}"
+              when: install is not defined
+
+            - name: Create ovn migration script
+              template:
+                  src: templates/start-ovn-migration.sh.j2
+                  dest: "{{ ovn_migration_working_dir }}/start-ovn-migration.sh"
+                  mode: 0755
+
+            - name: Generate inventory file for ovn migration
+              shell:
+                  set -o pipefail &&
+                  {{ ovn_migration_working_dir }}/start-ovn-migration.sh generate-inventory 2>&1 > {{ ovn_migration_working_dir}}/generate-inventory.log
+
+            - name: Set MTU T1
+              shell:
+                  set -o pipefail &&
+                  {{ ovn_migration_working_dir }}/start-ovn-migration.sh setup-mtu-t1 2>&1 > {{ ovn_migration_working_dir}}/setup-mtu-t1.log
+
+            - name: Reduce mtu of the pre migration networks
+              shell:
+                  set -o pipefail &&
+                  {{ ovn_migration_working_dir }}/start-ovn-migration.sh reduce-mtu 2>&1 > {{ ovn_migration_working_dir}}/reduce-mtu.log
+
+            - name: Start the migration process
+              shell:
+                  set -o pipefail &&
+                  {{ ovn_migration_working_dir }}/start-ovn-migration.sh start-migration 2>&1
+                  > {{ ovn_migration_working_dir}}/start-ovn-migration.sh.log
+
+            - name: Stop pinger if started
+              shell:
+                  echo "exit" > {{ ovn_migration_working_dir}}/_pinger_cmd.txt
+        always:
+            - name: Fetch ovn_migration log directory
+              synchronize:
+                  src: "{{ ovn_migration_working_dir }}"
+                  dest: "{{ inventory_dir }}"
+                  mode: pull
+              when: install is defined

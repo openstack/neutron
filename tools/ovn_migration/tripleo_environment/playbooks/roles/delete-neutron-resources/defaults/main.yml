@@ -1,0 +1,3 @@
+---
+
+ovn_migration_temp_dir_del: "{{ working_dir }}/delete_neutron_resources"

@@ -1,0 +1,6 @@
+---
+
+cleanup_resource_script: cleanup-resources.sh.j2
+resource_suffix: "pre"
+ovn_migration_temp_dir: "{{ working_dir }}/{{ resource_suffix }}_migration_resources"
+silent_cleanup: false

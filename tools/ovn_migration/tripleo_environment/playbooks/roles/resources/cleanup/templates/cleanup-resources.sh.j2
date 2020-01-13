@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -x
+
+source {{ overcloudrc }}
+
+openstack server delete ovn-migration-server-{{ resource_suffix }}
+
+openstack port delete ovn-migration-server-port-{{ resource_suffix }}
+
+server_ip=`cat {{ ovn_migration_temp_dir }}/server_public_ip`
+
+openstack floating ip delete $server_ip
+
+openstack router remove subnet ovn-migration-router-{{ resource_suffix }} ovn-migration-subnet-{{ resource_suffix }}
+
+openstack router unset --external-gateway ovn-migration-router-{{ resource_suffix }}
+
+openstack router delete ovn-migration-router-{{ resource_suffix }}
+
+openstack network delete ovn-migration-net-{{ resource_suffix }}
+
+openstack security group delete ovn-migration-sg-{{ resource_suffix }}
+
+openstack flavor delete ovn-migration-{{ resource_suffix }}
+
+openstack image delete cirros-ovn-migration-{{ resource_suffix }}
+
+openstack keypair delete ovn-migration-{{ resource_suffix }}
+
+echo "Resource cleanup done"
+exit 0

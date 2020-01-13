@@ -1,0 +1,204 @@
+# Migrate a Neutron deployment using ML2/OVS to OVN.
+#
+# See hosts-sample for expected contents of the ansible inventory.
+
+---
+- hosts: compute
+  remote_user: "{{ remote_user }}"
+  become: true
+  tasks:
+  - name: Ensure OVN packages are installed on compute nodes.
+    yum:
+      name: openvswitch-ovn-host
+      state: present
+  # TODO to make ansible-lint happy, all of these commands should be conditionally run
+  # only if the config value needs to be changed.
+  - name: Configure ovn-encap-type.
+    command: "ovs-vsctl set open . external_ids:ovn-encap-type=geneve"
+    changed_when: false
+  - name: Configure ovn-encap-ip.
+    command: "ovs-vsctl set open . external_ids:ovn-encap-ip={{ ovn_encap_ip }}"
+    changed_when: false
+  - name: Configure ovn-remote.
+    command: "ovs-vsctl set open . external_ids:ovn-remote=tcp:{{ ovn_db_ip }}:6642"
+    changed_when: false
+    # TODO We could discover the appropriate value for ovn-bridge-mappings based on
+    # the openvswitch agent configuration instead of requiring it to be configured
+    # in the inventory.
+  - name: Configure ovn-bridge-mappings.
+    command: "ovs-vsctl set open . external_ids:ovn-bridge-mappings={{ ovn_bridge_mappings }}"
+    changed_when: false
+  - name: Get hostname
+    command: hostname -f
+    register: hostname
+    check_mode: no
+    changed_when: false
+  - name: Set host name
+    command: "ovs-vsctl set Open_vSwitch . external-ids:hostname={{ hostname.stdout }}"
+    changed_when: false
+  # TODO ansible has an "iptables" module, but it does not allow you specify a "rule number"
+  # which we require here.
+  - name: Open Geneve UDP port for tunneling.
+    command: iptables -I INPUT 10 -m state --state NEW -p udp --dport 6081 -j ACCEPT
+    changed_when: false
+  - name: Persist our iptables changes after a reboot
+    shell: iptables-save > /etc/sysconfig/iptables.save
+    args:
+        creates: /etc/sysconfig/iptables.save
+    # TODO Remove this once the metadata API is supported.
+    # https://bugs.launchpad.net/networking-ovn/+bug/1562132
+  - name: Force config drive until the metadata API is supported.
+    ini_file:
+      dest: /etc/nova/nova.conf
+      section: DEFAULT
+      option: force_config_drive
+      value: true
+  - name: Restart nova-compute service to reflect force_config_drive value.
+    systemd:
+      name: openstack-nova-compute
+      state: restarted
+      enabled: yes
+
+- hosts: controller
+  remote_user: "{{ remote_user }}"
+  become: true
+  tasks:
+  - name: Ensure OVN packages are installed on the central OVN host.
+    when: ovn_central is defined
+    yum:
+      name: openvswitch-ovn-central
+      state: present
+  # TODO Set up SSL for OVN databases
+  # TODO ansible has an "iptables" module, but it does not allow you specify a "rule number"
+  # which we require here.
+  - name: Open OVN database ports.
+    command: "iptables -I INPUT 10 -m state --state NEW -p tcp --dport {{ item }} -j ACCEPT"
+    with_items: [ 6641, 6642 ]
+    changed_when: False
+  - name: Persist our iptables changes after a reboot
+    shell: iptables-save > /etc/sysconfig/iptables.save
+    args:
+        creates: /etc/sysconfig/iptables.save
+  # TODO Integrate HA support for the OVN control services.
+  - name: Start ovn-northd and the OVN databases.
+    when: ovn_central is defined
+    systemd:
+      name: ovn-northd
+      state: started
+      enabled: yes
+  - name: Enable remote access to the northbound database.
+    command: "ovn-nbctl set-connection ptcp:6641:{{ ovn_db_ip }}"
+    when: ovn_central is defined
+    changed_when: False
+  - name: Enable remote access to the southbound database.
+    command: "ovn-sbctl set-connection ptcp:6642:{{ ovn_db_ip }}"
+    when: ovn_central is defined
+    changed_when: False
+  - name: Update Neutron configuration files
+    ini_file: dest={{ item.dest }} section={{ item.section }} option={{ item.option }} value={{ item.value }}
+    with_items:
+        - { dest: '/etc/neutron/neutron.conf', section: 'DEFAULT', option: 'service_plugins', value: 'qos,ovn-router' }
+        - { dest: '/etc/neutron/neutron.conf', section: 'DEFAULT', option: 'notification_drivers', value: 'ovn-qos' }
+        - { dest: '/etc/neutron/plugins/ml2/ml2_conf.ini', section: 'ml2', option: 'mechanism_drivers', value: 'ovn' }
+        - { dest: '/etc/neutron/plugins/ml2/ml2_conf.ini', section: 'ml2', option: 'type_drivers', value: 'geneve,vxlan,vlan,flat' }
+        - { dest: '/etc/neutron/plugins/ml2/ml2_conf.ini', section: 'ml2', option: 'tenant_network_types', value: 'geneve' }
+        - { dest: '/etc/neutron/plugins/ml2/ml2_conf.ini', section: 'ml2_type_geneve', option: 'vni_ranges', value: '1:65536' }
+        - { dest: '/etc/neutron/plugins/ml2/ml2_conf.ini', section: 'ml2_type_geneve', option: 'max_header_size', value: '38' }
+        - { dest: '/etc/neutron/plugins/ml2/ml2_conf.ini', section: 'ovn', option: 'ovn_nb_connection', value: '"tcp:{{ ovn_db_ip }}:6641"' }
+        - { dest: '/etc/neutron/plugins/ml2/ml2_conf.ini', section: 'ovn', option: 'ovn_sb_connection', value: '"tcp:{{ ovn_db_ip }}:6642"' }
+        - { dest: '/etc/neutron/plugins/ml2/ml2_conf.ini', section: 'ovn', option: 'ovsdb_connection_timeout', value: '180' }
+        - { dest: '/etc/neutron/plugins/ml2/ml2_conf.ini', section: 'ovn', option: 'neutron_sync_mode', value: 'repair' }
+        - { dest: '/etc/neutron/plugins/ml2/ml2_conf.ini', section: 'ovn', option: 'ovn_l3_mode', value: 'true' }
+        - { dest: '/etc/neutron/plugins/ml2/ml2_conf.ini', section: 'ovn', option: 'vif_type', value: 'ovs' }
+  - name: Note that API downtime begins now.
+    debug:
+      msg: NEUTRON API DOWNTIME STARTING NOW FOR THIS HOST
+  - name: Shut down neutron-server so that we can begin data sync to OVN.
+    systemd:
+      name: neutron-server
+      state: stopped
+
+- hosts: controller
+  remote_user: "{{ remote_user }}"
+  become: true
+  tasks:
+  - name: Sync Neutron state to OVN.
+    when: ovn_central is defined
+    command: neutron-ovn-db-sync-util --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
+
+- hosts: overcloud
+  remote_user: "{{ remote_user }}"
+  become: true
+  tasks:
+  - name: Note that data plane imact starts now.
+    debug:
+      msg: DATA PLANE IMPACT BEGINS NOW.
+  - name: Stop metadata, DHCP, L3 and openvswitch agent if needed.
+    systemd: name={{ item.name }} state={{ item.state }} enabled=no
+    with_items:
+      - { name: 'neutron-metadata-agent', state: 'stopped' }
+      - { name: 'neutron-dhcp-agent', state: 'stopped' }
+      - { name: 'neutron-l3-agent', state: 'stopped' }
+      - { name: 'neutron-openvswitch-agent', state: 'stopped' }
+
+- hosts: compute
+  remote_user: "{{ remote_user }}"
+  become: true
+  tasks:
+  - name: Note that data plane is being restored.
+    debug:
+      msg: DATA PLANE IS NOW BEING RESTORED.
+  - name: Delete br-tun as it is no longer used.
+    command: "ovs-vsctl del-br br-tun"
+    changed_when: false
+  - name: Reset OpenFlow protocol version before ovn-controller takes over.
+    with_items: [ br-int, br-ex ]
+    command: "ovs-vsctl set Bridge {{ item }} protocols=[]"
+    ignore_errors: True
+    changed_when: false
+  - name: Start ovn-controller.
+    systemd:
+      name: ovn-controller
+      state: started
+      enabled: yes
+
+- hosts: controller
+  remote_user: "{{ remote_user }}"
+  become: true
+  tasks:
+  # TODO The sync util scheduling gateway routers depends on this patch:
+  # https://review.openstack.org/#/c/427020/
+  # If the patch is not merged, this command is harmless, but the gateway
+  # routers won't get scheduled until later when neutron-server starts.
+  - name: Schedule gateway routers by running the sync util.
+    when: ovn_central is defined
+    command: neutron-ovn-db-sync-util --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
+    changed_when: false
+  - name: Configure node for hosting gateway routers for external connectivity.
+    command: "ovs-vsctl set open . external_ids:ovn-cms-options=enable-chassis-as-gw"
+    changed_when: false
+
+- hosts: overcloud
+  remote_user: "{{ remote_user }}"
+  become: true
+  tasks:
+  # TODO Make this smarter so that it only deletes net namespaces that were
+  #   # created by neutron.  In the simple case, this is fine, but will break
+  #     # once containers are in use on the overcloud.
+  - name: Delete network namespaces.
+    command: ip -all netns delete
+    changed_when: false
+
+- hosts: controller
+  remote_user: "{{ remote_user }}"
+  become: true
+  tasks:
+  - name: Note that the Neutron API is coming back online.
+    debug:
+      msg: THE NEUTRON API IS NOW BEING RESTORED.
+  - name: Start neutron-server.
+    systemd:
+      name: neutron-server
+      state: started
+
+# TODO In our grenade script we had to restart rabbitmq.  Is that needed?

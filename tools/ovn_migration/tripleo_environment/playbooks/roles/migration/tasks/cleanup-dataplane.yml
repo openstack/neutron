@@ -1,0 +1,79 @@
+---
+- name: Quickly disable neutron router and dhcp interfaces
+  shell: |
+    for p in `ovs-vsctl show | egrep 'qr-|ha-|qg-|rfp-' | grep Interface | awk '{print $2}'`
+    do
+      # p will be having quotes. Eg. "hr-xxxx". So strip the quotes
+      p=`echo $p | sed -e 's/"//g'`
+      ovs-vsctl clear Interface $p external-ids
+      ovs-vsctl set Interface $p admin-state=down
+    done
+
+    # dhcp tap ports cannot be easily distinguished from ovsfw ports, so we
+    # list them from within the qdhcp namespaces
+
+    for netns in `ip netns  | awk '{ print $1 }' | grep qdhcp-`; do
+      for dhcp_port in `ip netns exec $netns ip -o link show | awk -F': ' '{print $2}' | grep tap`; do
+        ovs-vsctl clear Interface $dhcp_port external-ids
+        ovs-vsctl set Interface $dhcp_port admin-state=down
+      done
+    done
+
+
+- name: Clean neutron datapath security groups from iptables
+  shell: |
+    iptables-save > /tmp/iptables-before-cleanup
+    cat /tmp/iptables-before-cleanup | grep -v neutron-openvswi | \
+        grep -v neutron-filter > /tmp/iptables-after-cleanup
+
+    if ! cmp /tmp/iptables-before-cleanup /tmp/iptables-after-cleanup
+    then
+      cat /tmp/iptables-after-cleanup | iptables-restore
+      echo "Security groups cleaned"
+    fi
+  register: out
+  changed_when: "'Security groups cleaned' in out.stdout"
+
+- name: Cleanup neutron datapath resources
+  shell: |
+    # avoid cleaning up dhcp namespaces if the neutron dhcp agent is up (SR-IOV use case)
+    if [[ "{{ item.value.cleanup_type }}" == "dhcp" ]]; then
+        docker inspect neutron_dhcp && echo "Shouldn't clean DHCP namespaces if neutron_dhcp docker is up" && exit 0
+    fi
+
+    if ip netns | egrep -e "{{ item.value.netns_regex }}"
+    then
+      echo "Cleaning up"
+      cmd="$(paunch debug --file {{ ovn_migration_backups }}/tripleo-config/hashed-container-startup-config-step_4.json \
+                  --action print-cmd --container {{ item.key }} \
+                  --interactive | \
+                  sed 's/--interactive /--volume=\/tmp\/cleanup-{{ item.key }}.sh:\/cleanup.sh:ro /g ' )"
+
+      f="/tmp/cleanup-{{ item.key }}.sh"
+      f_cmd="/tmp/container-cmd-{{ item.key }}.sh"
+
+      echo "#!/bin/sh" > $f
+      echo "set -x" >> $f
+      echo "set -e" >> $f
+      echo "sudo -E kolla_set_configs" >> $f
+      echo "neutron-netns-cleanup {{ item.value.config }} --agent-type {{ item.value.cleanup_type }} --force" >> $f
+
+      chmod a+x $f
+
+      echo $cmd /cleanup.sh
+
+      echo "#!/bin/sh" > $f_cmd
+      echo "set -x" >> $f_cmd
+      echo "set -e" >> $f_cmd
+      echo $cmd /cleanup.sh >> $f_cmd
+      chmod a+x $f_cmd
+      $f_cmd
+
+    fi
+  with_dict: "{{ agent_cleanups }}"
+  register: out
+  changed_when: "'Cleaning up' in out.stdout"
+
+
+
+

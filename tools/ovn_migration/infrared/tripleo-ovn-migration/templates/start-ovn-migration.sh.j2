@@ -1,0 +1,7 @@
+#!/bin/bash
+
+export PUBLIC_NETWORK_NAME={{ public_network }}
+# TODO: Get this from the var
+export OPT_WORKDIR=/home/stack/ovn_migration
+
+/usr/bin/ovn_migration.sh $1
