@@ -1,0 +1,17 @@
+- name: Add apt key from hkp://keyserver.ubuntu.com:80
+  shell:
+    cmd: apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
+    executable: /bin/bash
+  become: yes
+  when:
+    - ansible_facts['distribution_release'] == "bionic"
+    - ansible_facts['distribution'] == "Ubuntu"
+
+- name: Add MariaDB 10.3 repository (https://bugs.launchpad.net/neutron/+bug/1855912)
+  apt_repository:
+    repo: deb [arch=amd64,arm64,ppc64el] http://ftp.hosteurope.de/mirror/mariadb.org/repo/10.3/ubuntu bionic main
+    state: present
+  become: yes
+  when:
+    - ansible_facts['distribution_release'] == "bionic"
+    - ansible_facts['distribution'] == "Ubuntu"
