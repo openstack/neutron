@@ -10,10 +10,10 @@ fixes:
     ``sriov-agent``. Hypervisor names default to ``socket.gethostname()``
     which works out of the box with ``libvirt`` even when the ``DEFAULT.host``
     config option is set to a non-default value. We believe this change fixes
-    `bug 696600 <https://launchpad.net/bugs/1853840>`_.
+    `bug 1853840 <https://launchpad.net/bugs/1853840>`_.
 upgrade:
   - |
-    For users affected by `bug 696600
+    For users affected by `bug 1853840
     <https://launchpad.net/bugs/1853840>`_ the hypervisor name
     now can be set per physical network device in config option
     ``resource_provider_hypervisors`` which is located in the ``[ovs]``
