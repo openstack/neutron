@@ -235,6 +235,12 @@ class OVSBridge(BaseOVS):
         self._default_cookie = generate_random_cookie()
         self._highest_protocol_needed = constants.OPENFLOW10
         self._min_bw_qos_id = uuidutils.generate_uuid()
+        # TODO(jlibosva): Revert initial_protocols once launchpad bug 1852221
+        #                 is fixed and new openvswitch containing the fix is
+        #                 released.
+        self.initial_protocols = {
+            constants.OPENFLOW10, constants.OPENFLOW13, constants.OPENFLOW14}
+        self.initial_protocols.add(self._highest_protocol_needed)
 
     @property
     def default_cookie(self):
@@ -273,6 +279,7 @@ class OVSBridge(BaseOVS):
         self._highest_protocol_needed = max(self._highest_protocol_needed,
                                             protocol,
                                             key=version_from_protocol)
+        self.initial_protocols.add(self._highest_protocol_needed)
 
     def create(self, secure_mode=False):
         other_config = {
@@ -287,7 +294,8 @@ class OVSBridge(BaseOVS):
             # transactions
             txn.add(
                 self.ovsdb.db_add('Bridge', self.br_name,
-                                  'protocols', self._highest_protocol_needed))
+                                  'protocols',
+                                  *self.initial_protocols))
             txn.add(
                 self.ovsdb.db_set('Bridge', self.br_name,
                                   ('other_config', other_config)))

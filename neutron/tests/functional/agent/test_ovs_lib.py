@@ -464,11 +464,12 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
 
     def test_db_add_set(self):
         protocols = ["OpenFlow10", "OpenFlow11"]
+        expected = self.br.initial_protocols.union(protocols)
         self.br.ovsdb.db_add("Bridge", self.br.br_name, "protocols",
                              *protocols).execute(check_error=True)
-        self.assertEqual(protocols,
-                         self.br.db_get_val('Bridge',
-                                            self.br.br_name, "protocols"))
+        self.assertItemsEqual(expected,
+                              self.br.db_get_val('Bridge',
+                                                 self.br.br_name, "protocols"))
 
     def test_db_add_map(self):
         key = "testdata"
