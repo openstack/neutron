@@ -77,6 +77,8 @@ class TestTrunkHandler(base.BaseTestCase):
         self.mock_get_port.side_effect = lambda ctxt, id: (
             self.sub_port_1_obj if id == 'sub_port_1' else (
                 self.sub_port_2_obj if id == 'sub_port_2' else None))
+        self.mock_port_update = mock.patch(
+            "neutron.objects.ports.Port.update").start()
         self.mock_update_pb = mock.patch(
             "neutron.objects.ports.PortBinding.update_object").start()
         self.mock_clear_levels = mock.patch(
@@ -106,10 +108,14 @@ class TestTrunkHandler(base.BaseTestCase):
         self.trunk_1.sub_ports = [self.sub_port_1, self.sub_port_2]
         self.handler.trunk_created(self.trunk_1)
 
+        calls = [mock.call(), mock.call()]
+        self._assert_calls(self.mock_port_update, calls)
+
         calls = [
             mock.call(mock.ANY,
                       {'profile': {'parent_name': trunk.port_id,
-                                   'tag': s_port.segmentation_id}},
+                                   'tag': s_port.segmentation_id},
+                       'vif_type': portbindings.VIF_TYPE_OVS},
                       host=mock.ANY,
                       port_id=s_port.port_id)
             for trunk, s_port in [(self.trunk_1, self.sub_port_1),
@@ -136,8 +142,10 @@ class TestTrunkHandler(base.BaseTestCase):
         self.handler.trunk_created(self.trunk_1)
         self.mock_update_pb.assert_called_once_with(
             mock.ANY, {'profile': {'parent_name': self.sub_port_1.trunk_id,
-                                   'tag': self.sub_port_1.segmentation_id}},
+                                   'tag': self.sub_port_1.segmentation_id},
+                       'vif_type': portbindings.VIF_TYPE_OVS},
             host='foo.com', port_id=self.sub_port_1.port_id)
+        self.mock_port_update.assert_not_called()
         self.plugin_driver._nb_ovn.set_lswitch_port.assert_not_called()
 
     def test_delete_trunk(self):
@@ -158,13 +166,14 @@ class TestTrunkHandler(base.BaseTestCase):
             'foo_field': self.sub_port_2.trunk_id})
         self.handler.trunk_deleted(self.trunk_1)
 
+        calls = [mock.call(), mock.call()]
+        self._assert_calls(self.mock_port_update, calls)
+
         calls = [
             mock.call(
                 mock.ANY,
                 {'profile': {'foo_field': s_port.trunk_id},
-                 'host': '',
-                 'vif_type': portbindings.VIF_TYPE_UNBOUND,
-                 'vif_details': ''},
+                 'vif_type': portbindings.VIF_TYPE_UNBOUND},
                 host='foo.com',
                 port_id=s_port.port_id)
             for trunk, s_port in [(self.trunk_1, self.sub_port_1),
@@ -195,9 +204,7 @@ class TestTrunkHandler(base.BaseTestCase):
         calls = [
             mock.call(mock.ANY,
                       {'profile': {'foo_field': s_port.trunk_id},
-                       'host': '',
-                       'vif_type': portbindings.VIF_TYPE_UNBOUND,
-                       'vif_details': ''},
+                       'vif_type': portbindings.VIF_TYPE_UNBOUND},
                       host='foo.com',
                       port_id=s_port.port_id)
             for trunk, s_port in [(self.trunk_1, self.sub_port_1)]]
@@ -230,9 +237,9 @@ class TestTrunkHandler(base.BaseTestCase):
         self.handler.trunk_deleted(self.trunk_1)
         self.mock_update_pb.assert_called_once_with(
             mock.ANY, {'profile': {},
-                       'vif_type': portbindings.VIF_TYPE_UNBOUND,
-                       'host': '', 'vif_details': ''},
+                       'vif_type': portbindings.VIF_TYPE_UNBOUND},
             host='foo.com', port_id=self.sub_port_1.port_id)
+        self.mock_port_update.assert_not_called()
         self.plugin_driver._nb_ovn.set_lswitch_port.assert_not_called()
         self.mock_clear_levels.assert_not_called()
 

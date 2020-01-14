@@ -30,7 +30,6 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from neutron_lib.services.qos import constants as qos_consts
-from neutron_lib.services.trunk import constants as trunk_consts
 from oslo_config import cfg
 from oslo_db import exception as os_db_exc
 from oslo_log import log
@@ -755,22 +754,6 @@ class OVNMechanismDriver(api.MechanismDriver):
         # See doc/source/design/ovn_worker.rst for more details.
         return [worker.MaintenanceWorker()]
 
-    def _update_subport_host_if_needed(self, port_id):
-        parent_port = self._ovn_client.get_parent_port(port_id)
-        if parent_port:
-            admin_context = n_context.get_admin_context()
-            host_id = None
-            try:
-                port = self._plugin.get_port(admin_context, parent_port)
-                host_id = port.get(portbindings.HOST_ID, '')
-                subport = {
-                    'port': {'binding:host_id': host_id,
-                             'device_owner': trunk_consts.TRUNK_SUBPORT_OWNER}}
-                self._plugin.update_port(admin_context, port_id, subport)
-            except (os_db_exc.DBReferenceError, n_exc.PortNotFound):
-                LOG.debug("Error trying to set host_id %s for subport %s",
-                          host_id, port_id)
-
     def _update_dnat_entry_if_needed(self, port_id, up=True):
         """Update DNAT entry if using distributed floating ips."""
         if not ovn_conf.is_ovn_distributed_floating_ip():
@@ -824,11 +807,6 @@ class OVNMechanismDriver(api.MechanismDriver):
 
         self._update_dnat_entry_if_needed(port_id)
         self._wait_for_metadata_provisioned_if_needed(port_id)
-
-        # If this port is a subport, we need to update the host_id and set it
-        # to its parent's. Otherwise, Neutron won't even try to bind it and
-        # it will not transition from DOWN to ACTIVE.
-        self._update_subport_host_if_needed(port_id)
 
         provisioning_blocks.provisioning_complete(
             n_context.get_admin_context(),

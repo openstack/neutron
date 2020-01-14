@@ -27,7 +27,6 @@ from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
-from neutron_lib.services.trunk import constants as trunk_consts
 from neutron_lib.tests import tools
 from neutron_lib.utils import net as n_net
 from oslo_config import cfg
@@ -784,9 +783,6 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                           device_owner=port_device_owner) as port1, \
                 mock.patch.object(provisioning_blocks,
                                   'provisioning_complete') as pc, \
-                mock.patch.object(
-                    self.mech_driver,
-                    '_update_subport_host_if_needed') as upd_subport, \
                 mock.patch.object(self.mech_driver,
                                   '_update_dnat_entry_if_needed') as ude, \
                 mock.patch.object(
@@ -801,7 +797,6 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                 resources.PORT,
                 provisioning_blocks.L2_AGENT_ENTITY
             )
-            upd_subport.assert_called_once_with(port1['port']['id'])
             ude.assert_called_once_with(port1['port']['id'])
             wmp.assert_called_once_with(port1['port']['id'])
 
@@ -893,22 +888,6 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                 provisioning_blocks.L2_AGENT_ENTITY
             )
             ude.assert_called_once_with(port1['port']['id'], False)
-
-    def test__update_subport_host_if_needed(self):
-        """Check that a subport is updated with parent's host_id."""
-        binding_host_id = {'binding:host_id': 'hostname',
-                           'device_owner': trunk_consts.TRUNK_SUBPORT_OWNER}
-        with mock.patch.object(self.mech_driver._ovn_client, 'get_parent_port',
-                               return_value='parent'), \
-                mock.patch.object(self.mech_driver._plugin, 'get_port',
-                                  return_value=binding_host_id) as get_port, \
-                mock.patch.object(self.mech_driver._plugin,
-                                  'update_port') as upd:
-            self.mech_driver._update_subport_host_if_needed('subport')
-
-        get_port.assert_called_once_with(mock.ANY, 'parent')
-        upd.assert_called_once_with(mock.ANY, 'subport',
-                                    {'port': binding_host_id})
 
     def _test__wait_for_metadata_provisioned_if_needed(self, enable_dhcp,
                                                        wait_expected):
