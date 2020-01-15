@@ -157,9 +157,21 @@ MAINTENANCE_DELETE_TYPE_ORDER = {
 # peer router port (connecting to the logical router).
 DEFAULT_ADDR_FOR_LSP_WITH_PEER = 'router'
 
+# FIP ACTIONS
+FIP_ACTION_ASSOCIATE = 'fip_associate'
+FIP_ACTION_DISASSOCIATE = 'fip_disassociate'
+
 # Loadbalancer constants
 LRP_PREFIX = "lrp-"
 LB_VIP_PORT_PREFIX = "ovn-lb-vip-"
+LB_EXT_IDS_LS_REFS_KEY = 'ls_refs'
+LB_EXT_IDS_LR_REF_KEY = 'lr_ref'
+LB_EXT_IDS_POOL_PREFIX = 'pool_'
+LB_EXT_IDS_LISTENER_PREFIX = 'listener_'
+LB_EXT_IDS_MEMBER_PREFIX = 'member_'
+LB_EXT_IDS_VIP_KEY = 'neutron:vip'
+LB_EXT_IDS_VIP_FIP_KEY = 'neutron:vip_fip'
+LB_EXT_IDS_VIP_PORT_ID_KEY = 'neutron:vip_port_id'
 
 # Hash Ring constants
 HASH_RING_NODES_TIMEOUT = 60
