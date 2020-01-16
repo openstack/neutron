@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import distutils
 import re
 import shutil
 import tempfile
@@ -41,8 +42,8 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common \
 LOG = logging.getLogger(__name__)
 
 
-MINIMUM_DNSMASQ_VERSION = 2.67
-DNSMASQ_VERSION_DHCP_RELEASE6 = 2.76
+MINIMUM_DNSMASQ_VERSION = '2.67'
+DNSMASQ_VERSION_DHCP_RELEASE6 = '2.76'
 DIRECT_PORT_QOS_MIN_OVS_VERSION = '2.11'
 MINIMUM_DIBBLER_VERSION = '1.0.1'
 CONNTRACK_GRE_MODULE = 'nf_conntrack_proto_gre'
@@ -226,8 +227,8 @@ def dnsmasq_version_supported():
         env = {'LC_ALL': 'C'}
         out = agent_utils.execute(cmd, addl_env=env)
         m = re.search(r"version (\d+\.\d+)", out)
-        ver = float(m.group(1)) if m else 0
-        if ver < MINIMUM_DNSMASQ_VERSION:
+        ver = distutils.version.StrictVersion(m.group(1) if m else '0.0')
+        if ver < distutils.version.StrictVersion(MINIMUM_DNSMASQ_VERSION):
             return False
     except (OSError, RuntimeError, IndexError, ValueError) as e:
         LOG.debug("Exception while checking minimal dnsmasq version. "
