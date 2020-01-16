@@ -105,11 +105,29 @@ The minor release frequency should follow the release schedule for the current
 series. For example, assuming the current release is Rocky, stable branch
 releases should coincide with milestones R1, R2, R3 and the final release.
 Stable branches can be also released more frequently if needed, for example,
-if there is a major bug fix that has merged recently
+if there is a major bug fix that has merged recently.
 
 The following steps should be taken before claiming a successful minor release:
 
 #. a patch for openstack/releases repo is proposed and merged.
+
+
+Minor version number should be bumped always in cases when new release contains
+a patch which introduces for example:
+
+#. new OVO version for an object,
+#. new configuration option added,
+#. requirement change,
+#. API visible change,
+
+The above list doesn't cover all possible cases. Those are only examples of fixes
+which require bump of minor version number but there can be also other types of
+changes requiring the same.
+
+Changes that require the minor version number to be bumped should always have a
+release note added.
+
+In other cases only patch number can be bumped.
 
 
 Client
