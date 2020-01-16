@@ -15,7 +15,6 @@
 import os
 import re
 
-from hacking import core
 from neutron_lib.hacking import checks
 
 
@@ -42,8 +41,6 @@ def flake8ext(f):
 #    neutron/tests/unit/hacking/test_checks.py
 
 
-unittest_imports_dot = re.compile(r"\bimport[\s]+unittest\b")
-unittest_imports_from = re.compile(r"\bfrom[\s]+unittest\b")
 filter_match = re.compile(r".*filter\(lambda ")
 
 tests_imports_dot = re.compile(r"\bimport[\s]+neutron.tests\b")
@@ -204,17 +201,6 @@ def check_builtins_gettext(logical_line, tokens, filename, lines, noqa):
             yield (0, msg)
 
 
-@core.flake8ext
-@core.off_by_default
-def check_unittest_imports(logical_line):
-    """N334 - Use unittest2 instead of unittest"""
-    if (re.match(unittest_imports_from, logical_line) or
-            re.match(unittest_imports_dot, logical_line)):
-        msg = "N334: '%s' must be used instead of '%s'." % (
-            logical_line.replace('unittest', 'unittest2'), logical_line)
-        yield (0, msg)
-
-
 @flake8ext
 def check_no_imports_from_tests(logical_line, filename, noqa):
     """N343 Production code must not import from neutron.tests.*
@@ -270,7 +256,6 @@ def factory(register):
     register(check_assertequal_for_httpcode)
     register(check_oslo_i18n_wrapper)
     register(check_builtins_gettext)
-    register(check_unittest_imports)
     register(check_no_imports_from_tests)
     register(check_python3_no_filter)
     register(check_no_sqlalchemy_event_import)

@@ -15,16 +15,16 @@
 
 
 import os
+import unittest
 
 from pecan import set_config
 from pecan.testing import load_test_app
-import unittest2
 
 
 __all__ = ['FunctionalTest']
 
 
-class FunctionalTest(unittest2.TestCase):
+class FunctionalTest(unittest.TestCase):
     """Pecan wsgi functional test base class
 
     Used for functional tests where you need to test your

@@ -12,10 +12,10 @@
 #
 
 import functools
+import unittest
 
 from neutron_lib import constants as n_const
 import testtools.testcase
-import unittest2.case
 
 from neutron.common import utils
 from neutron.tests import base
@@ -61,8 +61,7 @@ def no_skip_on_missing_deps(wrapped):
     def wrapper(*args, **kwargs):
         try:
             return wrapped(*args, **kwargs)
-        except (testtools.TestCase.skipException,
-                unittest2.case.SkipTest) as e:
+        except (testtools.TestCase.skipException, unittest.SkipTest) as e:
             if base.bool_from_env('OS_FAIL_ON_MISSING_DEPS'):
                 tools.fail(
                     '%s cannot be skipped because OS_FAIL_ON_MISSING_DEPS '

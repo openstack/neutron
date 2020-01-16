@@ -16,9 +16,9 @@
 """Tests to test the test framework"""
 
 import sys
+import unittest
 
 import eventlet.timeout
-import unittest2
 
 from neutron.tests import base
 
@@ -62,7 +62,7 @@ class SystemExitTestCase(base.DietTestCase):
     def test_sysexit(self):
         expectedFails = [self.MyTestCase(exitcode) for exitcode in (0, 1)]
 
-        suite = unittest2.TestSuite(tests=expectedFails)
+        suite = unittest.TestSuite(tests=expectedFails)
         result = self.defaultTestResult()
         try:
             suite.run(result)
