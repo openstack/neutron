@@ -27,7 +27,8 @@ def check_subnet_ip(cidr, ip_address, port_owner=''):
         # NOTE(njohnston): In some cases the code cannot know the owner of the
         # port. In these cases port_owner should an empty string, and we pass
         # it through here.
-        return (port_owner in (constants.ROUTER_PORT_OWNERS + ('', )) and
+        return ((port_owner in (constants.ROUTER_PORT_OWNERS + ('', )) or
+                 ip != net.network) and
                 ip in net)
     else:
         return ip != net.network and ip != net.broadcast and ip in net

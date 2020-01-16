@@ -14,6 +14,7 @@
 #    under the License.
 
 import netaddr
+from neutron_lib import constants
 
 from neutron.ipam import utils
 from neutron.tests import base
@@ -31,13 +32,37 @@ class TestIpamUtils(base.BaseTestCase):
         self.assertTrue(utils.check_subnet_ip('1.1.1.0/24', '1.1.1.1'))
         self.assertTrue(utils.check_subnet_ip('1.1.1.0/24', '1.1.1.254'))
 
-    def test_check_subnet_ip_v6_network(self):
-        self.assertTrue(utils.check_subnet_ip('F111::0/64', 'F111::0'))
+    def test_check_subnet_ip_v6_owner_router_or_not_defined(self):
+        for port_owner in (constants.ROUTER_PORT_OWNERS + ('', )):
+            # IP address == network
+            self.assertTrue(utils.check_subnet_ip('F111::0/64', 'F111::0',
+                                                  port_owner=port_owner))
+            # IP address == broadcast
+            self.assertTrue(utils.check_subnet_ip(
+                'F111::0/64', 'F111::FFFF:FFFF:FFFF:FFFF',
+                port_owner=port_owner))
+            # IP address in network
+            self.assertTrue(utils.check_subnet_ip('F111::0/64', 'F111::50',
+                                                  port_owner=port_owner))
+            # IP address not in network
+            self.assertFalse(utils.check_subnet_ip('F111::0/64', 'F112::50',
+                                                   port_owner=port_owner))
 
-    def test_check_subnet_ip_v6_valid(self):
-        self.assertTrue(utils.check_subnet_ip('F111::0/64', 'F111::1'))
-        self.assertTrue(utils.check_subnet_ip('F111::0/64',
-                                              'F111::FFFF:FFFF:FFFF:FFFF'))
+    def test_check_subnet_ip_v6_owner_not_router(self):
+        port_owner = 'nova:compute'
+        # IP address == network
+        self.assertFalse(utils.check_subnet_ip('F111::0/64', 'F111::0',
+                                               port_owner=port_owner))
+        # IP address == broadcast
+        self.assertTrue(utils.check_subnet_ip(
+            'F111::0/64', 'F111::FFFF:FFFF:FFFF:FFFF',
+            port_owner=port_owner))
+        # IP address in network
+        self.assertTrue(utils.check_subnet_ip('F111::0/64', 'F111::50',
+                                              port_owner=port_owner))
+        # IP address not in network
+        self.assertFalse(utils.check_subnet_ip('F111::0/64', 'F112::50',
+                                               port_owner=port_owner))
 
     def test_generate_pools_v4_nogateway(self):
         cidr = '192.168.0.0/24'
