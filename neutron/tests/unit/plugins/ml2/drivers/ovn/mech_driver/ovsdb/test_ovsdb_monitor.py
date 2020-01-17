@@ -12,10 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import datetime
 import os
 
 import mock
+from neutron_lib.plugins import constants as n_const
+from neutron_lib.plugins import directory
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from ovs.db import idl as ovs_idl
@@ -29,8 +32,11 @@ from neutron.common.ovn import hash_ring_manager
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
+from neutron.services.ovn_l3 import plugin  # noqa
 from neutron.tests import base
 from neutron.tests.unit import fake_resources as fakes
+from neutron.tests.unit.plugins.ml2.drivers.ovn.mech_driver import \
+    test_mech_driver
 
 
 basedir = os.path.dirname(os.path.abspath(__file__))
@@ -290,5 +296,187 @@ class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
                              'type': '_fake_'}))
 
 
-# NOTE(ralonsoh): once the OVN mech driver is implemented, we'll be able to
-# test OvnNbIdl and OvnSbIdl properly.
+class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
+
+    def setUp(self):
+        super(TestOvnNbIdlNotifyHandler, self).setUp()
+        helper = ovs_idl.SchemaHelper(schema_json=OVN_NB_SCHEMA)
+        helper.register_all()
+        self.idl = ovsdb_monitor.OvnNbIdl(self.driver, "remote", helper)
+        self.lp_table = self.idl.tables.get('Logical_Switch_Port')
+        self.driver.set_port_status_up = mock.Mock()
+        self.driver.set_port_status_down = mock.Mock()
+
+    def _test_lsp_helper(self, event, new_row_json, old_row_json=None,
+                         table=None):
+        row_uuid = uuidutils.generate_uuid()
+        if not table:
+            table = self.lp_table
+        lp_row = ovs_idl.Row.from_json(self.idl, table,
+                                       row_uuid, new_row_json)
+        if old_row_json:
+            old_row = ovs_idl.Row.from_json(self.idl, table,
+                                            row_uuid, old_row_json)
+        else:
+            old_row = None
+        self.idl.notify(event, lp_row, updates=old_row)
+        # Add a STOP EVENT to the queue
+        self.idl.notify_handler.shutdown()
+        # Execute the notifications queued
+        self.idl.notify_handler.notify_loop()
+
+    def test_lsp_up_create_event(self):
+        row_data = {"up": True, "name": "foo-name"}
+        self._test_lsp_helper('create', row_data)
+        self.driver.set_port_status_up.assert_called_once_with("foo-name")
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_lsp_down_create_event(self):
+        row_data = {"up": False, "name": "foo-name"}
+        self._test_lsp_helper('create', row_data)
+        self.driver.set_port_status_down.assert_called_once_with("foo-name")
+        self.assertFalse(self.driver.set_port_status_up.called)
+
+    def test_lsp_up_not_set_event(self):
+        row_data = {"up": ['set', []], "name": "foo-name"}
+        self._test_lsp_helper('create', row_data)
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_unwatch_logical_switch_port_create_events(self):
+        self.idl.unwatch_logical_switch_port_create_events()
+        row_data = {"up": True, "name": "foo-name"}
+        self._test_lsp_helper('create', row_data)
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+        row_data["up"] = False
+        self._test_lsp_helper('create', row_data)
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_post_connect(self):
+        self.idl.post_connect()
+        self.assertIsNone(self.idl._lsp_create_up_event)
+        self.assertIsNone(self.idl._lsp_create_down_event)
+
+    def test_lsp_up_update_event(self):
+        new_row_json = {"up": True, "name": "foo-name"}
+        old_row_json = {"up": False}
+        self._test_lsp_helper('update', new_row_json,
+                              old_row_json=old_row_json)
+        self.driver.set_port_status_up.assert_called_once_with("foo-name")
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_lsp_down_update_event(self):
+        new_row_json = {"up": False, "name": "foo-name"}
+        old_row_json = {"up": True}
+        self._test_lsp_helper('update', new_row_json,
+                              old_row_json=old_row_json)
+        self.driver.set_port_status_down.assert_called_once_with("foo-name")
+        self.assertFalse(self.driver.set_port_status_up.called)
+
+    def test_lsp_up_update_event_no_old_data(self):
+        new_row_json = {"up": True, "name": "foo-name"}
+        self._test_lsp_helper('update', new_row_json,
+                              old_row_json=None)
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_lsp_down_update_event_no_old_data(self):
+        new_row_json = {"up": False, "name": "foo-name"}
+        self._test_lsp_helper('update', new_row_json,
+                              old_row_json=None)
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_lsp_other_column_update_event(self):
+        new_row_json = {"up": False, "name": "foo-name",
+                        "addresses": ["10.0.0.2"]}
+        old_row_json = {"addresses": ["10.0.0.3"]}
+        self._test_lsp_helper('update', new_row_json,
+                              old_row_json=old_row_json)
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_notify_other_table(self):
+        new_row_json = {"name": "foo-name"}
+        self._test_lsp_helper('create', new_row_json,
+                              table=self.idl.tables.get("Logical_Switch"))
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    @mock.patch.object(hash_ring_manager.HashRingManager, 'get_node')
+    def test_notify_different_target_node(self, mock_get_node):
+        mock_get_node.return_value = 'this-is-a-different-node'
+        row = fakes.FakeOvsdbRow.create_one_ovsdb_row()
+        self.idl.notify_handler.notify = mock.Mock()
+        self.idl.notify("create", row)
+        # Assert that if the target_node returned by the ring is different
+        # than this driver's node_uuid, notify() won't be called
+        self.assertFalse(self.idl.notify_handler.notify.called)
+
+
+class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
+
+    l3_plugin = 'ovn-router'
+
+    def setUp(self):
+        super(TestOvnSbIdlNotifyHandler, self).setUp()
+        sb_helper = ovs_idl.SchemaHelper(schema_json=OVN_SB_SCHEMA)
+        sb_helper.register_table('Chassis')
+        self.sb_idl = ovsdb_monitor.OvnSbIdl(self.driver, "remote", sb_helper)
+        self.sb_idl.post_connect()
+        self.chassis_table = self.sb_idl.tables.get('Chassis')
+        self.driver.update_segment_host_mapping = mock.Mock()
+        self.l3_plugin = directory.get_plugin(n_const.L3)
+        self.l3_plugin.schedule_unhosted_gateways = mock.Mock()
+
+        self.row_json = {
+            "name": "fake-name",
+            "hostname": "fake-hostname",
+            "external_ids": ['map', [["ovn-bridge-mappings",
+                                      "fake-phynet1:fake-br1"]]]
+        }
+
+    def _test_chassis_helper(self, event, new_row_json, old_row_json=None):
+        row_uuid = uuidutils.generate_uuid()
+        table = self.chassis_table
+        row = ovs_idl.Row.from_json(self.sb_idl, table, row_uuid, new_row_json)
+        if old_row_json:
+            old_row = ovs_idl.Row.from_json(self.sb_idl, table,
+                                            row_uuid, old_row_json)
+        else:
+            old_row = None
+        self.sb_idl.notify(event, row, updates=old_row)
+        # Add a STOP EVENT to the queue
+        self.sb_idl.notify_handler.shutdown()
+        # Execute the notifications queued
+        self.sb_idl.notify_handler.notify_loop()
+
+    def test_chassis_create_event(self):
+        self._test_chassis_helper('create', self.row_json)
+        self.driver.update_segment_host_mapping.assert_called_once_with(
+            'fake-hostname', ['fake-phynet1'])
+        self.assertEqual(
+            1,
+            self.l3_plugin.schedule_unhosted_gateways.call_count)
+
+    def test_chassis_delete_event(self):
+        self._test_chassis_helper('delete', self.row_json)
+        self.driver.update_segment_host_mapping.assert_called_once_with(
+            'fake-hostname', [])
+        self.assertEqual(
+            1,
+            self.l3_plugin.schedule_unhosted_gateways.call_count)
+
+    def test_chassis_update_event(self):
+        old_row_json = copy.deepcopy(self.row_json)
+        old_row_json['external_ids'][1][0][1] = (
+            "fake-phynet2:fake-br2")
+        self._test_chassis_helper('update', self.row_json, old_row_json)
+        self.driver.update_segment_host_mapping.assert_called_once_with(
+            'fake-hostname', ['fake-phynet1'])
+        self.assertEqual(
+            1,
+            self.l3_plugin.schedule_unhosted_gateways.call_count)
