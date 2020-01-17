@@ -1,0 +1,25 @@
+---
+features:
+  - |
+    Adds support for configuring a list of IPv6 addresses for a dhcp-host entry
+    in the dnsmasq DHCP agent driver. For a port with multiple IPv6 fixed-ips
+    in the same subnet a single dhcp-host entry including all the addresses are
+    written to the dnsmasq dhcp-hostsfile.
+
+    Reserving multiple addresses for a host eases problems related to network
+    and chain-booting where each step in the boot process requests an address
+    using different DUID/IAID combinations. With a single address, only one
+    gets the "static" address and the boot process will fail on the following
+    steps. By reserving enough addresses for all the stages of the boot process
+    this problem is resolved. (See bug:
+    `#1861032 <https://bugs.launchpad.net/neutron/+bug/1861032>`_)
+
+    .. NOTE:: This requires dnsmasq version 2.81 or later. Some distributions
+              may backport this feauture to earlier dnsmasq version as part of
+              the packaging, check the distributions releasenotes.
+
+              Since the new configuration format is invalid in previous versions
+              of dnsmasq this feauture is *disabled* by default. To *enable* the
+              feature set the option ``dnsmasq_enable_addr6_list`` in DHCP agent
+              configuration to ``True``.
+

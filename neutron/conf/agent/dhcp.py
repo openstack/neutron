@@ -116,6 +116,9 @@ DNSMASQ_OPTS = [
     cfg.IntOpt('dhcp_rebinding_time', default=0,
                help=_("DHCP rebinding time T2 (in seconds). If set to 0, it "
                       "will default to 7/8 of the lease time.")),
+    cfg.BoolOpt('dnsmasq_enable_addr6_list', default=False,
+                help=_("Enable dhcp-host entry with list of addresses when "
+                       "port has multiple IPv6 addresses in the same subnet."))
 ]
 
 
