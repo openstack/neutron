@@ -160,20 +160,22 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     def __init__(self):
         self.set_ipam_backend()
-        if cfg.CONF.notify_nova_on_port_status_changes:
+        if (cfg.CONF.notify_nova_on_port_status_changes or
+                cfg.CONF.notify_nova_on_port_data_changes):
             # Import nova conditionally to support the use case of Neutron
             # being used outside of an OpenStack context.
             from neutron.notifiers import nova
+            self.nova_notifier = nova.Notifier.get_instance()
             # NOTE(arosen) These event listeners are here to hook into when
             # port status changes and notify nova about their change.
-            self.nova_notifier = nova.Notifier.get_instance()
-            db_api.sqla_listen(models_v2.Port, 'after_insert',
-                               self.nova_notifier.send_port_status)
-            db_api.sqla_listen(models_v2.Port, 'after_update',
-                               self.nova_notifier.send_port_status)
-            db_api.sqla_listen(
-                models_v2.Port.status, 'set',
-                self.nova_notifier.record_port_status_changed)
+            if cfg.CONF.notify_nova_on_port_status_changes:
+                db_api.sqla_listen(models_v2.Port, 'after_insert',
+                                   self.nova_notifier.send_port_status)
+                db_api.sqla_listen(models_v2.Port, 'after_update',
+                                   self.nova_notifier.send_port_status)
+                db_api.sqla_listen(
+                    models_v2.Port.status, 'set',
+                    self.nova_notifier.record_port_status_changed)
         if cfg.CONF.ironic.enable_notifications:
             # Import ironic notifier conditionally
             from neutron.notifiers import ironic
