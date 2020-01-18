@@ -426,7 +426,7 @@ class DBInconsistenciesPeriodics(object):
             type_ = port.type.strip()
             if not port.port_security:
                 if not type_ and ovn_const.UNKNOWN_ADDR not in addresses:
-                    addresses.append(ovn_const.UNKNOWN_ADDR)
+                    addresses = [ovn_const.UNKNOWN_ADDR]
                 elif type_ and ovn_const.UNKNOWN_ADDR in addresses:
                     addresses.remove(ovn_const.UNKNOWN_ADDR)
             else:
