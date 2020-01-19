@@ -46,9 +46,11 @@
         - tempest-slow-py3:
             irrelevant-files: *irrelevant-files
         - neutron-ovn-tempest-ovs-release
-        - networking-midonet-tempest-aio-ml2-centos-7:
-            voting: false
-            irrelevant-files: *irrelevant-files
+        # TODO(slaweq): add this job again to the check queue when it will be
+        # working fine on python 3
+        #- networking-midonet-tempest-aio-ml2-centos-7:
+        #    voting: false
+        #    irrelevant-files: *irrelevant-files
         - tempest-ipv6-only:
             irrelevant-files: *irrelevant-files
         - openstacksdk-functional-devstack-networking:
