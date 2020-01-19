@@ -117,6 +117,9 @@
     vars:
       devstack_localrc:
         MYSQL_SERVICE_NAME: mariadb
+    # NOTE(ralonsoh): once MariaDB default version in Ubuntu is bumped to
+    # >10.1, this workaround can be removed (bug 1855912)
+    pre-run: playbooks/add_mariadb_repo.yaml
     irrelevant-files: *irrelevant-files
 
 - job:
