@@ -2164,12 +2164,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.update_port_postcommit(mech_context)
             kwargs = {'context': context, 'port': mech_context.current,
                       'original_port': original_port}
-            if status == const.PORT_STATUS_ACTIVE:
-                # NOTE(kevinbenton): this kwarg was carried over from
-                # the RPC handler that used to call this. it's not clear
-                # who uses it so maybe it can be removed. added in commit
-                # 3f3874717c07e2b469ea6c6fd52bcb4da7b380c7
-                kwargs['update_device_up'] = True
             registry.notify(resources.PORT, events.AFTER_UPDATE, self,
                             **kwargs)
 
