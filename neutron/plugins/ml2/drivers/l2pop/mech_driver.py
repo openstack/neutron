@@ -271,7 +271,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
             self.L2populationAgentNotify.remove_fdb_entries(
                 self.rpc_ctx, fdb_entries)
 
-    def update_port_up(self, context, agent_restarted=False):
+    def update_port_up(self, context, refresh_tunnels=False):
         port = context.current
         agent_host = context.host
         port_context = context._plugin_context
@@ -285,7 +285,8 @@ class L2populationMechanismDriver(api.MechanismDriver):
 
         agent_active_ports = l2pop_db.get_agent_network_active_port_count(
             port_context, agent_host, network_id)
-
+        LOG.debug("host: %s, agent_active_ports: %s, refresh_tunnels: %s",
+                  agent_host, agent_active_ports, refresh_tunnels)
         agent_ip = l2pop_db.get_agent_ip(agent)
         segment = context.bottom_bound_segment
         if not self._validate_segment(segment, port['id'], agent):
@@ -297,7 +298,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
         # with high concurrency more than 1 port may be activated on an agent
         # at the same time (like VM port + a DVR port) so checking for 1 or 2
         is_first_port = agent_active_ports in (1, 2)
-        if is_first_port or agent_restarted:
+        if is_first_port or refresh_tunnels:
             # First port(s) activated on current agent in this network,
             # we have to provide it with the whole list of fdb entries
             agent_fdb_entries = self._create_agent_fdb(port_context,
