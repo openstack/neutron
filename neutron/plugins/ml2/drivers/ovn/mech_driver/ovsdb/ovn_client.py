@@ -936,15 +936,10 @@ class OVNClient(object):
             floatingip['id'], floatingip, ovn_const.TYPE_FLOATINGIPS)
         with self._nb_idl.transaction(check_error=True) as txn:
             txn.add(check_rev_cmd)
-            if (ovn_fip and
-                (floatingip['fixed_ip_address'] != ovn_fip['logical_ip'] or
-                 floatingip['port_id'] != ovn_fip['external_ids'].get(
-                    ovn_const.OVN_FIP_PORT_EXT_ID_KEY))):
-
+            if ovn_fip:
                 lrouter = ovn_fip['external_ids'].get(
                     ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY,
                     utils.ovn_name(router_id))
-
                 self._delete_floatingip(ovn_fip, lrouter, txn=txn)
                 fip_status = const.FLOATINGIP_STATUS_DOWN
 
