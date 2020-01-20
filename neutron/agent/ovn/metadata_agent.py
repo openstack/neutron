@@ -19,19 +19,20 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.ovn.metadata import agent
-from neutron.conf.agent.ovn.metadata import config as meta
+from neutron.conf.agent.metadata import config as meta
+from neutron.conf.agent.ovn.metadata import config as ovn_meta
 
 LOG = logging.getLogger(__name__)
 
 
 def main():
-    meta.register_meta_conf_opts(meta.SHARED_OPTS)
-    meta.register_meta_conf_opts(meta.UNIX_DOMAIN_METADATA_PROXY_OPTS)
-    meta.register_meta_conf_opts(meta.METADATA_PROXY_HANDLER_OPTS)
-    meta.register_meta_conf_opts(meta.OVS_OPTS, group='ovs')
+    ovn_meta.register_meta_conf_opts(meta.SHARED_OPTS)
+    ovn_meta.register_meta_conf_opts(meta.UNIX_DOMAIN_METADATA_PROXY_OPTS)
+    ovn_meta.register_meta_conf_opts(meta.METADATA_PROXY_HANDLER_OPTS)
+    ovn_meta.register_meta_conf_opts(ovn_meta.OVS_OPTS, group='ovs')
     config.init(sys.argv[1:])
     config.setup_logging()
-    meta.setup_privsep()
+    ovn_meta.setup_privsep()
     utils.log_opt_values(LOG)
 
     agt = agent.MetadataAgent(cfg.CONF)
