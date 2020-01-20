@@ -307,3 +307,59 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                            constants.MCAST_FLOOD_UNREGISTERED: 'true'})),
         ]
         nb_idl.db_set.assert_has_calls(expected_calls)
+
+    def test_check_for_ha_chassis_group_address_not_supported(self):
+        self.fake_ovn_client.is_external_ports_supported.return_value = False
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.check_for_ha_chassis_group_address)
+        self.assertFalse(
+            self.fake_ovn_client._nb_idl.ha_chassis_group_add.called)
+
+    def test_check_for_ha_chassis_group_address(self):
+        self.fake_ovn_client.is_external_ports_supported.return_value = True
+        nb_idl = self.fake_ovn_client._nb_idl
+        sb_idl = self.fake_ovn_client._sb_idl
+
+        gw_chassis_0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'priority': 1,
+                   'name': 'gw_chassis_0',
+                   'chassis_name': 'gw_chassis_0'})
+        gw_chassis_1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'priority': 2,
+                   'name': 'gw_chassis_1',
+                   'chassis_name': 'gw_chassis_1'})
+        non_gw_chassis_0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'non_gw_chassis_0'})
+        default_ha_group = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'ha_chassis': [gw_chassis_0, gw_chassis_1]})
+
+        nb_idl.ha_chassis_group_add.return_value.execute.return_value = (
+            default_ha_group)
+        sb_idl.get_all_chassis.return_value = [
+            non_gw_chassis_0.name, gw_chassis_0.name, gw_chassis_1.name]
+        sb_idl.get_gateway_chassis_from_cms_options.return_value = [
+            gw_chassis_0.name, gw_chassis_1.name]
+
+        # Invoke the periodic method, it meant to run only once at startup
+        # so NeverAgain will be raised at the end
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.check_for_ha_chassis_group_address)
+
+        # Make sure the non GW chassis has been removed from the
+        # default HA_CHASSIS_GROUP
+        nb_idl.ha_chassis_group_del_chassis.assert_called_once_with(
+            constants.HA_CHASSIS_GROUP_DEFAULT_NAME, non_gw_chassis_0.name,
+            if_exists=True)
+
+        # Assert the GW chassis are being added to the
+        # default HA_CHASSIS_GROUP
+        expected_calls = [
+            mock.call(constants.HA_CHASSIS_GROUP_DEFAULT_NAME,
+                      gw_chassis_1.chassis_name,
+                      priority=constants.HA_CHASSIS_GROUP_HIGHEST_PRIORITY),
+            # Note that the second chassis is getting priority -1
+            mock.call(constants.HA_CHASSIS_GROUP_DEFAULT_NAME,
+                      gw_chassis_0.chassis_name,
+                      priority=constants.HA_CHASSIS_GROUP_HIGHEST_PRIORITY - 1)
+        ]
+        nb_idl.ha_chassis_group_add_chassis.assert_has_calls(expected_calls)

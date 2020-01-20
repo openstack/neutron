@@ -146,6 +146,7 @@ class FakeOvsdbNbOvnIdl(object):
         self.unset_lswitch_port_to_virtual_type = mock.Mock()
         self.ls_get = mock.Mock()
         self.check_liveness = mock.Mock()
+        self.ha_chassis_group_get = mock.Mock()
 
 
 class FakeOvsdbSbOvnIdl(object):

@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    The OVN driver now makes uses of the "external" ports concept
+    that was introduced by Core OVN. For example, with this work a VM
+    with a SR-IOV port attached (VNIC type "direct" and no "switchdev"
+    capability) will now be translated into an "external" port which is
+    able reply to packets (e.g DHCP) from another host that were bypassed
+    in the hypervisor before. Note that, for this first interaction all
+    external ports will belong to the same HA group and will be scheduled
+    onto the same node.
