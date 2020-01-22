@@ -189,6 +189,10 @@ class TestL3Agent(base.BaseFullStackTestCase):
         return found_agents
 
     def _router_fip_qos_after_admin_state_down_up(self, ha=False):
+        def get_router_gw_interface():
+            devices = ip.get_devices()
+            return [dev.name for dev in devices if dev.name.startswith('qg-')]
+
         tenant_id = uuidutils.generate_uuid()
         ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
         external_vm = self._create_external_vm(ext_net, ext_sub)
@@ -235,13 +239,12 @@ class TestL3Agent(base.BaseFullStackTestCase):
         else:
             qrouter_ns = self._get_namespace(router['id'])
         ip = ip_lib.IPWrapper(qrouter_ns)
-        common_utils.wait_until_true(lambda: ip.get_devices())
+        try:
+            common_utils.wait_until_true(get_router_gw_interface)
+        except common_utils.WaitTimeout:
+            self.fail('Router gateway interface "qg-*" not found')
 
-        devices = ip.get_devices()
-        for dev in devices:
-            if dev.name.startswith("qg-"):
-                interface_name = dev.name
-
+        interface_name = get_router_gw_interface()[0]
         tc_wrapper = l3_tc_lib.FloatingIPTcCommand(
             interface_name,
             namespace=qrouter_ns)
