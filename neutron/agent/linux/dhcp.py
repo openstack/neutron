@@ -261,8 +261,9 @@ class DhcpLocalProcess(DhcpBase):
     def _enable(self):
         try:
             if self.active:
-                self.restart()
-            elif self._enable_dhcp():
+                self.disable(retain_port=True, block=True)
+
+            if self._enable_dhcp():
                 fileutils.ensure_tree(self.network_conf_dir, mode=0o755)
                 interface_name = self.device_manager.setup(self.network)
                 self.interface_name = interface_name
