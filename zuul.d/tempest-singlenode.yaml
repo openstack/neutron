@@ -188,7 +188,7 @@
         ((^neutron_tempest_plugin.api)|\
         (^neutron_tempest_plugin.scenario)|\
         (tempest.(api|scenario|thirdparty))).*$"
-      tempest_concurrency: 2
+      tempest_concurrency: 4
       devstack_localrc:
         Q_AGENT: ovn
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
