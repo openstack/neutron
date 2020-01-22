@@ -267,7 +267,8 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def _delete_security_group(self, resource, event, trigger,
                                security_group_id, **kwargs):
-        self._ovn_client.delete_security_group(security_group_id)
+        self._ovn_client.delete_security_group(kwargs['context'],
+                                               security_group_id)
 
     def _update_security_group(self, resource, event, trigger,
                                security_group, **kwargs):
@@ -289,10 +290,11 @@ class OVNMechanismDriver(api.MechanismDriver):
             self._ovn_client.create_security_group_rule(
                 kwargs.get('security_group_rule'))
         elif event == events.BEFORE_DELETE:
-            admin_context = n_context.get_admin_context()
             sg_rule = self._plugin.get_security_group_rule(
-                admin_context, kwargs.get('security_group_rule_id'))
-            self._ovn_client.delete_security_group_rule(sg_rule)
+                kwargs['context'], kwargs.get('security_group_rule_id'))
+            self._ovn_client.delete_security_group_rule(
+                kwargs['context'],
+                sg_rule)
 
     def _is_network_type_supported(self, network_type):
         return (network_type in [const.TYPE_LOCAL,
@@ -398,7 +400,9 @@ class OVNMechanismDriver(api.MechanismDriver):
         expected, and will not prevent the resource from being
         deleted.
         """
-        self._ovn_client.delete_network(context.current['id'])
+        self._ovn_client.delete_network(
+            context._plugin_context,
+            context.current['id'])
 
     def create_subnet_precommit(self, context):
         ovn_revision_numbers_db.create_initial_revision(
