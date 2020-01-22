@@ -257,9 +257,10 @@ class OVNMechanismDriver(api.MechanismDriver):
             self._maintenance_thread.start()
 
     def _create_security_group_precommit(self, resource, event, trigger,
-                                         security_group, context, **kwargs):
+                                         **kwargs):
         ovn_revision_numbers_db.create_initial_revision(
-            context, security_group['id'], ovn_const.TYPE_SECURITY_GROUPS)
+            kwargs['context'], kwargs['security_group']['id'],
+            ovn_const.TYPE_SECURITY_GROUPS)
 
     def _create_security_group(self, resource, event, trigger,
                                security_group, **kwargs):
