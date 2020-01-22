@@ -225,6 +225,22 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.ovs._delete_queue(queue_id)
         self._check_value(None, self._list_queues, queue_id=queue_id)
 
+    def test__delete_queue_still_used_in_a_qos(self):
+        queue_id, port_id = self._create_queue()
+        queues = {1: queue_id}
+        qos_id_1 = self._create_qos(queues=queues)
+        self.ovs._min_bw_qos_id = uuidutils.generate_uuid()
+        qos_id_2 = self._create_qos(queues=queues)
+        with mock.patch.object(ovs_lib.LOG, 'error') as mock_error:
+            self.assertRaises(RuntimeError, self.ovs._delete_queue,
+                              queue_id)
+
+        qoses = ', '.join(sorted([str(qos_id_1), str(qos_id_2)]))
+        msg = ('Queue %(queue)s was still in use by the following QoS rules: '
+               '%(qoses)s')
+        mock_error.assert_called_once_with(
+            msg, {'queue': str(queue_id), 'qoses': qoses})
+
     def test__update_qos_new(self):
         queue_id, port_id = self._create_queue()
         queues = {1: queue_id}

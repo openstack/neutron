@@ -91,16 +91,18 @@ class BaseQoSRuleTestCase(object):
             shared='False', is_default='False')
 
     def _prepare_vm_with_qos_policy(self, rule_add_functions):
-        qos_policy = self._create_qos_policy()
-        qos_policy_id = qos_policy['id']
+        if rule_add_functions:
+            qos_policy = self._create_qos_policy()
+            qos_policy_id = qos_policy['id']
+            for rule_add in rule_add_functions:
+                rule_add(qos_policy)
+        else:
+            qos_policy_id = qos_policy = None
 
         port = self.safe_client.create_port(
             self.tenant_id, self.network['id'],
             self.environment.hosts[0].hostname,
             qos_policy_id)
-
-        for rule_add in rule_add_functions:
-            rule_add(qos_policy)
 
         vm = self.useFixture(
             machine.FakeFullstackMachine(
@@ -691,23 +693,37 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
         self.fail('QoS register not found with queue-num %s' % queue_num)
 
     def test_min_bw_qos_port_removed(self):
-        """Test if min BW limit config is properly removed when port removed"""
+        """Test if min BW limit config is properly removed when port removed.
+
+        In case another port is added without a QoS policy, the L2 agent QoS
+        extension will call "handle_port" and then it will force the reset of
+        this port (self._process_reset_port(port)). This test will check that
+        if the port is not present in the agent QoS cache, the policy is not
+        removed.
+        """
+        # Create port without qos policy attached
+        vm_noqos, _ = self._prepare_vm_with_qos_policy(None)
+
         # Create port with qos policy attached
-        vm, qos_policy = self._prepare_vm_with_qos_policy(
+        vm_qos, qos_policy = self._prepare_vm_with_qos_policy(
             [functools.partial(
                 self._add_min_bw_rule, MIN_BANDWIDTH, self.direction)])
         self._wait_for_min_bw_rule_applied(
-            vm, MIN_BANDWIDTH, self.direction)
+            vm_qos, MIN_BANDWIDTH, self.direction)
 
-        qos, queue = self._find_agent_qos_and_queue(vm)
+        # Check QoS policy and Queue rule.
+        qos, queue = self._find_agent_qos_and_queue(vm_qos)
         self.assertEqual({'min-rate': str(MIN_BANDWIDTH * 1000)},
                          queue.other_config)
-        queues = vm.bridge._list_queues(port=vm.neutron_port['id'])
+        queues = vm_qos.bridge._list_queues(port=vm_qos.neutron_port['id'])
         self.assertEqual(1, len(queues))
         self.assertEqual(queue.uuid, queues[0]['_uuid'])
 
         # Delete port with qos policy attached
-        vm.destroy()
-        self._wait_for_min_bw_rule_removed(vm, self.direction)
-        self.assertEqual([],
-                         vm.bridge._list_queues(port=vm.neutron_port['id']))
+        vm_qos.destroy()
+        self._wait_for_min_bw_rule_removed(vm_qos, self.direction)
+        self.assertEqual(
+            [],
+            vm_qos.bridge._list_queues(port=vm_qos.neutron_port['id']))
+
+        vm_noqos.destroy()

@@ -168,6 +168,10 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
                       'vif_port was not found. It seems that port is already '
                       'deleted', port.get('port_id'))
             return
+
+        self.ports[port['port_id']][(qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
+                                     rule.direction)] = port
+
         # queue_num is used to identify the port which traffic come from,
         # it needs to be unique across br-int. It is convenient to use ofport
         # as queue_num because it is unique in br-int and start from 1.
@@ -187,10 +191,26 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
                    'qos_id': qos_id, 'ports': egress_port_names})
 
     def delete_minimum_bandwidth(self, port):
+        rule_port = self.ports[port['port_id']].pop(
+            (qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
+             constants.EGRESS_DIRECTION), None)
+        if not rule_port:
+            LOG.debug('delete_minimum_bandwidth was received for port %s but '
+                      'no port information was stored to be deleted',
+                      port['port_id'])
+            return
         self.br_int.delete_minimum_bandwidth_queue(port['port_id'])
         LOG.debug("Minimum bandwidth rule was deleted for port: %s.",
                   port['port_id'])
 
     def delete_minimum_bandwidth_ingress(self, port):
+        rule_port = self.ports[port['port_id']].pop(
+            (qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
+             constants.INGRESS_DIRECTION), None)
+        if not rule_port:
+            LOG.debug('delete_minimum_bandwidth_ingress was received for port '
+                      '%s but no port information was stored to be deleted',
+                      port['port_id'])
+            return
         LOG.debug("Minimum bandwidth rule for ingress direction was deleted "
                   "for port %s", port['port_id'])
