@@ -59,7 +59,9 @@
             voting: false
         - neutron-tempest-with-uwsgi:
             voting: false
-        - neutron-centos-7-tripleo-standalone
+        # TODO(slaweq): add this job again to the check queue when it will
+        # be working fine with python 3
+        #- neutron-centos-7-tripleo-standalone
        #- neutron-ovn-rally-task
         # TripleO jobs that deploy OVN.
         # Note we don't use a project-template here, so it's easier
