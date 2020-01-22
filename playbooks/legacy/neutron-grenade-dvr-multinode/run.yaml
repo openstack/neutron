@@ -41,6 +41,18 @@
           fi
           export DEVSTACK_GATE_TOPOLOGY="multinode"
 
+          # Disable some services to use less memory
+          # Cinder-backup
+          export DEVSTACK_LOCAL_CONFIG+=$'\n'"disable_service c-bak"
+          # Etcd
+          export DEVSTACK_LOCAL_CONFIG+=$'\n'"disable_service etcd3"
+          # Swift
+          export DEVSTACK_LOCAL_CONFIG+=$'\n'"disable_service s-account"
+          export DEVSTACK_LOCAL_CONFIG+=$'\n'"disable_service s-container"
+          export DEVSTACK_LOCAL_CONFIG+=$'\n'"disable_service s-container-sync"
+          export DEVSTACK_LOCAL_CONFIG+=$'\n'"disable_service s-object"
+          export DEVSTACK_LOCAL_CONFIG+=$'\n'"disable_service s-proxy"
+
           cp devstack-gate/devstack-vm-gate-wrap.sh ./safe-devstack-vm-gate-wrap.sh
           ./safe-devstack-vm-gate-wrap.sh
         executable: /bin/bash
