@@ -43,7 +43,6 @@ EXTRA_LOG_LEVEL_DEFAULTS = [
     'OfctlService=INFO',
     'os_ken.base.app_manager=INFO',
     'os_ken.controller.controller=INFO',
-    'ovsdbapp.backend.ovs_idl.vlog=INFO'
 ]
 
 # Register the configuration options

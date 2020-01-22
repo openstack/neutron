@@ -92,7 +92,9 @@ class BaseSudoTestCase(BaseLoggingTestCase):
     def _override_default_config():
         # NOTE(ralonsoh): once https://review.opendev.org/#/c/641681/ is
         # merged, we should increase the default value of those new parameters.
-        ovs_agent_opts = [('ovsdb_timeout', 30, 'OVS')]
+        ovs_agent_opts = [('ovsdb_timeout', 30, 'OVS'),
+                          ('ovsdb_debug', True, 'OVS'),
+                          ]
         ovs_agent_decorator = config_decorator(
             ovs_conf.register_ovs_agent_opts, ovs_agent_opts)
         mock.patch.object(ovs_conf, 'register_ovs_agent_opts',
