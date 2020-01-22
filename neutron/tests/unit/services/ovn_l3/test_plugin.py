@@ -1135,14 +1135,34 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin._get_floatingip')
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_floatingip')
-    def test_update_floatingip_association_not_changed(self, uf, gf):
-        self.fake_floating_ip.update({'fixed_port_id': None})
-        self.fake_floating_ip_new.update({'port_id': None})
+    def test_update_floatingip_association_empty_update(self, uf, gf):
+        self.get_a_ctx_mock_p.stop()
+        self.l3_inst._ovn.is_col_present.return_value = True
+        self.l3_inst._ovn.get_floatingip.return_value = (
+            self.fake_ovn_nat_rule)
+        self.fake_floating_ip.update({'fixed_port_id': 'foo'})
+        self.fake_floating_ip_new.update({'port_id': 'foo'})
         gf.return_value = self.fake_floating_ip
         uf.return_value = self.fake_floating_ip_new
         self.l3_inst.update_floatingip(self.context, 'id', 'floatingip')
-        self.l3_inst._ovn.delete_nat_rule_in_lrouter.assert_not_called()
-        self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_not_called()
+        self.l3_inst._ovn.delete_nat_rule_in_lrouter.assert_called_once_with(
+            'neutron-router-id',
+            type='dnat_and_snat',
+            logical_ip='10.0.0.10',
+            external_ip='192.168.0.10')
+        expected_ext_ids = {
+            ovn_const.OVN_FIP_EXT_ID_KEY: self.fake_floating_ip_new['id'],
+            ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
+            ovn_const.OVN_FIP_PORT_EXT_ID_KEY:
+                self.fake_floating_ip_new['port_id'],
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
+                self.fake_floating_ip_new['router_id'])}
+        self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
+            'neutron-new-router-id',
+            type='dnat_and_snat',
+            logical_ip='10.10.10.10',
+            external_ip='192.168.0.10',
+            external_ids=expected_ext_ids)
 
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin._get_floatingip')
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
