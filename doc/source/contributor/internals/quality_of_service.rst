@@ -363,6 +363,11 @@ integration bridge functions:
 The DSCP markings are in fact configured on the port by means of
 openflow rules.
 
+.. note::
+ As of Ussuri release, the QoS rules can be applied for direct ports with hardware
+ offload capability (switchdev), this requires Open vSwitch version 2.11.0 or newer
+ and Linux kernel based on kernel 5.4.0 or newer.
+
 SR-IOV
 ++++++
 
