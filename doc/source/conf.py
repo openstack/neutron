@@ -45,7 +45,6 @@ logging.getLogger('pyroute2').setLevel(logging.ERROR)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 NEUTRON_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
 sys.path.insert(0, NEUTRON_DIR)
-sys.path.append(os.path.abspath("ext"))
 
 # -- General configuration ---------------------------------------------------
 
@@ -58,7 +57,7 @@ extensions = [
     'sphinx.ext.graphviz',
     'sphinx.ext.todo',
     'openstackdocstheme',
-    'support_matrix',
+    'sphinx_feature_classification.support_matrix',
     'oslo_config.sphinxext',
     'oslo_config.sphinxconfiggen',
     'oslo_policy.sphinxext',
