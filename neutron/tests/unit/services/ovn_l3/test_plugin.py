@@ -1088,8 +1088,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin._get_floatingip')
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_floatingip')
-    def _test_update_floatingip_associate_distributed(self, network_type,
-                                                      uf, gf, gp, gn):
+    def test_update_floatingip_associate_distributed(self, uf, gf, gp, gn):
         self.get_a_ctx_mock_p.stop()
         self.l3_inst._ovn.is_col_present.return_value = True
         self.fake_floating_ip.update({'fixed_port_id': None})
@@ -1099,7 +1098,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         uf.return_value = self.fake_floating_ip_new
 
         fake_network_vlan = self.fake_network
-        fake_network_vlan[pnet.NETWORK_TYPE] = network_type
+        fake_network_vlan[pnet.NETWORK_TYPE] = constants.TYPE_FLAT
         gn.return_value = fake_network_vlan
 
         config.cfg.CONF.set_override(
@@ -1114,23 +1113,11 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
                 self.fake_floating_ip_new['router_id']),
             ovn_const.OVN_FIP_EXT_MAC_KEY: '00:01:02:03:04:05'}
-        if network_type == constants.TYPE_VLAN:
-            self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
-                'neutron-new-router-id', type='dnat_and_snat',
-                logical_ip='10.10.10.10', external_ip='192.168.0.10',
-                logical_port='new-port_id', external_ids=expected_ext_ids)
-        else:
-            self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
-                'neutron-new-router-id', type='dnat_and_snat',
-                logical_ip='10.10.10.10', external_ip='192.168.0.10',
-                external_mac='00:01:02:03:04:05', logical_port='new-port_id',
-                external_ids=expected_ext_ids)
-
-    def test_update_floatingip_associate_distributed_flat(self):
-        self._test_update_floatingip_associate_distributed(constants.TYPE_FLAT)
-
-    def test_update_floatingip_associate_distributed_vlan(self):
-        self._test_update_floatingip_associate_distributed(constants.TYPE_VLAN)
+        self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
+            'neutron-new-router-id', type='dnat_and_snat',
+            logical_ip='10.10.10.10', external_ip='192.168.0.10',
+            external_mac='00:01:02:03:04:05', logical_port='new-port_id',
+            external_ids=expected_ext_ids)
 
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin._get_floatingip')
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
