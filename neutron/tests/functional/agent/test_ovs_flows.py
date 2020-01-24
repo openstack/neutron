@@ -78,7 +78,6 @@ class ARPSpoofTestCase(OVSAgentTestBase):
         # NOTE(kevinbenton): it would be way cooler to use scapy for
         # these but scapy requires the python process to be running as
         # root to bind to the ports.
-        self.addOnException(self.collect_flows_and_ports)
         super(ARPSpoofTestCase, self).setUp()
         self.skip_without_arp_support()
         self.src_addr = '192.168.0.1'
@@ -93,6 +92,7 @@ class ARPSpoofTestCase(OVSAgentTestBase):
             net_helpers.OVSPortFixture(self.br, self.dst_namespace)).port
         # wait to add IPs until after anti-spoof rules to ensure ARP doesn't
         # happen before
+        self.addOnException(self.collect_flows_and_ports)
 
     def collect_flows_and_ports(self, exc_info):
         nicevif = lambda x: ['%s=%s' % (k, getattr(x, k))
