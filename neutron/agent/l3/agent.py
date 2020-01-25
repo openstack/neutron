@@ -352,26 +352,6 @@ class L3NATAgent(ha.AgentMixin,
                 LOG.error(msg, self.conf.ipv6_gateway)
                 raise SystemExit(1)
 
-    def _fetch_external_net_id(self, force=False):
-        """Find UUID of single external network for this agent."""
-        if self.conf.gateway_external_network_id:
-            return self.conf.gateway_external_network_id
-
-        if not force and self.target_ex_net_id:
-            return self.target_ex_net_id
-
-        try:
-            self.target_ex_net_id = self.plugin_rpc.get_external_network_id(
-                self.context)
-            return self.target_ex_net_id
-        except oslo_messaging.RemoteError as e:
-            with excutils.save_and_reraise_exception() as ctx:
-                if e.exc_type == 'TooManyExternalNetworks':
-                    # At this point we know gateway_external_network_id is not
-                    # defined. Since there are more than one external network,
-                    # we will handle all of them
-                    ctx.reraise = False
-
     def _create_router(self, router_id, router):
         args = []
         kwargs = {
@@ -553,15 +533,6 @@ class L3NATAgent(ha.AgentMixin,
         ex_net_id = (router['external_gateway_info'] or {}).get('network_id')
         if not ex_net_id and not self.conf.handle_internal_only_routers:
             raise l3_exc.RouterNotCompatibleWithAgent(router_id=router['id'])
-
-        # If target_ex_net_id and ex_net_id are set they must be equal
-        target_ex_net_id = self._fetch_external_net_id()
-        if (target_ex_net_id and ex_net_id and ex_net_id != target_ex_net_id):
-            # Double check that our single external_net_id has not changed
-            # by forcing a check by RPC.
-            if ex_net_id != self._fetch_external_net_id(force=True):
-                raise l3_exc.RouterNotCompatibleWithAgent(
-                    router_id=router['id'])
 
         if router['id'] not in self.router_info:
             self._process_added_router(router)
