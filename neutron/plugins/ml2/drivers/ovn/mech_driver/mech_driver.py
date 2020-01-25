@@ -972,7 +972,9 @@ class OVNMechanismDriver(api.MechanismDriver):
         except KeyError:
             updated_at = timeutils.utcnow(with_timezone=True)
 
-        if self._nb_ovn.nb_global.nb_cfg == nb_cfg:
+        # Allow a maximum of 1 difference between expected and read values
+        # to avoid false positives.
+        if self._nb_ovn.nb_global.nb_cfg - nb_cfg <= 1:
             # update the time of our successful check
             value = timeutils.utcnow(with_timezone=True).isoformat()
             self._sb_ovn.db_set('Chassis', chassis.uuid,

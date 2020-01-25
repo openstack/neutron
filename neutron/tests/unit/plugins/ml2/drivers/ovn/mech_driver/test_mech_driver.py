@@ -1542,11 +1542,22 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
             chassis = self._add_chassis_agent(5, agent_type)
             self.assertTrue(self.mech_driver.agent_alive(chassis, agent_type))
 
+    def test_agent_alive_true_one_diff(self):
+        # Agent should be reported as alive when the nb_cfg delta is 1
+        # even if the last update time was old enough.
+        for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
+                           ovn_const.OVN_METADATA_AGENT):
+            self.mech_driver._nb_ovn.nb_global.nb_cfg = 5
+            now = timeutils.utcnow()
+            updated_at = now - datetime.timedelta(cfg.CONF.agent_down_time + 1)
+            chassis = self._add_chassis_agent(4, agent_type, updated_at)
+            self.assertTrue(self.mech_driver.agent_alive(chassis, agent_type))
+
     def test_agent_alive_not_timed_out(self):
         for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
                            ovn_const.OVN_METADATA_AGENT):
             self.mech_driver._nb_ovn.nb_global.nb_cfg = 5
-            chassis = self._add_chassis_agent(4, agent_type)
+            chassis = self._add_chassis_agent(3, agent_type)
             self.assertTrue(self.mech_driver.agent_alive(chassis, agent_type),
                             "Agent type %s is not alive" % agent_type)
 
@@ -1556,7 +1567,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
             self.mech_driver._nb_ovn.nb_global.nb_cfg = 5
             now = timeutils.utcnow()
             updated_at = now - datetime.timedelta(cfg.CONF.agent_down_time + 1)
-            chassis = self._add_chassis_agent(4, agent_type, updated_at)
+            chassis = self._add_chassis_agent(3, agent_type, updated_at)
             self.assertFalse(self.mech_driver.agent_alive(chassis, agent_type))
 
     def _test__update_dnat_entry_if_needed(self, up=True):
