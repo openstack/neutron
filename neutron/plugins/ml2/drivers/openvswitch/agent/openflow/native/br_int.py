@@ -48,6 +48,10 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
         self.install_drop(table_id=constants.LOCAL_SWITCHING,
                           priority=constants.OPENFLOW_MAX_PRIORITY,
                           vlan_vid=constants.DEAD_VLAN_TAG)
+        # When openflow firewall is not enabled, we use this table to
+        # deal with all egress flow.
+        self.install_normal(table_id=constants.TRANSIENT_EGRESS_TABLE,
+                            priority=3)
 
     def setup_canary_table(self):
         self.install_drop(constants.CANARY_TABLE)
@@ -157,7 +161,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
             ofpp.OFPInstructionGotoTable(table_id=constants.TRANSIENT_TABLE),
         ]
         self.install_instructions(table_id=table_id,
-                                  priority=4,
+                                  priority=20,
                                   match=match,
                                   instructions=instructions)
         actions = [
@@ -165,7 +169,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
             ofpp.OFPActionOutput(dst_port, 0),
         ]
         self.install_apply_actions(table_id=constants.TRANSIENT_TABLE,
-                                   priority=4,
+                                   priority=20,
                                    match=match,
                                    actions=actions)
 
@@ -176,7 +180,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
                                            vlan_tag=vlan_tag, dst_mac=dst_mac)
         for table in (table_id, constants.TRANSIENT_TABLE):
             self.uninstall_flows(
-                strict=True, priority=4, table_id=table, match=match)
+                strict=True, priority=20, table_id=table, match=match)
 
     def add_dvr_mac_vlan(self, mac, port):
         self.install_goto(table_id=constants.LOCAL_SWITCHING,

@@ -170,6 +170,12 @@ agent_opts = [
                        "outgoing IP packet carrying GRE/VXLAN tunnel.")),
     cfg.BoolOpt('baremetal_smartnic', default=False,
                 help=_("Enable the agent to process Smart NIC ports.")),
+    cfg.BoolOpt('explicitly_egress_direct', default=False,
+                help=_("When set to True, the accepted egress unicast "
+                       "traffic will not use action NORMAL. The accepted "
+                       "egress packets will be taken care of in the final "
+                       "egress tables direct output flows for unicast "
+                       "traffic.")),
 ]
 
 
