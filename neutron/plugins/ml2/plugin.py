@@ -1531,7 +1531,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
                 # Activities immediately post-port-creation
                 self.extension_manager.process_create_port(context, pdata,
-                                                           db_port_obj)
+                                                           port_dict)
                 self._portsec_ext_port_create_processing(context, port_dict,
                                                          port_compat)
 
