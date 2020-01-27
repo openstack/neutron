@@ -71,14 +71,13 @@ class OpenFlowSwitchMixin(object):
             dp = ofctl_api.get_datapath(self._app, dpid_int)
             if dp is not None:
                 break
-            # The switch has not established a connection to us.
-            # Wait for a little.
+            # The switch has not established a connection to us; retry again
+            # until timeout.
             if timeutils.now() > start_time + timeout_sec:
                 m = _("Switch connection timeout")
                 LOG.error(m)
                 # NOTE(yamamoto): use RuntimeError for compat with ovs_lib
                 raise RuntimeError(m)
-            eventlet.sleep(1)
         return dp
 
     def _send_msg(self, msg, reply_cls=None, reply_multi=False,
