@@ -435,8 +435,13 @@ class DBInconsistenciesPeriodics(object):
                 elif not type_ and ovn_const.UNKNOWN_ADDR in addresses:
                     addresses.remove(ovn_const.UNKNOWN_ADDR)
 
-            self._nb_idl.lsp_set_addresses(
-                port.name, addresses=addresses).execute(check_error=True)
+            if addresses:
+                self._nb_idl.lsp_set_addresses(
+                    port.name, addresses=addresses).execute(check_error=True)
+            else:
+                self._nb_idl.db_clear(
+                    'Logical_Switch_Port', port.name,
+                    'addresses').execute(check_error=True)
 
         raise periodics.NeverAgain()
 
