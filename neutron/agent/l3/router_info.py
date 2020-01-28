@@ -580,6 +580,16 @@ class RouterInfo(object):
                                                 internal_ports)
 
         enable_ra = False
+        for p in old_ports:
+            self.internal_network_removed(p)
+            LOG.debug("removing port %s from internal_ports cache", p)
+            self.internal_ports.remove(p)
+            enable_ra = enable_ra or self._port_has_ipv6_subnet(p)
+            for subnet in p['subnets']:
+                if ipv6_utils.is_ipv6_pd_enabled(subnet):
+                    self.agent.pd.disable_subnet(self.router_id, subnet['id'])
+                    del self.pd_subnets[subnet['id']]
+
         for p in new_ports:
             self.internal_network_added(p)
             LOG.debug("appending port %s to internal_ports cache", p)
@@ -595,16 +605,6 @@ class RouterInfo(object):
                     if (subnet['cidr'] !=
                             lib_constants.PROVISIONAL_IPV6_PD_PREFIX):
                         self.pd_subnets[subnet['id']] = subnet['cidr']
-
-        for p in old_ports:
-            self.internal_network_removed(p)
-            LOG.debug("removing port %s from internal_ports cache", p)
-            self.internal_ports.remove(p)
-            enable_ra = enable_ra or self._port_has_ipv6_subnet(p)
-            for subnet in p['subnets']:
-                if ipv6_utils.is_ipv6_pd_enabled(subnet):
-                    self.agent.pd.disable_subnet(self.router_id, subnet['id'])
-                    del self.pd_subnets[subnet['id']]
 
         updated_cidrs = []
         for p in updated_ports:
