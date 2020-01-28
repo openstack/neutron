@@ -50,6 +50,7 @@ class FakeOvsdbNbOvnIdl(object):
         self._tables['NAT'] = self.nat_table
         self._tables['Port_Group'] = self.port_group_table
         self.transaction = mock.MagicMock()
+        self.create_transaction = mock.MagicMock()
         self.ls_add = mock.Mock()
         self.set_lswitch_ext_ids = mock.Mock()
         self.ls_del = mock.Mock()
@@ -144,6 +145,7 @@ class FakeOvsdbNbOvnIdl(object):
         self.set_lswitch_port_to_virtual_type = mock.Mock()
         self.unset_lswitch_port_to_virtual_type = mock.Mock()
         self.ls_get = mock.Mock()
+        self.check_liveness = mock.Mock()
 
 
 class FakeOvsdbSbOvnIdl(object):
