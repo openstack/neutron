@@ -79,6 +79,14 @@ OVN_GENEVE_OVERHEAD=${OVN_GENEVE_OVERHEAD:-38}
 OVN_DBS_LOG_LEVEL=${OVN_DBS_LOG_LEVEL:-info}
 
 OVN_META_CONF=$NEUTRON_CONF_DIR/neutron_ovn_metadata_agent.ini
+OVN_META_DATA_HOST=${OVN_META_DATA_HOST:-$(ipv6_unquote $SERVICE_HOST)}
+
+# ovsdb-server wants an IPv6 address in the quoted form, [::1]
+# Initialize un-quoted to handle IPv4, but add them back if version is IPv6
+OVSDB_SERVER_LOCAL_HOST=$(ipv6_unquote $SERVICE_LOCAL_HOST)
+if [[ "$SERVICE_IP_VERSION" == 6 ]]; then
+    OVSDB_SERVER_LOCAL_HOST=[$OVSDB_SERVER_LOCAL_HOST]
+fi
 
 OVS_PREFIX=/usr/local
 OVS_SBINDIR=$OVS_PREFIX/sbin
@@ -540,7 +548,7 @@ function configure_ovn {
         configure_root_helper_options $OVN_META_CONF
 
         iniset $OVN_META_CONF DEFAULT debug $ENABLE_DEBUG_LOG_LEVEL
-        iniset $OVN_META_CONF DEFAULT nova_metadata_host $SERVICE_HOST
+        iniset $OVN_META_CONF DEFAULT nova_metadata_host $OVN_META_DATA_HOST
         iniset $OVN_META_CONF DEFAULT metadata_workers $API_WORKERS
         iniset $OVN_META_CONF DEFAULT state_path $NEUTRON_STATE_PATH
         iniset $OVN_META_CONF ovs ovsdb_connection unix:$OVS_RUNDIR/db.sock
@@ -584,7 +592,7 @@ function _start_ovs {
             fi
         fi
 
-        local dbcmd="$OVS_SBINDIR/ovsdb-server --remote=punix:$OVS_RUNDIR/db.sock --remote=ptcp:6640:127.0.0.1 --pidfile --detach --log-file"
+        local dbcmd="$OVS_SBINDIR/ovsdb-server --remote=punix:$OVS_RUNDIR/db.sock --remote=ptcp:6640:$OVSDB_SERVER_LOCAL_HOST --pidfile --detach --log-file"
         dbcmd+=" --remote=db:Open_vSwitch,Open_vSwitch,manager_options"
         if is_service_enabled ovn-controller-vtep; then
             dbcmd+=" --remote=db:hardware_vtep,Global,managers $OVS_DATADIR/vtep.db"
@@ -668,8 +676,8 @@ function start_ovn {
         local stop_cmd="/bin/bash $SCRIPTDIR/ovn-ctl stop_northd"
 
         _run_process ovn-northd "$cmd" "$stop_cmd"
-        ovn-nbctl --db=unix:$OVS_RUNDIR/ovnnb_db.sock set-connection ptcp:6641:0.0.0.0 -- set connection . inactivity_probe=60000
-        ovn-sbctl --db=unix:$OVS_RUNDIR/ovnsb_db.sock set-connection ptcp:6642:0.0.0.0 -- set connection . inactivity_probe=60000
+        ovn-nbctl --db=unix:$OVS_RUNDIR/ovnnb_db.sock set-connection ptcp:6641:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
+        ovn-sbctl --db=unix:$OVS_RUNDIR/ovnsb_db.sock set-connection ptcp:6642:$SERVICE_LISTEN_ADDRESS -- set connection . inactivity_probe=60000
         sudo ovs-appctl -t $OVS_RUNDIR/ovnnb_db.ctl vlog/set console:off syslog:$OVN_DBS_LOG_LEVEL file:$OVN_DBS_LOG_LEVEL
         sudo ovs-appctl -t $OVS_RUNDIR/ovnsb_db.ctl vlog/set console:off syslog:$OVN_DBS_LOG_LEVEL file:$OVN_DBS_LOG_LEVEL
     fi
