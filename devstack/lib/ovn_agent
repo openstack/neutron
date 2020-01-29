@@ -133,7 +133,7 @@ Q_ML2_PLUGIN_MECHANISM_DRIVERS=${Q_ML2_PLUGIN_MECHANISM_DRIVERS:-ovn,logger}
 Q_ML2_PLUGIN_TYPE_DRIVERS=${Q_ML2_PLUGIN_TYPE_DRIVERS:-local,flat,vlan,geneve}
 Q_ML2_TENANT_NETWORK_TYPE=${Q_ML2_TENANT_NETWORK_TYPE:-"geneve"}
 Q_ML2_PLUGIN_GENEVE_TYPE_OPTIONS=${Q_ML2_PLUGIN_GENEVE_TYPE_OPTIONS:-"vni_ranges=1:65536"}
-Q_ML2_PLUGIN_EXT_DRIVERS=${Q_ML2_PLUGIN_EXT_DRIVERS:-port_security,dns}
+Q_ML2_PLUGIN_EXT_DRIVERS=${Q_ML2_PLUGIN_EXT_DRIVERS:-port_security,dns,qos}
 ML2_L3_PLUGIN="ovn-router,trunk"
 
 
@@ -162,7 +162,7 @@ function use_new_ovn_repository {
 # neutron-ovs-cleanup uses the OVSDB native interface.
 function ovn_base_setup_bridge {
     local bridge=$1
-    local addbr_cmd="ovs-vsctl --no-wait -- --may-exist add-br $bridge"
+    local addbr_cmd="ovs-vsctl --no-wait -- --may-exist add-br $bridge -- set bridge $bridge protocols=OpenFlow13"
 
     if [ "$OVS_DATAPATH_TYPE" != "system" ] ; then
         addbr_cmd="$addbr_cmd -- set Bridge $bridge datapath_type=${OVS_DATAPATH_TYPE}"
@@ -328,10 +328,12 @@ function _prepare_for_ovs_compilation {
 
 # Reload the ovs kernel modules
 function _reload_ovs_kernel_modules {
+    set +e
     ovs_system=$(sudo ovs-dpctl dump-dps | grep ovs-system)
     if [ -n "$ovs_system" ]; then
         sudo ovs-dpctl del-dp ovs-system
     fi
+    set -e
     sudo modprobe -r vport_geneve
     sudo modprobe -r openvswitch
     sudo modprobe openvswitch || (dmesg && die $LINENO "FAILED TO LOAD openvswitch")
@@ -499,6 +501,9 @@ function configure_ovn_plugin {
         export NETWORK_API_EXTENSIONS=$NETWORK_API_EXTENSIONS,$($PYTHON -c \
             'from neutron.common.ovn import extensions ;\
             print(",".join(extensions.ML2_SUPPORTED_API_EXTENSIONS_OVN_L3))')
+        if is_service_enabled q-qos neutron-qos ; then
+            export NETWORK_API_EXTENSIONS="$NETWORK_API_EXTENSIONS,qos"
+        fi
         populate_ml2_config /$Q_PLUGIN_CONF_FILE ml2_type_geneve max_header_size=$OVN_GENEVE_OVERHEAD
         populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_nb_connection="$OVN_NB_REMOTE"
         populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn ovn_sb_connection="$OVN_SB_REMOTE"
