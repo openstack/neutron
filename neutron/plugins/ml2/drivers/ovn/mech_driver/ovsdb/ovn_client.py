@@ -420,17 +420,6 @@ class OVNClient(object):
 
         db_rev.bump_revision(admin_context, port, ovn_const.TYPE_PORTS)
 
-    # TODO(lucasagomes): Remove this helper method in the Rocky release
-    def _get_lsp_backward_compat_sgs(self, ovn_port, port_object=None,
-                                     skip_trusted_port=True):
-        if ovn_const.OVN_SG_IDS_EXT_ID_KEY in ovn_port.external_ids:
-            return utils.get_ovn_port_security_groups(
-                ovn_port, skip_trusted_port=skip_trusted_port)
-        elif port_object is not None:
-            return utils.get_lsp_security_groups(
-                port_object, skip_trusted_port=skip_trusted_port)
-        return []
-
     def _set_unset_virtual_port_type(self, context, txn, parent_port,
                                      addresses, unset=False):
         cmd = self._nb_idl.set_lswitch_port_to_virtual_type
@@ -546,8 +535,7 @@ class OVNClient(object):
                     **columns_dict))
 
             # Determine if security groups or fixed IPs are updated.
-            old_sg_ids = set(self._get_lsp_backward_compat_sgs(
-                ovn_port, port_object=port_object))
+            old_sg_ids = set(utils.get_ovn_port_security_groups(ovn_port))
             new_sg_ids = set(utils.get_lsp_security_groups(port))
             detached_sg_ids = old_sg_ids - new_sg_ids
             attached_sg_ids = new_sg_ids - old_sg_ids
@@ -747,8 +735,8 @@ class OVNClient(object):
 
                 addresses = utils.sort_ips_by_version(
                     utils.get_ovn_port_addresses(ovn_port))
-                sec_groups = self._get_lsp_backward_compat_sgs(
-                    ovn_port, port_object=port_object, skip_trusted_port=False)
+                sec_groups = utils.get_ovn_port_security_groups(
+                    ovn_port, skip_trusted_port=False)
                 for sg_id in sec_groups:
                     for ip_version, addr_list in addresses.items():
                         if not addr_list:
