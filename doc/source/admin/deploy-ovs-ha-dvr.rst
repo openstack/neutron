@@ -75,6 +75,15 @@ Controller node
         [DEFAULT]
         router_distributed = True
 
+.. note::
+
+   For a large scale cloud, if your deployment is running DVR with DHCP,
+   we recommend you set ``host_dvr_for_dhcp=False`` to achieve higher
+   L3 agent router processing performance. When this is set to False,
+   DNS functionality will not be available via the DHCP namespace (dnsmasq)
+   however, a different nameserver will have to be configured, for
+   example, by specifying a value in ``dns_nameservers`` for subnets.
+
 #. Restart the following services:
 
    * Server
