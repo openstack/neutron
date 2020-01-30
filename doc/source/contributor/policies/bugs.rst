@@ -435,6 +435,9 @@ more will be added over time if needed.
 | oslo_                         | An interop/cross-project issue          | Bernard Cafarelli/       |
 |                               |                                         | Rodolfo Alonso Hernandez |
 +-------------------------------+-----------------------------------------+--------------------------+
+| ovn_                          | A bug affecting ML2/OVN                 | Jakub Libosvar/          |
+|                               |                                         | Lucas Alvares Gomes      |
++-------------------------------+-----------------------------------------+--------------------------+
 | ovs_                          | A bug affecting ML2/OVS                 | Miguel Lavalle           |
 +-------------------------------+-----------------------------------------+--------------------------+
 | ovs-fw_                       | A bug affecting OVS firewall            | Miguel Lavalle           |
@@ -699,6 +702,14 @@ OSLO
 
 * `Oslo - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=oslo>`_
 * `Oslo - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=oslo>`_
+
+.. _ovn:
+
+OVN
++++
+
+* `OVN - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=ovn>`_
+* `OVN - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=ovn>`_
 
 .. _ovs:
 
