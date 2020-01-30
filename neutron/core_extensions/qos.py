@@ -107,4 +107,10 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
 
         binding = resource['qos_policy_binding']
         qos_policy_id = binding['policy_id'] if binding else None
-        return {qos_consts.QOS_POLICY_ID: qos_policy_id}
+        retval = {qos_consts.QOS_POLICY_ID: qos_policy_id}
+        if resource_type == base.PORT:
+            network_binding = resource.get('qos_network_policy_binding')
+            qos_net_policy_id = (network_binding['policy_id'] if
+                                 network_binding else None)
+            retval[qos_consts.QOS_NETWORK_POLICY_ID] = qos_net_policy_id
+        return retval
