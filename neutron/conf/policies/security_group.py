@@ -20,8 +20,22 @@ SG_RESOURCE_PATH = '/security-groups/{id}'
 RULE_COLLECTION_PATH = '/security-group-rules'
 RULE_RESOURCE_PATH = '/security-group-rules/{id}'
 
+RULE_ADMIN_OR_SG_OWNER = 'rule:admin_or_sg_owner'
+RULE_ADMIN_OWNER_OR_SG_OWNER = 'rule:admin_owner_or_sg_owner'
+
 
 rules = [
+    policy.RuleDefault(
+        'admin_or_sg_owner',
+        base.policy_or('rule:context_is_admin',
+                       'tenant_id:%(security_group:tenant_id)s'),
+        description='Rule for admin or security group owner access'),
+    policy.RuleDefault(
+        'admin_owner_or_sg_owner',
+        base.policy_or('rule:owner',
+                       RULE_ADMIN_OR_SG_OWNER),
+        description=('Rule for resource owner, '
+                     'admin or security group owner access')),
     # TODO(amotoki): admin_or_owner is the right rule?
     # Does an empty string make more sense for create_security_group?
     policy.DocumentedRuleDefault(
@@ -88,7 +102,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         'get_security_group_rule',
-        base.RULE_ADMIN_OR_OWNER,
+        RULE_ADMIN_OWNER_OR_SG_OWNER,
         'Get a security group rule',
         [
             {
