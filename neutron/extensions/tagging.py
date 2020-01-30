@@ -12,7 +12,9 @@
 #    under the License.
 
 import abc
+import copy
 
+from neutron_lib.api.definitions import port
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import faults
 from neutron_lib.api import validators
@@ -47,6 +49,12 @@ TAG_ATTRIBUTE_MAP = {
                'is_visible': False, 'is_filter': True},
     NOT_TAGS_ANY: {'allow_post': False, 'allow_put': False,
                    'is_visible': False, 'is_filter': True},
+}
+TAG_ATTRIBUTE_MAP_PORTS = copy.deepcopy(TAG_ATTRIBUTE_MAP)
+TAG_ATTRIBUTE_MAP_PORTS[TAGS] = {
+        'allow_post': True, 'allow_put': False,
+        'validate': {'type:list_of_unique_strings': MAX_TAG_LEN},
+        'default': [], 'is_visible': True, 'is_filter': True
 }
 
 
@@ -210,7 +218,11 @@ class Tagging(api_extensions.ExtensionDescriptor):
             return {}
         EXTENDED_ATTRIBUTES_2_0 = {}
         for collection_name in TAG_SUPPORTED_RESOURCES:
-            EXTENDED_ATTRIBUTES_2_0[collection_name] = TAG_ATTRIBUTE_MAP
+            if collection_name == port.COLLECTION_NAME:
+                EXTENDED_ATTRIBUTES_2_0[collection_name] = (
+                    TAG_ATTRIBUTE_MAP_PORTS)
+            else:
+                EXTENDED_ATTRIBUTES_2_0[collection_name] = TAG_ATTRIBUTE_MAP
         return EXTENDED_ATTRIBUTES_2_0
 
 

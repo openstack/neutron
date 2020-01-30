@@ -1,0 +1,5 @@
+---
+features:
+  - The ``tag_ports_during_bulk_creation`` ML2 plugin extension has been
+    implemented to support tagging ports during bulk creation. As a side
+    effect, this extension also allows tagging ports during non-bulk creation.
