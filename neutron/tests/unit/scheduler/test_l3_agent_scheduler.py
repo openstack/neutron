@@ -47,6 +47,7 @@ from neutron import manager
 from neutron.objects import agent as agent_obj
 from neutron.objects import l3_hamode
 from neutron.objects import l3agent as rb_obj
+from neutron import quota
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests import base
 from neutron.tests.common import helpers
@@ -1449,6 +1450,10 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
             'neutron.scheduler.l3_agent_scheduler.ChanceScheduler'
         )
         self._register_l3_agents()
+        make_res = mock.patch.object(quota.QuotaEngine, 'make_reservation')
+        self.mock_make_res = make_res.start()
+        commit_res = mock.patch.object(quota.QuotaEngine, 'commit_reservation')
+        self.mock_quota_commit_res = commit_res.start()
 
     @staticmethod
     def get_router_l3_agent_binding(context, router_id, l3_agent_id=None,

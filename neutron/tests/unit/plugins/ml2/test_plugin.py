@@ -62,6 +62,7 @@ from neutron.plugins.ml2.drivers import type_vlan
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import plugin as ml2_plugin
+from neutron import quota
 from neutron.services.revisions import revision_plugin
 from neutron.services.segments import db as segments_plugin_db
 from neutron.services.segments import plugin as segments_plugin
@@ -2148,6 +2149,10 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         cfg.CONF.set_override(
             'enable_security_group', self.ENABLE_SG,
             group='SECURITYGROUP')
+        make_res = mock.patch.object(quota.QuotaEngine, 'make_reservation')
+        self.mock_quota_make_res = make_res.start()
+        commit_res = mock.patch.object(quota.QuotaEngine, 'commit_reservation')
+        self.mock_quota_commit_res = commit_res.start()
         super(TestMl2PortBinding, self).setUp()
 
     def _check_port_binding_profile(self, port, profile=None):
@@ -2868,6 +2873,10 @@ class TestMl2PortSecurity(Ml2PluginV2TestCase):
         cfg.CONF.set_override('enable_security_group',
                               False,
                               group='SECURITYGROUP')
+        make_res = mock.patch.object(quota.QuotaEngine, 'make_reservation')
+        self.mock_quota_make_res = make_res.start()
+        commit_res = mock.patch.object(quota.QuotaEngine, 'commit_reservation')
+        self.mock_quota_commit_res = commit_res.start()
         super(TestMl2PortSecurity, self).setUp()
 
     def test_port_update_without_security_groups(self):
