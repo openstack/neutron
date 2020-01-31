@@ -22,6 +22,7 @@ from neutron.db.models import port_forwarding as models
 from neutron.objects import base
 from neutron.objects import router
 from neutron_lib import constants as lib_const
+from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
 FIELDS_NOT_SUPPORT_FILTER = ['internal_ip_address', 'internal_port']
@@ -31,7 +32,8 @@ FIELDS_NOT_SUPPORT_FILTER = ['internal_ip_address', 'internal_port']
 class PortForwarding(base.NeutronDbObject):
     # Version 1.0: Initial version
     # Version 1.1: Change unique constraint
-    VERSION = '1.1'
+    # Version 1.2: Add "description" field
+    VERSION = '1.2'
 
     db_model = models.PortForwarding
 
@@ -61,8 +63,12 @@ class PortForwarding(base.NeutronDbObject):
         'internal_ip_address': obj_fields.IPV4AddressField(),
         'internal_port': common_types.PortRangeField(nullable=False),
         'floating_ip_address': obj_fields.IPV4AddressField(),
-        'router_id': common_types.UUIDField()
+        'router_id': common_types.UUIDField(),
+        'description': obj_fields.StringField()
     }
+
+    comparision_ignored_fields = ['revision_number', 'updated_at',
+                                  'created_at']
 
     synthetic_fields = ['floating_ip_address', 'router_id']
     fields_no_update = {
@@ -71,6 +77,11 @@ class PortForwarding(base.NeutronDbObject):
 
     def __eq__(self, other):
         for attr in self.fields:
+            # Some fields are inherited from standards attributes and are
+            # irrelevant while comparing two PortForwarding.
+            if attr in self.comparision_ignored_fields:
+                continue
+
             if getattr(self, attr) != getattr(other, attr):
                 return False
         return True
@@ -92,6 +103,11 @@ class PortForwarding(base.NeutronDbObject):
         super(PortForwarding, self).from_db_object(db_obj)
         self._load_attr_from_fip(attrname='router_id')
         self._load_attr_from_fip(attrname='floating_ip_address')
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 2):
+            primitive.pop('description', None)
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
