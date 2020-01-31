@@ -61,6 +61,7 @@ REPO_BASE=${GATE_DEST:-$(cd $(dirname "$0")/../.. && pwd)}
 INSTALL_MYSQL_ONLY=${INSTALL_MYSQL_ONLY:-False}
 # The gate should automatically install dependencies.
 INSTALL_BASE_DEPENDENCIES=${INSTALL_BASE_DEPENDENCIES:-$IS_GATE}
+BUILD_OVS_FROM_SOURCE=${BUILD_OVS_FROM_SOURCE:-True}
 
 
 if [ ! -f "$DEVSTACK_PATH/stack.sh" ]; then
@@ -97,18 +98,24 @@ function _install_base_deps {
     echo_summary "Installing base dependencies"
 
     INSTALL_TESTONLY_PACKAGES=True
-    PACKAGES=$(get_packages general,neutron,q-agt,q-l3)
-    # Do not install 'python-' prefixed packages other than
-    # python-dev*.  Neutron's functional testing relies on deployment
-    # to a tox env so there is no point in installing python
-    # dependencies system-wide.
-    PACKAGES=$(echo $PACKAGES | perl -pe 's|python-(?!dev)[^ ]*||g')
-    install_package $PACKAGES
+    if [[ "$BUILD_OVS_FROM_SOURCE" == "True" ]]; then
+        PACKAGES=$(get_packages general,neutron,q-agt,q-l3)
+        # Do not install 'python-' prefixed packages other than
+        # python-dev*.  Neutron's functional testing relies on deployment
+        # to a tox env so there is no point in installing python
+        # dependencies system-wide.
+        PACKAGES=$(echo $PACKAGES | perl -pe 's|python-(?!dev)[^ ]*||g')
+        install_package $PACKAGES
 
-    source $NEUTRON_PATH/devstack/lib/ovs
-    remove_ovs_packages
-    OVS_BRANCH="v2.12.0"
-    compile_ovs False /usr /var
+        source $NEUTRON_PATH/devstack/lib/ovs
+        remove_ovs_packages
+        OVS_BRANCH="v2.12.0"
+        compile_ovs False /usr /var
+    else
+        PACKAGES=$(get_packages general,neutron,q-agt,q-l3,openvswitch)
+        PACKAGES=$(echo $PACKAGES | perl -pe 's|python-(?!dev)[^ ]*||g')
+        install_package $PACKAGES
+    fi
 }
 
 
