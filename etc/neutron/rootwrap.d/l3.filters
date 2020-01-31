@@ -64,17 +64,17 @@ keepalived_state_change: CommandFilter, neutron-keepalived-state-change, root
 # command of the process to be killed is python.
 # TODO(mlavalle) These kill filters will be updated once we come up with a
 # mechanism to kill using the name of the script being executed by Python
-kill_keepalived_monitor_py: KillFilter, root, python, -15
-kill_keepalived_monitor_py27: KillFilter, root, python2.7, -15
-kill_keepalived_monitor_py3: KillFilter, root, python3, -15
-kill_keepalived_monitor_py35: KillFilter, root, python3.5, -15
-kill_keepalived_monitor_py36: KillFilter, root, python3.6, -15
-kill_keepalived_monitor_py37: KillFilter, root, python3.7, -15
+kill_keepalived_monitor_py: KillFilter, root, python, -15, -9
+kill_keepalived_monitor_py27: KillFilter, root, python2.7, -15, -9
+kill_keepalived_monitor_py3: KillFilter, root, python3, -15, -9
+kill_keepalived_monitor_py35: KillFilter, root, python3.5, -15, -9
+kill_keepalived_monitor_py36: KillFilter, root, python3.6, -15, -9
+kill_keepalived_monitor_py37: KillFilter, root, python3.7, -15, -9
 # For e.g. RHEL8 neutron-keepalived-state-change is run by "system python"
 # which is /usr/libexec/platform-python3.6 so this should be in filters also.
 # Path /usr/libexec isn't in PATH by default so it has to be given here as
 # absolute path
-kill_keepalived_monitor_platform_py: KillFilter, root, /usr/libexec/platform-python, -15
-kill_keepalived_monitor_platform_py36: KillFilter, root, /usr/libexec/platform-python3.6, -15
+kill_keepalived_monitor_platform_py: KillFilter, root, /usr/libexec/platform-python, -15, -9
+kill_keepalived_monitor_platform_py36: KillFilter, root, /usr/libexec/platform-python3.6, -15, -9
 # neutron-keepalived-state-change-monitor kill script filter
 kill_neutron-keepalived-state-change-monitor_script: CommandFilter, neutron-keepalived-state-change-monitor-kill, root
