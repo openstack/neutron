@@ -166,18 +166,20 @@ class MetadataAgent(object):
         self.sync()
 
     def start(self):
-        # Launch the server that will act as a proxy between the VM's and Nova.
-        proxy = metadata_server.UnixDomainMetadataProxy(self.conf)
-        proxy.run()
-
         # Open the connection to OVS database
         self.ovs_idl = ovsdb.MetadataAgentOvsIdl().start()
         self._load_config()
 
+        # Launch the server that will act as a proxy between the VM's and Nova.
+        proxy = metadata_server.UnixDomainMetadataProxy(self.conf,
+                                                        self.chassis)
+        proxy.run()
+
         # Open the connection to OVN SB database.
         self.sb_idl = ovsdb.MetadataAgentOvnSbIdl(
-            [PortBindingChassisEvent(self), ChassisCreateEvent(self),
-                SbGlobalUpdateEvent(self)]).start()
+            chassis=self.chassis,
+            events=[PortBindingChassisEvent(self), ChassisCreateEvent(self),
+                    SbGlobalUpdateEvent(self)]).start()
 
         # Do the initial sync.
         self.sync()

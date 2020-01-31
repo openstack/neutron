@@ -44,8 +44,9 @@ MODE_MAP = {
 
 class MetadataProxyHandler(object):
 
-    def __init__(self, conf):
+    def __init__(self, conf, chassis=''):
         self.conf = conf
+        self.chassis = chassis
         self.subscribe()
 
     def subscribe(self):
@@ -56,7 +57,7 @@ class MetadataProxyHandler(object):
     def post_fork_initialize(self, resource, event, trigger, payload=None):
         # We need to open a connection to OVN SouthBound database for
         # each worker so that we can process the metadata requests.
-        self.sb_idl = ovsdb.MetadataAgentOvnSbIdl().start()
+        self.sb_idl = ovsdb.MetadataAgentOvnSbIdl(chassis=self.chassis).start()
 
     @webob.dec.wsgify(RequestClass=webob.Request)
     def __call__(self, req):
@@ -161,8 +162,9 @@ class MetadataProxyHandler(object):
 
 class UnixDomainMetadataProxy(object):
 
-    def __init__(self, conf):
+    def __init__(self, conf, chassis=''):
         self.conf = conf
+        self.chassis = chassis
         agent_utils.ensure_directory_exists_without_file(
             cfg.CONF.metadata_proxy_socket)
 
@@ -187,7 +189,7 @@ class UnixDomainMetadataProxy(object):
     def run(self):
         self.server = agent_utils.UnixDomainWSGIServer(
             'networking-ovn-metadata-agent')
-        self.server.start(MetadataProxyHandler(self.conf),
+        self.server.start(MetadataProxyHandler(self.conf, self.chassis),
                           self.conf.metadata_proxy_socket,
                           workers=self.conf.metadata_workers,
                           backlog=self.conf.metadata_backlog,
