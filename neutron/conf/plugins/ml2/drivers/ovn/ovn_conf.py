@@ -16,6 +16,7 @@ from oslo_log import log as logging
 from ovsdbapp.backend.ovs_idl import vlog
 
 from neutron._i18n import _
+from neutron.conf.agent import ovs_conf
 
 LOG = logging.getLogger(__name__)
 
@@ -193,11 +194,13 @@ ovn_opts = [
 ]
 
 cfg.CONF.register_opts(ovn_opts, group='ovn')
+ovs_conf.register_ovs_agent_opts()
 
 
 def list_opts():
     return [
         ('ovn', ovn_opts),
+        ('ovs', ovs_conf.OPTS)
     ]
 
 
@@ -291,3 +294,7 @@ def get_global_dhcpv6_opts():
 
 def is_ovn_emit_need_to_frag_enabled():
     return cfg.CONF.ovn.ovn_emit_need_to_frag
+
+
+def is_igmp_snooping_enabled():
+    return cfg.CONF.OVS.igmp_snooping_enable

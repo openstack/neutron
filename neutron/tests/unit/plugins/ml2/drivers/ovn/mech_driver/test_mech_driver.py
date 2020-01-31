@@ -576,6 +576,24 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                           self.mech_driver.update_network_precommit,
                           fake_network_context)
 
+    def _create_network_igmp_snoop(self, enabled):
+        cfg.CONF.set_override('igmp_snooping_enable', enabled, group='OVS')
+        nb_idl = self.mech_driver._ovn_client._nb_idl
+        net = self._make_network(self.fmt, name='net1',
+                                 admin_state_up=True)['network']
+        value = 'true' if enabled else 'false'
+        nb_idl.ls_add.assert_called_once_with(
+            ovn_utils.ovn_name(net['id']), external_ids=mock.ANY,
+            may_exist=True,
+            other_config={ovn_const.MCAST_SNOOP: value,
+                          ovn_const.MCAST_FLOOD_UNREGISTERED: value})
+
+    def test_create_network_igmp_snoop_enabled(self):
+        self._create_network_igmp_snoop(enabled=True)
+
+    def test_create_network_igmp_snoop_disabled(self):
+        self._create_network_igmp_snoop(enabled=False)
+
     def test_create_port_without_security_groups(self):
         kwargs = {'security_groups': []}
         with self.network(set_context=True, tenant_id='test') as net1:

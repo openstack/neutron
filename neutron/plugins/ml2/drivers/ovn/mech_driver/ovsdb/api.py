@@ -24,19 +24,6 @@ from neutron.common.ovn import constants as ovn_const
 class API(api.API):
 
     @abc.abstractmethod
-    def set_lswitch_ext_ids(self, name, ext_ids, if_exists=True):
-        """Create a command to set OVN lswitch external ids
-
-        :param name:      The name of the lswitch
-        :type name:       string
-        :param ext_ids    The external ids to set for the lswitch
-        :type ext_ids:    dictionary
-        :param if_exists: Do not fail if lswitch does not exist
-        :type if_exists:  bool
-        :returns:        :class:`Command` with no result
-        """
-
-    @abc.abstractmethod
     def create_lswitch_port(self, lport_name, lswitch_name, may_exist=True,
                             **columns):
         """Create a command to add an OVN logical switch port

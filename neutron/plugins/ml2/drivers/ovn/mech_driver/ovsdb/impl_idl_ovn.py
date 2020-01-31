@@ -185,10 +185,6 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         except ovn_exc.RevisionConflict as e:
             LOG.info('Transaction aborted. Reason: %s', e)
 
-    def set_lswitch_ext_ids(self, lswitch_id, ext_ids, if_exists=True):
-        return cmd.LSwitchSetExternalIdsCommand(self, lswitch_id, ext_ids,
-                                                if_exists)
-
     def create_lswitch_port(self, lport_name, lswitch_name, may_exist=True,
                             **columns):
         return cmd.AddLSwitchPortCommand(self, lport_name, lswitch_name,
