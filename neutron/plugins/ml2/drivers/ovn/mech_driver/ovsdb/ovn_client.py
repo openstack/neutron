@@ -834,10 +834,7 @@ class OVNClient(object):
             columns['logical_port'] = floatingip['port_id']
             ext_ids[ovn_const.OVN_FIP_EXT_MAC_KEY] = port['mac_address']
             if self._nb_idl.lsp_get_up(floatingip['port_id']).execute():
-                port_net = self._plugin.get_network(admin_context,
-                                                    port['network_id'])
-                if port_net.get(pnet.NETWORK_TYPE) != const.TYPE_VLAN:
-                    columns['external_mac'] = port['mac_address']
+                columns['external_mac'] = port['mac_address']
 
         # TODO(dalvarez): remove this check once the minimum OVS required
         # version contains the column (when OVS 2.8.2 is released).
