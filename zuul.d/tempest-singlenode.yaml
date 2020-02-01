@@ -149,14 +149,14 @@
     # job instead of devstack-tempest
     parent: devstack-tempest
     timeout: 10800
-    required-projects:
+    required-projects: &ovn-base-required-projects
       - openstack/devstack-gate
       - openstack/neutron
       - openstack/neutron-tempest-plugin
       - openstack/octavia
       - openstack/tempest
     irrelevant-files: *irrelevant-files
-    vars:
+    vars: &ovn-base-vars
       tox_envlist: all-plugin
       tempest_test_regex: "^(?!.*\
         (?:.*\\[.*slow.*\\])|\
@@ -266,6 +266,23 @@
     vars:
       devstack_localrc:
         OVN_BRANCH: master
+
+- job:
+    name: neutron-ovn-tempest-ovs-ipv6-only-base
+    description: Base job for devstack/tempest to test Neutron with ovn driver in an IPv6-only deployment
+    parent: devstack-tempest-ipv6
+    timeout: 10800
+    irrelevant-files: *irrelevant-files
+    required-projects: *ovn-base-required-projects
+    vars: *ovn-base-vars
+
+- job:
+    name: neutron-ovn-tempest-ovs-release-ipv6-only
+    description: Job testing for devstack/tempest testing Neutron with ovn driver and latest released OVN branch in an IPv6-only deployment
+    parent: neutron-ovn-tempest-ovs-ipv6-only-base
+    vars:
+      devstack_localrc:
+        OVN_BRANCH: branch-2.12
 
 - job:
     name: neutron-ovn-tempest-ovs-release
