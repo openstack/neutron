@@ -65,14 +65,24 @@ class TestOVNQosDriver(base.BaseTestCase):
         self.network_policy_id = uuidutils.generate_uuid()
         self.policy = self._create_fake_policy()
         self.port = self._create_fake_port()
-        self.rule = self._create_bw_limit_rule()
-        self.expected = {'qos_max_rate': '1000', 'qos_burst': '100000'}
+        self.bw_rule = self._create_bw_limit_rule()
+        self.bw_expected = {'direction': 'egress', 'qos_max_rate': '1000',
+                            'qos_burst': '100000'}
+        self.dscp_rule = self._create_dscp_rule()
+        self.dscp_expected = {'dscp_mark': 16, 'direction': 'egress'}
 
     def _create_bw_limit_rule(self):
         rule_obj = qos_rule.QosBandwidthLimitRule()
         rule_obj.id = uuidutils.generate_uuid()
-        rule_obj.max_kbps = 1
-        rule_obj.max_burst_kbps = 100
+        rule_obj.max_kbps = 1000
+        rule_obj.max_burst_kbps = 100000
+        rule_obj.obj_reset_changes()
+        return rule_obj
+
+    def _create_dscp_rule(self):
+        rule_obj = qos_rule.QosDscpMarkingRule()
+        rule_obj.id = uuidutils.generate_uuid()
+        rule_obj.dscp_mark = 16
         rule_obj.obj_reset_changes()
         return rule_obj
 
@@ -117,8 +127,13 @@ class TestOVNQosDriver(base.BaseTestCase):
     def test__generate_port_options_no_rules(self):
         self._generate_port_options(self.policy_id, [], {})
 
-    def test__generate_port_options_with_rule(self):
-        self._generate_port_options(self.policy_id, [self.rule], self.expected)
+    def test__generate_port_options_with_bw_rule(self):
+        self._generate_port_options(self.policy_id, [self.bw_rule],
+                                    self.bw_expected)
+
+    def test__generate_port_options_with_dscp_rule(self):
+        self._generate_port_options(self.policy_id, [self.dscp_rule],
+                                    self.dscp_expected)
 
     def _get_qos_options(self, port, port_policy, network_policy):
         with mock.patch.object(qos_policy.QosPolicy, 'get_network_policy',
