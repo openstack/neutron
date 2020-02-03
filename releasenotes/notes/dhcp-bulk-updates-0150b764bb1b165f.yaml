@@ -1,0 +1,14 @@
+---
+features:
+  - By default the dnsmasq agent is restarted for every
+    port created, deleted or updated. When there are
+    many port changes on the same network it can and will
+    take a very long time for all of the port changes to
+    be realised. This enhancement adds in a new
+    configuration variable that will enable bulk updates.
+    This means that the dnsmasq will only be restarted once
+    in a period and not N times.
+    The new option 'bulk_reload_interval' indicates how
+    often the agent should be reloaded. The default value
+    is 0 which means that the original functionality is the
+    default.

@@ -115,6 +115,7 @@ class DhcpAgent(manager.Manager):
         self._pool_size = DHCP_PROCESS_GREENLET_MIN
         self._pool = eventlet.GreenPool(size=self._pool_size)
         self._queue = queue.ResourceProcessingQueue()
+        self._network_bulk_allocations = {}
 
     def init_host(self):
         self.sync_state()
@@ -144,11 +145,27 @@ class DhcpAgent(manager.Manager):
         self.periodic_resync()
         self.start_ready_ports_loop()
         eventlet.spawn_n(self._process_loop)
+        if self.conf.bulk_reload_interval:
+            eventlet.spawn_n(self._reload_bulk_allocations)
+
+    def _reload_bulk_allocations(self):
+        while True:
+            for network_id in self._network_bulk_allocations.keys():
+                network = self.cache.get_network_by_id(network_id)
+                self.call_driver('bulk_reload_allocations', network)
+                del self._network_bulk_allocations[network_id]
+            eventlet.greenthread.sleep(self.conf.bulk_reload_interval)
 
     def call_driver(self, action, network, **action_kwargs):
         """Invoke an action on a DHCP driver instance."""
         LOG.debug('Calling driver for network: %(net)s action: %(action)s',
                   {'net': network.id, 'action': action})
+        if self.conf.bulk_reload_interval and action == 'reload_allocations':
+            LOG.debug("Call deferred to bulk load")
+            self._network_bulk_allocations[network.id] = True
+            return True
+        if action == 'bulk_reload_allocations':
+            action = 'reload_allocations'
         try:
             # the Driver expects something that is duck typed similar to
             # the base models.
