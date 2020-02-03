@@ -77,6 +77,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ri._add_default_gw_virtual_route(ex_gw_port, 'qg-abc')
         self.assertEqual(0, len(mock_instance.virtual_routes.gateway_routes))
 
+        subnets[1]['gateway_ip'] = '30.0.1.1'
+        ri._add_default_gw_virtual_route(ex_gw_port, 'qg-abc')
+        self.assertEqual(2, len(mock_instance.virtual_routes.gateway_routes))
+
     @mock.patch.object(router_info.RouterInfo, 'remove_floating_ip')
     def test_remove_floating_ip(self, super_remove_floating_ip):
         ri = self._create_router(mock.MagicMock())
