@@ -1,0 +1,96 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+require 'yaml'
+require 'ipaddr'
+require '../provisioning/providers.rb'
+
+vagrant_config = YAML.load_file("instances.yml")
+
+Vagrant.configure(2) do |config|
+
+  if Vagrant.has_plugin?("vagrant-cachier")
+    # Configure cached packages to be shared between instances of the same base box.
+    # More info on http://fgrehm.viewdocs.io/vagrant-cachier/usage
+    config.cache.scope = :box
+  end
+
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.vm.synced_folder File.expand_path(".."), "/vagrant"
+  config.vm.synced_folder File.expand_path("../.."), "/home/vagrant/neutron"
+
+  # Use the ipaddr library to calculate the netmask of a given network
+  net = IPAddr.new vagrant_config['provider_network']
+  netmask = net.inspect().split("/")[1].split(">")[0]
+
+  # Build the common args for the setup-base.sh scripts.
+  setup_base_common_args = "#{vagrant_config['ovndb']['ip']} #{vagrant_config['ovndb']['short_name']} " +
+                           "#{vagrant_config['ovncontroller']['ip']} #{vagrant_config['ovncontroller']['short_name']} " +
+                           "#{vagrant_config['ovncompute1']['ip']} #{vagrant_config['ovncompute1']['short_name']} " +
+                           "#{vagrant_config['ovncompute2']['ip']} #{vagrant_config['ovncompute2']['short_name']} " +
+                           "#{vagrant_config['ovnvtep']['ip']} #{vagrant_config['ovnvtep']['short_name']} "
+
+  # Bring up the Devstack ovsdb/ovn-northd node
+  config.vm.define "ovn-db" do |ovndb|
+    cfg = vagrant_config['ovndb']
+    ovndb.vm.host_name = cfg['host_name']
+    ovndb.vm.network "private_network", ip: cfg['ip']
+    ovndb.vm.network "private_network", ip: cfg['prov-ip'], netmask: netmask
+    ovndb.vm.provision "shell", path: "../provisioning/setup-base.sh", privileged: false,
+      :args => "#{vagrant_config['ovndb']['mtu']} #{setup_base_common_args}"
+    ovndb.vm.provision "shell", path: "../provisioning/setup-db.sh", privileged: false, :args => "#{vagrant_config['ovncontroller']['ip']}"
+
+    configure_providers(ovndb.vm, cfg)
+  end
+
+  # Bring up the Devstack controller node on Virtualbox
+  config.vm.define "ovn-controller", primary: true do |ovncontroller|
+    cfg = vagrant_config['ovncontroller']
+    ovncontroller.vm.host_name = cfg['host_name']
+    ovncontroller.vm.network "private_network", ip: cfg['ip']
+    ovncontroller.vm.network "private_network", ip: cfg['prov-ip'], netmask: netmask
+    ovncontroller.vm.provision "shell", path: "../provisioning/setup-base.sh", privileged: false,
+      :args => "#{cfg['mtu']} #{setup_base_common_args}"
+    ovncontroller.vm.provision "shell", path: "../provisioning/setup-controller.sh", privileged: false,
+      :args => "#{vagrant_config['ovndb']['ip']} #{vagrant_config['provider_start_ip']} #{vagrant_config['provider_end_ip']} " +
+               "#{vagrant_config['provider_gateway']} #{vagrant_config['provider_network']} #{vagrant_config['ovn_vm_subnet']}"
+    configure_providers(ovncontroller.vm, cfg)
+  end
+
+  config.vm.define "ovn-vtep", autostart: false do |ovnvtep|
+    cfg = vagrant_config['ovnvtep']
+    ovnvtep.vm.host_name = cfg['host_name']
+    ovnvtep.vm.network "private_network", ip: cfg['ip']
+    ovnvtep.vm.network "private_network", ip: cfg['prov-ip'], netmask: netmask
+    ovnvtep.vm.provision "shell", path: "../provisioning/setup-base.sh", privileged: false,
+      :args => "#{cfg['mtu']} #{setup_base_common_args}"
+    ovnvtep.vm.provision "shell", path: "../provisioning/setup-vtep.sh", privileged: false, :args => "#{vagrant_config['ovncontroller']['ip']} #{vagrant_config['ovndb']['ip']}"
+    configure_providers(ovnvtep.vm, cfg)
+  end
+
+  # Bring up the first Devstack compute node on Virtualbox
+  config.vm.define "ovn-compute1" do |ovncompute1|
+    cfg = vagrant_config['ovncompute1']
+    ovncompute1.vm.host_name = cfg['host_name']
+    ovncompute1.vm.network "private_network", ip: cfg['ip']
+    ovncompute1.vm.network "private_network", ip: cfg['prov-ip'], netmask: netmask
+    ovncompute1.vm.provision "shell", path: "../provisioning/setup-base.sh", privileged: false,
+      :args => "#{cfg['mtu']} #{setup_base_common_args}"
+    ovncompute1.vm.provision "shell", path: "../provisioning/setup-compute.sh", privileged: false,
+      :args => "#{vagrant_config['ovncontroller']['ip']} #{vagrant_config['ovndb']['ip']}"
+    configure_providers(ovncompute1.vm, cfg)
+  end
+
+  # Bring up the second Devstack compute node on Virtualbox
+  config.vm.define "ovn-compute2" do |ovncompute2|
+    cfg = vagrant_config['ovncompute2']
+    ovncompute2.vm.host_name = cfg['host_name']
+    ovncompute2.vm.network "private_network", ip: cfg['ip']
+    ovncompute2.vm.network "private_network", ip: cfg['prov-ip'], netmask: netmask
+    ovncompute2.vm.provision "shell", path: "../provisioning/setup-base.sh", privileged: false,
+      :args => "#{cfg['mtu']} #{setup_base_common_args}"
+    ovncompute2.vm.provision "shell", path: "../provisioning/setup-compute.sh", privileged: false,
+      :args => "#{vagrant_config['ovncontroller']['ip']} #{vagrant_config['ovndb']['ip']}"
+    configure_providers(ovncompute2.vm, cfg)
+  end
+end

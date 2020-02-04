@@ -1,0 +1,39 @@
+#
+# Sample DevStack local.conf.
+#
+# This sample file is intended for running the HW VTEP emulator on a
+# separate node.
+#
+# For this configuration to work, you *must* set the SERVICE_HOST option to the
+# IP address of the main DevStack host.
+#
+
+[[local|localrc]]
+
+DATABASE_PASSWORD=password
+RABBIT_PASSWORD=password
+SERVICE_PASSWORD=password
+SERVICE_TOKEN=password
+ADMIN_PASSWORD=password
+
+# The DevStack plugin defaults to using the ovn branch from the official ovs
+# repo.  You can optionally use a different one.  For example, you may want to
+# use the latest patches in blp's ovn branch:
+#OVN_REPO=https://github.com/blp/ovs-reviews.git
+#OVN_BRANCH=ovn
+
+enable_plugin neutron https://git.openstack.org/openstack/neutron
+
+disable_all_services
+enable_service ovn-controller-vtep
+
+# A UUID to uniquely identify this system.  If one is not specified, a random
+# one will be generated and saved in the file 'ovn-uuid' for re-use in future
+# DevStack runs.
+#OVN_UUID=
+
+# Whether or not to build custom openvswitch kernel modules from the ovs git
+# tree. This is enabled by default.  This is required unless your distro kernel
+# includes ovs+conntrack support.  This support was first released in Linux 4.3,
+# and will likely be backported by some distros.
+#OVN_BUILD_MODULES=False

@@ -1,0 +1,6 @@
+---
+ubuntu:
+  virtualbox: bento/ubuntu-18.04
+  libvirt: elastic/ubuntu-18.04-x86_64
+  parallels: bento/ubuntu-18.04
+  openstack: bionic64

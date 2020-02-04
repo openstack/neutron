@@ -1,0 +1,46 @@
+---
+provider_network: "10.10.0.0/16"
+provider_gateway: "10.10.0.1"
+provider_start_ip: "10.10.0.101"
+provider_end_ip: "10.10.255.250"
+ovn_vm_subnet: "192.168.33.0/24"
+ovndb:
+  short_name: "ovn-db"
+  host_name: "ovn-db.devstack.dev"
+  ip: "192.168.33.11"
+  prov-ip: "10.10.0.11"
+  memory: 512
+  cpus: 2
+  mtu: 1500
+ovncontroller:
+  short_name: "ovn-controller"
+  host_name: "ovn-controller.devstack.dev"
+  ip: "192.168.33.12"
+  prov-ip: "10.10.0.12"
+  memory: 3072
+  cpus: 2
+  mtu: 1500
+ovnvtep:
+  short_name: "ovn-vtep"
+  host_name: "ovn-vtep.devstack.dev"
+  ip: "192.168.33.13"
+  prov-ip: "10.10.0.13"
+  memory: 512
+  cpus: 1
+  mtu: 1500
+ovncompute1:
+  short_name: "ovn-compute1"
+  host_name: "ovn-compute1.devstack.dev"
+  ip: "192.168.33.31"
+  prov-ip: "10.10.0.31"
+  memory: 1536
+  cpus: 1
+  mtu: 1500
+ovncompute2:
+  short_name: "ovn-compute2"
+  host_name: "ovn-compute2.devstack.dev"
+  ip: "192.168.33.32"
+  prov-ip: "10.10.0.32"
+  memory: 1536
+  cpus: 1
+  mtu: 1500

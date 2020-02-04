@@ -9,7 +9,7 @@ to deploy OpenStack with Open Virtual Network (OVN) integration for
 the Networking service in production with sufficient expectations
 of scale and performance. For evaluation purposes, you can deploy this
 environment using the :doc:`Installation Guide </install/ovn/index>` or
-`Vagrant <https://github.com/openstack/neutron/tree/master/tools/ovn_vagrant>`_.
+`Vagrant <https://github.com/openstack/neutron/tree/master/vagrant/ovn>`_.
 Any scaling or performance evaluations should use bare metal instead of
 virtual machines.
 
