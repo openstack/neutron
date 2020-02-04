@@ -134,7 +134,7 @@ class QosServiceDriverManager(object):
         self._drivers.append(driver)
         self.rpc_notifications_required |= driver.requires_rpc_notifications
 
-    def validate_rule_for_port(self, rule, port):
+    def validate_rule_for_port(self, context, rule, port):
         port_binding = utils.get_port_binding_by_status_and_host(
             port.bindings, lib_constants.ACTIVE, raise_if_not_found=True,
             port_id=port['id'])
@@ -148,7 +148,8 @@ class QosServiceDriverManager(object):
                 if not self._validate_vnic_type(driver, vnic_type, port['id']):
                     continue
 
-            if driver.is_rule_supported(rule):
+            if (driver.is_rule_supported(rule) and
+                    driver.validate_rule_for_port(context, rule, port)):
                 return True
 
         return False

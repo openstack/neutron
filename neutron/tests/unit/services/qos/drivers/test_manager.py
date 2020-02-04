@@ -111,7 +111,8 @@ class TestQoSDriversRulesValidations(TestQosDriversManagerBase):
         driver_manager._drivers[0].is_rule_supported = is_rule_supported_mock
 
         self.assertEqual(expected_result,
-                         driver_manager.validate_rule_for_port(rule, port))
+                         driver_manager.validate_rule_for_port(
+                             mock.Mock(), rule, port))
         if expected_result:
             is_rule_supported_mock.assert_called_once_with(rule)
         else:
