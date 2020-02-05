@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Add sort-keys validation logic to method ``get_sorts`` in
+    ``neutron.api.api_common``. See the link below for more:
+    https://bugs.launchpad.net/neutron/+bug/1659175
