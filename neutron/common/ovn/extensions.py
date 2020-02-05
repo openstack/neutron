@@ -21,6 +21,7 @@ ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     'router',
     'extraroute',
     'ext-gw-mode',
+    'fip-port-details',
     'pagination',
     'sorting',
     'project-id',

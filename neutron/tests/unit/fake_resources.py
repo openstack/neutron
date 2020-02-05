@@ -618,6 +618,7 @@ class FakeFloatingIp(object):
             'id': 'fip-id-' + fake_uuid,
             'tenant_id': '',
             'fixed_ip_address': '10.0.0.10',
+            'fixed_port': FakePort.create_one_port(),
             'floating_ip_address': '172.21.0.100',
             'router_id': 'router-id',
             'port_id': 'port_id',
