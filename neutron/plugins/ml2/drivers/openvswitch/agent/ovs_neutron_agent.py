@@ -164,16 +164,20 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.available_local_vlans = set(six.moves.range(
             n_const.MIN_VLAN_TAG, n_const.MAX_VLAN_TAG + 1))
         self.tunnel_types = agent_conf.tunnel_types or []
+        self.enable_tunneling = bool(self.tunnel_types)
         self.l2_pop = agent_conf.l2_population
         # TODO(ethuleau): Change ARP responder so it's not dependent on the
         #                 ML2 l2 population mechanism driver.
         self.enable_distributed_routing = agent_conf.enable_distributed_routing
         self.arp_responder_enabled = agent_conf.arp_responder and self.l2_pop
+        if (self.enable_distributed_routing and self.enable_tunneling and
+                not self.arp_responder_enabled):
+            LOG.warning("ARP responder was not enabled but is required since "
+                        "DVR and tunneling are enabled, setting to True.")
+            self.arp_responder_enabled = True
 
         host = self.conf.host
         self.agent_id = 'ovs-agent-%s' % host
-
-        self.enable_tunneling = bool(self.tunnel_types)
 
         # Validate agent configurations
         self._check_agent_configurations()
@@ -258,8 +262,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.patch_tun_ofport,
             host,
             self.enable_tunneling,
-            self.enable_distributed_routing,
-            self.arp_responder_enabled)
+            self.enable_distributed_routing)
 
         if self.enable_distributed_routing:
             self.dvr_agent.setup_dvr_flows()
