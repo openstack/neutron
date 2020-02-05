@@ -132,13 +132,13 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         # database
         if ovn_rev < 0:
             self.fake_ovn_client.create_network.assert_called_once_with(
-                self.net)
+                self.ctx, self.net)
         # If the revision number is > 0 it means that the object already
         # exist and we just need to update to match the latest in the
         # neutron database so, update_network() should be called.
         else:
             self.fake_ovn_client.update_network.assert_called_once_with(
-                self.net)
+                self.ctx, self.net)
 
     def test_fix_network_create(self):
         self._test_fix_create_update_network(ovn_rev=-1, neutron_rev=2)
@@ -174,13 +174,13 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         # database
         if ovn_rev < 0:
             self.fake_ovn_client.create_port.assert_called_once_with(
-                self.port)
+                self.ctx, self.port)
         # If the revision number is > 0 it means that the object already
         # exist and we just need to update to match the latest in the
         # neutron database so, update_port() should be called.
         else:
             self.fake_ovn_client.update_port.assert_called_once_with(
-                self.port)
+                self.ctx, self.port)
 
     def test_fix_port_create(self):
         self._test_fix_create_update_port(ovn_rev=-1, neutron_rev=2)
@@ -211,7 +211,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
 
         if revision_number < 0:
             self.fake_ovn_client.create_security_group.assert_called_once_with(
-                sg)
+                self.ctx, sg)
         else:
             # If the object already exist let's make sure we just bump
             # the revision number in the ovn_revision_numbers table
@@ -228,10 +228,10 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
     def test__create_lrouter_port(self):
         port = {'id': 'port-id',
                 'device_id': 'router-id'}
-        self.periodic._create_lrouter_port(port)
+        self.periodic._create_lrouter_port(self.ctx, port)
         l3_mock = self.periodic._ovn_client._l3_plugin
         l3_mock.add_router_interface.assert_called_once_with(
-            mock.ANY, port['device_id'], {'port_id': port['id']},
+            self.ctx, port['device_id'], {'port_id': port['id']},
             may_exist=True)
 
     @mock.patch.object(maintenance.LOG, 'debug')

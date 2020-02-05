@@ -265,7 +265,8 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def _create_security_group(self, resource, event, trigger,
                                security_group, **kwargs):
-        self._ovn_client.create_security_group(security_group)
+        self._ovn_client.create_security_group(kwargs['context'],
+                                               security_group)
 
     def _delete_security_group(self, resource, event, trigger,
                                security_group_id, **kwargs):
@@ -290,7 +291,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             self, resource, event, trigger, **kwargs):
         if event == events.AFTER_CREATE:
             self._ovn_client.create_security_group_rule(
-                kwargs.get('security_group_rule'))
+                kwargs['context'], kwargs.get('security_group_rule'))
         elif event == events.BEFORE_DELETE:
             sg_rule = self._plugin.get_security_group_rule(
                 kwargs['context'], kwargs.get('security_group_rule_id'))
@@ -348,7 +349,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         cause the deletion of the resource.
         """
         network = context.current
-        self._ovn_client.create_network(network)
+        self._ovn_client.create_network(context._plugin_context, network)
 
     def update_network_precommit(self, context):
         """Update resources of a network.
@@ -388,7 +389,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         # https://bugs.launchpad.net/neutron/+bug/1739798 is fixed.
         if context._plugin_context.session.is_active:
             return
-        self._ovn_client.update_network(context.current)
+        self._ovn_client.update_network(context._plugin_context,
+                                        context.current)
 
     def delete_network_postcommit(self, context):
         """Delete a network.
@@ -412,15 +414,17 @@ class OVNMechanismDriver(api.MechanismDriver):
             ovn_const.TYPE_SUBNETS)
 
     def create_subnet_postcommit(self, context):
-        self._ovn_client.create_subnet(context.current,
+        self._ovn_client.create_subnet(context._plugin_context,
+                                       context.current,
                                        context.network.current)
 
     def update_subnet_postcommit(self, context):
         self._ovn_client.update_subnet(
-            context.current, context.network.current)
+            context._plugin_context, context.current, context.network.current)
 
     def delete_subnet_postcommit(self, context):
-        self._ovn_client.delete_subnet(context.current['id'])
+        self._ovn_client.delete_subnet(context._plugin_context,
+                                       context.current['id'])
 
     def create_port_precommit(self, context):
         """Allocate resources for a new port.
@@ -492,10 +496,11 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def _notify_dhcp_updated(self, port_id):
         """Notifies Neutron that the DHCP has been update for port."""
+        admin_context = n_context.get_admin_context()
         if provisioning_blocks.is_object_blocked(
-                n_context.get_admin_context(), port_id, resources.PORT):
+                admin_context, port_id, resources.PORT):
             provisioning_blocks.provisioning_complete(
-                n_context.get_admin_context(), port_id, resources.PORT,
+                admin_context, port_id, resources.PORT,
                 provisioning_blocks.DHCP_ENTITY)
 
     def _validate_ignored_port(self, port, original_port):
@@ -527,7 +532,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         """
         port = copy.deepcopy(context.current)
         port['network'] = context.network.current
-        self._ovn_client.create_port(port)
+        self._ovn_client.create_port(context._plugin_context, port)
         self._notify_dhcp_updated(port['id'])
 
     def update_port_precommit(self, context):
@@ -590,11 +595,11 @@ class OVNMechanismDriver(api.MechanismDriver):
         if ((port['status'] == const.PORT_STATUS_DOWN and
              ovn_const.MIGRATING_ATTR in port[portbindings.PROFILE].keys() and
              port[portbindings.VIF_TYPE] == portbindings.VIF_TYPE_OVS)):
-            admin_context = n_context.get_admin_context()
             LOG.info("Setting port %s status from DOWN to UP in order "
                      "to emit vif-interface-plugged event.",
                      port['id'])
-            self._plugin.update_port_status(admin_context, port['id'],
+            self._plugin.update_port_status(context._plugin_context,
+                                            port['id'],
                                             const.PORT_STATUS_ACTIVE)
             # The revision has been changed. In the meantime
             # port-update event already updated the OVN configuration,
@@ -602,7 +607,8 @@ class OVNMechanismDriver(api.MechanismDriver):
             # will fail that OVN has port with bigger revision.
             return
 
-        self._ovn_client.update_port(port, port_object=original_port)
+        self._ovn_client.update_port(context._plugin_context, port,
+                                     port_object=original_port)
         self._notify_dhcp_updated(port['id'])
 
     def delete_port_postcommit(self, context):
@@ -811,13 +817,13 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._update_dnat_entry_if_needed(port_id)
         self._wait_for_metadata_provisioned_if_needed(port_id)
 
+        admin_context = n_context.get_admin_context()
         provisioning_blocks.provisioning_complete(
-            n_context.get_admin_context(),
+            admin_context,
             port_id,
             resources.PORT,
             provisioning_blocks.L2_AGENT_ENTITY)
 
-        admin_context = n_context.get_admin_context()
         try:
             # NOTE(lucasagomes): Router ports in OVN is never bound
             # to a host given their decentralized nature. By calling

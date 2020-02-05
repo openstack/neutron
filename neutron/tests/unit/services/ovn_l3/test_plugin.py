@@ -300,7 +300,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 'router-port-id', 'lrp-router-port-id', is_gw_port=False,
                 lsp_address=ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER)
         self.bump_rev_p.assert_called_once_with(
-            self.admin_context, self.fake_router_port,
+            mock.ANY, self.fake_router_port,
             ovn_const.TYPE_ROUTER_PORTS)
 
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
@@ -526,9 +526,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 lsp_address=ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER)
         self.l3_inst._ovn.add_static_route.assert_has_calls(expected_calls)
 
-        bump_rev_calls = [mock.call(self.admin_context, self.fake_ext_gw_port,
+        bump_rev_calls = [mock.call(mock.ANY, self.fake_ext_gw_port,
                                     ovn_const.TYPE_ROUTER_PORTS),
-                          mock.call(self.admin_context,
+                          mock.call(mock.ANY,
                                     self.fake_router_with_ext_gw,
                                     ovn_const.TYPE_ROUTERS),
                           ]
@@ -577,7 +577,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'neutron-router-id', logical_ip='10.0.0.0/24',
             external_ip='192.168.1.1', type='snat')
         self.bump_rev_p.assert_called_with(
-            self.admin_context, self.fake_router_port,
+            mock.ANY, self.fake_router_port,
             ovn_const.TYPE_ROUTER_PORTS)
 
     @mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_port')
@@ -648,7 +648,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             external_ip='192.168.1.1', type='snat')
 
         self.bump_rev_p.assert_called_with(
-            self.admin_context, self.fake_router_port,
+            mock.ANY, self.fake_router_port,
             ovn_const.TYPE_ROUTER_PORTS)
 
     @mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_port')
@@ -705,7 +705,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'neutron-router-id', type='snat',
             logical_ip='10.0.0.0/24', external_ip='192.168.1.1')
         self.bump_rev_p.assert_called_with(
-            self.admin_context, self.fake_ext_gw_port,
+            mock.ANY, self.fake_ext_gw_port,
             ovn_const.TYPE_ROUTER_PORTS)
 
     @mock.patch.object(utils, 'get_lrouter_ext_gw_static_route')
@@ -763,10 +763,10 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             external_ip='192.168.1.1')
 
         self.bump_rev_p.assert_called_with(
-            self.admin_context, self.fake_ext_gw_port,
+            mock.ANY, self.fake_ext_gw_port,
             ovn_const.TYPE_ROUTER_PORTS)
         self.del_rev_p.assert_called_once_with(
-            self.admin_context, 'old-gw-port-id', ovn_const.TYPE_ROUTER_PORTS)
+            mock.ANY, 'old-gw-port-id', ovn_const.TYPE_ROUTER_PORTS)
 
     @mock.patch.object(utils, 'get_lrouter_ext_gw_static_route')
     @mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_port')
@@ -1387,16 +1387,20 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient.update_router_port')
     def test_port_update_postcommit(self, update_rp_mock):
-        kwargs = {'port': {'device_owner': 'foo'}}
+        kwargs = {'port': {'device_owner': 'foo'},
+                  'context': 'fake_context'}
         self.l3_inst._port_update(resources.PORT, events.AFTER_UPDATE, None,
                                   **kwargs)
         update_rp_mock.assert_not_called()
 
-        kwargs = {'port': {'device_owner': constants.DEVICE_OWNER_ROUTER_INTF}}
+        kwargs = {'port': {'device_owner': constants.DEVICE_OWNER_ROUTER_INTF},
+                  'context': 'fake_context'}
         self.l3_inst._port_update(resources.PORT, events.AFTER_UPDATE, None,
                                   **kwargs)
 
-        update_rp_mock.assert_called_once_with(kwargs['port'], if_exists=True)
+        update_rp_mock.assert_called_once_with(kwargs['context'],
+                                               kwargs['port'],
+                                               if_exists=True)
 
     @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.update_port_status')
     @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.update_port')
@@ -1535,7 +1539,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             external_ip='192.168.1.1', type='snat')
 
         self.bump_rev_p.assert_called_with(
-            self.admin_context, self.fake_router_port,
+            mock.ANY, self.fake_router_port,
             ovn_const.TYPE_ROUTER_PORTS)
 
 
