@@ -1,3 +1,5 @@
+.. _neutron_stadium:
+
 ..
       Copyright 2014 Hewlett-Packard Development Company, L.P.
 
