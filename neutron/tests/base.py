@@ -65,6 +65,8 @@ ETCDIR = os.path.join(ROOTDIR, 'etc')
 
 SUDO_CMD = 'sudo -n'
 
+TESTCASE_RETRIES = 3
+
 
 def etcdir(*p):
     return os.path.join(ETCDIR, *p)
@@ -172,10 +174,24 @@ class AttributeDict(dict):
 def _catch_timeout(f):
     @functools.wraps(f)
     def func(self, *args, **kwargs):
-        try:
-            return f(self, *args, **kwargs)
-        except eventlet.Timeout as e:
-            self.fail('Execution of this test timed out: %s' % e)
+        for idx in range(1, TESTCASE_RETRIES + 1):
+            try:
+                return f(self, *args, **kwargs)
+            except eventlet.Timeout as e:
+                self.fail('Execution of this test timed out: %s' % e)
+            # NOTE(ralonsoh): exception catch added due to the constant
+            # occurrences of this exception during FT and UT execution.
+            # This is due to [1]. Once the sync decorators are removed or the
+            # privsep ones are decorated by those ones (swap decorator
+            # declarations) this catch can be remove.
+            # [1] https://review.opendev.org/#/c/631275/
+            except fixtures.TimeoutException:
+                with excutils.save_and_reraise_exception() as ctxt:
+                    if idx < TESTCASE_RETRIES:
+                        msg = ('"fixtures.TimeoutException" during test case '
+                               'execution no %s; test case re-executed' % idx)
+                        self.addDetail('DietTestCase', msg)
+                        ctxt.reraise = False
     return func
 
 
