@@ -319,7 +319,7 @@ class TestFailingAsyncProcess(base.BaseTestCase):
     def setUp(self):
         super(TestFailingAsyncProcess, self).setUp()
         path = self.get_temp_file_path('async.tmp', self.get_new_temp_dir())
-        self.process = async_process.AsyncProcess(['python',
+        self.process = async_process.AsyncProcess(['python3',
                                                    failing_process.__file__,
                                                    path],
                                                   respawn_interval=0)
