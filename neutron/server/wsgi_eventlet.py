@@ -27,7 +27,7 @@ def eventlet_wsgi_server():
 
 def start_api_and_rpc_workers(neutron_api):
     try:
-        worker_launcher = service.start_all_workers()
+        worker_launcher = service.start_all_workers(neutron_api)
 
         pool = eventlet.GreenPool()
         api_thread = pool.spawn(neutron_api.wait)
