@@ -215,15 +215,20 @@ class TestPlacementBandwidthReport(base.BaseFullStackTestCase):
         return not self._check_agent_synced()
 
     def _check_agent_synced(self):
-        agents = self.client.list_agents()
-        if (len(agents['agents']) == 1 and
-                agents['agents'][0]['resources_synced']):
-            return True
+        agents = self.client.list_agents(agent_type=self.l2_agent_type)
+        for agent in agents['agents']:
+            if (agent['id'] == self.original_agent_id and
+                    agent['resources_synced']):
+                return True
         return False
 
     def test_configurations_are_synced_towards_placement(self):
         neutron_config = self.environment.hosts[0].l2_agent.neutron_config
         report_interval = int(neutron_config['agent']['report_interval'])
+
+        agents = self.client.list_agents(agent_type=self.l2_agent_type)
+        self.assertEqual(1, len(agents['agents']))
+        self.original_agent_id = agents['agents'][0]['id']
 
         check_agent_synced = functools.partial(self._check_agent_synced)
         utils.wait_until_true(
