@@ -34,8 +34,11 @@ SUPPORTED_RULES = {
         qos_consts.MAX_BURST: {
             'type:range': [0, db_consts.DB_INTEGER_MAX_VALUE]},
         qos_consts.DIRECTION: {
-            'type:values': [constants.EGRESS_DIRECTION]}
+            'type:values': constants.VALID_DIRECTIONS},
     },
+    qos_consts.RULE_TYPE_DSCP_MARKING: {
+        qos_consts.DSCP_MARK: {'type:values': constants.VALID_DSCP_MARKS},
+    }
 }
 
 VIF_TYPES = [portbindings.VIF_TYPE_OVS, portbindings.VIF_TYPE_VHOST_USER]
@@ -101,9 +104,14 @@ class OVNQosDriver(object):
         for rule in all_rules:
             if isinstance(rule, qos_rule.QosBandwidthLimitRule):
                 if rule.max_kbps:
-                    options['qos_max_rate'] = str(rule.max_kbps * 1000)
+                    options['qos_max_rate'] = str(rule.max_kbps)
                 if rule.max_burst_kbps:
-                    options['qos_burst'] = str(rule.max_burst_kbps * 1000)
+                    options['qos_burst'] = str(rule.max_burst_kbps)
+                if rule.direction:
+                    options['direction'] = rule.direction
+            if isinstance(rule, qos_rule.QosDscpMarkingRule):
+                options['dscp_mark'] = rule.dscp_mark
+                options['direction'] = constants.EGRESS_DIRECTION
         return options
 
     def get_qos_options(self, port):
