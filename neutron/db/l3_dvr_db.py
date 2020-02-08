@@ -26,6 +26,7 @@ from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.exceptions import l3 as l3_exc
+from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as plugin_utils
@@ -1013,16 +1014,41 @@ class _DVRAgentInterfaceMixin(object):
                         {'ag': const.AGENT_TYPE_L3,
                          'host': host})
             return
+        if not l3_agent_db:
+            return
+
         l3_agent_mode = self._get_agent_mode(l3_agent_db)
         if l3_agent_mode == const.L3_AGENT_MODE_DVR_NO_EXTERNAL:
             return
-        if l3_agent_db:
-            LOG.debug("Agent ID exists: %s", l3_agent_db['id'])
-            agent_port = self._get_agent_gw_ports_exist_for_network(
-                context, network_id, host, l3_agent_db['id'])
-            if not agent_port:
-                LOG.info("Floating IP Agent Gateway port does not exist, "
-                         "creating one")
+
+        LOG.debug("Agent ID exists: %s", l3_agent_db['id'])
+        agent_port = self._get_agent_gw_ports_exist_for_network(
+            context, network_id, host, l3_agent_db['id'])
+        if not agent_port:
+            LOG.info("Floating IP Agent Gateway port for network %(network)s "
+                     "does not exist on host %(host)s. Creating one.",
+                     {'network': network_id,
+                      'host': host})
+            fip_agent_port_obj = l3_obj.DvrFipGatewayPortAgentBinding(
+                context,
+                network_id=network_id,
+                agent_id=l3_agent_db['id']
+            )
+            try:
+                fip_agent_port_obj.create()
+            except o_exc.NeutronDbObjectDuplicateEntry:
+                LOG.debug("Floating IP Agent Gateway port for network "
+                          "%(network)s already exists on host %(host)s. "
+                          "Probably it was just created by other worker.",
+                          {'network': network_id,
+                           'host': host})
+                agent_port = self._get_agent_gw_ports_exist_for_network(
+                    context, network_id, host, l3_agent_db['id'])
+                LOG.debug("Floating IP Agent Gateway port %(gw)s found "
+                          "for the destination host: %(dest_host)s",
+                          {'gw': agent_port,
+                           'dest_host': host})
+            else:
                 port_data = {'tenant_id': '',
                              'network_id': network_id,
                              'device_id': l3_agent_db['id'],
@@ -1033,6 +1059,7 @@ class _DVRAgentInterfaceMixin(object):
                 agent_port = plugin_utils.create_port(
                     self._core_plugin, context, {'port': port_data})
                 if not agent_port:
+                    fip_agent_port_obj.delete()
                     msg = _("Unable to create Floating IP Agent Gateway port")
                     raise n_exc.BadRequest(resource='router', msg=msg)
                 LOG.debug("Floating IP Agent Gateway port %(gw)s created "
@@ -1040,8 +1067,8 @@ class _DVRAgentInterfaceMixin(object):
                           {'gw': agent_port,
                            'dest_host': host})
 
-            self._populate_mtu_and_subnets_for_ports(context, [agent_port])
-            return agent_port
+        self._populate_mtu_and_subnets_for_ports(context, [agent_port])
+        return agent_port
 
     def _get_subnet_id_for_given_fixed_ip(self, context, fixed_ip, port_dict):
         """Returns the subnet_id that matches the fixedip on a network."""

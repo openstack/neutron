@@ -22,6 +22,7 @@ from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib import exceptions
 from neutron_lib.exceptions import l3 as l3_exc
+from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as plugin_utils
@@ -625,6 +626,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self.assertTrue(create_fip.called)
 
     def test_create_fip_agent_gw_port_if_not_exists_with_l3_agent(self):
+        network_id = _uuid()
         fport_db = {'id': _uuid()}
         self.mixin._get_agent_gw_ports_exist_for_network = mock.Mock(
             return_value=fport_db)
@@ -641,7 +643,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             return_value=fipagent)
         fport = self.mixin.create_fip_agent_gw_port_if_not_exists(
                                                 self.ctx,
-                                                'network_id',
+                                                network_id,
                                                 'host')
         self.assertIsNone(fport)
 
@@ -655,10 +657,84 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 configurations={"agent_mode": "dvr"})
         self.mixin._get_agent_by_type_and_host = mock.Mock(
             return_value=fipagent)
-        fport = self.mixin.create_fip_agent_gw_port_if_not_exists(
-                                                self.ctx,
-                                                'network_id',
-                                                'host')
+        with mock.patch.object(
+            router_obj, "DvrFipGatewayPortAgentBinding",
+        ) as dvr_fip_agent_port_obj:
+            dvr_fip_agent_port_obj_instance = (
+                dvr_fip_agent_port_obj.return_value)
+            fport = self.mixin.create_fip_agent_gw_port_if_not_exists(
+                                                    self.ctx,
+                                                    network_id,
+                                                    'host')
+
+        dvr_fip_agent_port_obj_instance.create.assert_not_called()
+        self.assertIsNotNone(fport)
+        dvr_fip_agent_port_obj_instance.delete.assert_not_called()
+
+    def test_create_fip_agent_gw_port_agent_port_not_created(self):
+        network_id = _uuid()
+        self.mixin._get_agent_gw_ports_exist_for_network = mock.Mock(
+            return_value=None)
+        fipagent = agent_obj.Agent(
+                self.ctx,
+                id=_uuid(),
+                binary='foo-agent',
+                host='host',
+                agent_type='L3 agent',
+                topic='foo_topic',
+                configurations={"agent_mode": "dvr"})
+        self.mixin._get_agent_by_type_and_host = mock.Mock(
+            return_value=fipagent)
+
+        with mock.patch.object(
+            router_obj, "DvrFipGatewayPortAgentBinding",
+        ) as dvr_fip_agent_port_obj,\
+            mock.patch.object(
+                plugin_utils, "create_port", return_value=None):
+
+            dvr_fip_agent_port_obj_instance = (
+                dvr_fip_agent_port_obj.return_value)
+
+            self.assertRaises(
+                exceptions.BadRequest,
+                self.mixin.create_fip_agent_gw_port_if_not_exists,
+                self.ctx, network_id, 'host')
+
+        dvr_fip_agent_port_obj_instance.create.assert_called_once_with()
+        self.mixin._get_agent_gw_ports_exist_for_network.\
+            assert_called_once_with(
+                self.ctx, network_id, 'host', fipagent['id'])
+        dvr_fip_agent_port_obj_instance.delete.assert_called_once_with()
+
+    def test_create_fip_agent_gw_port_if_not_exists_duplicate_port(self):
+        network_id = _uuid()
+        fport_db = {'id': _uuid()}
+        self.mixin._get_agent_gw_ports_exist_for_network = mock.Mock(
+            side_effect=[None, fport_db])
+        fipagent = agent_obj.Agent(
+                self.ctx,
+                id=_uuid(),
+                binary='foo-agent',
+                host='host',
+                agent_type='L3 agent',
+                topic='foo_topic',
+                configurations={"agent_mode": "dvr"})
+        self.mixin._get_agent_by_type_and_host = mock.Mock(
+            return_value=fipagent)
+
+        with mock.patch.object(
+            router_obj.DvrFipGatewayPortAgentBinding, 'create',
+            side_effect=o_exc.NeutronDbObjectDuplicateEntry(
+                mock.Mock(), mock.Mock())
+        ) as dvr_fip_gateway_port_agent_binding_create:
+            fport = self.mixin.create_fip_agent_gw_port_if_not_exists(
+                                                    self.ctx,
+                                                    network_id,
+                                                    'host')
+        dvr_fip_gateway_port_agent_binding_create.assert_called_once_with()
+        self.mixin._get_agent_gw_ports_exist_for_network.assert_has_calls([
+            mock.call(self.ctx, network_id, 'host', fipagent['id']),
+            mock.call(self.ctx, network_id, 'host', fipagent['id'])])
         self.assertIsNotNone(fport)
 
     def test_create_floatingip_agent_gw_port_with_non_dvr_router(self):

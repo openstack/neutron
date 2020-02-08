@@ -24,3 +24,20 @@ class DistributedVirtualRouterMacAddress(model_base.BASEV2):
 
     host = sa.Column(sa.String(255), primary_key=True, nullable=False)
     mac_address = sa.Column(sa.String(32), nullable=False, unique=True)
+
+
+class DvrFipGatewayPortAgentBinding(model_base.BASEV2):
+    """Represents a binding of agent's FIP gateway port and L3 agent.
+
+    Each L3 DVR agent can only have one FIP gateway port per network.
+    This table represents this constraint.
+    """
+
+    __tablename__ = 'dvr_fip_gateway_port_network'
+
+    network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id",
+                                                        ondelete="CASCADE"),
+                           primary_key=True)
+    agent_id = sa.Column(sa.String(36), sa.ForeignKey("agents.id",
+                                                      ondelete="CASCADE"),
+                         primary_key=True)
