@@ -42,6 +42,7 @@ from oslotest import base
 import six
 from sqlalchemy import exc as sqlalchemy_exc
 import testtools
+from testtools import content
 
 from neutron._i18n import _
 from neutron.agent.linux import external_process
@@ -186,12 +187,14 @@ def _catch_timeout(f):
             # declarations) this catch can be remove.
             # [1] https://review.opendev.org/#/c/631275/
             except fixtures.TimeoutException:
-                with excutils.save_and_reraise_exception() as ctxt:
-                    if idx < TESTCASE_RETRIES:
-                        msg = ('"fixtures.TimeoutException" during test case '
-                               'execution no %s; test case re-executed' % idx)
-                        self.addDetail('DietTestCase', msg)
-                        ctxt.reraise = False
+                if idx < TESTCASE_RETRIES:
+                    msg = ('"fixtures.TimeoutException" during test case '
+                           'execution no %s; test case re-executed' % idx)
+                    self.addDetail('DietTestCase',
+                                   content.text_content(msg))
+                    self._set_timeout()
+                else:
+                    self.fail('Execution of this test timed out')
     return func
 
 
