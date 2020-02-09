@@ -273,6 +273,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             'host': host,
             'topic': n_const.L2_AGENT_TOPIC,
             'configurations': {'bridge_mappings': self.bridge_mappings,
+                               'integration_bridge':
+                               ovs_conf.integration_bridge,
                                'tunnel_types': self.tunnel_types,
                                'tunneling_ip': self.local_ip,
                                'l2_population': self.l2_pop,
