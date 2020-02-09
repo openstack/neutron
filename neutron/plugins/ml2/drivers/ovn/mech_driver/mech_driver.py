@@ -14,6 +14,7 @@
 
 import atexit
 import copy
+import datetime
 import functools
 import operator
 import signal
@@ -1065,6 +1066,14 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def ping_chassis(self):
         """Update NB_Global.nb_cfg so that Chassis.nb_cfg will increment"""
+        last_ping = self._nb_ovn.nb_global.external_ids.get(
+            ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY)
+        if last_ping:
+            interval = max(cfg.CONF.agent_down_time // 2, 1)
+            next_ping = (timeutils.parse_isotime(last_ping) +
+                         datetime.timedelta(seconds=interval))
+            if timeutils.utcnow(with_timezone=True) < next_ping:
+                return
 
         with self._nb_ovn.create_transaction(check_error=True,
                                              bump_nb_cfg=True) as txn:

@@ -1638,6 +1638,38 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         expected_opts = {}
         self._test_update_network_fragmentation(new_mtu, expected_opts)
 
+    def test_ping_chassis(self):
+        self.nb_ovn.nb_global.external_ids = {}
+        self.mech_driver.ping_chassis()
+        self.nb_ovn.check_liveness.assert_called_once_with()
+
+    def test_ping_chassis_interval_expired(self):
+        timeout = 10
+        ovn_conf.cfg.CONF.set_override('agent_down_time', timeout)
+
+        # Pretend the interval is already expired
+        time = (timeutils.utcnow(with_timezone=True) -
+                datetime.timedelta(seconds=timeout))
+        self.nb_ovn.nb_global.external_ids = {
+            ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY: str(time)}
+
+        # Since the interval has expired, assert that the "check_liveness"
+        # command has been invoked
+        self.mech_driver.ping_chassis()
+        self.nb_ovn.check_liveness.assert_called_once_with()
+
+    def test_ping_chassis_interval_not_expired(self):
+        ovn_conf.cfg.CONF.set_override('agent_down_time', 10)
+
+        # Pretend the interval has NOT yet expired
+        time = timeutils.utcnow(with_timezone=True)
+        self.nb_ovn.nb_global.external_ids = {
+            ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY: str(time)}
+
+        # Assert that "check_liveness" wasn't invoked
+        self.mech_driver.ping_chassis()
+        self.assertFalse(self.nb_ovn.check_liveness.called)
+
 
 class OVNMechanismDriverTestCase(test_plugin.Ml2PluginV2TestCase):
     _mechanism_drivers = ['logger', 'ovn']
