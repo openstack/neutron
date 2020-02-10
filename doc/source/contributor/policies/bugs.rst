@@ -438,6 +438,9 @@ more will be added over time if needed.
 | ovn_                          | A bug affecting ML2/OVN                 | Jakub Libosvar/          |
 |                               |                                         | Lucas Alvares Gomes      |
 +-------------------------------+-----------------------------------------+--------------------------+
+| ovn-octavia-provider_         | A bug affecting OVN Octavia provider    | Maciej Jozefczyk/        |
+|                               | driver                                  | Brian Haley              |
++-------------------------------+-----------------------------------------+--------------------------+
 | ovs_                          | A bug affecting ML2/OVS                 | Miguel Lavalle           |
 +-------------------------------+-----------------------------------------+--------------------------+
 | ovs-fw_                       | A bug affecting OVS firewall            | Miguel Lavalle           |
@@ -710,6 +713,14 @@ OVN
 
 * `OVN - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=ovn>`_
 * `OVN - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=ovn>`_
+
+.. _ovn-octavia-provider:
+
+OVN Octavia Provider driver
++++++++++++++++++++++++++++
+
+* `OVN Octavia Provider driver - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=ovn-octavia-provider>`_
+* `OVN Octavia Provider driver - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=ovn-octavia-provider>`_
 
 .. _ovs:
 
