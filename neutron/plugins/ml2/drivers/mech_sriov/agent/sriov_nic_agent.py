@@ -561,6 +561,9 @@ def main():
         raise SystemExit(1)
     LOG.info("Physical Devices mappings: %s", device_mappings)
     LOG.info("Exclude Devices: %s", exclude_devices)
+    LOG.info("Resource provider bandwidths: %s", rp_bandwidths)
+    LOG.info("Resource provider inventory defaults: %s", rp_inventory_defaults)
+    LOG.info("Resource provider hypervisors: %s", rp_hypervisors)
 
     polling_interval = cfg.CONF.AGENT.polling_interval
     try:
