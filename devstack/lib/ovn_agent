@@ -777,3 +777,7 @@ function cleanup_ovn {
 
     sudo rm -f $OVN_RUNDIR
 }
+
+function neutron_plugin_create_nova_conf {
+    :
+}
