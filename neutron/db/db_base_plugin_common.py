@@ -207,12 +207,13 @@ class DbBasePluginCommon(object):
                'max_prefixlen': max_prefixlen,
                'is_default': subnetpool['is_default'],
                'shared': subnetpool['shared'],
-               'prefixes': [prefix.cidr for prefix in subnetpool['prefixes']],
+               'prefixes': [str(prefix.cidr)
+                            for prefix in subnetpool['prefixes']],
                'ip_version': subnetpool['ip_version'],
                'default_quota': subnetpool['default_quota'],
                'address_scope_id': subnetpool['address_scope_id']}
         resource_extend.apply_funcs(
-            subnetpool_def.COLLECTION_NAME, res, subnetpool)
+            subnetpool_def.COLLECTION_NAME, res, subnetpool.db_obj)
         return db_utils.resource_fields(res, fields)
 
     def _make_port_dict(self, port, fields=None,

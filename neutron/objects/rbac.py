@@ -20,7 +20,6 @@ from oslo_versionedobjects import fields as obj_fields
 from six import add_metaclass
 from sqlalchemy import and_
 
-from neutron.db import rbac_db_models as models
 from neutron.objects import base
 
 
@@ -45,13 +44,12 @@ class RBACBaseObject(base.NeutronDbObject):
                      target_tenant=None):
         clauses = []
         if object_id:
-            clauses.append(models.NetworkRBAC.object_id == object_id)
+            clauses.append(cls.db_model.object_id == object_id)
         if action:
-            clauses.append(models.NetworkRBAC.action == action)
+            clauses.append(cls.db_model.action == action)
         if target_tenant:
-            clauses.append(models.NetworkRBAC.target_tenant ==
-                           target_tenant)
-        query = context.session.query(models.NetworkRBAC.target_tenant)
+            clauses.append(cls.db_model.target_tenant == target_tenant)
+        query = context.session.query(cls.db_model.target_tenant)
         if clauses:
             query = query.filter(and_(*clauses))
         return [data[0] for data in query]

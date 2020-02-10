@@ -90,7 +90,7 @@ def _check_subnet_not_used(context, subnet_id):
 
 def _update_subnetpool_dict(orig_pool, new_pool):
     updated = dict((k, v) for k, v in orig_pool.to_dict().items()
-                   if k not in orig_pool.synthetic_fields)
+                   if k not in orig_pool.synthetic_fields or k == 'shared')
 
     new_pool = new_pool.copy()
     new_prefixes = new_pool.pop('prefixes', constants.ATTR_NOT_SPECIFIED)
@@ -1249,7 +1249,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         subnetpool = subnetpool_obj.SubnetPool(context, **pool_args)
         subnetpool.create()
 
-        return self._make_subnetpool_dict(subnetpool.db_obj)
+        return self._make_subnetpool_dict(subnetpool)
 
     @db_api.retry_if_session_inactive()
     def update_subnetpool(self, context, id, subnetpool):
@@ -1292,7 +1292,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     @db_api.retry_if_session_inactive()
     def get_subnetpool(self, context, id, fields=None):
         subnetpool = self._get_subnetpool(context, id)
-        return self._make_subnetpool_dict(subnetpool.db_obj, fields)
+        return self._make_subnetpool_dict(subnetpool, fields)
 
     @db_api.retry_if_session_inactive()
     def get_subnetpools(self, context, filters=None, fields=None,
@@ -1303,7 +1303,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         subnetpools = subnetpool_obj.SubnetPool.get_objects(
             context, _pager=pager, validate_filters=False, **filters)
         return [
-            self._make_subnetpool_dict(pool.db_obj, fields)
+            self._make_subnetpool_dict(pool, fields)
             for pool in subnetpools
         ]
 

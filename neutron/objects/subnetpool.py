@@ -14,17 +14,38 @@
 #    under the License.
 
 import netaddr
+from neutron_lib.db import model_query
 from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
+import sqlalchemy as sa
 
+from neutron._i18n import _
 from neutron.db import models_v2 as models
+from neutron.db import rbac_db_models
+from neutron.extensions import rbac as ext_rbac
 from neutron.objects import base
+from neutron.objects.db import api as obj_db_api
+from neutron.objects import rbac
+from neutron.objects import rbac_db
+from neutron.objects import subnet
 
 
 @base.NeutronObjectRegistry.register
-class SubnetPool(base.NeutronDbObject):
+class SubnetPoolRBAC(rbac.RBACBaseObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
+
+    db_model = rbac_db_models.SubnetPoolRBAC
+
+
+@base.NeutronObjectRegistry.register
+class SubnetPool(rbac_db.NeutronRbacObject):
+    # Version 1.0: Initial version
+    # Version 1.1: Add RBAC support
+    VERSION = '1.1'
+
+    # required by RbacNeutronMetaclass
+    rbac_db_cls = SubnetPoolRBAC
 
     db_model = models.SubnetPool
 
@@ -82,6 +103,46 @@ class SubnetPool(base.NeutronDbObject):
             super(SubnetPool, self).update()
             if 'prefixes' in fields:
                 self._attach_prefixes(fields['prefixes'])
+
+    @classmethod
+    def get_bound_tenant_ids(cls, context, obj_id):
+        sn_objs = subnet.Subnet.get_objects(context, subnetpool_id=obj_id)
+        return {snp.project_id for snp in sn_objs}
+
+    @classmethod
+    def validate_rbac_policy_create(cls, resource, event, trigger,
+                                    payload=None):
+        context = payload.context
+        policy = payload.request_body
+
+        db_obj = obj_db_api.get_object(
+            cls, context.elevated(), id=policy['object_id'])
+
+        if not db_obj["address_scope_id"]:
+            # Nothing to validate
+            return
+
+        rbac_as_model = rbac_db_models.AddressScopeRBAC
+
+        # Ensure that target project has access to AS
+        shared_to_target_project_or_to_all = (
+            sa.and_(
+                rbac_as_model.target_tenant.in_(
+                    ["*", policy['target_tenant']]
+                ),
+                rbac_as_model.object_id == db_obj["address_scope_id"]
+            )
+        )
+
+        matching_policies = model_query.query_with_hooks(
+            context, rbac_db_models.AddressScopeRBAC
+        ).filter(shared_to_target_project_or_to_all).count()
+
+        if matching_policies == 0:
+            raise ext_rbac.RbacPolicyInitError(
+                object_id=policy['object_id'],
+                reason=_("target project doesn't have access to "
+                         "associated address scope."))
 
 
 @base.NeutronObjectRegistry.register

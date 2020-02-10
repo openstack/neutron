@@ -39,6 +39,11 @@ class DuplicateRbacPolicy(n_exc.Conflict):
     message = _("An RBAC policy already exists with those values.")
 
 
+class RbacPolicyInitError(n_exc.PolicyInitError):
+    message = _("Failed to create RBAC policy on object %(object_id)s "
+                "because %(reason)s.")
+
+
 def convert_valid_object_type(otype):
     normalized = otype.strip().lower()
     if normalized in rbac_db_models.get_type_model_map():

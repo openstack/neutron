@@ -157,6 +157,13 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
                                          target_tenant=target_tenant)
 
     @classmethod
+    def validate_rbac_policy_create(cls, resource, event, trigger,
+                                    payload=None):
+        """Callback to handle RBAC_POLICY, BEFORE_CREATE callback.
+        """
+        pass
+
+    @classmethod
     def validate_rbac_policy_update(cls, resource, event, trigger,
                                     payload=None):
         """Callback to handle RBAC_POLICY, BEFORE_UPDATE callback.
@@ -201,7 +208,8 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
                 msg = _("Only admins can manipulate policies on objects "
                         "they do not own")
                 raise exceptions.InvalidInput(error_message=msg)
-        callback_map = {events.BEFORE_UPDATE: cls.validate_rbac_policy_update,
+        callback_map = {events.BEFORE_CREATE: cls.validate_rbac_policy_create,
+                        events.BEFORE_UPDATE: cls.validate_rbac_policy_update,
                         events.BEFORE_DELETE: cls.validate_rbac_policy_delete}
         if event in callback_map:
             return callback_map[event](resource, event, trigger,
