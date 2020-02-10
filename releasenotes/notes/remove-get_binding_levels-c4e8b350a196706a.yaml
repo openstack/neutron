@@ -1,0 +1,6 @@
+---
+deprecations:
+  - |
+    Function neutron.plugins.ml2.db.get_binding_levels was deprecated
+    in favor of neutron.plugins.ml2.db.get_binding_level_objs and now
+    is removed.

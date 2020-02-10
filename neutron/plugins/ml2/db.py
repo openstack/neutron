@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from debtcollector import removals
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -63,25 +62,6 @@ def set_binding_levels(context, levels):
                    'levels': levels})
     else:
         LOG.debug("Attempted to set empty binding levels")
-
-
-@removals.remove(
-    version="Stein", removal_version="T",
-    message="Function get_binding_levels is deprecated. Please use "
-            "get_binding_level_objs instead as it makes use of OVOs.")
-@db_api.CONTEXT_READER
-def get_binding_levels(context, port_id, host):
-    if host:
-        result = (context.session.query(models.PortBindingLevel).
-                  filter_by(port_id=port_id, host=host).
-                  order_by(models.PortBindingLevel.level).
-                  all())
-        LOG.debug("For port %(port_id)s, host %(host)s, "
-                  "got binding levels %(levels)s",
-                  {'port_id': port_id,
-                   'host': host,
-                   'levels': result})
-        return result
 
 
 @db_api.CONTEXT_READER
