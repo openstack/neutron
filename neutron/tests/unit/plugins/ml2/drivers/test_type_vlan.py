@@ -29,6 +29,7 @@ from neutron.tests.unit import testlib_api
 
 PROVIDER_NET = 'phys_net1'
 TENANT_NET = 'phys_net2'
+UNCONFIGURED_NET = 'no_net'
 VLAN_MIN = 200
 VLAN_MAX = 209
 NETWORK_VLAN_RANGES = [PROVIDER_NET, "%s:%s:%s" %
@@ -40,6 +41,12 @@ UPDATED_VLAN_RANGES = {
 EMPTY_VLAN_RANGES = {
     PROVIDER_NET: []
 }
+NETWORK_VLAN_RANGES_WITH_UNCONFIG = {
+    PROVIDER_NET: [],
+    TENANT_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)],
+    UNCONFIGURED_NET: [(VLAN_MIN, VLAN_MAX)]
+}
+
 CORE_PLUGIN = 'ml2'
 
 
@@ -168,8 +175,19 @@ class VlanTypeTest(testlib_api.SqlTestCase):
                 self._get_allocation(self.context, segment).allocated)
 
         check_in_ranges(self.network_vlan_ranges)
+
         self.driver.network_vlan_ranges = UPDATED_VLAN_RANGES
         self.driver._sync_vlan_allocations()
+        check_in_ranges(UPDATED_VLAN_RANGES)
+
+        self.driver.network_vlan_ranges = NETWORK_VLAN_RANGES_WITH_UNCONFIG
+        self.driver._sync_vlan_allocations()
+        self.driver.network_vlan_ranges = UPDATED_VLAN_RANGES
+        with mock.patch.object(type_vlan.LOG, 'debug') as mock_debug:
+            self.driver._sync_vlan_allocations()
+            mock_debug.assert_called_once_with(
+                'Removing any VLAN register on physical networks %s',
+                {UNCONFIGURED_NET})
         check_in_ranges(UPDATED_VLAN_RANGES)
 
         self.driver.network_vlan_ranges = EMPTY_VLAN_RANGES
