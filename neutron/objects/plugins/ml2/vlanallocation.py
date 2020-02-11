@@ -33,3 +33,24 @@ class VlanAllocation(base.NeutronDbObject):
     }
 
     primary_keys = ['physical_network', 'vlan_id']
+
+    @staticmethod
+    def get_physical_networks(context):
+        query = context.session.query(VlanAllocation.db_model.physical_network)
+        query = query.group_by(VlanAllocation.db_model.physical_network)
+        physnets = query.all()
+        return {physnet.physical_network for physnet in physnets}
+
+    @staticmethod
+    def delete_physical_networks(context, physical_networks):
+        column = VlanAllocation.db_model.physical_network
+        context.session.query(VlanAllocation.db_model).filter(
+            column.in_(physical_networks)).delete(synchronize_session=False)
+
+    @staticmethod
+    def bulk_create(ctx, physical_network, vlan_ids):
+        ctx.session.bulk_insert_mappings(
+            vlan_alloc_model.VlanAllocation,
+            [{'physical_network': physical_network,
+              'allocated': False,
+              'vlan_id': vlan_id} for vlan_id in vlan_ids])
