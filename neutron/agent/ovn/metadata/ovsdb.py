@@ -27,7 +27,7 @@ class MetadataAgentOvnSbIdl(ovsdb_monitor.OvnIdl):
 
     SCHEMA = 'OVN_Southbound'
 
-    def __init__(self, events=None):
+    def __init__(self, chassis, events=None):
         connection_string = config.get_ovn_sb_connection()
         ovsdb_monitor._check_and_set_ssl_files(self.SCHEMA)
         helper = self._get_ovsdb_helper(connection_string)
@@ -37,6 +37,7 @@ class MetadataAgentOvnSbIdl(ovsdb_monitor.OvnIdl):
             helper.register_table(table)
         super(MetadataAgentOvnSbIdl, self).__init__(
             None, connection_string, helper)
+        self.tables['Chassis'].condition = [['name', '==', chassis]]
         if events:
             self.notify_handler.watch_events(events)
 
