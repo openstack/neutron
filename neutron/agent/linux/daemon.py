@@ -170,7 +170,7 @@ class Daemon(object):
     Usage: subclass the Daemon class and override the run() method
     """
     def __init__(self, pidfile, stdin=DEVNULL, stdout=DEVNULL,
-                 stderr=DEVNULL, procname='python', uuid=None,
+                 stderr=DEVNULL, procname=sys.executable, uuid=None,
                  user=None, group=None):
         """Note: pidfile may be None."""
         self.stdin = stdin

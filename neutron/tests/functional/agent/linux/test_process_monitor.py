@@ -13,6 +13,7 @@
 #    under the License.
 
 import os
+import sys
 
 from oslo_config import cfg
 from six import moves
@@ -48,7 +49,7 @@ class BaseTestProcessMonitor(base.BaseLoggingTestCase):
 
     def _make_cmdline_callback(self, uuid):
         def _cmdline_callback(pidfile):
-            cmdline = ["python", simple_daemon.__file__,
+            cmdline = [sys.executable, simple_daemon.__file__,
                        "--uuid=%s" % uuid,
                        "--pid_file=%s" % pidfile]
             return cmdline

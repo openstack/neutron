@@ -14,6 +14,7 @@
 #    under the License.
 
 import os
+import sys
 
 import eventlet
 import mock
@@ -110,19 +111,20 @@ class NetnsCleanupTest(base.BaseSudoTestCase):
         to test the cleanup functionality which will issue a SIGKILL
         to all remaining processes after the SIGTERM attempt
         """
-        commands = [['python', process_spawn.__file__,
+        python_exec = os.path.basename(sys.executable)
+        commands = [[python_exec, process_spawn.__file__,
                      '-n', NUM_SUBPROCESSES,
                      '-f', n_const.IPv4,
                      '-p', n_const.PROTO_NAME_TCP,
                      '--noignore_sigterm',
                      '--parent_listen'],
-                    ['python', process_spawn.__file__,
+                    [python_exec, process_spawn.__file__,
                      '-n', NUM_SUBPROCESSES,
                      '-f', process_spawn.UNIX_FAMILY,
                      '-p', n_const.PROTO_NAME_TCP,
                      '--noignore_sigterm',
                      '--noparent_listen'],
-                    ['python', process_spawn.__file__,
+                    [python_exec, process_spawn.__file__,
                      '-n', NUM_SUBPROCESSES,
                      '-f', n_const.IPv4,
                      '-p', n_const.PROTO_NAME_UDP,
