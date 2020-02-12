@@ -38,8 +38,10 @@ class MetadataAgentOvnSbIdl(ovsdb_monitor.OvnIdl):
             helper.register_table(table)
         super(MetadataAgentOvnSbIdl, self).__init__(
             None, connection_string, helper)
-        if chassis and 'Chassis' in tables:
-            self.tables['Chassis'].condition = [['name', '==', chassis]]
+        if chassis:
+            table = ('Chassis_Private' if 'Chassis_Private' in tables
+                     else 'Chassis')
+            self.tables[table].condition = [['name', '==', chassis]]
         if events:
             self.notify_handler.watch_events(events)
 
