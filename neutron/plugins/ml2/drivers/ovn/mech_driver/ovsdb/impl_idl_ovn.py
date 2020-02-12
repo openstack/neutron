@@ -813,12 +813,6 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
                 if (r.mac and str(r.datapath.uuid) == network) and
                 ip_address in r.mac[0].split(' ')]
 
-    def update_metadata_health_status(self, chassis, nb_cfg):
-        return cmd.UpdateChassisExtIdsCommand(
-            self, chassis,
-            {ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY: str(nb_cfg)},
-            if_exists=True)
-
     def set_port_cidrs(self, name, cidrs):
         # TODO(twilson) add if_exists to db commands
         return self.db_set('Port_Binding', name, 'external_ids',

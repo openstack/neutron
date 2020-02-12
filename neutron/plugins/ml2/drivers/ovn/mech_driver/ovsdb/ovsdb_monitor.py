@@ -516,6 +516,8 @@ class OvnSbIdl(OvnIdlDistributedLock):
     def from_server(cls, connection_string, schema_name, driver):
         _check_and_set_ssl_files(schema_name)
         helper = idlutils.get_schema_helper(connection_string, schema_name)
+        if 'Chassis_Private' in helper.schema_json['tables']:
+            helper.register_table('Chassis_Private')
         helper.register_table('Chassis')
         helper.register_table('Encap')
         helper.register_table('Port_Binding')
