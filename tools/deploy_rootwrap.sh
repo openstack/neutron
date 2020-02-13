@@ -42,6 +42,8 @@ dst_conf_path=${target_etc_path}/neutron
 dst_conf=${dst_conf_path}/rootwrap.conf
 dst_rootwrap_path=${dst_conf_path}/rootwrap.d
 
+absolute_neutron_path=$(pwd)
+
 if [[ -d "$dst_rootwrap_path" ]]; then
     rm -rf ${dst_rootwrap_path}
 fi
@@ -49,7 +51,7 @@ mkdir -p -m 755 ${dst_rootwrap_path}
 
 cp -p ${src_rootwrap_path}/* ${dst_rootwrap_path}/
 cp -p ${src_conf} ${dst_conf}
-sed -i "s:^filters_path=.*$:filters_path=${dst_rootwrap_path}:" ${dst_conf}
+sed -i "s:^filters_path=.*$:filters_path=${absolute_neutron_path}/${dst_rootwrap_path}:" ${dst_conf}
 sed -i "s:^exec_dirs=\(.*\)$:exec_dirs=${target_bin_path},${fullstack_path},\1:" ${dst_conf}
 
 if [[ "$OS_SUDO_TESTING" = "1" ]]; then
