@@ -130,7 +130,7 @@
         etcd: false
         br-ex-tcpdump: true
         br-int-flows: true
-        neutron-ovn-metadata-agent: true
+        q-ovn-metadata-agent: true
         o-api: true
         o-hk: true
         ovn-controller: true
@@ -169,7 +169,7 @@
           q-l3: false
           q-meta: false
           q-metering: false
-          neutron-ovn-metadata-agent: true
+          q-ovn-metadata-agent: true
         devstack_localrc:
           Q_AGENT: ovn
           Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger

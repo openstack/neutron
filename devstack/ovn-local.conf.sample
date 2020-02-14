@@ -32,7 +32,7 @@ LOGFILE=$DEST/logs/stack.sh.log
 
 enable_service ovn-northd
 enable_service ovn-controller
-enable_service neutron-ovn-metadata-agent
+enable_service q-ovn-metadata-agent
 
 # Use Neutron instead of nova-network
 disable_service n-net
