@@ -1,0 +1,860 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="297mm"
+   height="210mm"
+   viewBox="0 0 1052.3622 744.09448"
+   id="svg6654"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="ovn-services.svg"
+   inkscape:export-filename="/Users/ajo/Documents/work/redhat/ovn/docs/networking-ovn/doc/source/admin/refarch/figures/ovn-services.png"
+   inkscape:export-xdpi="71.498116"
+   inkscape:export-ydpi="71.498116">
+  <defs
+     id="defs6656">
+    <linearGradient
+       id="linearGradient8990"
+       osb:paint="solid">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop8992" />
+    </linearGradient>
+    <filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Drop Shadow"
+       id="filter9167">
+      <feFlood
+         flood-opacity="0.498039"
+         flood-color="rgb(0,0,0)"
+         result="flood"
+         id="feFlood9169" />
+      <feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="in"
+         result="composite1"
+         id="feComposite9171" />
+      <feGaussianBlur
+         in="composite1"
+         stdDeviation="1.7"
+         result="blur"
+         id="feGaussianBlur9173" />
+      <feOffset
+         dx="2.7"
+         dy="3.2"
+         result="offset"
+         id="feOffset9175" />
+      <feComposite
+         in="SourceGraphic"
+         in2="offset"
+         operator="over"
+         result="composite2"
+         id="feComposite9177" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.35"
+     inkscape:cx="121.51632"
+     inkscape:cy="281.03287"
+     inkscape:document-units="px"
+     inkscape:current-layer="g6113"
+     showgrid="false"
+     inkscape:window-width="1440"
+     inkscape:window-height="802"
+     inkscape:window-x="3"
+     inkscape:window-y="10"
+     inkscape:window-maximized="0"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:snap-perpendicular="true"
+     inkscape:snap-tangential="true" />
+  <metadata
+     id="metadata6659">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-308.26772)">
+    <g
+       id="g9020"
+       transform="matrix(1,0,0,1.03616,-11.428571,294.19464)">
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         x="92.625908"
+         y="182.74992"
+         id="text9193"
+         sodipodi:linespacing="125%"
+         transform="scale(1.0179194,0.982396)"><tspan
+           sodipodi:role="line"
+           id="tspan9195"
+           x="92.625908"
+           y="182.74992" /></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         x="89.117348"
+         y="215.02866"
+         id="text9207"
+         sodipodi:linespacing="125%"
+         transform="scale(1.0179194,0.982396)"><tspan
+           sodipodi:role="line"
+           id="tspan9209"
+           x="89.117348"
+           y="215.02866" /></text>
+      <g
+         id="g6204">
+        <g
+           transform="matrix(0.85690424,0,0,0.85207019,7.9434853,12.057662)"
+           id="g9229">
+          <g
+             id="g6232">
+            <rect
+               id="rect7554"
+               width="231.82626"
+               height="505.07404"
+               x="38.981712"
+               y="83.861069"
+               style="fill:none;fill-opacity:1;stroke:#657b83;stroke-width:3.44908571;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+               ry="16.653866"
+               rx="15.363441" />
+            <g
+               id="g6113"
+               transform="translate(-15.772158,46.338267)">
+              <g
+                 id="g6160"
+                 transform="translate(7.0019493,0)">
+                <rect
+                   rx="9.0842314"
+                   ry="9.1202831"
+                   style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.24329948;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                   y="151.98941"
+                   x="66.423546"
+                   height="362.10504"
+                   width="181.43475"
+                   id="rect9045"
+                   transform="matrix(1.1020268,0,0,1.0262228,-7.1868545,-4.0997074)" />
+                <text
+                   transform="scale(1.0179194,0.98239605)"
+                   sodipodi:linespacing="125%"
+                   id="text9201"
+                   y="184.5858"
+                   x="155.16545"
+                   style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                   xml:space="preserve"><tspan
+                     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                     y="184.5858"
+                     x="155.16545"
+                     sodipodi:role="line"
+                     id="tspan6111">neutron-server</tspan></text>
+              </g>
+              <g
+                 transform="translate(7.0019493,81.551195)"
+                 id="g6166">
+                <rect
+                   transform="matrix(1.1020268,0,0,1,-7.1868545,0)"
+                   id="rect6168"
+                   width="173.42773"
+                   height="157.66496"
+                   x="66.423546"
+                   y="151.98941"
+                   style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                   ry="9.3594418"
+                   rx="9.0842314" />
+                <text
+                   xml:space="preserve"
+                   style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                   x="155.16545"
+                   y="184.5858"
+                   id="text6170"
+                   sodipodi:linespacing="125%"
+                   transform="scale(1.0179194,0.98239605)"><tspan
+                     sodipodi:role="line"
+                     x="155.16545"
+                     y="184.5858"
+                     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                     id="tspan6172">Networking</tspan><tspan
+                     id="tspan6174"
+                     sodipodi:role="line"
+                     x="155.16545"
+                     y="206.07571"
+                     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1">ML2 Plug-in</tspan></text>
+              </g>
+              <g
+                 transform="translate(8.6690801,158.57176)"
+                 id="g6176">
+                <rect
+                   transform="matrix(1.1020268,0,0,1,-0.18490522,0)"
+                   id="rect6178"
+                   width="157.23018"
+                   height="65.555252"
+                   x="67.936325"
+                   y="151.98941"
+                   style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                   ry="9.3594418"
+                   rx="9.0842314" />
+                <text
+                   xml:space="preserve"
+                   style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                   x="155.16545"
+                   y="184.5858"
+                   id="text6180"
+                   sodipodi:linespacing="125%"
+                   transform="scale(1.0179194,0.98239605)"><tspan
+                     id="tspan6184"
+                     sodipodi:role="line"
+                     x="155.16545"
+                     y="184.5858"
+                     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1">OVN Mechanism</tspan><tspan
+                     sodipodi:role="line"
+                     x="155.16545"
+                     y="206.07571"
+                     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                     id="tspan6188">Driver</tspan></text>
+              </g>
+              <g
+                 id="g6190"
+                 transform="translate(7.0019493,244.32996)">
+                <rect
+                   rx="9.0842314"
+                   ry="9.3594418"
+                   style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                   y="151.98941"
+                   x="67.936325"
+                   height="86.590279"
+                   width="157.23018"
+                   id="rect6192"
+                   transform="matrix(1.1020268,0,0,1,1.583354,18.306476)" />
+                <text
+                   transform="scale(1.0179194,0.98239605)"
+                   sodipodi:linespacing="125%"
+                   id="text6194"
+                   y="212.25668"
+                   x="157.45834"
+                   style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                   xml:space="preserve"><tspan
+                     id="tspan6198"
+                     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                     y="212.25668"
+                     x="157.45834"
+                     sodipodi:role="line">OVN Layer-3</tspan><tspan
+                     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                     y="233.7466"
+                     x="157.45834"
+                     sodipodi:role="line"
+                     id="tspan6202">Service Plug-in</tspan></text>
+              </g>
+            </g>
+            <text
+               xml:space="preserve"
+               style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:28.74238205px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+               x="155.93349"
+               y="129.21364"
+               id="text6154"
+               sodipodi:linespacing="125%"
+               transform="scale(1.0150442,0.98517878)"><tspan
+                 sodipodi:role="line"
+                 id="tspan6156"
+                 x="155.93349"
+                 y="129.21364">Controller</tspan><tspan
+                 sodipodi:role="line"
+                 x="155.93349"
+                 y="165.14162"
+                 id="tspan6158">Node</tspan></text>
+          </g>
+          <g
+             id="g6259"
+             transform="translate(266.74092,0)">
+            <g
+               id="g6343"
+               transform="translate(-23.339831,0)">
+              <rect
+                 id="rect6261"
+                 width="231.82626"
+                 height="467.86197"
+                 x="38.981712"
+                 y="83.859184"
+                 style="fill:none;fill-opacity:1;stroke:#657b83;stroke-width:3.44908571;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+                 ry="14.937626"
+                 rx="13.005761" />
+              <g
+                 id="g6263"
+                 transform="translate(-15.772158,46.338267)">
+                <g
+                   id="g6265"
+                   transform="translate(7.0019493,0)">
+                  <rect
+                     rx="9.0842314"
+                     ry="9.3594418"
+                     style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                     y="151.98941"
+                     x="66.423546"
+                     height="88.208359"
+                     width="172.35803"
+                     id="rect6267"
+                     transform="matrix(1.1020268,0,0,1,-7.1868545,0)" />
+                  <text
+                     transform="scale(1.0179194,0.98239605)"
+                     sodipodi:linespacing="125%"
+                     id="text6269"
+                     y="184.5858"
+                     x="155.16545"
+                     style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                     xml:space="preserve"><tspan
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="184.5858"
+                       x="155.16545"
+                       sodipodi:role="line"
+                       id="tspan6273">OVN Northbound</tspan><tspan
+                       id="tspan6313"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="206.07571"
+                       x="155.16545"
+                       sodipodi:role="line">Service</tspan><tspan
+                       id="tspan6315"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="227.56563"
+                       x="155.16545"
+                       sodipodi:role="line">ovn-northd</tspan></text>
+                </g>
+                <g
+                   transform="translate(7.0019493,81.551195)"
+                   id="g6275" />
+                <g
+                   transform="translate(8.6690801,158.57176)"
+                   id="g6285">
+                  <text
+                     xml:space="preserve"
+                     style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                     x="155.16545"
+                     y="184.5858"
+                     id="text6289"
+                     sodipodi:linespacing="125%"
+                     transform="scale(1.0179194,0.98239605)"><tspan
+                       sodipodi:role="line"
+                       x="155.16545"
+                       y="184.5858"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       id="tspan6293" /></text>
+                </g>
+                <g
+                   transform="translate(8.6690801,114.88362)"
+                   id="g6319">
+                  <rect
+                     transform="matrix(1.1020268,0,0,1,-7.1868545,0)"
+                     id="rect6321"
+                     width="172.35803"
+                     height="88.208359"
+                     x="66.423546"
+                     y="151.98941"
+                     style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                     ry="9.3594418"
+                     rx="9.0842314" />
+                  <text
+                     xml:space="preserve"
+                     style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                     x="155.16545"
+                     y="184.5858"
+                     id="text6323"
+                     sodipodi:linespacing="125%"
+                     transform="scale(1.0179194,0.98239605)"><tspan
+                       id="tspan6325"
+                       sodipodi:role="line"
+                       x="155.16545"
+                       y="184.5858"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1">OVN Northbound</tspan><tspan
+                       sodipodi:role="line"
+                       x="155.16545"
+                       y="206.07571"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       id="tspan6327">Database</tspan><tspan
+                       sodipodi:role="line"
+                       x="155.16545"
+                       y="227.56563"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       id="tspan6329">ovsdb-server</tspan></text>
+                </g>
+                <g
+                   id="g6331"
+                   transform="translate(8.6690801,230.41443)">
+                  <rect
+                     rx="9.0842314"
+                     ry="9.3594418"
+                     style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                     y="151.98941"
+                     x="66.423546"
+                     height="88.208359"
+                     width="172.35803"
+                     id="rect6333"
+                     transform="matrix(1.1020268,0,0,1,-7.1868545,0)" />
+                  <text
+                     transform="scale(1.0179194,0.98239605)"
+                     sodipodi:linespacing="125%"
+                     id="text6335"
+                     y="184.5858"
+                     x="155.16545"
+                     style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                     xml:space="preserve"><tspan
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="184.5858"
+                       x="155.16545"
+                       sodipodi:role="line"
+                       id="tspan6337">OVN Southbound</tspan><tspan
+                       id="tspan6339"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="206.07571"
+                       x="155.16545"
+                       sodipodi:role="line">Database</tspan><tspan
+                       id="tspan6341"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="227.56563"
+                       x="155.16545"
+                       sodipodi:role="line">ovsdb-server</tspan></text>
+                </g>
+              </g>
+              <text
+                 xml:space="preserve"
+                 style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:28.74238205px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                 x="155.93349"
+                 y="129.21364"
+                 id="text6305"
+                 sodipodi:linespacing="125%"
+                 transform="scale(1.0150442,0.98517878)"><tspan
+                   sodipodi:role="line"
+                   id="tspan6307"
+                   x="155.93349"
+                   y="129.21364">Database</tspan><tspan
+                   sodipodi:role="line"
+                   x="155.93349"
+                   y="165.14162"
+                   id="tspan6309">Node</tspan></text>
+            </g>
+            <g
+               id="g6372"
+               transform="translate(261.40593,0)">
+              <g
+                 transform="translate(-15.772158,46.338267)"
+                 id="g6376">
+                <g
+                   id="g6390"
+                   transform="translate(7.0019493,81.551195)" />
+                <g
+                   id="g6392"
+                   transform="translate(8.6690801,158.57176)">
+                  <text
+                     transform="scale(1.0179194,0.98239605)"
+                     sodipodi:linespacing="125%"
+                     id="text6394"
+                     y="184.5858"
+                     x="155.16545"
+                     style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                     xml:space="preserve"><tspan
+                       id="tspan6396"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="184.5858"
+                       x="155.16545"
+                       sodipodi:role="line" /></text>
+                </g>
+                <g
+                   transform="translate(8.6690801,230.41443)"
+                   id="g6410" />
+              </g>
+              <g
+                 id="g6450">
+                <rect
+                   id="rect6374"
+                   width="231.82626"
+                   height="467.86197"
+                   x="1.6379815"
+                   y="83.859184"
+                   style="fill:none;fill-opacity:1;stroke:#657b83;stroke-width:3.44908571;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+                   ry="16.474392"
+                   rx="14.184594" />
+                <g
+                   id="g6378"
+                   transform="translate(-46.113938,46.338267)"
+                   style="">
+                  <rect
+                     rx="9.0842314"
+                     ry="9.3594418"
+                     style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                     y="151.98941"
+                     x="66.423546"
+                     height="88.208359"
+                     width="172.35803"
+                     id="rect6380"
+                     transform="matrix(1.1020268,0,0,1,-7.1868545,0)" />
+                  <text
+                     transform="scale(1.0179194,0.98239605)"
+                     sodipodi:linespacing="125%"
+                     id="text6382"
+                     y="184.5858"
+                     x="155.16545"
+                     style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                     xml:space="preserve"><tspan
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="184.5858"
+                       x="155.16545"
+                       sodipodi:role="line"
+                       id="tspan6384">OVN Controller</tspan><tspan
+                       id="tspan6386"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="206.07571"
+                       x="155.16545"
+                       sodipodi:role="line">Service</tspan><tspan
+                       id="tspan6388"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="227.56563"
+                       x="155.16545"
+                       sodipodi:role="line">ovn-controller</tspan></text>
+                </g>
+                <g
+                   transform="translate(-44.446809,161.22189)"
+                   id="g6398"
+                   style="">
+                  <rect
+                     transform="matrix(1.1020268,0,0,1,-7.1868545,0)"
+                     id="rect6400"
+                     width="172.35803"
+                     height="88.208359"
+                     x="66.423546"
+                     y="151.98941"
+                     style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                     ry="9.3594418"
+                     rx="9.0842314" />
+                  <text
+                     xml:space="preserve"
+                     style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                     x="155.16545"
+                     y="184.5858"
+                     id="text6402"
+                     sodipodi:linespacing="125%"
+                     transform="scale(1.0179194,0.98239605)"><tspan
+                       id="tspan6404"
+                       sodipodi:role="line"
+                       x="155.16545"
+                       y="184.5858"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1">OVS Local</tspan><tspan
+                       sodipodi:role="line"
+                       x="155.16545"
+                       y="206.07571"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       id="tspan6406">Database</tspan><tspan
+                       sodipodi:role="line"
+                       x="155.16545"
+                       y="227.56563"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       id="tspan6408">ovsdb-server</tspan></text>
+                </g>
+                <rect
+                   rx="9.0842314"
+                   ry="9.3594418"
+                   style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                   y="151.98941"
+                   x="66.423546"
+                   height="88.208359"
+                   width="172.35803"
+                   id="rect6412"
+                   transform="matrix(1.1020268,0,0,1,-51.633657,276.7527)" />
+                <text
+                   transform="matrix(1.0179194,0,0,0.98239605,-7.10308,276.7527)"
+                   sodipodi:linespacing="125%"
+                   id="text6414"
+                   y="193.80943"
+                   x="118.47914"
+                   style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                   xml:space="preserve"><tspan
+                     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                     y="193.80943"
+                     x="118.47914"
+                     sodipodi:role="line"
+                     id="tspan6416">OVS Data Plane</tspan><tspan
+                     id="tspan6420"
+                     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                     y="215.29935"
+                     x="118.47914"
+                     sodipodi:role="line">ovs-vswitchd</tspan></text>
+                <text
+                   xml:space="preserve"
+                   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:28.74238205px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                   x="119.14323"
+                   y="129.21364"
+                   id="text6422"
+                   sodipodi:linespacing="125%"
+                   transform="scale(1.0150442,0.98517878)"><tspan
+                     sodipodi:role="line"
+                     x="119.14323"
+                     y="129.21364"
+                     id="tspan6426">Gateway</tspan><tspan
+                     id="tspan6430"
+                     sodipodi:role="line"
+                     x="119.14323"
+                     y="165.14162">Nodes</tspan></text>
+              </g>
+              <g
+                 id="g6472"
+                 transform="translate(245.06822,0)">
+                <rect
+                   rx="11.826921"
+                   ry="17.798012"
+                   style="fill:none;fill-opacity:1;stroke:#657b83;stroke-width:3.44908571;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+                   y="83.859184"
+                   x="1.6379815"
+                   height="469.48001"
+                   width="440.21762"
+                   id="rect6474" />
+                <g
+                   transform="translate(159.60998,43.102109)"
+                   id="g6476">
+                  <rect
+                     transform="matrix(1.1020268,0,0,1,-7.1868545,0)"
+                     id="rect6478"
+                     width="172.35803"
+                     height="88.208359"
+                     x="66.423546"
+                     y="151.98941"
+                     style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                     ry="9.3594418"
+                     rx="9.0842314" />
+                  <text
+                     xml:space="preserve"
+                     style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                     x="155.16545"
+                     y="184.5858"
+                     id="text6480"
+                     sodipodi:linespacing="125%"
+                     transform="scale(1.0179194,0.98239605)"><tspan
+                       id="tspan6482"
+                       sodipodi:role="line"
+                       x="155.16545"
+                       y="184.5858"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1">OVN Controller</tspan><tspan
+                       sodipodi:role="line"
+                       x="155.16545"
+                       y="206.07571"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       id="tspan6484">Service</tspan><tspan
+                       sodipodi:role="line"
+                       x="155.16545"
+                       y="227.56563"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       id="tspan6486">ovn-controller</tspan></text>
+                </g>
+                <g
+                   id="g6488"
+                   transform="translate(161.27711,157.98573)">
+                  <rect
+                     rx="9.0842314"
+                     ry="9.3594418"
+                     style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                     y="151.98941"
+                     x="66.423546"
+                     height="88.208359"
+                     width="172.35803"
+                     id="rect6490"
+                     transform="matrix(1.1020268,0,0,1,-7.1868545,0)" />
+                  <text
+                     transform="scale(1.0179194,0.98239605)"
+                     sodipodi:linespacing="125%"
+                     id="text6492"
+                     y="184.5858"
+                     x="155.16545"
+                     style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                     xml:space="preserve"><tspan
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="184.5858"
+                       x="155.16545"
+                       sodipodi:role="line"
+                       id="tspan6494">OVS Local</tspan><tspan
+                       id="tspan6496"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="206.07571"
+                       x="155.16545"
+                       sodipodi:role="line">Database</tspan><tspan
+                       id="tspan6498"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="227.56563"
+                       x="155.16545"
+                       sodipodi:role="line">ovsdb-server</tspan></text>
+                </g>
+                <g
+                   id="g6516"
+                   transform="translate(14.003898,0)">
+                  <rect
+                     rx="9.0842314"
+                     ry="9.3594418"
+                     style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                     y="151.98941"
+                     x="66.423546"
+                     height="88.208359"
+                     width="172.35803"
+                     id="rect6500"
+                     transform="matrix(1.1020268,0,0,1,140.08638,273.51654)" />
+                  <text
+                     transform="scale(1.0179194,0.98239605)"
+                     sodipodi:linespacing="125%"
+                     id="text6502"
+                     y="473.8743"
+                     x="301.48389"
+                     style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                     xml:space="preserve"><tspan
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="473.8743"
+                       x="301.48389"
+                       sodipodi:role="line"
+                       id="tspan6504">OVS Data Plane</tspan><tspan
+                       id="tspan6506"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="495.3642"
+                       x="301.48389"
+                       sodipodi:role="line">ovs-vswitchd</tspan></text>
+                </g>
+                <text
+                   transform="scale(1.0150442,0.98517878)"
+                   sodipodi:linespacing="125%"
+                   id="text6508"
+                   y="129.21364"
+                   x="219.33096"
+                   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:28.74238205px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                   xml:space="preserve"><tspan
+                     y="129.21364"
+                     x="219.33095"
+                     sodipodi:role="line"
+                     id="tspan6512">Compute Nodes</tspan></text>
+                <g
+                   id="g6522"
+                   transform="translate(-51.115331,42.454877)">
+                  <rect
+                     rx="9.0842314"
+                     ry="9.3594418"
+                     style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                     y="151.98941"
+                     x="66.423546"
+                     height="88.208359"
+                     width="172.35803"
+                     id="rect6524"
+                     transform="matrix(1.1020268,0,0,1,-7.1868545,0)" />
+                  <text
+                     transform="scale(1.0179194,0.98239605)"
+                     sodipodi:linespacing="125%"
+                     id="text6526"
+                     y="184.5858"
+                     x="155.16545"
+                     style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                     xml:space="preserve"><tspan
+                       id="tspan6532"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       y="184.5858"
+                       x="155.16545"
+                       sodipodi:role="line">nova-compute</tspan></text>
+                </g>
+                <g
+                   transform="translate(-49.448201,157.3385)"
+                   id="g6534">
+                  <rect
+                     transform="matrix(1.1020268,0,0,1,-7.1868545,0)"
+                     id="rect6536"
+                     width="172.35803"
+                     height="88.208359"
+                     x="66.423546"
+                     y="151.98941"
+                     style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                     ry="9.3594418"
+                     rx="9.0842314" />
+                  <text
+                     xml:space="preserve"
+                     style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                     x="155.16545"
+                     y="205.33897"
+                     id="text6538"
+                     sodipodi:linespacing="125%"
+                     transform="scale(1.0179194,0.98239605)"><tspan
+                       sodipodi:role="line"
+                       x="155.16545"
+                       y="205.33897"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       id="tspan6544">KVM Hypervisor</tspan><tspan
+                       sodipodi:role="line"
+                       x="155.16545"
+                       y="226.82889"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       id="tspan6568" /></text>
+                </g>
+                <g
+                   id="g6546"
+                   transform="translate(-196.72143,-0.64723163)">
+                  <rect
+                     transform="matrix(1.1020268,0,0,1,140.08638,273.51654)"
+                     id="rect6548"
+                     width="172.35803"
+                     height="88.208359"
+                     x="66.423546"
+                     y="151.98941"
+                     style="fill:#fcf4d7;fill-opacity:1;stroke:#657b83;stroke-width:3.28554845;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter9167)"
+                     ry="9.3594418"
+                     rx="9.0842314" />
+                  <text
+                     xml:space="preserve"
+                     style="font-style:normal;font-weight:normal;font-size:39.29584122px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#657b83;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                     x="301.48389"
+                     y="473.8743"
+                     id="text6550"
+                     sodipodi:linespacing="125%"
+                     transform="scale(1.0179194,0.98239605)"><tspan
+                       sodipodi:role="line"
+                       x="301.48389"
+                       y="473.8743"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       id="tspan6554">OVN Metadata</tspan><tspan
+                       sodipodi:role="line"
+                       x="301.48389"
+                       y="495.3642"
+                       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.19193077px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#657b83;fill-opacity:1"
+                       id="tspan6572">Agent</tspan></text>
+                </g>
+              </g>
+            </g>
+          </g>
+        </g>
+      </g>
+      <flowRoot
+         transform="matrix(1,0,0,0.96510193,11.428574,13.581956)"
+         style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         id="flowRoot9454"
+         xml:space="preserve"><flowRegion
+           id="flowRegion9456"><rect
+             y="294.09448"
+             x="777.14288"
+             height="111.42857"
+             width="238.57143"
+             id="rect9458" /></flowRegion><flowPara
+           id="flowPara9460" /></flowRoot>    </g>
+  </g>
+</svg>

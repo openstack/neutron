@@ -269,6 +269,7 @@ _config_generator_config_files = [
     'ml2_conf.ini',
     'neutron.conf',
     'openvswitch_agent.ini',
+    'ovn.ini',
     'sriov_agent.ini',
 ]
 

@@ -231,6 +231,16 @@ or adding subports to an existing trunk.
      | tags           | []                                                                                              |
      +----------------+-------------------------------------------------------------------------------------------------+
 
+* When using the OVN driver, additional logical switch port information
+  is available using the following commands:
+
+  .. code-block:: console
+
+     $ ovn-nbctl lsp-get-parent 61d8e620-fe3a-4d8f-b9e6-e1b0dea6d9e3
+     73fb9d54-43a7-4bb1-a8dc-569e0e0a0a38
+
+     $ ovn-nbctl lsp-get-tag 61d8e620-fe3a-4d8f-b9e6-e1b0dea6d9e3
+
 Launch an instance on the trunk
 -------------------------------
 

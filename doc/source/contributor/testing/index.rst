@@ -36,3 +36,4 @@ Testing
    template_model_sync_test
    db_transient_failure_injection
    ci_scenario_jobs
+   ovn_devstack

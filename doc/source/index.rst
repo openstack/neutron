@@ -34,7 +34,7 @@ Networking Guide
 ----------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    admin/index
 
@@ -52,6 +52,14 @@ CLI Reference
    :maxdepth: 2
 
    cli/index
+
+OVN Driver
+----------
+
+.. toctree::
+   :maxdepth: 2
+
+   ovn/index
 
 Neutron Feature Classification
 ------------------------------
