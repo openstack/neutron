@@ -76,7 +76,11 @@ class NetworkSegmentRange(base.NeutronDbObject):
             # AttrtibuteError can be raised when accessing self.db_obj
             # or self.db_obj.standard_attr
             pass
-        return db_utils.resource_fields(_dict, fields)
+        # NOTE(ralonsoh): this workaround should be removed once the migration
+        # from "tenant_id" to "project_id" is finished.
+        _dict = db_utils.resource_fields(_dict, fields)
+        _dict.pop('tenant_id', None)
+        return _dict
 
     def _get_allocation_model_details(self):
         model = models_map.get(self.network_type)
