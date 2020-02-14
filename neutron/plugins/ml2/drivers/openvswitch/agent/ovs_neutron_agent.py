@@ -79,6 +79,11 @@ from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_dvr_neutron_agent
 from neutron.plugins.ml2.drivers.openvswitch.agent import vlanmanager
 
+if six.PY2:
+    abc_dict = dict
+else:
+    abc_dict = collections.UserDict
+
 
 LOG = logging.getLogger(__name__)
 cfg.CONF.import_group('AGENT', 'neutron.plugins.ml2.drivers.openvswitch.'
@@ -95,6 +100,17 @@ class _mac_mydialect(netaddr.mac_unix):
 
 class OVSPluginApi(agent_rpc.CacheBackedPluginApi):
     pass
+
+
+class PortInfo(abc_dict):
+    def __init__(self, current=None, added=None, removed=None, updated=None,
+                 re_added=None):
+        _dict = {'current': current or set(),
+                 'added': added or set(),
+                 'removed': removed or set(),
+                 'updated': updated or set(),
+                 're_added': re_added or set()}
+        super(PortInfo, self).__init__(_dict)
 
 
 def has_zero_prefixlen_address(ip_addresses):
@@ -1560,9 +1576,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     def _get_port_info(self, registered_ports, cur_ports,
                        readd_registered_ports):
-        port_info = {'current': cur_ports,
-                     'added': set(),
-                     'removed': set()}
+        port_info = PortInfo(current=cur_ports)
         # FIXME(salv-orlando): It's not really necessary to return early
         # if nothing has changed.
         if not readd_registered_ports and cur_ports == registered_ports:
@@ -1596,15 +1610,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
     def process_ports_events(self, events, registered_ports, ancillary_ports,
                              old_ports_not_ready, failed_devices,
                              failed_ancillary_devices, updated_ports=None):
-        port_info = {}
-        port_info['added'] = set()
-        port_info['removed'] = set()
-        port_info['current'] = registered_ports
-
-        ancillary_port_info = {}
-        ancillary_port_info['added'] = set()
-        ancillary_port_info['removed'] = set()
-        ancillary_port_info['current'] = ancillary_ports
+        port_info = PortInfo(current=registered_ports)
+        ancillary_port_info = PortInfo(current=ancillary_ports)
 
         ports_not_ready_yet = set()
         # if a port was added and then removed or viceversa since the agent
@@ -1612,9 +1619,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # to determine if the port was added or deleted
         added_ports = {p['name'] for p in events['added']}
         removed_ports = {p['name'] for p in events['removed']}
-        ports_removed_and_added = added_ports & removed_ports
-        for p in ports_removed_and_added:
+
+        ports_re_added = added_ports & removed_ports
+        for p in ports_re_added:
             if ovs_lib.BaseOVS().port_exists(p):
+                events['re_added'] = [e for e in events['removed']
+                                      if e['name'] == p]
                 events['removed'] = [e for e in events['removed']
                                      if e['name'] != p]
             else:
@@ -1662,12 +1672,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             ports_not_ready_yet |= old_ports_not_ready_yet
             events['added'].extend(old_ports_not_ready_attrs)
 
-        for port in events['added']:
-            _process_port(port, port_info['added'],
-                          ancillary_port_info['added'])
-        for port in events['removed']:
-            _process_port(port, port_info['removed'],
-                          ancillary_port_info['removed'])
+        for event_type in ('added', 'removed', 're_added'):
+            for port in events.get(event_type, []):
+                _process_port(port, port_info[event_type],
+                              ancillary_port_info[event_type])
 
         self._update_port_info_failed_devices_stats(port_info, failed_devices)
         self._update_port_info_failed_devices_stats(ancillary_port_info,
@@ -1845,7 +1853,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     br.cleanup_tunnel_port(ofport)
                     self.tun_br_ofports[tunnel_type].pop(remote_ip, None)
 
-    def treat_devices_added_or_updated(self, devices, provisioning_needed):
+    def treat_devices_added_or_updated(self, devices, provisioning_needed,
+                                       re_added):
         skipped_devices = []
         need_binding_devices = []
         binding_no_activated_devices = set()
@@ -1891,6 +1900,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     need_binding_devices.append(details)
                 self._update_port_network(details['port_id'],
                                           details['network_id'])
+                if details['device'] in re_added:
+                    self.ext_manager.delete_port(self.context, details)
                 self.ext_manager.handle_port(self.context, details)
             else:
                 if n_const.NO_ACTIVE_BINDING in details:
@@ -1996,6 +2007,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # list at the same time; avoid processing it twice.
         devices_added_updated = (port_info.get('added', set()) |
                                  port_info.get('updated', set()))
+        re_added = port_info.get('re_added', set())
         need_binding_devices = []
         skipped_devices = set()
         binding_no_activated_devices = set()
@@ -2004,7 +2016,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             (skipped_devices, binding_no_activated_devices,
              need_binding_devices, failed_devices['added']) = (
                 self.treat_devices_added_or_updated(
-                    devices_added_updated, provisioning_needed))
+                    devices_added_updated, provisioning_needed, re_added))
             LOG.info("process_network_ports - iteration:%(iter_num)d - "
                      "treat_devices_added_or_updated completed. "
                      "Skipped %(num_skipped)d and no activated binding "
