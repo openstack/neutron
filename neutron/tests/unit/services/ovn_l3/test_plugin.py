@@ -464,6 +464,35 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'neutron-router-id',
             ip_prefix='1.1.1.0/24', nexthop='10.0.0.2')
 
+    @mock.patch.object(utils, 'get_lrouter_non_gw_routes')
+    @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
+                'update_router')
+    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.get_router')
+    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
+                'ovn_client.OVNClient._get_v4_network_of_all_router_ports')
+    def test_update_router_static_route_clear(self, get_rps, get_r, func,
+                                              mock_routes):
+        router_id = 'router-id'
+        get_rps.return_value = [{'device_id': '',
+                                 'device_owner': 'network:router_interface',
+                                 'mac_address': 'aa:aa:aa:aa:aa:aa',
+                                 'fixed_ips': [{'ip_address': '10.0.0.100',
+                                                'subnet_id': 'subnet-id'}],
+                                 'id': 'router-port-id'}]
+
+        mock_routes.return_value = self.fake_router['routes']
+        get_r.return_value = self.fake_router
+        new_router = self.fake_router.copy()
+        updated_data = {'routes': []}
+        new_router.update(updated_data)
+        func.return_value = new_router
+        self.l3_inst.update_router(self.context, router_id,
+                                   {'router': updated_data})
+        self.l3_inst._ovn.add_static_route.assert_not_called()
+        self.l3_inst._ovn.delete_static_route.assert_called_once_with(
+            'neutron-router-id',
+            ip_prefix='1.1.1.0/24', nexthop='10.0.0.2')
+
     @mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_port')
     @mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_subnet')
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
