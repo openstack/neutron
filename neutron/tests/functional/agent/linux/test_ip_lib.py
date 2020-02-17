@@ -866,8 +866,8 @@ class IpRouteCommandTestCase(functional_base.BaseSudoTestCase):
             scope = ip_lib.IP_ADDRESS_SCOPE[0]
         elif not scope:
             scope = 'global' if via else 'link'
-        if ip_version == constants.IP_VERSION_6 and not metric:
-            metric = 1024
+        if not metric:
+            metric = ip_lib.IP_ROUTE_METRIC_DEFAULT[ip_version]
         table = table or iproute_linux.DEFAULT_TABLE
         table = ip_lib.IP_RULE_TABLES_NAMES.get(table, table)
         cmp = {'table': table,

@@ -76,6 +76,13 @@ DEFAULT_GW_PATTERN = re.compile(r"via (\S+)")
 METRIC_PATTERN = re.compile(r"metric (\S+)")
 DEVICE_NAME_PATTERN = re.compile(r"(\d+?): (\S+?):.*")
 
+# NOTE: no metric is interpreted by the kernel as having the highest priority
+# (value 0). "ip route" uses the netlink API to communicate with the kernel. In
+# IPv6, when the metric value is not set is translated as 1024 as default:
+# https://access.redhat.com/solutions/3659171
+IP_ROUTE_METRIC_DEFAULT = {constants.IP_VERSION_4: 0,
+                           constants.IP_VERSION_6: 1024}
+
 
 def remove_interface_suffix(interface):
     """Remove a possible "<if>@<endpoint>" suffix from an interface' name.
@@ -1504,6 +1511,8 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
         else:
             cidr = constants.IP_ANY[ip_version]
         table = int(get_attr(route, 'RTA_TABLE'))
+        metric = (get_attr(route, 'RTA_PRIORITY') or
+                  IP_ROUTE_METRIC_DEFAULT[ip_version])
         value = {
             'table': IP_RULE_TABLES_NAMES.get(table, table),
             'source_prefix': get_attr(route, 'RTA_PREFSRC'),
@@ -1511,7 +1520,7 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
             'scope': IP_ADDRESS_SCOPE[int(route['scope'])],
             'device': get_device(int(get_attr(route, 'RTA_OIF')), devices),
             'via': get_attr(route, 'RTA_GATEWAY'),
-            'metric': get_attr(route, 'RTA_PRIORITY'),
+            'metric': metric,
         }
 
         ret.append(value)
