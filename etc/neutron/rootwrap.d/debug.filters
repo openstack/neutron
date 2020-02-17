@@ -20,7 +20,3 @@ ping6_alt: RegExpFilter, ping6, root, ping6, -c, \d+, -w, \d+, [0-9A-Fa-f:]+
 # "sleep" command, only for testing
 sleep: RegExpFilter, sleep, root, sleep, \d+
 kill_sleep: KillFilter, root, sleep, -9
-
-# "ncat" command, only for testing
-ncat: RegExpFilter, ncat, root, ncat, [0-9A-Fa-f:]+, \d+, .*
-ncat_exec: IpNetnsExecFilter, ncat, root
