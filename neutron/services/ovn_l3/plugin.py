@@ -35,6 +35,7 @@ from oslo_utils import excutils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import extensions
 from neutron.common.ovn import utils
+from neutron.db import l3_fip_port_details
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
@@ -48,7 +49,8 @@ LOG = log.getLogger(__name__)
 class OVNL3RouterPlugin(service_base.ServicePluginBase,
                         extraroute_db.ExtraRoute_dbonly_mixin,
                         l3_gwmode_db.L3_NAT_db_mixin,
-                        dns_db.DNSDbMixin):
+                        dns_db.DNSDbMixin,
+                        l3_fip_port_details.Fip_port_details_db_mixin):
     """Implementation of the OVN L3 Router Service Plugin.
 
     This class implements a L3 service plugin that provides
