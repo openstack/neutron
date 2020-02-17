@@ -746,7 +746,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                     'is_shared_with_tenant', return_value=False).start()
                 mock.patch.object(
                     rbac_db.RbacNeutronDbObjectMixin,
-                    'get_shared_with_tenant').start()
+                    'get_shared_with_tenant', return_value=False).start()
 
     def fake_get_object(self, context, model, **kwargs):
         objs = self.model_map[model]

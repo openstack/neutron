@@ -9,9 +9,11 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import random
 
 import mock
 
+from neutron.objects import address_scope
 from neutron.objects import network
 from neutron.objects.qos import policy
 from neutron.objects import rbac
@@ -20,10 +22,22 @@ from neutron.tests import base as neutron_test_base
 from neutron.tests.unit.objects import test_base
 
 
+class TestRBACObjectMixin(object):
+
+    def get_random_object_fields(self, obj_cls=None):
+        fields = (super(TestRBACObjectMixin, self).
+                  get_random_object_fields(obj_cls))
+        rnd_actions = self._test_class.db_model.get_valid_actions()
+        idx = random.randint(0, len(rnd_actions) - 1)
+        fields['action'] = rnd_actions[idx]
+        return fields
+
+
 class RBACBaseObjectTestCase(neutron_test_base.BaseTestCase):
 
     def test_get_type_class_map(self):
-        class_map = {'qos_policy': policy.QosPolicyRBAC,
+        class_map = {'address_scope': address_scope.AddressScopeRBAC,
+                     'qos_policy': policy.QosPolicyRBAC,
                      'network': network.NetworkRBAC,
                      'security_group': securitygroup.SecurityGroupRBAC}
         self.assertEqual(class_map, rbac.RBACBaseObject.get_type_class_map())

@@ -26,7 +26,8 @@ from neutron.tests import base as test_base
 # corresponding version bump in the affected objects. Please keep the list in
 # alphabetic order.
 object_data = {
-    'AddressScope': '1.0-dd0dfdb67775892d3adc090e28e43bd8',
+    'AddressScope': '1.1-dd0dfdb67775892d3adc090e28e43bd8',
+    'AddressScopeRBAC': '1.0-192845c5ed0718e1c54fac36936fcd7d',
     'Agent': '1.1-64b670752d57b3c7602cb136e0338507',
     'AllowedAddressPair': '1.0-9f9186b6f952fbf31d257b0458b852c0',
     'AutoAllocatedTopology': '1.0-74642e58c53bf3610dc224c59f81b242',

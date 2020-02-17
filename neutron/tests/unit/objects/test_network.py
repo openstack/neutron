@@ -10,8 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import random
-
 import mock
 
 from neutron.db import rbac_db_models
@@ -24,18 +22,7 @@ from neutron.tests.unit.objects import test_rbac
 from neutron.tests.unit import testlib_api
 
 
-class _NetworkRBACBase(object):
-
-    def get_random_object_fields(self, obj_cls=None):
-        fields = (super(_NetworkRBACBase, self).
-                  get_random_object_fields(obj_cls))
-        rnd_actions = self._test_class.db_model.get_valid_actions()
-        idx = random.randint(0, len(rnd_actions) - 1)
-        fields['action'] = rnd_actions[idx]
-        return fields
-
-
-class NetworkRBACDbObjectTestCase(_NetworkRBACBase,
+class NetworkRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
                                   obj_test_base.BaseDbObjectTestCase,
                                   testlib_api.SqlTestCase):
 
@@ -64,7 +51,7 @@ class NetworkRBACDbObjectTestCase(_NetworkRBACBase,
         self.assertNotIn('id', network_rbac_obj['versioned_object.data'])
 
 
-class NetworkRBACIfaceOjectTestCase(_NetworkRBACBase,
+class NetworkRBACIfaceOjectTestCase(test_rbac.TestRBACObjectMixin,
                                     obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = network.NetworkRBAC

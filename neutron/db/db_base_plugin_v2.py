@@ -59,6 +59,7 @@ from neutron import ipam
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import subnet_alloc
 from neutron import neutron_plugin_base_v2
+from neutron.objects import address_scope as address_scope_obj
 from neutron.objects import base as base_obj
 from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
@@ -1112,7 +1113,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         Subnetpool can associate with an address scope if
           - the tenant user is the owner of both the subnetpool and
             address scope
-          - the admin is associating the subnetpool with the shared
+          - the user is associating the subnetpool with a shared
             address scope
           - there is no prefix conflict with the existing subnetpools
             associated with the address scope.
@@ -1122,8 +1123,14 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if not validators.is_attr_set(address_scope_id):
             return
 
-        if not self.is_address_scope_owned_by_tenant(context,
-                                                     address_scope_id):
+        address_scope = self._get_address_scope(context, address_scope_id)
+        is_accessible = (
+            address_scope_obj.AddressScope.is_accessible(
+                context, address_scope
+            )
+        )
+
+        if not is_accessible:
             raise exc.IllegalSubnetPoolAssociationToAddressScope(
                 subnetpool_id=subnetpool_id, address_scope_id=address_scope_id)
 

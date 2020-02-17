@@ -13,6 +13,9 @@
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
+from sqlalchemy import sql
+
+from neutron.db import rbac_db_models
 
 
 class AddressScope(model_base.BASEV2, model_base.HasId, model_base.HasProject):
@@ -21,5 +24,18 @@ class AddressScope(model_base.BASEV2, model_base.HasId, model_base.HasProject):
     __tablename__ = "address_scopes"
 
     name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE), nullable=False)
-    shared = sa.Column(sa.Boolean, nullable=False)
+
+    # TODO(imalinovskiy): drop this field when contract migrations will be
+    # allowed again
+    # NOTE(imalinovskiy): this field cannot be removed from model due to
+    # functional test test_models_sync, trailing underscore is required to
+    # prevent conflicts with RBAC code
+    shared_ = sa.Column("shared", sa.Boolean, nullable=False,
+                        server_default=sql.false())
+
     ip_version = sa.Column(sa.Integer(), nullable=False)
+
+    rbac_entries = sa.orm.relationship(rbac_db_models.AddressScopeRBAC,
+                                       backref='address_scopes',
+                                       lazy='subquery',
+                                       cascade='all, delete, delete-orphan')

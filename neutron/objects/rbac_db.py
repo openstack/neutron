@@ -236,6 +236,37 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         self._validate_rbac_policy_delete(self.obj_context, obj_id, '*')
         return self.obj_context.session.delete(shared_prev)
 
+    def from_db_object(self, db_obj):
+        self._load_shared(db_obj)
+        super(RbacNeutronDbObjectMixin, self).from_db_object(db_obj)
+
+    def obj_load_attr(self, attrname):
+        if attrname == 'shared':
+            return self._load_shared()
+        super(RbacNeutronDbObjectMixin, self).obj_load_attr(attrname)
+
+    def _load_shared(self, db_obj=None):
+        # Do not override 'shared' attribute on create() or update()
+        if 'shared' in self.obj_get_changes():
+            return
+
+        if db_obj:
+            # NOTE(korzen) db_obj is passed when object is loaded from DB
+            rbac_entries = db_obj.get('rbac_entries') or {}
+            shared = self.is_network_shared(self.obj_context, rbac_entries)
+        else:
+            # NOTE(korzen) this case is used when object was
+            # instantiated and without DB interaction (get_object(s), update,
+            # create), it should be rare case to load 'shared' by that method
+            shared = self.get_shared_with_tenant(
+                self.obj_context.elevated(),
+                self.rbac_db_cls,
+                self.id,
+                self.project_id
+            )
+        setattr(self, 'shared', shared)
+        self.obj_reset_changes(['shared'])
+
 
 def _update_post(self, obj_changes):
     if "shared" in obj_changes:
@@ -249,6 +280,7 @@ def _update_hook(self, update_orig):
         obj_changes = self.obj_get_changes()
         update_orig(self)
         _update_post(self, obj_changes)
+        self._load_shared(db_obj=self.db_obj)
 
 
 def _create_post(self):
@@ -260,6 +292,7 @@ def _create_hook(self, orig_create):
     with self.db_context_writer(self.obj_context):
         orig_create(self)
         _create_post(self)
+        self._load_shared(db_obj=self.db_obj)
 
 
 def _to_dict_hook(self, to_dict_orig):

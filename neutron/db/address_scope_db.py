@@ -36,11 +36,7 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
 
     @staticmethod
     def _make_address_scope_dict(address_scope, fields=None):
-        res = {'id': address_scope['id'],
-               'name': address_scope['name'],
-               'tenant_id': address_scope['tenant_id'],
-               'shared': address_scope['shared'],
-               'ip_version': address_scope['ip_version']}
+        res = address_scope.to_dict()
         return db_utils.resource_fields(res, fields)
 
     def _get_address_scope(self, context, id):

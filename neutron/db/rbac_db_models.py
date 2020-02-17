@@ -126,3 +126,14 @@ class SecurityGroupRBAC(RBACColumns, model_base.BASEV2):
     @staticmethod
     def get_valid_actions():
         return (ACCESS_SHARED,)
+
+
+class AddressScopeRBAC(RBACColumns, model_base.BASEV2):
+    """RBAC table for address_scope."""
+
+    object_id = _object_id_column('address_scopes.id')
+    object_type = 'address_scope'
+
+    @staticmethod
+    def get_valid_actions():
+        return (ACCESS_SHARED,)
