@@ -173,13 +173,13 @@ class ML2ConfigFixture(ConfigFixture):
                 'mechanism_drivers': mechanism_drivers,
             },
             'ml2_type_vlan': {
-                'network_vlan_ranges': PHYSICAL_NETWORK_NAME + ':1000:2999',
+                'network_vlan_ranges': PHYSICAL_NETWORK_NAME + ':1000:1029',
             },
             'ml2_type_gre': {
-                'tunnel_id_ranges': '1:1000',
+                'tunnel_id_ranges': '1:30',
             },
             'ml2_type_vxlan': {
-                'vni_ranges': '1001:2000',
+                'vni_ranges': '1001:1030',
             },
         })
 
