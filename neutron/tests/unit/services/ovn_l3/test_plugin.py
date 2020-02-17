@@ -25,6 +25,7 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
@@ -62,6 +63,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                  'network_id': self.fake_network['id'],
                                  'device_owner': 'network:router_interface',
                                  'mac_address': 'aa:aa:aa:aa:aa:aa',
+                                 'status': constants.PORT_STATUS_ACTIVE,
                                  'fixed_ips': [{'ip_address': '10.0.0.100',
                                                 'subnet_id': 'subnet-id'}],
                                  'id': 'router-port-id'}
@@ -147,17 +149,65 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.fake_floating_ip_new = (
             fake_resources.FakeFloatingIp.create_one_fip(
                 attrs=self.fake_floating_ip_new_attrs))
-        self.fake_ovn_nat_rule = {
-            'logical_ip': self.fake_floating_ip['fixed_ip_address'],
-            'external_ip': self.fake_floating_ip['floating_ip_address'],
-            'type': 'dnat_and_snat',
-            'external_ids': {
-                ovn_const.OVN_FIP_EXT_ID_KEY: self.fake_floating_ip['id'],
-                ovn_const.OVN_FIP_PORT_EXT_ID_KEY:
-                    self.fake_floating_ip['port_id'],
-                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
-                    self.fake_floating_ip['router_id'])}}
+        self.fake_ovn_nat_rule = (
+            fake_resources.FakeOvsdbRow.create_one_ovsdb_row({
+                'logical_ip': self.fake_floating_ip['fixed_ip_address'],
+                'external_ip': self.fake_floating_ip['floating_ip_address'],
+                'type': 'dnat_and_snat',
+                'external_ids': {
+                    ovn_const.OVN_FIP_EXT_ID_KEY: self.fake_floating_ip['id'],
+                    ovn_const.OVN_FIP_PORT_EXT_ID_KEY:
+                        self.fake_floating_ip['port_id'],
+                    ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
+                        self.fake_floating_ip['router_id'])}}))
         self.l3_inst = directory.get_plugin(plugin_constants.L3)
+        self.lb_id = uuidutils.generate_uuid()
+        self.member_subnet = {'id': 'subnet-id',
+                              'ip_version': 4,
+                              'cidr': '10.0.0.0/24',
+                              'network_id': self.fake_network['id']}
+        self.member_id = uuidutils.generate_uuid()
+        self.member_port_id = uuidutils.generate_uuid()
+        self.member_address = '10.0.0.10'
+        self.member_l4_port = '80'
+        self.member_port = {
+            'network_id': self.fake_network['id'],
+            'mac_address': 'aa:aa:aa:aa:aa:aa',
+            'fixed_ips': [{'ip_address': self.member_address,
+                           'subnet_id': self.member_subnet['id']}],
+            'id': 'fake-port-id'}
+        self.member_lsp = fake_resources.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                'addresses': ['10.0.0.10 ff:ff:ff:ff:ff:ff'],
+                'uuid': self.member_port['id']})
+        self.listener_id = uuidutils.generate_uuid()
+        self.pool_id = uuidutils.generate_uuid()
+        self.ovn_lb = mock.MagicMock()
+        self.ovn_lb.protocol = ['tcp']
+        self.ovn_lb.uuid = uuidutils.generate_uuid()
+        self.member_line = (
+            'member_%s_%s:%s_%s' %
+            (self.member_id, self.member_address,
+             self.member_l4_port, self.member_subnet['id']))
+        self.ovn_lb.external_ids = {
+            ovn_const.LB_EXT_IDS_VIP_KEY: '10.22.33.4',
+            ovn_const.LB_EXT_IDS_VIP_FIP_KEY: '123.123.123.123',
+            ovn_const.LB_EXT_IDS_VIP_PORT_ID_KEY: 'foo_port',
+            'enabled': True,
+            'pool_%s' % self.pool_id: self.member_line,
+            'listener_%s' % self.listener_id: '80:pool_%s' % self.pool_id}
+        self.lb_vip_lsp = fake_resources.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'external_ids': {ovn_const.OVN_PORT_NAME_EXT_ID_KEY:
+                                    '%s%s' % (ovn_const.LB_VIP_PORT_PREFIX,
+                                              self.ovn_lb.uuid)},
+                   'name': uuidutils.generate_uuid(),
+                   'addresses': ['10.0.0.100 ff:ff:ff:ff:ff:ee'],
+                   'uuid': uuidutils.generate_uuid()})
+        self.lb_network = fake_resources.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'load_balancer': [self.ovn_lb],
+                   'name': 'neutron-%s' % self.fake_network['id'],
+                   'ports': [self.lb_vip_lsp, self.member_lsp],
+                   'uuid': self.fake_network['id']})
         self.nb_idl = self._start_mock(
             'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin._ovn',
             new_callable=mock.PropertyMock,
@@ -230,6 +280,11 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             return_value=self.admin_context)
         self.addCleanup(self.get_a_ctx_mock_p.stop)
         self.get_a_ctx_mock_p.start()
+        self.mock_is_lb_member_fip = mock.patch(
+            'neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_client'
+            '.OVNClient._is_lb_member_fip',
+            return_value=False)
+        self.mock_is_lb_member_fip.start()
 
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
     def test_add_router_interface(self, func):
@@ -988,6 +1043,57 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                               '192.168.0.10'}))]
         self.l3_inst._ovn.db_set.assert_has_calls(calls)
 
+    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin._get_floatingip')
+    @mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_port')
+    def test_create_floatingip_lb_member_fip(self, gp, gf):
+        self.get_a_ctx_mock_p.stop()
+        config.cfg.CONF.set_override(
+            'enable_distributed_floating_ip', True, group='ovn')
+        # Stop this mock.
+        self.mock_is_lb_member_fip.stop()
+        gp.return_value = self.member_port
+        gf.return_value = self.fake_floating_ip
+        self.l3_inst._ovn.lookup.return_value = self.lb_network
+        self.l3_inst._ovn.get_lswitch_port.return_value = self.member_lsp
+        self.l3_inst.create_floatingip(self.context, 'floatingip')
+        # Validate that there is no external_mac and logical_port while
+        # setting the NAT entry.
+        self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
+            'neutron-router-id',
+            external_ip='192.168.0.10',
+            logical_ip='10.0.0.10',
+            type='dnat_and_snat')
+
+    @mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_subnet')
+    def test_create_floatingip_lb_vip_fip(self, gs):
+        self.get_a_ctx_mock_p.stop()
+        config.cfg.CONF.set_override(
+            'enable_distributed_floating_ip', True, group='ovn')
+        gs.return_value = self.member_subnet
+        self.l3_inst._ovn.get_lswitch_port.return_value = self.lb_vip_lsp
+        self.l3_inst._ovn.db_find_rows.return_value.execute.side_effect = [
+            [self.ovn_lb],
+            [self.lb_network],
+            [self.fake_ovn_nat_rule],
+        ]
+        self.l3_inst._ovn.lookup.return_value = self.lb_network
+
+        self.l3_inst.create_floatingip(self.context, 'floatingip')
+        self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
+            'neutron-router-id',
+            external_ip='192.168.0.10',
+            external_mac='aa:aa:aa:aa:aa:aa',
+            logical_ip='10.0.0.10',
+            logical_port='port_id',
+            type='dnat_and_snat')
+        self.l3_inst._ovn.db_find_rows.assert_called_with(
+            'NAT', ('external_ids', '=', {ovn_const.OVN_FIP_PORT_EXT_ID_KEY:
+                                          self.member_lsp.name}))
+        # Validate that it clears external_mac/logical_port for member NAT.
+        self.l3_inst._ovn.db_clear.assert_has_calls([
+            mock.call('NAT', self.fake_ovn_nat_rule.uuid, 'external_mac'),
+            mock.call('NAT', self.fake_ovn_nat_rule.uuid, 'logical_port')])
+
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.delete_floatingip')
     def test_delete_floatingip(self, df):
         self.l3_inst._ovn.get_floatingip.return_value = (
@@ -998,6 +1104,42 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             type='dnat_and_snat',
             logical_ip='10.0.0.10',
             external_ip='192.168.0.10')
+
+    @mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_subnet')
+    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin._get_floatingip')
+    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.delete_floatingip')
+    def test_delete_floatingip_lb_vip_fip(self, df, gf, gs):
+        config.cfg.CONF.set_override(
+            'enable_distributed_floating_ip', True, group='ovn')
+        gs.return_value = self.member_subnet
+        gf.return_value = self.fake_floating_ip
+        self.l3_inst._ovn.get_floatingip.return_value = (
+            self.fake_ovn_nat_rule)
+        self.l3_inst._ovn.get_lswitch_port.return_value = self.lb_vip_lsp
+        self.l3_inst._ovn.db_find_rows.return_value.execute.side_effect = [
+            [self.ovn_lb],
+            [self.lb_network],
+            [self.fake_ovn_nat_rule],
+        ]
+        self.l3_inst._ovn.lookup.return_value = self.lb_network
+
+        self.l3_inst.delete_floatingip(self.context, 'floatingip-id')
+        self.l3_inst._ovn.delete_nat_rule_in_lrouter.assert_called_once_with(
+            'neutron-router-id',
+            type='dnat_and_snat',
+            logical_ip='10.0.0.10',
+            external_ip='192.168.0.10')
+        self.l3_inst._ovn.db_find_rows.assert_called_with(
+            'NAT', ('external_ids', '=',
+                    {ovn_const.OVN_FIP_PORT_EXT_ID_KEY: self.member_lsp.name}))
+        self.l3_inst._plugin.get_port.assert_called_once_with(
+            mock.ANY, self.member_lsp.name)
+        # Validate that it adds external_mac/logical_port back.
+        self.l3_inst._ovn.db_set.assert_has_calls([
+            mock.call('NAT', self.fake_ovn_nat_rule.uuid,
+                      ('logical_port', self.member_lsp.name)),
+            mock.call('NAT', self.fake_ovn_nat_rule.uuid,
+                      ('external_mac', 'aa:aa:aa:aa:aa:aa'))])
 
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin._get_floatingip')
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.delete_floatingip')
