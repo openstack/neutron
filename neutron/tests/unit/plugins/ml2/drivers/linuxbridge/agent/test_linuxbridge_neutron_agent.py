@@ -471,7 +471,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 dv6_fn.assert_not_called()
 
     def test__update_interface_ip_details(self):
-        gwdict = dict(via='1.1.1.1',
+        gwdict = dict(cidr='1.1.1.1/24',
+                      via='1.1.1.1',
                       metric=50)
         ipdict = dict(cidr='1.1.1.1/24',
                       broadcast='1.1.1.255',
