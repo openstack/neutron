@@ -232,6 +232,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         Update operation is currently only supported for VLAN type segments,
         and only the SEGMENTATION_ID field can be changed.
         """
+        project_id = network['project_id']
         segmentation_id = net_data.get(provider.SEGMENTATION_ID)
         network_type = segment[api.NETWORK_TYPE]
         if network_type != constants.TYPE_VLAN:
@@ -246,7 +247,8 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                        api.PHYSICAL_NETWORK: segment[api.PHYSICAL_NETWORK],
                        api.SEGMENTATION_ID: segmentation_id}
         self.validate_provider_segment(new_segment)
-        self.reserve_provider_segment(context, new_segment)
+        self.reserve_provider_segment(context, new_segment,
+                                      filters={'project_id': project_id})
         self._update_network_segment(context, segment['id'], segmentation_id)
         self.release_network_segment(context, segment)
 
