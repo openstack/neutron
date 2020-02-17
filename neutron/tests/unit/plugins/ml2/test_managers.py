@@ -213,7 +213,8 @@ class TypeManagerTestCase(base.BaseTestCase):
         super(TypeManagerTestCase, self).setUp()
         self.type_manager = managers.TypeManager()
         self.ctx = mock.Mock()
-        self.network = {'id': uuidutils.generate_uuid()}
+        self.network = {'id': uuidutils.generate_uuid(),
+                        'project_id': uuidutils.generate_uuid()}
 
     def test_update_network_segment_no_vlan_no_segmentation_id(self):
         net_data = {}
@@ -248,7 +249,9 @@ class TypeManagerTestCase(base.BaseTestCase):
             self.type_manager.update_network_segment(self.ctx, self.network,
                                                      net_data, segment)
             mock_validate.assert_called_once_with(new_segment)
-            mock_reserve.assert_called_once_with(self.ctx, new_segment)
+            mock_reserve.assert_called_once_with(
+                self.ctx, new_segment,
+                filters={'project_id': self.network['project_id']})
             mock_update_network_segment.assert_called_once_with(
                 self.ctx, segment['id'], segmentation_id)
             mock_release.assert_called_once_with(self.ctx, segment)
