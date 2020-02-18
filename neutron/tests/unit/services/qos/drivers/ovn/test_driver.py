@@ -66,10 +66,11 @@ class TestOVNQosDriver(base.BaseTestCase):
         self.policy = self._create_fake_policy()
         self.port = self._create_fake_port()
         self.bw_rule = self._create_bw_limit_rule()
-        self.bw_expected = {'direction': 'egress', 'qos_max_rate': '1000',
-                            'qos_burst': '100000'}
+        self.bw_expected = {'qos_max_rate': 1000, 'qos_burst': 100000,
+                            'direction': constants.EGRESS_DIRECTION}
         self.dscp_rule = self._create_dscp_rule()
-        self.dscp_expected = {'dscp_mark': 16, 'direction': 'egress'}
+        self.dscp_expected = {'dscp_mark': 16,
+                              'direction': constants.EGRESS_DIRECTION}
 
     def _create_bw_limit_rule(self):
         rule_obj = qos_rule.QosBandwidthLimitRule()

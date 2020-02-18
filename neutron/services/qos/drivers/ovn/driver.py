@@ -103,12 +103,10 @@ class OVNQosDriver(object):
                                        context, policy_id)
         for rule in all_rules:
             if isinstance(rule, qos_rule.QosBandwidthLimitRule):
-                if rule.max_kbps:
-                    options['qos_max_rate'] = str(rule.max_kbps)
+                options['qos_max_rate'] = rule.max_kbps
                 if rule.max_burst_kbps:
-                    options['qos_burst'] = str(rule.max_burst_kbps)
-                if rule.direction:
-                    options['direction'] = rule.direction
+                    options['qos_burst'] = rule.max_burst_kbps
+                options['direction'] = rule.direction
             if isinstance(rule, qos_rule.QosDscpMarkingRule):
                 options['dscp_mark'] = rule.dscp_mark
                 options['direction'] = constants.EGRESS_DIRECTION

@@ -714,9 +714,9 @@ class OVNClient(object):
             qos_rule.update(match=match)
         # QoS of bandwidth_limit
         if 'qos_max_rate' in qos_options:
-            qos_rule.update(rate=int(qos_options['qos_max_rate']),
-                            burst=int(qos_options['qos_burst']),
-                            dscp=None)
+            burst = qos_options.get('qos_burst')
+            qos_rule.update(rate=qos_options['qos_max_rate'],
+                            burst=burst, dscp=None)
         # QoS of dscp
         elif 'dscp_mark' in qos_options:
             qos_rule.update(rate=None, burst=None,
