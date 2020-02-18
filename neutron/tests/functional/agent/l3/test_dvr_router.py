@@ -2013,7 +2013,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         router_ip2 = router_ip_cidr2.partition('/')[0]
 
         br_int = framework.get_ovs_bridge(
-            self.agent.conf.ovs_integration_bridge)
+            self.agent.conf.OVS.integration_bridge)
         test_machine1 = self.useFixture(
             machine_fixtures.FakeMachine(
                 br_int,
@@ -2065,7 +2065,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         router.process()
 
         br_int = framework.get_ovs_bridge(
-            self.agent.conf.ovs_integration_bridge)
+            self.agent.conf.OVS.integration_bridge)
         src_machine = self.useFixture(
             machine_fixtures.FakeMachine(br_int, '19.4.4.12/24'))
         # Floating ip should work no matter of address scope
@@ -2080,7 +2080,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         gw_port = router.get_ex_gw_port()
         gw_ip = self._port_first_ip_cidr(gw_port).partition('/')[0]
         br_int = framework.get_ovs_bridge(
-            self.agent.conf.ovs_integration_bridge)
+            self.agent.conf.OVS.integration_bridge)
 
         src_machine = self.useFixture(
             machine_fixtures.FakeMachine(br_int, '19.4.4.12/24', gw_ip))

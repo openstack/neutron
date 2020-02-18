@@ -103,7 +103,7 @@ class MetadataL3AgentTestCase(framework.L3AgentTestFramework):
         # Create and configure client namespace
         router_ip_cidr = self._port_first_ip_cidr(router.internal_ports[0])
         br_int = framework.get_ovs_bridge(
-            self.agent.conf.ovs_integration_bridge)
+            self.agent.conf.OVS.integration_bridge)
 
         machine = self.useFixture(
             machine_fixtures.FakeMachine(

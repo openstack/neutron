@@ -51,6 +51,9 @@ PD_DRIVER_OPTS = [
 INTERFACE_OPTS = [
     cfg.StrOpt('ovs_integration_bridge',
                default='br-int',
+               deprecated_for_removal=True,
+               deprecated_reason='This variable is a duplicate of '
+                                 'OVS.integration_bridge. To be removed in W.',
                help=_('Name of Open vSwitch bridge to use')),
     cfg.BoolOpt('ovs_use_veth',
                 default=False,

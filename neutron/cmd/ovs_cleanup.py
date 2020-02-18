@@ -21,6 +21,7 @@ from neutron.common import config
 from neutron.conf.agent import cmd
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
+from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron.conf import service as service_config
 
 LOG = logging.getLogger(__name__)
@@ -43,6 +44,7 @@ def setup_conf():
     agent_config.register_interface_driver_opts_helper(conf)
     agent_config.register_interface_opts()
     service_config.register_service_opts(service_config.RPC_EXTRA_OPTS, conf)
+    ovs_conf.register_ovs_agent_opts(conf)
     conf.set_default("ovsdb_timeout", CLEANUP_OVSDB_TIMEOUT, "OVS")
     return conf
 
@@ -60,7 +62,7 @@ def main():
 
 
 def do_main(conf):
-    configuration_bridges = set([conf.ovs_integration_bridge])
+    configuration_bridges = set([conf.OVS.integration_bridge])
     ovs = ovs_lib.BaseOVS()
     ovs_bridges = set(ovs.get_bridges())
     available_configuration_bridges = configuration_bridges & ovs_bridges

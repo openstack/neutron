@@ -25,6 +25,7 @@ DEFAULT_TUNNEL_TYPES = []
 
 ovs_opts = [
     cfg.StrOpt('integration_bridge', default='br-int',
+               deprecated_name='ovs_integration_bridge',
                help=_("Integration bridge to use. "
                       "Do not change this parameter unless you have a good "
                       "reason to. This is the name of the OVS integration "
@@ -182,3 +183,7 @@ agent_opts = [
 def register_ovs_agent_opts(cfg=cfg.CONF):
     cfg.register_opts(ovs_opts, "OVS")
     cfg.register_opts(agent_opts, "AGENT")
+
+
+def register_ovs_opts(cfg=cfg.CONF):
+    cfg.register_opts(ovs_opts, "OVS")

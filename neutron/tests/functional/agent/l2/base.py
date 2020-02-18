@@ -148,7 +148,6 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase, OVSOFControllerHelper):
             'interface_driver',
             'neutron.agent.linux.interface.OVSInterfaceDriver')
         config.set_override('integration_bridge', self.br_int, "OVS")
-        config.set_override('ovs_integration_bridge', self.br_int)
         config.set_override('tunnel_bridge', self.br_tun, "OVS")
         config.set_override('int_peer_patch_port', self.patch_tun, "OVS")
         config.set_override('tun_peer_patch_port', self.patch_int, "OVS")

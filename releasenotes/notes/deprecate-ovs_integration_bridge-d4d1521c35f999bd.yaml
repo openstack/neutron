@@ -1,0 +1,6 @@
+---
+deprecations:
+  - Deprecate ``ovs_integration_bridge``. This configuration option is a
+    duplicate of ``OVS:integration_bridge``. Currently both options must be the
+    same to avoid configuration clashes. Previously used in the DHCP agent.
+    It will be removed in next releases.
