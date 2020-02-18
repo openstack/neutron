@@ -29,11 +29,13 @@ source $TOP_DIR/lib/neutron_plugins/openvswitch_agent
 # Set variables for building OVN from source
 OVN_REPO=${OVN_REPO:-https://github.com/ovn-org/ovn.git}
 OVN_REPO_NAME=$(basename ${OVN_REPO} | cut -f1 -d'.')
+OVN_REPO_NAME=${OVN_REPO_NAME:-ovn}
 OVN_BRANCH=${OVN_BRANCH:-master}
 
 # Set variables for building OVS from source
 OVS_REPO=${OVS_REPO:-https://github.com/openvswitch/ovs.git}
 OVS_REPO_NAME=$(basename ${OVS_REPO} | cut -f1 -d'.')
+OVS_REPO_NAME=${OVS_REPO_NAME:-ovs}
 OVS_BRANCH=${OVS_BRANCH:-master}
 
 # How to connect to ovsdb-server hosting the OVN SB database.
@@ -201,20 +203,18 @@ function _run_process {
 
 function clone_repository {
     local repo=$1
-    local branch=$2
-    repo_name=$(basename ${repo} | cut -f1 -d'.')
+    local dir=$2
+    local branch=$3
 
-    REPO_DIR=$DEST/$repo_name
-
-    if [ ! -d $REPO_DIR ] ; then
-        git_timed clone $repo $REPO_DIR
-        pushd $REPO_DIR
+    if [ ! -d $dir ] ; then
+        git_timed clone $repo $dir
+        pushd $dir
         git checkout $branch
         popd
     else
         # Even though the directory already exists, call git_clone to update it
         # if needed based on the RECLONE option
-        git_clone $repo $REPO_DIR $branch
+        git_clone $repo $dir $branch
     fi
 }
 
@@ -286,7 +286,7 @@ function _disable_libvirt_apparmor {
 # the compilation.
 function _prepare_for_ovs_compilation {
     local build_modules=$1
-    clone_repository $OVS_REPO $OVS_BRANCH
+    clone_repository $OVS_REPO $DEST/$OVS_REPO_NAME $OVS_BRANCH
 
     if [[ "$build_modules" == "False" ]]; then
         return
@@ -391,7 +391,7 @@ function compile_ovn {
         localstatedir="--localstatedir=$localstatedir"
     fi
 
-    clone_repository $OVN_REPO $OVN_BRANCH
+    clone_repository $OVN_REPO $DEST/$OVN_REPO_NAME $OVN_BRANCH
     pushd $DEST/$OVN_REPO_NAME
 
     if [ ! -f configure ] ; then
@@ -476,7 +476,7 @@ function install_ovn {
     if [[ "$OVN_INSTALL_OVS_PYTHON_MODULE" == "True" ]]; then
         sudo pip uninstall -y ovs
         # Clone the OVS repository if it's not yet present
-        clone_repository $OVS_REPO $OVS_BRANCH
+        clone_repository $OVS_REPO $DEST/$OVS_REPO_NAME $OVS_BRANCH
         sudo pip install -e $DEST/$OVS_REPO_NAME/python
     fi
 }
