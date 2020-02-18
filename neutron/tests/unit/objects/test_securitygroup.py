@@ -10,7 +10,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+import itertools
 import random
+
+from oslo_utils import uuidutils
 
 from neutron.objects import securitygroup
 from neutron.tests.unit.objects import test_base
@@ -213,3 +217,38 @@ class SecurityGroupRuleDbObjTestCase(test_base.BaseDbObjectTestCase,
                 'remote_group_id':
                     lambda: self._create_test_security_group_id()
             })
+
+    def test_get_security_group_rule_ids(self):
+        """Retrieve the SG rules associated to a project (see method desc.)
+
+        SG1 (PROJECT1)            SG2 (PROJECT2)
+          rule1a (PROJECT1)         rule2a (PROJECT1)
+          rule1b (PROJECT2)         rule2b (PROJECT2)
+
+        query PROJECT1: rule1a, rule1b, rule2a
+        query PROJECT2: rule1b, rule2a, rule2b
+        """
+        projects = [uuidutils.generate_uuid(), uuidutils.generate_uuid()]
+        sgs = [
+            self._create_test_security_group_id({'project_id': projects[0]}),
+            self._create_test_security_group_id({'project_id': projects[1]})]
+
+        rules_per_project = collections.defaultdict(list)
+        rules_per_sg = collections.defaultdict(list)
+        for project, sg in itertools.product(projects, sgs):
+            sgrule_fields = self.get_random_object_fields(
+                securitygroup.SecurityGroupRule)
+            sgrule_fields['project_id'] = project
+            sgrule_fields['security_group_id'] = sg
+            rule = securitygroup.SecurityGroupRule(self.context,
+                                                   **sgrule_fields)
+            rule.create()
+            rules_per_project[project].append(rule.id)
+            rules_per_sg[sg].append(rule.id)
+
+        for idx in range(2):
+            rule_ids = securitygroup.SecurityGroupRule.\
+                get_security_group_rule_ids(projects[idx])
+            rule_ids_ref = set(rules_per_project[projects[idx]])
+            rule_ids_ref.update(set(rules_per_sg[sgs[idx]]))
+            self.assertEqual(rule_ids_ref, set(rule_ids))

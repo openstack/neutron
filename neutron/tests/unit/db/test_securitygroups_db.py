@@ -477,3 +477,60 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             {'port_range_min': None,
              'port_range_max': 200,
              'protocol': constants.PROTO_NAME_VRRP})
+
+    def _create_environment(self):
+        self.sg = copy.deepcopy(FAKE_SECGROUP)
+        self.user_ctx = context.Context(user_id='user1', tenant_id='tenant_1',
+                                        is_admin=False, overwrite=False)
+        self.admin_ctx = context.Context(user_id='user2', tenant_id='tenant_2',
+                                         is_admin=True, overwrite=False)
+        self.sg_user = self.mixin.create_security_group(
+            self.user_ctx, {'security_group': {'name': 'name',
+                                               'tenant_id': 'tenant_1',
+                                               'description': 'fake'}})
+
+    def test_get_security_group_rules(self):
+        self._create_environment()
+        rules_before = self.mixin.get_security_group_rules(self.user_ctx)
+
+        rule = copy.deepcopy(FAKE_SECGROUP_RULE)
+        rule['security_group_rule']['security_group_id'] = self.sg_user['id']
+        rule['security_group_rule']['tenant_id'] = 'tenant_2'
+        self.mixin.create_security_group_rule(self.admin_ctx, rule)
+
+        rules_after = self.mixin.get_security_group_rules(self.user_ctx)
+        self.assertEqual(len(rules_before) + 1, len(rules_after))
+        for rule in (rule for rule in rules_after if rule not in rules_before):
+            self.assertEqual('tenant_2', rule['tenant_id'])
+
+    def test_get_security_group_rules_filters_passed(self):
+        self._create_environment()
+        filters = {'security_group_id': self.sg_user['id']}
+        rules_before = self.mixin.get_security_group_rules(self.user_ctx,
+                                                           filters=filters)
+
+        default_sg = self.mixin.get_security_groups(
+            self.user_ctx, filters={'name': 'default'})[0]
+        rule = copy.deepcopy(FAKE_SECGROUP_RULE)
+        rule['security_group_rule']['security_group_id'] = default_sg['id']
+        rule['security_group_rule']['tenant_id'] = 'tenant_1'
+        self.mixin.create_security_group_rule(self.user_ctx, rule)
+
+        rules_after = self.mixin.get_security_group_rules(self.user_ctx,
+                                                          filters=filters)
+        self.assertEqual(rules_before, rules_after)
+
+    def test_get_security_group_rules_admin_context(self):
+        self._create_environment()
+        rules_before = self.mixin.get_security_group_rules(self.ctx)
+
+        rule = copy.deepcopy(FAKE_SECGROUP_RULE)
+        rule['security_group_rule']['security_group_id'] = self.sg_user['id']
+        rule['security_group_rule']['tenant_id'] = 'tenant_1'
+        self.mixin.create_security_group_rule(self.user_ctx, rule)
+
+        rules_after = self.mixin.get_security_group_rules(self.ctx)
+        self.assertEqual(len(rules_before) + 1, len(rules_after))
+        for rule in (rule for rule in rules_after if rule not in rules_before):
+            self.assertEqual('tenant_1', rule['tenant_id'])
+            self.assertEqual(self.sg_user['id'], rule['security_group_id'])
