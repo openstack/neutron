@@ -30,7 +30,8 @@ from neutron.tests.unit.plugins.ml2 import _test_mech_agent as base
 
 class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
     VIF_TYPE = portbindings.VIF_TYPE_OVS
-    VIF_DETAILS = {portbindings.OVS_DATAPATH_TYPE: 'system',
+    VIF_DETAILS = {'bridge_name': 'br-int',
+                   portbindings.OVS_DATAPATH_TYPE: 'system',
                    portbindings.CAP_PORT_FILTER: True,
                    portbindings.OVS_HYBRID_PLUG: True}
     AGENT_TYPE = constants.AGENT_TYPE_OVS
@@ -38,11 +39,13 @@ class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
     GOOD_MAPPINGS = {'fake_physical_network': 'fake_bridge'}
     GOOD_TUNNEL_TYPES = ['gre', 'vxlan']
     GOOD_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
+                    'integration_bridge': 'br-int',
                     'tunnel_types': GOOD_TUNNEL_TYPES}
 
     BAD_MAPPINGS = {'wrong_physical_network': 'wrong_bridge'}
     BAD_TUNNEL_TYPES = ['bad_tunnel_type']
     BAD_CONFIGS = {'bridge_mappings': BAD_MAPPINGS,
+                   'integration_bridge': 'br-int',
                    'tunnel_types': BAD_TUNNEL_TYPES}
 
     AGENTS = [{'alive': True,
@@ -70,18 +73,43 @@ class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
         def fake_callback(resource, event, trigger, payload=None):
             trigger('fake-br-name')
 
+        def noop_callback(resource, event, trigger, payload=None):
+            pass
+
+        # hardcode callback to override bridge name
         registry.subscribe(fake_callback, a_const.OVS_BRIDGE_NAME,
                            events.BEFORE_READ)
         fake_vif_details = {}
-        self.driver._set_bridge_name('foo', fake_vif_details)
+        fake_agent = {'configurations': {'integration_bridge': 'fake-br'}}
+        old_fake_agent = {'configurations': {}}
+        self.driver._set_bridge_name('foo', fake_vif_details, fake_agent)
+        # assert that callback value is used
         self.assertEqual(
             'fake-br-name',
             fake_vif_details.get(portbindings.VIF_DETAILS_BRIDGE_NAME, ''))
+        # replace callback with noop
+        registry.unsubscribe(fake_callback, a_const.OVS_BRIDGE_NAME,
+                           events.BEFORE_READ)
+        registry.subscribe(noop_callback, a_const.OVS_BRIDGE_NAME,
+                           events.BEFORE_READ)
+        fake_vif_details = {}
+        self.driver._set_bridge_name('foo', fake_vif_details, fake_agent)
+        # assert that agent config value is used
+        self.assertEqual(
+            'fake-br',
+            fake_vif_details.get(portbindings.VIF_DETAILS_BRIDGE_NAME, ''))
+        fake_vif_details = {}
+        self.driver._set_bridge_name('foo', fake_vif_details, old_fake_agent)
+        # assert that if agent does not supply integration_bridge bridge_name
+        # is not set in vif:binding-details
+        self.assertIsNone(
+            fake_vif_details.get(portbindings.VIF_DETAILS_BRIDGE_NAME))
 
 
 class OpenvswitchMechanismSGDisabledBaseTestCase(
     OpenvswitchMechanismBaseTestCase):
-    VIF_DETAILS = {portbindings.OVS_DATAPATH_TYPE: 'system',
+    VIF_DETAILS = {'bridge_name': 'br-int',
+                   portbindings.OVS_DATAPATH_TYPE: 'system',
                    portbindings.CAP_PORT_FILTER: False,
                    portbindings.OVS_HYBRID_PLUG: False}
 
@@ -169,7 +197,8 @@ class OpenvswitchMechanismSGDisabledLocalTestCase(
 class OpenvswitchMechanismFirewallUndefinedTestCase(
     OpenvswitchMechanismBaseTestCase, base.AgentMechanismLocalTestCase):
 
-    VIF_DETAILS = {portbindings.OVS_DATAPATH_TYPE: 'system',
+    VIF_DETAILS = {'bridge_name': 'br-int',
+                   portbindings.OVS_DATAPATH_TYPE: 'system',
                    portbindings.CAP_PORT_FILTER: True,
                    portbindings.OVS_HYBRID_PLUG: True}
 
@@ -190,18 +219,21 @@ class OpenvswitchMechanismDPDKTestCase(OpenvswitchMechanismBaseTestCase):
     GOOD_TUNNEL_TYPES = ['gre', 'vxlan']
 
     VHOST_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
+                    'integration_bridge': 'br-int',
                     'tunnel_types': GOOD_TUNNEL_TYPES,
                     'datapath_type': a_const.OVS_DATAPATH_NETDEV,
                     'ovs_capabilities': {
                         'iface_types': [a_const.OVS_DPDK_VHOST_USER]}}
 
     VHOST_SERVER_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
+                    'integration_bridge': 'br-int',
                     'tunnel_types': GOOD_TUNNEL_TYPES,
                     'datapath_type': a_const.OVS_DATAPATH_NETDEV,
                     'ovs_capabilities': {
                         'iface_types': [a_const.OVS_DPDK_VHOST_USER_CLIENT]}}
 
     SYSTEM_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
+                      'integration_bridge': 'br-int',
                       'tunnel_types': GOOD_TUNNEL_TYPES,
                       'datapath_type': a_const.OVS_DATAPATH_SYSTEM,
                       'ovs_capabilities': {'iface_types': []}}
