@@ -34,7 +34,8 @@ RESOURCE_ATTRIBUTE_MAP = attrs.RESOURCES
 # Identify the attribute used by a resource to reference another resource
 
 RESOURCE_FOREIGN_KEYS = {
-    net_def.COLLECTION_NAME: 'network_id'
+    net_def.COLLECTION_NAME: 'network_id',
+    'security_groups': 'security_group_id'
 }
 
 
