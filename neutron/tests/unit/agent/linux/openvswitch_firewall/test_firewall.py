@@ -302,9 +302,9 @@ class TestConjIPFlowManager(base.BaseTestCase):
         self.vlan_tag = 100
         self.conj_id = 16
 
-    def test_update_flows_for_vlan_no_ports(self):
+    def test_update_flows_for_vlan_no_members(self):
         remote_group = self.driver.sg_port_map.get_sg.return_value
-        remote_group.ports = {}
+        remote_group.members = {}
         with mock.patch.object(self.manager.conj_id_map,
                                'get_conj_id') as get_conj_id_mock:
             get_conj_id_mock.return_value = self.conj_id
@@ -313,6 +313,21 @@ class TestConjIPFlowManager(base.BaseTestCase):
             self.manager.update_flows_for_vlan(self.vlan_tag)
         self.assertFalse(remote_group.get_ethertype_filtered_addresses.called)
         self.assertFalse(self.driver._add_flow.called)
+
+    def test_update_flows_for_vlan_no_ports_but_members(self):
+        remote_group = self.driver.sg_port_map.get_sg.return_value
+        remote_group.ports = set()
+        remote_group.members = {constants.IPv4: ['10.22.3.4']}
+        remote_group.get_ethertype_filtered_addresses.return_value = [
+            '10.22.3.4']
+        with mock.patch.object(self.manager.conj_id_map,
+                               'get_conj_id') as get_conj_id_mock:
+            get_conj_id_mock.return_value = self.conj_id
+            self.manager.add(self.vlan_tag, 'sg', 'remote_id',
+                             constants.INGRESS_DIRECTION, constants.IPv4, 0)
+            self.manager.update_flows_for_vlan(self.vlan_tag)
+        self.assertTrue(remote_group.get_ethertype_filtered_addresses.called)
+        self.assertTrue(self.driver._add_flow.called)
 
     def test_update_flows_for_vlan(self):
         remote_group = self.driver.sg_port_map.get_sg.return_value
