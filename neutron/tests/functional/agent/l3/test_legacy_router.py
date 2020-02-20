@@ -320,7 +320,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         # Verify that the ping replys with fip
         ns_ip_wrapper = ip_lib.IPWrapper(src_machine.namespace)
         result = ns_ip_wrapper.netns.execute(
-            ['ping', '-c', 1, '-W', 5, dst_fip])
+            ['ping', '-W', 5, '-c', 1, dst_fip])
         self._assert_ping_reply_from_expected_address(result, dst_fip)
 
     def _setup_address_scope(self, internal_address_scope1,
