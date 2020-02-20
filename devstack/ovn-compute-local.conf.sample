@@ -17,6 +17,12 @@ SERVICE_PASSWORD=password
 SERVICE_TOKEN=password
 ADMIN_PASSWORD=password
 
+Q_AGENT=ovn
+NEUTRON_AGENT=$Q_AGENT
+Q_ML2_PLUGIN_MECHANISM_DRIVERS=ovn,logger
+Q_ML2_PLUGIN_TYPE_DRIVERS=local,flat,vlan,geneve
+Q_ML2_TENANT_NETWORK_TYPE="geneve"
+
 # Enable devstack spawn logging
 LOGFILE=$DEST/logs/stack.sh.log
 
