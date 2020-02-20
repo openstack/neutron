@@ -705,6 +705,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         pager = base_obj.Pager(
             sorts=sorts, marker=marker, limit=limit, page_reverse=page_reverse)
 
+        project_id = filters.get('project_id') or filters.get('tenant_id')
+        if project_id:
+            project_id = project_id[0]
+        else:
+            project_id = context.project_id
+        if project_id:
+            self._ensure_default_security_group(context, project_id)
+
         # NOTE(slaweq): use admin context here to be able to get all rules
         # which fits filters' criteria. Later in policy engine rules will be
         # filtered and only those which are allowed according to policy will
