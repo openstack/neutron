@@ -277,10 +277,7 @@ class OVNClient(object):
                 # OVN allows any mac address from a port if "unknown"
                 # is added to the Logical_Switch_Port.addresses column.
                 # So add it.
-                addresses = [ovn_const.UNKNOWN_ADDR]
-            else:
-                addresses = [address]
-                addresses.extend(new_macs)
+                addresses.append(ovn_const.UNKNOWN_ADDR)
 
         dhcpv4_options = self._get_port_dhcp_options(port, const.IP_VERSION_4)
         dhcpv6_options = self._get_port_dhcp_options(port, const.IP_VERSION_6)
