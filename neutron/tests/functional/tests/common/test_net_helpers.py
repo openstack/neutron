@@ -21,6 +21,7 @@ from neutron_lib import exceptions as n_exc
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import utils as n_utils
+from neutron.tests import base as test_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 
@@ -40,6 +41,7 @@ class NetcatTesterTestCase(base.BaseSudoTestCase):
         veth2.link.set_up()
         veth2.addr.add('10.30.0.2/24')
 
+    @test_base.unstable_test("bug 1862927")
     def test_stop_process(self):
         self.nc.test_connectivity()
         server_pid = self.nc.server_process.child_pid
@@ -51,6 +53,7 @@ class NetcatTesterTestCase(base.BaseSudoTestCase):
         self.assertFalse(utils.process_is_running(server_pid))
         self.assertFalse(utils.process_is_running(client_pid))
 
+    @test_base.unstable_test("bug 1862927")
     def test_stop_process_no_process(self):
         self.nc.test_connectivity()
         client_pid = self.nc.client_process.child_pid
@@ -64,6 +67,7 @@ class NetcatTesterTestCase(base.BaseSudoTestCase):
                               self.nc.stop_processes,
                               skip_errors=[])
 
+    @test_base.unstable_test("bug 1862927")
     def test_stop_process_no_process_skip_no_process_exception(self):
         self.nc.test_connectivity()
         server_pid = self.nc.server_process.child_pid
