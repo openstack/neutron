@@ -15,17 +15,7 @@
 import os
 import re
 
-from neutron_lib.hacking import checks
-
-
-def flake8ext(f):
-    """Decorator to indicate flake8 extension.
-
-    This is borrowed from hacking.core.flake8ext(), but at now it is used
-    only for unit tests to know which are neutron flake8 extensions.
-    """
-    f.name = __name__
-    return f
+from hacking import core
 
 
 # Guidelines for writing new hacking checks
@@ -50,7 +40,7 @@ tests_imports_from2 = re.compile(r"\bfrom[\s]+neutron[\s]+import[\s]+tests\b")
 import_mock = re.compile(r"\bimport[\s]+mock\b")
 
 
-@flake8ext
+@core.flake8ext
 def check_assert_called_once_with(logical_line, filename):
     """N322 - Try to detect unintended calls of nonexistent mock methods like:
                  assertCalledOnceWith
@@ -74,7 +64,7 @@ def check_assert_called_once_with(logical_line, filename):
             yield (0, msg)
 
 
-@flake8ext
+@core.flake8ext
 def check_asserttruefalse(logical_line, filename):
     """N328 - Don't use assertEqual(True/False, observed)."""
     if 'neutron/tests/' in filename:
@@ -96,7 +86,7 @@ def check_asserttruefalse(logical_line, filename):
             yield (0, msg)
 
 
-@flake8ext
+@core.flake8ext
 def check_assertempty(logical_line, filename):
     """N330 - Enforce using assertEqual parameter ordering in case of empty
               objects.
@@ -111,7 +101,7 @@ def check_assertempty(logical_line, filename):
             yield (0, msg)
 
 
-@flake8ext
+@core.flake8ext
 def check_assertisinstance(logical_line, filename):
     """N331 - Enforce using assertIsInstance."""
     if 'neutron/tests/' in filename:
@@ -122,7 +112,7 @@ def check_assertisinstance(logical_line, filename):
             yield (0, msg)
 
 
-@flake8ext
+@core.flake8ext
 def check_assertequal_for_httpcode(logical_line, filename):
     """N332 - Enforce correct oredering for httpcode in assertEqual."""
     msg = ("N332: Use assertEqual(expected_http_code, observed_http_code) "
@@ -133,18 +123,9 @@ def check_assertequal_for_httpcode(logical_line, filename):
             yield (0, msg)
 
 
-@flake8ext
+@core.flake8ext
 def check_oslo_i18n_wrapper(logical_line, filename, noqa):
-    """N340 - Check for neutron.i18n usage.
-
-    Okay(neutron/foo/bar.py): from neutron._i18n import _
-    Okay(neutron_fwaas/foo/bar.py): from neutron_fwaas._i18n import _
-    N340(neutron/foo/bar.py): from neutron.i18n import _
-    N340(neutron_fwaas/foo/bar.py): from neutron_fwaas.i18n import _
-    N340(neutron_fwaas/foo/bar.py): from neutron.i18n import _
-    N340(neutron_fwaas/foo/bar.py): from neutron._i18n import _
-    Okay(neutron/foo/bar.py): from neutron.i18n import _  # noqa
-    """
+    """N340 - Check for neutron.i18n usage."""
 
     if noqa:
         return
@@ -162,16 +143,9 @@ def check_oslo_i18n_wrapper(logical_line, filename, noqa):
             yield (0, msg)
 
 
-@flake8ext
+@core.flake8ext
 def check_builtins_gettext(logical_line, tokens, filename, lines, noqa):
-    """N341 - Check usage of builtins gettext _().
-
-    Okay(neutron/foo.py): from neutron._i18n import _\n_('foo')
-    N341(neutron/foo.py): _('foo')
-    Okay(neutron/_i18n.py): _('foo')
-    Okay(neutron/i18n.py): _('foo')
-    Okay(neutron/foo.py): _('foo')  # noqa
-    """
+    """N341 - Check usage of builtins gettext _()."""
 
     if noqa:
         return
@@ -202,7 +176,7 @@ def check_builtins_gettext(logical_line, tokens, filename, lines, noqa):
             yield (0, msg)
 
 
-@flake8ext
+@core.flake8ext
 def check_no_imports_from_tests(logical_line, filename, noqa):
     """N343 - Production code must not import from neutron.tests.*
     """
@@ -219,7 +193,7 @@ def check_no_imports_from_tests(logical_line, filename, noqa):
             yield(0, msg)
 
 
-@flake8ext
+@core.flake8ext
 def check_python3_no_filter(logical_line):
     """N344 - Use list comprehension instead of filter(lambda)."""
 
@@ -231,7 +205,7 @@ def check_python3_no_filter(logical_line):
 
 
 # TODO(boden): rehome this check to neutron-lib
-@flake8ext
+@core.flake8ext
 def check_no_sqlalchemy_event_import(logical_line, filename, noqa):
     """N346 - Use neutron_lib.db.api.sqla_listen rather than sqlalchemy."""
     if noqa:
@@ -248,7 +222,7 @@ def check_no_sqlalchemy_event_import(logical_line, filename, noqa):
               "between unit tests")
 
 
-@flake8ext
+@core.flake8ext
 def check_no_import_mock(logical_line, filename, noqa):
     """N347 - Test code must not import mock library
     """
@@ -262,18 +236,3 @@ def check_no_import_mock(logical_line, filename, noqa):
 
     if re.match(import_mock, logical_line):
         yield(0, msg)
-
-
-def factory(register):
-    checks.factory(register)
-    register(check_assert_called_once_with)
-    register(check_asserttruefalse)
-    register(check_assertempty)
-    register(check_assertisinstance)
-    register(check_assertequal_for_httpcode)
-    register(check_oslo_i18n_wrapper)
-    register(check_builtins_gettext)
-    register(check_no_imports_from_tests)
-    register(check_python3_no_filter)
-    register(check_no_sqlalchemy_event_import)
-    register(check_no_import_mock)
