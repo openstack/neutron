@@ -37,7 +37,6 @@ from neutron.common.ovn import extensions
 from neutron.common.ovn import utils
 from neutron.db import l3_fip_port_details
 from neutron.db import ovn_revision_numbers_db as db_rev
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.scheduler import l3_ovn_scheduler
 
@@ -68,9 +67,8 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
     def __init__(self):
         LOG.info("Starting OVNL3RouterPlugin")
         super(OVNL3RouterPlugin, self).__init__()
-        self._nb_ovn_idl = None
-        self._sb_ovn_idl = None
         self._plugin_property = None
+        self._mech = None
         self._ovn_client_inst = None
         self.scheduler = l3_ovn_scheduler.get_scheduler()
         self._register_precommit_callbacks()
@@ -92,25 +90,23 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
 
     @property
     def _ovn(self):
-        if self._nb_ovn_idl is None:
-            LOG.info("Getting OvsdbNbOvnIdl")
-            conn = impl_idl_ovn.get_connection(impl_idl_ovn.OvsdbNbOvnIdl)
-            self._nb_ovn_idl = impl_idl_ovn.OvsdbNbOvnIdl(conn)
-        return self._nb_ovn_idl
+        return self._plugin_driver.nb_ovn
 
     @property
     def _sb_ovn(self):
-        if self._sb_ovn_idl is None:
-            LOG.info("Getting OvsdbSbOvnIdl")
-            conn = impl_idl_ovn.get_connection(impl_idl_ovn.OvsdbSbOvnIdl)
-            self._sb_ovn_idl = impl_idl_ovn.OvsdbSbOvnIdl(conn)
-        return self._sb_ovn_idl
+        return self._plugin_driver.sb_ovn
 
     @property
     def _plugin(self):
         if self._plugin_property is None:
             self._plugin_property = directory.get_plugin()
         return self._plugin_property
+
+    @property
+    def _plugin_driver(self):
+        if self._mech is None:
+            self._mech = self._plugin.mechanism_manager.mech_drivers['ovn'].obj
+        return self._mech
 
     def get_plugin_type(self):
         return plugin_constants.L3

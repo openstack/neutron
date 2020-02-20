@@ -312,24 +312,11 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
 
     def restart(self):
         self.stop()
-        # The OVN sync test starts its own synchronizers...
-        self.l3_plugin._nb_ovn_idl.ovsdb_connection.stop()
-        self.l3_plugin._sb_ovn_idl.ovsdb_connection.stop()
-        # Stop our monitor connections
-        self.nb_api.ovsdb_connection.stop()
-        self.sb_api.ovsdb_connection.stop()
 
         if self.ovsdb_server_mgr:
             self.ovsdb_server_mgr.stop()
         if self.ovn_northd_mgr:
             self.ovn_northd_mgr.stop()
-
-        self.mech_driver._nb_ovn = None
-        self.mech_driver._sb_ovn = None
-        self.l3_plugin._nb_ovn_idl = None
-        self.l3_plugin._sb_ovn_idl = None
-        self.nb_api.ovsdb_connection = None
-        self.sb_api.ovsdb_connection = None
 
         self.ovsdb_server_mgr.delete_dbs()
         self._start_ovsdb_server_and_idls()
