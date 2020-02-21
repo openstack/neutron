@@ -218,11 +218,6 @@
           ((^neutron_tempest_plugin.api)|\
           (^neutron_tempest_plugin.scenario)|\
           (tempest.(api|scenario|thirdparty))).*$"
-      # TODO(slaweq): live_migration related test from the blacklist when bug
-      # https://bugzilla.redhat.com/show_bug.cgi?id=1716335 will be fixed
-      tempest_black_regex: "\
-          (^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test)|\
-          (^tempest.api.compute.admin.test_live_migration.LiveMigrationTest)"
       devstack_localrc:
         OVN_BRANCH: master
     group-vars:
