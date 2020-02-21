@@ -682,15 +682,30 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
         # NOTE(ralonsoh): the "_min_bw_qos_id" in vm.bridge is not the same as
         # the ID in the agent br_int instance. We need first to find the QoS
         # register and the Queue assigned to vm.neutron_port['id']
-        queue = vm.bridge._find_queue(vm.neutron_port['id'])
-        queue_num = int(queue['external_ids']['queue-num'])
-        qoses = vm.bridge._list_qos()
-        for qos in qoses:
-            qos_queue = qos['queues'].get(queue_num)
-            if qos_queue and qos_queue.uuid == queue['_uuid']:
-                return qos, qos_queue
+        data = {'qos': None, 'qos_queue': None, 'queue_num': None}
 
-        self.fail('QoS register not found with queue-num %s' % queue_num)
+        def check_qos_and_queue():
+            queue = vm.bridge._find_queue(vm.neutron_port['id'])
+            data['queue_num'] = int(queue['external_ids']['queue-num'])
+            qoses = vm.bridge._list_qos()
+            for qos in qoses:
+                qos_queue = qos['queues'].get(data['queue_num'])
+                if qos_queue and qos_queue.uuid == queue['_uuid']:
+                    data['qos'] = qos
+                    data['qos_queue'] = qos_queue
+                    return True
+
+        try:
+            utils.wait_until_true(check_qos_and_queue, timeout=10)
+            return data['qos'], data['qos_queue']
+        except utils.WaitTimeout:
+            qoses = vm.bridge._list_qos()
+            queues = vm.bridge._list_queues()
+            queuenum = ('QoS register not found with queue-num %s' %
+                        data['queue_num'])
+            qoses = '\nList of OVS QoS registers:\n%s' % '\n'.join(qoses)
+            queues = '\nList of OVS Queue registers:\n%s' % '\n'.join(queues)
+            self.fail(queuenum + qoses + queues)
 
     def test_min_bw_qos_port_removed(self):
         """Test if min BW limit config is properly removed when port removed.
