@@ -13,22 +13,46 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from datetime import datetime
+import errno
 import os
+import shutil
 import warnings
 
+import fixtures
 import mock
+from neutron_lib import fixture
+from neutron_lib.plugins import constants
+from neutron_lib.plugins import directory
+from oslo_concurrency import lockutils
 from oslo_config import cfg
+from oslo_db import exception as os_db_exc
+from oslo_db.sqlalchemy import provision
+from oslo_log import log
+from oslo_utils import uuidutils
 
 from neutron.agent.linux import utils
+from neutron.api import extensions as exts
 from neutron.conf.agent import common as config
 from neutron.conf.agent import ovs_conf
+from neutron.conf.plugins.ml2 import config as ml2_config
+# Load all the models to register them into SQLAlchemy metadata before using
+# the SqlFixture
+from neutron.db import models  # noqa
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
+from neutron.plugins.ml2.drivers import type_geneve  # noqa
 from neutron.tests import base
 from neutron.tests.common import base as common_base
 from neutron.tests.common import helpers
+from neutron.tests.functional.resources import process
+from neutron.tests.unit.plugins.ml2 import test_plugin
+
+LOG = log.getLogger(__name__)
 
 # This is the directory from which infra fetches log files for functional tests
 DEFAULT_LOG_DIR = os.path.join(helpers.get_test_log_path(),
                                'dsvm-functional-logs')
+SQL_FIXTURE_LOCK = 'sql_fixture_lock'
 
 
 def config_decorator(method_to_decorate, config_tuples):
@@ -99,3 +123,237 @@ class BaseSudoTestCase(BaseLoggingTestCase):
             ovs_conf.register_ovs_agent_opts, ovs_agent_opts)
         mock.patch.object(ovs_conf, 'register_ovs_agent_opts',
                           new=ovs_agent_decorator).start()
+
+
+class OVNSqlFixture(fixture.StaticSqlFixture):
+
+    @classmethod
+    @lockutils.synchronized(SQL_FIXTURE_LOCK)
+    def _init_resources(cls):
+        cls.schema_resource = provision.SchemaResource(
+            provision.DatabaseResource("sqlite"),
+            cls._generate_schema, teardown=False)
+        dependency_resources = {}
+        for name, resource in cls.schema_resource.resources:
+            dependency_resources[name] = resource.getResource()
+        cls.schema_resource.make(dependency_resources)
+        cls.engine = dependency_resources['database'].engine
+
+    def _delete_from_schema(self, engine):
+        try:
+            super(OVNSqlFixture, self)._delete_from_schema(engine)
+        except os_db_exc.DBNonExistentTable:
+            pass
+
+
+class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
+                            BaseLoggingTestCase):
+
+    OVS_DISTRIBUTION = 'openvswitch'
+    OVN_DISTRIBUTION = 'ovn'
+    OVN_SCHEMA_FILES = ['ovn-nb.ovsschema', 'ovn-sb.ovsschema']
+
+    _mechanism_drivers = ['logger', 'ovn']
+    _extension_drivers = ['port_security']
+    _counter = 0
+    l3_plugin = 'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin'
+
+    def setUp(self, maintenance_worker=False):
+        ml2_config.cfg.CONF.set_override('extension_drivers',
+                                     self._extension_drivers,
+                                     group='ml2')
+        ml2_config.cfg.CONF.set_override('tenant_network_types',
+                                     ['geneve'],
+                                     group='ml2')
+        ml2_config.cfg.CONF.set_override('vni_ranges',
+                                     ['1:65536'],
+                                     group='ml2_type_geneve')
+
+        self.addCleanup(exts.PluginAwareExtensionManager.clear_instance)
+        super(TestOVNFunctionalBase, self).setUp()
+        self.test_log_dir = os.path.join(DEFAULT_LOG_DIR, self.id())
+        base.setup_test_logging(
+            cfg.CONF, self.test_log_dir, "testrun.txt")
+
+        mm = directory.get_plugin().mechanism_manager
+        self.mech_driver = mm.mech_drivers['ovn'].obj
+        self.l3_plugin = directory.get_plugin(constants.L3)
+        self.ovsdb_server_mgr = None
+        self.ovn_northd_mgr = None
+        self.maintenance_worker = maintenance_worker
+        self.temp_dir = self.useFixture(fixtures.TempDir()).path
+        self._start_ovsdb_server_and_idls()
+        self._start_ovn_northd()
+
+    def _get_install_share_path(self):
+        lookup_paths = set()
+        for installation in ['local', '']:
+            for distribution in [self.OVN_DISTRIBUTION, self.OVS_DISTRIBUTION]:
+                exists = True
+                for ovn_file in self.OVN_SCHEMA_FILES:
+                    path = os.path.join(os.path.sep, 'usr', installation,
+                                        'share', distribution, ovn_file)
+                    exists &= os.path.isfile(path)
+                    lookup_paths.add(os.path.dirname(path))
+                if exists:
+                    return os.path.dirname(path)
+        msg = 'Either ovn-nb.ovsschema and/or ovn-sb.ovsschema are missing. '
+        msg += 'Looked for schemas in paths:' + ', '.join(sorted(lookup_paths))
+        raise FileNotFoundError(
+                    errno.ENOENT, os.strerror(errno.ENOENT), msg)
+
+    # FIXME(lucasagomes): Workaround for
+    # https://bugs.launchpad.net/networking-ovn/+bug/1808146. We should
+    # investigate and properly fix the problem. This method is just a
+    # workaround to alleviate the gate for now and should not be considered
+    # a proper fix.
+    def _setup_database_fixtures(self):
+        fixture = OVNSqlFixture()
+        self.useFixture(fixture)
+        self.engine = fixture.engine
+
+    def get_additional_service_plugins(self):
+        p = super(TestOVNFunctionalBase, self).get_additional_service_plugins()
+        p.update({'revision_plugin_name': 'revisions'})
+        return p
+
+    @property
+    def _ovsdb_protocol(self):
+        return self.get_ovsdb_server_protocol()
+
+    def get_ovsdb_server_protocol(self):
+        return 'unix'
+
+    def _start_ovn_northd(self):
+        if not self.ovsdb_server_mgr:
+            return
+        ovn_nb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('nb')
+        ovn_sb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('sb')
+        self.ovn_northd_mgr = self.useFixture(
+            process.OvnNorthd(self.temp_dir,
+                              ovn_nb_db, ovn_sb_db,
+                              protocol=self._ovsdb_protocol))
+
+    def _start_ovsdb_server_and_idls(self):
+        # Start 2 ovsdb-servers one each for OVN NB DB and OVN SB DB
+        # ovsdb-server with OVN SB DB can be used to test the chassis up/down
+        # events.
+        install_share_path = self._get_install_share_path()
+        self.ovsdb_server_mgr = self.useFixture(
+            process.OvsdbServer(self.temp_dir, install_share_path,
+                                ovn_nb_db=True, ovn_sb_db=True,
+                                protocol=self._ovsdb_protocol))
+        set_cfg = cfg.CONF.set_override
+        set_cfg('ovn_nb_connection',
+                self.ovsdb_server_mgr.get_ovsdb_connection_path(), 'ovn')
+        set_cfg('ovn_sb_connection',
+                self.ovsdb_server_mgr.get_ovsdb_connection_path(
+                    db_type='sb'), 'ovn')
+        set_cfg('ovn_nb_private_key', self.ovsdb_server_mgr.private_key, 'ovn')
+        set_cfg('ovn_nb_certificate', self.ovsdb_server_mgr.certificate, 'ovn')
+        set_cfg('ovn_nb_ca_cert', self.ovsdb_server_mgr.ca_cert, 'ovn')
+        set_cfg('ovn_sb_private_key', self.ovsdb_server_mgr.private_key, 'ovn')
+        set_cfg('ovn_sb_certificate', self.ovsdb_server_mgr.certificate, 'ovn')
+        set_cfg('ovn_sb_ca_cert', self.ovsdb_server_mgr.ca_cert, 'ovn')
+
+        # 5 seconds should be more than enough for the transaction to complete
+        # for the test cases.
+        # This also fixes the bug #1607639.
+        cfg.CONF.set_override(
+            'ovsdb_connection_timeout', 5,
+            'ovn')
+
+        class TriggerCls(mock.MagicMock):
+            def trigger(self):
+                pass
+
+        trigger_cls = TriggerCls()
+        if self.maintenance_worker:
+            trigger_cls.trigger.__self__.__class__ = worker.MaintenanceWorker
+            cfg.CONF.set_override('neutron_sync_mode', 'off', 'ovn')
+
+        self.addCleanup(self._collect_processes_logs)
+        self.addCleanup(self.stop)
+
+        # mech_driver.post_fork_initialize creates the IDL connections
+        self.mech_driver.post_fork_initialize(
+            mock.ANY, mock.ANY, trigger_cls.trigger)
+
+        self.nb_api = self.mech_driver._nb_ovn
+        self.sb_api = self.mech_driver._sb_ovn
+
+    def _collect_processes_logs(self):
+        for database in ("nb", "sb"):
+            for file_suffix in ("log", "db"):
+                src_filename = "ovn_%(db)s.%(suffix)s" % {
+                    'db': database,
+                    'suffix': file_suffix
+                }
+                dst_filename = "ovn_%(db)s-%(timestamp)s.%(suffix)s" % {
+                    'db': database,
+                    'suffix': file_suffix,
+                    'timestamp': datetime.now().strftime('%y-%m-%d_%H-%M-%S'),
+                }
+
+                filepath = os.path.join(self.temp_dir, src_filename)
+                shutil.copyfile(
+                    filepath, os.path.join(self.test_log_dir, dst_filename))
+
+    def stop(self):
+        if self.maintenance_worker:
+            self.mech_driver.nb_synchronizer.stop()
+            self.mech_driver.sb_synchronizer.stop()
+        self.mech_driver._nb_ovn.ovsdb_connection.stop()
+        self.mech_driver._sb_ovn.ovsdb_connection.stop()
+
+    def restart(self):
+        self.stop()
+        # The OVN sync test starts its own synchronizers...
+        self.l3_plugin._nb_ovn_idl.ovsdb_connection.stop()
+        self.l3_plugin._sb_ovn_idl.ovsdb_connection.stop()
+        # Stop our monitor connections
+        self.nb_api.ovsdb_connection.stop()
+        self.sb_api.ovsdb_connection.stop()
+
+        if self.ovsdb_server_mgr:
+            self.ovsdb_server_mgr.stop()
+        if self.ovn_northd_mgr:
+            self.ovn_northd_mgr.stop()
+
+        self.mech_driver._nb_ovn = None
+        self.mech_driver._sb_ovn = None
+        self.l3_plugin._nb_ovn_idl = None
+        self.l3_plugin._sb_ovn_idl = None
+        self.nb_api.ovsdb_connection = None
+        self.sb_api.ovsdb_connection = None
+
+        self.ovsdb_server_mgr.delete_dbs()
+        self._start_ovsdb_server_and_idls()
+        self._start_ovn_northd()
+
+    def add_fake_chassis(self, host, physical_nets=None, external_ids=None,
+                         name=None):
+        physical_nets = physical_nets or []
+        external_ids = external_ids or {}
+
+        bridge_mapping = ",".join(["%s:br-provider%s" % (phys_net, i)
+                                  for i, phys_net in enumerate(physical_nets)])
+        if name is None:
+            name = uuidutils.generate_uuid()
+        external_ids['ovn-bridge-mappings'] = bridge_mapping
+        # We'll be using different IP addresses every time for the Encap of
+        # the fake chassis as the SB schema doesn't allow to have two entries
+        # with same (ip,type) pairs as of OVS 2.11. This shouldn't have any
+        # impact as the tunnels won't get created anyways since ovn-controller
+        # is not running. Ideally we shouldn't be creating more than 255
+        # fake chassis but from the SB db point of view, 'ip' column can be
+        # any string so we could add entries with ip='172.24.4.1000'.
+        self._counter += 1
+        self.sb_api.chassis_add(
+            name, ['geneve'], '172.24.4.%d' % self._counter,
+            external_ids=external_ids, hostname=host).execute(check_error=True)
+        return name
+
+    def del_fake_chassis(self, chassis, if_exists=True):
+        self.sb_api.chassis_del(
+            chassis, if_exists=if_exists).execute(check_error=True)
