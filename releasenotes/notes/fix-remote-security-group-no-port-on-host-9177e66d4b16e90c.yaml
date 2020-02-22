@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Fixes an issue that the OVS firewall driver does not configure security
+    group rules using remote group properly when a corresponding remote group
+    has no port on a local hypervisor. For more information
+    see bugs: `1862703 <https://bugs.launchpad.net/neutron/+bug/1862703>`_
+    and `1854131 <https://bugs.launchpad.net/neutron/+bug/1854131>`__.
