@@ -34,7 +34,6 @@ from six import moves
 from sqlalchemy import or_
 
 from neutron._i18n import _
-from neutron.objects import base as base_obj
 from neutron.objects import network_segment_range as range_obj
 from neutron.plugins.ml2.drivers import helpers
 from neutron.services.network_segment_range import plugin as range_plugin
@@ -279,78 +278,6 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
         return ranges
 
 
-class TunnelTypeDriver(_TunnelTypeDriverBase, metaclass=abc.ABCMeta):
-    """Define stable abstract interface for ML2 type drivers.
-
-    tunnel type networks rely on tunnel endpoints. This class defines abstract
-    methods to manage these endpoints.
-
-    ML2 type driver that passes session to functions:
-    - reserve_provider_segment
-    - allocate_tenant_segment
-    - release_segment
-    - get_allocation
-    """
-
-    def reserve_provider_segment(self, session, segment, filters=None):
-        if self.is_partial_segment(segment):
-            filters = filters or {}
-            alloc = self.allocate_partially_specified_segment(session,
-                                                              **filters)
-            if not alloc:
-                raise exc.NoNetworkAvailable()
-        else:
-            segmentation_id = segment.get(api.SEGMENTATION_ID)
-            alloc = self.allocate_fully_specified_segment(
-                session, **{self.segmentation_key: segmentation_id})
-            if not alloc:
-                raise exc.TunnelIdInUse(tunnel_id=segmentation_id)
-        return {api.NETWORK_TYPE: self.get_type(),
-                api.PHYSICAL_NETWORK: None,
-                api.SEGMENTATION_ID: getattr(alloc, self.segmentation_key),
-                api.MTU: self.get_mtu()}
-
-    def allocate_tenant_segment(self, session, filters=None):
-        filters = filters or {}
-        alloc = self.allocate_partially_specified_segment(session, **filters)
-        if not alloc:
-            return
-        return {api.NETWORK_TYPE: self.get_type(),
-                api.PHYSICAL_NETWORK: None,
-                api.SEGMENTATION_ID: getattr(alloc, self.segmentation_key),
-                api.MTU: self.get_mtu()}
-
-    def release_segment(self, session, segment):
-        tunnel_id = segment[api.SEGMENTATION_ID]
-
-        ranges = self.get_network_segment_ranges()
-
-        inside = any(lo <= tunnel_id <= hi for lo, hi in ranges)
-
-        info = {'type': self.get_type(), 'id': tunnel_id}
-        with session.begin(subtransactions=True):
-            query = (session.query(self.model).
-                     filter_by(**{self.segmentation_key: tunnel_id}))
-            if inside:
-                count = query.update({"allocated": False})
-                if count:
-                    LOG.debug("Releasing %(type)s tunnel %(id)s to pool",
-                              info)
-            else:
-                count = query.delete()
-                if count:
-                    LOG.debug("Releasing %(type)s tunnel %(id)s outside pool",
-                              info)
-
-        if not count:
-            LOG.warning("%(type)s tunnel %(id)s not found", info)
-
-    def get_allocation(self, session, tunnel_id):
-        return (session.query(self.model).
-                filter_by(**{self.segmentation_key: tunnel_id}).
-                first())
-
-
 class ML2TunnelTypeDriver(_TunnelTypeDriverBase, metaclass=abc.ABCMeta):
     """Define stable abstract interface for ML2 type drivers.
 
@@ -427,10 +354,7 @@ class EndpointTunnelTypeDriver(ML2TunnelTypeDriver):
 
     def __init__(self, segment_model, endpoint_model):
         super(EndpointTunnelTypeDriver, self).__init__(segment_model)
-        if issubclass(endpoint_model, base_obj.NeutronDbObject):
-            self.endpoint_model = endpoint_model.db_model
-        else:
-            self.endpoint_model = endpoint_model
+        self.endpoint_model = endpoint_model.db_model
         self.segmentation_key = next(iter(self.primary_keys))
 
     def get_endpoint_by_host(self, host):
