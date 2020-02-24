@@ -218,7 +218,7 @@ class AllServicesNeutronWorker(neutron_worker.BaseWorker):
         self._launcher.restart()
 
 
-def _start_workers(workers):
+def _start_workers(workers, neutron_api=None):
     process_workers = [
         plugin_worker for plugin_worker in workers
         if plugin_worker.worker_process_count > 0
@@ -226,9 +226,14 @@ def _start_workers(workers):
 
     try:
         if process_workers:
-            worker_launcher = common_service.ProcessLauncher(
-                cfg.CONF, wait_interval=1.0, restart_method='mutate'
-            )
+            # Get eventual already existing instance from WSGI app
+            worker_launcher = None
+            if neutron_api:
+                worker_launcher = neutron_api.wsgi_app.process_launcher
+            if worker_launcher is None:
+                worker_launcher = common_service.ProcessLauncher(
+                    cfg.CONF, wait_interval=1.0, restart_method='mutate'
+                )
 
             # add extra process worker and spawn there all workers with
             # worker_process_count == 0
@@ -260,9 +265,9 @@ def _start_workers(workers):
                           'details.')
 
 
-def start_all_workers():
+def start_all_workers(neutron_api=None):
     workers = _get_rpc_workers() + _get_plugins_workers()
-    launcher = _start_workers(workers)
+    launcher = _start_workers(workers, neutron_api)
     registry.publish(resources.PROCESS, events.AFTER_SPAWN, None)
     return launcher
 
