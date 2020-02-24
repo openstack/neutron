@@ -801,3 +801,25 @@ def disable_extension_by_service_plugin(core_plugin, service_plugin):
         core_plugin.supported_extension_aliases.remove('filter-validation')
         LOG.info('Disable filter validation extension by service plugin '
                  '%s.', service_plugin.__class__.__name__)
+
+
+def get_port_fixed_ips_set(port):
+    return set([ip["ip_address"] for ip in port.get("fixed_ips", [])])
+
+
+def port_ip_changed(new_port, original_port):
+    if not new_port or not original_port:
+        return False
+
+    # Quantity is not same, so it is changed.
+    if (len(new_port.get("fixed_ips", [])) !=
+            len(original_port.get("fixed_ips", []))):
+        return True
+
+    # IPs can be placed in any order, so use python set to verify the
+    # fixed IP addresses.
+    if (get_port_fixed_ips_set(new_port) !=
+            get_port_fixed_ips_set(original_port)):
+        return True
+
+    return False
