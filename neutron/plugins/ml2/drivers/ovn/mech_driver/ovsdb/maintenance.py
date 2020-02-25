@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
 import inspect
 import threading
 
@@ -24,6 +25,7 @@ from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import timeutils
+from ovsdbapp.backend.ovs_idl import event as row_event
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
@@ -68,7 +70,60 @@ class MaintenanceThread(object):
         self._worker = self._thread = None
 
 
-class DBInconsistenciesPeriodics(object):
+def rerun_on_schema_updates(func):
+    """Tasks decorated with this will rerun upon database version updates."""
+    func._rerun_on_schema_updates = True
+    return func
+
+
+class OVNNBDBReconnectionEvent(row_event.RowEvent):
+    """Event listening to reconnections from OVN Northbound DB."""
+
+    def __init__(self, driver, version):
+        self.driver = driver
+        self.version = version
+        table = 'Connection'
+        events = (self.ROW_CREATE,)
+        super(OVNNBDBReconnectionEvent, self).__init__(events, table, None)
+        self.event_name = self.__class__.__name__
+
+    def run(self, event, row, old):
+        curr_version = self.driver.get_ovn_nbdb_version()
+        if self.version != curr_version:
+            self.driver.nbdb_schema_updated_hook()
+            self.version = curr_version
+
+
+class SchemaAwarePeriodicsBase(object):
+
+    def __init__(self, ovn_client):
+        self._nb_idl = ovn_client._nb_idl
+        self._set_schema_aware_periodics()
+        self._nb_idl.idl.notify_handler.watch_event(OVNNBDBReconnectionEvent(
+            self, self.get_ovn_nbdb_version()))
+
+    def get_ovn_nbdb_version(self):
+        return self._nb_idl.idl._db.version
+
+    def _set_schema_aware_periodics(self):
+        self._schema_aware_periodics = []
+        for name, member in inspect.getmembers(self):
+            if not inspect.ismethod(member):
+                continue
+
+            schema_upt = getattr(member, '_rerun_on_schema_updates', None)
+            if schema_upt and periodics.is_periodic(member):
+                LOG.debug('Schema aware periodic task found: '
+                          '%(owner)s.%(member)s',
+                          {'owner': self.__class__.__name__, 'member': name})
+                self._schema_aware_periodics.append(member)
+
+    @abc.abstractmethod
+    def nbdb_schema_updated_hook(self):
+        """Hook invoked upon OVN NB schema is updated."""
+
+
+class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     def __init__(self, ovn_client):
         self._ovn_client = ovn_client
@@ -79,6 +134,7 @@ class DBInconsistenciesPeriodics(object):
         self._idl = self._nb_idl.idl
         self._idl.set_lock('ovn_db_inconsistencies_periodics')
         self._sync_timer = timeutils.StopWatch()
+        super(DBInconsistenciesPeriodics, self).__init__(ovn_client)
 
         self._resources_func_map = {
             ovn_const.TYPE_NETWORKS: {
@@ -139,6 +195,21 @@ class DBInconsistenciesPeriodics(object):
     @property
     def has_lock(self):
         return not self._idl.is_lock_contended
+
+    def nbdb_schema_updated_hook(self):
+        if not self.has_lock:
+            return
+
+        for func in self._schema_aware_periodics:
+            LOG.debug('OVN Northbound DB schema version was updated,'
+                      'invoking "%s"', func.__name__)
+            try:
+                func()
+            except periodics.NeverAgain:
+                pass
+            except Exception:
+                LOG.exception(
+                    'Unknown error while executing "%s"', func.__name__)
 
     def _fix_create_update(self, context, row):
         res_map = self._resources_func_map[row.resource_type]
@@ -207,6 +278,7 @@ class DBInconsistenciesPeriodics(object):
     # is held by some other neutron-server instance in the cloud, we'll attempt
     # to perform the migration every 10 seconds until completed.
     @periodics.periodic(spacing=10, run_immediately=True)
+    @rerun_on_schema_updates
     def migrate_to_port_groups(self):
         """Perform the migration from Address Sets to Port Groups. """
         # TODO(dalvarez): Remove this in U cycle when we're sure that all
