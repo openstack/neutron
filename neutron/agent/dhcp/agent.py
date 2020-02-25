@@ -88,6 +88,7 @@ class DhcpAgent(manager.Manager):
         super(DhcpAgent, self).__init__(host=host)
         self.needs_resync_reasons = collections.defaultdict(list)
         self.dhcp_ready_ports = set()
+        self.dhcp_prio_ready_ports = set()
         self.conf = conf or cfg.CONF
         # If 'resync_throttle' is configured more than 'resync_interval' by
         # mistake, raise exception and log with message.
@@ -243,23 +244,29 @@ class DhcpAgent(manager.Manager):
     def _dhcp_ready_ports_loop(self):
         """Notifies the server of any ports that had reservations setup."""
         while True:
-            # this is just watching a set so we can do it really frequently
+            # this is just watching sets so we can do it really frequently
             eventlet.sleep(0.1)
-            if self.dhcp_ready_ports:
-                ports_to_send = set()
-                for port_count in range(min(len(self.dhcp_ready_ports),
-                                            DHCP_READY_PORTS_SYNC_MAX)):
-                    ports_to_send.add(self.dhcp_ready_ports.pop())
-
+            prio_ports_to_send = set()
+            ports_to_send = set()
+            for port_count in range(min(len(self.dhcp_prio_ready_ports) +
+                                        len(self.dhcp_ready_ports),
+                                        DHCP_READY_PORTS_SYNC_MAX)):
+                if self.dhcp_prio_ready_ports:
+                    prio_ports_to_send.add(self.dhcp_prio_ready_ports.pop())
+                    continue
+                ports_to_send.add(self.dhcp_ready_ports.pop())
+            if prio_ports_to_send or ports_to_send:
                 try:
-                    self.plugin_rpc.dhcp_ready_on_ports(ports_to_send)
+                    self.plugin_rpc.dhcp_ready_on_ports(prio_ports_to_send |
+                                                        ports_to_send)
                     LOG.info("DHCP configuration for ports %s is completed",
-                             ports_to_send)
+                             prio_ports_to_send | ports_to_send)
                     continue
                 except Exception:
                     LOG.exception("Failure notifying DHCP server of "
                                   "ready DHCP ports. Will retry on next "
                                   "iteration.")
+                self.dhcp_prio_ready_ports |= prio_ports_to_send
                 self.dhcp_ready_ports |= ports_to_send
 
     def start_ready_ports_loop(self):
@@ -541,9 +548,10 @@ class DhcpAgent(manager.Manager):
         network = self.cache.get_network_by_id(updated_port.network_id)
         if not network:
             return
-        self.reload_allocations(updated_port, network)
+        # treat update as a create event
+        self.reload_allocations(updated_port, network, prio=True)
 
-    def reload_allocations(self, port, network):
+    def reload_allocations(self, port, network, prio=False):
         LOG.info("Trigger reload_allocations for port %s", port)
         driver_action = 'reload_allocations'
         if self._is_port_on_this_agent(port):
@@ -569,7 +577,10 @@ class DhcpAgent(manager.Manager):
                 driver_action = 'restart'
         self.cache.put_port(port)
         self.call_driver(driver_action, network)
-        self.dhcp_ready_ports.add(port.id)
+        if prio:
+            self.dhcp_prio_ready_ports.add(port.id)
+        else:
+            self.dhcp_ready_ports.add(port.id)
         self.update_isolated_metadata_proxy(network)
 
     def _is_port_on_this_agent(self, port):
@@ -606,7 +617,7 @@ class DhcpAgent(manager.Manager):
                                      "DHCP cache is out of sync",
                                      created_port.network_id)
                 return
-        self.reload_allocations(created_port, network)
+        self.reload_allocations(created_port, network, prio=True)
 
     def port_delete_end(self, context, payload):
         """Handle the port.delete.end notification event."""
