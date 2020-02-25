@@ -485,26 +485,38 @@ class TestOvsNeutronAgent(object):
                 actual)
 
     def test_process_ports_events_port_removed_and_added(self):
-        port_id = 'f6f104bd-37c7-4f7b-9d70-53a6bb42728f'
+        port_id_one = 'f6f104bd-37c7-4f7b-9d70-53a6bb42728f'
+        port_id_two = 'fbaf42ef-ab63-4cda-81d2-37ee55daac3a'
         events = {
             'removed':
                 [{'ofport': 1,
-                  'external_ids': {'iface-id': port_id,
+                  'external_ids': {'iface-id': port_id_one,
                                    'attached-mac': 'fa:16:3e:f6:1b:fb'},
-                  'name': 'qvof6f104bd-37'}],
+                  'name': 'qvof6f104bd-37'},
+                 {'ofport': 2,
+                  'external_ids': {'iface-id': port_id_two,
+                                   'attached-mac': 'fa:16:3e:a4:42:6e'},
+                  'name': 'qvofbaf42ef-ab'}],
             'added':
-                [{'ofport': 2,
-                  'external_ids': {'iface-id': port_id,
+                [{'ofport': 3,
+                  'external_ids': {'iface-id': port_id_one,
                                    'attached-mac': 'fa:16:3e:f6:1b:fb'},
-                  'name': 'qvof6f104bd-37'}],
+                  'name': 'qvof6f104bd-37'},
+                 {'ofport': 4,
+                  'external_ids': {'iface-id': port_id_two,
+                                   'attached-mac': 'fa:16:3e:a4:42:6e'},
+                  'name': 'qvofbaf42ef-ab'}],
             'modified': []
         }
-        registered_ports = {port_id}
+        registered_ports = {port_id_one, port_id_two}
         expected_ancillary = ovs_agent.PortInfo()
 
         # port was removed and then added
-        expected_ports = ovs_agent.PortInfo(current={port_id}, added={port_id},
-                                            re_added={port_id})
+        expected_ports = ovs_agent.PortInfo(
+            added={port_id_one, port_id_two},
+            current={port_id_one, port_id_two},
+            re_added={port_id_one, port_id_two}
+        )
         with mock.patch.object(ovs_lib.BaseOVS, "port_exists",
                                return_value=True):
             self._test_process_ports_events(events.copy(), registered_ports,
@@ -512,7 +524,7 @@ class TestOvsNeutronAgent(object):
                                             expected_ancillary)
 
         # port was added and then removed
-        expected_ports = ovs_agent.PortInfo(removed={port_id})
+        expected_ports = ovs_agent.PortInfo(removed={port_id_one, port_id_two})
         with mock.patch.object(ovs_lib.BaseOVS, "port_exists",
                                return_value=False):
             self._test_process_ports_events(events.copy(), registered_ports,
