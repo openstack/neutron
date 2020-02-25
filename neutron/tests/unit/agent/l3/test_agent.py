@@ -291,7 +291,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         destroy_metadata_proxy.assert_not_called()
 
     def _test__configure_ipv6_params_helper(self, state, gw_port_id):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        with mock.patch(
+                'neutron.common.ipv6_utils.is_enabled_and_bind_by_default',
+                return_value=True):
+            agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+
         router_info = l3router.RouterInfo(agent, _uuid(), {}, **self.ri_kwargs)
         if gw_port_id:
             router_info.ex_gw_port = {'id': gw_port_id}
