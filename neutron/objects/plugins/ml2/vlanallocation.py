@@ -12,15 +12,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants as n_const
 from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models.plugins.ml2 import vlanallocation as vlan_alloc_model
 from neutron.objects import base
+from neutron.objects.plugins.ml2 import base as ml2_base
 
 
 @base.NeutronObjectRegistry.register
-class VlanAllocation(base.NeutronDbObject):
+class VlanAllocation(base.NeutronDbObject, ml2_base.SegmentAllocation):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -33,6 +35,8 @@ class VlanAllocation(base.NeutronDbObject):
     }
 
     primary_keys = ['physical_network', 'vlan_id']
+
+    network_type = n_const.TYPE_VLAN
 
     @staticmethod
     def get_physical_networks(context):
@@ -54,3 +58,13 @@ class VlanAllocation(base.NeutronDbObject):
             [{'physical_network': physical_network,
               'allocated': False,
               'vlan_id': vlan_id} for vlan_id in vlan_ids])
+
+    @classmethod
+    def update_primary_keys(cls, _dict, segmentation_id=None,
+                            physical_network=None):
+        _dict['physical_network'] = physical_network
+        _dict['vlan_id'] = segmentation_id
+
+    @classmethod
+    def get_segmentation_id(cls):
+        return cls.db_model.get_segmentation_id()

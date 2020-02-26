@@ -43,3 +43,11 @@ class VlanAllocation(model_base.BASEV2):
     @classmethod
     def get_segmentation_id(cls):
         return cls.vlan_id
+
+    @property
+    def segmentation_id(self):
+        return self.vlan_id
+
+    @staticmethod
+    def primary_keys():
+        return {'vlan_id', 'physical_network'}

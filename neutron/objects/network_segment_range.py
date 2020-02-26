@@ -12,6 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+import itertools
+
 from neutron_lib import constants
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
@@ -19,8 +22,11 @@ from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import and_
 from sqlalchemy import not_
+from sqlalchemy import or_
+from sqlalchemy import sql
 
 from neutron._i18n import _
+from neutron.common import _constants as common_constants
 from neutron.db.models import network_segment_range as range_model
 from neutron.db.models.plugins.ml2 import geneveallocation as \
     geneve_alloc_model
@@ -144,3 +150,83 @@ class NetworkSegmentRange(base.NeutronDbObject):
                     models_v2.Network.id)).all()
         return {segmentation_id: project_id
                 for segmentation_id, project_id in alloc_used}
+
+    @classmethod
+    def _build_query_segments(cls, context, model, network_type, **filters):
+        columns = set(dict(model.__table__.columns))
+        model_filters = dict((k, filters[k])
+                             for k in columns & set(filters.keys()))
+        query = (context.session.query(model)
+                 .filter_by(allocated=False, **model_filters).distinct())
+        _and = and_(
+            cls.db_model.network_type == network_type,
+            model.physical_network == cls.db_model.physical_network if
+            network_type == constants.TYPE_VLAN else sql.expression.true())
+        return query.join(range_model.NetworkSegmentRange, _and)
+
+    @classmethod
+    def get_segments_for_project(cls, context, model, network_type,
+                                 model_segmentation_id, **filters):
+        _filters = copy.deepcopy(filters)
+        project_id = _filters.pop('project_id', None)
+        if not project_id:
+            return []
+
+        with cls.db_context_reader(context):
+            query = cls._build_query_segments(context, model, network_type,
+                                              **_filters)
+            query = query.filter(and_(
+                model_segmentation_id >= cls.db_model.minimum,
+                model_segmentation_id <= cls.db_model.maximum,
+                cls.db_model.project_id == project_id))
+            return query.limit(common_constants.IDPOOL_SELECT_SIZE).all()
+
+    @classmethod
+    def get_segments_shared(cls, context, model, network_type,
+                            model_segmentation_id, **filters):
+        _filters = copy.deepcopy(filters)
+        project_id = _filters.pop('project_id', None)
+        with cls.db_context_reader(context):
+            # Retrieve default segment ID range.
+            default_range = context.session.query(cls.db_model).filter(
+                and_(cls.db_model.network_type == network_type,
+                     cls.db_model.default == sql.expression.true()))
+            if network_type == constants.TYPE_VLAN:
+                default_range.filter(cls.db_model.physical_network ==
+                                     _filters['physical_network'])
+            segment_ids = set(range(default_range.all()[0].minimum,
+                                    default_range.all()[0].maximum + 1))
+
+            # Retrieve other project segment ID ranges (not own project, not
+            # default range).
+            other_project_ranges = context.session.query(cls.db_model).filter(
+                and_(cls.db_model.project_id != project_id,
+                     cls.db_model.project_id.isnot(None),
+                     cls.db_model.network_type == network_type))
+            if network_type == constants.TYPE_VLAN:
+                other_project_ranges = other_project_ranges.filter(
+                    cls.db_model.physical_network ==
+                    _filters['physical_network'])
+
+            for other_project_range in other_project_ranges.all():
+                _set = set(range(other_project_range.minimum,
+                                 other_project_range.maximum + 1))
+                segment_ids.difference_update(_set)
+
+            # NOTE(ralonsoh): https://stackoverflow.com/questions/4628333/
+            # converting-a-list-of-integers-into-range-in-python
+            segment_ranges = [
+                [t[0][1], t[-1][1]] for t in
+                (tuple(g[1]) for g in itertools.groupby(
+                    enumerate(segment_ids),
+                    key=lambda enum_seg: enum_seg[1] - enum_seg[0]))]
+
+            # Retrieve all segments belonging to the default range except those
+            # assigned to other projects.
+            query = cls._build_query_segments(context, model, network_type,
+                                              **_filters)
+            clauses = [and_(model_segmentation_id >= range[0],
+                            model_segmentation_id <= range[1])
+                       for range in segment_ranges]
+            query = query.filter(or_(*clauses))
+            return query.limit(common_constants.IDPOOL_SELECT_SIZE).all()

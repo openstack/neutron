@@ -29,6 +29,14 @@ class GeneveAllocation(model_base.BASEV2):
     def get_segmentation_id(cls):
         return cls.geneve_vni
 
+    @property
+    def segmentation_id(self):
+        return self.geneve_vni
+
+    @staticmethod
+    def primary_keys():
+        return {'geneve_vni'}
+
 
 class GeneveEndpoints(model_base.BASEV2):
     """Represents tunnel endpoint in RPC mode."""
