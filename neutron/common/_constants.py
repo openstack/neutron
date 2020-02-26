@@ -40,3 +40,6 @@ SG_PORT_PROTO_NAMES = [
 IPTABLES_MULTIPORT_ONLY_PROTOCOLS = [
     constants.PROTO_NAME_UDPLITE
 ]
+
+# Segmentation ID pool; DB select limit to improve the performace.
+IDPOOL_SELECT_SIZE = 100
