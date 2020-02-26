@@ -17,7 +17,6 @@
         - neutron-functional
         - neutron-fullstack
         - neutron-rally-task
-        - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
@@ -94,7 +93,6 @@
         - neutron-functional
         - neutron-fullstack
         - tempest-integrated-networking
-        - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
         - neutron-tempest-iptables_hybrid
         - neutron-grenade-multinode
