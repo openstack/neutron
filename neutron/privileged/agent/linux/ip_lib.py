@@ -546,7 +546,7 @@ def make_serializable(value):
     if isinstance(value, list):
         return [make_serializable(item) for item in value]
     elif isinstance(value, netlink.nla_slot):
-        return [value[0], make_serializable(value[1])]
+        return [_ensure_string(value[0]), make_serializable(value[1])]
     elif isinstance(value, netlink.nla_base) and six.PY3:
         return make_serializable(value.dump())
     elif isinstance(value, dict):
