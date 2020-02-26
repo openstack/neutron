@@ -31,6 +31,14 @@ class VxlanAllocation(model_base.BASEV2):
     def get_segmentation_id(cls):
         return cls.vxlan_vni
 
+    @property
+    def segmentation_id(self):
+        return self.vxlan_vni
+
+    @staticmethod
+    def primary_keys():
+        return {'vxlan_vni'}
+
 
 class VxlanEndpoints(model_base.BASEV2):
     """Represents tunnel endpoint in RPC mode."""

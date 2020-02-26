@@ -31,6 +31,14 @@ class GreAllocation(model_base.BASEV2):
     def get_segmentation_id(cls):
         return cls.gre_id
 
+    @property
+    def segmentation_id(self):
+        return self.gre_id
+
+    @staticmethod
+    def primary_keys():
+        return {'gre_id'}
+
 
 class GreEndpoints(model_base.BASEV2):
     """Represents tunnel endpoint in RPC mode."""

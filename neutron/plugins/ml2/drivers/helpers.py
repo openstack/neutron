@@ -13,10 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import random
+import functools
 
-from neutron_lib import constants as p_const
-from neutron_lib import context as neutron_ctx
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
 from neutron_lib.plugins import constants as plugin_constants
@@ -27,16 +25,11 @@ from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log
-from sqlalchemy import and_
-from sqlalchemy import sql
 
-from neutron.db.models import network_segment_range as range_model
-from neutron.objects import base as base_obj
+from neutron.objects import network_segment_range as ns_range
 
 
 LOG = log.getLogger(__name__)
-
-IDPOOL_SELECT_SIZE = 100
 
 
 class BaseTypeDriver(api.ML2TypeDriver):
@@ -64,61 +57,10 @@ class SegmentTypeDriver(BaseTypeDriver):
 
     def __init__(self, model):
         super(SegmentTypeDriver, self).__init__()
-        if issubclass(model, base_obj.NeutronDbObject):
-            self.model = model.db_model
-        else:
-            self.model = model
-        self.primary_keys = set(dict(self.model.__table__.columns))
-        self.primary_keys.remove("allocated")
-
-    # TODO(ataraday): get rid of this method when old TypeDriver won't be used
-    def _get_session(self, arg):
-        if isinstance(arg, neutron_ctx.Context):
-            return arg.session, db_api.CONTEXT_WRITER.using(arg)
-        return arg, arg.session.begin(subtransactions=True)
-
-    def build_segment_query(self, session, **filters):
-        # Only uses filters that correspond to columns defined by this model.
-        # Subclasses may use/support additional filters
-        columns = set(dict(self.model.__table__.columns))
-        model_filters = dict((k, filters[k])
-                             for k in columns & set(filters.keys()))
-        return [session.query(self.model).filter_by(allocated=False,
-                                                    **model_filters)]
-
-    def build_segment_queries_for_tenant_and_shared_ranges(self, session,
-                                                           **filters):
-        """Enforces that segments are allocated from network segment ranges
-        that are owned by the tenant, and then from shared ranges, but never
-        from ranges owned by other tenants.
-        This method also enforces that other network segment range attributes
-        are used when constraining the set of possible segments to be used.
-        """
-        network_type = self.get_type()
-        project_id = filters.pop('project_id', None)
-        columns = set(dict(self.model.__table__.columns))
-        model_filters = dict((k, filters[k])
-                             for k in columns & set(filters.keys()))
-        query = (session.query(self.model)
-                 .filter_by(allocated=False, **model_filters))
-        query = query.join(
-            range_model.NetworkSegmentRange,
-            and_(range_model.NetworkSegmentRange.network_type == network_type,
-                 self.model.physical_network ==
-                 range_model.NetworkSegmentRange.physical_network if
-                 network_type == p_const.TYPE_VLAN else
-                 sql.expression.true()))
-        query = query.filter(and_(self.model_segmentation_id >=
-                             range_model.NetworkSegmentRange.minimum,
-                             self.model_segmentation_id <=
-                             range_model.NetworkSegmentRange.maximum))
-        query_project_id = (query.filter(
-            range_model.NetworkSegmentRange.project_id == project_id) if
-            project_id is not None else [])
-        query_shared = query.filter(
-            range_model.NetworkSegmentRange.shared == sql.expression.true())
-
-        return [query_project_id] + [query_shared]
+        self.model = model.db_model
+        self.segmentation_obj = model
+        primary_keys_columns = self.model.__table__.primary_key.columns
+        self.primary_keys = {col.name for col in primary_keys_columns}
 
     def allocate_fully_specified_segment(self, context, **raw_segment):
         """Allocate segment fully specified by raw_segment.
@@ -129,12 +71,10 @@ class SegmentTypeDriver(BaseTypeDriver):
         """
 
         network_type = self.get_type()
-        session, ctx_manager = self._get_session(context)
-
         try:
-            with ctx_manager:
+            with db_api.CONTEXT_WRITER.using(context):
                 alloc = (
-                    session.query(self.model).filter_by(**raw_segment).
+                    context.session.query(self.model).filter_by(**raw_segment).
                     first())
                 if alloc:
                     if alloc.allocated:
@@ -146,7 +86,7 @@ class SegmentTypeDriver(BaseTypeDriver):
                                   "started ",
                                   {"type": network_type,
                                    "segment": raw_segment})
-                        count = (session.query(self.model).
+                        count = (context.session.query(self.model).
                                  filter_by(allocated=False, **raw_segment).
                                  update({"allocated": True}))
                         if count:
@@ -167,7 +107,7 @@ class SegmentTypeDriver(BaseTypeDriver):
                 LOG.debug("%(type)s segment %(segment)s create started",
                           {"type": network_type, "segment": raw_segment})
                 alloc = self.model(allocated=True, **raw_segment)
-                alloc.save(session)
+                alloc.save(context.session)
                 LOG.debug("%(type)s segment %(segment)s create done",
                           {"type": network_type, "segment": raw_segment})
 
@@ -184,46 +124,30 @@ class SegmentTypeDriver(BaseTypeDriver):
 
         Return allocated db object or None.
         """
-
         network_type = self.get_type()
-        session, ctx_manager = self._get_session(context)
-        with ctx_manager:
-            queries = (self.build_segment_queries_for_tenant_and_shared_ranges(
-                          session, **filters)
-                       if directory.get_plugin(
-                          plugin_constants.NETWORK_SEGMENT_RANGE) else
-                       self.build_segment_query(session, **filters))
+        if directory.get_plugin(plugin_constants.NETWORK_SEGMENT_RANGE):
+            calls = [
+                functools.partial(
+                    ns_range.NetworkSegmentRange.get_segments_for_project,
+                    context, self.model, network_type,
+                    self.model_segmentation_id, **filters),
+                functools.partial(
+                    ns_range.NetworkSegmentRange.get_segments_shared,
+                    context, self.model, network_type,
+                    self.model_segmentation_id, **filters)]
+        else:
+            calls = [functools.partial(
+                self.segmentation_obj.get_unallocated_segments,
+                context, **filters)]
 
-            for select in queries:
-                # Selected segment can be allocated before update by someone
-                # else
-                allocs = select.limit(IDPOOL_SELECT_SIZE).all()
-
-                if not allocs:
-                    # No resource available
-                    continue
-
-                alloc = random.choice(allocs)
-                raw_segment = dict((k, alloc[k]) for k in self.primary_keys)
-                LOG.debug("%(type)s segment allocate from pool "
-                          "started with %(segment)s ",
-                          {"type": network_type,
-                           "segment": raw_segment})
-                count = (session.query(self.model).
-                         filter_by(allocated=False, **raw_segment).
-                         update({"allocated": True}))
-                if count:
-                    LOG.debug("%(type)s segment allocate from pool "
-                              "success with %(segment)s ",
-                              {"type": network_type,
-                               "segment": raw_segment})
+        for call in calls:
+            allocations = call()
+            for alloc in allocations:
+                segment = dict((k, alloc[k]) for k in self.primary_keys)
+                if self.segmentation_obj.allocate(context, **segment):
+                    LOG.debug('%(type)s segment allocate from pool success '
+                              'with %(segment)s ', {'type': network_type,
+                                                    'segment': segment})
                     return alloc
-
-                # Segment allocated since select
-                LOG.debug("Allocate %(type)s segment from pool "
-                          "failed with segment %(segment)s",
-                          {"type": network_type,
-                           "segment": raw_segment})
-                # saving real exception in case we exceeded amount of attempts
                 raise db_exc.RetryRequest(
                     exceptions.NoNetworkFoundInMaximumAllowedAttempts())
