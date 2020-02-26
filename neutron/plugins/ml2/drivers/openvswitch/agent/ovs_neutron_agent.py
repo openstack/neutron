@@ -908,6 +908,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         devices_up = []
         devices_down = []
         failed_devices = []
+        tunnels_missing = False
         port_names = [p['vif_port'].port_name for p in need_binding_ports]
         port_info = self.int_br.get_ports_attributes(
             "Port", columns=["name", "tag"], ports=port_names, if_exists=True)
@@ -942,6 +943,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             if port_detail.get('admin_state_up'):
                 LOG.debug("Setting status for %s to UP", device)
                 devices_up.append(device)
+                if (not tunnels_missing and
+                        lvm.network_type in constants.TUNNEL_NETWORK_TYPES and
+                        len(lvm.tun_ofports) == 0):
+                    tunnels_missing = True
             else:
                 LOG.debug("Setting status for %s to DOWN", device)
                 devices_down.append(device)
@@ -951,7 +956,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             # to notify the agent to refresh the tunnel related flows.
             # Otherwise, these flows will be cleaned as stale due to the
             # different cookie id.
-            agent_restarted = self.iter_num == 0
+            agent_restarted = (self.iter_num == 0) or tunnels_missing
             devices_set = self.plugin_rpc.update_device_list(
                 self.context, devices_up, devices_down, self.agent_id,
                 self.conf.host, agent_restarted=agent_restarted)
