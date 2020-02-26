@@ -157,15 +157,19 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             lib_constants.SNAT_INT_DEV_PREFIX,
             mtu=port.get('mtu'))
 
+    def initialize(self, process_monitor):
+        self._create_snat_namespace()
+        super(DvrEdgeRouter, self).initialize(process_monitor)
+
     def _create_dvr_gateway(self, ex_gw_port, gw_interface_name):
-        snat_ns = self._create_snat_namespace()
         # connect snat_ports to br_int from SNAT namespace
         for port in self.get_snat_interfaces():
             self._plug_snat_port(port)
         self._external_gateway_added(ex_gw_port, gw_interface_name,
-                                     snat_ns.name, preserve_ips=[])
+                                     self.snat_namespace.name,
+                                     preserve_ips=[])
         self.snat_iptables_manager = iptables_manager.IptablesManager(
-            namespace=snat_ns.name,
+            namespace=self.snat_namespace.name,
             use_ipv6=self.use_ipv6)
 
         self._initialize_address_scope_iptables(self.snat_iptables_manager)

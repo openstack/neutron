@@ -889,3 +889,20 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri1.remove_centralized_floatingip(fip_cidr)
         ri1._remove_vip.assert_called_once_with(fip_cidr)
         super_remove_centralized_floatingip.assert_called_once_with(fip_cidr)
+
+    def test_initialize_dvr_ha_router_snat_ns_once(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.conf.agent_mode = lib_constants.L3_AGENT_MODE_DVR_SNAT
+        router = l3_test_common.prepare_router_data(
+            num_internal_ports=2, enable_ha=True)
+        router['gw_port_host'] = HOSTNAME
+        router[lib_constants.HA_INTERFACE_KEY]['status'] = 'ACTIVE'
+        self.mock_driver.unplug.reset_mock()
+        self._set_ri_kwargs(agent, router['id'], router)
+        ri = dvr_edge_ha_rtr.DvrEdgeHaRouter(HOSTNAME, [], **self.ri_kwargs)
+        ri._create_snat_namespace = mock.Mock()
+        ri.update_initial_state = mock.Mock()
+        ri._plug_external_gateway = mock.Mock()
+        ri.initialize(mock.Mock())
+        ri._create_dvr_gateway(mock.Mock(), mock.Mock())
+        ri._create_snat_namespace.assert_called_once_with()
