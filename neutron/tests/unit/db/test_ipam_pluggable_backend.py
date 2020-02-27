@@ -689,7 +689,8 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         mocks['driver'].get_address_request_factory.assert_called_once_with()
         mocks['ipam']._ipam_get_subnets.assert_called_once_with(
             context, network_id=port_dict['network_id'], fixed_configured=True,
-            host=None, service_type=port_dict['device_owner'])
+            fixed_ips=[ip_dict], host=None,
+            service_type=port_dict['device_owner'])
         # Validate port_dict is passed into address_factory
         address_factory.get_request.assert_called_once_with(context,
                                                             port_dict,

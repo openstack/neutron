@@ -298,7 +298,7 @@ class Subnet(base.NeutronDbObject):
 
     @classmethod
     def find_candidate_subnets(cls, context, network_id, host, service_type,
-                               fixed_configured):
+                               fixed_configured, fixed_ips):
         """Find canditate subnets for the network, host, and service_type"""
         query = cls.query_subnets_on_network(context, network_id)
         query = SubnetServiceType.query_filter_service_subnets(
@@ -311,7 +311,8 @@ class Subnet(base.NeutronDbObject):
                 # the network are candidates. Host/Segment will be validated
                 # on port update with binding:host_id set. Allocation _cannot_
                 # be deferred as requested fixed_ips would then be lost.
-                return query.all()
+                return cls._query_filter_by_fixed_ips_segment(
+                    query, fixed_ips).all()
             # If the host isn't known, we can't allocate on a routed network.
             # So, exclude any subnets attached to segments.
             return cls._query_exclude_subnets_on_segments(query).all()
@@ -331,6 +332,47 @@ class Subnet(base.NeutronDbObject):
                 host=host, network_id=network_id)
 
         return [subnet for subnet, _mapping in results]
+
+    @classmethod
+    def _query_filter_by_fixed_ips_segment(cls, query, fixed_ips):
+        """Excludes subnets not on the same segment as fixed_ips
+
+        :raises: FixedIpsSubnetsNotOnSameSegment
+        """
+        segment_ids = []
+        for fixed_ip in fixed_ips:
+            subnet = None
+            if 'subnet_id' in fixed_ip:
+                try:
+                    subnet = query.filter(
+                        cls.db_model.id == fixed_ip['subnet_id']).all()[0]
+                except IndexError:
+                    # NOTE(hjensas): The subnet is invalid for the network,
+                    # return all subnets. This will be detected in following
+                    # IPAM code and some exception will be raised.
+                    return query
+            elif 'ip_address' in fixed_ip:
+                ip = netaddr.IPNetwork(fixed_ip['ip_address'])
+
+                for s in query.all():
+                    if ip in netaddr.IPNetwork(s.cidr):
+                        subnet = s
+                        break
+                if not subnet:
+                    # NOTE(hjensas): The ip address is invalid, return all
+                    # subnets. This will be detected in following IPAM code
+                    # and some exception will be raised.
+                    return query
+
+            if subnet and subnet.segment_id not in segment_ids:
+                segment_ids.append(subnet.segment_id)
+
+            if 1 < len(segment_ids):
+                raise segment_exc.FixedIpsSubnetsNotOnSameSegment()
+
+        segment_id = False if not segment_ids else segment_ids[0]
+
+        return query.filter(cls.db_model.segment_id == segment_id)
 
     @classmethod
     def _query_filter_by_segment_host_mapping(cls, query, host):
