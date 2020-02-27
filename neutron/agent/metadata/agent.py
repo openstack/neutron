@@ -158,6 +158,13 @@ class MetadataProxyHandler(object):
         network_id = req.headers.get('X-Neutron-Network-ID')
         router_id = req.headers.get('X-Neutron-Router-ID')
 
+        # Only one should be given, drop since it could be spoofed
+        if network_id and router_id:
+            LOG.debug("Both network and router IDs were specified in proxy "
+                      "request, but only a single one of the two is allowed, "
+                      "dropping")
+            return None, None
+
         ports = self._get_ports(remote_address, network_id, router_id)
         LOG.debug("Gotten ports for remote_address %(remote_address)s, "
                   "network_id %(network_id)s, router_id %(router_id)s are: "

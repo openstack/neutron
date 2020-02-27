@@ -241,6 +241,9 @@ class _TestMetadataProxyHandlerCacheMixin(object):
 
         expected = []
 
+        if networks and router_id:
+            return (instance_id, tenant_id)
+
         if router_id:
             expected.append(
                 mock.call(
@@ -329,6 +332,28 @@ class _TestMetadataProxyHandlerCacheMixin(object):
         self.assertEqual(
             self._get_instance_and_tenant_id_helper(headers, ports,
                                                     networks=('the_id',)),
+            (None, None)
+        )
+
+    def test_get_instance_id_network_id_and_router_id_invalid(self):
+        network_id = 'the_nid'
+        router_id = 'the_rid'
+        headers = {
+            'X-Neutron-Network-ID': network_id,
+            'X-Neutron-Router-ID': router_id
+        }
+
+        # The call should never do a port lookup, but mock it to verify
+        ports = [
+            [{'device_id': 'device_id',
+              'tenant_id': 'tenant_id',
+              'network_id': network_id}]
+        ]
+
+        self.assertEqual(
+            self._get_instance_and_tenant_id_helper(headers, ports,
+                                                    networks=(network_id,),
+                                                    router_id=router_id),
             (None, None)
         )
 
