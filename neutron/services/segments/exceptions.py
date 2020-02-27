@@ -69,3 +69,7 @@ class HostNotCompatibleWithFixedIps(exceptions.Conflict):
 
 class SegmentInUse(exceptions.InUse):
     message = _("Segment '%(segment_id)s' cannot be deleted: %(reason)s.")
+
+
+class FixedIpsSubnetsNotOnSameSegment(exceptions.BadRequest):
+    message = _("Cannot allocate addresses from different segments.")
