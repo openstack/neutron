@@ -65,7 +65,8 @@ defaults
 listen listener
     bind %(host)s:%(port)s
     server metadata %(unix_socket_path)s
-    http-request add-header X-Neutron-%(res_type)s-ID %(res_id)s
+    http-request del-header X-Neutron-%(res_type_del)s-ID
+    http-request set-header X-Neutron-%(res_type)s-ID %(res_id)s
 """
 
 
@@ -128,12 +129,16 @@ class HaproxyConfigurator(object):
             'log_level': self.log_level,
             'log_tag': self.log_tag
         }
+        # If using the network ID, delete any spurious router ID that might
+        # have been in the request, same for network ID when using router ID.
         if self.network_id:
             cfg_info['res_type'] = 'Network'
             cfg_info['res_id'] = self.network_id
+            cfg_info['res_type_del'] = 'Router'
         else:
             cfg_info['res_type'] = 'Router'
             cfg_info['res_id'] = self.router_id
+            cfg_info['res_type_del'] = 'Network'
 
         haproxy_cfg = _HAPROXY_CONFIG_TEMPLATE % cfg_info
         LOG.debug("haproxy_cfg = %s", haproxy_cfg)
