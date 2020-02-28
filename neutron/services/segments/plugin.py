@@ -33,6 +33,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.db import resource_extend
+from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import placement as placement_exc
 from neutron_lib.placement import client as placement_client
 from neutron_lib.plugins import directory
@@ -43,9 +44,12 @@ from oslo_log import log
 from oslo_utils import excutils
 
 from neutron._i18n import _
+from neutron.common import ipv6_utils
+from neutron.db import models_v2
 from neutron.extensions import segment
 from neutron.notifiers import batch_notifier
 from neutron.objects import network as net_obj
+from neutron.objects import ports as ports_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.services.segments import db
 from neutron.services.segments import exceptions
@@ -131,6 +135,38 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
                        "%s") % ", ".join(subnet_ids)
             raise exceptions.SegmentInUse(segment_id=segment_id,
                                           reason=reason)
+
+    @registry.receives(
+        resources.SUBNET, [events.PRECOMMIT_DELETE_ASSOCIATIONS])
+    def _validate_auto_address_subnet_delete(self, resource, event, trigger,
+                                             payload):
+        context = payload.context
+        subnet = subnet_obj.Subnet.get_object(context, id=payload.resource_id)
+        is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
+        if not is_auto_addr_subnet or subnet.segment_id is None:
+            return
+
+        net_allocs = (context.session.query(models_v2.IPAllocation.port_id).
+                      filter_by(subnet_id=subnet.id))
+        port_ids_on_net = [ipalloc.port_id for ipalloc in net_allocs]
+        for port_id in port_ids_on_net:
+            try:
+                port = ports_obj.Port.get_object(context, id=port_id)
+                fixed_ips = [f for f in port['fixed_ips']
+                             if f['subnet_id'] != subnet.id]
+                if len(fixed_ips) != 0:
+                    continue
+
+                LOG.info("Found port %(port_id)s, with IP auto-allocation "
+                         "only on subnet %(subnet)s which is associated with "
+                         "segment %(segment_id)s, cannot delete",
+                         {'port_id': port_id,
+                          'subnet': subnet.id,
+                          'segment_id': subnet.segment_id})
+                raise n_exc.SubnetInUse(subnet_id=subnet.id)
+            except n_exc.PortNotFound:
+                # port is gone
+                continue
 
 
 class Event(object):

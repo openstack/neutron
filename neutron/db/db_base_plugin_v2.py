@@ -1037,21 +1037,20 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             raise exc.SubnetInUse(subnet_id=id)
 
     @db_api.retry_if_session_inactive()
-    def _remove_subnet_ip_allocations_from_ports(self, context, id):
+    def _remove_subnet_ip_allocations_from_ports(self, context, subnet):
         # Do not allow a subnet to be deleted if a router is attached to it
         self._subnet_check_ip_allocations_internal_router_ports(
-                context, id)
-        subnet = self._get_subnet_object(context, id)
+                context, subnet.id)
         is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
         if not is_auto_addr_subnet:
             # we only automatically remove IP addresses from user ports if
             # the IPs come from auto allocation subnets.
-            self._ensure_no_user_ports_on_subnet(context, id)
+            self._ensure_no_user_ports_on_subnet(context, subnet.id)
         net_allocs = (context.session.query(models_v2.IPAllocation.port_id).
-                      filter_by(subnet_id=id))
+                      filter_by(subnet_id=subnet.id))
         port_ids_on_net = [ipal.port_id for ipal in net_allocs]
         for port_id in port_ids_on_net:
-            self._remove_subnet_from_port(context, id, port_id,
+            self._remove_subnet_from_port(context, subnet.id, port_id,
                                           auto_subnet=is_auto_addr_subnet)
 
     @db_api.retry_if_session_inactive()
@@ -1060,7 +1059,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         # Make sure the subnet isn't used by other resources
         _check_subnet_not_used(context, id)
         subnet = self._get_subnet_object(context, id)
-        self._remove_subnet_ip_allocations_from_ports(context, id)
+        registry.publish(resources.SUBNET,
+                         events.PRECOMMIT_DELETE_ASSOCIATIONS,
+                         self,
+                         payload=events.DBEventPayload(context,
+                                                       resource_id=subnet.id))
+        self._remove_subnet_ip_allocations_from_ports(context, subnet)
         self._delete_subnet(context, subnet)
 
     def _delete_subnet(self, context, subnet):
