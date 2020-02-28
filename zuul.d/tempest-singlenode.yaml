@@ -188,9 +188,6 @@
         ((^neutron_tempest_plugin.api)|\
         (^neutron_tempest_plugin.scenario)|\
         (tempest.(api|scenario|thirdparty))).*$"
-      # TODO(mjozefcz): Remove this blacklist when https://bugs.launchpad.net/neutron/+bug/1864620
-      # will be fixed.
-      tempest_black_regex: "(?:neutron_tempest_plugin.scenario.test_security_groups.NetworkSecGroupTest.test_multiple_ports_portrange_remote)"
       tempest_concurrency: 4
       devstack_localrc:
         Q_AGENT: ovn
