@@ -64,7 +64,8 @@
         - neutron-tempest-with-uwsgi:
             voting: false
         - neutron-centos-8-tripleo-standalone
-       #- neutron-ovn-rally-task
+        - neutron-ovn-rally-task:
+            voting: false
         # TripleO jobs that deploy OVN.
         # Note we don't use a project-template here, so it's easier
         # to disable voting on one specific job if things go wrong.
@@ -72,7 +73,8 @@
         # networking-ovn-tripleo-ci-centos-7-containers-multinode.
         # If you need any support to debug these jobs in case of
         # failures, please reach us on #tripleo IRC channel.
-       #- neutron-ovn-tripleo-ci-centos-8-containers-multinode
+        - neutron-ovn-tripleo-ci-centos-8-containers-multinode:
+            voting: false
         - neutron-ovn-tempest-slow:
             voting: false
         - neutron-ovn-tempest-full-multinode-ovs-master:
