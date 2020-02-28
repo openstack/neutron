@@ -1791,6 +1791,38 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         port_b_snet_ids = [f['subnet_id'] for f in port_b['port']['fixed_ips']]
         self.assertNotIn(subnet_b1['subnet']['id'], port_b_snet_ids)
 
+    def test_slaac_segment_aware_delete_last_subnet_on_segment_fails(self):
+        (network, segment_a, segment_b, subnet_a0, subnet_a1, subnet_b0,
+         subnet_b1) = self._create_net_two_segments_four_slaac_subnets()
+
+        # Create two ports, port_a with subnet_a0 in fixed_ips and port_b
+        # with subnet_b0 in fixed_ips
+        port_a = self._create_port_and_show(
+            network, fixed_ips=[{'subnet_id': subnet_a0['subnet']['id']}])
+        port_b = self._create_port_and_show(
+            network, fixed_ips=[{'subnet_id': subnet_b0['subnet']['id']}])
+        self._validate_immediate_ip_allocation(port_a['port']['id'])
+        self._validate_immediate_ip_allocation(port_b['port']['id'])
+        self.assertEqual(2, len(port_a['port']['fixed_ips']))
+        self.assertEqual(2, len(port_b['port']['fixed_ips']))
+        # Delete subnet_b1 on segment_b
+        req = self.new_delete_request('subnets', subnet_b1['subnet']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
+        # Delete subnet_b0 on segment_b fails because port_b has no other
+        # allocation, SubnetInUse
+        req = self.new_delete_request('subnets', subnet_b0['subnet']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+        # Delete port_b
+        req = self.new_delete_request('ports', port_b['port']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
+        # Try to delete subnet_b0 again, should not fail with no ports
+        req = self.new_delete_request('subnets', subnet_b0['subnet']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
+
 
 class TestSegmentAwareIpamML2(TestSegmentAwareIpam):
 
