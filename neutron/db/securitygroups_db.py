@@ -733,12 +733,6 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         ]
 
     @db_api.retry_if_session_inactive()
-    def get_security_group_rules_count(self, context, filters=None):
-        filters = filters or {}
-        return sg_obj.SecurityGroupRule.count(
-            context, validate_filters=False, **filters)
-
-    @db_api.retry_if_session_inactive()
     def get_security_group_rule(self, context, id, fields=None):
         # NOTE(slaweq): use admin context here to be able to get all rules
         # which fits filters' criteria. Later in policy engine rules will be
