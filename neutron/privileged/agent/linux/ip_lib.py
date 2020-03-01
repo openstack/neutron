@@ -26,7 +26,6 @@ from pyroute2.netlink.rtnl import ifinfmsg
 from pyroute2.netlink.rtnl import ndmsg
 from pyroute2 import NetlinkError
 from pyroute2 import netns
-import six
 
 from neutron._i18n import _
 from neutron import privileged
@@ -520,16 +519,13 @@ def make_serializable(value):
     of two elements.
     """
     def _ensure_string(value):
-        # NOTE(ralonsoh): once PY2 is deprecated, the str() conversion will be
-        # no needed and six.binary_type --> bytes.
-        return (str(value.decode('utf-8'))
-                if isinstance(value, six.binary_type) else value)
+        return value.decode() if isinstance(value, bytes) else value
 
     if isinstance(value, list):
         return [make_serializable(item) for item in value]
     elif isinstance(value, netlink.nla_slot):
-        return [value[0], make_serializable(value[1])]
-    elif isinstance(value, netlink.nla_base) and six.PY3:
+        return [_ensure_string(value[0]), make_serializable(value[1])]
+    elif isinstance(value, netlink.nla_base):
         return make_serializable(value.dump())
     elif isinstance(value, dict):
         return {_ensure_string(key): make_serializable(data)
