@@ -24,6 +24,7 @@
       - ^migration/.*$
     voting: false
     vars:
+      tox_envlist: integrated-network
       devstack_local_conf:
         post-config:
           $NEUTRON_CONF:
