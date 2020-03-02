@@ -46,7 +46,8 @@ class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
                                     protocol,
                                     internal_ip_address,
                                     internal_port_id,
-                                    tenant_id=None):
+                                    tenant_id=None,
+                                    description=None):
         tenant_id = tenant_id or _uuid()
         data = {'port_forwarding': {
             "external_port": external_port,
@@ -55,6 +56,9 @@ class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
             "internal_ip_address": internal_ip_address,
             "internal_port_id": internal_port_id}
         }
+
+        if description:
+            data['port_forwarding']['description'] = description
 
         fip_pf_req = self._req(
             'POST', 'floatingips', data,
@@ -100,3 +104,34 @@ class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
                     port['port']['fixed_ips'][0]['ip_address'],
                     port['port']['id'])
                 self.assertEqual(exc.HTTPBadRequest.code, res.status_int)
+
+    def test_create_floatingip_port_forwarding_with_description(self):
+        with self.network() as ext_net:
+            network_id = ext_net['network']['id']
+            self._set_net_external(network_id)
+            with self.subnet(ext_net, cidr='10.10.10.0/24'), \
+                    self.router() as router, \
+                    self.subnet(cidr='11.0.0.0/24') as private_subnet, \
+                    self.port(private_subnet) as port:
+                self._add_external_gateway_to_router(
+                    router['router']['id'],
+                    network_id)
+                self._router_interface_action(
+                    'add', router['router']['id'],
+                    private_subnet['subnet']['id'],
+                    None)
+                fip = self._make_floatingip(
+                    self.fmt,
+                    network_id)
+                self.assertIsNone(fip['floatingip'].get('port_id'))
+                res = self._create_fip_port_forwarding(
+                    self.fmt, fip['floatingip']['id'],
+                    2222, 22,
+                    'tcp',
+                    port['port']['fixed_ips'][0]['ip_address'],
+                    port['port']['id'],
+                    description="blablablabla")
+                self.assertEqual(exc.HTTPCreated.code, res.status_int)
+                pf_body = self.deserialize(self.fmt, res)
+                self.assertEqual(
+                    "blablablabla", pf_body['port_forwarding']['description'])
