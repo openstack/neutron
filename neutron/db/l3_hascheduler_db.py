@@ -58,7 +58,7 @@ def _notify_l3_agent_ha_port_update(resource, event, trigger, **kwargs):
     new_port = kwargs.get('port')
     original_port = kwargs.get('original_port')
     context = kwargs.get('context')
-    host = new_port[portbindings.HOST_ID]
+    host = new_port.get(portbindings.HOST_ID)
 
     if new_port and original_port and host:
         new_device_owner = new_port.get('device_owner', '')
