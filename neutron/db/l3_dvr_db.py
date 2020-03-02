@@ -360,6 +360,22 @@ class DVRResourceOperationHandler(object):
             self.l3plugin.l3_rpc_notifier.delete_fipnamespace_for_ext_net(
                 payload.context, network_id)
 
+    def _delete_fip_agent_port(self, context, network_id, host_id):
+        try:
+            l3_agent_db = self._get_agent_by_type_and_host(
+                context, const.AGENT_TYPE_L3, host_id)
+        except agent_exc.AgentNotFoundByTypeHost:
+            LOG.warning("%(ag)s agent not found for the given host: %(host)s",
+                        {'ag': const.AGENT_TYPE_L3,
+                         'host': host_id})
+            return
+        try:
+            l3_obj.DvrFipGatewayPortAgentBinding(
+                context, network_id=network_id,
+                agent_id=l3_agent_db['id']).delete()
+        except n_exc.ObjectNotFound:
+            pass
+
     def delete_floatingip_agent_gateway_port(self, context, host_id,
                                              ext_net_id):
         """Function to delete FIP gateway port with given ext_net_id."""
@@ -371,6 +387,8 @@ class DVRResourceOperationHandler(object):
         for p in ports:
             if not host_id or p[portbindings.HOST_ID] == host_id:
                 self._core_plugin.ipam.delete_port(context, p['id'])
+                self._delete_fip_agent_port(
+                    context, ext_net_id, p[portbindings.HOST_ID])
                 if host_id:
                     return
 

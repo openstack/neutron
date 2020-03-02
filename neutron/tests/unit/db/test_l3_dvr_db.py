@@ -395,7 +395,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         routers = self.mixin._build_routers_list(self.ctx, routers, gw_ports)
         self.assertIsNone(routers[0].get('gw_port'))
 
-    def _helper_delete_floatingip_agent_gateway_port(self, port_host):
+    def _helper_delete_floatingip_agent_gateway_port(
+            self, port_host, delete_dvr_fip_agent_port_side_effect=None):
         ports = [{
             'id': 'my_port_id',
             portbindings.HOST_ID: 'foo_host',
@@ -411,17 +412,31 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         plugin = mock.Mock()
         directory.add_plugin(plugin_constants.CORE, plugin)
         plugin.get_ports.return_value = ports
-        self.mixin.delete_floatingip_agent_gateway_port(
-            self.ctx, port_host, 'ext_network_id')
+        self.mixin._get_agent_by_type_and_host = mock.Mock(
+            return_value={'id': uuidutils.generate_uuid()})
+
+        with mock.patch.object(
+            router_obj, "DvrFipGatewayPortAgentBinding"
+        ) as dvr_fip_agent_port_obj:
+            dvr_fip_agent_port_obj_instance = (
+                dvr_fip_agent_port_obj.return_value)
+            dvr_fip_agent_port_obj_instance.delete.side_effect = (
+                delete_dvr_fip_agent_port_side_effect)
+
+            self.mixin.delete_floatingip_agent_gateway_port(
+                self.ctx, port_host, 'ext_network_id')
+
         plugin.get_ports.assert_called_with(self.ctx, filters={
             'network_id': ['ext_network_id'],
             'device_owner': [const.DEVICE_OWNER_AGENT_GW]})
         if port_host:
             plugin.ipam.delete_port.assert_called_once_with(
                 self.ctx, 'my_port_id')
+            dvr_fip_agent_port_obj_instance.delete.assert_called_once()
         else:
             plugin.ipam.delete_port.assert_called_with(
                 self.ctx, 'my_new_port_id')
+            dvr_fip_agent_port_obj_instance.delete.assert_called()
 
     def test_delete_floatingip_agent_gateway_port_without_host_id(self):
         self._helper_delete_floatingip_agent_gateway_port(None)
@@ -429,6 +444,16 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def test_delete_floatingip_agent_gateway_port_with_host_id(self):
         self._helper_delete_floatingip_agent_gateway_port(
             'foo_host')
+
+    def test_delete_floatingip_agent_gateway_port_no_host_id_fip_gw_not_found(
+            self):
+        self._helper_delete_floatingip_agent_gateway_port(
+                None, exceptions.ObjectNotFound(id='my_port_id'))
+
+    def test_delete_floatingip_agent_gateway_port_host_id_fip_gw_not_found(
+            self):
+        self._helper_delete_floatingip_agent_gateway_port(
+            'foo_host', exceptions.ObjectNotFound(id='my_port_id'))
 
     def _setup_delete_current_gw_port_deletes_dvr_internal_ports(
             self, port=None, gw_port=True, new_network_id='ext_net_id_2'):
