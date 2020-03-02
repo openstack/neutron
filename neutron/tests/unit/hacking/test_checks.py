@@ -38,11 +38,6 @@ class HackingTestCase(base.BaseTestCase):
         self.assertIsInstance(next(func(line)), tuple)
 
     def test_assert_called_once_with(self):
-        fail_code1 = """
-               mock = Mock()
-               mock.method(1, 2, 3, test='wow')
-               mock.method.assert_called_once()
-               """
         fail_code2 = """
                mock = Mock()
                mock.method(1, 2, 3, test='wow')
@@ -68,9 +63,6 @@ class HackingTestCase(base.BaseTestCase):
                mock.method(1, 2, 3, test='wow')
                mock.method.assert_has_calls()
                """
-        self.assertEqual(
-            1, len(list(checks.check_assert_called_once_with(fail_code1,
-                                            "neutron/tests/test_assert.py"))))
         self.assertEqual(
             1, len(list(checks.check_assert_called_once_with(fail_code2,
                                             "neutron/tests/test_assert.py"))))
