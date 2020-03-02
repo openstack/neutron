@@ -1630,8 +1630,12 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         self._router.create()
         return self._router['id']
 
-    def _create_test_security_group_id(self):
+    def _create_test_security_group_id(self, fields=None):
         sg_fields = self.get_random_object_fields(securitygroup.SecurityGroup)
+        fields = fields or {}
+        for field, value in ((f, v) for (f, v) in fields.items() if
+                             f in sg_fields):
+            sg_fields[field] = value
         _securitygroup = securitygroup.SecurityGroup(
             self.context, **sg_fields)
         _securitygroup.create()
