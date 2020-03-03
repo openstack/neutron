@@ -34,7 +34,7 @@ OVN_BRANCH=${OVN_BRANCH:-master}
 # Set variables for building OVS from source
 OVS_REPO=${OVS_REPO:-https://github.com/openvswitch/ovs.git}
 OVS_REPO_NAME=$(basename ${OVS_REPO} | cut -f1 -d'.')
-OVS_BRANCH=$OVN_BRANCH
+OVS_BRANCH=${OVS_BRANCH:-master}
 
 # How to connect to ovsdb-server hosting the OVN SB database.
 OVN_SB_REMOTE=${OVN_SB_REMOTE:-tcp:$SERVICE_HOST:6642}
