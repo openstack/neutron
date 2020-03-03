@@ -51,7 +51,6 @@ tests_imports_from2 = re.compile(r"\bfrom[\s]+neutron[\s]+import[\s]+tests\b")
 @flake8ext
 def check_assert_called_once_with(logical_line, filename):
     """N322 - Try to detect unintended calls of nonexistent mock methods like:
-                 assert_called_once
                  assertCalledOnceWith
                  assert_has_called
                  called_once_with
@@ -61,7 +60,7 @@ def check_assert_called_once_with(logical_line, filename):
             return
         uncased_line = logical_line.lower().replace('_', '')
 
-        check_calls = ['.assertcalledonce', '.calledoncewith']
+        check_calls = ['.assertcalledoncewith', '.calledoncewith']
         if any(x for x in check_calls if x in uncased_line):
             msg = ("N322: Possible use of no-op mock method. "
                    "please use assert_called_once_with.")
