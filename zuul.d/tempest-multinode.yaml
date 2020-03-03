@@ -90,7 +90,6 @@
     timeout: 10800
     required-projects:
       - openstack/devstack-gate
-      - openstack/networking-ovn
       - openstack/neutron
       - openstack/neutron-tempest-plugin
       - openstack/octavia
@@ -102,6 +101,9 @@
     pre-run: playbooks/multinode-setup.yaml
     vars:
       devstack_localrc:
+        Q_AGENT: ovn
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
+        Q_ML2_TENANT_NETWORK_TYPE: geneve
         Q_USE_PROVIDERNET_FOR_PUBLIC: true
         PHYSICAL_NETWORK: public
         ENABLE_CHASSIS_AS_GW: true
@@ -116,7 +118,7 @@
         ADVANCED_INSTANCE_USER: ubuntu
         BUILD_TIMEOUT: 784
       devstack_plugins:
-        networking-ovn: https://opendev.org/openstack/networking-ovn
+        neutron: https://opendev.org/openstack/neutron
         neutron-tempest-plugin: https://opendev.org/openstack/neutron-tempest-plugin
         octavia: https://opendev.org/openstack/octavia
       zuul_copy_output:
@@ -128,7 +130,7 @@
         etcd: false
         br-ex-tcpdump: true
         br-int-flows: true
-        networking-ovn-metadata-agent: true
+        neutron-ovn-metadata-agent: true
         o-api: true
         o-hk: true
         ovn-controller: true
@@ -144,6 +146,7 @@
         q-l3: false
         q-meta: false
         q-metering: false
+        q-dns: true
         # When running python3 Swift should be disabled for now
         s-account: false
         s-container: false
@@ -166,8 +169,11 @@
           q-l3: false
           q-meta: false
           q-metering: false
-          networking-ovn-metadata-agent: true
+          neutron-ovn-metadata-agent: true
         devstack_localrc:
+          Q_AGENT: ovn
+          Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
+          Q_ML2_TENANT_NETWORK_TYPE: geneve
           Q_USE_PROVIDERNET_FOR_PUBLIC: true
           PHYSICAL_NETWORK: public
           ENABLE_CHASSIS_AS_GW: false

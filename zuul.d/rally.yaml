@@ -44,12 +44,11 @@
       - name: openstack/devstack-gate
       - name: openstack/rally
       - name: openstack/rally-openstack
-      - name: openstack/networking-ovn
     irrelevant-files: *irrelevant-files
     vars:
       devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron
         rally-openstack: https://opendev.org/openstack/rally-openstack
-        networking-ovn: https://opendev.org/openstack/networking-ovn
       zuul_copy_output:
         '{{ devstack_base_dir }}/data/ovs': 'logs'
       extensions_to_txt:
@@ -59,7 +58,7 @@
         ovn-controller: true
         ovs-vswitchd: true
         ovsdb-server: true
-        networking-ovn-metadata-agent: true
+        neutron-ovn-metadata-agent: true
         br-ex-tcpdump: true
         br-int-flows: true
         q-dhcp: false
@@ -67,7 +66,11 @@
         q-agt: false
         q-meta: false
         q-metering: false
+        q-dns: true
       devstack_localrc:
+        Q_AGENT: ovn
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
+        Q_ML2_TENANT_NETWORK_TYPE: geneve
         USE_PYTHON3: true
         PHYSICAL_NETWORK: public
         Q_USE_PROVIDERNET_FOR_PUBLIC: true
