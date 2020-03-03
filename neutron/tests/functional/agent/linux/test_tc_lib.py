@@ -15,7 +15,9 @@
 
 import random
 
+import mock
 import netaddr
+from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 
 from neutron.agent.linux import bridge_lib
@@ -138,6 +140,43 @@ class TcPolicyClassTestCase(functional_base.BaseSudoTestCase):
                                                  namespace=self.ns[0])
         self.assertGreater(tc_classes[0]['stats']['bytes'], bytes)
         self.assertGreater(tc_classes[0]['stats']['packets'], packets)
+
+    def test_add_tc_policy_class_check_min_kbps_values(self):
+        def warning_args(rate, min_rate):
+            return ('TC HTB class policy rate %(rate)s (bytes/second) is '
+                    'lower than the minimum accepted %(min_rate)s '
+                    '(bytes/second), for device %(device)s, qdisc '
+                    '%(qdisc)s and classid %(classid)s',
+                    {'rate': rate, 'min_rate': min_rate, 'classid': '1:10',
+                     'device': self.device[0], 'qdisc': '1:'})
+
+        self._create_two_namespaces()
+        tc_lib.add_tc_qdisc(self.device[0], 'htb', parent='root', handle='1:',
+                            namespace=self.ns[0])
+
+        with mock.patch.object(tc_lib, 'LOG') as mock_log:
+            # rate > min_rate: OK
+            tc_lib.add_tc_policy_class(self.device[0], '1:', '1:10',
+                                       max_kbps=2000, burst_kb=1000,
+                                       min_kbps=4, namespace=self.ns[0])
+            mock_log.warning.assert_not_called()
+
+            # rate < min_rate: min_rate = 466 with burst = 128000
+            tc_lib.add_tc_policy_class(self.device[0], '1:', '1:10',
+                                       max_kbps=2000, burst_kb=1000,
+                                       min_kbps=3, namespace=self.ns[0])
+            mock_log.warning.assert_called_once_with(
+                *warning_args(3 * 128, tc_lib._calc_min_rate(1000 * 128)))
+
+            # rate < min_rate: min_rate = 466 with burst = 0.8 ceil = 256000
+            mock_log.reset_mock()
+            tc_lib.add_tc_policy_class(self.device[0], '1:', '1:10',
+                                       max_kbps=2000, burst_kb=None,
+                                       min_kbps=5, namespace=self.ns[0])
+            min_rate = tc_lib._calc_min_rate(qos_consts.DEFAULT_BURST_RATE *
+                                             2000 * 128)
+            mock_log.warning.assert_called_once_with(
+                *warning_args(5 * 128, min_rate))
 
 
 class TcFiltersTestCase(functional_base.BaseSudoTestCase):
