@@ -36,6 +36,7 @@ from neutron.api import extensions as exts
 from neutron.conf.agent import common as config
 from neutron.conf.agent import ovs_conf
 from neutron.conf.plugins.ml2 import config as ml2_config
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 # Load all the models to register them into SQLAlchemy metadata before using
 # the SqlFixture
 from neutron.db import models  # noqa
@@ -168,6 +169,9 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         ml2_config.cfg.CONF.set_override('vni_ranges',
                                      ['1:65536'],
                                      group='ml2_type_geneve')
+        ovn_conf.cfg.CONF.set_override('dns_servers',
+                                       ['10.10.10.10'],
+                                       group='ovn')
 
         self.addCleanup(exts.PluginAwareExtensionManager.clear_instance)
         super(TestOVNFunctionalBase, self).setUp()
