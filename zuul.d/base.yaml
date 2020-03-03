@@ -37,7 +37,7 @@
     name: neutron-fullstack
     parent: neutron-functional
     vars:
-      tox_envlist: dsvm-fullstack
+      tox_envlist: dsvm-fullstack-gate
       zuul_copy_output:
         # We need to copy directory with logs to have it in job artifacts also,
         # /opt/stack/logs is default logs directory defined in neutron's
