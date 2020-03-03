@@ -719,6 +719,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         pager = base_obj.Pager(
             sorts=sorts, marker=marker, limit=limit, page_reverse=page_reverse)
 
+        project_id = filters.get('project_id') or filters.get('tenant_id')
+        if project_id:
+            project_id = project_id[0]
+        else:
+            project_id = context.project_id
+        if project_id:
+            self._ensure_default_security_group(context, project_id)
+
         if not filters and context.project_id and not context.is_admin:
             rule_ids = sg_obj.SecurityGroupRule.get_security_group_rule_ids(
                 context.project_id)
