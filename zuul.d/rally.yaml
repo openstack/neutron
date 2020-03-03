@@ -58,7 +58,7 @@
         ovn-controller: true
         ovs-vswitchd: true
         ovsdb-server: true
-        neutron-ovn-metadata-agent: true
+        q-ovn-metadata-agent: true
         br-ex-tcpdump: true
         br-int-flows: true
         q-dhcp: false

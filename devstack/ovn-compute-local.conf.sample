@@ -38,7 +38,7 @@ disable_all_services
 enable_service n-cpu
 enable_service placement-client
 enable_service ovn-controller
-enable_service neutron-ovn-metadata-agent
+enable_service q-ovn-metadata-agent
 
 # Set this to the address of the main DevStack host running the rest of the
 # OpenStack services.

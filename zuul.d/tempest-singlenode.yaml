@@ -237,7 +237,7 @@
         n-novnc-cell1: true
         n-sch: true
         n-super-cond: true
-        neutron-ovn-metadata-agent: true
+        q-ovn-metadata-agent: true
         o-api: true
         o-hk: true
         ovn-controller: true
