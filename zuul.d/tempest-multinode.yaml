@@ -187,6 +187,22 @@
     vars:
       tox_envlist: slow-serial
       tempest_test_regex: ""
+      # TODO(slaweq): remove test_port_security_macspoofing_port test from
+      # blacklist when bug https://bugs.launchpad.net/tempest/+bug/1728886
+      # will be fixed
+      # TODO(slaweq): remove tests from
+      # tempest.scenario.test_network_v6.TestGettingAddress module from
+      # blacklist when bug https://bugs.launchpad.net/neutron/+bug/1863577 will
+      # be fixed
+      # TODO(slaweq): remove test test_port_security_disable_security_group
+      # from blacklist list when bug
+      # https://bugzilla.redhat.com/show_bug.cgi?id=1805709
+      # will be fixed in OVN and we will use OVN with fix for this in our CI
+      tempest_black_regex: "\
+          (?:tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port)|\
+          (^tempest.scenario.test_network_v6.TestGettingAddress)|\
+          (^tempest.scenario.test_security_groups_basic_ops.TestSecurityGroupsBasicOps.test_port_security_disable_security_group)"
+
 
 - job:
     # TODO(slaweq): propose job with ovs-release and move -master one to
