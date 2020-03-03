@@ -112,7 +112,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
                 proxy.return_value = 'value'
 
                 retval = self.handler(req)
-                self.assertEqual(retval, 'value')
+                self.assertEqual('value', retval)
 
     def test_call_no_instance_match(self):
         req = mock.Mock()
@@ -129,7 +129,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
             get_ids.side_effect = Exception
             retval = self.handler(req)
             self.assertIsInstance(retval, webob.exc.HTTPInternalServerError)
-            self.assertEqual(len(self.log.mock_calls), 2)
+            self.assertEqual(2, len(self.log.mock_calls))
 
     def test_get_router_networks(self):
         router_id = 'router-id'
@@ -279,10 +279,10 @@ class _TestMetadataProxyHandlerCacheMixin(object):
         ]
 
         self.assertEqual(
+            ('device_id', 'tenant_id'),
             self._get_instance_and_tenant_id_helper(headers, ports,
                                                     networks=networks,
-                                                    router_id=router_id),
-            ('device_id', 'tenant_id')
+                                                    router_id=router_id)
         )
 
     def test_get_instance_id_router_id_no_match(self):
@@ -297,10 +297,10 @@ class _TestMetadataProxyHandlerCacheMixin(object):
             []
         ]
         self.assertEqual(
+            (None, None),
             self._get_instance_and_tenant_id_helper(headers, ports,
                                                     networks=networks,
-                                                    router_id=router_id),
-            (None, None)
+                                                    router_id=router_id)
         )
 
     def test_get_instance_id_network_id(self):
@@ -316,9 +316,9 @@ class _TestMetadataProxyHandlerCacheMixin(object):
         ]
 
         self.assertEqual(
+            ('device_id', 'tenant_id'),
             self._get_instance_and_tenant_id_helper(headers, ports,
-                                                    networks=('the_id',)),
-            ('device_id', 'tenant_id')
+                                                    networks=('the_id',))
         )
 
     def test_get_instance_id_network_id_no_match(self):
@@ -330,9 +330,9 @@ class _TestMetadataProxyHandlerCacheMixin(object):
         ports = [[]]
 
         self.assertEqual(
+            (None, None),
             self._get_instance_and_tenant_id_helper(headers, ports,
-                                                    networks=('the_id',)),
-            (None, None)
+                                                    networks=('the_id',))
         )
 
     def test_get_instance_id_network_id_and_router_id_invalid(self):
@@ -351,10 +351,10 @@ class _TestMetadataProxyHandlerCacheMixin(object):
         ]
 
         self.assertEqual(
+            (None, None),
             self._get_instance_and_tenant_id_helper(headers, ports,
                                                     networks=(network_id,),
-                                                    router_id=router_id),
-            (None, None)
+                                                    router_id=router_id)
         )
 
     def _proxy_request_test_helper(self, response_code=200, method='GET'):
@@ -391,13 +391,13 @@ class _TestMetadataProxyHandlerCacheMixin(object):
 
     def test_proxy_request_post(self):
         response = self._proxy_request_test_helper(method='POST')
-        self.assertEqual(response.content_type, "text/plain")
-        self.assertEqual(response.body, 'content')
+        self.assertEqual('text/plain', response.content_type)
+        self.assertEqual('content', response.body)
 
     def test_proxy_request_200(self):
         response = self._proxy_request_test_helper(200)
-        self.assertEqual(response.content_type, "text/plain")
-        self.assertEqual(response.body, 'content')
+        self.assertEqual('text/plain', response.content_type)
+        self.assertEqual('content', response.body)
 
     def test_proxy_request_400(self):
         self.assertIsInstance(self._proxy_request_test_helper(400),
@@ -425,8 +425,8 @@ class _TestMetadataProxyHandlerCacheMixin(object):
 
     def test_sign_instance_id(self):
         self.assertEqual(
-            self.handler._sign_instance_id('foo'),
-            '773ba44693c7553d6ee20f61ea5d2757a9a4f4a44d2841ae4e95b52e4cd62db4'
+            '773ba44693c7553d6ee20f61ea5d2757a9a4f4a44d2841ae4e95b52e4cd62db4',
+            self.handler._sign_instance_id('foo')
         )
 
 
