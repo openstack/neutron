@@ -34,6 +34,7 @@
               - ^tox.ini$
               - ^vagrant/.*$
               - ^migration/.*$
+              - ^devstack/.*\.sample$
         - tempest-multinode-full-py3:
             voting: false
             irrelevant-files: *irrelevant-files

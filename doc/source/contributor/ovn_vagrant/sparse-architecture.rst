@@ -49,10 +49,10 @@ Deployment
    :doc:`/contributor/ovn_vagrant/prerequisites`
 
 #. Clone the ``neutron`` repository locally and change to the
-   ``neutron/tools/ovn_vagrant/sparse`` directory::
+   ``neutron/vagrant/ovn/sparse`` directory::
 
      $ git clone https://opendev.org/openstack/neutron.git
-     $ cd neutron/tools/ovn_vagrant/sparse
+     $ cd neutron/vagrant/ovn/sparse
 
 #. If necessary, adjust any configuration in the ``instances.yml`` file.
 

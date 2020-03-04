@@ -30,7 +30,7 @@ Neutron logical network setup
 -----------------------------
 ::
 
-        vagrant@precise64:~/devstack$ openstack network list
+        vagrant@bionic64:~/devstack$ openstack network list
         +--------------------------------------+---------+----------------------------------------------------------------------------+
         | ID                                   | Name    | Subnets                                                                    |
         +--------------------------------------+---------+----------------------------------------------------------------------------+
@@ -38,7 +38,7 @@ Neutron logical network setup
         | 713bae25-8276-4e0a-a453-e59a1d65425a | private | 6fa3bab9-103e-45d5-872c-91f21b52ceda, c5c9f5c2-145d-46d2-a513-cf675530eaed |
         +--------------------------------------+---------+----------------------------------------------------------------------------+
 
-        vagrant@precise64:~/devstack$ openstack subnet list
+        vagrant@bionic64:~/devstack$ openstack subnet list
         +--------------------------------------+---------------------+--------------------------------------+--------------------+
         | ID                                   | Name                | Network                              | Subnet             |
         +--------------------------------------+---------------------+--------------------------------------+--------------------+
@@ -48,7 +48,7 @@ Neutron logical network setup
         | c5c9f5c2-145d-46d2-a513-cf675530eaed | private-subnet      | 713bae25-8276-4e0a-a453-e59a1d65425a | 10.0.0.0/24        |
         +--------------------------------------+---------------------+--------------------------------------+--------------------+
 
-        vagrant@precise64:~/devstack$ openstack port list
+        vagrant@bionic64:~/devstack$ openstack port list
         +--------------------------------------+------+-------------------+----------------------------------------------------------------------------------------------------+--------+
         | ID                                   | Name | MAC Address       | Fixed IP Addresses                                                                                 | Status |
         +--------------------------------------+------+-------------------+----------------------------------------------------------------------------------------------------+--------+
@@ -61,7 +61,7 @@ Neutron logical network setup
         +--------------------------------------+------+-------------------+----------------------------------------------------------------------------------------------------+--------+
 
 
-        vagrant@precise64:~/devstack$ openstack subnet show c5c9f5c2-145d-46d2-a513-cf675530eaed
+        vagrant@bionic64:~/devstack$ openstack subnet show c5c9f5c2-145d-46d2-a513-cf675530eaed
         +-------------------+--------------------------------------+
         | Field             | Value                                |
         +-------------------+--------------------------------------+
@@ -93,13 +93,13 @@ Neutron logical router setup
 
 ::
 
-        vagrant@precise64:~/devstack$ openstack router list
+        vagrant@bionic64:~/devstack$ openstack router list
         +--------------------------------------+---------+--------+-------+-------------+-------+----------------------------------+
         | ID                                   | Name    | Status | State | Distributed | HA    | Project                          |
         +--------------------------------------+---------+--------+-------+-------------+-------+----------------------------------+
         | 82fa9a47-246e-4da8-a864-53ea8daaed42 | router1 | ACTIVE | UP    | False       | False | 35e3820f7490493ca9e3a5e685393298 |
         +--------------------------------------+---------+--------+-------+-------------+-------+----------------------------------+
-        vagrant@precise64:~/devstack$ openstack router show router1
+        vagrant@bionic64:~/devstack$ openstack router show router1
         +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
         | Field                   | Value                                                                                                                                                |
         +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -121,7 +121,7 @@ Neutron logical router setup
         | status                  | ACTIVE                                                                                                                                               |
         | updated_at              | 2016-11-08T21:55:51Z                                                                                                                                 |
         +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
-        vagrant@precise64:~/devstack$ openstack port list --router router1
+        vagrant@bionic64:~/devstack$ openstack port list --router router1
         +--------------------------------------+------+-------------------+---------------------------------------------------------------------------------+--------+
         | ID                                   | Name | MAC Address       | Fixed IP Addresses                                                              | Status |
         +--------------------------------------+------+-------------------+---------------------------------------------------------------------------------+--------+
@@ -143,7 +143,7 @@ Neutron Routers are realized in OpenVSwitch
 
 "router1" in the Neutron logical network is realized through a port ("qr-0ba8700e-da") in OpenVSwitch - attached to "br-int"::
 
-        vagrant@precise64:~/devstack$ sudo ovs-vsctl show
+        vagrant@bionic64:~/devstack$ sudo ovs-vsctl show
         b9b27fc3-5057-47e7-ba64-0b6afe70a398
             Bridge br-int
                 Port "qr-0ba8700e-da"
@@ -182,7 +182,7 @@ Neutron Routers are realized in OpenVSwitch
             ovs_version: "1.4.0+build0"
 
 
-        vagrant@precise64:~/devstack$ brctl show
+        vagrant@bionic64:~/devstack$ brctl show
         bridge name	bridge id		STP enabled	interfaces
         br-eth1		0000.e2e7fc5ccb4d	no
         br-ex		0000.82ee46beaf4d	no		phy-br-ex
@@ -215,13 +215,13 @@ namespace. The namespace will have the name "qrouter-<UUID of the router>.
 
 For example::
 
-        vagrant@precise64:~$ openstack router list
+        vagrant@bionic64:~$ openstack router list
         +--------------------------------------+---------+-------------------------------------------------------------------------+
         | ID                                   | Name    | Status | State | Distributed | HA    | Project                          |
         +--------------------------------------+---------+-------------------------------------------------------------------------+
         | ad948c6e-afb6-422a-9a7b-0fc44cbb3910 | router1 | Active | UP    | True        | False | 35e3820f7490493ca9e3a5e685393298 |
         +--------------------------------------+---------+-------------------------------------------------------------------------+
-        vagrant@precise64:~/devstack$ sudo ip netns exec qrouter-ad948c6e-afb6-422a-9a7b-0fc44cbb3910 ip addr list
+        vagrant@bionic64:~/devstack$ sudo ip netns exec qrouter-ad948c6e-afb6-422a-9a7b-0fc44cbb3910 ip addr list
         18: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue state UNKNOWN
             link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
             inet 127.0.0.1/8 scope host lo
