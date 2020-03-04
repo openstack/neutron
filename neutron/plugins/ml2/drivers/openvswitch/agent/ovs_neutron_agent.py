@@ -653,35 +653,33 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.deleted_ports -= port_info['removed']
         deleted_ports = list(self.deleted_ports)
 
-        with self.int_br.deferred(full_ordered=True,
-                                  use_bundle=True) as int_br:
-            while self.deleted_ports:
-                port_id = self.deleted_ports.pop()
-                port = self.int_br.get_vif_port_by_id(port_id)
+        while self.deleted_ports:
+            port_id = self.deleted_ports.pop()
+            port = self.int_br.get_vif_port_by_id(port_id)
 
-                if (isinstance(self.sg_agent.firewall,
-                               agent_firewall.NoopFirewallDriver) or
-                        not agent_sg_rpc.is_firewall_enabled()):
-                    try:
-                        self.delete_accepted_egress_direct_flow(
-                            int_br,
-                            port.ofport,
-                            port.mac, self._get_port_local_vlan(port_id))
-                    except Exception as err:
-                        LOG.debug("Failed to remove accepted egress flows "
-                                  "for port %s, error: %s", port_id, err)
+            if (isinstance(self.sg_agent.firewall,
+                           agent_firewall.NoopFirewallDriver) or
+                    not agent_sg_rpc.is_firewall_enabled()):
+                try:
+                    self.delete_accepted_egress_direct_flow(
+                        self.int_br,
+                        port.ofport,
+                        port.mac, self._get_port_local_vlan(port_id))
+                except Exception as err:
+                    LOG.debug("Failed to remove accepted egress flows "
+                              "for port %s, error: %s", port_id, err)
 
-                self._clean_network_ports(port_id)
-                self.ext_manager.delete_port(self.context,
-                                             {"vif_port": port,
-                                              "port_id": port_id})
-                # move to dead VLAN so deleted ports no
-                # longer have access to the network
-                if port:
-                    # don't log errors since there is a chance someone will be
-                    # removing the port from the bridge at the same time
-                    self.port_dead(port, log_errors=False)
-                self.port_unbound(port_id)
+            self._clean_network_ports(port_id)
+            self.ext_manager.delete_port(self.context,
+                                         {"vif_port": port,
+                                          "port_id": port_id})
+            # move to dead VLAN so deleted ports no
+            # longer have access to the network
+            if port:
+                # don't log errors since there is a chance someone will be
+                # removing the port from the bridge at the same time
+                self.port_dead(port, log_errors=False)
+            self.port_unbound(port_id)
 
         # Flush firewall rules after ports are put on dead VLAN to be
         # more secure
@@ -770,27 +768,17 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         for lvm, agent_ports in self.get_agent_ports(fdb_entries):
             agent_ports.pop(self.local_ip, None)
             if len(agent_ports):
-                if not self.enable_distributed_routing:
-                    with self.tun_br.deferred() as deferred_br:
-                        self.fdb_add_tun(context, deferred_br, lvm,
-                                         agent_ports, self._tunnel_port_lookup)
-                else:
-                    self.fdb_add_tun(context, self.tun_br, lvm,
-                                     agent_ports, self._tunnel_port_lookup)
+                self.fdb_add_tun(context, self.tun_br, lvm,
+                                 agent_ports, self._tunnel_port_lookup)
 
     def fdb_remove(self, context, fdb_entries):
         LOG.debug("fdb_remove received")
         for lvm, agent_ports in self.get_agent_ports(fdb_entries):
             agent_ports.pop(self.local_ip, None)
             if len(agent_ports):
-                if not self.enable_distributed_routing:
-                    with self.tun_br.deferred() as deferred_br:
-                        self.fdb_remove_tun(context, deferred_br, lvm,
-                                            agent_ports,
-                                            self._tunnel_port_lookup)
-                else:
-                    self.fdb_remove_tun(context, self.tun_br, lvm,
-                                        agent_ports, self._tunnel_port_lookup)
+                self.fdb_remove_tun(context, self.tun_br, lvm,
+                                    agent_ports,
+                                    self._tunnel_port_lookup)
 
     def add_fdb_flow(self, br, port_info, remote_ip, lvm, ofport):
         if port_info == n_const.FLOODING_ENTRY:
@@ -826,9 +814,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     def _fdb_chg_ip(self, context, fdb_entries):
         LOG.debug("update chg_ip received")
-        with self.tun_br.deferred() as deferred_br:
-            self.fdb_chg_ip_tun(context, deferred_br, fdb_entries,
-                                self.local_ip)
+        self.fdb_chg_ip_tun(context, self.tun_br, fdb_entries, self.local_ip)
 
     def setup_entry_for_arp_reply(self, br, action, local_vid, mac_address,
                                   ip_address):
@@ -2078,17 +2064,16 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         if (isinstance(self.sg_agent.firewall,
                        agent_firewall.NoopFirewallDriver) or
                 not agent_sg_rpc.is_firewall_enabled()):
-            with self.int_br.deferred(full_ordered=True,
-                                      use_bundle=True) as int_br:
-                for port in ports:
-                    try:
-                        self.install_accepted_egress_direct_flow(port, int_br)
-                        # give other coroutines a chance to run
-                        eventlet.sleep(0)
-                    except Exception as err:
-                        LOG.debug("Failed to install accepted egress flows "
-                                  "for port %s, error: %s",
-                                  port['port_id'], err)
+            for port in ports:
+                try:
+                    self.install_accepted_egress_direct_flow(port,
+                                                             self.int_br)
+                    # give other coroutines a chance to run
+                    eventlet.sleep(0)
+                except Exception as err:
+                    LOG.debug("Failed to install accepted egress flows "
+                              "for port %s, error: %s",
+                              port['port_id'], err)
 
     def install_accepted_egress_direct_flow(self, port_detail, br_int):
         lvm = self.vlan_manager.get(port_detail['network_id'])
