@@ -13,7 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_config import cfg
+
 from neutron.cmd.sanity import checks
+from neutron.conf.agent import dhcp as dhcp_conf
 from neutron.tests.functional import base
 
 
@@ -24,6 +27,10 @@ class SanityTestCase(base.BaseLoggingTestCase):
     neutron-sanity-check runs without throwing an exception, as in the case
     where someone modifies the API without updating the check script.
     """
+    def setUp(self):
+        super(SanityTestCase, self).setUp()
+        # needed for test_dnsmasq_version()
+        cfg.CONF.register_opts(dhcp_conf.DNSMASQ_OPTS)
 
     def test_nova_notify_runs(self):
         checks.nova_notify_supported()
