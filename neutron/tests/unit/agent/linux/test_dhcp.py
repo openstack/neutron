@@ -231,6 +231,25 @@ class FakeV6PortExtraOpt(object):
                     ip_version=constants.IP_VERSION_6)]
 
 
+class FakeV6PortMultipleFixedIpsSameSubnet(object):
+    def __init__(self, domain='openstacklocal'):
+        self.id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
+        self.admin_state_up = True
+        self.device_owner = 'foo3'
+        self.fixed_ips = [
+            FakeIPAllocation('fdca:3ba5:a17a:4ba3::2',
+                             'ffffffff-ffff-ffff-ffff-ffffffffffff'),
+            FakeIPAllocation('fdca:3ba5:a17a:4ba3::4',
+                             'ffffffff-ffff-ffff-ffff-ffffffffffff')]
+        self.mac_address = '00:00:f3:aa:bb:cc'
+        self.device_id = 'fake_port6'
+        self.extra_dhcp_opts = []
+        self.dns_assignment = [FakeDNSAssignment('fdca:3ba5:a17a:4ba3::2',
+                                                 domain=domain),
+                               FakeDNSAssignment('fdca:3ba5:a17a:4ba3::4',
+                                                 domain=domain)]
+
+
 class FakeDualPortWithV6ExtraOpt(object):
     def __init__(self):
         self.id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
@@ -1004,6 +1023,14 @@ class FakeNetworkWithV6SatelessAndV4DHCPSubnets(object):
         self.id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
         self.subnets = [FakeV6SubnetStateless(), FakeV4Subnet()]
         self.ports = [FakeDualPortWithV6ExtraOpt(), FakeRouterPort()]
+        self.namespace = 'qdhcp-ns'
+
+
+class FakeV6NetworkStatefulDHCPSameSubnetFixedIps(object):
+    def __init__(self):
+        self.id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+        self.subnets = [FakeV6SubnetDHCPStateful()]
+        self.ports = [FakeV6PortMultipleFixedIpsSameSubnet()]
         self.namespace = 'qdhcp-ns'
 
 
@@ -2760,6 +2787,23 @@ class TestDnsmasq(TestBase):
                         'tag:port-hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
                         'option6:dns-server,ffea:3ba5:a17a:4ba3::100').lstrip()
         dm = self._get_dnsmasq(FakeV6NetworkStatelessDHCP())
+        dm._output_hosts_file()
+        dm._output_opts_file()
+        self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
+                                    mock.call(exp_opt_name, exp_opt_data)])
+
+    def test_host_and_opts_file_on_stateful_dhcpv6_same_subnet_fixedips(self):
+        self.conf.set_override('dnsmasq_enable_addr6_list', True)
+        exp_host_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/host'
+        exp_host_data = (
+            '00:00:f3:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--2.openstacklocal.,'
+            '[fdca:3ba5:a17a:4ba3::2],[fdca:3ba5:a17a:4ba3::4]\n'.lstrip())
+        exp_opt_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/opts'
+        exp_opt_data = ('tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+                        'option6:dns-server,[2001:0200:feed:7ac0::1]\n'
+                        'tag:subnet-ffffffff-ffff-ffff-ffff-ffffffffffff,'
+                        'option6:domain-search,openstacklocal').lstrip()
+        dm = self._get_dnsmasq(FakeV6NetworkStatefulDHCPSameSubnetFixedIps())
         dm._output_hosts_file()
         dm._output_opts_file()
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
