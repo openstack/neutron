@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Fixed an issue where IP allocation for IPv6 stateless subnets would allocate
+    on invalid subnets when segments are used. Auto-addressing now filters on
+    segment ids when allocating IP addresses. See bugs:
+    `#1864225 <https://bugs.launchpad.net/neutron/+bug/1864225>`_,
+    `#1864333 <https://bugs.launchpad.net/neutron/+bug/1864333>`_,
+    `#1865138 <https://bugs.launchpad.net/neutron/+bug/1865138>`_.
