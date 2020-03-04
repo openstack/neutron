@@ -84,6 +84,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         self.mech_driver = mm.mech_drivers['ovn'].obj
         self.mech_driver._nb_ovn = fakes.FakeOvsdbNbOvnIdl()
         self.mech_driver._sb_ovn = fakes.FakeOvsdbSbOvnIdl()
+        self.mech_driver._ovn_client._qos_driver = mock.Mock()
         self.nb_ovn = self.mech_driver._nb_ovn
         self.sb_ovn = self.mech_driver._sb_ovn
 
@@ -1705,6 +1706,7 @@ class OVNMechanismDriverTestCase(test_plugin.Ml2PluginV2TestCase):
         sb_ovn = fakes.FakeOvsdbSbOvnIdl()
         self.mech_driver._nb_ovn = nb_ovn
         self.mech_driver._sb_ovn = sb_ovn
+        self.mech_driver._ovn_client._qos_driver = mock.Mock()
         self.mech_driver._insert_port_provisioning_block = mock.Mock()
         p = mock.patch.object(ovn_utils, 'get_revision_number', return_value=1)
         p.start()
@@ -1843,6 +1845,7 @@ class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
         sb_ovn = fakes.FakeOvsdbSbOvnIdl()
         self.mech_driver._nb_ovn = nb_ovn
         self.mech_driver._sb_ovn = sb_ovn
+        self.mech_driver._ovn_client._qos_driver = mock.Mock()
         p = mock.patch.object(ovn_utils, 'get_revision_number', return_value=1)
         p.start()
         self.addCleanup(p.stop)
@@ -2452,6 +2455,7 @@ class TestOVNMechanismDriverSecurityGroup(
         sb_ovn = fakes.FakeOvsdbSbOvnIdl()
         self.mech_driver._nb_ovn = nb_ovn
         self.mech_driver._sb_ovn = sb_ovn
+        self.mech_driver._ovn_client._qos_driver = mock.Mock()
         self.ctx = context.get_admin_context()
         revision_plugin.RevisionPlugin()
 
@@ -2751,6 +2755,7 @@ class TestOVNMechanismDriverMetadataPort(test_plugin.Ml2PluginV2TestCase):
         self.mech_driver = mm.mech_drivers['ovn'].obj
         self.mech_driver._nb_ovn = fakes.FakeOvsdbNbOvnIdl()
         self.mech_driver._sb_ovn = fakes.FakeOvsdbSbOvnIdl()
+        self.mech_driver._ovn_client._qos_driver = mock.Mock()
         self.nb_ovn = self.mech_driver._nb_ovn
         self.sb_ovn = self.mech_driver._sb_ovn
         self.ctx = context.get_admin_context()
