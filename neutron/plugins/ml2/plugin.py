@@ -45,6 +45,7 @@ from neutron_lib.api.definitions import portbindings_extended as pbe_ext
 from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import rbac_security_groups as rbac_sg_apidef
 from neutron_lib.api.definitions import security_groups_port_filtering
+from neutron_lib.api.definitions import stateful_security_group
 from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api.definitions import subnet_onboard as subnet_onboard_def
 from neutron_lib.api.definitions import subnetpool_prefix_ops \
@@ -203,7 +204,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     pbe_ext.ALIAS,
                                     agent_resources_synced.ALIAS,
                                     subnet_onboard_def.ALIAS,
-                                    subnetpool_prefix_ops_def.ALIAS]
+                                    subnetpool_prefix_ops_def.ALIAS,
+                                    stateful_security_group.ALIAS]
 
     # List of agent types for which all binding_failed ports should try to be
     # rebound when agent revive
@@ -1373,8 +1375,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._portsec_ext_port_create_processing(context, result, port)
 
             # sgids must be got after portsec checked with security group
-            sgids = self._get_security_groups_on_port(context, port)
-            self._process_port_create_security_group(context, result, sgids)
+            sgs = self._get_security_groups_on_port(context, port)
+            self._process_port_create_security_group(context, result, sgs)
             network = self.get_network(context, result['network_id'])
             binding = db.add_port_binding(context, result['id'])
             mech_context = driver_context.PortContext(self, context, result,
@@ -1425,11 +1427,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return bound_context.current
 
-    def _ensure_security_groups_on_port(self, context, port_dict):
-        port_compat = {'port': port_dict}
-        sgids = self._get_security_groups_on_port(context, port_compat)
-        self._process_port_create_security_group(context, port_dict, sgids)
-
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def create_port_bulk(self, context, ports):
@@ -1464,7 +1461,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         const.PORT_STATUS_ACTIVE),
                     device_id=pdata.get('device_id'),
                     device_owner=pdata.get('device_owner'),
-                    security_group_ids=security_group_ids,
                     description=pdata.get('description'))
 
                 # Ensure that the networks exist.
@@ -1527,18 +1523,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                  process_extensions=False)
                 port_dict[portbindings.HOST_ID] = pdata.get(
                     portbindings.HOST_ID)
-                port_compat = {'port': port_dict}
 
                 # Activities immediately post-port-creation
                 self.extension_manager.process_create_port(context, pdata,
                                                            port_dict)
                 self._portsec_ext_port_create_processing(context, port_dict,
-                                                         port_compat)
+                                                         port)
 
-                # Ensure the default security group is assigned, unless one was
-                # specifically requested
-                if security_group_ids is None:
-                    self._ensure_security_groups_on_port(context, port_dict)
+                sgs = self._get_security_groups_on_port(context, port)
+                self._process_port_create_security_group(context, port_dict,
+                                                         sgs)
 
                 # process port binding
                 binding = db.add_port_binding(context, port_dict['id'])
@@ -1554,7 +1548,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # process allowed address pairs
                 db_port_obj[addr_apidef.ADDRESS_PAIRS] = (
                     self._process_create_allowed_address_pairs(
-                        context, port_compat,
+                        context, port_dict,
                         port_dict.get(addr_apidef.ADDRESS_PAIRS)))
 
                 # handle DHCP setup
@@ -1582,13 +1576,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # Perform actions after the transaction is committed
         completed_ports = []
         for port in port_data:
-            # Ensure security groups are assigned to the port, if
-            # specifically requested
-            port_dict = port['port_dict']
-            if port_dict.get('security_group_ids') is not None:
-                with db_api.CONTEXT_WRITER.using(context):
-                    self._ensure_security_groups_on_port(context, port_dict)
-
             resource_extend.apply_funcs('ports',
                                         port['port_dict'],
                                         port['port_obj'].db_obj)

@@ -1,0 +1,18 @@
+---
+prelude: >
+    Added support to create stateless security groups.
+features:
+  - |
+    Added support for a new stateful-security-group api extension that
+    implements stateless security groups for the iptables drivers.
+upgrade:
+  - |
+    Currently existing security groups will all be set to stateful during
+    the alembic migration.
+security:
+  - |
+    The ``stateless security group`` feature does not work with
+    OVS nor OVN driver as the driver is not aware of the ``stateful`` attribute
+    in the security group. If ``stateful`` attribute is provided with a
+    ``False`` value then the attribute value is ignored and the security
+    group would behave as stateful.

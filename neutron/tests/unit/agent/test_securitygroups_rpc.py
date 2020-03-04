@@ -513,13 +513,16 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 ctx, devices=devices)
             expected = {
                 'security_groups': {sg1_id: [
-                    {'direction': 'egress', 'ethertype': const.IPv4},
-                    {'direction': 'egress', 'ethertype': const.IPv6},
+                    {'direction': 'egress', 'ethertype': const.IPv4,
+                     'stateful': True},
+                    {'direction': 'egress', 'ethertype': const.IPv6,
+                     'stateful': True},
                     {'direction': u'ingress',
                      'protocol': const.PROTO_NAME_TCP,
                      'ethertype': const.IPv4,
                      'port_range_max': 25, 'port_range_min': 24,
-                     'remote_group_id': sg2_id}
+                     'remote_group_id': sg2_id,
+                     'stateful': True}
                 ]},
                 'sg_member_ips': {sg2_id: {
                     'IPv4': set([port_ip2]),
@@ -628,13 +631,16 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 ctx, devices=devices)
             expected = {
                 'security_groups': {sg1_id: [
-                    {'direction': 'egress', 'ethertype': const.IPv4},
-                    {'direction': 'egress', 'ethertype': const.IPv6},
+                    {'direction': 'egress', 'ethertype': const.IPv4,
+                     'stateful': True},
+                    {'direction': 'egress', 'ethertype': const.IPv6,
+                     'stateful': True},
                     {'direction': u'ingress',
                      'protocol': const.PROTO_NAME_TCP,
                      'ethertype': const.IPv6,
                      'port_range_max': 22, 'port_range_min': 22,
-                     'remote_group_id': sg1_id}
+                     'remote_group_id': sg1_id,
+                     'stateful': True}
                 ]},
                 'sg_member_ips': {sg1_id: {
                     'IPv6': set(),

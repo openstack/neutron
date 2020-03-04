@@ -396,16 +396,53 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         # match by interface for bridge input
         match_interface = '-i %s'
         match_physdev = '-m physdev --physdev-in %s'
-        # comment to prevent duplicate warnings for different devices using
-        # same bridge. truncate start to remove prefixes
-        comment = '-m comment --comment "Set zone for %s"' % port['device'][4:]
+        port_sg_rules = self._get_port_sg_rules(port)
+        if self._are_sg_rules_stateful(port_sg_rules):
+            # comment to prevent duplicate warnings for different devices using
+            # same bridge. truncate start to remove prefixes
+            comment = 'Set zone for %s' % port['device'][4:]
+            conntrack = '--zone %s' % self.ipconntrack.get_device_zone(port)
+        else:
+            comment = 'Make %s stateless' % port['device'][4:]
+            conntrack = '--notrack'
         rules = []
         for dev, match in ((br_dev, match_physdev), (br_dev, match_interface),
                            (port_dev, match_physdev)):
             match = match % dev
-            rule = '%s %s -j CT --zone %s' % (match, comment, zone)
+            rule = '%s -m comment --comment "%s" -j CT %s' % (match, comment,
+                                                              conntrack)
             rules.append(rule)
         return rules
+
+    def _get_port_sg_rules(self, port):
+        port_sg_rules = []
+        if not any(port.get('device_owner', '').startswith(prefix)
+                   for prefix in constants.DEVICE_OWNER_PREFIXES):
+            port_sg_ids = port.get('security_groups', [])
+            if port_sg_ids:
+                for rule in self.sg_rules.get(port_sg_ids[0], []):
+                    if self.enable_ipset:
+                        port_sg_rules.append(rule)
+                        break
+                    else:
+                        port_sg_rules.extend(
+                            self._expand_sg_rule_with_remote_ips(
+                                rule, port, constants.INGRESS_DIRECTION))
+                        if port_sg_rules:
+                            break
+                        else:
+                            port_sg_rules.extend(
+                                self._expand_sg_rule_with_remote_ips(
+                                    rule, port, constants.EGRESS_DIRECTION))
+                            if port_sg_rules:
+                                break
+        return port_sg_rules
+
+    @staticmethod
+    def _are_sg_rules_stateful(security_group_rules):
+        for rule in security_group_rules:
+            return rule.get('stateful', True)
+        return True
 
     def _add_conntrack_jump(self, port):
         for jump_rule in self._get_jump_rules(port):

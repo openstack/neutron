@@ -210,24 +210,24 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         if not validators.is_attr_set(port['port'].get(ext_sg.SECURITYGROUPS)):
             port['port'][ext_sg.SECURITYGROUPS] = [default_sg]
         with db_api.CONTEXT_WRITER.using(context):
-            sgids = self._get_security_groups_on_port(context, port)
+            sgs = self._get_security_groups_on_port(context, port)
             port = super(SecurityGroupTestPlugin, self).create_port(context,
                                                                     port)
             self._process_port_create_security_group(context, port,
-                                                     sgids)
+                                                     sgs)
         return port
 
     def update_port(self, context, id, port):
         with db_api.CONTEXT_WRITER.using(context):
             if ext_sg.SECURITYGROUPS in port['port']:
-                port['port'][ext_sg.SECURITYGROUPS] = (
-                    self._get_security_groups_on_port(context, port))
+                sgs = self._get_security_groups_on_port(context, port)
+                port['port'][ext_sg.SECURITYGROUPS] = [
+                    sg['id'] for sg in sgs] if sgs else None
                 # delete the port binding and read it with the new rules
                 self._delete_port_security_group_bindings(context, id)
                 port['port']['id'] = id
                 self._process_port_create_security_group(
-                    context, port['port'],
-                    port['port'].get(ext_sg.SECURITYGROUPS))
+                    context, port['port'], sgs)
             port = super(SecurityGroupTestPlugin, self).update_port(
                 context, id, port)
         return port
