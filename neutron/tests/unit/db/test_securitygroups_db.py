@@ -94,6 +94,18 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             with testtools.ExpectedException(securitygroup.SecurityGroupInUse):
                 self.mixin.delete_security_group(self.ctx, mock.ANY)
 
+    def test_update_security_group_statefulness_binded_conflict(self):
+        FAKE_SECGROUP['security_group']['stateful'] = mock.ANY
+        sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
+        FAKE_SECGROUP['security_group']['stateful'] = not sg_dict['stateful']
+        with mock.patch.object(self.mixin,
+                               '_get_port_security_group_bindings'), \
+                mock.patch.object(registry, "notify") as mock_notify:
+            mock_notify.side_effect = exceptions.CallbackFailure(Exception())
+            with testtools.ExpectedException(securitygroup.SecurityGroupInUse):
+                self.mixin.update_security_group(self.ctx, sg_dict['id'],
+                                                 FAKE_SECGROUP)
+
     def test_update_security_group_conflict(self):
         with mock.patch.object(registry, "notify") as mock_notify:
             mock_notify.side_effect = exceptions.CallbackFailure(Exception())
@@ -325,12 +337,16 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         self._test_security_group_precommit_create_event()
 
     def test_security_group_precommit_update_event(self):
+        FAKE_SECGROUP['security_group']['stateful'] = mock.ANY
         original_sg_dict = self.mixin.create_security_group(self.ctx,
                                                             FAKE_SECGROUP)
         sg_id = original_sg_dict['id']
-        with mock.patch.object(registry, "publish") as mock_notify:
+        with mock.patch.object(self.mixin,
+                               '_get_port_security_group_bindings'), \
+                mock.patch.object(registry, "publish") as mock_notify:
             fake_secgroup = copy.deepcopy(FAKE_SECGROUP)
             fake_secgroup['security_group']['name'] = 'updated_fake'
+            fake_secgroup['security_group']['stateful'] = mock.ANY
             sg_dict = self.mixin.update_security_group(
                     self.ctx, sg_id, fake_secgroup)
 

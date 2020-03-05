@@ -278,13 +278,16 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
     @db_api.retry_if_session_inactive()
     def update_security_group(self, context, id, security_group):
         s = security_group['security_group']
+
         if 'stateful' in s:
-            filters = {'security_group_id': [id]}
             with db_api.CONTEXT_READER.using(context):
-                ports = self._get_port_security_group_bindings(context,
-                                                               filters)
-                if ports:
-                    raise ext_sg.SecurityGroupInUse(id=id)
+                sg = self._get_security_group(context, id)
+                if s['stateful'] != sg['stateful']:
+                    filters = {'security_group_id': [id]}
+                    ports = self._get_port_security_group_bindings(context,
+                                                                   filters)
+                    if ports:
+                        raise ext_sg.SecurityGroupInUse(id=id)
 
         kwargs = {
             'context': context,
