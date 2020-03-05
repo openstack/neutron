@@ -226,6 +226,12 @@ class Server(object):
                              log_format=CONF.wsgi_log_format,
                              socket_timeout=self.client_socket_timeout)
 
+    @property
+    def process_launcher(self):
+        if isinstance(self._server, common_service.ProcessLauncher):
+            return self._server
+        return None
+
 
 class Request(wsgi.Request):
 
