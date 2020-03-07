@@ -94,11 +94,15 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
         try:
             utils.wait_until_true(text_in_file, timeout=15)
         except utils.WaitTimeout:
+            devices = {}
+            for dev in ip_lib.IPWrapper(
+                    namespace=self.router.namespace).get_devices():
+                devices[dev.name] = [addr['cidr'] for addr in dev.addr.list()]
             # NOTE: we need to read here the content of the file.
-            raise RuntimeError(
-                'Text not found in file %(file_name)s: "%(text)s". File '
-                'content: %(file_content)s' %
-                {'file_name': file_name, 'text': text,
+            self.fail(
+                'Text not found in file %(file_name)s: "%(text)s".\nDevice '
+                'addresses: %(devices)s.\nFile content:\n%(file_content)s' %
+                {'file_name': file_name, 'text': text, 'devices': devices,
                  'file_content': open(file_name).read()})
 
     def test_new_fip_sends_garp(self):
