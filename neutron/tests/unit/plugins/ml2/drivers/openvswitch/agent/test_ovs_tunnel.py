@@ -87,6 +87,7 @@ class TunnelTest(object):
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
         cfg.CONF.set_override('report_interval', 0, 'AGENT')
+        cfg.CONF.set_override('explicitly_egress_direct', True, 'AGENT')
 
         self.INT_BRIDGE = 'integration_bridge'
         self.TUN_BRIDGE = 'tunnel_bridge'
@@ -570,8 +571,14 @@ class TunnelTest(object):
 
         self.mock_int_bridge_expected += [
             mock.call.check_canary_table(),
+            mock.call.deferred(full_ordered=True, use_bundle=True),
+            mock.call.deferred().__enter__(),
+            mock.call.deferred().__exit__(None, None, None),
             mock.call.cleanup_flows(),
-            mock.call.check_canary_table()
+            mock.call.check_canary_table(),
+            mock.call.deferred(full_ordered=True, use_bundle=True),
+            mock.call.deferred().__enter__(),
+            mock.call.deferred().__exit__(None, None, None),
         ]
         self.mock_map_tun_bridge_expected += [
             mock.call.cleanup_flows(),

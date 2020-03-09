@@ -138,7 +138,13 @@ agent_opts = [
                        "outgoing IP packet carrying GRE/VXLAN tunnel.")),
     cfg.StrOpt('agent_type', default=n_const.AGENT_TYPE_OVS,
                deprecated_for_removal=True,
-               help=_("Selects the Agent Type reported"))
+               help=_("Selects the Agent Type reported")),
+    cfg.BoolOpt('explicitly_egress_direct', default=False,
+                help=_("When set to True, the accepted egress unicast "
+                       "traffic will not use action NORMAL. The accepted "
+                       "egress packets will be taken care of in the final "
+                       "egress tables direct output flows for unicast "
+                       "traffic.")),
 ]
 
 
