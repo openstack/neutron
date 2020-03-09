@@ -16,9 +16,12 @@
 #           Networking-OVN                        Neutron
 
 devstack/lib/ovn                        devstack/lib/ovn_agent
-networking_ovn/ovsdb/impl_idl_ovn.py    neutron/ovsdb/impl_idl_ovn.py
-networking_ovn/ovsdb                    neutron/ovsdb/ovn
 networking_ovn/ovn_db_sync.py           neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/ovn_db_sync.py
+networking_ovn/ovsdb/commands.py        neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/commands.py
+networking_ovn/ovsdb/impl_idl_ovn.py    neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/impl_idl_ovn.py
+networking_ovn/ovsdb/ovn_api.py         neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/api.py
+networking_ovn/ovsdb/ovsdb_monitor.py   neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/ovsdb_monitor.py
+networking_ovn/ovsdb/worker.py          neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/worker.py
 networking_ovn/agent/metadata           neutron/agent/ovn/metadata
 networking_ovn/cmd                      neutron/cmd
 networking_ovn/common/config.py         neutron/conf/ovn.py
