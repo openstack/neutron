@@ -172,6 +172,8 @@ traffic.
 Egress flow is determined by switch port number and ingress flow is determined
 by destination mac address. ``register 6`` contains port tag to isolate
 connections into separate conntrack zones.
+For VLAN networks, the physical VLAN tag will be used to act as an extra
+match rule to do such identifying work as well.
 
 ::
 
