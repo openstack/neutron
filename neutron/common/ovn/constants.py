@@ -203,3 +203,7 @@ METADATA_DEFAULT_IP = '169.254.169.254'
 METADATA_DEFAULT_CIDR = '%s/%d' % (METADATA_DEFAULT_IP,
                                    METADATA_DEFAULT_PREFIX)
 METADATA_PORT = 80
+
+# OVN igmp options
+MCAST_SNOOP = 'mcast_snoop'
+MCAST_FLOOD_UNREGISTERED = 'mcast_flood_unregistered'

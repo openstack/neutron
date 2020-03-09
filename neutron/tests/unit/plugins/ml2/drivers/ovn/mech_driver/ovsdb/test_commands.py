@@ -94,43 +94,6 @@ class TestCheckLivenessCommand(TestBaseCommand):
         self.assertNotEqual(cmd.result, old_ng_cfg)
 
 
-class TestLSwitchSetExternalIdsCommand(TestBaseCommand):
-
-    def _test_lswitch_extid_update_no_exist(self, if_exists=True):
-        with mock.patch.object(idlutils, 'row_by_value',
-                               side_effect=idlutils.RowNotFound):
-            cmd = commands.LSwitchSetExternalIdsCommand(
-                self.ovn_api, 'fake-lswitch',
-                {ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: 'neutron-network'},
-                if_exists=if_exists)
-            if if_exists:
-                cmd.run_idl(self.transaction)
-            else:
-                self.assertRaises(RuntimeError, cmd.run_idl, self.transaction)
-
-    def test_lswitch_no_exist_ignore(self):
-        self._test_lswitch_extid_update_no_exist(if_exists=True)
-
-    def test_lswitch_no_exist_fail(self):
-        self._test_lswitch_extid_update_no_exist(if_exists=False)
-
-    def test_lswitch_extid_update(self):
-        network_name = 'private'
-        new_network_name = 'private-new'
-        ext_ids = {ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: network_name}
-        new_ext_ids = {ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: new_network_name}
-        fake_lswitch = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'external_ids': ext_ids})
-        with mock.patch.object(idlutils, 'row_by_value',
-                               return_value=fake_lswitch):
-            cmd = commands.LSwitchSetExternalIdsCommand(
-                self.ovn_api, fake_lswitch.name,
-                {ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: new_network_name},
-                if_exists=True)
-            cmd.run_idl(self.transaction)
-            self.assertEqual(new_ext_ids, fake_lswitch.external_ids)
-
-
 class TestAddLSwitchPortCommand(TestBaseCommand):
 
     def test_lswitch_not_found(self):

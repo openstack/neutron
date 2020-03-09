@@ -17,6 +17,7 @@ import mock
 
 from futurist import periodics
 from neutron_lib import context
+from oslo_config import cfg
 
 from neutron.common.ovn import constants
 from neutron.common.ovn import utils
@@ -24,6 +25,7 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_revision_numbers_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
+from neutron.tests.unit import fake_resources as fakes
 from neutron.tests.unit.plugins.ml2 import test_security_group as test_sg
 from neutron.tests.unit import testlib_api
 
@@ -39,7 +41,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             self.fmt, name='net1', admin_state_up=True)['network']
         self.port = self._make_port(
             self.fmt, self.net['id'], name='port1')['port']
-        self.fake_ovn_client = mock.Mock()
+        self.fake_ovn_client = mock.MagicMock()
         self.periodic = maintenance.DBInconsistenciesPeriodics(
             self.fake_ovn_client)
         self.ctx = context.get_admin_context()
@@ -269,3 +271,39 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         incst = [mock.Mock(resource_type=constants.TYPE_NETWORKS)] * 2
         self.periodic._log_maintenance_inconsistencies(incst, [])
         self.assertFalse(mock_log.called)
+
+    def test_check_for_igmp_snoop_support(self):
+        cfg.CONF.set_override('igmp_snooping_enable', True, group='OVS')
+        nb_idl = self.fake_ovn_client._nb_idl
+        ls0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'ls0',
+                   'other_config': {
+                       constants.MCAST_SNOOP: 'false',
+                       constants.MCAST_FLOOD_UNREGISTERED: 'false'}})
+        ls1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'ls1',
+                   'other_config': {}})
+        ls2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'ls2',
+                   'other_config': {
+                        constants.MCAST_SNOOP: 'true',
+                        constants.MCAST_FLOOD_UNREGISTERED: 'true'}})
+
+        nb_idl.ls_list.return_value.execute.return_value = [ls0, ls1, ls2]
+
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.check_for_igmp_snoop_support)
+
+        # "ls2" is not part of the transaction because it already
+        # have the right value set
+        expected_calls = [
+            mock.call('Logical_Switch', 'ls0',
+                      ('other_config', {
+                           constants.MCAST_SNOOP: 'true',
+                           constants.MCAST_FLOOD_UNREGISTERED: 'true'})),
+            mock.call('Logical_Switch', 'ls1',
+                      ('other_config', {
+                           constants.MCAST_SNOOP: 'true',
+                           constants.MCAST_FLOOD_UNREGISTERED: 'true'})),
+        ]
+        nb_idl.db_set.assert_has_calls(expected_calls)

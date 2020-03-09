@@ -1719,31 +1719,36 @@ class OVNClient(object):
             tag=tag if tag else [],
             options={'network_name': physnet}))
 
-    def _gen_network_external_ids(self, network):
-        ext_ids = {
+    def _gen_network_parameters(self, network):
+        params = {'external_ids': {
             ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: network['name'],
             ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: str(network['mtu']),
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(
-                utils.get_revision_number(network, ovn_const.TYPE_NETWORKS))}
+                utils.get_revision_number(network, ovn_const.TYPE_NETWORKS))}}
 
         # NOTE(lucasagomes): There's a difference between the
         # "qos_policy_id" key existing and it being None, the latter is a
         # valid value. Since we can't save None in OVSDB, we are converting
         # it to "null" as a placeholder.
         if 'qos_policy_id' in network:
-            ext_ids[ovn_const.OVN_QOS_POLICY_EXT_ID_KEY] = (
+            params['external_ids'][ovn_const.OVN_QOS_POLICY_EXT_ID_KEY] = (
                 network['qos_policy_id'] or 'null')
-        return ext_ids
+
+        # Enable IGMP snooping if igmp_snooping_enable is enabled in Neutron
+        value = 'true' if ovn_conf.is_igmp_snooping_enabled() else 'false'
+        params['other_config'] = {ovn_const.MCAST_SNOOP: value,
+                                  ovn_const.MCAST_FLOOD_UNREGISTERED: value}
+        return params
 
     def create_network(self, network):
         # Create a logical switch with a name equal to the Neutron network
         # UUID.  This provides an easy way to refer to the logical switch
         # without having to track what UUID OVN assigned to it.
         admin_context = n_context.get_admin_context()
-        ext_ids = self._gen_network_external_ids(network)
+        lswitch_params = self._gen_network_parameters(network)
         lswitch_name = utils.ovn_name(network['id'])
         with self._nb_idl.transaction(check_error=True) as txn:
-            txn.add(self._nb_idl.ls_add(lswitch_name, external_ids=ext_ids,
+            txn.add(self._nb_idl.ls_add(lswitch_name, **lswitch_params,
                                         may_exist=True))
             physnet = network.get(pnet.PHYSICAL_NETWORK)
             if physnet:
@@ -1832,9 +1837,10 @@ class OVNClient(object):
         admin_context = n_context.get_admin_context()
         with self._nb_idl.transaction(check_error=True) as txn:
             txn.add(check_rev_cmd)
-            ext_ids = self._gen_network_external_ids(network)
+            lswitch_params = self._gen_network_parameters(network)
             lswitch = self._nb_idl.get_lswitch(lswitch_name)
-            txn.add(self._nb_idl.set_lswitch_ext_ids(lswitch_name, ext_ids))
+            txn.add(self._nb_idl.db_set(
+                'Logical_Switch', lswitch_name, *lswitch_params.items()))
             # Check if previous mtu is different than current one,
             # checking will help reduce number of operations
             if (not lswitch or

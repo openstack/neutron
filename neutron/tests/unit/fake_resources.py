@@ -52,7 +52,6 @@ class FakeOvsdbNbOvnIdl(object):
         self.transaction = mock.MagicMock()
         self.create_transaction = mock.MagicMock()
         self.ls_add = mock.Mock()
-        self.set_lswitch_ext_ids = mock.Mock()
         self.ls_del = mock.Mock()
         self.create_lswitch_port = mock.Mock()
         self.set_lswitch_port = mock.Mock()

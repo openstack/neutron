@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from oslo_config import cfg
 
 from futurist import periodics
 from neutron_lib.api.definitions import external_net as extnet_apidef
@@ -798,3 +799,30 @@ class TestMaintenance(_TestMaintenanceHelper):
         # for the port
         self.assertTrue(ovn_port['port_security'])
         self.assertNotIn('unknown', ovn_port['addresses'])
+
+    def test_check_for_igmp_snooping_enabled(self):
+        cfg.CONF.set_override('igmp_snooping_enable', False, group='OVS')
+        net = self._create_network('net')
+        ls = self.nb_api.db_find('Logical_Switch',
+            ('name', '=', utils.ovn_name(net['id']))).execute(
+            check_error=True)[0]
+
+        self.assertEqual('false', ls['other_config'][ovn_const.MCAST_SNOOP])
+        self.assertEqual(
+            'false', ls['other_config'][ovn_const.MCAST_FLOOD_UNREGISTERED])
+
+        # Change the value of the configuration
+        cfg.CONF.set_override('igmp_snooping_enable', True, group='OVS')
+
+        # Call the maintenance task and check that the value has been
+        # updated in the Logical Switch
+        self.assertRaises(periodics.NeverAgain,
+                          self.maint.check_for_igmp_snoop_support)
+
+        ls = self.nb_api.db_find('Logical_Switch',
+            ('name', '=', utils.ovn_name(net['id']))).execute(
+            check_error=True)[0]
+
+        self.assertEqual('true', ls['other_config'][ovn_const.MCAST_SNOOP])
+        self.assertEqual(
+            'true', ls['other_config'][ovn_const.MCAST_FLOOD_UNREGISTERED])

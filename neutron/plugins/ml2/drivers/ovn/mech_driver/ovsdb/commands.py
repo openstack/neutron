@@ -101,31 +101,6 @@ class CheckLivenessCommand(command.BaseCommand):
         self.result = self.api.nb_global.nb_cfg
 
 
-class LSwitchSetExternalIdsCommand(command.BaseCommand):
-    def __init__(self, api, name, ext_ids, if_exists):
-        super(LSwitchSetExternalIdsCommand, self).__init__(api)
-        self.name = name
-        self.ext_ids = ext_ids
-        self.if_exists = if_exists
-
-    def run_idl(self, txn):
-        try:
-            lswitch = idlutils.row_by_value(self.api.idl, 'Logical_Switch',
-                                            'name', self.name)
-
-        except idlutils.RowNotFound:
-            if self.if_exists:
-                return
-            msg = _("Logical Switch %s does not exist") % self.name
-            raise RuntimeError(msg)
-
-        lswitch.verify('external_ids')
-        external_ids = getattr(lswitch, 'external_ids', {})
-        for key, value in self.ext_ids.items():
-            external_ids[key] = value
-        lswitch.external_ids = external_ids
-
-
 class AddLSwitchPortCommand(command.BaseCommand):
     def __init__(self, api, lport, lswitch, may_exist, **columns):
         super(AddLSwitchPortCommand, self).__init__(api)
