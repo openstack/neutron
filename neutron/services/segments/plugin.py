@@ -553,7 +553,7 @@ class SegmentHostRoutes(object):
             if self._host_routes_need_update(host_routes, calc_host_routes):
                 LOG.debug(
                     "Updating host routes for subnet %s on routed network %s",
-                    (subnet.id, subnet.network_id))
+                    subnet.id, subnet.network_id)
                 plugin = directory.get_plugin()
                 plugin.update_subnet(context, subnet.id,
                                      {'subnet': {
