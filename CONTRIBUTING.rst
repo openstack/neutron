@@ -1,12 +1,19 @@
-If you would like to contribute to the development of OpenStack Networking,
-you must follow the steps documented at:
+The source repository for this project can be found at:
 
-   https://docs.openstack.org/neutron/latest/contributor/policies/blueprints.html
+  https://opendev.org/openstack/neutron
 
-Pull requests submitted through GitHub will be ignored.
+Pull requests submitted through GitHub are not monitored.
 
-Bugs should be filed on Launchpad, not GitHub:
+To start contributing to OpenStack, follow the steps in the contribution guide
+to set up and use Gerrit:
+
+   https://docs.openstack.org/contributors/code-and-documentation/quick-start.html
+
+Bugs should be filed on Launchpad:
 
    https://bugs.launchpad.net/neutron
 
-Please: do not register blueprints, they will be marked *obsolete* and ignored.
+For more specific information about contributing to this repository, see the
+Neutron contributor guide:
+
+    https://docs.openstack.org/neutron/latest/contributor/contributing.html

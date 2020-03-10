@@ -1,3 +1,5 @@
+.. _neutron_blueprints:
+
 Blueprints and Specs
 ====================
 

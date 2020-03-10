@@ -1,3 +1,5 @@
+.. _neutron_teams:
+
 ======================
 Neutron Team Structure
 ======================
@@ -104,6 +106,8 @@ Some notes on the above:
 * Note these areas may change as the project evolves due to code refactoring,
   new feature areas, and libification of certain pieces of code.
 * Infra means interactions with infra from a neutron perspective
+
+.. _subproject_lieutenants:
 
 Sub-project Lieutenants
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -219,6 +223,8 @@ code reviewers:
 
 Specs core reviewers may match core members of the above mentioned groups, but
 the group can be extended to other individuals, if required.
+
+.. _drivers_team:
 
 Drivers Team
 ------------

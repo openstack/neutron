@@ -1,3 +1,5 @@
+.. _neutron_bugs:
+
 Neutron Bugs
 ============
 
@@ -31,6 +33,7 @@ management. Permissions will have to be granted assuming that people sign up
 on the deputy role. The permission won't be given freely, a person must show
 some degree of prior involvement.
 
+.. _neutron_bug_deputy:
 
 Neutron Bug Deputy
 ------------------
