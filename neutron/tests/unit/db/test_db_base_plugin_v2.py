@@ -17,6 +17,7 @@ import contextlib
 import copy
 import functools
 import itertools
+import random
 
 import eventlet
 import mock
@@ -286,10 +287,15 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         data = self._deserializers[ctype].deserialize(response.body)['body']
         return data
 
-    def _find_ip_address(self, subnet):
+    def _find_ip_address(self, subnet, exclude=None, is_random=False):
         network_ports = self._list_ports(
             "json", 200, subnet['network_id']).json['ports']
         used_ips = set()
+        if exclude:
+            if isinstance(exclude, (list, set, tuple)):
+                used_ips = set(exclude)
+            else:
+                used_ips.add(exclude)
         for port in network_ports:
             for ip in port['fixed_ips']:
                 if ip['subnet_id'] == subnet['id']:
@@ -297,9 +303,11 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
         for pool in subnet['allocation_pools']:
             ips_range = netaddr.IPRange(pool['start'], pool['end'])
-            for ip in ips_range:
-                if ip not in used_ips:
-                    return str(ip)
+            ip_list = [str(ip) for ip in ips_range if str(ip) not in used_ips]
+            if ip_list:
+                if is_random:
+                    return random.choice(ip_list)
+                return ip_list[0]
 
     def _create_bulk_from_list(self, fmt, resource, objects, **kwargs):
         """Creates a bulk request from a list of objects."""
