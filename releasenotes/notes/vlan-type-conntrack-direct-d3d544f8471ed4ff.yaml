@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Add a new match rule based on physical VLAN tag for OpenFlow firewall
+    traffic identifying mechanism to the TRANSIENT table. This fixes the
+    distributed router east-west traffic between VLAN type networks.
+    For more information, see bug
+    `1831534 <https://bugs.launchpad.net/neutron/+bug/1831534>`_.
