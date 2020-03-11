@@ -126,6 +126,10 @@ class SecurityGroupAgentRpc(object):
         return decorated_function
 
     @skip_if_noopfirewall_or_firewall_disabled
+    def init_ovs_dvr_firewall(self, dvr_agent):
+        dvr_agent.set_firewall(self.firewall)
+
+    @skip_if_noopfirewall_or_firewall_disabled
     def prepare_devices_filter(self, device_ids):
         if not device_ids:
             return
