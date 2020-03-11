@@ -10,7 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
+from neutron_lib import constants as n_const
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models.plugins.ml2 import flatallocation
@@ -29,3 +29,5 @@ class FlatAllocation(base.NeutronDbObject):
     }
 
     primary_keys = ['physical_network']
+
+    network_type = n_const.TYPE_FLAT
