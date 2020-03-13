@@ -29,6 +29,32 @@ from neutron.db import rbac_db_models
 from neutron.db import standard_attr
 
 
+# NOTE(ralonsoh): move to neutron_lib.db.model_base
+class HasInUse(object):
+    """NeutronBaseV2 mixin, to add the flag "in_use" to a DB model.
+
+    The content of this flag (boolean) parameter is not relevant. The goal of
+    this field is to be used in a write transaction to mark a DB register as
+    "in_use". Writing any value on this DB parameter will lock the container
+    register. At the end of the DB transaction, the DB engine will check if
+    this register was modified or deleted. In such case, the transaction will
+    fail and won't be commited.
+
+    "lock_register" is the method to write the register "in_use" column.
+    Because the lifespan of this DB lock is the DB transaction, there isn't an
+    unlock method. The lock will finish once the transaction ends.
+    """
+    in_use = sa.Column(sa.Boolean(), nullable=False,
+                       server_default=sql.false(), default=False)
+
+    @classmethod
+    def lock_register(cls, context, exception, **filters):
+        num_reg = context.session.query(
+            cls).filter_by(**filters).update({'in_use': True})
+        if num_reg != 1:
+            raise exception
+
+
 class IPAllocationPool(model_base.BASEV2, model_base.HasId):
     """Representation of an allocation pool in a Neutron subnet."""
 
@@ -147,7 +173,7 @@ class DNSNameServer(model_base.BASEV2):
 
 
 class Subnet(standard_attr.HasStandardAttributes, model_base.BASEV2,
-             model_base.HasId, model_base.HasProject):
+             model_base.HasId, model_base.HasProject, HasInUse):
     """Represents a neutron subnet.
 
     When a subnet is created the first and last entries will be created. These

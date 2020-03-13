@@ -214,6 +214,14 @@ class IPAllocation(base.NeutronDbObject):
         if alloc_db:
             return True
 
+    @classmethod
+    def delete_alloc_by_subnet_id(cls, context, subnet_id):
+        allocs = context.session.query(models_v2.IPAllocation).filter_by(
+            subnet_id=subnet_id).all()
+        for alloc in allocs:
+            alloc_obj = super(IPAllocation, cls)._load_object(context, alloc)
+            alloc_obj.delete()
+
 
 @base.NeutronObjectRegistry.register
 class PortDNS(base.NeutronDbObject):
