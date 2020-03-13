@@ -224,7 +224,7 @@ class SecurityGroupInfoAPIMixin(object):
             context, sg_info['sg_member_ips'].keys())
         for sg_id, member_ips in ips.items():
             for ip in member_ips:
-                ethertype = 'IPv%d' % netaddr.IPNetwork(ip).version
+                ethertype = 'IPv%d' % netaddr.IPNetwork(ip[0]).version
                 if ethertype in sg_info['sg_member_ips'][sg_id]:
                     sg_info['sg_member_ips'][sg_id][ethertype].add(ip)
         return sg_info
@@ -253,7 +253,8 @@ class SecurityGroupInfoAPIMixin(object):
 
                 port['security_group_source_groups'].append(remote_group_id)
                 base_rule = rule
-                for ip in ips[remote_group_id]:
+                ip_list = [ip[0] for ip in ips[remote_group_id]]
+                for ip in ip_list:
                     if ip in port.get('fixed_ips', []):
                         continue
                     ip_rule = base_rule.copy()
@@ -396,9 +397,11 @@ class SecurityGroupServerRpcMixin(SecurityGroupInfoAPIMixin,
 
         # Join the security group binding table directly to the IP allocation
         # table instead of via the Port table skip an unnecessary intermediary
-        query = context.session.query(sg_binding_sgid,
-                                      models_v2.IPAllocation.ip_address,
-                                      aap_models.AllowedAddressPair.ip_address)
+        query = context.session.query(
+            sg_binding_sgid,
+            models_v2.IPAllocation.ip_address,
+            aap_models.AllowedAddressPair.ip_address,
+            aap_models.AllowedAddressPair.mac_address)
         query = query.join(models_v2.IPAllocation,
                            ip_port == sg_binding_port)
         # Outerjoin because address pairs may be null and we still want the
@@ -410,8 +413,12 @@ class SecurityGroupServerRpcMixin(SecurityGroupInfoAPIMixin,
         # Each allowed address pair IP record for a port beyond the 1st
         # will have a duplicate regular IP in the query response since
         # the relationship is 1-to-many. Dedup with a set
-        for security_group_id, ip_address, allowed_addr_ip in query:
-            ips_by_group[security_group_id].add(ip_address)
+        for security_group_id, ip_address, allowed_addr_ip, mac in query:
+            # Since port mac will not be used further, but in order to align
+            # the data structure we directly set None to it to avoid bother
+            # the ports table.
+            ips_by_group[security_group_id].add((ip_address, None))
             if allowed_addr_ip:
-                ips_by_group[security_group_id].add(allowed_addr_ip)
+                ips_by_group[security_group_id].add(
+                    (allowed_addr_ip, mac))
         return ips_by_group
