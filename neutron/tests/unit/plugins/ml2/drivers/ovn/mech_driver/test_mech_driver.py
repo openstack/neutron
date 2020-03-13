@@ -1540,16 +1540,17 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
             foo_admin_context, fake_port['id'], const.PORT_STATUS_ACTIVE)
 
     def _add_chassis_agent(self, nb_cfg, agent_type, updated_at=None):
+        updated_at = updated_at or datetime.datetime.utcnow()
         chassis = mock.Mock()
         chassis.nb_cfg = nb_cfg
         chassis.uuid = uuid.uuid4()
         chassis.external_ids = {ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY:
-                                timeutils.isotime(updated_at)}
+                                datetime.datetime.isoformat(updated_at)}
         if agent_type == ovn_const.OVN_METADATA_AGENT:
             chassis.external_ids.update({
                 ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY: nb_cfg,
                 ovn_const.METADATA_LIVENESS_CHECK_EXT_ID_KEY:
-                timeutils.isotime(updated_at)})
+                datetime.datetime.isoformat(updated_at)})
 
         return chassis
 
