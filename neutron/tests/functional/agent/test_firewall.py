@@ -585,7 +585,8 @@ class FirewallTestCase(BaseFirewallTestCase):
             [remote_sg_id],
             self.net_id)
 
-        vm_sg_members = {'IPv4': [self.tester.peer_ip_address]}
+        vm_sg_members = {'IPv4': [
+            (self.tester.peer_ip_address, self.tester.peer_mac_address)]}
         peer_sg_rules = [{'ethertype': 'IPv4', 'direction': 'egress',
                           'protocol': 'icmp'}]
         self.firewall.update_security_group_rules(remote_sg_id, peer_sg_rules)
