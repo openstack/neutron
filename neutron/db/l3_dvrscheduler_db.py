@@ -549,14 +549,14 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
     if new_port and original_port:
         l3plugin = directory.get_plugin(plugin_constants.L3)
         context = kwargs['context']
+        new_port_host = new_port.get(portbindings.HOST_ID)
+        original_port_host = original_port.get(portbindings.HOST_ID)
         is_new_port_binding_changed = (
-            new_port[portbindings.HOST_ID] and
-            new_port[portbindings.HOST_ID] !=
-            original_port[portbindings.HOST_ID])
+            new_port_host and
+            new_port_host != original_port_host)
         is_bound_port_moved = (
-            original_port[portbindings.HOST_ID] and
-            original_port[portbindings.HOST_ID] !=
-            new_port[portbindings.HOST_ID])
+            original_port_host and
+            original_port_host != new_port_host)
         fip_router_id = None
         dest_host = None
         new_port_profile = new_port.get(portbindings.PROFILE)
