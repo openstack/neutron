@@ -123,7 +123,7 @@ class TagPortsDuringBulkCreationTestCase(test_plugin.Ml2PluginV2TestCase):
                 ports_req = self.new_create_request('ports', req_body)
                 res = ports_req.get_response(self.api)
                 self.assertEqual(201, res.status_int)
-                self.assertIsInstance(patched_method.call_args.args[1],
+                self.assertIsInstance(patched_method.call_args[0][1],
                                       dict)
-                self.assertIsInstance(patched_method.call_args.args[2],
+                self.assertIsInstance(patched_method.call_args[0][2],
                                       dict)
