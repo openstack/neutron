@@ -282,8 +282,8 @@
     parent: neutron-ovn-tempest-ovs-ipv6-only-base
     vars:
       devstack_localrc:
-        OVN_BRANCH: branch-2.12
-        OVS_BRANCH: branch-2.12
+        OVN_BRANCH: v20.03.0
+        OVS_BRANCH: v2.13.0
 
 - job:
     name: neutron-ovn-tempest-ovs-release
@@ -291,8 +291,8 @@
     parent: neutron-ovn-base
     vars:
       devstack_localrc:
-        OVN_BRANCH: branch-2.12
-        OVS_BRANCH: branch-2.12
+        OVN_BRANCH: v20.03.0
+        OVS_BRANCH: v2.13.0
 
 - job:
     name: neutron-ovn-tempest-ovs-master-fedora
