@@ -646,14 +646,15 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         return fixed_ip_list
 
     def _ipam_get_subnets(self, context, network_id, host, service_type=None,
-                          fixed_configured=False):
+                          fixed_configured=False, fixed_ips=None):
         """Return eligible subnets
 
         If no eligible subnets are found, determine why and potentially raise
         an appropriate error.
         """
         subnets = subnet_obj.Subnet.find_candidate_subnets(
-            context, network_id, host, service_type, fixed_configured)
+            context, network_id, host, service_type, fixed_configured,
+            fixed_ips)
         if subnets:
             subnet_dicts = [self._make_subnet_dict(subnet, context=context)
                             for subnet in subnets]
