@@ -19,11 +19,14 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from oslo_config import cfg
 from oslo_utils import uuidutils
+from ovsdbapp.tests.functional import base as ovs_base
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.common import utils as n_utils
 from neutron.db import ovn_revision_numbers_db as db_rev
+from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.tests import base as tests_base
 from neutron.tests.functional import base
 
@@ -707,3 +710,55 @@ class TestAgentApi(base.TestOVNFunctionalBase):
     def test_agent_show_ovn_controller(self):
         self.assertTrue(self.plugin.get_agent(self.context,
                                               self.controller_agent))
+
+
+class TestCreateDefaultDropPortGroup(ovs_base.FunctionalTestCase,
+                                     base.BaseLoggingTestCase):
+    schemas = ['OVN_Southbound', 'OVN_Northbound']
+    PG_NAME = ovn_const.OVN_DROP_PORT_GROUP_NAME
+
+    def setUp(self):
+        super(TestCreateDefaultDropPortGroup, self).setUp()
+        self.api = impl_idl_ovn.OvsdbNbOvnIdl(
+            self.connection['OVN_Northbound'])
+        self.addCleanup(self.api.pg_del(self.PG_NAME, if_exists=True).execute,
+                        check_error=True)
+
+    def test_port_group_exists(self):
+        """Test new port group is not added or modified.
+
+        If Port Group was not existent, acls would be added.
+        """
+        self.api.pg_add(
+            self.PG_NAME, acls=[], may_exist=True).execute(check_error=True)
+        mech_driver.create_default_drop_port_group(self.api)
+        port_group = self.api.get_port_group(self.PG_NAME)
+        self.assertFalse(port_group.acls)
+
+    def _test_pg_with_ports(self, expected_ports=None):
+        expected_ports = expected_ports or []
+        mech_driver.create_default_drop_port_group(self.api)
+        port_group = self.api.get_port_group(self.PG_NAME)
+        self.assertItemsEqual(
+            expected_ports, [port.name for port in port_group.ports])
+
+    def test_with_ports_available(self):
+        expected_ports = ['port1', 'port2']
+        testing_pg = 'testing'
+        testing_ls = 'testing'
+        with self.api.transaction(check_error=True) as txn:
+            txn.add(self.api.pg_add(
+                testing_pg,
+                external_ids={ovn_const.OVN_SG_EXT_ID_KEY: 'foo'}))
+            txn.add(self.api.ls_add(testing_ls))
+            port_uuids = [txn.add(self.api.lsp_add(testing_ls, port))
+                          for port in expected_ports]
+            txn.add(self.api.pg_add_ports(testing_pg, port_uuids))
+
+        self.addCleanup(self.api.pg_del(testing_pg, if_exists=True).execute,
+                        check_error=True)
+
+        self._test_pg_with_ports(expected_ports)
+
+    def test_without_ports(self):
+        self._test_pg_with_ports(expected_ports=[])

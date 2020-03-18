@@ -285,6 +285,8 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
 
         self.addCleanup(self._collect_processes_logs)
         self.addCleanup(self.stop)
+        self.mech_driver.pre_fork_initialize(
+            mock.ANY, mock.ANY, trigger_cls.trigger)
 
         # mech_driver.post_fork_initialize creates the IDL connections
         self.mech_driver.post_fork_initialize(
