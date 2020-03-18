@@ -673,12 +673,9 @@ class OVNMechanismDriver(api.MechanismDriver):
                       {'port_id': port['id'], 'vnic_type': vnic_type})
             return
 
-        profile = port.get(portbindings.PROFILE)
-        capabilities = []
-        if profile:
-            capabilities = profile.get('capabilities', [])
+        capabilities = ovn_utils.get_port_capabilities(port)
         if (vnic_type == portbindings.VNIC_DIRECT and
-           'switchdev' not in capabilities):
+                ovn_const.PORT_CAP_SWITCHDEV not in capabilities):
             LOG.debug("Refusing to bind port due to unsupported vnic_type: %s "
                       "with no switchdev capability", portbindings.VNIC_DIRECT)
             return

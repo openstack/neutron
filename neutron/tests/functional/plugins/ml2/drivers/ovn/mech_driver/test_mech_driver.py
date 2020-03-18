@@ -15,6 +15,7 @@
 import functools
 
 import mock
+from neutron_lib.api.definitions import portbindings
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
@@ -431,3 +432,122 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
                          ovn_vport.options)
         self.assertNotIn(ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY,
                          ovn_vport.options)
+
+
+class TestExternalPorts(base.TestOVNFunctionalBase):
+
+    def setUp(self):
+        super(TestExternalPorts, self).setUp()
+        self._ovn_client = self.mech_driver._ovn_client
+        self.n1 = self._make_network(self.fmt, 'n1', True)
+        res = self._create_subnet(self.fmt, self.n1['network']['id'],
+                                  '10.0.0.0/24')
+        self.sub = self.deserialize(self.fmt, res)
+
+        # The default group will be created by the maintenance task (
+        # which is disabled in the functional jobs). So let's add it
+        self.default_ch_grp = self.nb_api.ha_chassis_group_add(
+            ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME).execute(check_error=True)
+
+    def _find_port_row_by_name(self, name):
+        cmd = self.nb_api.db_find_rows(
+            'Logical_Switch_Port', ('name', '=', name))
+        rows = cmd.execute(check_error=True)
+        return rows[0] if rows else None
+
+    def test_external_port_create(self):
+        port_data = {
+            'port': {'network_id': self.n1['network']['id'],
+                     'tenant_id': self._tenant_id,
+                     portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT}}
+
+        port_req = self.new_create_request('ports', port_data, self.fmt)
+        port_res = port_req.get_response(self.api)
+        port = self.deserialize(self.fmt, port_res)['port']
+
+        ovn_port = self._find_port_row_by_name(port['id'])
+        self.assertEqual(ovn_const.LSP_TYPE_EXTERNAL, ovn_port.type)
+        self.assertEqual(1, len(ovn_port.ha_chassis_group))
+        self.assertEqual(str(self.default_ch_grp.uuid),
+                         str(ovn_port.ha_chassis_group[0].uuid))
+
+    def test_external_port_update(self):
+        port_data = {
+            'port': {'network_id': self.n1['network']['id'],
+                     'tenant_id': self._tenant_id}}
+
+        port_req = self.new_create_request('ports', port_data, self.fmt)
+        port_res = port_req.get_response(self.api)
+        port = self.deserialize(self.fmt, port_res)['port']
+
+        ovn_port = self._find_port_row_by_name(port['id'])
+        self.assertEqual('', ovn_port.type)
+        self.assertEqual([], ovn_port.ha_chassis_group)
+
+        port_upt_data = {
+            'port': {portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT}}
+        port_req = self.new_update_request(
+            'ports', port_upt_data, port['id'], self.fmt)
+        port_res = port_req.get_response(self.api)
+        port = self.deserialize(self.fmt, port_res)['port']
+
+        ovn_port = self._find_port_row_by_name(port['id'])
+        self.assertEqual(ovn_const.LSP_TYPE_EXTERNAL, ovn_port.type)
+        self.assertEqual(1, len(ovn_port.ha_chassis_group))
+        self.assertEqual(str(self.default_ch_grp.uuid),
+                         str(ovn_port.ha_chassis_group[0].uuid))
+
+    def test_external_port_create_switchdev(self):
+        port_data = {
+            'port': {'network_id': self.n1['network']['id'],
+                     'tenant_id': self._tenant_id,
+                     portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT,
+                     ovn_const.OVN_PORT_BINDING_PROFILE: {
+                     'capabilities': [ovn_const.PORT_CAP_SWITCHDEV]}}}
+
+        port_req = self.new_create_request('ports', port_data, self.fmt)
+        port_res = port_req.get_response(self.api)
+        port = self.deserialize(self.fmt, port_res)['port']
+
+        ovn_port = self._find_port_row_by_name(port['id'])
+        # When "switchdev" is set, we should treat it as a normal
+        # port instead of "external" type
+        self.assertEqual("", ovn_port.type)
+        # Assert the poer hasn't been added to any HA Chassis Group either
+        self.assertEqual(0, len(ovn_port.ha_chassis_group))
+
+    def test_external_port_update_switchdev(self):
+        port_data = {
+            'port': {'network_id': self.n1['network']['id'],
+                     'tenant_id': self._tenant_id,
+                     portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT}}
+
+        # Create a VNIC_DIRECT type port without the "switchdev"
+        # capability and assert that it's an "external" port
+        port_req = self.new_create_request('ports', port_data, self.fmt)
+        port_res = port_req.get_response(self.api)
+        port = self.deserialize(self.fmt, port_res)['port']
+
+        ovn_port = self._find_port_row_by_name(port['id'])
+        self.assertEqual(ovn_const.LSP_TYPE_EXTERNAL, ovn_port.type)
+        self.assertEqual(1, len(ovn_port.ha_chassis_group))
+        self.assertEqual(str(self.default_ch_grp.uuid),
+                         str(ovn_port.ha_chassis_group[0].uuid))
+
+        # Now, update the port to add a "switchdev" capability and make
+        # sure it's not treated as an "external" port anymore nor it's
+        # included in a HA Chassis Group
+        port_upt_data = {
+            'port': {ovn_const.OVN_PORT_BINDING_PROFILE: {
+                     'capabilities': [ovn_const.PORT_CAP_SWITCHDEV]}}}
+        port_req = self.new_update_request(
+            'ports', port_upt_data, port['id'], self.fmt)
+        port_res = port_req.get_response(self.api)
+        port = self.deserialize(self.fmt, port_res)['port']
+
+        ovn_port = self._find_port_row_by_name(port['id'])
+        # When "switchdev" is set, we should treat it as a normal
+        # port instead of "external" type
+        self.assertEqual("", ovn_port.type)
+        # Assert the poer hasn't been added to any HA Chassis Group either
+        self.assertEqual(0, len(ovn_port.ha_chassis_group))

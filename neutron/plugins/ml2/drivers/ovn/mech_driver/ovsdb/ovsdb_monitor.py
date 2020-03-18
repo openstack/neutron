@@ -73,6 +73,51 @@ class ChassisEvent(row_event.RowEvent):
         super(ChassisEvent, self).__init__(events, table, None)
         self.event_name = 'ChassisEvent'
 
+    def handle_ha_chassis_group_changes(self, event, row, old):
+        """Handle HA Chassis Group changes.
+
+        This method handles the inclusion and removal of Chassis to/from
+        the default HA Chassis Group.
+        """
+        if not self.driver._ovn_client.is_external_ports_supported():
+            return
+
+        is_gw_chassis = utils.is_gateway_chassis(row)
+        # If the Chassis being created is not a gateway, ignore it
+        if not is_gw_chassis and event == self.ROW_CREATE:
+            return
+
+        if event == self.ROW_UPDATE:
+            is_old_gw = utils.is_gateway_chassis(old)
+            if is_gw_chassis and is_old_gw:
+                return
+            elif not is_gw_chassis and is_old_gw:
+                # Chassis is not a gateway anymore, treat it as deletion
+                event = self.ROW_DELETE
+            elif is_gw_chassis and not is_old_gw:
+                # Chassis is now a gateway, treat it as creation
+                event = self.ROW_CREATE
+
+        if event == self.ROW_CREATE:
+            default_group = self.driver._nb_ovn.ha_chassis_group_get(
+                ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME).execute(
+                check_error=True)
+
+            # Find what's the lowest priority number current in the group
+            # and add the new chassis as the new lowest
+            min_priority = min(
+                [ch.priority for ch in default_group.ha_chassis],
+                default=ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY)
+
+            self.driver._nb_ovn.ha_chassis_group_add_chassis(
+                ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME, row.name,
+                priority=min_priority - 1).execute(check_error=True)
+
+        elif event == self.ROW_DELETE:
+            self.driver._nb_ovn.ha_chassis_group_del_chassis(
+                ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME,
+                row.name, if_exists=True).execute(check_error=True)
+
     def run(self, event, row, old):
         host = row.hostname
         phy_nets = []
@@ -85,6 +130,8 @@ class ChassisEvent(row_event.RowEvent):
         self.driver.update_segment_host_mapping(host, phy_nets)
         if utils.is_ovn_l3(self.l3_plugin):
             self.l3_plugin.schedule_unhosted_gateways()
+
+        self.handle_ha_chassis_group_changes(event, row, old)
 
 
 class PortBindingChassisUpdateEvent(row_event.RowEvent):

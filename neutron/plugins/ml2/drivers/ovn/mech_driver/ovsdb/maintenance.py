@@ -76,6 +76,7 @@ class DBInconsistenciesPeriodics(object):
         # attributes like that, perhaps we should extend the OVNClient
         # class and create an interface for the locks ?
         self._nb_idl = self._ovn_client._nb_idl
+        self._sb_idl = self._ovn_client._sb_idl
         self._idl = self._nb_idl.idl
         self._idl.set_lock('ovn_db_inconsistencies_periodics')
         self._sync_timer = timeutils.StopWatch()
@@ -477,6 +478,58 @@ class DBInconsistenciesPeriodics(object):
                     ('other_config', {
                         ovn_const.MCAST_SNOOP: value,
                         ovn_const.MCAST_FLOOD_UNREGISTERED: value})))
+
+        raise periodics.NeverAgain()
+
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def check_for_ha_chassis_group_address(self):
+        # If external ports is not supported stop running
+        # this periodic task
+        if not self._ovn_client.is_external_ports_supported():
+            raise periodics.NeverAgain()
+
+        if not self.has_lock:
+            return
+
+        default_ch_grp = self._nb_idl.ha_chassis_group_add(
+            ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME, may_exist=True).execute(
+            check_error=True)
+
+        # NOTE(lucasagomes): Find the existing chassis with the highest
+        # priority and keep it as being the highest to avoid moving
+        # things around
+        high_prio_ch = max(default_ch_grp.ha_chassis, key=lambda x: x.priority)
+
+        all_ch = self._sb_idl.get_all_chassis()
+        gw_ch = self._sb_idl.get_gateway_chassis_from_cms_options()
+        ch_to_del = set(all_ch) - set(gw_ch)
+
+        with self._nb_idl.transaction(check_error=True) as txn:
+            for ch in ch_to_del:
+                txn.add(self._nb_idl.ha_chassis_group_del_chassis(
+                        ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME, ch,
+                        if_exists=True))
+
+            # NOTE(lucasagomes): If the high priority chassis is in
+            # the list of chassis to be added/updated. Add it first with
+            # the highest priority number possible and then add the rest
+            # (the priority of the rest of the chassis does not matter
+            # since only the highest one is active)
+            priority = ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY
+            if high_prio_ch and high_prio_ch.chassis_name in gw_ch:
+                txn.add(self._nb_idl.ha_chassis_group_add_chassis(
+                        ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME,
+                        high_prio_ch.chassis_name, priority=priority))
+                gw_ch.remove(high_prio_ch.chassis_name)
+                priority -= 1
+
+            for ch in gw_ch:
+                txn.add(self._nb_idl.ha_chassis_group_add_chassis(
+                        ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME,
+                        ch, priority=priority))
+                priority -= 1
 
         raise periodics.NeverAgain()
 

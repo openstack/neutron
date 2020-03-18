@@ -2598,6 +2598,29 @@ class TestOVNMechanismDriverSecurityGroup(
             self.assertEqual(
                 5, self.mech_driver._nb_ovn.add_acl.call_count)
 
+    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
+                'ovn_client.OVNClient.is_external_ports_supported',
+                lambda *_: True)
+    def test_create_port_with_vnic_direct(self):
+        fake_grp = 'fake-default-ha-group-uuid'
+        row = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={'uuid': fake_grp})
+        self.mech_driver._nb_ovn.ha_chassis_group_get.return_value.\
+            execute.return_value = row
+
+        with self.network() as n, self.subnet(n):
+            self._create_port(
+                self.fmt, n['network']['id'],
+                arg_list=(portbindings.VNIC_TYPE,),
+                **{portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT})
+
+            # Assert create_lswitch_port was called with the relevant
+            # parameters
+            _, kwargs = self.mech_driver._nb_ovn.create_lswitch_port.call_args
+            self.assertEqual(
+                1, self.mech_driver._nb_ovn.create_lswitch_port.call_count)
+            self.assertEqual(ovn_const.LSP_TYPE_EXTERNAL, kwargs['type'])
+            self.assertEqual(fake_grp, kwargs['ha_chassis_group'])
+
     def test_update_port_with_sgs(self):
         with self.network() as n, self.subnet(n):
             sg1 = self._create_empty_sg('sg1')

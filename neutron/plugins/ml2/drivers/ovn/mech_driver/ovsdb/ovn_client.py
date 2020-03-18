@@ -96,6 +96,10 @@ class OVNClient(object):
         # "virtual" port type was added in the version 2.12 of OVN
         return self._sb_idl.is_col_present('Port_Binding', 'virtual_parent')
 
+    def is_external_ports_supported(self):
+        return self._nb_idl.is_col_present(
+            'Logical_Switch_Port', 'ha_chassis_group')
+
     def _get_allowed_addresses_from_port(self, port):
         if not port.get(psec.PORTSECURITY):
             return [], []
@@ -253,6 +257,18 @@ class OVNClient(object):
                     not utils.is_neutron_dhcp_agent_port(port)):
                 port_type = 'localport'
 
+            capabilities = utils.get_port_capabilities(port)
+            vnic_type = port.get(portbindings.VNIC_TYPE,
+                                 portbindings.VNIC_NORMAL)
+            if (vnic_type == portbindings.VNIC_DIRECT and
+                    ovn_const.PORT_CAP_SWITCHDEV not in capabilities):
+                if self.is_external_ports_supported():
+                    port_type = ovn_const.LSP_TYPE_EXTERNAL
+                else:
+                    LOG.warning('The version of OVN used does not support '
+                                'the "external ports" feature used for '
+                                'SR-IOV ports with OVN native DHCP')
+
             # The "unknown" address should only be set for the normal LSP
             # ports (the ones which type is empty)
             if not port_security and not port_type:
@@ -269,13 +285,22 @@ class OVNClient(object):
         dhcpv4_options = self._get_port_dhcp_options(port, const.IP_VERSION_4)
         dhcpv6_options = self._get_port_dhcp_options(port, const.IP_VERSION_6)
 
-        options.update({'requested-chassis':
-                        port.get(portbindings.HOST_ID, '')})
+        # HA Chassis Group will bind the port to the highest
+        # priority Chassis
+        if port_type != ovn_const.LSP_TYPE_EXTERNAL:
+            options.update({'requested-chassis':
+                            port.get(portbindings.HOST_ID, '')})
+
         device_owner = port.get('device_owner', '')
         sg_ids = ' '.join(utils.get_lsp_security_groups(port))
         return OvnPortInfo(port_type, options, addresses, port_security,
                            parent_name, tag, dhcpv4_options, dhcpv6_options,
                            cidrs.strip(), device_owner, sg_ids)
+
+    def _get_default_ha_chassis_group(self):
+        return self._nb_idl.ha_chassis_group_get(
+            ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME).execute(
+            check_error=True).uuid
 
     def create_port(self, port):
         if utils.is_lsp_ignored(port):
@@ -340,6 +365,11 @@ class OVNClient(object):
                 'dhcpv4_options': dhcpv4_options,
                 'dhcpv6_options': dhcpv6_options
             }
+
+            if (self.is_external_ports_supported() and
+                    port_info.type == ovn_const.LSP_TYPE_EXTERNAL):
+                kwargs['ha_chassis_group'] = (
+                    self._get_default_ha_chassis_group())
 
             # TODO(lucasgomes): Remove this workaround in the future,
             # the core OVN version >= 2.12 supports the "virtual" port
@@ -504,6 +534,14 @@ class OVNClient(object):
                 port.get(portbindings.VIF_TYPE) ==
                     portbindings.VIF_TYPE_UNBOUND):
                 columns_dict['addresses'] = []
+
+            if self.is_external_ports_supported():
+                if port_info.type == ovn_const.LSP_TYPE_EXTERNAL:
+                    columns_dict['ha_chassis_group'] = (
+                        self._get_default_ha_chassis_group())
+                else:
+                    # Clear the ha_chassis_group field
+                    columns_dict['ha_chassis_group'] = []
 
             ovn_port = self._nb_idl.lookup('Logical_Switch_Port', port['id'])
             addr_pairs_diff = utils.compute_address_pairs_diff(ovn_port, port)
@@ -1446,6 +1484,10 @@ class OVNClient(object):
         2) if no chassis is available from 1) then,
            select chassis with proper bridge mappings
         """
+        # TODO(lucasagomes): Simplify the logic here, the CMS option has
+        # been introduced long ago and by now all gateway chassis should
+        # include it. This will match the logic in the is_gateway_chassis()
+        # (utils.py)
         cms = cms or self._sb_idl.get_gateway_chassis_from_cms_options()
         chassis_physnets = (chassis_physnets or
                             self._sb_idl.get_chassis_and_physnets())
