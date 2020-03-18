@@ -315,12 +315,20 @@ class OvnDbNotifyHandler(event.RowEventHandler):
 
 
 class BaseOvnIdl(connection.OvsdbIdl):
+
+    def __init__(self, remote, schema):
+        self.notify_handler = event.RowEventHandler()
+        super(BaseOvnIdl, self).__init__(remote, schema)
+
     @classmethod
     def from_server(cls, connection_string, schema_name):
         _check_and_set_ssl_files(schema_name)
         helper = idlutils.get_schema_helper(connection_string, schema_name)
         helper.register_all()
         return cls(connection_string, helper)
+
+    def notify(self, event, row, updates=None):
+        self.notify_handler.notify(event, row, updates)
 
 
 class BaseOvnSbIdl(connection.OvsdbIdl):
