@@ -12,6 +12,7 @@
 arping: CommandFilter, arping, root
 
 # l3_agent
+ethtool: CommandFilter, ethtool, root
 sysctl: CommandFilter, sysctl, root
 route: CommandFilter, route, root
 radvd: CommandFilter, radvd, root

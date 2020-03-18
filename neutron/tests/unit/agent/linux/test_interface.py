@@ -19,10 +19,14 @@ from neutron_lib import exceptions
 from oslo_utils import excutils
 
 from neutron.agent.common import ovs_lib
+from neutron.agent.linux import ethtool
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.conf.agent import common as config
+from neutron.conf.plugins.ml2.drivers import ovs_conf
+from neutron.plugins.ml2.drivers.openvswitch.agent.common \
+    import constants as ovs_const
 from neutron.tests import base
 
 
@@ -61,6 +65,8 @@ class TestBase(base.BaseTestCase):
         super(TestBase, self).setUp()
         self.conf = config.setup_conf()
         config.register_interface_opts(self.conf)
+        self.eth_tool_p = mock.patch.object(ethtool, 'Ethtool')
+        self.eth_tool = self.eth_tool_p.start()
         self.ip_dev_p = mock.patch.object(ip_lib, 'IPDevice')
         self.ip_dev = self.ip_dev_p.start()
         self.ip_p = mock.patch.object(ip_lib, 'IPWrapper')
@@ -505,7 +511,12 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
 
     def setUp(self):
         super(TestOVSInterfaceDriverWithVeth, self).setUp()
+        ovs_conf.register_ovs_agent_opts(self.conf)
         self.conf.set_override('ovs_use_veth', True)
+        self.conf.set_override(
+            'datapath_type',
+            ovs_const.OVS_DATAPATH_NETDEV,
+            group='OVS')
 
     def test_get_device_name(self):
         br = interface.OVSInterfaceDriver(self.conf)
@@ -536,6 +547,7 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
             mock.patch.object(
                 interface, '_get_veth',
                 return_value=(root_dev, ns_dev)).start()
+            ns_dev.name = devname
 
             expected = [mock.call(),
                         mock.call().add_veth('tap0', devname,
@@ -566,6 +578,9 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
             self.ip.assert_has_calls(expected)
             root_dev.assert_has_calls([mock.call.link.set_up()])
             ns_dev.assert_has_calls([mock.call.link.set_up()])
+            self.eth_tool.assert_has_calls([mock.call.offload(
+                                            devname, rx=False,
+                                            tx=False, namespace=namespace)])
 
     def test_plug_new(self, bridge=None, namespace=None):
         # The purpose of test_plug_new in parent class(TestOVSInterfaceDriver)
