@@ -23,6 +23,7 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.common import utils as n_utils
 from neutron.db import ovn_revision_numbers_db as db_rev
+from neutron.tests import base as tests_base
 from neutron.tests.functional import base
 
 
@@ -246,6 +247,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
         check = functools.partial(self._is_ovn_port_type, port_id, type)
         n_utils.wait_until_true(check, timeout=10)
 
+    @tests_base.unstable_test("bug 1865453")
     def test_virtual_port_created_before(self):
         virt_port = self._create_port()
         virt_ip = virt_port['fixed_ips'][0]['ip_address']
@@ -281,6 +283,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
             backup['id'],
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY])
 
+    @tests_base.unstable_test("bug 1865453")
     def test_virtual_port_update_address_pairs(self):
         master = self._create_port()
         backup = self._create_port()
@@ -350,6 +353,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
         self.assertNotIn(ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY,
                          ovn_vport.options)
 
+    @tests_base.unstable_test("bug 1865453")
     def test_virtual_port_created_after(self):
         master = self._create_port(fixed_ip='10.0.0.11')
         backup = self._create_port(fixed_ip='10.0.0.12')
@@ -376,6 +380,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
             backup['id'],
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY])
 
+    @tests_base.unstable_test("bug 1865453")
     def test_virtual_port_delete_parents(self):
         master = self._create_port()
         backup = self._create_port()
