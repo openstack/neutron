@@ -595,7 +595,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         self.assertEqual(
             len(create_network_list),
             ovn_nb_synchronizer._ovn_client.create_network.call_count)
-        create_network_calls = [mock.call(net['net'])
+        create_network_calls = [mock.call(mock.ANY, net['net'])
                                 for net in create_network_list]
         ovn_nb_synchronizer._ovn_client.create_network.assert_has_calls(
             create_network_calls, any_order=True)
@@ -603,7 +603,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         self.assertEqual(
             len(create_port_list),
             ovn_nb_synchronizer._ovn_client.create_port.call_count)
-        create_port_calls = [mock.call(port) for port in create_port_list]
+        create_port_calls = [mock.call(mock.ANY, port)
+                             for port in create_port_list]
         ovn_nb_synchronizer._ovn_client.create_port.assert_has_calls(
             create_port_calls, any_order=True)
 
@@ -677,7 +678,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
             len(del_floating_ip_list),
             ovn_nb_synchronizer._ovn_client._delete_floatingip.call_count)
 
-        create_router_calls = [mock.call(r, add_external_gateway=False)
+        create_router_calls = [mock.call(mock.ANY, r,
+                                         add_external_gateway=False)
                                for r in create_router_list]
         self.assertEqual(
             len(create_router_list),
@@ -685,7 +687,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         ovn_nb_synchronizer._ovn_client.create_router.assert_has_calls(
             create_router_calls, any_order=True)
 
-        create_router_port_calls = [mock.call(p['device_id'],
+        create_router_port_calls = [mock.call(mock.ANY, p['device_id'],
                                               mock.ANY)
                                     for p in create_router_port_list]
         self.assertEqual(
@@ -697,7 +699,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
 
         self.assertEqual(len(del_router_list),
                          ovn_api.delete_lrouter.call_count)
-        update_router_port_calls = [mock.call(p)
+        update_router_port_calls = [mock.call(mock.ANY, p)
                                     for p in update_router_port_list]
         self.assertEqual(
             len(update_router_port_list),

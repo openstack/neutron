@@ -227,7 +227,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         ovn_obj = res_map['ovn_get'](row.resource_uuid)
 
         if not ovn_obj:
-            res_map['ovn_create'](n_obj)
+            res_map['ovn_create'](context, n_obj)
         else:
             if row.resource_type == ovn_const.TYPE_SECURITY_GROUP_RULES:
                 LOG.error("SG rule %s found with a revision number while "
@@ -246,7 +246,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 # If the resource exist in the OVN DB but the revision
                 # number is different from Neutron DB, updated it.
                 if ovn_revision != n_obj['revision_number']:
-                    res_map['ovn_update'](n_obj)
+                    res_map['ovn_update'](context, n_obj)
                 else:
                     # If the resource exist and the revision number
                     # is equal on both databases just bump the revision on
@@ -271,9 +271,9 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             context, sn_db_obj['network_id'])
 
         if row.revision_number == ovn_const.INITIAL_REV_NUM:
-            self._ovn_client.create_subnet(sn_db_obj, n_db_obj)
+            self._ovn_client.create_subnet(context, sn_db_obj, n_db_obj)
         else:
-            self._ovn_client.update_subnet(sn_db_obj, n_db_obj)
+            self._ovn_client.update_subnet(context, sn_db_obj, n_db_obj)
 
     # The migration will run just once per neutron-server instance. If the lock
     # is held by some other neutron-server instance in the cloud, we'll attempt
@@ -381,7 +381,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                                     'type_': INCONSISTENCY_TYPE_DELETE})
             try:
                 if row.resource_type == ovn_const.TYPE_SUBNETS:
-                    self._ovn_client.delete_subnet(row.resource_uuid)
+                    self._ovn_client.delete_subnet(admin_context,
+                                                   row.resource_uuid)
                 else:
                     self._fix_delete(admin_context, row)
             except Exception:
@@ -394,11 +395,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         LOG.info('Maintenance task: Synchronization finished '
                  '(took %.2f seconds)', self._sync_timer.elapsed())
 
-    def _create_lrouter_port(self, port):
-        admin_context = n_context.get_admin_context()
+    def _create_lrouter_port(self, context, port):
         router_id = port['device_id']
         self._ovn_client._l3_plugin.add_router_interface(
-            admin_context, router_id, {'port_id': port['id']}, may_exist=True)
+            context, router_id, {'port_id': port['id']}, may_exist=True)
 
     def _check_subnet_global_dhcp_opts(self):
         inconsistent_subnets = []
@@ -452,7 +452,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 neutron_net = self._ovn_client._plugin.get_network(
                     admin_context, subnet['network_id'])
                 try:
-                    self._ovn_client.update_subnet(subnet, neutron_net)
+                    self._ovn_client.update_subnet(admin_context, subnet,
+                                                   neutron_net)
                 except Exception:
                     LOG.exception('Failed to update subnet %s',
                                   subnet['id'])

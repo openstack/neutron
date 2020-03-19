@@ -66,7 +66,7 @@ class OVNMechanismDriver(mech_driver.OVNMechanismDriver):
 
     def create_port_postcommit(self, context):
         port = context.current
-        self.ovn_client.create_port(port)
+        self.ovn_client.create_port(context, port)
 
     def update_port_precommit(self, context):
         pass
@@ -74,7 +74,7 @@ class OVNMechanismDriver(mech_driver.OVNMechanismDriver):
     def update_port_postcommit(self, context):
         port = context.current
         original_port = context.original
-        self.ovn_client.update_port(port, original_port)
+        self.ovn_client.update_port(context, port, original_port)
 
     def delete_port_precommit(self, context):
         pass

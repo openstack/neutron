@@ -111,7 +111,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
     def test__create_security_group(self, mock_bump):
         self.mech_driver._create_security_group(
             resources.SECURITY_GROUP, events.AFTER_CREATE, {},
-            security_group=self.fake_sg)
+            security_group=self.fake_sg, context=self.context)
         external_ids = {ovn_const.OVN_SG_EXT_ID_KEY: self.fake_sg['id']}
         ip4_name = ovn_utils.ovn_addrset_name(self.fake_sg['id'], 'ip4')
         ip6_name = ovn_utils.ovn_addrset_name(self.fake_sg['id'], 'ip6')
@@ -143,7 +143,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
             rule = {'security_group_id': 'sg_id'}
             self.mech_driver._process_sg_rule_notification(
                 resources.SECURITY_GROUP_RULE, events.AFTER_CREATE, {},
-                security_group_rule=rule)
+                security_group_rule=rule, context=self.context)
             ovn_acl_up.assert_called_once_with(
                 mock.ANY, mock.ANY, mock.ANY,
                 'sg_id', rule, is_add_acl=True)
@@ -1492,7 +1492,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         self.mech_driver.create_port_postcommit(fake_ctx)
         passed_fake_port = copy.deepcopy(fake_port)
         passed_fake_port['network'] = fake_ctx.network.current
-        mock_create_port.assert_called_once_with(passed_fake_port)
+        mock_create_port.assert_called_once_with(mock.ANY, passed_fake_port)
         mock_notify_dhcp.assert_called_once_with(fake_port['id'])
 
     @mock.patch.object(mech_driver.OVNMechanismDriver,
@@ -1512,32 +1512,31 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         passed_fake_port_orig['network'] = fake_ctx.network.current
 
         mock_update_port.assert_called_once_with(
-            passed_fake_port, port_object=passed_fake_port_orig)
+            mock.ANY, passed_fake_port, port_object=passed_fake_port_orig)
         mock_notify_dhcp.assert_called_once_with(fake_port['id'])
 
     @mock.patch.object(mech_driver.OVNMechanismDriver,
                        '_is_port_provisioning_required', lambda *_: True)
     @mock.patch.object(mech_driver.OVNMechanismDriver, '_notify_dhcp_updated')
     @mock.patch.object(ovn_client.OVNClient, 'update_port')
-    @mock.patch.object(context, 'get_admin_context')
     def test_update_port_postcommit_live_migration(
-            self, mock_admin_context, mock_update_port, mock_notify_dhcp):
+            self, mock_update_port, mock_notify_dhcp):
         self.plugin.update_port_status = mock.Mock()
-        foo_admin_context = mock.Mock()
-        mock_admin_context.return_value = foo_admin_context
+        fake_context = 'fake_context'
         fake_port = fakes.FakePort.create_one_port(
             attrs={
                 'status': const.PORT_STATUS_DOWN,
                 portbindings.PROFILE: {ovn_const.MIGRATING_ATTR: 'foo'},
                 portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS}).info()
-        fake_ctx = mock.Mock(current=fake_port, original=fake_port)
+        fake_ctx = mock.Mock(current=fake_port, original=fake_port,
+                             _plugin_context=fake_context)
 
         self.mech_driver.update_port_postcommit(fake_ctx)
 
         mock_update_port.assert_not_called()
         mock_notify_dhcp.assert_not_called()
         self.plugin.update_port_status.assert_called_once_with(
-            foo_admin_context, fake_port['id'], const.PORT_STATUS_ACTIVE)
+            fake_context, fake_port['id'], const.PORT_STATUS_ACTIVE)
 
     def _add_chassis_agent(self, nb_cfg, agent_type, updated_at=None):
         chassis = mock.Mock()
@@ -1630,7 +1629,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                            device_owner=const.DEVICE_OWNER_ROUTER_GW) as port:
                 # Let's update the MTU to something different
                 network['network']['mtu'] = new_mtu
-                fake_ctx = mock.Mock(current=network['network'])
+                fake_ctx = mock.MagicMock(current=network['network'])
                 fake_ctx._plugin_context.session.is_active = False
 
                 self.mech_driver.update_network_postcommit(fake_ctx)

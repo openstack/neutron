@@ -128,7 +128,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
     def create_router(self, context, router):
         router = super(OVNL3RouterPlugin, self).create_router(context, router)
         try:
-            self._ovn_client.create_router(router)
+            self._ovn_client.create_router(context, router)
         except Exception:
             with excutils.save_and_reraise_exception():
                 # Delete the logical router
@@ -142,7 +142,8 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         result = super(OVNL3RouterPlugin, self).update_router(context, id,
                                                               router)
         try:
-            self._ovn_client.update_router(result, original_router)
+            self._ovn_client.update_router(context, result,
+                                           original_router)
         except Exception:
             with excutils.save_and_reraise_exception():
                 LOG.exception('Unable to update lrouter for %s', id)
@@ -192,7 +193,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
             context, router_id, interface_info, may_exist=may_exist)
         try:
             self._ovn_client.create_router_port(
-                router_id, router_interface_info)
+                context, router_id, router_interface_info)
         except Exception:
             with excutils.save_and_reraise_exception():
                 super(OVNL3RouterPlugin, self).remove_router_interface(
@@ -402,4 +403,5 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
             # internally creates the port, and then calls update, which will
             # trigger this callback even before we had the chance to create
             # the OVN NB DB side
-            l3plugin._ovn_client.update_router_port(current, if_exists=True)
+            l3plugin._ovn_client.update_router_port(kwargs['context'],
+                                                    current, if_exists=True)

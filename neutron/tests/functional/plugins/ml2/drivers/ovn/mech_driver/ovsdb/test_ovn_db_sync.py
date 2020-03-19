@@ -79,6 +79,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         self.match_old_mac_dhcp_subnets = []
         self.expected_dns_records = []
         self.expected_ports_with_unknown_addr = []
+        self.ctx = context.get_admin_context()
         ovn_config.cfg.CONF.set_override('ovn_metadata_enabled', True,
                                          group='ovn')
         ovn_config.cfg.CONF.set_override(
@@ -1208,14 +1209,14 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             _ovn_client = self.l3_plugin._ovn_client
             networks, _ = (
                 _ovn_client._get_nets_and_ipv6_ra_confs_for_router_port(
-                    port_fixed_ips))
+                    self.ctx, port_fixed_ips))
             return networks
 
         def _get_ipv6_ra_configs_for_router_port(port_fixed_ips):
             _ovn_client = self.l3_plugin._ovn_client
             networks, ipv6_ra_configs = (
                 _ovn_client._get_nets_and_ipv6_ra_confs_for_router_port(
-                    port_fixed_ips))
+                    self.ctx, port_fixed_ips))
             return ipv6_ra_configs
 
         for router_id in db_router_ids:

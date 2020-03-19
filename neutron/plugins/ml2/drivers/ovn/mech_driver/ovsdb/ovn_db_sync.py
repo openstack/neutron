@@ -103,7 +103,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
 
         # Create the port in OVN. This will include ACL and Address Set
         # updates as needed.
-        self._ovn_client.create_port(port)
+        self._ovn_client.create_port(ctx, port)
 
     def remove_common_acls(self, neutron_acls, nb_acls):
         """Take out common acls of the two acl dictionaries.
@@ -610,7 +610,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                     LOG.warning("Creating the router %s in OVN NB DB",
                                 router['id'])
                     self._ovn_client.create_router(
-                        router, add_external_gateway=False)
+                        ctx, router, add_external_gateway=False)
                     if 'routes' in router:
                         update_sroutes_list.append(
                             {'id': router['id'], 'add': router['routes'],
@@ -642,7 +642,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                     LOG.warning("Creating the router port %s in OVN NB DB",
                                 rrport['id'])
                     self._ovn_client._create_lrouter_port(
-                        rrport['device_id'], rrport)
+                        ctx, rrport['device_id'], rrport)
                 except RuntimeError:
                     LOG.warning("Create router port in OVN "
                                 "NB failed for router port %s", rrport['id'])
@@ -656,7 +656,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                     LOG.warning(
                         "Updating networks on router port %s in OVN NB DB",
                         rport['id'])
-                    self._ovn_client.update_router_port(rport)
+                    self._ovn_client.update_router_port(ctx, rport)
                 except RuntimeError:
                     LOG.warning("Update router port networks in OVN "
                                 "NB failed for router port %s", rport['id'])
@@ -1000,7 +1000,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 try:
                     LOG.debug('Creating the network %s in OVN NB DB',
                               network['id'])
-                    self._ovn_client.create_network(network)
+                    self._ovn_client.create_network(ctx, network)
                 except RuntimeError:
                     LOG.warning("Create network in OVN NB failed for "
                                 "network %s", network['id'])
