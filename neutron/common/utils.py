@@ -873,6 +873,12 @@ class Timer(object):
 
     The timeout exception can be suppressed; when the time expires, the context
     finishes without rising TimerTimeout.
+
+    NOTE(ralonsoh): this class, when a timeout is defined, cannot be used in
+    other than the main thread. When a timeout is defined, an alarm signal is
+    set. Only the main thread is allowed to set a signal handler and the signal
+    handlers are always executed in this main thread [1].
+    [1] https://docs.python.org/3/library/signal.html#signals-and-threads
     """
     def __init__(self, timeout=None, raise_exception=True):
         self.start = self.delta = None
