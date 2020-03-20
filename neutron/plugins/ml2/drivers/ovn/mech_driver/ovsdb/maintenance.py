@@ -573,7 +573,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         # NOTE(lucasagomes): Find the existing chassis with the highest
         # priority and keep it as being the highest to avoid moving
         # things around
-        high_prio_ch = max(default_ch_grp.ha_chassis, key=lambda x: x.priority)
+        high_prio_ch = max(default_ch_grp.ha_chassis, key=lambda x: x.priority,
+                           default=None)
 
         all_ch = self._sb_idl.get_all_chassis()
         gw_ch = self._sb_idl.get_gateway_chassis_from_cms_options()
