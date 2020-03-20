@@ -584,8 +584,14 @@ class TunnelTest(object):
 
         self.mock_int_bridge_expected += [
             mock.call.check_canary_table(),
+            mock.call.deferred(full_ordered=True, use_bundle=True),
+            mock.call.deferred().__enter__(),
+            mock.call.deferred().__exit__(None, None, None),
             mock.call.cleanup_flows(),
             mock.call.check_canary_table(),
+            mock.call.deferred(full_ordered=True, use_bundle=True),
+            mock.call.deferred().__enter__(),
+            mock.call.deferred().__exit__(None, None, None),
         ]
         self.mock_map_tun_bridge_expected += [
             mock.call.cleanup_flows(),
