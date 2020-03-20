@@ -458,3 +458,17 @@ def is_gateway_chassis(chassis):
 def get_port_capabilities(port):
     """Return a list of port's capabilities"""
     return port.get(portbindings.PROFILE, {}).get('capabilities', [])
+
+
+def get_port_id_from_gwc_row(row):
+    """Return a port_id from gwc row
+
+    The Gateway_Chassis row stores router port_id in
+    the row name attribute:
+
+    <prefix>-<port_id>_<chassis_id>
+
+    :param row: A Gateway_Chassis table row.
+    :returns: String containing router port_id.
+    """
+    return constants.RE_PORT_FROM_GWC.search(row.name).group(2)

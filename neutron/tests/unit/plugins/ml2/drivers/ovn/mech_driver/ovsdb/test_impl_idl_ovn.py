@@ -580,42 +580,95 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
 
     def test_get_unhosted_gateways(self):
         self._load_nb_db()
-        # Test only host-1 in the valid list
+        # Port physnet-dict
+        port_physnet_dict = {
+            'orp-id-a1': 'physnet1',  # scheduled
+            'orp-id-a2': 'physnet1',  # scheduled
+            'orp-id-a3': 'physnet1',  # not scheduled
+            'orp-id-b6': 'physnet2'}  # not scheduled
+        # Test only that orp-id-a3 is to be scheduled.
+        # Rest ports don't have required chassis (physnet2)
+        # or are already scheduled.
         unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
-            {}, {'host-1': 'physnet1'}, [])
-        expected = ['lrp-orp-id-a1', 'lrp-orp-id-a2',
-                    'lrp-orp-id-a3', 'lrp-orp-id-b2']
+            port_physnet_dict, {'host-1': 'physnet1', 'host-2': 'physnet3'},
+            ['host-1', 'host-2'])
+        expected = ['lrp-orp-id-a3']
         self.assertItemsEqual(unhosted_gateways, expected)
         # Test both host-1, host-2 in valid list
         unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
-            {}, {'host-1': 'physnet1', 'host-2': 'physnet2'}, [])
-        self.assertItemsEqual(unhosted_gateways, expected)
-        # Schedule unhosted_gateways on host-2
-        for unhosted_gateway in unhosted_gateways:
-            router_row = self._find_ovsdb_fake_row(self.lrp_table,
-                                                   'name', unhosted_gateway)
-            setattr(router_row, 'options', {
-                ovn_const.OVN_GATEWAY_CHASSIS_KEY: 'host-2'})
-        unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
-            {}, {'host-1': 'physnet1', 'host-2': 'physnet2'}, [])
+            port_physnet_dict, {'host-1': 'physnet1', 'host-2': 'physnet2'},
+            ['host-1', 'host-2'])
+        expected = ['lrp-orp-id-a3', 'lrp-orp-id-b6']
         self.assertItemsEqual(unhosted_gateways, expected)
 
-    def test_unhosted_gateway_max_chassis(self):
+    def test_get_unhosted_gateways_deleted_physnet(self):
+        self._load_nb_db()
+        # The LRP is on host-2 now
+        router_row = self._find_ovsdb_fake_row(self.lrp_table,
+                                               'name', 'lrp-orp-id-a1')
+        setattr(router_row, 'options', {
+            ovn_const.OVN_GATEWAY_CHASSIS_KEY: 'host-2'})
+        port_physnet_dict = {'orp-id-a1': 'physnet1'}
+        # Lets spoof that physnet1 is deleted from host-2.
+        unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
+            port_physnet_dict, {'host-1': 'physnet1', 'host-2': 'physnet3'},
+            ['host-1', 'host-2'])
+        # Make sure that lrp is rescheduled, because host-1 has physet1
+        expected = ['lrp-orp-id-a1']
+        self.assertItemsEqual(unhosted_gateways, expected)
+        # Spoof that there is no valid host with required physnet.
+        unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
+            port_physnet_dict, {'host-1': 'physnet4', 'host-2': 'physnet3'},
+            ['host-1', 'host-2'])
+        self.assertItemsEqual(unhosted_gateways, [])
+
+    def _test_get_unhosted_gateway_max_chassis(self, r):
         gw_chassis_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
         self._tables['Gateway_Chassis'] = gw_chassis_table
         gw_chassis = collections.namedtuple('gw_chassis',
                                             'chassis_name priority')
         TestNBImplIdlOvn.fake_set['lrouter_ports'][0]['gateway_chassis'] = [
             gw_chassis(chassis_name='host-%s' % x,
-                       priority=x) for x in range(1, 6)]
-        for port in TestNBImplIdlOvn.fake_set['lrouter_ports'][1:]:
-            port['gateway_chassis'] = []
+                       priority=x) for x in r]
         self._load_nb_db()
+        self.port_physnet_dict = {'orp-id-a1': 'physnet1'}
+
+    def test_get_unhosted_gateway_max_chassis_lack_of_chassis(self):
+        self._test_get_unhosted_gateway_max_chassis(r=(1, 3, 5))
         unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
-            {}, {'host-1': 'physnet1', 'host-2': 'physnet2',
-                 'host-3': 'physnet1', 'host-4': 'physnet2',
-                 'host-5': 'physnet1', 'host-6': 'physnet2'}, [])
+            self.port_physnet_dict,
+            {'host-1': 'physnet1', 'host-2': 'physnet2',
+             'host-3': 'physnet1', 'host-4': 'physnet2',
+             'host-5': 'physnet1', 'host-6': 'physnet2'},
+            ['host-%s' % x for x in range(1, 7)])
+        # We don't have required number of chassis
         expected = []
+        self.assertItemsEqual(unhosted_gateways, expected)
+
+    def test_get_unhosted_gateway_max_chassis(self):
+        # We have required number of chassis, and lrp
+        # is hosted everywhere.
+        self._test_get_unhosted_gateway_max_chassis(r=range(1, 6))
+        unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
+            self.port_physnet_dict,
+            {'host-1': 'physnet1', 'host-2': 'physnet1',
+             'host-3': 'physnet1', 'host-4': 'physnet1',
+             'host-5': 'physnet1', 'host-6': 'physnet1'},
+            ['host-%s' % x for x in range(1, 7)])
+        expected = []
+        self.assertItemsEqual(unhosted_gateways, expected)
+
+    def test_get_unhosed_gateway_schedule_to_max(self):
+        # The LRP is not yet scheduled on all chassis
+        # but we can schedule on new chassis now.
+        self._test_get_unhosted_gateway_max_chassis(r=range(1, 4))
+        unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
+            self.port_physnet_dict,
+            {'host-1': 'physnet1', 'host-2': 'physnet1',
+             'host-3': 'physnet1', 'host-4': 'physnet1',
+             'host-5': 'physnet1', 'host-6': 'physnet1'},
+            ['host-%s' % x for x in range(1, 7)])
+        expected = ['lrp-orp-id-a1']
         self.assertItemsEqual(unhosted_gateways, expected)
 
     def test_get_subnet_dhcp_options(self):

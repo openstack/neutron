@@ -135,11 +135,28 @@ class TestRouter(base.TestOVNFunctionalBase):
     def test_gateway_chassis_with_cms_and_no_bridge_mappings(self):
         # chassis1 is having proper bridge mappings.
         # chassis3 is having enable-chassis-as-gw, but no bridge mappings.
-        # Test if chassis1 is selected as candidate or not.
         self.chassis3 = self.add_fake_chassis(
             'ovs-host3',
             external_ids={'ovn-cms-options': 'enable-chassis-as-gw'})
-        self._check_gateway_chassis_candidates([self.chassis1])
+        ovn_client = self.l3_plugin._ovn_client
+        ext1 = self._create_ext_network(
+            'ext1', 'vlan', 'physnet1', 1, "10.0.0.1", "10.0.0.0/24")
+        # As we have 'gateways' in the system, but without required
+        # chassis we should not schedule gw in that case at all.
+        self._set_redirect_chassis_to_invalid_chassis(ovn_client)
+        with mock.patch.object(ovn_client._ovn_scheduler, 'select',
+                              return_value=[self.chassis1]), \
+            mock.patch.object(self.l3_plugin.scheduler, 'select',
+                              side_effect=[self.chassis1]):
+            gw_info = {'network_id': ext1['network']['id']}
+            self._create_router('router1', gw_info=gw_info)
+
+        with mock.patch.object(
+                ovn_client._nb_idl, 'update_lrouter_port') as ulrp:
+            self.l3_plugin.schedule_unhosted_gateways()
+            # Make sure that we don't schedule on chassis3
+            # and do not updated the lrp port.
+            ulrp.assert_not_called()
 
     def test_gateway_chassis_with_bridge_mappings_and_no_cms(self):
         # chassis1 is configured with proper bridge mappings,

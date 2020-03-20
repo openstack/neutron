@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import re
+
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as const
 import six
@@ -163,6 +165,7 @@ FIP_ACTION_DISASSOCIATE = 'fip_disassociate'
 
 # Loadbalancer constants
 LRP_PREFIX = "lrp-"
+RE_PORT_FROM_GWC = re.compile(r'(%s)([\w-]+)_([\w-]+)' % LRP_PREFIX)
 LB_VIP_PORT_PREFIX = "ovn-lb-vip-"
 LB_EXT_IDS_LS_REFS_KEY = 'ls_refs'
 LB_EXT_IDS_LR_REF_KEY = 'lr_ref'

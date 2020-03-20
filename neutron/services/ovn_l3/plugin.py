@@ -318,24 +318,48 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
             if port['status'] != status:
                 self._plugin.update_port_status(context, port['id'], status)
 
-    def schedule_unhosted_gateways(self):
+    def schedule_unhosted_gateways(self, event_from_chassis=None):
+        # GW ports and its physnets.
         port_physnet_dict = self._get_gateway_port_physnet_mapping()
-        chassis_physnets = self._sb_ovn.get_chassis_and_physnets()
-        cms = self._sb_ovn.get_gateway_chassis_from_cms_options()
+        # Filter out unwanted ports in case of event.
+        if event_from_chassis:
+            gw_chassis = self._ovn.get_chassis_gateways(
+                chassis_name=event_from_chassis)
+            if not gw_chassis:
+                return
+            ports_impacted = []
+            for gwc in gw_chassis:
+                try:
+                    ports_impacted.append(utils.get_port_id_from_gwc_row(gwc))
+                except AttributeError:
+                    # Malformed GWC format.
+                    pass
+            port_physnet_dict = {
+                k: v
+                for k, v in port_physnet_dict.items()
+                if k in ports_impacted}
+        if not port_physnet_dict:
+            return
+        # All chassis with physnets configured.
+        chassis_with_physnets = self._sb_ovn.get_chassis_and_physnets()
+        # All chassis with enable_as_gw_chassis set
+        all_gw_chassis = self._sb_ovn.get_gateway_chassis_from_cms_options()
         unhosted_gateways = self._ovn.get_unhosted_gateways(
-            port_physnet_dict, chassis_physnets, cms)
+            port_physnet_dict, chassis_with_physnets,
+            all_gw_chassis)
         for g_name in unhosted_gateways:
-            physnet = port_physnet_dict.get(g_name[len('lrp-'):])
+            physnet = port_physnet_dict.get(g_name[len(ovn_const.LRP_PREFIX):])
             # Remove any invalid gateway chassis from the list, otherwise
             # we can have a situation where all existing_chassis are invalid
             existing_chassis = self._ovn.get_gateway_chassis_binding(g_name)
             master = existing_chassis[0] if existing_chassis else None
             existing_chassis = self.scheduler.filter_existing_chassis(
-                nb_idl=self._ovn, gw_chassis=cms,
-                physnet=physnet, chassis_physnets=chassis_physnets,
+                nb_idl=self._ovn, gw_chassis=all_gw_chassis,
+                physnet=physnet, chassis_physnets=chassis_with_physnets,
                 existing_chassis=existing_chassis)
             candidates = self._ovn_client.get_candidates_for_scheduling(
-                physnet, cms=cms, chassis_physnets=chassis_physnets)
+                physnet, cms=all_gw_chassis,
+                chassis_physnets=chassis_with_physnets)
             chassis = self.scheduler.select(
                 self._ovn, self._sb_ovn, g_name, candidates=candidates,
                 existing_chassis=existing_chassis)
