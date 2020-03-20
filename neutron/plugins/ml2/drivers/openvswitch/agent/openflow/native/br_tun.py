@@ -269,26 +269,3 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
         # REVISIT(yamamoto): match in_port as well?
         self.uninstall_flows(table_id=constants.DVR_NOT_LEARN,
                              eth_src=mac)
-
-    def deferred(self):
-        # REVISIT(yamamoto): This is for API compat with "ovs-ofctl"
-        # interface.  Consider removing this mechanism when obsoleting
-        # "ovs-ofctl" interface.
-        # For "ovs-ofctl" interface, "deferred" mechanism would improve
-        # performance by batching flow-mods with a single ovs-ofctl command
-        # invocation.
-        # On the other hand, for this "native" interface, the overheads of
-        # each flow-mods are already minimum and batching doesn't make much
-        # sense.  Thus this method is left as no-op.
-        # It might be possible to send multiple flow-mods with a single
-        # barrier.  But it's unclear that level of performance optimization
-        # is desirable while it would certainly complicate error handling.
-        return self
-
-    def __enter__(self):
-        # REVISIT(yamamoto): See the comment on deferred().
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        # REVISIT(yamamoto): See the comment on deferred().
-        pass
