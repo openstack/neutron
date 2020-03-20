@@ -1,8 +1,8 @@
 .. _ovn_devstack:
 
-=====================
-Testing with DevStack
-=====================
+=========================
+Testing OVN with DevStack
+=========================
 
 This document describes how to test OpenStack with OVN using DevStack. We will
 start by describing how to test on a single host.
@@ -13,7 +13,7 @@ Single Node Test Environment
 1. Create a test system.
 
 It's best to use a throwaway dev system for running DevStack. Your best bet is
-to use either CentOS 7 or the latest Ubuntu LTS (16.04, Xenial).
+to use either CentOS 8 or the latest Ubuntu LTS (18.04, Bionic).
 
 2. Create the ``stack`` user.
 
@@ -30,9 +30,9 @@ to use either CentOS 7 or the latest Ubuntu LTS (16.04, Xenial).
      $ git clone https://opendev.org/openstack/devstack.git
      $ git clone https://opendev.org/openstack/neutron.git
 
-4. Configure DevStack to use networking-ovn.
+4. Configure DevStack to use the OVN driver.
 
-Ovn driver comes with a sample DevStack configuration file you can start
+OVN driver comes with a sample DevStack configuration file you can start
 with.  For example, you may want to set some values for the various PASSWORD
 variables in that file so DevStack doesn't have to prompt you for them.  Feel
 free to edit it if you'd like, but it should work as-is.
@@ -40,7 +40,7 @@ free to edit it if you'd like, but it should work as-is.
 ::
 
     $ cd devstack
-    $ cp ../neutron/devstack/ovn.conf.sample local.conf
+    $ cp ../neutron/devstack/ovn-local.conf.sample local.conf
 
 5. Run DevStack.
 
@@ -102,7 +102,7 @@ Run the following command to see the existing networks::
     | 7ec986dd-aae4-40b5-86cf-8668feeeab67 | public  | 60d0c146-a29b-4cd3-bd90-3745603b1a4b, f010c309-09be-4af2-80d6-e6af9c78bae7 |
     +--------------------------------------+---------+----------------------------------------------------------------------------+
 
-A Neutron network is implemented as an OVN logical switch. Ovn driver
+A Neutron network is implemented as an OVN logical switch. OVN driver
 creates logical switches with a name in the format neutron-<network UUID>.
 We can use ``ovn-nbctl`` to list the configured logical switches and see that
 their names correlate with the output from ``openstack network list``::
@@ -397,11 +397,11 @@ Switch to the ``stack`` user and clone DevStack and neutron::
      $ git clone https://opendev.org/openstack/devstack.git
      $ git clone https://opendev.org/openstack/neutron.git
 
-networking-ovn comes with another sample configuration file that can be used
+OVN comes with another sample configuration file that can be used
 for this::
 
      $ cd devstack
-     $ cp ../neutron/devstack/ovn-computenode.conf.sample local.conf
+     $ cp ../neutron/devstack/ovn-compute-local.conf.sample local.conf
 
 You must set SERVICE_HOST in local.conf.  The value should be the IP address of
 the main DevStack host.  You must also set HOST_IP to the IP address of this
@@ -425,7 +425,7 @@ verify that the additional hypervisor has been added to the deployment::
 
     $ cd devstack
     $ . openrc admin
-
+    $ ./tools/discover_hosts.sh
     $ openstack hypervisor list
     +----+------------------------+-----------------+---------------+-------+
     | ID | Hypervisor Hostname    | Hypervisor Type | Host IP       | State |
