@@ -16,6 +16,7 @@
 from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
+from neutron_lib.db import api as db_api
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from webob import exc as web_exc
@@ -54,7 +55,7 @@ class AllowedAddressPairTestPlugin(portsecurity_db.PortSecurityDbMixin,
 
     def create_port(self, context, port):
         p = port['port']
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             neutron_db = super(AllowedAddressPairTestPlugin, self).create_port(
                 context, port)
             p.update(neutron_db)
@@ -72,7 +73,7 @@ class AllowedAddressPairTestPlugin(portsecurity_db.PortSecurityDbMixin,
             port)
         has_addr_pairs = self._check_update_has_allowed_address_pairs(port)
 
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             ret_port = super(AllowedAddressPairTestPlugin, self).update_port(
                 context, id, port)
             # copy values over - but not fixed_ips
