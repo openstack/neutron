@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib.api.definitions import vlantransparent as vlan_apidef
+from neutron_lib.db import api as db_api
 from oslo_config import cfg
 from webob import exc as web_exc
 
@@ -46,7 +47,7 @@ class VlanTransparentExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     supported_extension_aliases = [vlan_apidef.ALIAS]
 
     def create_network(self, context, network):
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             new_net = super(VlanTransparentExtensionTestPlugin,
                             self).create_network(context, network)
             # Update the vlan_transparent in the database
