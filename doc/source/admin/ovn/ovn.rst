@@ -10,30 +10,30 @@ The original OVN project announcement can be found here:
 
 The OVN architecture is described here:
 
-* http://www.openvswitch.org/support/dist-docs/ovn-architecture.7.html
+* http://www.ovn.org/support/dist-docs/ovn-architecture.7.html
 
 Here are two tutorials that help with learning different aspects of OVN:
 
-* http://blog.spinhirne.com/p/blog-series.html#introToOVN
-* http://docs.openvswitch.org/en/stable/tutorials/ovn-sandbox/
+* https://blog.spinhirne.com/posts/an-introduction-to-ovn/a-primer-on-ovn/
+* https://docs.ovn.org/en/stable/tutorials/ovn-sandbox.html
 
 There is also an in depth tutorial on using OVN with OpenStack:
 
-* http://docs.openvswitch.org/en/stable/tutorials/ovn-openstack/
+* https://docs.ovn.org/en/stable/tutorials/ovn-openstack.html
 
 OVN DB schemas and other man pages:
 
-* http://www.openvswitch.org/support/dist-docs/ovn-nb.5.html
-* http://www.openvswitch.org/support/dist-docs/ovn-sb.5.html
-* http://www.openvswitch.org/support/dist-docs/ovn-nbctl.8.html
-* http://www.openvswitch.org/support/dist-docs/ovn-sbctl.8.html
-* http://www.openvswitch.org/support/dist-docs/ovn-northd.8.html
-* http://www.openvswitch.org/support/dist-docs/ovn-controller.8.html
-* http://www.openvswitch.org/support/dist-docs/ovn-controller-vtep.8.html
+* http://www.ovn.org/support/dist-docs/ovn-nb.5.html
+* http://www.ovn.org/support/dist-docs/ovn-sb.5.html
+* http://www.ovn.org/support/dist-docs/ovn-nbctl.8.html
+* http://www.ovn.org/support/dist-docs/ovn-sbctl.8.html
+* http://www.ovn.org/support/dist-docs/ovn-northd.8.html
+* http://www.ovn.org/support/dist-docs/ovn-controller.8.html
+* http://www.ovn.org/support/dist-docs/ovn-controller-vtep.8.html
 
 or find a full list of OVS and OVN man pages here:
 
-* http://docs.openvswitch.org/en/latest/ref/
+* http://docs.ovn.org/en/latest/ref/
 
 The openvswitch web page includes a list of presentations, some of which are
 about OVN:
@@ -70,3 +70,4 @@ These blog resources may also help with testing and understanding OVN:
 * http://galsagie.github.io/sdn/openstack/ovs/2015/04/26/ovn-containers/
 * http://blog.russellbryant.net/2015/04/21/ovn-and-openstack-status-2015-04-21/
 * http://blog.russellbryant.net/2015/04/08/ovn-and-openstack-integration-development-update/
+* http://dani.foroselectronica.es/category/openstack/ovn/
