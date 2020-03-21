@@ -76,24 +76,39 @@ class PortBindingChassisEvent(row_event.RowEvent):
         resync = False
         if row.type not in OVN_VIF_PORT_TYPES:
             return
-        new_chassis = getattr(row, 'chassis', [])
-        old_chassis = getattr(old, 'chassis', [])
         with _SYNC_STATE_LOCK.read_lock():
             try:
-                if new_chassis and new_chassis[0].name == self.agent.chassis:
-                    LOG.info("Port %s in datapath %s bound to our chassis",
-                             row.logical_port, str(row.datapath.uuid))
-                    self.agent.update_datapath(str(row.datapath.uuid))
-                elif old_chassis and old_chassis[0].name == self.agent.chassis:
-                    LOG.info("Port %s in datapath %s unbound from our chassis",
-                             row.logical_port, str(row.datapath.uuid))
-                    self.agent.update_datapath(str(row.datapath.uuid))
+                LOG.info(self.LOG_MSG, row.logical_port,
+                         str(row.datapath.uuid))
+                self.agent.update_datapath(str(row.datapath.uuid))
             except ConfigException:
                 # We're now in the reader lock mode, we need to exit the
                 # context and then use writer lock
                 resync = True
         if resync:
             self.agent.resync()
+
+
+class PortBindingChassisCreatedEvent(PortBindingChassisEvent):
+    LOG_MSG = "Port %s in datapath %s bound to our chassis"
+
+    def match_fn(self, event, row, old):
+        try:
+            return (row.chassis[0].name == self.agent.chassis and
+                    not old.chassis)
+        except (IndexError, AttributeError):
+            return False
+
+
+class PortBindingChassisDeletedEvent(PortBindingChassisEvent):
+    LOG_MSG = "Port %s in datapath %s unbound from our chassis"
+
+    def match_fn(self, event, row, old):
+        try:
+            return (old.chassis[0].name == self.agent.chassis and
+                    not row.chassis)
+        except (IndexError, AttributeError):
+            return False
 
 
 class ChassisCreateEvent(row_event.RowEvent):
@@ -177,7 +192,9 @@ class MetadataAgent(object):
         # Open the connection to OVN SB database.
         self.sb_idl = ovsdb.MetadataAgentOvnSbIdl(
             chassis=self.chassis,
-            events=[PortBindingChassisEvent(self), ChassisCreateEvent(self),
+            events=[PortBindingChassisCreatedEvent(self),
+                    PortBindingChassisDeletedEvent(self),
+                    ChassisCreateEvent(self),
                     SbGlobalUpdateEvent(self)]).start()
 
         # Do the initial sync.

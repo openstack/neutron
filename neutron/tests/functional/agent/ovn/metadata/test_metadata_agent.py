@@ -127,15 +127,9 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 external_ids={
                     ovn_const.OVN_CIDRS_EXT_ID_KEY: '192.168.122.123/24'}))
 
-    @mock.patch.object(agent.PortBindingChassisEvent, 'run')
-    def test_agent_resync_on_non_existing_bridge(self, mock_pbinding):
-        # The agent has initialized with br-int and above list_br doesn't
-        # return it, hence the agent should trigger reconfiguration and store
-        # new br-new value to its attribute.
-        self.assertEqual(self.OVN_BRIDGE, self.agent.ovn_bridge)
+    def _create_logical_switch_port(self):
         lswitch_name = 'ovn-' + uuidutils.generate_uuid()
         lswitchport_name = 'ovn-port-' + uuidutils.generate_uuid()
-
         # It may take some time to ovn-northd to translate from OVN NB DB to
         # the OVN SB DB. Wait for port binding event to happen before binding
         # the port to chassis.
@@ -151,10 +145,21 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             self._create_metadata_port(txn, lswitch_name)
         self.assertTrue(pb_event.wait())
 
-        # Trigger PortBindingChassisEvent
+        return lswitchport_name
+
+    @mock.patch.object(agent.PortBindingChassisCreatedEvent, 'run')
+    def test_agent_resync_on_non_existing_bridge(self, mock_pbinding):
+        # The agent has initialized with br-int and above list_br doesn't
+        # return it, hence the agent should trigger reconfiguration and store
+        # new br-new value to its attribute.
+        self.assertEqual(self.OVN_BRIDGE, self.agent.ovn_bridge)
+
+        lswitchport_name = self._create_logical_switch_port()
+
+        # Trigger PortBindingChassisCreatedEvent
         self.sb_api.lsp_bind(lswitchport_name, self.chassis_name).execute(
             check_error=True, log_errors=True)
-        exc = Exception('PortBindingChassisEvent was not called')
+        exc = Exception('PortBindingChassisCreatedEvent was not called')
 
         def check_mock_pbinding():
             if mock_pbinding.call_count < 1:
@@ -166,6 +171,48 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             return True
 
         n_utils.wait_until_true(check_mock_pbinding, timeout=10, exception=exc)
+
+    @mock.patch.object(agent.PortBindingChassisDeletedEvent, 'run')
+    @mock.patch.object(agent.PortBindingChassisCreatedEvent, 'run')
+    def test_agent_events(self, m_pb_created, m_pb_deleted):
+        lswitchport_name = self._create_logical_switch_port()
+        self.sb_api.lsp_bind(lswitchport_name, self.chassis_name).execute(
+            check_error=True, log_errors=True)
+
+        def pb_created():
+            if m_pb_created.call_count < 1:
+                return False
+            args = m_pb_created.call_args[0]
+            self.assertEqual('update', args[0])
+            self.assertEqual(self.chassis_name, args[1].chassis[0].name)
+            self.assertFalse(args[2].chassis)
+            return True
+
+        n_utils.wait_until_true(
+            pb_created,
+            timeout=10,
+            exception=Exception(
+                "PortBindingChassisCreatedEvent didn't happen on port "
+                "binding."))
+
+        self.sb_api.lsp_unbind(lswitchport_name).execute(
+            check_error=True, log_errors=True)
+
+        def pb_deleted():
+            if m_pb_deleted.call_count < 1:
+                return False
+            args = m_pb_deleted.call_args[0]
+            self.assertEqual('update', args[0])
+            self.assertFalse(args[1].chassis)
+            self.assertEqual(self.chassis_name, args[2].chassis[0].name)
+            return True
+
+        n_utils.wait_until_true(
+            pb_deleted,
+            timeout=10,
+            exception=Exception(
+                "PortBindingChassisDeletedEvent didn't happen on port"
+                "unbind."))
 
     def test_agent_registration_at_chassis_create_event(self):
         chassis = self.sb_api.lookup('Chassis', self.chassis_name)
