@@ -114,6 +114,16 @@ class _TestMetadataProxyHandlerCacheMixin(object):
                 retval = self.handler(req)
                 self.assertEqual('value', retval)
 
+    def test_call_skip_cache(self):
+        req = mock.Mock()
+        with mock.patch.object(self.handler,
+                               '_get_instance_and_tenant_id') as get_ids:
+            get_ids.return_value = ('instance_id', 'tenant_id')
+            with mock.patch.object(self.handler, '_proxy_request') as proxy:
+                proxy.return_value = webob.exc.HTTPNotFound()
+                self.handler(req)
+                get_ids.assert_called_with(req, skip_cache=True)
+
     def test_call_no_instance_match(self):
         req = mock.Mock()
         with mock.patch.object(self.handler,
@@ -201,7 +211,8 @@ class _TestMetadataProxyHandlerCacheMixin(object):
             ports = self.handler._get_ports(remote_address, network_id,
                                             router_id)
             mock_get_ip_addr.assert_called_once_with(remote_address,
-                                                     networks)
+                                                     networks,
+                                                     skip_cache=False)
             self.assertFalse(mock_get_router_networks.called)
         self.assertEqual(expected, ports)
 
@@ -220,8 +231,10 @@ class _TestMetadataProxyHandlerCacheMixin(object):
                                   ) as mock_get_router_networks:
             ports = self.handler._get_ports(remote_address,
                                             router_id=router_id)
-            mock_get_router_networks.assert_called_once_with(router_id)
-            mock_get_ip_addr.assert_called_once_with(remote_address, networks)
+            mock_get_router_networks.assert_called_once_with(
+                router_id, skip_cache=False)
+            mock_get_ip_addr.assert_called_once_with(
+                remote_address, networks, skip_cache=False)
             self.assertEqual(expected, ports)
 
     def test_get_ports_no_id(self):
