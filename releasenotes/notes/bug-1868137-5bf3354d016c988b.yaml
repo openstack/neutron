@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Ensures that OVN's mechanism driver does not start when
+    ``[ml2_type_geneve]/max_header_size`` is set below the required 38.
+    `LP#1868137 <https://launchpad.net/bugs/1868137>`__
