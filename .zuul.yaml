@@ -167,7 +167,8 @@
         neutron-trunk: true
       rally_task: rally-jobs/task-neutron.yaml
     required-projects:
-      - openstack/rally-openstack
+      - name: openstack/rally-openstack
+        override-checkout: 1.7.0
     irrelevant-files:
       - ^.*\.rst$
       - ^doc/.*$
