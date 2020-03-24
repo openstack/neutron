@@ -73,21 +73,27 @@ class cache_method_results(object):
             'class': target_self_cls_name,
             'func_name': self.func.__name__,
         }
+        skip_cache = kwargs.pop('skip_cache', False)
+
         key = (func_name,) + args
         if kwargs:
             key += helpers.dict2tuple(kwargs)
         # oslo.cache expects a string or a buffer
         key = str(key)
-        try:
-            item = target_self._cache.get(key)
-        except TypeError:
-            LOG.debug("Method %(func_name)s cannot be cached due to "
-                      "unhashable parameters: args: %(args)s, kwargs: "
-                      "%(kwargs)s",
-                      {'func_name': func_name,
-                       'args': args,
-                       'kwargs': kwargs})
-            return self.func(target_self, *args, **kwargs)
+        if not skip_cache:
+            try:
+                item = target_self._cache.get(key)
+            except TypeError:
+                LOG.debug("Method %(func_name)s cannot be cached due to "
+                          "unhashable parameters: args: %(args)s, kwargs: "
+                          "%(kwargs)s",
+                          {'func_name': func_name,
+                           'args': args,
+                           'kwargs': kwargs})
+                return self.func(target_self, *args, **kwargs)
+        else:
+            LOG.debug('Skipping getting result from cache for %s.', func_name)
+            item = self._not_cached
 
         if item is self._not_cached:
             item = self.func(target_self, *args, **kwargs)

@@ -87,7 +87,15 @@ class MetadataProxyHandler(object):
 
             instance_id, tenant_id = self._get_instance_and_tenant_id(req)
             if instance_id:
-                return self._proxy_request(instance_id, tenant_id, req)
+                res = self._proxy_request(instance_id, tenant_id, req)
+                if isinstance(res, webob.exc.HTTPNotFound):
+                    LOG.info("The instance: %s is not present anymore, "
+                             "skipping cache...", instance_id)
+                    instance_id, tenant_id = self._get_instance_and_tenant_id(
+                        req, skip_cache=True)
+                    if instance_id:
+                        return self._proxy_request(instance_id, tenant_id, req)
+                return res
             else:
                 return webob.exc.HTTPNotFound()
 
@@ -118,42 +126,49 @@ class MetadataProxyHandler(object):
         return filters
 
     @cache.cache_method_results
-    def _get_router_networks(self, router_id):
+    def _get_router_networks(self, router_id, skip_cache=False):
         """Find all networks connected to given router."""
         internal_ports = self._get_ports_from_server(router_id=router_id)
         return tuple(p['network_id'] for p in internal_ports)
 
     @cache.cache_method_results
-    def _get_ports_for_remote_address(self, remote_address, networks):
+    def _get_ports_for_remote_address(self, remote_address, networks,
+                                      skip_cache=False):
         """Get list of ports that has given ip address and are part of
         given networks.
 
         :param networks: list of networks in which the ip address will be
                          searched for
+        :param skip_cache: when have to skip getting entry from cache
 
         """
         return self._get_ports_from_server(networks=networks,
                                            ip_address=remote_address)
 
-    def _get_ports(self, remote_address, network_id=None, router_id=None):
+    def _get_ports(self, remote_address, network_id=None, router_id=None,
+                   skip_cache=False):
         """Search for all ports that contain passed ip address and belongs to
         given network.
 
         If no network is passed ports are searched on all networks connected to
         given router. Either one of network_id or router_id must be passed.
 
+        :param skip_cache: when have to skip getting entry from cache
+
         """
         if network_id:
             networks = (network_id,)
         elif router_id:
-            networks = self._get_router_networks(router_id)
+            networks = self._get_router_networks(router_id,
+                                                 skip_cache=skip_cache)
         else:
             raise TypeError(_("Either one of parameter network_id or router_id"
                               " must be passed to _get_ports method."))
 
-        return self._get_ports_for_remote_address(remote_address, networks)
+        return self._get_ports_for_remote_address(remote_address, networks,
+                                                  skip_cache=skip_cache)
 
-    def _get_instance_and_tenant_id(self, req):
+    def _get_instance_and_tenant_id(self, req, skip_cache=False):
         remote_address = req.headers.get('X-Forwarded-For')
         network_id = req.headers.get('X-Neutron-Network-ID')
         router_id = req.headers.get('X-Neutron-Router-ID')
@@ -165,7 +180,8 @@ class MetadataProxyHandler(object):
                       "dropping")
             return None, None
 
-        ports = self._get_ports(remote_address, network_id, router_id)
+        ports = self._get_ports(remote_address, network_id, router_id,
+                                skip_cache=skip_cache)
         LOG.debug("Gotten ports for remote_address %(remote_address)s, "
                   "network_id %(network_id)s, router_id %(router_id)s are: "
                   "%(ports)s",
