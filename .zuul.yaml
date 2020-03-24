@@ -174,7 +174,8 @@
         neutron-trunk: true
     required-projects:
       - openstack/rally
-      - openstack/rally-openstack
+      - name: openstack/rally-openstack
+        override-checkout: 1.7.0
       - openstack/osprofiler
     irrelevant-files:
       - ^.*\.rst$
