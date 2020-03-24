@@ -1701,10 +1701,10 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
             total += int(netaddr.IPAddress(pool['end']) -
                          netaddr.IPAddress(pool['start'])) + 1
         if total:
-            if subnet['gateway_ip']:
+            if subnet.get('gateway_ip'):
                 total += 1
                 reserved += 1
-            if subnet['enable_dhcp']:
+            if subnet.get('enable_dhcp'):
                 reserved += 1
         return total, reserved
 
