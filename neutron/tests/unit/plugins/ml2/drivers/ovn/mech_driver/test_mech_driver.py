@@ -495,16 +495,11 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                              old_mac]),
                         called_args_dict.get('addresses'))
 
-    def test_create_port_possible_vip(self):
-        """Test if just created LSP has no adresses set.
-
-           This could be potential VIP port. If not - next
-           port update will set the adresses corectly during
-           binding process.
-        """
+    def test_create_port_ovn_octavia_vip(self):
         with (self.network(set_context=True, tenant_id='test')) as net1, (
                 self.subnet(network=net1)) as subnet1, (
-                self.port(subnet=subnet1, set_context=True, tenant_id='test')):
+                self.port(name=ovn_const.LB_VIP_PORT_PREFIX + 'foo',
+                          subnet=subnet1, set_context=True, tenant_id='test')):
 
             self.assertTrue(self.nb_ovn.create_lswitch_port.called)
             called_args_dict = (
@@ -711,32 +706,25 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
 
     def _test_update_port_vip(self, is_vip=True):
         kwargs = {}
-        if not is_vip:
-            # NOTE(mjozefcz): Lets pretend this is nova port to not
-            # be treated as VIP.
-            kwargs['device_owner'] = 'compute:nova'
         with (
             self.network(set_context=True, tenant_id='test')) as net1, (
             self.subnet(network=net1)) as subnet1, (
             self.port(subnet=subnet1, set_context=True,
                       tenant_id='test', **kwargs)) as port1:
-
             fake_lsp = (
                 fakes.FakeOVNPort.from_neutron_port(
                     port1['port']))
             self.nb_ovn.lookup.return_value = fake_lsp
-
-            # Update the port name.
             self.nb_ovn.set_lswitch_port.reset_mock()
-            data = {'port': {'name': 'rtheis'}}
+            if is_vip:
+                data = {'port': {'name': ovn_const.LB_VIP_PORT_PREFIX + 'foo'}}
+            else:
+                data = {'port': {}}
             self._update('ports', port1['port']['id'], data)
             self.assertEqual(
                 1, self.nb_ovn.set_lswitch_port.call_count)
             called_args_dict = (
                 self.nb_ovn.set_lswitch_port.call_args_list[0][1])
-            self.assertEqual(
-                'rtheis',
-                called_args_dict['external_ids']['neutron:port_name'])
             if is_vip:
                 self.assertEqual([],
                                  called_args_dict.get('addresses'))
