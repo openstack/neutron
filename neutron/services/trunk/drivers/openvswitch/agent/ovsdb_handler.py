@@ -14,6 +14,7 @@
 #    under the License.
 
 import functools
+import time
 
 import eventlet
 from neutron_lib.callbacks import events
@@ -42,6 +43,7 @@ from neutron.services.trunk.rpc import agent
 LOG = logging.getLogger(__name__)
 
 DEFAULT_WAIT_FOR_PORT_TIMEOUT = 60
+WAIT_BEFORE_TRUNK_DELETE = 3
 
 
 def lock_on_bridge_name(required_parameter):
@@ -215,6 +217,7 @@ class OVSDBHandler(object):
         # try to mitigate the issue by checking if there is a port on the
         # bridge and if so then do not remove it.
         bridge = ovs_lib.OVSBridge(bridge_name)
+        time.sleep(WAIT_BEFORE_TRUNK_DELETE)
         if bridge_has_instance_port(bridge):
             LOG.debug("The bridge %s has instances attached so it will not "
                       "be deleted.", bridge_name)
