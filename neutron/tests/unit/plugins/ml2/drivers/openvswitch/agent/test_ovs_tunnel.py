@@ -20,7 +20,6 @@ import mock
 from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_log import log
-import six
 
 from neutron.agent.common import ip_lib
 from neutron.agent.common import ovs_lib
@@ -29,13 +28,6 @@ from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
     import ovs_test_base
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
     import test_vlanmanager
-
-
-def nonzero(f):
-    if six.PY3:
-        return f.__bool__()
-    else:
-        return f.__nonzero__()
 
 
 # Useful global dummy variables.
@@ -257,7 +249,7 @@ class TunnelTest(object):
             mock.call.create(secure_mode=True),
             mock.call.setup_controllers(mock.ANY),
             mock.call.port_exists('patch-int'),
-            nonzero(mock.call.port_exists()),
+            mock.ANY,
             mock.call.add_patch_port('patch-int', 'patch-tun'),
         ]
         self.mock_int_bridge_expected += [
@@ -713,7 +705,7 @@ class TunnelTestUseVethInterco(TunnelTest):
             mock.call.create(secure_mode=True),
             mock.call.setup_controllers(mock.ANY),
             mock.call.port_exists('patch-int'),
-            nonzero(mock.call.port_exists()),
+            mock.ANY,
             mock.call.add_patch_port('patch-int', 'patch-tun'),
         ]
         self.mock_int_bridge_expected += [
@@ -733,7 +725,7 @@ class TunnelTestUseVethInterco(TunnelTest):
         self.ipdevice_expected = [
             mock.call('int-%s' % self.MAP_TUN_BRIDGE),
             mock.call().exists(),
-            nonzero(mock.call().exists()),
+            mock.ANY,
             mock.call().link.delete()
         ]
         self.ipwrapper_expected = [
