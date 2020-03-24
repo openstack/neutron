@@ -668,7 +668,7 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
     def test_delete_flavor_in_use(self):
         # make use of router since it has a flavor id
         fl, data = self._create_flavor()
-        with self.ctx.session.begin():
+        with db_api.CONTEXT_WRITER.using(self.ctx):
             self.ctx.session.add(l3_models.Router(flavor_id=fl['id']))
         self.assertRaises(
             flav_exc.FlavorInUse,

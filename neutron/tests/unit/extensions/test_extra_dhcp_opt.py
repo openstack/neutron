@@ -17,6 +17,7 @@ import copy
 
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 import webob.exc
 
 from neutron.db import db_base_plugin_v2
@@ -37,7 +38,7 @@ class ExtraDhcpOptTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     supported_extension_aliases = [edo_ext.ALIAS]
 
     def create_port(self, context, port):
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             edos = port['port'].get(edo_ext.EXTRADHCPOPTS, [])
             new_port = super(ExtraDhcpOptTestPlugin, self).create_port(
                 context, port)
@@ -45,7 +46,7 @@ class ExtraDhcpOptTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         return new_port
 
     def update_port(self, context, id, port):
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             rtn_port = super(ExtraDhcpOptTestPlugin, self).update_port(
                 context, id, port)
             self._update_extra_dhcp_opts_on_port(context, id, port, rtn_port)

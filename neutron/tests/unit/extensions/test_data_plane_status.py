@@ -17,6 +17,7 @@ from webob import exc as web_exc
 from neutron_lib.api.definitions import data_plane_status as dps_lib
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from neutron_lib.tests.unit import fake_notifier
 
@@ -54,7 +55,7 @@ class DataPlaneStatusExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             port_res, port_db)
 
     def update_port(self, context, id, port):
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             ret_port = super(DataPlaneStatusExtensionTestPlugin,
                              self).update_port(context, id, port)
             if dps_lib.DATA_PLANE_STATUS in port['port']:
