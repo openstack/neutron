@@ -6508,11 +6508,10 @@ class DbModelMixin(object):
                                         project_id='fake_project',
                                         mtu=1500)
             ctx.session.add(network)
-            with db_api.autonested_transaction(ctx.session):
-                sg = sg_models.SecurityGroup(name='sg', description='sg')
-                ctx.session.add(sg)
             # ensure db rels aren't loaded until commit for network object
-            # by sharing after a nested transaction
+            # by sharing after flush
+            ctx.session.flush()
+
             network_obj.NetworkRBAC(
                 ctx, object_id=network.id,
                 action='access_as_shared',
@@ -6556,11 +6555,12 @@ class DbModelMixin(object):
         return sg, rule
 
     def _make_floating_ip(self, ctx, port_id):
-        flip = l3_obj.FloatingIP(
-            ctx, floating_ip_address=netaddr.IPAddress('1.2.3.4'),
-            floating_network_id=uuidutils.generate_uuid(),
-            floating_port_id=port_id)
-        flip.create()
+        with db_api.CONTEXT_WRITER.using(ctx):
+            flip = l3_obj.FloatingIP(
+                ctx, floating_ip_address=netaddr.IPAddress('1.2.3.4'),
+                floating_network_id=uuidutils.generate_uuid(),
+                floating_port_id=port_id)
+            flip.create()
         return flip
 
     def _make_router(self, ctx):
@@ -6579,7 +6579,7 @@ class DbModelMixin(object):
         self.assertEqual(
             obj.__table__.name,
             self._get_neutron_attr(ctx, attr_id).resource_type)
-        with ctx.session.begin():
+        with db_api.CONTEXT_WRITER.using(ctx):
             ctx.session.delete(obj)
         with testtools.ExpectedException(orm.exc.NoResultFound):
             # we want to make sure that the attr resource was removed
@@ -6755,7 +6755,7 @@ class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
         return subnet
 
     def _make_port(self, ctx, network_id):
-        with ctx.session.begin():
+        with db_api.CONTEXT_WRITER.using(ctx):
             port = models_v2.Port(network_id=network_id, mac_address='1',
                                   tenant_id='dbcheck',
                                   admin_state_up=True, status="COOL",
@@ -6795,7 +6795,7 @@ class DbModelProjectTestCase(DbModelMixin, testlib_api.SqlTestCase):
         return subnet
 
     def _make_port(self, ctx, network_id):
-        with ctx.session.begin():
+        with db_api.CONTEXT_WRITER.using(ctx):
             port = models_v2.Port(network_id=network_id, mac_address='1',
                                   project_id='dbcheck',
                                   admin_state_up=True, status="COOL",
