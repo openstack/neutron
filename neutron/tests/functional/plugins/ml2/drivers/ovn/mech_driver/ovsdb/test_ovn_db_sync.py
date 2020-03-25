@@ -29,7 +29,6 @@ from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import port_security as ps
 from neutron_lib import constants
 from neutron_lib import context
-from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 
@@ -379,9 +378,13 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                                           uuidutils.generate_uuid(),
                                           'neutron-' + n1['network']['id']))
         self.delete_lswitches.append('neutron-' + n2['network']['id'])
-        self.delete_lswitch_ports.append(
-            (utils.ovn_provnet_port_name(e1['network']['id']),
-             utils.ovn_name(e1['network']['id'])))
+        for seg in self.segments_plugin.get_segments(
+            self.context,
+                filters={'network_id': [e1['network']['id']]}):
+            if seg.get('physical_network'):
+                self.delete_lswitch_ports.append(
+                    (utils.ovn_provnet_port_name(seg['id']),
+                     utils.ovn_name(e1['network']['id'])))
 
         r1 = self.l3_plugin.create_router(
             self.context,
@@ -846,9 +849,14 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
     def _validate_networks(self, should_match=True):
         db_networks = self._list('networks')
         db_net_ids = [net['id'] for net in db_networks['networks']]
-        db_provnet_ports = [utils.ovn_provnet_port_name(net['id'])
-                            for net in db_networks['networks']
-                            if net.get('provider:physical_network')]
+        db_provnet_ports = []
+        for net in db_networks['networks']:
+            for seg in self.segments_plugin.get_segments(
+                self.context,
+                    filters={'network_id': [net['id']]}):
+                if seg.get('physical_network'):
+                    db_provnet_ports.append(
+                        utils.ovn_provnet_port_name(seg['id']))
 
         # Get the list of lswitch ids stored in the OVN plugin IDL
         _plugin_nb_ovn = self.mech_driver._nb_ovn
@@ -1521,16 +1529,10 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
 
     def setUp(self):
         super(TestOvnSbSync, self).setUp(maintenance_worker=True)
-        self.segments_plugin = directory.get_plugin('segments')
         self.sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
             self.plugin, self.mech_driver._sb_ovn, self.mech_driver)
         self.addCleanup(self.sb_synchronizer.stop)
         self.ctx = context.get_admin_context()
-
-    def get_additional_service_plugins(self):
-        p = super(TestOvnSbSync, self).get_additional_service_plugins()
-        p.update({'segments': 'neutron.services.segments.plugin.Plugin'})
-        return p
 
     def _sync_resources(self):
         self.sb_synchronizer.sync_hostname_and_physical_networks(self.ctx)

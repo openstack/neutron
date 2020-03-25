@@ -22,6 +22,7 @@ import threading
 import types
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -174,6 +175,12 @@ class OVNMechanismDriver(api.MechanismDriver):
         registry.subscribe(self._add_segment_host_mapping_for_segment,
                            resources.SEGMENT,
                            events.AFTER_CREATE)
+        registry.subscribe(self.create_segment_provnet_port,
+                           resources.SEGMENT,
+                           events.AFTER_CREATE)
+        registry.subscribe(self.delete_segment_provnet_port,
+                           resources.SEGMENT,
+                           events.AFTER_DELETE)
 
         # Handle security group/rule notifications
         if self.sg_enabled:
@@ -374,6 +381,20 @@ class OVNMechanismDriver(api.MechanismDriver):
             if not self._is_network_type_supported(network_type):
                 msg = _('Network type %s is not supported') % network_type
                 raise n_exc.InvalidInput(error_message=msg)
+
+    def create_segment_provnet_port(self, resource, event, trigger,
+                                    context, segment, payload=None):
+        if not segment.get(segment_def.PHYSICAL_NETWORK):
+            return
+        self._ovn_client.create_provnet_port(segment['network_id'], segment)
+
+    def delete_segment_provnet_port(self, resource, event, trigger,
+                                    payload):
+        # NOTE(mjozefcz): Get the last state of segment resource.
+        segment = payload.states[-1]
+        if segment.get(segment_def.PHYSICAL_NETWORK):
+            self._ovn_client.delete_provnet_port(
+                segment['network_id'], segment)
 
     def create_network_precommit(self, context):
         """Allocate resources for a new network.

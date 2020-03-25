@@ -182,6 +182,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         mm = directory.get_plugin().mechanism_manager
         self.mech_driver = mm.mech_drivers['ovn'].obj
         self.l3_plugin = directory.get_plugin(constants.L3)
+        self.segments_plugin = directory.get_plugin('segments')
         self.ovsdb_server_mgr = None
         self.ovn_northd_mgr = None
         self.maintenance_worker = maintenance_worker
@@ -219,6 +220,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
     def get_additional_service_plugins(self):
         p = super(TestOVNFunctionalBase, self).get_additional_service_plugins()
         p.update({'revision_plugin_name': 'revisions'})
+        p.update({'segments': 'neutron.services.segments.plugin.Plugin'})
         return p
 
     @property

@@ -19,6 +19,7 @@ import threading
 
 from futurist import periodics
 from neutron_lib.api.definitions import external_net
+from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
@@ -28,9 +29,11 @@ from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import event as row_event
 
 from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db as hash_ring_db
 from neutron.db import ovn_revision_numbers_db as revision_numbers_db
+from neutron.db import segments_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 
 
@@ -605,6 +608,44 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                         ch, priority=priority))
                 priority -= 1
 
+        raise periodics.NeverAgain()
+
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def check_for_localnet_legacy_port_name(self):
+        if not self.has_lock:
+            return
+
+        admin_context = n_context.get_admin_context()
+        cmds = []
+        for ls in self._nb_idl.ls_list().execute(check_error=True):
+            network_id = ls.name.strip('neutron-')
+            legacy_name = utils.ovn_provnet_port_name(network_id)
+            legacy_port = None
+            segment_id = None
+            for lsp in ls.ports:
+                if legacy_name == lsp.name:
+                    legacy_port = lsp
+                    break
+            else:
+                continue
+            for segment in segments_db.get_network_segments(
+                    admin_context, network_id):
+                if (segment.get(segment_def.PHYSICAL_NETWORK) ==
+                        legacy_port.options['network_name']):
+                    segment_id = segment['id']
+                    break
+            if not segment_id:
+                continue
+            new_p_name = utils.ovn_provnet_port_name(segment_id)
+            cmds.append(self._nb_idl.db_set('Logical_Switch_Port',
+                                            legacy_port.uuid,
+                                            ('name', new_p_name)))
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
         raise periodics.NeverAgain()
 
 
