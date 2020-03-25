@@ -179,7 +179,8 @@ def main():
             return
         cfg.CONF.set_override('mechanism_drivers', ['ovn-sync'], 'ml2')
         conf.service_plugins = [
-            'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin']
+            'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin',
+            'neutron.services.segments.plugin.Plugin']
     else:
         LOG.error('Invalid core plugin : ["%s"].', cfg.CONF.core_plugin)
         return
