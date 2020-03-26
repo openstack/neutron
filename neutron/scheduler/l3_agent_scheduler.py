@@ -30,6 +30,7 @@ from oslo_log import log as logging
 from neutron.common import utils
 from neutron.conf.db import l3_hamode_db
 from neutron.db.models import l3agent as rb_model
+from neutron.objects import l3_hamode as l3_hamode_obj
 from neutron.objects import l3agent as rb_obj
 
 
@@ -284,10 +285,12 @@ class L3Scheduler(object, metaclass=abc.ABCMeta):
             port_binding = utils.create_object_with_dependency(
                 creator, dep_getter, dep_creator,
                 dep_id_attr, dep_deleter)[0]
-            # NOTE(ralonsoh): to be migrated to the new facade that can't be
-            # used with "create_object_with_dependency".
-            with lib_db_api.autonested_transaction(context.session):
+            with lib_db_api.CONTEXT_WRITER.using(context):
+                port_binding = (
+                    l3_hamode_obj.L3HARouterAgentPortBinding.get_object(
+                        context, port_id=port_binding['port_id']))
                 port_binding.l3_agent_id = agent['id']
+                port_binding.update()
         except db_exc.DBDuplicateEntry:
             LOG.debug("Router %(router)s already scheduled for agent "
                       "%(agent)s", {'router': router_id,

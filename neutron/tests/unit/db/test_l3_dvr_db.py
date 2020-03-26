@@ -21,6 +21,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.objects import exceptions as o_exc
@@ -60,11 +61,11 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         directory.add_plugin(plugin_constants.L3, self.mixin)
 
     def _create_router(self, router):
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(self.ctx):
             return self.mixin._create_router_db(self.ctx, router, 'foo_tenant')
 
     def create_port(self, net_id, port_info):
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(self.ctx):
             return self._create_port(self.fmt, net_id, **port_info)
 
     def _test__create_router_db(self, expected=False, distributed=None):
@@ -463,20 +464,20 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             'admin_state_up': True,
             'distributed': True
         }
-        router = self._create_router(router_db)
-        if gw_port:
-            with self.subnet(cidr='10.10.10.0/24') as subnet:
-                port_dict = {
-                    'device_id': router.id,
-                    'device_owner': const.DEVICE_OWNER_ROUTER_GW,
-                    'admin_state_up': True,
-                    'fixed_ips': [{'subnet_id': subnet['subnet']['id'],
-                                   'ip_address': '10.10.10.100'}]
-                }
-            net_id = subnet['subnet']['network_id']
-            port_res = self.create_port(net_id, port_dict)
-            port_res_dict = self.deserialize(self.fmt, port_res)
-            with self.ctx.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(self.ctx):
+            router = self._create_router(router_db)
+            if gw_port:
+                with self.subnet(cidr='10.10.10.0/24') as subnet:
+                    port_dict = {
+                        'device_id': router.id,
+                        'device_owner': const.DEVICE_OWNER_ROUTER_GW,
+                        'admin_state_up': True,
+                        'fixed_ips': [{'subnet_id': subnet['subnet']['id'],
+                                       'ip_address': '10.10.10.100'}]
+                    }
+                net_id = subnet['subnet']['network_id']
+                port_res = self.create_port(net_id, port_dict)
+                port_res_dict = self.deserialize(self.fmt, port_res)
                 port_db = self.ctx.session.query(models_v2.Port).filter_by(
                     id=port_res_dict['port']['id']).one()
                 router.gw_port = port_db
@@ -487,9 +488,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 )
                 self.ctx.session.add(router)
                 self.ctx.session.add(router_port)
-
-        else:
-            net_id = None
+            else:
+                net_id = None
 
         plugin = mock.Mock()
         directory.add_plugin(plugin_constants.CORE, plugin)
@@ -1132,6 +1132,10 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             mock_notify.assert_called_once_with(
                 'router', 'before_update', self.mixin, **kwargs)
 
+    def _assert_mock_called_with_router(self, mock_fn, router_id):
+        router = mock_fn.call_args[1].get('router_db')
+        self.assertEqual(router_id, router.id)
+
     def test__validate_router_migration_notify_advanced_services_mocked(self):
         # call test with admin_state_down_before_update ENABLED
         self._test__validate_router_migration_notify_advanced_services()
@@ -1152,9 +1156,16 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             interface_info = {'subnet_id': sub['subnet']['id']}
             self.mixin.add_router_interface(self.ctx, router_db.id,
                                             interface_info)
-            mock_notify.assert_called_once_with(self.ctx, router_db=router_db,
+            # NOTE(slaweq): here we are just checking if mock_notify was called
+            # with kwargs which we are expecting, but we can't check exactly if
+            # router_db was object which we are expecting and because of that
+            # below we are checking if router_db used as argument in
+            # mock_notify call is the has same id as the one which we are
+            # expecting
+            mock_notify.assert_called_once_with(self.ctx, router_db=mock.ANY,
                                                 port=mock.ANY,
                                                 interface_info=interface_info)
+            self._assert_mock_called_with_router(mock_notify, router_db.id)
 
     def test_validate_add_router_interface_by_port_notify_advanced_services(
             self):
@@ -1169,9 +1180,16 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             interface_info = {'port_id': port['port']['id']}
             self.mixin.add_router_interface(self.ctx, router_db.id,
                                             interface_info)
-            mock_notify.assert_called_once_with(self.ctx, router_db=router_db,
+            # NOTE(slaweq): here we are just checking if mock_notify was called
+            # with kwargs which we are expecting, but we can't check exactly if
+            # router_db was object which we are expecting and because of that
+            # below we are checking if router_db used as argument in
+            # mock_notify call is the has same id as the one which we are
+            # expecting.
+            mock_notify.assert_called_once_with(self.ctx, router_db=mock.ANY,
                                                 port=mock.ANY,
                                                 interface_info=interface_info)
+            self._assert_mock_called_with_router(mock_notify, router_db.id)
 
     def test_add_router_interface_csnat_ports_failure(self):
         router_dict = {'name': 'test_router', 'admin_state_up': True,

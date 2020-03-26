@@ -104,7 +104,7 @@ def create_initial_revision(context, resource_uuid, resource_type,
     LOG.debug('create_initial_revision uuid=%s, type=%s, rev=%s',
               resource_uuid, resource_type, revision_number)
     db_func = context.session.merge if may_exist else context.session.add
-    with context.session.begin(subtransactions=True):
+    with db_api.CONTEXT_WRITER.using(context):
         std_attr_id = std_attr_id or _get_standard_attr_id(
             context, resource_uuid, resource_type)
         row = ovn_models.OVNRevisionNumbers(
@@ -116,7 +116,7 @@ def create_initial_revision(context, resource_uuid, resource_type,
 @db_api.retry_if_session_inactive()
 def delete_revision(context, resource_uuid, resource_type):
     LOG.debug('delete_revision(%s)', resource_uuid)
-    with context.session.begin(subtransactions=True):
+    with db_api.CONTEXT_WRITER.using(context):
         row = context.session.query(ovn_models.OVNRevisionNumbers).filter_by(
             resource_uuid=resource_uuid,
             resource_type=resource_type).one_or_none()
@@ -136,7 +136,7 @@ def _ensure_revision_row_exist(context, resource, resource_type, std_attr_id):
     # deal with objects that already existed before the sync work. I believe
     # that we can remove this method after few development cycles. Or,
     # if we decide to make a migration script as well.
-    with context.session.begin(subtransactions=True):
+    with db_api.CONTEXT_READER.using(context):
         if not context.session.query(ovn_models.OVNRevisionNumbers).filter_by(
                 resource_uuid=resource['id'],
                 resource_type=resource_type).one_or_none():
@@ -152,7 +152,7 @@ def _ensure_revision_row_exist(context, resource, resource_type, std_attr_id):
 @db_api.retry_if_session_inactive()
 def get_revision_row(context, resource_uuid):
     try:
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_READER.using(context):
             return context.session.query(
                 ovn_models.OVNRevisionNumbers).filter_by(
                 resource_uuid=resource_uuid).one()
@@ -163,7 +163,7 @@ def get_revision_row(context, resource_uuid):
 @db_api.retry_if_session_inactive()
 def bump_revision(context, resource, resource_type):
     revision_number = ovn_utils.get_revision_number(resource, resource_type)
-    with context.session.begin(subtransactions=True):
+    with db_api.CONTEXT_WRITER.using(context):
         # NOTE(ralonsoh): "resource" could be a dict or an OVO.
         try:
             std_attr_id = resource.db_obj.standard_attr.id
@@ -203,7 +203,7 @@ def get_inconsistent_resources(context):
                          whens=MAINTENANCE_CREATE_UPDATE_TYPE_ORDER)
     time_ = (timeutils.utcnow() -
              datetime.timedelta(seconds=INCONSISTENCIES_OLDER_THAN))
-    with context.session.begin(subtransactions=True):
+    with db_api.CONTEXT_READER.using(context):
         query = context.session.query(ovn_models.OVNRevisionNumbers).join(
             standard_attr.StandardAttribute,
             ovn_models.OVNRevisionNumbers.standard_attr_id ==
@@ -232,6 +232,6 @@ def get_deleted_resources(context):
     """
     sort_order = sa.case(value=ovn_models.OVNRevisionNumbers.resource_type,
                          whens=MAINTENANCE_DELETE_TYPE_ORDER)
-    with context.session.begin(subtransactions=True):
+    with db_api.CONTEXT_READER.using(context):
         return context.session.query(ovn_models.OVNRevisionNumbers).filter_by(
             standard_attr_id=None).order_by(sort_order).all()

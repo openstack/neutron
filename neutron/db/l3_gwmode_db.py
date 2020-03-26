@@ -17,6 +17,7 @@ from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from oslo_config import cfg
 import sqlalchemy as sa
@@ -56,10 +57,9 @@ class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
             })
 
     def _update_router_gw_info(self, context, router_id, info, router=None):
-        # Load the router only if necessary
-        if not router:
+        with db_api.CONTEXT_WRITER.using(context):
+            # Always load the router inside the DB context.
             router = self._get_router(context, router_id)
-        with context.session.begin(subtransactions=True):
             old_router = self._make_router_dict(router)
             router.enable_snat = self._get_enable_snat(info)
             router_body = {l3_apidef.ROUTER:
@@ -75,7 +75,7 @@ class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
             context, router_id, info, router=router)
         # Returning the router might come back useful if this
         # method is overridden in child classes
-        return router
+        return self._get_router(context, router_id)
 
     @staticmethod
     def _get_enable_snat(info):

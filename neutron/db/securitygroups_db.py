@@ -109,17 +109,17 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                 return self.get_security_group(context, existing_def_sg_id)
 
         with db_api.CONTEXT_WRITER.using(context):
-            sg = sg_obj.SecurityGroup(
-                context, id=s.get('id') or uuidutils.generate_uuid(),
-                description=s['description'], project_id=tenant_id,
-                name=s['name'], is_default=default_sg, stateful=stateful)
-            sg.create()
-
             delta = len(ext_sg.sg_supported_ethertypes)
             delta = delta * 2 if default_sg else delta
             reservation = quota.QUOTAS.make_reservation(
                 context, tenant_id, {'security_group_rule': delta},
                 self)
+
+            sg = sg_obj.SecurityGroup(
+                context, id=s.get('id') or uuidutils.generate_uuid(),
+                description=s['description'], project_id=tenant_id,
+                name=s['name'], is_default=default_sg, stateful=stateful)
+            sg.create()
 
             for ethertype in ext_sg.sg_supported_ethertypes:
                 if default_sg:
@@ -738,6 +738,17 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             if rule['ethertype'] != "IPv%d" % (addr.version):
                 raise ext_sg.SecurityGroupRuleParameterConflict(
                     ethertype=rule['ethertype'], cidr=input_prefix)
+
+    @db_api.retry_if_session_inactive()
+    def get_security_group_rules_count(self, context, filters=None):
+        filters = filters if filters else {}
+        if not filters and context.project_id and not context.is_admin:
+            rule_ids = sg_obj.SecurityGroupRule.get_security_group_rule_ids(
+                context.project_id)
+            filters = {'id': rule_ids}
+
+        return sg_obj.SecurityGroupRule.count(context_lib.get_admin_context(),
+                                              **filters)
 
     @db_api.retry_if_session_inactive()
     def get_security_group_rules(self, context, filters=None, fields=None,

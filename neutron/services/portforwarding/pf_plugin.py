@@ -382,13 +382,15 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
                                          msg=message)
 
-            if self._rpc_notifications_required:
-                self.push_api.push(context, [pf_obj], rpc_events.CREATED)
-            registry.notify(pf_consts.PORT_FORWARDING, events.AFTER_CREATE,
-                            self,
-                            payload=[callbacks.PortForwardingPayload(context,
-                                current_pf=pf_obj)])
-            return pf_obj
+        registry.notify(pf_consts.PORT_FORWARDING, events.AFTER_CREATE,
+                        self,
+                        payload=[callbacks.PortForwardingPayload(context,
+                            current_pf=pf_obj)])
+
+        if self._rpc_notifications_required:
+            self.push_api.push(context, [pf_obj], rpc_events.CREATED)
+
+        return pf_obj
 
     @db_base_plugin_common.convert_result_to_dict
     def update_floatingip_port_forwarding(self, context, id, floatingip_id,

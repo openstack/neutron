@@ -99,56 +99,61 @@ class CRUDScenarioTestCase(testlib_api.SqlTestCase):
         self.obj_cls = network.Network
         self.ctxt = context.get_admin_context()
 
+    def _compare_objs(self, obj1, obj2):
+        for field in (field for field in self.obj_cls.fields if
+                      field not in ('updated_at', 'created_at')):
+            self.assertEqual(getattr(obj1, field, None),
+                             getattr(obj2, field, None))
+
     def test_get_object_with_None_value_in_filters(self):
         obj = api.create_object(self.obj_cls, self.ctxt, {'name': 'foo'})
         new_obj = api.get_object(
             self.obj_cls, self.ctxt, name='foo', status=None)
-        self.assertEqual(obj, new_obj)
+        self._compare_objs(obj, new_obj)
 
     def test_get_objects_with_None_value_in_filters(self):
         obj = api.create_object(self.obj_cls, self.ctxt, {'name': 'foo'})
         new_objs = api.get_objects(
             self.obj_cls, self.ctxt, name='foo', status=None)
-        self.assertEqual(obj, new_objs[0])
+        self._compare_objs(obj, new_objs[0])
 
     def test_get_objects_with_string_matching_filters_contains(self):
         obj1 = api.create_object(
             self.obj_cls, self.ctxt, {'name': 'obj_con_1'})
         obj2 = api.create_object(
             self.obj_cls, self.ctxt, {'name': 'obj_con_2'})
-        obj3 = api.create_object(
-            self.obj_cls, self.ctxt, {'name': 'obj_3'})
+        api.create_object(self.obj_cls, self.ctxt, {'name': 'obj_3'})
 
         objs = api.get_objects(
-            self.obj_cls, self.ctxt, name=obj_utils.StringContains('con'))
+            self.obj_cls, self.ctxt, name=obj_utils.StringContains('con'),
+            _pager=base.Pager(sorts=[('name', True)]))
         self.assertEqual(2, len(objs))
-        self.assertIn(obj1, objs)
-        self.assertIn(obj2, objs)
-        self.assertNotIn(obj3, objs)
+        self._compare_objs(obj1, objs[0])
+        self._compare_objs(obj2, objs[1])
 
     def test_get_objects_with_string_matching_filters_starts(self):
         obj1 = api.create_object(self.obj_cls, self.ctxt, {'name': 'pre_obj1'})
         obj2 = api.create_object(self.obj_cls, self.ctxt, {'name': 'pre_obj2'})
-        obj3 = api.create_object(self.obj_cls, self.ctxt, {'name': 'obj_3'})
+        api.create_object(self.obj_cls, self.ctxt, {'name': 'obj_3'})
 
         objs = api.get_objects(
-            self.obj_cls, self.ctxt, name=obj_utils.StringStarts('pre'))
+            self.obj_cls, self.ctxt, name=obj_utils.StringStarts('pre'),
+            _pager=base.Pager(sorts=[('name', True)]))
         self.assertEqual(2, len(objs))
-        self.assertIn(obj1, objs)
-        self.assertIn(obj2, objs)
-        self.assertNotIn(obj3, objs)
+        self._compare_objs(obj1, objs[0])
+        self._compare_objs(obj2, objs[1])
 
     def test_get_objects_with_string_matching_filters_ends(self):
         obj1 = api.create_object(self.obj_cls, self.ctxt, {'name': 'obj1_end'})
         obj2 = api.create_object(self.obj_cls, self.ctxt, {'name': 'obj2_end'})
-        obj3 = api.create_object(self.obj_cls, self.ctxt, {'name': 'obj_3'})
+        api.create_object(self.obj_cls, self.ctxt, {'name': 'obj_3'})
 
         objs = api.get_objects(
-            self.obj_cls, self.ctxt, name=obj_utils.StringEnds('end'))
+            self.obj_cls, self.ctxt, name=obj_utils.StringEnds('end'),
+            _pager=base.Pager(sorts=[('name', True)]))
         self.assertEqual(2, len(objs))
-        self.assertIn(obj1, objs)
-        self.assertIn(obj2, objs)
-        self.assertNotIn(obj3, objs)
+        self._compare_objs(obj1, objs[0])
+        self._compare_objs(obj2, objs[1])
 
     def test_get_values_with_None_value_in_filters(self):
         api.create_object(self.obj_cls, self.ctxt, {'name': 'foo'})
@@ -201,15 +206,14 @@ class CRUDScenarioTestCase(testlib_api.SqlTestCase):
         obj = api.create_object(self.obj_cls, self.ctxt, {'name': 'foo'})
 
         new_obj = api.get_object(self.obj_cls, self.ctxt, id=obj.id)
-        self.assertEqual(obj, new_obj)
+        self._compare_objs(obj, new_obj)
 
-        obj = new_obj
+        obj.name = 'bar'
         api.update_object(self.obj_cls, self.ctxt, {'name': 'bar'}, id=obj.id)
 
         new_obj = api.get_object(self.obj_cls, self.ctxt, id=obj.id)
-        self.assertEqual(obj, new_obj)
+        self._compare_objs(obj, new_obj)
 
-        obj = new_obj
         api.delete_object(self.obj_cls, self.ctxt, id=obj.id)
 
         new_obj = api.get_object(self.obj_cls, self.ctxt, id=obj.id)

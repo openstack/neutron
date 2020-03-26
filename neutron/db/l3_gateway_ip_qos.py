@@ -18,6 +18,7 @@
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import qos_gateway_ip
 from neutron_lib.api import extensions
+from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log as logging
@@ -65,9 +66,10 @@ class L3_gw_ip_qos_dbonly_mixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
                        self)._update_router_gw_info(
             context, router_id, info, router)
 
-        if self._is_gw_ip_qos_supported and router.gw_port:
-            self._update_router_gw_qos_policy(context, router_id,
-                                              info, router)
+        with db_api.CONTEXT_WRITER.using(context):
+            if self._is_gw_ip_qos_supported and router.gw_port:
+                self._update_router_gw_qos_policy(context, router_id,
+                                                  info, router)
 
         return router
 
@@ -93,9 +95,6 @@ class L3_gw_ip_qos_dbonly_mixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
                 self._delete_gw_ip_qos_db(context,
                                           router_id,
                                           old_qos_policy_id)
-
-        with context.session.begin(subtransactions=True):
-            context.session.refresh(router)
 
         if new_qos_policy_id:
             self._create_gw_ip_qos_db(

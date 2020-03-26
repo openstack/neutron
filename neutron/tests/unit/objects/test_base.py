@@ -101,8 +101,6 @@ class FakeSmallNeutronObjectNewEngineFacade(base.NeutronDbObject):
 
     db_model = ObjectFieldsModel
 
-    new_facade = True
-
     primary_keys = ['field1']
 
     foreign_keys = {
@@ -1796,7 +1794,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
 
     def test_get_objects_single_transaction(self):
         with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
-            with db_api.autonested_transaction(self.context.session):
+            with db_api.CONTEXT_READER.using(self.context):
                 self._test_class.get_objects(self.context)
         self.assertEqual(1, mock_exit.call_count)
 
@@ -1811,7 +1809,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         obj.create()
 
         with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
-            with db_api.autonested_transaction(self.context.session):
+            with db_api.CONTEXT_READER.using(self.context):
                 obj = self._test_class.get_object(self.context,
                                                   **obj._get_composite_keys())
         self.assertEqual(1, mock_exit.call_count)

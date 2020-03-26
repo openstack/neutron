@@ -37,7 +37,7 @@ class L3HARouterAgentPortBinding(base.NeutronDbObject):
     }
 
     primary_keys = ['port_id']
-    fields_no_update = ['router_id', 'port_id', 'l3_agent_id']
+    fields_no_update = ['router_id', 'port_id']
 
     @classmethod
     def get_l3ha_filter_host_router(cls, context, router_ids, host):
