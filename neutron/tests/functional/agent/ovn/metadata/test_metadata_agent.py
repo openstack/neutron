@@ -241,3 +241,33 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             check_for_metadata,
             timeout=10,
             exception=exc)
+
+    def test_metadata_agent_only_monitors_own_chassis(self):
+        # We already have the fake chassis which we should be monitoring, so
+        # create an event looking for a change to another chassis
+        other_name = uuidutils.generate_uuid()
+        other_chassis = self.add_fake_chassis(self.FAKE_CHASSIS_HOST,
+                                              name=other_name)
+        self.assertEqual(other_chassis, other_name)
+
+        event = MetadataAgentHealthEvent(chassis=other_name, sb_cfg=-1,
+                                         timeout=0)
+        # Use the agent's sb_idl to watch for the event since it has condition
+        self.agent.sb_idl.idl.notify_handler.watch_event(event)
+        # Use the test sb_api to set other_chassis values since shouldn't exist
+        # on agent's sb_idl
+        self.sb_api.db_set(
+            'Chassis', other_chassis,
+            ('external_ids', {'test': 'value'})).execute(check_error=True)
+
+        event2 = MetadataAgentHealthEvent(chassis=self.chassis_name, sb_cfg=-1)
+        self.agent.sb_idl.idl.notify_handler.watch_event(event2)
+        # Use the test's sb_api again to send a command so we can see if it
+        # completes and short-circuit the need to wait for a timeout to pass
+        # the test. If we get the result to this, we would have gotten the
+        # previous result as well.
+        self.sb_api.db_set(
+            'Chassis', self.chassis_name,
+            ('external_ids', {'test': 'value'})).execute(check_error=True)
+        self.assertTrue(event2.wait())
+        self.assertFalse(event.wait())
