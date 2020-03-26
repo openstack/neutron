@@ -32,12 +32,14 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
 from neutron.tests import base
 
 TESTING_VLAN_TAG = 1
+TESTING_SEGMENT = 1000
 
 
 def create_ofport(port_dict):
     ovs_port = mock.Mock(vif_mac='00:00:00:00:00:00', ofport=1,
                          port_name="port-name")
-    return ovsfw.OFPort(port_dict, ovs_port, vlan_tag=TESTING_VLAN_TAG)
+    return ovsfw.OFPort(port_dict, ovs_port, vlan_tag=TESTING_VLAN_TAG,
+                        segment_id=TESTING_SEGMENT)
 
 
 class TestCreateRegNumbers(base.BaseTestCase):
@@ -579,6 +581,103 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                 self.firewall, 'initialize_port_flows') as m_init_flows:
             self.firewall.prepare_port_filter(port_dict)
         self.assertFalse(m_init_flows.called)
+
+    def test_initialize_port_flows_vlan_dvr_conntrack_direct(self):
+        port_dict = {
+            'device': 'port-id',
+            'security_groups': [1]}
+        of_port = create_ofport(port_dict)
+        self.firewall.sg_port_map.ports[of_port.id] = of_port
+        port = self.firewall.get_or_create_ofport(port_dict)
+
+        self.firewall.initialize_port_flows(port)
+
+        call_args1 = {
+            'table': ovs_consts.TRANSIENT_TABLE,
+            'priority': 100,
+            'in_port': port.ofport,
+            'actions': 'set_field:{:d}->reg{:d},'
+                       'set_field:{:d}->reg{:d},'
+                       'resubmit(,{:d})'.format(
+                           port.ofport,
+                           ovsfw_consts.REG_PORT,
+                           port.vlan_tag,
+                           ovsfw_consts.REG_NET,
+                           ovs_consts.BASE_EGRESS_TABLE)}
+        egress_flow_call = mock.call(**call_args1)
+
+        call_args2 = {
+            'table': ovs_consts.TRANSIENT_TABLE,
+            'priority': 90,
+            'dl_dst': port.mac,
+            'dl_vlan': '0x%x' % port.segment_id,
+            'actions': 'set_field:{:d}->reg{:d},'
+                       'set_field:{:d}->reg{:d},'
+                       'strip_vlan,resubmit(,{:d})'.format(
+                           port.ofport,
+                           ovsfw_consts.REG_PORT,
+                           port.vlan_tag,
+                           ovsfw_consts.REG_NET,
+                           ovs_consts.BASE_INGRESS_TABLE)}
+        ingress_flow_call1 = mock.call(**call_args2)
+
+        call_args3 = {
+            'table': ovs_consts.TRANSIENT_TABLE,
+            'priority': 90,
+            'dl_dst': port.mac,
+            'dl_vlan': '0x%x' % port.vlan_tag,
+            'actions': 'set_field:{:d}->reg{:d},'
+                       'set_field:{:d}->reg{:d},'
+                       'strip_vlan,resubmit(,{:d})'.format(
+                           port.ofport,
+                           ovsfw_consts.REG_PORT,
+                           port.vlan_tag,
+                           ovsfw_consts.REG_NET,
+                           ovs_consts.BASE_INGRESS_TABLE)}
+        ingress_flow_call2 = mock.call(**call_args3)
+        self.mock_bridge.br.add_flow.assert_has_calls(
+            [egress_flow_call, ingress_flow_call1, ingress_flow_call2])
+
+    def test_delete_all_port_flows(self):
+        port_dict = {
+            'device': 'port-id',
+            'security_groups': [1]}
+        of_port = create_ofport(port_dict)
+        self.firewall.sg_port_map.ports[of_port.id] = of_port
+        port = self.firewall.get_or_create_ofport(port_dict)
+
+        self.firewall.delete_all_port_flows(port)
+
+        call_args1 = {"strict": True,
+                      "priority": 90,
+                      "table": ovs_consts.TRANSIENT_TABLE,
+                      "dl_dst": port.mac,
+                      "dl_vlan": port.vlan_tag}
+        flow1 = mock.call(**call_args1)
+
+        call_args2 = {"strict": True,
+                      "priority": 90,
+                      "table": ovs_consts.TRANSIENT_TABLE,
+                      "dl_dst": port.mac,
+                      "dl_vlan": port.segment_id}
+        flow2 = mock.call(**call_args2)
+
+        call_args3 = {"table": ovs_consts.ACCEPT_OR_INGRESS_TABLE,
+                      "dl_dst": port.mac,
+                      "reg6": port.vlan_tag}
+        flow3 = mock.call(**call_args3)
+
+        call_args4 = {"in_port": port.ofport,
+                      "strict": True,
+                      "priority": 100,
+                      "table": ovs_consts.TRANSIENT_TABLE}
+        flow4 = mock.call(**call_args4)
+
+        call_args5 = {"reg5": port.ofport}
+        flow5 = mock.call(**call_args5)
+
+        self.mock_bridge.br.delete_flows.assert_has_calls(
+            [flow1, flow2, flow3, flow4, flow5])
 
     def test_prepare_port_filter_initialized_port(self):
         port_dict = {'device': 'port-id',
