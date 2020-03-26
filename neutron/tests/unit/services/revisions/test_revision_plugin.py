@@ -66,7 +66,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
     def test_handle_expired_object(self):
         rp = directory.get_plugin('revision_plugin')
         with self.port():
-            with self.ctx.session.begin():
+            with db_api.CONTEXT_WRITER.using(self.ctx):
                 ipal_objs = port_obj.IPAllocation.get_objects(self.ctx)
                 if not ipal_objs:
                     raise Exception("No IP allocations available.")
