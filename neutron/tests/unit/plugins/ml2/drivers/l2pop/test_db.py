@@ -16,6 +16,7 @@ import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib.tests import tools
 from neutron_lib.utils import net
 from oslo_utils import uuidutils
@@ -53,7 +54,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         network_obj.Network(self.ctx, id=network_id).create()
 
     def _create_router(self, distributed=True, ha=False):
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(self.ctx):
             self.ctx.session.add(l3_models.Router(id=TEST_ROUTER_ID))
             l3_objs.RouterExtraAttributes(
                 self.ctx,
@@ -67,7 +68,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         # Tests should test that host3 is not a HA agent host.
         helpers.register_l3_agent(HOST_3)
         helpers.register_ovs_agent(HOST_3, tunneling_ip=HOST_3_TUNNELING_IP)
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(self.ctx):
             network_obj.Network(self.ctx, id=TEST_HA_NETWORK_ID).create()
             self._create_router(distributed=distributed, ha=True)
             for state, host in [(constants.HA_ROUTER_STATE_ACTIVE, HOST),
@@ -100,7 +101,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         self.assertIsNone(agent)
 
     def _setup_port_binding(self, **kwargs):
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(self.ctx):
             mac = netaddr.EUI(
                     net.get_random_mac('fa:16:3e:00:00:00'.split(':')),
                     dialect=netaddr.mac_unix_expanded)

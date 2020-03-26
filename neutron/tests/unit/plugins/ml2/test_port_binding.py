@@ -18,6 +18,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import portbindings_extended as pbe_ext
 from neutron_lib import constants as const
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils
@@ -118,7 +119,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         ctx = context.get_admin_context()
         with self.port(name='name') as port:
             # emulating concurrent binding deletion
-            with ctx.session.begin():
+            with db_api.CONTEXT_WRITER.using(ctx):
                 for item in (ctx.session.query(ml2_models.PortBinding).
                              filter_by(port_id=port['port']['id'])):
                     ctx.session.delete(item)
