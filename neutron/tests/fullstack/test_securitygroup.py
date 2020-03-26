@@ -18,7 +18,6 @@ from oslo_utils import uuidutils
 
 from neutron.cmd.sanity import checks
 from neutron.common import utils as common_utils
-from neutron.tests import base as tests_base
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
@@ -86,6 +85,7 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
 
     network_type = 'vxlan'
     scenarios = [
+        # TODO(njohnston): Re-add the linuxbridge scenario once it is # stable
         # The iptables_hybrid driver lacks isolation between agents and
         # because of that using only one host is enough
         ('ovs-hybrid', {
@@ -95,10 +95,6 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
         ('ovs-openflow', {
             'firewall_driver': 'openvswitch',
             'l2_agent_type': constants.AGENT_TYPE_OVS,
-            'num_hosts': 2}),
-        ('linuxbridge-iptables', {
-            'firewall_driver': 'iptables',
-            'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE,
             'num_hosts': 2})]
 
     index_to_sg = [0, 0, 1, 2]
@@ -106,7 +102,6 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
     # NOTE(toshii): As a firewall_driver can interfere with others,
     # the recommended way to add test is to expand this method, not
     # adding another.
-    @tests_base.unstable_test("bug 1779328")
     def test_securitygroup(self):
         """Tests if a security group rules are working, by confirming
         that 0. traffic is allowed when port security is disabled,
