@@ -82,6 +82,11 @@ class ChassisEvent(row_event.RowEvent):
         if not self.driver._ovn_client.is_external_ports_supported():
             return
 
+        # NOTE(lucasgomes): If the external_ids column wasn't updated
+        # (meaning, Chassis "gateway" status didn't change) just returns
+        if not hasattr(old, 'external_ids') and event == self.ROW_UPDATE:
+            return
+
         is_gw_chassis = utils.is_gateway_chassis(row)
         # If the Chassis being created is not a gateway, ignore it
         if not is_gw_chassis and event == self.ROW_CREATE:
