@@ -100,7 +100,8 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
             events = get_events()
             filtered_events = {
                 'added': [],
-                'removed': []
+                'removed': [],
+                'modified': []
             }
             for event_type in filtered_events:
                 for dev in events[event_type]:
