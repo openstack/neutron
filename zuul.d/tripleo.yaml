@@ -1,7 +1,6 @@
 - job:
-    name: neutron-centos-7-tripleo-standalone
-    parent: tripleo-ci-base-standalone
-    nodeset: single-centos-7-node
+    name: neutron-centos-8-tripleo-standalone
+    parent: tripleo-ci-base-standalone-centos-8
     voting: false
     vars:
       featureset: '052'
@@ -31,8 +30,8 @@
       - ^migration/.*$
 
 - job:
-    name: neutron-ovn-tripleo-ci-centos-7-containers-multinode
-    parent: tripleo-ci-base-multinode
+    name: neutron-ovn-tripleo-ci-centos-8-containers-multinode
+    parent: tripleo-ci-centos-8-containers-multinode
     vars:
       nodes: 1ctlr
       featureset: '010'

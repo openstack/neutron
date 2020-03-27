@@ -63,9 +63,7 @@
             voting: false
         - neutron-tempest-with-uwsgi:
             voting: false
-        # TODO(slaweq): add this job again to the check queue when it will
-        # be working fine with python 3
-        #- neutron-centos-7-tripleo-standalone
+        - neutron-centos-8-tripleo-standalone
        #- neutron-ovn-rally-task
         # TripleO jobs that deploy OVN.
         # Note we don't use a project-template here, so it's easier
@@ -74,7 +72,7 @@
         # networking-ovn-tripleo-ci-centos-7-containers-multinode.
         # If you need any support to debug these jobs in case of
         # failures, please reach us on #tripleo IRC channel.
-       #- neutron-ovn-tripleo-ci-centos-7-containers-multinode
+       #- neutron-ovn-tripleo-ci-centos-8-containers-multinode
         - neutron-ovn-tempest-slow:
             voting: false
         - neutron-ovn-tempest-full-multinode-ovs-master:
@@ -110,7 +108,7 @@
         - openstack-tox-lower-constraints:  # from openstack-tox-lower-constraints template
             timeout: 3600
         #- neutron-ovn-rally-task
-        #- neutron-ovn-tripleo-ci-centos-7-containers-multinode
+        #- neutron-ovn-tripleo-ci-centos-8-containers-multinode
 
     experimental:
       jobs:
