@@ -73,6 +73,9 @@ CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
         AdvAutonomous off;
    };
    {% endfor %}
+
+   route fe80::a9fe:a9fe/128 {
+   };
 };
 """)
 

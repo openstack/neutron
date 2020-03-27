@@ -372,9 +372,12 @@ class IptablesManager(object):
     def initialize_nat_table(self):
         self.ipv4.update(
             {'nat': IptablesTable(binary_name=self.wrap_name)})
+        self.ipv6.update(
+            {'nat': IptablesTable(binary_name=self.wrap_name)})
 
         builtin_chains = {
-            4: {'nat': ['PREROUTING', 'OUTPUT', 'POSTROUTING']}}
+            4: {'nat': ['PREROUTING', 'OUTPUT', 'POSTROUTING']},
+            6: {'nat': ['PREROUTING']}}
         self._configure_builtin_chains(builtin_chains)
 
         # Add a neutron-postrouting-bottom chain. It's intended to be

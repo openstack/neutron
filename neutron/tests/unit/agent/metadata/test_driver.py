@@ -44,6 +44,14 @@ class TestMetadataDriverRules(base.BaseTestCase):
             [rules],
             metadata_driver.MetadataDriver.metadata_nat_rules(9697))
 
+    def test_metadata_nat_rules_ipv6(self):
+        rules = ('PREROUTING', '-d fe80::a9fe:a9fe/128 -i qr-+ '
+                 '-p tcp -m tcp --dport 80 -j REDIRECT --to-ports 9697')
+        self.assertEqual(
+            [rules],
+            metadata_driver.MetadataDriver.metadata_nat_rules(
+                9697, metadata_address='fe80::a9fe:a9fe/128'))
+
     def test_metadata_filter_rules(self):
         rules = [('INPUT', '-m mark --mark 0x1/%s -j ACCEPT' %
                   constants.ROUTER_MARK_MASK),
