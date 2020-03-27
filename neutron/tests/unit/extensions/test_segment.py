@@ -1007,6 +1007,19 @@ class SegmentAwareIpamTestCase(SegmentTestCase):
                                         is_adjacent=False)
             return subnet
 
+    def _create_test_slaac_subnet_with_segment(
+            self, network, segment, cidr='2001:db8:0:0::/64'):
+        with self.subnet(network=network,
+                         segment_id=segment['segment']['id'],
+                         ip_version=constants.IP_VERSION_6,
+                         ipv6_ra_mode=constants.IPV6_SLAAC,
+                         ipv6_address_mode=constants.IPV6_SLAAC,
+                         cidr=cidr,
+                         allocation_pools=None) as subnet:
+            self._validate_l2_adjacency(network['network']['id'],
+                                        is_adjacent=False)
+            return subnet
+
     def _validate_l2_adjacency(self, network_id, is_adjacent):
         request = self.new_show_request('networks', network_id)
         response = self.deserialize(self.fmt, request.get_response(self.api))
@@ -1028,6 +1041,27 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
                 segments.append(segment)
                 subnets.append(subnet)
             return network, segments, subnets
+
+    def _create_net_two_segments_four_slaac_subnets(self):
+        with self.network() as network:
+            segment_a = self._test_create_segment(
+                network_id=network['network']['id'],
+                physical_network='physnet_a',
+                network_type=constants.TYPE_FLAT)
+            segment_b = self._test_create_segment(
+                network_id=network['network']['id'],
+                physical_network='physnet_b',
+                network_type=constants.TYPE_FLAT)
+            subnet_a0 = self._create_test_slaac_subnet_with_segment(
+                network, segment_a, '2001:db8:a:0::/64')
+            subnet_a1 = self._create_test_slaac_subnet_with_segment(
+                network, segment_a, '2001:db8:a:1::/64')
+            subnet_b0 = self._create_test_slaac_subnet_with_segment(
+                network, segment_b, '2001:db8:b:0::/64')
+            subnet_b1 = self._create_test_slaac_subnet_with_segment(
+                network, segment_b, '2001:db8:b:1::/64')
+            return (network, segment_a, segment_b, subnet_a0, subnet_a1,
+                    subnet_b0, subnet_b1)
 
     def test_port_create_with_segment_subnets(self):
         """No binding information is provided, defer IP allocation"""
@@ -1627,6 +1661,63 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         # Port update succeeds and allocates a new IP address.
         self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
         self._assert_one_ip_in_subnet(response, subnet['subnet']['cidr'])
+
+    def test_slaac_segment_aware_no_binding_info(self):
+        (network, segment_a, segment_b, subnet_a0, subnet_a1, subnet_b0,
+         subnet_b1) = self._create_net_two_segments_four_slaac_subnets()
+
+        # Create a port with no IP address (since there is no subnet)
+        port_deferred = self._create_deferred_ip_port(network)
+        self._validate_deferred_ip_allocation(port_deferred['port']['id'])
+
+    def test_slaac_segment_aware_immediate_fixed_ips_no_binding_info_(self):
+        (network, segment_a, segment_b, subnet_a0, subnet_a1, subnet_b0,
+         subnet_b1) = self._create_net_two_segments_four_slaac_subnets()
+
+        # Create two ports, port_a with subnet_a0 in fixed_ips and port_b
+        # with subnet_b0 in fixed_ips
+        port_a = self._create_port_and_show(
+            network, fixed_ips=[{'subnet_id': subnet_a0['subnet']['id']}])
+        port_b = self._create_port_and_show(
+            network, fixed_ips=[{'subnet_id': subnet_b0['subnet']['id']}])
+        self._validate_immediate_ip_allocation(port_a['port']['id'])
+        self._validate_immediate_ip_allocation(port_b['port']['id'])
+        self.assertEqual(2, len(port_a['port']['fixed_ips']))
+        self.assertEqual(2, len(port_b['port']['fixed_ips']))
+        port_a_snet_ids = [f['subnet_id'] for f in port_a['port']['fixed_ips']]
+        port_b_snet_ids = [f['subnet_id'] for f in port_b['port']['fixed_ips']]
+        self.assertIn(subnet_a0['subnet']['id'], port_a_snet_ids)
+        self.assertIn(subnet_a1['subnet']['id'], port_a_snet_ids)
+        self.assertIn(subnet_b0['subnet']['id'], port_b_snet_ids)
+        self.assertIn(subnet_b1['subnet']['id'], port_b_snet_ids)
+        self.assertNotIn(subnet_a0['subnet']['id'], port_b_snet_ids)
+        self.assertNotIn(subnet_a1['subnet']['id'], port_b_snet_ids)
+        self.assertNotIn(subnet_b0['subnet']['id'], port_a_snet_ids)
+        self.assertNotIn(subnet_b1['subnet']['id'], port_a_snet_ids)
+
+    def test_slaac_segment_aware_immediate_with_binding_info(self):
+        (network, segment_a, segment_b, subnet_a0, subnet_a1, subnet_b0,
+         subnet_b1) = self._create_net_two_segments_four_slaac_subnets()
+
+        self._setup_host_mappings([(segment_a['segment']['id'], 'fakehost_a')])
+
+        # Create a port with host ID, validate immediate allocation on subnets
+        # with correct segment_id.
+        response = self._create_port(self.fmt,
+                                     net_id=network['network']['id'],
+                                     tenant_id=network['network']['tenant_id'],
+                                     arg_list=(portbindings.HOST_ID,),
+                                     **{portbindings.HOST_ID: 'fakehost_a'})
+        res = self.deserialize(self.fmt, response)
+        self._validate_immediate_ip_allocation(res['port']['id'])
+        # Since host mapped to segment_a, IP's must come from subnets:
+        #   subnet_a0 and subnet_a1
+        self.assertEqual(2, len(res['port']['fixed_ips']))
+        res_subnet_ids = [f['subnet_id'] for f in res['port']['fixed_ips']]
+        self.assertIn(subnet_a0['subnet']['id'], res_subnet_ids)
+        self.assertIn(subnet_a1['subnet']['id'], res_subnet_ids)
+        self.assertNotIn(subnet_b0['subnet']['id'], res_subnet_ids)
+        self.assertNotIn(subnet_b1['subnet']['id'], res_subnet_ids)
 
 
 class TestSegmentAwareIpamML2(TestSegmentAwareIpam):
