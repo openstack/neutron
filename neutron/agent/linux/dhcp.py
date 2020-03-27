@@ -48,8 +48,12 @@ from neutron.privileged.agent.linux import dhcp as priv_dhcp
 LOG = logging.getLogger(__name__)
 
 DNS_PORT = 53
+# TODO(bence romsics): use the rehomed constants when they get released:
+# https://review.opendev.org/738205
 METADATA_DEFAULT_IP = '169.254.169.254'
 METADATA_SUBNET_CIDR = '169.254.0.0/16'
+METADATA_V6_IP = 'fe80::a9fe:a9fe'
+METADATA_V6_CIDR = 'fe80::a9fe:a9fe/64'
 METADATA_PORT = 80
 WIN2k3_STATIC_DNS = 249
 NS_PREFIX = 'qdhcp-'
@@ -327,6 +331,9 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     def interface_name(self, value):
         interface_file_path = self.get_conf_file_name('interface')
         file_utils.replace_file(interface_file_path, value)
+
+    def get_metadata_bind_interface(self, port):
+        return self.device_manager.get_interface_name(self.network, port)
 
     @property
     def active(self):
@@ -1329,11 +1336,9 @@ class Dnsmasq(DhcpLocalProcess):
         providing access to the metadata service via logical routers built
         with 3rd party backends.
         """
-        # Only IPv4 subnets, with dhcp enabled, will use the metadata proxy.
         all_subnets = cls._get_all_subnets(network)
-        v4_dhcp_subnets = [s for s in all_subnets
-                           if s.ip_version == 4 and s.enable_dhcp]
-        if not v4_dhcp_subnets:
+        dhcp_subnets = [s for s in all_subnets if s.enable_dhcp]
+        if not dhcp_subnets:
             return False
 
         if conf.force_metadata:
@@ -1347,7 +1352,7 @@ class Dnsmasq(DhcpLocalProcess):
             return True
 
         isolated_subnets = cls.get_isolated_subnets(network)
-        return any(isolated_subnets[s.id] for s in v4_dhcp_subnets)
+        return any(isolated_subnets[s.id] for s in dhcp_subnets)
 
 
 class DeviceManager(object):
@@ -1714,6 +1719,8 @@ class DeviceManager(object):
 
         if self.conf.force_metadata or self.conf.enable_isolated_metadata:
             ip_cidrs.append(constants.METADATA_CIDR)
+            if netutils.is_ipv6_enabled():
+                ip_cidrs.append(METADATA_V6_CIDR)
 
         self.driver.init_l3(interface_name, ip_cidrs,
                             namespace=network.namespace)

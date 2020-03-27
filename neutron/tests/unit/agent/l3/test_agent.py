@@ -284,12 +284,15 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router_info.agent = agent
         agent.router_info[router.id] = router_info
         agent.l3_ext_manager.ha_state_change = mock.Mock()
-        agent.enqueue_state_change(router.id, 'primary')
-        eventlet.sleep(self.conf.ha_vrrp_advert_int + 2)
-        agent.l3_ext_manager.ha_state_change.assert_called_once_with(
-            agent.context,
-            {'router_id': router.id, 'state': 'primary',
-             'host': agent.host})
+        with mock.patch('neutron.agent.linux.ip_lib.'
+                        'IpAddrCommand.wait_until_address_ready') as mock_wait:
+            mock_wait.return_value = True
+            agent.enqueue_state_change(router.id, 'primary')
+            eventlet.sleep(self.conf.ha_vrrp_advert_int + 2)
+            agent.l3_ext_manager.ha_state_change.assert_called_once_with(
+                agent.context,
+                {'router_id': router.id, 'state': 'primary',
+                 'host': agent.host})
 
     def test_enqueue_state_change_router_active_ha(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)

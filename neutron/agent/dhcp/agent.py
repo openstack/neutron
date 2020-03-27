@@ -32,6 +32,7 @@ import oslo_messaging
 from oslo_service import loopingcall
 from oslo_utils import fileutils
 from oslo_utils import importutils
+from oslo_utils import netutils
 from oslo_utils import timeutils
 
 from neutron._i18n import _
@@ -117,6 +118,19 @@ class DhcpAgent(manager.Manager):
         self._pool = eventlet.GreenPool(size=self._pool_size)
         self._queue = queue.ResourceProcessingQueue()
         self._network_bulk_allocations = {}
+        # Each dhcp-agent restart should trigger a restart of all
+        # metadata-proxies too. This way we can ensure that changes in
+        # the metadata-proxy config we generate will be applied soon
+        # after a new version of dhcp-agent is started. This makes
+        # the metadata service transiently offline. However similar
+        # metadata-proxy restarts were always done by l3-agent so people
+        # can apparently live with short metadata outages. We only stop
+        # the process here and let the process monitor restart it,
+        # first because it knows everything about how to restart it,
+        # second because (unless we temporarily disable the monitor too)
+        # we could race with the monitor restarting the process. See also
+        # method update_isolated_metadata_proxy().
+        self.restarted_metadata_proxy_set = set()
 
     def init_host(self):
         self.sync_state()
@@ -175,8 +189,11 @@ class DhcpAgent(manager.Manager):
                                           self._process_monitor,
                                           self.dhcp_version,
                                           self.plugin_rpc)
-            getattr(driver, action)(**action_kwargs)
-            return True
+            rv = getattr(driver, action)(**action_kwargs)
+            if action == 'get_metadata_bind_interface':
+                return rv
+            else:
+                return True
         except exceptions.Conflict:
             # No need to resync here, the agent will receive the event related
             # to a status update for the network
@@ -678,11 +695,15 @@ class DhcpAgent(manager.Manager):
 
         According to return from driver class, spawn or kill the metadata
         proxy process. Spawn an existing metadata proxy or kill a nonexistent
-        metadata proxy will just silently return.
+        metadata proxy will just silently return. Spawning an existing
+        metadata proxy restarts it once after each dhcp-agent start.
         """
         should_enable_metadata = self.dhcp_driver_cls.should_enable_metadata(
             self.conf, network)
         if should_enable_metadata:
+            if network.id not in self.restarted_metadata_proxy_set:
+                self.disable_isolated_metadata_proxy(network)
+                self.restarted_metadata_proxy_set.add(network.id)
             self.enable_isolated_metadata_proxy(network)
         else:
             self.disable_isolated_metadata_proxy(network)
@@ -714,6 +735,30 @@ class DhcpAgent(manager.Manager):
                     kwargs = {'router_id': router_ports[0].device_id}
                     self._metadata_routers[network.id] = (
                         router_ports[0].device_id)
+
+        if netutils.is_ipv6_enabled():
+            try:
+                dhcp_ifaces = [
+                    self.call_driver(
+                        'get_metadata_bind_interface', network, port=p)
+                    for p in network.ports
+                    if (p.device_owner == constants.DEVICE_OWNER_DHCP and
+                        p.admin_state_up)
+                ]
+                if len(dhcp_ifaces) == 1:
+                    kwargs['bind_interface'] = dhcp_ifaces[0]
+                    kwargs['bind_address_v6'] = dhcp.METADATA_V6_IP
+                else:
+                    LOG.error(
+                        'Unexpected number of DHCP interfaces for metadata '
+                        'proxy, expected 1, got %s', len(dhcp_ifaces)
+                    )
+            except AttributeError:
+                LOG.warning(
+                    'Cannot serve metadata on IPv6 because DHCP driver '
+                    'does not implement method '
+                    'get_metadata_bind_interface(): %s',
+                    self.dhcp_driver_class)
 
         metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
             self._process_monitor, network.namespace, dhcp.METADATA_PORT,
