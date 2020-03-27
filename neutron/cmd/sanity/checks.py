@@ -42,6 +42,7 @@ LOG = logging.getLogger(__name__)
 
 MINIMUM_DNSMASQ_VERSION = 2.67
 DNSMASQ_VERSION_DHCP_RELEASE6 = 2.76
+DNSMASQ_VERSION_HOST_ADDR6_LIST = 2.81
 MINIMUM_DIBBLER_VERSION = '1.0.1'
 CONNTRACK_GRE_MODULE = 'nf_conntrack_proto_gre'
 
@@ -199,6 +200,10 @@ def get_dnsmasq_version_with_dhcp_release6():
     return DNSMASQ_VERSION_DHCP_RELEASE6
 
 
+def get_dnsmasq_version_with_host_addr6_list():
+    return DNSMASQ_VERSION_HOST_ADDR6_LIST
+
+
 def dnsmasq_local_service_supported():
     cmd = ['dnsmasq', '--test', '--local-service']
     env = {'LC_ALL': 'C'}
@@ -223,6 +228,17 @@ def dnsmasq_version_supported():
         ver = float(m.group(1)) if m else 0
         if ver < MINIMUM_DNSMASQ_VERSION:
             return False
+        if (cfg.CONF.dnsmasq_enable_addr6_list is True and
+                ver < DNSMASQ_VERSION_HOST_ADDR6_LIST):
+            LOG.warning('Support for multiple IPv6 addresses in host '
+                        'entries was introduced in dnsmasq version '
+                        '%(required)s. Found dnsmasq version %(current)s, '
+                        'which does not support this feature. Unless support '
+                        'for multiple IPv6 addresses was backported to the '
+                        'running build of dnsmasq, the configuration option '
+                        'dnsmasq_enable_addr6_list should be set to False.',
+                        {'required': DNSMASQ_VERSION_HOST_ADDR6_LIST,
+                         'current': ver})
     except (OSError, RuntimeError, IndexError, ValueError) as e:
         LOG.debug("Exception while checking minimal dnsmasq version. "
                   "Exception: %s", e)
