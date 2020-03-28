@@ -558,3 +558,12 @@ class TestChassisEvent(base.BaseTestCase):
         # after it became a Gateway chassis
         self._test_handle_ha_chassis_group_changes_create(
             self.event.ROW_UPDATE)
+
+    def test_handle_ha_chassis_group_changes_update_ext_id_not_found(self):
+        self.is_gw_ch_mock.side_effect = (True, False)
+        old = fakes.FakeOvsdbTable.create_one_ovsdb_table(
+            attrs={'name': 'SpongeBob'})
+        self.assertIsNone(self.event.handle_ha_chassis_group_changes(
+            self.event.ROW_UPDATE, mock.Mock(), old))
+        self.assertFalse(self.nb_ovn.ha_chassis_group_add_chassis.called)
+        self.assertFalse(self.nb_ovn.ha_chassis_group_del_chassis.called)
