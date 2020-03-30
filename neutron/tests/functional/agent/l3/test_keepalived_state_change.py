@@ -14,9 +14,9 @@
 
 import functools
 import os
+from unittest import mock
 
 import eventlet
-import mock
 import netaddr
 from oslo_utils import uuidutils
 

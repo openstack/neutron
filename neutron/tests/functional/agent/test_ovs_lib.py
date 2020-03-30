@@ -14,9 +14,9 @@
 #    under the License.
 
 import collections
+from unittest import mock
 import uuid
 
-import mock
 from neutron_lib import constants as const
 from oslo_config import cfg
 from ovsdbapp.backend.ovs_idl import idlutils

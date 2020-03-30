@@ -10,7 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
+
 from neutron_lib.api.definitions import fip_pf_description as ext_apidef
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
 from neutron_lib.callbacks import exceptions as c_exc

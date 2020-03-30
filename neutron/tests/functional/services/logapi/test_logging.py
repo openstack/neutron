@@ -14,8 +14,8 @@
 #    under the License.
 
 import re
+from unittest import mock
 
-import mock
 from neutron_lib import constants
 from neutron_lib import context as neutron_context
 from oslo_config import cfg

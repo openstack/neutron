@@ -14,8 +14,8 @@
 #    under the License.
 
 import os
+from unittest import mock
 
-import mock
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import constants

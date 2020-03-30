@@ -15,8 +15,8 @@
 #    under the License.
 
 import time
+from unittest import mock
 
-import mock
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources

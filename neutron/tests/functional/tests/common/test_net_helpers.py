@@ -13,8 +13,7 @@
 #    under the License.
 
 import signal
-
-import mock
+from unittest import mock
 
 from neutron_lib import exceptions as n_exc
 

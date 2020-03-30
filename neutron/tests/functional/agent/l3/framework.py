@@ -15,8 +15,8 @@
 
 import copy
 import functools
+from unittest import mock
 
-import mock
 import netaddr
 from neutron_lib import constants
 from oslo_config import cfg

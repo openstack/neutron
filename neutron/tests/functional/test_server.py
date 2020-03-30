@@ -18,9 +18,9 @@ import signal
 import socket
 import time
 import traceback
+from unittest import mock
 
 import httplib2
-import mock
 from neutron_lib import worker as neutron_worker
 from oslo_config import cfg
 import psutil

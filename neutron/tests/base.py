@@ -24,10 +24,10 @@ import logging
 import os
 import os.path
 import threading
+from unittest import mock
 
 import eventlet.timeout
 import fixtures
-import mock
 from neutron_lib.callbacks import manager as registry_manager
 from neutron_lib.db import api as db_api
 from neutron_lib import fixture

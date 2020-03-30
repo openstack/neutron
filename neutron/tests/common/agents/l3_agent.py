@@ -14,8 +14,8 @@
 
 import sys
 import types
+from unittest import mock
 
-import mock
 from neutron_lib import constants
 from oslo_config import cfg
 

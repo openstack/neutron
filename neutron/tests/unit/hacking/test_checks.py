@@ -208,6 +208,24 @@ class HackingTestCase(base.BaseTestCase):
         self.assertLinePasses(f, "filter(function, range(0,10))")
         self.assertLinePasses(f, "lambda x, y: x+y")
 
+    def test_check_no_import_mock(self):
+        pass_line = 'from unittest import mock'
+        fail_lines = ('import mock',
+                      'import mock as mock_lib')
+        self.assertEqual(
+            0, len(list(
+                checks.check_no_import_mock(
+                    pass_line, "neutron/tests/test_fake.py", None))))
+        for fail_line in fail_lines:
+            self.assertEqual(
+                0, len(list(
+                    checks.check_no_import_mock(
+                        fail_line, "neutron/common/utils.py", None))))
+            self.assertEqual(
+                1, len(list(
+                    checks.check_no_import_mock(
+                        fail_line, "neutron/tests/test_fake.py", None))))
+
 
 # The following is borrowed from hacking/tests/test_doctest.py.
 # Tests defined in docstring is easier to understand

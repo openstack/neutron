@@ -14,8 +14,8 @@
 #    under the License.
 
 import sys
+from unittest import mock
 
-import mock
 from oslo_config import cfg
 
 from neutron.agent.common import ovs_lib
