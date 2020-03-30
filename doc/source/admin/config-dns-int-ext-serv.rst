@@ -522,10 +522,10 @@ depending on which of the DNS extensions is enabled in the Neutron
 configuration. These extensions are described in the following in
 descending order of priority.
 
-Use case 3a: The ``subnet_dns_publish_fixed_ips`` extension
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Use case 3a: The ``subnet_dns_publish_fixed_ip`` extension
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When the ``subnet_dns_publish_fixed_ips`` extension is enabled, it is possible
+When the ``subnet_dns_publish_fixed_ip`` extension is enabled, it is possible
 to make a selection per subnet whether DNS records should be published for
 fixed IPs that are assigned to ports from that subnet. This happens via the
 ``dns_publish_fixed_ips`` attribute that this extension adds to the
