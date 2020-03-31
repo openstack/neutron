@@ -26,7 +26,6 @@ from neutron import manager
 from neutron import opts as neutron_options
 from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 from neutron.plugins.ml2 import plugin as ml2_plugin
 
@@ -54,8 +53,6 @@ class OVNMechanismDriver(mech_driver.OVNMechanismDriver):
 
     @property
     def ovn_client(self):
-        if not self._ovn_client:
-            self._ovn_client = ovn_client.OVNClient(self._nb_ovn, self._sb_ovn)
         return self._ovn_client
 
     # Since we are not using the ovn mechanism driver while syncing,
