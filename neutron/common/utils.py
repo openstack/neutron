@@ -46,6 +46,7 @@ import six
 import neutron
 from neutron._i18n import _
 from neutron.db import api as db_api
+from neutron.services.trunk import constants as trunk_constants
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
@@ -174,7 +175,8 @@ def get_other_dvr_serviced_device_owners(host_dvr_for_dhcp=True):
     separately (see is_dvr_serviced() below)
     """
     device_owners = [n_const.DEVICE_OWNER_LOADBALANCER,
-                     n_const.DEVICE_OWNER_LOADBALANCERV2]
+                     n_const.DEVICE_OWNER_LOADBALANCERV2,
+                     trunk_constants.TRUNK_SUBPORT_OWNER]
     if host_dvr_for_dhcp:
         device_owners.append(n_const.DEVICE_OWNER_DHCP)
     return device_owners
