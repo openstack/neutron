@@ -1103,6 +1103,35 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self.assertTrue(
                 self.mixin.is_router_distributed(self.ctx, router_id))
 
+    @mock.patch.object(l3_dvr_db, "is_port_bound")
+    def test_get_ports_under_dvr_connected_subnet(self, is_port_bound_mock):
+        router_dict = {'name': 'test_router', 'admin_state_up': True,
+                       'distributed': True}
+        router = self._create_router(router_dict)
+        with self.network() as network,\
+                self.subnet(network=network) as subnet:
+            fake_bound_ports_ids = []
+
+            def fake_is_port_bound(port):
+                return port['id'] in fake_bound_ports_ids
+
+            is_port_bound_mock.side_effect = fake_is_port_bound
+
+            for _ in range(4):
+                port_res = self.create_port(
+                    network['network']['id'],
+                    {'fixed_ips': [{'subnet_id': subnet['subnet']['id']}]})
+                port_id = self.deserialize(self.fmt, port_res)['port']['id']
+                if len(fake_bound_ports_ids) < 2:
+                    fake_bound_ports_ids.append(port_id)
+
+            self.mixin.add_router_interface(self.ctx, router['id'],
+                {'subnet_id': subnet['subnet']['id']})
+            dvr_subnet_ports = self.mixin.get_ports_under_dvr_connected_subnet(
+                self.ctx, subnet['subnet']['id'])
+            dvr_subnet_ports_ids = [p['id'] for p in dvr_subnet_ports]
+            self.assertItemsEqual(fake_bound_ports_ids, dvr_subnet_ports_ids)
+
     @mock.patch.object(plugin_utils, 'can_port_be_bound_to_virtual_bridge',
                        return_value=True)
     def test__get_assoc_data_valid_vnic_type(self, *args):

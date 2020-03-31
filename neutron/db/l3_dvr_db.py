@@ -16,6 +16,7 @@ import collections
 import netaddr
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import portbindings_extended
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
@@ -55,6 +56,18 @@ from neutron.objects import router as l3_obj
 
 LOG = logging.getLogger(__name__)
 l3_dvr_db.register_db_l3_dvr_opts()
+
+
+# TODO(slaweq): this should be moved to neutron_lib.plugins.utils module
+def is_port_bound(port):
+    active_binding = plugin_utils.get_port_binding_by_status_and_host(
+        port.get("port_bindings", []), const.ACTIVE)
+    if not active_binding:
+        LOG.warning("Binding for port %s was not found.", port)
+        return False
+    return active_binding[portbindings_extended.VIF_TYPE] not in [
+        portbindings.VIF_TYPE_UNBOUND,
+        portbindings.VIF_TYPE_BINDING_FAILED]
 
 
 @registry.has_registry_receivers
@@ -1242,10 +1255,11 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
 
     def get_ports_under_dvr_connected_subnet(self, context, subnet_id):
         query = dvr_mac_db.get_ports_query_by_subnet_and_ip(context, subnet_id)
+        ports = [p for p in query.all() if is_port_bound(p)]
         return [
             self.l3plugin._core_plugin._make_port_dict(
                 port, process_extensions=False)
-            for port in query.all()
+            for port in ports
         ]
 
 
