@@ -393,8 +393,7 @@ class Subnet(base.NeutronDbObject):
             if 1 < len(segment_ids):
                 raise segment_exc.FixedIpsSubnetsNotOnSameSegment()
 
-        segment_id = False if not segment_ids else segment_ids[0]
-
+        segment_id = None if not segment_ids else segment_ids[0]
         return query.filter(cls.db_model.segment_id == segment_id)
 
     @classmethod
