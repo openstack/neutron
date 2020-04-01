@@ -138,6 +138,16 @@ class OVNMechanismDriver(api.MechanismDriver):
                                                          self._sb_ovn)
         return self._ovn_client_inst
 
+    @property
+    def nb_ovn(self):
+        # NOTE (twilson): This and sb_ovn can be moved to instance variables
+        # once all references to the private versions are changed
+        return self._nb_ovn
+
+    @property
+    def sb_ovn(self):
+        return self._sb_ovn
+
     def _setup_vif_port_bindings(self):
         self.supported_vnic_types = [portbindings.VNIC_NORMAL,
                                      portbindings.VNIC_DIRECT]
