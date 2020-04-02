@@ -501,8 +501,10 @@ class TunnelRpcCallbackMixin(object):
         version = netaddr.IPAddress(tunnel_ip).version
         if version != cfg.CONF.ml2.overlay_ip_version:
             msg = (_("Tunnel IP version does not match ML2 "
-                     "overlay_ip_version, host: %(host)s, tunnel_ip: %(ip)s"),
-                   {'host': host, 'ip': tunnel_ip})
+                     "overlay_ip_version: %(overlay)s, host: %(host)s, "
+                     "tunnel_ip: %(ip)s"),
+                   {'overlay': cfg.CONF.ml2.overlay_ip_version,
+                    'host': host, 'ip': tunnel_ip})
             raise exc.InvalidInput(error_message=msg)
 
         tunnel_type = kwargs.get('tunnel_type')
