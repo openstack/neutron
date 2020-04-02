@@ -35,7 +35,13 @@ _CDLL = None
 def _get_cdll():
     global _CDLL
     if not _CDLL:
-        _CDLL = ctypes.CDLL(ctypes_util.find_library('c'), use_errno=True)
+        # NOTE(ralonsoh): from https://docs.python.org/3.6/library/
+        # ctypes.html#ctypes.PyDLL: "Instances of this class behave like CDLL
+        # instances, except that the Python GIL is not released during the
+        # function call, and after the function execution the Python error
+        # flag is checked."
+        # Check https://bugs.launchpad.net/neutron/+bug/1870352
+        _CDLL = ctypes.PyDLL(ctypes_util.find_library('c'), use_errno=True)
     return _CDLL
 
 
