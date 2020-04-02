@@ -141,7 +141,8 @@ class MonitorDaemon(daemon.Daemon):
             self.namespace,
             event['name'],
             ip_address,
-            log_exception=False
+            log_exception=False,
+            use_eventlet=False
         )
         LOG.debug('Sent GARP to %(ip_address)s from %(device_name)s',
                   {'ip_address': ip_address, 'device_name': event['name']})
