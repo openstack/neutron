@@ -1033,7 +1033,8 @@ def _arping(ns_name, iface_name, address, count, log_exception):
 
 
 def send_ip_addr_adv_notif(
-        ns_name, iface_name, address, count=3, log_exception=True):
+        ns_name, iface_name, address, count=3, log_exception=True,
+        use_eventlet=True):
     """Send advance notification of an IP address assignment.
 
     If the address is in the IPv4 family, send gratuitous ARP.
@@ -1051,12 +1052,18 @@ def send_ip_addr_adv_notif(
     :param log_exception: (Optional) True if possible failures should be logged
                           on exception level. Otherwise they are logged on
                           WARNING level. Default is True.
+    :param use_eventlet: (Optional) True if the arping command will be spawned
+                         using eventlet, False to use Python threads
+                         (threading).
     """
     def arping():
         _arping(ns_name, iface_name, address, count, log_exception)
 
     if count > 0 and netaddr.IPAddress(address).version == 4:
-        eventlet.spawn_n(arping)
+        if use_eventlet:
+            eventlet.spawn_n(arping)
+        else:
+            threading.Thread(target=arping).start()
 
 
 def sysctl(cmd, namespace=None, log_fail_as_error=True):
