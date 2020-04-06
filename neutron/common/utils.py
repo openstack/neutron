@@ -38,6 +38,7 @@ import netaddr
 from neutron_lib import constants as n_const
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
+from neutron_lib.services.trunk import constants as trunk_constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -178,7 +179,8 @@ def get_other_dvr_serviced_device_owners(host_dvr_for_dhcp=True):
     separately (see is_dvr_serviced() below)
     """
     device_owners = [n_const.DEVICE_OWNER_LOADBALANCER,
-                     n_const.DEVICE_OWNER_LOADBALANCERV2]
+                     n_const.DEVICE_OWNER_LOADBALANCERV2,
+                     trunk_constants.TRUNK_SUBPORT_OWNER]
     if host_dvr_for_dhcp:
         device_owners.append(n_const.DEVICE_OWNER_DHCP)
     return device_owners
