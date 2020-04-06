@@ -107,14 +107,14 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
     def _create_network_segment_range(
             self, minimum, maximum, network_type=None, physical_network=None,
-            project_id=None, default=False):
+            project_id=None, default=False, shared=False):
         kwargs = self.get_random_db_fields()
         kwargs.update({'network_type': network_type or constants.TYPE_VLAN,
                        'physical_network': physical_network or 'foo',
                        'minimum': minimum,
                        'maximum': maximum,
                        'default': default,
-                       'shared': default,
+                       'shared': shared,
                        'project_id': project_id})
         db_obj = self._test_class.db_model(**kwargs)
         obj_fields = self._test_class.modify_fields_from_db(db_obj)
@@ -180,7 +180,7 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         obj.shared = False
         self.assertRaises(n_exc.ObjectActionError, obj.update)
 
-    def _create_environment(self):
+    def _create_environment(self, default_range=True):
         self.projects = [uuidutils.generate_uuid() for _ in range(3)]
         self.segment_ranges = {
             'default': [100, 120], self.projects[0]: [90, 105],
@@ -193,14 +193,30 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             for name, ranges in self.segment_ranges.items():
                 default = True if name == 'default' else False
                 project = name if not default else None
+                if default and not default_range:
+                    continue
+
                 self._create_network_segment_range(
                     ranges[0], ranges[1], network_type=subclass.network_type,
-                    project_id=project, default=default).create()
+                    project_id=project, default=default,
+                    shared=default).create()
 
             # Build allocations (non allocated).
             for segmentation_id in range(self.seg_min, self.seg_max + 1):
                 self._create_allocation(subclass,
                                         segmentation_id=segmentation_id)
+
+    def _create_shared_ranges(self):
+        self.shared_ranges = {0: [100, 105], 1: [110, 115]}
+        self.shared_ids = set(itertools.chain.from_iterable(
+            list(range(r[0], r[1] + 1)) for r in self.shared_ranges.values()))
+        for shared_range, subclass in itertools.product(
+                self.shared_ranges.values(),
+                ml2_base.SegmentAllocation.__subclasses__()):
+            self._create_network_segment_range(
+                shared_range[0], shared_range[1],
+                network_type=subclass.network_type, default=False,
+                shared=True).create()
 
     def _default_range_set(self, project_id=None):
         range_set = set(range(self.segment_ranges['default'][0],
@@ -275,3 +291,36 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             # a segmentation ID not belonging to any project.
             for alloc in allocated:
                 self.assertEqual(1, subclass.deallocate(self.context, **alloc))
+
+    def test_get_segments_shared_no_shared_ranges(self):
+        self._create_environment(default_range=False)
+        for project_id, subclass in itertools.product(
+                self.projects, ml2_base.SegmentAllocation.__subclasses__()):
+            filters = {'project_id': project_id,
+                       'physical_network': 'foo'}
+            allocations = network_segment_range.NetworkSegmentRange. \
+                get_segments_shared(
+                    self.context, subclass.db_model, subclass.network_type,
+                    subclass.get_segmentation_id(), **filters)
+
+            self.assertEqual([], allocations)
+
+    def test_get_segments_shared_no_default_range_two_shared_ranges(self):
+        self._create_environment(default_range=False)
+        self.projects.append(None)
+        self._create_shared_ranges()
+        for project_id, subclass in itertools.product(
+                self.projects, ml2_base.SegmentAllocation.__subclasses__()):
+
+            filters = {'project_id': project_id,
+                       'physical_network': 'foo'}
+            allocations = network_segment_range.NetworkSegmentRange. \
+                get_segments_shared(
+                    self.context, subclass.db_model, subclass.network_type,
+                    subclass.get_segmentation_id(), **filters)
+
+            prange = self._default_range_set(project_id)
+            available_ids = prange & self.shared_ids
+            self.assertEqual(len(available_ids), len(allocations))
+            for alloc in allocations:
+                self.assertIn(alloc.segmentation_id, available_ids)
