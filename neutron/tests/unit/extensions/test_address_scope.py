@@ -98,9 +98,8 @@ class AddressScopeTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                    expected=None, tenant_id=None):
         update_req = self.new_update_request(
             'address-scopes', data, addr_scope_id)
-        if not admin:
-            neutron_context = context.Context('', tenant_id or self._tenant_id)
-            update_req.environ['neutron.context'] = neutron_context
+        update_req.environ['neutron.context'] = context.Context(
+            '', tenant_id or self._tenant_id, is_admin=admin)
 
         update_res = update_req.get_response(self.ext_api)
         if expected:

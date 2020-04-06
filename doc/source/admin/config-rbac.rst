@@ -18,6 +18,7 @@ is supported by:
 * Binding QoS policies permissions to networks or ports (since Mitaka).
 * Attaching router gateways to networks (since Mitaka).
 * Binding security groups to ports (since Stein).
+* Assigning address scopes to subnet pools (since Ussuri).
 
 
 Sharing an object with specific projects
@@ -281,12 +282,87 @@ This process can be repeated any number of times to share a security-group
 with an arbitrary number of projects.
 
 
+Sharing an address scope with specific projects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create an address scope to share:
+
+.. code-block:: console
+
+   $ openstack address scope create my_address_scope
+   +-------------------+--------------------------------------+
+   | Field             | Value                                |
+   +-------------------+--------------------------------------+
+   | id                | c19cb654-3489-4160-9c82-8a3015483643 |
+   | ip_version        | 4                                    |
+   | location          | ...                                  |
+   | name              | my_address_scope                     |
+   | project_id        | 34304bc4f233470fa4a2448d153b6324     |
+   | shared            | False                                |
+   +-------------------+--------------------------------------+
+
+
+Create the RBAC policy entry using the :command:`openstack network rbac create`
+command (in this example, the ID of the project we want to share with is
+``32016615de5d43bb88de99e7f2e26a1e``):
+
+.. code-block:: console
+
+   $ openstack network rbac create --target-project \
+   32016615de5d43bb88de99e7f2e26a1e --action access_as_shared \
+   --type address_scope c19cb654-3489-4160-9c82-8a3015483643
+   +-------------------+--------------------------------------+
+   | Field             | Value                                |
+   +-------------------+--------------------------------------+
+   | action            | access_as_shared                     |
+   | id                | d54b1482-98c4-44aa-9115-ede80387ffe0 |
+   | location          | ...                                  |
+   | name              | None                                 |
+   | object_id         | c19cb654-3489-4160-9c82-8a3015483643 |
+   | object_type       | address_scope                        |
+   | project_id        | 34304bc4f233470fa4a2448d153b6324     |
+   | target_project_id | 32016615de5d43bb88de99e7f2e26a1e     |
+   +-------------------+--------------------------------------+
+
+
+The ``target-project`` parameter specifies the project that requires
+access to the address scope. The ``action`` parameter specifies what
+the project is allowed to do. The ``type`` parameter says
+that the target object is an address scope. The final parameter is the ID of
+the address scope we are granting access to.
+
+Project ``32016615de5d43bb88de99e7f2e26a1e`` will now be able to see
+the address scope when running :command:`openstack address scope list` and
+:command:`openstack address scope show` and will also be able to assign
+it to its subnet pools. No other users (other than admins and the owner)
+will be able to see the address scope.
+
+To remove access for that project, delete the RBAC policy that allows
+it using the :command:`openstack network rbac delete` command:
+
+.. code-block:: console
+
+   $ openstack network rbac delete d54b1482-98c4-44aa-9115-ede80387ffe0
+
+If that project has subnet pools with the address scope applied to them,
+the server will not delete the RBAC policy until
+the address scope is no longer in use:
+
+.. code-block:: console
+
+   $ openstack network rbac delete d54b1482-98c4-44aa-9115-ede80387ffe0
+   RBAC policy on object c19cb654-3489-4160-9c82-8a3015483643
+   cannot be removed because other objects depend on it.
+
+This process can be repeated any number of times to share an address scope
+with an arbitrary number of projects.
+
 How the 'shared' flag relates to these entries
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As introduced in other guide entries, neutron provides a means of
-making an object (``network``, ``qos-policy``, ``security-group``) available
-to every project.
+making an object (``address-scope``, ``network``, ``qos-policy``,
+``security-group``) available to every project.
 This is accomplished using the ``shared`` flag on the supported object:
 
 .. code-block:: console

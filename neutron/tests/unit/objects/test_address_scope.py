@@ -12,17 +12,48 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants as lib_constants
+
 from neutron.objects import address_scope
-from neutron.tests.unit.objects import test_base as obj_test_base
+from neutron.tests.unit.objects import test_base
+from neutron.tests.unit.objects import test_rbac
 from neutron.tests.unit import testlib_api
 
 
-class AddressScopeIfaceObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
+class AddressScopeIfaceObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     _test_class = address_scope.AddressScope
 
 
-class AddressScopeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
+class AddressScopeDbObjectTestCase(test_base.BaseDbObjectTestCase,
                                    testlib_api.SqlTestCase):
 
     _test_class = address_scope.AddressScope
+
+
+class AddressScopeRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
+                                       test_base.BaseDbObjectTestCase,
+                                       testlib_api.SqlTestCase):
+
+    _test_class = address_scope.AddressScopeRBAC
+
+    def setUp(self):
+        super(AddressScopeRBACDbObjectTestCase, self).setUp()
+        for obj in self.db_objs:
+            as_obj = address_scope.AddressScope(
+                self.context,
+                id=obj['object_id'],
+                name="test_as_%s_%s" % (obj['object_id'], obj['project_id']),
+                project_id=obj['project_id'],
+                ip_version=lib_constants.IP_ALLOWED_VERSIONS[0],
+            )
+            as_obj.create()
+
+    def _create_test_address_scope_rbac(self):
+        self.objs[0].create()
+        return self.objs[0]
+
+
+class AddressScopeRBACIfaceObjectTestCase(test_rbac.TestRBACObjectMixin,
+                                          test_base.BaseObjectIfaceTestCase):
+    _test_class = address_scope.AddressScopeRBAC
