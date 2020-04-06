@@ -52,19 +52,7 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
         self.router, self.peer = self.machines.machines[:2]
         self.router_id = uuidutils.generate_uuid()
 
-        self.cmd_opts = [
-            ha_router.STATE_CHANGE_PROC_NAME,
-            '--router_id=%s' % self.router_id,
-            '--namespace=%s' % self.router.namespace,
-            '--conf_dir=%s' % self.conf_dir,
-            '--log-file=%s' % self.log_file,
-            '--monitor_interface=%s' % self.router.port.name,
-            '--monitor_cidr=%s' % self.cidr,
-            '--pid_file=%s' % self.pid_file,
-            '--state_path=%s' % self.conf_dir,
-            '--user=%s' % os.geteuid(),
-            '--group=%s' % os.getegid()
-        ]
+        self._generate_cmd_opts()
         self.ext_process = external_process.ProcessManager(
             None, '%s.monitor' % self.pid_file, None, service='test_ip_mon',
             pids_path=self.conf_dir, default_cmd_callback=self._callback,
@@ -84,6 +72,22 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
 
     def _callback(self, *args):
         return self.cmd_opts
+
+    def _generate_cmd_opts(self, monitor_interface=None, cidr=None):
+        monitor_interface = monitor_interface or self.router.port.name
+        cidr = cidr or self.cidr
+        self.cmd_opts = [
+            ha_router.STATE_CHANGE_PROC_NAME,
+            '--router_id=%s' % self.router_id,
+            '--namespace=%s' % self.router.namespace,
+            '--conf_dir=%s' % self.conf_dir,
+            '--log-file=%s' % self.log_file,
+            '--monitor_interface=%s' % monitor_interface,
+            '--monitor_cidr=%s' % cidr,
+            '--pid_file=%s' % self.pid_file,
+            '--state_path=%s' % self.conf_dir,
+            '--user=%s' % os.geteuid(),
+            '--group=%s' % os.getegid()]
 
     def _search_in_file(self, file_name, text):
         def text_in_file():
@@ -106,11 +110,22 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
                  'file_content': open(file_name).read()})
 
     def test_new_fip_sends_garp(self):
+        ns_ip_wrapper = ip_lib.IPWrapper(self.router.namespace)
+        new_interface = ns_ip_wrapper.add_dummy('new_interface')
+        new_interface_cidr = '169.254.152.1/24'
+        new_interface.link.set_up()
+        new_interface.addr.add(new_interface_cidr)
+        self._generate_cmd_opts(monitor_interface='new_interface',
+                                cidr=new_interface_cidr)
+
         self._run_monitor()
+
         next_ip_cidr = net_helpers.increment_ip_cidr(self.machines.ip_cidr, 2)
         expected_ip = str(netaddr.IPNetwork(next_ip_cidr).ip)
         # Create incomplete ARP entry
         self.peer.assert_no_ping(expected_ip)
+        # Wait for ping expiration
+        eventlet.sleep(1)
         has_entry = has_expected_arp_entry(
             self.peer.port.name,
             self.peer.namespace,
@@ -133,6 +148,9 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
                 self.router.port.link.address))
         utils.wait_until_true(has_arp_entry_predicate, timeout=15,
                               exception=exc)
+        msg = ('Sent GARP to %(cidr)s from %(device)s' %
+               {'cidr': expected_ip, 'device': self.router.port.name})
+        self._search_in_file(self.log_file, msg)
 
     def test_read_queue_change_state(self):
         self._run_monitor()
