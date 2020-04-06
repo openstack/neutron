@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+if is_plugin_enabled octavia; then
+    function octavia_create_network_interface_device {
+        INTERFACE=$1
+        MGMT_PORT_ID=$2
+        MGMT_PORT_MAC=$3
+
+        if [[ $NEUTRON_AGENT == "openvswitch" || $Q_AGENT == "openvswitch" || $NEUTRON_AGENT == "ovn" || $Q_AGENT == "ovn" ]]; then
+            if [[ $NEUTRON_AGENT == "ovn" || $Q_AGENT == "ovn" ]]; then
+                openstack subnet set --gateway none lb-mgmt-subnet
+            fi
+            sudo ovs-vsctl -- --may-exist add-port ${OVS_BRIDGE:-br-int} $INTERFACE -- set Interface $INTERFACE type=internal -- set Interface $INTERFACE external-ids:iface-status=active -- set Interface $INTERFACE external-ids:attached-mac=$MGMT_PORT_MAC -- set Interface $INTERFACE external-ids:iface-id=$MGMT_PORT_ID -- set Interface $INTERFACE external-ids:skip_cleanup=true
+        elif [[ $NEUTRON_AGENT == "linuxbridge" || $Q_AGENT == "linuxbridge" ]]; then
+            if ! ip link show $INTERFACE ; then
+                sudo ip link add $INTERFACE type veth peer name o-bhm0
+                NETID=$(openstack network show lb-mgmt-net -c id -f value)
+                BRNAME=brq$(echo $NETID|cut -c 1-11)
+                sudo ip link set o-bhm0 master $BRNAME
+                sudo ip link set o-bhm0 up
+            fi
+        else
+            die "Unknown network controller - $NEUTRON_AGENT/$Q_AGENT"
+        fi
+    }
+
+    function octavia_delete_network_interface_device {
+        if [[ $NEUTRON_AGENT == "openvswitch" || $Q_AGENT == "openvswitch" || $NEUTRON_AGENT == "ovn" || $Q_AGENT == "ovn" ]]; then
+            :  # Do nothing
+        elif [[ $NEUTRON_AGENT == "linuxbridge" || $Q_AGENT == "linuxbridge" ]]; then
+            if ip link show $INTERFACE ; then
+                sudo ip link del $INTERFACE
+            fi
+        else
+            die "Unknown network controller - $NEUTRON_AGENT/$Q_AGENT"
+        fi
+    }
+fi
+
+# Restore xtrace
+$XTRACE
