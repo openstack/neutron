@@ -62,7 +62,7 @@ class ConfigFixture(config_fixtures.ConfigFileFixture):
 class NeutronConfigFixture(ConfigFixture):
 
     def __init__(self, env_desc, host_desc, temp_dir,
-                 connection, rabbitmq_environment):
+                 connection, rabbitmq_environment, use_local_apipaste=True):
         super(NeutronConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir, base_filename='neutron.conf')
 
@@ -70,7 +70,6 @@ class NeutronConfigFixture(ConfigFixture):
             'DEFAULT': {
                 'host': self._generate_host(),
                 'state_path': self._generate_state_path(self.temp_dir),
-                'api_paste_config': self._generate_api_paste(),
                 'core_plugin': 'ml2',
                 'service_plugins': env_desc.service_plugins,
                 'auth_strategy': 'noauth',
@@ -96,6 +95,11 @@ class NeutronConfigFixture(ConfigFixture):
                 'log_agent_heartbeats': 'True',
             },
         })
+
+        if use_local_apipaste:
+            self.config['DEFAULT']['api_paste_config'] = (
+                self._generate_api_paste())
+
         policy_file = self._generate_policy_json()
         if policy_file:
             self.config['oslo_policy'] = {'policy_file': policy_file}
