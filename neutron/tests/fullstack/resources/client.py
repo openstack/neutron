@@ -317,13 +317,17 @@ class ClientFixture(fixtures.Fixture):
         }
         return self.client.trunk_remove_subports(trunk_id, spec)
 
-    def create_security_group(self, tenant_id, name=None):
+    def create_security_group(self, tenant_id, name=None, stateful=True):
         resource_type = 'security_group'
 
         name = name or utils.get_rand_name(prefix=resource_type)
-        spec = {'tenant_id': tenant_id, 'name': name}
+        spec = {'tenant_id': tenant_id, 'name': name, 'stateful': stateful}
 
         return self._create_resource(resource_type, spec)
+
+    def update_security_group(self, security_group_id, **kwargs):
+        return self._update_resource('security_group', security_group_id,
+                                     kwargs)
 
     def create_security_group_rule(self, tenant_id, security_group_id,
                                    **kwargs):
