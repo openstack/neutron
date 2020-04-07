@@ -1,0 +1,128 @@
+#!/bin/bash
+
+set -x
+
+source {{ overcloudrc }}
+
+image_name={{ image_name }}
+openstack image show $image_name
+if [ "$?" != "0" ]
+then
+    if [ ! -f cirros-0.4.0-x86_64-disk.img ]
+    then
+        curl -Lo cirros-0.4.0-x86_64-disk.img https://github.com/cirros-dev/cirros/releases/download/0.4.0/cirros-0.4.0-x86_64-disk.img
+    fi
+
+    openstack image create "cirros-ovn-migration-{{ resource_suffix }}"  --file cirros-0.4.0-x86_64-disk.img \
+--disk-format qcow2 --container-format bare --public
+    image_name="cirros-ovn-migration-{{ resource_suffix }}"
+fi
+
+
+openstack flavor create ovn-migration-{{ resource_suffix }} --ram 1024 --disk 1 --vcpus 1
+
+openstack keypair create ovn-migration-{{ resource_suffix }} --private-key {{ ovn_migration_temp_dir }}/ovn_migration_ssh_key
+
+openstack security group create ovn-migration-sg-{{ resource_suffix }}
+
+openstack security group rule create --ingress --protocol icmp ovn-migration-sg-{{ resource_suffix }}
+
+openstack security group rule create --ingress --protocol tcp --dst-port 22  ovn-migration-sg-{{ resource_suffix }}
+
+openstack network create ovn-migration-net-{{ resource_suffix }}
+
+neutron net-update ovn-migration-net-{{ resource_suffix }} --mtu 1442
+
+openstack subnet create  --network ovn-migration-net-{{ resource_suffix }}  --subnet-range 172.168.199.0/24 ovn-migration-subnet-{{ resource_suffix }}
+
+openstack port create --network ovn-migration-net-{{ resource_suffix }} --security-group ovn-migration-sg-{{ resource_suffix }} ovn-migration-server-port-{{ resource_suffix }}
+
+openstack server create --flavor ovn-migration-{{ resource_suffix }} --image $image_name \
+--key-name ovn-migration-{{ resource_suffix }} \
+--nic port-id=ovn-migration-server-port-{{ resource_suffix }} ovn-migration-server-{{ resource_suffix }}
+
+openstack router create ovn-migration-router-{{ resource_suffix }}
+
+openstack router set --external-gateway {{ public_network_name }} ovn-migration-router-{{ resource_suffix }}
+
+openstack router add subnet ovn-migration-router-{{ resource_suffix }} ovn-migration-subnet-{{ resource_suffix }}
+
+server_ip=`openstack floating ip create --port ovn-migration-server-port-{{ resource_suffix }} \
+{{ public_network_name }} -c floating_ip_address | grep floating_ip_address \
+| awk '{print $4'}`
+
+echo $server_ip > {{ ovn_migration_temp_dir }}/server_public_ip
+
+chmod 0600 {{ ovn_migration_temp_dir }}/ovn_migration_ssh_key
+
+# Wait till the port is ACTIVE
+
+echo "Wait till the port is ACTIVE"
+port_status=`openstack port show ovn-migration-server-port-{{ resource_suffix }} -c status | grep status | awk '{print $4}'`
+
+num_attempts=0
+while [ "$port_status" != "ACTIVE" ]
+do
+    num_attempts=$((num_attempts+1))
+    sleep 5
+    port_status=`openstack port show ovn-migration-server-port-{{ resource_suffix }} -c status | grep status | awk '{print $4}'`
+    echo "Port status = $port_status"
+
+    if [ $num_attempts -gt 24 ]
+    then
+        echo "Port is not up even after 2 minutes. Something is wrong"
+        exit 1
+    fi
+done
+
+echo "VM is up and the port is ACTIVE"
+
+# Wait till the VM allows ssh connections
+
+vm_status="down"
+num_attempts=0
+while [ "$vm_status" != "up" ]
+do
+    num_attempts=$((num_attempts+1))
+    sleep 5
+    openstack console log show ovn-migration-server-{{ resource_suffix }} | grep "login:"
+    if [ "$?" == "0" ]
+    then
+        vm_status="up"
+    else
+        if [ $num_attempts -gt 60 ]
+        then
+            echo "Port is not up even after 5 minutes. Something is wrong."
+            # Even though something seems wrong, lets try and ping.
+            break
+        fi
+    fi
+done
+
+num_attempts=0
+vm_reachable="false"
+while [ "$vm_reachable" != "true" ]
+do
+    num_attempts=$((num_attempts+1))
+    sleep 1
+    ping -c 3 $server_ip
+    if [ "$?" == "0" ]
+    then
+        vm_reachable="true"
+    else
+        if [ $num_attempts -gt 60 ]
+        then
+            echo "VM is not reachable. Something is wrong."
+            # Even though something seems wrong, lets try and ping.
+            exit 1
+        fi
+    fi
+done
+
+ssh -i {{ ovn_migration_temp_dir }}/ovn_migration_ssh_key -o StrictHostKeyChecking=no \
+-o UserKnownHostsFile=/dev/null  cirros@$server_ip date
+
+rc=$?
+
+echo "Done with the resource creation : exiting with $rc"
+exit $rc

@@ -1,0 +1,9 @@
+---
+
+public_network_name: "{{ public_network_name }}"
+create_resource_script: create-resources.sh.j2
+ovn_migration_temp_dir: "{{ ovn_migration_temp_dir }}"
+image_name: "{{ image_name }}"
+server_user_name: "{{ server_user_name }}"
+overcloudrc: "{{ overcloudrc }}"
+resource_suffix: pinger

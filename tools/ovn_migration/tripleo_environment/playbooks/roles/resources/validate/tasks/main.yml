@@ -1,0 +1,12 @@
+- name: Generate resource validation script
+  template:
+    src: "{{ validate_resources_script }}"
+    dest: "{{ ovn_migration_temp_dir }}/validate-resources.sh"
+    mode: 0744
+
+- name: Run the validation script
+  shell: >
+    set -o pipefail &&
+    {{ ovn_migration_temp_dir }}/validate-resources.sh 2>&1 | tee
+    {{ ovn_migration_temp_dir }}/validate-resources.sh.log
+

@@ -1,0 +1,77 @@
+# The purpose of this script is to make a clone of the br-int content
+# into br-migration, and to create fake provider bridges.
+# This way, while we synchronize the neutron database into the OVN
+# northbound DB, and that translates into southbound content all
+# the ovn-controllers around are able to create the SBDB content
+# safely, without disrupting the existing neutron ml2/ovs dataplane.
+
+OVN_MIG_PREFIX=br-mig
+OVN_BR_MIGRATION=${OVN_BR_MIGRATION:-br-migration}
+
+function recreate_bridge_mappings() {
+    function new_bridge_mappings() {
+        orig_bms=$1
+
+        if echo $orig_bms | grep $OVN_MIG_PREFIX; then
+        echo $orig_bms
+        return
+        fi
+        ovn_bms=$(echo $1 | sed 's/\"//g' | sed 's/,/ /g')
+        final_bm=""
+        br_n=0
+
+        for bm in $ovn_bms; do
+        parts=($(echo $bm | sed 's/:/ /g'))
+        physnet=${parts[0]}
+        bridge="${OVN_MIG_PREFIX}-${br_n}"
+        mapping="${physnet}:${bridge}"
+        if [[ -z "$final_bm" ]]; then
+            final_bm=$mapping
+        else
+            final_bm="${final_bm},${mapping}"
+        fi
+        # ensure bridge
+        ovs-vsctl --may-exist add-br $bridge
+        br_n=$(( br_n + 1 ))
+        done
+        echo $final_bm
+    }
+    ovn_orig_bm=$(ovs-vsctl get open . external_ids:ovn-bridge-mappings)
+
+    # backup the original mapping if we didn't already do
+    ovs-vsctl get open . external_ids:ovn-bridge-mappings-back || \
+         ovs-vsctl set open . external_ids:ovn-bridge-mappings-back="$ovn_orig_bm"
+
+    new_mapping=$(new_bridge_mappings $ovn_orig_bm)
+
+    ovs-vsctl set open . external_ids:ovn-bridge-mappings="$new_mapping"
+}
+
+function copy_interfaces_to_br_migration() {
+
+    interfaces=$(ovs-vsctl list-ifaces br-int | egrep -v 'qr-|ha-|qg-|rfp-')
+    for interface in $interfaces; do
+        if [[ "$interface" == "br-int" ]]; then
+        continue
+        fi
+        ifmac=$(ovs-vsctl get Interface $interface external-ids:attached-mac)
+        if [ $? -ne 0 ]; then
+        echo "Can't get port details for $interface"
+        continue
+        fi
+        ifstatus=$(ovs-vsctl get Interface $interface external-ids:iface-status)
+        ifid=$(ovs-vsctl get Interface $interface external-ids:iface-id)
+        ifname=x$interface
+        ovs-vsctl -- --may-exist add-port $OVN_BR_MIGRATION $ifname \
+             -- set Interface $ifname type=internal \
+             -- set Interface $ifname external-ids:iface-status=$ifstatus \
+             -- set Interface $ifname external-ids:attached-mac=$ifmac \
+             -- set Interface $ifname external-ids:iface-id=$ifid
+
+        echo cloned port $interface from br-int as $ifname on $OVN_BR_MIGRATION
+    done
+}
+
+recreate_bridge_mappings
+docker restart ovn_controller
+copy_interfaces_to_br_migration

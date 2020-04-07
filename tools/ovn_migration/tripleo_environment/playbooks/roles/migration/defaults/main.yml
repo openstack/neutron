@@ -1,0 +1,15 @@
+---
+
+agent_cleanups:
+  neutron_l3_agent:
+    config: --config-file /usr/share/neutron/neutron-dist.conf --config-dir /usr/share/neutron/l3_agent --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/l3_agent.ini --config-dir /etc/neutron/conf.d/common --config-dir /etc/neutron/conf.d/neutron-l3-agent --log-file=/var/log/neutron/netns-cleanup-l3.log
+    cleanup_type: l3
+    netns_regex: "fip-|snat-|qrouter-"
+
+  neutron_dhcp:
+    config: --config-file /usr/share/neutron/neutron-dist.conf --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/dhcp_agent.ini --config-dir /etc/neutron/conf.d/common --config-dir /etc/neutron/conf.d/neutron-dhcp-agent --log-file=/var/log/neutron/netns-cleanup-dhcp.log
+    cleanup_type: dhcp
+    netns_regex: "qdhcp-"
+
+tunnel_bridge: "br-tun"
+ovn_bridge: "br-int"

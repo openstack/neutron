@@ -1,0 +1,19 @@
+# The following tasks ensure that we have backup data which is
+# necessary later for cleanup (like l3/dhcp/metadata agent definitions)
+
+- name: "Ensure the ovn backup directory"
+  file: path="{{ ovn_migration_backups }}" state=directory
+
+- name: "Save the tripleo container definitions"
+  shell: |
+    # only copy them the first time, otherwise, on a later run when
+    # it has been already migrated to OVN we would miss the data
+    if [ ! -d {{ ovn_migration_backups }}/tripleo-config ]; then
+      cp -rfp /var/lib/tripleo-config {{ ovn_migration_backups }}
+      echo "Backed up"
+    fi
+  register: command_result
+  changed_when: "'Backed up' in command_result.stdout"
+
+# TODO(majopela): Include steps for backing up the mysql database on the
+#                 controllers and the undercloud before continuing

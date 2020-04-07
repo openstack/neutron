@@ -1,0 +1,12 @@
+---
+- include_tasks: clone-dataplane.yml
+
+- include_tasks: sync-dbs.yml
+  when: ovn_central is defined
+
+- include_tasks: activate-ovn.yml
+
+- include_tasks: cleanup-dataplane.yml
+  when: ovn_controller is defined
+  tags:
+    - cleanup-dataplane

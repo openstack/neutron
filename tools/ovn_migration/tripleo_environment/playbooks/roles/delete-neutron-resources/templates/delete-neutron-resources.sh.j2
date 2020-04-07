@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -x
+
+source {{ overcloudrc }}
+
+# Delete non alive neutron agents
+for i in `openstack network agent list | grep neutron- | grep -v ':-)' | awk {'print $2'}`
+do
+  openstack network agent delete $i
+done
+
+
+delete_network_ports() {
+    net_id=$1
+    for p in `openstack port list --network $net_id | grep -v ID | awk '{print $2}'`
+    do
+        openstack port delete $p
+    done
+}
+
+# Delete HA networks
+for i in `openstack network list | grep "HA network tenant" | awk '{print $2}'`
+do
+    delete_network_ports $i
+    openstack network delete $i
+done
+
+exit 0

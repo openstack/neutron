@@ -1,0 +1,59 @@
+---
+
+#
+# Validate pre-migration resources and then clean those up
+#
+
+- name: Validate pre migration resources after migration
+  include_role:
+    name: resources/validate
+  vars:
+      restart_server: true
+  when:
+    - validate_migration|bool
+    - validate_premigration_resources
+
+- name: Delete the pre migration resources
+  include_role:
+    name: resources/cleanup
+  tags:
+    - post-migration
+  when:
+    - validate_migration|bool
+    - validate_premigration_resources
+
+#
+# Create post-migration resources, validate, and then clean up
+#
+
+# Delete any existing resources to make sure we don't conflict on a second run
+- name: Delete any post migration resources (preventive)
+  include_role:
+    name: resources/cleanup
+  vars:
+      resource_suffix: "post"
+      silent_cleanup: true
+  when: validate_migration|bool
+
+- name: Create post-migration resources
+  include_role:
+    name: resources/create
+  vars:
+      resource_suffix: "post"
+  when: validate_migration|bool
+
+- name: Validate post migration resources
+  include_role:
+    name: resources/validate
+  vars:
+      resource_suffix: "post"
+  when: validate_migration|bool
+
+- name: Delete the post migration resources
+  include_role:
+    name: resources/cleanup
+  tags:
+    - post-migration
+  vars:
+      resource_suffix: "post"
+  when: validate_migration|bool

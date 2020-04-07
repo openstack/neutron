@@ -1,0 +1,33 @@
+- name: Delete temp file directory if present
+  file:
+    state: absent
+    path: "{{ ovn_migration_temp_dir }}"
+
+- name : Create temp file directory if not present
+  file:
+    state: directory
+    path: "{{ ovn_migration_temp_dir }}"
+
+- name: Generate resource creation script
+  template:
+    src: create-resources.sh.j2
+    dest: "{{ ovn_migration_temp_dir }}/create-resources.sh"
+    mode: 0744
+
+- name: Creating pre pre migration resources
+  shell: >
+    set -o pipefail &&
+    {{ ovn_migration_temp_dir }}/create-resources.sh 2>&1 >
+    {{ ovn_migration_temp_dir }}/create-resources.sh.log
+  changed_when: true
+
+- name: Generate pinger script
+  template:
+    src: start-pinger.sh.j2
+    dest: "{{ ovn_migration_temp_dir }}/start-pinger.sh"
+    mode: 0744
+
+- name: Start pinger in background
+  shell: >
+      nohup {{ ovn_migration_temp_dir }}/start-pinger.sh </dev/null >/dev/null 2>&1 &
+  changed_when: False

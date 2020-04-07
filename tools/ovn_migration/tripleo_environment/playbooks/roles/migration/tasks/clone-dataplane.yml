@@ -1,0 +1,15 @@
+# we use this instead of a big shell entry because some versions of
+# ansible-playbook choke on our script syntax + yaml parsing
+- name: Generate script to clone br-int and provider bridges
+  template:
+    src: "clone-br-int.sh.j2"
+    dest: "/tmp/clone-br-int.sh"
+    mode: 0744
+
+- name: Run clone script for dataplane
+  shell: /tmp/clone-br-int.sh
+
+- name: Delete clone script
+  file:
+    state: absent
+    path: /tmp/clone-br-int.sh

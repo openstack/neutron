@@ -1,0 +1,58 @@
+#!/bin/bash
+
+set -x
+
+echo "creating virtualenv in {{ ovn_migration_temp_dir }}/pinger_venv"
+virtualenv {{ ovn_migration_temp_dir }}/pinger_venv
+source {{ ovn_migration_temp_dir }}/pinger_venv/bin/activate
+pip install --upgrade pip
+pip install sh
+
+cat > {{ ovn_migration_temp_dir }}/pinger.py <<-EOF
+import sh
+import sys
+import time
+
+
+def main(ips):
+    run_cmds = []
+    for ip in ips:
+        ip_out_file = "{{ ovn_migration_temp_dir }}/" + ip.replace('.', '_') + '_ping.out'
+        run_cmds.append(sh.ping('-i', '1', ip, _out=ip_out_file, _bg=True))
+
+    if not run_cmds:
+        return
+
+    while True:
+        try:
+            cmd_file = open("{{ ovn_migration_temp_dir }}/_pinger_cmd.txt", "r")
+            cmd = cmd_file.readline()
+            if cmd.startswith("exit"):
+                break
+            cmd_file.close()
+        except IOError:
+            time.sleep(3)
+            continue
+
+    for p in run_cmds:
+        p.signal(2)
+        p.wait()
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
+
+EOF
+
+pinger_ips=""
+for ip in `cat {{ ovn_migration_temp_dir }}/server_fips`
+do
+    pinger_ips="$pinger_ips $ip"
+done
+
+echo "pinger ips = $pinger_ips"
+
+echo "calling pinger.py"
+python {{ ovn_migration_temp_dir }}/pinger.py $pinger_ips
+
+echo "Exiting..."

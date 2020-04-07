@@ -1,0 +1,22 @@
+---
+- name: Delete temp file directory if present
+  file:
+    state: absent
+    path: "{{ ovn_migration_temp_dir }}"
+
+- name : Create temp file directory if not present
+  file:
+    state: directory
+    path: "{{ ovn_migration_temp_dir }}"
+
+- name: Generate resource creation script
+  template:
+    src: "{{ create_migration_resource_script }}"
+    dest: "{{ ovn_migration_temp_dir }}/create-migration-resources.sh"
+    mode: 0744
+
+- name: Creating migration resources
+  shell: >
+    set -o pipefail &&
+    {{ ovn_migration_temp_dir }}/create-migration-resources.sh 2>&1 | tee
+    {{ ovn_migration_temp_dir }}/create-migration-resources.sh.log

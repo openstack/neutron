@@ -1,0 +1,7 @@
+---
+
+infrared_deployment: False
+registry_namespace: docker.io/tripleomaster
+local_namespace: 192.168.24.1:8787/tripleomaster
+image_tag: current-tripleo-rdo
+image_prefix: centos-binary-
