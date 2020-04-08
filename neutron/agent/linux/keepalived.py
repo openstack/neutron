@@ -452,6 +452,12 @@ class KeepalivedManager(object):
         pm = self.get_process()
         pm.disable(sig='15')
 
+    def check_processes(self):
+        keepalived_pm = self.get_process()
+        vrrp_pm = self._get_vrrp_process(
+            self.get_vrrp_pid_file_name(keepalived_pm.get_pid_file_name()))
+        return keepalived_pm.active and vrrp_pm.active
+
     def get_process(self):
         return external_process.ProcessManager(
             cfg.CONF,
