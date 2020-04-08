@@ -1354,16 +1354,14 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     @mock.patch('neutron.services.ovn_l3.plugin.OVNL3RouterPlugin.'
                 '_get_gateway_port_physnet_mapping')
     def test_schedule_unhosted_gateways(self, get_gppm):
-        physnet_dict = {'foo-1': 'physnet1',
-                        'foo-2': 'physnet1',
-                        'foo-3': 'physnet1'}
         unhosted_gws = ['lrp-foo-1', 'lrp-foo-2', 'lrp-foo-3']
+        get_gppm.return_value = {k[len(ovn_const.LRP_PREFIX):]: 'physnet1'
+                                 for k in unhosted_gws}
         chassis_mappings = {
             'chassis1': ['physnet1'],
             'chassis2': ['physnet1'],
             'chassis3': ['physnet1']}
         chassis = ['chassis1', 'chassis2', 'chassis3']
-        get_gppm.return_value = physnet_dict
         self.sb_idl().get_chassis_and_physnets.return_value = (
             chassis_mappings)
         self.sb_idl().get_gateway_chassis_from_cms_options.return_value = (
@@ -1407,6 +1405,34 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                       gateway_chassis=['chassis2', 'chassis1', 'chassis3']),
             mock.call('lrp-foo-3',
                       gateway_chassis=['chassis3', 'chassis2', 'chassis1'])])
+
+    @mock.patch('neutron.services.ovn_l3.plugin.OVNL3RouterPlugin.'
+                '_get_gateway_port_physnet_mapping')
+    def test_schedule_unhosted_gateways_on_event_no_gw_chassis(self, get_gppm):
+        unhosted_gws = ['lrp-foo-1', 'lrp-foo-2', 'lrp-foo-3']
+        get_gppm.return_value = {k[len(ovn_const.LRP_PREFIX):]: 'physnet1'
+                                 for k in unhosted_gws}
+        self.nb_idl().get_chassis_gateways.return_value = []
+        self.l3_inst.schedule_unhosted_gateways(event_from_chassis='chassis4')
+        self.nb_idl().get_unhosted_gateways.assert_not_called()
+
+    @mock.patch('neutron.services.ovn_l3.plugin.OVNL3RouterPlugin.'
+                '_get_gateway_port_physnet_mapping')
+    def test_schedule_unhosted_gateways_on_event(self, get_gppm):
+        unhosted_gws = ['lrp-foo-1', 'lrp-foo-2', 'lrp-foo-3']
+        get_gppm.return_value = {k[len(ovn_const.LRP_PREFIX):]: 'physnet1'
+                                 for k in unhosted_gws}
+        foo_gw = fake_resources.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lrp-foo-1_chassis1',
+                   'chassis_name': 'chassis1'})
+        self.nb_idl().get_chassis_gateways.return_value = [
+            foo_gw]
+        self.nb_idl().get_unhosted_gateways.return_value = []
+        # Fake that rescheduling is executed on chassis event
+        self.l3_inst.schedule_unhosted_gateways(event_from_chassis='chassis1')
+        # Validate that only foo-1 port is beign rescheduled.
+        self.nb_idl().get_unhosted_gateways.assert_called_once_with(
+            {'foo-1': 'physnet1'}, mock.ANY, mock.ANY)
 
     @mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_network')
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'

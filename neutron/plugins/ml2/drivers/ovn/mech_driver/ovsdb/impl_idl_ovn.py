@@ -434,22 +434,46 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         except idlutils.RowNotFound:
             return []
 
-    def get_unhosted_gateways(self, port_physnet_dict, chassis_physnets,
-                              gw_chassis):
-        unhosted_gateways = []
-        for lrp in self._tables['Logical_Router_Port'].rows.values():
-            if not lrp.name.startswith('lrp-'):
+    def get_chassis_gateways(self, chassis_name):
+        gw_chassis = self.db_find_rows(
+            'Gateway_Chassis', ('chassis_name', '=', chassis_name))
+        return gw_chassis.execute(check_error=True)
+
+    def get_unhosted_gateways(self, port_physnet_dict, chassis_with_physnets,
+                              all_gw_chassis):
+        unhosted_gateways = set()
+        for port, physnet in port_physnet_dict.items():
+            lrp_name = '%s%s' % (ovn_const.LRP_PREFIX, port)
+            original_state = self.get_gateway_chassis_binding(lrp_name)
+
+            # Filter out chassis that lost physnet, the cms option,
+            # or has been deleted.
+            actual_gw_chassis = [
+                chassis for chassis in original_state
+                if not utils.is_gateway_chassis_invalid(
+                    chassis, all_gw_chassis, physnet, chassis_with_physnets)]
+
+            # Check if gw ports are fully scheduled.
+            if len(actual_gw_chassis) >= ovn_const.MAX_GW_CHASSIS:
                 continue
-            physnet = port_physnet_dict.get(lrp.name[len('lrp-'):])
-            chassis_list = self._get_logical_router_port_gateway_chassis(lrp)
-            is_max_gw_reached = len(chassis_list) < ovn_const.MAX_GW_CHASSIS
-            for chassis_name, prio in chassis_list:
-                # TODO(azbiswas): Handle the case when a chassis is no
-                # longer valid. This may involve moving conntrack states,
-                # so it needs to discussed in the OVN community first.
-                if is_max_gw_reached or utils.is_gateway_chassis_invalid(
-                        chassis_name, gw_chassis, physnet, chassis_physnets):
-                    unhosted_gateways.append(lrp.name)
+
+            # If there are no gateways with 'enable-chassis-as-gw' cms option
+            # then try to schedule on all gateways with physnets connected,
+            # and filter required physnet.
+            available_chassis = {
+                c for c in all_gw_chassis or chassis_with_physnets.keys()
+                if not utils.is_gateway_chassis_invalid(
+                    c, all_gw_chassis, physnet, chassis_with_physnets)}
+
+            if available_chassis == set(original_state):
+                # The same situation as was before. Nothing
+                # to be rescheduled.
+                continue
+            if not available_chassis:
+                # There is no chassis that could host
+                # this gateway.
+                continue
+            unhosted_gateways.add(lrp_name)
         return unhosted_gateways
 
     def add_dhcp_options(self, subnet_id, port_id=None, may_exist=True,

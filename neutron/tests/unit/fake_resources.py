@@ -76,6 +76,7 @@ class FakeOvsdbNbOvnIdl(object):
         self.delete_address_set = mock.Mock()
         self.update_address_set = mock.Mock()
         self.get_all_chassis_gateway_bindings = mock.Mock()
+        self.get_chassis_gateways = mock.Mock()
         self.get_gateway_chassis_binding = mock.Mock()
         self.get_unhosted_gateways = mock.Mock()
         self.add_dhcp_options = mock.Mock()

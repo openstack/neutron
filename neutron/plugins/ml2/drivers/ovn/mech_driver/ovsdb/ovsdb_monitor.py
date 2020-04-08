@@ -82,11 +82,6 @@ class ChassisEvent(row_event.RowEvent):
         if not self.driver._ovn_client.is_external_ports_supported():
             return
 
-        # NOTE(lucasgomes): If the external_ids column wasn't updated
-        # (meaning, Chassis "gateway" status didn't change) just returns
-        if not hasattr(old, 'external_ids') and event == self.ROW_UPDATE:
-            return
-
         is_gw_chassis = utils.is_gateway_chassis(row)
         # If the Chassis being created is not a gateway, ignore it
         if not is_gw_chassis and event == self.ROW_CREATE:
@@ -123,6 +118,19 @@ class ChassisEvent(row_event.RowEvent):
                 ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME,
                 row.name, if_exists=True).execute(check_error=True)
 
+    def match_fn(self, event, row, old):
+        if event != self.ROW_UPDATE:
+            return True
+        # NOTE(lucasgomes): If the external_ids column wasn't updated
+        # (meaning, Chassis "gateway" status didn't change) just returns
+        if not hasattr(old, 'external_ids') and event == self.ROW_UPDATE:
+            return
+        if (old.external_ids.get('ovn-bridge-mappings') !=
+                row.external_ids.get('ovn-bridge-mappings')):
+            return True
+        f = utils.is_gateway_chassis
+        return f(old) != f(row)
+
     def run(self, event, row, old):
         host = row.hostname
         phy_nets = []
@@ -133,8 +141,33 @@ class ChassisEvent(row_event.RowEvent):
             phy_nets = list(mapping_dict)
 
         self.driver.update_segment_host_mapping(host, phy_nets)
+
         if utils.is_ovn_l3(self.l3_plugin):
-            self.l3_plugin.schedule_unhosted_gateways()
+            # If chassis lost physnet or has been
+            # deleted we can limit the scope and
+            # reschedule only ports from this chassis.
+            # In other cases we need to reschedule all gw ports.
+            kwargs = {'event_from_chassis': None}
+            if event == self.ROW_DELETE:
+                kwargs['event_from_chassis'] = row.name
+            elif event == self.ROW_UPDATE:
+                old_mappings = old.external_ids.get('ovn-bridge-mappings',
+                                                    set()) or set()
+                new_mappings = row.external_ids.get('ovn-bridge-mappings',
+                                                    set()) or set()
+                if old_mappings:
+                    old_mappings = set(old_mappings.split(','))
+                if new_mappings:
+                    new_mappings = set(new_mappings.split(','))
+
+                mappings_removed = old_mappings - new_mappings
+                mappings_added = new_mappings - old_mappings
+                if mappings_removed and not mappings_added:
+                    # Mapping has been only removed. So we can
+                    # limit scope of rescheduling only to impacted
+                    # gateway chassis.
+                    kwargs['event_from_chassis'] = row.name
+            self.l3_plugin.schedule_unhosted_gateways(**kwargs)
 
         self.handle_ha_chassis_group_changes(event, row, old)
 

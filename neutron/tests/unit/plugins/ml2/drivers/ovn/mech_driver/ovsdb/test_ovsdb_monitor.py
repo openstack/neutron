@@ -459,17 +459,15 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self._test_chassis_helper('create', self.row_json)
         self.driver.update_segment_host_mapping.assert_called_once_with(
             'fake-hostname', ['fake-phynet1'])
-        self.assertEqual(
-            1,
-            self.l3_plugin.schedule_unhosted_gateways.call_count)
+        self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
+            event_from_chassis=None)
 
     def test_chassis_delete_event(self):
         self._test_chassis_helper('delete', self.row_json)
         self.driver.update_segment_host_mapping.assert_called_once_with(
             'fake-hostname', [])
-        self.assertEqual(
-            1,
-            self.l3_plugin.schedule_unhosted_gateways.call_count)
+        self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
+            event_from_chassis='fake-name')
 
     def test_chassis_update_event(self):
         old_row_json = copy.deepcopy(self.row_json)
@@ -478,9 +476,54 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self._test_chassis_helper('update', self.row_json, old_row_json)
         self.driver.update_segment_host_mapping.assert_called_once_with(
             'fake-hostname', ['fake-phynet1'])
-        self.assertEqual(
-            1,
-            self.l3_plugin.schedule_unhosted_gateways.call_count)
+        self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
+            event_from_chassis=None)
+
+    def test_chassis_update_event_reschedule_not_needed(self):
+        self.row_json['external_ids'][1].append(['foo_field', 'foo_value_new'])
+        old_row_json = copy.deepcopy(self.row_json)
+        old_row_json['external_ids'][1][1][1] = (
+            "foo_value")
+        self._test_chassis_helper('update', self.row_json, old_row_json)
+        self.driver.update_segment_host_mapping.assert_not_called()
+        self.l3_plugin.schedule_unhosted_gateways.assert_not_called()
+
+    def test_chassis_update_event_reschedule_lost_physnet(self):
+        old_row_json = copy.deepcopy(self.row_json)
+        self.row_json['external_ids'][1][0][1] = ''
+        self._test_chassis_helper('update', self.row_json, old_row_json)
+        self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
+            event_from_chassis='fake-name')
+
+    def test_chassis_update_event_reschedule_add_physnet(self):
+        old_row_json = copy.deepcopy(self.row_json)
+        self.row_json['external_ids'][1][0][1] += ',foo_physnet:foo_br'
+        self._test_chassis_helper('update', self.row_json, old_row_json)
+        self.driver.update_segment_host_mapping.assert_called_once_with(
+            'fake-hostname', ['fake-phynet1', 'foo_physnet'])
+        self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
+            event_from_chassis=None)
+
+    def test_chassis_update_event_reschedule_add_and_remove_physnet(self):
+        old_row_json = copy.deepcopy(self.row_json)
+        self.row_json['external_ids'][1][0][1] = 'foo_physnet:foo_br'
+        self._test_chassis_helper('update', self.row_json, old_row_json)
+        self.driver.update_segment_host_mapping.assert_called_once_with(
+            'fake-hostname', ['foo_physnet'])
+        self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
+            event_from_chassis=None)
+
+    def test_chassis_update_empty_no_external_ids(self):
+        old_row_json = copy.deepcopy(self.row_json)
+        old_row_json.pop('external_ids')
+        with mock.patch(
+            'neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
+            'ovsdb_monitor.ChassisEvent.'
+                'handle_ha_chassis_group_changes') as mock_ha:
+            self._test_chassis_helper('update', self.row_json, old_row_json)
+            self.driver.update_segment_host_mapping.assert_not_called()
+            self.l3_plugin.schedule_unhosted_gateways.assert_not_called()
+            mock_ha.assert_not_called()
 
 
 class TestChassisEvent(base.BaseTestCase):
@@ -558,12 +601,3 @@ class TestChassisEvent(base.BaseTestCase):
         # after it became a Gateway chassis
         self._test_handle_ha_chassis_group_changes_create(
             self.event.ROW_UPDATE)
-
-    def test_handle_ha_chassis_group_changes_update_ext_id_not_found(self):
-        self.is_gw_ch_mock.side_effect = (True, False)
-        old = fakes.FakeOvsdbTable.create_one_ovsdb_table(
-            attrs={'name': 'SpongeBob'})
-        self.assertIsNone(self.event.handle_ha_chassis_group_changes(
-            self.event.ROW_UPDATE, mock.Mock(), old))
-        self.assertFalse(self.nb_ovn.ha_chassis_group_add_chassis.called)
-        self.assertFalse(self.nb_ovn.ha_chassis_group_del_chassis.called)
