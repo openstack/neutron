@@ -21,6 +21,7 @@ from oslo_utils import importutils
 from neutron._i18n import _
 from neutron.agent.common import utils
 from neutron.conf.agent import common as config
+from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron.debug import debug_agent
 from neutronclient.common import exceptions as exc
 from neutronclient import shell
@@ -72,6 +73,7 @@ class NeutronDebugShell(shell.NeutronShell):
         client = self.client_manager.neutron
         config.register_interface_opts()
         config.register_interface_driver_opts_helper(cfg.CONF)
+        ovs_conf.register_ovs_opts(cfg.CONF)
         cfg.CONF(['--config-file', self.options.config_file])
         config.setup_logging()
         driver = utils.load_interface_driver(cfg.CONF)
