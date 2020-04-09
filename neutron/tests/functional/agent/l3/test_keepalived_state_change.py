@@ -54,9 +54,10 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
 
         self._generate_cmd_opts()
         self.ext_process = external_process.ProcessManager(
-            None, '%s.monitor' % self.pid_file, None, service='test_ip_mon',
-            pids_path=self.conf_dir, default_cmd_callback=self._callback,
-            run_as_root=True)
+            conf=None, uuid=self.router_id, namespace=self.router.namespace,
+            service='test_ip_mon', pids_path=self.conf_dir,
+            default_cmd_callback=self._callback, run_as_root=True,
+            pid_file=self.pid_file)
 
         server = linux_utils.UnixDomainWSGIServer(
             'neutron-keepalived-state-change', num_threads=1)
