@@ -114,12 +114,12 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
     @property
     def _ovn_client(self):
         if self._ovn_client_inst is None:
-            self._ovn_client_inst = ovn_client.OVNClient(self._ovn,
+            self._ovn_client_inst = ovn_client.OVNClient(self._nb_ovn,
                                                          self._sb_ovn)
         return self._ovn_client_inst
 
     @property
-    def _ovn(self):
+    def _nb_ovn(self):
         return self._plugin_driver.nb_ovn
 
     @property
@@ -362,7 +362,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         if not self._plugin_driver.list_availability_zones(context):
             return []
 
-        lrp = self._ovn.get_lrouter_port(lrp_name)
+        lrp = self._nb_ovn.get_lrouter_port(lrp_name)
         router = self.get_router(
             context, lrp.external_ids[ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY])
         az_hints = common_utils.get_az_hints(router)
@@ -373,7 +373,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         port_physnet_dict = self._get_gateway_port_physnet_mapping()
         # Filter out unwanted ports in case of event.
         if event_from_chassis:
-            gw_chassis = self._ovn.get_chassis_gateways(
+            gw_chassis = self._nb_ovn.get_chassis_gateways(
                 chassis_name=event_from_chassis)
             if not gw_chassis:
                 return
@@ -394,17 +394,17 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         chassis_with_physnets = self._sb_ovn.get_chassis_and_physnets()
         # All chassis with enable_as_gw_chassis set
         all_gw_chassis = self._sb_ovn.get_gateway_chassis_from_cms_options()
-        unhosted_gateways = self._ovn.get_unhosted_gateways(
+        unhosted_gateways = self._nb_ovn.get_unhosted_gateways(
             port_physnet_dict, chassis_with_physnets,
             all_gw_chassis)
         for g_name in unhosted_gateways:
             physnet = port_physnet_dict.get(g_name[len(ovn_const.LRP_PREFIX):])
             # Remove any invalid gateway chassis from the list, otherwise
             # we can have a situation where all existing_chassis are invalid
-            existing_chassis = self._ovn.get_gateway_chassis_binding(g_name)
+            existing_chassis = self._nb_ovn.get_gateway_chassis_binding(g_name)
             primary = existing_chassis[0] if existing_chassis else None
             existing_chassis = self.scheduler.filter_existing_chassis(
-                nb_idl=self._ovn, gw_chassis=all_gw_chassis,
+                nb_idl=self._nb_ovn, gw_chassis=all_gw_chassis,
                 physnet=physnet, chassis_physnets=chassis_with_physnets,
                 existing_chassis=existing_chassis)
             az_hints = self._get_availability_zones_from_router_port(g_name)
@@ -413,7 +413,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                 chassis_physnets=chassis_with_physnets,
                 availability_zone_hints=az_hints)
             chassis = self.scheduler.select(
-                self._ovn, self._sb_ovn, g_name, candidates=candidates,
+                self._nb_ovn, self._sb_ovn, g_name, candidates=candidates,
                 existing_chassis=existing_chassis)
             if primary and primary != chassis[0]:
                 if primary not in chassis:
@@ -433,8 +433,8 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                     chassis[0], chassis[index] = chassis[index], chassis[0]
             # NOTE(dalvarez): Let's commit the changes in separate transactions
             # as we will rely on those for scheduling subsequent gateways.
-            with self._ovn.transaction(check_error=True) as txn:
-                txn.add(self._ovn.update_lrouter_port(
+            with self._nb_ovn.transaction(check_error=True) as txn:
+                txn.add(self._nb_ovn.update_lrouter_port(
                     g_name, gateway_chassis=chassis))
 
     @staticmethod
@@ -460,7 +460,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                   ] if orig_gw_ip else []
         add = [{'destination': '0.0.0.0/0', 'nexthop': current_gw_ip}
                ] if current_gw_ip else []
-        with l3plugin._ovn.transaction(check_error=True) as txn:
+        with l3plugin._nb_ovn.transaction(check_error=True) as txn:
             for router_id in router_ids:
                 l3plugin._ovn_client.update_router_routes(
                     context, router_id, add, remove, txn=txn)
@@ -502,7 +502,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                                                     current, if_exists=True)
 
     def get_router_availability_zones(self, router):
-        lr = self._ovn.get_lrouter(router['id'])
+        lr = self._nb_ovn.get_lrouter(router['id'])
         if not lr:
             return []
 

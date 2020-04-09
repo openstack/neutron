@@ -170,7 +170,7 @@ class OVNPortForwarding(object):
         if not payload:
             return
         context = payload.context
-        ovn_nb = self._l3_plugin._ovn
+        ovn_nb = self._l3_plugin._nb_ovn
         with ovn_nb.transaction(check_error=True) as ovn_txn:
             if event_type == events.AFTER_CREATE:
                 self._handler.port_forwarding_created(ovn_txn, ovn_nb,
@@ -213,7 +213,7 @@ class OVNPortForwarding(object):
         pf_objs = self._get_pf_objs(context, fip_id)
         LOG.debug("Maintenance port forwarding under fip %s : %s",
                   fip_id, pf_objs)
-        ovn_nb = self._l3_plugin._ovn
+        ovn_nb = self._l3_plugin._nb_ovn
         with ovn_nb.transaction(check_error=True) as ovn_txn:
             for lb_name in self._handler.lb_names(fip_id):
                 ovn_txn.add(ovn_nb.lb_del(lb_name, vip=None, if_exists=True))
@@ -240,7 +240,7 @@ class OVNPortForwarding(object):
     def maintenance_delete(self, _context, fip_id):
         LOG.info("Maintenance DELETE port-forwarding entries under fip %s",
                  fip_id)
-        ovn_nb = self._l3_plugin._ovn
+        ovn_nb = self._l3_plugin._nb_ovn
         with ovn_nb.transaction(check_error=True) as ovn_txn:
             for lb_name in self._handler.lb_names(fip_id):
                 ovn_txn.add(ovn_nb.lb_del(lb_name, vip=None, if_exists=True))
@@ -250,7 +250,7 @@ class OVNPortForwarding(object):
         # NOTE: Since the db_sync callback is not granular to the level
         #       of the affected pfs AND the fact that pfs are all vips
         #       in a load balancer entry, it is cheap enough to simply rebuild.
-        ovn_nb = self._l3_plugin._ovn
+        ovn_nb = self._l3_plugin._nb_ovn
         pf_objs = self._get_pf_objs(context, fip_id)
         LOG.debug("Db sync port forwarding under fip %s : %s", fip_id, pf_objs)
         for lb_name in self._handler.lb_names(fip_id):
@@ -262,7 +262,7 @@ class OVNPortForwarding(object):
 
     def db_sync_delete(self, context, fip_id, ovn_txn):
         LOG.info("db_sync DELETE entries under fip %s", fip_id)
-        ovn_nb = self._l3_plugin._ovn
+        ovn_nb = self._l3_plugin._nb_ovn
         for lb_name in self._handler.lb_names(fip_id):
             ovn_txn.add(ovn_nb.lb_del(lb_name, vip=None, if_exists=True))
 
