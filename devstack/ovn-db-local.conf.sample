@@ -22,6 +22,14 @@ ADMIN_PASSWORD=password
 #OVN_REPO=https://github.com/blp/ovs-reviews.git
 #OVN_BRANCH=ovn
 
+Q_AGENT=ovn
+NEUTRON_AGENT=$Q_AGENT
+
+Q_ML2_PLUGIN_MECHANISM_DRIVERS=ovn,logger
+Q_ML2_PLUGIN_TYPE_DRIVERS=local,flat,vlan,geneve
+Q_ML2_TENANT_NETWORK_TYPE="geneve"
+#SERVICE_HOST=
+
 enable_plugin neutron https://git.openstack.org/openstack/neutron
 
 disable_all_services
