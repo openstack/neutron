@@ -27,6 +27,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
 from oslo_utils import encodeutils
+from oslo_utils import netutils
 import requests
 import webob
 
@@ -108,18 +109,26 @@ class MetadataProxyHandler(object):
             return webob.exc.HTTPInternalServerError(explanation=explanation)
 
     def _get_ports_from_server(self, router_id=None, ip_address=None,
-                               networks=None):
+                               networks=None, mac_address=None):
         """Get ports from server."""
-        filters = self._get_port_filters(router_id, ip_address, networks)
+        filters = self._get_port_filters(
+            router_id, ip_address, networks, mac_address)
         return self.plugin_rpc.get_ports(self.context, filters)
 
     def _get_port_filters(self, router_id=None, ip_address=None,
-                          networks=None):
+                          networks=None, mac_address=None):
         filters = {}
         if router_id:
             filters['device_id'] = [router_id]
             filters['device_owner'] = constants.ROUTER_INTERFACE_OWNERS
-        if ip_address:
+        # We either get an IP assigned (and therefore known) by neutron
+        # via X-Forwarded-For or that header contained a link-local
+        # IPv6 address of which neutron only knows the MAC address encoded
+        # in it. In the latter case the IPv6 address in X-Forwarded-For
+        # is not a fixed ip of the port.
+        if mac_address:
+            filters['mac_address'] = [mac_address]
+        elif ip_address:
             filters['fixed_ips'] = {'ip_address': [ip_address]}
         if networks:
             filters['network_id'] = networks
@@ -134,7 +143,8 @@ class MetadataProxyHandler(object):
 
     @cache.cache_method_results
     def _get_ports_for_remote_address(self, remote_address, networks,
-                                      skip_cache=False):
+                                      skip_cache=False,
+                                      remote_mac=None):
         """Get list of ports that has given ip address and are part of
         given networks.
 
@@ -144,10 +154,11 @@ class MetadataProxyHandler(object):
 
         """
         return self._get_ports_from_server(networks=networks,
-                                           ip_address=remote_address)
+                                           ip_address=remote_address,
+                                           mac_address=remote_mac)
 
     def _get_ports(self, remote_address, network_id=None, router_id=None,
-                   skip_cache=False):
+                   skip_cache=False, remote_mac=None):
         """Search for all ports that contain passed ip address and belongs to
         given network.
 
@@ -167,7 +178,8 @@ class MetadataProxyHandler(object):
                               " must be passed to _get_ports method."))
 
         return self._get_ports_for_remote_address(remote_address, networks,
-                                                  skip_cache=skip_cache)
+                                                  skip_cache=skip_cache,
+                                                  remote_mac=remote_mac)
 
     def _get_instance_and_tenant_id(self, req, skip_cache=False):
         forwarded_for = req.headers.get('X-Forwarded-For')
@@ -181,15 +193,23 @@ class MetadataProxyHandler(object):
                       "dropping")
             return None, None
 
+        remote_mac = None
         remote_ip = netaddr.IPAddress(forwarded_for)
         if remote_ip.version == constants.IP_VERSION_6:
             if remote_ip.is_ipv4_mapped():
                 # When haproxy listens on v4 AND v6 then it inserts ipv4
                 # addresses as ipv4-mapped v6 addresses into X-Forwarded-For.
                 forwarded_for = str(remote_ip.ipv4())
+            if remote_ip.is_link_local():
+                # When haproxy sees an ipv6 link-local client address
+                # (and sends that to us in X-Forwarded-For) we must rely
+                # on the EUI encoded in it, because that's all we can
+                # recognize.
+                remote_mac = str(netutils.get_mac_addr_by_ipv6(remote_ip))
 
-        ports = self._get_ports(forwarded_for, network_id, router_id,
-                                skip_cache=skip_cache)
+        ports = self._get_ports(
+            forwarded_for, network_id, router_id,
+            skip_cache=skip_cache, remote_mac=remote_mac)
         LOG.debug("Gotten ports for remote_address %(remote_address)s, "
                   "network_id %(network_id)s, router_id %(router_id)s are: "
                   "%(ports)s",
