@@ -260,11 +260,11 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         set_cfg('ovn_sb_certificate', self.ovsdb_server_mgr.certificate, 'ovn')
         set_cfg('ovn_sb_ca_cert', self.ovsdb_server_mgr.ca_cert, 'ovn')
 
-        # 5 seconds should be more than enough for the transaction to complete
-        # for the test cases.
-        # This also fixes the bug #1607639.
+        # NOTE(mjozefcz): We can find occasional functional test
+        # failures because of low timeout value - set it to 15
+        # seconds, should be enought. More info: 1868110
         cfg.CONF.set_override(
-            'ovsdb_connection_timeout', 5,
+            'ovsdb_connection_timeout', 15,
             'ovn')
 
         class TriggerCls(mock.MagicMock):
