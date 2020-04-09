@@ -539,10 +539,14 @@ class NetcatTester(object):
         if respawn:
             self.stop_processes()
 
-        self.client_process.writeline(testing_string)
-        message = self.server_process.read_stdout(READ_TIMEOUT).strip()
-        self.server_process.writeline(message)
-        message = self.client_process.read_stdout(READ_TIMEOUT).strip()
+        try:
+            self.client_process.writeline(testing_string)
+            message = self.server_process.read_stdout(READ_TIMEOUT).strip()
+            self.server_process.writeline(message)
+            message = self.client_process.read_stdout(READ_TIMEOUT).strip()
+        except ConnectionError as e:
+            LOG.debug("Error: %s occured during connectivity test.", e)
+            message = ""
 
         return message == testing_string
 
