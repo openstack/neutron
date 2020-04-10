@@ -36,6 +36,7 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils
 from neutron.agent.linux import ip_lib
+from neutron.api.rpc.callbacks import resources
 from neutron.objects.ports import Port
 from neutron.objects.ports import PortBinding
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
@@ -1282,26 +1283,94 @@ class TestOvsNeutronAgent(object):
             port['id'] = 'd850ed99-5f46-47bc-8c06-86d9d519c46a'
             port['mac_address'] = netaddr.EUI(FAKE_MAC)
             port['device_id'] = '0'
-            port_bind = PortBinding()
-            port_bind['host'] = 'host'
-            port_bind['vnic_type'] = portbindings.VNIC_SMARTNIC
-            port_bind['vif_type'] = 'ovs'
-            port_bind['profile'] = {
+            bindings_data = PortBinding()
+            bindings_data['host'] = 'host'
+            bindings_data['vnic_type'] = portbindings.VNIC_SMARTNIC
+            bindings_data['vif_type'] = portbindings.VIF_TYPE_OVS
+            bindings_data['profile'] = {
                 'local_link_information': [{'port_id': 'rep_port'}]}
-            port.bindings = [port_bind]
+            port.bindings = [bindings_data]
             mocked_resource.return_value = port
             self.agent.port_update("unused_context",
                                    port=port_arg)
-            expected_smartnic_data = {
+            expected_smartnic_port_data = {
                 'mac': port['mac_address'],
                 'vm_uuid': port['device_id'],
-                'iface_name': 'rep_port',
+                'vif_name': 'rep_port',
                 'iface_id': port['id'],
-                'vif_type': port_bind['vif_type']
+                'vif_type': bindings_data['vif_type']
             }
             self.assertEqual({TEST_PORT_ID1}, self.agent.updated_ports)
-            self.assertEqual([expected_smartnic_data],
+            self.assertEqual([expected_smartnic_port_data],
                              self.agent.updated_smartnic_ports)
+
+    def test_port_update_unbound_smartnic_port(self):
+        cfg.CONF.set_default('baremetal_smartnic', True, group='AGENT')
+        port_arg = {"id": 'd850ed99-5f46-47bc-8c06-86d9d519c46a'}
+        vif_name = "rep0-0"
+        vif_id = port_arg["id"]
+        vif_mac = FAKE_MAC
+        self.agent.current_smartnic_ports_map = {
+            vif_id: {
+                'vif_mac': vif_mac,
+                'vif_name': vif_name}}
+
+        with mock.patch.object(self.agent.plugin_rpc.remote_resource_cache,
+                               "get_resource_by_id") as mocked_resource:
+            port = Port()
+            port['id'] = port_arg["id"]
+            port['mac_address'] = netaddr.EUI(FAKE_MAC)
+            port['device_id'] = '0'
+            bindings_data = PortBinding()
+            bindings_data['host'] = ''
+            bindings_data['vnic_type'] = portbindings.VNIC_SMARTNIC
+            bindings_data['vif_type'] = portbindings.VIF_TYPE_UNBOUND
+            bindings_data['profile'] = {}
+            port.bindings = [bindings_data]
+            mocked_resource.return_value = port
+            self.agent.port_update("unused_context",
+                                   port=port_arg)
+            expected_smartnic_port_data = [{
+                'mac': port['mac_address'],
+                'vm_uuid': '',
+                'vif_name': 'rep0-0',
+                'iface_id': port['id'],
+                'vif_type': portbindings.VIF_TYPE_UNBOUND
+            }]
+            mocked_resource.assert_called_with(resources.PORT, port['id'])
+            self.assertEqual({port['id']}, self.agent.updated_ports)
+            self.assertEqual(expected_smartnic_port_data,
+                             self.agent.updated_smartnic_ports)
+
+    def test_port_update_unbound_smartnic_port_not_belong_to_the_agent(self):
+        cfg.CONF.set_default('baremetal_smartnic', True, group='AGENT')
+        port_arg = {"id": 'd850ed99-5f46-47bc-8c06-86d9d519c46a'}
+        vif_name = "rep0-0"
+        vif_id = 'd850ed99-5f46-47bc-8c06-86d9d519c46b'
+        vif_mac = FAKE_MAC
+        self.agent.current_smartnic_ports_map = {
+            vif_id: {
+                'vif_mac': vif_mac,
+                'vif_name': vif_name}}
+
+        with mock.patch.object(self.agent.plugin_rpc.remote_resource_cache,
+                               "get_resource_by_id") as mocked_resource:
+            port = Port()
+            port['id'] = port_arg["id"]
+            port['mac_address'] = netaddr.EUI(FAKE_MAC)
+            port['device_id'] = '0'
+            bindings_data = PortBinding()
+            bindings_data['host'] = ''
+            bindings_data['vnic_type'] = portbindings.VNIC_SMARTNIC
+            bindings_data['vif_type'] = portbindings.VIF_TYPE_UNBOUND
+            bindings_data['profile'] = {}
+            port.bindings = [bindings_data]
+            mocked_resource.return_value = port
+            self.agent.port_update("unused_context",
+                                   port=port_arg)
+            mocked_resource.assert_called_with(resources.PORT, port['id'])
+            self.assertEqual({port['id']}, self.agent.updated_ports)
+            self.assertEqual([], self.agent.updated_smartnic_ports)
 
     def test_port_delete_after_update(self):
         """Make sure a port is not marked for delete and update."""
@@ -2576,7 +2645,7 @@ class TestOvsNeutronAgent(object):
         smartnic_data = {
             'mac': mac,
             'vm_uuid': vm_uuid,
-            'iface_name': rep_port,
+            'vif_name': rep_port,
             'iface_id': iface_id,
             'vif_type': vif_type}
 
@@ -2593,7 +2662,7 @@ class TestOvsNeutronAgent(object):
 
             agent.treat_smartnic_port(smartnic_data)
 
-            if vif_type == 'ovs':
+            if vif_type == portbindings.VIF_TYPE_OVS:
                 plug_mock.assert_called_once_with(vif, instance_info)
             else:
                 unplug_mock.assert_called_once_with(vif, instance_info)
@@ -2604,96 +2673,129 @@ class TestOvsNeutronAgent(object):
     def test_treat_smartnic_port_remove(self):
         self._test_treat_smartnic_port('unbound')
 
-    def test_process_smartnic_ports(self):
-        port_id_int_br = "407a79e0-e0be-4b7d-92a6-513b2161011a"
-        vm_uuid = "407a79e0-e0be-4b7d-92a6-513b2161011b"
-        iface_id = "407a79e0-e0be-4b7d-92a6-513b2161011c"
+    def test_process_smartnic_ports_remove(self):
+        port_id = "407a79e0-e0be-4b7d-92a6-513b2161011a"
         rep_port = 'rep0-0'
         mac = FAKE_MAC
-        vif_type = "ovs"
-        EXISTING_PORT = {'id': port_id_int_br}
-        PORT_TO_PROCESS = {
-            'binding:profile': {'local_link_information': [
-                {'hostname': 'host1', 'port_id': rep_port}]},
-            'mac_address': FAKE_MAC,
-            'device_id': vm_uuid,
-            'id': iface_id,
-            'binding:vif_type': vif_type
-        }
-        with mock.patch.object(self.agent.int_br,
-                               'get_vif_port_set',
-                               return_value={port_id_int_br}),\
-                mock.patch.object(self.agent.plugin_rpc,
-                                  "get_ports_by_vnic_type_and_host",
-                                  return_value=[EXISTING_PORT,
-                                                PORT_TO_PROCESS]):
-            smartnic_data = {
-                'mac': mac,
-                'vm_uuid': vm_uuid,
-                'iface_name': rep_port,
-                'iface_id': iface_id,
-                'vif_type': vif_type}
+        ovs_port = mock.Mock()
+        ovs_port.vif_mac = mac
+        ovs_port.port_name = rep_port
+        ovs_port.vif_id = port_id
+        ports_int_br = [ovs_port]
+        expected_smartnic_ports_processed_list = [
+            {'iface_id': port_id,
+             'vif_name': rep_port,
+             'mac': mac,
+             'vif_type': portbindings.VIF_TYPE_UNBOUND,
+             'vm_uuid': ''}]
+        expected_current_smartnic_ports_map = {
+            port_id: {
+                'vif_mac': mac,
+                'vif_name': rep_port}}
+        with mock.patch.object(self.agent.plugin_rpc,
+                               "get_ports_by_vnic_type_and_host",
+                               return_value=[]),\
+                mock.patch.object(self.agent.int_br,
+                                  "get_vif_ports",
+                                  return_value=ports_int_br):
             self.agent.process_smartnic_ports()
-            self.assertEqual([smartnic_data],
+            self.assertEqual(expected_smartnic_ports_processed_list,
                              self.agent.updated_smartnic_ports)
+            self.assertEqual(expected_current_smartnic_ports_map,
+                             self.agent.current_smartnic_ports_map)
 
-    def test_add_port_to_updated_smartnic_ports_port_as_dict(self):
-        vm_uuid = "407a79e0-e0be-4b7d-92a6-513b2161011b"
-        iface_id = "407a79e0-e0be-4b7d-92a6-513b2161011c"
+    def test_process_smartnic_ports(self):
+        port_id = "407a79e0-e0be-4b7d-92a6-513b2161011a"
         rep_port = 'rep0-0'
         mac = FAKE_MAC
-        vif_type = "ovs"
+        ovs_port = mock.Mock()
+        ovs_port.vif_mac = mac
+        ovs_port.port_name = rep_port
+        ovs_port.vif_id = port_id
+        ports_int_br = [ovs_port]
+
         PORT_TO_PROCESS = {
             'binding:profile': {'local_link_information': [
                 {'hostname': 'host1', 'port_id': rep_port}]},
             'mac_address': FAKE_MAC,
-            'device_id': vm_uuid,
-            'id': iface_id,
-            'binding:vif_type': vif_type
+            'device_id': "407a79e0-e0be-4b7d-92a6-513b2161011e",
+            'id': "407a79e0-e0be-4b7d-92a6-513b2161011c",
+            'binding:vif_type': portbindings.VIF_TYPE_OVS
         }
-        self.agent._add_port_to_updated_smartnic_ports(
-            PORT_TO_PROCESS,
-            {'profile': PORT_TO_PROCESS['binding:profile'],
-             'vif_type': PORT_TO_PROCESS['binding:vif_type']})
+        expected_smartnic_ports_processed_list = [
+            {'iface_id': port_id,
+             'vif_name': rep_port,
+             'mac': mac,
+             'vif_type': portbindings.VIF_TYPE_UNBOUND,
+             'vm_uuid': ''},
+            {'iface_id': "407a79e0-e0be-4b7d-92a6-513b2161011c",
+             'vif_name': rep_port,
+             'mac': mac,
+             'vif_type': portbindings.VIF_TYPE_OVS,
+             'vm_uuid': "407a79e0-e0be-4b7d-92a6-513b2161011e"}]
+        expected_current_smartnic_ports_map = {
+            port_id: {
+                'vif_mac': mac,
+                'vif_name': rep_port}}
+        with mock.patch.object(self.agent.plugin_rpc,
+                               "get_ports_by_vnic_type_and_host",
+                               return_value=[PORT_TO_PROCESS]),\
+            mock.patch.object(self.agent.int_br,
+                              "get_vif_ports",
+                              return_value=ports_int_br):
+            self.agent.process_smartnic_ports()
+            self.assertEqual(expected_smartnic_ports_processed_list,
+                             self.agent.updated_smartnic_ports)
+            self.assertEqual(expected_current_smartnic_ports_map,
+                             self.agent.current_smartnic_ports_map)
 
-        smartnic_data = {
-            'mac': mac,
-            'vm_uuid': vm_uuid,
-            'iface_name': rep_port,
-            'iface_id': iface_id,
-            'vif_type': vif_type}
-        self.assertEqual([smartnic_data],
-                         self.agent.updated_smartnic_ports)
-
-    def test_add_port_to_updated_smartnic_ports_port_as_object(self):
-        vm_uuid = "407a79e0-e0be-4b7d-92a6-513b2161011b"
-        iface_id = "407a79e0-e0be-4b7d-92a6-513b2161011c"
-        rep_port = 'rep0-0'
+    def test_add_bound_port_to_updated_smartnic_ports(self):
         mac = FAKE_MAC
-        vif_type = "ovs"
-
-        port = Port()
-        port['id'] = iface_id
-        port['mac_address'] = netaddr.EUI(mac)
-        port['device_id'] = vm_uuid
-        port_bind = PortBinding()
-        port_bind['profile'] = {'local_link_information': [
-            {'hostname': 'host1', 'port_id': rep_port}]}
-        port_bind['vif_type'] = vif_type
-        port_bind['host'] = 'host'
-        port_bind['vnic_type'] = portbindings.VNIC_SMARTNIC
-        port.bindings = [port_bind]
-
-        self.agent._add_port_to_updated_smartnic_ports(port, port_bind)
+        vm_uuid = "407a79e0-e0be-4b7d-92a6-513b2161011b"
+        rep_port = 'rep0-0'
+        iface_id = "407a79e0-e0be-4b7d-92a6-513b2161011c"
+        self.agent._add_port_to_updated_smartnic_ports(
+            mac,
+            rep_port,
+            iface_id,
+            portbindings.VIF_TYPE_OVS,
+            vm_uuid,)
 
         smartnic_data = {
             'mac': mac,
             'vm_uuid': vm_uuid,
-            'iface_name': rep_port,
+            'vif_name': rep_port,
             'iface_id': iface_id,
-            'vif_type': vif_type}
+            'vif_type': portbindings.VIF_TYPE_OVS}
         self.assertEqual([smartnic_data],
                          self.agent.updated_smartnic_ports)
+
+    def test_add_unbound_port_to_updated_smartnic_ports(self):
+        vif_mac = FAKE_MAC
+        vif_name = 'rep0-0'
+        vif_id = "407a79e0-e0be-4b7d-92a6-513b2161011a"
+        self.agent._add_port_to_updated_smartnic_ports(
+            vif_mac,
+            vif_name,
+            vif_id,
+            portbindings.VIF_TYPE_UNBOUND)
+        smartnic_data = {
+            'mac': vif_mac,
+            'vm_uuid': '',
+            'vif_name': vif_name,
+            'iface_id': vif_id,
+            'vif_type': portbindings.VIF_TYPE_UNBOUND}
+        self.assertEqual([smartnic_data],
+                         self.agent.updated_smartnic_ports)
+
+    def test_create_smartnic_port_map_entry_data(self):
+        mac = FAKE_MAC
+        rep_port = 'rep0-0'
+        expected_return_value = {"vif_mac": mac,
+                                 "vif_name": rep_port}
+        int_br_smartnic_port_map =\
+            self.agent.create_smartnic_port_map_entry_data(mac, rep_port)
+        self.assertEqual(int_br_smartnic_port_map, expected_return_value)
 
 
 class TestOvsNeutronAgentOSKen(TestOvsNeutronAgent,

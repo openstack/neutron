@@ -213,6 +213,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.activated_bindings = set()
         # Stores smartnic ports update/remove
         self.updated_smartnic_ports = list()
+        # Stores integration bridge smartnic ports data
+        self.current_smartnic_ports_map = {}
 
         self.network_ports = collections.defaultdict(set)
         # keeps association between ports and ofports to detect ofport change
@@ -542,8 +544,24 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         for port_binding in port_data.get('bindings', []):
             if port_binding['vnic_type'] == portbindings.VNIC_SMARTNIC:
                 if port_binding['host'] == self.conf.host:
-                    self._add_port_to_updated_smartnic_ports(port_data,
-                                                             port_binding)
+                    local_link = (port_binding['profile']
+                                  ['local_link_information'])
+                    if local_link:
+                        self._add_port_to_updated_smartnic_ports(
+                            port_data['mac_address'],
+                            local_link[0]['port_id'],
+                            port_data['id'],
+                            port_binding['vif_type'],
+                            port_data['device_id'])
+                elif (not port_binding['host'] and port_binding['vif_type'] ==
+                      portbindings.VIF_TYPE_UNBOUND and port['id'] in
+                      self.current_smartnic_ports_map.keys()):
+                    smartnic_port = self.current_smartnic_ports_map[
+                        port['id']]
+                    self._add_port_to_updated_smartnic_ports(
+                        smartnic_port['vif_mac'], smartnic_port['vif_name'],
+                        port['id'], portbindings.VIF_TYPE_UNBOUND)
+
                 else:
                     # The port doesn't belong to this Smart NIC,
                     # the reason for this could be multi Smart NIC
@@ -556,7 +574,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
     def treat_smartnic_port(self, smartnic_port_data):
         mac = smartnic_port_data['mac']
         vm_uuid = smartnic_port_data['vm_uuid']
-        rep_port = smartnic_port_data['iface_name']
+        rep_port = smartnic_port_data['vif_name']
         iface_id = smartnic_port_data['iface_id']
         vif_type = smartnic_port_data['vif_type']
 
@@ -565,9 +583,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         try:
             if vif_type == portbindings.VIF_TYPE_OVS:
                 os_vif.plug(vif, instance_info)
+                self.current_smartnic_ports_map[iface_id] = (
+                    self.create_smartnic_port_map_entry_data(mac, rep_port))
 
             elif vif_type == portbindings.VIF_TYPE_UNBOUND:
                 os_vif.unplug(vif, instance_info)
+                self.current_smartnic_ports_map.pop(iface_id, None)
 
             else:
                 LOG.error("Unexpected vif_type:%(vif_type)s for "
@@ -592,16 +613,14 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             vif_name=rep_port, plugin='ovs', port_profile=port_profile,
             network=network, address=str(mac))
 
-    def _add_port_to_updated_smartnic_ports(self, port_data, port_binding):
-        local_link = port_binding['profile']['local_link_information']
-        if local_link:
-            iface_name = local_link[0]['port_id']
-            self.updated_smartnic_ports.append({
-                'mac': port_data['mac_address'],
-                'vm_uuid': port_data['device_id'],
-                'iface_name': iface_name,
-                'iface_id': port_data['id'],
-                'vif_type': port_binding['vif_type']})
+    def _add_port_to_updated_smartnic_ports(self, mac, vif_name, iface_id,
+                                            vif_type, vm_uuid=''):
+        self.updated_smartnic_ports.append({
+            'mac': mac,
+            'vm_uuid': vm_uuid,
+            'vif_name': vif_name,
+            'iface_id': iface_id,
+            'vif_type': vif_type})
 
     @profiler.trace("rpc")
     def port_delete(self, context, **kwargs):
@@ -692,16 +711,54 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # more secure
         self.sg_agent.remove_devices_filter(deleted_ports)
 
+    def create_smartnic_port_map_entry_data(self, vif_mac, vif_name):
+        return {"vif_mac": vif_mac, "vif_name": vif_name}
+
     def process_smartnic_ports(self):
         smartnic_ports = self.plugin_rpc.get_ports_by_vnic_type_and_host(
             self.context, portbindings.VNIC_SMARTNIC, self.conf.host)
-        ports = self.int_br.get_vif_port_set()
-        for smartnic_port in smartnic_ports:
-            if smartnic_port['id'] not in ports:
+        smartnic_ports_map = {smartnic_port['id']: smartnic_port
+                              for smartnic_port in smartnic_ports}
+        smartnic_port_ids = set(smartnic_ports_map.keys())
+
+        ofport_filter = (ovs_lib.INVALID_OFPORT, ovs_lib.UNASSIGNED_OFPORT)
+        cur_smartnic_ports = self.int_br.get_vif_ports(ofport_filter)
+        self.current_smartnic_ports_map = {
+            port.vif_id: self.create_smartnic_port_map_entry_data(
+                port.vif_mac, port.port_name) for port in cur_smartnic_ports}
+        cur_smartnic_port_ids = set(self.current_smartnic_ports_map.keys())
+
+        removed_ports = []
+        for vif_id in cur_smartnic_port_ids - smartnic_port_ids:
+            vif_data = {'vif_id': vif_id}
+            vif_data.update(self.current_smartnic_ports_map[vif_id])
+            removed_ports.append(vif_data)
+
+        added_ports = [smartnic_ports_map[port_id] for port_id in
+                       smartnic_port_ids - cur_smartnic_port_ids]
+
+        def _process_added_ports(smartnic_added_ports):
+            for smartnic_port in smartnic_added_ports:
+                local_link = (smartnic_port['binding:profile']
+                              ['local_link_information'])
+                if local_link:
+                    self._add_port_to_updated_smartnic_ports(
+                        smartnic_port['mac_address'],
+                        local_link[0]['port_id'],
+                        smartnic_port['id'],
+                        smartnic_port['binding:vif_type'],
+                        smartnic_port['device_id'])
+
+        def _process_removed_ports(removed_ports):
+            for ovs_port in removed_ports:
                 self._add_port_to_updated_smartnic_ports(
-                    smartnic_port,
-                    {'profile': smartnic_port['binding:profile'],
-                     'vif_type': smartnic_port['binding:vif_type']})
+                        ovs_port['vif_mac'],
+                        ovs_port['vif_name'],
+                        ovs_port['vif_id'],
+                        portbindings.VIF_TYPE_UNBOUND)
+
+        _process_removed_ports(removed_ports)
+        _process_added_ports(added_ports)
 
     def process_deactivated_bindings(self, port_info):
         # don't try to deactivate bindings for removed ports since they are
