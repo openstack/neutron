@@ -52,7 +52,10 @@ class KeepalivedManagerTestCase(base.BaseLoggingTestCase,
         # neutron.tests.unit.agent.linux.test_keepalived module
         dev_names = ['eth0', 'eth1', 'eth2', 'eth4', 'eth6', 'eth10']
         for name in dev_names:
-            self.ip_wrapper.add_dummy(name)
+            ip_device = self.ip_wrapper.add_dummy(name)
+            if name == 'eth0':
+                ip_device.link.set_up()
+                ip_device.addr.add('169.254.201.1/16')
 
     def _spawn_keepalived(self, keepalived_manager):
         keepalived_manager.spawn()
