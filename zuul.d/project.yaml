@@ -16,10 +16,12 @@
       jobs:
         - neutron-functional
         - neutron-fullstack
+        - neutron-fullstack-with-uwsgi
         - neutron-rally-task
-        - neutron-tempest-linuxbridge
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
+        - neutron-tempest-linuxbridge
+        - neutron-tempest-with-uwsgi
         - tempest-integrated-networking:
             # We don't run the job on things like neutron docs-only changes
             irrelevant-files: &irrelevant-files
@@ -45,6 +47,8 @@
             irrelevant-files: *irrelevant-files
         - tempest-slow-py3:
             irrelevant-files: *irrelevant-files
+        - tempest-ipv6-only:
+            irrelevant-files: *irrelevant-files
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only:
             voting: false
@@ -53,15 +57,9 @@
         #- networking-midonet-tempest-aio-ml2-centos-7:
         #    voting: false
         #    irrelevant-files: *irrelevant-files
-        - tempest-ipv6-only:
-            irrelevant-files: *irrelevant-files
         - openstacksdk-functional-devstack-networking:
             voting: false
         - neutron-functional-with-uwsgi:
-            voting: false
-        - neutron-fullstack-with-uwsgi:
-            voting: false
-        - neutron-tempest-with-uwsgi:
             voting: false
         - neutron-centos-8-tripleo-standalone
         - neutron-ovn-rally-task:
