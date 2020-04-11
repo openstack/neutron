@@ -2695,35 +2695,59 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self._test_process_routers_update_rpc_timeout(ext_net_call=True,
                                                       ext_net_call_failed=True)
 
-    @mock.patch.object(pd, 'remove_router')
-    def _test_process_routers_update_router_deleted(self, remove_router,
-                                                    error=False):
+    def test_process_routers_update_router_update(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent._queue = mock.Mock()
         update = mock.Mock()
         update.resource = None
-        update.action = 1  # ROUTER_DELETED
+        update.action = l3_agent.ADD_UPDATE_ROUTER
         router_info = mock.MagicMock()
         agent.router_info[update.id] = router_info
         router_processor = mock.Mock()
         agent._queue.each_update_to_next_resource.side_effect = [
             [(router_processor, update)]]
         agent._resync_router = mock.Mock()
+        agent._safe_router_removed = mock.Mock()
+        agent.plugin_rpc = mock.MagicMock()
+        agent.plugin_rpc.get_routers.side_effect = (
+            Exception("Failed to get router info"))
+        # start test
+        agent._process_router_update()
+        router_info.delete.assert_not_called()
+        self.assertFalse(router_info.delete.called)
+        self.assertTrue(agent.router_info)
+        self.assertTrue(agent._resync_router.called)
+        self.assertFalse(agent._safe_router_removed.called)
+
+    def _test_process_routers_update_router_deleted(self,
+                                                    error=False):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent._queue = mock.Mock()
+        update = mock.Mock()
+        update.resource = None
+        update.action = l3_agent.DELETE_ROUTER
+        router_info = mock.MagicMock()
+        agent.router_info[update.id] = router_info
+        router_processor = mock.Mock()
+        agent._queue.each_update_to_next_resource.side_effect = [
+            [(router_processor, update)]]
+        agent._resync_router = mock.Mock()
+        agent._safe_router_removed = mock.Mock()
         if error:
-            agent._safe_router_removed = mock.Mock()
             agent._safe_router_removed.return_value = False
         agent._process_router_update()
         if error:
             self.assertFalse(router_processor.fetched_and_processed.called)
             agent._resync_router.assert_called_with(update)
-            self.assertFalse(remove_router.called)
+            self.assertTrue(agent._safe_router_removed.called)
         else:
-            router_info.delete.assert_called_once_with()
-            self.assertFalse(agent.router_info)
+            router_info.delete.assert_not_called()
+            self.assertFalse(router_info.delete.called)
+            self.assertTrue(agent.router_info)
             self.assertFalse(agent._resync_router.called)
             router_processor.fetched_and_processed.assert_called_once_with(
                 update.timestamp)
-            self.assertTrue(remove_router.called)
+            self.assertTrue(agent._safe_router_removed.called)
 
     def test_process_routers_update_router_deleted_success(self):
         self._test_process_routers_update_router_deleted()
