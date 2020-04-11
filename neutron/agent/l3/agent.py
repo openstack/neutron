@@ -658,9 +658,6 @@ class L3NATAgent(ha.AgentMixin,
         if router_update.hit_retry_limit():
             LOG.warning("Hit retry limit with router update for %s, action %s",
                         router_update.id, router_update.action)
-            if router_update.action != DELETE_ROUTER:
-                LOG.debug("Deleting router %s", router_update.id)
-                self._safe_router_removed(router_update.id)
             return
         router_update.timestamp = timeutils.utcnow()
         router_update.priority = priority
