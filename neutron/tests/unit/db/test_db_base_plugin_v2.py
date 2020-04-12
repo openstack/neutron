@@ -6767,7 +6767,7 @@ class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
         with db_api.CONTEXT_WRITER.using(ctx):
             subnetpool = models_v2.SubnetPool(
                 ip_version=constants.IP_VERSION_4, default_prefixlen=4,
-                min_prefixlen=4, max_prefixlen=4, shared=False,
+                min_prefixlen=4, max_prefixlen=4,
                 default_quota=4, address_scope_id='f', tenant_id='dbcheck',
                 is_default=False
             )
@@ -6807,7 +6807,7 @@ class DbModelProjectTestCase(DbModelMixin, testlib_api.SqlTestCase):
         with db_api.CONTEXT_WRITER.using(ctx):
             subnetpool = models_v2.SubnetPool(
                 ip_version=constants.IP_VERSION_4, default_prefixlen=4,
-                min_prefixlen=4, max_prefixlen=4, shared=False,
+                min_prefixlen=4, max_prefixlen=4,
                 default_quota=4, address_scope_id='f', project_id='dbcheck',
                 is_default=False
             )

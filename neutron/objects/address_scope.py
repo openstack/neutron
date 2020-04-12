@@ -14,7 +14,6 @@
 
 from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
-import sqlalchemy as sa
 
 from neutron.db.models import address_scope as models
 from neutron.db import models_v2
@@ -31,22 +30,6 @@ class AddressScopeRBAC(rbac.RBACBaseObject):
     VERSION = '1.0'
 
     db_model = rbac_db_models.AddressScopeRBAC
-
-    @classmethod
-    def get_projects(cls, context, object_id=None, action=None,
-                     target_tenant=None):
-        clauses = []
-
-        if object_id:
-            clauses.append(cls.db_model.object_id == object_id)
-        if action:
-            clauses.append(cls.db_model.action == action)
-        if target_tenant:
-            clauses.append(cls.db_model.target_tenant == target_tenant)
-        query = context.session.query(cls.db_model.target_tenant)
-        if clauses:
-            query = query.filter(sa.and_(*clauses))
-        return [data[0] for data in query]
 
 
 @base.NeutronObjectRegistry.register

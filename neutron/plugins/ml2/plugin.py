@@ -45,6 +45,7 @@ from neutron_lib.api.definitions import portbindings_extended as pbe_ext
 from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import rbac_address_scope
 from neutron_lib.api.definitions import rbac_security_groups as rbac_sg_apidef
+from neutron_lib.api.definitions import rbac_subnetpool
 from neutron_lib.api.definitions import security_groups_port_filtering
 from neutron_lib.api.definitions import stateful_security_group
 from neutron_lib.api.definitions import subnet as subnet_def
@@ -184,6 +185,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "quotas", "security-group",
                                     rbac_address_scope.ALIAS,
                                     rbac_sg_apidef.ALIAS,
+                                    rbac_subnetpool.ALIAS,
                                     agent_apidef.ALIAS,
                                     dhcpagentscheduler.ALIAS,
                                     multiprovidernet.ALIAS,

@@ -235,7 +235,15 @@ class SubnetPool(standard_attr.HasStandardAttributes, model_base.BASEV2,
     default_prefixlen = sa.Column(sa.Integer, nullable=False)
     min_prefixlen = sa.Column(sa.Integer, nullable=False)
     max_prefixlen = sa.Column(sa.Integer, nullable=False)
-    shared = sa.Column(sa.Boolean, nullable=False)
+
+    # TODO(imalinovskiy): drop this field when contract migrations will be
+    #  allowed again
+    # NOTE(imalinovskiy): this field cannot be removed from model due to
+    # functional test test_models_sync, trailing underscore is required to
+    # prevent conflicts with RBAC code
+    shared_ = sa.Column("shared", sa.Boolean, nullable=False,
+                        server_default=sql.false())
+
     is_default = sa.Column(sa.Boolean, nullable=False,
                            server_default=sql.false())
     default_quota = sa.Column(sa.Integer, nullable=True)
@@ -245,6 +253,10 @@ class SubnetPool(standard_attr.HasStandardAttributes, model_base.BASEV2,
                                 backref='subnetpools',
                                 cascade='all, delete, delete-orphan',
                                 lazy='subquery')
+    rbac_entries = sa.orm.relationship(rbac_db_models.SubnetPoolRBAC,
+                                       backref='subnetpools',
+                                       lazy='subquery',
+                                       cascade='all, delete, delete-orphan')
     api_collections = [subnetpool_def.COLLECTION_NAME]
     collection_resource_map = {subnetpool_def.COLLECTION_NAME:
                                subnetpool_def.RESOURCE_NAME}

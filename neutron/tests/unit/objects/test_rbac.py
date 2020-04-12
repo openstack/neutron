@@ -18,6 +18,7 @@ from neutron.objects import network
 from neutron.objects.qos import policy
 from neutron.objects import rbac
 from neutron.objects import securitygroup
+from neutron.objects import subnetpool
 from neutron.tests import base as neutron_test_base
 from neutron.tests.unit.objects import test_base
 
@@ -39,7 +40,8 @@ class RBACBaseObjectTestCase(neutron_test_base.BaseTestCase):
         class_map = {'address_scope': address_scope.AddressScopeRBAC,
                      'qos_policy': policy.QosPolicyRBAC,
                      'network': network.NetworkRBAC,
-                     'security_group': securitygroup.SecurityGroupRBAC}
+                     'security_group': securitygroup.SecurityGroupRBAC,
+                     'subnetpool': subnetpool.SubnetPoolRBAC}
         self.assertEqual(class_map, rbac.RBACBaseObject.get_type_class_map())
 
 
