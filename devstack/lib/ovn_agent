@@ -600,7 +600,7 @@ function init_ovn {
 
 function _start_ovs {
     echo "Starting OVS"
-    if is_service_enabled ovn-controller || is_service_enabled ovn-controller-vtep ; then
+    if is_service_enabled ovn-controller ovn-controller-vtep ovn-northd; then
         # ovsdb-server and ovs-vswitchd are used privately in OVN as openvswitch service names.
         enable_service ovsdb-server
         enable_service ovs-vswitchd
