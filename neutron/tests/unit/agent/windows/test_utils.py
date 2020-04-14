@@ -26,6 +26,13 @@ from neutron.agent.windows import utils
 from neutron.tests import base
 
 
+class x_wmi(Exception):
+    def __init__(self, info='', com_error=None):
+        super(x_wmi, self).__init__(info)
+        self.info = info
+        self.com_error = com_error
+
+
 @ddt.ddt
 class WindowsUtilsTestCase(base.BaseTestCase):
     @mock.patch('os.environ', {mock.sentinel.key0: mock.sentinel.val0})
@@ -86,6 +93,25 @@ class WindowsUtilsTestCase(base.BaseTestCase):
 
         if pid:
             mock_conn.Win32_Process.assert_called_once_with(ProcessId=pid)
+
+    @ddt.data({},
+              {"hresult": 0xff,
+               "expect_exc": True})
+    @ddt.unpack
+    @mock.patch.object(utils, 'wmi', create=True)
+    def test_get_wmi_process_exc(self, mock_wmi, expect_exc=False,
+                                 hresult=0x800703FA):
+        mock_conn = mock_wmi.WMI.return_value
+        mock_wmi.x_wmi = x_wmi
+        com_error = mock.Mock(hresult=hresult)
+        exc = x_wmi(com_error=com_error)
+        mock_conn.Win32_Process.side_effect = exc
+
+        if expect_exc:
+            self.assertRaises(
+                x_wmi, utils._get_wmi_process, mock.sentinel.pid)
+        else:
+            self.assertIsNone(utils._get_wmi_process(mock.sentinel.pid))
 
     @ddt.data(True, False)
     @mock.patch.object(utils, '_get_wmi_process')

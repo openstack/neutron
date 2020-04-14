@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import ctypes
 import io
 import os
 
@@ -37,6 +38,8 @@ LOG = logging.getLogger(__name__)
 # as pipes are blocking on Windows.
 subprocess = eventlet.patcher.original('subprocess')
 subprocess.threading = eventlet.patcher.original('threading')
+
+ERROR_KEY_DELETED = 0x03FA
 
 
 def create_process(cmd, run_as_root=False, addl_env=None,
@@ -71,8 +74,16 @@ def _get_wmi_process(pid):
     if not pid:
         return None
 
-    conn = wmi.WMI()
-    processes = conn.Win32_Process(ProcessId=pid)
+    try:
+        conn = wmi.WMI()
+        processes = conn.Win32_Process(ProcessId=pid)
+    except wmi.x_wmi as exc:
+        hresult = exc.com_error.hresult
+        err_code = ctypes.c_uint(hresult).value & 0xFFFF
+        if err_code == ERROR_KEY_DELETED:
+            return None
+        raise
+
     if processes:
         return processes[0]
     return None
