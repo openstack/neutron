@@ -8,6 +8,7 @@ OVN Driver Administration Guide
    ovn
    features
    routing
+   igmp
    tutorial
    refarch/refarch
    dpdk
