@@ -14,6 +14,7 @@
 #    under the License.
 
 import os
+import threading
 
 import eventlet
 from oslo_log import log as logging
@@ -83,6 +84,8 @@ class AgentMixin(object):
         self.state_change_notifier = batch_notifier.BatchNotifier(
             self._calculate_batch_duration(), self.notify_server)
         eventlet.spawn(self._start_keepalived_notifications_server)
+        self._transition_states = {}
+        self._transition_state_mutex = threading.Lock()
 
     def _get_router_info(self, router_id):
         try:
@@ -112,7 +115,44 @@ class AgentMixin(object):
         # default 2 seconds.
         return self.conf.ha_vrrp_advert_int
 
+    def _update_transition_state(self, router_id, new_state=None):
+        with self._transition_state_mutex:
+            transition_state = self._transition_states.get(router_id)
+            if new_state:
+                self._transition_states[router_id] = new_state
+            else:
+                self._transition_states.pop(router_id, None)
+        return transition_state
+
     def enqueue_state_change(self, router_id, state):
+        """Inform the server about the new router state
+
+        This function will also update the metadata proxy, the radvd daemon,
+        process the prefix delegation and inform to the L3 extensions. If the
+        HA router changes to "master", this transition will be delayed for at
+        least "ha_vrrp_advert_int" seconds. When the "master" router
+        transitions to "backup", "keepalived" will set the rest of HA routers
+        to "master" until it decides which one should be the only "master".
+        The transition from "backup" to "master" and then to "backup" again,
+        should not be registered in the Neutron server.
+
+        :param router_id: router ID
+        :param state: ['master', 'backup']
+        """
+        if not self._update_transition_state(router_id, state):
+            eventlet.spawn_n(self._enqueue_state_change, router_id, state)
+            eventlet.sleep(0)
+
+    def _enqueue_state_change(self, router_id, state):
+        # NOTE(ralonsoh): move 'master' and 'backup' constants to n-lib
+        if state == 'master':
+            eventlet.sleep(self.conf.ha_vrrp_advert_int)
+        if self._update_transition_state(router_id) != state:
+            # If the current "transition state" is not the initial "state" sent
+            # to update the router, that means the actual router state is the
+            # same as the "transition state" (e.g.: backup-->master-->backup).
+            return
+
         state_change_data = {"router_id": router_id, "state": state}
         LOG.info('Router %(router_id)s transitioned to %(state)s',
                  state_change_data)
@@ -125,6 +165,7 @@ class AgentMixin(object):
         # configuration to keepalived-state-change in order to remove the
         # dependency that currently exists on l3-agent running for the IPv6
         # failover.
+        ri.ha_state = state
         self._configure_ipv6_params(ri, state)
         if self.conf.enable_metadata_proxy:
             self._update_metadata_proxy(ri, router_id, state)
