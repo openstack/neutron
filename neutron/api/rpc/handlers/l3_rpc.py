@@ -293,8 +293,8 @@ class L3RpcCallback(object):
         """DVR: RPC called by dvr-agent to get all ports for subnet."""
         subnet_id = kwargs.get('subnet_id')
         LOG.debug("DVR: subnet_id: %s", subnet_id)
-        filters = {'fixed_ips': {'subnet_id': [subnet_id]}}
-        return self.plugin.get_ports(context, filters=filters)
+        return self.l3plugin.get_ports_under_dvr_connected_subnet(
+            context, subnet_id)
 
     @db_api.retry_db_errors
     def get_agent_gateway_port(self, context, **kwargs):

@@ -202,7 +202,8 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         return db_utils.resource_fields(res, fields)
 
     def _make_port_dict(self, port, fields=None,
-                        process_extensions=True):
+                        process_extensions=True,
+                        with_fixed_ips=True):
         res = {"id": port["id"],
                'name': port['name'],
                "network_id": port["network_id"],
@@ -210,11 +211,13 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                "mac_address": port["mac_address"],
                "admin_state_up": port["admin_state_up"],
                "status": port["status"],
-               "fixed_ips": [{'subnet_id': ip["subnet_id"],
-                              'ip_address': ip["ip_address"]}
-                             for ip in port["fixed_ips"]],
                "device_id": port["device_id"],
                "device_owner": port["device_owner"]}
+        if with_fixed_ips:
+            res["fixed_ips"] = [
+                {'subnet_id': ip["subnet_id"],
+                 'ip_address': str(
+                     ip["ip_address"])} for ip in port["fixed_ips"]]
         # Call auxiliary extend functions, if any
         if process_extensions:
             resource_extend.apply_funcs(port_def.COLLECTION_NAME, res, port)
