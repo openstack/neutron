@@ -50,7 +50,7 @@ OVN Northbound Database:
 
 
 To find more information about the learnt IGMP groups by OVN use the
-command below:
+command below (populated only when igmp_snooping_enable is True):
 
 .. code-block:: bash
 
@@ -63,6 +63,13 @@ command below:
     ...
 
 .. end
+
+.. note::
+
+   Since IGMP querier is not yet supported in the OVN driver, restarting
+   the ovn-controller service(s) will result in OVN unlearning the IGMP
+   groups and broadcast all the multicast traffic. This behavior can
+   impact when updating/upgrading the OVN services.
 
 
 Extra information
