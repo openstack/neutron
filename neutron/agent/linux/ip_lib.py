@@ -15,6 +15,7 @@
 
 import errno
 import re
+import threading
 import time
 
 import eventlet
@@ -1412,7 +1413,7 @@ def ip_monitor(namespace, queue, event_stop, event_started):
                 return
             raise
 
-    def read_ip_updates(_queue):
+    def read_ip_updates(_ip, _queue):
         """Read Pyroute2.IPRoute input socket
 
         The aim of this function is to open and bind an IPRoute socket only for
@@ -1420,13 +1421,14 @@ def ip_monitor(namespace, queue, event_stop, event_started):
         opened socket. This function is executed in a separate thread,
         dedicated only to this task.
         """
-        with privileged.get_iproute(namespace) as ip:
-            ip.bind()
+        _ip.bind(async_cache=True)
+        try:
             while True:
-                eventlet.sleep(0)
-                ip_addresses = ip.get()
+                ip_addresses = _ip.get()
                 for ip_address in ip_addresses:
                     _queue.put(ip_address)
+        except EOFError:
+            pass
 
     _queue = eventlet.Queue()
     try:
@@ -1435,13 +1437,14 @@ def ip_monitor(namespace, queue, event_stop, event_started):
             for device in ip.get_links():
                 cache_devices[device['index']] = get_attr(device,
                                                           'IFLA_IFNAME')
-        pool = eventlet.GreenPool(1)
-        ip_updates_thread = pool.spawn(read_ip_updates, _queue)
-        event_started.send()
-        while not event_stop.ready():
-            eventlet.sleep(0)
+        _ip = privileged.get_iproute(namespace)
+        ip_updates_thread = threading.Thread(target=read_ip_updates,
+                                             args=(_ip, _queue))
+        ip_updates_thread.start()
+        event_started.set()
+        while not event_stop.is_set():
             try:
-                ip_address = _queue.get(timeout=2)
+                ip_address = _queue.get(timeout=1)
             except eventlet.queue.Empty:
                 continue
             if 'index' in ip_address and 'prefixlen' in ip_address:
@@ -1454,7 +1457,8 @@ def ip_monitor(namespace, queue, event_stop, event_started):
                 cache_devices[index] = name
                 queue.put(_parse_ip_address(ip_address, name))
 
-        ip_updates_thread.kill()
+        _ip.close()
+        ip_updates_thread.join(timeout=5)
 
     except OSError as e:
         if e.errno == errno.ENOENT:
