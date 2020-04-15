@@ -9,4 +9,5 @@ OVN Driver
    :maxdepth: 1
 
    migration.rst
+   gaps.rst
    faq/index.rst
