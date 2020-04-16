@@ -509,6 +509,55 @@ class TestDhcpAgent(base.BaseTestCase):
                        ready.call_args_list[1][0][0])
         self.assertEqual(set(range(port_count)), ports_ready)
 
+    def test_dhcp_ready_ports_loop_with_limit_ports_per_call_prio(self):
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        sync_max = dhcp_agent.DHCP_READY_PORTS_SYNC_MAX
+        port_count = 4
+        # port set ranges must be unique to differentiate results
+        dhcp.dhcp_prio_ready_ports = set(range(sync_max))
+        dhcp.dhcp_ready_ports = set(range(sync_max, sync_max + port_count))
+
+        with mock.patch.object(dhcp.plugin_rpc,
+                               'dhcp_ready_on_ports') as ready:
+            # exit after 1 iteration
+            with mock.patch.object(dhcp_agent.eventlet, 'sleep',
+                                   side_effect=[0, RuntimeError]):
+                with testtools.ExpectedException(RuntimeError):
+                    dhcp._dhcp_ready_ports_loop()
+
+        # only priority ports should have been processed
+        self.assertEqual(set(), dhcp.dhcp_prio_ready_ports)
+        self.assertEqual(set(range(sync_max, sync_max + port_count)),
+                         dhcp.dhcp_ready_ports)
+        # one call is expected, with DHCP_READY_PORTS_SYNC_MAX ports
+        self.assertEqual(1, ready.call_count)
+        self.assertEqual(sync_max, len(ready.call_args_list[0][0][0]))
+        # priority ports need to be ready
+        ports_ready = ready.call_args_list[0][0][0]
+        self.assertEqual(set(range(sync_max)), ports_ready)
+
+        # add some priority ports, to make sure they are processed
+        dhcp.dhcp_prio_ready_ports = set(range(port_count))
+        with mock.patch.object(dhcp.plugin_rpc,
+                               'dhcp_ready_on_ports') as ready:
+            # exit after 1 iteration
+            with mock.patch.object(dhcp_agent.eventlet, 'sleep',
+                                   side_effect=[0, RuntimeError]):
+                with testtools.ExpectedException(RuntimeError):
+                    dhcp._dhcp_ready_ports_loop()
+
+        # all ports should have been processed
+        self.assertEqual(set(), dhcp.dhcp_prio_ready_ports)
+        self.assertEqual(set(), dhcp.dhcp_ready_ports)
+        # one call is expected, with (port_count * 2) ports
+        self.assertEqual(1, ready.call_count)
+        self.assertEqual(port_count * 2, len(ready.call_args_list[0][0][0]))
+        # all ports need to be ready
+        ports_ready = ready.call_args_list[0][0][0]
+        all_ports = (set(range(port_count)) |
+                     set(range(sync_max, sync_max + port_count)))
+        self.assertEqual(all_ports, ports_ready)
+
     def test_dhcp_ready_ports_updates_after_enable_dhcp(self):
         dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         self.assertEqual(set(), dhcp.dhcp_ready_ports)
@@ -1180,7 +1229,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.dhcp.port_update_end(None, payload)
         self.dhcp._process_resource_update()
         self.reload_allocations.assert_called_once_with(fake_port2,
-                                                        fake_network)
+                                                        fake_network,
+                                                        prio=True)
 
     def test_reload_allocations(self):
         self.cache.get_port_by_id.return_value = fake_port2
@@ -1201,7 +1251,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.dhcp.port_create_end(None, payload)
         self.dhcp._process_resource_update()
         self.reload_allocations.assert_called_once_with(fake_port2,
-                                                        fake_network)
+                                                        fake_network,
+                                                        prio=True)
 
     def test_port_create_end_no_resync_if_same_port_already_in_cache(self):
         self.reload_allocations_p = mock.patch.object(self.dhcp,
@@ -1215,7 +1266,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.dhcp.port_create_end(None, payload)
         self.dhcp._process_resource_update()
         self.reload_allocations.assert_called_once_with(fake_port2,
-                                                        new_fake_network)
+                                                        new_fake_network,
+                                                        prio=True)
         self.schedule_resync.assert_not_called()
 
     def test_port_update_change_ip_on_port(self):
