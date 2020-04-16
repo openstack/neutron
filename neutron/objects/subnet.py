@@ -321,7 +321,8 @@ class Subnet(base.NeutronDbObject):
 
     @classmethod
     def find_candidate_subnets(cls, context, network_id, host, service_type,
-                               fixed_configured, fixed_ips):
+                               fixed_configured, fixed_ips,
+                               distributed_service=False):
         """Find canditate subnets for the network, host, and service_type"""
         query = cls.query_subnets_on_network(context, network_id)
         query = SubnetServiceType.query_filter_service_subnets(
@@ -335,7 +336,8 @@ class Subnet(base.NeutronDbObject):
                 # on port update with binding:host_id set. Allocation _cannot_
                 # be deferred as requested fixed_ips would then be lost.
                 return cls._query_filter_by_fixed_ips_segment(
-                    query, fixed_ips).all()
+                    query, fixed_ips,
+                    allow_multiple_segments=distributed_service).all()
             # If the host isn't known, we can't allocate on a routed network.
             # So, exclude any subnets attached to segments.
             return cls._query_exclude_subnets_on_segments(query).all()
@@ -357,7 +359,8 @@ class Subnet(base.NeutronDbObject):
         return [subnet for subnet, _mapping in results]
 
     @classmethod
-    def _query_filter_by_fixed_ips_segment(cls, query, fixed_ips):
+    def _query_filter_by_fixed_ips_segment(cls, query, fixed_ips,
+            allow_multiple_segments=False):
         """Excludes subnets not on the same segment as fixed_ips
 
         :raises: FixedIpsSubnetsNotOnSameSegment
@@ -390,8 +393,11 @@ class Subnet(base.NeutronDbObject):
             if subnet and subnet.segment_id not in segment_ids:
                 segment_ids.append(subnet.segment_id)
 
-            if 1 < len(segment_ids):
+            if 1 < len(segment_ids) and not allow_multiple_segments:
                 raise segment_exc.FixedIpsSubnetsNotOnSameSegment()
+
+        if allow_multiple_segments:
+            return query
 
         segment_id = None if not segment_ids else segment_ids[0]
         return query.filter(cls.db_model.segment_id == segment_id)

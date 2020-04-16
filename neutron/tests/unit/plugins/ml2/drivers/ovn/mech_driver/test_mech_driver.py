@@ -1990,6 +1990,116 @@ class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
             lport_name=ovn_utils.ovn_provnet_port_name(seg_2['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']))
 
+    def _test_segments_helper(self):
+        ovn_conf.cfg.CONF.set_override('ovn_metadata_enabled', True,
+                                       group='ovn')
+
+        # Create first segment and associate subnet to it.
+        with self.network() as n:
+            self.net = n
+        self.seg_1 = self._test_create_segment(
+            network_id=self.net['network']['id'], physical_network='phys_net1',
+            segmentation_id=200, network_type='vlan')['segment']
+        with self.subnet(network=self.net, cidr='10.0.1.0/24',
+                         segment_id=self.seg_1['id']) as subnet:
+            self.sub_1 = subnet
+
+        # Create second segment and subnet linked to it
+        self.seg_2 = self._test_create_segment(
+            network_id=self.net['network']['id'], physical_network='phys_net2',
+            segmentation_id=300, network_type='vlan')['segment']
+        with self.subnet(network=self.net, cidr='10.0.2.0/24',
+                         segment_id=self.seg_2['id']) as subnet:
+            self.sub_2 = subnet
+
+    def test_create_segments_subnet_metadata_ip_allocation(self):
+        self._test_segments_helper()
+        ovn_nb_api = self.mech_driver._nb_ovn
+
+        # Assert that metadata address has been allocated from previously
+        # created subnet.
+        self.assertIn(
+            '10.0.1.2',
+            ovn_nb_api.set_lswitch_port.call_args_list[0][1]['addresses'][0])
+
+        # Assert that the second subnet address also has been allocated for
+        # metadata port.
+        self.assertIn(
+            '10.0.2.2',
+            ovn_nb_api.set_lswitch_port.call_args_list[1][1]['addresses'][0])
+        # Assert also that the first subnet address is in this update
+        self.assertIn(
+            '10.0.1.2',
+            ovn_nb_api.set_lswitch_port.call_args_list[1][1]['addresses'][0])
+        self.assertEqual(
+            ovn_nb_api.set_lswitch_port.call_count, 2)
+
+        # Make sure both updates where on same metadata port
+        args_list = ovn_nb_api.set_lswitch_port.call_args_list
+        self.assertEqual(
+            'ovnmeta-%s' % self.net['network']['id'],
+            args_list[1][1]['external_ids']['neutron:device_id'])
+        self.assertEqual(
+            args_list[1][1]['external_ids']['neutron:device_id'],
+            args_list[0][1]['external_ids']['neutron:device_id'])
+        self.assertEqual(
+            args_list[1][1]['external_ids']['neutron:device_owner'],
+            args_list[0][1]['external_ids']['neutron:device_owner'])
+        self.assertEqual(
+            const.DEVICE_OWNER_DHCP,
+            args_list[1][1]['external_ids']['neutron:device_owner'])
+
+    def test_create_segments_mixed_allocation_prohibited(self):
+        self._test_segments_helper()
+
+        # Try to create 'normal' port with ip address
+        # allocations from multiple segments
+        kwargs = {'fixed_ips': [{'ip_address': '10.0.1.100',
+                                 'subnet_id': self.sub_1['subnet']['id']},
+                                {'ip_address': '10.0.2.100',
+                                 'subnet_id': self.sub_2['subnet']['id']}]}
+
+        # Make sure that this allocation is prohibited.
+        self._create_port(
+            self.fmt, self.net['network']['id'],
+            arg_list=('fixed_ips',), **kwargs,
+            expected_res_status=400)
+
+    def test_create_delete_segment_distributed_service_port_not_touched(self):
+        self._test_segments_helper()
+        ovn_nb_api = self.mech_driver._nb_ovn
+
+        # Delete second subnet
+        self._delete('subnets', self.sub_2['subnet']['id'])
+        # Make sure that shared metadata port wasn't deleted.
+        ovn_nb_api.delete_lswitch_port.assert_not_called()
+
+        # Delete first subnet
+        self._delete('subnets', self.sub_1['subnet']['id'])
+        # Make sure that the metadata port wasn't deleted.
+        ovn_nb_api.delete_lswitch_port.assert_not_called()
+
+        # Delete both segments
+        self._delete('segments', self.seg_2['id'])
+        self._delete('segments', self.seg_1['id'])
+
+        # Make sure that the metadata port wasn't deleted.
+        deleted_ports = [
+            port[1]['lport_name']
+            for port in ovn_nb_api.delete_lswitch_port.call_args_list]
+        self.assertNotIn(
+            'ovnmeta-%s' % self.net['network']['id'],
+            deleted_ports)
+        self.assertEqual(
+            2,
+            ovn_nb_api.delete_lswitch_port.call_count)
+
+        # Only on network deletion the metadata port is deleted.
+        self._delete('networks', self.net['network']['id'])
+        self.assertEqual(
+            3,
+            ovn_nb_api.delete_lswitch_port.call_count)
+
 
 @mock.patch.object(n_net, 'get_random_mac', lambda *_: '01:02:03:04:05:06')
 class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):

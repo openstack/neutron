@@ -118,6 +118,9 @@ Routed provider networks offer performance at scale that is difficult to
 achieve with a plain provider network at the expense of guaranteed layer-2
 connectivity.
 
+Neutron port could be associated with only one network segment,
+but there is an exception for OVN distributed services like OVN Metadata.
+
 See :ref:`config-routed-provider-networks` for more information.
 
 .. _intro-os-networking-selfservice:

@@ -86,6 +86,18 @@ class TestIpamBackendMixin(base.BaseTestCase):
         self.mixin._get_subnet_object = mock.Mock(
             side_effect=_get_subnet_object)
 
+    def test__is_distributed_service(self):
+        port = {'device_owner':
+                '%snova' % constants.DEVICE_OWNER_COMPUTE_PREFIX,
+                'device_id': uuidutils.generate_uuid()}
+        self.assertFalse(self.mixin._is_distributed_service(port))
+        port = {'device_owner': constants.DEVICE_OWNER_DHCP,
+                'device_id': uuidutils.generate_uuid()}
+        self.assertFalse(self.mixin._is_distributed_service(port))
+        port = {'device_owner': constants.DEVICE_OWNER_DHCP,
+                'device_id': 'ovnmeta-%s' % uuidutils.generate_uuid()}
+        self.assertTrue(self.mixin._is_distributed_service(port))
+
     def _test_get_changed_ips_for_port(self, expected, original_ips,
                                        new_ips, owner):
         change = self.mixin._get_changed_ips_for_port(self.ctx,
