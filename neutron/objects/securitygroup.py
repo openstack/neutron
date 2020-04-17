@@ -10,9 +10,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import context as context_lib
 from neutron_lib.utils import net as net_utils
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
+from sqlalchemy import or_
 
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import rbac_db_models
@@ -155,3 +157,21 @@ class SecurityGroupRule(base.NeutronDbObject):
             fields['remote_ip_prefix'] = (
                 net_utils.AuthenticIPNetwork(fields['remote_ip_prefix']))
         return fields
+
+    @classmethod
+    def get_security_group_rule_ids(cls, project_id):
+        """Retrieve all SG rules related to this project_id
+
+        This method returns the SG rule IDs that meet these conditions:
+        - The rule belongs to this project_id
+        - The rule belongs to a security group that belongs to the project_id
+        """
+        context = context_lib.get_admin_context()
+        query = context.session.query(cls.db_model.id)
+        query = query.join(
+            SecurityGroup.db_model,
+            cls.db_model.security_group_id == SecurityGroup.db_model.id)
+        clauses = or_(SecurityGroup.db_model.project_id == project_id,
+                      cls.db_model.project_id == project_id)
+        rule_ids = query.filter(clauses).all()
+        return [rule_id[0] for rule_id in rule_ids]

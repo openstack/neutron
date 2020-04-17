@@ -713,6 +713,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         if project_id:
             self._ensure_default_security_group(context, project_id)
 
+        if not filters and context.project_id and not context.is_admin:
+            rule_ids = sg_obj.SecurityGroupRule.get_security_group_rule_ids(
+                context.project_id)
+            filters = {'id': rule_ids}
+
         # NOTE(slaweq): use admin context here to be able to get all rules
         # which fits filters' criteria. Later in policy engine rules will be
         # filtered and only those which are allowed according to policy will
