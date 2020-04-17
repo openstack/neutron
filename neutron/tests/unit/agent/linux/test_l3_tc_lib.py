@@ -25,10 +25,10 @@ FLOATING_IP_2 = "172.16.10.105"
 FILETER_ID_1 = "800::800"
 FILETER_ID_2 = "800::801"
 
-TC_INGRESS_FILTERS = (
+TC_INGRESS_FILTERS_BASE = (
     'filter protocol ip u32 \n'
-    'filter protocol ip u32 fh 800: ht divisor 1 \n'
-    'filter protocol ip u32 fh %(filter_id1)s order 2048 key '
+    'filter protocol ip u32 %(chain_value)sfh 800: ht divisor 1 \n'
+    'filter protocol ip u32 %(chain_value)sfh %(filter_id1)s order 2048 key '
     'ht 800 bkt 0 '
     'flowid :1  (rule hit 0 success 0)\n'
     '  match IP dst %(fip1)s/32 (success 0 ) \n'
@@ -36,7 +36,33 @@ TC_INGRESS_FILTERS = (
     'ref 1 bind 1\n'
     '\n'
     ' Sent 111 bytes 222 pkts (dropped 0, overlimits 0) \n'
-    'filter protocol ip u32 fh %(filter_id2)s order 2049 key '
+    'filter protocol ip u32 %(chain_value)sfh %(filter_id2)s order 2049 key '
+    'ht 800 bkt 0 '
+    'flowid :1  (rule hit 0 success 0)\n'
+    '  match IP dst %(fip2)s/32 (success 0 ) \n'
+    ' police 0x1b rate 22000Kbit burst 22Mb mtu 64Kb action drop '
+    'overhead 0b \n'
+    'ref 1 bind 1\n'
+    '\n'
+    ' Sent 111 bytes 222 pkts (dropped 0, overlimits 0)\n')
+
+TC_INGRESS_FILTERS_WITHOUT_CHAIN = TC_INGRESS_FILTERS_BASE % {
+    "chain_value": "",
+    "filter_id1": FILETER_ID_1,
+    "fip1": FLOATING_IP_1,
+    "filter_id2": FILETER_ID_2,
+    "fip2": FLOATING_IP_2}
+
+# NOTE(slaweq): in iproute 4.15 chain value was added to filter output
+TC_INGRESS_FILTERS_WITH_CHAIN = TC_INGRESS_FILTERS_BASE % {
+    "chain_value": "chain 1 ",
+    "filter_id1": FILETER_ID_1,
+    "fip1": FLOATING_IP_1,
+    "filter_id2": FILETER_ID_2,
+    "fip2": FLOATING_IP_2}
+
+TC_INGRESS_FILTERS_DUP_WITHOUT_CHAIN = TC_INGRESS_FILTERS_WITHOUT_CHAIN + (
+    'filter protocol ip u32 %(chain_value)sfh %(filter_id2)s order 2049 key '
     'ht 800 bkt 0 '
     'flowid :1  (rule hit 0 success 0)\n'
     '  match IP dst %(fip2)s/32 (success 0 ) \n'
@@ -45,13 +71,12 @@ TC_INGRESS_FILTERS = (
     'ref 1 bind 1\n'
     '\n'
     ' Sent 111 bytes 222 pkts (dropped 0, overlimits 0)\n') % {
-        "filter_id1": FILETER_ID_1,
-        "fip1": FLOATING_IP_1,
+        "chain_value": "",
         "filter_id2": FILETER_ID_2,
         "fip2": FLOATING_IP_2}
 
-TC_INGRESS_FILTERS_DUP = TC_INGRESS_FILTERS + (
-    'filter protocol ip u32 fh %(filter_id2)s order 2049 key '
+TC_INGRESS_FILTERS_DUP_WITH_CHAIN = TC_INGRESS_FILTERS_WITH_CHAIN + (
+    'filter protocol ip u32 %(chain_value)sfh %(filter_id2)s order 2049 key '
     'ht 800 bkt 0 '
     'flowid :1  (rule hit 0 success 0)\n'
     '  match IP dst %(fip2)s/32 (success 0 ) \n'
@@ -60,13 +85,14 @@ TC_INGRESS_FILTERS_DUP = TC_INGRESS_FILTERS + (
     'ref 1 bind 1\n'
     '\n'
     ' Sent 111 bytes 222 pkts (dropped 0, overlimits 0)\n') % {
+        "chain_value": "chain 1 ",
         "filter_id2": FILETER_ID_2,
         "fip2": FLOATING_IP_2}
 
-TC_EGRESS_FILTERS = (
+TC_EGRESS_FILTERS_BASE = (
     'filter protocol ip u32 \n'
-    'filter protocol ip u32 fh 800: ht divisor 1 \n'
-    'filter protocol ip u32 fh %(filter_id1)s order 2048 key '
+    'filter protocol ip u32 %(chain_name)sfh 800: ht divisor 1 \n'
+    'filter protocol ip u32 %(chain_name)sfh %(filter_id1)s order 2048 key '
     'ht 800 bkt 0 '
     'flowid :1  (rule hit 0 success 0)\n'
     '  match IP src %(fip1)s/32 (success 0 ) \n'
@@ -74,7 +100,7 @@ TC_EGRESS_FILTERS = (
     'ref 1 bind 1\n'
     '\n'
     ' Sent 111 bytes 222 pkts (dropped 0, overlimits 0) \n'
-    'filter protocol ip u32 fh %(filter_id2)s order 2049 key '
+    'filter protocol ip u32 %(chain_name)sfh %(filter_id2)s order 2049 key '
     'ht 800 bkt 0 '
     'flowid :1  (rule hit 0 success 0)\n'
     '  match IP src %(fip2)s/32 (success 0 ) \n'
@@ -82,13 +108,21 @@ TC_EGRESS_FILTERS = (
     'overhead 0b \n'
     'ref 1 bind 1\n'
     '\n'
-    ' Sent 111 bytes 222 pkts (dropped 0, overlimits 0)\n') % {
-        "filter_id1": FILETER_ID_1,
-        "fip1": FLOATING_IP_1,
-        "filter_id2": FILETER_ID_2,
-        "fip2": FLOATING_IP_2}
-FILTERS_IDS = {constants.INGRESS_DIRECTION: TC_INGRESS_FILTERS,
-               constants.EGRESS_DIRECTION: TC_EGRESS_FILTERS}
+    ' Sent 111 bytes 222 pkts (dropped 0, overlimits 0)\n')
+
+TC_EGRESS_FILTERS_WITHOUT_CHAIN = TC_EGRESS_FILTERS_BASE % {
+    "chain_name": "",
+    "filter_id1": FILETER_ID_1,
+    "fip1": FLOATING_IP_1,
+    "filter_id2": FILETER_ID_2,
+    "fip2": FLOATING_IP_2}
+
+TC_EGRESS_FILTERS_WITH_CHAIN = TC_EGRESS_FILTERS_BASE % {
+    "chain_name": "chain 1 ",
+    "filter_id1": FILETER_ID_1,
+    "fip1": FLOATING_IP_1,
+    "filter_id2": FILETER_ID_2,
+    "fip2": FLOATING_IP_2}
 
 INGRESS_QSIC_ID = "ffff:"
 EGRESS_QDISC_ID = "1:"
@@ -164,12 +198,18 @@ class TestFloatingIPTcCommandBase(base.BaseTestCase):
             extra_ok_codes=None
         )
 
-    def test__get_filterid_for_ip(self):
+    def _test__get_filterid_for_ip(self, filters):
         with mock.patch.object(tc_lib.FloatingIPTcCommandBase,
                                '_get_filters') as get_filters:
-            get_filters.return_value = TC_EGRESS_FILTERS
+            get_filters.return_value = filters
             f_id = self.tc._get_filterid_for_ip(INGRESS_QSIC_ID, FLOATING_IP_1)
             self.assertEqual(FILETER_ID_1, f_id)
+
+    def test__get_filterid_for_ip_without_chain(self):
+        self._test__get_filterid_for_ip(TC_EGRESS_FILTERS_WITHOUT_CHAIN)
+
+    def test__get_filterid_for_ip_with_chain(self):
+        self._test__get_filterid_for_ip(TC_EGRESS_FILTERS_WITH_CHAIN)
 
     def test__get_filterid_for_ip_no_output(self):
         with mock.patch.object(tc_lib.FloatingIPTcCommandBase,
@@ -179,21 +219,36 @@ class TestFloatingIPTcCommandBase(base.BaseTestCase):
                               self.tc._get_filterid_for_ip,
                               INGRESS_QSIC_ID, FLOATING_IP_1)
 
-    def test__get_filterid_for_ip_duplicated(self):
+    def _test__get_filterid_for_ip_duplicated(self, filters):
         with mock.patch.object(tc_lib.FloatingIPTcCommandBase,
                                '_get_filters') as get_filters:
-            get_filters.return_value = TC_INGRESS_FILTERS_DUP
+            get_filters.return_value = filters
             self.assertRaises(exceptions.MultipleFilterIDForIPFound,
                               self.tc._get_filterid_for_ip,
                               INGRESS_QSIC_ID, FLOATING_IP_2)
 
-    def test__get_filterid_for_ip_not_found(self):
+    def test__get_filterid_for_ip_duplicated_without_chain(self):
+        self._test__get_filterid_for_ip_duplicated(
+            TC_INGRESS_FILTERS_DUP_WITHOUT_CHAIN)
+
+    def test__get_filterid_for_ip_duplicated_with_chain(self):
+        self._test__get_filterid_for_ip_duplicated(
+            TC_INGRESS_FILTERS_DUP_WITH_CHAIN)
+
+    def _test__get_filterid_for_ip_not_found(self, filters):
         with mock.patch.object(tc_lib.FloatingIPTcCommandBase,
                                '_get_filters') as get_filters:
-            get_filters.return_value = TC_EGRESS_FILTERS
+            get_filters.return_value = filters
             self.assertRaises(exceptions.FilterIDForIPNotFound,
                               self.tc._get_filterid_for_ip,
                               INGRESS_QSIC_ID, "1.1.1.1")
+
+    def test__get_filterid_for_ip_not_found_without_chain(self):
+        self._test__get_filterid_for_ip_not_found(
+            TC_EGRESS_FILTERS_WITHOUT_CHAIN)
+
+    def test__get_filterid_for_ip_not_found_with_chain(self):
+        self._test__get_filterid_for_ip_not_found(TC_EGRESS_FILTERS_WITH_CHAIN)
 
     def test__del_filter_by_id(self):
         self.tc._del_filter_by_id(INGRESS_QSIC_ID, FLOATING_IP_1)
@@ -208,12 +263,18 @@ class TestFloatingIPTcCommandBase(base.BaseTestCase):
             extra_ok_codes=None
         )
 
-    def test__get_qdisc_filters(self):
+    def _test__get_qdisc_filters(self, filters):
         with mock.patch.object(tc_lib.FloatingIPTcCommandBase,
                                '_get_filters') as get_filters:
-            get_filters.return_value = TC_EGRESS_FILTERS
+            get_filters.return_value = filters
             f_ids = self.tc._get_qdisc_filters(INGRESS_QSIC_ID)
             self.assertEqual([FILETER_ID_1, FILETER_ID_2], f_ids)
+
+    def test__get_qdisc_filters_without_chain(self):
+        self._test__get_qdisc_filters(TC_EGRESS_FILTERS_WITHOUT_CHAIN)
+
+    def test__get_qdisc_filters_with_chain(self):
+        self._test__get_qdisc_filters(TC_EGRESS_FILTERS_WITH_CHAIN)
 
     def test__get_qdisc_filters_no_output(self):
         with mock.patch.object(tc_lib.FloatingIPTcCommandBase,
@@ -280,15 +341,21 @@ class TestFloatingIPTcCommand(base.BaseTestCase):
             namespace=FLOATING_IP_ROUTER_NAMESPACE)
         self.execute = mock.patch('neutron.agent.common.utils.execute').start()
 
-    def test_clear_all_filters(self):
+    def _test_clear_all_filters(self, filters):
         with mock.patch.object(tc_lib.FloatingIPTcCommandBase,
                                '_get_qdisc_id_for_filter') as get_disc:
             get_disc.return_value = EGRESS_QDISC_ID
             with mock.patch.object(tc_lib.FloatingIPTcCommandBase,
                                    '_get_filters') as get_filters:
-                get_filters.return_value = TC_EGRESS_FILTERS
+                get_filters.return_value = filters
                 self.tc.clear_all_filters(constants.EGRESS_DIRECTION)
                 self.assertEqual(2, self.execute.call_count)
+
+    def test_clear_all_filters_without_chain(self):
+        self._test_clear_all_filters(TC_EGRESS_FILTERS_WITHOUT_CHAIN)
+
+    def test_clear_all_filters_with_chain(self):
+        self._test_clear_all_filters(TC_EGRESS_FILTERS_WITH_CHAIN)
 
     def test_set_ip_rate_limit_filter_existed(self):
         with mock.patch.object(tc_lib.FloatingIPTcCommandBase,
@@ -310,7 +377,7 @@ class TestFloatingIPTcCommand(base.BaseTestCase):
                             EGRESS_QDISC_ID, constants.EGRESS_DIRECTION,
                             ip, 1, 1)
 
-    def test_set_ip_rate_limit_no_qdisc(self):
+    def _test_set_ip_rate_limit_no_qdisc(self, filters):
         with mock.patch.object(tc_lib.FloatingIPTcCommandBase,
                                '_get_qdisc_id_for_filter') as get_disc:
             get_disc.return_value = None
@@ -318,7 +385,7 @@ class TestFloatingIPTcCommand(base.BaseTestCase):
                                    '_add_qdisc'):
                 with mock.patch.object(tc_lib.FloatingIPTcCommandBase,
                                        '_get_filters') as get_filters:
-                    get_filters.return_value = TC_INGRESS_FILTERS
+                    get_filters.return_value = filters
                     get_disc.return_value = INGRESS_QSIC_ID
                     ip = "111.111.111.111"
                     self.tc.set_ip_rate_limit(constants.INGRESS_DIRECTION,
@@ -341,6 +408,12 @@ class TestFloatingIPTcCommand(base.BaseTestCase):
                         log_fail_as_error=True,
                         extra_ok_codes=None
                     )
+
+    def test_set_ip_rate_limit_no_qdisc_without_chain(self):
+        self._test_set_ip_rate_limit_no_qdisc(TC_INGRESS_FILTERS_WITHOUT_CHAIN)
+
+    def test_set_ip_rate_limit_no_qdisc_with_chain(self):
+        self._test_set_ip_rate_limit_no_qdisc(TC_INGRESS_FILTERS_WITH_CHAIN)
 
     def test_clear_ip_rate_limit(self):
         with mock.patch.object(tc_lib.FloatingIPTcCommandBase,
