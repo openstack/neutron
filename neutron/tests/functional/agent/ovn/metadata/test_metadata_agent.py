@@ -215,22 +215,22 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 "unbind."))
 
     def test_agent_registration_at_chassis_create_event(self):
-        chassis = self.sb_api.lookup('Chassis', self.chassis_name)
-        self.assertIn(ovn_const.OVN_AGENT_METADATA_ID_KEY,
-                      chassis.external_ids)
+        def check_for_metadata():
+            chassis = self.sb_api.lookup('Chassis', self.chassis_name)
+            return ovn_const.OVN_AGENT_METADATA_ID_KEY in chassis.external_ids
+
+        exc = Exception('Chassis not created, %s is not in chassis '
+                        'external_ids' % ovn_const.OVN_AGENT_METADATA_ID_KEY)
+        n_utils.wait_until_true(check_for_metadata, timeout=5, exception=exc)
 
         # Delete Chassis and assert
+        chassis = self.sb_api.lookup('Chassis', self.chassis_name)
         self.del_fake_chassis(chassis.name)
         self.assertRaises(idlutils.RowNotFound, self.sb_api.lookup,
                           'Chassis', self.chassis_name)
 
         # Re-add the Chassis
         self.add_fake_chassis(self.FAKE_CHASSIS_HOST, name=self.chassis_name)
-
-        def check_for_metadata():
-            chassis = self.sb_api.lookup('Chassis', self.chassis_name)
-            return ovn_const.OVN_AGENT_METADATA_ID_KEY in chassis.external_ids
-
         exc = Exception('Agent metadata failed to re-register itself '
                         'after the Chassis %s was re-created' %
                         self.chassis_name)
