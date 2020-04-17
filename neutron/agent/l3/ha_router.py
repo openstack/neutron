@@ -376,11 +376,11 @@ class HaRouter(router.RouterInfo):
 
     def _get_state_change_monitor_process_manager(self):
         return external_process.ProcessManager(
-            self.agent_conf,
-            '%s.monitor' % self.router_id,
-            self.ha_namespace,
+            conf=self.agent_conf, uuid='%s.monitor' % self.router_id,
+            namespace=self.ha_namespace,
             service=KEEPALIVED_STATE_CHANGE_MONITOR_SERVICE_NAME,
-            default_cmd_callback=self._get_state_change_monitor_callback())
+            default_cmd_callback=self._get_state_change_monitor_callback(),
+            run_as_root=True)
 
     def _get_state_change_monitor_callback(self):
         ha_device = self.get_ha_device_name()
