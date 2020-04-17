@@ -26,7 +26,6 @@ from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
     constants as agent_const)
-from neutron.tests.common.exclusive_resources import port
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 
@@ -570,41 +569,6 @@ class OVSLibTestCase(base.BaseOVSLinuxTestCase):
     def setUp(self):
         super(OVSLibTestCase, self).setUp()
         self.ovs = ovs_lib.BaseOVS()
-
-    def test_add_manager_appends(self):
-        port1 = self.useFixture(port.ExclusivePort(const.PROTO_NAME_TCP,
-            start=net_helpers.OVS_MANAGER_TEST_PORT_FIRST,
-            end=net_helpers.OVS_MANAGER_TEST_PORT_LAST)).port
-        port2 = self.useFixture(port.ExclusivePort(const.PROTO_NAME_TCP,
-            start=net_helpers.OVS_MANAGER_TEST_PORT_FIRST,
-            end=net_helpers.OVS_MANAGER_TEST_PORT_LAST)).port
-        manager_list = ["ptcp:%s:127.0.0.1" % port1,
-                        "ptcp:%s:127.0.0.1" % port2]
-        # Verify that add_manager does not override the existing manager
-        expected_manager_list = list()
-        for conn_uri in manager_list:
-            self.ovs.add_manager(conn_uri)
-            self.addCleanup(self.ovs.remove_manager, conn_uri)
-            self.assertIn(conn_uri, self.ovs.get_manager())
-            expected_manager_list.append(conn_uri)
-
-        # Verify that switch is configured with both the managers
-        for manager_uri in expected_manager_list:
-            self.assertIn(manager_uri, manager_list)
-
-    def test_add_manager_lifecycle_baseovs(self):
-        port1 = self.useFixture(port.ExclusivePort(const.PROTO_NAME_TCP,
-            start=net_helpers.OVS_MANAGER_TEST_PORT_FIRST,
-            end=net_helpers.OVS_MANAGER_TEST_PORT_LAST)).port
-        conn_uri = "ptcp:%s:127.0.0.1" % port1
-        self.addCleanup(self.ovs.remove_manager, conn_uri)
-        self.ovs.add_manager(conn_uri)
-        self.assertIn(conn_uri, self.ovs.get_manager())
-        self.assertEqual(self.ovs.db_get_val('Manager', conn_uri,
-                                             'inactivity_probe'),
-                         self.ovs.ovsdb_timeout * 1000)
-        self.ovs.remove_manager(conn_uri)
-        self.assertNotIn(conn_uri, self.ovs.get_manager())
 
     def test_bridge_lifecycle_baseovs(self):
         name = utils.get_rand_name(prefix=net_helpers.BR_PREFIX)

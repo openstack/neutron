@@ -46,6 +46,8 @@ class OVSAgentBridgeTestCase(ovs_test_base.OVSOSKenTestBase):
         mock.patch.object(ovs_lib.OVSBridge, 'db_get_val',
                           side_effect=_mock_db_get_val).start()
         br = self.br_int_cls('br-int')
+        # Reduce timeout for faster execution
+        br.ovsdb.ovsdb_connection.timeout = 1
         # make sure that in case of any misconfiguration when no datapath is
         # found a proper exception, not a TypeError is raised
         self.assertRaises(RuntimeError, br._get_dp)

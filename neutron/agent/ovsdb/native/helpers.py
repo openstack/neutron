@@ -14,10 +14,19 @@
 
 import functools
 
+from oslo_config import cfg
 from ovsdbapp.schema.open_vswitch import helpers
 
 from neutron.agent.common import utils
+from neutron.conf.agent import ovs_conf as agent_ovs_conf
+from neutron.conf.plugins.ml2.drivers import ovs_conf as ml2_ovs_conf
+
+
+agent_ovs_conf.register_ovs_agent_opts(cfg.CONF)
+ml2_ovs_conf.register_ovs_opts(cfg=cfg.CONF)
 
 enable_connection_uri = functools.partial(
     helpers.enable_connection_uri, execute=utils.execute, run_as_root=True,
-    log_fail_as_error=False, check_exit_code=False)
+    log_fail_as_error=False, check_exit_code=False,
+    timeout=cfg.CONF.OVS.ovsdb_timeout,
+    inactivity_probe=cfg.CONF.OVS.of_inactivity_probe * 1000)
