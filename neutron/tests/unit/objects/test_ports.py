@@ -11,6 +11,7 @@
 #    under the License.
 
 import mock
+import netaddr
 from neutron_lib import constants
 from neutron_lib.tests import tools
 from oslo_utils import uuidutils
@@ -545,3 +546,30 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
                 self.context, network_id,
                 binding_types=['vif_type1', 'vif_type2'],
                 negative_search=True))
+
+    def test_get_ports_allocated_by_subnet_id(self):
+        network_id = self._create_test_network_id()
+        segment_id = self._create_test_segment_id(network_id)
+        subnet_id = self._create_test_subnet_id(network_id)
+        self.update_obj_fields(
+            {'network_id': network_id,
+             'fixed_ips': {'subnet_id': subnet_id,
+                           'network_id': network_id},
+             'device_owner': 'not_a_router',
+             'binding_levels': {'segment_id': segment_id}},
+            db_objs=[self.db_objs[0]])
+
+        objs = []
+        for idx in range(3):
+            objs.append(self._make_object(self.obj_fields[idx]))
+            objs[idx].create()
+
+        ipa = ports.IPAllocation(self.context, port_id=objs[0].id,
+                                 subnet_id=subnet_id, network_id=network_id,
+                                 ip_address=netaddr.IPAddress('10.0.0.1'))
+        ipa.create()
+
+        ports_alloc = ports.Port.get_ports_allocated_by_subnet_id(self.context,
+                                                                  subnet_id)
+        self.assertEqual(1, len(ports_alloc))
+        self.assertEqual(objs[0].id, ports_alloc[0].id)
