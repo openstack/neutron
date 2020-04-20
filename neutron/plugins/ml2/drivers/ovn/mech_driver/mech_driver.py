@@ -30,7 +30,6 @@ from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
-from neutron_lib.services.qos import constants as qos_consts
 from oslo_config import cfg
 from oslo_db import exception as os_db_exc
 from oslo_log import log
@@ -90,9 +89,6 @@ class OVNMechanismDriver(api.MechanismDriver):
     update network/port case, all data validation must be done within
     methods that are part of the database transaction.
     """
-
-    supported_qos_rule_types = [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT]
-
     def initialize(self):
         """Perform driver initialization.
 
@@ -118,7 +114,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             LOG.warning('Firewall driver configuration is ignored')
         self._setup_vif_port_bindings()
         self.subscribe()
-        self.qos_driver = qos_driver.OVNQosNotificationDriver.create(self)
+        self.qos_driver = qos_driver.OVNQosDriver.create(self)
         self.trunk_driver = trunk_driver.OVNTrunkDriver.create(self)
 
     @property
@@ -399,8 +395,9 @@ class OVNMechanismDriver(api.MechanismDriver):
         # https://bugs.launchpad.net/neutron/+bug/1739798 is fixed.
         if context._plugin_context.session.is_active:
             return
-        self._ovn_client.update_network(context._plugin_context,
-                                        context.current)
+        self._ovn_client.update_network(
+            context._plugin_context, context.current,
+            original_network=context.original)
 
     def delete_network_postcommit(self, context):
         """Delete a network.

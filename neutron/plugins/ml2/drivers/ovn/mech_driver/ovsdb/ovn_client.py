@@ -39,8 +39,10 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_revision_numbers_db as db_rev
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
+    import qos as qos_extension
 from neutron.scheduler import l3_ovn_scheduler
-from neutron.services.qos.drivers.ovn import driver as qos_driver
+
 
 LOG = log.getLogger(__name__)
 
@@ -65,7 +67,8 @@ class OVNClient(object):
         self._plugin_property = None
         self._l3_plugin_property = None
 
-        self._qos_driver = qos_driver.OVNQosDriver(self)
+        # TODO(ralonsoh): handle the OVN client extensions with an ext. manager
+        self._qos_driver = qos_extension.OVNClientQosExtension(self)
         self._ovn_scheduler = l3_ovn_scheduler.get_scheduler()
 
     @property
@@ -431,13 +434,7 @@ class OVNClient(object):
             if self.is_dns_required_for_port(port):
                 self.add_txns_to_sync_port_dns_records(txn, port)
 
-            # Add qos for port by qos table of logical flow instead of tc
-            qos_options = self._qos_driver.get_qos_options(port)
-
-            if qos_options:
-                qos_rule_column = self._create_qos_rules(qos_options,
-                                                         port, lswitch_name)
-                txn.add(self._nb_idl.qos_add(**qos_rule_column))
+            self._qos_driver.create_port(txn, port)
 
         db_rev.bump_revision(context, port, ovn_const.TYPE_PORTS)
 
@@ -466,10 +463,9 @@ class OVNClient(object):
 
     # TODO(lucasagomes): The ``port_object`` parameter was added to
     # keep things backward compatible. Remove it in the Rocky release.
-    def update_port(self, context, port, qos_options=None, port_object=None):
+    def update_port(self, context, port, port_object=None):
         if utils.is_lsp_ignored(port):
             return
-        # Does not need to add qos rule to port_info
         port_info = self._get_port_options(port)
         external_ids = {ovn_const.OVN_PORT_NAME_EXT_ID_KEY: port['name'],
                         ovn_const.OVN_DEVID_EXT_ID_KEY: port['device_id'],
@@ -484,7 +480,6 @@ class OVNClient(object):
                         ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(
                             utils.get_revision_number(
                                 port, ovn_const.TYPE_PORTS))}
-        lswitch_name = utils.ovn_name(port['network_id'])
         sg_cache = {}
         subnet_cache = {}
 
@@ -655,50 +650,7 @@ class OVNClient(object):
                                             addrs_add=addr_add,
                                             addrs_remove=addr_remove))
 
-            # Update QoS policy rule, delete the old one, then add the new one
-            # If we create port with qos_policy, we also need execute
-            # update_port method, which qos_policy is in port dict, so we
-            # also need get policy from port dict if qos_options is None
-            qos_options_new = (qos_options if qos_options
-                               else self._qos_driver.get_qos_options(port))
-            # If port_object is None, we also need to get necessary params
-            # to delete the qos rule
-            qos_options_old = (self._qos_driver.get_qos_options(port_object)
-                               if port_object else qos_options_new)
-
-            ovn_net = self._nb_idl.get_lswitch(lswitch_name)
-            ovn_net_qos_policy = (ovn_net.external_ids
-                                  [ovn_const.OVN_QOS_POLICY_EXT_ID_KEY]
-                                  if ovn_const.OVN_QOS_POLICY_EXT_ID_KEY
-                                  in ovn_net.external_ids else None)
-
-            if qos_options_new:
-                qos_rule_column_old = self._create_qos_rules(qos_options_old,
-                                                             port,
-                                                             lswitch_name,
-                                                             if_delete=True)
-                # Delete old QoS rule first
-                txn.add(self._nb_idl.qos_del(**qos_rule_column_old))
-                # Add new QoS rule
-                qos_rule_column_new = self._create_qos_rules(qos_options_new,
-                                                             port,
-                                                             lswitch_name)
-                txn.add(self._nb_idl.qos_add(**qos_rule_column_new))
-            # If we want to delete port qos_rule by using
-            # param '--no-qos-policy'
-            elif qos_options_old:
-
-                qos_rule_column_old = self._create_qos_rules(qos_options_old,
-                                                             port,
-                                                             lswitch_name,
-                                                             if_delete=True)
-                # Delete old QoS rule
-                txn.add(self._nb_idl.qos_del(**qos_rule_column_old))
-
-            # If we want to delete network qos_rule by using
-            # param '--no-qos-policy'
-            elif not qos_options_old and ovn_net_qos_policy:
-                txn.add(self._nb_idl.qos_del(lswitch_name))
+            self._qos_driver.update_port(txn, port, port_object)
 
             if self.is_dns_required_for_port(port):
                 self.add_txns_to_sync_port_dns_records(
@@ -709,36 +661,6 @@ class OVNClient(object):
 
         if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
             db_rev.bump_revision(context, port, ovn_const.TYPE_PORTS)
-
-    def _create_qos_rules(self, qos_options, port, lswitch_name,
-                          if_delete=False):
-        qos_rule = {}
-        direction = 'from-lport' if qos_options['direction'] ==\
-                    'egress' else 'to-lport'
-        qos_rule.update(switch=lswitch_name, direction=direction,
-                        priority=2002)
-
-        if direction == 'from-lport':
-            match = 'inport == ' + '"{}"'.format(port['id'])
-            qos_rule.update(match=match)
-        else:
-            match = 'outport == ' + '"{}"'.format(port['id'])
-            qos_rule.update(match=match)
-        # QoS of bandwidth_limit
-        if 'qos_max_rate' in qos_options:
-            burst = qos_options.get('qos_burst')
-            qos_rule.update(rate=qos_options['qos_max_rate'],
-                            burst=burst, dscp=None)
-        # QoS of dscp
-        elif 'dscp_mark' in qos_options:
-            qos_rule.update(rate=None, burst=None,
-                            dscp=qos_options['dscp_mark'])
-        # There is no need 'rate', 'burst' or 'dscp' for deleted method
-        if if_delete is True:
-            qos_rule.pop('rate')
-            qos_rule.pop('burst')
-            qos_rule.pop('dscp')
-        return qos_rule
 
     def _delete_port(self, port_id, port_object=None):
         ovn_port = self._nb_idl.lookup('Logical_Switch_Port', port_id)
@@ -769,20 +691,10 @@ class OVNClient(object):
                             name=utils.ovn_addrset_name(sg_id, ip_version),
                             addrs_add=None,
                             addrs_remove=addr_list))
-            # Delete qos rule of port
-            try:
-                if (not port_object or 'qos_policy_id' not in port_object or
-                        port_object['qos_policy_id'] is None):
-                    pass
-                else:
-                    qos_options = self._qos_driver.get_qos_options(port_object)
-                    qos_rule_column = self._create_qos_rules(qos_options,
-                                                             port_object,
-                                                             network_id,
-                                                             if_delete=True)
-                    txn.add(self._nb_idl.qos_del(**qos_rule_column))
-            except KeyError:
-                pass
+
+            p_object = ({'id': port_id, 'network_id': network_id}
+                        if not port_object else port_object)
+            self._qos_driver.delete_port(txn, p_object)
 
             if port_object and self.is_dns_required_for_port(port_object):
                 self.add_txns_to_remove_port_dns_records(txn, port_object)
@@ -1751,14 +1663,6 @@ class OVNClient(object):
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(
                 utils.get_revision_number(network, ovn_const.TYPE_NETWORKS))}}
 
-        # NOTE(lucasagomes): There's a difference between the
-        # "qos_policy_id" key existing and it being None, the latter is a
-        # valid value. Since we can't save None in OVSDB, we are converting
-        # it to "null" as a placeholder.
-        if 'qos_policy_id' in network:
-            params['external_ids'][ovn_const.OVN_QOS_POLICY_EXT_ID_KEY] = (
-                network['qos_policy_id'] or 'null')
-
         # Enable IGMP snooping if igmp_snooping_enable is enabled in Neutron
         value = 'true' if ovn_conf.is_igmp_snooping_enabled() else 'false'
         params['other_config'] = {ovn_const.MCAST_SNOOP: value,
@@ -1794,21 +1698,6 @@ class OVNClient(object):
         db_rev.delete_revision(
             context, network_id, ovn_const.TYPE_NETWORKS)
 
-    def _is_qos_update_required(self, network):
-        # Is qos service enabled
-        if 'qos_policy_id' not in network:
-            return False
-
-        # Check if qos service wasn't enabled before
-        ovn_net = self._nb_idl.get_lswitch(utils.ovn_name(network['id']))
-        if ovn_const.OVN_QOS_POLICY_EXT_ID_KEY not in ovn_net.external_ids:
-            return True
-
-        # Check if the policy_id has changed
-        new_qos_id = network['qos_policy_id'] or 'null'
-        return new_qos_id != ovn_net.external_ids[
-            ovn_const.OVN_QOS_POLICY_EXT_ID_KEY]
-
     def set_gateway_mtu(self, context, prov_net, txn=None):
         ports = self._plugin.get_ports(
             context, filters=dict(network_id=[prov_net['id']],
@@ -1824,10 +1713,8 @@ class OVNClient(object):
                             name=lrp_name, if_exists=True, options=options))
         self._transaction(commands, txn=txn)
 
-    def update_network(self, context, network):
+    def update_network(self, context, network, original_network=None):
         lswitch_name = utils.ovn_name(network['id'])
-        # Check if QoS needs to be update, before updating OVNDB
-        qos_update_required = self._is_qos_update_required(network)
         check_rev_cmd = self._nb_idl.check_revision_number(
             lswitch_name, network, ovn_const.TYPE_NETWORKS)
 
@@ -1880,9 +1767,9 @@ class OVNClient(object):
                     self.set_gateway_mtu(n_context.get_admin_context(),
                                          network, txn)
 
+            self._qos_driver.update_network(txn, network, original_network)
+
         if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
-            if qos_update_required:
-                self._qos_driver.update_network(network)
             db_rev.bump_revision(context, network, ovn_const.TYPE_NETWORKS)
 
     def _add_subnet_dhcp_options(self, subnet, network,

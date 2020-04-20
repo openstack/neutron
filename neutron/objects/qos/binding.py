@@ -14,7 +14,10 @@
 #    under the License.
 
 from neutron_lib.objects import common_types
+from sqlalchemy import and_
+from sqlalchemy import exists
 
+from neutron.db import models_v2
 from neutron.db.qos import models as qos_db_model
 from neutron.objects import base
 
@@ -33,6 +36,20 @@ class QosPolicyPortBinding(base.NeutronDbObject):
 
     primary_keys = ['port_id']
     fields_no_update = ['policy_id', 'port_id']
+
+    @classmethod
+    def get_ports_by_network_id(cls, context, network_id, policy_id=None):
+        query = context.session.query(models_v2.Port).filter(
+            models_v2.Port.network_id == network_id)
+        if policy_id:
+            query = query.filter(exists().where(and_(
+                cls.db_model.port_id == models_v2.Port.id,
+                cls.db_model.policy_id == policy_id)))
+        else:
+            query = query.filter(~exists().where(
+                cls.db_model.port_id == models_v2.Port.id)).filter(
+                models_v2.Port.network_id == network_id)
+        return query.all()
 
 
 @base.NeutronObjectRegistry.register

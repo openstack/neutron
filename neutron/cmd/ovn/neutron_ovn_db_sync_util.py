@@ -81,8 +81,7 @@ class OVNMechanismDriver(mech_driver.OVNMechanismDriver):
         port['network'] = context.network.current
         # FIXME(lucasagomes): PortContext does not have a session, therefore
         # we need to use the _plugin_context attribute.
-        self.ovn_client.delete_port(context._plugin_context, port['id'],
-                                    port_object=port)
+        self.ovn_client.delete_port(context._plugin_context, port)
 
 
 class AgentNotifierApi(object):
