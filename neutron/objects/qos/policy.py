@@ -335,12 +335,12 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                                           self.id)
 
     def get_bound_floatingips(self):
-        return binding.QosPolicyFloatingIPBinding.get_objects(self.obj_context,
-                                                              self.id)
+        return binding.QosPolicyFloatingIPBinding.get_objects(
+            self.obj_context, policy_id=self.id)
 
     def get_bound_routers(self):
         return binding.QosPolicyRouterGatewayIPBinding.get_objects(
-            self.obj_context, self.id)
+            self.obj_context, policy_id=self.id)
 
     @classmethod
     def _get_bound_tenant_ids(cls, session, binding_db, bound_db,

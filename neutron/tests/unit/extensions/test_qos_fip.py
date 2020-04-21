@@ -51,7 +51,8 @@ class TestFloatingIPQoSIntPlugin(
 class TestFloatingIPQoSL3NatServicePlugin(
         test_l3.TestL3NatServicePlugin,
         l3_fip_qos.FloatingQoSDbMixin):
-    supported_extension_aliases = [l3_apidef.ALIAS, qos_fip.FIP_QOS_ALIAS]
+    supported_extension_aliases = [l3_apidef.ALIAS, 'qos',
+                                   qos_fip.FIP_QOS_ALIAS]
 
 
 class FloatingIPQoSDBTestCaseBase(object):

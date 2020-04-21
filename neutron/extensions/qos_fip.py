@@ -12,6 +12,7 @@
 # under the License.
 
 from neutron_lib.api.definitions import l3
+from neutron_lib.api.definitions import qos
 from neutron_lib.api import extensions
 from neutron_lib.services.qos import constants as qos_consts
 
@@ -26,6 +27,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
             'validate': {'type:uuid_or_none': None}}
     }
 }
+REQUIRED_EXTENSIONS = [l3.ALIAS, qos.ALIAS]
 
 
 class Qos_fip(extensions.ExtensionDescriptor):
@@ -48,7 +50,7 @@ class Qos_fip(extensions.ExtensionDescriptor):
         return "2017-07-20T00:00:00-00:00"
 
     def get_required_extensions(self):
-        return ["router", "qos"]
+        return REQUIRED_EXTENSIONS
 
     def get_extended_resources(self, version):
         if version == "2.0":

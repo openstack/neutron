@@ -911,7 +911,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 self.fake_floating_ip['port_id'],
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
                 self.fake_floating_ip['router_id']),
-            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa'}
+            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa',
+            ovn_const.OVN_FIP_NET_ID:
+                self.fake_floating_ip['floating_network_id']}
         self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
             type='dnat_and_snat',
@@ -937,7 +939,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 self.fake_floating_ip['port_id'],
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
                 self.fake_floating_ip['router_id']),
-            ovn_const.OVN_FIP_EXT_MAC_KEY: '00:01:02:03:04:05'}
+            ovn_const.OVN_FIP_EXT_MAC_KEY: '00:01:02:03:04:05',
+            ovn_const.OVN_FIP_NET_ID:
+                self.fake_floating_ip['floating_network_id']}
         self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id', type='dnat_and_snat', logical_ip='10.0.0.10',
             external_ip='192.168.0.10', external_mac='00:01:02:03:04:05',
@@ -963,7 +967,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 self.fake_floating_ip['port_id'],
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
                 self.fake_floating_ip['router_id']),
-            ovn_const.OVN_FIP_EXT_MAC_KEY: '00:01:02:03:04:05'}
+            ovn_const.OVN_FIP_EXT_MAC_KEY: '00:01:02:03:04:05',
+            ovn_const.OVN_FIP_NET_ID:
+                self.fake_floating_ip['floating_network_id']}
         self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id', type='dnat_and_snat', logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
@@ -984,7 +990,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 self.fake_floating_ip['port_id'],
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
                 self.fake_floating_ip['router_id']),
-            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa'}
+            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa',
+            ovn_const.OVN_FIP_NET_ID:
+                self.fake_floating_ip['floating_network_id']}
         self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
             type='dnat_and_snat',
@@ -1010,7 +1018,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 self.fake_floating_ip['port_id'],
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
                 self.fake_floating_ip['router_id']),
-            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa'}
+            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa',
+            ovn_const.OVN_FIP_NET_ID:
+                self.fake_floating_ip['floating_network_id']}
         self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
             type='dnat_and_snat',
@@ -1167,7 +1177,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 self.fake_floating_ip_new['port_id'],
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
                 self.fake_floating_ip_new['router_id']),
-            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa'}
+            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa',
+            ovn_const.OVN_FIP_NET_ID:
+                self.fake_floating_ip['floating_network_id']}
         self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-new-router-id',
             type='dnat_and_snat',
@@ -1191,7 +1203,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 self.fake_floating_ip_new['port_id'],
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
                 self.fake_floating_ip_new['router_id']),
-            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa'}
+            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa',
+            ovn_const.OVN_FIP_NET_ID:
+                self.fake_floating_ip['floating_network_id']}
         self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-new-router-id',
             type='dnat_and_snat',
@@ -1225,7 +1239,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 self.fake_floating_ip_new['port_id'],
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
                 self.fake_floating_ip_new['router_id']),
-            ovn_const.OVN_FIP_EXT_MAC_KEY: '00:01:02:03:04:05'}
+            ovn_const.OVN_FIP_EXT_MAC_KEY: '00:01:02:03:04:05',
+            ovn_const.OVN_FIP_NET_ID:
+                self.fake_floating_ip['floating_network_id']}
         self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-new-router-id', type='dnat_and_snat',
             logical_ip='10.10.10.10', external_ip='192.168.0.10',
@@ -1254,7 +1270,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 self.fake_floating_ip_new['port_id'],
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
                 self.fake_floating_ip_new['router_id']),
-            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa'}
+            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa',
+            ovn_const.OVN_FIP_NET_ID:
+                self.fake_floating_ip['floating_network_id']}
         self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-new-router-id',
             type='dnat_and_snat',
@@ -1287,7 +1305,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 self.fake_floating_ip_new['port_id'],
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
                 self.fake_floating_ip_new['router_id']),
-            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa'}
+            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa',
+            ovn_const.OVN_FIP_NET_ID:
+                self.fake_floating_ip['floating_network_id']}
         self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-new-router-id',
             type='dnat_and_snat',
