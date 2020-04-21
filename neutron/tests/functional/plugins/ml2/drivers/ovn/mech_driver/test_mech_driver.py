@@ -460,11 +460,11 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         rows = cmd.execute(check_error=True)
         return rows[0] if rows else None
 
-    def test_external_port_create(self):
+    def _test_external_port_create(self, vnic_type):
         port_data = {
             'port': {'network_id': self.n1['network']['id'],
                      'tenant_id': self._tenant_id,
-                     portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT}}
+                     portbindings.VNIC_TYPE: vnic_type}}
 
         port_req = self.new_create_request('ports', port_data, self.fmt)
         port_res = port_req.get_response(self.api)
@@ -476,7 +476,16 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         self.assertEqual(str(self.default_ch_grp.uuid),
                          str(ovn_port.ha_chassis_group[0].uuid))
 
-    def test_external_port_update(self):
+    def test_external_port_create_vnic_direct(self):
+        self._test_external_port_create(portbindings.VNIC_DIRECT)
+
+    def test_external_port_create_vnic_direct_physical(self):
+        self._test_external_port_create(portbindings.VNIC_DIRECT_PHYSICAL)
+
+    def test_external_port_create_vnic_macvtap(self):
+        self._test_external_port_create(portbindings.VNIC_MACVTAP)
+
+    def _test_external_port_update(self, vnic_type):
         port_data = {
             'port': {'network_id': self.n1['network']['id'],
                      'tenant_id': self._tenant_id}}
@@ -490,7 +499,7 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         self.assertEqual([], ovn_port.ha_chassis_group)
 
         port_upt_data = {
-            'port': {portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT}}
+            'port': {portbindings.VNIC_TYPE: vnic_type}}
         port_req = self.new_update_request(
             'ports', port_upt_data, port['id'], self.fmt)
         port_res = port_req.get_response(self.api)
@@ -502,11 +511,20 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         self.assertEqual(str(self.default_ch_grp.uuid),
                          str(ovn_port.ha_chassis_group[0].uuid))
 
-    def test_external_port_create_switchdev(self):
+    def test_external_port_update_vnic_direct(self):
+        self._test_external_port_update(portbindings.VNIC_DIRECT)
+
+    def test_external_port_update_vnic_direct_physical(self):
+        self._test_external_port_update(portbindings.VNIC_DIRECT_PHYSICAL)
+
+    def test_external_port_update_vnic_macvtap(self):
+        self._test_external_port_update(portbindings.VNIC_MACVTAP)
+
+    def _test_external_port_create_switchdev(self, vnic_type):
         port_data = {
             'port': {'network_id': self.n1['network']['id'],
                      'tenant_id': self._tenant_id,
-                     portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT,
+                     portbindings.VNIC_TYPE: vnic_type,
                      ovn_const.OVN_PORT_BINDING_PROFILE: {
                      'capabilities': [ovn_const.PORT_CAP_SWITCHDEV]}}}
 
@@ -521,13 +539,23 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         # Assert the poer hasn't been added to any HA Chassis Group either
         self.assertEqual(0, len(ovn_port.ha_chassis_group))
 
-    def test_external_port_update_switchdev(self):
+    def test_external_port_create_switchdev_vnic_direct(self):
+        self._test_external_port_create_switchdev(portbindings.VNIC_DIRECT)
+
+    def test_external_port_create_switchdev_vnic_direct_physical(self):
+        self._test_external_port_create_switchdev(
+            portbindings.VNIC_DIRECT_PHYSICAL)
+
+    def test_external_port_create_switchdev_vnic_macvtap(self):
+        self._test_external_port_create_switchdev(portbindings.VNIC_MACVTAP)
+
+    def _test_external_port_update_switchdev(self, vnic_type):
         port_data = {
             'port': {'network_id': self.n1['network']['id'],
                      'tenant_id': self._tenant_id,
-                     portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT}}
+                     portbindings.VNIC_TYPE: vnic_type}}
 
-        # Create a VNIC_DIRECT type port without the "switchdev"
+        # Create a VNIC_DIRECT[_PHYSICAL] type port without the "switchdev"
         # capability and assert that it's an "external" port
         port_req = self.new_create_request('ports', port_data, self.fmt)
         port_res = port_req.get_response(self.api)
@@ -556,3 +584,13 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         self.assertEqual("", ovn_port.type)
         # Assert the poer hasn't been added to any HA Chassis Group either
         self.assertEqual(0, len(ovn_port.ha_chassis_group))
+
+    def test_external_port_update_switchdev_vnic_direct(self):
+        self._test_external_port_update_switchdev(portbindings.VNIC_DIRECT)
+
+    def test_external_port_update_switchdev_vnic_direct_physical(self):
+        self._test_external_port_update_switchdev(
+            portbindings.VNIC_DIRECT_PHYSICAL)
+
+    def test_external_port_update_switchdev_vnic_macvtap(self):
+        self._test_external_port_update_switchdev(portbindings.VNIC_MACVTAP)

@@ -263,7 +263,7 @@ class OVNClient(object):
             capabilities = utils.get_port_capabilities(port)
             vnic_type = port.get(portbindings.VNIC_TYPE,
                                  portbindings.VNIC_NORMAL)
-            if (vnic_type == portbindings.VNIC_DIRECT and
+            if (vnic_type in ovn_const.EXTERNAL_PORT_TYPES and
                     ovn_const.PORT_CAP_SWITCHDEV not in capabilities):
                 if self.is_external_ports_supported():
                     port_type = ovn_const.LSP_TYPE_EXTERNAL
