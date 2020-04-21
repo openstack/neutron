@@ -49,13 +49,13 @@ traffic directions (from the VM point of view).
 
 .. table:: **Networking back ends, supported rules, and traffic direction**
 
-    ====================  =======================  =======================  ===================
-     Rule \\ back end      Open vSwitch             SR-IOV                   Linux bridge
-    ====================  =======================  =======================  ===================
-     Bandwidth limit       Egress \\ Ingress        Egress (1)               Egress \\ Ingress
-     Minimum bandwidth     Egress \\ Ingress (2)    Egress \\ Ingress (2)    -
-     DSCP marking          Egress                   -                        Egress
-    ====================  =======================  =======================  ===================
+    ====================  =======================  =======================  ===================  ===================
+     Rule \\ back end      Open vSwitch             SR-IOV                   Linux bridge         OVN
+    ====================  =======================  =======================  ===================  ===================
+     Bandwidth limit       Egress \\ Ingress        Egress (1)               Egress \\ Ingress    Egress \\ Ingress
+     Minimum bandwidth     Egress \\ Ingress (2)    Egress \\ Ingress (2)    -                    -
+     DSCP marking          Egress                   -                        Egress               Egress
+    ====================  =======================  =======================  ===================  ===================
 
 .. note::
 
@@ -66,12 +66,12 @@ traffic directions (from the VM point of view).
 
 .. table:: **Neutron backends, supported directions and enforcement types for Minimum Bandwidth rule**
 
-    ============================  ====================  ====================  ==============
-     Enforcement type \ Backend    Open vSwitch          SR-IOV                Linux Bridge
-    ============================  ====================  ====================  ==============
-     Dataplane                     -                     Egress (1)            -
-     Placement                     Egress/Ingress (2)    Egress/Ingress (2)    -
-    ============================  ====================  ====================  ==============
+    ============================  ====================  ====================  ==============  =====
+     Enforcement type \ Backend    Open vSwitch          SR-IOV                Linux Bridge    OVN
+    ============================  ====================  ====================  ==============  =====
+     Dataplane                     -                     Egress (1)            -               -
+     Placement                     Egress/Ingress (2)    Egress/Ingress (2)    -               -
+    ============================  ====================  ====================  ==============  =====
 
 .. note::
 
