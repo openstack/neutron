@@ -3487,6 +3487,64 @@ class TestOvsDvrNeutronAgent(object):
                 self.agent.ancillary_brs = mock.Mock()
                 self._test_scan_ports_failure('scan_ancillary_ports')
 
+    def test_ext_br_recreated(self):
+        self._setup_for_dvr_test()
+        reset_methods = (
+            'reset_ovs_parameters', 'reset_dvr_parameters',
+            'setup_dvr_flows_on_integ_br', 'setup_dvr_flows_on_tun_br',
+            'setup_dvr_flows_on_phys_br', 'setup_dvr_mac_flows_on_all_brs')
+        for method in reset_methods:
+            mock.patch.object(self.agent.dvr_agent, method).start()
+        bridge_mappings = {'physnet0': 'br-ex0',
+                           'physnet1': 'br-ex1'}
+        ex_br_mocks = [mock.Mock(br_name='br-ex0'),
+                       mock.Mock(br_name='br-ex1')]
+        phys_bridges = {'physnet0': ex_br_mocks[0],
+                        'physnet1': ex_br_mocks[1]},
+        bm_mock = mock.Mock()
+        bridges_added = ['br-ex0']
+        with mock.patch(
+            'neutron.agent.linux.ovsdb_monitor.get_bridges_monitor',
+            return_value=bm_mock),\
+                mock.patch.object(
+                    self.agent,
+                    'check_ovs_status',
+                    return_value=constants.OVS_NORMAL),\
+                mock.patch.object(
+                    self.agent,
+                    '_agent_has_updates',
+                    side_effect=TypeError('loop exit')),\
+                mock.patch.dict(
+                    self.agent.bridge_mappings, bridge_mappings, clear=True),\
+                mock.patch.dict(
+                    self.agent.phys_brs, phys_bridges, clear=True),\
+                mock.patch.object(
+                    self.agent,
+                    'setup_physical_bridges') as setup_physical_bridges:
+            bm_mock.bridges_added = bridges_added
+            try:
+                self.agent.rpc_loop(polling_manager=mock.Mock(),
+                                    bridges_monitor=bm_mock)
+            except TypeError:
+                pass
+        # Setup bridges should be called once even if it will raise Runtime
+        # Error because TypeError is raised in _agent_has_updates to stop
+        # agent after first loop iteration
+        setup_physical_bridges.assert_called_once_with({'physnet0': 'br-ex0'})
+        # Ensure dvr_agent methods were called correctly
+        self.agent.dvr_agent.reset_ovs_parameters.assert_called_once_with(
+            self.agent.int_br, self.agent.tun_br, self.agent.phys_brs,
+            self.agent.patch_int_ofport, self.agent.patch_tun_ofport)
+        self.agent.dvr_agent.reset_dvr_parameters.assert_called_once_with()
+        (self.agent.dvr_agent.setup_dvr_flows_on_phys_br.
+         assert_called_once_with({'physnet0': 'br-ex0'}))
+        (self.agent.dvr_agent.setup_dvr_flows_on_integ_br.
+            assert_called_once_with())
+        (self.agent.dvr_agent.setup_dvr_flows_on_tun_br.
+            assert_called_once_with())
+        (self.agent.dvr_agent.setup_dvr_mac_flows_on_all_brs.
+            assert_called_once_with())
+
 
 class TestOvsDvrNeutronAgentOFCtl(TestOvsDvrNeutronAgent,
                                   ovs_test_base.OVSOFCtlTestBase):

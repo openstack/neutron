@@ -130,10 +130,9 @@ class OVSDVRNeutronAgent(object):
         self.enable_tunneling = enable_tunneling
         self.enable_distributed_routing = enable_distributed_routing
         self.bridge_mappings = bridge_mappings
-        self.phys_brs = phys_brs
         self.int_ofports = int_ofports
         self.phys_ofports = phys_ofports
-        self.reset_ovs_parameters(integ_br, tun_br,
+        self.reset_ovs_parameters(integ_br, tun_br, phys_brs,
                                   patch_int_ofport, patch_tun_ofport)
         self.reset_dvr_parameters()
         self.dvr_mac_address = None
@@ -145,17 +144,19 @@ class OVSDVRNeutronAgent(object):
     def set_firewall(self, firewall=None):
         self.firewall = firewall
 
-    def setup_dvr_flows(self):
+    def setup_dvr_flows(self, bridge_mappings=None):
+        bridge_mappings = bridge_mappings or self.bridge_mappings
         self.setup_dvr_flows_on_integ_br()
         self.setup_dvr_flows_on_tun_br()
-        self.setup_dvr_flows_on_phys_br()
+        self.setup_dvr_flows_on_phys_br(bridge_mappings)
         self.setup_dvr_mac_flows_on_all_brs()
 
-    def reset_ovs_parameters(self, integ_br, tun_br,
+    def reset_ovs_parameters(self, integ_br, tun_br, phys_brs,
                              patch_int_ofport, patch_tun_ofport):
         '''Reset the openvswitch parameters'''
         self.int_br = integ_br
         self.tun_br = tun_br
+        self.phys_brs = phys_brs
         self.patch_int_ofport = patch_int_ofport
         self.patch_tun_ofport = patch_tun_ofport
 
@@ -165,6 +166,15 @@ class OVSDVRNeutronAgent(object):
         self.local_csnat_map = {}
         self.local_ports = {}
         self.registered_dvr_macs = set()
+
+    def reset_dvr_flows(self, integ_br, tun_br, phys_brs,
+                        patch_int_ofport, patch_tun_ofport,
+                        bridge_mappings=None):
+        '''Reset the openvswitch and DVR parameters and DVR flows'''
+        self.reset_ovs_parameters(
+            integ_br, tun_br, phys_brs, patch_int_ofport, patch_tun_ofport)
+        self.reset_dvr_parameters()
+        self.setup_dvr_flows(bridge_mappings)
 
     def get_dvr_mac_address(self):
         try:
@@ -241,10 +251,10 @@ class OVSDVRNeutronAgent(object):
         self.tun_br.install_goto(table_id=constants.DVR_PROCESS,
                                  dest_table_id=constants.PATCH_LV_TO_TUN)
 
-    def setup_dvr_flows_on_phys_br(self):
+    def setup_dvr_flows_on_phys_br(self, bridge_mappings=None):
         '''Setup up initial dvr flows into br-phys'''
-
-        for physical_network in self.bridge_mappings:
+        bridge_mappings = bridge_mappings or self.bridge_mappings
+        for physical_network in bridge_mappings:
             self.phys_brs[physical_network].install_goto(
                 in_port=self.phys_ofports[physical_network],
                 priority=2,
