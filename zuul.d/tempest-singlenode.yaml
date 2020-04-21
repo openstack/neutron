@@ -199,6 +199,10 @@
         ENABLE_CHASSIS_AS_GW: true
         OVN_L3_CREATE_PUBLIC_NETWORK: true
         OVN_DBS_LOG_LEVEL: dbg
+        # TODO(mjozefcz): Stop compiling OVS modules when meter action in kernel
+        # will be released in Ubuntu Bionic.
+        # More info: https://mail.openvswitch.org/pipermail/ovs-discuss/2018-December/048009.html
+        OVN_BUILD_MODULES: True
         USE_PYTHON3: True
         DOWNLOAD_DEFAULT_IMAGES: false
         IMAGE_URLS: "http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img,https://cloud-images.ubuntu.com/releases/xenial/release/ubuntu-16.04-server-cloudimg-amd64-disk1.img"
@@ -260,6 +264,7 @@
         s-object: false
         s-proxy: false
         tls-proxy: true
+        q-qos: true
 
 - job:
     name: neutron-ovn-tempest-ovs-master
