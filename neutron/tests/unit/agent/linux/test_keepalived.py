@@ -83,16 +83,16 @@ class KeepalivedConfBaseMixin(object):
         instance1.track_interfaces.append("eth0")
 
         vip_address1 = keepalived.KeepalivedVipAddress('192.168.1.0/24',
-                                                       'eth1')
+                                                       'eth1', track=False)
 
         vip_address2 = keepalived.KeepalivedVipAddress('192.168.2.0/24',
-                                                       'eth2')
+                                                       'eth2', track=False)
 
         vip_address3 = keepalived.KeepalivedVipAddress('192.168.3.0/24',
-                                                       'eth2')
+                                                       'eth2', track=False)
 
         vip_address_ex = keepalived.KeepalivedVipAddress('192.168.55.0/24',
-                                                         'eth10')
+                                                         'eth10', track=False)
 
         instance1.vips.append(vip_address1)
         instance1.vips.append(vip_address2)
@@ -110,7 +110,7 @@ class KeepalivedConfBaseMixin(object):
         instance2.track_interfaces.append("eth4")
 
         vip_address1 = keepalived.KeepalivedVipAddress('192.168.3.0/24',
-                                                       'eth6')
+                                                       'eth6', track=False)
 
         instance2.vips.append(vip_address1)
         instance2.vips.append(vip_address2)
@@ -144,13 +144,13 @@ class KeepalivedConfTestCase(base.BaseTestCase,
                 169.254.0.1/24 dev eth0
             }
             virtual_ipaddress_excluded {
-                192.168.1.0/24 dev eth1
-                192.168.2.0/24 dev eth2
-                192.168.3.0/24 dev eth2
-                192.168.55.0/24 dev eth10
+                192.168.1.0/24 dev eth1 no_track
+                192.168.2.0/24 dev eth2 no_track
+                192.168.3.0/24 dev eth2 no_track
+                192.168.55.0/24 dev eth10 no_track
             }
             virtual_routes {
-                0.0.0.0/0 via 192.168.1.1 dev eth1
+                0.0.0.0/0 via 192.168.1.1 dev eth1 no_track
             }
         }
         vrrp_instance VR_2 {
@@ -167,9 +167,9 @@ class KeepalivedConfTestCase(base.BaseTestCase,
                 169.254.0.2/24 dev eth4
             }
             virtual_ipaddress_excluded {
-                192.168.2.0/24 dev eth2
-                192.168.3.0/24 dev eth6
-                192.168.55.0/24 dev eth10
+                192.168.2.0/24 dev eth2 no_track
+                192.168.3.0/24 dev eth6 no_track
+                192.168.55.0/24 dev eth10 no_track
             }
         }""")
 
@@ -239,11 +239,11 @@ class KeepalivedInstanceRoutesTestCase(base.BaseTestCase):
 
     def test_build_config(self):
         expected = """    virtual_routes {
-        0.0.0.0/0 via 1.0.0.254 dev eth0
-        ::/0 via fe80::3e97:eff:fe26:3bfa/64 dev eth1
-        10.0.0.0/8 via 1.0.0.1
-        20.0.0.0/8 via 2.0.0.2
-        30.0.0.0/8 dev eth0 scope link
+        0.0.0.0/0 via 1.0.0.254 dev eth0 no_track
+        ::/0 via fe80::3e97:eff:fe26:3bfa/64 dev eth1 no_track
+        10.0.0.0/8 via 1.0.0.1 no_track
+        20.0.0.0/8 via 2.0.0.2 no_track
+        30.0.0.0/8 dev eth0 scope link no_track
     }"""
         routes = self._get_instance_routes()
         self.assertEqual(expected, '\n'.join(routes.build_config()))
@@ -281,10 +281,10 @@ class KeepalivedInstanceTestCase(base.BaseTestCase,
                     169.254.0.1/24 dev eth0
                 }
                 virtual_ipaddress_excluded {
-                    192.168.1.0/24 dev eth1
+                    192.168.1.0/24 dev eth1 no_track
                 }
                 virtual_routes {
-                    0.0.0.0/0 via 192.168.1.1 dev eth1
+                    0.0.0.0/0 via 192.168.1.1 dev eth1 no_track
                 }
             }
             vrrp_instance VR_2 {
@@ -301,9 +301,9 @@ class KeepalivedInstanceTestCase(base.BaseTestCase,
                     169.254.0.2/24 dev eth4
                 }
                 virtual_ipaddress_excluded {
-                    192.168.2.0/24 dev eth2
-                    192.168.3.0/24 dev eth6
-                    192.168.55.0/24 dev eth10
+                    192.168.2.0/24 dev eth2 no_track
+                    192.168.3.0/24 dev eth6 no_track
+                    192.168.55.0/24 dev eth10 no_track
                 }
             }""")
 
@@ -371,12 +371,13 @@ class KeepalivedVirtualRouteTestCase(base.BaseTestCase):
     def test_virtual_route_with_dev(self):
         route = keepalived.KeepalivedVirtualRoute(n_consts.IPv4_ANY, '1.2.3.4',
                                                   'eth0')
-        self.assertEqual('0.0.0.0/0 via 1.2.3.4 dev eth0',
+        self.assertEqual('0.0.0.0/0 via 1.2.3.4 dev eth0 no_track',
                          route.build_config())
 
     def test_virtual_route_without_dev(self):
         route = keepalived.KeepalivedVirtualRoute('50.0.0.0/8', '1.2.3.4')
-        self.assertEqual('50.0.0.0/8 via 1.2.3.4', route.build_config())
+        self.assertEqual('50.0.0.0/8 via 1.2.3.4 no_track',
+                         route.build_config())
 
 
 class KeepalivedTrackScriptTestCase(base.BaseTestCase):
