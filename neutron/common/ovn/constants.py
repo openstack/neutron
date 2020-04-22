@@ -87,14 +87,88 @@ ACL_ACTION_ALLOW = 'allow'
 # unhosted router gateways to schedule.
 OVN_GATEWAY_INVALID_CHASSIS = 'neutron-ovn-invalid-chassis'
 
-SUPPORTED_DHCP_OPTS = {
-    4: ['netmask', 'router', 'dns-server', 'log-server',
-        'lpr-server', 'swap-server', 'ip-forward-enable',
-        'policy-filter', 'default-ttl', 'mtu', 'router-discovery',
-        'router-solicitation', 'arp-timeout', 'ethernet-encap',
-        'tcp-ttl', 'tcp-keepalive', 'nis-server', 'ntp-server',
-        'tftp-server'],
-    6: ['server-id', 'dns-server', 'domain-search']}
+# NOTE(lucasagomes): These options were last synced from
+# https://github.com/ovn-org/ovn/blob/feb5d6e81d5a0290aa3618a229c860d01200422e/lib/ovn-l7.h
+#
+# NOTE(lucasagomes): Whenever we update these lists please also update
+# the related documentation at doc/source/ovn/dhcp_opts.rst
+#
+# Mappping between Neutron option names and OVN ones
+SUPPORTED_DHCP_OPTS_MAPPING = {
+    4: {'arp-timeout': 'arp_cache_timeout',
+        'tcp-keepalive': 'tcp_keepalive_interval',
+        'netmask': 'netmask',
+        'router': 'router',
+        'dns-server': 'dns_server',
+        'log-server': 'log_server',
+        'lpr-server': 'lpr_server',
+        'domain-name': 'domain_name',
+        'swap-server': 'swap_server',
+        'policy-filter': 'policy_filter',
+        'router-solicitation': 'router_solicitation',
+        'nis-server': 'nis_server',
+        'ntp-server': 'ntp_server',
+        'server-id': 'server_id',
+        'tftp-server': 'tftp_server',
+        'classless-static-route': 'classless_static_route',
+        'ms-classless-static-route': 'ms_classless_static_route',
+        'ip-forward-enable': 'ip_forward_enable',
+        'router-discovery': 'router_discovery',
+        'ethernet-encap': 'ethernet_encap',
+        'default-ttl': 'default_ttl',
+        'tcp-ttl': 'tcp_ttl',
+        'mtu': 'mtu',
+        'lease-time': 'lease_time',
+        'T1': 'T1',
+        'T2': 'T2',
+        'bootfile-name': 'bootfile_name',
+        'wpad': 'wpad',
+        'path-prefix': 'path_prefix',
+        'tftp-server-address': 'tftp_server_address',
+        'server-ip-address': 'tftp_server_address',
+        '1': 'netmask',
+        '3': 'router',
+        '6': 'dns_server',
+        '7': 'log_server',
+        '9': 'lpr_server',
+        '15': 'domain_name',
+        '16': 'swap_server',
+        '21': 'policy_filter',
+        '32': 'router_solicitation',
+        '35': 'arp_cache_timeout',
+        '38': 'tcp_keepalive_interval',
+        '41': 'nis_server',
+        '42': 'ntp_server',
+        '54': 'server_id',
+        '66': 'tftp_server',
+        '121': 'classless_static_route',
+        '249': 'ms_classless_static_route',
+        '19': 'ip_forward_enable',
+        '31': 'router_discovery',
+        '36': 'ethernet_encap',
+        '23': 'default_ttl',
+        '37': 'tcp_ttl',
+        '26': 'mtu',
+        '51': 'lease_time',
+        '58': 'T1',
+        '59': 'T2',
+        '67': 'bootfile_name',
+        '252': 'wpad',
+        '210': 'path_prefix',
+        '150': 'tftp_server_address'},
+    6: {'server-id': 'server_id',
+        'dns-server': 'dns_server',
+        'domain-search': 'domain_search',
+        'ia-addr': 'ip_addr',
+        '2': 'server_id',
+        '5': 'ia_addr',
+        '24': 'domain_search',
+        '23': 'dns_server'},
+}
+
+# Special option for disabling DHCP via extra DHCP options
+DHCP_DISABLED_OPT = 'dhcp_disabled'
+
 DHCPV6_STATELESS_OPT = 'dhcpv6_stateless'
 
 # When setting global DHCP options, these options will be ignored
