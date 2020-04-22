@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+import netaddr
 from neutron_lib import constants as lib_const
 from neutron_lib import context
 from oslo_utils import uuidutils
@@ -274,7 +275,7 @@ class FipPortForwardingExtensionTestCase(PortForwardingExtensionBaseTestCase):
             self.portforwarding1.external_port,
             protocol=self.portforwarding1.protocol)
         mock_device.delete_addr_and_conntrack_state.assert_called_once_with(
-            str(self.portforwarding1.floating_ip_address))
+            str(netaddr.IPNetwork(self.portforwarding1.floating_ip_address)))
         fip_status = {
             self.portforwarding1.floatingip_id:
                 lib_const.FLOATINGIP_STATUS_DOWN}

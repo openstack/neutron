@@ -344,8 +344,8 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
         iptables_manager.apply()
 
         fip_id_cidrs = set([(pf.floatingip_id,
-                             str(pf.floating_ip_address)) for pf in
-                            port_forwardings])
+                             str(netaddr.IPNetwork(pf.floating_ip_address)))
+                            for pf in port_forwardings])
         self._sync_and_remove_fip(context, fip_id_cidrs, device, ri)
         self._store_local(port_forwardings, events.DELETED)
 
