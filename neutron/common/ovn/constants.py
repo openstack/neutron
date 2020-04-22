@@ -210,3 +210,7 @@ METADATA_PORT = 80
 # OVN igmp options
 MCAST_SNOOP = 'mcast_snoop'
 MCAST_FLOOD_UNREGISTERED = 'mcast_flood_unregistered'
+
+EXTERNAL_PORT_TYPES = (portbindings.VNIC_DIRECT,
+                       portbindings.VNIC_DIRECT_PHYSICAL,
+                       portbindings.VNIC_MACVTAP)
