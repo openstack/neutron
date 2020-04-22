@@ -34,8 +34,7 @@ enable_service ovn-northd
 enable_service ovn-controller
 enable_service q-ovn-metadata-agent
 
-# Use Neutron instead of nova-network
-disable_service n-net
+# Use Neutron
 enable_service q-svc
 
 # Disable Neutron agents not used with OVN.
