@@ -15,7 +15,6 @@
 
 import copy
 import functools
-import textwrap
 
 import mock
 import netaddr
@@ -47,6 +46,39 @@ from neutron.tests.functional import base
 _uuid = uuidutils.generate_uuid
 
 OVS_INTERFACE_DRIVER = 'neutron.agent.linux.interface.OVSInterfaceDriver'
+
+KEEPALIVED_CONFIG = """\
+global_defs {
+    notification_email_from %(email_from)s
+    router_id %(router_id)s
+}
+vrrp_instance VR_1 {
+    state BACKUP
+    interface %(ha_device_name)s
+    virtual_router_id 1
+    priority 50
+    garp_master_delay 60
+    nopreempt
+    advert_int 2
+    track_interface {
+        %(ha_device_name)s
+    }
+    virtual_ipaddress {
+        169.254.0.1/24 dev %(ha_device_name)s
+    }
+    virtual_ipaddress_excluded {
+        %(floating_ip_cidr)s dev %(ex_device_name)s no_track
+        %(external_device_cidr)s dev %(ex_device_name)s no_track
+        %(internal_device_cidr)s dev %(internal_device_name)s no_track
+        %(ex_port_ipv6)s dev %(ex_device_name)s scope link no_track
+        %(int_port_ipv6)s dev %(internal_device_name)s scope link no_track
+    }
+    virtual_routes {
+        0.0.0.0/0 via %(default_gateway_ip)s dev %(ex_device_name)s no_track
+        8.8.8.0/24 via 19.4.4.4 no_track
+        %(extra_subnet_cidr)s dev %(ex_device_name)s scope link no_track
+    }
+}"""
 
 
 def get_ovs_bridge(br_name):
@@ -443,38 +475,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             router.get_floating_ips()[0]['floating_ip_address'])
         default_gateway_ip = external_port['subnets'][0].get('gateway_ip')
         extra_subnet_cidr = external_port['extra_subnets'][0].get('cidr')
-        return textwrap.dedent("""\
-            global_defs {
-                notification_email_from %(email_from)s
-                router_id %(router_id)s
-            }
-            vrrp_instance VR_1 {
-                state BACKUP
-                interface %(ha_device_name)s
-                virtual_router_id 1
-                priority 50
-                garp_master_delay 60
-                nopreempt
-                advert_int 2
-                track_interface {
-                    %(ha_device_name)s
-                }
-                virtual_ipaddress {
-                    169.254.0.1/24 dev %(ha_device_name)s
-                }
-                virtual_ipaddress_excluded {
-                    %(floating_ip_cidr)s dev %(ex_device_name)s
-                    %(external_device_cidr)s dev %(ex_device_name)s
-                    %(internal_device_cidr)s dev %(internal_device_name)s
-                    %(ex_port_ipv6)s dev %(ex_device_name)s scope link
-                    %(int_port_ipv6)s dev %(internal_device_name)s scope link
-                }
-                virtual_routes {
-                    0.0.0.0/0 via %(default_gateway_ip)s dev %(ex_device_name)s
-                    8.8.8.0/24 via 19.4.4.4
-                    %(extra_subnet_cidr)s dev %(ex_device_name)s scope link
-                }
-            }""") % {
+        return KEEPALIVED_CONFIG % {
             'email_from': keepalived.KEEPALIVED_EMAIL_FROM,
             'router_id': keepalived.KEEPALIVED_ROUTER_ID,
             'ha_device_name': ha_device_name,
