@@ -59,7 +59,7 @@ l3_dvr_db.register_db_l3_dvr_opts()
 
 # TODO(slaweq): this should be moved to neutron_lib.plugins.utils module
 def is_port_bound(port):
-    if port.port_binding:
+    if not port.port_binding:
         LOG.warning("Binding for port %s was not found.", port)
         return False
     return port.port_binding[portbindings_extended.VIF_TYPE] not in [
