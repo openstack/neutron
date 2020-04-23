@@ -146,7 +146,7 @@ fake_meta_port = dhcp.DictModel(id='12345678-1234-aaaa-1234567890ab',
                                 fixed_ips=[fake_meta_fixed_ip])
 
 fake_meta_dvr_port = dhcp.DictModel(fake_meta_port)
-fake_meta_dvr_port.device_owner = const.DEVICE_OWNER_DVR_INTERFACE
+fake_meta_dvr_port['device_owner'] = const.DEVICE_OWNER_DVR_INTERFACE
 
 fake_dist_port = dhcp.DictModel(id='12345678-1234-aaaa-1234567890ab',
                                 mac_address='aa:bb:cc:dd:ee:ff',
@@ -199,7 +199,7 @@ fake_meta_network = dhcp.NetModel(id=FAKE_NETWORK_UUID,
                                   ports=[fake_meta_port])
 
 fake_meta_dvr_network = dhcp.NetModel(fake_meta_network)
-fake_meta_dvr_network.ports = [fake_meta_dvr_port]
+fake_meta_dvr_network['ports'] = [fake_meta_dvr_port]
 
 fake_dist_network = dhcp.NetModel(id=FAKE_NETWORK_UUID,
                                   tenant_id=FAKE_TENANT_ID,
