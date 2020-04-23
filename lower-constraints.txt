@@ -98,7 +98,7 @@ PyMySQL==0.7.6
 pyOpenSSL==17.1.0
 pyparsing==2.1.0
 pyperclip==1.5.27
-pyroute2==0.5.7
+pyroute2==0.5.13
 python-dateutil==2.5.3
 python-designateclient==2.7.0
 python-editor==1.0.3
