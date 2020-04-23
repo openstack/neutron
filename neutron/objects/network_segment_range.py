@@ -184,15 +184,19 @@ class NetworkSegmentRange(base.NeutronDbObject):
         _filters = copy.deepcopy(filters)
         project_id = _filters.pop('project_id', None)
         with cls.db_context_reader(context):
-            # Retrieve default segment ID range.
-            default_range = context.session.query(cls.db_model).filter(
+            # Retrieve all network segment ranges shared.
+            shared_ranges = context.session.query(cls.db_model).filter(
                 and_(cls.db_model.network_type == network_type,
-                     cls.db_model.default == sql.expression.true()))
+                     cls.db_model.shared == sql.expression.true()))
             if network_type == constants.TYPE_VLAN:
-                default_range.filter(cls.db_model.physical_network ==
+                shared_ranges.filter(cls.db_model.physical_network ==
                                      _filters['physical_network'])
-            segment_ids = set(six_range(default_range.all()[0].minimum,
-                                        default_range.all()[0].maximum + 1))
+            segment_ids = set([])
+            for shared_range in shared_ranges.all():
+                segment_ids.update(set(six_range(shared_range.minimum,
+                                                 shared_range.maximum + 1)))
+            if not segment_ids:
+                return []
 
             # Retrieve other project segment ID ranges (not own project, not
             # default range).
@@ -222,8 +226,8 @@ class NetworkSegmentRange(base.NeutronDbObject):
             # assigned to other projects.
             query = cls._build_query_segments(context, model, network_type,
                                               **_filters)
-            clauses = [and_(model_segmentation_id >= range[0],
-                            model_segmentation_id <= range[1])
-                       for range in segment_ranges]
+            clauses = [and_(model_segmentation_id >= _range[0],
+                            model_segmentation_id <= _range[1])
+                       for _range in segment_ranges]
             query = query.filter(or_(*clauses))
             return query.limit(common_constants.IDPOOL_SELECT_SIZE).all()
