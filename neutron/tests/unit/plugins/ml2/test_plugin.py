@@ -698,7 +698,7 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
             kwargs = after_create.mock_calls[0][2]
             self.assertEqual(s['subnet']['id'], kwargs['subnet']['id'])
 
-    def test_port_update_subnetnotfound(self):
+    def test_port_create_subnetnotfound(self):
         with self.network() as n:
             with self.subnet(network=n, cidr='1.1.1.0/24') as s1,\
                     self.subnet(network=n, cidr='1.1.2.0/24') as s2,\
@@ -706,27 +706,23 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                 fixed_ips = [{'subnet_id': s1['subnet']['id']},
                              {'subnet_id': s2['subnet']['id']},
                              {'subnet_id': s3['subnet']['id']}]
-                with self.port(subnet=s1, fixed_ips=fixed_ips,
-                               device_owner=constants.DEVICE_OWNER_DHCP) as p:
-                    plugin = directory.get_plugin()
-                    orig_update = plugin.update_port
+                plugin = directory.get_plugin()
+                origin_create_port_db = plugin.create_port_db
 
-                    def delete_before_update(ctx, *args, **kwargs):
-                        # swap back out with original so only called once
-                        plugin.update_port = orig_update
-                        # delete s2 in the middle of s1 port_update
-                        plugin.delete_subnet(ctx, s2['subnet']['id'])
-                        return plugin.update_port(ctx, *args, **kwargs)
-                    plugin.update_port = delete_before_update
-                    req = self.new_delete_request('subnets',
-                                                  s1['subnet']['id'])
-                    res = req.get_response(self.api)
-                    self.assertEqual(204, res.status_int)
-                    # ensure port only has 1 IP on s3
-                    port = self._show('ports', p['port']['id'])['port']
-                    self.assertEqual(1, len(port['fixed_ips']))
-                    self.assertEqual(s3['subnet']['id'],
-                                     port['fixed_ips'][0]['subnet_id'])
+                def create_port(ctx, port):
+                    plugin.create_port_db = origin_create_port_db
+                    second_ctx = context.get_admin_context()
+                    with db_api.CONTEXT_WRITER.using(second_ctx):
+                        setattr(second_ctx, 'GUARD_TRANSACTION', False)
+                        plugin.delete_subnet(second_ctx, s2['subnet']['id'])
+                    return plugin.create_port_db(ctx, port)
+
+                plugin.create_port_db = create_port
+                res = self._create_port(
+                    self.fmt, s2['subnet']['network_id'], fixed_ips=fixed_ips,
+                    device_owner=constants.DEVICE_OWNER_DHCP, subnet=s1)
+                self.assertIn('Subnet %s could not be found.'
+                              % s2['subnet']['id'], res.text)
 
     def test_update_subnet_with_empty_body(self):
         with self.subnet() as subnet:
@@ -3286,23 +3282,21 @@ class TestML2PluggableIPAM(test_ipam.UseIpamMixin, TestMl2SubnetsV2):
             driver_mock().remove_subnet.assert_called_with(request.subnet_id)
 
     def test_delete_subnet_deallocates_slaac_correctly(self):
-        driver = 'neutron.ipam.drivers.neutrondb_ipam.driver.NeutronDbPool'
+        cidr = '2001:db8:100::0/64'
         with self.network() as network:
-            with self.subnet(network=network,
-                             cidr='2001:100::0/64',
+            with self.subnet(network=network, cidr=cidr,
                              ip_version=constants.IP_VERSION_6,
                              ipv6_ra_mode=constants.IPV6_SLAAC) as subnet:
                 with self.port(subnet=subnet) as port:
-                    with mock.patch(driver) as driver_mock:
-                        # Validate that deletion of SLAAC allocation happens
-                        # via IPAM interface, i.e. ipam_subnet.deallocate is
-                        # called prior to subnet deletiong from db.
-                        self._delete('subnets', subnet['subnet']['id'])
-                        dealloc = driver_mock().get_subnet().deallocate
-                        dealloc.assert_called_with(
-                            port['port']['fixed_ips'][0]['ip_address'])
-                        driver_mock().remove_subnet.assert_called_with(
-                            subnet['subnet']['id'])
+                    ipallocs = port_obj.IPAllocation.get_objects(self.context)
+                    self.assertEqual(1, len(ipallocs))
+                    self.assertEqual(
+                        port['port']['fixed_ips'][0]['ip_address'],
+                        str(ipallocs[0].ip_address))
+
+                    self._delete('subnets', subnet['subnet']['id'])
+                    ipallocs = port_obj.IPAllocation.get_objects(self.context)
+                    self.assertEqual(0, len(ipallocs))
 
 
 class TestTransactionGuard(Ml2PluginV2TestCase):

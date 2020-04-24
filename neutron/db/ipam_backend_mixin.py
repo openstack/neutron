@@ -656,6 +656,12 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             context, network_id, host, service_type, fixed_configured,
             fixed_ips)
         if subnets:
+            msg = ('This subnet is being modified by another concurrent '
+                   'operation')
+            for subnet in subnets:
+                subnet.lock_register(
+                    context, exc.SubnetInUse(subnet_id=subnet.id, reason=msg),
+                    id=subnet.id)
             subnet_dicts = [self._make_subnet_dict(subnet, context=context)
                             for subnet in subnets]
             # Give priority to subnets with service_types
