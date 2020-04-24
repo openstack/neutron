@@ -85,24 +85,28 @@ class InvalidAuthenticationTypeException(exceptions.NeutronException):
 class KeepalivedVipAddress(object):
     """A virtual address entry of a keepalived configuration."""
 
-    def __init__(self, ip_address, interface_name, scope=None):
+    def __init__(self, ip_address, interface_name, scope=None, track=True):
         self.ip_address = ip_address
         self.interface_name = interface_name
         self.scope = scope
+        self.track = track
 
     def __eq__(self, other):
         return (isinstance(other, KeepalivedVipAddress) and
                 self.ip_address == other.ip_address)
 
     def __str__(self):
-        return '[%s, %s, %s]' % (self.ip_address,
-                                 self.interface_name,
-                                 self.scope)
+        return '[%s, %s, %s, %s]' % (self.ip_address,
+                                     self.interface_name,
+                                     self.scope,
+                                     self.track)
 
     def build_config(self):
         result = '%s dev %s' % (self.ip_address, self.interface_name)
         if self.scope:
             result += ' scope %s' % self.scope
+        if not self.track:
+            result += ' no_track'
         return result
 
 
@@ -124,6 +128,7 @@ class KeepalivedVirtualRoute(object):
             output += ' dev %s' % self.interface_name
         if self.scope:
             output += ' scope %s' % self.scope
+        output += ' no_track'
         return output
 
 
@@ -200,7 +205,8 @@ class KeepalivedInstance(object):
         self.authentication = (auth_type, password)
 
     def add_vip(self, ip_cidr, interface_name, scope):
-        vip = KeepalivedVipAddress(ip_cidr, interface_name, scope)
+        track = interface_name in self.track_interfaces
+        vip = KeepalivedVipAddress(ip_cidr, interface_name, scope, track=track)
         if vip not in self.vips:
             self.vips.append(vip)
         else:
