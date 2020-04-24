@@ -16,10 +16,10 @@
 import collections
 import copy
 import sys
+from unittest import mock
 import uuid
 
 import eventlet
-import mock
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib import constants as const
 from neutron_lib import exceptions

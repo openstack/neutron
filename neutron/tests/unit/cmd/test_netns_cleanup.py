@@ -14,8 +14,8 @@
 #    under the License.
 
 import signal
+from unittest import mock
 
-import mock
 import testtools
 
 from neutron.cmd import netns_cleanup as util

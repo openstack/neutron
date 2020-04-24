@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from unittest import mock
 import uuid
-
-import mock
 
 from neutron.agent.common import placement_report
 from neutron.tests import base

@@ -14,9 +14,9 @@ import collections
 import copy
 import itertools
 import random
+from unittest import mock
 
 import fixtures
-import mock
 import netaddr
 from neutron_lib import constants
 from neutron_lib import context

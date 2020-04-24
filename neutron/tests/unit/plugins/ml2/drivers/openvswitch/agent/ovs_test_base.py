@@ -16,8 +16,8 @@
 #    under the License.
 
 import functools
+from unittest import mock
 
-import mock
 from oslo_utils import importutils
 
 from neutron.tests import base

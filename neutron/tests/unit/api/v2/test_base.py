@@ -14,8 +14,8 @@
 #    under the License.
 
 import os
+from unittest import mock
 
-import mock
 from neutron_lib.api import attributes
 from neutron_lib.api import converters
 from neutron_lib.api.definitions import empty_string_filtering

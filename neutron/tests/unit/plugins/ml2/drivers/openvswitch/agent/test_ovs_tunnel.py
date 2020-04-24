@@ -15,8 +15,8 @@
 #
 
 import time
+from unittest import mock
 
-import mock
 from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_log import log

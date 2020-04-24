@@ -13,8 +13,8 @@
 #    under the License.
 
 import os.path
+from unittest import mock
 
-import mock
 from neutron_lib import fixture as lib_fixtures
 from oslo_config import cfg
 from oslo_utils import fileutils

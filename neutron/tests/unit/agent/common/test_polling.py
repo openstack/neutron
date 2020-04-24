@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
 
 from neutron.agent.common import base_polling
 from neutron.agent.common import polling

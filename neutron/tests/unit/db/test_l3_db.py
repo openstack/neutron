@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
+from unittest import mock
+
 import netaddr
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry

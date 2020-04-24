@@ -11,7 +11,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import mock
+from unittest import mock
 
 from neutron_lib.callbacks import events
 from neutron_lib import fixture

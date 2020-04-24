@@ -11,8 +11,8 @@
 #    under the License.
 
 import copy
+from unittest import mock
 
-import mock
 from neutron_lib import context
 from neutron_lib.db import model_query
 from neutron_lib import exceptions as n_exc

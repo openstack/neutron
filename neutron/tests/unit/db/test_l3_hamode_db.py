@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import mock
+from unittest import mock
 
 from neutron_lib.api.definitions import dvr as dvr_apidef
 from neutron_lib.api.definitions import external_net as extnet_apidef

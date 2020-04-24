@@ -16,8 +16,8 @@
 import copy
 import errno
 import socket
+from unittest import mock
 
-import mock
 import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions

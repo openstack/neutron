@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
+from unittest import mock
+
 from neutron_lib.callbacks import events as cb_events
 from neutron_lib.services.trunk import constants as t_const
 import oslo_messaging

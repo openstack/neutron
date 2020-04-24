@@ -10,7 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
 
 from neutron.api.rpc.callbacks.consumer import registry as cons_registry
 from neutron.api.rpc.callbacks.producer import registry as prod_registry

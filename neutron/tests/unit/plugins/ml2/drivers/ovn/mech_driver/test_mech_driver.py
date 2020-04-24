@@ -14,9 +14,9 @@
 
 import copy
 import datetime
+from unittest import mock
 import uuid
 
-import mock
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet

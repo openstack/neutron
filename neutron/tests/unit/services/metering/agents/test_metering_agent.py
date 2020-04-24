@@ -12,7 +12,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import mock
+from unittest import mock
+
 from neutron_lib.tests.unit import fake_notifier
 from oslo_config import cfg
 from oslo_utils import fixture as utils_fixture

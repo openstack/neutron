@@ -14,8 +14,8 @@
 #    under the License.
 
 import copy
+from unittest import mock
 
-import mock
 from neutron_lib import constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg

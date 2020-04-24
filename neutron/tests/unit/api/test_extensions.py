@@ -14,9 +14,9 @@
 #    under the License.
 
 import copy
+from unittest import mock
 
 import fixtures
-import mock
 from neutron_lib import exceptions
 from neutron_lib.plugins import constants as lib_const
 from neutron_lib.plugins import directory

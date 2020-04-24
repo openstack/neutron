@@ -11,8 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
-import testtools
+from unittest import mock
 
 from neutron_lib.api.definitions import constants as api_const
 from neutron_lib import constants
@@ -20,6 +19,7 @@ from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
+import testtools
 
 from neutron.services.auto_allocate import db
 from neutron.services.auto_allocate import exceptions

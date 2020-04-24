@@ -10,7 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
+
 from neutron_lib import constants as lib_constants
 from neutron_lib.exceptions import l3 as l3_exc
 from oslo_utils import uuidutils

@@ -13,9 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import eventlet
-import mock
+from unittest import mock
 
+import eventlet
 from neutron_lib.api.definitions import portbindings as portbindings_def
 from neutron_lib import constants as n_const
 from openstack import connection

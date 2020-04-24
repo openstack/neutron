@@ -13,9 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
+
 from keystoneauth1 import loading
 from keystoneauth1 import session
-import mock
 import netaddr
 from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import provider_net as pnet

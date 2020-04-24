@@ -17,8 +17,8 @@ import logging
 from logging import handlers
 import os
 import sys
+from unittest import mock
 
-import mock
 from neutron_lib import exceptions
 from neutron_lib import fixture as lib_fixtures
 import testtools

@@ -13,8 +13,8 @@
 #    under the License.
 
 import datetime
+from unittest import mock
 
-import mock
 from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_utils import timeutils

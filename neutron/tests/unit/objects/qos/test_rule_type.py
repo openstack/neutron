@@ -13,7 +13,8 @@
 # rule types are so different from other objects that we don't base the test
 # class on the common base class for all objects
 
-import mock
+from unittest import mock
+
 from neutron_lib import constants as lib_consts
 from neutron_lib.db import constants as db_consts
 from neutron_lib.services.qos import constants as qos_consts

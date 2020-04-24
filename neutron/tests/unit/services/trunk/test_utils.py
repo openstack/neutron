@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
+from unittest import mock
 
 from neutron.services.trunk import utils
 from neutron.tests.unit.plugins.ml2 import test_plugin

@@ -13,8 +13,8 @@
 #    under the License.
 
 import errno
+from unittest import mock
 
-import mock
 import pyroute2
 from pyroute2 import netlink
 from pyroute2.netlink.rtnl import ifinfmsg

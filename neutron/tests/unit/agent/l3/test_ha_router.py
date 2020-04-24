@@ -14,8 +14,8 @@
 
 import copy
 import signal
+from unittest import mock
 
-import mock
 from neutron_lib import constants as n_consts
 from neutron_lib import fixture as lib_fixtures
 from oslo_utils import uuidutils

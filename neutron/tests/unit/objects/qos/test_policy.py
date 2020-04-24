@@ -11,8 +11,8 @@
 #    under the License.
 
 import random
+from unittest import mock
 
-import mock
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils

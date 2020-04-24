@@ -15,8 +15,8 @@
 
 import os
 import textwrap
+from unittest import mock
 
-import mock
 from neutron_lib import constants as n_consts
 import testtools
 

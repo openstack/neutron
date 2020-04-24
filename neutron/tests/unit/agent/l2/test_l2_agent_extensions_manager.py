@@ -10,7 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
+
 from oslo_config import cfg
 
 from neutron.agent.l2 import l2_agent_extensions_manager as l2_ext_manager

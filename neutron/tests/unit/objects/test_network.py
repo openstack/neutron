@@ -10,7 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
 
 from neutron.db import rbac_db_models
 from neutron.objects import base as obj_base

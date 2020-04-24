@@ -15,8 +15,8 @@
 
 import copy
 import os
+from unittest import mock
 
-import mock
 import netaddr
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib import constants

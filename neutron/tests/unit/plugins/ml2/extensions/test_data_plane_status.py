@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
 
 from neutron_lib.api.definitions import data_plane_status as dps_lib
 from neutron_lib.api.definitions import port as port_def

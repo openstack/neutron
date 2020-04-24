@@ -14,8 +14,8 @@
 #    under the License.
 
 import datetime
+from unittest import mock
 
-import mock
 import netaddr
 from neutron_lib.agent import topics as lib_topics
 from neutron_lib.callbacks import events

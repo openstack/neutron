@@ -13,8 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
 
-import mock
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_ctx
 from neutron_lib import exceptions as n_exc

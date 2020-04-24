@@ -12,7 +12,8 @@
 #    under the License.
 #
 
-import mock
+from unittest import mock
+
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry

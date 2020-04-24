@@ -11,7 +11,7 @@
 #    under the License.
 import random
 
-import mock
+from unittest import mock
 
 from neutron.objects import address_scope
 from neutron.objects import network

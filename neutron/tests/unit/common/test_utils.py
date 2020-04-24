@@ -17,11 +17,11 @@ import random
 import re
 import sys
 import time
+from unittest import mock
 
 import ddt
 import eventlet
 from eventlet import queue
-import mock
 import netaddr
 from neutron_lib import constants
 from oslo_log import log as logging

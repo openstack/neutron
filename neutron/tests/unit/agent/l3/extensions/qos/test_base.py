@@ -13,7 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
+
 from oslo_utils import uuidutils
 
 from neutron.agent.l3.extensions.qos import base as qos_base

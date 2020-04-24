@@ -10,7 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
+
 from neutron_lib.api.definitions import port_security as psec
 
 from neutron.db import portsecurity_db_common as pdc

@@ -13,8 +13,8 @@
 #
 
 import copy
+from unittest import mock
 
-import mock
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet

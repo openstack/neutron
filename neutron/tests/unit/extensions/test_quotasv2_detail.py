@@ -13,8 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
 
-import mock
 from neutron_lib import context
 from neutron_lib import fixture
 from oslo_config import cfg

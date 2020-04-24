@@ -13,8 +13,8 @@
 #    under the License.
 
 import collections
+from unittest import mock
 
-import mock
 from neutron_lib import constants as const
 
 from neutron.common.ovn import acl

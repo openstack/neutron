@@ -13,7 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
+
 from neutron_lib.plugins import directory
 from oslo_utils import importutils
 from sqlalchemy.orm import exc as orm_exc

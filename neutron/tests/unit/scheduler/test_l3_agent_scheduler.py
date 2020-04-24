@@ -16,8 +16,8 @@
 import collections
 import contextlib
 import datetime
+from unittest import mock
 
-import mock
 from neutron_lib.api.definitions import l3_ext_ha_mode
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import router_availability_zone

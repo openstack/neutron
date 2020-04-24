@@ -13,7 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
+
 from neutron_lib import rpc
 from neutron_lib.services.logapi import constants as log_const
 from oslo_config import cfg

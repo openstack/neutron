@@ -18,13 +18,13 @@ import os
 import re
 import sys
 import textwrap
+from unittest import mock
 
 from alembic.autogenerate import api as alembic_ag_api
 from alembic import config as alembic_config
 from alembic.operations import ops as alembic_ops
 from alembic import script as alembic_script
 import fixtures
-import mock
 from neutron_lib import fixture as lib_fixtures
 from neutron_lib.utils import helpers
 from oslo_utils import fileutils

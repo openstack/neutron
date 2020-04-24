@@ -14,11 +14,11 @@
 #    under the License.
 
 import io
+from unittest import mock
 
 import ddt
 import eventlet
 from eventlet import tpool
-import mock
 from neutron_lib import exceptions
 import six
 

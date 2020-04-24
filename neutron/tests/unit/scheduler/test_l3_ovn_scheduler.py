@@ -13,8 +13,8 @@
 #
 
 import random
+from unittest import mock
 
-import mock
 from neutron.tests import base
 
 from neutron.common.ovn import constants as ovn_const

@@ -15,9 +15,9 @@
 
 import os
 import sys
+from unittest import mock
 
 import fixtures
-import mock
 from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.exceptions import l3 as l3_exc

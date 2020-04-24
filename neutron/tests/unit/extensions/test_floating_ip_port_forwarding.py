@@ -12,7 +12,8 @@
 #    under the License.
 #
 
-import mock
+from unittest import mock
+
 from neutron_lib import context
 from oslo_utils import uuidutils
 from webob import exc

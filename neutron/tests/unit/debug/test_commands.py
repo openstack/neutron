@@ -14,8 +14,8 @@
 #    under the License.
 
 import socket
+from unittest import mock
 
-import mock
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from oslo_config import cfg

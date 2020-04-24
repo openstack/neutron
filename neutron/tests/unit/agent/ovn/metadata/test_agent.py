@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import collections
+from unittest import mock
 
-import mock
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
 

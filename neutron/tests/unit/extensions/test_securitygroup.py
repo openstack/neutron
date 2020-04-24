@@ -15,8 +15,8 @@
 
 import contextlib
 import copy
+from unittest import mock
 
-import mock
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import context

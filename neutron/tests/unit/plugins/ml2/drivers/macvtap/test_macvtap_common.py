@@ -15,8 +15,7 @@
 #    under the License.
 
 import hashlib
-
-import mock
+from unittest import mock
 
 from neutron.plugins.ml2.drivers.macvtap import macvtap_common as m_common
 from neutron.tests import base

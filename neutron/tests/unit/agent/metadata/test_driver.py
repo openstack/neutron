@@ -14,8 +14,8 @@
 #    under the License.
 
 import os
+from unittest import mock
 
-import mock
 from neutron_lib import constants
 from neutron_lib import fixture as lib_fixtures
 from oslo_config import cfg
