@@ -628,8 +628,10 @@ class OVNClient(object):
     def delete_port(self, context, port_id, port_object=None):
         try:
             self._delete_port(port_id, port_object=port_object)
-        except idlutils.RowNotFound:
-            pass
+        except Exception as e:
+            with excutils.save_and_reraise_exception():
+                LOG.error('Failed to delete port %(port)s. Error: '
+                          '%(error)s', {'port': port_id, 'error': e})
         db_rev.delete_revision(context, port_id, ovn_const.TYPE_PORTS)
 
     def _create_or_update_floatingip(self, floatingip, txn=None):
