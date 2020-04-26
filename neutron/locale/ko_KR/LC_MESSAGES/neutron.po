@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2019-12-20 15:01+0000\n"
+"POT-Creation-Date: 2020-04-25 10:29+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1324,10 +1324,6 @@ msgstr ""
 "IP 범위가 %(parent_range)s이고 크기가 %(size)s인(IP 범위 %(excluded_ranges)s "
 "제외) 네트워크를 발견하지 못했습니다."
 
-#, python-format
-msgid "Network type value '%s' not supported"
-msgstr "네트워크 유형 값 '%s'이(가) 지원되지 않음"
-
 msgid "Network type value needed by the ML2 plugin"
 msgstr "ML2 플러그인에 네트워크 유형 값이 필요함"
 
@@ -1991,13 +1987,6 @@ msgid ""
 msgstr ""
 "이 네트워크에 연결된 라우터가 있으며, 해당 라우터에는 액세스를 위해 이 정책"
 "이 필요합니다."
-
-msgid ""
-"True to delete all ports on all the OpenvSwitch bridges. False to delete "
-"ports created by Neutron on integration and external network bridges."
-msgstr ""
-"모든 OpenvSwitch 브릿지의 모든 포트를 삭제하려면 true입니다. 통합 및 외부 네"
-"트워크 브릿지에 Neutron이 작성한 포트를 삭제하려면 false입니다. "
 
 msgid "Tunnel IP value needed by the ML2 plugin"
 msgstr "ML2 플러그인에 터널 IP 값이 필요함"

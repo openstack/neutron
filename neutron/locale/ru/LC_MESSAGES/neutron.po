@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2019-12-20 15:01+0000\n"
+"POT-Creation-Date: 2020-04-25 10:29+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1369,10 +1369,6 @@ msgstr ""
 "Сеть размера %(size)s из диапазона IP-адресов %(parent_range)s, кроме "
 "диапазонов IP-адресов %(excluded_ranges)s, не найдена."
 
-#, python-format
-msgid "Network type value '%s' not supported"
-msgstr "Значение типа сети '%s' не поддерживается"
-
 msgid "Network type value needed by the ML2 plugin"
 msgstr "Для модуля ML2 требуется значение типа сети"
 
@@ -2074,13 +2070,6 @@ msgid ""
 "access."
 msgstr ""
 "К сети подключены маршрутизаторы, доступ к которым зависит от этой стратегии."
-
-msgid ""
-"True to delete all ports on all the OpenvSwitch bridges. False to delete "
-"ports created by Neutron on integration and external network bridges."
-msgstr ""
-"True - удалить все порты для всех мостов OpenvSwitch. False - удалить порты, "
-"созданные Neutron для мостов интеграции и внешних сетей."
 
 msgid "Tunnel IP value needed by the ML2 plugin"
 msgstr "Для модуля ML2 требуется значение IP-адреса туннеля"

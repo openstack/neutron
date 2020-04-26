@@ -7,15 +7,16 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 # Frank Kloeker <eumel@arcor.de>, 2016. #zanata
 # Andreas Jaeger <jaegerandi@gmail.com>, 2019. #zanata
+# Andreas Jaeger <jaegerandi@gmail.com>, 2020. #zanata
 msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2019-12-20 15:01+0000\n"
+"POT-Creation-Date: 2020-04-25 10:29+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2019-09-26 12:47+0000\n"
+"PO-Revision-Date: 2020-04-25 10:33+0000\n"
 "Last-Translator: Andreas Jaeger <jaegerandi@gmail.com>\n"
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -362,6 +363,11 @@ msgid ""
 msgstr ""
 "Der verteilte Router %(router_id)s kann am traditionellen L3-Agenten "
 "%(agent_id)s nicht gehostet werden."
+
+msgid "Cannot match priority on flow deletion or modification without 'strict'"
+msgstr ""
+"Abgleichen von Priorität bei Ablauflöschung oder Änderung nicht möglich ohne "
+"'strict'"
 
 msgid "Cannot specify both subnet-id and port-id"
 msgstr "Angabe sowohl von Teilnetz-ID als auch von Port-ID nicht möglich"
@@ -1191,6 +1197,10 @@ msgid "Invalid user/uid: '%s'"
 msgstr "Ungültiger Benutzer/Benutzer ID: '%s'"
 
 #, python-format
+msgid "Invalid value %(value)s for parameter %(parameter)s provided."
+msgstr "Ungültiger Wert %(value)s für Parameter '%(parameter)s' angegeben."
+
+#, python-format
 msgid ""
 "Invalid value for ICMP %(field)s (%(attr)s) %(value)s. It must be 0 to 255."
 msgstr ""
@@ -1490,10 +1500,6 @@ msgid ""
 msgstr ""
 "Netz der Größe %(size)s, aus IP-Bereich %(parent_range)s ausschließlich der "
 "IP-Bereiche %(excluded_ranges)s wurde nicht gefunden."
-
-#, python-format
-msgid "Network type value '%s' not supported"
-msgstr "Netztypwert '%s' wird nicht unterstützt"
 
 msgid "Network type value needed by the ML2 plugin"
 msgstr "Netztypwert für ML2-Plug-in erforderlich"
@@ -2270,14 +2276,6 @@ msgid ""
 msgstr ""
 "Zeitlimit in Sekunden für die Wartezeit, in der der lokale Switch die "
 "Verbindung mit dem Controller hergestellt haben muss."
-
-msgid ""
-"True to delete all ports on all the OpenvSwitch bridges. False to delete "
-"ports created by Neutron on integration and external network bridges."
-msgstr ""
-"'True' zum Löschen aller Ports auf den OpenvSwitch-Brücken. 'False' zum "
-"Löschen von Ports, die von Neutron auf Integrationsbrücken und externen "
-"Netzbrücken erstellt wurden."
 
 msgid "Tunnel IP value needed by the ML2 plugin"
 msgstr "Tunnel-IP-Wert für ML2-Plug-in erforderlich"

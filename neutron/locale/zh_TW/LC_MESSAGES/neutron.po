@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2019-12-20 15:01+0000\n"
+"POT-Creation-Date: 2020-04-25 10:29+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1252,10 +1252,6 @@ msgstr ""
 "在 IP 範圍 %(parent_range)s（排除 IP 範圍 %(excluded_ranges)s）中找不到大小"
 "為 %(size)s 的網路。"
 
-#, python-format
-msgid "Network type value '%s' not supported"
-msgstr "不支援網路類型值 '%s'"
-
 msgid "Network type value needed by the ML2 plugin"
 msgstr "ML2 外掛程式需要的網路類型值"
 
@@ -1884,13 +1880,6 @@ msgid ""
 "There are routers attached to this network that depend on this policy for "
 "access."
 msgstr "有依賴於此存取原則的路由器已連接至此網路。"
-
-msgid ""
-"True to delete all ports on all the OpenvSwitch bridges. False to delete "
-"ports created by Neutron on integration and external network bridges."
-msgstr ""
-"如果為 True，則刪除所有 OpenvSwitch 橋接器上的所有埠。如果為 False，則刪除"
-"Neutron 在整合及外部網路橋接器上建立的埠。"
 
 msgid "Tunnel IP value needed by the ML2 plugin"
 msgstr "ML2 外掛程式需要的通道 IP 值"
