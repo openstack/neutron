@@ -823,27 +823,17 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         for lvm, agent_ports in self.get_agent_ports(fdb_entries):
             agent_ports.pop(self.local_ip, None)
             if len(agent_ports):
-                if not self.enable_distributed_routing:
-                    with self.tun_br.deferred() as deferred_br:
-                        self.fdb_add_tun(context, deferred_br, lvm,
-                                         agent_ports, self._tunnel_port_lookup)
-                else:
-                    self.fdb_add_tun(context, self.tun_br, lvm,
-                                     agent_ports, self._tunnel_port_lookup)
+                self.fdb_add_tun(context, self.tun_br, lvm,
+                                 agent_ports, self._tunnel_port_lookup)
 
     def fdb_remove(self, context, fdb_entries):
         LOG.debug("fdb_remove received")
         for lvm, agent_ports in self.get_agent_ports(fdb_entries):
             agent_ports.pop(self.local_ip, None)
             if len(agent_ports):
-                if not self.enable_distributed_routing:
-                    with self.tun_br.deferred() as deferred_br:
-                        self.fdb_remove_tun(context, deferred_br, lvm,
-                                            agent_ports,
-                                            self._tunnel_port_lookup)
-                else:
-                    self.fdb_remove_tun(context, self.tun_br, lvm,
-                                        agent_ports, self._tunnel_port_lookup)
+                self.fdb_remove_tun(context, self.tun_br, lvm,
+                                    agent_ports,
+                                    self._tunnel_port_lookup)
 
     def add_fdb_flow(self, br, port_info, remote_ip, lvm, ofport):
         if port_info == n_const.FLOODING_ENTRY:
@@ -879,9 +869,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     def _fdb_chg_ip(self, context, fdb_entries):
         LOG.debug("update chg_ip received")
-        with self.tun_br.deferred() as deferred_br:
-            self.fdb_chg_ip_tun(context, deferred_br, fdb_entries,
-                                self.local_ip)
+        self.fdb_chg_ip_tun(context, self.tun_br, fdb_entries, self.local_ip)
 
     def setup_entry_for_arp_reply(self, br, action, local_vid, mac_address,
                                   ip_address):

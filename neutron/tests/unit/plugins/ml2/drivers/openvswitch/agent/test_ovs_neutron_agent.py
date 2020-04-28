@@ -1837,13 +1837,12 @@ class TestOvsNeutronAgent(object):
                       {'agent_ip':
                        [l2pop_rpc.PortInfo(FAKE_MAC, FAKE_IP1),
                         n_const.FLOODING_ENTRY]}}}
-        with mock.patch.object(self.agent.tun_br,
-                               "deferred") as defer_fn:
+        with mock.patch.object(self.agent, 'tun_br', autospec=True) as tun_br:
             self.agent.fdb_add(None, fdb_entry)
-            defer_fn.assert_not_called()
+            tun_br.add_port.assert_not_called()
 
             self.agent.fdb_remove(None, fdb_entry)
-            defer_fn.assert_not_called()
+            tun_br.delete_port.assert_not_called()
 
     def test_fdb_add_flows(self):
         self._prepare_l2_pop_ofports()
@@ -1861,14 +1860,12 @@ class TestOvsNeutronAgent(object):
                                   autospec=True) as add_tun_fn:
             self.agent.fdb_add(None, fdb_entry)
             add_tun_fn.assert_not_called()
-            deferred_br_call = mock.call.deferred().__enter__()
             expected_calls = [
-                deferred_br_call.install_arp_responder('vlan1', FAKE_IP1,
-                                                       FAKE_MAC),
-                deferred_br_call.install_unicast_to_tun('vlan1', 'seg1', '2',
-                                                        FAKE_MAC),
-                deferred_br_call.install_flood_to_tun('vlan1', 'seg1',
-                                                      set(['1', '2'])),
+                mock.call.install_arp_responder('vlan1', FAKE_IP1, FAKE_MAC),
+                mock.call.install_unicast_to_tun('vlan1', 'seg1', '2',
+                                                 FAKE_MAC),
+                mock.call.install_flood_to_tun('vlan1', 'seg1',
+                                               set(['1', '2'])),
             ]
             tun_br.assert_has_calls(expected_calls)
 
@@ -1883,17 +1880,12 @@ class TestOvsNeutronAgent(object):
                         n_const.FLOODING_ENTRY]}}}
         with mock.patch.object(self.agent, 'tun_br', autospec=True) as br_tun:
             self.agent.fdb_remove(None, fdb_entry)
-            deferred_br_call = mock.call.deferred().__enter__()
             expected_calls = [
-                mock.call.deferred(),
-                mock.call.deferred().__enter__(),
-                deferred_br_call.delete_arp_responder('vlan2', FAKE_IP1),
-                deferred_br_call.delete_unicast_to_tun('vlan2', FAKE_MAC),
-                deferred_br_call.install_flood_to_tun('vlan2', 'seg2',
-                                                      set(['1'])),
-                deferred_br_call.delete_port('gre-02020202'),
-                deferred_br_call.cleanup_tunnel_port('2'),
-                mock.call.deferred().__exit__(None, None, None),
+                mock.call.delete_arp_responder('vlan2', FAKE_IP1),
+                mock.call.delete_unicast_to_tun('vlan2', FAKE_MAC),
+                mock.call.install_flood_to_tun('vlan2', 'seg2', set(['1'])),
+                mock.call.delete_port('gre-02020202'),
+                mock.call.cleanup_tunnel_port('2'),
             ]
             br_tun.assert_has_calls(expected_calls)
 
@@ -1912,9 +1904,8 @@ class TestOvsNeutronAgent(object):
             fdb_entry['net1']['ports']['10.10.10.10'] = [
                 l2pop_rpc.PortInfo(FAKE_MAC, FAKE_IP1)]
             self.agent.fdb_add(None, fdb_entry)
-            deferred_br = tun_br.deferred().__enter__()
             add_tun_fn.assert_called_with(
-                deferred_br, 'gre-0a0a0a0a', '10.10.10.10', 'gre')
+                tun_br, 'gre-0a0a0a0a', '10.10.10.10', 'gre')
 
     def test_fdb_del_port(self):
         self._prepare_l2_pop_ofports()
@@ -1922,13 +1913,9 @@ class TestOvsNeutronAgent(object):
                      {'network_type': 'gre',
                       'segment_id': 'tun2',
                       'ports': {'2.2.2.2': [n_const.FLOODING_ENTRY]}}}
-        with mock.patch.object(self.agent.tun_br, 'deferred') as defer_fn,\
-                mock.patch.object(self.agent.tun_br,
-                                  'delete_port') as delete_port_fn:
+        with mock.patch.object(self.agent, 'tun_br', autospec=True) as tun_br:
             self.agent.fdb_remove(None, fdb_entry)
-            deferred_br = defer_fn().__enter__()
-            deferred_br.delete_port.assert_called_once_with('gre-02020202')
-            delete_port_fn.assert_not_called()
+            tun_br.delete_port.assert_called_once_with('gre-02020202')
 
     def test_fdb_update_chg_ip(self):
         self._prepare_l2_pop_ofports()
@@ -1937,10 +1924,9 @@ class TestOvsNeutronAgent(object):
                         {'agent_ip':
                          {'before': [l2pop_rpc.PortInfo(FAKE_MAC, FAKE_IP1)],
                           'after': [l2pop_rpc.PortInfo(FAKE_MAC, FAKE_IP2)]}}}}
-        with mock.patch.object(self.agent.tun_br, 'deferred') as deferred_fn:
+        with mock.patch.object(self.agent, 'tun_br', autospec=True) as tun_br:
             self.agent.fdb_update(None, fdb_entries)
-            deferred_br = deferred_fn().__enter__()
-            deferred_br.assert_has_calls([
+            tun_br.assert_has_calls([
                 mock.call.install_arp_responder('vlan1', FAKE_IP2, FAKE_MAC),
                 mock.call.delete_arp_responder('vlan1', FAKE_IP1)
             ])
