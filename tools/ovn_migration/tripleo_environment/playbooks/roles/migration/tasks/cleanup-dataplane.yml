@@ -35,45 +35,16 @@
   changed_when: "'Security groups cleaned' in out.stdout"
 
 - name: Cleanup neutron datapath resources
+  become: yes
   shell: |
-    # avoid cleaning up dhcp namespaces if the neutron dhcp agent is up (SR-IOV use case)
-    if [[ "{{ item.value.cleanup_type }}" == "dhcp" ]]; then
-        docker inspect neutron_dhcp && echo "Shouldn't clean DHCP namespaces if neutron_dhcp docker is up" && exit 0
-    fi
+    for container in $(podman ps -a --format {% raw %}"{{.ID}}"{% endraw %} --filter "name=(neutron-(dibbler|dnsmasq|haproxy|keepalived)-.*|dhcp_dnsmasq|dhcp_haproxy|l3_keepalived|l3_haproxy|l3_dibbler|l3_radvd)"); do
+        echo "Cleaning up side-car container $container"
+        podman stop $container
+        podman rm -f $container
+    done
 
-    if ip netns | egrep -e "{{ item.value.netns_regex }}"
-    then
-      echo "Cleaning up"
-      cmd="$(paunch debug --file {{ ovn_migration_backups }}/tripleo-config/hashed-container-startup-config-step_4.json \
-                  --action print-cmd --container {{ item.key }} \
-                  --interactive | \
-                  sed 's/--interactive /--volume=\/tmp\/cleanup-{{ item.key }}.sh:\/cleanup.sh:ro /g ' )"
-
-      f="/tmp/cleanup-{{ item.key }}.sh"
-      f_cmd="/tmp/container-cmd-{{ item.key }}.sh"
-
-      echo "#!/bin/sh" > $f
-      echo "set -x" >> $f
-      echo "set -e" >> $f
-      echo "sudo -E kolla_set_configs" >> $f
-      echo "neutron-netns-cleanup {{ item.value.config }} --agent-type {{ item.value.cleanup_type }} --force" >> $f
-
-      chmod a+x $f
-
-      echo $cmd /cleanup.sh
-
-      echo "#!/bin/sh" > $f_cmd
-      echo "set -x" >> $f_cmd
-      echo "set -e" >> $f_cmd
-      echo $cmd /cleanup.sh >> $f_cmd
-      chmod a+x $f_cmd
-      $f_cmd
-
-    fi
-  with_dict: "{{ agent_cleanups }}"
-  register: out
-  changed_when: "'Cleaning up' in out.stdout"
-
-
-
-
+    # cleanup Neutron ml2/ovs namespaces
+    for netns in $(ip netns | awk '/^(snat|fip|qdhcp|qrouter)-/{ print $1 }'); do
+        echo "Cleaning up namespace $netns"
+        ip netns delete $netns
+    done
