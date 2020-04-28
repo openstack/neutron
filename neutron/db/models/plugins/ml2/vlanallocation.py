@@ -10,8 +10,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from neutron_lib.db import model_base
 import sqlalchemy as sa
+
+
+# https://docs.sqlalchemy.org/en/13/core/constraints.html#check-constraint
+VLAN_CONSTRAINT = ('vlan_id>=%(min_vlan)s AND vlan_id<=%(max_vlan)s' %
+                   {'min_vlan': constants.MIN_VLAN_TAG,
+                    'max_vlan': constants.MAX_VLAN_TAG})
 
 
 class VlanAllocation(model_base.BASEV2):
@@ -32,7 +39,10 @@ class VlanAllocation(model_base.BASEV2):
     __table_args__ = (
         sa.Index('ix_ml2_vlan_allocations_physical_network_allocated',
                  'physical_network', 'allocated'),
-        model_base.BASEV2.__table_args__,)
+        sa.CheckConstraint(sqltext=VLAN_CONSTRAINT,
+                           name='check_ml2_vlan_allocations0vlan_id'),
+        model_base.BASEV2.__table_args__,
+    )
 
     physical_network = sa.Column(sa.String(64), nullable=False,
                                  primary_key=True)

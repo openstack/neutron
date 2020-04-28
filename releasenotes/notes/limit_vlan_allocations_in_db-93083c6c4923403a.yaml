@@ -1,0 +1,8 @@
+---
+upgrade:
+  - |
+    Limit the ML2 VLAN allocations to [1, 4094] values in the database engine.
+    This constraint, enforced in the database engine, could not be supported
+    yet. In this case, it will be ignored. For more information, see the note
+    in
+    ``neutron.db.migration.alembic_migrations.versions.victoria.expand.dfe425060830_limit_vlan_allocation_id_values.py``.

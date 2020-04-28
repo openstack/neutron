@@ -179,3 +179,14 @@ class TestChecks(base.BaseTestCase):
             self.assertEqual(Code.WARNING, result.code)
             self.assertIn('Host A', result.details)
             self.assertIn('Host B', result.details)
+
+    def test_vlan_allocations_segid_check(self):
+        cases = ([0, Code.SUCCESS], [1, Code.WARNING])
+        with mock.patch.object(
+                checks, 'count_vlan_allocations_invalid_segmentation_id') \
+                as mock_count:
+            for count, returned_code in cases:
+                mock_count.return_value = count
+                result = checks.CoreChecks.vlan_allocations_segid_check(
+                    mock.ANY)
+                self.assertEqual(returned_code, result.code)
