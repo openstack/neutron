@@ -6,7 +6,7 @@
 # Why, you ask? Because you made changes to neutron-lib, and you want
 # run the unit tests together.  E.g.:
 #
-#   env TOX_ENV_SRC_MODULES="$HOME/src/neutron-lib" tox -e py37
+#   env TOX_ENV_SRC_MODULES="$HOME/src/neutron-lib" tox -e py38
 
 toxinidir="$1"
 
