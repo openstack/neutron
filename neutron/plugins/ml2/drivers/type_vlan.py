@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import sys
 
 from neutron_lib import constants as p_const
@@ -21,7 +22,6 @@ from neutron_lib import exceptions as exc
 from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
 from oslo_log import log
-from six import moves
 
 from neutron._i18n import _
 from neutron.conf.plugins.ml2.drivers import driver_type
@@ -64,22 +64,30 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
     def _sync_vlan_allocations(self):
         ctx = context.get_admin_context()
         with db_api.context_manager.writer.using(ctx):
-            # get existing allocations for all physical networks
-            allocations = dict()
-            allocs = vlanalloc.VlanAllocation.get_objects(ctx)
-            for alloc in allocs:
-                if alloc.physical_network not in allocations:
-                    allocations[alloc.physical_network] = list()
+            # VLAN ranges per physical network:
+            #   {phy1: [(1, 10), (30, 50)], ...}
+            ranges = self.network_vlan_ranges
+
+            # Delete those VLAN registers from unconfigured physical networks
+            physnets = vlanalloc.VlanAllocation.get_physical_networks(ctx)
+            physnets_unconfigured = physnets - set(ranges)
+            if physnets_unconfigured:
+                LOG.debug('Removing any VLAN register on physical networks %s',
+                          physnets_unconfigured)
+                vlanalloc.VlanAllocation.delete_physical_networks(
+                    ctx, physnets_unconfigured)
+
+            # Get existing allocations for all configured physical networks
+            allocations = collections.defaultdict(list)
+            for alloc in vlanalloc.VlanAllocation.get_objects(ctx):
                 allocations[alloc.physical_network].append(alloc)
 
-            # process vlan ranges for each configured physical network
-            for (physical_network,
-                 vlan_ranges) in self.network_vlan_ranges.items():
+            for physical_network, vlan_ranges in ranges.items():
                 # determine current configured allocatable vlans for
                 # this physical network
                 vlan_ids = set()
                 for vlan_min, vlan_max in vlan_ranges:
-                    vlan_ids |= set(moves.range(vlan_min, vlan_max + 1))
+                    vlan_ids |= set(range(vlan_min, vlan_max + 1))
 
                 # remove from table unallocated vlans not currently
                 # allocatable
@@ -112,25 +120,9 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                                     alloc.delete()
                     del allocations[physical_network]
 
-                # add missing allocatable vlans to table
-                for vlan_id in sorted(vlan_ids):
-                    alloc = vlanalloc.VlanAllocation(
-                        ctx,
-                        physical_network=physical_network,
-                        vlan_id=vlan_id, allocated=False)
-                    alloc.create()
-
-            # remove from table unallocated vlans for any unconfigured
-            # physical networks
-            for allocs in allocations.values():
-                for alloc in allocs:
-                    if not alloc.allocated:
-                        LOG.debug("Removing vlan %(vlan_id)s on physical "
-                                  "network %(physical_network)s from pool",
-                                  {'vlan_id': alloc.vlan_id,
-                                   'physical_network':
-                                   alloc.physical_network})
-                        alloc.delete()
+                # Add missing allocatable VLAN registers for "physical_network"
+                vlanalloc.VlanAllocation.bulk_create(ctx, physical_network,
+                                                     vlan_ids)
 
     def get_type(self):
         return p_const.TYPE_VLAN
