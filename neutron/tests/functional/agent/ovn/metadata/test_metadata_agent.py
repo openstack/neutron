@@ -127,7 +127,7 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 external_ids={
                     ovn_const.OVN_CIDRS_EXT_ID_KEY: '192.168.122.123/24'}))
 
-    def _create_logical_switch_port(self):
+    def _create_logical_switch_port(self, type_=None):
         lswitch_name = 'ovn-' + uuidutils.generate_uuid()
         lswitchport_name = 'ovn-port-' + uuidutils.generate_uuid()
         # It may take some time to ovn-northd to translate from OVN NB DB to
@@ -136,16 +136,20 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         pb_event = test_event.WaitForPortBindingEvent(lswitchport_name)
         self.handler.watch_event(pb_event)
 
+        lswitch_port_columns = {}
+        if type_:
+            lswitch_port_columns['type'] = type_
+
         with self.nb_api.transaction(check_error=True, log_errors=True) as txn:
             txn.add(
                 self.nb_api.ls_add(lswitch_name))
             txn.add(
                 self.nb_api.create_lswitch_port(
-                    lswitchport_name, lswitch_name))
+                    lswitchport_name, lswitch_name, **lswitch_port_columns))
             self._create_metadata_port(txn, lswitch_name)
         self.assertTrue(pb_event.wait())
 
-        return lswitchport_name
+        return lswitchport_name, lswitch_name
 
     @mock.patch.object(agent.PortBindingChassisCreatedEvent, 'run')
     def test_agent_resync_on_non_existing_bridge(self, mock_pbinding):
@@ -154,7 +158,7 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         # new br-new value to its attribute.
         self.assertEqual(self.OVN_BRIDGE, self.agent.ovn_bridge)
 
-        lswitchport_name = self._create_logical_switch_port()
+        lswitchport_name, _ = self._create_logical_switch_port()
 
         # Trigger PortBindingChassisCreatedEvent
         self.sb_api.lsp_bind(lswitchport_name, self.chassis_name).execute(
@@ -172,10 +176,14 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
 
         n_utils.wait_until_true(check_mock_pbinding, timeout=10, exception=exc)
 
-    @mock.patch.object(agent.PortBindingChassisDeletedEvent, 'run')
-    @mock.patch.object(agent.PortBindingChassisCreatedEvent, 'run')
-    def test_agent_events(self, m_pb_created, m_pb_deleted):
-        lswitchport_name = self._create_logical_switch_port()
+    def _test_agent_events(self, delete, type_=None):
+        m_pb_created = mock.patch.object(
+            agent.PortBindingChassisCreatedEvent, 'run').start()
+        m_pb_deleted = mock.patch.object(
+            agent.PortBindingChassisDeletedEvent, 'run').start()
+
+        lswitchport_name, lswitch_name = self._create_logical_switch_port(
+            type_)
         self.sb_api.lsp_bind(lswitchport_name, self.chassis_name).execute(
             check_error=True, log_errors=True)
 
@@ -195,24 +203,47 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 "PortBindingChassisCreatedEvent didn't happen on port "
                 "binding."))
 
-        self.sb_api.lsp_unbind(lswitchport_name).execute(
-            check_error=True, log_errors=True)
+        if delete:
+            self.nb_api.delete_lswitch_port(
+                lswitchport_name, lswitch_name).execute(
+                    check_error=True, log_errors=True)
+        else:
+            self.sb_api.lsp_unbind(lswitchport_name).execute(
+                check_error=True, log_errors=True)
 
         def pb_deleted():
             if m_pb_deleted.call_count < 1:
                 return False
             args = m_pb_deleted.call_args[0]
-            self.assertEqual('update', args[0])
-            self.assertFalse(args[1].chassis)
-            self.assertEqual(self.chassis_name, args[2].chassis[0].name)
+            if delete:
+                self.assertEqual('delete', args[0])
+                self.assertTrue(args[1].chassis)
+                self.assertEqual(self.chassis_name, args[1].chassis[0].name)
+            else:
+                self.assertEqual('update', args[0])
+                self.assertFalse(args[1].chassis)
+                self.assertEqual(self.chassis_name, args[2].chassis[0].name)
             return True
 
         n_utils.wait_until_true(
             pb_deleted,
             timeout=10,
             exception=Exception(
-                "PortBindingChassisDeletedEvent didn't happen on port"
-                "unbind."))
+                "PortBindingChassisDeletedEvent didn't happen on port "
+                "unbind or delete."))
+
+        self.assertEqual(1, m_pb_deleted.call_count)
+
+    def test_agent_unbind_port(self):
+        self._test_agent_events(delete=False)
+
+    def test_agent_delete_bound_external_port(self):
+        self._test_agent_events(delete=True, type_='external')
+
+    def test_agent_delete_bound_nonexternal_port(self):
+        with mock.patch.object(agent.LOG, 'warning') as m_warn:
+            self._test_agent_events(delete=True)
+        self.assertTrue(m_warn.called)
 
     def test_agent_registration_at_chassis_create_event(self):
         def check_for_metadata():
