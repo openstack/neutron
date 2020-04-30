@@ -328,7 +328,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             return ports
 
     def _setup_neutron_router(self):
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(self.ctx):
             router = l3_models.Router()
             self.ctx.session.add(router)
             return router

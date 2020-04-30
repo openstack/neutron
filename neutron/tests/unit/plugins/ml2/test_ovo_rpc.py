@@ -14,6 +14,7 @@
 from unittest import mock
 
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib.plugins import directory
 
 from neutron.objects import network
@@ -94,7 +95,7 @@ class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
     def test_transaction_state_error_doesnt_notify(self):
         # running in a transaction should cause it to skip notification since
         # fresh reads aren't possible.
-        with self.ctx.session.begin():
+        with db_api.CONTEXT_WRITER.using(self.ctx):
             self.plugin.create_security_group(
                 self.ctx, {'security_group': {'tenant_id': 'test',
                                               'description': 'desc',

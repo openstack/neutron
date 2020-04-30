@@ -2390,26 +2390,26 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             self._check_port_binding_profile(port, profile)
 
     def test_update_port_binding_host_id_none(self):
-        with self.port() as port:
-            plugin = directory.get_plugin()
-            binding = p_utils.get_port_binding_by_status_and_host(
-                plugin._get_port(self.context,
-                                 port['port']['id']).port_bindings,
-                constants.ACTIVE)
-            with self.context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(self.context):
+            with self.port() as port:
+                plugin = directory.get_plugin()
+                binding = p_utils.get_port_binding_by_status_and_host(
+                    plugin._get_port(self.context,
+                                     port['port']['id']).port_bindings,
+                    constants.ACTIVE)
                 binding.host = 'test'
-            mech_context = driver_context.PortContext(
-                plugin, self.context, port['port'],
-                plugin.get_network(self.context, port['port']['network_id']),
-                binding, None)
-        with mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.'
-                        '_update_port_dict_binding') as update_mock:
-            attrs = {portbindings.HOST_ID: None}
-            self.assertEqual('test', binding.host)
-            with self.context.session.begin(subtransactions=True):
+                mech_context = driver_context.PortContext(
+                    plugin, self.context, port['port'],
+                    plugin.get_network(
+                        self.context, port['port']['network_id']),
+                    binding, None)
+            with mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.'
+                            '_update_port_dict_binding') as update_mock:
+                attrs = {portbindings.HOST_ID: None}
+                self.assertEqual('test', binding.host)
                 plugin._process_port_binding(mech_context, attrs)
-            self.assertTrue(update_mock.mock_calls)
-            self.assertEqual('', binding.host)
+                self.assertTrue(update_mock.mock_calls)
+                self.assertEqual('', binding.host)
 
     def test_update_port_binding_host_id_not_changed(self):
         with self.port() as port:
