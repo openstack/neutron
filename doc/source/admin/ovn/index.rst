@@ -13,3 +13,4 @@ OVN Driver Administration Guide
    refarch/refarch
    dpdk
    troubleshooting
+   sriov
