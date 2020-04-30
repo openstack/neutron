@@ -17,6 +17,7 @@ source $LIBDIR/log
 source $LIBDIR/fip_port_forwarding
 source $LIBDIR/uplink_status_propagation
 source $LIBDIR/tag_ports_during_bulk_creation
+source $LIBDIR/octavia
 
 Q_BUILD_OVS_FROM_GIT=$(trueorfalse False Q_BUILD_OVS_FROM_GIT)
 
