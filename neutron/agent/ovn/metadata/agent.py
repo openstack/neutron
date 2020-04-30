@@ -62,10 +62,9 @@ class ConfigException(Exception):
 
 
 class PortBindingChassisEvent(row_event.RowEvent):
-    def __init__(self, metadata_agent):
+    def __init__(self, metadata_agent, events):
         self.agent = metadata_agent
         table = 'Port_Binding'
-        events = (self.ROW_UPDATE,)
         super(PortBindingChassisEvent, self).__init__(
             events, table, None)
         self.event_name = self.__class__.__name__
@@ -92,6 +91,11 @@ class PortBindingChassisEvent(row_event.RowEvent):
 class PortBindingChassisCreatedEvent(PortBindingChassisEvent):
     LOG_MSG = "Port %s in datapath %s bound to our chassis"
 
+    def __init__(self, metadata_agent):
+        events = (self.ROW_UPDATE,)
+        super(PortBindingChassisCreatedEvent, self).__init__(
+            metadata_agent, events)
+
     def match_fn(self, event, row, old):
         try:
             return (row.chassis[0].name == self.agent.chassis and
@@ -103,10 +107,24 @@ class PortBindingChassisCreatedEvent(PortBindingChassisEvent):
 class PortBindingChassisDeletedEvent(PortBindingChassisEvent):
     LOG_MSG = "Port %s in datapath %s unbound from our chassis"
 
+    def __init__(self, metadata_agent):
+        events = (self.ROW_UPDATE, self.ROW_DELETE)
+        super(PortBindingChassisDeletedEvent, self).__init__(
+            metadata_agent, events)
+
     def match_fn(self, event, row, old):
         try:
-            return (old.chassis[0].name == self.agent.chassis and
-                    not row.chassis)
+            if event == self.ROW_UPDATE:
+                return (old.chassis[0].name == self.agent.chassis and
+                        not row.chassis)
+            else:
+                if row.chassis[0].name == self.agent.chassis:
+                    if row.type != "external":
+                        LOG.warning(
+                            'Removing non-external type port %(port_id)s with '
+                            'type "%(type)s"',
+                            {"port_id": row.uuid, "type": row.type})
+                    return True
         except (IndexError, AttributeError):
             return False
 
