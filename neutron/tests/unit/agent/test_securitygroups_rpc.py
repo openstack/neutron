@@ -15,8 +15,8 @@
 
 import collections
 import contextlib
+from unittest import mock
 
-import mock
 import netaddr
 from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
 from neutron_lib import constants as const

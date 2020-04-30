@@ -10,7 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
 
 from neutron.agent.l3 import dvr_edge_router
 from neutron.agent.l3 import dvr_local_router

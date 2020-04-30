@@ -13,8 +13,8 @@
 #    under the License.
 
 import collections
+from unittest import mock
 
-import mock
 from neutron_lib import exceptions
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils

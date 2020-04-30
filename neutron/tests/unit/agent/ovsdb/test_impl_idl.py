@@ -12,10 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
-import testtools
+from unittest import mock
 
 from ovsdbapp import exceptions
+import testtools
 
 from neutron.agent.ovsdb import impl_idl
 from neutron.tests import base

@@ -14,8 +14,8 @@
 
 import collections
 import sys
+from unittest import mock
 
-import mock
 from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_config import cfg

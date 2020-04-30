@@ -14,7 +14,8 @@
 #    under the License.
 #
 
-import mock
+from unittest import mock
+
 import netaddr
 from neutron_lib.api.definitions import external_net as enet_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef

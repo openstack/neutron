@@ -14,8 +14,8 @@
 #    under the License.
 
 import datetime
+from unittest import mock
 
-import mock
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from oslo_utils import timeutils

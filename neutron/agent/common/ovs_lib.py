@@ -500,8 +500,8 @@ class OVSBridge(BaseOVS):
         return [f for f in self.run_ofctl("dump-flows", []).splitlines()
                 if is_a_flow_line(f)]
 
-    def deferred(self, **kwargs):
-        return DeferredOVSBridge(self, **kwargs)
+    def deferred(self, *args, **kwargs):
+        return DeferredOVSBridge(self, *args, **kwargs)
 
     def add_tunnel_port(self, port_name, remote_ip, local_ip,
                         tunnel_type=p_const.TYPE_GRE,

@@ -12,9 +12,9 @@
 #    under the License.
 #
 
-import ddt
-import mock
+from unittest import mock
 
+import ddt
 from neutron_lib.api.definitions import external_net as enet_apidef
 from neutron_lib.api.definitions import floatingip_pools as apidef
 from neutron_lib.api.definitions import l3 as l3_apidef

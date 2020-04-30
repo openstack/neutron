@@ -13,9 +13,8 @@
 #
 import collections
 import copy
+from unittest import mock
 import uuid
-
-import mock
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils

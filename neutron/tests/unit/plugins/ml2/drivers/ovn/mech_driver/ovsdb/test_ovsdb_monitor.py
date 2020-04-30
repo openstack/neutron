@@ -15,8 +15,8 @@
 import copy
 import datetime
 import os
+from unittest import mock
 
-import mock
 from neutron_lib.plugins import constants as n_const
 from neutron_lib.plugins import directory
 from oslo_utils import timeutils

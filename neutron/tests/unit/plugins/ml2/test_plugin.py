@@ -15,10 +15,10 @@
 
 import copy
 import functools
+from unittest import mock
 import weakref
 
 import fixtures
-import mock
 import netaddr
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.api.definitions import availability_zone as az_def

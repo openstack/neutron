@@ -10,7 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
+
 from os_ken.ofproto import ofproto_v1_3
 from os_ken.ofproto import ofproto_v1_3_parser
 

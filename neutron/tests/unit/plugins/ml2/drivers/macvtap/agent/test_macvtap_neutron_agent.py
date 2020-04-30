@@ -16,8 +16,8 @@
 
 import os
 import sys
+from unittest import mock
 
-import mock
 from neutron_lib.agent import topics
 from neutron_lib.utils import helpers
 from oslo_config import cfg

@@ -18,9 +18,9 @@ import copy
 import functools
 import itertools
 import random
+from unittest import mock
 
 import eventlet
-import mock
 import netaddr
 from neutron_lib.callbacks import exceptions
 from neutron_lib.callbacks import registry

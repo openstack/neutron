@@ -13,8 +13,8 @@
 #    under the License.
 
 import contextlib
+from unittest import mock
 
-import mock
 import netaddr
 from neutron_lib.api.definitions import address_scope as apidef
 from neutron_lib.callbacks import events

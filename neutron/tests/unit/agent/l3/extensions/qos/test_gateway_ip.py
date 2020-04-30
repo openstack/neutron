@@ -14,8 +14,8 @@
 #    under the License.
 
 import copy
+from unittest import mock
 
-import mock
 from neutron_lib import constants as lib_const
 from neutron_lib import context
 from oslo_utils import uuidutils

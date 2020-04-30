@@ -14,8 +14,8 @@
 # limitations under the License.
 
 import datetime
+from unittest import mock
 
-import mock
 from neutron_lib.api.definitions import dhcpagentscheduler as das_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants

@@ -14,8 +14,8 @@
 
 import os
 import shutil
+from unittest import mock
 
-import mock
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import constants
 from oslo_config import cfg

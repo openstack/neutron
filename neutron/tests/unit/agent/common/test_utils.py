@@ -14,8 +14,7 @@
 #    under the License.
 
 import socket
-
-import mock
+from unittest import mock
 
 from neutron.agent.common import utils
 from neutron.agent.linux import interface

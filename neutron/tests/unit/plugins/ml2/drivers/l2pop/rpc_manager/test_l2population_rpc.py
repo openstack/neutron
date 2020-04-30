@@ -14,7 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
+
 from neutron_lib import constants as n_const
 
 from neutron.tests.unit.plugins.ml2.drivers.l2pop.rpc_manager \

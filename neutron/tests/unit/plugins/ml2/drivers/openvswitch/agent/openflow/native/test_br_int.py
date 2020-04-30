@@ -14,7 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
+
 from neutron_lib import constants as p_const
 
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants

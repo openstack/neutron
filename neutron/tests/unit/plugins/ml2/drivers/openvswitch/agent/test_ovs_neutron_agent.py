@@ -15,8 +15,8 @@
 import contextlib
 import sys
 import time
+from unittest import mock
 
-import mock
 import netaddr
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.api.definitions import portbindings

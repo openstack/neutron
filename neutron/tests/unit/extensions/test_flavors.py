@@ -12,11 +12,10 @@
 #    under the License.
 #
 
-
 import copy
+from unittest import mock
 
 import fixtures
-import mock
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib.db import constants as db_const

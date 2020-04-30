@@ -14,7 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
 
 from neutron_lib.api.definitions import provider_net as provider
 from neutron_lib import exceptions as exc

@@ -14,8 +14,8 @@
 #    under the License.
 
 import itertools
+from unittest import mock
 
-import mock
 from neutron_lib import context
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.plugins import constants as plugin_constants

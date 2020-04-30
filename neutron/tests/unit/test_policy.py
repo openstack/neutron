@@ -15,7 +15,8 @@
 
 """Test of Policy Engine For Neutron"""
 
-import mock
+from unittest import mock
+
 from neutron_lib.api import attributes
 from neutron_lib import constants
 from neutron_lib import context

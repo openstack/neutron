@@ -16,8 +16,8 @@
 import os
 import socket
 import ssl
+from unittest import mock
 
-import mock
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exception
 from oslo_config import cfg

@@ -14,8 +14,8 @@
 
 import collections
 import copy
+from unittest import mock
 
-import mock
 from neutron_lib.api.definitions import l3
 from oslo_utils import uuidutils
 

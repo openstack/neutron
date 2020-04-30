@@ -11,8 +11,8 @@
 #    under the License.
 
 import copy
+from unittest import mock
 
-import mock
 import netaddr
 from neutron_lib.api.definitions import qos
 from neutron_lib.callbacks import events

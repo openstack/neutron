@@ -14,8 +14,8 @@
 #    under the License.
 
 import itertools
+from unittest import mock
 
-import mock
 from neutron_lib import exceptions as n_exc
 from neutron_lib.services.trunk import constants
 from oslo_db import exception as obj_exc

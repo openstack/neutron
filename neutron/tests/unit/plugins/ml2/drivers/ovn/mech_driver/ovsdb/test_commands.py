@@ -12,7 +12,8 @@
 #    under the License.
 #
 
-import mock
+from unittest import mock
+
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.common.ovn import acl as ovn_acl

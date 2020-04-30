@@ -14,8 +14,8 @@
 
 import itertools
 import random
+from unittest import mock
 
-import mock
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from neutron_lib.utils import helpers

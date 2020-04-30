@@ -16,8 +16,8 @@
 
 import contextlib
 import copy
+from unittest import mock
 
-import mock
 import netaddr
 from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import external_net as extnet_apidef

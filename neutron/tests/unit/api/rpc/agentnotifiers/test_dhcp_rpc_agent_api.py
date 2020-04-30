@@ -15,8 +15,8 @@
 
 import copy
 import datetime
+from unittest import mock
 
-import mock
 from neutron_lib.api import extensions
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry

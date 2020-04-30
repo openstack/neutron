@@ -16,8 +16,8 @@
 import datetime
 from operator import attrgetter
 import random
+from unittest import mock
 
-import mock
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.exceptions import dhcpagentscheduler as das_exc

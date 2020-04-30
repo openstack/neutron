@@ -18,8 +18,8 @@ Unit Tests for ml2 rpc
 """
 
 import collections
+from unittest import mock
 
-import mock
 from neutron_lib.agent import topics
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources

@@ -14,9 +14,9 @@
 # limitations under the License.
 
 import re
+from unittest import mock
 import warnings
 
-import mock
 import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants

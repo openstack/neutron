@@ -14,11 +14,11 @@
 
 import signal
 import sys
+from unittest import mock
 
 import eventlet.event
 from eventlet.green import subprocess
 import eventlet.queue
-import mock
 import testtools
 
 from neutron.agent.common import async_process

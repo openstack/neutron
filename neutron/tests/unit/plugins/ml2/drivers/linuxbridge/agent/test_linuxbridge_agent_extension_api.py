@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+from unittest import mock
 
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_agent_extension_api as ext_api
