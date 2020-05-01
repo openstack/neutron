@@ -1,0 +1,28 @@
+---
+prelude: |
+    The 16.0.0 release includes many bug fixes and new features.
+
+    The most important improvements worth mentioning are:
+
+    - Python 2 is no longer supported by Neutron, Python 3.6 and 3.7 are.
+
+    - Address scopes and subnetpools can now be shared with other tenants using
+      the Role Based Access Control (``RBAC``) mechanism.
+
+    - Security groups can now be set as ``stateful``. Conntrack will not be
+      used for any rules from such a group. This is currently supported only by
+      the ``iptables`` and ``iptables_hybrid`` drivers.
+
+    - Neutron API now allows tagging resources directly in the ``POST`` request.
+
+    - IGMP snooping (multicast) can now be enabled in the ``OVS`` and ``OVN``
+      drivers.
+
+    - A list of IPv6 addresses for a dhcp-host entry in the dnsmasq DHCP agent
+      driver can be configured. This solves problems with failing boot process
+      when only one IP address is available. See `#1861032
+      <https://bugs.launchpad.net/neutron/+bug/1861032>`_) for details about
+      the issue.
+
+    - The networking-ovn mechanism driver has been merged into the neutron
+      repository and is now an in-tree driver for ML2.
