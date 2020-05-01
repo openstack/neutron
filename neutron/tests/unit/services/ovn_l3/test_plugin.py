@@ -895,8 +895,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
             external_ids=expected_ext_ids)
-        self.l3_inst._ovn.delete_lswitch_port.assert_called_once_with(
-            'fip-port-id', 'neutron-fip-net-id')
 
     def test_create_floatingip_distributed(self):
         self.l3_inst._ovn.is_col_present.return_value = True
@@ -966,8 +964,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
             external_ids=expected_ext_ids)
-        self.l3_inst._ovn.delete_lswitch_port.assert_called_once_with(
-            'fip-port-id', 'neutron-fip-net-id')
 
     def test_create_floatingip_external_ip_present_type_snat(self):
         self.l3_inst._ovn.is_col_present.return_value = True
@@ -990,8 +986,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
             external_ids=expected_ext_ids)
-        self.l3_inst._ovn.delete_lswitch_port.assert_called_once_with(
-            'fip-port-id', 'neutron-fip-net-id')
 
     def test_create_floatingip_lsp_external_id(self):
         foo_lport = fake_resources.FakeOvsdbRow.create_one_ovsdb_row()
