@@ -476,6 +476,12 @@ class Subnet(base.NeutronDbObject):
             raise ipam_exceptions.DeferIpam()
         return False
 
+    @classmethod
+    def get_subnet_cidrs(cls, context):
+        return [
+            {'id': subnet[0], 'cidr': subnet[1]} for subnet in
+            context.session.query(cls.db_model.id, cls.db_model.cidr).all()]
+
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 1):  # version 1.1 adds "dns_publish_fixed_ip"
