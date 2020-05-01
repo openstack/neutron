@@ -354,9 +354,3 @@ class DbBasePluginCommon(object):
             if validators.is_attr_set(subnet['ipv6_address_mode']):
                 args['ipv6_address_mode'] = subnet['ipv6_address_mode']
         return args
-
-    def _make_fixed_ip_dict(self, ips):
-        # Excludes from dict all keys except subnet_id and ip_address
-        return [{'subnet_id': ip["subnet_id"],
-                 'ip_address': ip["ip_address"]}
-                for ip in ips]
