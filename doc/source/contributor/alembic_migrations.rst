@@ -229,8 +229,8 @@ Create and activate the virtualenv
 
 From the root of the neutron (or sub-project) repo directory, run::
 
- tox --notest -r -e py37
- source .tox/py37/bin/activate
+ tox --notest -r -e py38
+ source .tox/py38/bin/activate
 
 Now you can use the ``test-db-manage`` alias in place of ``neutron-db-manage``
 in the script auto-generation instructions below.
