@@ -47,7 +47,7 @@ disable_service q-meta
 enable_plugin neutron https://opendev.org/openstack/neutron
 enable_service q-trunk
 enable_service q-dns
-#enable_service q-qos
+enable_service q-qos
 
 # Enable neutron tempest plugin tests
 enable_plugin neutron-tempest-plugin https://opendev.org/openstack/neutron-tempest-plugin
@@ -92,10 +92,12 @@ disable_service cinder c-sch c-api c-vol
 #OVN_L3_SCHEDULER=leastloaded
 
 # Whether or not to build custom openvswitch kernel modules from the ovs git
-# tree. This is enabled by default.  This is required unless your distro kernel
+# tree. This is disabled by default.  This is required unless your distro kernel
 # includes ovs+conntrack support.  This support was first released in Linux 4.3,
 # and will likely be backported by some distros.
-#OVN_BUILD_MODULES=False
+# NOTE(mjozefcz): We need to compile the module for Ubuntu Bionic, because default
+# shipped kernel module doesn't openflow meter action support.
+OVN_BUILD_MODULES=True
 
 # Skydive
 #enable_plugin skydive https://github.com/redhat-cip/skydive.git

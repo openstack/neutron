@@ -55,10 +55,12 @@ OVN_SB_REMOTE=tcp:$SERVICE_HOST:6642
 #OVN_UUID=
 
 # Whether or not to build custom openvswitch kernel modules from the ovs git
-# tree. This is enabled by default.  This is required unless your distro kernel
+# tree. This is disabled by default.  This is required unless your distro kernel
 # includes ovs+conntrack support.  This support was first released in Linux 4.3,
 # and will likely be backported by some distros.
-#OVN_BUILD_MODULES=False
+# NOTE(mjozefcz): We need to compile the module for Ubuntu Bionic, because default
+# shipped kernel module doesn't openflow meter action support.
+OVN_BUILD_MODULES=True
 
 HOST_IP=<IP address of current host>
 NOVA_VNC_ENABLED=True
