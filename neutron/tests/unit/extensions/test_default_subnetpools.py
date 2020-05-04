@@ -176,13 +176,13 @@ class DefaultSubnetpoolsExtensionTestCase(
                                  subnet['subnetpool_id'])
 
     def test_create_subnet_V6_pd_slaac(self):
-        self._test_create_subnet_V6_pd_modes('slaac')
+        self._test_create_subnet_V6_pd_modes(constants.IPV6_SLAAC)
 
     def test_create_subnet_V6_pd_stateless(self):
-        self._test_create_subnet_V6_pd_modes('dhcpv6-stateless')
+        self._test_create_subnet_V6_pd_modes(constants.DHCPV6_STATELESS)
 
-    def test_create_subnet_V6_pd_statefull(self):
-        self._test_create_subnet_V6_pd_modes('dhcpv6-statefull',
+    def test_create_subnet_V6_pd_stateful(self):
+        self._test_create_subnet_V6_pd_modes(constants.DHCPV6_STATEFUL,
                                              expect_fail=True)
 
     def test_create_subnet_V6_pd_no_mode(self):
