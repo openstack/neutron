@@ -57,13 +57,14 @@ class NetworkSegmentRangeIfaceObjectTestCase(
         # `shared` and `network_type` respectively.
         # Hack to always populate test project_id and physical_network
         # fields in network segment range Iface object testing so that related
-        # tests like `test_extra_fields`, `test_create_updates_from_db_object`,
+        # tests like `test_create_updates_from_db_object` and
         # `test_update_updates_from_db_object` can have those fields.
         # Alternatives can be skipping those tests when executing
         # NetworkSegmentRangeIfaceObjectTestCase, or making base test case
         # adjustments.
         self.update_obj_fields({'project_id': TEST_TENANT_ID,
                                 'physical_network': TEST_PHYSICAL_NETWORK})
+        self.extra_fields_not_in_dict = ['tenant_id']
 
 
 class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
