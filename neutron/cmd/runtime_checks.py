@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import exceptions
 from oslo_log import log as logging
 
 from neutron.agent.linux import utils as agent_utils
@@ -33,5 +34,15 @@ def dhcp_release6_supported():
     except (OSError, RuntimeError, IndexError, ValueError) as e:
         LOG.debug("Exception while checking dhcp_release6. "
                   "Exception: %s", e)
+        return False
+    return True
+
+
+def dnsmasq_host_tag_support():
+    cmd = ['dnsmasq', '--test', '--dhcp-host=tag:foo']
+    env = {'LC_ALL': 'C', 'PATH': '/sbin:/usr/sbin'}
+    try:
+        agent_utils.execute(cmd, addl_env=env, log_fail_as_error=False)
+    except exceptions.ProcessExecutionError:
         return False
     return True
