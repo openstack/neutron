@@ -236,14 +236,14 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             if cidr.prefixlen == 0:
                 err_msg = _("0 is not allowed as CIDR prefix length")
                 raise exc.InvalidInput(error_message=err_msg)
-
         if cfg.CONF.allow_overlapping_ips:
-            subnet_list = network.subnets
+            subnet_list = [{'id': s.id, 'cidr': s.cidr}
+                           for s in network.subnets]
         else:
-            subnet_list = self._get_subnets(context)
+            subnet_list = subnet_obj.Subnet.get_subnet_cidrs(context)
         for subnet in subnet_list:
-            if ((netaddr.IPSet([subnet.cidr]) & new_subnet_ipset) and
-                    str(subnet.cidr) != const.PROVISIONAL_IPV6_PD_PREFIX):
+            if ((netaddr.IPSet([subnet['cidr']]) & new_subnet_ipset) and
+                    str(subnet['cidr']) != const.PROVISIONAL_IPV6_PD_PREFIX):
                 # don't give out details of the overlapping subnet
                 err_msg = ("Requested subnet with cidr: %(cidr)s for "
                            "network: %(network_id)s overlaps with another "
@@ -254,8 +254,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                          "overlaps with subnet %(subnet_id)s "
                          "(CIDR: %(cidr)s)",
                          {'new_cidr': new_subnet_cidr,
-                          'subnet_id': subnet.id,
-                          'cidr': subnet.cidr})
+                          'subnet_id': subnet['id'],
+                          'cidr': subnet['cidr']})
                 raise exc.InvalidInput(error_message=err_msg)
 
     def _validate_network_subnetpools(self, network, subnet_ip_version,
