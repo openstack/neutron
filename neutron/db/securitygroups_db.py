@@ -165,7 +165,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         # GETS. TODO(arosen)  context handling can probably be improved here.
         filters = filters or {}
         if not default_sg and context.tenant_id:
-            tenant_id = filters.get('tenant_id')
+            tenant_id = filters.get('project_id') or filters.get('tenant_id')
             if tenant_id:
                 tenant_id = tenant_id[0]
             else:
