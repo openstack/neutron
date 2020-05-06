@@ -164,7 +164,7 @@ function use_new_ovn_repository {
 # neutron-ovs-cleanup uses the OVSDB native interface.
 function ovn_base_setup_bridge {
     local bridge=$1
-    local addbr_cmd="ovs-vsctl --no-wait -- --may-exist add-br $bridge -- set bridge $bridge protocols=OpenFlow13"
+    local addbr_cmd="ovs-vsctl --no-wait -- --may-exist add-br $bridge -- set bridge $bridge protocols=OpenFlow13,OpenFlow15"
 
     if [ "$OVS_DATAPATH_TYPE" != "system" ] ; then
         addbr_cmd="$addbr_cmd -- set Bridge $bridge datapath_type=${OVS_DATAPATH_TYPE}"
@@ -247,7 +247,7 @@ function create_public_bridge {
     local ext_gw_ifc
     ext_gw_ifc=$(get_ext_gw_interface)
 
-    ovs-vsctl --may-exist add-br $ext_gw_ifc -- set bridge $ext_gw_ifc protocols=OpenFlow13
+    ovs-vsctl --may-exist add-br $ext_gw_ifc -- set bridge $ext_gw_ifc protocols=OpenFlow13,OpenFlow15
     ovs-vsctl set open . external-ids:ovn-bridge-mappings=$PHYSICAL_NETWORK:$ext_gw_ifc
     if [ -n "$FLOATING_RANGE" ]; then
         local cidr_len=${FLOATING_RANGE#*/}
@@ -650,8 +650,8 @@ function _start_ovs {
             ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-cms-options="enable-chassis-as-gw"
         fi
 
-        ovn_base_setup_bridge br-int
-        ovs-vsctl --no-wait set bridge br-int fail-mode=secure other-config:disable-in-band=true
+        # Note: ovn-controller will create and configure br-int once it is started.
+        # So, no need to create it now because nothing depends on that bridge here.
 
         local ovscmd="$OVS_SBINDIR/ovs-vswitchd --log-file --pidfile --detach"
         _run_process ovs-vswitchd "$ovscmd" "" "$STACK_GROUP" "root"
