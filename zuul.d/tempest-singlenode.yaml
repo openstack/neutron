@@ -189,6 +189,11 @@
         (^neutron_tempest_plugin.scenario)|\
         (tempest.(api|scenario|thirdparty))).*$"
       tempest_concurrency: 4
+      devstack_local_conf:
+        test-config:
+          $TEMPEST_CONFIG:
+            neutron_plugin_options:
+              is_igmp_snooping_enabled: True
       devstack_localrc:
         Q_AGENT: ovn
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
@@ -213,6 +218,7 @@
         ADVANCED_INSTANCE_USER: ubuntu
         BUILD_TIMEOUT: 784
         ENABLE_TLS: True
+        OVN_IGMP_SNOOPING_ENABLE: True
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron
         neutron-tempest-plugin: https://opendev.org/openstack/neutron-tempest-plugin

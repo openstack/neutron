@@ -96,6 +96,8 @@ if [[ "$SERVICE_IP_VERSION" == 6 ]]; then
     OVSDB_SERVER_LOCAL_HOST=[$OVSDB_SERVER_LOCAL_HOST]
 fi
 
+OVN_IGMP_SNOOPING_ENABLE=$(trueorfalse False OVN_IGMP_SNOOPING_ENABLE)
+
 OVS_PREFIX=/usr/local
 OVS_SBINDIR=$OVS_PREFIX/sbin
 OVS_BINDIR=$OVS_PREFIX/bin
@@ -530,6 +532,8 @@ function configure_ovn_plugin {
             iniset $NEUTRON_CONF DEFAULT dns_domain openstackgate.local
             populate_ml2_config /$Q_PLUGIN_CONF_FILE ovn dns_servers="$OVN_DNS_SERVERS"
         fi
+
+        iniset $NEUTRON_CONF ovs igmp_snooping_enable $OVN_IGMP_SNOOPING_ENABLE
     fi
 
     if is_service_enabled q-dhcp neutron-dhcp ; then
