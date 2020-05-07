@@ -77,6 +77,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         mock.patch(
             'neutron.objects.base.NeutronDbObject.modify_fields_from_db'
         ).start()
+        mock.patch.object(router.FloatingIP, 'from_db_object').start()
 
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         cfg.CONF.set_override("service_plugins", ["router", "port_forwarding"])

@@ -14,6 +14,7 @@
 
 from oslo_utils import uuidutils
 
+from neutron.objects.qos import binding as qos_binding
 from neutron.objects import router
 from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
@@ -168,6 +169,42 @@ class FloatingIPDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             {'floating_port_id': lambda: self._create_test_port_id(),
              'fixed_port_id': lambda: self._create_test_port_id(),
              'router_id': lambda: self._create_test_router_id()})
+
+    def test_qos_policy(self):
+        _qos_policy_1 = self._create_test_qos_policy()
+        _qos_policy_2 = self._create_test_qos_policy()
+
+        self.obj_fields[0]['qos_policy_id'] = _qos_policy_1.id
+        obj = self._test_class(
+            self.context, **obj_test_base.remove_timestamps_from_fields(
+                self.obj_fields[0], self._test_class.fields))
+        obj.create()
+        self.assertEqual(_qos_policy_1.id, obj.qos_policy_id)
+
+        obj.qos_policy_id = _qos_policy_2.id
+        obj.update()
+        self.assertEqual(_qos_policy_2.id, obj.qos_policy_id)
+
+        obj.qos_policy_id = None
+        obj.update()
+        self.assertIsNone(obj.qos_policy_id)
+
+        obj.qos_policy_id = _qos_policy_1.id
+        obj.update()
+        fip_id = obj.id
+        qos_fip_binding = qos_binding.QosPolicyFloatingIPBinding.get_objects(
+            self.context, fip_id=fip_id)
+        self.assertEqual(1, len(qos_fip_binding))
+        self.assertEqual(_qos_policy_1.id, qos_fip_binding[0].policy_id)
+        obj.delete()
+        qos_fip_binding = qos_binding.QosPolicyFloatingIPBinding.get_objects(
+            self.context, fip_id=fip_id)
+        self.assertEqual([], qos_fip_binding)
+
+    def test_v1_1_to_v1_0_drops_qos_policy_id(self):
+        obj = self._make_object(self.obj_fields[0])
+        obj_v1_0 = obj.obj_to_primitive(target_version='1.0')
+        self.assertNotIn('qos_policy_id', obj_v1_0['versioned_object.data'])
 
 
 class DvrFipGatewayPortAgentBindingTestCase(

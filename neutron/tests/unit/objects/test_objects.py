@@ -42,7 +42,7 @@ object_data = {
     'FlatAllocation': '1.0-bf666f24f4642b047eeca62311fbcb41',
     'Flavor': '1.0-82194de5c9aafce08e8527bb7977f5c6',
     'FlavorServiceProfileBinding': '1.0-a2c8731e16cefdac4571f80abf1f8930',
-    'FloatingIP': '1.0-0205cc99ec79e8089d641ed1b565ddae',
+    'FloatingIP': '1.1-595514f8e992849cfc67981d1fd6614e',
     'FloatingIPDNS': '1.0-ee3db848500fa1825235f701828c06d5',
     'GeneveAllocation': '1.0-d5f76e8eac60a778914d61dd8e23e90f',
     'GeneveEndpoint': '1.0-040f026996b5952e2ae4ccd40ac61ca6',

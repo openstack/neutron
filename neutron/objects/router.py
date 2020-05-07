@@ -19,6 +19,7 @@ from neutron_lib.api.validators import availability_zone as az_validator
 from neutron_lib import constants as n_const
 from neutron_lib.objects import common_types
 from neutron_lib.utils import net as net_utils
+from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 import six
 from sqlalchemy import func
@@ -29,6 +30,7 @@ from neutron.db.models import l3_attrs
 from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
 from neutron.objects import base
+from neutron.objects.qos import binding as qos_binding
 
 
 @base.NeutronObjectRegistry.register
@@ -233,7 +235,8 @@ class Router(base.NeutronDbObject):
 @base.NeutronObjectRegistry.register
 class FloatingIP(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Added qos_policy_id field
+    VERSION = '1.1'
 
     db_model = l3.FloatingIP
 
@@ -245,6 +248,7 @@ class FloatingIP(base.NeutronDbObject):
         'floating_port_id': common_types.UUIDField(),
         'fixed_port_id': common_types.UUIDField(nullable=True),
         'fixed_ip_address': obj_fields.IPAddressField(nullable=True),
+        'qos_policy_id': common_types.UUIDField(nullable=True, default=None),
         'router_id': common_types.UUIDField(nullable=True),
         'last_known_router_id': common_types.UUIDField(nullable=True),
         'status': common_types.FloatingIPStatusEnumField(nullable=True),
@@ -252,7 +256,9 @@ class FloatingIP(base.NeutronDbObject):
     }
     fields_no_update = ['project_id', 'floating_ip_address',
                         'floating_network_id', 'floating_port_id']
-    synthetic_fields = ['dns']
+    synthetic_fields = ['dns',
+                        'qos_policy_id',
+                        ]
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
@@ -276,6 +282,46 @@ class FloatingIP(base.NeutronDbObject):
             result['floating_ip_address'] = cls.filter_to_str(
                 result['floating_ip_address'])
         return result
+
+    def _attach_qos_policy(self, qos_policy_id):
+        qos_binding.QosPolicyFloatingIPBinding.delete_objects(
+            self.obj_context, fip_id=self.id)
+        if qos_policy_id:
+            fip_binding_obj = qos_binding.QosPolicyFloatingIPBinding(
+                self.obj_context, policy_id=qos_policy_id, fip_id=self.id)
+            fip_binding_obj.create()
+
+        self.qos_policy_id = qos_policy_id
+        self.obj_reset_changes(['qos_policy_id'])
+
+    def create(self):
+        fields = self.obj_get_changes()
+        with self.db_context_writer(self.obj_context):
+            qos_policy_id = self.qos_policy_id
+            super(FloatingIP, self).create()
+            if 'qos_policy_id' in fields:
+                self._attach_qos_policy(qos_policy_id)
+
+    def update(self):
+        fields = self.obj_get_changes()
+        with self.db_context_writer(self.obj_context):
+            super(FloatingIP, self).update()
+            if 'qos_policy_id' in fields:
+                self._attach_qos_policy(fields['qos_policy_id'])
+
+    def from_db_object(self, db_obj):
+        super(FloatingIP, self).from_db_object(db_obj)
+        fields_to_change = []
+        if db_obj.get('qos_policy_binding'):
+            self.qos_policy_id = db_obj.qos_policy_binding.policy_id
+            fields_to_change.append('qos_policy_id')
+
+        self.obj_reset_changes(fields_to_change)
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):
+            primitive.pop('qos_policy_id', None)
 
     @classmethod
     def get_scoped_floating_ips(cls, context, router_ids):
