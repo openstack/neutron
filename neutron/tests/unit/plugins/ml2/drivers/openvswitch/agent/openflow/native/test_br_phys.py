@@ -27,7 +27,7 @@ call = mock.call  # short hand
 
 class OVSPhysicalBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                             ovs_bridge_test_base.OVSDVRProcessTestMixin):
-    dvr_process_table_id = ovs_const.DVR_PROCESS_VLAN
+    dvr_process_table_id = ovs_const.DVR_PROCESS_PHYSICAL
     dvr_process_next_table_id = ovs_const.LOCAL_VLAN_TRANSLATION
 
     def setUp(self):
@@ -125,10 +125,10 @@ class OVSPhysicalBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
-    def test_add_dvr_mac_vlan(self):
+    def test_add_dvr_mac_physical(self):
         mac = '00:02:b3:13:fe:3d'
         port = 8888
-        self.br.add_dvr_mac_vlan(mac=mac, port=port)
+        self.br.add_dvr_mac_physical(mac=mac, port=port)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
             call._send_msg(ofpp.OFPFlowMod(dp,

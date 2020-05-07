@@ -224,7 +224,7 @@ class OVSDVRNeutronAgent(object):
         # Insert 'drop' action as the default for Table DVR_TO_SRC_MAC
         self.int_br.install_drop(table_id=constants.DVR_TO_SRC_MAC, priority=1)
 
-        self.int_br.install_drop(table_id=constants.DVR_TO_SRC_MAC_VLAN,
+        self.int_br.install_drop(table_id=constants.DVR_TO_SRC_MAC_PHYSICAL,
                                  priority=1)
 
         for physical_network in self.bridge_mappings:
@@ -256,12 +256,12 @@ class OVSDVRNeutronAgent(object):
             self.phys_brs[physical_network].install_goto(
                 in_port=self.phys_ofports[physical_network],
                 priority=2,
-                dest_table_id=constants.DVR_PROCESS_VLAN)
+                dest_table_id=constants.DVR_PROCESS_PHYSICAL)
             self.phys_brs[physical_network].install_goto(
                 priority=1,
-                dest_table_id=constants.DVR_NOT_LEARN_VLAN)
+                dest_table_id=constants.DVR_NOT_LEARN_PHYSICAL)
             self.phys_brs[physical_network].install_goto(
-                table_id=constants.DVR_PROCESS_VLAN,
+                table_id=constants.DVR_PROCESS_PHYSICAL,
                 priority=0,
                 dest_table_id=constants.LOCAL_VLAN_TRANSLATION)
             self.phys_brs[physical_network].install_drop(
@@ -269,15 +269,15 @@ class OVSDVRNeutronAgent(object):
                 in_port=self.phys_ofports[physical_network],
                 priority=2)
             self.phys_brs[physical_network].install_normal(
-                table_id=constants.DVR_NOT_LEARN_VLAN,
+                table_id=constants.DVR_NOT_LEARN_PHYSICAL,
                 priority=1)
 
     def _add_dvr_mac_for_phys_br(self, physical_network, mac):
-        self.int_br.add_dvr_mac_vlan(mac=mac,
-                                     port=self.int_ofports[physical_network])
+        self.int_br.add_dvr_mac_physical(
+            mac=mac, port=self.int_ofports[physical_network])
         phys_br = self.phys_brs[physical_network]
-        phys_br.add_dvr_mac_vlan(mac=mac,
-                                 port=self.phys_ofports[physical_network])
+        phys_br.add_dvr_mac_physical(
+            mac=mac, port=self.phys_ofports[physical_network])
 
     def _add_arp_dvr_mac_for_phys_br(self, physical_network, mac):
         self.int_br.add_dvr_gateway_mac_arp_vlan(
@@ -402,7 +402,7 @@ class OVSDVRNeutronAgent(object):
         ldm.set_dvr_owned(True)
 
         vlan_to_use = lvm.vlan
-        if lvm.network_type == n_const.TYPE_VLAN:
+        if lvm.network_type in constants.DVR_PHYSICAL_NETWORK_TYPES:
             vlan_to_use = lvm.segmentation_id
 
         subnet_info = ldm.get_subnet_info()
@@ -456,7 +456,7 @@ class OVSDVRNeutronAgent(object):
             dvr_mac=self.dvr_mac_address,
             rtr_port=port.ofport)
 
-        if lvm.network_type == n_const.TYPE_VLAN:
+        if lvm.network_type in constants.DVR_PHYSICAL_NETWORK_TYPES:
             # TODO(vivek) remove the IPv6 related flows once SNAT is not
             # used for IPv6 DVR.
             br = self.phys_brs[lvm.physical_network]
@@ -517,7 +517,7 @@ class OVSDVRNeutronAgent(object):
                 ovsport.add_subnet(subnet_uuid)
                 self.local_ports[port.vif_id] = ovsport
             vlan_to_use = lvm.vlan
-            if lvm.network_type == n_const.TYPE_VLAN:
+            if lvm.network_type in constants.DVR_PHYSICAL_NETWORK_TYPES:
                 vlan_to_use = lvm.segmentation_id
             # create a rule for this vm port
             self.int_br.install_dvr_to_src_mac(
@@ -577,7 +577,7 @@ class OVSDVRNeutronAgent(object):
         ovsport.add_subnet(subnet_uuid)
         self.local_ports[port.vif_id] = ovsport
         vlan_to_use = lvm.vlan
-        if lvm.network_type == n_const.TYPE_VLAN:
+        if lvm.network_type in constants.DVR_PHYSICAL_NETWORK_TYPES:
             vlan_to_use = lvm.segmentation_id
         self.int_br.install_dvr_to_src_mac(
             network_type=lvm.network_type,
@@ -591,8 +591,9 @@ class OVSDVRNeutronAgent(object):
         if not self.in_distributed_mode():
             return
 
-        if local_vlan_map.network_type not in (constants.TUNNEL_NETWORK_TYPES +
-                                               [n_const.TYPE_VLAN]):
+        if (local_vlan_map.network_type not in
+                (constants.TUNNEL_NETWORK_TYPES +
+                 constants.DVR_PHYSICAL_NETWORK_TYPES)):
             LOG.debug("DVR: Port %s is with network_type %s not supported"
                       " for dvr plumbing", port.vif_id,
                       local_vlan_map.network_type)
@@ -629,7 +630,7 @@ class OVSDVRNeutronAgent(object):
         network_type = lvm.network_type
         physical_network = lvm.physical_network
         vlan_to_use = lvm.vlan
-        if network_type == n_const.TYPE_VLAN:
+        if network_type in constants.DVR_PHYSICAL_NETWORK_TYPES:
             vlan_to_use = lvm.segmentation_id
         # ensure we process for all the subnets laid on this removed port
         for sub_uuid in subnet_set:
@@ -660,7 +661,7 @@ class OVSDVRNeutronAgent(object):
                 # this subnet from local_dvr_map, as no dvr (or) csnat
                 # ports available on this agent anymore
                 self.local_dvr_map.pop(sub_uuid, None)
-            if network_type == n_const.TYPE_VLAN:
+            if network_type in constants.DVR_PHYSICAL_NETWORK_TYPES:
                 br = self.phys_brs[physical_network]
             if network_type in constants.TUNNEL_NETWORK_TYPES:
                 br = self.tun_br
@@ -679,7 +680,7 @@ class OVSDVRNeutronAgent(object):
                 self.firewall.delete_accepted_egress_direct_flow(
                     subnet_info['gateway_mac'], lvm.vlan)
 
-        if lvm.network_type == n_const.TYPE_VLAN:
+        if lvm.network_type in constants.DVR_PHYSICAL_NETWORK_TYPES:
             br = self.phys_brs[physical_network]
         if lvm.network_type in constants.TUNNEL_NETWORK_TYPES:
             br = self.tun_br
@@ -701,7 +702,7 @@ class OVSDVRNeutronAgent(object):
             ldm = self.local_dvr_map[sub_uuid]
             ldm.remove_compute_ofport(port.vif_id)
             vlan_to_use = lvm.vlan
-            if lvm.network_type == n_const.TYPE_VLAN:
+            if lvm.network_type in constants.DVR_PHYSICAL_NETWORK_TYPES:
                 vlan_to_use = lvm.segmentation_id
             # first remove this vm port rule
             self.int_br.delete_dvr_to_src_mac(
@@ -722,7 +723,7 @@ class OVSDVRNeutronAgent(object):
         ldm = self.local_dvr_map[sub_uuid]
         ldm.set_csnat_ofport(constants.OFPORT_INVALID)
         vlan_to_use = lvm.vlan
-        if lvm.network_type == n_const.TYPE_VLAN:
+        if lvm.network_type in constants.DVR_PHYSICAL_NETWORK_TYPES:
             vlan_to_use = lvm.segmentation_id
         # then remove csnat port rule
         self.int_br.delete_dvr_to_src_mac(

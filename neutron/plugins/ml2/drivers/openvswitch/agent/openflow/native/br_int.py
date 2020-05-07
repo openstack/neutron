@@ -21,7 +21,6 @@
 
 import netaddr
 
-from neutron_lib import constants as p_const
 from os_ken.lib.packet import ether_types
 from os_ken.lib.packet import icmpv6
 from os_ken.lib.packet import in_proto
@@ -103,13 +102,15 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
     def _arp_dvr_dst_mac_match(ofp, ofpp, vlan, dvr_mac):
         # If eth_dst is equal to the dvr mac of this host, then
         # flag it as matched.
+        if not vlan:
+            return ofpp.OFPMatch(vlan_vid=ofp.OFPVID_NONE, eth_dst=dvr_mac)
         return ofpp.OFPMatch(vlan_vid=vlan | ofp.OFPVID_PRESENT,
                              eth_dst=dvr_mac)
 
     @staticmethod
     def _dvr_dst_mac_table_id(network_type):
-        if network_type == p_const.TYPE_VLAN:
-            return constants.ARP_DVR_MAC_TO_DST_MAC_VLAN
+        if network_type in constants.DVR_PHYSICAL_NETWORK_TYPES:
+            return constants.ARP_DVR_MAC_TO_DST_MAC_PHYSICAL
         else:
             return constants.ARP_DVR_MAC_TO_DST_MAC
 
@@ -137,13 +138,16 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
 
     @staticmethod
     def _dvr_to_src_mac_match(ofp, ofpp, vlan_tag, dst_mac):
+        if not vlan_tag:
+            # When the network is flat type, the vlan_tag will be None.
+            return ofpp.OFPMatch(vlan_vid=ofp.OFPVID_NONE, eth_dst=dst_mac)
         return ofpp.OFPMatch(vlan_vid=vlan_tag | ofp.OFPVID_PRESENT,
                              eth_dst=dst_mac)
 
     @staticmethod
     def _dvr_to_src_mac_table_id(network_type):
-        if network_type == p_const.TYPE_VLAN:
-            return constants.DVR_TO_SRC_MAC_VLAN
+        if network_type in constants.DVR_PHYSICAL_NETWORK_TYPES:
+            return constants.DVR_TO_SRC_MAC_PHYSICAL
         else:
             return constants.DVR_TO_SRC_MAC
 
@@ -164,10 +168,10 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
                                   priority=20,
                                   match=match,
                                   instructions=instructions)
-        actions = [
-            ofpp.OFPActionPopVlan(),
-            ofpp.OFPActionOutput(dst_port, 0),
-        ]
+        actions = []
+        if vlan_tag:
+            actions.append(ofpp.OFPActionPopVlan())
+        actions.append(ofpp.OFPActionOutput(dst_port, 0))
         self.install_apply_actions(table_id=constants.TRANSIENT_TABLE,
                                    priority=20,
                                    match=match,
@@ -182,12 +186,12 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
             self.uninstall_flows(
                 strict=True, priority=20, table_id=table, match=match)
 
-    def add_dvr_mac_vlan(self, mac, port):
+    def add_dvr_mac_physical(self, mac, port):
         self.install_goto(table_id=constants.LOCAL_SWITCHING,
                           priority=4,
                           in_port=port,
                           eth_src=mac,
-                          dest_table_id=constants.DVR_TO_SRC_MAC_VLAN)
+                          dest_table_id=constants.DVR_TO_SRC_MAC_PHYSICAL)
 
     def remove_dvr_mac_vlan(self, mac):
         # REVISIT(yamamoto): match in_port as well?
@@ -214,11 +218,12 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
             strict=True, priority=5, table_id=table_id, match=match)
 
     def add_dvr_gateway_mac_arp_vlan(self, mac, port):
-        self.install_goto(table_id=constants.LOCAL_SWITCHING,
-                          priority=5,
-                          in_port=port,
-                          eth_dst=mac,
-                          dest_table_id=constants.ARP_DVR_MAC_TO_DST_MAC_VLAN)
+        self.install_goto(
+            table_id=constants.LOCAL_SWITCHING,
+            priority=5,
+            in_port=port,
+            eth_dst=mac,
+            dest_table_id=constants.ARP_DVR_MAC_TO_DST_MAC_PHYSICAL)
 
     def remove_dvr_gateway_mac_arp_vlan(self, mac, port):
         self.uninstall_flows(table_id=constants.LOCAL_SWITCHING,

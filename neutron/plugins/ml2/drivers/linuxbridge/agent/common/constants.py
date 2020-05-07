@@ -12,9 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-FLAT_VLAN_ID = -1
-LOCAL_VLAN_ID = -2
-
 # Supported VXLAN features
 VXLAN_NONE = 'not_supported'
 VXLAN_MCAST = 'multicast_flooding'
