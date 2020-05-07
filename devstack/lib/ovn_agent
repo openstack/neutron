@@ -30,13 +30,13 @@ source $TOP_DIR/lib/neutron_plugins/openvswitch_agent
 OVN_REPO=${OVN_REPO:-https://github.com/ovn-org/ovn.git}
 OVN_REPO_NAME=$(basename ${OVN_REPO} | cut -f1 -d'.')
 OVN_REPO_NAME=${OVN_REPO_NAME:-ovn}
-OVN_BRANCH=${OVN_BRANCH:-master}
+OVN_BRANCH=${OVN_BRANCH:-v20.03.0}
 
 # Set variables for building OVS from source
 OVS_REPO=${OVS_REPO:-https://github.com/openvswitch/ovs.git}
 OVS_REPO_NAME=$(basename ${OVS_REPO} | cut -f1 -d'.')
 OVS_REPO_NAME=${OVS_REPO_NAME:-ovs}
-OVS_BRANCH=${OVS_BRANCH:-master}
+OVS_BRANCH=${OVS_BRANCH:-v2.13.0}
 
 if is_service_enabled tls-proxy; then
     OVN_PROTO=ssl
