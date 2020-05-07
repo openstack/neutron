@@ -261,10 +261,10 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         set_cfg('ovn_sb_ca_cert', self.ovsdb_server_mgr.ca_cert, 'ovn')
 
         # NOTE(mjozefcz): We can find occasional functional test
-        # failures because of low timeout value - set it to 15
+        # failures because of low timeout value - set it to 30
         # seconds, should be enought. More info: 1868110
         cfg.CONF.set_override(
-            'ovsdb_connection_timeout', 15,
+            'ovsdb_connection_timeout', 30,
             'ovn')
 
         class TriggerCls(mock.MagicMock):
