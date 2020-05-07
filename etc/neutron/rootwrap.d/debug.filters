@@ -16,3 +16,7 @@ ping: RegExpFilter, ping, root, ping, -w, \d+, -c, \d+, [0-9\.]+
 ping_alt: RegExpFilter, ping, root, ping, -c, \d+, -w, \d+, [0-9\.]+
 ping6: RegExpFilter, ping6, root, ping6, -w, \d+, -c, \d+, [0-9A-Fa-f:]+
 ping6_alt: RegExpFilter, ping6, root, ping6, -c, \d+, -w, \d+, [0-9A-Fa-f:]+
+
+# "sleep" command, only for testing
+sleep: RegExpFilter, sleep, root, sleep, \d+
+kill_sleep: KillFilter, root, sleep, -9

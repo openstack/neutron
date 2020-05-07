@@ -12,14 +12,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
 import random
 
+import eventlet
 from oslo_utils import uuidutils
 import testtools
 
 from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
 from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
+from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base
 
 
@@ -455,3 +458,35 @@ class GetIpAddressesTestCase(functional_base.BaseSudoTestCase):
             self.assertEqual(interfaces[int_name]['cidr'], cidr)
             self.assertEqual(interfaces[int_name]['scope'],
                              ip_lib.IP_ADDRESS_SCOPE[ip_address['scope']])
+
+
+class ListNamespacePids(functional_base.BaseSudoTestCase):
+
+    def setUp(self):
+        super(ListNamespacePids, self).setUp()
+        self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
+
+    @staticmethod
+    def _run_sleep(namespace):
+        ip_wrapper = ip_lib.IPWrapper(namespace=namespace)
+        ip_wrapper.netns.execute(['sleep', '100'], check_exit_code=False)
+
+    def _check_pids(self, num_pids, namespace=None):
+        namespace = self.namespace if not namespace else namespace
+        self.pids = priv_ip_lib.list_ns_pids(namespace)
+        return len(self.pids) == num_pids
+
+    def test_list_namespace_pids(self):
+        eventlet.spawn_n(self._run_sleep, self.namespace)
+
+        try:
+            check_pids = functools.partial(self._check_pids, 1)
+            common_utils.wait_until_true(check_pids, timeout=5)
+        except common_utils.WaitTimeout:
+            self.fail('Process no found in namespace %s' % self.namespace)
+
+    def test_list_namespace_pids_nothing_running_inside(self):
+        self.assertTrue(self._check_pids(0))
+
+    def test_list_namespace_not_created(self):
+        self.assertTrue(self._check_pids(0, namespace='othernamespace'))
