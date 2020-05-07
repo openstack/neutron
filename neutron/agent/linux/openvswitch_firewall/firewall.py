@@ -771,32 +771,47 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         return {id_: port.neutron_port_dict
                 for id_, port in self.sg_port_map.ports.items()}
 
-    def install_vlan_direct_flow(self, mac, segment_id, ofport, local_vlan):
-        # If the port segment_id is not None/0, the
-        # port's network type must be VLAN type.
-        if segment_id:
+    def install_physical_direct_flow(self, mac, segment_id,
+                                     ofport, local_vlan, network_type):
+        actions = ('set_field:{:d}->reg{:d},'
+                   'set_field:{:d}->reg{:d},').format(
+                       ofport,
+                       ovsfw_consts.REG_PORT,
+                       # This always needs the local vlan.
+                       local_vlan,
+                       ovsfw_consts.REG_NET)
+        if network_type == lib_const.TYPE_VLAN:
+            actions += 'strip_vlan,resubmit(,{:d})'.format(
+                    ovs_consts.BASE_INGRESS_TABLE)
             self._add_flow(
                 table=ovs_consts.TRANSIENT_TABLE,
                 priority=90,
                 dl_dst=mac,
                 dl_vlan='0x%x' % segment_id,
-                actions='set_field:{:d}->reg{:d},'
-                        'set_field:{:d}->reg{:d},'
-                        'strip_vlan,resubmit(,{:d})'.format(
-                            ofport,
-                            ovsfw_consts.REG_PORT,
-                            # This always needs the local vlan.
-                            local_vlan,
-                            ovsfw_consts.REG_NET,
-                            ovs_consts.BASE_INGRESS_TABLE)
-            )
+                actions=actions)
+        elif network_type == lib_const.TYPE_FLAT:
+            # If the port belong to flat network, we need match vlan_tci and
+            # needn't pop vlan
+            actions += 'resubmit(,{:d})'.format(
+                    ovs_consts.BASE_INGRESS_TABLE)
+            self._add_flow(
+                table=ovs_consts.TRANSIENT_TABLE,
+                priority=90,
+                dl_dst=mac,
+                vlan_tci=ovs_consts.FLAT_VLAN_TCI,
+                actions=actions)
 
-    def delete_vlan_direct_flow(self, mac, segment_id):
+    def delete_physical_direct_flow(self, mac, segment_id):
         if segment_id:
             self._strict_delete_flow(priority=90,
                                      table=ovs_consts.TRANSIENT_TABLE,
                                      dl_dst=mac,
                                      dl_vlan=segment_id)
+        else:
+            self._strict_delete_flow(priority=90,
+                                     table=ovs_consts.TRANSIENT_TABLE,
+                                     dl_dst=mac,
+                                     vlan_tci=ovs_consts.FLAT_VLAN_TCI)
 
     def initialize_port_flows(self, port):
         """Set base flows for port
@@ -821,8 +836,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         # Identify ingress flows
         for mac_addr in port.all_allowed_macs:
-            self.install_vlan_direct_flow(
-                mac_addr, port.segment_id, port.ofport, port.vlan_tag)
+            self.install_physical_direct_flow(
+                mac_addr, port.segment_id, port.ofport,
+                port.vlan_tag, port.network_type)
 
             self._add_flow(
                 table=ovs_consts.TRANSIENT_TABLE,
@@ -1406,7 +1422,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                                      table=ovs_consts.TRANSIENT_TABLE,
                                      dl_dst=mac_addr,
                                      dl_vlan=port.vlan_tag)
-            self.delete_vlan_direct_flow(mac_addr, port.segment_id)
+            self.delete_physical_direct_flow(mac_addr, port.segment_id)
             self._delete_flows(table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
                                dl_dst=mac_addr, reg_net=port.vlan_tag)
 

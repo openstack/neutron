@@ -37,11 +37,12 @@ TESTING_VLAN_TAG = 1
 TESTING_SEGMENT = 1000
 
 
-def create_ofport(port_dict, network_type=None, physical_network=None):
+def create_ofport(port_dict, network_type=None,
+                  physical_network=None, segment_id=TESTING_SEGMENT):
     ovs_port = mock.Mock(vif_mac='00:00:00:00:00:00', ofport=1,
                          port_name="port-name")
     return ovsfw.OFPort(port_dict, ovs_port, vlan_tag=TESTING_VLAN_TAG,
-                        segment_id=TESTING_SEGMENT,
+                        segment_id=segment_id,
                         network_type=network_type,
                         physical_network=physical_network)
 
@@ -589,18 +590,23 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             self.firewall.prepare_port_filter(port_dict)
         self.assertFalse(m_init_flows.called)
 
-    def test_initialize_port_flows_vlan_dvr_conntrack_direct(self):
+    def _test_initialize_port_flows_dvr_conntrack_direct(self, network_type):
         port_dict = {
             'device': 'port-id',
             'security_groups': [1]}
+        segment_id = None
+        if network_type == constants.TYPE_VLAN:
+            segment_id = TESTING_SEGMENT
         of_port = create_ofport(port_dict,
-                                network_type=constants.TYPE_VXLAN)
+                                network_type=network_type,
+                                segment_id=segment_id)
         self.firewall.sg_port_map.ports[of_port.id] = of_port
         port = self.firewall.get_or_create_ofport(port_dict)
 
         fake_patch_port = 999
         self.mock_bridge.br.get_port_ofport.return_value = fake_patch_port
 
+        expected_calls = []
         self.firewall.initialize_port_flows(port)
 
         call_args1 = {
@@ -615,22 +621,39 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                            port.vlan_tag,
                            ovsfw_consts.REG_NET,
                            ovs_consts.BASE_EGRESS_TABLE)}
-        egress_flow_call = mock.call(**call_args1)
+        expected_calls.append(mock.call(**call_args1))
 
-        call_args2 = {
-            'table': ovs_consts.TRANSIENT_TABLE,
-            'priority': 90,
-            'dl_dst': port.mac,
-            'dl_vlan': '0x%x' % port.segment_id,
-            'actions': 'set_field:{:d}->reg{:d},'
-                       'set_field:{:d}->reg{:d},'
-                       'strip_vlan,resubmit(,{:d})'.format(
-                           port.ofport,
-                           ovsfw_consts.REG_PORT,
-                           port.vlan_tag,
-                           ovsfw_consts.REG_NET,
-                           ovs_consts.BASE_INGRESS_TABLE)}
-        ingress_flow_call1 = mock.call(**call_args2)
+        if network_type == constants.TYPE_VLAN:
+            call_args2 = {
+                'table': ovs_consts.TRANSIENT_TABLE,
+                'priority': 90,
+                'dl_dst': port.mac,
+                'dl_vlan': '0x%x' % port.segment_id,
+                'actions': 'set_field:{:d}->reg{:d},'
+                           'set_field:{:d}->reg{:d},'
+                           'strip_vlan,resubmit(,{:d})'.format(
+                               port.ofport,
+                               ovsfw_consts.REG_PORT,
+                               port.vlan_tag,
+                               ovsfw_consts.REG_NET,
+                               ovs_consts.BASE_INGRESS_TABLE)}
+            expected_calls.append(mock.call(**call_args2))
+
+        if network_type == constants.TYPE_FLAT:
+            call_args2 = {
+                'table': ovs_consts.TRANSIENT_TABLE,
+                'priority': 90,
+                'dl_dst': port.mac,
+                'vlan_tci': ovs_consts.FLAT_VLAN_TCI,
+                'actions': 'set_field:{:d}->reg{:d},'
+                           'set_field:{:d}->reg{:d},'
+                           'resubmit(,{:d})'.format(
+                               port.ofport,
+                               ovsfw_consts.REG_PORT,
+                               port.vlan_tag,
+                               ovsfw_consts.REG_NET,
+                               ovs_consts.BASE_INGRESS_TABLE)}
+            expected_calls.append(mock.call(**call_args2))
 
         call_args3 = {
             'table': ovs_consts.TRANSIENT_TABLE,
@@ -645,9 +668,20 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                            port.vlan_tag,
                            ovsfw_consts.REG_NET,
                            ovs_consts.BASE_INGRESS_TABLE)}
-        ingress_flow_call2 = mock.call(**call_args3)
-        self.mock_bridge.br.add_flow.assert_has_calls(
-            [egress_flow_call, ingress_flow_call1, ingress_flow_call2])
+        expected_calls.append(mock.call(**call_args3))
+        self.mock_bridge.br.add_flow.assert_has_calls(expected_calls)
+
+    def test_initialize_port_flows_dvr_conntrack_direct_vxlan(self):
+        self._test_initialize_port_flows_dvr_conntrack_direct(
+                network_type='vxlan')
+
+    def test_initialize_port_flows_dvr_conntrack_direct_vlan(self):
+        self._test_initialize_port_flows_dvr_conntrack_direct(
+                network_type='vlan')
+
+    def test_initialize_port_flows_dvr_conntrack_direct_flat(self):
+        self._test_initialize_port_flows_dvr_conntrack_direct(
+                network_type='flat')
 
     def test_initialize_port_flows_vlan_dvr_conntrack_direct_vlan(self):
         port_dict = {
