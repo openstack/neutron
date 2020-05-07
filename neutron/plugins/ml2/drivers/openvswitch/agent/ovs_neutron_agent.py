@@ -917,18 +917,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         else:
             LOG.warning('Action %s not supported', action)
 
-    def _local_vlan_for_flat(self, lvid, physical_network):
-        phys_br = self.phys_brs[physical_network]
-        phys_port = self.phys_ofports[physical_network]
-        int_br = self.int_br
-        int_port = self.int_ofports[physical_network]
-        phys_br.provision_local_vlan(port=phys_port, lvid=lvid,
-                                     segmentation_id=None,
-                                     distributed=False)
-        int_br.provision_local_vlan(port=int_port, lvid=lvid,
-                                    segmentation_id=None)
-
-    def _local_vlan_for_vlan(self, lvid, physical_network, segmentation_id):
+    def _local_vlan_for_physical(self, lvid, physical_network,
+                                 segmentation_id=None):
         distributed = self.enable_distributed_routing
         phys_br = self.phys_brs[physical_network]
         phys_port = self.phys_ofports[physical_network]
@@ -1009,7 +999,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                            'net_uuid': net_uuid})
         elif network_type == n_const.TYPE_FLAT:
             if physical_network in self.phys_brs:
-                self._local_vlan_for_flat(lvid, physical_network)
+                self._local_vlan_for_physical(lvid, physical_network)
             else:
                 LOG.error("Cannot provision flat network for "
                           "net-id=%(net_uuid)s - no bridge for "
@@ -1018,8 +1008,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                            'physical_network': physical_network})
         elif network_type == n_const.TYPE_VLAN:
             if physical_network in self.phys_brs:
-                self._local_vlan_for_vlan(lvid, physical_network,
-                                          segmentation_id)
+                self._local_vlan_for_physical(lvid, physical_network,
+                                              segmentation_id)
             else:
                 LOG.error("Cannot provision VLAN network for "
                           "net-id=%(net_uuid)s - no bridge for "

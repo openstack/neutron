@@ -344,7 +344,8 @@ class OVSFlowTestCase(OVSAgentTestBase):
                   'dst_mac': '12:34:56:78:cc:dd',
                   'dst_port': 123}
         self.br_int.install_dvr_to_src_mac(network_type='vlan', **kwargs)
-        self.br_int.add_dvr_mac_vlan(mac=other_dvr_mac, port=other_dvr_port)
+        self.br_int.add_dvr_mac_physical(mac=other_dvr_mac,
+                                         port=other_dvr_port)
 
         trace = self._run_trace(self.br.br_name,
                                 "in_port=%d," % other_dvr_port +

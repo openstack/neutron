@@ -285,6 +285,48 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
+    def test_install_dvr_to_src_mac_flat(self):
+        network_type = 'flat'
+        gateway_mac = '08:60:6e:7f:74:e7'
+        dst_mac = '00:02:b3:13:fe:3d'
+        dst_port = 6666
+        self.br.install_dvr_to_src_mac(network_type=network_type,
+                                       vlan_tag=None,
+                                       gateway_mac=gateway_mac,
+                                       dst_mac=dst_mac,
+                                       dst_port=dst_port)
+        (dp, ofp, ofpp) = self._get_dp()
+        expected = [
+            call._send_msg(ofpp.OFPFlowMod(dp,
+                cookie=self.stamp,
+                instructions=[
+                    ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, [
+                        ofpp.OFPActionSetField(eth_src=gateway_mac),
+                    ]),
+                    ofpp.OFPInstructionGotoTable(table_id=60),
+                ],
+                match=ofpp.OFPMatch(
+                    eth_dst=dst_mac,
+                    vlan_vid=ofp.OFPVID_NONE),
+                priority=20,
+                table_id=2),
+                           active_bundle=None),
+            call._send_msg(ofpp.OFPFlowMod(dp,
+                cookie=self.stamp,
+                instructions=[
+                    ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, [
+                        ofpp.OFPActionOutput(dst_port, 0),
+                    ]),
+                ],
+                match=ofpp.OFPMatch(
+                    eth_dst=dst_mac,
+                    vlan_vid=ofp.OFPVID_NONE),
+                priority=20,
+                table_id=60),
+                           active_bundle=None),
+        ]
+        self.assertEqual(expected, self.mock.mock_calls)
+
     def test_delete_dvr_to_src_mac_vlan(self):
         network_type = 'vlan'
         vlan_tag = 1111
@@ -311,10 +353,36 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
-    def test_add_dvr_mac_vlan(self):
+    def test_delete_dvr_to_src_mac_flat(self):
+        network_type = 'flat'
+        vlan_tag = None
+        dst_mac = '00:02:b3:13:fe:3d'
+        self.br.delete_dvr_to_src_mac(network_type=network_type,
+                                      vlan_tag=vlan_tag,
+                                      dst_mac=dst_mac)
+        (dp, ofp, ofpp) = self._get_dp()
+        expected = [
+            call.uninstall_flows(
+                strict=True,
+                priority=20,
+                table_id=2,
+                match=ofpp.OFPMatch(
+                    eth_dst=dst_mac,
+                    vlan_vid=ofp.OFPVID_NONE)),
+            call.uninstall_flows(
+                strict=True,
+                priority=20,
+                table_id=60,
+                match=ofpp.OFPMatch(
+                    eth_dst=dst_mac,
+                    vlan_vid=ofp.OFPVID_NONE)),
+        ]
+        self.assertEqual(expected, self.mock.mock_calls)
+
+    def test_add_dvr_mac_physical(self):
         mac = '00:02:b3:13:fe:3d'
         port = 8888
-        self.br.add_dvr_mac_vlan(mac=mac, port=port)
+        self.br.add_dvr_mac_physical(mac=mac, port=port)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
             call._send_msg(ofpp.OFPFlowMod(dp,
@@ -487,12 +555,15 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         self.assertEqual(expected, self.mock.mock_calls)
 
     def _test_delete_dvr_dst_mac_for_arp(self, network_type):
-        if network_type == p_const.TYPE_VLAN:
-            table_id = constants.DVR_TO_SRC_MAC_VLAN
+        if network_type in (p_const.TYPE_VLAN, p_const.TYPE_FLAT):
+            table_id = constants.DVR_TO_SRC_MAC_PHYSICAL
         else:
             table_id = constants.DVR_TO_SRC_MAC
 
-        vlan_tag = 1111
+        if network_type == p_const.TYPE_FLAT:
+            vlan_tag = None
+        else:
+            vlan_tag = 1111
         gateway_mac = '00:02:b3:13:fe:3e'
         dvr_mac = '00:02:b3:13:fe:3f'
         rtr_port = 8888
@@ -502,15 +573,26 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                                            dvr_mac=dvr_mac,
                                            rtr_port=rtr_port)
         (dp, ofp, ofpp) = self._get_dp()
-        expected = [
-            call.uninstall_flows(
-                strict=True,
-                priority=5,
-                table_id=table_id,
-                match=ofpp.OFPMatch(
-                    eth_dst=dvr_mac,
-                    vlan_vid=vlan_tag | ofp.OFPVID_PRESENT)),
-        ]
+        if network_type == p_const.TYPE_FLAT:
+            expected = [
+                call.uninstall_flows(
+                    strict=True,
+                    priority=5,
+                    table_id=table_id,
+                    match=ofpp.OFPMatch(
+                        eth_dst=dvr_mac,
+                        vlan_vid=ofp.OFPVID_NONE)),
+            ]
+        else:
+            expected = [
+                call.uninstall_flows(
+                    strict=True,
+                    priority=5,
+                    table_id=table_id,
+                    match=ofpp.OFPMatch(
+                        eth_dst=dvr_mac,
+                        vlan_vid=vlan_tag | ofp.OFPVID_PRESENT)),
+            ]
         self.assertEqual(expected, self.mock.mock_calls)
 
     def test_delete_dvr_dst_mac_for_arp_vlan(self):
@@ -518,3 +600,6 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
 
     def test_delete_dvr_dst_mac_for_arp_tunnel(self):
         self._test_delete_dvr_dst_mac_for_arp(network_type='vxlan')
+
+    def test_delete_dvr_dst_mac_for_flat(self):
+        self._test_delete_dvr_dst_mac_for_arp(network_type='flat')
