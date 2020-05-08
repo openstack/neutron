@@ -1074,7 +1074,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         need_network_update_notify = False
 
         with db_api.CONTEXT_WRITER.using(context):
-            original_network = self.get_network(context, id)
+            db_network = self._get_network(context, id)
+            original_network = self.get_network(context, id, net_db=db_network)
             self._update_provider_network_attributes(
                 context, original_network, net_data)
 
@@ -1084,12 +1085,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.extension_manager.process_update_network(context, net_data,
                                                           updated_network)
             self._process_l3_update(context, updated_network, net_data)
-
-            # ToDO(QoS): This would change once EngineFacade moves out
-            db_network = self._get_network(context, id)
-            # Expire the db_network in current transaction, so that the join
-            # relationship can be updated.
-            context.session.expire(db_network)
 
             if (mtuw_apidef.MTU in net_data or
                 # NOTE(ihrachys) mtu may be null for existing networks,
@@ -1137,11 +1132,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return updated_network
 
     @db_api.retry_if_session_inactive()
-    def get_network(self, context, id, fields=None):
+    def get_network(self, context, id, fields=None, net_db=None):
         # NOTE(ihrachys) use writer manager to be able to update mtu
         # TODO(ihrachys) remove in Queens+ when mtu is not nullable
         with db_api.CONTEXT_WRITER.using(context):
-            net_db = self._get_network(context, id)
+            net_db = net_db or self._get_network(context, id)
 
             # NOTE(ihrachys) pre Pike networks may have null mtus; update them
             # in database if needed
