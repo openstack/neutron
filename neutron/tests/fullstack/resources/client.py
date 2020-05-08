@@ -79,6 +79,16 @@ class ClientFixture(fixtures.Fixture):
     def update_router(self, router_id, **kwargs):
         return self._update_resource('router', router_id, kwargs)
 
+    def create_segment(self, project_id, network, name, network_type=None,
+                       segmentation_id=None, physical_network=None):
+        resource_type = 'segment'
+        name = name or utils.get_rand_name(prefix=resource_type)
+        spec = {'project_id': project_id, 'name': name, 'network_id': network,
+                'network_type': network_type,
+                'physical_network': physical_network,
+                'segmentation_id': segmentation_id}
+        return self._create_resource(resource_type, spec)
+
     def create_network(self, tenant_id, name=None, external=False,
                        network_type=None, segmentation_id=None,
                        physical_network=None, mtu=None):
@@ -128,6 +138,10 @@ class ClientFixture(fixtures.Fixture):
             spec['cidr'] = cidr
 
         return self._create_resource(resource_type, spec)
+
+    def list_subnets(self, retrieve_all=True, **kwargs):
+        resp = self.client.list_subnets(retrieve_all=retrieve_all, **kwargs)
+        return resp['subnets']
 
     def list_ports(self, retrieve_all=True, **kwargs):
         resp = self.client.list_ports(retrieve_all=retrieve_all, **kwargs)

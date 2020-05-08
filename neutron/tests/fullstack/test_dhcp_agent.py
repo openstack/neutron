@@ -232,3 +232,100 @@ class TestDhcpAgentHARaceCondition(BaseDhcpAgentTest):
         network_dhcp_agents = self.client.list_dhcp_agent_hosting_networks(
             self.network['id'])['agents']
         self.assertEqual(1, len(network_dhcp_agents))
+
+
+class TestSubnetDeleteRace(BaseDhcpAgentTest):
+    agent_down_time = 30
+    number_of_hosts = 2
+    boot_vm_for_test = False
+
+    def setUp(self):
+        host_descriptions = [
+            environment.HostDescription(
+                dhcp_agent=True, l2_agent_type=constants.AGENT_TYPE_OVS),
+            environment.HostDescription(
+                dhcp_agent=False,
+                l2_agent_type=constants.AGENT_TYPE_LINUXBRIDGE)
+        ]
+
+        env = environment.Environment(
+            environment.EnvironmentDescription(
+                network_type='vlan',
+                mech_drivers='openvswitch,linuxbridge',
+                l2_pop=False,
+                arp_responder=False,
+                agent_down_time=self.agent_down_time,
+                service_plugins='router,segments'
+            ),
+            host_descriptions)
+
+        # Note(lajoskatona): Here, call grandparent's (BaseFullStackTestCase)
+        # setup(), to avoid BaseDhcpAgentTest mess up environment.
+        super(BaseDhcpAgentTest, self).setUp(env)
+        self.project_id = uuidutils.generate_uuid()
+        if self.boot_vm_for_test:
+            self._create_network_subnet_and_vm()
+
+    def test_subnet_delete_race_condition(self):
+        ovs_physnet = ''
+        lb_physnet = ''
+
+        agents = self.client.list_agents()
+        for agent in agents['agents']:
+            if agent['binary'] == 'neutron-openvswitch-agent':
+                ovs_physnet = list(
+                    agent['configurations']['bridge_mappings'].keys())[0]
+            if agent['binary'] == 'neutron-linuxbridge-agent':
+                lb_physnet = list(
+                    agent['configurations']['interface_mappings'].keys())[0]
+
+        self.network = self.safe_client.create_network(
+            tenant_id=self.project_id, network_type='vlan',
+            segmentation_id=103, physical_network=lb_physnet)
+
+        self.segment2 = self.safe_client.create_segment(
+            project_id=self.project_id, network=self.network['id'],
+            network_type='vlan', name='segment_2', segmentation_id=103,
+            physical_network=ovs_physnet)
+
+        subnet = self.safe_client.create_subnet(
+            self.project_id,
+            self.network['id'],
+            cidr='10.0.11.0/24',
+            gateway_ip='10.0.11.1',
+            name='subnet-test',
+            enable_dhcp=True)
+
+        self.vm = self._spawn_vm()
+        self.vm.block_until_boot()
+        self.vm.block_until_dhcp_config_done()
+
+        dhcp_ports = self.safe_client.list_ports(**{
+            'device_owner': 'network:dhcp',
+            'network_id': self.network['id']
+        })
+        self.assertEqual(1, len(dhcp_ports))
+        self.assertEqual('ACTIVE', dhcp_ports[0]['status'])
+
+        port_id = self.vm.neutron_port['id']
+        self.vm.destroy()
+
+        self.client.delete_port(port_id)
+
+        dhcp_ports = self.safe_client.list_ports(**{
+            'device_owner': 'network:dhcp',
+            'network_id': self.network['id']
+        })
+        self.assertEqual(1, len(dhcp_ports))
+
+        self.client.delete_subnet(subnet['id'])
+
+        def _is_subnet_deleted():
+            snets = self.safe_client.list_subnets()
+            if len(snets) == 0:
+                return True
+            return False
+
+        common_utils.wait_until_true(_is_subnet_deleted)
+        # Note(lajoskatona): Here cleanup do its job and the cleanup
+        # will fail if the segment or network deletion is inpossible
