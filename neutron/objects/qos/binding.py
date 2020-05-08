@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
+
 from neutron_lib.objects import common_types
 from sqlalchemy import and_
 from sqlalchemy import exists
@@ -22,8 +24,21 @@ from neutron.db.qos import models as qos_db_model
 from neutron.objects import base
 
 
+class _QosPolicyBindingMixin(object, metaclass=abc.ABCMeta):
+
+    _bound_model_id = None
+
+    @classmethod
+    def get_bound_ids(cls, context, policy_id):
+        if not cls._bound_model_id:
+            return []
+
+        return cls.get_values(context, cls._bound_model_id.name,
+                              policy_id=policy_id)
+
+
 @base.NeutronObjectRegistry.register
-class QosPolicyPortBinding(base.NeutronDbObject):
+class QosPolicyPortBinding(base.NeutronDbObject, _QosPolicyBindingMixin):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -36,6 +51,7 @@ class QosPolicyPortBinding(base.NeutronDbObject):
 
     primary_keys = ['port_id']
     fields_no_update = ['policy_id', 'port_id']
+    _bound_model_id = db_model.port_id
 
     @classmethod
     def get_ports_by_network_id(cls, context, network_id, policy_id=None):
@@ -53,7 +69,7 @@ class QosPolicyPortBinding(base.NeutronDbObject):
 
 
 @base.NeutronObjectRegistry.register
-class QosPolicyNetworkBinding(base.NeutronDbObject):
+class QosPolicyNetworkBinding(base.NeutronDbObject, _QosPolicyBindingMixin):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -66,10 +82,11 @@ class QosPolicyNetworkBinding(base.NeutronDbObject):
 
     primary_keys = ['network_id']
     fields_no_update = ['policy_id', 'network_id']
+    _bound_model_id = db_model.network_id
 
 
 @base.NeutronObjectRegistry.register
-class QosPolicyFloatingIPBinding(base.NeutronDbObject):
+class QosPolicyFloatingIPBinding(base.NeutronDbObject, _QosPolicyBindingMixin):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -82,10 +99,12 @@ class QosPolicyFloatingIPBinding(base.NeutronDbObject):
 
     primary_keys = ['policy_id', 'fip_id']
     fields_no_update = ['policy_id', 'fip_id']
+    _bound_model_id = db_model.fip_id
 
 
 @base.NeutronObjectRegistry.register
-class QosPolicyRouterGatewayIPBinding(base.NeutronDbObject):
+class QosPolicyRouterGatewayIPBinding(base.NeutronDbObject,
+                                      _QosPolicyBindingMixin):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -98,3 +117,4 @@ class QosPolicyRouterGatewayIPBinding(base.NeutronDbObject):
 
     primary_keys = ['policy_id', 'router_id']
     fields_no_update = ['policy_id', 'router_id']
+    _bound_model_id = db_model.router_id

@@ -327,32 +327,20 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             return qos_default_policy.qos_policy_id
 
     def get_bound_networks(self):
-        return [
-            nb.network_id
-            for nb in binding.QosPolicyNetworkBinding.get_objects(
-                self.obj_context, policy_id=self.id)
-        ]
+        return binding.QosPolicyNetworkBinding.get_bound_ids(self.obj_context,
+                                                             self.id)
 
     def get_bound_ports(self):
-        return [
-            pb.port_id
-            for pb in binding.QosPolicyPortBinding.get_objects(
-                self.obj_context, policy_id=self.id)
-        ]
+        return binding.QosPolicyPortBinding.get_bound_ids(self.obj_context,
+                                                          self.id)
 
     def get_bound_floatingips(self):
-        return [
-            fb.fip_id
-            for fb in binding.QosPolicyFloatingIPBinding.get_objects(
-                self.obj_context, policy_id=self.id)
-        ]
+        return binding.QosPolicyFloatingIPBinding.get_objects(self.obj_context,
+                                                              self.id)
 
     def get_bound_routers(self):
-        return [
-            rb.router_id
-            for rb in binding.QosPolicyRouterGatewayIPBinding.get_objects(
-                self.obj_context, policy_id=self.id)
-        ]
+        return binding.QosPolicyRouterGatewayIPBinding.get_objects(
+            self.obj_context, self.id)
 
     @classmethod
     def _get_bound_tenant_ids(cls, session, binding_db, bound_db,

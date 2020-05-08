@@ -15,13 +15,25 @@ from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
 
 
+class _QosPolicyBindingMixinTestCase(object):
+
+    def test_get_bound_ids(self):
+        [obj.create() for obj in self.objs]
+        for obj in self.objs:
+            obj_ids = obj.get_bound_ids(self.context, obj.policy_id)
+            self.assertEqual(1, len(obj_ids))
+            self.assertEqual(obj[obj.__class__._bound_model_id.name],
+                             obj_ids[0])
+
+
 class QosPolicyPortBindingObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     _test_class = binding.QosPolicyPortBinding
 
 
 class QosPolicyPortBindingDbObjectTestCase(test_base.BaseDbObjectTestCase,
-                                           testlib_api.SqlTestCase):
+                                           testlib_api.SqlTestCase,
+                                           _QosPolicyBindingMixinTestCase):
 
     _test_class = binding.QosPolicyPortBinding
 
@@ -40,7 +52,8 @@ class QosPolicyNetworkBindingObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
 
 class QosPolicyNetworkBindingDbObjectTestCase(test_base.BaseDbObjectTestCase,
-                                              testlib_api.SqlTestCase):
+                                              testlib_api.SqlTestCase,
+                                              _QosPolicyBindingMixinTestCase):
 
     _test_class = binding.QosPolicyNetworkBinding
 
@@ -59,7 +72,8 @@ class QosPolicyFloatingIPBindingObjectTestCase(
 
 class QosPolicyFloatingIPBindingDbObjectTestCase(
         test_base.BaseDbObjectTestCase,
-        testlib_api.SqlTestCase):
+        testlib_api.SqlTestCase,
+        _QosPolicyBindingMixinTestCase):
 
     _test_class = binding.QosPolicyFloatingIPBinding
 
@@ -78,7 +92,8 @@ class QosPolicyRouterGatewayIPBindingObjectTestCase(
 
 class QosPolicyRouterGatewayIPBindingDbObjectTestCase(
         test_base.BaseDbObjectTestCase,
-        testlib_api.SqlTestCase):
+        testlib_api.SqlTestCase,
+        _QosPolicyBindingMixinTestCase):
 
     _test_class = binding.QosPolicyRouterGatewayIPBinding
 
