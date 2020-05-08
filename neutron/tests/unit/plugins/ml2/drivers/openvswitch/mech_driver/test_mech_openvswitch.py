@@ -44,6 +44,7 @@ class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
     GOOD_TUNNEL_TYPES = ['gre', 'vxlan']
     GOOD_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
                     'integration_bridge': 'br-int',
+                    portbindings.OVS_HYBRID_PLUG: True,
                     'tunnel_types': GOOD_TUNNEL_TYPES}
 
     BAD_MAPPINGS = {'wrong_physical_network': 'wrong_bridge'}
@@ -119,6 +120,16 @@ class OpenvswitchMechanismSGDisabledBaseTestCase(
                    portbindings.VIF_DETAILS_CONNECTIVITY:
                        portbindings.CONNECTIVITY_L2}
 
+    GOOD_MAPPINGS = {'fake_physical_network': 'fake_bridge'}
+    GOOD_TUNNEL_TYPES = ['gre', 'vxlan']
+    GOOD_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
+                    'integration_bridge': 'br-int',
+                    portbindings.OVS_HYBRID_PLUG: False,
+                    'tunnel_types': GOOD_TUNNEL_TYPES}
+    AGENTS = [{'alive': True,
+               'configurations': GOOD_CONFIGS,
+               'host': 'host'}]
+
     def setUp(self):
         cfg.CONF.set_override('enable_security_group',
                               False,
@@ -132,17 +143,6 @@ class OpenvswitchMechanismHybridPlugTestCase(OpenvswitchMechanismBaseTestCase):
         segments = [{api.ID: 'local_segment_id', api.NETWORK_TYPE: 'local'}]
         return base.FakePortContext(self.AGENT_TYPE, agents, segments,
                                     vnic_type=self.VNIC_TYPE)
-
-    def test_backward_compat_with_unreporting_agent(self):
-        hybrid = portbindings.OVS_HYBRID_PLUG
-        # agent didn't report so it should be hybrid based on server config
-        context = self._make_port_ctx(self.AGENTS)
-        self.driver.bind_port(context)
-        self.assertTrue(context._bound_vif_details[hybrid])
-        self.driver.vif_details[hybrid] = False
-        context = self._make_port_ctx(self.AGENTS)
-        self.driver.bind_port(context)
-        self.assertFalse(context._bound_vif_details[hybrid])
 
     def test_hybrid_plug_true_if_agent_requests(self):
         hybrid = portbindings.OVS_HYBRID_PLUG
@@ -240,11 +240,11 @@ class OpenvswitchMechanismDPDKTestCase(OpenvswitchMechanismBaseTestCase):
     GOOD_TUNNEL_TYPES = ['gre', 'vxlan']
 
     VHOST_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
-                    'integration_bridge': 'br-int',
-                    'tunnel_types': GOOD_TUNNEL_TYPES,
-                    'datapath_type': a_const.OVS_DATAPATH_NETDEV,
-                    'ovs_capabilities': {
-                        'iface_types': [a_const.OVS_DPDK_VHOST_USER]}}
+                     'integration_bridge': 'br-int',
+                     'tunnel_types': GOOD_TUNNEL_TYPES,
+                     'datapath_type': a_const.OVS_DATAPATH_NETDEV,
+                     'ovs_capabilities': {
+                         'iface_types': [a_const.OVS_DPDK_VHOST_USER]}}
 
     VHOST_SERVER_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
                     'integration_bridge': 'br-int',

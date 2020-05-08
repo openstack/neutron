@@ -56,13 +56,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def __init__(self):
         sg_enabled = securitygroups_rpc.is_firewall_enabled()
-        hybrid_plug_required = (
-            not cfg.CONF.SECURITYGROUP.firewall_driver or
-            cfg.CONF.SECURITYGROUP.firewall_driver in (
-                IPTABLES_FW_DRIVER_FULL, 'iptables_hybrid')
-        ) and sg_enabled
         vif_details = {portbindings.CAP_PORT_FILTER: sg_enabled,
-                       portbindings.OVS_HYBRID_PLUG: hybrid_plug_required,
                        portbindings.VIF_DETAILS_CONNECTIVITY:
                            portbindings.CONNECTIVITY_L2}
         # NOTE(moshele): Bind DIRECT (SR-IOV) port allows
@@ -185,12 +179,10 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         a_config = agent['configurations']
         vif_type = self.get_vif_type(context, agent, segment=None)
         if vif_type != portbindings.VIF_TYPE_VHOST_USER:
-            details = dict(self.vif_details)
-            hybrid = portbindings.OVS_HYBRID_PLUG
-            if hybrid in a_config:
-                # we only override the vif_details for hybrid plugging set
-                # in the constructor if the agent specifically requests it
-                details[hybrid] = a_config[hybrid]
+            details = {
+                **self.vif_details,
+                portbindings.OVS_HYBRID_PLUG: a_config.get(
+                    portbindings.OVS_HYBRID_PLUG)}
         else:
             sock_path = self.agent_vhu_sockpath(agent, context.current['id'])
             caps = a_config.get('ovs_capabilities', {})
