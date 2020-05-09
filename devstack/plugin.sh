@@ -110,6 +110,9 @@ if [[ "$1" == "stack" ]]; then
                 configure_ml2_extension_drivers
             fi
             if is_ovn_enabled; then
+                if is_service_enabled q-port-forwarding neutron-port-forwarding; then
+                    configure_port_forwarding
+                fi
                 configure_ovn_plugin
                 start_ovn
             fi

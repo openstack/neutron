@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+import copy
 
 import netaddr
 from neutron_lib.api.definitions import expose_port_forwarding_in_fip
@@ -31,6 +32,7 @@ from neutron_lib.exceptions import l3 as lib_l3_exc
 from neutron_lib.objects import exceptions as obj_exc
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _
@@ -43,12 +45,26 @@ from neutron.extensions import floating_ip_port_forwarding as fip_pf
 from neutron.objects import base as base_obj
 from neutron.objects import port_forwarding as pf
 from neutron.objects import router as l3_obj
+from neutron.services.portforwarding import callbacks
 from neutron.services.portforwarding.common import exceptions as pf_exc
+from neutron.services.portforwarding import constants as pf_consts
 
 LOG = logging.getLogger(__name__)
 
 # Move to neutron-lib someday.
 PORT_FORWARDING_FLOATINGIP_KEY = '_pf_floatingips'
+
+
+def _required_service_plugins():
+    supported_svc_plugins = [l3.ROUTER, 'ovn-router']
+    try:
+        plugins = [svc for svc in supported_svc_plugins if
+                   svc in cfg.CONF.service_plugins]
+    except cfg.NoSuchOptError:
+        plugins = None
+        pass
+    # Use l3.ROUTER as required service plugin if no other was provided.
+    return plugins or [l3.ROUTER]
 
 
 @resource_extend.has_resource_extenders
@@ -59,7 +75,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
     This class implements a Port Forwarding plugin.
     """
 
-    required_service_plugins = ['router']
+    required_service_plugins = _required_service_plugins()
 
     supported_extension_aliases = [apidef.ALIAS,
                                    expose_port_forwarding_in_fip.ALIAS,
@@ -74,6 +90,8 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         self.push_api = resources_rpc.ResourcesPushRpcApi()
         self.l3_plugin = directory.get_plugin(constants.L3)
         self.core_plugin = directory.get_plugin()
+        registry.publish(pf_consts.PORT_FORWARDING_PLUGIN, events.AFTER_INIT,
+                         self)
 
     @staticmethod
     @resource_extend.extends([l3.FLOATINGIPS])
@@ -225,6 +243,11 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
 
         self.push_api.push(context, remove_port_forwarding_list,
                            rpc_events.DELETED)
+        registry_notify_payload = [
+            callbacks.PortForwardingPayload(context, original_pf=pf_obj) for
+            pf_obj in remove_port_forwarding_list]
+        registry.notify(pf_consts.PORT_FORWARDING, events.AFTER_DELETE, self,
+                        payload=registry_notify_payload)
 
     def _get_internal_ip_subnet(self, request_ip, fixed_ips):
         request_ip = netaddr.IPNetwork(request_ip)
@@ -347,6 +370,10 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                                          msg=message)
 
             self.push_api.push(context, [pf_obj], rpc_events.CREATED)
+            registry.notify(pf_consts.PORT_FORWARDING, events.AFTER_CREATE,
+                            self,
+                            payload=[callbacks.PortForwardingPayload(context,
+                                current_pf=pf_obj)])
             return pf_obj
 
     @db_base_plugin_common.convert_result_to_dict
@@ -364,6 +391,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 pf_obj = pf.PortForwarding.get_object(context, id=id)
                 if not pf_obj:
                     raise pf_exc.PortForwardingNotFound(id=id)
+                original_pf_obj = copy.deepcopy(pf_obj)
                 ori_internal_port_id = pf_obj.internal_port_id
                 if new_internal_port_id and (new_internal_port_id !=
                                              ori_internal_port_id):
@@ -396,6 +424,9 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
             raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
                                      msg=message)
         self.push_api.push(context, [pf_obj], rpc_events.UPDATED)
+        registry.notify(pf_consts.PORT_FORWARDING, events.AFTER_UPDATE, self,
+                        payload=[callbacks.PortForwardingPayload(context,
+                            current_pf=pf_obj, original_pf=original_pf_obj)])
         return pf_obj
 
     def _check_router_match(self, context, fip_obj, router_id, pf_dict):
@@ -494,6 +525,9 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 fip_obj.update()
             pf_obj.delete()
         self.push_api.push(context, [pf_obj], rpc_events.DELETED)
+        registry.notify(pf_consts.PORT_FORWARDING, events.AFTER_DELETE, self,
+                        payload=[callbacks.PortForwardingPayload(
+                            context, original_pf=pf_obj)])
 
     def sync_port_forwarding_fip(self, context, routers):
         if not routers:
