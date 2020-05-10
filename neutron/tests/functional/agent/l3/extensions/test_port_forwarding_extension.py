@@ -15,11 +15,11 @@
 
 import os
 import re
+from unittest import mock
 
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
-import mock
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.l3.extensions import port_forwarding as pf
 from neutron.agent.linux import ip_lib

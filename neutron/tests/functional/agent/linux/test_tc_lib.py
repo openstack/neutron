@@ -14,8 +14,8 @@
 #    under the License.
 
 import random
+from unittest import mock
 
-import mock
 import netaddr
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils

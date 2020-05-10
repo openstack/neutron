@@ -17,10 +17,10 @@ from datetime import datetime
 import errno
 import os
 import shutil
+from unittest import mock
 import warnings
 
 import fixtures
-import mock
 from neutron_lib import fixture
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory

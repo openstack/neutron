@@ -15,9 +15,9 @@
 
 import os
 import sys
+from unittest import mock
 
 import eventlet
-import mock
 from neutron_lib import constants as n_const
 
 from neutron.agent.l3 import namespaces

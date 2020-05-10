@@ -14,8 +14,8 @@
 #    under the License.
 
 import functools
+from unittest import mock
 
-import mock
 from neutron_lib.services.qos import constants as qos_constants
 from oslo_utils import uuidutils
 import six

@@ -15,8 +15,7 @@
 
 
 import collections
-
-import mock
+from unittest import mock
 
 from neutron_lib import constants
 from oslo_utils import uuidutils

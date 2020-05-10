@@ -47,6 +47,8 @@ tests_imports_dot = re.compile(r"\bimport[\s]+neutron.tests\b")
 tests_imports_from1 = re.compile(r"\bfrom[\s]+neutron.tests\b")
 tests_imports_from2 = re.compile(r"\bfrom[\s]+neutron[\s]+import[\s]+tests\b")
 
+import_mock = re.compile(r"\bimport[\s]+mock\b")
+
 
 @flake8ext
 def check_assert_called_once_with(logical_line, filename):
@@ -202,9 +204,9 @@ def check_builtins_gettext(logical_line, tokens, filename, lines, noqa):
 
 @flake8ext
 def check_no_imports_from_tests(logical_line, filename, noqa):
-    """N343 Production code must not import from neutron.tests.*
+    """N343 - Production code must not import from neutron.tests.*
     """
-    msg = ("N343 Production code must not import from neutron.tests.*")
+    msg = ("N343: Production code must not import from neutron.tests.*")
 
     if noqa:
         return
@@ -246,6 +248,22 @@ def check_no_sqlalchemy_event_import(logical_line, filename, noqa):
               "between unit tests")
 
 
+@flake8ext
+def check_no_import_mock(logical_line, filename, noqa):
+    """N347 - Test code must not import mock library
+    """
+    msg = ("N347: Test code must not import mock library")
+
+    if noqa:
+        return
+
+    if 'neutron/tests/' not in filename:
+        return
+
+    if re.match(import_mock, logical_line):
+        yield(0, msg)
+
+
 def factory(register):
     checks.factory(register)
     register(check_assert_called_once_with)
@@ -258,3 +276,4 @@ def factory(register):
     register(check_no_imports_from_tests)
     register(check_python3_no_filter)
     register(check_no_sqlalchemy_event_import)
+    register(check_no_import_mock)

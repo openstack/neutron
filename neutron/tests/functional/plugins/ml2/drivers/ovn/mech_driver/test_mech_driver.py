@@ -13,8 +13,8 @@
 #    under the License.
 
 import functools
+from unittest import mock
 
-import mock
 from neutron_lib.api.definitions import portbindings
 from oslo_config import cfg
 from oslo_utils import uuidutils

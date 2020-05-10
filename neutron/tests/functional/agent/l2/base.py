@@ -15,10 +15,10 @@
 #    under the License.
 
 import random
+from unittest import mock
 
 import eventlet
 import fixtures
-import mock
 from neutron_lib import constants as n_const
 from neutron_lib.utils import net
 from oslo_config import cfg

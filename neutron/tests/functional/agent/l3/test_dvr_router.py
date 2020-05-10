@@ -15,8 +15,8 @@
 
 import copy
 import functools
+from unittest import mock
 
-import mock
 import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants

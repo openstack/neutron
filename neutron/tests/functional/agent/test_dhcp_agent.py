@@ -15,10 +15,10 @@
 
 import copy
 import os.path
+from unittest import mock
 
 import eventlet
 import fixtures
-import mock
 import netaddr
 from neutron_lib import constants as lib_const
 from oslo_config import fixture as fixture_config
