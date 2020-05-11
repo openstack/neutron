@@ -1508,7 +1508,7 @@ class TestDnsmasq(TestBase):
             '00:00:80:aa:bb:cc 192.168.0.2 * *',
             '00:00:0f:aa:bb:cc 192.168.0.3 * *',
             '00:00:0f:rr:rr:rr 192.168.0.1 * *\n']
-        expected = "\n".join(['%s %s' % (timestamp, l) for l in expected])
+        expected = "\n".join(['%s %s' % (timestamp, le) for le in expected])
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
             conf_fn.return_value = '/foo/leases'
             dm = self._get_dnsmasq(FakeDualNetwork())

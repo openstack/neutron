@@ -1334,12 +1334,12 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         with self.router(tenant_id=router_tenant_id, set_context=True) as r:
             with self.network(shared=True) as n:
                 with self.subnet(network=n) as s1, (
-                     self.subnet(network=n, cidr='fd00::/64',
-                                 ip_version=lib_constants.IP_VERSION_6)
-                                 ) as s2, (
-                     self.subnet(network=n, cidr='fd01::/64',
-                                 ip_version=lib_constants.IP_VERSION_6)
-                                 ) as s3:
+                        self.subnet(network=n, cidr='fd00::/64',
+                                    ip_version=lib_constants.IP_VERSION_6)
+                                    ) as s2, (
+                        self.subnet(network=n, cidr='fd01::/64',
+                                    ip_version=lib_constants.IP_VERSION_6)
+                                    ) as s3:
                     fixed_ips = [{'subnet_id': s1['subnet']['id']},
                                  {'subnet_id': s2['subnet']['id']},
                                  {'subnet_id': s3['subnet']['id']}]

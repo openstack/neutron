@@ -160,8 +160,8 @@ class FdbPopulationAgentExtension(
         self.fdb_tracker.delete_port(devices, port_id)
 
     def _get_devices(self):
-        def _flatten_list(l):
-            return [item for sublist in l for item in sublist]
+        def _flatten_list(li):
+            return [item for sublist in li for item in sublist]
 
         return _flatten_list(self.device_mappings.values())
 

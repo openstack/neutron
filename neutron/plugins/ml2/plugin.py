@@ -2034,9 +2034,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                              port_id)
                     result[dev_id] = None
                     continue
-                levels = [l for l in port_db.binding_levels
-                          if l.host == bindlevelhost_match]
-                levels = sorted(levels, key=lambda l: l.level)
+                levels = [bl for bl in port_db.binding_levels
+                          if bl.host == bindlevelhost_match]
+                levels = sorted(levels, key=lambda bl: bl.level)
                 network_ctx = netctxs_by_netid.get(port_db.network_id)
                 port_context = driver_context.PortContext(
                     self, plugin_context, port, network_ctx, binding, levels)

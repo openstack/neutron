@@ -879,8 +879,8 @@ class Dnsmasq(DhcpLocalProcess):
         leases = set()
         try:
             with open(filename) as f:
-                for l in f.readlines():
-                    host = l.strip().split(',')
+                for line in f.readlines():
+                    host = line.strip().split(',')
                     mac = host[0]
                     client_id = None
                     if host[1].startswith('set:'):
@@ -938,10 +938,10 @@ class Dnsmasq(DhcpLocalProcess):
         server_id = None
         if os.path.exists(filename):
             with open(filename) as f:
-                for l in f.readlines():
-                    if l.startswith('duid'):
+                for line in f.readlines():
+                    if line.startswith('duid'):
                         if not server_id:
-                            server_id = l.strip().split()[1]
+                            server_id = line.strip().split()[1]
                             continue
                         else:
                             LOG.warning('Multiple DUID entries in %s '
@@ -949,7 +949,7 @@ class Dnsmasq(DhcpLocalProcess):
                                         'not functioning properly',
                                         filename)
                             continue
-                    parts = l.strip().split()
+                    parts = line.strip().split()
                     if len(parts) != 5:
                         LOG.warning('Invalid lease entry %s found in %s '
                                     'lease file, ignoring', parts, filename)

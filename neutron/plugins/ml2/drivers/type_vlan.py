@@ -270,7 +270,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
 
         if self.is_partial_segment(segment):
             if (directory.get_plugin(
-                    plugin_constants.NETWORK_SEGMENT_RANGE)and project_id):
+                    plugin_constants.NETWORK_SEGMENT_RANGE) and project_id):
                 filters['project_id'] = project_id
             alloc = self.allocate_partially_specified_segment(
                 context, **filters)

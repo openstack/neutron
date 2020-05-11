@@ -741,13 +741,11 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                                                         ip_prefix, nexthop,
                                                         True))
 
-            for lrouter_name, nat_dict in(
-                    self.create_lrouter_nats):
+            for lrouter_name, nat_dict in self.create_lrouter_nats:
                 txn.add(self.nb_api.add_nat_rule_in_lrouter(
                     lrouter_name, **nat_dict))
 
-            for lrouter_name, nat_dict in(
-                    self.delete_lrouter_nats):
+            for lrouter_name, nat_dict in self.delete_lrouter_nats:
                 txn.add(self.nb_api.delete_nat_rule_in_lrouter(
                     lrouter_name, if_exists=True, **nat_dict))
 
