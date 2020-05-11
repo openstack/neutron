@@ -1,7 +1,7 @@
 {
     "name": "OVN_Southbound",
-    "version": "2.4.0",
-    "cksum": "3059284885 20260",
+    "version": "2.7.0",
+    "cksum": "4286723485 21693",
     "tables": {
         "SB_Global": {
             "columns": {
@@ -173,6 +173,8 @@
                                       "minInteger": 1,
                                       "maxInteger": 4095},
                               "min": 0, "max": 1}},
+                "virtual_parent": {"type": {"key": "string", "min": 0,
+                                            "max": 1}},
                 "chassis": {"type": {"key": {"type": "uuid",
                                              "refTable": "Chassis",
                                              "refType": "weak"},
@@ -372,6 +374,7 @@
                 "querier": {"type": {"key": "boolean", "min": 0, "max": 1}},
                 "eth_src": {"type": "string"},
                 "ip4_src": {"type": "string"},
+                "ip6_src": {"type": "string"},
                 "table_size": {"type": {"key": "integer",
                                         "min": 0, "max": 1}},
                 "idle_timeout": {"type": {"key": "integer",
@@ -401,4 +404,31 @@
                                            "refType": "weak"},
                                    "min": 0, "max": "unlimited"}}},
             "indexes": [["address", "datapath", "chassis"]],
-            "isRoot": true}}}
+            "isRoot": true},
+        "Service_Monitor": {
+            "columns": {
+                "ip": {"type": "string"},
+                "protocol": {
+                    "type": {"key": {"type": "string",
+                             "enum": ["set", ["tcp", "udp"]]},
+                             "min": 0, "max": 1}},
+                "port": {"type": {"key": {"type": "integer",
+                                          "minInteger": 0,
+                                          "maxInteger": 32767}}},
+                "logical_port": {"type": "string"},
+                "src_mac": {"type": "string"},
+                "src_ip": {"type": "string"},
+                "status": {
+                    "type": {"key": {"type": "string",
+                             "enum": ["set", ["online", "offline", "error"]]},
+                             "min": 0, "max": 1}},
+                "options": {
+                    "type": {"key": "string", "value": "string",
+                             "min": 0, "max": "unlimited"}},
+                "external_ids": {
+                    "type": {"key": "string", "value": "string",
+                             "min": 0, "max": "unlimited"}}},
+            "indexes": [["logical_port", "ip", "port", "protocol"]],
+            "isRoot": true}
+    }
+}

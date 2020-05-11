@@ -1,10 +1,11 @@
 {
     "name": "OVN_Northbound",
-    "version": "5.16.0",
-    "cksum": "923459061 23095",
+    "version": "5.23.0",
+    "cksum": "111023208 25806",
     "tables": {
         "NB_Global": {
             "columns": {
+                "name": {"type": "string"},
                 "nb_cfg": {"type": {"key": "integer"}},
                 "sb_cfg": {"type": {"key": "integer"}},
                 "hv_cfg": {"type": {"key": "integer"}},
@@ -59,7 +60,12 @@
                              "min": 0, "max": "unlimited"}},
                 "external_ids": {
                     "type": {"key": "string", "value": "string",
-                             "min": 0, "max": "unlimited"}}},
+                             "min": 0, "max": "unlimited"}},
+               "forwarding_groups": {
+                    "type": {"key": {"type": "uuid",
+                                     "refTable": "Forwarding_Group",
+                                     "refType": "strong"},
+                                     "min": 0, "max": "unlimited"}}},
             "isRoot": true},
         "Logical_Switch_Port": {
             "columns": {
@@ -113,6 +119,18 @@
                              "min": 0, "max": "unlimited"}}},
             "indexes": [["name"]],
             "isRoot": false},
+        "Forwarding_Group": {
+            "columns": {
+                "name": {"type": "string"},
+                "vip": {"type": "string"},
+                "vmac": {"type": "string"},
+                "liveness": {"type": "boolean"},
+                "external_ids": {
+                    "type": {"key": "string", "value": "string",
+                             "min": 0, "max": "unlimited"}},
+                "child_port": {"type": {"key": "string",
+                                        "min": 1, "max": "unlimited"}}},
+            "isRoot": false},
         "Address_Set": {
             "columns": {
                 "name": {"type": "string"},
@@ -150,12 +168,39 @@
                              "min": 0, "max": "unlimited"}},
                 "protocol": {
                     "type": {"key": {"type": "string",
-                             "enum": ["set", ["tcp", "udp"]]},
+                             "enum": ["set", ["tcp", "udp", "sctp"]]},
                              "min": 0, "max": 1}},
+                "health_check": {"type": {
+                    "key": {"type": "uuid",
+                            "refTable": "Load_Balancer_Health_Check",
+                            "refType": "strong"},
+                    "min": 0,
+                    "max": "unlimited"}},
+                "ip_port_mappings": {
+                    "type": {"key": "string", "value": "string",
+                             "min": 0, "max": "unlimited"}},
+                "selection_fields": {
+                    "type": {"key": {"type": "string",
+                             "enum": ["set",
+                                ["eth_src", "eth_dst", "ip_src", "ip_dst",
+                                 "tp_src", "tp_dst"]]},
+                             "min": 0, "max": "unlimited"}},
                 "external_ids": {
                     "type": {"key": "string", "value": "string",
                              "min": 0, "max": "unlimited"}}},
             "isRoot": true},
+        "Load_Balancer_Health_Check": {
+            "columns": {
+                "vip": {"type": "string"},
+                "options": {
+                     "type": {"key": "string",
+                              "value": "string",
+                              "min": 0,
+                              "max": "unlimited"}},
+                "external_ids": {
+                    "type": {"key": "string", "value": "string",
+                             "min": 0, "max": "unlimited"}}},
+            "isRoot": false},
         "ACL": {
             "columns": {
                 "name": {"type": {"key": {"type": "string",
@@ -303,6 +348,9 @@
                 "ipv6_ra_configs": {
                     "type": {"key": "string", "value": "string",
                              "min": 0, "max": "unlimited"}},
+                "ipv6_prefix": {"type": {"key": "string",
+                                      "min": 0,
+                                      "max": "unlimited"}},
                 "external_ids": {
                     "type": {"key": "string", "value": "string",
                              "min": 0, "max": "unlimited"}}},
@@ -330,13 +378,17 @@
                 "action": {"type": {
                     "key": {"type": "string",
                             "enum": ["set", ["allow", "drop", "reroute"]]}}},
-                "nexthop": {"type": {"key": "string", "min": 0, "max": 1}}},
+                "nexthop": {"type": {"key": "string", "min": 0, "max": 1}},
+                "external_ids": {
+                    "type": {"key": "string", "value": "string",
+                             "min": 0, "max": "unlimited"}}},
             "isRoot": false},
         "NAT": {
             "columns": {
                 "external_ip": {"type": "string"},
                 "external_mac": {"type": {"key": "string",
                                           "min": 0, "max": 1}},
+                "external_port_range": {"type": "string"},
                 "logical_ip": {"type": "string"},
                 "logical_port": {"type": {"key": "string",
                                           "min": 0, "max": 1}},
@@ -345,6 +397,8 @@
                                                              "snat",
                                                              "dnat_and_snat"
                                                                ]]}}},
+                "options": {"type": {"key": "string", "value": "string",
+                                     "min": 0, "max": "unlimited"}},
                 "external_ids": {
                     "type": {"key": "string", "value": "string",
                              "min": 0, "max": "unlimited"}}},
