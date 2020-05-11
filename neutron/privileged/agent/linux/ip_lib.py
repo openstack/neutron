@@ -64,6 +64,8 @@ def _get_scope_name(scope):
     return rtnl.rt_scope.get(scope, scope)
 
 
+# TODO(ralonsoh): move those exceptions out of priv_ip_lib to avoid other
+# modules to import this one.
 class NetworkNamespaceNotFound(RuntimeError):
     message = _("Network namespace %(netns_name)s could not be found.")
 
@@ -100,6 +102,21 @@ class InterfaceOperationNotSupported(RuntimeError):
         message = message or self.message % {
                 'device': device, 'namespace': namespace}
         super(InterfaceOperationNotSupported, self).__init__(message)
+
+
+class InvalidArgument(RuntimeError):
+    message = _("Invalid parameter/value used on interface %(device)s, "
+                "namespace %(namespace)s.")
+
+    def __init__(self, message=None, device=None, namespace=None):
+        # NOTE(slaweq): 'message' can be passed as an optional argument
+        # because of how privsep daemon works. If exception is raised in
+        # function called by privsep daemon, it will then try to reraise it
+        # and will call it always with passing only message from originally
+        # raised exception.
+        message = message or self.message % {'device': device,
+                                             'namespace': namespace}
+        super(InvalidArgument, self).__init__(message)
 
 
 class IpAddressAlreadyExists(RuntimeError):
@@ -234,6 +251,8 @@ def _translate_ip_device_exception(e, device=None, namespace=None):
     if e.code == errno.EOPNOTSUPP:
         raise InterfaceOperationNotSupported(device=device,
                                              namespace=namespace)
+    if e.code == errno.EINVAL:
+        raise InvalidArgument(device=device, namespace=namespace)
 
 
 def get_link_id(device, namespace, raise_exception=True):
@@ -392,6 +411,11 @@ def set_link_attribute(device, namespace, **attributes):
 
 
 @privileged.default.entrypoint
+def set_link_vf_feature(device, namespace, vf_config):
+    return _run_iproute_link("set", device, namespace=namespace, vf=vf_config)
+
+
+@privileged.default.entrypoint
 def get_link_attributes(device, namespace):
     link = _run_iproute_link("get", device, namespace)[0]
     return {
@@ -405,6 +429,24 @@ def get_link_attributes(device, namespace):
         'allmulticast': bool(link['flags'] & ifinfmsg.IFF_ALLMULTI),
         'link_kind': link.get_nested('IFLA_LINKINFO', 'IFLA_INFO_KIND')
     }
+
+
+@privileged.default.entrypoint
+def get_link_vfs(device, namespace):
+    link = _run_iproute_link('get', device, namespace=namespace, ext_mask=1)[0]
+    num_vfs = link.get_attr('IFLA_NUM_VF')
+    vfs = {}
+    if not num_vfs:
+        return vfs
+
+    vfinfo_list = link.get_attr('IFLA_VFINFO_LIST')
+    for vinfo in vfinfo_list.get_attrs('IFLA_VF_INFO'):
+        mac = vinfo.get_attr('IFLA_VF_MAC')
+        link_state = vinfo.get_attr('IFLA_VF_LINK_STATE')
+        vfs[mac['vf']] = {'mac': mac['mac'],
+                          'link_state': link_state['link_state']}
+
+    return vfs
 
 
 @privileged.default.entrypoint

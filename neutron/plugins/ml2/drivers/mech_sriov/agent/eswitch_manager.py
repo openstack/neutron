@@ -21,12 +21,19 @@ from neutron_lib.utils import helpers
 from oslo_log import log as logging
 
 from neutron._i18n import _
-from neutron.agent.linux import ip_link_support
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
 from neutron.plugins.ml2.drivers.mech_sriov.agent import pci_lib
 
 LOG = logging.getLogger(__name__)
+
+
+IP_LINK_CAPABILITY_STATE = 'state'
+IP_LINK_CAPABILITY_VLAN = 'vlan'
+IP_LINK_CAPABILITY_RATE = 'max_tx_rate'
+IP_LINK_CAPABILITY_MIN_TX_RATE = 'min_tx_rate'
+IP_LINK_CAPABILITY_SPOOFCHK = 'spoofchk'
+IP_LINK_SUB_CAPABILITY_QOS = 'qos'
 
 
 class PciOsWrapper(object):
@@ -200,11 +207,11 @@ class EmbSwitch(object):
                                                  auto=propagate_uplink_state)
 
     def set_device_rate(self, pci_slot, rate_type, rate_kbps):
-        """Set device rate: rate (max_tx_rate), min_tx_rate
+        """Set device rate: max_tx_rate, min_tx_rate
 
         @param pci_slot: Virtual Function address
-        @param rate_type: device rate name type. Could be 'rate' and
-                          'min_tx_rate'.
+        @param rate_type: device rate name type. Could be 'max_tx_rate' and
+                          'min_tx_rate' ('rate' is not supported anymore).
         @param rate_kbps: device rate in kbps
         """
         vf_index = self._get_vf_index(pci_slot)
@@ -349,7 +356,7 @@ class ESwitchManager(object):
         embedded_switch = self._get_emb_eswitch(device_mac, pci_slot)
         if embedded_switch:
             return embedded_switch.get_device_state(pci_slot)
-        return pci_lib.LinkState.DISABLE
+        return pci_lib.LinkState.disable.name
 
     def set_device_max_rate(self, device_mac, pci_slot, max_kbps):
         """Set device max rate
@@ -362,9 +369,7 @@ class ESwitchManager(object):
         embedded_switch = self._get_emb_eswitch(device_mac, pci_slot)
         if embedded_switch:
             embedded_switch.set_device_rate(
-                pci_slot,
-                ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE,
-                max_kbps)
+                pci_slot, IP_LINK_CAPABILITY_RATE, max_kbps)
 
     def set_device_min_tx_rate(self, device_mac, pci_slot, min_kbps):
         """Set device min_tx_rate
@@ -377,9 +382,7 @@ class ESwitchManager(object):
         embedded_switch = self._get_emb_eswitch(device_mac, pci_slot)
         if embedded_switch:
             embedded_switch.set_device_rate(
-                pci_slot,
-                ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_MIN_TX_RATE,
-                min_kbps)
+                pci_slot, IP_LINK_CAPABILITY_MIN_TX_RATE, min_kbps)
 
     def set_device_state(self, device_mac, pci_slot, admin_state_up,
                          propagate_uplink_state):
@@ -498,9 +501,7 @@ class ESwitchManager(object):
         Clear the "rate" configuration from VF by setting it to 0.
         @param pci_slot: VF PCI slot
         """
-        self._clear_rate(
-            pci_slot,
-            ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE)
+        self._clear_rate(pci_slot, IP_LINK_CAPABILITY_RATE)
 
     def clear_min_tx_rate(self, pci_slot):
         """Clear the VF "min_tx_rate" parameter
@@ -508,16 +509,14 @@ class ESwitchManager(object):
         Clear the "min_tx_rate" configuration from VF by setting it to 0.
         @param pci_slot: VF PCI slot
         """
-        self._clear_rate(
-            pci_slot,
-            ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_MIN_TX_RATE)
+        self._clear_rate(pci_slot, IP_LINK_CAPABILITY_MIN_TX_RATE)
 
     def _clear_rate(self, pci_slot, rate_type):
         """Clear the VF rate parameter specified in rate_type
 
         Clear the rate configuration from VF by setting it to 0.
         @param pci_slot: VF PCI slot
-        @param rate_type: rate to clear ('rate', 'min_tx_rate')
+        @param rate_type: rate to clear ('max_tx_rate', 'min_tx_rate')
         """
         # NOTE(Moshe Levi): we don't use the self._get_emb_eswitch here,
         # because when clearing the VF it may be not assigned. This happens
