@@ -355,6 +355,15 @@ function _compile_ovs {
 
     _prepare_for_ovs_compilation $build_modules
 
+    KERNEL_VERSION=$(uname -r)
+    major_version=$(echo "${KERNEL_VERSION}" | cut -d '.' -f1)
+    patch_level=$(echo "${KERNEL_VERSION}" | cut -d '.' -f2)
+    if [ "${major_version}" -gt 5 ] || [ "${major_version}" == 5 ] && [ "${patch_level}" -gt 5 ]; then
+        echo "NOTE: KERNEL VERSION is ${KERNEL_VERSION} and OVS doesn't support compiling "
+        echo "Kernel module for version higher than 5.5. Skipping module compilation..."
+        build_modules="False"
+    fi
+
     pushd $DEST/$OVS_REPO_NAME
     [ -f configure ] || ./boot.sh
     if [ ! -f config.status ] || [ configure -nt config.status ] ; then
