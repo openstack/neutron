@@ -2202,6 +2202,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             LOG.info("Agent rpc_loop - iteration:%d started",
                      self.iter_num)
             ovs_status = self.check_ovs_status()
+            bridges_recreated = False
             if ovs_status == constants.OVS_RESTARTED:
                 self.setup_integration_br()
                 self.setup_physical_bridges(self.bridge_mappings)
@@ -2239,17 +2240,19 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 port_stats = self.get_port_stats({}, {})
                 self.loop_count_and_wait(start, port_stats)
                 continue
-            # Check if any physical bridge wasn't recreated recently
-            if bridges_monitor:
-                added_bridges = (
-                    bridges_monitor.bridges_added + self.added_bridges)
-                bridges_recreated = self._reconfigure_physical_bridges(
-                    added_bridges)
-                if bridges_recreated:
-                    # In case when any bridge was "re-created", we need to
-                    # ensure that there is no any stale flows in bridges left
-                    need_clean_stale_flow = True
-                sync |= bridges_recreated
+            else:
+                # Check if any physical bridge wasn't recreated recently
+                if bridges_monitor:
+                    added_bridges = (
+                        bridges_monitor.bridges_added + self.added_bridges)
+                    bridges_recreated = self._reconfigure_physical_bridges(
+                        added_bridges)
+                    if bridges_recreated:
+                        # In case when any bridge was "re-created", we need to
+                        # ensure that there is no any stale flows in bridges
+                        # left
+                        need_clean_stale_flow = True
+                    sync |= bridges_recreated
             # Notify the plugin of tunnel IP
             if self.enable_tunneling and tunnel_sync:
                 try:
