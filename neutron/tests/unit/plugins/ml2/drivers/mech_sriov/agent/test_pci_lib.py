@@ -16,28 +16,18 @@
 
 import mock
 
-from neutron.agent.linux import ip_link_support
-from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
-    import exceptions as exc
+from neutron.agent.linux import ip_lib
 from neutron.plugins.ml2.drivers.mech_sriov.agent import pci_lib
 from neutron.tests import base
 
 
 class TestPciLib(base.BaseTestCase):
     DEV_NAME = "p7p1"
+
     VF_INDEX = 1
-    VF_INDEX_DISABLE = 0
-    PF_LINK_SHOW = ('122: p7p1: <BROADCAST,MULTICAST> mtu 1500 qdisc noop'
-                    ' state DOWN mode DEFAULT group default qlen 1000')
-    PF_MAC = '    link/ether f4:52:14:2a:3e:c0 brd ff:ff:ff:ff:ff:ff'
-    VF_0_LINK_SHOW = ('    vf 0 MAC fa:16:3e:b4:81:ac, vlan 4095, spoof'
-                      ' checking off, link-state disable')
-    VF_1_LINK_SHOW = ('    vf 1 MAC 00:00:00:00:00:11, vlan 4095, spoof'
-                      ' checking off, link-state enable')
-    VF_2_LINK_SHOW = ('    vf 2 MAC fa:16:3e:68:4e:79, vlan 4095, spoof'
-                      ' checking off, link-state enable')
-    VF_LINK_SHOW = '\n'.join((PF_LINK_SHOW, PF_MAC, VF_0_LINK_SHOW,
-                              VF_1_LINK_SHOW, VF_2_LINK_SHOW))
+    VFS_LIST = {0: {'mac': 'fa:16:3e:b4:81:ac', 'link_state': 2},
+                1: {'mac': '00:00:00:00:00:11', 'link_state': 1},
+                2: {'mac': 'fa:16:3e:68:4e:79', 'link_state': 0}}
 
     MAC_MAPPING = {
         0: "fa:16:3e:b4:81:ac",
@@ -45,121 +35,69 @@ class TestPciLib(base.BaseTestCase):
         2: "fa:16:3e:68:4e:79",
     }
 
+    STATE_MAPPING = {  # VF index: state (string), according to VFS_LIST
+        0: pci_lib.LinkState.disable.name,
+        1: pci_lib.LinkState.enable.name,
+        2: pci_lib.LinkState.auto.name,
+    }
+
     def setUp(self):
         super(TestPciLib, self).setUp()
         self.pci_wrapper = pci_lib.PciDeviceIPWrapper(self.DEV_NAME)
+        self.mock_ip_device = mock.Mock()
+        self.mock_ip_device.link.get_vfs.return_value = self.VFS_LIST
+        mock.patch.object(ip_lib, 'IPDevice',
+                          return_value=self.mock_ip_device).start()
 
     def test_get_assigned_macs(self):
-        with mock.patch.object(self.pci_wrapper,
-                               "_as_root") as mock_as_root:
-            mock_as_root.return_value = self.VF_LINK_SHOW
-            result = self.pci_wrapper.get_assigned_macs([self.VF_INDEX])
-            self.assertEqual(
-                {self.VF_INDEX: self.MAC_MAPPING[self.VF_INDEX]}, result)
+        for idx in range(len(self.VFS_LIST)):
+            result = self.pci_wrapper.get_assigned_macs([idx])
+            self.assertEqual({idx: self.MAC_MAPPING[idx]}, result)
 
-    def test_get_assigned_macs_fail(self):
-        with mock.patch.object(self.pci_wrapper,
-                               "_as_root") as mock_as_root:
-            mock_as_root.side_effect = Exception()
-            self.assertRaises(exc.IpCommandError,
-                              self.pci_wrapper.get_assigned_macs,
-                              [self.VF_INDEX])
+    def test_get_assigned_macs_not_present(self):
+        result = self.pci_wrapper.get_assigned_macs([1000])
+        self.assertEqual({}, result)
 
-    def test_get_vf_state_enable(self):
-        with mock.patch.object(self.pci_wrapper,
-                               "_as_root") as mock_as_root:
-            mock_as_root.return_value = self.VF_LINK_SHOW
-            result = self.pci_wrapper.get_vf_state(self.VF_INDEX)
-            self.assertEqual('enable', result)
+    def test_get_vf_state(self):
+        for idx in range(len(self.VFS_LIST)):
+            result = self.pci_wrapper.get_vf_state(idx)
+            self.assertEqual(self.STATE_MAPPING[idx], result)
 
-    def test_get_vf_state_disable(self):
-        with mock.patch.object(self.pci_wrapper,
-                               "_as_root") as mock_as_root:
-            mock_as_root.return_value = self.VF_LINK_SHOW
-            result = self.pci_wrapper.get_vf_state(self.VF_INDEX_DISABLE)
-            self.assertEqual('disable', result)
-
-    def test_get_vf_state_fail(self):
-        with mock.patch.object(self.pci_wrapper,
-                               "_as_root") as mock_as_root:
-            mock_as_root.side_effect = Exception()
-            self.assertRaises(exc.IpCommandError,
-                              self.pci_wrapper.get_vf_state,
-                              self.VF_INDEX)
+    def test_get_vf_state_not_present(self):
+        result = self.pci_wrapper.get_vf_state(1000)
+        self.assertEqual(pci_lib.LinkState.disable.name, result)
 
     def test_set_vf_state(self):
-        with mock.patch.object(self.pci_wrapper, "_as_root"):
-            result = self.pci_wrapper.set_vf_state(self.VF_INDEX,
-                                                   True)
-            self.assertIsNone(result)
+        self.pci_wrapper.set_vf_state(self.VF_INDEX, True)
+        vf = {'vf': self.VF_INDEX, 'link_state': 1}
+        self.mock_ip_device.link.set_vf_feature.assert_called_once_with(vf)
 
-    def test_set_vf_state_fail(self):
-        with mock.patch.object(self.pci_wrapper,
-                               "_as_root") as mock_as_root:
-            mock_as_root.side_effect = Exception()
-            self.assertRaises(exc.IpCommandError,
-                              self.pci_wrapper.set_vf_state,
-                              self.VF_INDEX,
-                              True)
+        self.mock_ip_device.link.set_vf_feature.reset_mock()
+        self.pci_wrapper.set_vf_state(self.VF_INDEX, False)
+        vf = {'vf': self.VF_INDEX, 'link_state': 2}
+        self.mock_ip_device.link.set_vf_feature.assert_called_once_with(vf)
+
+        self.mock_ip_device.link.set_vf_feature.reset_mock()
+        self.pci_wrapper.set_vf_state(self.VF_INDEX, False, auto=True)
+        vf = {'vf': self.VF_INDEX, 'link_state': 0}
+        self.mock_ip_device.link.set_vf_feature.assert_called_once_with(vf)
 
     def test_set_vf_spoofcheck(self):
-        with mock.patch.object(self.pci_wrapper, "_as_root"):
-            result = self.pci_wrapper.set_vf_spoofcheck(self.VF_INDEX,
-                                                        True)
-            self.assertIsNone(result)
+        self.pci_wrapper.set_vf_spoofcheck(self.VF_INDEX, True)
+        vf = {'vf': self.VF_INDEX, 'spoofchk': 1}
+        self.mock_ip_device.link.set_vf_feature.assert_called_once_with(vf)
 
-    def test_set_vf_spoofcheck_fail(self):
-        with mock.patch.object(self.pci_wrapper,
-                               "_as_root") as mock_as_root:
-            mock_as_root.side_effect = Exception()
-            self.assertRaises(exc.IpCommandError,
-                              self.pci_wrapper.set_vf_spoofcheck,
-                              self.VF_INDEX,
-                              True)
+        self.mock_ip_device.link.set_vf_feature.reset_mock()
+        self.pci_wrapper.set_vf_spoofcheck(self.VF_INDEX, False)
+        vf = {'vf': self.VF_INDEX, 'spoofchk': 0}
+        self.mock_ip_device.link.set_vf_feature.assert_called_once_with(vf)
 
-    def _set_vf_rate(self, rate, passed=True):
-        if passed:
-            with mock.patch.object(self.pci_wrapper, "_as_root") \
-                    as mock_as_root:
-                result = self.pci_wrapper.set_vf_rate(
-                    self.VF_INDEX,
-                    ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE,
-                    1000)
-                self.assertIsNone(result)
-                mock_as_root.assert_called_once_with(
-                    [], "link", ("set", self.DEV_NAME, "vf",
-                                 str(self.VF_INDEX), "rate", '1000'))
-        else:
-            with mock.patch.object(self.pci_wrapper, "_as_root",
-                                   side_effect=Exception()):
-                self.assertRaises(exc.IpCommandError,
-                                  self.pci_wrapper.set_vf_rate,
-                                  self.VF_INDEX,
-                                  rate,
-                                  1000)
+    def test_set_vf_rate(self):
+        self.pci_wrapper.set_vf_rate(self.VF_INDEX, 'max_tx_rate', 20)
+        vf = {'vf': self.VF_INDEX, 'rate': {'max_tx_rate': 20}}
+        self.mock_ip_device.link.set_vf_feature.assert_called_once_with(vf)
 
-    def test_set_vf_rate_max_rate(self):
-        self._set_vf_rate(
-            ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE)
-
-    def test_set_vf_rate_max_rate_fail(self):
-        self._set_vf_rate('rate', passed=False)
-
-    def test_set_vf_rate_min_tx_rate(self):
-        self._set_vf_rate(
-            ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_MIN_TX_RATE)
-
-    def test_set_vf_rate_min_tx_rate_fail(self):
-        self._set_vf_rate(
-            ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_MIN_TX_RATE,
-            passed=False)
-
-    def test_set_vf_state_not_supported(self):
-        with mock.patch.object(self.pci_wrapper,
-                               "_as_root") as mock_as_root:
-            mock_as_root.side_effect = Exception(
-                pci_lib.PciDeviceIPWrapper.IP_LINK_OP_NOT_SUPPORTED)
-            self.assertRaises(exc.IpCommandOperationNotSupportedError,
-                              self.pci_wrapper.set_vf_state,
-                              self.VF_INDEX,
-                              state=True)
+        self.mock_ip_device.link.set_vf_feature.reset_mock()
+        self.pci_wrapper.set_vf_rate(self.VF_INDEX, 'min_tx_rate', 10)
+        vf = {'vf': self.VF_INDEX, 'rate': {'min_tx_rate': 10}}
+        self.mock_ip_device.link.set_vf_feature.assert_called_once_with(vf)

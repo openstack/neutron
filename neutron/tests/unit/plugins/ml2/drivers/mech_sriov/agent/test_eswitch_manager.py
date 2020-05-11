@@ -18,7 +18,6 @@ import os
 
 import mock
 
-from neutron.agent.linux import ip_link_support
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
 from neutron.plugins.ml2.drivers.mech_sriov.agent import eswitch_manager as esm
@@ -72,8 +71,8 @@ class TestESwitchManagerApi(base.BaseTestCase):
     PCI_SLOT = '0000:06:00.1'
     WRONG_MAC = '00:00:00:00:00:67'
     WRONG_PCI = "0000:06:00.6"
-    MAX_RATE = ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE
-    MIN_RATE = ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_MIN_TX_RATE
+    MAX_RATE = esm.IP_LINK_CAPABILITY_RATE
+    MIN_RATE = esm.IP_LINK_CAPABILITY_MIN_TX_RATE
 
     def setUp(self):
         super(TestESwitchManagerApi, self).setUp()
@@ -526,55 +525,48 @@ class TestEmbSwitch(base.BaseTestCase):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
                         "PciDeviceIPWrapper.set_vf_rate") as pci_lib_mock:
             self.emb_switch.set_device_rate(
-                self.PCI_SLOT,
-                ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE, 2000)
+                self.PCI_SLOT, esm.IP_LINK_CAPABILITY_RATE, 2000)
             pci_lib_mock.assert_called_with(
-                0, ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE, 2)
+                0, esm.IP_LINK_CAPABILITY_RATE, 2)
 
     def test_set_device_max_rate_ok2(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
                         "PciDeviceIPWrapper.set_vf_rate") as pci_lib_mock:
             self.emb_switch.set_device_rate(
-                self.PCI_SLOT,
-                ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE, 99)
+                self.PCI_SLOT, esm.IP_LINK_CAPABILITY_RATE, 99)
             pci_lib_mock.assert_called_with(
-                0, ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE, 1)
+                0, esm.IP_LINK_CAPABILITY_RATE, 1)
 
     def test_set_device_max_rate_rounded_ok(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
                         "PciDeviceIPWrapper.set_vf_rate") as pci_lib_mock:
             self.emb_switch.set_device_rate(
-                self.PCI_SLOT,
-                ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE, 2001)
-            pci_lib_mock.assert_called_with(
-                0, ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE, 2)
+                self.PCI_SLOT, esm.IP_LINK_CAPABILITY_RATE, 2001)
+            pci_lib_mock.assert_called_with(0, esm.IP_LINK_CAPABILITY_RATE, 2)
 
     def test_set_device_max_rate_rounded_ok2(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
                         "PciDeviceIPWrapper.set_vf_rate") as pci_lib_mock:
             self.emb_switch.set_device_rate(
-                self.PCI_SLOT,
-                ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE, 2499)
+                self.PCI_SLOT, esm.IP_LINK_CAPABILITY_RATE, 2499)
             pci_lib_mock.assert_called_with(
-                0, ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE, 2)
+                0, esm.IP_LINK_CAPABILITY_RATE, 2)
 
     def test_set_device_max_rate_rounded_ok3(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
                         "PciDeviceIPWrapper.set_vf_rate") as pci_lib_mock:
             self.emb_switch.set_device_rate(
-                self.PCI_SLOT,
-                ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE, 2500)
+                self.PCI_SLOT, esm.IP_LINK_CAPABILITY_RATE, 2500)
             pci_lib_mock.assert_called_with(
-                0, ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE, 3)
+                0, esm.IP_LINK_CAPABILITY_RATE, 3)
 
     def test_set_device_max_rate_disable(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
                         "PciDeviceIPWrapper.set_vf_rate") as pci_lib_mock:
             self.emb_switch.set_device_rate(
-                self.PCI_SLOT,
-                ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE, 0)
+                self.PCI_SLOT, esm.IP_LINK_CAPABILITY_RATE, 0)
             pci_lib_mock.assert_called_with(
-                0, ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE, 0)
+                0, esm.IP_LINK_CAPABILITY_RATE, 0)
 
     def test_set_device_max_rate_fail(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
@@ -583,7 +575,7 @@ class TestEmbSwitch(base.BaseTestCase):
                 exc.InvalidPciSlotError,
                 self.emb_switch.set_device_rate,
                 self.WRONG_PCI_SLOT,
-                ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE, 1000)
+                esm.IP_LINK_CAPABILITY_RATE, 1000)
 
     def test_get_pci_device(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."

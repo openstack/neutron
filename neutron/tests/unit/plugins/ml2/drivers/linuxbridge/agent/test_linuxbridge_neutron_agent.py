@@ -454,7 +454,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                         return_value=vxlan_dev) as add_vxlan_fn,\
                     mock.patch.object(vxlan_dev.link, 'set_mtu',
                         side_effect=ip_lib.InvalidArgument(
-                            parameter="MTU", value=mtu)),\
+                            device='device_exists', namespace='ns')),\
                     mock.patch.object(ip_lib, 'get_device_mtu',
                         return_value=physical_mtu),\
                     mock.patch.object(vxlan_dev.link, 'delete') as delete_dev:

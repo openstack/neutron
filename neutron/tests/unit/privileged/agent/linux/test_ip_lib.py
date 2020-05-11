@@ -213,6 +213,39 @@ class IpLibTestCase(base.BaseTestCase):
             except OSError as e:
                 self.assertEqual(errno.EINVAL, e.errno)
 
+    def _clean(self, client_mode):
+        priv_lib.privileged.default.client_mode = client_mode
+
+    def test_get_link_vfs(self):
+        # NOTE(ralonsoh): there should be a functional test checking this
+        # method, but this is not possible due to the lack of SR-IOV capable
+        # NICs in the CI servers.
+        vf_info = []
+        for idx in range(3):
+            vf_info.append(pyroute2.netlink.nlmsg_base())
+            mac_info = {'mac': 'mac_%s' % idx, 'vf': idx}
+            link_state = {'link_state': idx}  # see SR-IOV pci_lib.LinkState
+            vf_info[idx].setvalue(
+                {'attrs': [('IFLA_VF_MAC', mac_info),
+                           ('IFLA_VF_LINK_STATE', link_state)]})
+        vfinfo_list = pyroute2.netlink.nlmsg_base()
+        vfinfo_list.setvalue({'attrs': [('IFLA_VF_INFO', vf_info[0]),
+                                        ('IFLA_VF_INFO', vf_info[1]),
+                                        ('IFLA_VF_INFO', vf_info[2])]})
+        value = pyroute2.netlink.nlmsg_base()
+        value.setvalue({'attrs': [('IFLA_NUM_VF', 3),
+                                  ('IFLA_VFINFO_LIST', vfinfo_list)]})
+        client_mode = priv_lib.privileged.default.client_mode
+        priv_lib.privileged.default.client_mode = False
+        self.addCleanup(self._clean, client_mode)
+        with mock.patch.object(priv_lib, '_run_iproute_link') as mock_iplink:
+            mock_iplink.return_value = [value]
+            result = priv_lib.get_link_vfs('device', 'namespace')
+            self.assertEqual({0: {'mac': 'mac_0', 'link_state': 0},
+                              1: {'mac': 'mac_1', 'link_state': 1},
+                              2: {'mac': 'mac_2', 'link_state': 2}},
+                             result)
+
 
 class MakeSerializableTestCase(base.BaseTestCase):
 
