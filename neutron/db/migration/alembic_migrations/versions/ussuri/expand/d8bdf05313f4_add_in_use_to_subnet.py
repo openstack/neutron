@@ -17,6 +17,8 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.engine import reflection
 
+from neutron.db import migration
+
 
 """add in_use to subnet
 
@@ -29,6 +31,9 @@ Create Date: 2020-03-13 17:15:38.462751
 # revision identifiers, used by Alembic.
 revision = 'd8bdf05313f4'
 down_revision = 'e88badaa9591'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.USSURI]
 
 TABLE = 'subnets'
 COLUMN_IN_USE = 'in_use'
