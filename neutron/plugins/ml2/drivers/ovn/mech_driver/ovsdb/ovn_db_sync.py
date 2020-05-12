@@ -604,11 +604,13 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 update_snats_list.append({'id': lrouter['name'],
                                           'add': add_snats,
                                           'del': del_snats})
-                del db_routers[lrouter['name']]
             else:
                 del_lrouters_list.append(lrouter)
 
+        lrouters_names = {lr['name'] for lr in lrouters}
         for r_id, router in db_routers.items():
+            if r_id in lrouters_names:
+                continue
             LOG.warning("Router found in Neutron but not in "
                         "OVN DB, router id=%s", router['id'])
             if self.mode == SYNC_MODE_REPAIR:
@@ -647,8 +649,9 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 try:
                     LOG.warning("Creating the router port %s in OVN NB DB",
                                 rrport['id'])
+                    router = db_routers[rrport['device_id']]
                     self._ovn_client._create_lrouter_port(
-                        ctx, rrport['device_id'], rrport)
+                        ctx, router, rrport)
                 except RuntimeError:
                     LOG.warning("Create router port in OVN "
                                 "NB failed for router port %s", rrport['id'])

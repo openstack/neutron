@@ -11,6 +11,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+
+from neutron_lib.api.definitions import agent as agent_def
+from neutron_lib.api.definitions import availability_zone as az_def
+from neutron_lib.api.definitions import router_availability_zone as raz_def
+
 # NOTE(russellb) This remains in its own file (vs constants.py) because we want
 # to be able to easily import it and export the info without any dependencies
 # on external imports.
@@ -26,13 +31,15 @@ ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     'sorting',
     'project-id',
     'dns-integration',
+    agent_def.ALIAS,
+    az_def.ALIAS,
+    raz_def.ALIAS,
 ]
 ML2_SUPPORTED_API_EXTENSIONS = [
     'address-scope',
     'agent',
     'allowed-address-pairs',
     'auto-allocated-topology',
-    'availability_zone',
     'binding',
     'default-subnetpools',
     'external-net',
