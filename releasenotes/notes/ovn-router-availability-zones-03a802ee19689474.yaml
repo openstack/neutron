@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Added support for router availability zones in OVN. The OVN driver
+    can now read from the router's availability_zone_hints field and
+    schedule router ports accordingly with the given availability zones.

@@ -25,6 +25,7 @@ OVN_NETWORK_MTU_EXT_ID_KEY = 'neutron:mtu'
 OVN_PORT_NAME_EXT_ID_KEY = 'neutron:port_name'
 OVN_PORT_FIP_EXT_ID_KEY = 'neutron:port_fip'
 OVN_ROUTER_NAME_EXT_ID_KEY = 'neutron:router_name'
+OVN_ROUTER_AZ_HINTS_EXT_ID_KEY = 'neutron:availability_zone_hints'
 OVN_ROUTER_IS_EXT_GW = 'neutron:is_ext_gw'
 OVN_GW_PORT_EXT_ID_KEY = 'neutron:gw_port_id'
 OVN_SUBNET_EXT_ID_KEY = 'neutron:subnet_id'
@@ -287,3 +288,8 @@ MCAST_FLOOD_UNREGISTERED = 'mcast_flood_unregistered'
 EXTERNAL_PORT_TYPES = (portbindings.VNIC_DIRECT,
                        portbindings.VNIC_DIRECT_PHYSICAL,
                        portbindings.VNIC_MACVTAP)
+
+NEUTRON_AVAILABILITY_ZONES = 'neutron-availability-zones'
+OVN_CMS_OPTIONS = 'ovn-cms-options'
+CMS_OPT_CHASSIS_AS_GW = 'enable-chassis-as-gw'
+CMS_OPT_AVAILABILITY_ZONES = 'availability-zones'
