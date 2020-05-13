@@ -1,0 +1,19 @@
+---
+# vars file for stop-agents
+ml2_ovs_services:
+  - name: dhcp
+    service_file: tripleo_neutron_dhcp.service
+    healthcheck_service_file: tripleo_neutron_dhcp_healthcheck.service
+    healthcheck_timer_file: tripleo_neutron_dhcp_healthcheck.timer
+  - name: l3
+    service_file: tripleo_neutron_l3_agent.service
+    healthcheck_service_file: tripleo_neutron_l3_agent_healthcheck.service
+    healthcheck_timer_file: tripleo_neutron_l3_agent_healthcheck.timer
+  - name: metadata
+    service_file: tripleo_neutron_metadata_agent.service
+    healthcheck_service_file: tripleo_neutron_metadata_agent_healthcheck.service
+    healthcheck_timer_file: tripleo_neutron_metadata_agent_healthcheck.timer
+  - name: ovs
+    service_file: tripleo_neutron_ovs_agent.service
+    healthcheck_service_file: tripleo_neutron_ovs_agent_healthcheck.service
+    healthcheck_timer_file: tripleo_neutron_ovs_agent_healthcheck.timer

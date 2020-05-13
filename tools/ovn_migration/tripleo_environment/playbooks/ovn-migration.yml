@@ -25,6 +25,14 @@
   tags:
     - setup
 
+
+- name: Stop ml2/ovs resources
+  hosts: ovn-controllers
+  roles:
+    - stop-agents
+  tags:
+    - migration
+
 #
 # TripleO / Director is executed to deploy ovn using "br-migration" for the
 # dataplane, while br-int is left intact to avoid dataplane disruption.
