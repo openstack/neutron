@@ -26,9 +26,14 @@ import sqlalchemy as sa
 
 from neutron_lib.db import constants
 
+from neutron.db import migration
+
 # revision identifiers, used by Alembic.
 revision = '867d39095bf4'
 down_revision = '61663558142c'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.ROCKY]
 
 
 def upgrade():
