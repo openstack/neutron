@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fixed an issue where the client on a dual-stack (IPv4 + IPv6) network failed
+    to get configuration from the dnsmasq DHCP server. See bug: `1876094
+    <https://launchpad.net/bugs/1876094>`_.
