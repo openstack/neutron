@@ -179,7 +179,8 @@ class TestOVSDBHandler(base.BaseTestCase):
             self.ovsdb_handler.handle_trunk_add('foo')
         self.assertFalse(has_port_mock.called)
 
-    def test_handle_trunk_remove_trunk_manager_failure(self):
+    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
+    def test_handle_trunk_remove_trunk_manager_failure(self, br):
         with mock.patch.object(self.ovsdb_handler, '_get_trunk_metadata',
                 side_effect=trunk_manager.TrunkManagerError(error='error')):
             with mock.patch.object(ovsdb_handler, 'bridge_has_instance_port',
