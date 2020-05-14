@@ -24,8 +24,8 @@ from neutron.tests.functional import base as n_base
 from neutron.tests.functional.resources.ovsdb import events
 
 
-class TestSbApi(base.FunctionalTestCase,
-                n_base.BaseLoggingTestCase):
+class TestSbApi(n_base.BaseLoggingTestCase,
+                base.FunctionalTestCase):
     schemas = ['OVN_Southbound', 'OVN_Northbound']
 
     def setUp(self):

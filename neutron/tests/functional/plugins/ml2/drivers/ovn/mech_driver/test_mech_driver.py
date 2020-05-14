@@ -599,8 +599,8 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         self._test_external_port_update_switchdev(portbindings.VNIC_MACVTAP)
 
 
-class TestCreateDefaultDropPortGroup(ovs_base.FunctionalTestCase,
-                                     base.BaseLoggingTestCase):
+class TestCreateDefaultDropPortGroup(base.BaseLoggingTestCase,
+                                     ovs_base.FunctionalTestCase):
     schemas = ['OVN_Southbound', 'OVN_Northbound']
     PG_NAME = ovn_const.OVN_DROP_PORT_GROUP_NAME
 
