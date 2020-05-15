@@ -500,8 +500,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # cleanup if a network-owned port snuck in without failing
             for subnet in subnets:
                 self._delete_subnet(context, subnet)
+                # TODO(ralonsoh): use payloads
                 registry.notify(resources.SUBNET, events.AFTER_DELETE,
-                                self, context=context, subnet=subnet.to_dict())
+                                self, context=context, subnet=subnet.to_dict(),
+                                for_net_delete=True)
             with db_api.CONTEXT_WRITER.using(context):
                 network_db = self._get_network(context, id)
                 network = self._make_network_dict(network_db, context=context)

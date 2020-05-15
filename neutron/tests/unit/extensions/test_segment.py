@@ -2478,6 +2478,33 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
             self.segments_plugin.nova_updater._send_notifications([event])
             self.assertTrue(log.called)
 
+    def _test_create_network_and_segment(self, phys_net):
+        with self.network() as net:
+            network = net['network']
+        segment = self._test_create_segment(
+            network_id=network['id'], physical_network=phys_net,
+            segmentation_id=200, network_type='vlan')
+        return network, segment['segment']
+
+    def test_delete_network_and_owned_segments(self):
+        db.subscribe()
+        aggregate = mock.MagicMock()
+        aggregate.uuid = uuidutils.generate_uuid()
+        aggregate.id = 1
+        aggregate.hosts = ['fakehost1']
+        self.mock_p_client.list_aggregates.return_value = {
+            'aggregates': [aggregate.uuid]}
+        self.mock_n_client.aggregates.list.return_value = [aggregate]
+        self.mock_n_client.aggregates.get_details.return_value = aggregate
+        network, segment = self._test_create_network_and_segment('physnet')
+        self._delete('networks', network['id'])
+        self.mock_n_client.aggregates.remove_host.assert_has_calls(
+            [mock.call(aggregate.id, 'fakehost1')])
+        self.mock_n_client.aggregates.delete.assert_has_calls(
+            [mock.call(aggregate.id)])
+        self.mock_p_client.delete_resource_provider.assert_has_calls(
+            [mock.call(segment['id'])])
+
 
 class TestDhcpAgentSegmentScheduling(HostSegmentMappingTestCase):
 
