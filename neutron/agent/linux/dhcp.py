@@ -60,6 +60,7 @@ NS_PREFIX = 'qdhcp-'
 DNSMASQ_SERVICE_NAME = 'dnsmasq'
 DHCP_RELEASE_TRIES = 3
 DHCP_RELEASE_TRIES_SLEEP = 0.3
+HOST_DHCPV6_TAG = 'tag:dhcpv6,'
 
 # this variable will be removed when neutron-lib is updated with this value
 DHCP_OPT_CLIENT_ID_NUM = 61
@@ -358,6 +359,7 @@ class Dnsmasq(DhcpLocalProcess):
     _ID = 'id:'
 
     _IS_DHCP_RELEASE6_SUPPORTED = None
+    _IS_HOST_TAG_SUPPORTED = None
 
     @classmethod
     def check_version(cls):
@@ -520,6 +522,12 @@ class Dnsmasq(DhcpLocalProcess):
                 LOG.warning("dhcp_release6 is not present on this system, "
                             "will not call it again.")
         return self._IS_DHCP_RELEASE6_SUPPORTED
+
+    def _is_dnsmasq_host_tag_supported(self):
+        if self._IS_HOST_TAG_SUPPORTED is None:
+            self._IS_HOST_TAG_SUPPORTED = checks.dnsmasq_host_tag_support()
+
+        return self._IS_HOST_TAG_SUPPORTED
 
     def _release_lease(self, mac_address, ip, ip_version, client_id=None,
                        server_id=None, iaid=None):
@@ -703,6 +711,7 @@ class Dnsmasq(DhcpLocalProcess):
             no_dhcp,  # A flag indicating that the address doesn't need a DHCP
                       # IP address.
             no_opts,  # A flag indication that options shouldn't be written
+            tag,    # A dhcp-host tag to add to the configuration if supported
         )
         """
         v6_nets = dict((subnet.id, subnet) for subnet in
@@ -722,10 +731,13 @@ class Dnsmasq(DhcpLocalProcess):
             for alloc in fixed_ips:
                 no_dhcp = False
                 no_opts = False
+                tag = ''
                 if alloc.subnet_id in v6_nets:
                     addr_mode = v6_nets[alloc.subnet_id].ipv6_address_mode
                     no_dhcp = addr_mode in (constants.IPV6_SLAAC,
                                             constants.DHCPV6_STATELESS)
+                    if self._is_dnsmasq_host_tag_supported():
+                        tag = HOST_DHCPV6_TAG
                     # we don't setup anything for SLAAC. It doesn't make sense
                     # to provide options for a client that won't use DHCP
                     no_opts = addr_mode == constants.IPV6_SLAAC
@@ -733,7 +745,7 @@ class Dnsmasq(DhcpLocalProcess):
                 hostname, fqdn = self._get_dns_assignment(alloc.ip_address,
                                                           dns_assignment)
 
-                yield (port, alloc, hostname, fqdn, no_dhcp, no_opts)
+                yield (port, alloc, hostname, fqdn, no_dhcp, no_opts, tag)
 
     def _get_port_extra_dhcp_opts(self, port):
         return getattr(port, edo_ext.EXTRADHCPOPTS, False)
@@ -767,7 +779,7 @@ class Dnsmasq(DhcpLocalProcess):
             s.id for s in self._get_all_subnets(self.network)
             if s.enable_dhcp and s.ip_version == constants.IP_VERSION_4]
         for host_tuple in self._iter_hosts():
-            port, alloc, hostname, name, no_dhcp, no_opts = host_tuple
+            port, alloc, hostname, name, no_dhcp, no_opts, tag = host_tuple
             # don't write ip address which belongs to a dhcp disabled subnet
             # or an IPv6 subnet.
             if no_dhcp or alloc.subnet_id not in dhcpv4_enabled_subnet_ids:
@@ -818,11 +830,11 @@ class Dnsmasq(DhcpLocalProcess):
         # NOTE(ihrachyshka): the loop should not log anything inside it, to
         # avoid potential performance drop when lots of hosts are dumped
         for host_tuple in self._iter_hosts(merge_addr6_list=True):
-            port, alloc, hostname, name, no_dhcp, no_opts = host_tuple
+            port, alloc, hostname, name, no_dhcp, no_opts, tag = host_tuple
             if no_dhcp:
                 if not no_opts and self._get_port_extra_dhcp_opts(port):
-                    buf.write('%s,%s%s\n' % (
-                        port.mac_address,
+                    buf.write('%s,%s%s%s\n' % (
+                        port.mac_address, tag,
                         'set:', self._PORT_TAG_PREFIX % port.id))
                 continue
 
@@ -835,21 +847,21 @@ class Dnsmasq(DhcpLocalProcess):
             if self._get_port_extra_dhcp_opts(port):
                 client_id = self._get_client_id(port)
                 if client_id and len(port.extra_dhcp_opts) > 1:
-                    buf.write('%s,%s%s,%s,%s,%s%s\n' %
-                              (port.mac_address, self._ID, client_id, name,
-                               ip_address, 'set:',
+                    buf.write('%s,%s%s%s,%s,%s,%s%s\n' %
+                              (port.mac_address, tag, self._ID, client_id,
+                               name, ip_address, 'set:',
                                self._PORT_TAG_PREFIX % port.id))
                 elif client_id and len(port.extra_dhcp_opts) == 1:
-                    buf.write('%s,%s%s,%s,%s\n' %
-                              (port.mac_address, self._ID, client_id, name,
-                               ip_address))
+                    buf.write('%s,%s%s%s,%s,%s\n' %
+                              (port.mac_address, tag, self._ID, client_id,
+                               name, ip_address))
                 else:
-                    buf.write('%s,%s,%s,%s%s\n' %
-                              (port.mac_address, name, ip_address,
+                    buf.write('%s,%s%s,%s,%s%s\n' %
+                              (port.mac_address, tag, name, ip_address,
                                'set:', self._PORT_TAG_PREFIX % port.id))
             else:
-                buf.write('%s,%s,%s\n' %
-                          (port.mac_address, name, ip_address))
+                buf.write('%s,%s%s,%s\n' %
+                          (port.mac_address, tag, name, ip_address))
 
         file_utils.replace_file(filename, buf.getvalue())
         LOG.debug('Done building host file %s', filename)
@@ -1045,7 +1057,7 @@ class Dnsmasq(DhcpLocalProcess):
         """
         buf = six.StringIO()
         for host_tuple in self._iter_hosts():
-            port, alloc, hostname, fqdn, no_dhcp, no_opts = host_tuple
+            port, alloc, hostname, fqdn, no_dhcp, no_opts, tag = host_tuple
             # It is compulsory to write the `fqdn` before the `hostname` in
             # order to obtain it in PTR responses.
             if alloc:
