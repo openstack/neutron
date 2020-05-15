@@ -34,6 +34,7 @@ from neutron.db import models_v2
 from neutron.objects import base as objects_base
 from neutron.objects import ports as port_obj
 from neutron.plugins.ml2 import models
+from neutron.services.segments import db as seg_db
 from neutron.services.segments import exceptions as seg_exc
 
 LOG = log.getLogger(__name__)
@@ -336,7 +337,7 @@ def is_dhcp_active_on_any_subnet(context, subnet_ids):
 def _prevent_segment_delete_with_port_bound(resource, event, trigger,
                                             payload=None):
     """Raise exception if there are any ports bound with segment_id."""
-    if payload.metadata.get('for_net_delete'):
+    if payload.metadata.get(seg_db.FOR_NET_DELETE):
         # don't check for network deletes
         return
 

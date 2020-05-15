@@ -38,6 +38,7 @@ from neutron.services.segments import exceptions
 
 
 _USER_CONFIGURED_SEGMENT_PLUGIN = None
+FOR_NET_DELETE = 'for_net_delete'
 
 
 def check_user_configured_segment_plugin():
@@ -189,7 +190,7 @@ class SegmentDbMixin(object):
                          self.delete_segment,
                          payload=events.DBEventPayload(
                              context, metadata={
-                                 'for_net_delete': for_net_delete},
+                                 FOR_NET_DELETE: for_net_delete},
                              states=(segment_dict,),
                              resource_id=uuid))
 
