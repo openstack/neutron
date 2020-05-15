@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import glob
 import os
 import re
 
@@ -36,6 +37,7 @@ class PciOsWrapper(object):
     NUMVFS_PATH = "/sys/class/net/%s/device/sriov_numvfs"
     VIRTFN_FORMAT = r"^virtfn(?P<vf_index>\d+)"
     VIRTFN_REG_EX = re.compile(VIRTFN_FORMAT)
+    MAC_VTAP_PREFIX = "upper_macvtap*"
 
     @classmethod
     def scan_vf_devices(cls, dev_name):
@@ -67,17 +69,16 @@ class PciOsWrapper(object):
         return os.path.isdir(cls.DEVICE_PATH % dev_name)
 
     @classmethod
-    def is_assigned_vf(cls, dev_name, vf_index, ip_link_show_output):
+    def is_assigned_vf(cls, dev_name, vf_index):
         """Check if VF is assigned.
 
         Checks if a given vf index of a given device name is assigned
         by checking the relevant path in the system:
         VF is assigned if:
             Direct VF: PCI_PATH does not exist.
-            Macvtap VF: macvtap@<vf interface> interface exists in ip link show
+            Macvtap VF: upper_macvtap path exists.
         @param dev_name: pf network device name
         @param vf_index: vf index
-        @param ip_link_show_output: 'ip link show' output
         """
 
         if not cls.pf_device_exists(dev_name):
@@ -87,21 +88,10 @@ class PciOsWrapper(object):
             return False
 
         path = cls.PCI_PATH % (dev_name, vf_index)
-
-        try:
-            ifname_list = os.listdir(path)
-        except OSError:
-            # PCI_PATH does not exist means that the DIRECT VF assigned
+        if not os.path.isdir(path):
             return True
-
-        # Note(moshele) kernel < 3.13 doesn't create symbolic link
-        # for macvtap interface. Therefore we workaround it
-        # by parsing ip link show and checking if macvtap interface exists
-        for ifname in ifname_list:
-            if pci_lib.PciDeviceIPWrapper.is_macvtap_assigned(
-                    ifname, ip_link_show_output):
-                return True
-        return False
+        upper_macvtap_path = os.path.join(path, "*", cls.MAC_VTAP_PREFIX)
+        return bool(glob.glob(upper_macvtap_path))
 
     @classmethod
     def get_numvfs(cls, dev_name):
@@ -169,9 +159,8 @@ class EmbSwitch(object):
         """
         vf_to_pci_slot_mapping = {}
         assigned_devices_info = []
-        ls = self.pci_dev_wrapper.link_show()
         for pci_slot, vf_index in self.pci_slot_map.items():
-            if not PciOsWrapper.is_assigned_vf(self.dev_name, vf_index, ls):
+            if not PciOsWrapper.is_assigned_vf(self.dev_name, vf_index):
                 continue
             vf_to_pci_slot_mapping[vf_index] = pci_slot
         if vf_to_pci_slot_mapping:
@@ -263,8 +252,7 @@ class EmbSwitch(object):
         vf_index = self.pci_slot_map.get(pci_slot)
         mac = None
         if vf_index is not None:
-            ls = self.pci_dev_wrapper.link_show()
-            if PciOsWrapper.is_assigned_vf(self.dev_name, vf_index, ls):
+            if PciOsWrapper.is_assigned_vf(self.dev_name, vf_index):
                 macs = self.pci_dev_wrapper.get_assigned_macs([vf_index])
                 mac = macs.get(vf_index)
         return mac
