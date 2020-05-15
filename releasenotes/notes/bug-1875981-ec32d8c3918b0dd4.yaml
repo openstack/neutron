@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    `1875981 <https://bugs.launchpad.net/neutron/+bug/1875981>`_
+    Neutron now correctly removes associated DNS records when an admin
+    deletes ports, servers or floation IPs.
