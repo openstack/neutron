@@ -44,7 +44,7 @@ disable_service q-dhcp
 disable_service q-meta
 
 # Enable services, these services depend on neutron plugin.
-enable_plugin neutron https://opendev.org/openstack/neutron
+enable_plugin neutron https://opendev.org/openstack/neutron stable/ussuri
 enable_service q-trunk
 enable_service q-dns
 #enable_service q-qos

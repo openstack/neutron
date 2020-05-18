@@ -32,7 +32,7 @@ LOGFILE=$DEST/logs/stack.sh.log
 #OVN_REPO=https://github.com/blp/ovs-reviews.git
 #OVN_BRANCH=ovn
 
-enable_plugin neutron https://opendev.org/openstack/neutron
+enable_plugin neutron https://opendev.org/openstack/neutron stable/ussuri
 
 disable_all_services
 enable_service n-cpu

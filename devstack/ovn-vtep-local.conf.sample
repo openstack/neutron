@@ -22,7 +22,7 @@ ADMIN_PASSWORD=password
 #OVN_REPO=https://github.com/blp/ovs-reviews.git
 #OVN_BRANCH=ovn
 
-enable_plugin neutron https://git.openstack.org/openstack/neutron
+enable_plugin neutron https://git.openstack.org/openstack/neutron stable/ussuri
 
 disable_all_services
 enable_service ovn-controller-vtep

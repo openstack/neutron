@@ -30,7 +30,7 @@ Q_ML2_PLUGIN_TYPE_DRIVERS=local,flat,vlan,geneve
 Q_ML2_TENANT_NETWORK_TYPE="geneve"
 #SERVICE_HOST=
 
-enable_plugin neutron https://git.openstack.org/openstack/neutron
+enable_plugin neutron https://git.openstack.org/openstack/neutron stable/ussuri
 
 disable_all_services
 enable_service ovn-northd
