@@ -696,54 +696,40 @@ class DelAddrSetCommand(command.BaseCommand):
         self.api._tables['Address_Set'].rows[addrset.uuid].delete()
 
 
-class UpdateChassisExtIdsCommand(command.BaseCommand):
-    def __init__(self, api, name, external_ids, if_exists):
-        super(UpdateChassisExtIdsCommand, self).__init__(api)
-        self.name = name
+class UpdateObjectExtIdsCommand(command.BaseCommand):
+    table = None
+    field = 'name'
+
+    def __init__(self, api, record, external_ids, if_exists):
+        super(UpdateObjectExtIdsCommand, self).__init__(api)
+        self.record = record
         self.external_ids = external_ids
         self.if_exists = if_exists
 
     def run_idl(self, txn):
         try:
-            chassis = idlutils.row_by_value(self.api.idl, 'Chassis',
-                                            'name', self.name)
+            # api.lookup() would be better as it doesn't rely on hardcoded col
+            obj = idlutils.row_by_value(self.api.idl, self.table, self.field,
+                                        self.record)
         except idlutils.RowNotFound:
             if self.if_exists:
                 return
-            msg = _("Chassis %s does not exist. "
-                    "Can't update external IDs") % self.name
+            msg = _("%(tbl)s %(rec)s does not exist. "
+                    "Can't update external IDs") % {
+                'tbl': self.table, 'rec': self.record}
             raise RuntimeError(msg)
 
-        chassis.verify('external_ids')
-        chassis_external_ids = getattr(chassis, 'external_ids', {})
         for ext_id_key, ext_id_value in self.external_ids.items():
-            chassis_external_ids[ext_id_key] = ext_id_value
-        chassis.external_ids = chassis_external_ids
+            obj.setkey('external_ids', ext_id_key, ext_id_value)
 
 
-class UpdatePortBindingExtIdsCommand(command.BaseCommand):
-    def __init__(self, api, name, external_ids, if_exists):
-        super(UpdatePortBindingExtIdsCommand, self).__init__(api)
-        self.name = name
-        self.external_ids = external_ids
-        self.if_exists = if_exists
+class UpdateChassisExtIdsCommand(UpdateObjectExtIdsCommand):
+    table = 'Chassis'
 
-    def run_idl(self, txn):
-        try:
-            port = idlutils.row_by_value(self.api.idl, 'Port_Binding',
-                                         'logical_port', self.name)
-        except idlutils.RowNotFound:
-            if self.if_exists:
-                return
-            msg = _("Port %s does not exist. "
-                    "Can't update external IDs") % self.name
-            raise RuntimeError(msg)
 
-        port.verify('external_ids')
-        port_external_ids = getattr(port, 'external_ids', {})
-        for ext_id_key, ext_id_value in self.external_ids.items():
-            port_external_ids[ext_id_key] = ext_id_value
-        port.external_ids = port_external_ids
+class UpdatePortBindingExtIdsCommand(UpdateObjectExtIdsCommand):
+    table = 'Port_Binding'
+    field = 'logical_port'
 
 
 class AddDHCPOptionsCommand(command.BaseCommand):
@@ -817,11 +803,7 @@ class AddNATRuleInLRouterCommand(command.BaseCommand):
         row = txn.insert(self.api._tables['NAT'])
         for col, val in self.columns.items():
             setattr(row, col, val)
-        # TODO(chandrav): convert this to ovs transaction mutate
-        lrouter.verify('nat')
-        nat = getattr(lrouter, 'nat', [])
-        nat.append(row.uuid)
-        setattr(lrouter, 'nat', nat)
+        lrouter.addvalue('nat', row.uuid)
 
 
 class DeleteNATRuleInLRouterCommand(command.BaseCommand):
@@ -845,20 +827,13 @@ class DeleteNATRuleInLRouterCommand(command.BaseCommand):
             msg = _("Logical Router %s does not exist") % self.lrouter
             raise RuntimeError(msg)
 
-        lrouter.verify('nat')
-        # TODO(chandrav): convert this to ovs transaction mutate
-        nats = getattr(lrouter, 'nat', [])
-        for nat in nats:
-            type = getattr(nat, 'type', '')
-            external_ip = getattr(nat, 'external_ip', '')
-            logical_ip = getattr(nat, 'logical_ip', '')
-            if (self.type == type and
-                    self.external_ip == external_ip and
-                    self.logical_ip == logical_ip):
-                nats.remove(nat)
+        for nat in lrouter.nat:
+            if (self.type == nat.type and
+                    self.external_ip == nat.external_ip and
+                    self.logical_ip == nat.logical_ip):
+                lrouter.delvalue('nat', nat)
                 nat.delete()
                 break
-        setattr(lrouter, 'nat', nats)
 
 
 class SetNATRuleInLRouterCommand(command.BaseCommand):
@@ -876,9 +851,7 @@ class SetNATRuleInLRouterCommand(command.BaseCommand):
             msg = _("Logical Router %s does not exist") % self.lrouter
             raise RuntimeError(msg)
 
-        lrouter.verify('nat')
-        nat_rules = getattr(lrouter, 'nat', [])
-        for nat_rule in nat_rules:
+        for nat_rule in lrouter.nat:
             if nat_rule.uuid == self.nat_rule_uuid:
                 for col, val in self.columns.items():
                     setattr(nat_rule, col, val)
@@ -986,21 +959,17 @@ class DeleteLRouterExtGwCommand(command.BaseCommand):
             msg = _("Logical Router %s does not exist") % self.lrouter
             raise RuntimeError(msg)
 
-        lrouter.verify('static_routes')
-        static_routes = getattr(lrouter, 'static_routes', [])
-        for route in static_routes:
+        for route in lrouter.static_routes:
             external_ids = getattr(route, 'external_ids', {})
             if ovn_const.OVN_ROUTER_IS_EXT_GW in external_ids:
-                _delvalue_from_list(lrouter, 'static_routes', route)
+                lrouter.delvalue('static_routes', route)
                 route.delete()
                 break
 
-        lrouter.verify('nat')
-        nats = getattr(lrouter, 'nat', [])
-        for nat in nats:
+        for nat in lrouter.nat:
             if nat.type != 'snat':
                 continue
-            _delvalue_from_list(lrouter, 'nat', nat)
+            lrouter.delvalue('nat', nat)
             nat.delete()
 
         lrouter_ext_ids = getattr(lrouter, 'external_ids', {})
@@ -1015,7 +984,7 @@ class DeleteLRouterExtGwCommand(command.BaseCommand):
         except idlutils.RowNotFound:
             return
 
-        _delvalue_from_list(lrouter, 'ports', lrouter_port)
+        lrouter.delvalue('ports', lrouter_port)
 
 
 class SetLSwitchPortToVirtualTypeCommand(command.BaseCommand):
