@@ -31,6 +31,10 @@ OVN_REPO=${OVN_REPO:-https://github.com/ovn-org/ovn.git}
 OVN_REPO_NAME=$(basename ${OVN_REPO} | cut -f1 -d'.')
 OVN_REPO_NAME=${OVN_REPO_NAME:-ovn}
 OVN_BRANCH=${OVN_BRANCH:-v20.03.0}
+# The commit removing OVN bits from the OVS tree, it is the commit that is not
+# present in OVN tree and is used to distinguish if OVN is part of OVS or not.
+# https://github.com/openvswitch/ovs/commit/05bf1dbb98b0635a51f75e268ef8aed27601401d
+OVN_SPLIT_HASH=05bf1dbb98b0635a51f75e268ef8aed27601401d
 
 # Set variables for building OVS from source
 OVS_REPO=${OVS_REPO:-https://github.com/openvswitch/ovs.git}
@@ -151,10 +155,18 @@ function is_kernel_module_loaded {
 }
 
 function use_new_ovn_repository {
-    # IF OVN_BRANCH is "master" or branch-2.13 (or higher), use the new
-    # OVN repository
-    [ "$OVN_BRANCH" == "master" ] && return 0
-    return $(! printf "%s\n%s" ${OVN_BRANCH//[!0-9.]/} 2.12 | sort -C -V)
+    if [ "x$is_new_ovn" == "x" ]; then
+        local ovs_repo_dir=$DEST/$OVS_REPO_NAME
+        if [ ! -d $ovs_repo_dir ]; then
+            clone_repository $OVS_REPO $ovs_repo_dir $OVS_BRANCH
+        fi
+        # Check the split commit exists in the current branch
+        pushd $ovs_repo_dir
+        git log $OVS_BRANCH --pretty=format:"%H" | grep -q $OVN_SPLIT_HASH
+        is_new_ovn=$?
+        popd
+    fi
+    return $is_new_ovn
 }
 
 # NOTE(rtheis): Function copied from DevStack _neutron_ovs_base_setup_bridge
