@@ -67,3 +67,12 @@ IPTABLES_RANDOM_FULLY_VERSION = '1.6.2'
 
 # Segmentation ID pool; DB select limit to improve the performace.
 IDPOOL_SELECT_SIZE = 100
+
+# Ports with the following 'device_owner' values will not prevent
+# network deletion.  If delete_network() finds that all ports on a
+# network have these owners, it will explicitly delete each port
+# and allow network deletion to continue.  Similarly, if delete_subnet()
+# finds out that all existing IP Allocations are associated with ports
+# with these owners, it will allow subnet deletion to proceed with the
+# IP allocations being cleaned up by cascade.
+AUTO_DELETE_PORT_OWNERS = [constants.DEVICE_OWNER_DHCP]
