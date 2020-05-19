@@ -1,0 +1,10 @@
+---
+deprecations:
+  - |
+    Abstract method ``plug_new`` from the
+    neutron.agent.linux.interface.LinuxInterfaceDriver class now accepts
+    an optional parameter ``link_up``.
+    Usage of this method, which takes from 5 to 9 positional arguments, without
+    ``link_up`` is now deprecated and will not be possible starting in the W
+    release. Third-party drivers which inherit from this base class should update
+    the implementation of their ``plug_new`` method.
