@@ -208,7 +208,8 @@ class HackingTestCase(base.BaseTestCase):
     def test_check_no_import_mock(self):
         pass_line = 'from unittest import mock'
         fail_lines = ('import mock',
-                      'import mock as mock_lib')
+                      'import mock as mock_lib',
+                      'from mock import patch')
         self.assertEqual(
             0, len(list(
                 checks.check_no_import_mock(
