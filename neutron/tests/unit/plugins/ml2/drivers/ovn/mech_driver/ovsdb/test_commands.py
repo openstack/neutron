@@ -1207,7 +1207,8 @@ class TestDeleteLRouterExtGwCommand(TestBaseCommand):
         fake_route_2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'ip_prefix': '50.0.0.0/24', 'nexthop': '40.0.0.101'})
         fake_lrouter = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'static_routes': [fake_route_1, fake_route_2]})
+            attrs={'static_routes': [fake_route_1, fake_route_2],
+                   'nat': []})
         with mock.patch.object(self.ovn_api, "is_col_present",
                                return_value=True):
             with mock.patch.object(idlutils, 'row_by_value',
@@ -1226,7 +1227,8 @@ class TestDeleteLRouterExtGwCommand(TestBaseCommand):
             attrs={'external_ip': '192.168.1.8',
                    'logical_ip': '10.0.0.5', 'type': 'badtype'})
         fake_lrouter = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'nat': [fake_nat_1, fake_nat_2]})
+            attrs={'nat': [fake_nat_1, fake_nat_2],
+                   'static_routes': []})
         with mock.patch.object(self.ovn_api, "is_col_present",
                                return_value=True):
             with mock.patch.object(idlutils, 'row_by_value',
@@ -1241,7 +1243,8 @@ class TestDeleteLRouterExtGwCommand(TestBaseCommand):
         port_id = 'fake-port-id'
         fake_lrouter = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'external_ids':
-                   {ovn_const.OVN_GW_PORT_EXT_ID_KEY: port_id}})
+                   {ovn_const.OVN_GW_PORT_EXT_ID_KEY: port_id},
+                   'static_routes': [], 'nat': []})
         with mock.patch.object(self.ovn_api, "is_col_present",
                                return_value=True):
             with mock.patch.object(idlutils, 'row_by_value',
@@ -1256,7 +1259,8 @@ class TestDeleteLRouterExtGwCommand(TestBaseCommand):
         port_id = 'fake-port-id'
         fake_lrouter = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'external_ids':
-                   {ovn_const.OVN_GW_PORT_EXT_ID_KEY: port_id}})
+                   {ovn_const.OVN_GW_PORT_EXT_ID_KEY: port_id},
+                   'static_routes': [], 'nat': []})
         with mock.patch.object(self.ovn_api, "is_col_present",
                                return_value=True):
             with mock.patch.object(idlutils, 'row_by_value',
