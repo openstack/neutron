@@ -15,6 +15,7 @@
     check:
       jobs:
         - neutron-functional
+        - neutron-functional-with-uwsgi
         - neutron-fullstack
         - neutron-fullstack-with-uwsgi
         - neutron-rally-task
@@ -58,8 +59,6 @@
         #    voting: false
         #    irrelevant-files: *irrelevant-files
         - openstacksdk-functional-devstack-networking:
-            voting: false
-        - neutron-functional-with-uwsgi:
             voting: false
         - neutron-centos-8-tripleo-standalone
         - neutron-ovn-rally-task:
