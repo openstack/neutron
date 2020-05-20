@@ -291,7 +291,8 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         fixed_ip_list = []
         for fixed in fixed_ips:
             fixed['device_owner'] = device_owner
-            subnet = self._get_subnet_for_fixed_ip(context, fixed, subnets)
+            subnet = self._get_subnet_for_fixed_ip(context, fixed,
+                                                   subnets, network_id)
 
             is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
             if ('ip_address' in fixed and
