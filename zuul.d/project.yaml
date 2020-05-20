@@ -19,6 +19,8 @@
         - neutron-rally-task
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
+        - neutron-grenade-ovn:
+            voting: false
         - neutron-tempest-linuxbridge
         - neutron-tempest-with-uwsgi
         - neutron-tempest-multinode-full-py3
@@ -106,7 +108,6 @@
     experimental:
       jobs:
         - neutron-ovn-tempest-ovs-master
-        - neutron-ovn-grenade
 
     periodic:
       jobs:
