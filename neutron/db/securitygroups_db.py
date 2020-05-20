@@ -272,6 +272,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             sg.delete()
 
         kwargs.pop('security_group')
+        kwargs['name'] = sg['name']
         registry.notify(resources.SECURITY_GROUP, events.AFTER_DELETE,
                         self, **kwargs)
 
