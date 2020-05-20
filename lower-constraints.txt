@@ -52,7 +52,6 @@ munch==2.1.0
 netaddr==0.7.18
 netifaces==0.10.4
 neutron-lib==2.3.0
-openstackdocstheme==1.30.0
 openstacksdk==0.31.2
 os-client-config==1.28.0
 os-ken==0.3.0
@@ -110,7 +109,7 @@ python-novaclient==9.1.0
 python-subunit==1.0.0
 pytz==2013.6
 PyYAML==3.12
-reno==2.5.0
+reno==3.1.0
 repoze.lru==0.7
 requests==2.14.2
 requestsexceptions==1.2.0
@@ -120,8 +119,6 @@ simplejson==3.5.1
 six==1.10.0
 smmap==0.9.0
 snowballstemmer==1.2.1
-Sphinx==1.6.5
-sphinxcontrib-websupport==1.0.1
 sqlalchemy-migrate==0.11.0
 SQLAlchemy==1.2.0
 sqlparse==0.2.2
