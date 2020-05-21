@@ -385,15 +385,17 @@ class FakeOvsdbTable(FakeResource):
 
         # Set default attributes.
         ovsdb_table_attrs = {
-            'rows': {},
+            'rows': collections.UserDict(),
             'columns': {},
         }
 
         # Overwrite default attributes.
         ovsdb_table_attrs.update(attrs)
 
-        return FakeResource(info=copy.deepcopy(ovsdb_table_attrs),
-                            loaded=True)
+        result = FakeResource(info=copy.deepcopy(ovsdb_table_attrs),
+                              loaded=True)
+        result.rows.indexes = {}
+        return result
 
 
 class FakePort(object):

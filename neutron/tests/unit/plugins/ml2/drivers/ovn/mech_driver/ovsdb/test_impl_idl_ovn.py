@@ -16,6 +16,8 @@ import copy
 from unittest import mock
 import uuid
 
+from ovsdbapp.backend import ovs_idl
+
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
@@ -339,8 +341,10 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
 
         with mock.patch.object(impl_idl_ovn, 'get_connection',
                                return_value=mock.Mock()):
-            impl_idl_ovn.OvsdbNbOvnIdl.ovsdb_connection = None
-            self.nb_ovn_idl = impl_idl_ovn.OvsdbNbOvnIdl(mock.Mock())
+            with mock.patch.object(ovs_idl.Backend, 'autocreate_indices',
+                                   create=True):
+                impl_idl_ovn.OvsdbNbOvnIdl.ovsdb_connection = None
+                self.nb_ovn_idl = impl_idl_ovn.OvsdbNbOvnIdl(mock.Mock())
 
         self.nb_ovn_idl.idl.tables = self._tables
 
@@ -396,6 +400,8 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         fake_address_sets = TestNBImplIdlOvn.fake_set['address_sets']
         self._load_ovsdb_fake_rows(self.address_set_table, fake_address_sets)
 
+    @mock.patch.object(ovs_idl.Backend, 'autocreate_indices', mock.Mock(),
+                       create=True)
     @mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'ovsdb_connection', None)
     @mock.patch.object(impl_idl_ovn, 'get_connection', mock.Mock())
     def test_setting_ovsdb_probe_timeout_default_value(self):
@@ -403,6 +409,8 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         inst.idl._session.reconnect.set_probe_interval.assert_called_with(
             60000)
 
+    @mock.patch.object(ovs_idl.Backend, 'autocreate_indices', mock.Mock(),
+                       create=True)
     @mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'ovsdb_connection', None)
     @mock.patch.object(impl_idl_ovn, 'get_connection', mock.Mock())
     @mock.patch.object(ovn_conf, 'get_ovn_ovsdb_probe_interval')
@@ -799,8 +807,10 @@ class TestSBImplIdlOvn(TestDBImplIdlOvn):
 
         with mock.patch.object(impl_idl_ovn, 'get_connection',
                                return_value=mock.Mock()):
-            impl_idl_ovn.OvsdbSbOvnIdl.ovsdb_connection = None
-            self.sb_ovn_idl = impl_idl_ovn.OvsdbSbOvnIdl(mock.Mock())
+            with mock.patch.object(ovs_idl.Backend, 'autocreate_indices',
+                                   create=True):
+                impl_idl_ovn.OvsdbSbOvnIdl.ovsdb_connection = None
+                self.sb_ovn_idl = impl_idl_ovn.OvsdbSbOvnIdl(mock.Mock())
 
         self.sb_ovn_idl.idl.tables = self._tables
 
@@ -809,6 +819,8 @@ class TestSBImplIdlOvn(TestDBImplIdlOvn):
         fake_chassis = TestSBImplIdlOvn.fake_set['chassis']
         self._load_ovsdb_fake_rows(self.chassis_table, fake_chassis)
 
+    @mock.patch.object(ovs_idl.Backend, 'autocreate_indices', mock.Mock(),
+                       create=True)
     @mock.patch.object(impl_idl_ovn.OvsdbSbOvnIdl, 'ovsdb_connection', None)
     @mock.patch.object(impl_idl_ovn, 'get_connection', mock.Mock())
     def test_setting_ovsdb_probe_timeout_default_value(self):
@@ -816,6 +828,8 @@ class TestSBImplIdlOvn(TestDBImplIdlOvn):
         inst.idl._session.reconnect.set_probe_interval.assert_called_with(
             60000)
 
+    @mock.patch.object(ovs_idl.Backend, 'autocreate_indices', mock.Mock(),
+                       create=True)
     @mock.patch.object(impl_idl_ovn.OvsdbSbOvnIdl, 'ovsdb_connection', None)
     @mock.patch.object(impl_idl_ovn, 'get_connection', mock.Mock())
     @mock.patch.object(ovn_conf, 'get_ovn_ovsdb_probe_interval')
