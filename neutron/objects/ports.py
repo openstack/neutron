@@ -20,6 +20,7 @@ from oslo_log import log as logging
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
+from neutron.common import utils
 from neutron.db.models import dns as dns_models
 from neutron.db.models import l3
 from neutron.db.models import securitygroup as sg_models
@@ -409,6 +410,7 @@ class Port(base.NeutronDbObject):
         )
 
     @classmethod
+    @utils.timecost
     def get_objects(cls, context, _pager=None, validate_filters=True,
                     security_group_ids=None, **kwargs):
         if security_group_ids:
@@ -419,8 +421,15 @@ class Port(base.NeutronDbObject):
                 kwargs['id'] = list(set(port_ids) & set(ports_with_sg))
             else:
                 kwargs['id'] = ports_with_sg
-        return super(Port, cls).get_objects(context, _pager, validate_filters,
-                                            **kwargs)
+        port_array = super(Port, cls).get_objects(context, _pager,
+                                                  validate_filters,
+                                                  **kwargs)
+        sg_count = len(security_group_ids) if security_group_ids else 0
+        LOG.debug("Time-cost: Fetching %(port_count)s ports in %(sg_count)s "
+                  "security groups",
+                  {'port_count': len(port_array),
+                   'sg_count': sg_count})
+        return port_array
 
     @classmethod
     def get_port_ids_filter_by_segment_id(cls, context, segment_id):
