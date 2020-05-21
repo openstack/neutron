@@ -53,15 +53,15 @@ Perform the following steps in the undercloud
 
    .. code-block:: console
 
-      yum install python-networking-ovn-migration-tool
+      # yum install python-networking-ovn-migration-tool
 
 2. Create a working directory on the undercloud, and copy the ansible playbooks
 
    .. code-block:: console
 
-      mkdir ~/ovn_migration
-      cd ~/ovn_migration
-      cp -rfp /usr/share/ansible/networking-ovn-migration/playbooks .
+      $ mkdir ~/ovn_migration
+      $ cd ~/ovn_migration
+      $ cp -rfp /usr/share/ansible/networking-ovn-migration/playbooks .
 
 3. Create  ``~/overcloud-deploy-ovn.sh`` script in your ``$HOME``.
    This script must source your stackrc file, and then execute an ``openstack
@@ -72,7 +72,7 @@ Perform the following steps in the undercloud
    When your network topology is DVR and your compute nodes have connectivity
    to the external network:
 
-   .. code-block:: console
+   .. code-block:: none
 
       -e /usr/share/openstack-tripleo-heat-templates/environments/services/neutron-ovn-dvr-ha.yaml \
       -e $HOME/ovn-extras.yaml
@@ -80,7 +80,7 @@ Perform the following steps in the undercloud
    When your compute nodes don't have external connectivity and you don't use
    DVR:
 
-   .. code-block:: console
+   .. code-block:: none
 
       -e /usr/share/openstack-tripleo-heat-templates/environments/services/neutron-ovn-ha.yaml \
       -e $HOME/ovn-extras.yaml
@@ -88,9 +88,9 @@ Perform the following steps in the undercloud
    Make sure that all users have execution privileges on the script, because it
    will be called by ovn_migration.sh/ansible during the migration process.
 
-     .. code-block:: console
+   .. code-block:: console
 
-        $ chmod a+x ~/overcloud-deploy-ovn.sh
+      $ chmod a+x ~/overcloud-deploy-ovn.sh
 
 4. To configure the parameters of your migration you can set the environment
    variables that will be used by ``ovn_migration.sh``. You can skip setting
@@ -222,7 +222,7 @@ Perform the following steps in the undercloud
    of the VM taps attached to a tenant network. If T1 propegation was a success,
    you should see that requests happen on an interval of approximately 30 seconds.
 
-   .. code-block:: console
+   .. code-block:: shell
 
       [heat-admin@overcloud-novacompute-0 ~]$ sudo tcpdump -i tap52e872c2-e6 port 67 or port 68 -n
       tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
@@ -285,7 +285,7 @@ Perform the following steps in the undercloud
 
    You can verify with:
 
-   .. code-block:: console
+   .. code-block:: shell
 
       $ grep neutron_driver $HOME/containers-prepare-parameter.yaml
       neutron_driver: ovn
