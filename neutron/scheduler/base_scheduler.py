@@ -18,13 +18,11 @@ from operator import attrgetter
 import random
 
 from oslo_log import log as logging
-import six
 
 LOG = logging.getLogger(__name__)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class BaseScheduler(object):
+class BaseScheduler(object, metaclass=abc.ABCMeta):
     """The base scheduler (agnostic to resource type).
        Child classes of BaseScheduler must define the
        self.resource_filter to filter agents of

@@ -17,14 +17,12 @@ import abc
 
 from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
-from six import add_metaclass
 from sqlalchemy import and_
 
 from neutron.objects import base
 
 
-@add_metaclass(abc.ABCMeta)
-class RBACBaseObject(base.NeutronDbObject):
+class RBACBaseObject(base.NeutronDbObject, metaclass=abc.ABCMeta):
     # Version 1.0: Initial version
 
     VERSION = '1.0'

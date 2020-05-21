@@ -15,15 +15,12 @@
 
 import abc
 
-import six
-
 from neutron.conf.agent import common as agent_conf
 
 agent_conf.register_pddriver_opts()
 
 
-@six.add_metaclass(abc.ABCMeta)
-class PDDriverBase(object):
+class PDDriverBase(object, metaclass=abc.ABCMeta):
 
     def __init__(self, router_id, subnet_id, ri_ifname):
         self.router_id = router_id

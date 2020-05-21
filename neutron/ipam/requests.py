@@ -17,20 +17,17 @@ from neutron_lib.api import validators
 from neutron_lib import constants
 from oslo_utils import netutils
 from oslo_utils import uuidutils
-import six
 
 from neutron._i18n import _
 from neutron.common import utils as common_utils
 from neutron.ipam import exceptions as ipam_exc
 
 
-@six.add_metaclass(abc.ABCMeta)
-class SubnetPool(object):
+class SubnetPool(object, metaclass=abc.ABCMeta):
     """Represents a pool of IPs available inside an address scope."""
 
 
-@six.add_metaclass(abc.ABCMeta)
-class SubnetRequest(object):
+class SubnetRequest(object, metaclass=abc.ABCMeta):
     """Carries the data needed to make a subnet request
 
     The data validated and carried by an instance of this class is the data
@@ -184,8 +181,7 @@ class SpecificSubnetRequest(SubnetRequest):
         return self._subnet_cidr.prefixlen
 
 
-@six.add_metaclass(abc.ABCMeta)
-class AddressRequest(object):
+class AddressRequest(object, metaclass=abc.ABCMeta):
     """Abstract base class for address requests"""
 
 

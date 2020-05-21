@@ -22,7 +22,6 @@ from neutron_lib import constants as const
 from neutron_lib.placement import utils as place_utils
 from neutron_lib.plugins.ml2 import api
 from oslo_log import log
-import six
 
 from neutron._i18n import _
 from neutron.db import provisioning_blocks
@@ -30,8 +29,7 @@ from neutron.db import provisioning_blocks
 LOG = log.getLogger(__name__)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class AgentMechanismDriverBase(api.MechanismDriver):
+class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
     """Base class for drivers that attach to networks using an L2 agent.
 
     The AgentMechanismDriverBase provides common code for mechanism
@@ -236,8 +234,8 @@ class AgentMechanismDriverBase(api.MechanismDriver):
             return False
 
 
-@six.add_metaclass(abc.ABCMeta)
-class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
+class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase,
+                                     metaclass=abc.ABCMeta):
     """Base class for simple drivers using an L2 agent.
 
     The SimpleAgentMechanismDriverBase provides common code for

@@ -18,7 +18,6 @@ import abc
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api import extensions
 from neutron_lib.plugins import constants
-import six
 
 from neutron.api.v2 import resource_helper
 from neutron.conf import quota
@@ -42,8 +41,7 @@ class L3(extensions.APIExtensionDescriptor):
             register_quota=True)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class RouterPluginBase(object):
+class RouterPluginBase(object, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def create_router(self, context, router):

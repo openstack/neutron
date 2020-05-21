@@ -13,14 +13,12 @@
 import abc
 
 from oslo_config import cfg
-import six
 
 from neutron.ipam import requests as ipam_req
 from neutron import manager
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Pool(object):
+class Pool(object, metaclass=abc.ABCMeta):
     """Interface definition for an IPAM driver.
 
     There should be an instance of the driver for every subnet pool.
@@ -128,8 +126,7 @@ class Pool(object):
         return True
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Subnet(object):
+class Subnet(object, metaclass=abc.ABCMeta):
     """Interface definition for an IPAM subnet
 
     A subnet would typically be associated with a network but may not be.  It
@@ -167,8 +164,7 @@ class Subnet(object):
         """
 
 
-@six.add_metaclass(abc.ABCMeta)
-class SubnetGroup(object):
+class SubnetGroup(object, metaclass=abc.ABCMeta):
     """Interface definition for a filtered group of IPAM Subnets
 
     Allocates from a group of semantically equivalent subnets.  The list of

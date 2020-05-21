@@ -15,8 +15,6 @@
 
 import abc
 
-import six
-
 
 NETWORK = 'network'
 PORT = 'port'
@@ -27,8 +25,7 @@ EVENT_UPDATE = 'update'
 CORE_RESOURCES = [NETWORK, PORT]
 
 
-@six.add_metaclass(abc.ABCMeta)
-class CoreResourceExtension(object):
+class CoreResourceExtension(object, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def process_fields(self, context, resource_type, event_type,

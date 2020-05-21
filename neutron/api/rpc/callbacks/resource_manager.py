@@ -15,7 +15,6 @@ import collections
 
 from neutron_lib.callbacks import exceptions
 from oslo_log import log as logging
-import six
 
 from neutron.api.rpc.callbacks import exceptions as rpc_exc
 from neutron.api.rpc.callbacks import resources
@@ -31,8 +30,7 @@ def _validate_resource_type(resource_type):
         raise exceptions.Invalid(element='resource', value=resource_type)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class ResourceCallbacksManager(object):
+class ResourceCallbacksManager(object, metaclass=abc.ABCMeta):
     """A callback system that allows information providers in a loose manner.
     """
 

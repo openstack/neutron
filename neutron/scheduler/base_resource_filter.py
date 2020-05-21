@@ -16,11 +16,9 @@
 import abc
 
 from neutron_lib.db import api as db_api
-import six
 
 
-@six.add_metaclass(abc.ABCMeta)
-class BaseResourceFilter(object):
+class BaseResourceFilter(object, metaclass=abc.ABCMeta):
     """Encapsulate logic that is specific to the resource type."""
     @abc.abstractmethod
     def filter_agents(self, plugin, context, resource):

@@ -17,7 +17,6 @@ import abc
 from neutron_lib.api.definitions import address_scope as apidef
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.plugins import directory
-import six
 
 from neutron.api import extensions
 from neutron.api.v2 import base
@@ -45,8 +44,7 @@ class Address_scope(api_extensions.APIExtensionDescriptor):
         return [ex]
 
 
-@six.add_metaclass(abc.ABCMeta)
-class AddressScopePluginBase(object):
+class AddressScopePluginBase(object, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def create_address_scope(self, context, address_scope):

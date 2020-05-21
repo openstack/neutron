@@ -24,7 +24,6 @@ import oslo_messaging
 from oslo_service import periodic_task
 from oslo_utils import excutils
 from osprofiler import profiler
-import six
 
 from neutron._i18n import _
 from neutron.common import utils
@@ -40,8 +39,7 @@ class ManagerMeta(profiler.TracedMeta, type(periodic_task.PeriodicTasks)):
     pass
 
 
-@six.add_metaclass(ManagerMeta)
-class Manager(periodic_task.PeriodicTasks):
+class Manager(periodic_task.PeriodicTasks, metaclass=ManagerMeta):
     __trace_args__ = {"name": "rpc"}
 
     # Set RPC API version to 1.0 by default.
@@ -91,8 +89,7 @@ def validate_pre_plugin_load():
         return msg
 
 
-@six.add_metaclass(profiler.TracedMeta)
-class NeutronManager(object):
+class NeutronManager(object, metaclass=profiler.TracedMeta):
     """Neutron's Manager class.
 
     Neutron's Manager class is responsible for parsing a config file and

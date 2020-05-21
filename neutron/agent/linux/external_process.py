@@ -22,7 +22,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import fileutils
 import psutil
-import six
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
@@ -37,8 +36,7 @@ agent_cfg.register_external_process_opts()
 agent_cfg.register_process_monitor_opts(cfg.CONF)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class MonitoredProcess(object):
+class MonitoredProcess(object, metaclass=abc.ABCMeta):
     @abc.abstractproperty
     def active(self):
         """Boolean representing the running state of the process."""

@@ -17,7 +17,6 @@ import abc
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.plugins import directory
-import six
 
 from neutron.api import extensions
 from neutron.api.v2 import base
@@ -40,8 +39,7 @@ class Availability_zone(api_extensions.APIExtensionDescriptor):
         return [ex]
 
 
-@six.add_metaclass(abc.ABCMeta)
-class AvailabilityZonePluginBase(object):
+class AvailabilityZonePluginBase(object, metaclass=abc.ABCMeta):
     """REST API to operate the Availability Zone."""
 
     @abc.abstractmethod

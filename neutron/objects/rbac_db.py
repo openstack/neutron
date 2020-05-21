@@ -19,7 +19,6 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import exceptions
-from six import add_metaclass
 from six import with_metaclass
 from sqlalchemy import and_
 
@@ -32,9 +31,9 @@ from neutron.objects import base
 from neutron.objects.db import api as obj_db_api
 
 
-@add_metaclass(abc.ABCMeta)
 class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
-                               base.NeutronDbObject):
+                               base.NeutronDbObject,
+                               metaclass=abc.ABCMeta):
 
     rbac_db_cls = None
 

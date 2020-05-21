@@ -20,7 +20,6 @@ from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
 from oslo_log import log as logging
-import six
 
 from neutron.api import extensions
 from neutron.api.v2 import base
@@ -63,8 +62,8 @@ class Network_segment_range(api_extensions.APIExtensionDescriptor):
         return NetworkSegmentRangePluginBase
 
 
-@six.add_metaclass(abc.ABCMeta)
-class NetworkSegmentRangePluginBase(service_base.ServicePluginBase):
+class NetworkSegmentRangePluginBase(service_base.ServicePluginBase,
+                                    metaclass=abc.ABCMeta):
     """REST API to manage network segment ranges.
 
     All methods must be in an admin context.

@@ -14,11 +14,8 @@
 
 import abc
 
-import six
 
-
-@six.add_metaclass(abc.ABCMeta)
-class MeteringAbstractDriver(object):
+class MeteringAbstractDriver(object, metaclass=abc.ABCMeta):
     """Abstract Metering driver."""
 
     def __init__(self, plugin, conf):

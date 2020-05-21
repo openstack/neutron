@@ -355,8 +355,7 @@ class Securitygroup(api_extensions.ExtensionDescriptor):
         return [stdattr_ext.Standardattrdescription.get_alias()]
 
 
-@six.add_metaclass(abc.ABCMeta)
-class SecurityGroupPluginBase(object):
+class SecurityGroupPluginBase(object, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def create_security_group(self, context, security_group):

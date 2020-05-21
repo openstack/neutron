@@ -26,7 +26,6 @@ from neutron_lib.exceptions import l3 as l3_exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
-import six
 
 from neutron.common import utils
 from neutron.conf.db import l3_hamode_db
@@ -38,8 +37,7 @@ LOG = logging.getLogger(__name__)
 cfg.CONF.register_opts(l3_hamode_db.L3_HA_OPTS)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class L3Scheduler(object):
+class L3Scheduler(object, metaclass=abc.ABCMeta):
 
     def __init__(self):
         self.max_ha_agents = cfg.CONF.max_l3_agents_per_router

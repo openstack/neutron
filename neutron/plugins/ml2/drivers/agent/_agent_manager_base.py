@@ -16,8 +16,6 @@
 
 import abc
 
-import six
-
 
 class NetworkSegment(object):
     """Represents a Neutron network segment"""
@@ -29,8 +27,7 @@ class NetworkSegment(object):
         self.mtu = mtu
 
 
-@six.add_metaclass(abc.ABCMeta)
-class CommonAgentManagerRpcCallBackBase(object):
+class CommonAgentManagerRpcCallBackBase(object, metaclass=abc.ABCMeta):
     """Base class for managers RPC callbacks.
 
     This class must be inherited by a RPC callback class that is used
@@ -81,8 +78,7 @@ class CommonAgentManagerRpcCallBackBase(object):
         return updated_devices
 
 
-@six.add_metaclass(abc.ABCMeta)
-class CommonAgentManagerBase(object):
+class CommonAgentManagerBase(object, metaclass=abc.ABCMeta):
     """Base class for managers that are used with the common agent loop.
 
     This class must be inherited by a manager class that is used

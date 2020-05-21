@@ -142,10 +142,10 @@ class NeutronObjectRegistry(obj_base.VersionedObjectRegistry):
         return self
 
 
-@six.add_metaclass(abc.ABCMeta)
 class NeutronObject(obj_base.VersionedObject,
                     obj_base.VersionedObjectDictCompat,
-                    obj_base.ComparableVersionedObject):
+                    obj_base.ComparableVersionedObject,
+                    metaclass=abc.ABCMeta):
 
     synthetic_fields = []
     extra_filter_names = set()
@@ -398,8 +398,7 @@ class DeclarativeObject(abc.ABCMeta):
             raise o_exc.NeutronObjectValidatorException(fields=invalid_fields)
 
 
-@six.add_metaclass(DeclarativeObject)
-class NeutronDbObject(NeutronObject):
+class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
 
     # should be overridden for all persistent objects
     db_model = None

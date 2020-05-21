@@ -16,7 +16,6 @@ import abc
 
 from neutron_lib.api.definitions import router_availability_zone as apidef
 from neutron_lib.api import extensions
-import six
 
 
 class Router_availability_zone(extensions.APIExtensionDescriptor):
@@ -25,8 +24,7 @@ class Router_availability_zone(extensions.APIExtensionDescriptor):
     api_definition = apidef
 
 
-@six.add_metaclass(abc.ABCMeta)
-class RouterAvailabilityZonePluginBase(object):
+class RouterAvailabilityZonePluginBase(object, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_router_availability_zones(self, router):

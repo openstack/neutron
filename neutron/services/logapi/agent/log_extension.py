@@ -19,7 +19,6 @@ import contextlib
 from neutron_lib.agent import extension
 from neutron_lib import constants
 from oslo_concurrency import lockutils
-import six
 
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
@@ -34,8 +33,7 @@ log_cfg.register_log_driver_opts()
 LOGGING_DRIVERS_NAMESPACE = 'neutron.services.logapi.drivers'
 
 
-@six.add_metaclass(abc.ABCMeta)
-class LoggingDriver(object):
+class LoggingDriver(object, metaclass=abc.ABCMeta):
     """Defines abstract interface for logging driver"""
 
     # specific logging types are supported

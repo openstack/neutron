@@ -18,7 +18,6 @@ import abc
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.services import base
 from oslo_serialization import jsonutils
-import six
 
 from neutron.api import extensions
 from neutron import wsgi
@@ -30,8 +29,7 @@ class FoxInSocksController(wsgi.Controller):
         return "Try to say this Mr. Knox, sir..."
 
 
-@six.add_metaclass(abc.ABCMeta)
-class FoxInSocksPluginInterface(base.ServicePluginBase):
+class FoxInSocksPluginInterface(base.ServicePluginBase, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def method_to_support_foxnsox_extension(self):

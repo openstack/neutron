@@ -22,7 +22,6 @@ from neutron_lib import exceptions
 from oslo_log import log as logging
 from oslo_utils import excutils
 from pyroute2.netlink import exceptions as pyroute2_exc
-import six
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
@@ -36,8 +35,7 @@ def _get_veth(name1, name2, namespace2):
             ip_lib.IPDevice(name2, namespace=namespace2))
 
 
-@six.add_metaclass(abc.ABCMeta)
-class LinuxInterfaceDriver(object):
+class LinuxInterfaceDriver(object, metaclass=abc.ABCMeta):
 
     DEV_NAME_LEN = constants.LINUX_DEV_LEN
     DEV_NAME_PREFIX = constants.TAP_DEVICE_PREFIX
