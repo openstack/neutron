@@ -13,19 +13,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import builtins
 import gettext
 
 from debtcollector import removals
-import six
 
 
-if six.PY2:
-    # pylint: disable=unexpected-keyword-arg
-    gettext.install('neutron', unicode=1)
-else:
-    gettext.install('neutron')
+gettext.install('neutron')
 
 
-six.moves.builtins.__dict__['_'] = removals.remove(
+builtins.__dict__['_'] = removals.remove(
     message='Builtin _ translation function is deprecated in OpenStack; '
             'use the function from _i18n module for your project.')(_)  # noqa

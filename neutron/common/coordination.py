@@ -19,7 +19,6 @@ import decorator
 from oslo_concurrency import lockutils
 from oslo_log import log
 from oslo_utils import timeutils
-import six
 
 LOG = log.getLogger(__name__)
 
@@ -61,13 +60,9 @@ def synchronized(lock_name):
 
     @decorator.decorator
     def _synchronized(f, *a, **k):
-        if six.PY2:
-            # pylint: disable=deprecated-method
-            call_args = inspect.getcallargs(f, *a, **k)
-        else:
-            sig = inspect.signature(f).bind(*a, **k)
-            sig.apply_defaults()
-            call_args = sig.arguments
+        sig = inspect.signature(f).bind(*a, **k)
+        sig.apply_defaults()
+        call_args = sig.arguments
         call_args['f_name'] = f.__name__
         lock_format_name = lock_name.format(**call_args)
         t1 = timeutils.now()
