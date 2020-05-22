@@ -44,7 +44,6 @@
               network_create_args: {}
               network_update_args:
                   admin_state_up: False
-                  name: "_updated"
           runner:
             constant:
               times: 40
@@ -99,7 +98,6 @@
               subnets_per_network: 2
               subnet_update_args:
                   enable_dhcp: True
-                  name: "_subnet_updated"
           runner:
             constant:
               times: 100
@@ -166,7 +164,6 @@
               router_create_args: {}
               router_update_args:
                   admin_state_up: False
-                  name: "_router_updated"
           runner:
             constant:
               times: 40
@@ -209,8 +206,8 @@
             network quotas are not exceeded
           scenario:
             NeutronNetworks.create_and_list_ports:
-              network_create_args:
-              port_create_args:
+              network_create_args: {}
+              port_create_args: {}
               ports_per_network: 50
           runner:
             constant:
@@ -243,7 +240,6 @@
                   admin_state_up: False
                   device_id: "dummy_id"
                   device_owner: "dummy_owner"
-                  name: "_port_updated"
           runner:
             constant:
               times: 40
