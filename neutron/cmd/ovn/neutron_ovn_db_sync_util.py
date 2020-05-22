@@ -55,6 +55,14 @@ class OVNMechanismDriver(mech_driver.OVNMechanismDriver):
     def ovn_client(self):
         return self._ovn_client
 
+    def _clean_hash_ring(self):
+        """Don't clean the hash ring.
+
+        If this method was not overriden, cleanup would be performed when
+        calling the db sync and running neutron server would lose all the nodes
+        from the ring.
+        """
+
     # Since we are not using the ovn mechanism driver while syncing,
     # we override the post and pre commit methods so that original ones are
     # not called.
