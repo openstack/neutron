@@ -24,7 +24,6 @@ from neutron_lib.db import constants as db_const
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from oslo_utils import netutils
-import six
 
 from neutron._i18n import _
 from neutron.api import extensions
@@ -171,7 +170,7 @@ def convert_protocol(value):
 
 
 def convert_ethertype_to_case_insensitive(value):
-    if isinstance(value, six.string_types):
+    if isinstance(value, str):
         for ethertype in sg_supported_ethertypes:
             if ethertype.lower() == value.lower():
                 return ethertype

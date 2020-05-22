@@ -30,7 +30,6 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_policy import policy
 from oslo_utils import excutils
-import six
 import stevedore
 
 from neutron._i18n import _
@@ -334,7 +333,7 @@ class OwnerCheck(policy.Check):
 
         match = self.match % target
         if self.kind in creds:
-            return match == six.text_type(creds[self.kind])
+            return match == str(creds[self.kind])
         return False
 
 

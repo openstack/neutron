@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import six
 import testresources
 import testscenarios
 import testtools
@@ -56,7 +55,7 @@ def create_request(path, body, content_type, method='GET',
     req.headers = {}
     req.headers['Accept'] = content_type
     req.headers.update(headers)
-    if isinstance(body, six.text_type):
+    if isinstance(body, str):
         req.body = body.encode()
     else:
         req.body = body

@@ -30,7 +30,6 @@ from neutron_lib.utils import helpers
 from neutron_lib.utils import net
 from oslo_log import log as logging
 from oslo_utils import uuidutils
-import six
 from sqlalchemy.orm import scoped_session
 
 from neutron._i18n import _
@@ -414,7 +413,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         protocol = rule_dict.get('protocol')
         if protocol:
             # object expects strings only
-            protocol = six.text_type(protocol)
+            protocol = str(protocol)
 
         args = {
             'id': (rule_dict.get('id') or uuidutils.generate_uuid()),

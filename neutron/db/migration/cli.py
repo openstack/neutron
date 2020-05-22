@@ -25,7 +25,6 @@ from alembic import util as alembic_util
 from oslo_config import cfg
 from oslo_utils import fileutils
 from oslo_utils import importutils
-import six
 
 from neutron._i18n import _
 from neutron.conf.db import migration_cli
@@ -83,7 +82,7 @@ def do_alembic_command(config, cmd, revision=None, desc=None, **kwargs):
     try:
         getattr(alembic_command, cmd)(config, *args, **kwargs)
     except alembic_util.CommandError as e:
-        log_error(six.text_type(e))
+        log_error(str(e))
     log_info(_('OK'))
 
 

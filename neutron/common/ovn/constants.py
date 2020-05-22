@@ -14,7 +14,6 @@ import re
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as const
-import six
 
 # TODO(lucasagomes): Remove OVN_SG_NAME_EXT_ID_KEY in the Rocky release
 OVN_SG_NAME_EXT_ID_KEY = 'neutron:security_group_name'
@@ -46,10 +45,10 @@ OVN_DEVICE_OWNER_EXT_ID_KEY = 'neutron:device_owner'
 OVN_LIVENESS_CHECK_EXT_ID_KEY = 'neutron:liveness_check_at'
 METADATA_LIVENESS_CHECK_EXT_ID_KEY = 'neutron:metadata_liveness_check_at'
 OVN_PORT_BINDING_PROFILE = portbindings.PROFILE
-OVN_PORT_BINDING_PROFILE_PARAMS = [{'parent_name': six.string_types,
-                                    'tag': six.integer_types},
-                                   {'vtep-physical-switch': six.string_types,
-                                    'vtep-logical-switch': six.string_types}]
+OVN_PORT_BINDING_PROFILE_PARAMS = [{'parent_name': str,
+                                    'tag': int},
+                                   {'vtep-physical-switch': str,
+                                    'vtep-logical-switch': str}]
 MIGRATING_ATTR = 'migrating_to'
 OVN_ROUTER_PORT_OPTION_KEYS = ['router-port', 'nat-addresses']
 OVN_GATEWAY_CHASSIS_KEY = 'redirect-chassis'

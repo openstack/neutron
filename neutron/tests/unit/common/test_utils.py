@@ -392,7 +392,7 @@ class TestExcDetails(base.BaseTestCase):
 
     def test_extract_exc_details_no_details_attached(self):
         self.assertIsInstance(
-            utils.extract_exc_details(Exception()), six.text_type)
+            utils.extract_exc_details(Exception()), str)
 
 
 @ddt.ddt

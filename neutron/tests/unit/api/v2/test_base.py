@@ -31,7 +31,6 @@ from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
-import six
 from six.moves import urllib
 import webob
 from webob import exc
@@ -930,7 +929,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
 
         instance = self.plugin.return_value
         instance.get_network.return_value = {
-            'tenant_id': six.text_type(tenant_id)
+            'tenant_id': str(tenant_id)
         }
         instance.get_ports_count.return_value = 1
         instance.create_port.return_value = return_value
