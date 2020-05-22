@@ -17,7 +17,6 @@ import copy
 import random
 
 from oslo_log import log
-import six
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
@@ -30,8 +29,7 @@ OVN_SCHEDULER_CHANCE = 'chance'
 OVN_SCHEDULER_LEAST_LOADED = 'leastloaded'
 
 
-@six.add_metaclass(abc.ABCMeta)
-class OVNGatewayScheduler(object):
+class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
 
     def __init__(self):
         pass

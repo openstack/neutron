@@ -16,7 +16,6 @@ import abc
 
 from neutron_lib.api.definitions import dvr as apidef
 from neutron_lib.api import extensions
-import six
 
 
 class Dvr(extensions.APIExtensionDescriptor):
@@ -25,8 +24,7 @@ class Dvr(extensions.APIExtensionDescriptor):
     api_definition = apidef
 
 
-@six.add_metaclass(abc.ABCMeta)
-class DVRMacAddressPluginBase(object):
+class DVRMacAddressPluginBase(object, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_dvr_mac_address_list(self, context):

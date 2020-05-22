@@ -22,7 +22,6 @@ from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from neutron_lib import rpc as n_rpc
 from neutron_lib.services import base as service_base
-import six
 import webob.exc
 
 from neutron._i18n import _
@@ -226,8 +225,7 @@ class Tagging(api_extensions.ExtensionDescriptor):
         return EXTENDED_ATTRIBUTES_2_0
 
 
-@six.add_metaclass(abc.ABCMeta)
-class TagPluginBase(service_base.ServicePluginBase):
+class TagPluginBase(service_base.ServicePluginBase, metaclass=abc.ABCMeta):
     """REST API to operate the Tag."""
 
     def get_plugin_description(self):

@@ -21,7 +21,6 @@ from neutron_lib.api import extensions as api_extensions
 from neutron_lib import constants
 from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import directory
-import six
 
 from neutron.api import extensions
 from neutron.api.v2 import base
@@ -149,8 +148,7 @@ class Segment(api_extensions.ExtensionDescriptor):
                 stdattrseg_apidef.ALIAS]
 
 
-@six.add_metaclass(abc.ABCMeta)
-class SegmentPluginBase(object):
+class SegmentPluginBase(object, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def create_segment(self, context, segment):

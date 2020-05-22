@@ -215,8 +215,7 @@ class _CatchTimeoutMetaclass(abc.ABCMeta):
 # kills the whole worker, with all test cases scheduled to it. This metaclass
 # makes all test cases convert Timeout exceptions into unittest friendly
 # failure mode (self.fail).
-@six.add_metaclass(_CatchTimeoutMetaclass)
-class DietTestCase(base.BaseTestCase):
+class DietTestCase(base.BaseTestCase, metaclass=_CatchTimeoutMetaclass):
     """Same great taste, less filling.
 
     BaseTestCase is responsible for doing lots of plugin-centric setup

@@ -22,7 +22,6 @@ from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import faults
 from neutron_lib.plugins import directory
 from neutron_lib import rpc as n_rpc
-import six
 
 from neutron.api import extensions
 from neutron.api.v2 import resource
@@ -100,8 +99,7 @@ class Dhcpagentscheduler(api_extensions.APIExtensionDescriptor):
         return exts
 
 
-@six.add_metaclass(abc.ABCMeta)
-class DhcpAgentSchedulerPluginBase(object):
+class DhcpAgentSchedulerPluginBase(object, metaclass=abc.ABCMeta):
     """REST API to operate the DHCP agent scheduler.
 
     All of method must be in an admin context.

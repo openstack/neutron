@@ -32,7 +32,6 @@ from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
-import six
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import bridge_lib
@@ -717,8 +716,7 @@ class MacvtapFixture(fixtures.Fixture):
                 pass
 
 
-@six.add_metaclass(abc.ABCMeta)
-class PortFixture(fixtures.Fixture):
+class PortFixture(fixtures.Fixture, metaclass=abc.ABCMeta):
     """Create a port.
 
     :ivar port: created port

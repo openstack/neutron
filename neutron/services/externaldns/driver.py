@@ -17,15 +17,13 @@ import abc
 
 from oslo_config import cfg
 from oslo_log import log
-import six
 
 from neutron import manager
 
 LOG = log.getLogger(__name__)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class ExternalDNSService(object):
+class ExternalDNSService(object, metaclass=abc.ABCMeta):
     """Interface definition for an external dns service driver."""
 
     def __init__(self):

@@ -15,13 +15,11 @@
 import abc
 
 from ovsdbapp import api
-import six
 
 from neutron.common.ovn import constants as ovn_const
 
 
-@six.add_metaclass(abc.ABCMeta)
-class API(api.API):
+class API(api.API, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def create_lswitch_port(self, lport_name, lswitch_name, may_exist=True,
@@ -627,8 +625,7 @@ class API(api.API):
         """
 
 
-@six.add_metaclass(abc.ABCMeta)
-class SbAPI(api.API):
+class SbAPI(api.API, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def chassis_exists(self, hostname):

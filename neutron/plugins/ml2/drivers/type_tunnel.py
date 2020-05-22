@@ -30,7 +30,6 @@ from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log
 from oslo_utils import uuidutils
-import six
 from six import moves
 from sqlalchemy import or_
 
@@ -54,8 +53,7 @@ def chunks(iterable, chunk_size):
         chunk = list(itertools.islice(iterator, 0, chunk_size))
 
 
-@six.add_metaclass(abc.ABCMeta)
-class _TunnelTypeDriverBase(helpers.SegmentTypeDriver):
+class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
 
     BULK_SIZE = 100
 
@@ -281,8 +279,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver):
         return ranges
 
 
-@six.add_metaclass(abc.ABCMeta)
-class TunnelTypeDriver(_TunnelTypeDriverBase):
+class TunnelTypeDriver(_TunnelTypeDriverBase, metaclass=abc.ABCMeta):
     """Define stable abstract interface for ML2 type drivers.
 
     tunnel type networks rely on tunnel endpoints. This class defines abstract
@@ -354,8 +351,7 @@ class TunnelTypeDriver(_TunnelTypeDriverBase):
                 first())
 
 
-@six.add_metaclass(abc.ABCMeta)
-class ML2TunnelTypeDriver(_TunnelTypeDriverBase):
+class ML2TunnelTypeDriver(_TunnelTypeDriverBase, metaclass=abc.ABCMeta):
     """Define stable abstract interface for ML2 type drivers.
 
     tunnel type networks rely on tunnel endpoints. This class defines abstract

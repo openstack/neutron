@@ -18,7 +18,6 @@ from neutron_lib.api.definitions import metering as metering_apidef
 from neutron_lib.api import extensions
 from neutron_lib.plugins import constants
 from neutron_lib.services import base as service_base
-import six
 
 from neutron.api.v2 import resource_helper
 
@@ -42,8 +41,8 @@ class Metering(extensions.APIExtensionDescriptor):
             constants.METERING, translate_name=True, allow_bulk=True)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class MeteringPluginBase(service_base.ServicePluginBase):
+class MeteringPluginBase(service_base.ServicePluginBase,
+                         metaclass=abc.ABCMeta):
 
     def get_plugin_description(self):
         return constants.METERING

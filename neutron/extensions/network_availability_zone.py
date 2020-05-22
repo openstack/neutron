@@ -16,7 +16,6 @@ import abc
 
 from neutron_lib.api.definitions import network_availability_zone as apidef
 from neutron_lib.api import extensions
-import six
 
 
 class Network_availability_zone(extensions.APIExtensionDescriptor):
@@ -25,8 +24,7 @@ class Network_availability_zone(extensions.APIExtensionDescriptor):
     api_definition = apidef
 
 
-@six.add_metaclass(abc.ABCMeta)
-class NetworkAvailabilityZonePluginBase(object):
+class NetworkAvailabilityZonePluginBase(object, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_network_availability_zones(self, network):

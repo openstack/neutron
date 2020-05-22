@@ -21,7 +21,6 @@ from neutron_lib.api import extensions as api_extensions
 from neutron_lib.plugins import constants as plugin_consts
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
-import six
 
 from neutron.api import extensions
 from neutron.api.v2 import base
@@ -77,8 +76,8 @@ class Floating_ip_port_forwarding(api_extensions.APIExtensionDescriptor):
         return resources
 
 
-@six.add_metaclass(abc.ABCMeta)
-class PortForwardingPluginBase(service_base.ServicePluginBase):
+class PortForwardingPluginBase(service_base.ServicePluginBase,
+                               metaclass=abc.ABCMeta):
 
     path_prefix = apidef.API_PREFIX
 

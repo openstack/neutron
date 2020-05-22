@@ -20,7 +20,6 @@ from neutron_lib import constants as lib_constants
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
-import six
 
 from neutron._i18n import _
 from neutron.agent.l3 import namespaces
@@ -42,8 +41,7 @@ ADDRESS_SCOPE_MARK_ID_MAX = 2048
 DEFAULT_ADDRESS_SCOPE = "noscope"
 
 
-@six.add_metaclass(abc.ABCMeta)
-class BaseRouterInfo(object):
+class BaseRouterInfo(object, metaclass=abc.ABCMeta):
 
     def __init__(self,
                  agent,

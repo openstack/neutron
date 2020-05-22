@@ -161,8 +161,7 @@ class NetModel(DictModel):
         return self._ns_name
 
 
-@six.add_metaclass(abc.ABCMeta)
-class DhcpBase(object):
+class DhcpBase(object, metaclass=abc.ABCMeta):
 
     def __init__(self, conf, network, process_monitor,
                  version=None, plugin=None):
@@ -216,8 +215,7 @@ class DhcpBase(object):
         raise NotImplementedError()
 
 
-@six.add_metaclass(abc.ABCMeta)
-class DhcpLocalProcess(DhcpBase):
+class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     PORTS = []
 
     def __init__(self, conf, network, process_monitor, version=None,

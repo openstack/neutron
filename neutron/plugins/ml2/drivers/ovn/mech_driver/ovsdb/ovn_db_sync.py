@@ -24,7 +24,6 @@ from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.utils import helpers
 from oslo_log import log
-import six
 
 from neutron.common.ovn import acl as acl_utils
 from neutron.common.ovn import constants as ovn_const
@@ -41,8 +40,7 @@ SYNC_MODE_LOG = 'log'
 SYNC_MODE_REPAIR = 'repair'
 
 
-@six.add_metaclass(abc.ABCMeta)
-class OvnDbSynchronizer(object):
+class OvnDbSynchronizer(object, metaclass=abc.ABCMeta):
 
     def __init__(self, core_plugin, ovn_api, ovn_driver):
         self.ovn_driver = ovn_driver

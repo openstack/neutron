@@ -20,7 +20,6 @@ from neutron_lib.api.definitions import logging as apidef
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.plugins import constants as plugin_const
 from neutron_lib.services import base as service_base
-import six
 
 from neutron.api.v2 import resource_helper
 
@@ -50,8 +49,7 @@ class Logging(api_extensions.APIExtensionDescriptor):
         return resources
 
 
-@six.add_metaclass(abc.ABCMeta)
-class LoggingPluginBase(service_base.ServicePluginBase):
+class LoggingPluginBase(service_base.ServicePluginBase, metaclass=abc.ABCMeta):
 
     path_prefix = apidef.API_PREFIX
 

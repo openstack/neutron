@@ -16,8 +16,6 @@
 import abc
 import contextlib
 
-import six
-
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib import constants as n_const
 from neutron_lib.utils import runtime
@@ -49,8 +47,7 @@ def load_firewall_driver_class(driver):
         'neutron.agent.firewall_drivers', driver)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class FirewallDriver(object):
+class FirewallDriver(object, metaclass=abc.ABCMeta):
     """Firewall Driver base class.
 
     Defines methods that any driver providing security groups

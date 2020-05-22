@@ -19,14 +19,12 @@ import itertools
 from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
-import six
 
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent import vlanmanager
 
 
-@six.add_metaclass(abc.ABCMeta)
-class L2populationRpcCallBackMixin(object):
+class L2populationRpcCallBackMixin(object, metaclass=abc.ABCMeta):
     '''General mixin class of L2-population RPC call back.
 
     The following methods are called through RPC.
@@ -105,8 +103,8 @@ class L2populationRpcCallBackMixin(object):
         pass
 
 
-@six.add_metaclass(abc.ABCMeta)
-class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
+class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin,
+                                         metaclass=abc.ABCMeta):
     '''Mixin class of L2-population call back for Tunnel.
 
     The following methods are all used in agents as internal methods.

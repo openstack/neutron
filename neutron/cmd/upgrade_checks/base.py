@@ -14,11 +14,8 @@
 
 import abc
 
-import six
 
-
-@six.add_metaclass(abc.ABCMeta)
-class BaseChecks(object):
+class BaseChecks(object, metaclass=abc.ABCMeta):
 
     """Base class providing upgrade checks.
 

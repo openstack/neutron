@@ -23,7 +23,6 @@ from neutron_lib.utils import helpers
 from oslo_utils import versionutils
 from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
-import six
 
 from neutron.db.qos import models as qos_db_model
 from neutron.objects import base
@@ -43,8 +42,7 @@ def get_rules(obj_cls, context, qos_policy_id):
     return all_rules
 
 
-@six.add_metaclass(abc.ABCMeta)
-class QosRule(base.NeutronDbObject):
+class QosRule(base.NeutronDbObject, metaclass=abc.ABCMeta):
     # Version 1.0: Initial version, only BandwidthLimitRule
     #         1.1: Added DscpMarkingRule
     #         1.2: Added QosMinimumBandwidthRule
