@@ -83,10 +83,22 @@ class MetadataProxyHandler(object):
 
         ports = self.sb_idl.get_network_port_bindings_by_ip(network_id,
                                                             remote_address)
-        if len(ports) == 1:
+        num_ports = len(ports)
+        if num_ports == 1:
             external_ids = ports[0].external_ids
             return (external_ids[ovn_const.OVN_DEVID_EXT_ID_KEY],
                     external_ids[ovn_const.OVN_PROJID_EXT_ID_KEY])
+        elif num_ports == 0:
+            LOG.error("No port found in network %s with IP address %s",
+                      network_id, remote_address)
+        elif num_ports > 1:
+            port_uuids = ', '.join([str(port.uuid) for port in ports])
+            LOG.error("More than one port found in network %s with IP address "
+                      "%s. Please run the neutron-ovn-db-sync-util script as "
+                      "there seems to be inconsistent data between Neutron "
+                      "and OVN databases. OVN Port uuids: %s", network_id,
+                      remote_address, port_uuids)
+
         return None, None
 
     def _proxy_request(self, instance_id, tenant_id, req):
