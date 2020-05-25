@@ -27,21 +27,23 @@ Packaging
 ---------
 
 Open vSwitch (OVS) includes OVN beginning with version 2.5 and considers
-it experimental. The Networking service integration for OVN is now one of
-the in-tree Neutron drivers so should be delivered with ``neutron`` package,
-but older versions of this integration were delivered with independent
-package, typically ``networking-ovn``.
+it experimental. From version 2.13 OVN has been released as separate project.
+The Networking service integration for OVN is now one of the in-tree Neutron
+drivers so should be delivered with ``neutron`` package, but older versions of
+this integration were delivered with independent package, typically ``networking-ovn``.
 
-Building OVS from source automatically installs OVN. For deployment tools
-using distribution packages, the ``openvswitch-ovn`` package for RHEL/CentOS
-and compatible distributions automatically installs ``openvswitch`` as a
-dependency. Ubuntu/Debian includes ``ovn-central``, ``ovn-host``,
+Building OVS from source automatically installs OVN for releases older than 2.13.
+For newer releases it is required to build OVS and OVN separately.
+For deployment tools using distribution packages, the ``openvswitch-ovn``
+package for RHEL/CentOS and compatible distributions automatically installs
+``openvswitch`` as a dependency. Ubuntu/Debian includes ``ovn-central``, ``ovn-host``,
 ``ovn-docker``, and ``ovn-common`` packages that pull in the appropriate Open
 vSwitch dependencies as needed.
 
 A ``python-networking-ovn`` RPM may be obtained for Fedora or CentOS from
-the RDO project.  A package based on the ``master`` branch of
-``networking-ovn`` can be found at https://trunk.rdoproject.org/.
+the RDO project.  Since Ussuri release OVN driver is shipped with ``neutron`` package.
+A package based on the older branch of ``networking-ovn`` can be found at
+https://trunk.rdoproject.org/.
 
 Fedora and CentOS RPM builds of OVS and OVN from the ``master`` branch of
 ``ovs`` can be found in this COPR repository:
@@ -144,7 +146,7 @@ primary node. See the :doc:`/ovn/faq/index` for more information.
 
         [DEFAULT]
         ...
-        service_plugins = networking_ovn.l3.l3_ovn.OVNL3RouterPlugin
+        service_plugins = neutron.services.ovn_l3.plugin:OVNL3RouterPlugin
 
 #. Configure the ML2 plug-in. Edit the
    ``/etc/neutron/plugins/ml2/ml2_conf.ini`` file:
