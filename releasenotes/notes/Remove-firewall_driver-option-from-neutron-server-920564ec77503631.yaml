@@ -1,0 +1,9 @@
+---
+upgrade:
+  - |
+    The configuration option ``firewall_driver`` is no longer used by
+    neutron-server, it only applies to the L2 agent.
+    This was required for backward-compatibility for hybrid plugging,
+    but since the Newton release the L2 agent has been able to report
+    hybrid plugging is needed in it's report message back to the
+    server.
