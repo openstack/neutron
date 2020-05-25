@@ -371,7 +371,8 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                  mock.call('security_group', 'after_delete',
                            mock.ANY, context=mock.ANY,
                            security_group_id=sg_dict['id'],
-                           security_group_rule_ids=[mock.ANY, mock.ANY])])
+                           security_group_rule_ids=[mock.ANY, mock.ANY],
+                           name=sg_dict['name'])])
 
     def test_security_group_rule_precommit_create_event_fail(self):
         registry.subscribe(fake_callback, resources.SECURITY_GROUP_RULE,
