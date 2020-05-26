@@ -35,7 +35,6 @@ from oslo_service import systemd
 from oslo_service import wsgi
 from oslo_utils import encodeutils
 from oslo_utils import excutils
-import six
 import webob.dec
 import webob.exc
 
@@ -322,7 +321,7 @@ class JSONDictSerializer(DictSerializer):
 
     def default(self, data):
         def sanitizer(obj):
-            return six.text_type(obj)
+            return str(obj)
         return encode_body(jsonutils.dumps(data, default=sanitizer))
 
 

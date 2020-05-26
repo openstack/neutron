@@ -35,7 +35,6 @@ from oslo_config import cfg
 from oslo_log import helpers as log_helper
 from oslo_log import log as logging
 from oslo_utils import excutils
-import six
 
 from neutron._i18n import _
 from neutron.api import extensions
@@ -1123,7 +1122,7 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
 
     def _get_device_owner(self, context, router=None):
         """Get device_owner for the specified router."""
-        router_is_uuid = isinstance(router, six.string_types)
+        router_is_uuid = isinstance(router, str)
         if router_is_uuid:
             router = self._get_router(context, router)
         if is_distributed_router(router):

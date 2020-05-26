@@ -28,7 +28,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import encodeutils
 import requests
-import six
 from six.moves import urllib
 import webob
 
@@ -74,7 +73,7 @@ class MetadataProxyHandler(object):
             LOG.exception("Unexpected error.")
             msg = _('An unknown error has occurred. '
                     'Please try your request again.')
-            explanation = six.text_type(msg)
+            explanation = str(msg)
             return webob.exc.HTTPInternalServerError(explanation=explanation)
 
     def _get_instance_and_project_id(self, req):
@@ -159,7 +158,7 @@ class MetadataProxyHandler(object):
                 'Remote metadata server experienced an internal server error.'
             )
             LOG.warning(msg)
-            explanation = six.text_type(msg)
+            explanation = str(msg)
             return webob.exc.HTTPInternalServerError(explanation=explanation)
         else:
             raise Exception(_('Unexpected response code: %s') %

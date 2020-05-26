@@ -25,7 +25,6 @@ import oslo_messaging
 from oslo_service import loopingcall
 from oslo_utils import encodeutils
 import requests
-import six
 from six.moves import urllib
 import webob
 
@@ -103,7 +102,7 @@ class MetadataProxyHandler(object):
             LOG.exception("Unexpected error.")
             msg = _('An unknown error has occurred. '
                     'Please try your request again.')
-            explanation = six.text_type(msg)
+            explanation = str(msg)
             return webob.exc.HTTPInternalServerError(explanation=explanation)
 
     def _get_ports_from_server(self, router_id=None, ip_address=None,
@@ -252,7 +251,7 @@ class MetadataProxyHandler(object):
                 'Remote metadata server experienced an internal server error.'
             )
             LOG.warning(msg)
-            explanation = six.text_type(msg)
+            explanation = str(msg)
             return webob.exc.HTTPInternalServerError(explanation=explanation)
         else:
             raise Exception(_('Unexpected response code: %s') %

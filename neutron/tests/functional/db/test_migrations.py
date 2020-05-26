@@ -23,7 +23,6 @@ from oslo_config import fixture as config_fixture
 from oslo_db.sqlalchemy import test_migrations
 from oslo_log import log as logging
 from oslotest import base as oslotest_base
-import six
 import sqlalchemy
 from sqlalchemy import event  # noqa
 from sqlalchemy.sql import ddl as sqla_ddl
@@ -576,7 +575,7 @@ class _TestWalkMigrations(object):
         self.script_dir = alembic_script.ScriptDirectory.from_config(db_config)
         db_config.neutron_config = cfg.CONF
         db_config.neutron_config.set_override('connection',
-                                              six.text_type(uri),
+                                              str(uri),
                                               group='database')
         return db_config
 

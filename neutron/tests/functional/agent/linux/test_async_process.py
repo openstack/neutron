@@ -13,7 +13,6 @@
 #    under the License.
 
 import eventlet
-import six
 
 from neutron._i18n import _
 from neutron.agent.common import async_process
@@ -27,7 +26,7 @@ class AsyncProcessTestFramework(base.BaseLoggingTestCase):
     def setUp(self):
         super(AsyncProcessTestFramework, self).setUp()
         self.test_file_path = self.get_temp_file_path('test_async_process.tmp')
-        self.data = [six.text_type(x) for x in range(4)]
+        self.data = [str(x) for x in range(4)]
         with open(self.test_file_path, 'w') as f:
             f.writelines('%s\n' % item for item in self.data)
 

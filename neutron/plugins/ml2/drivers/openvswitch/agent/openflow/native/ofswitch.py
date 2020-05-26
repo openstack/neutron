@@ -29,7 +29,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import timeutils
-import six
 
 from neutron._i18n import _
 from neutron.agent.common import ovs_lib
@@ -219,7 +218,7 @@ class OpenFlowSwitchMixin(object):
                              match=None, active_bundle=None, **match_kwargs):
         (dp, ofp, ofpp) = self._get_dp()
         match = self._match(ofp, ofpp, match, **match_kwargs)
-        if isinstance(instructions, six.string_types):
+        if isinstance(instructions, str):
             debtcollector.deprecate("Use of string instruction is "
                 "deprecated", removal_version='U')
             jsonlist = ofctl_string.ofp_instruction_from_str(

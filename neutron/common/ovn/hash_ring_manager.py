@@ -17,7 +17,6 @@ import datetime
 
 from oslo_log import log
 from oslo_utils import timeutils
-import six
 from tooz import hashring
 
 from neutron.common.ovn import constants
@@ -89,7 +88,7 @@ class HashRingManager(object):
         self._load_hash_ring()
 
         # tooz expects a byte string for the hash
-        if isinstance(key, six.string_types):
+        if isinstance(key, str):
             key = key.encode('utf-8')
 
         try:
