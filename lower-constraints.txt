@@ -138,4 +138,5 @@ vine==1.1.4
 waitress==1.1.0
 WebOb==1.8.2
 WebTest==2.0.27
+wmi==1.4.9
 wrapt==1.7.0
