@@ -25,6 +25,9 @@
     voting: false
     vars:
       tox_envlist: integrated-network
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
       devstack_local_conf:
         post-config:
           $NEUTRON_CONF:
@@ -59,6 +62,8 @@
           q-agt: true
           q-l3: true
           q-meta: true
+          br-ex-tcpdump: true
+          br-int-flows: true
         devstack_local_conf:
           post-config:
             $NEUTRON_CONF:

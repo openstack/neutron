@@ -768,16 +768,6 @@ function start_ovn {
         setup_logging $OVN_META_CONF
     fi
 
-    if is_service_enabled br-ex-tcpdump ; then
-        # tcpdump monitor on br-ex for ARP, reverse ARP and ICMP v4 / v6 packets
-        sudo ip link set dev $PUBLIC_BRIDGE up
-        run_process br-ex-tcpdump "/usr/sbin/tcpdump -i $PUBLIC_BRIDGE arp or rarp or icmp or icmp6 -enlX" "$STACK_GROUP" root
-    fi
-
-    if is_service_enabled br-int-flows ; then
-        run_process br-int-flows "/bin/sh -c \"set +e; while true; do echo ovs-ofctl dump-flows br-int; ovs-ofctl dump-flows br-int ; sleep 30; done; \"" "$STACK_GROUP" root
-    fi
-
     # NOTE(lucasagomes): To keep things simpler, let's reuse the same
     # RUNDIR for both OVS and OVN. This way we avoid having to specify the
     # --db option in the ovn-{n,s}bctl commands while playing with DevStack
