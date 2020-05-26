@@ -17,7 +17,6 @@ import signal
 import socket
 from unittest import mock
 
-import six
 import testtools
 
 from neutron_lib import exceptions
@@ -154,16 +153,11 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
     def test_encode_process_input(self):
         str_idata = "%s\n" % self.test_file[:-1]
         str_odata = "%s\n" % self.test_file
-        if six.PY3:
-            bytes_idata = str_idata.encode(encoding='utf-8')
-            bytes_odata = str_odata.encode(encoding='utf-8')
-            self.mock_popen.return_value = [bytes_odata, b'']
-            result = utils.execute(['cat'], process_input=str_idata)
-            self.mock_popen.assert_called_once_with(bytes_idata)
-        else:
-            self.mock_popen.return_value = [str_odata, '']
-            result = utils.execute(['cat'], process_input=str_idata)
-            self.mock_popen.assert_called_once_with(str_idata)
+        bytes_idata = str_idata.encode(encoding='utf-8')
+        bytes_odata = str_odata.encode(encoding='utf-8')
+        self.mock_popen.return_value = [bytes_odata, b'']
+        result = utils.execute(['cat'], process_input=str_idata)
+        self.mock_popen.assert_called_once_with(bytes_idata)
         self.assertEqual(str_odata, result)
 
     def test_return_str_data(self):
