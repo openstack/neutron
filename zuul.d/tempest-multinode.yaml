@@ -168,6 +168,8 @@
     group-vars:
       subnode:
         devstack_services:
+          br-ex-tcpdump: true
+          br-int-flows: true
           ovn-controller: true
           ovn-northd: false
           ovn-octavia: false
