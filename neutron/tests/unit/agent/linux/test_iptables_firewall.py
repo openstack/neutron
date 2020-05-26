@@ -118,6 +118,15 @@ class BaseIptablesFirewallTestCase(base.BaseTestCase):
 
 class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
+    def test__get_port_device_name(self):
+        self.assertEqual(
+            "name",
+            self.firewall._get_port_device_name({'device': 'name'}))
+        self.assertEqual(
+            "name",
+            self.firewall._get_port_device_name(
+                {'device': '%s_name' % constants.TAP_DEVICE_PREFIX}))
+
     def test_prepare_port_filter_with_no_sg(self):
         port = self._fake_port()
         self.firewall.prepare_port_filter(port)
