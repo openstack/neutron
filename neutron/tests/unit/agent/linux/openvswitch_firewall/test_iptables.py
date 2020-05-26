@@ -17,6 +17,7 @@ from unittest import mock
 
 from neutron.agent.linux import iptables_firewall
 from neutron.agent.linux.openvswitch_firewall import iptables
+from neutron.agent.linux import utils
 from neutron.tests import base
 
 
@@ -25,6 +26,8 @@ class TestHelper(base.BaseTestCase):
         super(TestHelper, self).setUp()
         self.helper = iptables.Helper(mock.Mock())
         mock.patch.object(iptables_firewall, 'cfg').start()
+        self.mock_execute = mock.patch.object(utils, 'execute',
+                                              return_value=False).start()
         mock.patch('neutron.agent.linux.ip_conntrack.get_conntrack').start()
 
     def test_get_hybrid_ports(self):
