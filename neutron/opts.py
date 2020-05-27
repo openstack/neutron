@@ -191,6 +191,8 @@ def list_dhcp_agent_opts():
 
 def list_linux_bridge_opts():
     return [
+        ('DEFAULT',
+         neutron.conf.service.RPC_EXTRA_OPTS),
         ('linux_bridge',
          neutron.conf.plugins.ml2.drivers.linuxbridge.bridge_opts),
         ('vxlan',
