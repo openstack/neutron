@@ -38,6 +38,7 @@ tests_imports_from1 = re.compile(r"\bfrom[\s]+neutron.tests\b")
 tests_imports_from2 = re.compile(r"\bfrom[\s]+neutron[\s]+import[\s]+tests\b")
 
 import_mock = re.compile(r"\bimport[\s]+mock\b")
+import_from_mock = re.compile(r"\bfrom[\s]+mock[\s]+import\b")
 
 
 @core.flake8ext
@@ -234,5 +235,6 @@ def check_no_import_mock(logical_line, filename, noqa):
     if 'neutron/tests/' not in filename:
         return
 
-    if re.match(import_mock, logical_line):
-        yield(0, msg)
+    for regex in import_mock, import_from_mock:
+        if re.match(regex, logical_line):
+            yield(0, msg)
