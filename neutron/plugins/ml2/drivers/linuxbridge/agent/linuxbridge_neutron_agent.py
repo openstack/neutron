@@ -42,6 +42,7 @@ from neutron.common import config as common_config
 from neutron.common import profiler as setup_profiler
 from neutron.common import utils
 from neutron.conf.agent import common as agent_config
+from neutron.conf import service as service_conf
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca
 from neutron.plugins.ml2.drivers.agent import config as cagt_config  # noqa
@@ -1032,6 +1033,8 @@ def main():
 
     common_config.setup_logging()
     agent_config.setup_privsep()
+    service_conf.register_service_opts(service_conf.RPC_EXTRA_OPTS, cfg.CONF)
+
     try:
         interface_mappings = helpers.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.physical_interface_mappings)
