@@ -200,7 +200,11 @@ def main():
 
     manager.init()
     core_plugin = directory.get_plugin()
-    ovn_driver = core_plugin.mechanism_manager.mech_drivers['ovn-sync'].obj
+    driver = core_plugin.mechanism_manager.mech_drivers['ovn-sync']
+    # The L3 code looks for the OVSDB connection on the 'ovn' driver
+    # and will fail with a KeyError if it isn't there
+    core_plugin.mechanism_manager.mech_drivers['ovn'] = driver
+    ovn_driver = driver.obj
     ovn_driver._nb_ovn = ovn_api
     ovn_driver._sb_ovn = ovn_sb_api
 
