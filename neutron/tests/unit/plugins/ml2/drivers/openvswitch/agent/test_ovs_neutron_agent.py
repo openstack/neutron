@@ -36,6 +36,7 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import utils as linux_utils
 from neutron.api.rpc.callbacks import resources
 from neutron.objects.ports import Port
 from neutron.objects.ports import PortBinding
@@ -1193,7 +1194,8 @@ class TestOvsNeutronAgent(object):
     def test_process_network_port_with_empty_port(self):
         self._test_process_network_ports({})
 
-    def test_hybrid_plug_flag_based_on_firewall(self):
+    @mock.patch.object(linux_utils, 'execute', return_value=False)
+    def test_hybrid_plug_flag_based_on_firewall(self, *args):
         cfg.CONF.set_default(
             'firewall_driver',
             'neutron.agent.firewall.NoopFirewallDriver',
