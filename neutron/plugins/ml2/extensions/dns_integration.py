@@ -288,6 +288,8 @@ class DNSExtensionDriver(api.ExtensionDriver):
         if dns_domain and dns_domain != lib_const.DNS_DOMAIN_DEFAULT:
             if dns_data_db:
                 dns_name = dns_data_db.dns_name
+                if dns_data_db.current_dns_domain:
+                    dns_domain = dns_data_db.current_dns_domain
         return dns_name, dns_domain
 
     def _get_dns_names_for_port(self, ips, dns_data_db):
