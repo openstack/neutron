@@ -164,6 +164,9 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
             self.assertEqual(current_dns_name, dns_data_db['current_dns_name'])
             self.assertEqual(previous_dns_name,
                              dns_data_db['previous_dns_name'])
+            curr_dns_domain = dns_data_db['current_dns_domain']
+            for fqdn in port['dns_assignment']:
+                self.assertTrue(fqdn['fqdn'].endswith(curr_dns_domain))
             if current_dns_name:
                 self.assertEqual(current_dns_domain,
                                  dns_data_db['current_dns_domain'])
