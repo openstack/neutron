@@ -16,6 +16,7 @@
 #           Networking-OVN                        Neutron
 
 devstack/lib/ovn                        devstack/lib/ovn_agent
+doc/source/contributor/design           doc/source/contributor/internals/ovn
 networking_ovn/ovn_db_sync.py           neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/ovn_db_sync.py
 networking_ovn/ovsdb/commands.py        neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/commands.py
 networking_ovn/ovsdb/impl_idl_ovn.py    neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/impl_idl_ovn.py
@@ -25,12 +26,12 @@ networking_ovn/ovsdb/worker.py          neutron/plugins/ml2/drivers/ovn/mech_dri
 networking_ovn/agent/metadata           neutron/agent/ovn/metadata
 networking_ovn/cmd                      neutron/cmd
 networking_ovn/common/config.py         neutron/conf/ovn.py
-networking_ovn/common/acl.py            neutron/plugins/ml2/drivers/ovn/common/acl.py
+networking_ovn/common/acl.py            neutron/common/ovn/acl.py
 networking_ovn/common/constants.py      neutron/common/ovn/constants.py
 networking_ovn/common/exceptions.py     neutron/common/ovn/exceptions.py
 networking_ovn/common/hash_ring_manager.py  neutron/common/ovn/hash_ring_manager.py
 networking_ovn/common/maintanance.py    neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/maintenance.py
-networking_ovn/common/ovn_client.py     neutron/plugins/ml2/drivers/ovn/common/client.py
+networking_ovn/common/ovn_client.py     neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/ovn_client.py
 networking_ovn/common/utils.py          neutron/common/ovn/utils.py
 networking_ovn/conf/agent/metadata      neutron/conf/agent/ovn/metadata.py
 networking_ovn/db                       neutron/db
