@@ -879,7 +879,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         db_metadata_ports_ids = set()
         db_metadata_ports_nets = set()
         for port in db_ports['ports']:
-            if (port['device_owner'] == constants.DEVICE_OWNER_DHCP and
+            if (port['device_owner'] == constants.DEVICE_OWNER_DISTRIBUTED and
                     port['device_id'].startswith('ovnmeta')):
                 db_metadata_ports_ids.add(port['id'])
                 db_metadata_ports_nets.add(port['network_id'])
@@ -1341,7 +1341,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         db_ports = self._list('ports')
         db_metadata_ports = [port for port in db_ports['ports'] if
                              port['device_owner'] ==
-                             constants.DEVICE_OWNER_DHCP and
+                             constants.DEVICE_OWNER_DISTRIBUTED and
                              port['device_id'].startswith('ovnmeta')]
         lswitches = {}
         ports_to_delete = len(db_metadata_ports) / 2

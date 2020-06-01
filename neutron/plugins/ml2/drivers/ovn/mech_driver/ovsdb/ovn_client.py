@@ -259,7 +259,11 @@ class OVNClient(object):
 
             # Only adjust the OVN type if the port is not owned by Neutron
             # DHCP agents.
-            if (port['device_owner'] == const.DEVICE_OWNER_DHCP and
+            # TODO(mjozefcz): Remove const.DEVICE_OWNER_DHCP
+            # from get_ports in W-release.
+            if (port['device_owner'] in [
+                    const.DEVICE_OWNER_DISTRIBUTED,
+                    const.DEVICE_OWNER_DHCP] and
                     not utils.is_neutron_dhcp_agent_port(port)):
                 port_type = 'localport'
 
@@ -2030,9 +2034,19 @@ class OVNClient(object):
         if not ovn_conf.is_ovn_metadata_enabled():
             return
 
+        # TODO(mjozefcz): Remove const.DEVICE_OWNER_DHCP
+        # from get_ports in W-release.
         ports = self._plugin.get_ports(context, filters=dict(
-            network_id=[network_id], device_owner=[const.DEVICE_OWNER_DHCP]))
-
+            network_id=[network_id],
+            device_owner=[
+                const.DEVICE_OWNER_DHCP,
+                const.DEVICE_OWNER_DISTRIBUTED]))
+        # TODO(mjozefcz): Remove this compatibility code in W release.
+        # First look for const.DEVICE_OWNER_DISTRIBUTED and then for
+        # const.DEVICE_OWNER_DHCP.
+        for port in ports:
+            if port['device_owner'] == const.DEVICE_OWNER_DISTRIBUTED:
+                return port
         # Metadata ports are DHCP ports not belonging to the Neutron
         # DHCP agents
         for port in ports:
@@ -2054,7 +2068,7 @@ class OVNClient(object):
                 port = {'port':
                         {'network_id': network['id'],
                          'tenant_id': network['project_id'],
-                         'device_owner': const.DEVICE_OWNER_DHCP,
+                         'device_owner': const.DEVICE_OWNER_DISTRIBUTED,
                          'device_id': 'ovnmeta-%s' % network['id']}}
                 # TODO(boden): rehome create_port into neutron-lib
                 p_utils.create_port(self._plugin, context, port)

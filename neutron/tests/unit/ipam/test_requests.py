@@ -317,6 +317,13 @@ class TestAddressRequestFactory(base.BaseTestCase):
             ipam_req.AddressRequestFactory.get_request(None, port, ip),
             ipam_req.PreferNextAddressRequest)
 
+    def test_prefernext_address_request_on_distributed_port(self):
+        ip = {}
+        port = {'device_owner': constants.DEVICE_OWNER_DISTRIBUTED}
+        self.assertIsInstance(
+            ipam_req.AddressRequestFactory.get_request(None, port, ip),
+            ipam_req.PreferNextAddressRequest)
+
 
 class TestSubnetRequestFactory(IpamSubnetRequestTestCase):
 

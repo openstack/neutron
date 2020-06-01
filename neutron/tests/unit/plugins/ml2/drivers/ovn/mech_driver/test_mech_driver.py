@@ -2906,17 +2906,36 @@ class TestOVNMechanismDriverMetadataPort(test_plugin.Ml2PluginV2TestCase):
         p.start()
         self.addCleanup(p.stop)
 
-    def _create_fake_dhcp_port(self, device_id):
-        return {'network_id': 'fake', 'device_owner': const.DEVICE_OWNER_DHCP,
+    def _create_fake_dhcp_port(self, device_id, neutron_port=False):
+        port = {'network_id': 'fake',
+                'device_owner': const.DEVICE_OWNER_DISTRIBUTED,
                 'device_id': device_id}
+        if neutron_port:
+            port['device_owner'] = const.DEVICE_OWNER_DHCP
+        return port
 
     @mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2, 'get_ports')
     def test__find_metadata_port(self, mock_get_ports):
         ports = [
-            self._create_fake_dhcp_port('dhcp-0'),
-            self._create_fake_dhcp_port('dhcp-1'),
-            self._create_fake_dhcp_port(const.DEVICE_ID_RESERVED_DHCP_PORT),
+            self._create_fake_dhcp_port('dhcp-0', neutron_port=True),
+            self._create_fake_dhcp_port('dhcp-1', neutron_port=True),
+            self._create_fake_dhcp_port(const.DEVICE_ID_RESERVED_DHCP_PORT,
+                                        neutron_port=True),
             self._create_fake_dhcp_port('ovnmeta-0')]
+        mock_get_ports.return_value = ports
+
+        md_port = self.mech_driver._ovn_client._find_metadata_port(
+            self.ctx, 'fake-net-id')
+        self.assertEqual('ovnmeta-0', md_port['device_id'])
+
+    @mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2, 'get_ports')
+    def test__find_metadata_port_compat(self, mock_get_ports):
+        ports = [
+            self._create_fake_dhcp_port('dhcp-0', neutron_port=True),
+            self._create_fake_dhcp_port('dhcp-1', neutron_port=True),
+            self._create_fake_dhcp_port(const.DEVICE_ID_RESERVED_DHCP_PORT,
+                                        neutron_port=True),
+            self._create_fake_dhcp_port('ovnmeta-0', neutron_port=True)]
         mock_get_ports.return_value = ports
 
         md_port = self.mech_driver._ovn_client._find_metadata_port(
@@ -2958,7 +2977,7 @@ class TestOVNMechanismDriverMetadataPort(test_plugin.Ml2PluginV2TestCase):
                 # Create a network:dhcp owner port just as how Neutron DHCP
                 # agent would do.
                 with self.port(subnet=subnet1,
-                               device_owner=const.DEVICE_OWNER_DHCP,
+                               device_owner=const.DEVICE_OWNER_DISTRIBUTED,
                                device_id='dhcpxxxx',
                                set_context=True, tenant_id='test'):
                     with self.subnet(network=net1, cidr='20.0.0.0/24'):

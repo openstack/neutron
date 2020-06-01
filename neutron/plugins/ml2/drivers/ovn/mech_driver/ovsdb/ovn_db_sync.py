@@ -742,10 +742,14 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         if not ovn_conf.is_ovn_metadata_enabled():
             return
         LOG.debug('OVN sync metadata ports started')
+        # TODO(mjozefcz): Remove constants.DEVICE_OWNER_DHCP
+        # from get_ports in W-release.
         for net in self.core_plugin.get_networks(ctx):
             dhcp_ports = self.core_plugin.get_ports(ctx, filters=dict(
                 network_id=[net['id']],
-                device_owner=[constants.DEVICE_OWNER_DHCP]))
+                device_owner=[
+                    constants.DEVICE_OWNER_DISTRIBUTED,
+                    constants.DEVICE_OWNER_DHCP]))
 
             for port in dhcp_ports:
                 # Do not touch the Neutron DHCP agents ports
