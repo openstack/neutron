@@ -59,7 +59,8 @@ def setup_logging():
                 fmt=cfg.CONF.logging_default_format_string,
                 datefmt=cfg.CONF.log_date_format))
     elif cfg.CONF.use_journal:
-        journal_handler = handlers.OSJournalHandler()
+        # TODO(haleyb): remove when oslo.log is fixed, related bug #1871840
+        journal_handler = handlers.OSJournalHandler(facility=None)
         LOG.logger.addHandler(journal_handler)
     else:
         syslog_handler = handlers.OSSysLogHandler()

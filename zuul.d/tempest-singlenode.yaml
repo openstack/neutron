@@ -188,6 +188,9 @@
         ((^neutron_tempest_plugin.api)|\
         (^neutron_tempest_plugin.scenario)|\
         (tempest.(api|scenario|thirdparty))).*$"
+      # TODO(haleyb): Remove this blacklist when
+      # https://bugs.launchpad.net/neutron/+bug/1881558 is fixed.
+      tempest_black_regex: "(?:neutron_tempest_plugin.scenario.test_ipv6.IPv6Test)"
       tempest_concurrency: 4
       devstack_local_conf:
         test-config:
