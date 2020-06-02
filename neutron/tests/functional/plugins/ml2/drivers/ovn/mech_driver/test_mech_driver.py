@@ -441,6 +441,21 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
         self.assertNotIn(ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY,
                          ovn_vport.options)
 
+    def test_virtual_port_not_set_similiar_address(self):
+        # Create one port
+        self._create_port(fixed_ip='10.0.0.110')
+        # Create second port with similar IP, so that
+        # string matching will return True
+        second_port = self._create_port(fixed_ip='10.0.0.11')
+
+        # Assert the virtual port has not been set.
+        ovn_vport = self._find_port_row(second_port['id'])
+        self.assertEqual("", ovn_vport.type)
+        self.assertNotIn(ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY,
+                         ovn_vport.options)
+        self.assertNotIn(ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY,
+                         ovn_vport.options)
+
 
 class TestExternalPorts(base.TestOVNFunctionalBase):
 
