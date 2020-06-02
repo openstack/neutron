@@ -22,6 +22,7 @@ from ovsdbapp.backend.ovs_idl import vlog
 from ovsdbapp.schema.open_vswitch import impl_idl
 
 from neutron.agent.ovsdb.native import connection as n_connection
+from neutron.common import utils
 from neutron.conf.agent import ovs_conf
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 
@@ -83,12 +84,13 @@ class OvsCleanup(command.BaseCommand):
         return True
 
 
+@utils.SingletonDecorator
 class NeutronOvsdbIdl(impl_idl.OvsdbIdl):
     def __init__(self, connection, idl_monitor):
         max_level = None if cfg.CONF.OVS.ovsdb_debug else vlog.INFO
         vlog.use_python_logger(max_level=max_level)
         self.idl_monitor = idl_monitor
-        super(NeutronOvsdbIdl, self).__init__(connection)
+        impl_idl.OvsdbIdl.__init__(self, connection)
 
     def ovs_cleanup(self, bridges, all_ports=False):
         return OvsCleanup(self, bridges, all_ports)
