@@ -16,8 +16,6 @@
 Check for globals that are now available in neutron-lib
 """
 
-from __future__ import print_function
-
 
 def check_globals(things, nmod, lmod):
     core = vars(nmod)['_mg__my_globals']
