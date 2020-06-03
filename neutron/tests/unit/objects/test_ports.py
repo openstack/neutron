@@ -379,12 +379,6 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         self.skipTest(
             'Port object loads segment info without relationships')
 
-    def test_v1_1_to_v1_0_drops_data_plane_status(self):
-        port_new = self._create_test_port()
-        port_v1_0 = port_new.obj_to_primitive(target_version='1.0')
-        self.assertNotIn('data_plane_status',
-                         port_v1_0['versioned_object.data'])
-
     def test_v1_2_to_v1_1_drops_segment_id_in_binding_levels(self):
         port_new = self._create_test_port()
         segment = network.NetworkSegment(

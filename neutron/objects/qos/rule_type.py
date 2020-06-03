@@ -14,8 +14,6 @@ from neutron_lib.objects import common_types
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from neutron_lib.services.qos import constants as qos_consts
-from oslo_utils import versionutils
-from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.objects import base
@@ -73,12 +71,6 @@ class QosRuleType(base.NeutronObject):
     @classmethod
     def get_values(cls, field, **kwargs):
         return [getattr(obj, field) for obj in cls.get_objects(**kwargs)]
-
-    def obj_make_compatible(self, primitive, target_version):
-        _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 3):
-            raise exception.IncompatibleObjectVersion(
-                objver=target_version, objtype=self.__class__.__name__)
 
 
 @base.NeutronObjectRegistry.register
