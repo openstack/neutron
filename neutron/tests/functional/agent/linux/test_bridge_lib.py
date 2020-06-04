@@ -13,7 +13,6 @@
 #    under the License.
 
 import random
-import re
 
 import netaddr
 from neutron_lib import constants
@@ -25,6 +24,9 @@ from neutron.agent.linux import ip_lib
 from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
+
+
+MAC_ALL_NODES_ADDRESS = '33:33:00:00:00:01'
 
 
 class BridgeLibTestCase(base.BaseSudoTestCase):
@@ -131,8 +133,6 @@ class FdbInterfaceTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
 
     MAC1 = 'ca:fe:ca:fe:ca:fe'
     MAC2 = 'ca:fe:ca:fe:ca:01'
-    RULE_PATTERN = (r"^(?P<mac>([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})) "
-                    r"(dst (?P<ip>\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b))*")
 
     scenarios = [
         ('namespace', {'namespace': 'ns_' + uuidutils.generate_uuid()}),
@@ -172,59 +172,109 @@ class FdbInterfaceTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
                 except priv_ip_lib.NetworkInterfaceNotFound:
                     pass
 
-    def _list_fdb_rules(self, device):
-        output = bridge_lib.FdbInterface.show(dev=device,
-                                              namespace=self.namespace)
-        rules = re.finditer(self.RULE_PATTERN, output, flags=re.MULTILINE)
-        ret = {}
-        for rule in rules:
-            ret[rule.groupdict()['mac']] = rule.groupdict()['ip']
-        return ret
+    def _assert_mac(self, mac_address, device, present=True):
+        msg = ('MAC address %(mac_address)s %(present)s in the FDB table for '
+               'the device %(device)s in namespace %(namespace)s' %
+               {'mac_address': mac_address, 'device': device,
+                'namespace': self.namespace,
+                'present': 'not present' if present else 'present'})
+
+        for _device, fdbs in bridge_lib.FdbInterface.show(
+                dev=device, namespace=self.namespace).items():
+            self.assertEqual(device, _device)
+            macs = [fdb['mac'] for fdb in fdbs]
+            if ((mac_address in macs and not present) or
+                    (mac_address not in macs and present)):
+                self.fail(msg)
+
+    def _assert_ip(self, mac_address, ip_address, device):
+        msg = ('Destination IP address %(ip_address)s not present in the FDB '
+               'table for the MAC address %(mac_address)s and device '
+               '%(device)s in namespace %(namespace)s' %
+               {'mac_address': mac_address, 'device': device,
+                'namespace': self.namespace, 'ip_address': ip_address})
+
+        for _device, fdbs in bridge_lib.FdbInterface.show(
+                dev=device, namespace=self.namespace).items():
+            self.assertEqual(device, _device)
+            for _ in (fdb for fdb in fdbs if fdb['mac'] == mac_address and
+                    fdb['dst_ip'] == ip_address):
+                return
+            self.fail(msg)
 
     def test_add_delete(self):
-        self.assertNotIn(self.MAC1, self._list_fdb_rules(self.device))
+        self._assert_mac(self.MAC1, self.device, present=False)
         bridge_lib.FdbInterface.add(self.MAC1, self.device,
                                     namespace=self.namespace)
-        self.assertIn(self.MAC1, self._list_fdb_rules(self.device))
+        self._assert_mac(self.MAC1, self.device)
         bridge_lib.FdbInterface.delete(self.MAC1, self.device,
                                        namespace=self.namespace)
-        self.assertNotIn(self.MAC1, self._list_fdb_rules(self.device))
+        self._assert_mac(self.MAC1, self.device, present=False)
 
     def test_add_delete_dst(self):
-        self.assertNotIn(self.MAC1, self._list_fdb_rules(self.device_vxlan))
+        self._assert_mac(self.MAC1, self.device_vxlan, present=False)
         bridge_lib.FdbInterface.add(
             self.MAC1, self.device_vxlan, namespace=self.namespace,
-            ip_dst=str(netaddr.IPNetwork(self.ip).ip))
-        rules = self._list_fdb_rules(self.device_vxlan)
-        self.assertEqual(str(netaddr.IPNetwork(self.ip).ip), rules[self.MAC1])
+            dst_ip=str(netaddr.IPNetwork(self.ip).ip))
+        self._assert_ip(self.MAC1, str(netaddr.IPNetwork(self.ip).ip),
+                        self.device_vxlan)
         bridge_lib.FdbInterface.delete(
             self.MAC1, self.device_vxlan, namespace=self.namespace,
-            ip_dst=str(netaddr.IPNetwork(self.ip).ip))
-        self.assertNotIn(self.MAC1, self._list_fdb_rules(self.device_vxlan))
+            dst_ip=str(netaddr.IPNetwork(self.ip).ip))
+        self._assert_mac(self.MAC1, self.device_vxlan, present=False)
 
     def test_append(self):
-        self.assertNotIn(self.MAC1, self._list_fdb_rules(self.device))
+        self._assert_mac(self.MAC1, self.device, present=False)
         bridge_lib.FdbInterface.append(self.MAC1, self.device,
                                        namespace=self.namespace)
-        self.assertIn(self.MAC1, self._list_fdb_rules(self.device))
+        self._assert_mac(self.MAC1, self.device)
 
     def test_append_dst(self):
-        self.assertNotIn(self.MAC1, self._list_fdb_rules(self.device_vxlan))
+        self._assert_mac(self.MAC1, self.device_vxlan)
         bridge_lib.FdbInterface.append(
             self.MAC1, self.device_vxlan, namespace=self.namespace,
-            ip_dst=str(netaddr.IPNetwork(self.ip).ip))
-        rules = self._list_fdb_rules(self.device_vxlan)
-        self.assertEqual(str(netaddr.IPNetwork(self.ip).ip), rules[self.MAC1])
+            dst_ip=str(netaddr.IPNetwork(self.ip).ip))
+        self._assert_ip(self.MAC1, str(netaddr.IPNetwork(self.ip).ip),
+                        self.device_vxlan)
 
     def test_replace(self):
-        self.assertNotIn(self.MAC1, self._list_fdb_rules(self.device))
+        self._assert_mac(self.MAC1, self.device, present=False)
         bridge_lib.FdbInterface.add(
             self.MAC1, self.device_vxlan, namespace=self.namespace,
-            ip_dst=str(netaddr.IPNetwork(self.ip).ip))
-        rules = self._list_fdb_rules(self.device_vxlan)
-        self.assertEqual(str(netaddr.IPNetwork(self.ip).ip), rules[self.MAC1])
+            dst_ip=str(netaddr.IPNetwork(self.ip).ip))
+        self._assert_ip(self.MAC1, str(netaddr.IPNetwork(self.ip).ip),
+                        self.device_vxlan)
         bridge_lib.FdbInterface.replace(
             self.MAC1, self.device_vxlan, namespace=self.namespace,
-            ip_dst='1.1.1.1')
-        rules = self._list_fdb_rules(self.device_vxlan)
-        self.assertEqual('1.1.1.1', rules[self.MAC1])
+            dst_ip='1.1.1.1')
+        self._assert_ip(self.MAC1, '1.1.1.1', self.device_vxlan)
+
+    def test_show(self):
+        ip_str = str(netaddr.IPNetwork(self.ip).ip)
+        bridge_lib.FdbInterface.add(
+            self.MAC1, self.device_vxlan, namespace=self.namespace,
+            dst_ip=ip_str)
+        rules = bridge_lib.FdbInterface.show(dev=self.device_vxlan,
+                                             namespace=self.namespace)
+        self.assertEqual(1, len(rules))
+        self.assertEqual(1, len(rules[self.device_vxlan]))
+        self.assertEqual(self.MAC1, rules[self.device_vxlan][0]['mac'])
+        self.assertEqual(ip_str, rules[self.device_vxlan][0]['dst_ip'])
+
+        _uuid = uuidutils.generate_uuid()
+        bridge_name = ('br_' + _uuid)[:constants.DEVICE_NAME_MAX_LEN]
+        priv_ip_lib.create_interface(bridge_name, self.namespace, 'bridge')
+        bridge = bridge_lib.BridgeDevice(bridge_name, namespace=self.namespace)
+        bridge.addif(self.device)
+        rules = bridge_lib.FdbInterface.show(dev=bridge_name,
+                                             namespace=self.namespace)
+        self.assertEqual(1, len(rules))
+        self._assert_mac(MAC_ALL_NODES_ADDRESS, bridge_name)
+
+        rules = bridge_lib.FdbInterface.show(dev=self.device,
+                                             namespace=self.namespace)
+        mac_address = ip_lib.IPDevice(self.device, self.namespace).link.address
+        for rule in (rule for rule in rules[self.device] if
+                     rule['mac'] == mac_address):
+            self.assertEqual(bridge_name, rule['master'])
+            self.assertIn(rule['vlan'], (1, None))

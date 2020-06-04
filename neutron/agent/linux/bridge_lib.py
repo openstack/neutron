@@ -16,6 +16,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import functools
 import os
 
@@ -128,39 +129,66 @@ class BridgeDevice(ip_lib.IPDevice):
 
 
 class FdbInterface(object):
-    """provide basic functionality to edit the FDB table"""
+    """Provide basic functionality to edit the FDB table"""
 
     @staticmethod
-    def _execute_bridge(cmd, namespace, **kwargs):
-        ip_wrapper = ip_lib.IPWrapper(namespace)
-        return ip_wrapper.netns.execute(cmd, run_as_root=True, **kwargs)
+    @catch_exceptions
+    def add(mac, dev, dst_ip=None, namespace=None, **kwargs):
+        priv_ip_lib.add_bridge_fdb(mac, dev, dst_ip=dst_ip,
+                                   namespace=namespace, **kwargs)
 
-    @classmethod
-    def _cmd(cls, op, mac, dev, ip_dst, namespace, **kwargs):
-        cmd = ['bridge', 'fdb', op, mac, 'dev', dev]
-        if ip_dst is not None:
-            cmd += ['dst', ip_dst]
-        cls._execute_bridge(cmd, namespace, **kwargs)
+    @staticmethod
+    @catch_exceptions
+    def append(mac, dev, dst_ip=None, namespace=None, **kwargs):
+        priv_ip_lib.append_bridge_fdb(mac, dev, dst_ip=dst_ip,
+                                      namespace=namespace, **kwargs)
 
-    @classmethod
-    def add(cls, mac, dev, ip_dst=None, namespace=None, **kwargs):
-        return cls._cmd('add', mac, dev, ip_dst, namespace, **kwargs)
+    @staticmethod
+    @catch_exceptions
+    def replace(mac, dev, dst_ip=None, namespace=None, **kwargs):
+        try:
+            priv_ip_lib.delete_bridge_fdb(mac, dev, namespace=namespace,
+                                          **kwargs)
+        except (RuntimeError, OSError, netlink_exceptions.NetlinkError):
+            pass
+        priv_ip_lib.add_bridge_fdb(mac, dev, dst_ip=dst_ip,
+                                   namespace=namespace, **kwargs)
 
-    @classmethod
-    def append(cls, mac, dev, ip_dst=None, namespace=None, **kwargs):
-        return cls._cmd('append', mac, dev, ip_dst, namespace, **kwargs)
+    @staticmethod
+    @catch_exceptions
+    def delete(mac, dev, dst_ip=None, namespace=None, **kwargs):
+        priv_ip_lib.delete_bridge_fdb(mac, dev, dst_ip=dst_ip,
+                                      namespace=namespace, **kwargs)
 
-    @classmethod
-    def replace(cls, mac, dev, ip_dst=None, namespace=None, **kwargs):
-        return cls._cmd('replace', mac, dev, ip_dst, namespace, **kwargs)
+    @staticmethod
+    def show(dev=None, namespace=None, **kwargs):
+        """List the FDB entries in a namespace
 
-    @classmethod
-    def delete(cls, mac, dev, ip_dst=None, namespace=None, **kwargs):
-        return cls._cmd('delete', mac, dev, ip_dst, namespace, **kwargs)
+        :parameter dev: device name to filter the query
+        :parameter namespace: namespace name
+        :returns: a dictionary with the device names and the list of entries
+                  per device.
+        """
 
-    @classmethod
-    def show(cls, dev=None, namespace=None, **kwargs):
-        cmd = ['bridge', 'fdb', 'show']
-        if dev:
-            cmd += ['dev', dev]
-        return cls._execute_bridge(cmd, namespace, **kwargs)
+        def find_device_name(ifindex, devices):
+            for device in (device for device in devices if
+                           device['index'] == ifindex):
+                return device['name']
+
+        ret = collections.defaultdict(list)
+        fdbs = priv_ip_lib.list_bridge_fdb(namespace=namespace, **kwargs)
+        devices = ip_lib.get_devices_info(namespace)
+        for fdb in fdbs:
+            name = find_device_name(fdb['ifindex'], devices)
+            if dev and dev != name:
+                continue
+
+            master = find_device_name(ip_lib.get_attr(fdb, 'NDA_MASTER'),
+                                      devices)
+            fdb_info = {'mac': ip_lib.get_attr(fdb, 'NDA_LLADDR'),
+                        'master': master,
+                        'vlan': ip_lib.get_attr(fdb, 'NDA_VLAN'),
+                        'dst_ip': ip_lib.get_attr(fdb, 'NDA_DST')}
+            ret[name].append(fdb_info)
+
+        return ret
