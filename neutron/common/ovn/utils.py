@@ -210,6 +210,10 @@ def is_port_security_enabled(port):
     return port.get(psec.PORTSECURITY)
 
 
+def is_security_groups_enabled(port):
+    return port.get(constants.PORT_SECURITYGROUPS)
+
+
 def validate_and_get_data_from_binding_profile(port):
     if (constants.OVN_PORT_BINDING_PROFILE not in port or
             not validators.is_attr_set(
