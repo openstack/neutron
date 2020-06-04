@@ -14,3 +14,4 @@ OVN Driver Administration Guide
    dpdk
    troubleshooting
    sriov
+   router_availability_zones
