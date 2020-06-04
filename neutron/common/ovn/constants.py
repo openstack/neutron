@@ -264,6 +264,11 @@ UNKNOWN_ADDR = 'unknown'
 
 PORT_CAP_SWITCHDEV = 'switchdev'
 
+# The name of the port security group attribute is currently not in neutron nor
+# neutron-lib api definitions or constants. To avoid importing the extension
+# code directly we keep a copy here.
+PORT_SECURITYGROUPS = 'security_groups'
+
 # TODO(lucasagomes): Create constants for other LSP types
 LSP_TYPE_LOCALNET = 'localnet'
 LSP_TYPE_VIRTUAL = 'virtual'
