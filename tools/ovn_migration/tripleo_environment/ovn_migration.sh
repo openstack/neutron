@@ -77,7 +77,7 @@ file again."
 get_host_ip() {
     inventory_file=$1
     host_name=$2
-    ip=`jq -r --arg role _meta --arg hostname $host_name 'to_entries[] | select(.key == $role) | .value.hostvars[$hostname].management_ip' $inventory_file`
+    ip=`jq -r --arg role _meta --arg hostname $host_name 'to_entries[] | select(.key == $role) | .value.hostvars[$hostname].ansible_host' $inventory_file`
     if [[ "x$ip" == "x" ]] || [[ "x$ip" == "xnull" ]]; then
         # This file does not provide translation from the hostname to the IP, or
         # we already have an IP (Queens backwards compatibility)
