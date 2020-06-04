@@ -16,11 +16,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
 import os
 
-from oslo_utils import excutils
+from pyroute2.netlink import exceptions as netlink_exceptions
 
 from neutron.agent.linux import ip_lib
+from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 
 # NOTE(toabctl): Don't use /sys/devices/virtual/net here because not all tap
 # devices are listed here (i.e. when using Xen)
@@ -29,6 +31,20 @@ BRIDGE_INTERFACE_FS = BRIDGE_FS + "%(bridge)s/brif/%(interface)s"
 BRIDGE_INTERFACES_FS = BRIDGE_FS + "%s/brif/"
 BRIDGE_PORT_FS_FOR_DEVICE = BRIDGE_FS + "%s/brport"
 BRIDGE_PATH_FOR_DEVICE = BRIDGE_PORT_FS_FOR_DEVICE + '/bridge'
+
+
+def catch_exceptions(function):
+    """Catch bridge command exceptions and mimic $? output"""
+
+    @functools.wraps(function)
+    def decorated_function(self, *args, **kwargs):
+        try:
+            function(self, *args, **kwargs)
+            return 0
+        except (RuntimeError, OSError, netlink_exceptions.NetlinkError):
+            return 1
+
+    return decorated_function
 
 
 def is_bridged_interface(interface):
@@ -51,19 +67,14 @@ def get_bridge_names():
 
 
 class BridgeDevice(ip_lib.IPDevice):
-    def _ip_link(self, cmd):
-        cmd = ['ip', 'link'] + cmd
-        ip_wrapper = ip_lib.IPWrapper(self.namespace)
-        return ip_wrapper.netns.execute(cmd, run_as_root=True)
 
     @classmethod
     def addbr(cls, name, namespace=None):
         bridge = cls(name, namespace, 'bridge')
         try:
             bridge.link.create()
-        except RuntimeError:
-            with excutils.save_and_reraise_exception() as ectx:
-                ectx.reraise = not bridge.exists()
+        except priv_ip_lib.InterfaceAlreadyExists:
+            pass
         return bridge
 
     @classmethod
@@ -79,19 +90,28 @@ class BridgeDevice(ip_lib.IPDevice):
     def delbr(self):
         return self.link.delete()
 
+    @catch_exceptions
     def addif(self, interface):
-        return self._ip_link(['set', 'dev', interface, 'master', self.name])
+        priv_ip_lib.set_link_bridge_master(interface, self.name,
+                                           namespace=self.namespace)
 
+    @catch_exceptions
     def delif(self, interface):
-        return self._ip_link(['set', 'dev', interface, 'nomaster'])
+        priv_ip_lib.set_link_bridge_master(interface, None,
+                                           namespace=self.namespace)
 
+    @catch_exceptions
     def setfd(self, fd):
-        return self._ip_link(['set', 'dev', self.name, 'type', 'bridge',
-                              'forward_delay', str(fd)])
+        priv_ip_lib.set_link_bridge_forward_delay(self.name, fd,
+                                                  namespace=self.namespace)
 
+    @catch_exceptions
     def disable_stp(self):
-        return self._ip_link(['set', 'dev', self.name, 'type', 'bridge',
-                              'stp_state', 0])
+        priv_ip_lib.set_link_bridge_stp(self.name, 0, namespace=self.namespace)
+
+    @catch_exceptions
+    def enable_stp(self):
+        priv_ip_lib.set_link_bridge_stp(self.name, 1, namespace=self.namespace)
 
     def owns_interface(self, interface):
         return os.path.exists(

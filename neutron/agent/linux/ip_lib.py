@@ -1395,6 +1395,10 @@ def get_devices_info(namespace, **kwargs):
                                                    'IFLA_VXLAN_LINK')
             elif ret['kind'] == 'vlan':
                 ret['vlan_id'] = get_attr(ifla_data, 'IFLA_VLAN_ID')
+            elif ret['kind'] == 'bridge':
+                ret['stp'] = get_attr(ifla_data, 'IFLA_BR_STP_STATE')
+                ret['forward_delay'] = get_attr(ifla_data,
+                                                'IFLA_BR_FORWARD_DELAY')
         retval[device['index']] = ret
 
     for device in retval.values():

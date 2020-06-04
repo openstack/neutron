@@ -864,7 +864,7 @@ class OVSPortFixture(PortFixture):
         self.addCleanup(self.port.link.delete)
         ip_wrapper.add_device_to_namespace(self.port)
         bridge_port.link.set_up()
-        self.qbr.addif(bridge_port)
+        self.qbr.addif(bridge_port.name)
 
         self.port.link.set_address(self.mac)
         self.port.link.set_up()
@@ -963,7 +963,7 @@ class LinuxBridgePortFixture(PortFixture):
         # bridge side
         br_ip_wrapper = ip_lib.IPWrapper(self.bridge.namespace)
         br_ip_wrapper.add_device_to_namespace(self.br_port)
-        self.bridge.addif(self.br_port)
+        self.bridge.addif(self.br_port.name)
         self.br_port.link.set_up()
 
         # port side
