@@ -205,8 +205,9 @@ class OVNClient(object):
     def get_virtual_port_parents(self, virtual_ip, port):
         ls = self._nb_idl.ls_get(utils.ovn_name(port['network_id'])).execute(
             check_error=True)
-        return [lsp.name for lsp in ls.ports for ps in lsp.port_security
-                if lsp.name != port['id'] and virtual_ip in ps]
+        return [lsp.name for lsp in ls.ports
+                if lsp.name != port['id'] and
+                virtual_ip in utils.get_ovn_port_addresses(lsp)]
 
     def _get_port_options(self, port):
         context = n_context.get_admin_context()
