@@ -624,3 +624,21 @@ class SpawnWithOrWithoutProfilerTestCase(
 
     def test_spawn_without_profiler(self):
         self._compare_profilers_in_parent_and_in_child(init_profiler=False)
+
+
+@utils.SingletonDecorator
+class _TestSingletonClass(object):
+
+    def __init__(self):
+        self.variable = None
+
+
+class SingletonDecoratorTestCase(base.BaseTestCase):
+
+    def test_singleton_instance_class(self):
+        instance_1 = _TestSingletonClass()
+        instance_1.variable = 'value1'
+
+        instance_2 = _TestSingletonClass()
+        self.assertEqual(instance_1.__hash__(), instance_2.__hash__())
+        self.assertEqual('value1', instance_2.variable)
