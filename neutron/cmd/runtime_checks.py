@@ -25,19 +25,6 @@ LOG = logging.getLogger(__name__)
 #       which would be run at system setup time. Please consider writing a
 #       sanity check instead.
 
-
-def dhcp_release6_supported():
-    try:
-        cmd = ['dhcp_release6', '--help']
-        env = {'LC_ALL': 'C'}
-        agent_utils.execute(cmd, addl_env=env)
-    except (OSError, RuntimeError, IndexError, ValueError) as e:
-        LOG.debug("Exception while checking dhcp_release6. "
-                  "Exception: %s", e)
-        return False
-    return True
-
-
 def dnsmasq_host_tag_support():
     cmd = ['dnsmasq', '--test', '--dhcp-host=tag:foo']
     env = {'LC_ALL': 'C', 'PATH': '/sbin:/usr/sbin'}

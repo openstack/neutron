@@ -34,6 +34,7 @@ from neutron.cmd import runtime_checks as checks
 from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_config
 from neutron.conf import common as base_config
+from neutron.privileged.agent.linux import dhcp as priv_dhcp
 from neutron.tests import base
 
 
@@ -2244,19 +2245,24 @@ class TestDnsmasq(TestBase):
                                 'server_id': 'server_id'}
                           },
                          {}])
-        ipw = mock.patch(
-            'neutron.agent.linux.ip_lib.IpNetnsCommand.execute').start()
+        mock_dhcp_release = mock.patch.object(priv_dhcp,
+                                              'dhcp_release').start()
+        mock_dhcp_release6 = mock.patch.object(priv_dhcp,
+                                               'dhcp_release6').start()
+        mock_dhcp_release6_supported = mock.patch.object(
+            priv_dhcp, 'dhcp_release6_supported').start()
         dnsmasq._release_unused_leases()
         # Verify that dhcp_release is called both for ipv4 and ipv6 addresses.
-        self.assertEqual(2, ipw.call_count)
-        ipw.assert_has_calls([mock.call(['dhcp_release6',
-                                         '--iface', None, '--ip', ip1,
-                                         '--client-id', 'client_id',
-                                         '--server-id', 'server_id',
-                                         '--iaid', 0xff],
-                                        run_as_root=True)])
-        ipw.assert_has_calls([mock.call(['dhcp_release', None, ip2, mac2],
-                             run_as_root=True), ])
+        self.assertEqual(1, mock_dhcp_release.call_count)
+        self.assertEqual(1, mock_dhcp_release6.call_count)
+        mock_dhcp_release.assert_called_once_with(
+            interface_name=None, ip_address=ip2, mac_address=mac2,
+            client_id=None, namespace=dnsmasq.network.namespace)
+        mock_dhcp_release6.assert_called_once_with(
+            interface_name=None, ip_address=ip1, client_id='client_id',
+            server_id='server_id', iaid=0xff,
+            namespace=dnsmasq.network.namespace)
+        mock_dhcp_release6_supported.assert_called_once_with()
 
     def test_release_for_ipv6_lease_no_dhcp_release6(self):
         dnsmasq = self._get_dnsmasq(FakeDualNetwork())

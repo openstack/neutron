@@ -28,3 +28,12 @@ default = priv_context.PrivContext(
                   caps.CAP_DAC_READ_SEARCH,
                   caps.CAP_SYS_PTRACE],
 )
+
+
+dhcp_release_cmd = priv_context.PrivContext(
+    __name__,
+    cfg_section='privsep_dhcp_release',
+    pypath=__name__ + '.dhcp_release_cmd',
+    capabilities=[caps.CAP_SYS_ADMIN,
+                  caps.CAP_NET_ADMIN]
+)

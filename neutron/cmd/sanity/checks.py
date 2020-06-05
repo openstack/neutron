@@ -33,10 +33,10 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils as agent_utils
-from neutron.cmd import runtime_checks
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as ovs_const
+from neutron.privileged.agent.linux import dhcp as priv_dhcp
 
 LOG = logging.getLogger(__name__)
 
@@ -239,7 +239,7 @@ def ovs_qos_direct_port_supported():
 
 
 def dhcp_release6_supported():
-    return runtime_checks.dhcp_release6_supported()
+    return priv_dhcp.dhcp_release6_supported()
 
 
 def bridge_firewalling_enabled():
