@@ -284,6 +284,23 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             return_value=False)
         self.mock_is_lb_member_fip.start()
 
+    def test__plugin_driver(self):
+        # No valid mech drivers should raise an exception.
+        self._mechanism_drivers = None
+        self.l3_inst._plugin.mechanism_manager.mech_drivers = {}
+        self.l3_inst._mech = None
+        self.assertRaises(n_exc.NotFound, lambda: self.l3_inst._plugin_driver)
+        # Populate the mechanism driver map with keys the code under test looks
+        # for and validate it finds them.
+        fake_mech_driver = mock.MagicMock()
+        for driver in ('ovn', 'ovn-sync'):
+            self.l3_inst._plugin.mechanism_manager.mech_drivers[
+                driver] = fake_mech_driver
+            result = self.l3_inst._plugin_driver
+            self.l3_inst._plugin.mechanism_manager.mech_drivers.pop(
+                driver, None)
+            self.assertEqual(fake_mech_driver.obj, result)
+
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
     def test_add_router_interface(self, func):
         router_id = 'router-id'
