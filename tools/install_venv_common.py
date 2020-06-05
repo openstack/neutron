@@ -22,8 +22,6 @@ environment, it should be kept strictly compatible with Python 2.6.
 Synced in from openstack-common
 """
 
-from __future__ import print_function
-
 import optparse
 import os
 import subprocess
