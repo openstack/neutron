@@ -143,6 +143,9 @@ def setup_conf():
     cfg.CONF.register_cli_opts(ovn_opts, group=ovn_group)
     db_group, neutron_db_opts = db_options.list_opts()[0]
     cfg.CONF.register_cli_opts(neutron_db_opts, db_group)
+    # Override Nova notify configuration LP: #1882020
+    cfg.CONF.set_override('notify_nova_on_port_status_changes', False)
+    cfg.CONF.set_override('notify_nova_on_port_data_changes', False)
     return conf
 
 
