@@ -100,10 +100,8 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.periodic.check_for_inconsistencies()
         mock_fix_net.assert_called_once_with(mock.ANY, fake_row)
 
-    def _test_migrate_to_port_groups_helper(self, pg_supported, a_sets,
-                                            migration_expected, never_again):
-        self.fake_ovn_client._nb_idl.is_port_groups_supported.return_value = (
-            pg_supported)
+    def _test_migrate_to_port_groups_helper(self, a_sets, migration_expected,
+                                            never_again):
         self.fake_ovn_client._nb_idl.get_address_sets.return_value = a_sets
         with mock.patch.object(ovn_db_sync.OvnNbSynchronizer,
                                'migrate_to_port_groups') as mtpg:
@@ -118,24 +116,15 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             else:
                 mtpg.assert_not_called()
 
-    def test_migrate_to_port_groups_port_groups_not_supported(self):
-        self._test_migrate_to_port_groups_helper(pg_supported=False,
-                                                 a_sets=None,
-                                                 migration_expected=False,
-                                                 never_again=True)
-
     def test_migrate_to_port_groups_not_needed(self):
-        self._test_migrate_to_port_groups_helper(pg_supported=True,
-                                                 a_sets=None,
+        self._test_migrate_to_port_groups_helper(a_sets=None,
                                                  migration_expected=False,
                                                  never_again=True)
 
     def test_migrate_to_port_groups(self):
-        # Check normal migration path: if port groups are supported by the
-        # schema and the migration has to be done, it will take place and
-        # won't be attempted in the future.
-        self._test_migrate_to_port_groups_helper(pg_supported=True,
-                                                 a_sets=['as1', 'as2'],
+        # Check normal migration path: if the migration has to be done, it will
+        # take place and won't be attempted in the future.
+        self._test_migrate_to_port_groups_helper(a_sets=['as1', 'as2'],
                                                  migration_expected=True,
                                                  never_again=True)
 
@@ -145,8 +134,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                                    return_value=False)):
             # Check that if this worker doesn't have the lock, it won't
             # perform the migration and it will try again later.
-            self._test_migrate_to_port_groups_helper(pg_supported=True,
-                                                     a_sets=['as1', 'as2'],
+            self._test_migrate_to_port_groups_helper(a_sets=['as1', 'as2'],
                                                      migration_expected=False,
                                                      never_again=False)
 
