@@ -256,20 +256,6 @@ class API(api.API, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def create_address_set(self, name, may_exist=True, **columns):
-        """Create an address set
-
-        :param name:        The name of the address set
-        :type name:         string
-        :param may_exist:   Do not fail if address set already exists
-        :type may_exist:    bool
-        :param columns:     Dictionary of address set columns
-                            Supported columns: external_ids, addresses
-        :type columns:      dictionary
-        :returns:           :class:`Command` with no result
-        """
-
-    @abc.abstractmethod
     def delete_address_set(self, name, if_exists=True):
         """Delete an address set
 
@@ -278,35 +264,6 @@ class API(api.API, metaclass=abc.ABCMeta):
         :param if_exists:   Do not fail if the address set does not exist
         :type if_exists:    bool
         :returns:           :class:`Command` with no result
-        """
-
-    @abc.abstractmethod
-    def update_address_set(self, name, addrs_add, addrs_remove,
-                           if_exists=True):
-        """Updates addresses in an address set
-
-        :param name:            The name of the address set
-        :type name:             string
-        :param addrs_add:       The addresses to be added
-        :type addrs_add:        []
-        :param addrs_remove:    The addresses to be removed
-        :type addrs_remove:     []
-        :param if_exists:       Do not fail if the address set does not exist
-        :type if_exists:        bool
-        :returns:               :class:`Command` with no result
-        """
-
-    @abc.abstractmethod
-    def update_address_set_ext_ids(self, name, external_ids, if_exists=True):
-        """Update external IDs for an address set
-
-        :param name:          The name of the address set
-        :type name:           string
-        :param external_ids:  The external IDs for the address set
-        :type external_ids:   dict
-        :param if_exists:     Do not fail if the address set does not exist
-        :type if_exists:      bool
-        :returns:             :class:`Command` with no result
         """
 
     @abc.abstractmethod
@@ -575,17 +532,6 @@ class API(api.API, metaclass=abc.ABCMeta):
         :param lrouter_name: The name of the logical router
         :type lrouter_name: string
         :returns: :class:`Command` with no result
-        """
-
-    @abc.abstractmethod
-    def get_address_set(self, addrset_id, ip_version='ip4'):
-        """Get a Address Set by its ID.
-
-        :param addrset_id: The Address Set ID
-        :type addrset_id: string
-        :param ip_version: Either "ip4" or "ip6". Defaults to "ip4"
-        :type addr_name: string
-        :returns: The Address Set row or None
         """
 
     @abc.abstractmethod

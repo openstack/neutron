@@ -675,25 +675,6 @@ class DelStaticRouteCommand(command.BaseCommand):
                 break
 
 
-class AddAddrSetCommand(command.BaseCommand):
-    def __init__(self, api, name, may_exist, **columns):
-        super(AddAddrSetCommand, self).__init__(api)
-        self.name = name
-        self.columns = columns
-        self.may_exist = may_exist
-
-    def run_idl(self, txn):
-        if self.may_exist:
-            addrset = idlutils.row_by_value(self.api.idl, 'Address_Set',
-                                            'name', self.name, None)
-            if addrset:
-                return
-        row = txn.insert(self.api._tables['Address_Set'])
-        row.name = self.name
-        for col, val in self.columns.items():
-            setattr(row, col, val)
-
-
 class DelAddrSetCommand(command.BaseCommand):
     def __init__(self, api, name, if_exists):
         super(DelAddrSetCommand, self).__init__(api)
@@ -712,56 +693,6 @@ class DelAddrSetCommand(command.BaseCommand):
             raise RuntimeError(msg)
 
         self.api._tables['Address_Set'].rows[addrset.uuid].delete()
-
-
-class UpdateAddrSetCommand(command.BaseCommand):
-    def __init__(self, api, name, addrs_add, addrs_remove, if_exists):
-        super(UpdateAddrSetCommand, self).__init__(api)
-        self.name = name
-        self.addrs_add = addrs_add
-        self.addrs_remove = addrs_remove
-        self.if_exists = if_exists
-
-    def run_idl(self, txn):
-        try:
-            addrset = idlutils.row_by_value(self.api.idl, 'Address_Set',
-                                            'name', self.name)
-        except idlutils.RowNotFound:
-            if self.if_exists:
-                return
-            msg = _("Address set %s does not exist. "
-                    "Can't update addresses") % self.name
-            raise RuntimeError(msg)
-
-        _updatevalues_in_list(
-            addrset, 'addresses',
-            new_values=self.addrs_add,
-            old_values=self.addrs_remove)
-
-
-class UpdateAddrSetExtIdsCommand(command.BaseCommand):
-    def __init__(self, api, name, external_ids, if_exists):
-        super(UpdateAddrSetExtIdsCommand, self).__init__(api)
-        self.name = name
-        self.external_ids = external_ids
-        self.if_exists = if_exists
-
-    def run_idl(self, txn):
-        try:
-            addrset = idlutils.row_by_value(self.api.idl, 'Address_Set',
-                                            'name', self.name)
-        except idlutils.RowNotFound:
-            if self.if_exists:
-                return
-            msg = _("Address set %s does not exist. "
-                    "Can't update external IDs") % self.name
-            raise RuntimeError(msg)
-
-        addrset.verify('external_ids')
-        addrset_external_ids = getattr(addrset, 'external_ids', {})
-        for ext_id_key, ext_id_value in self.external_ids.items():
-            addrset_external_ids[ext_id_key] = ext_id_value
-        addrset.external_ids = addrset_external_ids
 
 
 class UpdateChassisExtIdsCommand(command.BaseCommand):
