@@ -120,6 +120,10 @@ function _install_base_deps {
         PACKAGES=$(echo $PACKAGES | perl -pe 's|python-(?!dev)[^ ]*||g')
         install_package $PACKAGES
     fi
+
+    if is_ubuntu && [[ "$DISTRO" != "bionic" ]]; then
+        install_package "ncat"
+    fi
 }
 
 
