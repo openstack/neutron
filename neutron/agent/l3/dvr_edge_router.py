@@ -162,6 +162,13 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
 
     def _create_dvr_gateway(self, ex_gw_port, gw_interface_name):
         # connect snat_ports to br_int from SNAT namespace
+
+        # NOTE(ataraday): Check if snat namespace exists, create if not -
+        # workaround for race between router_added and router_updated
+        # notifications https://launchpad.net/bugs/1881995
+        if not self.snat_namespace.exists():
+            self._create_snat_namespace()
+
         for port in self.get_snat_interfaces():
             self._plug_snat_port(port)
         self._external_gateway_added(ex_gw_port, gw_interface_name,
