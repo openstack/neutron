@@ -1860,7 +1860,7 @@ class TestDeviceManager(base.BaseTestCase):
     def test_setup_calls_fill_dhcp_udp_checksums_v4(self):
         self._test_setup_helper(False)
         rule = ('-p udp -m udp --dport %d -j CHECKSUM --checksum-fill'
-                % const.DHCP_RESPONSE_PORT)
+                % const.DHCP_CLIENT_PORT)
         expected = [mock.call.add_rule('POSTROUTING', rule)]
         self.mangle_inst_v4.assert_has_calls(expected)
 

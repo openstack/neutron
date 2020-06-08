@@ -45,11 +45,7 @@ from neutron.ipam import utils as ipam_utils
 
 LOG = logging.getLogger(__name__)
 
-UDP = 'udp'
-TCP = 'tcp'
 DNS_PORT = 53
-DHCPV4_PORT = 67
-DHCPV6_PORT = 547
 METADATA_DEFAULT_IP = '169.254.169.254'
 METADATA_SUBNET_CIDR = '169.254.0.0/16'
 METADATA_PORT = 80
@@ -344,9 +340,13 @@ class Dnsmasq(DhcpLocalProcess):
     # on the Neutron port used for DHCP.  These are provided as a convenience
     # for users of this class.
     PORTS = {constants.IP_VERSION_4:
-             [(UDP, DNS_PORT), (TCP, DNS_PORT), (UDP, DHCPV4_PORT)],
+             [(constants.PROTO_NAME_UDP, DNS_PORT),
+              (constants.PROTO_NAME_TCP, DNS_PORT),
+              (constants.PROTO_NAME_UDP, constants.DHCP_RESPONSE_PORT)],
              constants.IP_VERSION_6:
-             [(UDP, DNS_PORT), (TCP, DNS_PORT), (UDP, DHCPV6_PORT)],
+             [(constants.PROTO_NAME_UDP, DNS_PORT),
+              (constants.PROTO_NAME_TCP, DNS_PORT),
+              (constants.PROTO_NAME_UDP, constants.DHCPV6_RESPONSE_PORT)],
              }
 
     _SUBNET_TAG_PREFIX = 'subnet-%s'
@@ -1742,7 +1742,7 @@ class DeviceManager(object):
                                                         nat=False,
                                                         namespace=namespace)
         ipv4_rule = ('-p udp -m udp --dport %d -j CHECKSUM --checksum-fill'
-                     % constants.DHCP_RESPONSE_PORT)
+                     % constants.DHCP_CLIENT_PORT)
         ipv6_rule = ('-p udp -m udp --dport %d -j CHECKSUM --checksum-fill'
                      % constants.DHCPV6_CLIENT_PORT)
         iptables_mgr.ipv4['mangle'].add_rule('POSTROUTING', ipv4_rule)
