@@ -395,37 +395,48 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
                           self.ctxt, 'fake-pf-id', 'fip_id_2', **pf_input)
 
     def test_service_plugins_values(self):
-        exp_default = ['router']
+        exp_default_plugins = ['router']
         supported_plugins = ['router', 'ovn-router']
         same_as_input = 'same_as_input'
-        TC = namedtuple('TC', 'input expected description')
+        TC = namedtuple('TC', 'input exp_plugins exp_uses_rpc description')
         test_cases = [
-            TC([], exp_default, "default from empty cfg"),
-            TC(['foo'], exp_default, "default from unexpected cfg"),
-            TC(['foo', 123], exp_default, "default from unexpected cfg"),
-            TC(['foo', 'router'], exp_default, "default from valid cfg"),
-            TC(['router'], same_as_input, "valid cfg 1"),
-            TC(['router'], same_as_input, "valid cfg 1"),
-            TC(['ovn-router'], same_as_input, "valid cfg 2"),
-            TC(['ovn-router', 'router'], supported_plugins, "valid cfg 3"),
-            TC(['router', 'ovn-router'], supported_plugins, "valid cfg 4"),
-            TC(['bar', 'router', 'foo'], ['router'], "valid cfg 5"),
-            TC(['bar', 'ovn-router', 'foo'], ['ovn-router'], "valid cfg 6"),
+            TC([], exp_default_plugins, True, "default from empty cfg"),
+            TC(['foo'], exp_default_plugins, True,
+               "default from unexpected cfg"),
+            TC(['foo', 123], exp_default_plugins, True,
+               "default from unexpected cfg"),
+            TC(['foo', 'router'], exp_default_plugins, True,
+               "default from valid cfg"),
+            TC(['router'], same_as_input, True, "valid cfg 1"),
+            TC(['router'], same_as_input, True, "valid cfg 1"),
+            TC(['ovn-router'], same_as_input, False, "valid cfg 2"),
+            TC(['ovn-router', 'router'], supported_plugins, True,
+               "valid cfg 3"),
+            TC(['router', 'ovn-router'], supported_plugins, True,
+               "valid cfg 4"),
+            TC(['bar', 'router', 'foo'], ['router'], True, "valid cfg 5"),
+            TC(['bar', 'ovn-router', 'foo'], ['ovn-router'], False,
+               "valid cfg 6"),
             TC(['bar', 'router', 123, 'ovn-router', 'foo', 'kitchen', 'sink'],
-               supported_plugins, "valid cfg 7"),
+               supported_plugins, True, "valid cfg 7"),
         ]
         for tc in test_cases:
             cfg.CONF.set_override("service_plugins", tc.input)
-            result = pf_plugin._required_service_plugins()
-            if tc.expected == same_as_input:
-                self.assertEqual(tc.input, result, tc.description)
+            plugins, rpc_required = pf_plugin._required_service_plugins()
+            if tc.exp_plugins == same_as_input:
+                self.assertEqual(
+                    (tc.input, tc.exp_uses_rpc), (plugins, rpc_required),
+                    tc.description)
             else:
-                self.assertEqual(tc.expected, result, tc.description)
+                self.assertEqual(
+                    (tc.exp_plugins, tc.exp_uses_rpc), (plugins, rpc_required),
+                    tc.description)
 
     @mock.patch.object(cfg.ConfigOpts, '__getattr__')
     def test_service_plugins_no_such_opt(self, mock_config_opts_get):
         description = "test cfg.NoSuchOptError exception"
         mock_config_opts_get.side_effect = cfg.NoSuchOptError('test_svc_plug')
-        result = pf_plugin._required_service_plugins()
+        plugins, rpc_required = pf_plugin._required_service_plugins()
         mock_config_opts_get.assert_called_once()
-        self.assertEqual(['router'], result, description)
+        self.assertEqual(
+            (['router'], True), (plugins, rpc_required), description)
