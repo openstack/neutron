@@ -13,8 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
+
 import fixtures
-import mock
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 
 from neutron.common.ovn import constants
