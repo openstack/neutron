@@ -18,10 +18,12 @@ from neutron_lib.db import model_query
 from oslo_config import cfg
 from oslo_serialization import jsonutils
 from oslo_upgradecheck import upgradecheck
+from sqlalchemy import or_
 
 from neutron._i18n import _
 from neutron.cmd.upgrade_checks import base
 from neutron.db.models import agent as agent_model
+from neutron.db.models.plugins.ml2 import vlanallocation
 from neutron.db import models_v2
 
 
@@ -71,6 +73,15 @@ def get_ovn_db_revisions():
         "SELECT version_num from %s;" % OVN_ALEMBIC_TABLE_NAME)]  # nosec
 
 
+def count_vlan_allocations_invalid_segmentation_id():
+    ctx = context.get_admin_context()
+    query = ctx.session.query(vlanallocation.VlanAllocation)
+    query = query.filter(or_(
+        vlanallocation.VlanAllocation.vlan_id < constants.MIN_VLAN_TAG,
+        vlanallocation.VlanAllocation.vlan_id > constants.MAX_VLAN_TAG))
+    return query.count()
+
+
 class CoreChecks(base.BaseChecks):
 
     def get_checks(self):
@@ -83,7 +94,9 @@ class CoreChecks(base.BaseChecks):
             (_("Networking-ovn database revision"),
              self.ovn_db_revision_check),
             (_("NIC Switch agent check kernel"),
-             self.nic_switch_agent_min_kernel_check)
+             self.nic_switch_agent_min_kernel_check),
+            (_("VLAN allocations valid segmentation ID check"),
+             self.vlan_allocations_segid_check),
         ]
 
     @staticmethod
@@ -240,3 +253,31 @@ class CoreChecks(base.BaseChecks):
             return upgradecheck.Result(
                 upgradecheck.Code.SUCCESS,
                 _("No NIC Switch agents detected."))
+
+    @staticmethod
+    def vlan_allocations_segid_check(checker):
+        """Checks that "ml2_vlan_allocations.vlan_id" has a valid value
+
+        Database register column "ml2_vlan_allocations.vlan_id" must be between
+        1 and 4094.
+        """
+        if not cfg.CONF.database.connection:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("Database connection string is not set. Check for VLAN "
+                  "allocations with invalid segmentation IDs can't be done."))
+
+        count = count_vlan_allocations_invalid_segmentation_id()
+        if count:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("There are %(count)s registers in 'ml2_vlan_allocations' "
+                  "table with an invalid segmentation ID. 'vlan_id' must be "
+                  "between %(min_vlan)s and %(max_vlan)s") %
+                {'count': count, 'min_vlan': constants.MIN_VLAN_TAG,
+                 'max_vlan': constants.MAX_VLAN_TAG})
+
+        return upgradecheck.Result(
+            upgradecheck.Code.SUCCESS,
+            _("All 'ml2_vlan_allocations' registers have a valid "
+              "segmentation ID."))
