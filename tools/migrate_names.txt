@@ -15,7 +15,6 @@
 #
 #           Networking-OVN                        Neutron
 
-devstack/lib/ovn                        devstack/lib/ovn_agent
 doc/source/admin/refarch                doc/source/admin/ovn/refarch
 doc/source/contributor/design           doc/source/contributor/internals/ovn
 networking_ovn/ovn_db_sync.py           neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/ovn_db_sync.py

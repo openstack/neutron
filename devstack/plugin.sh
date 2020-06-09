@@ -40,11 +40,6 @@ if [[ "$1" == "stack" ]]; then
                 load_conntrack_gre_module
                 start_new_ovs
             fi
-            if is_ovn_enabled; then
-                install_ovn
-                configure_ovn
-                init_ovn
-            fi
             ;;
         post-config)
             if is_service_enabled neutron-tag-ports-during-bulk-creation; then
@@ -113,24 +108,11 @@ if [[ "$1" == "stack" ]]; then
                 if is_service_enabled q-port-forwarding neutron-port-forwarding; then
                     configure_port_forwarding
                 fi
-                configure_ovn_plugin
-                start_ovn
             fi
             ;;
         extra)
             if is_service_enabled q-sriov-agt neutron-sriov-agent; then
                 start_l2_agent_sriov
-            fi
-
-            if is_ovn_enabled; then
-                if [[ "$OVN_L3_CREATE_PUBLIC_NETWORK" == "True" ]]; then
-                    if [[ "$NEUTRON_CREATE_INITIAL_NETWORKS" != "True" ]]; then
-                        echo "OVN_L3_CREATE_PUBLIC_NETWORK=True is being ignored because"
-                        echo "NEUTRON_CREATE_INITIAL_NETWORKS is set to False"
-                    else
-                        create_public_bridge
-                    fi
-                fi
             fi
             if is_service_enabled br-ex-tcpdump ; then
                 # tcpdump monitor on br-ex for ARP, reverse ARP and ICMP v4 / v6 packets
@@ -150,10 +132,5 @@ elif [[ "$1" == "unstack" ]]; then
     if [[ "$NEUTRON_AGENT" == "openvswitch" ]] && \
        [[ "$Q_BUILD_OVS_FROM_GIT" == "True" ]]; then
         stop_new_ovs
-    fi
-
-    if is_ovn_enabled; then
-        stop_ovn
-        cleanup_ovn
     fi
 fi

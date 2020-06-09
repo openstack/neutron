@@ -125,6 +125,7 @@
               is_igmp_snooping_enabled: True
       devstack_localrc:
         Q_AGENT: ovn
+        ML2_L3_PLUGIN: ovn-router,trunk
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
         Q_ML2_TENANT_NETWORK_TYPE: geneve
         Q_USE_PROVIDERNET_FOR_PUBLIC: true
