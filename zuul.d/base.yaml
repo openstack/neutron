@@ -50,6 +50,12 @@
     vars:
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: true
+      # Because this job uses neutron defined tox env (defined in base job),
+      # we need to set zuul_work_dir to neutron so that it can be used by
+      # other projects. Currently devstack run this job. Not setting this
+      # in base neutron-functional job as that is being used by neutron
+      # stadium projects where they need to use stadium project as working dir.
+      zuul_work_dir: src/opendev.org/openstack/neutron
 
 - job:
     name: neutron-functional-with-uwsgi
@@ -57,3 +63,9 @@
     vars:
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: true
+      # Because this job uses neutron defined tox env (defined in base job),
+      # we need to set zuul_work_dir to neutron so that it can be used by
+      # other projects. Currently devstack run this job. Not setting this
+      # in base neutron-functional job as that is being used by neutron
+      # stadium projects where they need to use stadium project as working dir.
+      zuul_work_dir: src/opendev.org/openstack/neutron
