@@ -62,6 +62,33 @@ at [1]_.
   Currently ML2/OVS supports making a tenant subnet routable via BGP, and
   can announce host routes for both floating and fixed IP addresses.
 
+* Baremetal provisioning with iPXE
+
+  The core OVN DHCP server implementation does not have support for
+  sending different boot options based on the ``gpxe`` DHCP Option
+  (no. 175). Also, Ironic uses dnsmasq syntax when configuring the DHCP
+  options for Neutron [6]_ which is not understood by the OVN driver.
+
+* Availability Zones
+
+  Availability zones are used to make network resources highly available
+  by grouping nodes in separate zones which resources will be scheduled
+  to. Neutron supports two types of availability zones: Network (DHCP
+  agent) and router (L3 agent). The OVN team needs to assess each case
+  to see how they would fit in the OVN model. For example, in the router
+  availability zone case, the OVN driver should schedule the router
+  ports on a Chassis (a "node" in OVN terms) where the availability
+  zones match with the router availability zones [7]_.
+
+* Routed provider networks
+
+  Routed provider networks allow for a single provider network to
+  represent multiple L2 domains (segments). The OVN driver does not
+  understand this feature yet and will need to account for multiple
+  physical networks associated with a single OVN Logical Switch (a
+  network in Neutron terms) [8]_.
+
+
 References
 ----------
 
@@ -70,3 +97,6 @@ References
 .. [3] https://review.opendev.org/#/c/539826/
 .. [4] https://github.com/openvswitch/ovs/commit/66d89287269ca7e2f7593af0920e910d7f9bcc38
 .. [5] https://github.com/torvalds/linux/blob/master/net/openvswitch/meter.h
+.. [6] https://github.com/openstack/ironic/blob/123cb22c731f93d0c608d791b41e05884fe18c04/ironic/common/pxe_utils.py#L447-L462>
+.. [7] https://docs.openstack.org/neutron/latest/admin/config-az.html
+.. [8] https://bugs.launchpad.net/neutron/+bug/1865889
