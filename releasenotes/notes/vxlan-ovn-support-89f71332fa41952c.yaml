@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    OVN driver now supports VXLAN type for networks. This requires
+    OVN version to be 20.09 or newer.

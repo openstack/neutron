@@ -406,6 +406,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         return (network_type in [const.TYPE_LOCAL,
                                  const.TYPE_FLAT,
                                  const.TYPE_GENEVE,
+                                 const.TYPE_VXLAN,
                                  const.TYPE_VLAN])
 
     def _validate_network_segments(self, network_segments):

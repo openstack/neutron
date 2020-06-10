@@ -649,24 +649,26 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         # Test supported network types.
         fake_network_context = self._create_fake_network_context('local')
         self.mech_driver.create_network_precommit(fake_network_context)
+
         fake_network_context = self._create_fake_network_context(
             'flat', physical_network='physnet')
         self.mech_driver.update_network_precommit(fake_network_context)
+
         fake_network_context = self._create_fake_network_context(
             'geneve', segmentation_id=10)
         self.mech_driver.create_network_precommit(fake_network_context)
+
         fake_network_context = self._create_fake_network_context(
             'vlan', physical_network='physnet', segmentation_id=11)
         self.mech_driver.update_network_precommit(fake_network_context)
         fake_mp_network_context = self._create_fake_mp_network_context()
         self.mech_driver.create_network_precommit(fake_mp_network_context)
 
-        # Test unsupported network types.
         fake_network_context = self._create_fake_network_context(
             'vxlan', segmentation_id=12)
-        self.assertRaises(n_exc.InvalidInput,
-                          self.mech_driver.create_network_precommit,
-                          fake_network_context)
+        self.mech_driver.create_network_precommit(fake_network_context)
+
+        # Test unsupported network types.
         fake_network_context = self._create_fake_network_context(
             'gre', segmentation_id=13)
         self.assertRaises(n_exc.InvalidInput,
