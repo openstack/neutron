@@ -170,15 +170,9 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
         return self.deserialize(self.fmt, res)['security_group']
 
     def _find_security_group_row_by_id(self, sg_id):
-        if self.nb_api.is_port_groups_supported():
-            for row in self.nb_api._tables['Port_Group'].rows.values():
-                if row.name == utils.ovn_port_group_name(sg_id):
-                    return row
-        else:
-            for row in self.nb_api._tables['Address_Set'].rows.values():
-                if (row.external_ids.get(
-                        ovn_const.OVN_SG_EXT_ID_KEY) == sg_id):
-                    return row
+        for row in self.nb_api._tables['Port_Group'].rows.values():
+            if row.name == utils.ovn_port_group_name(sg_id):
+                return row
 
     def _create_security_group_rule(self, sg_id):
         data = {'security_group_rule': {'security_group_id': sg_id,

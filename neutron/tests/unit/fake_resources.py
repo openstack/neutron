@@ -71,10 +71,6 @@ class FakeOvsdbNbOvnIdl(object):
         self.idl = mock.Mock()
         self.add_static_route = mock.Mock()
         self.delete_static_route = mock.Mock()
-        self.create_address_set = mock.Mock()
-        self.update_address_set_ext_ids = mock.Mock()
-        self.delete_address_set = mock.Mock()
-        self.update_address_set = mock.Mock()
         self.get_all_chassis_gateway_bindings = mock.Mock()
         self.get_chassis_gateways = mock.Mock()
         self.get_gateway_chassis_binding = mock.Mock()
@@ -121,12 +117,6 @@ class FakeOvsdbNbOvnIdl(object):
         self.get_lrouter.return_value = None
         self.delete_lrouter_ext_gw = mock.Mock()
         self.delete_lrouter_ext_gw.return_value = None
-        self.is_port_groups_supported = mock.Mock()
-        # TODO(lucasagomes): Flip this return value to True at some point,
-        # port groups should be the default method used by networking-ovn
-        self.is_port_groups_supported.return_value = False
-        self.get_address_set = mock.Mock()
-        self.get_address_set.return_value = None
         self.pg_acl_add = mock.Mock()
         self.pg_acl_del = mock.Mock()
         self.pg_del = mock.Mock()
