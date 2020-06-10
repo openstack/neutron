@@ -1,0 +1,21 @@
+---
+- name: "stop and disable {{ service.name }} services and healthchecks"
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  become: yes
+  loop:
+    - "{{ service.healthcheck_timer_file }}"
+    - "{{ service.healthcheck_service_file }}"
+    - "{{ service.service_file }}"
+
+- name: delete ml2 ovs systemd service files
+  file:
+    path: "{{ systemd_service_file_dir }}/{{ item }}"
+    state: absent
+  loop:
+    - "{{ service.service_file }}"
+    - "{{ service.healthcheck_service_file }}"
+    - "{{ service.healthcheck_timer_file }}"
+  become: yes
