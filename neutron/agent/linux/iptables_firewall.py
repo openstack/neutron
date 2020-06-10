@@ -387,6 +387,11 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def _get_br_device_name(self, port):
         return ('brq' + port['network_id'])[:constants.LINUX_DEV_LEN]
 
+    def _get_port_device_name(self, port):
+        if port['device'].startswith(constants.TAP_DEVICE_PREFIX):
+            return port['device'][4:]
+        return port['device']
+
     def _get_jump_rules(self, port, create=True):
         zone = self.ipconntrack.get_device_zone(port, create=create)
         if not zone:
@@ -400,10 +405,10 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         if self._are_sg_rules_stateful(port_sg_rules):
             # comment to prevent duplicate warnings for different devices using
             # same bridge. truncate start to remove prefixes
-            comment = 'Set zone for %s' % port['device'][4:]
+            comment = 'Set zone for %s' % self._get_port_device_name(port)
             conntrack = '--zone %s' % self.ipconntrack.get_device_zone(port)
         else:
-            comment = 'Make %s stateless' % port['device'][4:]
+            comment = 'Make %s stateless' % self._get_port_device_name(port)
             conntrack = '--notrack'
         rules = []
         for dev, match in ((br_dev, match_physdev), (br_dev, match_interface),
