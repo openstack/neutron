@@ -1044,8 +1044,6 @@ class _DVRAgentInterfaceMixin(object):
                         {'ag': const.AGENT_TYPE_L3,
                          'host': host})
             return
-        if not l3_agent_db:
-            return
 
         l3_agent_mode = self._get_agent_mode(l3_agent_db)
         if l3_agent_mode == const.L3_AGENT_MODE_DVR_NO_EXTERNAL:
