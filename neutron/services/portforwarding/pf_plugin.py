@@ -56,15 +56,22 @@ PORT_FORWARDING_FLOATINGIP_KEY = '_pf_floatingips'
 
 
 def _required_service_plugins():
-    supported_svc_plugins = [l3.ROUTER, 'ovn-router']
+    SvcPlugin = collections.namedtuple('SvcPlugin', 'plugin uses_rpc')
+    l3_router = SvcPlugin(l3.ROUTER, True)
+    supported_svc_plugins = [l3_router, SvcPlugin('ovn-router', False)]
+    plugins = []
+    rpc_required = False
     try:
-        plugins = [svc for svc in supported_svc_plugins if
-                   svc in cfg.CONF.service_plugins]
+        for svc in supported_svc_plugins:
+            if svc.plugin in cfg.CONF.service_plugins:
+                plugins.append(svc.plugin)
+                rpc_required |= svc.uses_rpc
     except cfg.NoSuchOptError:
-        plugins = None
         pass
-    # Use l3.ROUTER as required service plugin if no other was provided.
-    return plugins or [l3.ROUTER]
+    if plugins:
+        return plugins, rpc_required
+    # Use l3_router as required service plugin if no other was provided.
+    return [l3_router.plugin], l3_router.uses_rpc
 
 
 @resource_extend.has_resource_extenders
@@ -75,7 +82,8 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
     This class implements a Port Forwarding plugin.
     """
 
-    required_service_plugins = _required_service_plugins()
+    required_service_plugins, _rpc_notifications_required = \
+        _required_service_plugins()
 
     supported_extension_aliases = [apidef.ALIAS,
                                    expose_port_forwarding_in_fip.ALIAS,
@@ -87,7 +95,8 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
 
     def __init__(self):
         super(PortForwardingPlugin, self).__init__()
-        self.push_api = resources_rpc.ResourcesPushRpcApi()
+        self.push_api = resources_rpc.ResourcesPushRpcApi() \
+            if self._rpc_notifications_required else None
         self.l3_plugin = directory.get_plugin(constants.L3)
         self.core_plugin = directory.get_plugin()
         registry.publish(pf_consts.PORT_FORWARDING_PLUGIN, events.AFTER_INIT,
@@ -241,8 +250,9 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                     pf_resource.delete()
                     remove_port_forwarding_list.append(pf_resource)
 
-        self.push_api.push(context, remove_port_forwarding_list,
-                           rpc_events.DELETED)
+        if self._rpc_notifications_required:
+            self.push_api.push(context, remove_port_forwarding_list,
+                               rpc_events.DELETED)
         registry_notify_payload = [
             callbacks.PortForwardingPayload(context, original_pf=pf_obj) for
             pf_obj in remove_port_forwarding_list]
@@ -369,7 +379,8 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
                                          msg=message)
 
-            self.push_api.push(context, [pf_obj], rpc_events.CREATED)
+            if self._rpc_notifications_required:
+                self.push_api.push(context, [pf_obj], rpc_events.CREATED)
             registry.notify(pf_consts.PORT_FORWARDING, events.AFTER_CREATE,
                             self,
                             payload=[callbacks.PortForwardingPayload(context,
@@ -423,7 +434,8 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                         "are %s") % conflict_params
             raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
                                      msg=message)
-        self.push_api.push(context, [pf_obj], rpc_events.UPDATED)
+        if self._rpc_notifications_required:
+            self.push_api.push(context, [pf_obj], rpc_events.UPDATED)
         registry.notify(pf_consts.PORT_FORWARDING, events.AFTER_UPDATE, self,
                         payload=[callbacks.PortForwardingPayload(context,
                             current_pf=pf_obj, original_pf=original_pf_obj)])
@@ -524,7 +536,8 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 fip_obj.update_fields({'router_id': None})
                 fip_obj.update()
             pf_obj.delete()
-        self.push_api.push(context, [pf_obj], rpc_events.DELETED)
+        if self._rpc_notifications_required:
+            self.push_api.push(context, [pf_obj], rpc_events.DELETED)
         registry.notify(pf_consts.PORT_FORWARDING, events.AFTER_DELETE, self,
                         payload=[callbacks.PortForwardingPayload(
                             context, original_pf=pf_obj)])
