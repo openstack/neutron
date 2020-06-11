@@ -1754,7 +1754,7 @@ class OVNClient(object):
             global_options = ovn_conf.get_global_dhcpv6_opts()
 
         for option, value in global_options.items():
-            if option in ovn_const.GLOBAL_DHCP_OPTS_BLACKLIST[ip_version]:
+            if option in ovn_const.GLOBAL_DHCP_OPTS_PROHIBIT_LIST[ip_version]:
                 # This option is not allowed to be set with a global setting
                 LOG.debug('DHCP option %s is not permitted to be set in '
                           'global options. This option will be ignored.',

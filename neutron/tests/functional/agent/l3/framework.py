@@ -202,7 +202,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                 n, len([line for line in out.strip().split('\n') if line]))
 
         if ha:
-            common_utils.wait_until_true(lambda: router.ha_state == 'master')
+            common_utils.wait_until_true(lambda: router.ha_state == 'primary')
 
         with self.assert_max_execution_time(100):
             assert_num_of_conntrack_rules(0)
@@ -322,7 +322,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         router.process()
 
         if enable_ha:
-            common_utils.wait_until_true(lambda: router.ha_state == 'master')
+            common_utils.wait_until_true(lambda: router.ha_state == 'primary')
 
             # Keepalived notifies of a state transition when it starts,
             # not when it ends. Thus, we have to wait until keepalived finishes
@@ -629,34 +629,34 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
 
         return (router1, router2)
 
-    def _get_master_and_slave_routers(self, router1, router2,
-                                      check_external_device=True):
+    def _get_primary_and_backup_routers(self, router1, router2,
+                                        check_external_device=True):
 
         try:
             common_utils.wait_until_true(
-                lambda: router1.ha_state == 'master')
+                lambda: router1.ha_state == 'primary')
             if check_external_device:
                 common_utils.wait_until_true(
                     lambda: self._check_external_device(router1))
-            master_router = router1
-            slave_router = router2
+            primary_router = router1
+            backup_router = router2
         except common_utils.WaitTimeout:
             common_utils.wait_until_true(
-                lambda: router2.ha_state == 'master')
+                lambda: router2.ha_state == 'primary')
             if check_external_device:
                 common_utils.wait_until_true(
                     lambda: self._check_external_device(router2))
-            master_router = router2
-            slave_router = router1
+            primary_router = router2
+            backup_router = router1
 
         common_utils.wait_until_true(
-                lambda: master_router.ha_state == 'master')
+                lambda: primary_router.ha_state == 'primary')
         if check_external_device:
             common_utils.wait_until_true(
-                lambda: self._check_external_device(master_router))
+                lambda: self._check_external_device(primary_router))
         common_utils.wait_until_true(
-            lambda: slave_router.ha_state == 'backup')
-        return master_router, slave_router
+            lambda: backup_router.ha_state == 'backup')
+        return primary_router, backup_router
 
     def fail_ha_router(self, router):
         device_name = router.get_ha_device_name()

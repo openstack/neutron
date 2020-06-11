@@ -84,7 +84,10 @@ class MonitorDaemon(daemon.Daemon):
                 continue
 
             if event['name'] == self.interface and event['cidr'] == self.cidr:
-                new_state = 'master' if event['event'] == 'added' else 'backup'
+                if event['event'] == 'added':
+                    new_state = 'primary'
+                else:
+                    new_state = 'backup'
                 self.write_state_change(new_state)
                 self.notify_agent(new_state)
             elif event['name'] != self.interface and event['event'] == 'added':
@@ -103,7 +106,7 @@ class MonitorDaemon(daemon.Daemon):
             ip = ip_lib.IPDevice(self.interface, self.namespace)
             for address in ip.addr.list():
                 if address.get('cidr') == self.cidr:
-                    state = 'master'
+                    state = 'primary'
                     self.write_state_change(state)
                     self.notify_agent(state)
                     break

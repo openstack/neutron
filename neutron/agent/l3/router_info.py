@@ -170,7 +170,7 @@ class RouterInfo(BaseRouterInfo):
         return namespaces.RouterNamespace(
             router_id, agent_conf, iface_driver, use_ipv6)
 
-    def is_router_master(self):
+    def is_router_primary(self):
         return True
 
     def _update_routing_table(self, operation, route, namespace):

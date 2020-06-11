@@ -1,9 +1,9 @@
 ---
 features:
   - Keepalived VRRP health check functionality to enable verification of
-    connectivity from the "master" router to all gateways. Activation of this
+    connectivity from the "primary" router to all gateways. Activation of this
     feature enables gateway connectivity validation and rescheduling of the
-    "master" router to another node when connectivity is lost. If all routers
+    "primary" router to another node when connectivity is lost. If all routers
     lose connectivity to the gateways, the election process will be repeated
     round-robin until one of the routers restores its gateway connection. In
-    the mean time, all of the routers will be reported as "master".
+    the mean time, all of the routers will be reported as "primary".

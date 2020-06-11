@@ -234,9 +234,9 @@ class SriovSwitchMechVnicTypesTestCase(SriovNicSwitchMechanismBaseTestCase):
                 portbindings.VNIC_DIRECT,
                 portbindings.VNIC_MACVTAP,
                 portbindings.VNIC_DIRECT_PHYSICAL]
-        self.blacklist_cfg = {
+        self.prohibit_list_cfg = {
             'SRIOV_DRIVER': {
-                'vnic_type_blacklist': []
+                'vnic_type_prohibit_list': []
             }
         }
         super(SriovSwitchMechVnicTypesTestCase, self).setUp()
@@ -250,13 +250,13 @@ class SriovSwitchMechVnicTypesTestCase(SriovNicSwitchMechanismBaseTestCase):
             self.override_vnic_types,
             self.driver_with_vnic_types.supported_vnic_types)
 
-    def test_vnic_type_blacklist_valid_item(self):
-        self.blacklist_cfg['SRIOV_DRIVER']['vnic_type_blacklist'] = \
+    def test_vnic_type_prohibit_list_valid_item(self):
+        self.prohibit_list_cfg['SRIOV_DRIVER']['vnic_type_prohibit_list'] = \
             [portbindings.VNIC_MACVTAP]
 
         fake_conf = cfg.CONF
         fake_conf_fixture = base.MechDriverConfFixture(
-            fake_conf, self.blacklist_cfg,
+            fake_conf, self.prohibit_list_cfg,
             mech_sriov_conf.register_sriov_mech_driver_opts)
         self.useFixture(fake_conf_fixture)
 
@@ -268,26 +268,27 @@ class SriovSwitchMechVnicTypesTestCase(SriovNicSwitchMechanismBaseTestCase):
         self.assertEqual(len(self.default_supported_vnics) - 1,
                          len(supported_vnic_types))
 
-    def test_vnic_type_blacklist_not_valid_item(self):
-        self.blacklist_cfg['SRIOV_DRIVER']['vnic_type_blacklist'] = ['foo']
+    def test_vnic_type_prohibit_list_not_valid_item(self):
+        self.prohibit_list_cfg['SRIOV_DRIVER']['vnic_type_prohibit_list'] = \
+            ['foo']
         fake_conf = cfg.CONF
         fake_conf_fixture = base.MechDriverConfFixture(
-            fake_conf, self.blacklist_cfg,
+            fake_conf, self.prohibit_list_cfg,
             mech_sriov_conf.register_sriov_mech_driver_opts)
         self.useFixture(fake_conf_fixture)
 
         self.assertRaises(ValueError,
                           mech_driver.SriovNicSwitchMechanismDriver)
 
-    def test_vnic_type_blacklist_all_items(self):
-        self.blacklist_cfg['SRIOV_DRIVER']['vnic_type_blacklist'] = \
+    def test_vnic_type_prohibit_list_all_items(self):
+        self.prohibit_list_cfg['SRIOV_DRIVER']['vnic_type_prohibit_list'] = \
             [portbindings.VNIC_DIRECT,
              portbindings.VNIC_MACVTAP,
              portbindings.VNIC_DIRECT_PHYSICAL]
 
         fake_conf = cfg.CONF
         fake_conf_fixture = base.MechDriverConfFixture(
-            fake_conf, self.blacklist_cfg,
+            fake_conf, self.prohibit_list_cfg,
             mech_sriov_conf.register_sriov_mech_driver_opts)
         self.useFixture(fake_conf_fixture)
 

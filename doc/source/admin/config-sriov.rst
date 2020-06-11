@@ -87,7 +87,7 @@ Using SR-IOV interfaces
 In order to enable SR-IOV, the following steps are required:
 
 #. Create Virtual Functions (Compute)
-#. Whitelist PCI devices in nova-compute (Compute)
+#. Configure allow list for PCI devices in nova-compute (Compute)
 #. Configure neutron-server (Controller)
 #. Configure nova-scheduler (Controller)
 #. Enable neutron sriov-agent (Compute)
@@ -223,8 +223,8 @@ network and has access to the private networks of all machines.
       the ``sysfsutils`` tool. However, this is not available by default on
       many major distributions.
 
-Whitelist PCI devices nova-compute (Compute)
---------------------------------------------
+Configuring allow list for PCI devices nova-compute (Compute)
+-------------------------------------------------------------
 
 #. Configure which PCI devices the ``nova-compute`` service may use. Edit
    the ``nova.conf`` file:
@@ -239,7 +239,7 @@ Whitelist PCI devices nova-compute (Compute)
    ``physnet2``.
 
    Alternatively the ``[pci] passthrough_whitelist`` parameter also supports
-   whitelisting by:
+   allowing devices by:
 
    - PCI address: The address uses the same syntax as in ``lspci`` and an
      asterisk (``*``) can be used to match anything.
@@ -604,8 +604,8 @@ you must:
    machines with no switch and the cards are plugged in back-to-back. A
    subnet manager is required for the link on the cards to come up.
    It is possible to have more than one subnet manager. In this case, one
-   of them will act as the master, and any other will act as a slave that
-   will take over when the master subnet manager fails.
+   of them will act as the primary, and any other will act as a backup that
+   will take over when the primary subnet manager fails.
 
 #. Install the ``ebrctl`` utility on the compute nodes.
 

@@ -49,11 +49,11 @@ OPTS = [
                       'VRRP health checks. Recommended value is 5. '
                       'This will cause pings to be sent to the gateway '
                       'IP address(es) - requires ICMP_ECHO_REQUEST '
-                      'to be enabled on the gateway. '
-                      'If gateway fails, all routers will be reported '
-                      'as master, and master election will be repeated '
-                      'in round-robin fashion, until one of the router '
-                      'restore the gateway connection.')),
+                      'to be enabled on the gateway(s). '
+                      'If a gateway fails, all routers will be reported '
+                      'as primary, and a primary election will be repeated '
+                      'in a round-robin fashion, until one of the routers '
+                      'restores the gateway connection.')),
 ]
 
 

@@ -43,7 +43,7 @@ addition or deletion of the chassis, following approach can be considered:
 
 * Find a list of chassis where router is scheduled and reschedule it
   up to *MAX_GW_CHASSIS* gateways using list of available candidates.
-  Do not modify the master chassis association to not interrupt network flows.
+  Do not modify the primary chassis association to not interrupt network flows.
 
 Rescheduling is an event triggered operation which will occur whenever a
 chassis is added or removed. When it happend, ``schedule_unhosted_gateways()``
@@ -58,7 +58,7 @@ southbound database table, would be the ones eligible for hosting the routers.
 Rescheduling of router depends on current prorities set. Each chassis is given
 a specific priority for the router's gateway and priority increases with
 increasing value ( i.e. 1 < 2 < 3 ...). The highest prioritized chassis hosts
-gateway port. Other chassis are selected as slaves.
+gateway port. Other chassis are selected as backups.
 
 There are two approaches for rescheduling supported by ovn driver right
 now:
@@ -72,7 +72,7 @@ Few points to consider for the design:
   C1 to C3 and C2 to C3. Rescheduling from C1 to C2 and vice-versa should not
   be allowed.
 
-* In order to reschedule the router's chassis, the ``master`` chassis for a
+* In order to reschedule the router's chassis, the ``primary`` chassis for a
   gateway router will be left untouched. However, for the scenario where all
   routers are scheduled in only one chassis which is available as gateway,
   the addition of the second gateway chassis would schedule the router
@@ -89,11 +89,11 @@ Following scenarios are possible which have been considered in the design:
     - System has 2 chassis C1 and C2 during installation. C1 goes down.
     - Behavior: In this case, all routers would be rescheduled to C2.
       Once C1 is back up, routers would be rescheduled on it. However,
-      since C2 is now the new master, routers on C1 would have lower priority.
+      since C2 is now the new primary, routers on C1 would have lower priority.
 * Case #3:
     - System has 2 chassis C1 and C2 during installation. C3 is added to it.
-    - Behavior: In this case, routers would not move their master chassis
-      associations. So routers which have their master on C1, would remain
+    - Behavior: In this case, routers would not move their primary chassis
+      associations. So routers which have their primary on C1, would remain
       there, and same for routers on C2. However, lower proritized candidates
       of existing gateways would be scheduled on the chassis C3, depending
       on the type of used scheduler (Random or LeastLoaded).
@@ -102,23 +102,23 @@ Following scenarios are possible which have been considered in the design:
 Rebalancing of Gateway Chassis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Rebalancing is the second part of the design and it assigns a new master to
+Rebalancing is the second part of the design and it assigns a new primary to
 already scheduled router gateway ports. Downtime is expected in this
 operation. Rebalancing of routers can be achieved using external cli script.
 Similar approach has been implemeneted for DHCP rescheduling `[4]`_.
-The master chassis gateway could be moved only to other, previously scheduled
-gateway. Rebalancing of chassis occurs only if number of scheduled master
+The primary chassis gateway could be moved only to other, previously scheduled
+gateway. Rebalancing of chassis occurs only if number of scheduled primary
 chassis ports per each provider network hosted by given chassis is higher than
-average number of hosted master gateway ports per chassis per provider network.
+average number of hosted primary gateway ports per chassis per provider network.
 
 This dependency is determined by formula:
 
 avg_gw_per_chassis = num_gw_by_provider_net / num_chassis_with_provider_net
 
 Where:
-    - avg_gw_per_chassis - average number of scheduler master gateway chassis
+    - avg_gw_per_chassis - average number of scheduler primary gateway chassis
       withing same provider network.
-    - num_gw_by_provider_net - number of master chassis gateways scheduled in
+    - num_gw_by_provider_net - number of primary chassis gateways scheduled in
       given provider networks.
     - num_chassis_with_provider_net - number of chassis that has connectivity
       to given provider network.
@@ -128,9 +128,9 @@ The rebalancing occurs only if:
 num_gw_by_provider_net_by_chassis > avg_gw_per_chassis
 
 Where:
-    - num_gw_by_provider_net_by_chassis - number of hosted master gateways
+    - num_gw_by_provider_net_by_chassis - number of hosted primary gateways
       by given provider network by given chassis
-    - avg_gw_per_chassis - average number of scheduler master gateway chassis
+    - avg_gw_per_chassis - average number of scheduler primary gateway chassis
       withing same provider network.
 
 

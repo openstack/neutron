@@ -521,7 +521,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         self.l3_plugin.schedule_unhosted_gateways()
 
         # As Chassis4 has been removed so all gateways that were
-        # hosted there are now masters on chassis5 and have
+        # hosted there are now primaries on chassis5 and have
         # priority 1.
         self.assertEqual({1: 20}, _get_result_dict()[chassis5])
 

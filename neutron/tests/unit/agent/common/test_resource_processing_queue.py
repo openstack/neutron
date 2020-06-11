@@ -29,78 +29,78 @@ PRIORITY_RPC = 0
 
 class TestExclusiveResourceProcessor(base.BaseTestCase):
 
-    def test_i_am_master(self):
-        master = queue.ExclusiveResourceProcessor(FAKE_ID)
-        not_master = queue.ExclusiveResourceProcessor(FAKE_ID)
-        master_2 = queue.ExclusiveResourceProcessor(FAKE_ID_2)
-        not_master_2 = queue.ExclusiveResourceProcessor(FAKE_ID_2)
+    def test_i_am_primary(self):
+        primary = queue.ExclusiveResourceProcessor(FAKE_ID)
+        not_primary = queue.ExclusiveResourceProcessor(FAKE_ID)
+        primary_2 = queue.ExclusiveResourceProcessor(FAKE_ID_2)
+        not_primary_2 = queue.ExclusiveResourceProcessor(FAKE_ID_2)
 
-        self.assertTrue(master._i_am_master())
-        self.assertFalse(not_master._i_am_master())
-        self.assertTrue(master_2._i_am_master())
-        self.assertFalse(not_master_2._i_am_master())
+        self.assertTrue(primary._i_am_primary())
+        self.assertFalse(not_primary._i_am_primary())
+        self.assertTrue(primary_2._i_am_primary())
+        self.assertFalse(not_primary_2._i_am_primary())
 
-        master.__exit__(None, None, None)
-        master_2.__exit__(None, None, None)
+        primary.__exit__(None, None, None)
+        primary_2.__exit__(None, None, None)
 
-    def test_master(self):
-        master = queue.ExclusiveResourceProcessor(FAKE_ID)
-        not_master = queue.ExclusiveResourceProcessor(FAKE_ID)
-        master_2 = queue.ExclusiveResourceProcessor(FAKE_ID_2)
-        not_master_2 = queue.ExclusiveResourceProcessor(FAKE_ID_2)
+    def test_primary(self):
+        primary = queue.ExclusiveResourceProcessor(FAKE_ID)
+        not_primary = queue.ExclusiveResourceProcessor(FAKE_ID)
+        primary_2 = queue.ExclusiveResourceProcessor(FAKE_ID_2)
+        not_primary_2 = queue.ExclusiveResourceProcessor(FAKE_ID_2)
 
-        self.assertEqual(master, master._master)
-        self.assertEqual(master, not_master._master)
-        self.assertEqual(master_2, master_2._master)
-        self.assertEqual(master_2, not_master_2._master)
+        self.assertEqual(primary, primary._primary)
+        self.assertEqual(primary, not_primary._primary)
+        self.assertEqual(primary_2, primary_2._primary)
+        self.assertEqual(primary_2, not_primary_2._primary)
 
-        master.__exit__(None, None, None)
-        master_2.__exit__(None, None, None)
+        primary.__exit__(None, None, None)
+        primary_2.__exit__(None, None, None)
 
     def test__enter__(self):
-        self.assertNotIn(FAKE_ID, queue.ExclusiveResourceProcessor._masters)
-        master = queue.ExclusiveResourceProcessor(FAKE_ID)
-        master.__enter__()
-        self.assertIn(FAKE_ID, queue.ExclusiveResourceProcessor._masters)
-        master.__exit__(None, None, None)
+        self.assertNotIn(FAKE_ID, queue.ExclusiveResourceProcessor._primaries)
+        primary = queue.ExclusiveResourceProcessor(FAKE_ID)
+        primary.__enter__()
+        self.assertIn(FAKE_ID, queue.ExclusiveResourceProcessor._primaries)
+        primary.__exit__(None, None, None)
 
     def test__exit__(self):
-        master = queue.ExclusiveResourceProcessor(FAKE_ID)
-        not_master = queue.ExclusiveResourceProcessor(FAKE_ID)
-        master.__enter__()
-        self.assertIn(FAKE_ID, queue.ExclusiveResourceProcessor._masters)
-        not_master.__enter__()
-        not_master.__exit__(None, None, None)
-        self.assertIn(FAKE_ID, queue.ExclusiveResourceProcessor._masters)
-        master.__exit__(None, None, None)
-        self.assertNotIn(FAKE_ID, queue.ExclusiveResourceProcessor._masters)
+        primary = queue.ExclusiveResourceProcessor(FAKE_ID)
+        not_primary = queue.ExclusiveResourceProcessor(FAKE_ID)
+        primary.__enter__()
+        self.assertIn(FAKE_ID, queue.ExclusiveResourceProcessor._primaries)
+        not_primary.__enter__()
+        not_primary.__exit__(None, None, None)
+        self.assertIn(FAKE_ID, queue.ExclusiveResourceProcessor._primaries)
+        primary.__exit__(None, None, None)
+        self.assertNotIn(FAKE_ID, queue.ExclusiveResourceProcessor._primaries)
 
     def test_data_fetched_since(self):
-        master = queue.ExclusiveResourceProcessor(FAKE_ID)
+        primary = queue.ExclusiveResourceProcessor(FAKE_ID)
         self.assertEqual(datetime.datetime.min,
-                         master._get_resource_data_timestamp())
+                         primary._get_resource_data_timestamp())
 
         ts1 = datetime.datetime.utcnow() - datetime.timedelta(seconds=10)
         ts2 = datetime.datetime.utcnow()
 
-        master.fetched_and_processed(ts2)
-        self.assertEqual(ts2, master._get_resource_data_timestamp())
-        master.fetched_and_processed(ts1)
-        self.assertEqual(ts2, master._get_resource_data_timestamp())
+        primary.fetched_and_processed(ts2)
+        self.assertEqual(ts2, primary._get_resource_data_timestamp())
+        primary.fetched_and_processed(ts1)
+        self.assertEqual(ts2, primary._get_resource_data_timestamp())
 
-        master.__exit__(None, None, None)
+        primary.__exit__(None, None, None)
 
     def test_updates(self):
-        master = queue.ExclusiveResourceProcessor(FAKE_ID)
-        not_master = queue.ExclusiveResourceProcessor(FAKE_ID)
+        primary = queue.ExclusiveResourceProcessor(FAKE_ID)
+        not_primary = queue.ExclusiveResourceProcessor(FAKE_ID)
 
-        master.queue_update(queue.ResourceUpdate(FAKE_ID, 0))
-        not_master.queue_update(queue.ResourceUpdate(FAKE_ID, 0))
+        primary.queue_update(queue.ResourceUpdate(FAKE_ID, 0))
+        not_primary.queue_update(queue.ResourceUpdate(FAKE_ID, 0))
 
-        for update in not_master.updates():
-            raise Exception("Only the master should process a resource")
+        for update in not_primary.updates():
+            raise Exception("Only the primary should process a resource")
 
-        self.assertEqual(2, len([i for i in master.updates()]))
+        self.assertEqual(2, len([i for i in primary.updates()]))
 
     def test_hit_retry_limit(self):
         tries = 1

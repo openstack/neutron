@@ -35,7 +35,7 @@ PRIMARY_VIP_RANGE_SIZE = 24
 KEEPALIVED_SERVICE_NAME = 'keepalived'
 KEEPALIVED_EMAIL_FROM = 'neutron@openstack.local'
 KEEPALIVED_ROUTER_ID = 'neutron'
-GARP_MASTER_DELAY = 60
+GARP_PRIMARY_DELAY = 60
 HEALTH_CHECK_NAME = 'ha_health_check'
 
 LOG = logging.getLogger(__name__)
@@ -167,7 +167,7 @@ class KeepalivedInstance(object):
     def __init__(self, state, interface, vrouter_id, ha_cidrs,
                  priority=HA_DEFAULT_PRIORITY, advert_int=None,
                  mcast_src_ip=None, nopreempt=False,
-                 garp_master_delay=GARP_MASTER_DELAY,
+                 garp_primary_delay=GARP_PRIMARY_DELAY,
                  vrrp_health_check_interval=0,
                  ha_conf_dir=None):
         self.name = 'VR_%s' % vrouter_id
@@ -182,7 +182,7 @@ class KeepalivedInstance(object):
         self.nopreempt = nopreempt
         self.advert_int = advert_int
         self.mcast_src_ip = mcast_src_ip
-        self.garp_master_delay = garp_master_delay
+        self.garp_primary_delay = garp_primary_delay
         self.track_interfaces = []
         self.vips = []
         self.virtual_routes = KeepalivedInstanceRoutes()
@@ -294,7 +294,7 @@ class KeepalivedInstance(object):
                        '    interface %s' % self.interface,
                        '    virtual_router_id %s' % self.vrouter_id,
                        '    priority %s' % self.priority,
-                       '    garp_master_delay %s' % self.garp_master_delay])
+                       '    garp_master_delay %s' % self.garp_primary_delay])
 
         if self.nopreempt:
             config.append('    nopreempt')
@@ -380,7 +380,7 @@ class KeepalivedManager(object):
         self.process_monitor = process_monitor
         self.conf_path = conf_path
         # configure throttler for spawn to introduce delay between SIGHUPs,
-        # otherwise keepalived master may unnecessarily flip to slave
+        # otherwise keepalived primary may unnecessarily flip to backup
         if throttle_restart_value is not None:
             self._throttle_spawn(throttle_restart_value)
 

@@ -833,7 +833,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         fip_cidr = '11.22.33.44/24'
 
         ri = dvr_edge_ha_rtr.DvrEdgeHaRouter(HOSTNAME, [], **self.ri_kwargs)
-        ri.is_router_master = mock.Mock(return_value=False)
+        ri.is_router_primary = mock.Mock(return_value=False)
         ri._add_vip = mock.Mock()
         interface_name = ri.get_snat_external_device_interface_name(
             ri.get_ex_gw_port())
@@ -844,7 +844,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         router[lib_constants.HA_INTERFACE_KEY]['status'] = 'DOWN'
         self._set_ri_kwargs(agent, router['id'], router)
         ri_1 = dvr_edge_ha_rtr.DvrEdgeHaRouter(HOSTNAME, [], **self.ri_kwargs)
-        ri_1.is_router_master = mock.Mock(return_value=True)
+        ri_1.is_router_primary = mock.Mock(return_value=True)
         ri_1._add_vip = mock.Mock()
         interface_name = ri_1.get_snat_external_device_interface_name(
             ri_1.get_ex_gw_port())
@@ -855,7 +855,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         router[lib_constants.HA_INTERFACE_KEY]['status'] = 'ACTIVE'
         self._set_ri_kwargs(agent, router['id'], router)
         ri_2 = dvr_edge_ha_rtr.DvrEdgeHaRouter(HOSTNAME, [], **self.ri_kwargs)
-        ri_2.is_router_master = mock.Mock(return_value=True)
+        ri_2.is_router_primary = mock.Mock(return_value=True)
         ri_2._add_vip = mock.Mock()
         interface_name = ri_2.get_snat_external_device_interface_name(
             ri_2.get_ex_gw_port())
@@ -877,14 +877,14 @@ class TestDvrRouterOperations(base.BaseTestCase):
         fip_cidr = '11.22.33.44/24'
 
         ri = dvr_edge_ha_rtr.DvrEdgeHaRouter(HOSTNAME, [], **self.ri_kwargs)
-        ri.is_router_master = mock.Mock(return_value=False)
+        ri.is_router_primary = mock.Mock(return_value=False)
         ri._remove_vip = mock.Mock()
         ri.remove_centralized_floatingip(fip_cidr)
         ri._remove_vip.assert_called_once_with(fip_cidr)
         super_remove_centralized_floatingip.assert_not_called()
 
         ri1 = dvr_edge_ha_rtr.DvrEdgeHaRouter(HOSTNAME, [], **self.ri_kwargs)
-        ri1.is_router_master = mock.Mock(return_value=True)
+        ri1.is_router_primary = mock.Mock(return_value=True)
         ri1._remove_vip = mock.Mock()
         ri1.remove_centralized_floatingip(fip_cidr)
         ri1._remove_vip.assert_called_once_with(fip_cidr)
@@ -922,7 +922,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri._ha_state_path = self.get_temp_file_path('router_ha_state')
 
         with open(ri._ha_state_path, "w") as f:
-            f.write("master")
+            f.write("primary")
 
         ri._create_snat_namespace = mock.Mock()
         ri.update_initial_state = mock.Mock()
