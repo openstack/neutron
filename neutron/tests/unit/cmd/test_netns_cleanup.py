@@ -19,40 +19,8 @@ from unittest import mock
 import testtools
 
 from neutron.cmd import netns_cleanup as util
+from neutron.privileged.agent.linux import utils as priv_utils
 from neutron.tests import base
-
-NETSTAT_NETNS_OUTPUT = ("""
-Active Internet connections (only servers)
-Proto Recv-Q Send-Q Local Address           Foreign Address         State\
-       PID/Program name
-tcp        0      0 0.0.0.0:9697            0.0.0.0:*               LISTEN\
-      1347/python
-raw        0      0 0.0.0.0:112             0.0.0.0:*               7\
-           1279/keepalived
-raw        0      0 0.0.0.0:112             0.0.0.0:*               7\
-           1279/keepalived
-raw6       0      0 :::58                   :::*                    7\
-           1349/radvd
-Active UNIX domain sockets (only servers)
-Proto RefCnt Flags       Type       State         I-Node   PID/Program name\
-     Path
-unix  2      [ ACC ]     STREAM     LISTENING     82039530 1353/python\
-          /tmp/rootwrap-VKSm8a/rootwrap.sock
-""")
-
-NETSTAT_NO_NAMESPACE = ("""
-Cannot open network namespace "qrouter-e6f206b2-4e8d-4597-a7e1-c3a20337e9c6":\
- No such file or directory
-""")
-
-NETSTAT_NO_LISTEN_PROCS = ("""
-Active Internet connections (only servers)
-Proto Recv-Q Send-Q Local Address           Foreign Address         State\
-       PID/Program name
-Active UNIX domain sockets (only servers)
-Proto RefCnt Flags       Type       State         I-Node   PID/Program name\
-     Path
-""")
 
 
 class TestNetnsCleanup(base.BaseTestCase):
@@ -189,28 +157,6 @@ class TestNetnsCleanup(base.BaseTestCase):
                     self.assertEqual([], ovs_br_cls.mock_calls)
                     self.assertTrue(debug.called)
 
-    def _test_find_listen_pids_namespace_helper(self, expected,
-                                                netstat_output=None):
-        with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip_wrap:
-            ip_wrap.return_value.netns.execute.return_value = netstat_output
-            observed = util.find_listen_pids_namespace(mock.ANY)
-            self.assertEqual(expected, observed)
-
-    def test_find_listen_pids_namespace_correct_output(self):
-        expected = set(['1347', '1279', '1349', '1353'])
-        self._test_find_listen_pids_namespace_helper(expected,
-                                                     NETSTAT_NETNS_OUTPUT)
-
-    def test_find_listen_pids_namespace_no_procs(self):
-        expected = set()
-        self._test_find_listen_pids_namespace_helper(expected,
-                                                     NETSTAT_NO_LISTEN_PROCS)
-
-    def test_find_listen_pids_namespace_no_namespace(self):
-        expected = set()
-        self._test_find_listen_pids_namespace_helper(expected,
-                                                     NETSTAT_NO_NAMESPACE)
-
     def _test__kill_listen_processes_helper(self, pids, parents, children,
                                             kills_expected, force):
         def _get_element(dct, x):
@@ -234,7 +180,7 @@ class TestNetnsCleanup(base.BaseTestCase):
             mocks['find_fork_top_parent'].side_effect = _find_parent
             mocks['find_child_pids'].side_effect = _find_childs
 
-            with mock.patch.object(util, 'find_listen_pids_namespace',
+            with mock.patch.object(priv_utils, 'find_listen_pids_namespace',
                                    return_value=pids):
                 calls = []
                 for pid, sig in kills_expected:
