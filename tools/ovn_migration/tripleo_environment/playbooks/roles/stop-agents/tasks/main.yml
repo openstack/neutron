@@ -1,0 +1,18 @@
+---
+- name: populate service facts
+  service_facts:
+
+- name: disable ml2 ovs services and healthchecks
+  include_tasks: cleanup.yml
+  loop: "{{ ml2_ovs_services }}"
+  loop_control:
+    loop_var: service
+  when: ansible_facts.services[service.service_file] is defined
+
+- name: remove containers
+  become: yes
+  shell: |
+    for agent in $(podman ps -a --format {% raw %}"{{.ID}}"{% endraw %} --filter "name=(neutron_.*_agent|neutron_dhcp)"); do
+        echo "Cleaning up agent $agent"
+        podman rm -f $agent
+    done
