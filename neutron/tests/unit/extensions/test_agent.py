@@ -122,15 +122,16 @@ class AgentDBTestCase(AgentDBTestMixIn,
     def test_show_agent(self):
         self._register_agent_states()
         agents = self._list_agents(
-            query_string='binary=neutron-l3-agent')
+            query_string='binary=' + constants.AGENT_PROCESS_L3)
         self.assertEqual(2, len(agents['agents']))
         agent = self._show('agents', agents['agents'][0]['id'])
-        self.assertEqual('neutron-l3-agent', agent['agent']['binary'])
+        self.assertEqual(constants.AGENT_PROCESS_L3, agent['agent']['binary'])
 
     def test_update_agent(self):
         self._register_agent_states()
         agents = self._list_agents(
-            query_string='binary=neutron-l3-agent&host=' + L3_HOSTB)
+            query_string=('binary=' + constants.AGENT_PROCESS_L3 +
+                '&host=' + L3_HOSTB))
         self.assertEqual(1, len(agents['agents']))
         com_id = agents['agents'][0]['id']
         agent = self._show('agents', com_id)
@@ -148,5 +149,6 @@ class AgentDBTestCase(AgentDBTestMixIn,
         self._register_agent_states()
         time.sleep(1.5)
         agents = self._list_agents(
-            query_string='binary=neutron-l3-agent&host=' + L3_HOSTB)
+            query_string=('binary=' + constants.AGENT_PROCESS_L3 +
+                '&host=' + L3_HOSTB))
         self.assertFalse(agents['agents'][0]['alive'])

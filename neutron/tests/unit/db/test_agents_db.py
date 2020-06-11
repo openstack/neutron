@@ -45,8 +45,8 @@ load_tests = testscenarios.load_tests_apply_scenarios
 
 
 TEST_RESOURCE_VERSIONS = {"A": "1.0"}
-AGENT_STATUS = {'agent_type': 'Open vSwitch agent',
-                'binary': 'neutron-openvswitch-agent',
+AGENT_STATUS = {'agent_type': constants.AGENT_TYPE_OVS,
+                'binary': constants.AGENT_PROCESS_OVS,
                 'host': 'overcloud-notcompute',
                 'topic': 'N/A',
                 'resource_versions': TEST_RESOURCE_VERSIONS}

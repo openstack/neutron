@@ -172,7 +172,7 @@ class SriovNicSwitchAgent(object):
 
         # TODO(mangelajo): optimize resource_versions (see ovs agent)
         self.agent_state = {
-            'binary': 'neutron-sriov-nic-agent',
+            'binary': n_constants.AGENT_PROCESS_NIC_SWITCH,
             'host': self.conf.host,
             'topic': n_constants.L2_AGENT_TOPIC,
             'configurations': configurations,
@@ -580,6 +580,6 @@ def main():
         LOG.exception("Agent Initialization Failed")
         raise SystemExit(1)
     # Start everything.
-    setup_profiler.setup("neutron-sriov-nic-agent", cfg.CONF.host)
+    setup_profiler.setup(n_constants.AGENT_PROCESS_NIC_SWITCH, cfg.CONF.host)
     LOG.info("Agent initialized successfully, now running... ")
     agent.daemon_loop()

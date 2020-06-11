@@ -276,7 +276,7 @@ class UnixDomainMetadataProxy(object):
         self.failed_state_report = False
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         self.agent_state = {
-            'binary': 'neutron-metadata-agent',
+            'binary': constants.AGENT_PROCESS_METADATA,
             'host': cfg.CONF.host,
             'topic': 'N/A',
             'configurations': {
@@ -333,7 +333,8 @@ class UnixDomainMetadataProxy(object):
         return MODE_MAP[mode]
 
     def run(self):
-        server = agent_utils.UnixDomainWSGIServer('neutron-metadata-agent')
+        server = agent_utils.UnixDomainWSGIServer(
+                     constants.AGENT_PROCESS_METADATA)
         server.start(MetadataProxyHandler(self.conf),
                      self.conf.metadata_proxy_socket,
                      workers=self.conf.metadata_workers,

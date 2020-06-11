@@ -1,0 +1,16 @@
+---
+features:
+  - |
+    A previous change to set neutron-server child process names also modified
+    neutron agent ones. This can impact monitoring systems relying on
+    /proc/PID/environ formatting or `ps -e` output. Now neutron agents all have
+    process names formatted this way (showing both an old style process name
+    and full process name visible in recent releases)
+    ``neutron-agent-name`` (``original process name including interpreter``)
+
+    See bug `1881297 <https://bugs.launchpad.net/neutron/+bug/1881297>`_
+    for more details.
+upgrade:
+  - |
+    Monitoring tools relying on exact process names should be checked after
+    upgrade, and modified if needed.

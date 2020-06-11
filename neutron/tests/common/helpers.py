@@ -57,7 +57,7 @@ def _get_l3_agent_dict(host, agent_mode, internal_only=True,
                        az=DEFAULT_AZ):
     return {
         'agent_type': constants.AGENT_TYPE_L3,
-        'binary': 'neutron-l3-agent',
+        'binary': constants.AGENT_PROCESS_L3,
         'host': host,
         'topic': topics.L3_AGENT,
         'availability_zone': az,
@@ -82,7 +82,7 @@ def register_l3_agent(host=HOST, agent_mode=constants.L3_AGENT_MODE_LEGACY,
 
 def _get_dhcp_agent_dict(host, networks=0, az=DEFAULT_AZ):
     agent = {
-        'binary': 'neutron-dhcp-agent',
+        'binary': constants.AGENT_PROCESS_DHCP,
         'host': host,
         'topic': topics.DHCP_AGENT,
         'agent_type': constants.AGENT_TYPE_DHCP,
@@ -161,7 +161,7 @@ def _get_l2_agent_dict(host, agent_type, binary, tunnel_types=None,
 
 
 def register_ovs_agent(host=HOST, agent_type=constants.AGENT_TYPE_OVS,
-                       binary='neutron-openvswitch-agent',
+                       binary=constants.AGENT_PROCESS_OVS,
                        tunnel_types=['vxlan'], tunneling_ip='20.0.0.1',
                        interface_mappings=None, bridge_mappings=None,
                        l2pop_network_types=None, plugin=None, start_flag=True,
@@ -176,7 +176,7 @@ def register_ovs_agent(host=HOST, agent_type=constants.AGENT_TYPE_OVS,
 
 def register_linuxbridge_agent(host=HOST,
                                agent_type=constants.AGENT_TYPE_LINUXBRIDGE,
-                               binary='neutron-linuxbridge-agent',
+                               binary=constants.AGENT_PROCESS_LINUXBRIDGE,
                                tunnel_types=['vxlan'], tunneling_ip='20.0.0.1',
                                interface_mappings=None, bridge_mappings=None,
                                plugin=None):
@@ -189,7 +189,7 @@ def register_linuxbridge_agent(host=HOST,
 
 def register_macvtap_agent(host=HOST,
                            agent_type=constants.AGENT_TYPE_MACVTAP,
-                           binary='neutron-macvtap-agent',
+                           binary=constants.AGENT_PROCESS_MACVTAP,
                            interface_mappings=None, plugin=None):
     agent = _get_l2_agent_dict(host, agent_type, binary,
                                interface_mappings=interface_mappings)
@@ -198,7 +198,7 @@ def register_macvtap_agent(host=HOST,
 
 def register_sriovnicswitch_agent(host=HOST,
                                   agent_type=constants.AGENT_TYPE_NIC_SWITCH,
-                                  binary='neutron-sriov-nic-agent',
+                                  binary=constants.AGENT_PROCESS_NIC_SWITCH,
                                   device_mappings=None, plugin=None):
     agent = _get_l2_agent_dict(host, agent_type, binary,
                                device_mappings=device_mappings)

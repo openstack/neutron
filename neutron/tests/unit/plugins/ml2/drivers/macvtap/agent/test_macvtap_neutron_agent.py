@@ -19,6 +19,7 @@ import sys
 from unittest import mock
 
 from neutron_lib.agent import topics
+from neutron_lib import constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_service import service
@@ -252,7 +253,7 @@ class TestMacvtapMain(base.BaseTestCase):
             self.assertTrue(mock_pim.called)
             mock_manager.assert_called_with(INTERFACE_MAPPINGS)
             mock_loop.assert_called_with(mock_manager_return, 2, 1,
-                                         'Macvtap agent',
-                                         'neutron-macvtap-agent')
+                                         constants.AGENT_TYPE_MACVTAP,
+                                         constants.AGENT_PROCESS_MACVTAP)
             self.assertTrue(mock_launch.called)
             self.assertTrue(mock_launch_return.wait.called)

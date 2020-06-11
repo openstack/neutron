@@ -19,6 +19,7 @@ import re
 import signal
 
 import fixtures
+from neutron_lib import constants
 from neutronclient.common import exceptions as nc_exc
 from neutronclient.v2_0 import client
 from oslo_log import log as logging
@@ -182,8 +183,6 @@ class NeutronServerFixture(ServiceFixture):
 
 class OVSAgentFixture(ServiceFixture):
 
-    NEUTRON_OVS_AGENT = "neutron-openvswitch-agent"
-
     def __init__(self, env_desc, host_desc,
                  test_name, neutron_cfg_fixture, agent_cfg_fixture):
         super(OVSAgentFixture, self).__init__()
@@ -205,7 +204,7 @@ class OVSAgentFixture(ServiceFixture):
 
         self.process_fixture = self.useFixture(ProcessFixture(
             test_name=self.test_name,
-            process_name=self.NEUTRON_OVS_AGENT,
+            process_name=constants.AGENT_PROCESS_OVS,
             exec_name=spawn.find_executable(
                 'ovs_agent.py',
                 path=os.path.join(fullstack_base.ROOTDIR, CMD_FOLDER)),
@@ -237,8 +236,6 @@ class PlacementFixture(fixtures.Fixture):
 
 class SRIOVAgentFixture(ServiceFixture):
 
-    NEUTRON_SRIOV_AGENT = "neutron-sriov-nic-agent"
-
     def __init__(self, env_desc, host_desc,
                  test_name, neutron_cfg_fixture, agent_cfg_fixture):
         super(SRIOVAgentFixture, self).__init__()
@@ -255,15 +252,13 @@ class SRIOVAgentFixture(ServiceFixture):
                             self.agent_cfg_fixture.filename]
         self.process_fixture = self.useFixture(ProcessFixture(
             test_name=self.test_name,
-            process_name=self.NEUTRON_SRIOV_AGENT,
-            exec_name=self.NEUTRON_SRIOV_AGENT,
+            process_name=constants.AGENT_PROCESS_NIC_SWITCH,
+            exec_name=constants.AGENT_PROCESS_NIC_SWITCH,
             config_filenames=config_filenames,
             kill_signal=signal.SIGTERM))
 
 
 class LinuxBridgeAgentFixture(ServiceFixture):
-
-    NEUTRON_LINUXBRIDGE_AGENT = "neutron-linuxbridge-agent"
 
     def __init__(self, env_desc, host_desc, test_name,
                  neutron_cfg_fixture, agent_cfg_fixture,
@@ -285,8 +280,8 @@ class LinuxBridgeAgentFixture(ServiceFixture):
         self.process_fixture = self.useFixture(
             ProcessFixture(
                 test_name=self.test_name,
-                process_name=self.NEUTRON_LINUXBRIDGE_AGENT,
-                exec_name=self.NEUTRON_LINUXBRIDGE_AGENT,
+                process_name=constants.AGENT_PROCESS_LINUXBRIDGE,
+                exec_name=constants.AGENT_PROCESS_LINUXBRIDGE,
                 config_filenames=config_filenames,
                 namespace=self.namespace
             )
@@ -294,8 +289,6 @@ class LinuxBridgeAgentFixture(ServiceFixture):
 
 
 class L3AgentFixture(ServiceFixture):
-
-    NEUTRON_L3_AGENT = "neutron-l3-agent"
 
     def __init__(self, env_desc, host_desc, test_name,
                  neutron_cfg_fixture, l3_agent_cfg_fixture,
@@ -326,7 +319,7 @@ class L3AgentFixture(ServiceFixture):
         self.process_fixture = self.useFixture(
             ProcessFixture(
                 test_name=self.test_name,
-                process_name=self.NEUTRON_L3_AGENT,
+                process_name=constants.AGENT_PROCESS_L3,
                 exec_name=exec_name,
                 config_filenames=config_filenames,
                 namespace=self.namespace
@@ -338,8 +331,6 @@ class L3AgentFixture(ServiceFixture):
 
 
 class DhcpAgentFixture(fixtures.Fixture):
-
-    NEUTRON_DHCP_AGENT = "neutron-dhcp-agent"
 
     def __init__(self, env_desc, host_desc, test_name,
                  neutron_cfg_fixture, agent_cfg_fixture, namespace=None):
@@ -369,7 +360,7 @@ class DhcpAgentFixture(fixtures.Fixture):
         self.process_fixture = self.useFixture(
             ProcessFixture(
                 test_name=self.test_name,
-                process_name=self.NEUTRON_DHCP_AGENT,
+                process_name=constants.AGENT_PROCESS_DHCP,
                 exec_name=exec_name,
                 config_filenames=config_filenames,
                 namespace=self.namespace

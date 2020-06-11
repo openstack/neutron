@@ -968,7 +968,7 @@ class DhcpAgentWithStateReport(DhcpAgent):
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         self.failed_report_state = False
         self.agent_state = {
-            'binary': 'neutron-dhcp-agent',
+            'binary': constants.AGENT_PROCESS_DHCP,
             'host': host,
             'availability_zone': self.conf.AGENT.availability_zone,
             'topic': topics.DHCP_AGENT,

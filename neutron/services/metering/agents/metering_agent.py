@@ -253,7 +253,7 @@ class MeteringAgentWithStateReport(MeteringAgent):
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         self.failed_report_state = False
         self.agent_state = {
-            'binary': 'neutron-metering-agent',
+            'binary': constants.AGENT_PROCESS_METERING,
             'host': host,
             'topic': topics.METERING_AGENT,
             'configurations': {
@@ -302,7 +302,7 @@ def main():
     config.setup_logging()
     config.setup_privsep()
     server = neutron_service.Service.create(
-        binary='neutron-metering-agent',
+        binary=constants.AGENT_PROCESS_METERING,
         topic=topics.METERING_AGENT,
         report_interval=cfg.CONF.AGENT.report_interval,
         manager='neutron.services.metering.agents.'

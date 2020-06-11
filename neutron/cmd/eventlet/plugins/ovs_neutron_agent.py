@@ -13,8 +13,15 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import setproctitle
+
 import neutron.plugins.ml2.drivers.openvswitch.agent.main as agent_main
+from neutron_lib import constants
 
 
 def main():
+    proctitle = "%s (%s)" % (
+            constants.AGENT_PROCESS_OVS, setproctitle.getproctitle())
+    setproctitle.setproctitle(proctitle)
+
     agent_main.main()

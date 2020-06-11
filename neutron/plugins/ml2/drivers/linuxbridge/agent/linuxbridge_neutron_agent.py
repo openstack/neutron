@@ -61,7 +61,6 @@ from neutron.plugins.ml2.drivers.linuxbridge.agent \
 
 LOG = logging.getLogger(__name__)
 
-LB_AGENT_BINARY = 'neutron-linuxbridge-agent'
 BRIDGE_NAME_PREFIX = "brq"
 MAX_VLAN_POSTFIX_LEN = 5
 VXLAN_INTERFACE_PREFIX = "vxlan-"
@@ -1059,8 +1058,8 @@ def main():
     quitting_rpc_timeout = cfg.CONF.AGENT.quitting_rpc_timeout
     agent = ca.CommonAgentLoop(manager, polling_interval, quitting_rpc_timeout,
                                constants.AGENT_TYPE_LINUXBRIDGE,
-                               LB_AGENT_BINARY)
-    setup_profiler.setup("neutron-linuxbridge-agent", cfg.CONF.host)
+                               constants.AGENT_PROCESS_LINUXBRIDGE)
+    setup_profiler.setup(constants.AGENT_PROCESS_LINUXBRIDGE, cfg.CONF.host)
     LOG.info("Agent initialized successfully, now running... ")
     launcher = service.launch(cfg.CONF, agent, restart_method='mutate')
     launcher.wait()
