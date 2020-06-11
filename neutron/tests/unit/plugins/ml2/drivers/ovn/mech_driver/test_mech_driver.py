@@ -47,6 +47,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import ovn_revision_numbers_db
 from neutron.db import provisioning_blocks
 from neutron.db import securitygroups_db
+from neutron.db import segments_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
@@ -599,6 +600,34 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
 
     def test_create_network_igmp_snoop_disabled(self):
         self._create_network_igmp_snoop(enabled=False)
+
+    def test_create_network_create_localnet_port_tunnel_network_type(self):
+        nb_idl = self.mech_driver._ovn_client._nb_idl
+        self._make_network(self.fmt, name='net1',
+                           admin_state_up=True)['network']
+        # net1 is not physical network
+        nb_idl.create_lswitch_port.assert_not_called()
+
+    def test_create_network_create_localnet_port_physical_network_type(self):
+        nb_idl = self.mech_driver._ovn_client._nb_idl
+        net_arg = {pnet.NETWORK_TYPE: 'vlan',
+                   pnet.PHYSICAL_NETWORK: 'physnet1',
+                   pnet.SEGMENTATION_ID: '2'}
+        net = self._make_network(self.fmt, 'net1', True,
+                                 arg_list=(pnet.NETWORK_TYPE,
+                                           pnet.PHYSICAL_NETWORK,
+                                           pnet.SEGMENTATION_ID,),
+                                 **net_arg)['network']
+        segments = segments_db.get_network_segments(
+            self.context, net['id'])
+        nb_idl.create_lswitch_port.assert_called_once_with(
+            addresses=[ovn_const.UNKNOWN_ADDR],
+            external_ids={},
+            lport_name=ovn_utils.ovn_provnet_port_name(segments[0]['id']),
+            lswitch_name=ovn_utils.ovn_name(net['id']),
+            options={'network_name': 'physnet1'},
+            tag=2,
+            type='localnet')
 
     def test_create_port_without_security_groups(self):
         kwargs = {'security_groups': []}
@@ -1817,6 +1846,7 @@ class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
         p = mock.patch.object(ovn_utils, 'get_revision_number', return_value=1)
         p.start()
         self.addCleanup(p.stop)
+        self.context = context.get_admin_context()
 
     def _test_segment_host_mapping(self):
         # Disable the callback to update SegmentHostMapping by default, so
@@ -1883,6 +1913,82 @@ class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
 
         segments_host_db2 = self._get_segments_for_host('hostname2')
         self.assertFalse(set(segments_host_db2))
+
+    def test_create_segment_create_localnet_port(self):
+        ovn_nb_api = self.mech_driver._nb_ovn
+        with self.network() as network:
+            net = network['network']
+        new_segment = self._test_create_segment(
+            network_id=net['id'], physical_network='phys_net1',
+            segmentation_id=200, network_type='vlan')['segment']
+        ovn_nb_api.create_lswitch_port.assert_called_once_with(
+            addresses=[ovn_const.UNKNOWN_ADDR],
+            external_ids={},
+            lport_name=ovn_utils.ovn_provnet_port_name(new_segment['id']),
+            lswitch_name=ovn_utils.ovn_name(net['id']),
+            options={'network_name': 'phys_net1'},
+            tag=200,
+            type='localnet')
+        ovn_nb_api.create_lswitch_port.reset_mock()
+        new_segment = self._test_create_segment(
+            network_id=net['id'], physical_network='phys_net2',
+            segmentation_id=300, network_type='vlan')['segment']
+        ovn_nb_api.create_lswitch_port.assert_called_once_with(
+            addresses=[ovn_const.UNKNOWN_ADDR],
+            external_ids={},
+            lport_name=ovn_utils.ovn_provnet_port_name(new_segment['id']),
+            lswitch_name=ovn_utils.ovn_name(net['id']),
+            options={'network_name': 'phys_net2'},
+            tag=300,
+            type='localnet')
+        segments = segments_db.get_network_segments(
+            self.context, net['id'])
+        self.assertEqual(len(segments), 3)
+
+    def test_delete_segment_delete_localnet_port(self):
+        ovn_nb_api = self.mech_driver._nb_ovn
+        with self.network() as network:
+            net = network['network']
+        segment = self._test_create_segment(
+            network_id=net['id'], physical_network='phys_net1',
+            segmentation_id=200, network_type='vlan')['segment']
+        self._delete('segments', segment['id'])
+        ovn_nb_api.delete_lswitch_port.assert_called_once_with(
+            lport_name=ovn_utils.ovn_provnet_port_name(segment['id']),
+            lswitch_name=ovn_utils.ovn_name(net['id']))
+
+    def test_delete_segment_delete_localnet_port_compat_name(self):
+        ovn_nb_api = self.mech_driver._nb_ovn
+        with self.network() as network:
+            net = network['network']
+        seg_1 = self._test_create_segment(
+            network_id=net['id'], physical_network='phys_net1',
+            segmentation_id=200, network_type='vlan')['segment']
+        seg_2 = self._test_create_segment(
+            network_id=net['id'], physical_network='phys_net2',
+            segmentation_id=300, network_type='vlan')['segment']
+        # Lets pretend that segment_1 is old and its localnet
+        # port is based on neutron network id.
+        ovn_nb_api.fake_ls_row.ports = [
+            fakes.FakeOVNPort.create_one_port(
+                attrs={
+                    'options': {'network_name': 'phys_net1'},
+                    'tag': 200,
+                    'name': ovn_utils.ovn_provnet_port_name(net['id'])}),
+            fakes.FakeOVNPort.create_one_port(
+                attrs={
+                    'options': {'network_name': 'phys_net2'},
+                    'tag': 300,
+                    'name': ovn_utils.ovn_provnet_port_name(seg_2['id'])})]
+        self._delete('segments', seg_1['id'])
+        ovn_nb_api.delete_lswitch_port.assert_called_once_with(
+            lport_name=ovn_utils.ovn_provnet_port_name(net['id']),
+            lswitch_name=ovn_utils.ovn_name(net['id']))
+        ovn_nb_api.delete_lswitch_port.reset_mock()
+        self._delete('segments', seg_2['id'])
+        ovn_nb_api.delete_lswitch_port.assert_called_once_with(
+            lport_name=ovn_utils.ovn_provnet_port_name(seg_2['id']),
+            lswitch_name=ovn_utils.ovn_name(net['id']))
 
 
 @mock.patch.object(n_net, 'get_random_mac', lambda *_: '01:02:03:04:05:06')

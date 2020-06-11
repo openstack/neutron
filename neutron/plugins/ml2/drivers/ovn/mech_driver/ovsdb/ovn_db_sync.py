@@ -16,7 +16,7 @@ import itertools
 
 from eventlet import greenthread
 from neutron_lib.api.definitions import l3
-from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
@@ -71,6 +71,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         self.mode = mode
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
         self._ovn_client = ovn_client.OVNClient(ovn_api, sb_ovn)
+        self.segments_plugin = directory.get_plugin('segments')
 
     def stop(self):
         if utils.is_ovn_l3(self.l3_plugin):
@@ -805,6 +806,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         del_lswitchs_list = []
         del_lports_list = []
         add_provnet_ports_list = []
+        del_provnet_ports_list = []
         for lswitch in lswitches:
             if lswitch['name'] in db_networks:
                 for lport in lswitch['ports']:
@@ -816,13 +818,29 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                         del_lports_list.append({'port': lport,
                                                 'lswitch': lswitch['name']})
                 db_network = db_networks[lswitch['name']]
-                physnet = db_network.get(pnet.PHYSICAL_NETWORK)
-                # Updating provider attributes is forbidden by neutron, thus
-                # we only need to consider missing provnet-ports in OVN DB.
-                if physnet and not lswitch['provnet_port']:
-                    add_provnet_ports_list.append(
-                        {'network': db_network,
-                         'lswitch': lswitch['name']})
+                db_segments = self.segments_plugin.get_segments(
+                    ctx, filters={'network_id': [db_network['id']]})
+                segments_provnet_port_names = []
+                for db_segment in db_segments:
+                    physnet = db_segment.get(segment_def.PHYSICAL_NETWORK)
+                    pname = utils.ovn_provnet_port_name(db_segment['id'])
+                    segments_provnet_port_names.append(pname)
+                    if physnet and pname not in lswitch['provnet_ports']:
+                        add_provnet_ports_list.append(
+                            {'network': db_network,
+                             'segment': db_segment,
+                             'lswitch': lswitch['name']})
+                # Delete orhpaned provnet ports
+                for provnet_port in lswitch['provnet_ports']:
+                    if provnet_port in segments_provnet_port_names:
+                        continue
+                    if provnet_port not in [
+                            utils.ovn_provnet_port_name(v['segment'])
+                            for v in add_provnet_ports_list]:
+                        del_provnet_ports_list.append(
+                            {'network': db_network,
+                             'lport': provnet_port,
+                             'lswitch': lswitch['name']})
 
                 del db_networks[lswitch['name']]
             else:
@@ -878,15 +896,33 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
 
             for provnet_port_info in add_provnet_ports_list:
                 network = provnet_port_info['network']
+                segment = provnet_port_info['segment']
                 LOG.warning("Provider network found in Neutron but "
                             "provider network port not found in OVN DB, "
-                            "network_id=%s", provnet_port_info['lswitch'])
+                            "network_id=%(net)s segment_id=%(seg)s",
+                            {'net': network['id'],
+                             'seg': segment['id']})
                 if self.mode == SYNC_MODE_REPAIR:
                     LOG.debug('Creating the provnet port %s in OVN NB DB',
-                              utils.ovn_provnet_port_name(network['id']))
-                    self._ovn_client._create_provnet_port(
-                        txn, network, network.get(pnet.PHYSICAL_NETWORK),
-                        network.get(pnet.SEGMENTATION_ID))
+                              utils.ovn_provnet_port_name(segment['id']))
+                    self._ovn_client.create_provnet_port(
+                        network['id'], segment, txn=txn)
+
+            for provnet_port_info in del_provnet_ports_list:
+                network = provnet_port_info['network']
+                lport = provnet_port_info['lport']
+                lswitch = provnet_port_info['lswitch']
+                LOG.warning("Provider network port found in OVN DB, "
+                            "but not in neutron network_id=%(net)s "
+                            "port_name=%(lport)s",
+                            {'net': network,
+                             'seg': lport})
+                if self.mode == SYNC_MODE_REPAIR:
+                    LOG.debug('Deleting the port %s from OVN NB DB',
+                              lport)
+                    txn.add(self.ovn_api.delete_lswitch_port(
+                        lport_name=lport,
+                        lswitch_name=lswitch))
 
             for lport_info in del_lports_list:
                 LOG.warning("Port found in OVN but not in "

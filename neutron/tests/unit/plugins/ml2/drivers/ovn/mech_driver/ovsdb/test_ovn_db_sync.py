@@ -60,6 +60,23 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                           'mtu': 1450,
                           'provider:physical_network': 'physnet2'}]
 
+        self.segments = [{'id': 'seg1',
+                          'network_id': 'n1',
+                          'physical_network': 'physnet1',
+                          'network_type': 'vlan',
+                          'segmentation_id': 1000},
+                         {'id': 'seg2',
+                          'network_id': 'n2',
+                          'physical_network': None,
+                          'network_type': 'geneve'},
+                         {'id': 'seg4',
+                          'network_id': 'n4',
+                          'physical_network': 'physnet2',
+                          'network_type': 'flat'}]
+        self.segments_map = {
+            k['network_id']: k
+            for k in self.segments}
+
         self.subnets = [{'id': 'n1-s1',
                          'network_id': 'n1',
                          'enable_dhcp': True,
@@ -305,15 +322,22 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
 
         self.lswitches_with_ports = [{'name': 'neutron-n1',
                                       'ports': ['p1n1', 'p3n1'],
-                                      'provnet_port': None},
+                                      'provnet_ports': []},
                                      {'name': 'neutron-n3',
                                       'ports': ['p1n3', 'p2n3'],
-                                      'provnet_port': None},
+                                      'provnet_ports': []},
                                      {'name': 'neutron-n4',
                                       'ports': [],
-                                      'provnet_port': 'provnet-n4'}]
+                                      'provnet_ports': [
+                                          'provnet-seg4',
+                                          'provnet-orphaned-segment']}]
 
         self.lrport_networks = ['fdad:123:456::1/64', 'fdad:cafe:a1b2::1/64']
+
+    def get_additional_service_plugins(self):
+        p = super(TestOvnNbSyncML2, self).get_additional_service_plugins()
+        p.update({'segments': 'neutron.services.segments.plugin.Plugin'})
+        return p
 
     def _fake_get_ovn_dhcp_options(self, subnet, network, server_mac=None):
         if subnet['id'] == 'n1-s1':
@@ -349,11 +373,24 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         ovn_api = ovn_nb_synchronizer.ovn_api
         ovn_driver = ovn_nb_synchronizer.ovn_driver
         l3_plugin = ovn_nb_synchronizer.l3_plugin
+        segments_plugin = ovn_nb_synchronizer.segments_plugin
 
         core_plugin.get_networks = mock.Mock()
         core_plugin.get_networks.return_value = self.networks
         core_plugin.get_subnets = mock.Mock()
         core_plugin.get_subnets.return_value = self.subnets
+
+        def get_segments(self, filters):
+            segs = []
+            for segment in self.segments:
+                if segment['network_id'] == filters['network_id'][0]:
+                    segs.append(segment)
+            return segs
+
+        segments_plugin.get_segments = mock.Mock()
+        segments_plugin.get_segments.side_effect = (
+            lambda x, filters: get_segments(self, filters))
+
         # following block is used for acl syncing unit-test
 
         # With the given set of values in the unit testing,
@@ -423,7 +460,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         ovn_driver.validate_and_get_data_from_binding_profile = mock.Mock()
         ovn_nb_synchronizer._ovn_client.create_port = mock.Mock()
         ovn_nb_synchronizer._ovn_client.create_port.return_value = mock.ANY
-        ovn_nb_synchronizer._ovn_client._create_provnet_port = mock.Mock()
+        ovn_nb_synchronizer._ovn_client.create_provnet_port = mock.Mock()
         ovn_api.ls_del = mock.Mock()
         ovn_api.delete_lswitch_port = mock.Mock()
 
@@ -547,14 +584,16 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
             create_port_calls, any_order=True)
 
         create_provnet_port_calls = [
-            mock.call(mock.ANY, mock.ANY,
-                      network['provider:physical_network'],
-                      network['provider:segmentation_id'])
-            for network in create_provnet_port_list]
+            mock.call(
+                network['id'],
+                self.segments_map[network['id']],
+                txn=mock.ANY)
+            for network in create_provnet_port_list
+            if network.get('provider:physical_network')]
         self.assertEqual(
             len(create_provnet_port_list),
-            ovn_nb_synchronizer._ovn_client._create_provnet_port.call_count)
-        ovn_nb_synchronizer._ovn_client._create_provnet_port.assert_has_calls(
+            ovn_nb_synchronizer._ovn_client.create_provnet_port.call_count)
+        ovn_nb_synchronizer._ovn_client.create_provnet_port.assert_has_calls(
             create_provnet_port_calls, any_order=True)
 
         self.assertEqual(len(del_network_list),
@@ -684,7 +723,9 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                 'ext_ids': {}}]
         del_network_list = ['neutron-n3']
         del_port_list = [{'id': 'p3n1', 'lswitch': 'neutron-n1'},
-                         {'id': 'p1n1', 'lswitch': 'neutron-n1'}]
+                         {'id': 'p1n1', 'lswitch': 'neutron-n1'},
+                         {'id': 'provnet-orphaned-segment',
+                          'lswitch': 'neutron-n4'}]
         create_port_list = self.ports
         for port in create_port_list:
             if port['id'] in ['p1n1', 'fp1']:

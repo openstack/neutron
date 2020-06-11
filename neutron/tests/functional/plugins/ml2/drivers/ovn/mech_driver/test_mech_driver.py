@@ -16,6 +16,7 @@ import functools
 from unittest import mock
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from ovsdbapp.tests.functional import base as ovs_base
@@ -664,3 +665,80 @@ class TestCreateDefaultDropPortGroup(base.BaseLoggingTestCase,
 
     def test_without_ports(self):
         self._test_pg_with_ports(expected_ports=[])
+
+
+class TestProvnetPorts(base.TestOVNFunctionalBase):
+
+    def setUp(self):
+        super(TestProvnetPorts, self).setUp()
+        self._ovn_client = self.mech_driver._ovn_client
+
+    def _find_port_row_by_name(self, name):
+        cmd = self.nb_api.db_find_rows(
+            'Logical_Switch_Port', ('name', '=', name))
+        rows = cmd.execute(check_error=True)
+        return rows[0] if rows else None
+
+    def create_segment(self, network_id, physical_network, segmentation_id):
+        segment_data = {'network_id': network_id,
+                        'physical_network': physical_network,
+                        'segmentation_id': segmentation_id,
+                        'network_type': 'vlan',
+                        'name': constants.ATTR_NOT_SPECIFIED,
+                        'description': constants.ATTR_NOT_SPECIFIED}
+        return self.segments_plugin.create_segment(
+            self.context, segment={'segment': segment_data})
+
+    def delete_segment(self, segment_id):
+        return self.segments_plugin.delete_segment(
+            self.context, segment_id)
+
+    def get_segments(self, network_id):
+        return self.segments_plugin.get_segments(
+            self.context, filters={'network_id': [network_id]})
+
+    def test_network_segments_localnet_ports(self):
+        n1 = self._make_network(
+                self.fmt, 'n1', True,
+                arg_list=('provider:network_type',
+                          'provider:segmentation_id',
+                          'provider:physical_network'),
+                **{'provider:network_type': 'vlan',
+                   'provider:segmentation_id': 100,
+                   'provider:physical_network': 'physnet1'})['network']
+        ovn_port = self._find_port_row_by_name(
+            utils.ovn_provnet_port_name(n1['id']))
+        # Assert that localnet port name is not based
+        # on network name.
+        self.assertIsNone(ovn_port)
+        seg_db = self.get_segments(n1['id'])
+        ovn_localnetport = self._find_port_row_by_name(
+            utils.ovn_provnet_port_name(seg_db[0]['id']))
+        self.assertEqual(ovn_localnetport.tag, [100])
+        self.assertEqual(ovn_localnetport.options,
+                         {'network_name': 'physnet1'})
+        seg_2 = self.create_segment(n1['id'], 'physnet2', '222')
+        ovn_localnetport = self._find_port_row_by_name(
+            utils.ovn_provnet_port_name(seg_2['id']))
+        self.assertEqual(ovn_localnetport.options,
+                         {'network_name': 'physnet2'})
+        self.assertEqual(ovn_localnetport.tag, [222])
+
+        # Delete segments and ensure that localnet
+        # ports are deleted.
+        self.delete_segment(seg_db[0]['id'])
+        ovn_localnetport = self._find_port_row_by_name(
+            utils.ovn_provnet_port_name(seg_db[0]['id']))
+        self.assertIsNone(ovn_localnetport)
+
+        # Make sure that other localnet port is not touched.
+        ovn_localnetport = self._find_port_row_by_name(
+            utils.ovn_provnet_port_name(seg_2['id']))
+        self.assertIsNotNone(ovn_localnetport)
+
+        # Delete second segment and validate that the
+        # second localnet port has been deleted.
+        self.delete_segment(seg_2['id'])
+        ovn_localnetport = self._find_port_row_by_name(
+            utils.ovn_provnet_port_name(seg_2['id']))
+        self.assertIsNone(ovn_localnetport)
