@@ -122,10 +122,9 @@ class RouterWithMetering(object):
 class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
     def __init__(self, plugin, conf):
-        self.plugin = plugin
-        self.conf = conf or cfg.CONF
-        self.routers = {}
+        super(IptablesMeteringDriver, self).__init__(plugin, conf)
 
+        self.routers = {}
         self.driver = common_utils.load_interface_driver(self.conf)
 
     def _update_router(self, router):
@@ -424,42 +423,173 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
     @log_helpers.log_method_call
     def get_traffic_counters(self, context, routers):
-        accs = {}
+        traffic_counters = {}
         routers_to_reconfigure = set()
         for router in routers:
-            rm = self.routers.get(router['id'])
-            if not rm:
-                continue
-
-            for label_id in rm.metering_labels:
-                try:
-                    chain = iptables_manager.get_chain_name(WRAP_NAME +
-                                                            LABEL +
-                                                            label_id,
-                                                            wrap=False)
-
-                    chain_acc = rm.iptables_manager.get_traffic_counters(
-                        chain, wrap=False, zero=True)
-                except RuntimeError:
-                    LOG.exception('Failed to get traffic counters, '
-                                  'router: %s', router)
-                    routers_to_reconfigure.add(router['id'])
-                    continue
-
-                if not chain_acc:
-                    continue
-
-                acc = accs.get(label_id, {'pkts': 0, 'bytes': 0})
-
-                acc['pkts'] += chain_acc['pkts']
-                acc['bytes'] += chain_acc['bytes']
-
-                accs[label_id] = acc
+            if self.granular_traffic_data:
+                self.retrieve_and_account_granular_traffic_counters(
+                    router, routers_to_reconfigure, traffic_counters)
+            else:
+                self.retrieve_and_account_traffic_counters_legacy(
+                    router, routers_to_reconfigure, traffic_counters)
 
         for router_id in routers_to_reconfigure:
             del self.routers[router_id]
 
-        return accs
+        return traffic_counters
+
+    def retrieve_and_account_traffic_counters_legacy(self, router,
+                                                     routers_to_reconfigure,
+                                                     traffic_counters):
+        rm = self.routers.get(router['id'])
+        if not rm:
+            return
+
+        for label_id in rm.metering_labels:
+            chain_acc = self.retrieve_traffic_counters(label_id, rm, router,
+                                                       routers_to_reconfigure)
+
+            if not chain_acc:
+                continue
+
+            acc = traffic_counters.get(label_id, {'pkts': 0, 'bytes': 0})
+
+            acc['pkts'] += chain_acc['pkts']
+            acc['bytes'] += chain_acc['bytes']
+
+            traffic_counters[label_id] = acc
+
+    @staticmethod
+    def retrieve_traffic_counters(label_id, rm, router,
+                                  routers_to_reconfigure):
+        try:
+            chain = iptables_manager.get_chain_name(WRAP_NAME +
+                                                    LABEL +
+                                                    label_id,
+                                                    wrap=False)
+
+            chain_acc = rm.iptables_manager.get_traffic_counters(
+                chain, wrap=False, zero=True)
+        except RuntimeError:
+            LOG.exception('Failed to get traffic counters, '
+                          'router: %s', router)
+            routers_to_reconfigure.add(router['id'])
+            return {}
+        return chain_acc
+
+    def retrieve_and_account_granular_traffic_counters(self, router,
+                                                       routers_to_reconfigure,
+                                                       traffic_counters):
+        """Retrieve and account traffic counters for routers.
+
+        This method will retrieve the traffic counters for all labels that
+        are assigned to a router. Then, it will account the traffic counter
+        data in the following granularities.
+                * label -- all of the traffic counter for a given label.
+                One must bear in mind that a label can be assigned to multiple
+                routers.
+                * router -- all of the traffic counter for all labels that
+                are assigned to the router.
+                * project -- all of the traffic counters for all labels of
+                all routers that a project has.
+                * router-label -- all of the traffic counters for a router
+                and the given label.
+                * project-label -- all of the traffic counters for all
+                routers of a project that have a given label.
+
+
+        All of the keys have the following standard in the
+        `traffic_counters` dictionary.
+                * labels -- label-<label_id>
+                * routers -- router-<router_id>
+                * project -- project-<tenant_id>
+                * router-label -- router-<router_id>-label-<label_id>
+                * project-label -- project-<tenant_id>-label-<label_id>
+
+        And last, but not least, if we are not able to retrieve the traffic
+        counters from `iptables` for a given router, we will add it to
+        `routers_to_reconfigure` set.
+
+        :param router:
+        :param routers_to_reconfigure:
+        :param traffic_counters:
+        """
+        router_id = router['id']
+        rm = self.routers.get(router_id)
+        if not rm:
+            return
+
+        default_traffic_counters = {'pkts': 0, 'bytes': 0}
+        project_traffic_counter_key = self.get_project_traffic_counter_key(
+            router['tenant_id'])
+        router_traffic_counter_key = self.get_router_traffic_counter_key(
+            router_id)
+
+        project_counters = traffic_counters.get(
+            project_traffic_counter_key, default_traffic_counters.copy())
+        project_counters['traffic-counter-granularity'] = "project"
+
+        router_counters = traffic_counters.get(
+            router_traffic_counter_key, default_traffic_counters.copy())
+        router_counters['traffic-counter-granularity'] = "router"
+
+        for label_id in rm.metering_labels:
+            label_traffic_counter_key = self.get_label_traffic_counter_key(
+                label_id)
+
+            project_label_traffic_counter_key = "%s-%s" % (
+                project_traffic_counter_key, label_traffic_counter_key)
+            router_label_traffic_counter_key = "%s-%s" % (
+                router_traffic_counter_key, label_traffic_counter_key)
+
+            chain_acc = self.retrieve_traffic_counters(label_id, rm, router,
+                                                       routers_to_reconfigure)
+
+            if not chain_acc:
+                continue
+
+            label_traffic_counters = traffic_counters.get(
+                label_traffic_counter_key, default_traffic_counters.copy())
+            label_traffic_counters['traffic-counter-granularity'] = "label"
+
+            project_label_traffic_counters = traffic_counters.get(
+                project_label_traffic_counter_key,
+                default_traffic_counters.copy())
+            project_label_traffic_counters[
+                'traffic-counter-granularity'] = "label_project"
+
+            router_label_traffic_counters = traffic_counters.get(
+                router_label_traffic_counter_key,
+                default_traffic_counters.copy())
+            router_label_traffic_counters[
+                'traffic-counter-granularity'] = "label_router"
+
+            project_label_traffic_counters['pkts'] += chain_acc['pkts']
+            project_label_traffic_counters['bytes'] += chain_acc['bytes']
+
+            router_label_traffic_counters['pkts'] += chain_acc['pkts']
+            router_label_traffic_counters['bytes'] += chain_acc['bytes']
+
+            label_traffic_counters['pkts'] += chain_acc['pkts']
+            label_traffic_counters['bytes'] += chain_acc['bytes']
+
+            traffic_counters[project_label_traffic_counter_key] = \
+                project_label_traffic_counters
+
+            traffic_counters[router_label_traffic_counter_key] = \
+                router_label_traffic_counters
+
+            traffic_counters[label_traffic_counter_key] = \
+                label_traffic_counters
+
+            router_counters['pkts'] += chain_acc['pkts']
+            router_counters['bytes'] += chain_acc['bytes']
+
+            project_counters['pkts'] += chain_acc['pkts']
+            project_counters['bytes'] += chain_acc['bytes']
+
+        traffic_counters[router_traffic_counter_key] = router_counters
+        traffic_counters[project_traffic_counter_key] = project_counters
 
     @log_helpers.log_method_call
     def sync_router_namespaces(self, context, routers):

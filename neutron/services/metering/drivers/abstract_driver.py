@@ -14,12 +14,21 @@
 
 import abc
 
+from oslo_config import cfg
+
+BASE_ROUTER_TRAFFIC_COUNTER_KEY = "router-"
+BASE_PROJECT_TRAFFIC_COUNTER_KEY = "project-"
+BASE_LABEL_TRAFFIC_COUNTER_KEY = "label-"
+
 
 class MeteringAbstractDriver(object, metaclass=abc.ABCMeta):
     """Abstract Metering driver."""
 
     def __init__(self, plugin, conf):
-        pass
+        self.conf = conf or cfg.CONF
+        self.plugin = plugin
+
+        self.granular_traffic_data = self.conf.granular_traffic_data
 
     @abc.abstractmethod
     def update_routers(self, context, routers):
@@ -48,3 +57,22 @@ class MeteringAbstractDriver(object, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def sync_router_namespaces(self, context, routers):
         pass
+
+    @staticmethod
+    def get_router_traffic_counter_key(router_id):
+        return MeteringAbstractDriver._concat_base_key_with_id(
+            router_id, BASE_ROUTER_TRAFFIC_COUNTER_KEY)
+
+    @staticmethod
+    def get_project_traffic_counter_key(tenant_id):
+        return MeteringAbstractDriver._concat_base_key_with_id(
+            tenant_id, BASE_PROJECT_TRAFFIC_COUNTER_KEY)
+
+    @staticmethod
+    def get_label_traffic_counter_key(label_id):
+        return MeteringAbstractDriver._concat_base_key_with_id(
+            label_id, BASE_LABEL_TRAFFIC_COUNTER_KEY)
+
+    @staticmethod
+    def _concat_base_key_with_id(resource_id, base_traffic_key):
+        return base_traffic_key + "%s" % resource_id

@@ -25,6 +25,14 @@ metering_agent_opts = [
                help=_("Interval between two metering measures")),
     cfg.IntOpt('report_interval', default=300,
                help=_("Interval between two metering reports")),
+    cfg.BoolOpt('granular_traffic_data',
+                default=False,
+                help=_("Defines if the metering agent driver should present "
+                       "traffic data in a granular fashion, instead of "
+                       "grouping all of the traffic data for all projects and "
+                       "routers where the labels were assigned to. The "
+                       "default value is `False` for backward compatibility."),
+                ),
 ]
 
 
