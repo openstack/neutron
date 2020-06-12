@@ -421,18 +421,18 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         mapping = self.nb_ovn_idl.get_all_logical_switches_with_ports()
         expected = [{'name': utils.ovn_name('ls-id-1'),
                      'ports': ['lsp-id-11', 'lsp-id-12', 'lsp-rp-id-1'],
-                     'provnet_port': 'provnet-ls-id-1'},
+                     'provnet_ports': ['provnet-ls-id-1']},
                     {'name': utils.ovn_name('ls-id-2'),
                      'ports': ['lsp-id-21', 'lsp-rp-id-2'],
-                     'provnet_port': 'provnet-ls-id-2'},
+                     'provnet_ports': ['provnet-ls-id-2']},
                     {'name': utils.ovn_name('ls-id-3'),
                      'ports': ['lsp-id-31', 'lsp-id-32', 'lsp-rp-id-3',
                                'lsp-vpn-id-3'],
-                     'provnet_port': None},
+                     'provnet_ports': []},
                     {'name': utils.ovn_name('ls-id-5'),
                      'ports': ['lsp-id-51', 'lsp-id-52', 'lsp-rp-id-5',
                                'lsp-vpn-id-5'],
-                     'provnet_port': None}]
+                     'provnet_ports': []}]
         self.assertItemsEqual(mapping, expected)
 
     def test_get_all_logical_routers_with_rports(self):

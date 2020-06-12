@@ -21,6 +21,7 @@ from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib import constants as const
 from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
@@ -39,6 +40,7 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_revision_numbers_db as db_rev
+from neutron.db import segments_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import qos as qos_extension
 from neutron.scheduler import l3_ovn_scheduler
@@ -1653,15 +1655,41 @@ class OVNClient(object):
                     for network in networks]
         self._transaction(commands, txn=txn)
 
-    def _create_provnet_port(self, txn, network, physnet, tag):
-        txn.add(self._nb_idl.create_lswitch_port(
-            lport_name=utils.ovn_provnet_port_name(network['id']),
-            lswitch_name=utils.ovn_name(network['id']),
+    def create_provnet_port(self, network_id, segment, txn=None):
+        tag = segment.get(segment_def.SEGMENTATION_ID, [])
+        physnet = segment.get(segment_def.PHYSICAL_NETWORK)
+        cmd = self._nb_idl.create_lswitch_port(
+            lport_name=utils.ovn_provnet_port_name(segment['id']),
+            lswitch_name=utils.ovn_name(network_id),
             addresses=[ovn_const.UNKNOWN_ADDR],
             external_ids={},
             type=ovn_const.LSP_TYPE_LOCALNET,
-            tag=tag if tag else [],
-            options={'network_name': physnet}))
+            tag=tag,
+            options={'network_name': physnet})
+        self._transaction([cmd], txn=txn)
+
+    def delete_provnet_port(self, network_id, segment):
+        port_to_del = utils.ovn_provnet_port_name(segment['id'])
+        legacy_port_name = utils.ovn_provnet_port_name(network_id)
+        physnet = segment.get(segment_def.PHYSICAL_NETWORK)
+        lswitch = self._nb_idl.get_lswitch(utils.ovn_name(network_id))
+        lports = [lp.name for lp in lswitch.ports]
+
+        # Cover the situation where localnet ports
+        # were named after network_id and not segment_id.
+        # TODO(mjozefcz): Remove this in w-release.
+        if (port_to_del not in lports and
+                legacy_port_name in lports):
+            for lport in lswitch.ports:
+                if (legacy_port_name == lport.name and
+                        lport.options['network_name'] == physnet):
+                    port_to_del = legacy_port_name
+                    break
+
+        cmd = self._nb_idl.delete_lswitch_port(
+                lport_name=port_to_del,
+                lswitch_name=utils.ovn_name(network_id))
+        self._transaction([cmd])
 
     def _gen_network_parameters(self, network):
         params = {'external_ids': {
@@ -1682,13 +1710,16 @@ class OVNClient(object):
         # without having to track what UUID OVN assigned to it.
         lswitch_params = self._gen_network_parameters(network)
         lswitch_name = utils.ovn_name(network['id'])
+        # NOTE(mjozefcz): Remove this workaround when bug
+        # 1869877 will be fixed.
+        segments = segments_db.get_network_segments(
+            context, network['id'])
         with self._nb_idl.transaction(check_error=True) as txn:
             txn.add(self._nb_idl.ls_add(lswitch_name, **lswitch_params,
                                         may_exist=True))
-            physnet = network.get(pnet.PHYSICAL_NETWORK)
-            if physnet:
-                self._create_provnet_port(txn, network, physnet,
-                                          network.get(pnet.SEGMENTATION_ID))
+            for segment in segments:
+                if segment.get(segment_def.PHYSICAL_NETWORK):
+                    self.create_provnet_port(network['id'], segment, txn=txn)
         db_rev.bump_revision(context, network, ovn_const.TYPE_NETWORKS)
         self.create_metadata_port(context, network)
         return network
