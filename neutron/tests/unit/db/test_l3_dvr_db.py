@@ -762,6 +762,42 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             mock.call(self.ctx, network_id, 'host', fipagent['id'])])
         self.assertIsNotNone(fport)
 
+    def test_create_fip_agent_gw_port_agent_binding_exists(self):
+        network_id = _uuid()
+        fport_db = {'id': _uuid()}
+        self.mixin._get_agent_gw_ports_exist_for_network = mock.Mock(
+            side_effect=[None, None])
+        fipagent = agent_obj.Agent(
+                self.ctx,
+                id=_uuid(),
+                binary='foo-agent',
+                host='host',
+                agent_type='L3 agent',
+                topic='foo_topic',
+                configurations={"agent_mode": "dvr"})
+        self.mixin._get_agent_by_type_and_host = mock.Mock(
+            return_value=fipagent)
+        self.mixin._populate_mtu_and_subnets_for_ports = mock.Mock()
+
+        with mock.patch.object(
+            router_obj.DvrFipGatewayPortAgentBinding, 'create',
+            side_effect=o_exc.NeutronDbObjectDuplicateEntry(
+                mock.Mock(), mock.Mock())
+        ) as dvr_fip_gateway_port_agent_binding_create,\
+            mock.patch.object(
+                plugin_utils, "create_port", return_value=fport_db):
+            fport = self.mixin.create_fip_agent_gw_port_if_not_exists(
+                                                    self.ctx,
+                                                    network_id,
+                                                    'host')
+        dvr_fip_gateway_port_agent_binding_create.assert_called_once_with()
+        self.mixin._get_agent_gw_ports_exist_for_network.assert_has_calls([
+            mock.call(self.ctx, network_id, 'host', fipagent['id']),
+            mock.call(self.ctx, network_id, 'host', fipagent['id'])])
+        self.mixin._populate_mtu_and_subnets_for_ports.assert_has_calls([
+            mock.call(self.ctx, [fport_db])])
+        self.assertIsNotNone(fport)
+
     def test_create_floatingip_agent_gw_port_with_non_dvr_router(self):
         floatingip = {
             'id': _uuid(),

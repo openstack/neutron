@@ -1096,13 +1096,14 @@ class _DVRAgentInterfaceMixin(object):
             try:
                 fip_agent_port_obj.create()
             except o_exc.NeutronDbObjectDuplicateEntry:
-                LOG.debug("Floating IP Agent Gateway port for network "
+                LOG.debug("Floating IP Gateway port agent binding for network "
                           "%(network)s already exists on host %(host)s. "
                           "Probably it was just created by other worker.",
                           {'network': network_id,
                            'host': host})
                 agent_port = self._get_agent_gw_ports_exist_for_network(
                     context, network_id, host, l3_agent_db['id'])
+            if agent_port:
                 LOG.debug("Floating IP Agent Gateway port %(gw)s found "
                           "for the destination host: %(dest_host)s",
                           {'gw': agent_port,
