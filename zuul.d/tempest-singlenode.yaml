@@ -153,7 +153,6 @@
       - openstack/devstack-gate
       - openstack/neutron
       - openstack/neutron-tempest-plugin
-      - openstack/octavia
       - openstack/tempest
     irrelevant-files: *irrelevant-files
     vars: &ovn-base-vars
@@ -225,7 +224,6 @@
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron
         neutron-tempest-plugin: https://opendev.org/openstack/neutron-tempest-plugin
-        octavia: https://opendev.org/openstack/octavia
       zuul_copy_output:
         '{{ devstack_base_dir }}/data/ovs': 'logs'
       extensions_to_txt:
@@ -249,11 +247,8 @@
         n-sch: true
         n-super-cond: true
         q-ovn-metadata-agent: true
-        o-api: true
-        o-hk: true
         ovn-controller: true
         ovn-northd: true
-        ovn-octavia: true
         ovs-vswitchd: true
         ovsdb-server: true
         placement-api: true
