@@ -29,6 +29,7 @@ from neutron.common.ovn import acl as acl_utils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
+from neutron import manager
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.services.segments import db as segments_db
 
@@ -72,6 +73,10 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
         self._ovn_client = ovn_client.OVNClient(ovn_api, sb_ovn)
         self.segments_plugin = directory.get_plugin('segments')
+        if not self.segments_plugin:
+            self.segments_plugin = (
+                manager.NeutronManager.load_class_for_provider(
+                    'neutron.service_plugins', 'segments')())
 
     def stop(self):
         if utils.is_ovn_l3(self.l3_plugin):
