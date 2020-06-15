@@ -993,7 +993,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                             " networking-ovn-metadata-agent status/logs.",
                             port_id)
 
-    def agent_alive(self, chassis, type_):
+    def agent_alive(self, chassis, type_, update_db):
         nb_cfg = chassis.nb_cfg
         key = ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY
         if type_ == ovn_const.OVN_METADATA_AGENT:
@@ -1005,15 +1005,17 @@ class OVNMechanismDriver(api.MechanismDriver):
             updated_at = timeutils.parse_isotime(chassis.external_ids[key])
         except KeyError:
             updated_at = timeutils.utcnow(with_timezone=True)
+            update_db = True
 
         # Allow a maximum of 1 difference between expected and read values
         # to avoid false positives.
         if self._nb_ovn.nb_global.nb_cfg - nb_cfg <= 1:
-            # update the time of our successful check
-            value = timeutils.utcnow(with_timezone=True).isoformat()
-            self._sb_ovn.db_set('Chassis', chassis.uuid,
-                                ('external_ids', {key: value})).execute(
-                check_error=True)
+            if update_db:
+                # Update the time of our successful check
+                value = timeutils.utcnow(with_timezone=True).isoformat()
+                self._sb_ovn.db_set('Chassis', chassis.uuid,
+                                    ('external_ids', {key: value})).execute(
+                    check_error=True)
             return True
         now = timeutils.utcnow(with_timezone=True)
 
@@ -1041,7 +1043,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             'alive': alive,
             'admin_state_up': True}
 
-    def agents_from_chassis(self, chassis):
+    def agents_from_chassis(self, chassis, update_db=True):
         agent_dict = {}
 
         # Check for ovn-controller / ovn-controller gateway
@@ -1052,7 +1054,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                 chassis.external_ids.get('ovn-cms-options', [])):
             agent_type = ovn_const.OVN_CONTROLLER_GW_AGENT
 
-        alive = self.agent_alive(chassis, agent_type)
+        alive = self.agent_alive(chassis, agent_type, update_db)
         description = chassis.external_ids.get(
             ovn_const.OVN_AGENT_DESC_KEY, '')
         agent_dict[agent_id] = self._format_agent_info(
@@ -1064,7 +1066,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             ovn_const.OVN_AGENT_METADATA_ID_KEY)
         if metadata_agent_id:
             agent_type = ovn_const.OVN_METADATA_AGENT
-            alive = self.agent_alive(chassis, agent_type)
+            alive = self.agent_alive(chassis, agent_type, update_db)
             description = chassis.external_ids.get(
                 ovn_const.OVN_AGENT_METADATA_DESC_KEY, '')
             agent_dict[metadata_agent_id] = self._format_agent_info(
@@ -1098,7 +1100,11 @@ class OVNMechanismDriver(api.MechanismDriver):
         setattr(self._plugin, method_name, types.MethodType(fn, self._plugin))
 
     def ping_chassis(self):
-        """Update NB_Global.nb_cfg so that Chassis.nb_cfg will increment"""
+        """Update NB_Global.nb_cfg so that Chassis.nb_cfg will increment
+
+        :returns: (bool) True if nb_cfg was updated. False if it was updated
+            recently and this call didn't trigger any update.
+        """
         last_ping = self._nb_ovn.nb_global.external_ids.get(
             ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY)
         if last_ping:
@@ -1106,11 +1112,12 @@ class OVNMechanismDriver(api.MechanismDriver):
             next_ping = (timeutils.parse_isotime(last_ping) +
                          datetime.timedelta(seconds=interval))
             if timeutils.utcnow(with_timezone=True) < next_ping:
-                return
+                return False
 
         with self._nb_ovn.create_transaction(check_error=True,
                                              bump_nb_cfg=True) as txn:
             txn.add(self._nb_ovn.check_liveness())
+        return True
 
 
 def populate_agents(driver):
@@ -1121,12 +1128,12 @@ def populate_agents(driver):
 
 
 def get_agents(self, context, filters=None, fields=None, _driver=None):
-    _driver.ping_chassis()
+    update_db = _driver.ping_chassis()
     filters = filters or {}
     agent_list = []
     populate_agents(_driver)
     for ch in AGENTS.values():
-        for agent in _driver.agents_from_chassis(ch).values():
+        for agent in _driver.agents_from_chassis(ch, update_db).values():
             if all(agent[k] in v for k, v in filters.items()):
                 agent_list.append(agent)
     return agent_list
