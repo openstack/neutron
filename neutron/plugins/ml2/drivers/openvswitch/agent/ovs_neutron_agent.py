@@ -171,6 +171,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             for b in ('br_int', 'br_phys', 'br_tun'))
 
         self.use_veth_interconnection = ovs_conf.use_veth_interconnection
+        if self.use_veth_interconnection:
+            LOG.warning("Usage of veth instead of patch ports for bridges "
+                        "interconnection is deprecated in Victoria and will "
+                        "be removed in W release. Please use patch ports "
+                        "instead.")
         self.veth_mtu = agent_conf.veth_mtu
         self.available_local_vlans = set(six.moves.range(
             n_const.MIN_VLAN_TAG, n_const.MAX_VLAN_TAG + 1))
