@@ -125,7 +125,15 @@ core_opts = [
                       'this value without modification. For overlay networks '
                       'such as VXLAN, neutron automatically subtracts the '
                       'overlay protocol overhead from this value. Defaults '
-                      'to 1500, the standard value for Ethernet.'))
+                      'to 1500, the standard value for Ethernet.')),
+    cfg.IntOpt('http_retries', default=3, min=0,
+               help=_("Number of times client connections (nova, ironic) "
+                      "should be retried on a failed HTTP call. 0 (zero) means"
+                      "connection is attempted only once (not retried). "
+                      "Setting to any positive integer means that on failure "
+                      "the connection is retried that many times. "
+                      "For example, setting to 3 means total attempts to "
+                      "connect will be 4."))
 ]
 
 core_cli_opts = [
