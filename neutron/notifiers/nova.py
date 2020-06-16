@@ -75,6 +75,7 @@ class Notifier(object):
             region_name=cfg.CONF.nova.region_name,
             endpoint_type=cfg.CONF.nova.endpoint_type,
             extensions=self.extensions,
+            connect_retries=cfg.CONF.http_retries,
             global_request_id=global_id)
 
     def _is_compute_port(self, port):
