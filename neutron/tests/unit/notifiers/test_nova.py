@@ -334,6 +334,7 @@ class TestNovaNotify(base.BaseTestCase):
         nova.Notifier()
         mock_client.assert_called_once_with(
                                 api_versions.APIVersion(nova.NOVA_API_VERSION),
+                                connect_retries=3,
                                 session=mock.ANY,
                                 region_name=cfg.CONF.nova.region_name,
                                 endpoint_type='public',
@@ -344,6 +345,7 @@ class TestNovaNotify(base.BaseTestCase):
         nova.Notifier()
         mock_client.assert_called_once_with(
                                 api_versions.APIVersion(nova.NOVA_API_VERSION),
+                                connect_retries=3,
                                 session=mock.ANY,
                                 region_name=cfg.CONF.nova.region_name,
                                 endpoint_type='internal',
