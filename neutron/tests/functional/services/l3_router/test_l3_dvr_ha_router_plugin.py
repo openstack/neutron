@@ -142,7 +142,7 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
                           arg_list=arg_list,
                           **{portbindings.HOST_ID: HOST2}), \
                 self.port(subnet=subnet3,
-                          device_owner=constants.DEVICE_OWNER_NEUTRON_PREFIX,
+                          device_owner=constants.DEVICE_OWNER_NETWORK_PREFIX,
                           arg_list=arg_list,
                           **{portbindings.HOST_ID: HOST3}):
             # make net external
