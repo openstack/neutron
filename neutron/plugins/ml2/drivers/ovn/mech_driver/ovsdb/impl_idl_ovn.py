@@ -685,7 +685,13 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             # removed at some point.
             return
 
-    def get_port_groups(self):
+    def get_sg_port_groups(self):
+        """Returns OVN port groups used as Neutron Security Groups.
+
+        This method will return all port group entries in OVN that map to
+        a Security Group. Even though neutron_pg_drop is used to assist on
+        SGs, it will also not be returned.
+        """
         port_groups = {}
         try:
             for row in self._tables['Port_Group'].rows.values():

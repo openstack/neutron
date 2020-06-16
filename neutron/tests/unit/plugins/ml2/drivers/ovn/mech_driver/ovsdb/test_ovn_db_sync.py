@@ -131,18 +131,18 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                        'security_group_id': 'sg2'}],
              'name': 'all-tcpe'}]
 
-        self.port_groups_ovn = [mock.Mock(), mock.Mock(), mock.Mock()]
-        self.port_groups_ovn[0].configure_mock(
+        self.sg_port_groups_ovn = [mock.Mock(), mock.Mock(), mock.Mock()]
+        self.sg_port_groups_ovn[0].configure_mock(
             name='pg_sg1',
             external_ids={ovn_const.OVN_SG_EXT_ID_KEY: 'sg1'},
             ports=[],
             acls=[])
-        self.port_groups_ovn[1].configure_mock(
+        self.sg_port_groups_ovn[1].configure_mock(
             name='pg_unknown_del',
             external_ids={ovn_const.OVN_SG_EXT_ID_KEY: 'sg2'},
             ports=[],
             acls=[])
-        self.port_groups_ovn[2].configure_mock(
+        self.sg_port_groups_ovn[2].configure_mock(
             name='neutron_pg_drop',
             external_ids=[],
             ports=[],
@@ -410,9 +410,9 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         ovn_nb_synchronizer.get_acls.return_value = self.acls_ovn
         core_plugin.get_security_groups = mock.MagicMock(
             return_value=self.security_groups)
-        get_port_groups = mock.MagicMock()
-        get_port_groups.execute.return_value = self.port_groups_ovn
-        ovn_api.db_list_rows.return_value = get_port_groups
+        get_sg_port_groups = mock.MagicMock()
+        get_sg_port_groups.execute.return_value = self.sg_port_groups_ovn
+        ovn_api.db_list_rows.return_value = get_sg_port_groups
         ovn_api.lsp_list.execute.return_value = self.ports_ovn
         # end of acl-sync block
 
