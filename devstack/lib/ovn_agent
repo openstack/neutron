@@ -33,7 +33,7 @@ source $NEUTRON_DIR/devstack/lib/ovs
 OVN_REPO=${OVN_REPO:-https://github.com/ovn-org/ovn.git}
 OVN_REPO_NAME=$(basename ${OVN_REPO} | cut -f1 -d'.')
 OVN_REPO_NAME=${OVN_REPO_NAME:-ovn}
-OVN_BRANCH=${OVN_BRANCH:-v20.03.0}
+OVN_BRANCH=${OVN_BRANCH:-v20.06.1}
 # The commit removing OVN bits from the OVS tree, it is the commit that is not
 # present in OVN tree and is used to distinguish if OVN is part of OVS or not.
 # https://github.com/openvswitch/ovs/commit/05bf1dbb98b0635a51f75e268ef8aed27601401d
