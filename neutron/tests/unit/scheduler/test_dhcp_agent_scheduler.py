@@ -31,6 +31,7 @@ from neutron.objects import agent
 from neutron.objects import network as network_obj
 from neutron.scheduler import dhcp_agent_scheduler
 from neutron.services.segments import db as segments_service_db
+from neutron.tests import base
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import test_plugin
 from neutron.tests.unit import testlib_api
@@ -930,3 +931,61 @@ class DHCPAgentAZAwareWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
             # which is also not in the same az as the first selected agent.
             self.assertEqual('az2-host2', agents_select[1]['host'])
             self.assertEqual('az2', agents_select[1]['availability_zone'])
+
+
+class DhcpFilterTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super(DhcpFilterTestCase, self).setUp()
+        self.mock_agent_count = mock.patch.object(agent.Agent, 'count').start()
+        self.mock_dhcpagent_bindings = mock.patch.object(
+            network_obj.NetworkDhcpAgentBinding, 'get_objects').start()
+        cfg.CONF.set_override('dhcp_agents_per_network', 3)
+        self.dhcp_filter = dhcp_agent_scheduler.DhcpFilter()
+
+    def test_get_vacant_network_dhcp_agent_binding_index_no_agents(self):
+        self.mock_agent_count.return_value = 0
+        self.mock_dhcpagent_bindings.return_value = []
+        ret = self.dhcp_filter.get_vacant_network_dhcp_agent_binding_index(
+            mock.ANY, mock.ANY, False)
+        self.assertEqual(-1, ret)
+
+    def test_get_vacant_network_dhcp_agent_binding_index_several_agents(self):
+        self.mock_agent_count.return_value = 1
+        self.mock_dhcpagent_bindings.return_value = []
+        ret = self.dhcp_filter.get_vacant_network_dhcp_agent_binding_index(
+            mock.ANY, mock.ANY, False)
+        self.assertEqual(1, ret)
+
+        self.mock_agent_count.return_value = 1
+        self.mock_dhcpagent_bindings.return_value = [
+            mock.Mock(binding_index=1)]
+        ret = self.dhcp_filter.get_vacant_network_dhcp_agent_binding_index(
+            mock.ANY, mock.ANY, False)
+        self.assertEqual(-1, ret)
+
+        self.mock_agent_count.return_value = 3
+        self.mock_dhcpagent_bindings.return_value = [
+            mock.Mock(binding_index=1), mock.Mock(binding_index=3)]
+        ret = self.dhcp_filter.get_vacant_network_dhcp_agent_binding_index(
+            mock.ANY, mock.ANY, False)
+        self.assertEqual(2, ret)
+
+    def test_get_vacant_network_dhcp_agent_binding_index_force_sched(self):
+        self.mock_agent_count.return_value = 3
+        self.mock_dhcpagent_bindings.return_value = [
+            mock.Mock(binding_index=1), mock.Mock(binding_index=2),
+            mock.Mock(binding_index=3), mock.Mock(binding_index=5),
+            mock.Mock(binding_index=7)]
+        ret = self.dhcp_filter.get_vacant_network_dhcp_agent_binding_index(
+            mock.ANY, mock.ANY, True)
+        self.assertEqual(4, ret)
+
+        self.mock_agent_count.return_value = 3
+        self.mock_dhcpagent_bindings.return_value = [
+            mock.Mock(binding_index=1), mock.Mock(binding_index=2),
+            mock.Mock(binding_index=3), mock.Mock(binding_index=4),
+            mock.Mock(binding_index=5)]
+        ret = self.dhcp_filter.get_vacant_network_dhcp_agent_binding_index(
+            mock.ANY, mock.ANY, True)
+        self.assertEqual(6, ret)
