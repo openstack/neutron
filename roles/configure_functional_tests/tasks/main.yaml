@@ -10,10 +10,15 @@
         PROJECT_NAME={{ project_name }}
         NEUTRON_PATH={{ neutron_dir }}
         DEVSTACK_PATH={{ devstack_dir }}
+        TOP_DIR={{ devstack_dir }}
         VENV={{ tests_venv }}
+        STACK_USER=stack
+        OVS_BRANCH={{ OVS_BRANCH }}
+        OVN_BRANCH={{ OVN_BRANCH }}
 
         source $DEVSTACK_PATH/functions
         source $NEUTRON_PATH/devstack/lib/ovs
+        source $NEUTRON_PATH/devstack/lib/ovn_agent
         source $NEUTRON_PATH/tools/configure_for_func_testing.sh
 
         configure_host_for_func_testing

@@ -19,8 +19,8 @@
 # There are some ovs functions OVN depends on that must be sourced from
 # the ovs neutron plugins. After doing this, the OVN overrides must be
 # re-sourced.
-source $TOP_DIR/lib/neutron_plugins/ovs_base
-source $TOP_DIR/lib/neutron_plugins/openvswitch_agent
+source ${TOP_DIR}/lib/neutron_plugins/ovs_base
+source ${TOP_DIR}/lib/neutron_plugins/openvswitch_agent
 
 
 # Defaults
@@ -412,9 +412,6 @@ function compile_ovn {
     local prefix=$2
     local localstatedir=$3
 
-    # First, compile OVS
-    _compile_ovs $build_modules
-
     if [ -n "$prefix" ]; then
         prefix="--prefix=$prefix"
     fi
@@ -476,10 +473,9 @@ function install_ovn {
     remove_ovs_packages
     sudo rm -f $OVS_RUNDIR/*
 
+    compile_ovs $OVN_BUILD_MODULES
     if use_new_ovn_repository; then
         compile_ovn $OVN_BUILD_MODULES
-    else
-        compile_ovs $OVN_BUILD_MODULES
     fi
 
     sudo mkdir -p $OVS_RUNDIR
