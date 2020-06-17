@@ -12,13 +12,18 @@
 #    under the License.
 #
 
+import netaddr
 from neutron_lib import constants as const
 from neutron_lib import exceptions as n_exceptions
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
+
+
+LOG = logging.getLogger(__name__)
 
 # Convert the protocol number from integer to strings because that's
 # how Neutron will pass it to us
@@ -84,9 +89,17 @@ def acl_ethertype(r):
 def acl_remote_ip_prefix(r, ip_version):
     if not r['remote_ip_prefix']:
         return ''
+    cidr = netaddr.IPNetwork(r['remote_ip_prefix'])
+    normalized_ip_prefix = "%s/%s" % (cidr.network, cidr.prefixlen)
+    if r['remote_ip_prefix'] != normalized_ip_prefix:
+        LOG.info("remote_ip_prefix %(remote_ip_prefix)s configured in "
+                 "rule %(rule_id)s is not normalized. Normalized CIDR "
+                 "%(normalized_ip_prefix)s will be used instead.",
+                 {'remote_ip_prefix': r['remote_ip_prefix'],
+                  'rule_id': r['id'],
+                  'normalized_ip_prefix': normalized_ip_prefix})
     src_or_dst = 'src' if r['direction'] == const.INGRESS_DIRECTION else 'dst'
-    return ' && %s.%s == %s' % (ip_version, src_or_dst,
-                                r['remote_ip_prefix'])
+    return ' && %s.%s == %s' % (ip_version, src_or_dst, normalized_ip_prefix)
 
 
 def _get_protocol_number(protocol):
@@ -314,7 +327,7 @@ def add_acls_for_sg_port_group(ovn, security_group, txn):
     for r in security_group['security_group_rules']:
         acl = _add_sg_rule_acl_for_port_group(
             utils.ovn_port_group_name(security_group['id']), r)
-        txn.add(ovn.pg_acl_add(**acl))
+        txn.add(ovn.pg_acl_add(**acl, may_exist=True))
 
 
 def update_acls_for_security_group(plugin,
@@ -339,7 +352,7 @@ def update_acls_for_security_group(plugin,
         if not keep_name_severity:
             acl.pop('name')
             acl.pop('severity')
-        ovn.pg_acl_add(**acl).execute(check_error=True)
+        ovn.pg_acl_add(**acl, may_exist=True).execute(check_error=True)
     else:
         ovn.pg_acl_del(acl['port_group'], acl['direction'],
                        acl['priority'], acl['match']).execute(
