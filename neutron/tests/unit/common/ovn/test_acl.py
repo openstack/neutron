@@ -539,6 +539,19 @@ class TestACLs(base.BaseTestCase):
         expected_match = ' && %s.dst == %s' % (ip_version, remote_ip_prefix)
         self.assertEqual(expected_match, match)
 
+    def test_acl_remote_ip_prefix_not_normalized(self):
+        sg_rule = fakes.FakeSecurityGroupRule.create_one_security_group_rule({
+            'direction': 'ingress',
+            'remote_ip_prefix': '10.10.10.175/26'
+        }).info()
+        normalized_ip_prefix = '10.10.10.128/26'
+        ip_version = 'ip4'
+
+        match = ovn_acl.acl_remote_ip_prefix(sg_rule, ip_version)
+        expected_match = ' && %s.src == %s' % (ip_version,
+                                               normalized_ip_prefix)
+        self.assertEqual(expected_match, match)
+
     def test_acl_remote_group_id(self):
         sg_rule = fakes.FakeSecurityGroupRule.create_one_security_group_rule({
             'direction': 'ingress',
