@@ -511,9 +511,9 @@ class L3NATAgent(ha.AgentMixin,
         ri = self.router_info.get(router_id)
 
         try:
-            self._router_removed(ri, router_id)
             if ri:
                 self.l3_ext_manager.delete_router(self.context, ri.router)
+            self._router_removed(ri, router_id)
         except Exception:
             LOG.exception('Error while deleting router %s', router_id)
             return False
