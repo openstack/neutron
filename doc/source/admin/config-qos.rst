@@ -118,10 +118,7 @@ On the controller nodes:
 
    .. code-block:: none
 
-      service_plugins = \
-      neutron.services.l3_router.l3_router_plugin.L3RouterPlugin,
-      neutron.services.metering.metering_plugin.MeteringPlugin,
-      neutron.services.qos.qos_plugin.QoSPlugin
+      service_plugins = router,metering,qos
 
 #. Optionally, set the needed ``notification_drivers`` in the ``[qos]``
    section in ``/etc/neutron/neutron.conf`` (``message_queue`` is the
