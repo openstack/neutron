@@ -521,6 +521,7 @@ def remove_netns(name, **kwargs):
     except OSError as e:
         if e.errno != errno.ENOENT:
             raise
+    LOG.debug("Namespace %s deleted.", name)
 
 
 @privileged.namespace_cmd.entrypoint
