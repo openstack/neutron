@@ -438,5 +438,6 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         mock_config_opts_get.side_effect = cfg.NoSuchOptError('test_svc_plug')
         plugins, rpc_required = pf_plugin._required_service_plugins()
         mock_config_opts_get.assert_called_once()
+        expected = (['router'], True)
         self.assertEqual(
-            (['router'], True), (plugins, rpc_required), description)
+            expected, (plugins, rpc_required), description)
