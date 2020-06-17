@@ -18,8 +18,10 @@
         - neutron-fullstack
         - neutron-fullstack-with-uwsgi
         - neutron-rally-task
-        - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
+        # TODO(bcafarel): temporarily disable these jobs so we can get multiple
+        # gate fixes properly backported
+        #- neutron-grenade-multinode
+        #- neutron-grenade-dvr-multinode
         - neutron-tempest-linuxbridge
         - neutron-tempest-with-uwsgi
         - tempest-integrated-networking:
@@ -94,8 +96,10 @@
         - tempest-integrated-networking
         - neutron-tempest-linuxbridge
         - neutron-tempest-iptables_hybrid
-        - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
+        # TODO(bcafarel): temporarily disable these jobs so we can get multiple
+        # gate fixes properly backported
+        #- neutron-grenade-multinode
+        #- neutron-grenade-dvr-multinode
         - tempest-slow-py3:
             irrelevant-files: *irrelevant-files
         - tempest-ipv6-only:
