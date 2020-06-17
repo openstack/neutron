@@ -88,6 +88,14 @@
                 availability_zone: nova
 
 - job:
+    name: neutron-tempest-multinode-full-py3
+    parent: tempest-multinode-full-py3
+    timeout: 10800
+    irrelevant-files: *irrelevant-files
+    vars:
+      tox_envlist: integrated-network
+
+- job:
     name: neutron-ovn-multinode-base
     description: Base multinode job for devstack/tempest to test Neutron with ovn driver.
     abstract: true
