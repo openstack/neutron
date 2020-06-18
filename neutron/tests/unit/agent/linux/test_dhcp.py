@@ -2572,51 +2572,57 @@ class TestDnsmasq(TestBase):
     def test_release_unused_leases_one_lease_mult_times_removed(self):
         self._test_release_unused_leases_one_lease_mult_times(True)
 
-    def test_read_hosts_file_leases(self):
+    def test__parse_ip_addresses(self):
+        ip_list = ['192.168.0.1', '[fdca:3ba5:a17a::1]', 'no_ip_address']
+        self.assertEqual(['192.168.0.1', 'fdca:3ba5:a17a::1'],
+                         dhcp.Dnsmasq._parse_ip_addresses(ip_list))
+
+    def _test_read_hosts_file_leases(self, lines, expected_result):
         filename = '/path/to/file'
-        lines = ["00:00:80:aa:bb:cc,inst-name,192.168.0.1",
-                 "00:00:80:aa:bb:cc,inst-name,[fdca:3ba5:a17a::1]"]
         mock_open = self.useFixture(
             lib_fixtures.OpenFixture(filename, '\n'.join(lines))).mock_open
         dnsmasq = self._get_dnsmasq(FakeDualNetwork())
         leases = dnsmasq._read_hosts_file_leases(filename)
-
-        self.assertEqual(set([("192.168.0.1", "00:00:80:aa:bb:cc", None),
-                              ("fdca:3ba5:a17a::1", "00:00:80:aa:bb:cc",
-                               None)]), leases)
+        self.assertEqual(expected_result, leases)
         mock_open.assert_called_once_with(filename)
 
+    def test_read_hosts_file_leases(self):
+        lines = ["00:00:80:aa:bb:cc,inst-name,192.168.0.1",
+                 "00:00:80:aa:bb:cc,inst-name,[fdca:3ba5:a17a::1]"]
+        result = {("192.168.0.1", "00:00:80:aa:bb:cc", None),
+                  ("fdca:3ba5:a17a::1", "00:00:80:aa:bb:cc", None)}
+        self._test_read_hosts_file_leases(lines, result)
+
     def test_read_hosts_file_leases_with_client_id(self):
-        filename = '/path/to/file'
         lines = ["00:00:80:aa:bb:cc,id:client1,inst-name,192.168.0.1",
                  "00:00:80:aa:bb:cc,id:client2,inst-name,"
                  "[fdca:3ba5:a17a::1]"]
-        mock_open = self.useFixture(
-            lib_fixtures.OpenFixture(filename, '\n'.join(lines))).mock_open
-        dnsmasq = self._get_dnsmasq(FakeDualNetwork())
-        leases = dnsmasq._read_hosts_file_leases(filename)
-
-        self.assertEqual(set([("192.168.0.1", "00:00:80:aa:bb:cc", 'client1'),
-                              ("fdca:3ba5:a17a::1", "00:00:80:aa:bb:cc",
-                               'client2')]), leases)
-        mock_open.assert_called_once_with(filename)
+        result = {("192.168.0.1", "00:00:80:aa:bb:cc", 'client1'),
+                  ("fdca:3ba5:a17a::1", "00:00:80:aa:bb:cc", 'client2')}
+        self._test_read_hosts_file_leases(lines, result)
 
     def test_read_hosts_file_leases_with_stateless_IPv6_tag(self):
-        filename = self.get_temp_file_path('leases')
-        with open(filename, "w") as leasesfile:
-            lines = [
-                "00:00:80:aa:bb:cc,id:client1,inst-name,192.168.0.1\n",
-                "00:00:80:aa:bb:cc,set:ccccccccc-cccc-cccc-cccc-cccccccc\n",
-                "00:00:80:aa:bb:cc,id:client2,inst-name,[fdca:3ba5:a17a::1]\n"]
-            for line in lines:
-                leasesfile.write(line)
+        lines = [
+            "00:00:80:aa:bb:cc,id:client1,inst-name,192.168.0.1",
+            "00:00:80:aa:bb:cc,set:ccccccccc-cccc-cccc-cccc-cccccccc",
+            "00:00:80:aa:bb:cc,id:client2,inst-name,[fdca:3ba5:a17a::1]"]
+        result = {("192.168.0.1", "00:00:80:aa:bb:cc", 'client1'),
+                  ("fdca:3ba5:a17a::1", "00:00:80:aa:bb:cc", 'client2')}
+        self._test_read_hosts_file_leases(lines, result)
 
-        dnsmasq = self._get_dnsmasq(FakeDualNetwork())
-        leases = dnsmasq._read_hosts_file_leases(filename)
-
-        self.assertEqual(set([("192.168.0.1", "00:00:80:aa:bb:cc", 'client1'),
-                              ("fdca:3ba5:a17a::1", "00:00:80:aa:bb:cc",
-                              'client2')]), leases)
+    def test_read_hosts_file_leases_with_IPv6_tag_and_multiple_ips(self):
+        lines = [
+            "00:00:80:aa:bb:cc,id:client1,inst-name,192.168.0.1",
+            "00:00:80:aa:bb:cc,set:ccccccccc-cccc-cccc-cccc-cccccccc",
+            "00:00:80:aa:bb:cc,tag:dhcpv6,inst-name,[fdca:3ba5:a17a::1],"
+            "[fdca:3ba5:a17a::2],[fdca:3ba5:a17a::3],[fdca:3ba5:a17a::4],"
+            "set:port-fe2baee9-aba9-4b67-be03-be4aeee40cca"]
+        result = {("192.168.0.1", "00:00:80:aa:bb:cc", 'client1'),
+                  ("fdca:3ba5:a17a::1", "00:00:80:aa:bb:cc", None),
+                  ("fdca:3ba5:a17a::2", "00:00:80:aa:bb:cc", None),
+                  ("fdca:3ba5:a17a::3", "00:00:80:aa:bb:cc", None),
+                  ("fdca:3ba5:a17a::4", "00:00:80:aa:bb:cc", None)}
+        self._test_read_hosts_file_leases(lines, result)
 
     def _test_read_leases_file_leases(self, ip_version, add_bad_line=False):
         filename = '/path/to/file'
