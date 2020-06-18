@@ -26,6 +26,7 @@ from neutron_lib.db import model_query
 from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
+from neutron_lib.objects import exceptions as obj_exc
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net
 from oslo_log import log as logging
@@ -44,6 +45,8 @@ from neutron import quota
 
 
 LOG = logging.getLogger(__name__)
+
+DEFAULT_SG_DESCRIPTION = _('Default security group')
 
 
 @resource_extend.has_resource_extenders
@@ -865,10 +868,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             'security_group':
                 {'name': 'default',
                  'tenant_id': tenant_id,
-                 'description': _('Default security group')}
+                 'description': DEFAULT_SG_DESCRIPTION}
         }
-        return self.create_security_group(context, security_group,
-                                          default_sg=True)['id']
+        try:
+            return self.create_security_group(context, security_group,
+                                              default_sg=True)['id']
+        except obj_exc.NeutronDbObjectDuplicateEntry:
+            return self._get_default_sg_id(context, tenant_id)
 
     def _get_security_groups_on_port(self, context, port):
         """Check that all security groups on port belong to tenant.
