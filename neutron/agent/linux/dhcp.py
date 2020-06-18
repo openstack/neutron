@@ -875,6 +875,11 @@ class Dnsmasq(DhcpLocalProcess):
                                     str(DHCP_OPT_CLIENT_ID_NUM)):
                     return opt.opt_value
 
+    @staticmethod
+    def _parse_ip_addresses(ip_list):
+        ip_list = [ip.strip('[]') for ip in ip_list]
+        return [ip for ip in ip_list if netutils.is_valid_ip(ip)]
+
     def _read_hosts_file_leases(self, filename):
         leases = set()
         try:
@@ -886,11 +891,14 @@ class Dnsmasq(DhcpLocalProcess):
                     if host[1].startswith('set:'):
                         continue
                     if host[1].startswith(self._ID):
-                        ip = host[3].strip('[]')
+                        ips = self._parse_ip_addresses(host[3:])
                         client_id = host[1][len(self._ID):]
+                    elif host[1].startswith('tag:'):
+                        ips = self._parse_ip_addresses(host[3:])
                     else:
-                        ip = host[2].strip('[]')
-                    leases.add((ip, mac, client_id))
+                        ips = self._parse_ip_addresses(host[2:])
+                    for ip in ips:
+                        leases.add((ip, mac, client_id))
         except (OSError, IOError):
             LOG.debug('Error while reading hosts file %s', filename)
         return leases
