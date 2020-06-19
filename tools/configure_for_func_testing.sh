@@ -63,6 +63,8 @@ INSTALL_MYSQL_ONLY=${INSTALL_MYSQL_ONLY:-False}
 # The gate should automatically install dependencies.
 INSTALL_BASE_DEPENDENCIES=${INSTALL_BASE_DEPENDENCIES:-$IS_GATE}
 BUILD_OVS_FROM_SOURCE=${BUILD_OVS_FROM_SOURCE:-True}
+OVN_BRANCH=${OVN_BRANCH:-master}
+OVS_BRANCH=${OVS_BRANCH:-master}
 
 
 if [ ! -f "$DEVSTACK_PATH/stack.sh" ]; then
@@ -81,7 +83,7 @@ function _init {
     TOP_DIR=$DEVSTACK_PATH
 
     if [ -f $DEVSTACK_PATH/local.conf ]; then
-        source $DEVSTACK_PATH/local.conf 2> /dev/null
+        source $DEVSTACK_PATH/local.conf 2> /dev/null || true
     fi
 
     source $DEVSTACK_PATH/stackrc
@@ -109,9 +111,10 @@ function _install_base_deps {
         install_package $PACKAGES
 
         source $NEUTRON_PATH/devstack/lib/ovs
-        remove_ovs_packages
-        OVS_BRANCH="v2.12.0"
+        source $NEUTRON_PATH/devstack/lib/ovn_agent
+        echo_summary "OVN_BRANCH: ${OVN_BRANCH} OVS_BRANCH: ${OVS_BRANCH}"
         compile_ovs False /usr /var
+        compile_ovn False /usr /var
     else
         PACKAGES=$(get_packages general,neutron,q-agt,q-l3,openvswitch)
         PACKAGES=$(echo $PACKAGES | perl -pe 's|python-(?!dev)[^ ]*||g')
