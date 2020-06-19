@@ -279,8 +279,8 @@ class TcFilterClassTestCase(functional_base.BaseSudoTestCase):
             namespace=self.namespace)
 
         # NOTE(ralonsoh):
-        # - rate: 320000 bytes/sec (pyroute2 units) = 2500 kbits/sec (OS units)
-        # - burst: 192000 bytes/sec = 1500 kbits/sec
+        # - rate: 320000 bytes/sec (pyroute2 units) = 2560 kbits/sec (OS units)
+        # - burst: 192000 bytes/sec = 1536 kbits/sec
         priv_tc_lib.add_tc_filter_policy(
             self.device, 'ffff:', 49, 320000, 192000, 1200, 'drop',
             namespace=self.namespace)
@@ -288,6 +288,6 @@ class TcFilterClassTestCase(functional_base.BaseSudoTestCase):
         filters = tc_lib.list_tc_filters(
             self.device, 'ffff:', namespace=self.namespace)
         self.assertEqual(1, len(filters))
-        self.assertEqual(2500, filters[0]['rate_kbps'])
-        self.assertEqual(1500, filters[0]['burst_kb'])
+        self.assertEqual(2560, filters[0]['rate_kbps'])
+        self.assertEqual(1536, filters[0]['burst_kb'])
         self.assertEqual(1200, filters[0]['mtu'])

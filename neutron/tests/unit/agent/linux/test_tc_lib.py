@@ -271,9 +271,9 @@ class TcTestCase(base.BaseTestCase):
         tc_lib.add_tc_qdisc('device', 'tbf', parent='root', max_kbps=10000,
                             burst_kb=1500, latency_ms=70, kernel_hz=250,
                             namespace=self.namespace)
-        burst = tc_lib._get_tbf_burst_value(10000, 1500, 70) * 1024 / 8
+        burst = tc_lib._get_tbf_burst_value(10000, 1500, 70) * 1000 / 8
         self.mock_add_tc_qdisc.assert_called_once_with(
-            'device', parent=rtnl.TC_H_ROOT, kind='tbf', rate=10000 * 128,
+            'device', parent=rtnl.TC_H_ROOT, kind='tbf', rate=10000 * 125,
             burst=burst, latency=70000, namespace=self.namespace)
 
     def test_add_tc_qdisc_tbf_missing_arguments(self):
@@ -318,8 +318,8 @@ class TcTestCase(base.BaseTestCase):
         self.assertEqual('root', qdiscs[0]['parent'])
         self.assertEqual('5:1', qdiscs[0]['handle'])
         self.assertEqual('tbf', qdiscs[0]['qdisc_type'])
-        self.assertEqual(2500, qdiscs[0]['max_kbps'])
-        self.assertEqual(1500, qdiscs[0]['burst_kb'])
+        self.assertEqual(2560, qdiscs[0]['max_kbps'])
+        self.assertEqual(1536, qdiscs[0]['burst_kb'])
         self.assertEqual(50, qdiscs[0]['latency_ms'])
 
     def test__get_tbf_burst_value_when_burst_bigger_then_minimal(self):
@@ -346,8 +346,8 @@ class TcPolicyClassTestCase(base.BaseTestCase):
             'device', 'root', '1:10', min_kbps=1000, max_kbps=2000,
             burst_kb=1600, namespace=self.namespace)
         self.mock_add_tc_policy_class.assert_called_once_with(
-            'device', rtnl.TC_H_ROOT, '1:10', 'htb', rate=1000 * 128,
-            ceil=2000 * 128, burst=1600 * 128, namespace=self.namespace)
+            'device', rtnl.TC_H_ROOT, '1:10', 'htb', rate=1000 * 125,
+            ceil=2000 * 125, burst=1600 * 125, namespace=self.namespace)
 
     @mock.patch('pyroute2.netlink.rtnl.tcmsg.common.tick_in_usec', 15.625)
     def test_list_tc_policy_classes(self):
@@ -367,9 +367,9 @@ class TcPolicyClassTestCase(base.BaseTestCase):
                      'parent': 'root',
                      'classid': '1:1',
                      'qdisc_type': 'htb',
-                     'min_kbps': 1500,
-                     'max_kbps': 2000,
-                     'burst_kb': 1200}
+                     'min_kbps': 1536,
+                     'max_kbps': 2048,
+                     'burst_kb': 1228}
         self.assertEqual(reference, _class)
 
 
