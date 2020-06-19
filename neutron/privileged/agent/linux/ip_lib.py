@@ -10,8 +10,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import ctypes
-from ctypes import util as ctypes_util
 import errno
 import os
 import socket
@@ -29,6 +27,7 @@ from pyroute2 import netns
 
 from neutron._i18n import _
 from neutron import privileged
+from neutron.privileged.agent import linux as priv_linux
 
 
 LOG = logging.getLogger(__name__)
@@ -36,21 +35,6 @@ LOG = logging.getLogger(__name__)
 _IP_VERSION_FAMILY_MAP = {4: socket.AF_INET, 6: socket.AF_INET6}
 
 NETNS_RUN_DIR = '/var/run/netns'
-
-_CDLL = None
-
-
-def _get_cdll():
-    global _CDLL
-    if not _CDLL:
-        # NOTE(ralonsoh): from https://docs.python.org/3.6/library/
-        # ctypes.html#ctypes.PyDLL: "Instances of this class behave like CDLL
-        # instances, except that the Python GIL is not released during the
-        # function call, and after the function execution the Python error
-        # flag is checked."
-        # Check https://bugs.launchpad.net/neutron/+bug/1870352
-        _CDLL = ctypes.PyDLL(ctypes_util.find_library('c'), use_errno=True)
-    return _CDLL
 
 
 def _get_scope_name(scope):
@@ -532,7 +516,7 @@ def create_netns(name, **kwargs):
     :param name: The name of the namespace to create
     """
     try:
-        netns.create(name, libc=_get_cdll())
+        netns.create(name, libc=priv_linux.get_cdll())
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
@@ -545,7 +529,7 @@ def remove_netns(name, **kwargs):
     :param name: The name of the namespace to remove
     """
     try:
-        netns.remove(name, libc=_get_cdll())
+        netns.remove(name, libc=priv_linux.get_cdll())
     except OSError as e:
         if e.errno != errno.ENOENT:
             raise
