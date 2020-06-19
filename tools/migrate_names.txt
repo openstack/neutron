@@ -16,6 +16,7 @@
 #           Networking-OVN                        Neutron
 
 devstack/lib/ovn                        devstack/lib/ovn_agent
+doc/source/admin/refarch                doc/source/admin/ovn/refarch
 doc/source/contributor/design           doc/source/contributor/internals/ovn
 networking_ovn/ovn_db_sync.py           neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/ovn_db_sync.py
 networking_ovn/ovsdb/commands.py        neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/commands.py
@@ -40,11 +41,15 @@ networking_ovn/ml2/qos_driver.py        neutron/services/qos/drivers/ovn/driver.
 networking_ovn/ml2/trunk_driver.py      neutron/services/trunk/drivers/ovn/trunk_driver.py
 networking_ovn/l3/l3_ovn.py             neutron/services/ovn_l3/l3_ovn.py
 networking_ovn/l3/l3_ovn_scheduler.py   neutron/scheduler/ovn_l3_scheduler.py
-networking_ovn/tests/unit/ml2/test_mech_driver.py neutron/tests/unit/plugins/ml2/drivers/ovn/mech_driver/test_mech_driver.py
-networking_ovn/tests/unit/ml2/test_qos_driver.py neutron/tests/unit/services/qos/drivers/ovn/test_driver.py
-networking_ovn/tests/unit/ml2/test_trunk_driver.py neutron/tests/unit/services/trunk/drivers/ovn/test_trunk_driver.py
+networking_ovn/tests/unit/fakes.py      neutron/tests/unit/fake_resources.py
+networking_ovn/tests/unit/test_ovn_db_sync.py  neutron/tests/unit/plugins/ml2/drivers/ovn/mech_driver/ovsdb/test_ovn_db_sync.py
+networking_ovn/tests/unit/common/test_maintenance.py  neutron/tests/unit/plugins/ml2/drivers/ovn/mech_driver/ovsdb/test_maintenance.py
+networking_ovn/tests/unit/common        neutron/tests/unit/common/ovn
+networking_ovn/tests/functional         neutron/tests/functional/plugins/ml2/drivers/ovn/mech_driver/ovsdb
+networking_ovn/tests/unit/ml2/test_mech_driver.py  neutron/tests/unit/plugins/ml2/drivers/ovn/mech_driver/test_mech_driver.py
+networking_ovn/tests/unit/ml2/test_qos_driver.py  neutron/tests/unit/services/qos/drivers/ovn/test_driver.py
+networking_ovn/tests/unit/ml2/test_trunk_driver.py  neutron/tests/unit/services/trunk/drivers/ovn/test_trunk_driver.py
+networking_ovn/tests/unit/ovsdb         neutron/tests/unit/plugins/ml2/drivers/ovn/mech_driver/ovsdb
 networking_ovn/tests                    neutron/tests
 networking_ovn/common/extensions.py     neutron/extensions/ovn.py
-networking_ovn/tests/unit/fakes.py      neutron/tests/unit/fake_resources.py
 migration                               tools/migration_to_ovn
-
