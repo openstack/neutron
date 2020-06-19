@@ -166,17 +166,17 @@ class TcPolicyClassTestCase(functional_base.BaseSudoTestCase):
                                        max_kbps=2000, burst_kb=1000,
                                        min_kbps=3, namespace=self.ns[0])
             mock_log.warning.assert_called_once_with(
-                *warning_args(3 * 128, tc_lib._calc_min_rate(1000 * 128)))
+                *warning_args(3 * 125, tc_lib._calc_min_rate(1000 * 125)))
 
-            # rate < min_rate: min_rate = 466 with burst = 0.8 ceil = 256000
+            # rate < min_rate: min_rate = 455 with burst = 0.8 ceil = 256000
             mock_log.reset_mock()
             tc_lib.add_tc_policy_class(self.device[0], '1:', '1:10',
                                        max_kbps=2000, burst_kb=None,
                                        min_kbps=5, namespace=self.ns[0])
             min_rate = tc_lib._calc_min_rate(qos_consts.DEFAULT_BURST_RATE *
-                                             2000 * 128)
+                                             2000 * 125)
             mock_log.warning.assert_called_once_with(
-                *warning_args(5 * 128, min_rate))
+                *warning_args(5 * 125, min_rate))
 
 
 class TcFiltersTestCase(functional_base.BaseSudoTestCase):
