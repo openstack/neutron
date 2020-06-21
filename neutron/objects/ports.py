@@ -248,11 +248,6 @@ class PortDNS(base.NeutronDbObject):
         'dns_domain': common_types.DomainNameField(),
     }
 
-    def obj_make_compatible(self, primitive, target_version):
-        _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 1):
-            primitive.pop('dns_domain', None)
-
 
 @base.NeutronObjectRegistry.register
 class SecurityGroupPortBinding(base.NeutronDbObject):
@@ -500,8 +495,6 @@ class Port(base.NeutronDbObject):
 
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 1):
-            primitive.pop('data_plane_status', None)
         if _target_version < (1, 2):
             binding_levels = primitive.get('binding_levels', [])
             for lvl in binding_levels:

@@ -19,7 +19,6 @@ from neutron_lib import constants as lib_consts
 from neutron_lib.db import constants as db_consts
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_config import cfg
-from oslo_versionedobjects import exception
 
 from neutron import manager
 from neutron.objects.qos import rule_type
@@ -88,8 +87,3 @@ class QosRuleTypeObjectTestCase(test_base.BaseTestCase):
 
     def test_wrong_type(self):
         self.assertRaises(ValueError, rule_type.QosRuleType, type='bad_type')
-
-    def test_object_version_degradation_less_than_1_3(self):
-        qos_rule_type = rule_type.QosRuleType()
-        self.assertRaises(exception.IncompatibleObjectVersion,
-                          qos_rule_type.obj_to_primitive, '1.2')

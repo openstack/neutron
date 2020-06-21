@@ -17,7 +17,6 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import common_types
 from neutron_lib.objects import exceptions as o_exc
 from oslo_db import exception as o_db_exc
-from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.objects import base
@@ -138,9 +137,3 @@ class Trunk(base.NeutronDbObject):
             # or self.db_obj.standard_attr
             pass
         return _dict
-
-    def obj_make_compatible(self, primitive, target_version):
-        _target_version = versionutils.convert_version_to_tuple(target_version)
-
-        if _target_version < (1, 1):
-            primitive['tenant_id'] = primitive.pop('project_id')

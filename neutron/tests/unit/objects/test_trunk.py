@@ -172,14 +172,6 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
             if k in kwargs:
                 self.assertEqual(kwargs[k], trunk[k])
 
-    def test_v1_1_to_v1_0_drops_project_id(self):
-        trunk_new = self._test_create_trunk_with_subports(
-            self.db_objs[0]['port_id'], [1, 2])
-
-        trunk_v1_0 = trunk_new.obj_to_primitive(target_version='1.0')
-        self.assertNotIn('project_id', trunk_v1_0['versioned_object.data'])
-        self.assertIn('tenant_id', trunk_v1_0['versioned_object.data'])
-
     def test_get_objects_tenant_id(self):
         trunk = t_obj.Trunk(context=self.context,
                             project_id='faketenant',
