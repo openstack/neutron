@@ -703,8 +703,8 @@ class OVSBridge(BaseOVS):
         self.set_controller_field('inactivity_probe', interval * 1000)
 
     def _set_egress_bw_limit_for_port(self, port_name, max_kbps,
-                                      max_burst_kbps):
-        with self.ovsdb.transaction(check_error=True) as txn:
+                                      max_burst_kbps, check_error=True):
+        with self.ovsdb.transaction(check_error=check_error) as txn:
             txn.add(self.ovsdb.db_set('Interface', port_name,
                                       ('ingress_policing_rate', max_kbps)))
             txn.add(self.ovsdb.db_set('Interface', port_name,
@@ -731,8 +731,7 @@ class OVSBridge(BaseOVS):
     def delete_egress_bw_limit_for_port(self, port_name):
         if not self.port_exists(port_name):
             return
-        self._set_egress_bw_limit_for_port(
-            port_name, 0, 0)
+        self._set_egress_bw_limit_for_port(port_name, 0, 0, check_error=False)
 
     def find_qos(self, port_name):
         qos = self.ovsdb.db_find(
@@ -903,16 +902,16 @@ class OVSBridge(BaseOVS):
         return max_kbps, max_burst_kbit
 
     def delete_ingress_bw_limit_for_port(self, port_name):
+        self.ovsdb.db_clear('Port', port_name,
+                            'qos').execute(check_error=False)
         qos = self.find_qos(port_name)
         queue = self.find_queue(port_name, QOS_DEFAULT_QUEUE)
-        does_port_exist = self.port_exists(port_name)
-        with self.ovsdb.transaction(check_error=True) as txn:
-            if does_port_exist:
-                txn.add(self.ovsdb.db_clear("Port", port_name, 'qos'))
-            if qos:
-                txn.add(self.ovsdb.db_destroy('QoS', qos['_uuid']))
-            if queue:
-                txn.add(self.ovsdb.db_destroy('Queue', queue['_uuid']))
+        if qos:
+            self.ovsdb.db_destroy('QoS',
+                                  qos['_uuid']).execute(check_error=True)
+        if queue:
+            self.ovsdb.db_destroy('Queue',
+                                  queue['_uuid']).execute(check_error=True)
 
     def set_controller_field(self, field, value):
         attr = [(field, value)]
