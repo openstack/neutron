@@ -428,20 +428,24 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                 for router_id in (router_ids - result_set):
                     subnet_ids = self.get_subnet_ids_on_router(
                         context, router_id, keep_gateway_port=False)
-                    if (subnet_ids and
+                    if (subnet_ids and (
                             self._check_dvr_serviceable_ports_on_host(
                                     context, agent_db['host'],
-                                    list(subnet_ids))):
+                                    list(subnet_ids)) or
+                            self._is_router_related_to_dvr_routers(
+                                    context, router_id, dvr_routers))):
                         result_set.add(router_id)
 
             LOG.debug("Routers %(router_ids)s are scheduled or have "
                       "serviceable ports in host %(host)s",
                       {'router_ids': result_set,
                        'host': agent_db['host']})
-            for router_id in router_ids:
-                result_set |= set(
+            related_routers = set()
+            for router_id in result_set:
+                related_routers |= set(
                     self._get_other_dvr_router_ids_connected_router(
                         context, router_id))
+            result_set |= related_routers
 
         LOG.debug("Router IDs %(router_ids)s for agent in host %(host)s",
                   {'router_ids': result_set,
@@ -491,6 +495,13 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             ml2_models.PortBinding.profile.contains(profile_host))
         query = query.filter(host_filter)
         return query.first() is not None
+
+    @log_helpers.log_method_call
+    def _is_router_related_to_dvr_routers(self, context, router_id,
+                                          dvr_routers):
+        related_routers = self._get_other_dvr_router_ids_connected_router(
+            context, router_id)
+        return any([r in dvr_routers for r in related_routers])
 
 
 def _dvr_handle_unbound_allowed_addr_pair_add(
