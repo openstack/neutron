@@ -43,6 +43,7 @@ from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import profiler as setup_profiler
 from neutron.common import utils as n_utils
+from neutron.conf.agent import common as agent_config
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
@@ -546,6 +547,7 @@ def main():
     common_config.init(sys.argv[1:])
 
     common_config.setup_logging()
+    agent_config.setup_privsep()
     try:
         config_parser = SriovNicAgentConfigParser()
         config_parser.parse()
