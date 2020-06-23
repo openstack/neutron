@@ -28,7 +28,6 @@ from pyroute2.netlink import exceptions as netlink_exceptions
 from pyroute2.netlink import rtnl
 from pyroute2.netlink.rtnl import ifaddrmsg
 from pyroute2.netlink.rtnl import ifinfmsg
-from pyroute2 import NetlinkError
 from pyroute2 import netns
 
 from neutron._i18n import _
@@ -100,9 +99,7 @@ class AddressNotReady(exceptions.NeutronException):
                 "become ready: %(reason)s")
 
 
-class InvalidArgument(exceptions.NeutronException):
-    message = _("Invalid value %(value)s for parameter %(parameter)s "
-                "provided.")
+InvalidArgument = privileged.InvalidArgument
 
 
 class SubProcessBase(object):
@@ -442,13 +439,8 @@ class IpLinkCommand(IpDeviceCommandBase):
             self.name, self._parent.namespace, ifinfmsg.IFF_ALLMULTI)
 
     def set_mtu(self, mtu_size):
-        try:
-            privileged.set_link_attribute(
-                self.name, self._parent.namespace, mtu=mtu_size)
-        except NetlinkError as e:
-            if e.code == errno.EINVAL:
-                raise InvalidArgument(parameter="MTU", value=mtu_size)
-            raise
+        privileged.set_link_attribute(
+            self.name, self._parent.namespace, mtu=mtu_size)
 
     def set_up(self):
         privileged.set_link_attribute(
@@ -519,6 +511,13 @@ class IpLinkCommand(IpDeviceCommandBase):
     @property
     def exists(self):
         return privileged.interface_exists(self.name, self._parent.namespace)
+
+    def get_vfs(self):
+        return privileged.get_link_vfs(self.name, self._parent.namespace)
+
+    def set_vf_feature(self, vf_config):
+        return privileged.set_link_vf_feature(
+            self.name, self._parent.namespace, vf_config)
 
 
 class IpAddrCommand(IpDeviceCommandBase):

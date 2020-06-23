@@ -31,6 +31,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
 from osprofiler import profiler
+import pyroute2
 import six
 
 from neutron._i18n import _
@@ -48,6 +49,7 @@ from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
 from neutron.plugins.ml2.drivers.mech_sriov.agent import eswitch_manager as esm
+from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 
 
 LOG = logging.getLogger(__name__)
@@ -292,10 +294,9 @@ class SriovNicSwitchAgent(object):
                 self.eswitch_mgr.set_device_state(device, pci_slot,
                                                   admin_state_up,
                                                   propagate_uplink_state)
-            except exc.IpCommandOperationNotSupportedError:
-                LOG.warning("Device %s does not support state change",
-                            device)
-            except exc.SriovNicError:
+            except priv_ip_lib.InterfaceOperationNotSupported:
+                LOG.warning("Device %s does not support state change", device)
+            except pyroute2.NetlinkError:
                 LOG.warning("Failed to set device %s state", device)
                 return False
         else:

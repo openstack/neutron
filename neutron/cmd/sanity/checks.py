@@ -29,7 +29,6 @@ from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import ip_link_support
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils as agent_utils
 from neutron.cmd import runtime_checks
@@ -144,41 +143,6 @@ def icmpv6_header_match_supported():
                                icmp_type=n_consts.ICMPV6_TYPE_NA,
                                nd_target='fdf8:f53b:82e4::10',
                                actions="NORMAL")
-
-
-def _vf_management_support(required_caps):
-    is_supported = True
-    try:
-        vf_section = ip_link_support.IpLinkSupport.get_vf_mgmt_section()
-        for cap in required_caps:
-            if not ip_link_support.IpLinkSupport.vf_mgmt_capability_supported(
-                   vf_section, cap):
-                is_supported = False
-                LOG.debug("ip link command does not support "
-                          "vf capability '%(cap)s'", {'cap': cap})
-    except ip_link_support.UnsupportedIpLinkCommand:
-        LOG.exception("Unexpected exception while checking supported "
-                      "ip link command")
-        return False
-    return is_supported
-
-
-def vf_management_supported():
-    required_caps = (
-        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_STATE,
-        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_SPOOFCHK,
-        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE)
-    return _vf_management_support(required_caps)
-
-
-def vf_extended_management_supported():
-    required_caps = (
-        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_STATE,
-        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_SPOOFCHK,
-        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE,
-        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_MIN_TX_RATE,
-    )
-    return _vf_management_support(required_caps)
 
 
 def netns_read_requires_helper():

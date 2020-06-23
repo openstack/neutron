@@ -182,25 +182,6 @@ def check_icmpv6_header_match():
     return result
 
 
-def check_vf_management():
-    result = checks.vf_management_supported()
-    if not result:
-        LOG.error('Check for VF management support failed. '
-                  'Please ensure that the version of ip link '
-                  'being used has VF support.')
-    return result
-
-
-def check_vf_extended_management():
-    result = checks.vf_extended_management_supported()
-    if not result:
-        LOG.error('Check for VF extended management support failed. '
-                  'Please ensure that the version of ip link '
-                  'being used has VF extended support: version '
-                  '"iproute2-ss140804", git tag "v3.16.0"')
-    return result
-
-
 def check_ovsdb_native():
     result = checks.ovsdb_native_supported()
     if not result:
@@ -315,10 +296,6 @@ OPTS = [
                     help=_('Check for ARP header match support')),
     BoolOptCallback('icmpv6_header_match', check_icmpv6_header_match,
                     help=_('Check for ICMPv6 header match support')),
-    BoolOptCallback('vf_management', check_vf_management,
-                    help=_('Check for VF management support')),
-    BoolOptCallback('vf_extended_management', check_vf_extended_management,
-                    help=_('Check for VF extended management support')),
     BoolOptCallback('read_netns', check_read_netns,
                     help=_('Check netns permission settings')),
     BoolOptCallback('dnsmasq_local_service_supported',

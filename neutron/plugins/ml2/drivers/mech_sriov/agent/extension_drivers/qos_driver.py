@@ -15,9 +15,8 @@
 from oslo_log import log as logging
 
 from neutron.agent.l2.extensions import qos_linux as qos
-from neutron.plugins.ml2.drivers.mech_sriov.agent.common import (
-    exceptions as exc)
 from neutron.plugins.ml2.drivers.mech_sriov.agent import eswitch_manager as esm
+from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 from neutron.services.qos.drivers.sriov import driver
 
 LOG = logging.getLogger(__name__)
@@ -55,9 +54,9 @@ class QosSRIOVAgentDriver(qos.QosLinuxAgentDriver):
             try:
                 self.eswitch_mgr.set_device_max_rate(
                     device, pci_slot, max_kbps)
-            except exc.SriovNicError:
-                LOG.exception(
-                    "Failed to set device %s max rate", device)
+            except (priv_ip_lib.InterfaceOperationNotSupported,
+                    priv_ip_lib.InvalidArgument):
+                LOG.exception("Failed to set device %s max rate", device)
         else:
             LOG.info("No device with MAC %s defined on agent.", device)
 
@@ -97,8 +96,8 @@ class QosSRIOVAgentDriver(qos.QosLinuxAgentDriver):
             try:
                 self.eswitch_mgr.set_device_min_tx_rate(
                     device, pci_slot, min_tx_kbps)
-            except exc.SriovNicError:
-                LOG.exception(
-                    "Failed to set device %s min_tx_rate", device)
+            except (priv_ip_lib.InterfaceOperationNotSupported,
+                    priv_ip_lib.InvalidArgument):
+                LOG.exception("Failed to set device %s min_tx_rate", device)
         else:
             LOG.info("No device with MAC %s defined on agent.", device)
