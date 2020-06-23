@@ -168,51 +168,14 @@
 - job:
     name: neutron-ovn-base
     description: Base job for devstack/tempest to test Neutron with ovn driver.
-    # TODO(slaweq): consider changing parent to be tempest-integrated-networking
-    # job instead of devstack-tempest
-    parent: devstack-tempest
+    parent: tempest-integrated-networking
     timeout: 10800
     required-projects: &ovn-base-required-projects
       - openstack/devstack-gate
       - openstack/neutron
-      - openstack/neutron-tempest-plugin
       - openstack/tempest
     irrelevant-files: *irrelevant-files
     vars: &ovn-base-vars
-      tox_envlist: all-plugin
-      tempest_test_regex: "^(?!.*\
-        (?:.*\\[.*slow.*\\])|\
-        (?:tempest.api.network.admin.test_quotas.QuotasTest.test_lbaas_quotas.*)|\
-        (?:tempest.api.network.test_load_balancer.*)|\
-        (?:tempest.scenario.test_load_balancer.*)|\
-        (?:tempest.api.network.admin.test_load_balancer.*)|\
-        (?:tempest.api.network.admin.test_lbaas.*)|\
-        (?:tempest.api.network.test_fwaas_extensions.*)|\
-        (?:tempest.api.network.test_metering_extensions.*)|\
-        (?:tempest.thirdparty.boto.test_s3.*)|\
-        (?:tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port)|\
-        (?:tempest.api.identity*)|\
-        (?:tempest.api.image*)|\
-        (?:tempest.api.volume*)|\
-        (?:tempest.api.compute.images*)|\
-        (?:tempest.api.compute.keypairs*)|\
-        (?:tempest.api.compute.certificates*)|\
-        (?:tempest.api.compute.flavors*)|\
-        (?:tempest.api.compute.test_quotas*)|\
-        (?:tempest.api.compute.test_versions*)|\
-        (?:tempest.api.compute.volumes*)|\
-        (?:tempest.api.compute.admin.test_flavor*)|\
-        (?:tempest.api.compute.admin.test_volume*)|\
-        (?:tempest.api.compute.admin.test_hypervisor*)|\
-        (?:tempest.api.compute.admin.test_aggregate*)|\
-        (?:tempest.api.compute.admin.test_quota*)|\
-        (?:tempest.scenario.test_volume*))\
-        ((^neutron_tempest_plugin.api)|\
-        (^neutron_tempest_plugin.scenario)|\
-        (tempest.(api|scenario|thirdparty))).*$"
-      # TODO(haleyb): Remove this blacklist when
-      # https://bugs.launchpad.net/neutron/+bug/1881558 is fixed.
-      tempest_black_regex: "(?:neutron_tempest_plugin.scenario.test_ipv6.IPv6Test)"
       tempest_concurrency: 4
       devstack_local_conf:
         test-config:
@@ -246,7 +209,6 @@
         OVN_IGMP_SNOOPING_ENABLE: True
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron
-        neutron-tempest-plugin: https://opendev.org/openstack/neutron-tempest-plugin
       zuul_copy_output:
         '{{ devstack_base_dir }}/data/ovs': 'logs'
       extensions_to_txt:
