@@ -52,6 +52,8 @@ Below is a summary of those jobs.
     |neutron-tempest-plugin-scenario-openvswitch-\ |neutron_tempest_plugin.scenario   |   3.6   |   1   | openvswitch | iptables_hybrid | legacy   | False | False  | False      | Yes         |
     |  iptables_hybrid                             |                                  |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-tempest-plugin-scenario-ovn           | neutron_tempest_plugin.scenario  |   3.6   |   1   | ovn         | ovn             | ---      | False | False  | False      | Yes         |
+    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |tempest-integrated-networking                 |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
     |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
@@ -84,7 +86,6 @@ Below is a summary of those jobs.
     |tempest-ipv6-only                             |tempest smoke + IPv6 tests        |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovn-tempest-ovs-release               |Various tempest api, scenario     |   3.6   |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
-    |                                              |and neutron_tempest_plugi tests   |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovn-tempest-slow                      |tempest slow tests                |   3.6   |   2   | ovn         | ovn             | ---      | False | False  | True       | No          |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
