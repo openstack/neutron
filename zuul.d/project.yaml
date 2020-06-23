@@ -50,6 +50,9 @@
             irrelevant-files: *irrelevant-files
         - tempest-ipv6-only:
             irrelevant-files: *irrelevant-files
+        - neutron-tempest-with-neutron-lib-master:
+            voting: false
+            irrelevant-files: *irrelevant-files
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only:
             voting: false

@@ -133,6 +133,16 @@
       - openstack/os-ken
 
 - job:
+    name: neutron-tempest-with-neutron-lib-master
+    parent: tempest-integrated-networking
+    timeout: 7800
+    required-projects:
+      - openstack/devstack-gate
+      - openstack/neutron
+      - openstack/tempest
+      - openstack/neutron-lib
+
+- job:
     name: neutron-tempest-with-uwsgi
     parent: tempest-integrated-networking
     description: Run neutron Tempest tests with uwsgi
