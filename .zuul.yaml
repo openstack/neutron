@@ -21,8 +21,10 @@
         - neutron-rally-task
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
-        - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
+        - neutron-grenade-multinode:
+            voting: false
+        - neutron-grenade-dvr-multinode:
+            voting: false
         - tempest-multinode-full-py3:
             voting: false
             # We don't run the job on things like neutron docs-only changes
@@ -38,7 +40,8 @@
               - ^tox.ini$
         - neutron-tempest-dvr-ha-multinode-full
         - neutron-tempest-iptables_hybrid
-        - neutron-grenade
+        - neutron-grenade:
+            voting: false
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             voting: false
             irrelevant-files: *tempest-irrelevant-files
@@ -54,6 +57,7 @@
             voting: false
             irrelevant-files: *tempest-irrelevant-files
         - grenade-py3:
+            voting: false
             irrelevant-files: *tempest-irrelevant-files
         - openstacksdk-functional-devstack-networking:
             voting: false
@@ -65,16 +69,11 @@
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
         - neutron-tempest-iptables_hybrid
-        - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
-        - neutron-grenade
         - tempest-full:
             timeout: 10800
         - tempest-full-py3:
             timeout: 10800
         - tempest-slow-py3:
-            irrelevant-files: *tempest-irrelevant-files
-        - grenade-py3:
             irrelevant-files: *tempest-irrelevant-files
     periodic:
       jobs:
