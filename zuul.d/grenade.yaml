@@ -24,6 +24,8 @@
         s-container: false
         s-object: false
         s-proxy: false
+        br-ex-tcpdump: true
+        br-int-flows: true
 
 - job:
     name: neutron-grenade-dvr-multinode
@@ -43,6 +45,8 @@
         s-container: false
         s-object: false
         s-proxy: false
+        br-ex-tcpdump: true
+        br-int-flows: true
       devstack_local_conf:
         post-config:
           $NEUTRON_CONF:
@@ -76,6 +80,8 @@
           q-agt: true
           q-l3: true
           q-meta: true
+          br-ex-tcpdump: true
+          br-int-flows: true
         devstack_local_conf:
           post-config:
             $NEUTRON_CONF:

@@ -10,6 +10,9 @@
       tempest_concurrency: 4
       devstack_localrc:
         Q_DVR_MODE: dvr_snat
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
     irrelevant-files: &irrelevant-files
       - ^(test-|)requirements.txt$
       - ^.*\.rst$
@@ -56,6 +59,8 @@
         neutron-segments: true
         neutron-trunk: true
         neutron-uplink-status-propagation: true
+        br-ex-tcpdump: true
+        br-int-flows: true
       devstack_local_conf:
         post-config:
           $NEUTRON_CONF:
@@ -104,6 +109,8 @@
       devstack_services:
         postgresql: true
         mysql: false
+        br-ex-tcpdump: true
+        br-int-flows: true
     irrelevant-files: *irrelevant-files
 
 - job:
@@ -117,6 +124,9 @@
     vars:
       devstack_localrc:
         MYSQL_SERVICE_NAME: mariadb
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
     # NOTE(ralonsoh): once MariaDB default version in Ubuntu is bumped to
     # >10.1, this workaround can be removed (bug 1855912)
     pre-run: playbooks/add_mariadb_repo.yaml
@@ -150,6 +160,9 @@
     vars:
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: true
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
     irrelevant-files: *irrelevant-files
 
 - job:
