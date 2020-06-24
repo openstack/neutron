@@ -135,15 +135,15 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
             tenant_uuid, subnet_cidr)
 
         # 0. check that traffic is allowed when port security is disabled
+        vms[0].block_until_ping(vms[1].ip)
+        vms[0].block_until_ping(vms[2].ip)
+        vms[1].block_until_ping(vms[2].ip)
         self.assert_connection(
             vms[1].namespace, vms[0].namespace, vms[0].ip, 3333,
             net_helpers.NetcatTester.TCP)
         self.assert_connection(
             vms[2].namespace, vms[0].namespace, vms[0].ip, 3333,
             net_helpers.NetcatTester.TCP)
-        vms[0].block_until_ping(vms[1].ip)
-        vms[0].block_until_ping(vms[2].ip)
-        vms[1].block_until_ping(vms[2].ip)
 
         # Apply security groups to the ports
         for port, sg in zip(ports, self.index_to_sg):
