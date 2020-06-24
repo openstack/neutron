@@ -138,7 +138,7 @@ primary node. See the :doc:`/ovn/faq/index` for more information.
 
         [DEFAULT]
         ...
-        core_plugin = neutron.plugins.ml2.plugin.Ml2Plugin
+        core_plugin = ml2
 
    * Enable the OVN layer-3 service.
 
@@ -146,7 +146,7 @@ primary node. See the :doc:`/ovn/faq/index` for more information.
 
         [DEFAULT]
         ...
-        service_plugins = neutron.services.ovn_l3.plugin:OVNL3RouterPlugin
+        service_plugins = ovn-router
 
 #. Configure the ML2 plug-in. Edit the
    ``/etc/neutron/plugins/ml2/ml2_conf.ini`` file:
