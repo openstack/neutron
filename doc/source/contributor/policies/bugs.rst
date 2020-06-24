@@ -408,7 +408,8 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+--------------------------+
 | l2-pop_                       | A bug in L2 Population mech driver      | Miguel Lavalle           |
 +-------------------------------+-----------------------------------------+--------------------------+
-| l3-bgp_                       | A bug affecting neutron-dynamic-routing | Ryan Tidwell             |
+| l3-bgp_                       | A bug affecting neutron-dynamic-routing | Tobias Urdin/            |
+|                               |                                         | Jens Harbott             |
 +-------------------------------+-----------------------------------------+--------------------------+
 | l3-dvr-backlog_               | A bug affecting distributed routing     | Yulong Liu/              |
 |                               |                                         | Brian Haley              |

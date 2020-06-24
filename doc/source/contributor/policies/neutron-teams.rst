@@ -125,7 +125,9 @@ updating the core review team for the sub-project's repositories.
 | networking-bagpipe      +-----------------------------+-------------------+
 |                         | Thomas Morin                | tmorin            |
 +-------------------------+-----------------------------+-------------------+
-| neutron-dynamic-routing | Ryan Tidwell                | tidwellr          |
+| neutron-dynamic-routing | Tobias Urdin                | tobias-urdin      |
+|                         +-----------------------------+-------------------+
+|                         | Jens Harbott                | frickler          |
 +-------------------------+-----------------------------+-------------------+
 | neutron-fwaas           | Nate Johnston               | njohnston         |
 +-------------------------+-----------------------------+-------------------+
