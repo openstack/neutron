@@ -85,3 +85,40 @@ class BaseWeightScheduler(BaseScheduler):
         chosen_agents = sorted(resource_hostable_agents,
                                key=attrgetter('load'))[0:num_agents_needed]
         return chosen_agents
+
+
+def get_vacant_binding_index(num_agents, bindings, lowest_binding_index,
+                             force_scheduling=False):
+    """Return a vacant binding_index to use and whether or not it exists.
+
+    This method can be used with DHCP and L3 agent schedulers. It will return
+    the lowest vacant index for one of those agents.
+    :param num_agents: (int) number of agents (DHCP, L3) already scheduled
+    :param bindings: (NetworkDhcpAgentBinding, RouterL3AgentBinding) agent
+                     binding object, must have "binding_index" field.
+    :param lowest_binding_index: (int) lowest index number to be scheduled.
+    :param force_scheduling: (optional)(boolean) if enabled, the method will
+                             always return an index, even if this number
+                             exceeds the maximum configured number of agents.
+    """
+    binding_indices = [b.binding_index for b in bindings]
+    all_indices = set(range(lowest_binding_index, num_agents + 1))
+    open_slots = sorted(list(all_indices - set(binding_indices)))
+
+    if open_slots:
+        return open_slots[0]
+
+    if not force_scheduling:
+        return -1
+
+    # Last chance: if this is a manual scheduling, we're gonna allow
+    # creation of a binding_index even if it will exceed
+    # dhcp_agents_per_network.
+    if max(binding_indices) == len(binding_indices):
+        return max(binding_indices) + 1
+    else:
+        # Find binding index set gaps and return first free one.
+        all_indices = set(range(lowest_binding_index,
+                                max(binding_indices) + 1))
+        open_slots = sorted(list(all_indices - set(binding_indices)))
+        return open_slots[0]
