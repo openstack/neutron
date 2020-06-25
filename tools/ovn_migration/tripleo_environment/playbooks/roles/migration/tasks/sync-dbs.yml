@@ -1,17 +1,17 @@
 ---
-- name: Get the neutron docker ID
+- name: Get the neutron container ID
   shell:
-    docker ps | grep neutron-server-ovn | awk '{print $1}'
-  register: neutron_docker_id
+    podman ps --filter "name=neutron-server-ovn" --format {% raw %}"{{.ID}}"{% endraw %}
+  register: neutron_id
 
 - name: Sync neutron db with OVN db (container) - Run 1
-  command: docker exec "{{ neutron_docker_id.stdout }}"
+  command: podman exec "{{ neutron_id.stdout }}"
            neutron-ovn-db-sync-util --config-file /etc/neutron/neutron.conf
            --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
            --ovn-neutron_sync_mode repair
 
 - name: Sync neutron db with OVN db (container) - Run 2
-  command: docker exec "{{ neutron_docker_id.stdout }}"
+  command: podman exec "{{ neutron_id.stdout }}"
            neutron-ovn-db-sync-util --config-file /etc/neutron/neutron.conf
            --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
            --ovn-neutron_sync_mode repair

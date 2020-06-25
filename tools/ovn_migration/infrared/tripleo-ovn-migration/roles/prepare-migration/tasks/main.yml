@@ -31,9 +31,9 @@
   set_fact:
       overcloud_deploy_ovn_script: '~/overcloud-deploy-ovn.sh'
 
-- name: Set docker images environment file
+- name: Set container images environment file
   set_fact:
-      output_env_file: /home/stack/docker-images-ovn.yaml
+      output_env_file: /home/stack/container-images-ovn.yaml
 
 - name: Get the proper neutron-ovn-ha.yaml path
   stat:
@@ -79,7 +79,7 @@
 
       - name: Set image tag from puddle version
         set_fact:
-            docker_image_tag: "{{ core_puddle_version.stdout }}"
+            container_image_tag: "{{ core_puddle_version.stdout }}"
 
       - name: Get registry namespace
         shell: cat containers-prepare-parameter.yaml | grep -v _namespace | grep namespace | awk '{print $2}'
@@ -94,7 +94,7 @@
           msg: "{{ core_puddle_version.stdout }}"
 
       - debug:
-          msg: "{{ docker_image_tag }}"
+          msg: "{{ container_image_tag }}"
 
       - debug:
           msg: "{{ reg_namespace }}"
@@ -102,7 +102,7 @@
 
 - name: Set image tag (tripleo deployment)
   set_fact:
-      docker_image_tag: "{{ image_tag }}"
+      container_image_tag: "{{ image_tag }}"
   when:
       - not infrared_deployment|bool
 
@@ -116,16 +116,16 @@
 - name: Add ovn container images to ovn_container_images.yaml
   lineinfile:
       dest: ~/ovn_container_images.yaml
-      line: "- imagename: {{ reg_namespace }}/{{ image_prefix }}-{{ item }}:{{ docker_image_tag }}"
+      line: "- imagename: {{ reg_namespace }}/{{ image_prefix }}-{{ item }}:{{ container_image_tag }}"
   with_items:
       - "ovn-northd"
       - "ovn-controller"
       - "neutron-server-ovn"
       - "neutron-metadata-agent-ovn"
 
-- name: Generate docker images environment file
+- name: Generate container images environment file
   shell: |
-      echo "parameter_defaults:" > ~/docker-images-ovn.yaml
+      echo "parameter_defaults:" > ~/container-images-ovn.yaml
   changed_when: False
 
 - name: Set the local namespace
@@ -160,10 +160,10 @@
   when:
       - local_namespace != ''
 
-- name: Add ovn container images to docker images environment file
+- name: Add ovn container images to container images environment file
   lineinfile:
-      dest: ~/docker-images-ovn.yaml
-      line: "  {{ item.name }}: {{ local_registry }}/{{ image_prefix }}-{{ item.image_name }}:{{ docker_image_tag }}"
+      dest: ~/container-images-ovn.yaml
+      line: "  {{ item.name }}: {{ local_registry }}/{{ image_prefix }}-{{ item.image_name }}:{{ container_image_tag }}"
   with_items:
       - { name: ContainerNeutronApiImage, image_name: neutron-server-ovn}
       - { name: ContainerNeutronConfigImage, image_name: neutron-server-ovn}
