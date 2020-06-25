@@ -2624,7 +2624,7 @@ class TestDnsmasq(TestBase):
                   ("fdca:3ba5:a17a::4", "00:00:80:aa:bb:cc", None)}
         self._test_read_hosts_file_leases(lines, result)
 
-    def _test_read_leases_file_leases(self, ip_version, add_bad_line=False):
+    def _test_read_leases_file_leases(self, add_bad_line=False):
         filename = '/path/to/file'
         lines = [
                 "1472673289 aa:bb:cc:00:00:02 192.168.1.2 host-192-168-1-2 *",
@@ -2648,7 +2648,7 @@ class TestDnsmasq(TestBase):
         dnsmasq = self._get_dnsmasq(FakeDualNetwork())
         with mock.patch('os.path.exists', return_value=True), \
                 mock.patch.object(dhcp.LOG, 'warning') as mock_log_warn:
-            leases = dnsmasq._read_leases_file_leases(filename, ip_version)
+            leases = dnsmasq._read_leases_file_leases(filename)
         server_id = '00:01:00:01:02:03:04:05:06:07:08:09:0a:0b'
         entry1 = {'iaid': '1044800001',
                   'client_id': '00:04:4a:d0:d2:34:19:2b:49:08:84:'
@@ -2665,11 +2665,6 @@ class TestDnsmasq(TestBase):
                                '7f:5c:33:31:37:5d:80:77:b4',
                   'server_id': server_id
                   }
-        v6_expected = {'2001:DB8::a': entry1,
-                       '2001:DB8::b': entry2,
-                       '2001:DB8::c': entry3
-                       }
-
         entry4 = {'iaid': 'aa:bb:cc:00:00:02',
                   'client_id': '*',
                   'server_id': None
@@ -2682,34 +2677,24 @@ class TestDnsmasq(TestBase):
                   'client_id': '*',
                   'server_id': None
                   }
-        v4_expected = {'192.168.1.2': entry4,
-                       '192.168.1.3': entry5,
-                       '192.168.1.4': entry6
-                       }
-
-        expected = {}
-        if not ip_version or ip_version == constants.IP_VERSION_6:
-            expected.update(v6_expected)
-
-        if not ip_version or ip_version == constants.IP_VERSION_4:
-            expected.update(v4_expected)
+        expected = {'2001:DB8::a': entry1,
+                    '2001:DB8::b': entry2,
+                    '2001:DB8::c': entry3,
+                    '192.168.1.2': entry4,
+                    '192.168.1.3': entry5,
+                    '192.168.1.4': entry6
+                    }
 
         mock_open.assert_called_once_with(filename)
         self.assertEqual(expected, leases)
         if add_bad_line:
             self.assertTrue(mock_log_warn.called)
 
-    def test_read_v6_leases_file_leases(self):
-        self._test_read_leases_file_leases(constants.IP_VERSION_6)
-
-    def test_read_v4_leases_file_leases(self):
-        self._test_read_leases_file_leases(constants.IP_VERSION_4)
-
     def test_read_all_leases_file_leases(self):
-        self._test_read_leases_file_leases(None)
+        self._test_read_leases_file_leases()
 
     def test_read_all_leases_file_leases_with_bad_line(self):
-        self._test_read_leases_file_leases(None, True)
+        self._test_read_leases_file_leases(add_bad_line=True)
 
     def test_make_subnet_interface_ip_map(self):
         with mock.patch('neutron.agent.linux.ip_lib.'

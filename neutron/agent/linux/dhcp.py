@@ -901,7 +901,7 @@ class Dnsmasq(DhcpLocalProcess):
             LOG.debug('Error while reading hosts file %s', filename)
         return leases
 
-    def _read_leases_file_leases(self, filename, ip_version=None):
+    def _read_leases_file_leases(self, filename):
         """Read dnsmasq dhcp leases file
 
         Read information from leases file, which is needed to pass to
@@ -936,7 +936,6 @@ class Dnsmasq(DhcpLocalProcess):
         dnsmasq-discuss/2016q2/010595.html
 
         :param filename: leases file
-        :param ip_version: IP version of entries to return, or None for all
         :return: dict, keys are IP(v6) addresses, values are dicts containing
                 iaid, client_id and server_id
         """
@@ -962,9 +961,6 @@ class Dnsmasq(DhcpLocalProcess):
                         continue
                     (iaid, ip, client_id) = parts[1], parts[2], parts[4]
                     ip = ip.strip('[]')
-                    if (ip_version and
-                            netaddr.IPAddress(ip).version != ip_version):
-                        continue
                     leases[ip] = {'iaid': iaid,
                                   'client_id': client_id,
                                   'server_id': server_id
