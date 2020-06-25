@@ -10,9 +10,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+# Defaults
+# --------
+
+# Set variables for building OVS from source
 OVS_REPO=${OVS_REPO:-https://github.com/openvswitch/ovs.git}
 OVS_REPO_NAME=$(basename ${OVS_REPO} | cut -f1 -d'.')
-OVS_BRANCH=${OVS_BRANCH:-master}
+OVS_REPO_NAME=${OVS_REPO_NAME:-ovs}
+OVS_BRANCH=${OVS_BRANCH:-51e9479da62edb04a5be47a7655de75c299b9fa1}
 
 # Functions
 
@@ -33,7 +38,7 @@ function load_module {
 
 # prepare_for_compilation() - Fetch ovs git repository and install packages needed for
 #                             compilation.
-function prepare_for_compilation {
+function prepare_for_ovs_compilation {
     local build_modules=${1:-False}
     OVS_DIR=$DEST/$OVS_REPO_NAME
 
@@ -85,22 +90,24 @@ function prepare_for_compilation {
     fi
 }
 
-# load_kernel_modules() - load openvswitch kernel module
-function load_kernel_modules {
+# load_ovs_kernel_modules() - load openvswitch kernel module
+function load_ovs_kernel_modules {
     load_module openvswitch
     load_module vport-geneve False
     dmesg | tail
 }
 
-# reload_kernel_modules() - reload openvswitch kernel module
-function reload_kernel_modules {
-    local ovs_system=$(sudo ovs-dpctl dump-dps | grep ovs-system)
+# reload_ovs_kernel_modules() - reload openvswitch kernel module
+function reload_ovs_kernel_modules {
+    set +e
+    ovs_system=$(sudo ovs-dpctl dump-dps | grep ovs-system)
     if [ -n "$ovs_system" ]; then
         sudo ovs-dpctl del-dp ovs-system
     fi
+    set -e
     sudo modprobe -r vport_geneve
     sudo modprobe -r openvswitch
-    load_kernel_modules
+    load_ovs_kernel_modules
 }
 
 # compile_ovs() - Compile OVS from source and load needed modules.
@@ -123,7 +130,16 @@ function compile_ovs {
         localstatedir="--localstatedir=$localstatedir"
     fi
 
-    prepare_for_compilation $build_modules
+    prepare_for_ovs_compilation $build_modules
+
+    KERNEL_VERSION=$(uname -r)
+    major_version=$(echo "${KERNEL_VERSION}" | cut -d '.' -f1)
+    patch_level=$(echo "${KERNEL_VERSION}" | cut -d '.' -f2)
+    if [ "${major_version}" -gt 5 ] || [ "${major_version}" == 5 ] && [ "${patch_level}" -gt 5 ]; then
+        echo "NOTE: KERNEL VERSION is ${KERNEL_VERSION} and OVS doesn't support compiling "
+        echo "Kernel module for version higher than 5.5. Skipping module compilation..."
+        build_modules="False"
+    fi
 
     if [ ! -f configure ] ; then
         ./boot.sh
@@ -139,9 +155,9 @@ function compile_ovs {
     sudo make install
     if [[ "$build_modules" == "True" ]]; then
         sudo make INSTALL_MOD_DIR=kernel/net/openvswitch modules_install
-        reload_kernel_modules
+        reload_ovs_kernel_modules
     else
-        load_kernel_modules
+        load_ovs_kernel_modules
     fi
 
     cd $_pwd
@@ -164,33 +180,6 @@ function action_openvswitch {
             ${action}_service openvswitch
         fi
     fi
-}
-
-
-# compile_ovs_kernel_module() - Compile openvswitch kernel module and load it
-function compile_ovs_kernel_module {
-    local _pwd=$PWD
-
-    prepare_for_compilation
-
-    [ -f configure ] || ./boot.sh
-    if [ ! -f config.status ] || [ configure -nt config.status ] ; then
-        ./configure --with-linux=/lib/modules/$(uname -r)/build
-    fi
-
-    action_openvswitch stop
-
-    make -j$[$(nproc) + 1]
-    sudo make INSTALL_MOD_DIR=kernel/net/openvswitch modules_install
-    if [ $? -eq 0 ]; then
-        reload_kernel_modules
-    else
-        echo "Compiling OVS kernel module failed"
-    fi
-
-    action_openvswitch start
-
-    cd $_pwd
 }
 
 # start_new_ovs() - removes old ovs database, creates a new one and starts ovs
