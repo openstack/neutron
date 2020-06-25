@@ -6,11 +6,11 @@ VENV=${1:-"api"}
 FLAVOR=${2:-"all"}
 
 GATE_DEST=$BASE/new
-NEUTRON_PATH=$GATE_DEST/neutron
-GATE_HOOKS=$NEUTRON_PATH/neutron/tests/contrib/hooks
+NEUTRON_DIR=$GATE_DEST/neutron
+GATE_HOOKS=$NEUTRON_DIR/neutron/tests/contrib/hooks
 DEVSTACK_PATH=$GATE_DEST/devstack
 LOCAL_CONF=$DEVSTACK_PATH/late-local.conf
-RALLY_EXTRA_DIR=$NEUTRON_PATH/rally-jobs/extra
+RALLY_EXTRA_DIR=$NEUTRON_DIR/rally-jobs/extra
 DSCONF=/tmp/devstack-tools/bin/dsconf
 
 # Install devstack-tools used to produce local.conf; we can't rely on

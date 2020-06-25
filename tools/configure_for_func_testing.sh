@@ -58,7 +58,7 @@ VENV=${VENV:-dsvm-functional}
 DEVSTACK_PATH=${DEVSTACK_PATH:-$1}
 PROJECT_NAME=${PROJECT_NAME:-neutron}
 REPO_BASE=${GATE_DEST:-$(cd $(dirname "$0")/../.. && pwd)}
-NEUTRON_PATH=${NEUTRON_PATH:=$REPO_BASE/$PROJECT_NAME}
+NEUTRON_DIR=${NEUTRON_DIR:=$REPO_BASE/$PROJECT_NAME}
 INSTALL_MYSQL_ONLY=${INSTALL_MYSQL_ONLY:-False}
 # The gate should automatically install dependencies.
 INSTALL_BASE_DEPENDENCIES=${INSTALL_BASE_DEPENDENCIES:-$IS_GATE}
@@ -110,8 +110,8 @@ function _install_base_deps {
         PACKAGES=$(echo $PACKAGES | perl -pe 's|python-(?!dev)[^ ]*||g')
         install_package $PACKAGES
 
-        source $NEUTRON_PATH/devstack/lib/ovs
-        source $NEUTRON_PATH/devstack/lib/ovn_agent
+        source $NEUTRON_DIR/devstack/lib/ovs
+        source $NEUTRON_DIR/devstack/lib/ovn_agent
         echo_summary "OVN_BRANCH: ${OVN_BRANCH} OVS_BRANCH: ${OVS_BRANCH}"
         compile_ovs False /usr /var
         compile_ovn False /usr /var
