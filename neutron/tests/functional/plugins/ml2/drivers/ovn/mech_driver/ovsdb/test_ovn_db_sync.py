@@ -1315,7 +1315,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             db_pgs.append(utils.ovn_port_group_name(sg['id']))
         db_pgs.append(ovn_const.OVN_DROP_PORT_GROUP_NAME)
 
-        nb_pgs = _plugin_nb_ovn.get_port_groups()
+        nb_pgs = _plugin_nb_ovn.get_sg_port_groups()
 
         mn_pgs = []
         for row in self.nb_api.tables['Port_Group'].rows.values():

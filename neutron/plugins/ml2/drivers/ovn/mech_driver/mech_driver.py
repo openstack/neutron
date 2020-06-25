@@ -1286,7 +1286,7 @@ def create_default_drop_port_group(nb_idl):
             txn.add(nb_idl.pg_acl_add(may_exist=True, **acl))
 
         ports_with_pg = set()
-        for pg in nb_idl.get_port_groups().values():
+        for pg in nb_idl.get_sg_port_groups().values():
             ports_with_pg.update(pg['ports'])
 
         if ports_with_pg:

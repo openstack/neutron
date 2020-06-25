@@ -775,11 +775,11 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         port_group = self.nb_ovn_idl.get_port_group(str(uuid.uuid4()))
         self.assertIsNone(port_group)
 
-    def test_get_port_groups_not_supported(self):
+    def test_get_sg_port_groups_not_supported(self):
         self._load_nb_db()
         # Make sure that PG tables doesn't exist in fake db.
         self._tables.pop('Port_Group', None)
-        port_groups = self.nb_ovn_idl.get_port_groups()
+        port_groups = self.nb_ovn_idl.get_sg_port_groups()
         self.assertEqual({}, port_groups)
 
 

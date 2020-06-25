@@ -372,8 +372,8 @@ class API(api.API, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def get_port_groups(self):
-        """Gets all port groups in the OVN_Northbound DB
+    def get_sg_port_groups(self):
+        """Gets port groups in the OVN_Northbound DB that map to SGs.
 
         :returns: dictionary indexed by name, DB columns as values
         """
