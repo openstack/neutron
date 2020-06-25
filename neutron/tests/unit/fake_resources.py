@@ -161,6 +161,8 @@ class FakeOvsdbSbOvnIdl(object):
         self.is_col_present = mock.Mock()
         self.is_col_present.return_value = False
         self.db_set = mock.Mock()
+        self.lookup = mock.MagicMock()
+        self.chassis_list = mock.MagicMock()
 
 
 class FakeOvsdbTransaction(object):
@@ -751,3 +753,33 @@ class FakeOVNRouter(object):
              'enabled': router.get('admin_state_up') or False,
              'name': ovn_utils.ovn_name(router['id']),
              'static_routes': routes})
+
+
+class FakeChassis(object):
+
+    @staticmethod
+    def create(attrs=None, az_list=None, chassis_as_gw=False):
+        cms_opts = []
+        if az_list:
+            cms_opts.append("%s=%s" % (ovn_const.CMS_OPT_AVAILABILITY_ZONES,
+                                       ':'.join(az_list)))
+        if chassis_as_gw:
+            cms_opts.append(ovn_const.CMS_OPT_CHASSIS_AS_GW)
+
+        external_ids = {}
+        if cms_opts:
+            external_ids[ovn_const.OVN_CMS_OPTIONS] = ','.join(cms_opts)
+
+        attrs = {
+            'encaps': [],
+            'external_ids': external_ids,
+            'hostname': '',
+            'name': uuidutils.generate_uuid(),
+            'nb_cfg': 0,
+            'other_config': {},
+            'transport_zones': [],
+            'vtep_logical_switches': []}
+
+        # Overwrite default attributes.
+        attrs.update(attrs)
+        return type('Chassis', (object, ), attrs)

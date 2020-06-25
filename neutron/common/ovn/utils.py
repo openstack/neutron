@@ -16,6 +16,7 @@ import os
 import re
 
 import netaddr
+from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib.api.definitions import l3
@@ -27,6 +28,7 @@ from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from neutron_lib.utils import net as n_utils
+from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import netutils
 from oslo_utils import strutils
@@ -40,6 +42,7 @@ from neutron.common.ovn import exceptions as ovn_exc
 
 LOG = log.getLogger(__name__)
 
+CONF = cfg.CONF
 
 DNS_RESOLVER_FILE = "/etc/resolv.conf"
 
@@ -489,11 +492,15 @@ def compute_address_pairs_diff(ovn_port, neutron_port):
     return AddrPairsDiff(added, removed, changed=any(added or removed))
 
 
+def get_ovn_cms_options(chassis):
+    """Return the list of CMS options in a Chassis."""
+    return [opt.strip() for opt in chassis.external_ids.get(
+            constants.OVN_CMS_OPTIONS, '').split(',')]
+
+
 def is_gateway_chassis(chassis):
     """Check if the given chassis is a gateway chassis"""
-    external_ids = getattr(chassis, 'external_ids', {})
-    return ('enable-chassis-as-gw' in external_ids.get(
-        'ovn-cms-options', '').split(','))
+    return constants.CMS_OPT_CHASSIS_AS_GW in get_ovn_cms_options(chassis)
 
 
 def get_port_capabilities(port):
@@ -513,3 +520,24 @@ def get_port_id_from_gwc_row(row):
     :returns: String containing router port_id.
     """
     return constants.RE_PORT_FROM_GWC.search(row.name).group(2)
+
+
+def get_az_hints(resource):
+    """Return the availability zone hints from a given resource."""
+    return (resource.get(az_def.AZ_HINTS) or CONF.default_availability_zones)
+
+
+def get_chassis_availability_zones(chassis):
+    """Return a list of availability zones from a given OVN Chassis."""
+    azs = []
+    if not chassis:
+        return azs
+
+    opt_key = constants.CMS_OPT_AVAILABILITY_ZONES + '='
+    for opt in get_ovn_cms_options(chassis):
+        if not opt.startswith(opt_key):
+            continue
+        values = opt.split('=')[1]
+        azs = [az.strip() for az in values.split(':') if az.strip()]
+        break
+    return azs

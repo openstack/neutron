@@ -26,6 +26,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import availability_zone as az_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
@@ -35,6 +36,7 @@ from oslo_utils import excutils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import extensions
 from neutron.common.ovn import utils
+from neutron.db.availability_zone import router as router_az_db
 from neutron.db import l3_fip_port_details
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
@@ -49,7 +51,8 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                         extraroute_db.ExtraRoute_dbonly_mixin,
                         l3_gwmode_db.L3_NAT_db_mixin,
                         dns_db.DNSDbMixin,
-                        l3_fip_port_details.Fip_port_details_db_mixin):
+                        l3_fip_port_details.Fip_port_details_db_mixin,
+                        router_az_db.RouterAvailabilityZoneMixin):
     """Implementation of the OVN L3 Router Service Plugin.
 
     This class implements a L3 service plugin that provides
@@ -311,6 +314,22 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
             if port['status'] != status:
                 self._plugin.update_port_status(context, port['id'], status)
 
+    def _get_availability_zones_from_router_port(self, lrp_name):
+        """Return the availability zones hints for the router port.
+
+        Return a list of availability zones hints associated with the
+        router that the router port belongs to.
+        """
+        context = n_context.get_admin_context()
+        if not self._plugin_driver.list_availability_zones(context):
+            return []
+
+        lrp = self._ovn.get_lrouter_port(lrp_name)
+        router = self.get_router(
+            context, lrp.external_ids[ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY])
+        az_hints = utils.get_az_hints(router)
+        return az_hints
+
     def schedule_unhosted_gateways(self, event_from_chassis=None):
         # GW ports and its physnets.
         port_physnet_dict = self._get_gateway_port_physnet_mapping()
@@ -350,9 +369,11 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                 nb_idl=self._ovn, gw_chassis=all_gw_chassis,
                 physnet=physnet, chassis_physnets=chassis_with_physnets,
                 existing_chassis=existing_chassis)
+            az_hints = self._get_availability_zones_from_router_port(g_name)
             candidates = self._ovn_client.get_candidates_for_scheduling(
                 physnet, cms=all_gw_chassis,
-                chassis_physnets=chassis_with_physnets)
+                chassis_physnets=chassis_with_physnets,
+                availability_zone_hints=az_hints)
             chassis = self.scheduler.select(
                 self._ovn, self._sb_ovn, g_name, candidates=candidates,
                 existing_chassis=existing_chassis)
@@ -422,3 +443,25 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
             # the OVN NB DB side
             l3plugin._ovn_client.update_router_port(kwargs['context'],
                                                     current, if_exists=True)
+
+    def get_router_availability_zones(self, router):
+        lr = self._ovn.get_lrouter(router['id'])
+        if not lr:
+            return []
+
+        return [az.strip() for az in lr.external_ids.get(
+                ovn_const.OVN_ROUTER_AZ_HINTS_EXT_ID_KEY, '').split(',')
+                if az.strip()]
+
+    def validate_availability_zones(self, context, resource_type,
+                                    availability_zones):
+        """Verify that the availability zones exist."""
+        if not availability_zones or resource_type != 'router':
+            return
+
+        azs = {az['name'] for az in
+               self._plugin_driver.list_availability_zones(context).values()}
+        diff = set(availability_zones) - azs
+        if diff:
+            raise az_exc.AvailabilityZoneNotFound(
+                availability_zone=', '.join(diff))
