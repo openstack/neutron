@@ -373,7 +373,7 @@ class MetadataAgent(object):
         mac = match.group()
         ip_addresses = set(
             port.external_ids[ovn_const.OVN_CIDRS_EXT_ID_KEY].split(' '))
-        ip_addresses.add(ovn_const.METADATA_DEFAULT_CIDR)
+        ip_addresses.add(n_const.METADATA_CIDR)
         metadata_port = MetadataPortInfo(mac, ip_addresses)
 
         # Create the VETH pair if it's not created. Also the add_veth function
