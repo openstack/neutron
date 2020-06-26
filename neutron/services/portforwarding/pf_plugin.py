@@ -386,6 +386,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                         pf_obj.internal_port
                     })
                 pf_obj.update_fields(port_forwarding, reset_changes=True)
+                self._check_port_forwarding_update(context, pf_obj)
                 pf_obj.update()
         except obj_exc.NeutronDbObjectDuplicateEntry:
             (__, conflict_params) = self._find_existing_port_forwarding(
@@ -422,6 +423,48 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                     'internal_port_id': internal_port_id}
             raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
                                      msg=message)
+
+    def _check_port_forwarding_update(self, context, pf_obj):
+        def _raise_port_forwarding_update_failed(conflict):
+            message = _("Another port forwarding entry with the same "
+                        "attributes already exists, conflicting "
+                        "values are %s") % conflict
+            raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
+                                     msg=message)
+
+        db_port = self.core_plugin.get_port(context, pf_obj.internal_port_id)
+        for fixed_ip in db_port['fixed_ips']:
+            if str(pf_obj.internal_ip_address) == fixed_ip['ip_address']:
+                break
+        else:
+            # Reached end of internal_port iteration w/out finding fixed_ip
+            message = _("The internal IP does not correspond to an "
+                        "address on the internal port, which has "
+                        "fixed_ips %s") % db_port['fixed_ips']
+            raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
+                                     msg=message)
+        objs = pf.PortForwarding.get_objects(
+            context,
+            floatingip_id=pf_obj.floatingip_id,
+            protocol=pf_obj.protocol)
+        for obj in objs:
+            if obj.id == pf_obj.id:
+                continue
+            # Ensure there are no conflicts on the outside
+            if (obj.floating_ip_address == pf_obj.floating_ip_address and
+                    obj.external_port == pf_obj.external_port):
+                _raise_port_forwarding_update_failed(
+                    {'floating_ip_address': str(obj.floating_ip_address),
+                     'external_port': obj.external_port})
+            # Ensure there are no conflicts in the inside
+            # socket: internal_ip_address + internal_port
+            if (obj.internal_port_id == pf_obj.internal_port_id and
+                    obj.internal_ip_address == pf_obj.internal_ip_address and
+                    obj.internal_port == pf_obj.internal_port):
+                _raise_port_forwarding_update_failed(
+                    {'internal_port_id': obj.internal_port_id,
+                     'internal_ip_address': str(obj.internal_ip_address),
+                     'internal_port': obj.internal_port})
 
     def _find_existing_port_forwarding(self, context, floatingip_id,
                                        port_forwarding, specify_params=None):
