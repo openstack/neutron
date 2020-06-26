@@ -1246,6 +1246,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         if bridge_mappings:
             sync = True
             self.setup_physical_bridges(bridge_mappings)
+            if self.enable_distributed_routing:
+                self.dvr_agent.reset_dvr_flows(
+                    self.int_br, self.tun_br, self.phys_brs,
+                    self.patch_int_ofport, self.patch_tun_ofport,
+                    bridge_mappings)
         return sync
 
     def _check_bridge_datapath_id(self, bridge, datapath_ids_set):
@@ -2289,12 +2294,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             # with l2pop fdb entries update
             self._report_state()
         if self.enable_distributed_routing:
-            self.dvr_agent.reset_ovs_parameters(self.int_br,
-                                                self.tun_br,
-                                                self.patch_int_ofport,
-                                                self.patch_tun_ofport)
-            self.dvr_agent.reset_dvr_parameters()
-            self.dvr_agent.setup_dvr_flows()
+            self.dvr_agent.reset_dvr_flows(
+                self.int_br, self.tun_br, self.phys_brs,
+                self.patch_int_ofport, self.patch_tun_ofport)
         # notify that OVS has restarted
         registry.notify(
             callback_resources.AGENT,
