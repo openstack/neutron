@@ -471,7 +471,8 @@ class OVS_Lib_Test(base.BaseTestCase):
         ) as port_exists_mock:
             self.br.delete_egress_bw_limit_for_port("test_port")
             port_exists_mock.assert_called_once_with("test_port")
-            set_egress_mock.assert_called_once_with("test_port", 0, 0)
+            set_egress_mock.assert_called_once_with("test_port", 0, 0,
+                                                    check_error=False)
 
     def test_delete_egress_bw_limit_for_port_port_not_exists(self):
         with mock.patch.object(
