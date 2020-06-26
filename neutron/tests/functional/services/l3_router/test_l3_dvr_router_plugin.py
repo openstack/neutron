@@ -1298,7 +1298,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                           arg_list=arg_list,
                           **{portbindings.HOST_ID: HOST2}),\
                 self.port(subnet=subnet3,
-                          device_owner=constants.DEVICE_OWNER_NEUTRON_PREFIX,
+                          device_owner=constants.DEVICE_OWNER_NETWORK_PREFIX,
                           arg_list=arg_list,
                           **{portbindings.HOST_ID: HOST3}):
             # make net external
@@ -1448,7 +1448,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 self.port(subnet=subnet2,
                           device_owner=constants.DEVICE_OWNER_DHCP) as p2,\
                 self.port(subnet=subnet3,
-                          device_owner=constants.DEVICE_OWNER_NEUTRON_PREFIX)\
+                          device_owner=constants.DEVICE_OWNER_NETWORK_PREFIX)\
                 as p3,\
                 self.port(subnet=subnet3,
                           device_owner=constants.DEVICE_OWNER_COMPUTE_PREFIX)\
