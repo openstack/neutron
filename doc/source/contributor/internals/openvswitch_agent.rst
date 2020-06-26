@@ -466,7 +466,7 @@ Implementation Trunk Bridge (Option C)
 
 This implementation is based on this `etherpad <https://etherpad.openstack.org/p/trunk-bridge-tagged-patch-experiment>`_.
 Credits to Bence Romsics.
-The option use_veth_interconnection=true won't be supported, it will probably be deprecated soon,
+The option use_veth_interconnection=true won't be supported, it is deprecated since Victoria,
 see [1]. The IDs used for bridge and port names are truncated.
 
 ::
