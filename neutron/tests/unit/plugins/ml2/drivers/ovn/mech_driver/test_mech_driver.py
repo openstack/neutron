@@ -18,6 +18,7 @@ import uuid
 
 import mock
 from neutron_lib.api.definitions import external_net
+from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.callbacks import events
@@ -305,6 +306,56 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         self.assertRaises(mech_driver.OVNPortUpdateError,
                           self.mech_driver._validate_ignored_port,
                           p, ori_p)
+
+    def test__validate_port_extra_dhcp_opts(self):
+        opt = {'opt_name': 'bootfile-name',
+               'opt_value': 'homer_simpson.bin',
+               'ip_version': 4}
+        port = {edo_ext.EXTRADHCPOPTS: [opt], 'id': 'fake-port'}
+        self.assertIsNone(
+            self.mech_driver._validate_port_extra_dhcp_opts(port))
+
+    def test__validate_port_extra_dhcp_opts_invalid(self):
+        opt = {'opt_name': 'not-valid',
+               'opt_value': 'spongebob squarepants',
+               'ip_version': 4}
+        port = {edo_ext.EXTRADHCPOPTS: [opt], 'id': 'fake-port'}
+        self.assertRaises(mech_driver.OVNPortUpdateError,
+                          self.mech_driver._validate_port_extra_dhcp_opts,
+                          port)
+
+    def test_create_port_invalid_extra_dhcp_opts(self):
+        extra_dhcp_opts = {
+            'extra_dhcp_opts': [{'ip_version': 4, 'opt_name': 'banana',
+                                 'opt_value': 'banana'},
+                                {'ip_version': 6, 'opt_name': 'orange',
+                                 'opt_value': 'orange'}]
+        }
+        with self.network() as n:
+            with self.subnet(n):
+                res = self._create_port(self.fmt, n['network']['id'],
+                                        arg_list=('extra_dhcp_opts',),
+                                        **extra_dhcp_opts)
+                # Assert 400 (BadRequest) was returned
+                self.assertEqual(400, res.status_code)
+                response = self.deserialize(self.fmt, res)
+                self.assertIn('banana', response['NeutronError']['message'])
+                self.assertIn('orange', response['NeutronError']['message'])
+
+    def test_update_port_invalid_extra_dhcp_opts(self):
+        data = {
+            'port': {'extra_dhcp_opts': [{'ip_version': 4, 'opt_name': 'apple',
+                                         'opt_value': 'apple'},
+                                         {'ip_version': 6, 'opt_name': 'grape',
+                                         'opt_value': 'grape'}]}}
+        with self.network(set_context=True, tenant_id='test') as net:
+            with self.subnet(network=net) as subnet:
+                with self.port(subnet=subnet,
+                               set_context=True, tenant_id='test') as port:
+                    res = self._update('ports', port['port']['id'], data,
+                                       expected_code=400)
+                    self.assertIn('apple', res['NeutronError']['message'])
+                    self.assertIn('grape', res['NeutronError']['message'])
 
     def test_create_and_update_ignored_fip_port(self):
         with self.network(set_context=True, tenant_id='test') as net1:

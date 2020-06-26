@@ -14,6 +14,8 @@
 #    under the License.
 
 import fixtures
+import mock
+from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 
 from neutron.common.ovn import constants
 from neutron.common.ovn import utils
@@ -118,3 +120,114 @@ class TestGateWayChassisValidity(base.BaseTestCase):
         self.assertTrue(utils.is_gateway_chassis_invalid(
             self.chassis_name, self.gw_chassis, self.physnet,
             self.chassis_physnets))
+
+
+class TestDHCPUtils(base.BaseTestCase):
+
+    def test_validate_port_extra_dhcp_opts_empty(self):
+        port = {edo_ext.EXTRADHCPOPTS: []}
+        result = utils.validate_port_extra_dhcp_opts(port)
+        self.assertFalse(result.failed)
+        self.assertEqual([], result.invalid_ipv4)
+        self.assertEqual([], result.invalid_ipv6)
+
+    def test_validate_port_extra_dhcp_opts_dhcp_disabled(self):
+        opt0 = {'opt_name': 'not-valid-ipv4',
+                'opt_value': 'joe rogan',
+                'ip_version': 4}
+        opt1 = {'opt_name': 'dhcp_disabled',
+                'opt_value': 'True',
+                'ip_version': 4}
+        port = {edo_ext.EXTRADHCPOPTS: [opt0, opt1]}
+
+        # Validation always succeeds if the "dhcp_disabled" option is enabled
+        result = utils.validate_port_extra_dhcp_opts(port)
+        self.assertFalse(result.failed)
+        self.assertEqual([], result.invalid_ipv4)
+        self.assertEqual([], result.invalid_ipv6)
+
+    def test_validate_port_extra_dhcp_opts(self):
+        opt0 = {'opt_name': 'bootfile-name',
+                'opt_value': 'homer_simpson.bin',
+                'ip_version': 4}
+        opt1 = {'opt_name': 'dns-server',
+                'opt_value': '2001:4860:4860::8888',
+                'ip_version': 6}
+        port = {edo_ext.EXTRADHCPOPTS: [opt0, opt1]}
+
+        result = utils.validate_port_extra_dhcp_opts(port)
+        self.assertFalse(result.failed)
+        self.assertEqual([], result.invalid_ipv4)
+        self.assertEqual([], result.invalid_ipv6)
+
+    def test_validate_port_extra_dhcp_opts_invalid(self):
+        # Two value options and two invalid, assert the validation
+        # will fail and only the invalid options will be returned as
+        # not supported
+        opt0 = {'opt_name': 'bootfile-name',
+                'opt_value': 'homer_simpson.bin',
+                'ip_version': 4}
+        opt1 = {'opt_name': 'dns-server',
+                'opt_value': '2001:4860:4860::8888',
+                'ip_version': 6}
+        opt2 = {'opt_name': 'not-valid-ipv4',
+                'opt_value': 'joe rogan',
+                'ip_version': 4}
+        opt3 = {'opt_name': 'not-valid-ipv6',
+                'opt_value': 'young jamie',
+                'ip_version': 6}
+        port = {edo_ext.EXTRADHCPOPTS: [opt0, opt1, opt2, opt3]}
+
+        result = utils.validate_port_extra_dhcp_opts(port)
+        self.assertTrue(result.failed)
+        self.assertEqual(['not-valid-ipv4'], result.invalid_ipv4)
+        self.assertEqual(['not-valid-ipv6'], result.invalid_ipv6)
+
+    def test_get_lsp_dhcp_opts_empty(self):
+        port = {edo_ext.EXTRADHCPOPTS: []}
+        dhcp_disabled, options = utils.get_lsp_dhcp_opts(port, 4)
+        self.assertFalse(dhcp_disabled)
+        self.assertEqual({}, options)
+
+    def test_get_lsp_dhcp_opts_empty_dhcp_disabled(self):
+        opt0 = {'opt_name': 'bootfile-name',
+                'opt_value': 'homer_simpson.bin',
+                'ip_version': 4}
+        opt1 = {'opt_name': 'dhcp_disabled',
+                'opt_value': 'True',
+                'ip_version': 4}
+        port = {edo_ext.EXTRADHCPOPTS: [opt0, opt1]}
+
+        # Validation always succeeds if the "dhcp_disabled" option is enabled
+        dhcp_disabled, options = utils.get_lsp_dhcp_opts(port, 4)
+        self.assertTrue(dhcp_disabled)
+        self.assertEqual({}, options)
+
+    @mock.patch.object(utils, 'is_network_device_port')
+    def test_get_lsp_dhcp_opts_is_network_device_port(self, mock_device_port):
+        mock_device_port.return_value = True
+        port = {}
+        dhcp_disabled, options = utils.get_lsp_dhcp_opts(port, 4)
+        # Assert OVN DHCP is disabled
+        self.assertTrue(dhcp_disabled)
+        self.assertEqual({}, options)
+
+    def test_get_lsp_dhcp_opts(self):
+        opt0 = {'opt_name': 'bootfile-name',
+                'opt_value': 'homer_simpson.bin',
+                'ip_version': 4}
+        opt1 = {'opt_name': 'server-ip-address',
+                'opt_value': '10.0.0.1',
+                'ip_version': 4}
+        opt2 = {'opt_name': '42',
+                'opt_value': '10.0.2.1',
+                'ip_version': 4}
+        port = {edo_ext.EXTRADHCPOPTS: [opt0, opt1, opt2]}
+
+        dhcp_disabled, options = utils.get_lsp_dhcp_opts(port, 4)
+        self.assertFalse(dhcp_disabled)
+        # Assert the names got translated to their OVN names
+        expected_options = {'tftp_server_address': '10.0.0.1',
+                            'ntp_server': '10.0.2.1',
+                            'bootfile_name': 'homer_simpson.bin'}
+        self.assertEqual(expected_options, options)

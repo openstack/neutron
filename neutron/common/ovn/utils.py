@@ -27,6 +27,7 @@ from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from neutron_lib.utils import net as n_utils
+from oslo_log import log
 from oslo_utils import netutils
 from oslo_utils import strutils
 from ovs.db import idl
@@ -37,11 +38,16 @@ from neutron._i18n import _
 from neutron.common.ovn import constants
 from neutron.common.ovn import exceptions as ovn_exc
 
+LOG = log.getLogger(__name__)
+
 
 DNS_RESOLVER_FILE = "/etc/resolv.conf"
 
 AddrPairsDiff = collections.namedtuple(
     'AddrPairsDiff', ['added', 'removed', 'changed'])
+
+PortExtraDHCPValidation = collections.namedtuple(
+    'PortExtraDHCPValidation', ['failed', 'invalid_ipv4', 'invalid_ipv6'])
 
 
 def ovn_name(id):
@@ -109,6 +115,39 @@ def is_network_device_port(port):
         const.DEVICE_OWNER_PREFIXES)
 
 
+def _is_dhcp_disabled(dhcp_opt):
+    return (dhcp_opt['opt_name'] == constants.DHCP_DISABLED_OPT and
+            dhcp_opt.get('opt_value', '').lower() == 'true')
+
+
+def validate_port_extra_dhcp_opts(port):
+    """Validate port's extra DHCP options.
+
+    :param port: A neutron port.
+    :returns: A PortExtraDHCPValidation object.
+    """
+    invalid = {const.IP_VERSION_4: [], const.IP_VERSION_6: []}
+    failed = False
+    for edo in port.get(edo_ext.EXTRADHCPOPTS, []):
+        ip_version = edo['ip_version']
+        opt_name = edo['opt_name']
+
+        # If DHCP is disabled for this port via this special option,
+        # always succeed the validation
+        if _is_dhcp_disabled(edo):
+            failed = False
+            break
+
+        if opt_name not in constants.SUPPORTED_DHCP_OPTS_MAPPING[ip_version]:
+            invalid[ip_version].append(opt_name)
+            failed = True
+
+    return PortExtraDHCPValidation(
+        failed=failed,
+        invalid_ipv4=invalid[const.IP_VERSION_4] if failed else [],
+        invalid_ipv6=invalid[const.IP_VERSION_6] if failed else [])
+
+
 def get_lsp_dhcp_opts(port, ip_version):
     # Get dhcp options from Neutron port, for setting DHCP_Options row
     # in OVN.
@@ -117,12 +156,12 @@ def get_lsp_dhcp_opts(port, ip_version):
     if is_network_device_port(port):
         lsp_dhcp_disabled = True
     else:
+        mapping = constants.SUPPORTED_DHCP_OPTS_MAPPING[ip_version]
         for edo in port.get(edo_ext.EXTRADHCPOPTS, []):
             if edo['ip_version'] != ip_version:
                 continue
 
-            if edo['opt_name'] == 'dhcp_disabled' and (
-                    edo['opt_value'] in ['True', 'true']):
+            if _is_dhcp_disabled(edo):
                 # OVN native DHCP is disabled on this port
                 lsp_dhcp_disabled = True
                 # Make sure return value behavior not depends on the order and
@@ -130,11 +169,13 @@ def get_lsp_dhcp_opts(port, ip_version):
                 lsp_dhcp_opts.clear()
                 break
 
-            if edo['opt_name'] not in (
-                    constants.SUPPORTED_DHCP_OPTS[ip_version]):
+            if edo['opt_name'] not in mapping:
+                LOG.warning('The DHCP option %(opt_name)s on port %(port)s '
+                            'is not suppported by OVN, ignoring it',
+                            {'opt_name': edo['opt_name'], 'port': port['id']})
                 continue
 
-            opt = edo['opt_name'].replace('-', '_')
+            opt = mapping[edo['opt_name']]
             lsp_dhcp_opts[opt] = edo['opt_value']
 
     return (lsp_dhcp_disabled, lsp_dhcp_opts)

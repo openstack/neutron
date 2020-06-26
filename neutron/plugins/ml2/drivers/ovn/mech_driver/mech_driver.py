@@ -456,6 +456,19 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._ovn_client.delete_subnet(context._plugin_context,
                                        context.current['id'])
 
+    def _validate_port_extra_dhcp_opts(self, port):
+        result = ovn_utils.validate_port_extra_dhcp_opts(port)
+        if not result.failed:
+            return
+        ipv4_opts = ', '.join(result.invalid_ipv4)
+        ipv6_opts = ', '.join(result.invalid_ipv6)
+        msg = (_('The following extra DHCP options for port %(port_id)s '
+                 'are not supported by OVN. IPv4: "%(ipv4_opts)s" and '
+                 'IPv6: "%(ipv6_opts)s"') %
+               {'port_id': port['id'], 'ipv4_opts': ipv4_opts,
+                'ipv6_opts': ipv6_opts})
+        raise OVNPortUpdateError(resource='port', msg=msg)
+
     def create_port_precommit(self, context):
         """Allocate resources for a new port.
 
@@ -470,6 +483,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         if ovn_utils.is_lsp_ignored(port):
             return
         ovn_utils.validate_and_get_data_from_binding_profile(port)
+        self._validate_port_extra_dhcp_opts(port)
         if self._is_port_provisioning_required(port, context.host):
             self._insert_port_provisioning_block(context._plugin_context,
                                                  port['id'])
@@ -584,6 +598,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         original_port = context.original
         self._validate_ignored_port(port, original_port)
         ovn_utils.validate_and_get_data_from_binding_profile(port)
+        self._validate_port_extra_dhcp_opts(port)
         if self._is_port_provisioning_required(port, context.host,
                                                context.original_host):
             self._insert_port_provisioning_block(context._plugin_context,

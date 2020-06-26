@@ -10,4 +10,5 @@ OVN Driver
 
    migration.rst
    gaps.rst
+   dhcp_opts.rst
    faq/index.rst
