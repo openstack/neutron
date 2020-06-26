@@ -1626,7 +1626,10 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                            ovn_const.OVN_METADATA_AGENT):
             self.mech_driver._nb_ovn.nb_global.nb_cfg = 5
             chassis = self._add_chassis_agent(5, agent_type)
-            self.assertTrue(self.mech_driver.agent_alive(chassis, agent_type))
+            self.assertTrue(self.mech_driver.agent_alive(chassis, agent_type,
+                                                         update_db=True))
+        # Assert that each Chassis has been updated in the SB database
+        self.assertEqual(2, self.sb_ovn.db_set.call_count)
 
     def test_agent_alive_true_one_diff(self):
         # Agent should be reported as alive when the nb_cfg delta is 1
@@ -1637,14 +1640,16 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
             now = timeutils.utcnow()
             updated_at = now - datetime.timedelta(cfg.CONF.agent_down_time + 1)
             chassis = self._add_chassis_agent(4, agent_type, updated_at)
-            self.assertTrue(self.mech_driver.agent_alive(chassis, agent_type))
+            self.assertTrue(self.mech_driver.agent_alive(chassis, agent_type,
+                                                         update_db=True))
 
     def test_agent_alive_not_timed_out(self):
         for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
                            ovn_const.OVN_METADATA_AGENT):
             self.mech_driver._nb_ovn.nb_global.nb_cfg = 5
             chassis = self._add_chassis_agent(3, agent_type)
-            self.assertTrue(self.mech_driver.agent_alive(chassis, agent_type),
+            self.assertTrue(self.mech_driver.agent_alive(
+                chassis, agent_type, update_db=True),
                             "Agent type %s is not alive" % agent_type)
 
     def test_agent_alive_timed_out(self):
@@ -1654,7 +1659,17 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
             now = timeutils.utcnow()
             updated_at = now - datetime.timedelta(cfg.CONF.agent_down_time + 1)
             chassis = self._add_chassis_agent(3, agent_type, updated_at)
-            self.assertFalse(self.mech_driver.agent_alive(chassis, agent_type))
+            self.assertFalse(self.mech_driver.agent_alive(chassis, agent_type,
+                                                          update_db=True))
+
+    def test_agent_alive_true_skip_db_update(self):
+        for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
+                           ovn_const.OVN_METADATA_AGENT):
+            self.mech_driver._nb_ovn.nb_global.nb_cfg = 5
+            chassis = self._add_chassis_agent(5, agent_type)
+            self.assertTrue(self.mech_driver.agent_alive(chassis, agent_type,
+                                                         update_db=False))
+            self.sb_ovn.db_set.assert_not_called()
 
     def _test__update_dnat_entry_if_needed(self, up=True):
         ovn_conf.cfg.CONF.set_override(
@@ -1739,10 +1754,12 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         self.nb_ovn.nb_global.external_ids = {
             ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY: str(time)}
 
+        update_db = self.mech_driver.ping_chassis()
         # Since the interval has expired, assert that the "check_liveness"
         # command has been invoked
-        self.mech_driver.ping_chassis()
         self.nb_ovn.check_liveness.assert_called_once_with()
+        # Assert that ping_chassis returned True as it updated the db
+        self.assertTrue(update_db)
 
     def test_ping_chassis_interval_not_expired(self):
         ovn_conf.cfg.CONF.set_override('agent_down_time', 10)
@@ -1752,9 +1769,11 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         self.nb_ovn.nb_global.external_ids = {
             ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY: str(time)}
 
+        update_db = self.mech_driver.ping_chassis()
         # Assert that "check_liveness" wasn't invoked
-        self.mech_driver.ping_chassis()
         self.assertFalse(self.nb_ovn.check_liveness.called)
+        # Assert that ping_chassis returned False as it didn't update the db
+        self.assertFalse(update_db)
 
 
 class OVNMechanismDriverTestCase(test_plugin.Ml2PluginV2TestCase):
