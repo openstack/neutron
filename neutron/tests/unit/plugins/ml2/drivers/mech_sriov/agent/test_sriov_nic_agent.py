@@ -19,12 +19,13 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from oslo_config import cfg
 from oslo_utils import uuidutils
+import pyroute2
 
 from neutron.agent.l2 import l2_agent_extensions_manager as l2_ext_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config  # noqa
-from neutron.plugins.ml2.drivers.mech_sriov.agent.common import exceptions
 from neutron.plugins.ml2.drivers.mech_sriov.agent import sriov_nic_agent
+from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 from neutron.tests import base
 
 DEVICE_MAC = '11:22:33:44:55:66'
@@ -423,8 +424,7 @@ class TestSriovAgent(base.BaseTestCase):
         agent.eswitch_mgr = mock.Mock()
         agent.eswitch_mgr.device_exists.return_value = True
         agent.eswitch_mgr.set_device_state.side_effect = (
-            exceptions.IpCommandOperationNotSupportedError(
-                dev_name='aa:bb:cc:dd:ee:ff'))
+            priv_ip_lib.InterfaceOperationNotSupported())
 
         self.assertTrue(agent.treat_device('aa:bb:cc:dd:ee:ff', '1:2:3:0',
                                            admin_state_up=True))
@@ -435,7 +435,7 @@ class TestSriovAgent(base.BaseTestCase):
         agent.eswitch_mgr = mock.Mock()
         agent.eswitch_mgr.device_exists.return_value = True
         agent.eswitch_mgr.set_device_state.side_effect = (
-            exceptions.SriovNicError())
+            pyroute2.NetlinkError(22))
 
         self.assertFalse(agent.treat_device('aa:bb:cc:dd:ee:ff', '1:2:3:0',
                                            admin_state_up=True))
