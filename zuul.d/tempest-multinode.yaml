@@ -1,7 +1,7 @@
 - job:
     name: neutron-tempest-dvr-ha-multinode-full
     parent: tempest-multinode-full-py3
-    nodeset: openstack-three-node-bionic
+    nodeset: openstack-three-node-focal
     timeout: 10800
     roles:
       - zuul: openstack/neutron-tempest-plugin
@@ -137,10 +137,6 @@
         ENABLE_CHASSIS_AS_GW: true
         OVN_L3_CREATE_PUBLIC_NETWORK: true
         OVN_DBS_LOG_LEVEL: dbg
-        # TODO(mjozefcz): Stop compiling OVS modules when meter action in kernel
-        # will be released in Ubuntu Bionic.
-        # More info: https://mail.openvswitch.org/pipermail/ovs-discuss/2018-December/048009.html
-        OVN_BUILD_MODULES: True
         BUILD_TIMEOUT: 784
         ENABLE_TLS: True
         OVN_IGMP_SNOOPING_ENABLE: True
@@ -211,10 +207,6 @@
           OVN_DBS_LOG_LEVEL: dbg
           USE_PYTHON3: True
           ENABLE_TLS: True
-          # TODO(mjozefcz): Stop compiling OVS modules when meter action in kernel
-          # will be released in Ubuntu Bionic.
-          # More info: https://mail.openvswitch.org/pipermail/ovs-discuss/2018-December/048009.html
-          OVN_BUILD_MODULES: True
 
 
 - job:
