@@ -38,6 +38,7 @@ from sqlalchemy import orm
 import testtools
 
 from neutron import objects
+from neutron.objects import address_group
 from neutron.objects import agent
 from neutron.objects import base
 from neutron.objects.db import api as obj_db_api
@@ -1639,6 +1640,17 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             self.context, **sg_fields)
         _securitygroup.create()
         return _securitygroup.id
+
+    def _create_test_address_group_id(self, fields=None):
+        ag_fields = self.get_random_object_fields(address_group.AddressGroup)
+        fields = fields or {}
+        for field, value in ((f, v) for (f, v) in fields.items() if
+                             f in ag_fields):
+            ag_fields[field] = value
+        _address_group = address_group.AddressGroup(
+            self.context, **ag_fields)
+        _address_group.create()
+        return _address_group.id
 
     def _create_test_agent_id(self):
         attrs = self.get_random_object_fields(obj_cls=agent.Agent)

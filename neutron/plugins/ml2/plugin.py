@@ -18,6 +18,7 @@ import netaddr
 from netaddr.strategy import eui48
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.agent import topics
+from neutron_lib.api.definitions import address_group as addrgrp_def
 from neutron_lib.api.definitions import address_scope
 from neutron_lib.api.definitions import agent as agent_apidef
 from neutron_lib.api.definitions import agent_resources_synced
@@ -95,6 +96,7 @@ from neutron.api.rpc.handlers import metadata_rpc
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.common import utils
+from neutron.db import address_group_db
 from neutron.db import address_scope_db
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -157,7 +159,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 vlantransparent_db.Vlantransparent_db_mixin,
                 extradhcpopt_db.ExtraDhcpOptMixin,
                 address_scope_db.AddressScopeDbMixin,
-                subnet_service_type_mixin.SubnetServiceTypeMixin):
+                subnet_service_type_mixin.SubnetServiceTypeMixin,
+                address_group_db.AddressGroupDbMixin):
 
     """Implement the Neutron L2 abstractions using modules.
 
@@ -209,7 +212,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     agent_resources_synced.ALIAS,
                                     subnet_onboard_def.ALIAS,
                                     subnetpool_prefix_ops_def.ALIAS,
-                                    stateful_security_group.ALIAS]
+                                    stateful_security_group.ALIAS,
+                                    addrgrp_def.ALIAS]
 
     # List of agent types for which all binding_failed ports should try to be
     # rebound when agent revive
