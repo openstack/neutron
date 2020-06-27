@@ -192,32 +192,11 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         num_agents = agent_obj.Agent.count(
             context, agent_type=constants.AGENT_TYPE_DHCP)
         num_agents = min(num_agents, cfg.CONF.dhcp_agents_per_network)
-
         bindings = network.NetworkDhcpAgentBinding.get_objects(
             context, network_id=network_id)
-
-        binding_indices = [b.binding_index for b in bindings]
-        all_indices = set(range(ndab_model.LOWEST_BINDING_INDEX,
-                                num_agents + 1))
-        open_slots = sorted(list(all_indices - set(binding_indices)))
-
-        if open_slots:
-            return open_slots[0]
-
-        if not force_scheduling:
-            return -1
-
-        # Last chance: if this is a manual scheduling, we're gonna allow
-        # creation of a binding_index even if it will exceed
-        # dhcp_agents_per_network.
-        if max(binding_indices) == len(binding_indices):
-            return max(binding_indices) + 1
-        else:
-            # Find binding index set gaps and return first free one.
-            all_indices = set(range(ndab_model.LOWEST_BINDING_INDEX,
-                                    max(binding_indices) + 1))
-            open_slots = sorted(list(all_indices - set(binding_indices)))
-            return open_slots[0]
+        return base_scheduler.get_vacant_binding_index(
+            num_agents, bindings, ndab_model.LOWEST_BINDING_INDEX,
+            force_scheduling=force_scheduling)
 
     def bind(self, context, agents, network_id, force_scheduling=False):
         """Bind the network to the agents."""

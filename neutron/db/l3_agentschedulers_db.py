@@ -34,6 +34,7 @@ from neutron.objects import agent as ag_obj
 from neutron.objects import base as base_obj
 from neutron.objects import l3agent as rb_obj
 from neutron.objects import router as l3_objs
+from neutron.scheduler import base_scheduler
 
 
 LOG = logging.getLogger(__name__)
@@ -520,21 +521,9 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         pager = base_obj.Pager(sorts=[('binding_index', True)])
         bindings = rb_obj.RouterL3AgentBinding.get_objects(
                 context, _pager=pager, router_id=router_id)
-        binding_indices = [b.binding_index for b in bindings]
-        all_indicies = set(range(rb_model.LOWEST_BINDING_INDEX,
-                                 num_agents + 1))
-        open_slots = sorted(list(all_indicies - set(binding_indices)))
-
-        if open_slots:
-            return open_slots[0]
-
-        # Last chance: if this is a manual scheduling, we're gonna allow
-        # creation of a binding_index even if it will exceed
-        # max_l3_agents_per_router.
-        if is_manual_scheduling:
-            return max(all_indicies) + 1
-
-        return -1
+        return base_scheduler.get_vacant_binding_index(
+            num_agents, bindings, rb_model.LOWEST_BINDING_INDEX,
+            force_scheduling=is_manual_scheduling)
 
 
 class AZL3AgentSchedulerDbMixin(L3AgentSchedulerDbMixin,
