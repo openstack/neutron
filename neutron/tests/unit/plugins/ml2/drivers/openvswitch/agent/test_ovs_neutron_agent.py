@@ -2024,8 +2024,9 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(self.agent.ovs.ovsdb, 'idl_monitor') as \
                 mock_idl_monitor:
             self.agent.daemon_loop()
-        mock_get_pm.assert_called_with(True,
-                                       constants.DEFAULT_OVSDBMON_RESPAWN)
+        mock_get_pm.assert_called_with(
+            True, constants.DEFAULT_OVSDBMON_RESPAWN, bridge_names=[],
+            ovs=self.agent.ovs)
         mock_loop.assert_called_once_with(polling_manager=mock.ANY)
         mock_idl_monitor.start_bridge_monitor.assert_called()
 

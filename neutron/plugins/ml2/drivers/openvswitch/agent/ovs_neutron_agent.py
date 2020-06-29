@@ -2726,9 +2726,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         br_names = [br.br_name for br in self.phys_brs.values()]
 
         self.ovs.ovsdb.idl_monitor.start_bridge_monitor(br_names)
+        bridge_names = polling.filter_bridge_names([self.int_br.br_name])
         with polling.get_polling_manager(
                 self.minimize_polling,
-                self.ovsdb_monitor_respawn_interval) as pm:
+                self.ovsdb_monitor_respawn_interval,
+                bridge_names=bridge_names,
+                ovs=self.ovs) as pm:
             self.rpc_loop(polling_manager=pm)
 
     def _handle_sigterm(self, signum, frame):
