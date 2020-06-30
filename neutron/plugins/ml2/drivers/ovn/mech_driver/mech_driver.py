@@ -860,9 +860,6 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def _update_dnat_entry_if_needed(self, port_id, up=True):
         """Update DNAT entry if using distributed floating ips."""
-        if not ovn_conf.is_ovn_distributed_floating_ip():
-            return
-
         if not self._nb_ovn:
             self._nb_ovn = self._ovn_client._nb_idl
 
@@ -882,17 +879,20 @@ class OVNMechanismDriver(api.MechanismDriver):
                                 {ovn_const.OVN_FIP_EXT_MAC_KEY:
                                  nat['external_mac']})).execute()
 
-        if up:
+        if up and ovn_conf.is_ovn_distributed_floating_ip():
             mac = nat['external_ids'][ovn_const.OVN_FIP_EXT_MAC_KEY]
-            LOG.debug("Setting external_mac of port %s to %s",
-                      port_id, mac)
-            self._nb_ovn.db_set(
-                'NAT', nat['_uuid'],
-                ('external_mac', mac)).execute(check_error=True)
+            if nat['external_mac'] != mac:
+                LOG.debug("Setting external_mac of port %s to %s",
+                          port_id, mac)
+                self._nb_ovn.db_set(
+                    'NAT', nat['_uuid'], ('external_mac', mac)).execute(
+                    check_error=True)
         else:
-            LOG.debug("Clearing up external_mac of port %s", port_id)
-            self._nb_ovn.db_clear(
-                'NAT', nat['_uuid'], 'external_mac').execute(check_error=True)
+            if nat['external_mac']:
+                LOG.debug("Clearing up external_mac of port %s", port_id)
+                self._nb_ovn.db_clear(
+                    'NAT', nat['_uuid'], 'external_mac').execute(
+                    check_error=True)
 
     def _should_notify_nova(self, db_port):
         # NOTE(twilson) It is possible for a test to override a config option
