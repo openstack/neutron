@@ -911,11 +911,12 @@ class OVSBridge(BaseOVS):
                             'qos').execute(check_error=False)
         qos = self.find_qos(port_name)
         queue = self.find_queue(port_name, QOS_DEFAULT_QUEUE)
-        with self.ovsdb.transaction(check_error=True) as txn:
-            if qos:
-                txn.add(self.ovsdb.db_destroy('QoS', qos['_uuid']))
-            if queue:
-                txn.add(self.ovsdb.db_destroy('Queue', queue['_uuid']))
+        if qos:
+            self.ovsdb.db_destroy('QoS',
+                                  qos['_uuid']).execute(check_error=True)
+        if queue:
+            self.ovsdb.db_destroy('Queue',
+                                  queue['_uuid']).execute(check_error=True)
 
     def set_controller_field(self, field, value):
         attr = [(field, value)]
