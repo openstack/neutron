@@ -28,6 +28,7 @@ from oslo_service import service
 from neutron.agent.linux import ip_lib
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
+from neutron.conf.agent import common as agent_config
 from neutron.conf.plugins.ml2.drivers import macvtap as config
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca
@@ -209,6 +210,7 @@ def main():
     common_config.init(sys.argv[1:])
 
     common_config.setup_logging()
+    agent_config.setup_privsep()
 
     validate_firewall_driver()
     interface_mappings = parse_interface_mappings()
