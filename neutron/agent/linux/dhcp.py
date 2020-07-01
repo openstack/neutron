@@ -50,10 +50,8 @@ TCP = 'tcp'
 DNS_PORT = 53
 DHCPV4_PORT = 67
 DHCPV6_PORT = 547
-METADATA_DEFAULT_PREFIX = 16
 METADATA_DEFAULT_IP = '169.254.169.254'
-METADATA_DEFAULT_CIDR = '%s/%d' % (METADATA_DEFAULT_IP,
-                                   METADATA_DEFAULT_PREFIX)
+METADATA_SUBNET_CIDR = '169.254.0.0/16'
 METADATA_PORT = 80
 WIN2k3_STATIC_DNS = 249
 NS_PREFIX = 'qdhcp-'
@@ -1141,11 +1139,11 @@ class Dnsmasq(DhcpLocalProcess):
                 subnet_dhcp_ip = subnet_to_interface_ip.get(subnet.id)
                 if subnet_dhcp_ip:
                     host_routes.append(
-                        '%s/32,%s' % (METADATA_DEFAULT_IP, subnet_dhcp_ip)
+                        '%s,%s' % (constants.METADATA_CIDR, subnet_dhcp_ip)
                     )
             elif not isolated_subnets[subnet.id] and gateway:
                 host_routes.append(
-                    '%s/32,%s' % (METADATA_DEFAULT_IP, gateway)
+                    '%s,%s' % (constants.METADATA_CIDR, gateway)
                 )
 
             if subnet.ip_version == 4:
@@ -1305,7 +1303,7 @@ class Dnsmasq(DhcpLocalProcess):
     @staticmethod
     def has_metadata_subnet(subnets):
         """Check if the subnets has a metadata subnet."""
-        meta_cidr = netaddr.IPNetwork(METADATA_DEFAULT_CIDR)
+        meta_cidr = netaddr.IPNetwork(METADATA_SUBNET_CIDR)
         if any(netaddr.IPNetwork(s.cidr) in meta_cidr
                for s in subnets):
             return True
@@ -1710,7 +1708,7 @@ class DeviceManager(object):
                     ip_cidrs.append('%s/%s' % (gateway, net.prefixlen))
 
         if self.conf.force_metadata or self.conf.enable_isolated_metadata:
-            ip_cidrs.append(METADATA_DEFAULT_CIDR)
+            ip_cidrs.append(constants.METADATA_CIDR)
 
         self.driver.init_l3(interface_name, ip_cidrs,
                             namespace=network.namespace)

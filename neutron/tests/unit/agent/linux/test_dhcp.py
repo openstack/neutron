@@ -2975,7 +2975,7 @@ class TestDnsmasq(TestBase):
                                       for alloc in FakeDhcpPort().fixed_ips]
             options, idx_map = dm._generate_opts_per_subnet()
 
-        contains_metadata_ip = any(['%s/32' % dhcp.METADATA_DEFAULT_IP in line
+        contains_metadata_ip = any(['%s' % constants.METADATA_CIDR in line
                                     for line in options])
         self.assertEqual(expected_mdt_ip, contains_metadata_ip)
 
@@ -3141,7 +3141,7 @@ class TestDeviceManager(TestConfBase):
 
             expect_ips = ['192.168.0.6/24', 'fdca:3ba5:a17a:4ba3::2/64']
             if enable_isolated_metadata or force_metadata:
-                expect_ips.append(dhcp.METADATA_DEFAULT_CIDR)
+                expect_ips.append(constants.METADATA_CIDR)
             mgr.driver.init_l3.assert_called_with('ns-XXX',
                                                   expect_ips,
                                                   namespace='qdhcp-ns')

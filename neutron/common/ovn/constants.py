@@ -280,10 +280,7 @@ HA_CHASSIS_GROUP_HIGHEST_PRIORITY = 32767
 
 # TODO(lucasagomes): Move this to neutron-lib later.
 # Metadata constants
-METADATA_DEFAULT_PREFIX = 16
 METADATA_DEFAULT_IP = '169.254.169.254'
-METADATA_DEFAULT_CIDR = '%s/%d' % (METADATA_DEFAULT_IP,
-                                   METADATA_DEFAULT_PREFIX)
 METADATA_PORT = 80
 
 # OVN igmp options

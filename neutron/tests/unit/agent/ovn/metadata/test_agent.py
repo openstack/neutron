@@ -15,6 +15,7 @@
 import collections
 from unittest import mock
 
+from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
 
@@ -25,6 +26,7 @@ from neutron.agent.linux.ip_lib import IpNetnsCommand as ip_netns
 from neutron.agent.linux.ip_lib import IPWrapper as ip_wrap
 from neutron.agent.ovn.metadata import agent
 from neutron.agent.ovn.metadata import driver
+from neutron.common.ovn import constants as ovn_const
 from neutron.conf.agent.metadata import config as meta_conf
 from neutron.conf.agent.ovn.metadata import config as ovn_meta_conf
 from neutron.tests import base
@@ -258,13 +260,13 @@ class TestMetadataAgent(base.BaseTestCase):
             # Check that the metadata port has the IP addresses properly
             # configured and that IPv6 address has been skipped.
             expected_calls = [mock.call('10.0.0.1/23'),
-                              mock.call('169.254.169.254/16')]
+                              mock.call(n_const.METADATA_CIDR)]
             self.assertEqual(sorted(expected_calls),
                              sorted(ip_addr_add.call_args_list))
             # Check that metadata proxy has been spawned
             spawn_mdp.assert_called_once_with(
                 mock.ANY, 'namespace', 80, mock.ANY,
-                bind_address='169.254.169.254', network_id='1')
+                bind_address=ovn_const.METADATA_DEFAULT_IP, network_id='1')
             # Check that the chassis has been updated with the datapath.
             update_chassis.assert_called_once_with('1')
 

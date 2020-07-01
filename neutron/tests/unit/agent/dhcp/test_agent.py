@@ -1820,9 +1820,9 @@ class TestDeviceManager(base.BaseTestCase):
 
         if port == fake_ipv6_port:
             expected_ips = ['2001:db8::a8bb:ccff:fedd:ee99/64',
-                            '169.254.169.254/16']
+                            const.METADATA_CIDR]
         else:
-            expected_ips = ['172.9.9.9/24', '169.254.169.254/16']
+            expected_ips = ['172.9.9.9/24', const.METADATA_CIDR]
 
         expected = [mock.call.get_device_name(port)]
 
