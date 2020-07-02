@@ -1380,3 +1380,27 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self.assertRaises(
                 exceptions.BadRequest,
                 self.mixin._get_assoc_data, self.ctx, mock.ANY, mock.Mock())
+
+    def test__delete_dvr_internal_ports(self):
+        payload = mock.Mock()
+        payload.context = mock.Mock()
+        payload.latest_state = {'distributed': True}
+        payload.metadata = {'new_network_id': 'fake-net-1',
+                            'network_id': 'fake-net-2'}
+        plugin = mock.Mock()
+        directory.add_plugin(plugin_constants.CORE, plugin)
+        plugin.get_ports.return_value = []
+        with mock.patch.object(self.mixin,
+                               'delete_floatingip_agent_gateway_port') as \
+            del_port, \
+            mock.patch.object(
+                self.mixin.l3_rpc_notifier,
+                'delete_fipnamespace_for_ext_net') as \
+            del_fip_ns, \
+            mock.patch.object(router_obj.DvrFipGatewayPortAgentBinding,
+                              "delete_objects") as del_binding:
+            self.mixin._delete_dvr_internal_ports(
+                None, None, resources.ROUTER_GATEWAY, payload)
+            del_port.assert_called_once()
+            del_fip_ns.assert_called_once()
+            del_binding.assert_called_once()
