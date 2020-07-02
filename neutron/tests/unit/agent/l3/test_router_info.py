@@ -37,13 +37,20 @@ class TestRouterInfo(base.BaseTestCase):
         ip_cls = self.ip_cls_p.start()
         self.mock_ip = mock.MagicMock()
         ip_cls.return_value = self.mock_ip
+        self.mock_add_ip_route = mock.patch.object(
+            ip_lib, 'add_ip_route').start()
+        self.mock_delete_ip_route = mock.patch.object(
+            ip_lib, 'delete_ip_route').start()
         self.ri_kwargs = {'agent_conf': conf,
                           'interface_driver': mock.sentinel.interface_driver}
 
-    def _check_agent_method_called(self, calls):
-        self.mock_ip.netns.execute.assert_has_calls(
-            [mock.call(call, check_exit_code=False) for call in calls],
-            any_order=True)
+    def _check_agent_method_called(self, router, action_calls):
+        for action, calls in action_calls.items():
+            mock_calls = [mock.call(router.ns_name, c[0], via=c[1])
+                          for c in calls]
+            mock_method = (self.mock_add_ip_route if action == 'replace' else
+                           self.mock_delete_ip_route)
+            mock_method.assert_has_calls(mock_calls, any_order=True)
 
     def test_routing_table_update(self):
         ri = router_info.RouterInfo(mock.Mock(), _uuid(), {}, **self.ri_kwargs)
@@ -55,24 +62,20 @@ class TestRouterInfo(base.BaseTestCase):
                        'nexthop': '1.2.3.4'}
 
         ri.update_routing_table('replace', fake_route1)
-        expected = [['ip', 'route', 'replace', 'to', '135.207.0.0/16',
-                     'via', '1.2.3.4']]
-        self._check_agent_method_called(expected)
+        expected = {'replace': [('135.207.0.0/16', '1.2.3.4')]}
+        self._check_agent_method_called(ri, expected)
 
         ri.update_routing_table('delete', fake_route1)
-        expected = [['ip', 'route', 'delete', 'to', '135.207.0.0/16',
-                     'via', '1.2.3.4']]
-        self._check_agent_method_called(expected)
+        expected = {'delete': [('135.207.0.0/16', '1.2.3.4')]}
+        self._check_agent_method_called(ri, expected)
 
         ri.update_routing_table('replace', fake_route2)
-        expected = [['ip', 'route', 'replace', 'to', '135.207.111.111/32',
-                     'via', '1.2.3.4']]
-        self._check_agent_method_called(expected)
+        expected = {'replace': [('135.207.111.111/32', '1.2.3.4')]}
+        self._check_agent_method_called(ri, expected)
 
         ri.update_routing_table('delete', fake_route2)
-        expected = [['ip', 'route', 'delete', 'to', '135.207.111.111/32',
-                     'via', '1.2.3.4']]
-        self._check_agent_method_called(expected)
+        expected = {'delete': [('135.207.111.111/32', '1.2.3.4')]}
+        self._check_agent_method_called(ri, expected)
 
     def test_update_routing_table(self):
         # Just verify the correct namespace was used in the call
@@ -103,28 +106,22 @@ class TestRouterInfo(base.BaseTestCase):
         ri.router['routes'] = fake_new_routes
         ri.routes_updated(fake_old_routes, fake_new_routes)
 
-        expected = [['ip', 'route', 'replace', 'to', '110.100.30.0/24',
-                    'via', '10.100.10.30'],
-                    ['ip', 'route', 'replace', 'to', '110.100.31.0/24',
-                     'via', '10.100.10.30']]
-
-        self._check_agent_method_called(expected)
+        expected = {'replace': [('110.100.30.0/24', '10.100.10.30'),
+                                ('110.100.31.0/24', '10.100.10.30')]}
+        self._check_agent_method_called(ri, expected)
         ri.routes = fake_new_routes
         fake_new_routes = [{'destination': "110.100.30.0/24",
                             'nexthop': "10.100.10.30"}]
         ri.router['routes'] = fake_new_routes
         ri.routes_updated(ri.routes, fake_new_routes)
-        expected = [['ip', 'route', 'delete', 'to', '110.100.31.0/24',
-                    'via', '10.100.10.30']]
-
-        self._check_agent_method_called(expected)
+        expected = {'delete': [('110.100.31.0/24', '10.100.10.30')]}
+        self._check_agent_method_called(ri, expected)
         fake_new_routes = []
         ri.router['routes'] = fake_new_routes
         ri.routes_updated(ri.routes, fake_new_routes)
 
-        expected = [['ip', 'route', 'delete', 'to', '110.100.30.0/24',
-                    'via', '10.100.10.30']]
-        self._check_agent_method_called(expected)
+        expected = {'delete': [('110.100.30.0/24', '10.100.10.30')]}
+        self._check_agent_method_called(ri, expected)
 
     def test__process_pd_iptables_rules(self):
         subnet_id = _uuid()

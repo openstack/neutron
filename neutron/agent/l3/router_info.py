@@ -20,6 +20,7 @@ from neutron_lib import constants as lib_constants
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
+from pyroute2.netlink import exceptions as pyroute2_exc
 
 from neutron._i18n import _
 from neutron.agent.l3 import namespaces
@@ -173,10 +174,12 @@ class RouterInfo(BaseRouterInfo):
         return True
 
     def _update_routing_table(self, operation, route, namespace):
-        cmd = ['ip', 'route', operation, 'to', route['destination'],
-               'via', route['nexthop']]
-        ip_wrapper = ip_lib.IPWrapper(namespace=namespace)
-        ip_wrapper.netns.execute(cmd, check_exit_code=False)
+        method = (ip_lib.add_ip_route if operation == 'replace' else
+                  ip_lib.delete_ip_route)
+        try:
+            method(namespace, route['destination'], via=route['nexthop'])
+        except (RuntimeError, OSError, pyroute2_exc.NetlinkError):
+            pass
 
     def update_routing_table(self, operation, route):
         self._update_routing_table(operation, route, self.ns_name)

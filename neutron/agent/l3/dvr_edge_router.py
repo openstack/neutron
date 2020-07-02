@@ -230,8 +230,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             # NOTE: For now let us apply the static routes both in SNAT
             # namespace and Router Namespace, to reduce the complexity.
             if self.snat_namespace.exists():
-                super(DvrEdgeRouter, self)._update_routing_table(
-                    operation, route, namespace=ns_name)
+                self._update_routing_table(operation, route, ns_name)
             else:
                 LOG.error("The SNAT namespace %s does not exist for "
                           "the router.", ns_name)
