@@ -12,16 +12,12 @@
     check:
       jobs:
         - neutron-functional
-        - neutron-fullstack
         - neutron-rally-neutron
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
-        - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
         - neutron-tempest-multinode-full
         - neutron-tempest-dvr-ha-multinode-full
         - neutron-tempest-ovsfw
-        - neutron-grenade
         - openstack-tox-cover
         - tempest-full:
             irrelevant-files:
@@ -39,16 +35,16 @@
         - neutron-functional
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
-        - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
-        - neutron-grenade
-
         - openstack-tox-cover
     post:
       jobs:
         - openstack-tox-cover
     experimental:
       jobs:
+        - neutron-fullstack
+        - neutron-grenade
+        - neutron-grenade-multinode
+        - neutron-grenade-dvr-multinode
         - legacy-grenade-dsvm-neutron-linuxbridge-multinode:
             irrelevant-files:
               - ^(test-|)requirements.txt$
@@ -137,6 +133,8 @@
     required-projects:
       - openstack/devstack-gate
       - openstack/neutron
+    vars:
+      ensure_pip_from_packages_with_python2: yes
     irrelevant-files:
       - ^.*\.rst$
       - ^doc/.*$
@@ -152,6 +150,8 @@
     required-projects:
       - openstack/devstack-gate
       - openstack/neutron
+    vars:
+      ensure_pip_from_packages_with_python2: yes
     irrelevant-files:
       - ^.*\.rst$
       - ^doc/.*$
@@ -188,6 +188,8 @@
       - openstack/tripleo-image-elements
       - openstack/watcher
       - openstack/zaqar-ui
+    vars:
+      ensure_pip_from_packages_with_python2: yes
     irrelevant-files:
       - ^.*\.rst$
       - ^doc/.*$
@@ -340,6 +342,8 @@
       - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
+    vars:
+      ensure_pip_from_packages_with_python2: yes
     irrelevant-files:
       - ^(test-|)requirements.txt$
       - ^.*\.rst$

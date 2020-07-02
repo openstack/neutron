@@ -1,7 +1,11 @@
 - hosts: all
   name: Autoconverted job legacy-tempest-dsvm-neutron-ovsfw from old job gate-tempest-dsvm-neutron-ovsfw-ubuntu-xenial-nv
   tasks:
-
+    - name: Ensure tox is installed
+      include_role:
+        name: ensure-tox
+      vars:
+        ensure_global_symlinks: True
     - name: Ensure legacy workspace directory
       file:
         path: '{{ ansible_user_dir }}/workspace'

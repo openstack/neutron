@@ -1,7 +1,11 @@
 - hosts: all
   name: Autoconverted job legacy-rally-dsvm-neutron-neutron from old job gate-rally-dsvm-neutron-neutron-ubuntu-xenial
   tasks:
-
+    - name: Ensure tox is installed
+      include_role:
+        name: ensure-tox
+      vars:
+        ensure_global_symlinks: True
     - name: Ensure legacy workspace directory
       file:
         path: '{{ ansible_user_dir }}/workspace'
