@@ -52,6 +52,8 @@
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only:
             voting: false
+        - neutron-tempest-with-uwsgi-loki:
+            voting: false
         # TODO(slaweq): add this job again to the check queue when it will be
         # working fine on python 3
         #- networking-midonet-tempest-aio-ml2-centos-7:

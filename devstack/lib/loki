@@ -1,0 +1,6 @@
+# For more information on loki, see:
+# https://docs.openstack.org/neutron/latest//contributor/testing/db_transient_failure_injection.html
+
+function configure_loki {
+    neutron_service_plugin_class_add "loki"
+}
