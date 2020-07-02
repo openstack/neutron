@@ -11,23 +11,14 @@
     check:
       jobs:
         - neutron-functional
-        - neutron-fullstack
         - neutron-rally-neutron
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
-        - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
         - neutron-tempest-multinode-full
         - neutron-tempest-dvr-ha-multinode-full
         - neutron-tempest-ovsfw
-        - neutron-grenade
         - openstack-tox-cover
-        - legacy-neutron-dsvm-api:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^releasenotes/.*$
+        - neutron-dsvm-api
         - legacy-tempest-dsvm-neutron-dvr-multinode-scenario:
             voting: false
             irrelevant-files:
@@ -68,19 +59,17 @@
         - neutron-functional
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
-
         - openstack-tox-cover
-        - legacy-neutron-dsvm-api:
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^releasenotes/.*$
+        - neutron-dsvm-api
     post:
       jobs:
         - openstack-tox-cover
     experimental:
       jobs:
+        - neutron-fullstack
+        - neutron-grenade
+        - neutron-grenade-multinode
+        - neutron-grenade-dvr-multinode
         - legacy-grenade-dsvm-neutron-linuxbridge-multinode:
             irrelevant-files:
               - ^(test-|)requirements.txt$
@@ -169,6 +158,8 @@
     required-projects:
       - openstack/devstack-gate
       - openstack/neutron
+    vars:
+      ensure_pip_from_packages_with_python2: yes
     irrelevant-files:
       - ^.*\.rst$
       - ^doc/.*$
@@ -184,6 +175,8 @@
     required-projects:
       - openstack/devstack-gate
       - openstack/neutron
+    vars:
+      ensure_pip_from_packages_with_python2: yes
     irrelevant-files:
       - ^.*\.rst$
       - ^doc/.*$
@@ -220,6 +213,8 @@
       - openstack/tripleo-image-elements
       - openstack/watcher
       - openstack/zaqar-ui
+    vars:
+      ensure_pip_from_packages_with_python2: yes
     irrelevant-files:
       - ^.*\.rst$
       - ^doc/.*$
@@ -374,6 +369,8 @@
       - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
+    vars:
+      ensure_pip_from_packages_with_python2: yes
     irrelevant-files:
       - ^(test-|)requirements.txt$
       - ^.*\.rst$
@@ -407,3 +404,20 @@
       - ^tools/.*$
       - ^tox.ini$
     voting: false
+
+- job:
+    name: neutron-dsvm-api
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-dsvm-api/run.yaml
+    post-run: playbooks/legacy/neutron-dsvm-api/post.yaml
+    timeout: 7800
+    required-projects:
+      - openstack/devstack-gate
+      - openstack/neutron
+    vars:
+      ensure_pip_from_packages_with_python2: yes
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^releasenotes/.*$

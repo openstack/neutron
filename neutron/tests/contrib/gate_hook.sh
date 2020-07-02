@@ -70,19 +70,7 @@ case $VENV in
 
     configure_host_for_func_testing
 
-    # Because of bug present in current Ubuntu Xenial kernel version
-    # we need a fix for VXLAN local tunneling.
-    if [[ "$VENV" =~ "dsvm-fullstack" ]]; then
-        # The OVS_BRANCH variable is used by git checkout. In the case below,
-        # we use openvswitch commit 175be4bf23a206b264719b5661707af186b31f32
-        # that contains a fix for usage of VXLAN tunnels on a single node
-        # (commit 741f47cf35df2bfc7811b2cff75c9bb8d05fd26f) and is compatible
-        # with kernel 4.4.0-145
-        # NOTE(slaweq): Replace with a release tag when one is available.
-        # See commit 138df3e563de9da0e5a4155b3534a69621495742 (on the ovs repo).
-        OVS_BRANCH="175be4bf23a206b264719b5661707af186b31f32"
-        compile_ovs_kernel_module
-    elif [[ "$VENV" =~ "dsvm-functional" ]]; then
+    if [[ "$VENV" =~ "dsvm-functional" ]]; then
         # NOTE(slaweq): there is some bug in keepalived
         # 1:1.2.24-1ubuntu0.16.04.1, and because of that we have to use older
         # version for tests as workaround. For details check

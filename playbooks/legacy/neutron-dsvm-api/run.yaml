@@ -1,5 +1,5 @@
 - hosts: all
-  name: Autoconverted job legacy-neutron-dsvm-fullstack from old job gate-neutron-dsvm-fullstack-ubuntu-xenial
+  name: Autoconverted job legacy-neutron-dsvm-api from old job gate-neutron-dsvm-api-ubuntu-xenial-nv
   tasks:
     - name: Ensure tox is installed
       include_role:
@@ -32,22 +32,23 @@
           set -e
           set -x
           export PYTHONUNBUFFERED=true
-          export DEVSTACK_GATE_TEMPEST=0
-          export DEVSTACK_GATE_EXERCISES=0
+          export DEVSTACK_GATE_TEMPEST=1
           export DEVSTACK_GATE_NEUTRON=1
-          export DEVSTACK_GATE_INSTALL_TESTONLY=1
+          export DEVSTACK_GATE_EXERCISES=0
           export BRANCH_OVERRIDE=default
           if [ "$BRANCH_OVERRIDE" != "default" ] ; then
               export OVERRIDE_ZUUL_BRANCH=$BRANCH_OVERRIDE
           fi
+          export DEVSTACK_GATE_TEMPEST_ALL_PLUGINS=1
+          export DEVSTACK_GATE_TEMPEST_REGEX="^neutron.tests.tempest.api\."
 
           function gate_hook {
-              bash -xe $BASE/new/neutron/neutron/tests/contrib/gate_hook.sh dsvm-fullstack
+              bash -xe $BASE/new/neutron/neutron/tests/contrib/gate_hook.sh api
           }
           export -f gate_hook
 
           function post_test_hook {
-              bash -xe $BASE/new/neutron/neutron/tests/contrib/post_test_hook.sh dsvm-fullstack
+              bash -xe $BASE/new/neutron/neutron/tests/contrib/post_test_hook.sh api
           }
           export -f post_test_hook
 
