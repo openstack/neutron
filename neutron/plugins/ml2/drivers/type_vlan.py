@@ -77,19 +77,6 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                         range_obj.NetworkSegmentRange(ctx, **res))
                     new_default_range_obj.create()
 
-    @db_api.retry_db_errors
-    def _delete_expired_default_network_segment_ranges(self):
-        ctx = context.get_admin_context()
-        with db_api.CONTEXT_WRITER.using(ctx):
-            filters = {
-                'default': True,
-                'network_type': p_const.TYPE_VLAN,
-            }
-            old_default_range_objs = range_obj.NetworkSegmentRange.get_objects(
-                ctx, **filters)
-            for obj in old_default_range_objs:
-                obj.delete()
-
     def _parse_network_vlan_ranges(self):
         try:
             self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(

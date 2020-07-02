@@ -164,19 +164,6 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
                 new_default_range_obj.create()
 
     @db_api.retry_db_errors
-    def _delete_expired_default_network_segment_ranges(self):
-        ctx = context.get_admin_context()
-        with db_api.CONTEXT_WRITER.using(ctx):
-            filters = {
-                'default': True,
-                'network_type': self.get_type(),
-            }
-            old_default_range_objs = range_obj.NetworkSegmentRange.get_objects(
-                ctx, **filters)
-            for obj in old_default_range_objs:
-                obj.delete()
-
-    @db_api.retry_db_errors
     def _get_network_segment_ranges_from_db(self):
         ranges = []
         ctx = context.get_admin_context()
