@@ -1147,12 +1147,11 @@ class OVNClient(object):
 
     def _add_router_ext_gw(self, router, networks, txn):
         context = n_context.get_admin_context()
-        router_id = router['id']
         # 1. Add the external gateway router port.
         gateways = self._get_gw_info(context, router)
         gw_port_id = router['gw_port_id']
         port = self._plugin.get_port(context, gw_port_id)
-        self._create_lrouter_port(context, router_id, port, txn=txn)
+        self._create_lrouter_port(context, router, port, txn=txn)
 
         def _build_extids(gw_info):
             # TODO(lucasagomes): Remove this check after OVS 2.8.2 is tagged
@@ -1167,7 +1166,7 @@ class OVNClient(object):
             return columns
 
         # 2. Add default route with nexthop as gateway ip
-        lrouter_name = utils.ovn_name(router_id)
+        lrouter_name = utils.ovn_name(router['id'])
         for gw_info in gateways:
             columns = _build_extids(gw_info)
             txn.add(self._nb_idl.add_static_route(
@@ -1261,7 +1260,9 @@ class OVNClient(object):
             ovn_const.OVN_GW_PORT_EXT_ID_KEY:
                 router.get('gw_port_id') or '',
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(utils.get_revision_number(
-                router, ovn_const.TYPE_ROUTERS))}
+                router, ovn_const.TYPE_ROUTERS)),
+            ovn_const.OVN_ROUTER_AZ_HINTS_EXT_ID_KEY:
+                ','.join(utils.get_az_hints(router))}
 
     def create_router(self, context, router, add_external_gateway=True):
         """Create a logical router."""
@@ -1382,13 +1383,16 @@ class OVNClient(object):
         db_rev.delete_revision(context, router_id, ovn_const.TYPE_ROUTERS)
 
     def get_candidates_for_scheduling(self, physnet, cms=None,
-                                      chassis_physnets=None):
+                                      chassis_physnets=None,
+                                      availability_zone_hints=None):
         """Return chassis for scheduling gateway router.
 
         Criteria for selecting chassis as candidates
         1) chassis from cms with proper bridge mappings
         2) if no chassis is available from 1) then,
            select chassis with proper bridge mappings
+        3) Filter the available chassis accordingly to the routers
+           availability zone hints (if present)
         """
         # TODO(lucasagomes): Simplify the logic here, the CMS option has
         # been introduced long ago and by now all gateway chassis should
@@ -1406,6 +1410,16 @@ class OVNClient(object):
                 else:
                     bmaps.append(chassis)
         candidates = cms_bmaps or bmaps
+
+        # Filter for availability zones
+        if availability_zone_hints:
+            LOG.debug('Filtering Chassis candidates by availability zone '
+                      'hints: %s', ', '.join(availability_zone_hints))
+            candidates = [ch for ch in candidates
+                          for az in availability_zone_hints
+                          if az in utils.get_chassis_availability_zones(
+                              self._sb_idl.lookup('Chassis', ch, None))]
+
         if not cms_bmaps:
             LOG.debug("No eligible chassis with external connectivity"
                       " through ovn-cms-options for %s", physnet)
@@ -1454,9 +1468,9 @@ class OVNClient(object):
 
         return options
 
-    def _create_lrouter_port(self, context, router_id, port, txn=None):
+    def _create_lrouter_port(self, context, router, port, txn=None):
         """Create a logical router port."""
-        lrouter = utils.ovn_name(router_id)
+        lrouter = utils.ovn_name(router['id'])
         networks, ipv6_ra_configs = (
             self._get_nets_and_ipv6_ra_confs_for_router_port(
                 context, port['fixed_ips']))
@@ -1470,7 +1484,8 @@ class OVNClient(object):
             port_net = self._plugin.get_network(n_context.get_admin_context(),
                                                 port['network_id'])
             physnet = self._get_physnet(port_net)
-            candidates = self.get_candidates_for_scheduling(physnet)
+            candidates = self.get_candidates_for_scheduling(
+                physnet, availability_zone_hints=utils.get_az_hints(router))
             selected_chassis = self._ovn_scheduler.select(
                 self._nb_idl, self._sb_idl, lrouter_port_name,
                 candidates=candidates)
@@ -1497,6 +1512,7 @@ class OVNClient(object):
 
     def create_router_port(self, context, router_id, router_interface):
         port = self._plugin.get_port(context, router_interface['port_id'])
+        router = self._l3_plugin.get_router(context, router_id)
         with self._nb_idl.transaction(check_error=True) as txn:
             multi_prefix = False
             if (len(router_interface.get('subnet_ids', [])) == 1 and
@@ -1508,9 +1524,8 @@ class OVNClient(object):
                 self._update_lrouter_port(context, port, txn=txn)
                 multi_prefix = True
             else:
-                self._create_lrouter_port(context, router_id, port, txn=txn)
+                self._create_lrouter_port(context, router, port, txn=txn)
 
-            router = self._l3_plugin.get_router(context, router_id)
             if router.get(l3.EXTERNAL_GW_INFO):
                 cidr = None
                 for fixed_ip in port['fixed_ips']:

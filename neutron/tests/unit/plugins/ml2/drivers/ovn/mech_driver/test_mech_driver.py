@@ -1775,6 +1775,43 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         # Assert that ping_chassis returned False as it didn't update the db
         self.assertFalse(update_db)
 
+    def test_get_candidates_for_scheduling_availability_zones(self):
+        ovn_client = self.mech_driver._ovn_client
+        ch0 = fakes.FakeChassis.create(az_list=['az0', 'az1'],
+                                       chassis_as_gw=True)
+        ch1 = fakes.FakeChassis.create(az_list=['az3', 'az4'],
+                                       chassis_as_gw=True)
+        ch2 = fakes.FakeChassis.create(az_list=['az2'], chassis_as_gw=True)
+        ch3 = fakes.FakeChassis.create(az_list=[], chassis_as_gw=True)
+        ch4 = fakes.FakeChassis.create(az_list=['az0'], chassis_as_gw=True)
+        ch5 = fakes.FakeChassis.create(az_list=['az2'], chassis_as_gw=False)
+
+        # Fake ovsdbapp lookup
+        def fake_lookup(table, chassis_name, default):
+            for ch in [ch0, ch1, ch2, ch3, ch4, ch5]:
+                if ch.name == chassis_name:
+                    return ch
+        ovn_client._sb_idl.lookup = fake_lookup
+
+        # The target physnet and availability zones
+        physnet = 'public'
+        az_hints = ['az0', 'az2']
+
+        cms = [ch0.name, ch1.name, ch2.name, ch3.name, ch4.name, ch5.name]
+        ch_physnet = {ch0.name: [physnet], ch1.name: [physnet],
+                      ch2.name: [physnet], ch3.name: [physnet],
+                      ch4.name: ['another-physnet'],
+                      ch5.name: ['yet-another-physnet']}
+
+        candidates = ovn_client.get_candidates_for_scheduling(
+            physnet, cms=cms, chassis_physnets=ch_physnet,
+            availability_zone_hints=az_hints)
+
+        # Only chassis ch0 and ch2 should match the availability zones
+        # hints and physnet we passed to get_candidates_for_scheduling()
+        expected_candidates = [ch0.name, ch2.name]
+        self.assertEqual(sorted(expected_candidates), sorted(candidates))
+
 
 class OVNMechanismDriverTestCase(test_plugin.Ml2PluginV2TestCase):
     _mechanism_drivers = ['logger', 'ovn']
@@ -3224,3 +3261,38 @@ class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
         self.mech_driver._ovn_client.delete_port(self.context, parent['id'])
         self.nb_idl.unset_lswitch_port_to_virtual_type.assert_called_once_with(
             virt_port['id'], parent['id'], if_exists=True)
+
+
+class TestOVNAvailabilityZone(OVNMechanismDriverTestCase):
+
+    def setUp(self):
+        super(TestOVNAvailabilityZone, self).setUp()
+        self.context = context.get_admin_context()
+        self.sb_idl = self.mech_driver._ovn_client._sb_idl
+
+    def test_list_availability_zones(self):
+        ch0 = fakes.FakeChassis.create(az_list=['az0', 'az1'],
+                                       chassis_as_gw=True)
+        ch1 = fakes.FakeChassis.create(az_list=[], chassis_as_gw=False)
+        ch2 = fakes.FakeChassis.create(az_list=['az2'], chassis_as_gw=True)
+        ch3 = fakes.FakeChassis.create(az_list=[], chassis_as_gw=True)
+        self.sb_idl.chassis_list.return_value.execute.return_value = [
+            ch0, ch1, ch2, ch3]
+
+        azs = self.mech_driver.list_availability_zones(self.context)
+        expected_azs = {'az0': {'name': 'az0', 'resource': 'router',
+                                'state': 'available', 'tenant_id': mock.ANY},
+                        'az1': {'name': 'az1', 'resource': 'router',
+                                'state': 'available', 'tenant_id': mock.ANY},
+                        'az2': {'name': 'az2', 'resource': 'router',
+                                'state': 'available', 'tenant_id': mock.ANY}}
+        self.assertEqual(expected_azs, azs)
+
+    def test_list_availability_zones_no_azs(self):
+        ch0 = fakes.FakeChassis.create(az_list=[], chassis_as_gw=True)
+        ch1 = fakes.FakeChassis.create(az_list=[], chassis_as_gw=True)
+        self.sb_idl.chassis_list.return_value.execute.return_value = [
+            ch0, ch1]
+
+        azs = self.mech_driver.list_availability_zones(mock.Mock())
+        self.assertEqual({}, azs)

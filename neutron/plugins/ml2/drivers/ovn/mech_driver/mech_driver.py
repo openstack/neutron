@@ -241,6 +241,10 @@ class OVNMechanismDriver(api.MechanismDriver):
         self.patch_plugin_choose("update_agent", update_agent)
         self.patch_plugin_choose("delete_agent", delete_agent)
 
+        # Override availability zone methods
+        self.patch_plugin_merge("get_availability_zones",
+                                get_availability_zones)
+
         # Now IDL connections can be safely used.
         self._post_fork_event.set()
 
@@ -1045,7 +1049,8 @@ class OVNMechanismDriver(api.MechanismDriver):
             'binary': binary,
             'host': chassis.hostname,
             'heartbeat_timestamp': timeutils.utcnow(),
-            'availability_zone': 'n/a',
+            'availability_zone': ', '.join(
+                ovn_utils.get_chassis_availability_zones(chassis)),
             'topic': 'n/a',
             'description': description,
             'configurations': {
@@ -1134,6 +1139,27 @@ class OVNMechanismDriver(api.MechanismDriver):
             txn.add(self._nb_ovn.check_liveness())
         return True
 
+    def list_availability_zones(self, context, filters=None):
+        """List all availability zones from gateway chassis."""
+        azs = {}
+        # TODO(lucasagomes): In the future, once the agents API in OVN
+        # gets more stable we should consider getting the information from
+        # the availability zones from the agents API itself. That would
+        # allow us to do things like: Do not schedule router ports on
+        # chassis that are offline (via the "alive" attribute for agents).
+        for ch in self._sb_ovn.chassis_list().execute(check_error=True):
+            # Only take in consideration gateway chassis because that's where
+            # the router ports are scheduled on
+            if not ovn_utils.is_gateway_chassis(ch):
+                continue
+
+            azones = ovn_utils.get_chassis_availability_zones(ch)
+            for azone in azones:
+                azs[azone] = {'name': azone, 'resource': 'router',
+                              'state': 'available',
+                              'tenant_id': context.project_id}
+        return azs
+
 
 def populate_agents(driver):
     for ch in driver._sb_ovn.tables['Chassis'].rows.values():
@@ -1198,3 +1224,9 @@ def delete_agent(self, context, id, _driver=None):
     get_agent(self, None, id, _driver=_driver)
     raise n_exc.BadRequest(resource='agent',
                            msg='OVN agents cannot be deleted')
+
+
+def get_availability_zones(cls, context, _driver, filters=None, fields=None,
+                           sorts=None, limit=None, marker=None,
+                           page_reverse=False):
+    return list(_driver.list_availability_zones(context, filters).values())
