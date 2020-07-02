@@ -1,7 +1,11 @@
 - hosts: all
   name: Neutron Tempest iptables-hybrid job
   tasks:
-
+    - name: Ensure tox is installed
+      include_role:
+        name: ensure-tox
+      vars:
+        ensure_global_symlinks: True
     - name: Ensure legacy workspace directory
       file:
         path: '{{ ansible_user_dir }}/workspace'

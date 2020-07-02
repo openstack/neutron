@@ -12,16 +12,12 @@
     check:
       jobs:
         - neutron-functional
-        - neutron-fullstack
         - neutron-rally-task
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
-        - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
         - neutron-tempest-multinode-full
         - neutron-tempest-dvr-ha-multinode-full
         - neutron-tempest-iptables_hybrid
-        - neutron-grenade
         - openstack-tox-lower-constraints
         - neutron-fullstack-python35
         # We don't run the job on things like neutron docs-only changes
@@ -52,13 +48,9 @@
     gate:
       jobs:
         - neutron-functional
-        - neutron-fullstack
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
         - neutron-tempest-iptables_hybrid
-        - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
-        - neutron-grenade
         - openstack-tox-lower-constraints
         - openstack-tox-cover
     periodic:
@@ -70,9 +62,12 @@
       jobs:
         - neutron-functional-python35
         - neutron-functional-with-uwsgi
+        - neutron-fullstack
         - neutron-fullstack-with-uwsgi
         - neutron-tempest-with-uwsgi
-
+        - neutron-grenade
+        - neutron-grenade-multinode
+        - neutron-grenade-dvr-multinode
         - legacy-grenade-dsvm-neutron-linuxbridge-multinode:
             irrelevant-files:
               - ^(test-|)requirements.txt$
@@ -163,6 +158,8 @@
     required-projects:
       - openstack/devstack-gate
       - openstack/neutron
+    vars:
+      ensure_pip_from_packages_with_python2: yes
     irrelevant-files:
       - ^.*\.rst$
       - ^doc/.*$
@@ -194,6 +191,8 @@
     required-projects:
       - openstack/devstack-gate
       - openstack/neutron
+    vars:
+      ensure_pip_from_packages_with_python2: yes
     irrelevant-files:
       - ^.*\.rst$
       - ^doc/.*$
@@ -383,6 +382,8 @@
       - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
+    vars:
+      ensure_pip_from_packages_with_python2: yes
     irrelevant-files:
       - ^(test-|)requirements.txt$
       - ^.*\.rst$
