@@ -1517,13 +1517,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         filters = filters or {}
         return l3_obj.FloatingIP.count(context, **filters)
 
-    def _router_exists(self, context, router_id):
-        try:
-            self.get_router(context.elevated(), router_id)
-            return True
-        except l3_exc.RouterNotFound:
-            return False
-
     def prevent_l3_port_deletion(self, context, port_id):
         """Checks to make sure a port is allowed to be deleted.
 
@@ -1561,7 +1554,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                           "%(port_id)s no longer exists, allowing deletion.",
                           {'f_id': port['device_id'], 'port_id': port['id']})
                 return
-        elif not self._router_exists(context, port['device_id']):
+        elif not l3_obj.Router.objects_exist(context.elevated(),
+                                             id=port['device_id']):
             LOG.debug("Router %(router_id)s corresponding to port "
                       "%(port_id)s no longer exists, allowing deletion.",
                       {'router_id': port['device_id'],
