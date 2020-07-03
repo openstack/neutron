@@ -67,6 +67,7 @@ class MonitorDaemon(daemon.Daemon):
         # as root
         if not run_as_root:
             super(MonitorDaemon, self).run()
+        config.setup_logging()
         self.handle_initial_state()
         for iterable in self.monitor:
             self.parse_and_handle_event(iterable)
@@ -158,7 +159,6 @@ def configure(conf):
     conf.set_override('log_dir', cfg.CONF.conf_dir)
     conf.set_override('debug', True)
     conf.set_override('use_syslog', True)
-    config.setup_logging()
     agent_config.setup_privsep()
 
 
