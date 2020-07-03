@@ -1011,7 +1011,7 @@ def _arping(ns_name, iface_name, address, count, log_exception):
             arping_cmd = ['arping', arg, '-I', iface_name, '-c', 1,
                           # Pass -w to set timeout to ensure exit if interface
                           # removed while running
-                          '-w', 1.5, address]
+                          '-w', 2, address]
             try:
                 ip_wrapper.netns.execute(arping_cmd,
                                          extra_ok_codes=extra_ok_codes)
