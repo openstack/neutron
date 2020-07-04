@@ -3078,8 +3078,8 @@ class TestOvsDvrNeutronAgent(object):
             ),
         ]
 
-    def _test_port_bound_for_dvr_on_vlan_network(
-            self, device_owner, ip_version=n_const.IP_VERSION_4):
+    def _test_port_bound_for_dvr_on_physical_network(
+            self, device_owner, network_type, ip_version=n_const.IP_VERSION_4):
         self._setup_for_dvr_test()
         if ip_version == n_const.IP_VERSION_4:
             gateway_ip = '1.1.1.10'
@@ -3093,7 +3093,8 @@ class TestOvsDvrNeutronAgent(object):
         self._compute_port.vif_mac = '77:88:99:00:11:22'
         physical_network = self._physical_network
         segmentation_id = self._segmentation_id
-        network_type = n_const.TYPE_VLAN
+        if network_type == n_const.TYPE_FLAT:
+            segmentation_id = None
         int_br = mock.create_autospec(self.agent.int_br)
         tun_br = mock.create_autospec(self.agent.tun_br)
         phys_br = mock.create_autospec(self.br_phys_cls('br-phys'))
@@ -3256,10 +3257,19 @@ class TestOvsDvrNeutronAgent(object):
             phys_br.assert_not_called()
 
     def test_port_bound_for_dvr_with_compute_ports(self):
-        self._test_port_bound_for_dvr_on_vlan_network(
-            device_owner=DEVICE_OWNER_COMPUTE)
-        self._test_port_bound_for_dvr_on_vlan_network(
+        self._test_port_bound_for_dvr_on_physical_network(
             device_owner=DEVICE_OWNER_COMPUTE,
+            network_type=n_const.TYPE_VLAN)
+        self._test_port_bound_for_dvr_on_physical_network(
+            device_owner=DEVICE_OWNER_COMPUTE,
+            network_type=n_const.TYPE_VLAN,
+            ip_version=n_const.IP_VERSION_6)
+        self._test_port_bound_for_dvr_on_physical_network(
+            device_owner=DEVICE_OWNER_COMPUTE,
+            network_type=n_const.TYPE_FLAT)
+        self._test_port_bound_for_dvr_on_physical_network(
+            device_owner=DEVICE_OWNER_COMPUTE,
+            network_type=n_const.TYPE_FLAT,
             ip_version=n_const.IP_VERSION_6)
         self._test_port_bound_for_dvr_on_vxlan_network(
             device_owner=DEVICE_OWNER_COMPUTE)
@@ -3268,10 +3278,19 @@ class TestOvsDvrNeutronAgent(object):
             ip_version=n_const.IP_VERSION_6)
 
     def test_port_bound_for_dvr_with_dhcp_ports(self):
-        self._test_port_bound_for_dvr_on_vlan_network(
-            device_owner=n_const.DEVICE_OWNER_DHCP)
-        self._test_port_bound_for_dvr_on_vlan_network(
+        self._test_port_bound_for_dvr_on_physical_network(
             device_owner=n_const.DEVICE_OWNER_DHCP,
+            network_type=n_const.TYPE_VLAN)
+        self._test_port_bound_for_dvr_on_physical_network(
+            device_owner=n_const.DEVICE_OWNER_DHCP,
+            network_type=n_const.TYPE_VLAN,
+            ip_version=n_const.IP_VERSION_6)
+        self._test_port_bound_for_dvr_on_physical_network(
+            device_owner=n_const.DEVICE_OWNER_DHCP,
+            network_type=n_const.TYPE_FLAT)
+        self._test_port_bound_for_dvr_on_physical_network(
+            device_owner=n_const.DEVICE_OWNER_DHCP,
+            network_type=n_const.TYPE_FLAT,
             ip_version=n_const.IP_VERSION_6)
         self._test_port_bound_for_dvr_on_vxlan_network(
             device_owner=n_const.DEVICE_OWNER_DHCP)
@@ -3737,8 +3756,9 @@ class TestOvsDvrNeutronAgent(object):
                 mock.call.setup_canary_table(),
                 mock.call.install_drop(table_id=constants.DVR_TO_SRC_MAC,
                                        priority=1),
-                mock.call.install_drop(table_id=constants.DVR_TO_SRC_MAC_VLAN,
-                                       priority=1),
+                mock.call.install_drop(
+                    table_id=constants.DVR_TO_SRC_MAC_PHYSICAL,
+                    priority=1),
                 mock.call.install_drop(table_id=constants.LOCAL_SWITCHING,
                                        priority=2,
                                        in_port=ioport),
@@ -3829,7 +3849,7 @@ class TestOvsDvrNeutronAgent(object):
                     dvr_macs=[{'host': newhost,
                                'mac_address': newmac}])
             expected_on_int_br = [
-                mock.call.add_dvr_mac_vlan(
+                mock.call.add_dvr_mac_physical(
                     mac=newmac,
                     port=self.agent.int_ofports[physical_network]),
                 mock.call.add_dvr_mac_tun(
@@ -3842,7 +3862,7 @@ class TestOvsDvrNeutronAgent(object):
                     port=self.agent.patch_int_ofport),
             ]
             expected_on_phys_br = [
-                mock.call.add_dvr_mac_vlan(
+                mock.call.add_dvr_mac_physical(
                     mac=newmac,
                     port=self.agent.phys_ofports[physical_network]),
             ]
