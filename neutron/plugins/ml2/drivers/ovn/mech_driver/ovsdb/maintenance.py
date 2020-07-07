@@ -277,6 +277,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
     # The migration will run just once per neutron-server instance. If the lock
     # is held by some other neutron-server instance in the cloud, we'll attempt
     # to perform the migration every 10 seconds until completed.
+    # TODO(jlibosva): Remove the migration to port groups at some point. It's
+    # been around since Queens release so it is good to drop this soon.
     @periodics.periodic(spacing=10, run_immediately=True)
     @rerun_on_schema_updates
     def migrate_to_port_groups(self):
