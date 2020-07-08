@@ -90,7 +90,7 @@ class SriovSwitchMechGenericTestCase(SriovNicSwitchMechanismBaseTestCase,
 
     def test_driver_responsible_for_ports_allocation(self):
         agents = [
-            {'agent_type': 'NIC Switch agent',
+            {'agent_type': constants.AGENT_TYPE_NIC_SWITCH,
              'configurations': {'resource_provider_bandwidths': {'eth0': {}}},
              'host': 'host',
              'id': '1'}

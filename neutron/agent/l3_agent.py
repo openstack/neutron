@@ -17,6 +17,7 @@
 import sys
 
 from neutron_lib.agent import topics
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_service import service
 
@@ -49,7 +50,7 @@ def main(manager='neutron.agent.l3.agent.L3NATAgentWithStateReport'):
     config.setup_logging()
     config.setup_privsep()
     server = neutron_service.Service.create(
-        binary='neutron-l3-agent',
+        binary=constants.AGENT_PROCESS_L3,
         topic=topics.L3_AGENT,
         report_interval=cfg.CONF.AGENT.report_interval,
         manager=manager)

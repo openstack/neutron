@@ -12,9 +12,16 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import setproctitle
+
 from neutron.plugins.ml2.drivers.macvtap.agent import (
     macvtap_neutron_agent as agent_main)
+from neutron_lib import constants
 
 
 def main():
+    proctitle = "%s (%s)" % (
+            constants.AGENT_PROCESS_MACVTAP, setproctitle.getproctitle())
+    setproctitle.setproctitle(proctitle)
+
     agent_main.main()

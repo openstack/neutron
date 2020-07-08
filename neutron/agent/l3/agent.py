@@ -923,7 +923,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         self.failed_report_state = False
         self.agent_state = {
-            'binary': 'neutron-l3-agent',
+            'binary': lib_const.AGENT_PROCESS_L3,
             'host': host,
             'availability_zone': self.conf.AGENT.availability_zone,
             'topic': topics.L3_AGENT,

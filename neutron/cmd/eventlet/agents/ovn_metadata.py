@@ -10,8 +10,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import setproctitle
+
 from neutron.agent.ovn import metadata_agent
+from neutron_lib import constants
 
 
 def main():
+    proctitle = "%s (%s)" % (
+            constants.AGENT_PROCESS_OVN_METADATA, setproctitle.getproctitle())
+    setproctitle.setproctitle(proctitle)
+
     metadata_agent.main()

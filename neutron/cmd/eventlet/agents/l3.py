@@ -10,8 +10,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import setproctitle
+
 from neutron.agent import l3_agent
+from neutron_lib import constants
 
 
 def main():
+    proctitle = "%s (%s)" % (
+            constants.AGENT_PROCESS_L3, setproctitle.getproctitle())
+    setproctitle.setproctitle(proctitle)
+
     l3_agent.main()

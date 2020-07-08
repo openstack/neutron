@@ -322,7 +322,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         #                  versions about resources which are common,
         #                  or which are used by specific extensions.
         self.agent_state = {
-            'binary': 'neutron-openvswitch-agent',
+            'binary': n_const.AGENT_PROCESS_OVS,
             'host': host,
             'topic': n_const.L2_AGENT_TOPIC,
             'configurations': {'bridge_mappings': self.bridge_mappings,

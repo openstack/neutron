@@ -36,7 +36,6 @@ from neutron.plugins.ml2.drivers.macvtap import macvtap_common
 
 LOG = logging.getLogger(__name__)
 
-MACVTAP_AGENT_BINARY = "neutron-macvtap-agent"
 MACVTAP_FS = "/sys/class/net/"
 EXTENSION_DRIVER_TYPE = 'macvtap'
 
@@ -222,7 +221,7 @@ def main():
     agent = ca.CommonAgentLoop(manager, polling_interval,
                                quitting_rpc_timeout,
                                constants.AGENT_TYPE_MACVTAP,
-                               MACVTAP_AGENT_BINARY)
+                               constants.AGENT_PROCESS_MACVTAP)
     LOG.info("Agent initialized successfully, now running... ")
     launcher = service.launch(cfg.CONF, agent, restart_method='mutate')
     launcher.wait()

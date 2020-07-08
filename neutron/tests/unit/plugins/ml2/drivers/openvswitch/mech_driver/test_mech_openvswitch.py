@@ -173,7 +173,7 @@ class OpenvswitchMechanismGenericTestCase(OpenvswitchMechanismBaseTestCase,
                                           base.AgentMechanismGenericTestCase):
     def test_driver_responsible_for_ports_allocation(self):
         agents = [
-            {'agent_type': 'Open vSwitch agent',
+            {'agent_type': constants.AGENT_TYPE_OVS,
              'configurations': {'resource_provider_bandwidths': {'eth0': {}}},
              'id': '1',
              'host': 'host'}
