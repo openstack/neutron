@@ -22,7 +22,6 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
-from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as plugin_utils
@@ -217,9 +216,9 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
             'device_owner': n_const.DEVICE_OWNER_ROUTER_INTF,
             'device_id': '44', 'id': 'f',
             'fixed_ips': [{'ip_address': '1.1.1.1', 'subnet_id': '4'}]}
-        self.db.get_router = mock.Mock()
-        self.db.get_router.side_effect = l3_exc.RouterNotFound(router_id='44')
-        self.db.prevent_l3_port_deletion(mock.Mock(), None)
+        with mock.patch.object(l3_obj.Router, 'objects_exist',
+                               return_value=False):
+            self.db.prevent_l3_port_deletion(mock.Mock(), None)
 
     @mock.patch.object(directory, 'get_plugin')
     def test_prevent_l3_port_existing_router(self, gp):

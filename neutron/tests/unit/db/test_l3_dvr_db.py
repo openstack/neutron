@@ -347,11 +347,11 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         plugin = mock.Mock()
         directory.add_plugin(plugin_constants.CORE, plugin)
         plugin.get_port.return_value = port
-        self.mixin._router_exists = mock.Mock(return_value=True)
-        self.assertRaises(exceptions.ServicePortInUse,
-                          self.mixin.prevent_l3_port_deletion,
-                          self.ctx,
-                          port['id'])
+        with mock.patch.object(router_obj.Router, 'objects_exist',
+                               return_value=True):
+            self.assertRaises(exceptions.ServicePortInUse,
+                              self.mixin.prevent_l3_port_deletion,
+                              self.ctx, port['id'])
 
     def test_prevent_delete_floatingip_agent_gateway_port(self):
         port = {
