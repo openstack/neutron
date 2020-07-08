@@ -40,6 +40,7 @@ from neutron_lib.api.definitions import network_mtu as mtu_apidef
 from neutron_lib.api.definitions import network_mtu_writable as mtuw_apidef
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import port_mac_address_regenerate
+from neutron_lib.api.definitions import port_numa_affinity_policy as pnap_def
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import portbindings_extended as pbe_ext
@@ -213,7 +214,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     subnet_onboard_def.ALIAS,
                                     subnetpool_prefix_ops_def.ALIAS,
                                     stateful_security_group.ALIAS,
-                                    addrgrp_def.ALIAS]
+                                    addrgrp_def.ALIAS,
+                                    pnap_def.ALIAS,
+                                    ]
 
     # List of agent types for which all binding_failed ports should try to be
     # rebound when agent revive
@@ -378,12 +381,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 ]
 
     def _check_mac_update_allowed(self, orig_port, port, binding):
-        unplugged_types = (portbindings.VIF_TYPE_BINDING_FAILED,
-                           portbindings.VIF_TYPE_UNBOUND)
         new_mac = port.get('mac_address')
         mac_change = (new_mac is not None and
                       orig_port['mac_address'] != new_mac)
-        if (mac_change and binding.vif_type not in unplugged_types):
+        if (mac_change and binding.vif_type not in
+                portbindings.VIF_UNPLUGGED_TYPES):
             raise exc.PortBound(port_id=orig_port['id'],
                                 vif_type=binding.vif_type,
                                 old_mac=orig_port['mac_address'],

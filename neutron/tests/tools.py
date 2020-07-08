@@ -266,3 +266,7 @@ def get_random_ipv6_mode():
 
 def get_random_security_event():
     return random.choice(log_const.LOG_EVENTS)
+
+
+def get_random_port_numa_affinity_policy():
+    return random.choice(constants.PORT_NUMA_POLICIES)
