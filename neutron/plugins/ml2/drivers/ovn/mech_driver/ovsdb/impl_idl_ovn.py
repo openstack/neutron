@@ -359,13 +359,6 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def delete_acl(self, lswitch, lport, if_exists=True):
         return cmd.DelACLCommand(self, lswitch, lport, if_exists)
 
-    def update_acls(self, lswitch_names, port_list, acl_new_values_dict,
-                    need_compare=True, is_add_acl=True):
-        return cmd.UpdateACLsCommand(self, lswitch_names,
-                                     port_list, acl_new_values_dict,
-                                     need_compare=need_compare,
-                                     is_add_acl=is_add_acl)
-
     def add_static_route(self, lrouter, **columns):
         return cmd.AddStaticRouteCommand(self, lrouter, **columns)
 

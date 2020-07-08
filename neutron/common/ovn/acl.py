@@ -171,23 +171,6 @@ def drop_all_ip_traffic_for_port(port):
     return acl_list
 
 
-def add_sg_rule_acl_for_port(port, r, match):
-    dir_map = {const.INGRESS_DIRECTION: 'to-lport',
-               const.EGRESS_DIRECTION: 'from-lport'}
-    acl = {"lswitch": utils.ovn_name(port['network_id']),
-           "lport": port['id'],
-           "priority": ovn_const.ACL_PRIORITY_ALLOW,
-           "action": ovn_const.ACL_ACTION_ALLOW_RELATED,
-           "log": False,
-           "name": [],
-           "severity": [],
-           "direction": dir_map[r['direction']],
-           "match": match,
-           "external_ids": {'neutron:lport': port['id'],
-                            ovn_const.OVN_SG_RULE_EXT_ID_KEY: r['id']}}
-    return acl
-
-
 def add_sg_rule_acl_for_port_group(port_group, r, match):
     dir_map = {const.INGRESS_DIRECTION: 'to-lport',
                const.EGRESS_DIRECTION: 'from-lport'}
