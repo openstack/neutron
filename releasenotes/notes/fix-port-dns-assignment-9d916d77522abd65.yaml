@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    The dns-assignment will reflect the dns-domain defined in the network or
+    sent by user when creating the port using --dns-domain rather than just
+    take the dns-domain defined in the neutron configuration
