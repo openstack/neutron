@@ -100,7 +100,7 @@
 - job:
     name: neutron-tempest-postgres-full
     parent: tempest-integrated-networking
-    timeout: 7800
+    timeout: 10800
     required-projects:
       - openstack/devstack-gate
       - openstack/neutron
@@ -116,7 +116,7 @@
 - job:
     name: neutron-tempest-mariadb-full
     parent: tempest-integrated-networking
-    timeout: 7800
+    timeout: 10800
     required-projects:
       - openstack/devstack-gate
       - openstack/neutron
@@ -135,7 +135,7 @@
 - job:
     name: neutron-tempest-with-os-ken-master
     parent: tempest-integrated-networking
-    timeout: 7800
+    timeout: 10800
     required-projects:
       - openstack/devstack-gate
       - openstack/neutron
@@ -145,7 +145,7 @@
 - job:
     name: neutron-tempest-with-neutron-lib-master
     parent: tempest-integrated-networking
-    timeout: 7800
+    timeout: 10800
     required-projects:
       - openstack/devstack-gate
       - openstack/neutron
@@ -156,7 +156,7 @@
     name: neutron-tempest-with-uwsgi
     parent: tempest-integrated-networking
     description: Run neutron Tempest tests with uwsgi
-    timeout: 8400
+    timeout: 10800
     vars:
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: true
