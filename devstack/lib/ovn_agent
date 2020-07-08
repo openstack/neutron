@@ -379,6 +379,10 @@ function install_ovn {
         compile_ovn $OVN_BUILD_MODULES
     fi
 
+    # Ensure that the OVS commands are accessible in the PATH
+    OVS_BINDIR=${OVS_BINDIR:-/usr/local/bin}
+    export PATH=$OVS_BINDIR:$PATH
+
     sudo mkdir -p $OVS_RUNDIR
     sudo chown $(whoami) $OVS_RUNDIR
     sudo mkdir -p $OVS_PREFIX/var/log/openvswitch
