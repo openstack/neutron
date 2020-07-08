@@ -15,6 +15,7 @@
 
 import functools
 
+from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
 from neutron_lib.plugins import constants as plugin_constants
@@ -151,3 +152,10 @@ class SegmentTypeDriver(BaseTypeDriver):
                     return alloc
                 raise db_exc.RetryRequest(
                     exceptions.NoNetworkFoundInMaximumAllowedAttempts())
+
+    @db_api.retry_db_errors
+    def _delete_expired_default_network_segment_ranges(self):
+        ctx = context.get_admin_context()
+        with db_api.CONTEXT_WRITER.using(ctx):
+            filters = {'default': True, 'network_type': self.get_type()}
+            ns_range.NetworkSegmentRange.delete_objects(ctx, **filters)
