@@ -88,11 +88,11 @@ fake_ipv6_subnet = dhcp.DictModel(id='bbbbbbbb-1111-2222-bbbbbbbbbbbb',
                                   ipv6_ra_mode='slaac', ipv6_address_mode=None)
 
 fake_meta_subnet = dhcp.DictModel(dict(id='bbbbbbbb-1111-2222-bbbbbbbbbbbb',
-                                  network_id=FAKE_NETWORK_UUID,
-                                  cidr='169.254.169.252/30',
-                                  gateway_ip='169.254.169.253',
-                                  enable_dhcp=True,
-                                  ip_version=const.IP_VERSION_4))
+                                       network_id=FAKE_NETWORK_UUID,
+                                       cidr='169.254.169.252/30',
+                                       gateway_ip='169.254.169.253',
+                                       enable_dhcp=True,
+                                       ip_version=const.IP_VERSION_4))
 
 fake_fixed_ip1 = dhcp.DictModel(id='', subnet_id=fake_subnet1.id,
                                 ip_address='172.9.9.9')
@@ -1040,10 +1040,10 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_refresh_dhcp_helper_no_dhcp_enabled_networks(self):
         network = dhcp.NetModel(dict(id='net-id',
-                                tenant_id=FAKE_TENANT_ID,
-                                admin_state_up=True,
-                                subnets=[],
-                                ports=[]))
+                                     tenant_id=FAKE_TENANT_ID,
+                                     admin_state_up=True,
+                                     subnets=[],
+                                     ports=[]))
 
         self.cache.get_network_by_id.return_value = network
         self.plugin.get_network_info.return_value = network
@@ -1057,10 +1057,10 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_refresh_dhcp_helper_exception_during_rpc(self):
         network = dhcp.NetModel(dict(id='net-id',
-                                tenant_id=FAKE_TENANT_ID,
-                                admin_state_up=True,
-                                subnets=[],
-                                ports=[]))
+                                     tenant_id=FAKE_TENANT_ID,
+                                     admin_state_up=True,
+                                     subnets=[],
+                                     ports=[]))
 
         self.cache.get_network_by_id.return_value = network
         self.plugin.get_network_info.side_effect = Exception
@@ -1148,10 +1148,10 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_subnet_update_end_restart(self):
         new_state = dhcp.NetModel(dict(id=fake_network.id,
-                                  tenant_id=fake_network.tenant_id,
-                                  admin_state_up=True,
-                                  subnets=[fake_subnet1, fake_subnet3],
-                                  ports=[fake_port1]))
+                                       tenant_id=fake_network.tenant_id,
+                                       admin_state_up=True,
+                                       subnets=[fake_subnet1, fake_subnet3],
+                                       ports=[fake_port1]))
 
         payload = dict(subnet=dict(network_id=fake_network.id),
                        priority=FAKE_PRIORITY)
@@ -1167,10 +1167,10 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_subnet_delete_end_no_network_id(self):
         prev_state = dhcp.NetModel(dict(id=fake_network.id,
-                                   tenant_id=fake_network.tenant_id,
-                                   admin_state_up=True,
-                                   subnets=[fake_subnet1, fake_subnet3],
-                                   ports=[fake_port1]))
+                                        tenant_id=fake_network.tenant_id,
+                                        admin_state_up=True,
+                                        subnets=[fake_subnet1, fake_subnet3],
+                                        ports=[fake_port1]))
 
         payload = dict(subnet_id=fake_subnet1.id, priority=FAKE_PRIORITY)
         self.cache.get_network_by_subnet_id.return_value = prev_state
@@ -1192,10 +1192,10 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_subnet_update_end_delete_payload(self):
         prev_state = dhcp.NetModel(dict(id=fake_network.id,
-                                   tenant_id=fake_network.tenant_id,
-                                   admin_state_up=True,
-                                   subnets=[fake_subnet1, fake_subnet3],
-                                   ports=[fake_port1]))
+                                        tenant_id=fake_network.tenant_id,
+                                        admin_state_up=True,
+                                        subnets=[fake_subnet1, fake_subnet3],
+                                        ports=[fake_port1]))
 
         payload = dict(subnet_id=fake_subnet1.id, network_id=fake_network.id,
                        priority=FAKE_PRIORITY)

@@ -27,6 +27,7 @@ from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.utils import file as file_utils
+from oslo_concurrency import processutils
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import fileutils
@@ -42,6 +43,7 @@ from neutron.agent.linux import iptables_manager
 from neutron.cmd import runtime_checks as checks
 from neutron.common import utils as common_utils
 from neutron.ipam import utils as ipam_utils
+from neutron.privileged.agent.linux import dhcp as priv_dhcp
 
 LOG = logging.getLogger(__name__)
 
@@ -513,7 +515,8 @@ class Dnsmasq(DhcpLocalProcess):
 
     def _is_dhcp_release6_supported(self):
         if self._IS_DHCP_RELEASE6_SUPPORTED is None:
-            self._IS_DHCP_RELEASE6_SUPPORTED = checks.dhcp_release6_supported()
+            self._IS_DHCP_RELEASE6_SUPPORTED = (
+                priv_dhcp.dhcp_release6_supported())
             if not self._IS_DHCP_RELEASE6_SUPPORTED:
                 LOG.warning("dhcp_release6 is not present on this system, "
                             "will not call it again.")
@@ -528,24 +531,27 @@ class Dnsmasq(DhcpLocalProcess):
     def _release_lease(self, mac_address, ip, ip_version, client_id=None,
                        server_id=None, iaid=None):
         """Release a DHCP lease."""
-        if ip_version == constants.IP_VERSION_6:
-            if not self._is_dhcp_release6_supported():
-                return
-            cmd = ['dhcp_release6', '--iface', self.interface_name,
-                   '--ip', ip, '--client-id', client_id,
-                   '--server-id', server_id, '--iaid', iaid]
-        else:
-            cmd = ['dhcp_release', self.interface_name, ip, mac_address]
-            if client_id:
-                cmd.append(client_id)
-        ip_wrapper = ip_lib.IPWrapper(namespace=self.network.namespace)
         try:
-            ip_wrapper.netns.execute(cmd, run_as_root=True)
-        except RuntimeError as e:
+            if ip_version == constants.IP_VERSION_6:
+                if not self._is_dhcp_release6_supported():
+                    return
+
+                params = {'interface_name': self.interface_name,
+                          'ip_address': ip, 'client_id': client_id,
+                          'server_id': server_id, 'iaid': iaid,
+                          'namespace': self.network.namespace}
+                priv_dhcp.dhcp_release6(**params)
+            else:
+                params = {'interface_name': self.interface_name,
+                          'ip_address': ip, 'mac_address': mac_address,
+                          'client_id': client_id,
+                          'namespace': self.network.namespace}
+                priv_dhcp.dhcp_release(**params)
+        except (processutils.ProcessExecutionError, OSError) as e:
             # when failed to release single lease there's
             # no need to propagate error further
-            LOG.warning('DHCP release failed for %(cmd)s. '
-                        'Reason: %(e)s', {'cmd': cmd, 'e': e})
+            LOG.warning('DHCP release failed for params %(params)s. '
+                        'Reason: %(e)s', {'params': params, 'e': e})
 
     def _output_config_files(self):
         self._output_hosts_file()
