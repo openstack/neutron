@@ -76,7 +76,6 @@
         Q_USE_PROVIDERNET_FOR_PUBLIC: true
         ENABLE_CHASSIS_AS_GW: true
         OVN_L3_CREATE_PUBLIC_NETWORK: true
-        OVN_BRANCH: master
       devstack_local_conf:
         post-config:
           "${RALLY_CONF_DIR}/${RALLY_CONF_FILE}":
