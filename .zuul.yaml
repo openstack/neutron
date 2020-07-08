@@ -14,35 +14,8 @@
         - neutron-rally-neutron
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
-        - neutron-tempest-multinode-full
-        - neutron-tempest-dvr-ha-multinode-full
-        - neutron-tempest-ovsfw
         - openstack-tox-cover
         - neutron-dsvm-api
-        - legacy-tempest-dsvm-neutron-dvr-multinode-scenario:
-            voting: false
-            irrelevant-files:
-              - ^(test-|)requirements.txt$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^neutron/tests/unit/.*$
-              - ^releasenotes/.*$
-              - ^setup.cfg$
-              - ^tools/.*$
-              - ^tox.ini$
-        - legacy-tempest-dsvm-neutron-scenario-linuxbridge:
-            voting: false
-            irrelevant-files:
-              - ^(test-|)requirements.txt$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^neutron/tests/unit/.*$
-              - ^releasenotes/.*$
-              - ^setup.cfg$
-              - ^tools/.*$
-              - ^tox.ini$
         - tempest-full:
             irrelevant-files:
               - ^(test-|)requirements.txt$
@@ -70,6 +43,31 @@
         - neutron-grenade
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
+        - neutron-tempest-multinode-full
+        - neutron-tempest-dvr-ha-multinode-full
+        - neutron-tempest-ovsfw
+        - legacy-tempest-dsvm-neutron-dvr-multinode-scenario:
+            irrelevant-files:
+              - ^(test-|)requirements.txt$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^neutron/locale/.*$
+              - ^neutron/tests/unit/.*$
+              - ^releasenotes/.*$
+              - ^setup.cfg$
+              - ^tools/.*$
+              - ^tox.ini$
+        - legacy-tempest-dsvm-neutron-scenario-linuxbridge:
+            irrelevant-files:
+              - ^(test-|)requirements.txt$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^neutron/locale/.*$
+              - ^neutron/tests/unit/.*$
+              - ^releasenotes/.*$
+              - ^setup.cfg$
+              - ^tools/.*$
+              - ^tox.ini$
         - legacy-grenade-dsvm-neutron-linuxbridge-multinode:
             irrelevant-files:
               - ^(test-|)requirements.txt$
