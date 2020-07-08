@@ -15,14 +15,8 @@
         - neutron-rally-task
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
-        - neutron-tempest-multinode-full
-        - neutron-tempest-dvr-ha-multinode-full
-        - neutron-tempest-iptables_hybrid
-        - openstack-tox-lower-constraints
-        - neutron-fullstack-python35
         # We don't run the job on things like neutron docs-only changes
-        - ironic-tempest-dsvm-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
-            voting: false
+        - neutron-tempest-iptables_hybrid:
             irrelevant-files:
               - ^(test-|)requirements.txt$
               - ^.*\.rst$
@@ -33,6 +27,7 @@
               - ^setup.cfg$
               - ^tools/.*$
               - ^tox.ini$
+        - openstack-tox-lower-constraints
         - openstack-tox-cover
         - tempest-full:
             irrelevant-files:
@@ -64,10 +59,15 @@
         - neutron-functional-with-uwsgi
         - neutron-fullstack
         - neutron-fullstack-with-uwsgi
+        - neutron-fullstack-python35
         - neutron-tempest-with-uwsgi
+        - neutron-tempest-multinode-full
+        - neutron-tempest-dvr-ha-multinode-full
         - neutron-grenade
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
+        - ironic-tempest-dsvm-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
+            voting: false
         - legacy-grenade-dsvm-neutron-linuxbridge-multinode:
             irrelevant-files:
               - ^(test-|)requirements.txt$
