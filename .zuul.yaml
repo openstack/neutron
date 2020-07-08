@@ -15,9 +15,6 @@
         - neutron-rally-neutron
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
-        - neutron-tempest-multinode-full
-        - neutron-tempest-dvr-ha-multinode-full
-        - neutron-tempest-ovsfw
         - openstack-tox-cover
         - tempest-full:
             irrelevant-files:
@@ -45,6 +42,9 @@
         - neutron-grenade
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
+        - neutron-tempest-multinode-full
+        - neutron-tempest-dvr-ha-multinode-full
+        - neutron-tempest-ovsfw
         - legacy-grenade-dsvm-neutron-linuxbridge-multinode:
             irrelevant-files:
               - ^(test-|)requirements.txt$
