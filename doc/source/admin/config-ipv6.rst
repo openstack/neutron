@@ -4,7 +4,8 @@
 IPv6
 ====
 
-This section describes the following items:
+This section describes the OpenStack Networking reference implementation
+for IPv6, including the following items:
 
 * How to enable dual-stack (IPv4 and IPv6 enabled) instances.
 * How those instances receive an IPv6 address.
@@ -67,12 +68,12 @@ advertisements for a subnet.
 The IPv6 Protocol uses Internet Control Message Protocol packets
 (ICMPv6) as a way to distribute information about networking. ICMPv6
 packets with the type flag set to 134 are called "Router
-Advertisement" packets, which contain information about the router
+Advertisement" messages, which contain information about the router
 and the route that can be used by guest instances to send network
 traffic.
 
 The ``ipv6_ra_mode`` is used to specify if the Networking service should
-generate Router Advertisement packets for a subnet.
+generate Router Advertisement messages for a subnet.
 
 ipv6_ra_mode and ipv6_address_mode combinations
 -----------------------------------------------
@@ -212,24 +213,24 @@ IPv6 supports three different addressing schemes for address configuration and
 for providing optional network information.
 
 Stateless Address Auto Configuration (SLAAC)
-  Address configuration using Router Advertisement (RA).
+  Address configuration using Router Advertisements.
 
 DHCPv6-stateless
-  Address configuration using RA and optional information
+  Address configuration using Router Advertisements and optional information
   using DHCPv6.
 
 DHCPv6-stateful
   Address configuration and optional information using DHCPv6.
 
 OpenStack can be setup such that OpenStack Networking directly
-provides RA, DHCP
+provides Router Advertisements, DHCP
 relay and DHCPv6 address and optional information for their networks
 or this can be delegated to external routers and services based on the
 drivers that are in use. There are two neutron subnet attributes -
 ``ipv6_ra_mode`` and ``ipv6_address_mode`` – that determine how IPv6
 addressing and network information is provided to project instances:
 
-* ``ipv6_ra_mode``: Determines who sends RA.
+* ``ipv6_ra_mode``: Determines who sends Router Advertisements.
 * ``ipv6_address_mode``: Determines how instances obtain IPv6 address,
   default gateway, or optional information.
 
@@ -258,10 +259,10 @@ When using SLAAC, the currently supported combinations for ``ipv6_ra_mode`` and
      - Address are assigned using EUI-64, and OpenStack Networking
        provides routing.
 
-Setting ``ipv6_ra_mode`` to ``slaac`` will result in OpenStack Networking
-routers being configured to send RA packets, when they are created.
-This results in the following values set for the address configuration
-flags in the RA messages:
+Setting SLAAC for ``ipv6_ra_mode`` configures the neutron
+router with an radvd agent to send Router Advertisements. The list below
+captures the values set for the address configuration flags in the Router
+Advertisement messages in this scenario.
 
 * Auto Configuration Flag = 1
 * Managed Configuration Flag = 0
@@ -269,12 +270,18 @@ flags in the RA messages:
 
 New or existing neutron networks that contain a SLAAC enabled IPv6 subnet will
 result in all neutron ports attached to the network receiving IPv6 addresses.
-This is because when RA broadcast messages are sent out on a neutron
-network, they are received by all IPv6 capable ports on the network,
+This is because when Router Advertisement messages are multicast on a
+neutron network, they are received by all IPv6 capable ports on the network,
 and each port will then configure an IPv6 address based on the
-information contained in the RA packet. In some cases, an IPv6 SLAAC
-address will be added to a port, in addition to other IPv4 and IPv6 addresses
-that the port already has been assigned.
+information contained in the Router Advertisement messages. In some cases, an
+IPv6 SLAAC address will be added to a port, in addition to other IPv4 and IPv6
+addresses that the port already has been assigned.
+
+.. note::
+
+    If a router is not created and added to the subnet, SLAAC addressing will
+    not succeed for instances since no Router Advertisement messages will
+    be generated.
 
 DHCPv6
 ------
@@ -291,16 +298,16 @@ follows:
      - Result
    * - DHCPv6-stateless
      - DHCPv6-stateless
-     - Addresses are assigned through RAs (see SLAAC above) and optional
-       information is delivered through DHCPv6.
+     - Addresses are assigned through Router Advertisements (see SLAAC above)
+       and optional information is delivered through DHCPv6.
    * - DHCPv6-stateful
      - DHCPv6-stateful
      - Addresses and optional information are assigned using DHCPv6.
 
 Setting DHCPv6-stateless for ``ipv6_ra_mode`` configures the neutron
-router with radvd agent to send RAs. The list below captures the
-values set for the address configuration flags in the RA packet in
-this scenario. Similarly, setting DHCPv6-stateless for
+router with an radvd agent to send Router Advertisements. The list below
+captures the values set for the address configuration flags in the Router
+Advertisement messages in this scenario. Similarly, setting DHCPv6-stateless for
 ``ipv6_address_mode`` configures neutron DHCP implementation to provide
 the additional network information.
 
@@ -309,15 +316,21 @@ the additional network information.
 * Other Configuration Flag = 1
 
 Setting DHCPv6-stateful for ``ipv6_ra_mode`` configures the neutron
-router with radvd agent to send RAs. The list below captures the
-values set for the address configuration flags in the RA packet in
-this scenario. Similarly, setting DHCPv6-stateful for
+router with an radvd agent to send Router Advertisements. The list below
+captures the values set for the address configuration flags in the Router
+Advertisements messages in this scenario. Similarly, setting DHCPv6-stateful for
 ``ipv6_address_mode`` configures neutron DHCP implementation to provide
 addresses and additional network information through DHCPv6.
 
 * Auto Configuration Flag = 0
 * Managed Configuration Flag = 1
 * Other Configuration Flag = 1
+
+.. note::
+
+    If a router is not created and added to the subnet, DHCPv6 addressing will
+    not succeed for instances since no Router Advertisement messages will
+    be generated.
 
 Router support
 ~~~~~~~~~~~~~~
@@ -345,16 +358,17 @@ modified so that an IPv6 subnet is not required for the external network that
 is associated with the neutron router. The LLA address of the upstream router
 can be learned in two ways.
 
-#. In the absence of an upstream RA support, ``ipv6_gateway`` flag can be set
+#. In the absence of an upstream Router Advertisement message, the
+   ``ipv6_gateway`` flag can be set
    with the external router gateway LLA in the neutron L3 agent configuration
    file. This also requires that no subnet is associated with that port.
-#. The upstream router can send an RA and the neutron router will
-   automatically learn the next-hop LLA, provided again that no subnet is
+#. The upstream router can send a Router Advertisement and the neutron router
+   will automatically learn the next-hop LLA, provided again that no subnet is
    assigned and the ``ipv6_gateway`` flag is not set.
 
-Effectively the ``ipv6_gateway`` flag takes precedence over an RA that
-is received from the upstream router. If it is desired to use a GUA
-next hop that is accomplished by allocating a subnet to the external
+Effectively the ``ipv6_gateway`` flag takes precedence over a Router
+Advertisements that is received from the upstream router. If it is desired to
+use a GUA next hop that is accomplished by allocating a subnet to the external
 router port and assigning the upstream routers GUA address as the
 gateway for the subnet.
 
