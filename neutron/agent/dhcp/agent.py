@@ -165,10 +165,15 @@ class DhcpAgent(manager.Manager):
 
     def _reload_bulk_allocations(self):
         while True:
-            for network_id in self._network_bulk_allocations.keys():
+            # No need to lock access to _network_bulk_allocations because
+            # greenthreads multi-task co-operatively.
+            to_reload = self._network_bulk_allocations.keys()
+            self._network_bulk_allocations = {}
+
+            for network_id in to_reload:
                 network = self.cache.get_network_by_id(network_id)
-                self.call_driver('bulk_reload_allocations', network)
-                del self._network_bulk_allocations[network_id]
+                if network is not None:
+                    self.call_driver('bulk_reload_allocations', network)
             eventlet.greenthread.sleep(self.conf.bulk_reload_interval)
 
     def call_driver(self, action, network, **action_kwargs):
