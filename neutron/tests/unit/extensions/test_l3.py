@@ -2961,8 +2961,14 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_create_floatingip_invalid_fixed_ipv6_address_returns_400(self):
         # API-level test - no need to create all objects for l3 plugin
         res = self._create_floatingip(self.fmt, uuidutils.generate_uuid(),
-                                      uuidutils.generate_uuid(), '2001:db8::a')
+                                      uuidutils.generate_uuid(), '2001:db8::m')
         self.assertEqual(400, res.status_int)
+
+    def test_create_floatingip_not_existing_network_returns_404(self):
+        # API-level test - no need to create all objects for l3 plugin
+        res = self._create_floatingip(self.fmt, uuidutils.generate_uuid(),
+                                      uuidutils.generate_uuid(), '2001:db8::a')
+        self.assertEqual(404, res.status_int)
 
     def test_floatingip_list_with_sort(self):
         with self.subnet(cidr="10.0.0.0/24") as s1,\

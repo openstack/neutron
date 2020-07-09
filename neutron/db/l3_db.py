@@ -1250,9 +1250,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 'context': context,
                 'association_event': association_event}
 
-    def _is_ipv4_network(self, context, net_id):
-        net = self._core_plugin._get_network(context, net_id)
-        return any(s.ip_version == 4 for s in net.subnets)
+    def _is_ipv4_network(self, context, net_db):
+        return any(s.ip_version == 4 for s in net_db.subnets)
 
     def _create_floatingip(self, context, floatingip,
                            initial_status=constants.FLOATINGIP_STATUS_ACTIVE):
@@ -1268,11 +1267,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         fip_id = uuidutils.generate_uuid()
 
         f_net_id = fip['floating_network_id']
-        if not self._core_plugin._network_is_external(context, f_net_id):
+        f_net_db = self._core_plugin._get_network(context, f_net_id)
+        if not f_net_db.external:
             msg = _("Network %s is not a valid external network") % f_net_id
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
-        if not self._is_ipv4_network(context, f_net_id):
+        if not self._is_ipv4_network(context, f_net_db):
             msg = _("Network %s does not contain any IPv4 subnet") % f_net_id
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
