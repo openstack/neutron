@@ -390,7 +390,7 @@ servers with those ports:
 
     $ openstack server create server0 \
         --flavor cirros256 \
-        --image cirros-0.4.0-x86_64-disk \
+        --image cirros-0.5.1-x86_64-disk \
         --port port-normal-qos
 
 On Healing of Allocations

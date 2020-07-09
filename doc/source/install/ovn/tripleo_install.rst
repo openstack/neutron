@@ -206,9 +206,9 @@ You can use the following script to create the resources.
 
    source ~/overcloudrc
 
-   curl http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img \
-     > cirros-0.4.0-x86_64-disk.img
-   openstack image create "cirros" --file cirros-0.4.0-x86_64-disk.img   \
+   curl http://download.cirros-cloud.net/0.5.0/cirros-0.5.1-x86_64-disk.img \
+     > cirros-0.5.1-x86_64-disk.img
+   openstack image create "cirros" --file cirros-0.5.1-x86_64-disk.img   \
                   --disk-format qcow2 --container-format bare --public
 
    openstack network create public --provider-physical-network datacentre \

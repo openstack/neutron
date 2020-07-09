@@ -122,13 +122,6 @@
         # will be released in Ubuntu Bionic.
         # More info: https://mail.openvswitch.org/pipermail/ovs-discuss/2018-December/048009.html
         OVN_BUILD_MODULES: True
-        DOWNLOAD_DEFAULT_IMAGES: false
-        IMAGE_URLS: "http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img,https://cloud-images.ubuntu.com/releases/xenial/release/ubuntu-16.04-server-cloudimg-amd64-disk1.img"
-        DEFAULT_IMAGE_NAME: cirros-0.4.0-x86_64-disk
-        DEFAULT_IMAGE_FILE_NAME: cirros-0.4.0-x86_64-disk.img
-        ADVANCED_IMAGE_NAME: ubuntu-16.04-server-cloudimg-amd64-disk1
-        ADVANCED_INSTANCE_TYPE: ds512M
-        ADVANCED_INSTANCE_USER: ubuntu
         BUILD_TIMEOUT: 784
         ENABLE_TLS: True
         OVN_IGMP_SNOOPING_ENABLE: True
