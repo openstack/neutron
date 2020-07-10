@@ -400,6 +400,25 @@ def set_link_vf_feature(device, namespace, vf_config):
 
 
 @privileged.default.entrypoint
+def set_link_bridge_forward_delay(device, forward_delay, namespace=None):
+    return _run_iproute_link('set', device, namespace=namespace,
+                             kind='bridge', br_forward_delay=forward_delay)
+
+
+@privileged.default.entrypoint
+def set_link_bridge_stp(device, stp, namespace=None):
+    return _run_iproute_link('set', device, namespace=namespace,
+                             kind='bridge', br_stp_state=stp)
+
+
+@privileged.default.entrypoint
+def set_link_bridge_master(device, bridge, namespace=None):
+    bridge_idx = get_link_id(bridge, namespace) if bridge else 0
+    return _run_iproute_link('set', device, namespace=namespace,
+                             master=bridge_idx)
+
+
+@privileged.default.entrypoint
 def get_link_attributes(device, namespace):
     link = _run_iproute_link("get", device, namespace)[0]
     return {

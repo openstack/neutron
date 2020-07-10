@@ -521,10 +521,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                   'get_interface_bridge') as get_if_br_fn:
             de_fn.return_value = False
             br_fn.addbr.return_value = bridge_device
-            bridge_device.setfd.return_value = False
-            bridge_device.disable_stp.return_value = False
+            bridge_device.setfd.return_value = 0
+            bridge_device.disable_stp.return_value = 0
             bridge_device.disable_ipv6.return_value = False
-            bridge_device.link.set_up.return_value = False
+            bridge_device.link.set_up.return_value = 0
             self.assertEqual("br0", self.lbm.ensure_bridge("br0", None))
 
             bridge_device.owns_interface.return_value = False
@@ -617,7 +617,6 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                     mock.patch.object(self.lbm, '_set_tap_mtu') as set_tap, \
                     mock.patch.object(bridge_lib.BridgeDevice,
                                       "get_interface_bridge") as get_br:
-                bridge_device.addif.retun_value = False
                 get_br.return_value = True
                 self.assertTrue(self.lbm.add_tap_interface(
                     "123", constants.TYPE_LOCAL, "physnet1", None,
@@ -632,7 +631,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 en_fn.assert_called_with("123", "brq999")
 
                 get_br.return_value = False
-                bridge_device.addif.retun_value = True
+                bridge_device.addif.retun_value = 1
                 self.assertFalse(self.lbm.add_tap_interface(
                     "123", constants.TYPE_LOCAL, "physnet1",
                     None, "tap1", dev_owner_prefix, None))

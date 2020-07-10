@@ -41,13 +41,22 @@ class BridgeLibTestCase(base.BaseSudoTestCase):
                 bridge, port_id=uuidutils.generate_uuid()))
         return bridge, port_fixture
 
-    def test_is_bridged_interface(self):
-        self.assertTrue(
-            bridge_lib.is_bridged_interface(self.port_fixture.br_port.name))
+    def test_is_bridged_interface_and_remove(self):
+        bridge = bridge_lib.BridgeDevice(self.bridge.name)
+        bridge_port = self.port_fixture.br_port.name
+        self.assertTrue(bridge_lib.is_bridged_interface(bridge_port))
+        bridge.delif(bridge_port)
+        self.assertFalse(bridge_lib.is_bridged_interface(bridge_port))
 
     def test_is_not_bridged_interface(self):
         self.assertFalse(
             bridge_lib.is_bridged_interface(self.port_fixture.port.name))
+
+    def test_delete_bridge(self):
+        bridge = bridge_lib.BridgeDevice(self.bridge.name)
+        self.assertTrue(bridge.exists())
+        bridge.delbr()
+        self.assertFalse(bridge.exists())
 
     def test_get_bridge_names(self):
         self.assertIn(self.bridge.name, bridge_lib.get_bridge_names())
@@ -93,6 +102,29 @@ class BridgeLibTestCase(base.BaseSudoTestCase):
         with open(sysfs_path, 'r') as sysfs_disable_ipv6_file:
             sysfs_disable_ipv6 = sysfs_disable_ipv6_file.read()
             self.assertEqual("1\n", sysfs_disable_ipv6)
+
+    def _get_bridge_info(self):
+        for device in (device for device in ip_lib.get_devices_info(
+                self.bridge.namespace) if device['name'] == self.bridge.name):
+            return device
+        self.fail('Bridge %s not present' % self.bridge.name)
+
+    def test_set_forward_delay(self):
+        bridge = bridge_lib.BridgeDevice(self.bridge.name)
+        for fd in (10, 200, 3000, 40000):
+            bridge.setfd(fd)
+            br_info = self._get_bridge_info()
+            self.assertEqual(fd, br_info['forward_delay'])
+
+    def test_enable_and_disable_stp(self):
+        bridge = bridge_lib.BridgeDevice(self.bridge.name)
+        bridge.disable_stp()
+        br_info = self._get_bridge_info()
+        self.assertEqual(0, br_info['stp'])
+
+        bridge.enable_stp()
+        br_info = self._get_bridge_info()
+        self.assertEqual(1, br_info['stp'])
 
 
 class FdbInterfaceTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
