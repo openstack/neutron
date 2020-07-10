@@ -276,6 +276,20 @@ class TunnelTest(object):
         self.intb_expected = []
         self.execute_expected = []
 
+        self.mock_int_bridge_expected += [
+            mock.call.install_goto(
+                dest_table_id=constants.LOCAL_MAC_DIRECT,
+                in_port=self.MAP_TUN_INT_OFPORT,
+                priority=4, table_id=constants.TRANSIENT_TABLE),
+            mock.call.install_goto(
+                dest_table_id=constants.LOCAL_MAC_DIRECT,
+                in_port=self.TUN_OFPORT,
+                priority=4, table_id=constants.TRANSIENT_TABLE),
+            mock.call.install_goto(
+                dest_table_id=constants.TRANSIENT_EGRESS_TABLE,
+                table_id=constants.LOCAL_MAC_DIRECT),
+        ]
+
     def _build_agent(self, **config_opts_agent):
         """Configure and initialize OVS agent.
 
@@ -746,6 +760,20 @@ class TunnelTestUseVethInterco(TunnelTest):
         self.intb_expected = [mock.call.link.set_up()]
         self.execute_expected = [mock.call(['udevadm', 'settle',
                                             '--timeout=10'])]
+
+        self.mock_int_bridge_expected += [
+            mock.call.install_goto(
+                dest_table_id=constants.LOCAL_MAC_DIRECT,
+                in_port=self.MAP_TUN_INT_OFPORT,
+                priority=4, table_id=constants.TRANSIENT_TABLE),
+            mock.call.install_goto(
+                dest_table_id=constants.LOCAL_MAC_DIRECT,
+                in_port=self.TUN_OFPORT,
+                priority=4, table_id=constants.TRANSIENT_TABLE),
+            mock.call.install_goto(
+                dest_table_id=constants.TRANSIENT_EGRESS_TABLE,
+                table_id=constants.LOCAL_MAC_DIRECT),
+        ]
 
 
 class TunnelTestUseVethIntercoOSKen(TunnelTestUseVethInterco,
