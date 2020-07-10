@@ -271,16 +271,6 @@ function _install_post_devstack {
         exit_distro_not_supported "installing dhclient and ncat packages"
     fi
 
-    # Installing python-openvswitch from packages is a stop-gap while
-    # python-openvswitch remains unavailable from pypi.  This also
-    # requires that sitepackages=True be set in tox.ini to allow the
-    # venv to use the installed package.  Once python-openvswitch
-    # becomes available on pypi, this will no longer be required.
-    #
-    # NOTE: the package name 'python-openvswitch' is common across
-    # supported distros.
-    install_package python-openvswitch
-
     enable_kernel_bridge_firewall
 }
 
