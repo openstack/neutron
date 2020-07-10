@@ -38,7 +38,6 @@ import oslo_messaging
 from oslo_serialization import jsonutils
 from oslo_utils import importutils
 from oslo_utils import timeutils
-import six
 
 from neutron.agent.common import utils
 from neutron.api.rpc.callbacks import version_manager
@@ -125,7 +124,7 @@ class AgentAvailabilityZoneMixin(az_ext.AvailabilityZonePluginBase):
 
     def _adjust_az_filters(self, filters):
         # The intersect of sets gets us applicable filter keys (others ignored)
-        common_keys = six.viewkeys(filters) & six.viewkeys(AZ_ATTRIBUTE_MAP)
+        common_keys = filters.keys() & AZ_ATTRIBUTE_MAP.keys()
         for key in common_keys:
             filter_key = AZ_ATTRIBUTE_MAP[key]['agent_key']
             filter_vals = filters.pop(key)

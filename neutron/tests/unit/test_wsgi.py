@@ -17,12 +17,12 @@ import os
 import socket
 import ssl
 from unittest import mock
+import urllib
 
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exception
 from oslo_config import cfg
 from oslo_utils import netutils
-from six.moves import urllib
 import testtools
 import webob
 import webob.exc

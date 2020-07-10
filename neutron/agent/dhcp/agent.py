@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+import functools
 import os
 import threading
 
@@ -32,7 +33,6 @@ from oslo_service import loopingcall
 from oslo_utils import fileutils
 from oslo_utils import importutils
 from oslo_utils import timeutils
-import six
 
 from neutron._i18n import _
 from neutron.agent.common import resource_processing_queue as queue
@@ -57,7 +57,7 @@ DHCP_READY_PORTS_SYNC_MAX = 64
 
 def _sync_lock(f):
     """Decorator to block all operations for a global sync call."""
-    @six.wraps(f)
+    @functools.wraps(f)
     def wrapped(*args, **kwargs):
         with _SYNC_STATE_LOCK.write_lock():
             return f(*args, **kwargs)
@@ -66,7 +66,7 @@ def _sync_lock(f):
 
 def _wait_if_syncing(f):
     """Decorator to wait if any sync operations are in progress."""
-    @six.wraps(f)
+    @functools.wraps(f)
     def wrapped(*args, **kwargs):
         with _SYNC_STATE_LOCK.read_lock():
             return f(*args, **kwargs)

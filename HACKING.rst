@@ -28,6 +28,7 @@ Below you can find a list of checks specific to this repository.
   with [obj for obj in data if test(obj)].
 - [N346] Use neutron_lib.db.api.sqla_listen rather than sqlalchemy
 - [N347] Test code must not import mock library
+- [N348] Test code must not import six library
 
 .. note::
    When adding a new hacking check to this repository or ``neutron-lib``, make

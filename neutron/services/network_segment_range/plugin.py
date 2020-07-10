@@ -23,7 +23,6 @@ from neutron_lib.plugins import utils as plugin_utils
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log
-import six
 
 from neutron._i18n import _
 from neutron.db import segments_db
@@ -106,7 +105,7 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
 
     def _add_unchanged_range_attributes(self, updates, existing):
         """Adds data for unspecified fields on incoming update requests."""
-        for key, value in six.iteritems(existing):
+        for key, value in existing.items():
             updates.setdefault(key, value)
         return updates
 

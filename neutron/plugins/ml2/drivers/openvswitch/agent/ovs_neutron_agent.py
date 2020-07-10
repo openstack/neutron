@@ -47,7 +47,6 @@ from oslo_service import systemd
 from oslo_utils import netutils
 from osprofiler import profiler
 from ovsdbapp import exceptions as ovs_exceptions
-import six
 
 from neutron._i18n import _
 from neutron.agent.common import ip_lib
@@ -177,8 +176,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                         "be removed in W release. Please use patch ports "
                         "instead.")
         self.veth_mtu = agent_conf.veth_mtu
-        self.available_local_vlans = set(six.moves.range(
-            n_const.MIN_VLAN_TAG, n_const.MAX_VLAN_TAG + 1))
+        self.available_local_vlans = set(range(n_const.MIN_VLAN_TAG,
+                                               n_const.MAX_VLAN_TAG + 1))
         self.tunnel_types = agent_conf.tunnel_types or []
         self.enable_tunneling = bool(self.tunnel_types)
         self.l2_pop = agent_conf.l2_population
@@ -226,7 +225,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.rp_bandwidths = place_utils.parse_rp_bandwidths(
             ovs_conf.resource_provider_bandwidths)
 
-        br_set = set(six.itervalues(self.bridge_mappings))
+        br_set = set(self.bridge_mappings.values())
         n_utils.validate_rp_bandwidth(self.rp_bandwidths,
                                       br_set)
         self.rp_inventory_defaults = place_utils.parse_rp_inventory_defaults(

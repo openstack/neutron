@@ -10,10 +10,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
+
 from neutron_lib.db import api as db_api
 from oslo_config import cfg
 from oslo_log import log
-import six
 
 from neutron._i18n import _
 from neutron.quota import resource
@@ -89,7 +90,7 @@ def mark_resources_dirty(f):
     of the decorated function.
     """
 
-    @six.wraps(f)
+    @functools.wraps(f)
     def wrapper(_self, context, *args, **kwargs):
         ret_val = f(_self, context, *args, **kwargs)
         set_resources_dirty(context)
@@ -112,7 +113,7 @@ class tracked_resources(object):
 
     def __call__(self, f):
 
-        @six.wraps(f)
+        @functools.wraps(f)
         def wrapper(*args, **kwargs):
             registry = ResourceRegistry.get_instance()
             for resource_name in self._tracked_resources:

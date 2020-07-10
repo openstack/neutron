@@ -15,7 +15,6 @@
 
 import netaddr
 from neutron_lib.db import api as db_api
-import six
 from sqlalchemy import func
 
 import neutron.db.models_v2 as mod
@@ -32,7 +31,7 @@ SUPPORTED_FILTERS = {
     'project_id': mod.Network.project_id,
     'ip_version': mod.Subnet.ip_version,
 }
-SUPPORTED_FILTER_KEYS = six.viewkeys(SUPPORTED_FILTERS)
+SUPPORTED_FILTER_KEYS = set(SUPPORTED_FILTERS.keys())
 
 
 class IpAvailabilityMixin(object):
@@ -82,7 +81,7 @@ class IpAvailabilityMixin(object):
                             subnet_total_ips_dict.get(row.subnet_id, 0))
 
         # Convert result back into the list it expects
-        net_ip_availabilities = list(six.viewvalues(result_dict))
+        net_ip_availabilities = list(result_dict.values())
         return net_ip_availabilities
 
     @classmethod
@@ -143,7 +142,7 @@ class IpAvailabilityMixin(object):
     @classmethod
     def _adjust_query_for_filters(cls, query, filters):
         # The intersect of sets gets us applicable filter keys (others ignored)
-        common_keys = six.viewkeys(filters) & SUPPORTED_FILTER_KEYS
+        common_keys = filters.keys() & SUPPORTED_FILTER_KEYS
         for key in common_keys:
             filter_vals = filters[key]
             if filter_vals:

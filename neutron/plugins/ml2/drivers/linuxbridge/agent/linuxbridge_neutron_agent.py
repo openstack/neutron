@@ -32,7 +32,6 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import service
 from oslo_utils import excutils
-from six import moves
 
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
@@ -700,7 +699,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             return False
 
         test_iface = None
-        for seg_id in moves.range(1, constants.MAX_VXLAN_VNI + 1):
+        for seg_id in range(1, constants.MAX_VXLAN_VNI + 1):
             if (ip_lib.device_exists(self.get_vxlan_device_name(seg_id)) or
                     ip_lib.vxlan_in_use(seg_id)):
                 continue

@@ -14,6 +14,7 @@
 
 import hashlib
 import hmac
+import urllib
 
 from neutron_lib.agent import topics
 from neutron_lib import constants
@@ -25,7 +26,6 @@ import oslo_messaging
 from oslo_service import loopingcall
 from oslo_utils import encodeutils
 import requests
-from six.moves import urllib
 import webob
 
 from neutron._i18n import _

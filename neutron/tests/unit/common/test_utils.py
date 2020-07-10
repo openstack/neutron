@@ -26,7 +26,6 @@ import netaddr
 from neutron_lib import constants
 from oslo_log import log as logging
 from osprofiler import profiler
-import six
 import testscenarios
 import testtools
 
@@ -336,7 +335,7 @@ class TestPortRuleMasking(base.BaseTestCase):
 
     def test_port_rule_masking_random_ranges(self):
         # calling randint a bunch of times is really slow
-        randports = sorted(random.sample(six.moves.range(1, 65536), 2000))
+        randports = sorted(random.sample(range(1, 65536), 2000))
         port_max = 0
         for i in randports:
             port_min = port_max
@@ -436,8 +435,7 @@ class TestThrottler(base.BaseTestCase):
 
         self.assertEqual(2, orig_function.call_count)
 
-        lock_with_timer = six.get_function_closure(
-            throttled_func)[1].cell_contents
+        lock_with_timer = throttled_func.__closure__[1].cell_contents
         timestamp = lock_with_timer.timestamp - threshold
         lock_with_timer.timestamp = timestamp
 

@@ -1133,8 +1133,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('six.moves.builtins.hasattr',
-                        new=fakehasattr):
+        with mock.patch('builtins.hasattr', new=fakehasattr):
             with self.network() as net:
                 res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
                                              'test', True)
@@ -1173,8 +1172,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('six.moves.builtins.hasattr',
-                        new=fakehasattr):
+        with mock.patch('builtins.hasattr', new=fakehasattr):
             plugin = directory.get_plugin()
             method_to_patch = '_process_port_binding'
             if real_has_attr(plugin, method_to_patch):
@@ -2923,8 +2921,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('six.moves.builtins.hasattr',
-                        new=fakehasattr):
+        with mock.patch('builtins.hasattr', new=fakehasattr):
             res = self._create_network_bulk(self.fmt, 2, 'test', True)
             self._validate_behavior_on_bulk_success(res, 'networks')
 
@@ -2949,8 +2946,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
 
         orig = directory.get_plugin().create_network
         # ensures the API choose the emulation code path
-        with mock.patch('six.moves.builtins.hasattr',
-                        new=fakehasattr):
+        with mock.patch('builtins.hasattr', new=fakehasattr):
             method_to_patch = _get_create_db_method('network')
             with mock.patch.object(directory.get_plugin(),
                                    method_to_patch) as patched_plugin:
@@ -3460,8 +3456,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('six.moves.builtins.hasattr',
-                        new=fakehasattr):
+        with mock.patch('builtins.hasattr', new=fakehasattr):
             with self.network() as net:
                 res = self._create_subnet_bulk(self.fmt, 2,
                                                net['network']['id'],
@@ -3477,8 +3472,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        with mock.patch('six.moves.builtins.hasattr',
-                        new=fakehasattr):
+        with mock.patch('builtins.hasattr', new=fakehasattr):
             orig = directory.get_plugin().create_subnet
             method_to_patch = _get_create_db_method('subnet')
             with mock.patch.object(directory.get_plugin(),

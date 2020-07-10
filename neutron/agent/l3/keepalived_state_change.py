@@ -13,6 +13,7 @@
 #    under the License.
 
 import os
+import queue
 import sys
 import threading
 
@@ -20,7 +21,6 @@ import httplib2
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
-from six.moves import queue
 
 from neutron._i18n import _
 from neutron.agent.l3 import ha

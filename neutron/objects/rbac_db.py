@@ -19,10 +19,10 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import exceptions
-from six import with_metaclass
 from sqlalchemy import and_
 
 from neutron._i18n import _
+from neutron.common import utils
 from neutron.db import _utils as db_utils
 from neutron.db import rbac_db_mixin
 from neutron.db import rbac_db_models as models
@@ -386,4 +386,5 @@ class RbacNeutronMetaclass(type):
         return klass
 
 
-NeutronRbacObject = with_metaclass(RbacNeutronMetaclass, base.NeutronDbObject)
+NeutronRbacObject = utils.with_metaclass(RbacNeutronMetaclass,
+                                         base.NeutronDbObject)

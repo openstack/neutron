@@ -14,11 +14,11 @@
 #
 
 import datetime
+import queue
 import time
 
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
-from six.moves import queue as Queue
 
 
 class ResourceUpdate(object):
@@ -110,7 +110,7 @@ class ExclusiveResourceProcessor(object):
 
         if id not in self._masters:
             self._masters[id] = self
-            self._queue = Queue.PriorityQueue(-1)
+            self._queue = queue.PriorityQueue(-1)
 
         self._master = self._masters[id]
 
@@ -162,7 +162,7 @@ class ExclusiveResourceProcessor(object):
 class ResourceProcessingQueue(object):
     """Manager of the queue of resources to process."""
     def __init__(self):
-        self._queue = Queue.PriorityQueue()
+        self._queue = queue.PriorityQueue()
 
     def add(self, update):
         update.tries -= 1

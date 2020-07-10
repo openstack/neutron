@@ -32,7 +32,6 @@ import oslo_messaging
 from oslo_service import loopingcall
 from osprofiler import profiler
 import pyroute2
-import six
 
 from neutron._i18n import _
 from neutron.agent.common import utils
@@ -534,7 +533,7 @@ class SriovNicAgentConfigParser(object):
         exists in device mappings.
         """
         dev_net_set = set(itertools.chain.from_iterable(
-                          six.itervalues(self.device_mappings)))
+            self.device_mappings.values()))
         for dev_name in self.exclude_devices.keys():
             if dev_name not in dev_net_set:
                 raise ValueError(_(

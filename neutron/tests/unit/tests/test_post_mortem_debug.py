@@ -16,8 +16,6 @@
 import sys
 from unittest import mock
 
-from six import moves
-
 from neutron.tests import base
 from neutron.tests import post_mortem_debug
 
@@ -48,8 +46,7 @@ class TestTesttoolsExceptionHandler(base.BaseTestCase):
             mod_mock.post_mortem = mock.Mock()
             return mod_mock
 
-        with mock.patch('six.moves.builtins.__import__',
-                        side_effect=import_mock):
+        with mock.patch('builtins.__import__', side_effect=import_mock):
             pdb_debugger = post_mortem_debug._get_debugger('pdb')
             pudb_debugger = post_mortem_debug._get_debugger('pudb')
             self.assertEqual('pdb', pdb_debugger.__name__)
@@ -78,7 +75,7 @@ class TestGetIgnoredTraceback(base.BaseTestCase):
 
         tb = root_tb
         tracebacks = [tb]
-        for x in moves.range(len(ignored_bit_array) - 1):
+        for x in range(len(ignored_bit_array) - 1):
             tb.tb_next = mock.Mock()
             tb = tb.tb_next
             tracebacks.append(tb)

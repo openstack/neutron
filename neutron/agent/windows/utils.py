@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import builtins
 import ctypes
 import io
 import os
@@ -23,7 +24,6 @@ from neutron_lib import exceptions
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
 from oslo_utils import encodeutils
-import six
 
 from neutron._i18n import _
 
@@ -64,7 +64,7 @@ def create_process(cmd, run_as_root=False, addl_env=None,
         # in a tpool proxy object, avoding blocking other greenthreads.
         #
         # The 'file' type is not available on Python 3.x.
-        file_type = getattr(six.moves.builtins, 'file', io.IOBase)
+        file_type = getattr(builtins, 'file', io.IOBase)
         obj = tpool.Proxy(obj, autowrap=(file_type, ))
 
     return obj, cmd

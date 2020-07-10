@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import collections
+import functools
 import re
 
 from neutron.agent.linux import external_process
@@ -29,7 +30,6 @@ from oslo_log import log
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event as row_event
 from ovsdbapp.backend.ovs_idl import vlog
-import six
 
 
 LOG = log.getLogger(__name__)
@@ -46,7 +46,7 @@ MetadataPortInfo = collections.namedtuple('MetadataPortInfo', ['mac',
 
 def _sync_lock(f):
     """Decorator to block all operations for a global sync call."""
-    @six.wraps(f)
+    @functools.wraps(f)
     def wrapped(*args, **kwargs):
         with _SYNC_STATE_LOCK.write_lock():
             return f(*args, **kwargs)

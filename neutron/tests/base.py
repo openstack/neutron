@@ -23,6 +23,7 @@ import inspect
 import logging
 import os
 import os.path
+import queue
 import threading
 from unittest import mock
 
@@ -42,7 +43,6 @@ from oslo_utils import fileutils
 from oslo_utils import strutils
 from oslotest import base
 from osprofiler import profiler
-import six
 from sqlalchemy import exc as sqlalchemy_exc
 import testtools
 from testtools import content
@@ -495,7 +495,7 @@ class BaseTestCase(DietTestCase):
                             item = self.q.get(False)
                             func, func_args = item[0], item[1]
                             func(*func_args)
-                        except six.moves.queue.Empty:
+                        except queue.Empty:
                             pass
                         finally:
                             if item:
@@ -506,7 +506,7 @@ class BaseTestCase(DietTestCase):
             def get_exception(self):
                 return self.exception
 
-        q = six.moves.queue.Queue()
+        q = queue.Queue()
         for func, func_args in zip(calls, args):
             q.put_nowait((func, func_args))
 

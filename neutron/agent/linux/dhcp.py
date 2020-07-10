@@ -16,6 +16,7 @@
 import abc
 import collections
 import copy
+import io
 import itertools
 import os
 import re
@@ -33,7 +34,6 @@ from oslo_utils import excutils
 from oslo_utils import fileutils
 from oslo_utils import netutils
 from oslo_utils import uuidutils
-import six
 
 from neutron._i18n import _
 from neutron.agent.common import utils as agent_common_utils
@@ -765,7 +765,7 @@ class Dnsmasq(DhcpLocalProcess):
         epoch-timestamp mac_addr ip_addr hostname client-ID
         """
         filename = self.get_conf_file_name('leases')
-        buf = six.StringIO()
+        buf = io.StringIO()
 
         LOG.debug('Building initial lease file: %s', filename)
         # we make up a lease time for the database entry
@@ -822,7 +822,7 @@ class Dnsmasq(DhcpLocalProcess):
         should receive a dhcp lease, the hosts resolution in itself is
         defined by the `_output_addn_hosts_file` method.
         """
-        buf = six.StringIO()
+        buf = io.StringIO()
         filename = self.get_conf_file_name('host')
 
         LOG.debug('Building host file: %s', filename)
@@ -1061,7 +1061,7 @@ class Dnsmasq(DhcpLocalProcess):
         Each line in this file is in the same form as a standard /etc/hosts
         file.
         """
-        buf = six.StringIO()
+        buf = io.StringIO()
         for host_tuple in self._iter_hosts():
             port, alloc, hostname, fqdn, no_dhcp, no_opts, tag = host_tuple
             # It is compulsory to write the `fqdn` before the `hostname` in

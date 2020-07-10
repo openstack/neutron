@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+import functools
 import itertools
 import operator
 import random
@@ -30,7 +31,6 @@ from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 
 import debtcollector
-import six
 import tenacity
 
 from neutron._i18n import _
@@ -87,7 +87,7 @@ def _ovsdb_retry(fn):
     The instance's ovsdb_timeout is used as the max waiting time. This relies
     on the fact that instance methods receive self as the first argument.
     """
-    @six.wraps(fn)
+    @functools.wraps(fn)
     def wrapped(*args, **kwargs):
         self = args[0]
         new_fn = tenacity.retry(
@@ -1041,11 +1041,11 @@ class OVSBridge(BaseOVS):
                       max_burst_kbps=None, min_kbps=None):
         other_config = {}
         if max_kbps:
-            other_config[six.u('max-rate')] = six.u(str(max_kbps * 1000))
+            other_config['max-rate'] = str(max_kbps * 1000)
         if max_burst_kbps:
-            other_config[six.u('burst')] = six.u(str(max_burst_kbps * 1000))
+            other_config['burst'] = str(max_burst_kbps * 1000)
         if min_kbps:
-            other_config[six.u('min-rate')] = six.u(str(min_kbps * 1000))
+            other_config['min-rate'] = str(min_kbps * 1000)
 
         queue = self._find_queue(port_id)
         if queue and queue['_uuid']:

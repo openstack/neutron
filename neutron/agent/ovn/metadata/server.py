@@ -14,6 +14,7 @@
 
 import hashlib
 import hmac
+import urllib
 
 from neutron._i18n import _
 from neutron.agent.linux import utils as agent_utils
@@ -28,7 +29,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import encodeutils
 import requests
-from six.moves import urllib
 import webob
 
 

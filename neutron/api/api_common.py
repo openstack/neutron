@@ -14,6 +14,7 @@
 #    under the License.
 
 import functools
+import urllib
 
 from neutron_lib.api import attributes
 from neutron_lib import constants
@@ -23,7 +24,6 @@ from oslo_config import cfg
 import oslo_i18n
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
-from six.moves import urllib
 from webob import exc
 
 from neutron._i18n import _

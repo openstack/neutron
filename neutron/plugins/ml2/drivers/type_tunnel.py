@@ -30,7 +30,6 @@ from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log
 from oslo_utils import uuidutils
-from six import moves
 from sqlalchemy import or_
 
 from neutron._i18n import _
@@ -194,7 +193,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
         tunnel_ids = set()
         ranges = self.get_network_segment_ranges()
         for tun_min, tun_max in ranges:
-            tunnel_ids |= set(moves.range(tun_min, tun_max + 1))
+            tunnel_ids |= set(range(tun_min, tun_max + 1))
 
         tunnel_id_getter = operator.attrgetter(self.segmentation_key)
         tunnel_col = getattr(self.model, self.segmentation_key)

@@ -24,7 +24,6 @@ from neutron_lib import constants as n_const
 from neutron_lib.utils import runtime
 from oslo_log import log as logging
 from oslo_utils import netutils
-import six
 from stevedore import driver
 
 from neutron.common import utils
@@ -121,7 +120,7 @@ class PrefixDelegation(object):
         if not self._is_pd_master_router(router):
             return
         prefix_update = {}
-        for pd_info in six.itervalues(router['subnets']):
+        for pd_info in router['subnets'].values():
             # gateway is added after internal router ports.
             # If a PD is being synced, and if the prefix is available,
             # send update if prefix out of sync; If not available,
@@ -169,7 +168,7 @@ class PrefixDelegation(object):
         preserve_ips = []
         router = self.routers.get(router_id)
         if router is not None:
-            for pd_info in six.itervalues(router['subnets']):
+            for pd_info in router['subnets'].values():
                 preserve_ips.append(pd_info.get_bind_lla_with_mask())
         return preserve_ips
 
@@ -184,7 +183,7 @@ class PrefixDelegation(object):
         router = self.routers.get(router_id)
         if router is not None:
             subnet_to_delete = None
-            for subnet_id, pd_info in six.iteritems(router['subnets']):
+            for subnet_id, pd_info in router['subnets'].items():
                 if pd_info.ri_ifname == stale_ifname:
                     self._delete_pd(router, pd_info)
                     subnet_to_delete = subnet_id
@@ -268,11 +267,11 @@ class PrefixDelegation(object):
 
         router['master'] = master
         if master:
-            for pd_info in six.itervalues(router['subnets']):
+            for pd_info in router['subnets'].values():
                 bind_lla_with_mask = pd_info.get_bind_lla_with_mask()
                 self._add_lla(router, bind_lla_with_mask)
         else:
-            for pd_info in six.itervalues(router['subnets']):
+            for pd_info in router['subnets'].values():
                 self._delete_lla(router, pd_info.get_bind_lla_with_mask())
                 if pd_info.client_started:
                     pd_info.driver.disable(self.pmon,

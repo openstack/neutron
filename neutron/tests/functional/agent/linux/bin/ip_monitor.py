@@ -15,12 +15,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import queue
 import signal
 import sys
 import threading
 
 from oslo_serialization import jsonutils
-from six.moves import queue
 
 from neutron.agent.linux import ip_lib
 
