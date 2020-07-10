@@ -143,7 +143,6 @@
         ovs-vswitchd: true
         ovsdb-server: true
         placement-api: true
-        peakmem_tracker: false
         q-svc: true
         q-agt: false
         q-dhcp: false

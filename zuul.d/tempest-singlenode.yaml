@@ -234,7 +234,6 @@
         q-dns: true
         c-bak: false
         etcd: false
-        peakmem_tracker: false
         q-agt: false
         q-dhcp: false
         q-l3: false
