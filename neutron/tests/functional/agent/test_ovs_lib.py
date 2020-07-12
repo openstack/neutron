@@ -486,7 +486,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         expected = self.br.initial_protocols.union(protocols)
         self.br.ovsdb.db_add("Bridge", self.br.br_name, "protocols",
                              *protocols).execute(check_error=True)
-        self.assertItemsEqual(expected,
+        self.assertCountEqual(expected,
                               self.br.db_get_val('Bridge',
                                                  self.br.br_name, "protocols"))
 
@@ -669,4 +669,4 @@ class OVSLibTestCase(base.BaseOVSLinuxTestCase):
         self.assertTrue(tags_present)
         tags_42 = [t for t in tags_present if t['tag'] == 42]
         self.assertEqual(tags_42, single_value.result)
-        self.assertItemsEqual(len_0_list.result, tags_present)
+        self.assertCountEqual(len_0_list.result, tags_present)

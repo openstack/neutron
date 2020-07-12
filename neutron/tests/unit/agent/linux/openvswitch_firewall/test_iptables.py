@@ -35,7 +35,7 @@ class TestHelper(base.BaseTestCase):
         self.helper.int_br.get_port_name_list.return_value = present_ports
         expected_hybrid_ports = ['qvo-1234', 'qvo-fghfhfh']
         observed = self.helper.get_hybrid_ports()
-        self.assertItemsEqual(expected_hybrid_ports, observed)
+        self.assertCountEqual(expected_hybrid_ports, observed)
 
     def test_has_not_been_cleaned_no_value(self):
         other_config = {'foo': 'bar'}

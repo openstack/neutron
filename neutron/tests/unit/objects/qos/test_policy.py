@@ -113,7 +113,7 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
         objs = self._test_class.get_objects(self.context)
         self.get_objects_mock.assert_any_call(
             self._test_class, self.context, _pager=None)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             [test_base.get_obj_persistent_fields(obj) for obj in self.objs],
             [test_base.get_obj_persistent_fields(obj) for obj in objs])
 

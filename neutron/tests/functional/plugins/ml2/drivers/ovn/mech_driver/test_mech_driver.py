@@ -642,7 +642,7 @@ class TestCreateDefaultDropPortGroup(base.BaseLoggingTestCase,
         expected_ports = expected_ports or []
         mech_driver.create_default_drop_port_group(self.api)
         port_group = self.api.get_port_group(self.PG_NAME)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             expected_ports, [port.name for port in port_group.ports])
 
     def test_with_ports_available(self):

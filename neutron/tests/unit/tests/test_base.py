@@ -70,7 +70,7 @@ class SystemExitTestCase(base.DietTestCase):
             self.fail('SystemExit escaped!')
 
         self.assertEqual([], result.errors)
-        self.assertItemsEqual(set(id(t) for t in expectedFails),
+        self.assertCountEqual(set(id(t) for t in expectedFails),
                               set(id(t) for (t, traceback) in result.failures))
 
 

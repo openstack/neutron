@@ -94,9 +94,9 @@ class TestIpamBackendMixin(base.BaseTestCase):
                                                       new_ips,
                                                       owner)
 
-        self.assertItemsEqual(expected.add, change.add)
-        self.assertItemsEqual(expected.original, change.original)
-        self.assertItemsEqual(expected.remove, change.remove)
+        self.assertCountEqual(expected.add, change.add)
+        self.assertCountEqual(expected.original, change.original)
+        self.assertCountEqual(expected.remove, change.remove)
 
     def test__get_changed_ips_for_port(self):
         new_ips = self._prepare_ips(self.default_new_ips)

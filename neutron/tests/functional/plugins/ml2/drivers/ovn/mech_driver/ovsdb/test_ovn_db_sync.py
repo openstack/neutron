@@ -848,25 +848,25 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             if row.name.startswith(ovn_const.OVN_PROVNET_PORT_NAME_PREFIX)]
 
         if should_match:
-            self.assertItemsEqual(db_net_ids, plugin_lswitch_ids)
-            self.assertItemsEqual(db_net_ids, monitor_lswitch_ids)
-            self.assertItemsEqual(db_provnet_ports, plugin_provnet_ports)
-            self.assertItemsEqual(db_provnet_ports, monitor_provnet_ports)
+            self.assertCountEqual(db_net_ids, plugin_lswitch_ids)
+            self.assertCountEqual(db_net_ids, monitor_lswitch_ids)
+            self.assertCountEqual(db_provnet_ports, plugin_provnet_ports)
+            self.assertCountEqual(db_provnet_ports, monitor_provnet_ports)
         else:
             self.assertRaises(
-                AssertionError, self.assertItemsEqual, db_net_ids,
+                AssertionError, self.assertCountEqual, db_net_ids,
                 plugin_lswitch_ids)
 
             self.assertRaises(
-                AssertionError, self.assertItemsEqual, db_net_ids,
+                AssertionError, self.assertCountEqual, db_net_ids,
                 monitor_lswitch_ids)
 
             self.assertRaises(
-                AssertionError, self.assertItemsEqual, db_provnet_ports,
+                AssertionError, self.assertCountEqual, db_provnet_ports,
                 plugin_provnet_ports)
 
             self.assertRaises(
-                AssertionError, self.assertItemsEqual, db_provnet_ports,
+                AssertionError, self.assertCountEqual, db_provnet_ports,
                 monitor_provnet_ports)
 
     def _validate_metadata_ports(self, should_match=True):
@@ -894,9 +894,9 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
         if should_match:
             # Check that metadata ports exist in both Neutron and OVN dbs.
-            self.assertItemsEqual(db_metadata_ports_ids, plugin_metadata_ports)
+            self.assertCountEqual(db_metadata_ports_ids, plugin_metadata_ports)
             # Check that all networks have one and only one metadata port.
-            self.assertItemsEqual(db_metadata_ports_nets, db_net_ids)
+            self.assertCountEqual(db_metadata_ports_nets, db_net_ids)
         else:
             metadata_sync = (sorted(db_metadata_ports_ids) ==
                              sorted(plugin_metadata_ports))
@@ -942,23 +942,23 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             if row.dhcpv6_options]
 
         if should_match:
-            self.assertItemsEqual(db_port_ids, plugin_lport_ids)
-            self.assertItemsEqual(db_port_ids, monitor_lport_ids)
+            self.assertCountEqual(db_port_ids, plugin_lport_ids)
+            self.assertCountEqual(db_port_ids, monitor_lport_ids)
 
             expected_dhcpv4_options_ports_ids = (
                 db_port_ids_dhcp_valid.difference(
                     set(self.lport_dhcpv4_disabled.keys())))
-            self.assertItemsEqual(expected_dhcpv4_options_ports_ids,
+            self.assertCountEqual(expected_dhcpv4_options_ports_ids,
                                   plugin_lport_ids_dhcpv4_enabled)
-            self.assertItemsEqual(expected_dhcpv4_options_ports_ids,
+            self.assertCountEqual(expected_dhcpv4_options_ports_ids,
                                   monitor_lport_ids_dhcpv4_enabled)
 
             expected_dhcpv6_options_ports_ids = (
                 db_port_ids_dhcp_valid.difference(
                     set(self.lport_dhcpv6_disabled.keys())))
-            self.assertItemsEqual(expected_dhcpv6_options_ports_ids,
+            self.assertCountEqual(expected_dhcpv6_options_ports_ids,
                                   plugin_lport_ids_dhcpv6_enabled)
-            self.assertItemsEqual(expected_dhcpv6_options_ports_ids,
+            self.assertCountEqual(expected_dhcpv6_options_ports_ids,
                                   monitor_lport_ids_dhcpv6_enabled)
 
             # Check if unknow address is set for the expected lports.
@@ -969,19 +969,19 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
         else:
             self.assertRaises(
-                AssertionError, self.assertItemsEqual, db_port_ids,
+                AssertionError, self.assertCountEqual, db_port_ids,
                 plugin_lport_ids)
 
             self.assertRaises(
-                AssertionError, self.assertItemsEqual, db_port_ids,
+                AssertionError, self.assertCountEqual, db_port_ids,
                 monitor_lport_ids)
 
             self.assertRaises(
-                AssertionError, self.assertItemsEqual, db_port_ids,
+                AssertionError, self.assertCountEqual, db_port_ids,
                 plugin_lport_ids_dhcpv4_enabled)
 
             self.assertRaises(
-                AssertionError, self.assertItemsEqual, db_port_ids,
+                AssertionError, self.assertCountEqual, db_port_ids,
                 monitor_lport_ids_dhcpv4_enabled)
 
     @staticmethod
@@ -1026,18 +1026,18 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 'options': opts})
 
         if should_match:
-            self.assertItemsEqual(self.expected_dhcp_options_rows,
+            self.assertCountEqual(self.expected_dhcp_options_rows,
                                   observed_plugin_dhcp_options_rows)
-            self.assertItemsEqual(self.expected_dhcp_options_rows,
+            self.assertCountEqual(self.expected_dhcp_options_rows,
                                   observed_monitor_dhcp_options_rows)
         else:
             self.assertRaises(
-                AssertionError, self.assertItemsEqual,
+                AssertionError, self.assertCountEqual,
                 self.expected_dhcp_options_rows,
                 observed_plugin_dhcp_options_rows)
 
             self.assertRaises(
-                AssertionError, self.assertItemsEqual,
+                AssertionError, self.assertCountEqual,
                 self.expected_dhcp_options_rows,
                 observed_monitor_dhcp_options_rows)
 
@@ -1088,14 +1088,14 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 monitor_acls.append(self._build_acl_to_compare(acl))
 
         if should_match:
-            self.assertItemsEqual(db_acls, plugin_acls)
-            self.assertItemsEqual(db_acls, monitor_acls)
+            self.assertCountEqual(db_acls, plugin_acls)
+            self.assertCountEqual(db_acls, monitor_acls)
         else:
             self.assertRaises(
-                AssertionError, self.assertItemsEqual,
+                AssertionError, self.assertCountEqual,
                 db_acls, plugin_acls)
             self.assertRaises(
-                AssertionError, self.assertItemsEqual,
+                AssertionError, self.assertCountEqual,
                 db_acls, monitor_acls)
 
     def _validate_routers_and_router_ports(self, should_match=True):
@@ -1153,15 +1153,15 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 self.nb_api.tables['Logical_Router'].rows.values())]
 
         if should_match:
-            self.assertItemsEqual(db_router_ids, plugin_lrouter_ids)
-            self.assertItemsEqual(db_router_ids, monitor_lrouter_ids)
+            self.assertCountEqual(db_router_ids, plugin_lrouter_ids)
+            self.assertCountEqual(db_router_ids, monitor_lrouter_ids)
         else:
             self.assertRaises(
-                AssertionError, self.assertItemsEqual, db_router_ids,
+                AssertionError, self.assertCountEqual, db_router_ids,
                 plugin_lrouter_ids)
 
             self.assertRaises(
-                AssertionError, self.assertItemsEqual, db_router_ids,
+                AssertionError, self.assertCountEqual, db_router_ids,
                 monitor_lrouter_ids)
 
         def _get_networks_for_router_port(port_fixed_ips):
@@ -1247,64 +1247,64 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 monitor_nats = []
 
             if should_match:
-                self.assertItemsEqual(r_port_ids, plugin_lrouter_port_ids)
-                self.assertItemsEqual(r_port_ids, monitor_lrouter_port_ids)
+                self.assertCountEqual(r_port_ids, plugin_lrouter_port_ids)
+                self.assertCountEqual(r_port_ids, monitor_lrouter_port_ids)
                 for p in plugin_lport_networks:
-                    self.assertItemsEqual(r_port_networks[p],
+                    self.assertCountEqual(r_port_networks[p],
                                           plugin_lport_networks[p])
-                    self.assertItemsEqual(r_port_ipv6_ra_configs[p],
+                    self.assertCountEqual(r_port_ipv6_ra_configs[p],
                                           plugin_lport_ra_configs[p])
                 for p in monitor_lport_networks:
-                    self.assertItemsEqual(r_port_networks[p],
+                    self.assertCountEqual(r_port_networks[p],
                                           monitor_lport_networks[p])
-                    self.assertItemsEqual(r_port_ipv6_ra_configs[p],
+                    self.assertCountEqual(r_port_ipv6_ra_configs[p],
                                           monitor_lport_ra_configs[p])
-                self.assertItemsEqual(r_routes, plugin_routes)
-                self.assertItemsEqual(r_routes, monitor_routes)
-                self.assertItemsEqual(r_nats, plugin_nats)
-                self.assertItemsEqual(r_nats, monitor_nats)
+                self.assertCountEqual(r_routes, plugin_routes)
+                self.assertCountEqual(r_routes, monitor_routes)
+                self.assertCountEqual(r_nats, plugin_nats)
+                self.assertCountEqual(r_nats, monitor_nats)
             else:
                 self.assertRaises(
-                    AssertionError, self.assertItemsEqual, r_port_ids,
+                    AssertionError, self.assertCountEqual, r_port_ids,
                     plugin_lrouter_port_ids)
 
                 self.assertRaises(
-                    AssertionError, self.assertItemsEqual, r_port_ids,
+                    AssertionError, self.assertCountEqual, r_port_ids,
                     monitor_lrouter_port_ids)
 
                 for _p in self.update_lrouter_ports:
                     p = _p[0].replace('lrp-', '')
                     if p in plugin_lport_networks:
                         self.assertRaises(
-                            AssertionError, self.assertItemsEqual,
+                            AssertionError, self.assertCountEqual,
                             r_port_networks[p], plugin_lport_networks[p])
                         self.assertRaises(
-                            AssertionError, self.assertItemsEqual,
+                            AssertionError, self.assertCountEqual,
                             r_port_ipv6_ra_configs[p],
                             plugin_lport_ra_configs[p])
                     if p in monitor_lport_networks:
                         self.assertRaises(
-                            AssertionError, self.assertItemsEqual,
+                            AssertionError, self.assertCountEqual,
                             r_port_networks[p], monitor_lport_networks[p])
                         self.assertRaises(
-                            AssertionError, self.assertItemsEqual,
+                            AssertionError, self.assertCountEqual,
                             r_port_ipv6_ra_configs[p],
                             monitor_lport_ra_configs[p])
 
                 self.assertRaises(
-                    AssertionError, self.assertItemsEqual, r_routes,
+                    AssertionError, self.assertCountEqual, r_routes,
                     plugin_routes)
 
                 self.assertRaises(
-                    AssertionError, self.assertItemsEqual, r_routes,
+                    AssertionError, self.assertCountEqual, r_routes,
                     monitor_routes)
 
                 self.assertRaises(
-                    AssertionError, self.assertItemsEqual, r_nats,
+                    AssertionError, self.assertCountEqual, r_nats,
                     plugin_nats)
 
                 self.assertRaises(
-                    AssertionError, self.assertItemsEqual, r_nats,
+                    AssertionError, self.assertCountEqual, r_nats,
                     monitor_nats)
 
     def _validate_port_groups(self, should_match=True):
@@ -1322,12 +1322,12 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             mn_pgs.append(getattr(row, 'name', ''))
 
         if should_match:
-            self.assertItemsEqual(nb_pgs, db_pgs)
-            self.assertItemsEqual(mn_pgs, db_pgs)
+            self.assertCountEqual(nb_pgs, db_pgs)
+            self.assertCountEqual(mn_pgs, db_pgs)
         else:
-            self.assertRaises(AssertionError, self.assertItemsEqual,
+            self.assertRaises(AssertionError, self.assertCountEqual,
                               nb_pgs, db_pgs)
-            self.assertRaises(AssertionError, self.assertItemsEqual,
+            self.assertRaises(AssertionError, self.assertCountEqual,
                               mn_pgs, db_pgs)
 
     def _delete_metadata_ports(self):
@@ -1368,10 +1368,10 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 {'external_ids': dns_row.external_ids,
                  'records': dns_row.records})
         if should_match:
-            self.assertItemsEqual(self.expected_dns_records,
+            self.assertCountEqual(self.expected_dns_records,
                                   observed_dns_records)
         else:
-            self.assertRaises(AssertionError, self.assertItemsEqual,
+            self.assertRaises(AssertionError, self.assertCountEqual,
                               self.expected_dns_records, observed_dns_records)
 
     def _validate_resources(self, should_match=True):

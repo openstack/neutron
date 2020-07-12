@@ -663,7 +663,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                          expected_code=expected_code)
         if expected_code == webob.exc.HTTPOk.code:
             resource = resource.replace('-', '_')
-            self.assertItemsEqual([i['id'] for i in res['%ss' % resource]],
+            self.assertCountEqual([i['id'] for i in res['%ss' % resource]],
                                   [i[resource]['id'] for i in items])
 
     @contextlib.contextmanager
@@ -6030,7 +6030,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                       initial_subnetpool['subnetpool']['id'])
         api = self._api_for_resource('subnetpools')
         res = self.deserialize(self.fmt, req.get_response(api))
-        self.assertItemsEqual(res['subnetpool']['prefixes'],
+        self.assertCountEqual(res['subnetpool']['prefixes'],
                               ['10.10.8.0/21', '3.3.3.0/24', '2.2.2.0/24'])
 
     def test_update_subnetpool_prefix_list_compaction(self):
@@ -6045,7 +6045,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                       initial_subnetpool['subnetpool']['id'])
         api = self._api_for_resource('subnetpools')
         res = self.deserialize(self.fmt, req.get_response(api))
-        self.assertItemsEqual(res['subnetpool']['prefixes'],
+        self.assertCountEqual(res['subnetpool']['prefixes'],
                               ['10.10.10.0/23'])
 
     def test_illegal_subnetpool_prefix_list_update(self):

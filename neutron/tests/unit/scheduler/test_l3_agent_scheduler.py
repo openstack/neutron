@@ -2053,7 +2053,7 @@ class TestGetL3AgentsWithAgentModeFilter(TestGetL3AgentsWithFilter):
         self.assertEqual(len(self.expected_agent_modes), len(l3_agents))
         returned_agent_modes = [self._get_agent_mode(agent)
                                 for agent in l3_agents]
-        self.assertItemsEqual(self.expected_agent_modes, returned_agent_modes)
+        self.assertCountEqual(self.expected_agent_modes, returned_agent_modes)
 
 
 class TestGetL3AgentsWithHostFilter(TestGetL3AgentsWithFilter):

@@ -85,7 +85,7 @@ class TestRouter(base.TestOVNFunctionalBase):
                 'Logical_Router_Port'].rows.values():
             if self._l3_ha_supported():
                 chassis = [gwc.chassis_name for gwc in row.gateway_chassis]
-                self.assertItemsEqual(expected, chassis)
+                self.assertCountEqual(expected, chassis)
             else:
                 rc = row.options.get(ovn_const.OVN_GATEWAY_CHASSIS_KEY)
                 self.assertIn(rc, expected)
@@ -100,7 +100,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         # candidates.
 
         def fake_select(*args, **kwargs):
-            self.assertItemsEqual(candidates, kwargs['candidates'])
+            self.assertCountEqual(candidates, kwargs['candidates'])
             # We are not interested in further processing, let us return
             # INVALID_CHASSIS to avoid erros
             return [ovn_const.OVN_GATEWAY_INVALID_CHASSIS]
@@ -289,7 +289,7 @@ class TestRouter(base.TestOVNFunctionalBase):
             self.assertIsNotNone(gw_port)
 
             expected_networks = ['%s/24' % subnet4_ip, '%s/64' % subnet6_ip]
-            self.assertItemsEqual(
+            self.assertCountEqual(
                 expected_networks, gw_port.networks,
                 'networks in ovn port must match fixed_ips in neutron')
 
@@ -341,7 +341,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         self.candidates = []
 
         def fake_select(*args, **kwargs):
-            self.assertItemsEqual(self.candidates, kwargs['candidates'])
+            self.assertCountEqual(self.candidates, kwargs['candidates'])
             # We are not interested in further processing, let us return
             # INVALID_CHASSIS to avoid erros
             return [ovn_const.OVN_GATEWAY_INVALID_CHASSIS]

@@ -72,7 +72,7 @@ class TestSbApi(n_base.BaseLoggingTestCase,
         dp, iface, phys = self.api.get_chassis_data_for_ml2_bind_port(host)
         self.assertEqual('', dp)
         self.assertEqual('', iface)
-        self.assertItemsEqual(phys, ['private', 'public'])
+        self.assertCountEqual(phys, ['private', 'public'])
 
     def test_chassis_exists(self):
         self.assertTrue(self.api.chassis_exists(

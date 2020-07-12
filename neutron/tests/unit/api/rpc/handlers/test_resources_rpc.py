@@ -231,7 +231,7 @@ class ResourcesPullRpcCallbackTestCase(ResourcesRpcBaseTestCase):
             objs = self.callbacks.bulk_pull(
                 self.context, resource_type=FakeResource.obj_name(),
                 version=TEST_VERSION)
-            self.assertItemsEqual([r1.obj_to_primitive(),
+            self.assertCountEqual([r1.obj_to_primitive(),
                                    r2.obj_to_primitive()],
                                   objs)
             objs = self.callbacks.bulk_pull(

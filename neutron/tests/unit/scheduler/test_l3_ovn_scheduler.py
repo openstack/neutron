@@ -119,7 +119,7 @@ class OVNGatewayChanceScheduler(TestOVNGatewayScheduler):
         mapping = self.fake_chassis_gateway_mappings['Multiple1']
         gateway_name = self.new_gateway_name
         chassis = self.select(mapping, gateway_name)
-        self.assertItemsEqual(chassis, mapping.get('Chassis'))
+        self.assertCountEqual(chassis, mapping.get('Chassis'))
 
     def test_filter_existing_chassis(self):
         # filter_existing_chassis is scheduler independent, but calling
@@ -182,7 +182,7 @@ class OVNGatewayLeastLoadedScheduler(TestOVNGatewayScheduler):
         mapping = self.fake_chassis_gateway_mappings['Multiple1']
         gateway_name = self.new_gateway_name
         chassis = self.select(mapping, gateway_name)
-        self.assertItemsEqual(chassis, mapping.get('Chassis'))
+        self.assertCountEqual(chassis, mapping.get('Chassis'))
         # least loaded will be the first one in the list,
         # networking-ovn will assign highest priority to this first element
         self.assertEqual(['hv5', 'hv4', 'hv3', 'hv2', 'hv1'], chassis)
@@ -222,7 +222,7 @@ class OVNGatewayLeastLoadedScheduler(TestOVNGatewayScheduler):
             chassis_info.append(('lrp', 2))
         actual = self.l3_scheduler._get_chassis_load_by_prios(chassis_info)
         expected = {1: 5, 2: 5}
-        self.assertItemsEqual(expected.items(), actual)
+        self.assertCountEqual(expected.items(), actual)
 
     def test__get_chassis_load_by_prios_no_ports(self):
         self.assertFalse(self.l3_scheduler._get_chassis_load_by_prios([]))

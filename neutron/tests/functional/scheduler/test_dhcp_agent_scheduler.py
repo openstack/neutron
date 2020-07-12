@@ -171,7 +171,7 @@ class TestWeightScheduleNetwork(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
             sorted_unscheduled_active_agents = sorted(
                 unscheduled_active_agents,
                 key=attrgetter('load'))[0:self.expected_scheduled_agent_count]
-            self.assertItemsEqual(
+            self.assertCountEqual(
                 (agent['id'] for agent in actual_scheduled_agents),
                 (agent['id'] for agent in sorted_unscheduled_active_agents))
             self.assertEqual(self.expected_scheduled_agent_count,
@@ -409,7 +409,7 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                 network.Network.get_objects(self.ctx, id=hosted_net_ids)]
             expected_hosted_networks = self.expected_hosted_networks[
                 'agent-%s' % host_index]
-            self.assertItemsEqual(
+            self.assertCountEqual(
                 hosted_net_names, expected_hosted_networks, msg)
 
 
