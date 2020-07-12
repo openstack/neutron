@@ -72,12 +72,12 @@ class TestAZAgentCase(AZTestCommon):
             {'name': 'nova3', 'resource': 'router', 'state': 'unavailable'}]
         res = self._list('availability_zones')
         azs = res['availability_zones']
-        self.assertItemsEqual(expected, azs)
+        self.assertCountEqual(expected, azs)
         # not admin case
         ctx = context.Context('', 'noadmin')
         res = self._list('availability_zones', neutron_context=ctx)
         azs = res['availability_zones']
-        self.assertItemsEqual(expected, azs)
+        self.assertCountEqual(expected, azs)
 
     def test_list_availability_zones_with_filter(self):
         self._register_azs()
@@ -90,27 +90,27 @@ class TestAZAgentCase(AZTestCommon):
             {'name': 'nova3', 'resource': 'router', 'state': 'unavailable'}]
         res = self._list('availability_zones')
         azs = res['availability_zones']
-        self.assertItemsEqual(expected, azs)
+        self.assertCountEqual(expected, azs)
         # list with filter of 'name'
         res = self._list('availability_zones',
                          query_params="name=nova1")
         azs = res['availability_zones']
-        self.assertItemsEqual(expected[:1], azs)
+        self.assertCountEqual(expected[:1], azs)
         # list with filter of 'resource'
         res = self._list('availability_zones',
                          query_params="resource=router")
         azs = res['availability_zones']
-        self.assertItemsEqual(expected[-2:], azs)
+        self.assertCountEqual(expected[-2:], azs)
         # list with filter of 'state' as 'available'
         res = self._list('availability_zones',
                          query_params="state=available")
         azs = res['availability_zones']
-        self.assertItemsEqual(expected[:3], azs)
+        self.assertCountEqual(expected[:3], azs)
         # list with filter of 'state' as 'unavailable'
         res = self._list('availability_zones',
                          query_params="state=unavailable")
         azs = res['availability_zones']
-        self.assertItemsEqual(expected[-1:], azs)
+        self.assertCountEqual(expected[-1:], azs)
 
     def test_list_agent_with_az(self):
         helpers.register_dhcp_agent(host='host1', az='nova1')
@@ -145,7 +145,7 @@ class TestAZNetworkCase(AZTestCommon):
         az_hints = ['nova1']
         with self.network(availability_zone_hints=az_hints) as net:
             res = self._show('networks', net['network']['id'])
-            self.assertItemsEqual(az_hints,
+            self.assertCountEqual(az_hints,
                                   res['network']['availability_zone_hints'])
 
     def test_create_network_with_azs(self):
@@ -153,7 +153,7 @@ class TestAZNetworkCase(AZTestCommon):
         az_hints = ['nova1', 'nova2']
         with self.network(availability_zone_hints=az_hints) as net:
             res = self._show('networks', net['network']['id'])
-            self.assertItemsEqual(az_hints,
+            self.assertCountEqual(az_hints,
                                   res['network']['availability_zone_hints'])
 
     def test_create_network_without_az(self):

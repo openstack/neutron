@@ -63,14 +63,14 @@ class SubnetPoolDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         pool.update()
 
         new_pool = self._test_class.get_object(self.context, id=pool.id)
-        self.assertItemsEqual(prefixes, new_pool.prefixes)
+        self.assertCountEqual(prefixes, new_pool.prefixes)
 
         prefixes.pop()
         pool.prefixes = prefixes
         pool.update()
 
         new_pool = self._test_class.get_object(self.context, id=pool.id)
-        self.assertItemsEqual(prefixes, new_pool.prefixes)
+        self.assertCountEqual(prefixes, new_pool.prefixes)
 
     def test_get_objects_queries_constant(self):
         # TODO(korzen) SubnetPool is using SubnetPoolPrefix object to reload

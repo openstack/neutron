@@ -2838,7 +2838,7 @@ class TestDnsmasq(TestBase):
                 result = dhcp.Dnsmasq.existing_dhcp_networks(self.conf)
 
                 mock_listdir.assert_called_once_with(path)
-                self.assertItemsEqual(['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+                self.assertCountEqual(['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
                                        'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'],
                                       result)
 

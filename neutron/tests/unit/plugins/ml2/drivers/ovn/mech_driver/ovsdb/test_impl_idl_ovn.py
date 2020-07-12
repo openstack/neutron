@@ -423,7 +423,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
     def test_get_all_logical_switches_with_ports(self):
         # Test empty
         mapping = self.nb_ovn_idl.get_all_logical_switches_with_ports()
-        self.assertItemsEqual(mapping, {})
+        self.assertCountEqual(mapping, {})
         # Test loaded values
         self._load_nb_db()
         mapping = self.nb_ovn_idl.get_all_logical_switches_with_ports()
@@ -441,12 +441,12 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                      'ports': ['lsp-id-51', 'lsp-id-52', 'lsp-rp-id-5',
                                'lsp-vpn-id-5'],
                      'provnet_ports': []}]
-        self.assertItemsEqual(mapping, expected)
+        self.assertCountEqual(mapping, expected)
 
     def test_get_all_logical_routers_with_rports(self):
         # Test empty
         mapping = self.nb_ovn_idl.get_all_logical_switches_with_ports()
-        self.assertItemsEqual(mapping, {})
+        self.assertCountEqual(mapping, {})
         # Test loaded values
         self._load_nb_db()
         mapping = self.nb_ovn_idl.get_all_logical_routers_with_rports()
@@ -482,7 +482,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                      'snats': [], 'dnat_and_snats': []},
                     {'name': 'lr-id-e', 'ports': {}, 'static_routes': [],
                      'snats': [], 'dnat_and_snats': []}]
-        self.assertItemsEqual(mapping, expected)
+        self.assertCountEqual(mapping, expected)
 
     def test_get_acls_for_lswitches(self):
         self._load_nb_db()
@@ -539,7 +539,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                  'direction': 'to-lport',
                  'match': 'outport == "lsp-id-52" && ip4.src == $as_ip4_id_5'}
             ]}
-        self.assertItemsEqual(acl_values, excepted_acl_values)
+        self.assertCountEqual(acl_values, excepted_acl_values)
         self.assertEqual(len(acl_objs), 8)
         self.assertEqual(len(lswitch_ovsdb_dict), len(lswitches))
 
@@ -547,7 +547,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         lswitches = ['ls-id-4']
         acl_values, acl_objs, lswitch_ovsdb_dict = \
             self.nb_ovn_idl.get_acls_for_lswitches(lswitches)
-        self.assertItemsEqual(acl_values, {})
+        self.assertCountEqual(acl_values, {})
         self.assertEqual(len(acl_objs), 0)
         self.assertEqual(len(lswitch_ovsdb_dict), 0)
 
@@ -559,15 +559,15 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                     'host-2': [utils.ovn_lrouter_port_name('orp-id-b2')],
                     ovn_const.OVN_GATEWAY_INVALID_CHASSIS: [
                         utils.ovn_name('orp-id-a3')]}
-        self.assertItemsEqual(bindings, expected)
+        self.assertCountEqual(bindings, expected)
 
         bindings = self.nb_ovn_idl.get_all_chassis_gateway_bindings([])
-        self.assertItemsEqual(bindings, expected)
+        self.assertCountEqual(bindings, expected)
 
         bindings = self.nb_ovn_idl.get_all_chassis_gateway_bindings(['host-1'])
         expected = {'host-1': [utils.ovn_lrouter_port_name('orp-id-a1'),
                                utils.ovn_lrouter_port_name('orp-id-a2')]}
-        self.assertItemsEqual(bindings, expected)
+        self.assertCountEqual(bindings, expected)
 
     def test_get_gateway_chassis_binding(self):
         self._load_nb_db()
@@ -601,13 +601,13 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             port_physnet_dict, {'host-1': 'physnet1', 'host-2': 'physnet3'},
             ['host-1', 'host-2'])
         expected = ['lrp-orp-id-a3']
-        self.assertItemsEqual(unhosted_gateways, expected)
+        self.assertCountEqual(unhosted_gateways, expected)
         # Test both host-1, host-2 in valid list
         unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
             port_physnet_dict, {'host-1': 'physnet1', 'host-2': 'physnet2'},
             ['host-1', 'host-2'])
         expected = ['lrp-orp-id-a3', 'lrp-orp-id-b6']
-        self.assertItemsEqual(unhosted_gateways, expected)
+        self.assertCountEqual(unhosted_gateways, expected)
 
     def test_get_unhosted_gateways_deleted_physnet(self):
         self._load_nb_db()
@@ -623,12 +623,12 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             ['host-1', 'host-2'])
         # Make sure that lrp is rescheduled, because host-1 has physet1
         expected = ['lrp-orp-id-a1']
-        self.assertItemsEqual(unhosted_gateways, expected)
+        self.assertCountEqual(unhosted_gateways, expected)
         # Spoof that there is no valid host with required physnet.
         unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
             port_physnet_dict, {'host-1': 'physnet4', 'host-2': 'physnet3'},
             ['host-1', 'host-2'])
-        self.assertItemsEqual(unhosted_gateways, [])
+        self.assertCountEqual(unhosted_gateways, [])
 
     def _test_get_unhosted_gateway_max_chassis(self, r):
         gw_chassis_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
@@ -651,7 +651,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             ['host-%s' % x for x in range(1, 7)])
         # We don't have required number of chassis
         expected = []
-        self.assertItemsEqual(unhosted_gateways, expected)
+        self.assertCountEqual(unhosted_gateways, expected)
 
     def test_get_unhosted_gateway_max_chassis(self):
         # We have required number of chassis, and lrp
@@ -664,7 +664,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
              'host-5': 'physnet1', 'host-6': 'physnet1'},
             ['host-%s' % x for x in range(1, 7)])
         expected = []
-        self.assertItemsEqual(unhosted_gateways, expected)
+        self.assertCountEqual(unhosted_gateways, expected)
 
     def test_get_unhosed_gateway_schedule_to_max(self):
         # The LRP is not yet scheduled on all chassis
@@ -677,7 +677,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
              'host-5': 'physnet1', 'host-6': 'physnet1'},
             ['host-%s' % x for x in range(1, 7)])
         expected = ['lrp-orp-id-a1']
-        self.assertItemsEqual(unhosted_gateways, expected)
+        self.assertCountEqual(unhosted_gateways, expected)
 
     def test_get_subnet_dhcp_options(self):
         self._load_nb_db()
@@ -702,7 +702,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         # Test empty
         subnet_options = self.nb_ovn_idl.get_subnet_dhcp_options(
             'subnet-id-10-0-1-0', with_ports=True)
-        self.assertItemsEqual({'subnet': None, 'ports': []}, subnet_options)
+        self.assertCountEqual({'subnet': None, 'ports': []}, subnet_options)
         # Test loaded values
         self._load_nb_db()
         # Test getting both subnet and port dhcp options
@@ -715,7 +715,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                           'external_ids': dhcp_row.external_ids,
                           'options': dhcp_row.options,
                           'uuid': dhcp_row.uuid} for dhcp_row in dhcp_rows]
-        self.assertItemsEqual(expected_rows, [
+        self.assertCountEqual(expected_rows, [
             subnet_options['subnet']] + subnet_options['ports'])
         # Test getting only subnet dhcp options
         subnet_options = self.nb_ovn_idl.get_subnet_dhcp_options(
@@ -726,12 +726,12 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                           'external_ids': dhcp_row.external_ids,
                           'options': dhcp_row.options,
                           'uuid': dhcp_row.uuid} for dhcp_row in dhcp_rows]
-        self.assertItemsEqual(expected_rows, [
+        self.assertCountEqual(expected_rows, [
             subnet_options['subnet']] + subnet_options['ports'])
         # Test getting no dhcp options
         subnet_options = self.nb_ovn_idl.get_subnet_dhcp_options(
             'subnet-id-11-0-2-0', with_ports=True)
-        self.assertItemsEqual({'subnet': None, 'ports': []}, subnet_options)
+        self.assertCountEqual({'subnet': None, 'ports': []}, subnet_options)
 
     def test_get_subnets_dhcp_options(self):
         self._load_nb_db()
@@ -746,13 +746,13 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             get_row_dict(
                 self._find_ovsdb_fake_row(self.dhcp_table, 'cidr', cidr))
             for cidr in ('10.0.1.0/24', '10.0.2.0/24')]
-        self.assertItemsEqual(expected_rows, subnets_options)
+        self.assertCountEqual(expected_rows, subnets_options)
 
         subnets_options = self.nb_ovn_idl.get_subnets_dhcp_options(
             ['subnet-id-11-0-2-0', 'subnet-id-20-0-1-0'])
         expected_row = get_row_dict(
             self._find_ovsdb_fake_row(self.dhcp_table, 'cidr', '20.0.1.0/24'))
-        self.assertItemsEqual([expected_row], subnets_options)
+        self.assertCountEqual([expected_row], subnets_options)
 
         subnets_options = self.nb_ovn_idl.get_subnets_dhcp_options(
             ['port-id-30-0-1-0', 'fake-not-exist'])

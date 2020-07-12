@@ -1543,7 +1543,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             dvr_subnet_ports = self.mixin.get_ports_under_dvr_connected_subnet(
                 self.ctx, subnet['subnet']['id'])
             dvr_subnet_ports_ids = [p['id'] for p in dvr_subnet_ports]
-            self.assertItemsEqual(fake_bound_ports_ids, dvr_subnet_ports_ids)
+            self.assertCountEqual(fake_bound_ports_ids, dvr_subnet_ports_ids)
             (self.mixin._core_plugin.get_allowed_address_pairs_for_ports.
                 assert_called_once_with(self.ctx, dvr_subnet_ports_ids))
 

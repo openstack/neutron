@@ -77,7 +77,7 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
                 self.context, port_id=subport['port_id'], host='')
             self.assertEqual(n_consts.PORT_STATUS_ACTIVE, binding['status'])
 
-        self.assertItemsEqual(ovn_subports_info, neutron_subports_info)
+        self.assertCountEqual(ovn_subports_info, neutron_subports_info)
         self.assertEqual(has_items, len(neutron_subports_info) != 0)
 
         if trunk.get('status'):

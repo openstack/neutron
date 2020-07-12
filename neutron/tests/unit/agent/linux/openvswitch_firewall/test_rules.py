@@ -451,7 +451,7 @@ class TestMergeRules(base.BaseTestCase):
                           ({'direction': 'ingress', 'ethertype': 'IPv4',
                             'protocol': 1}, 24)]
         result = rules.merge_common_rules(rule_conj_list)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             [({'direction': 'ingress', 'ethertype': 'IPv4',
                'protocol': 1}, [8, 24]),
              ({'direction': 'ingress', 'ethertype': 'IPv4',

@@ -67,7 +67,7 @@ class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
             self.mock_registry_provide.assert_called_with(
                 server.trunk_by_port_provider,
                 resources.TRUNK)
-            self.assertItemsEqual(('trunk', [test_obj],),
+            self.assertCountEqual(('trunk', [test_obj],),
                                   mock_conn.mock_calls[1][1])
 
     def test_update_subport_bindings(self):
