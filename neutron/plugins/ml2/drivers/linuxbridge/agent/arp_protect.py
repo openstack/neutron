@@ -87,8 +87,7 @@ def _delete_arp_spoofing_protection(vifs, current_rules, table, chain):
         ebtables(['-D', chain, '-i', vif, '-j',
                   chain_name(vif), '-p', 'ARP'], table=table)
     for vif in vifs:
-        if chain_exists(chain_name(vif), current_rules):
-            ebtables(['-X', chain_name(vif)], table=table)
+        chain_delete(chain_name(vif), table, current_rules)
     _delete_mac_spoofing_protection(vifs, current_rules, table=table,
                                     chain=chain)
 
@@ -154,6 +153,13 @@ def chain_exists(chain, current_rules):
     return False
 
 
+def chain_delete(chain, table, current_rules):
+    # flush and delete chain if exists
+    if chain_exists(chain, current_rules):
+        ebtables(['-F', chain], table=table)
+        ebtables(['-X', chain], table=table)
+
+
 def vif_jump_present(vif, current_rules):
     searches = (('-i %s' % vif), ('-j %s' % chain_name(vif)), ('-p ARP'))
     for line in current_rules:
@@ -212,9 +218,7 @@ def _delete_mac_spoofing_protection(vifs, current_rules, table, chain):
         ebtables(['-D', chain, '-i', vif, '-j',
                   _mac_chain_name(vif)], table=table)
     for vif in vifs:
-        chain = _mac_chain_name(vif)
-        if chain_exists(chain, current_rules):
-            ebtables(['-X', chain], table=table)
+        chain_delete(_mac_chain_name(vif), table, current_rules)
 
 
 # Used to scope ebtables commands in testing
