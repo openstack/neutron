@@ -1520,7 +1520,9 @@ class TestOvsNeutronAgent(object):
         self.assertIn('added_port_id', port_info['added'])
         self.assertNotIn('activated_port_id', port_info['added'])
 
-    def _test_setup_physical_bridges(self, port_exists=False):
+    def _test_setup_physical_bridges(self, port_exists=False,
+                                     dvr_enabled=False):
+        self.agent.enable_distributed_routing = dvr_enabled
         with mock.patch.object(ip_lib.IPDevice, "exists") as devex_fn,\
                 mock.patch.object(sys, "exit"),\
                 mock.patch.object(self.agent, 'br_phys_cls') as phys_br_cls,\
@@ -1577,8 +1579,13 @@ class TestOvsNeutronAgent(object):
                         'phy-br-eth', constants.NONEXISTENT_PEER),
                 ]
             expected_calls += [
-                mock.call.int_br.drop_port(in_port='int_ofport'),
-                mock.call.phys_br.drop_port(in_port='phy_ofport'),
+                    mock.call.int_br.drop_port(in_port='int_ofport')
+            ]
+            if not dvr_enabled:
+                expected_calls += [
+                        mock.call.phys_br.drop_port(in_port='phy_ofport')
+                ]
+            expected_calls += [
                 mock.call.int_br.set_db_attribute('Interface', 'int-br-eth',
                                                   'options',
                                                   {'peer': 'phy-br-eth'}),
@@ -1597,6 +1604,9 @@ class TestOvsNeutronAgent(object):
 
     def test_setup_physical_bridges_port_exists(self):
         self._test_setup_physical_bridges(port_exists=True)
+
+    def test_setup_physical_bridges_dvr_enabled(self):
+        self._test_setup_physical_bridges(dvr_enabled=True)
 
     def test_setup_physical_bridges_using_veth_interconnection(self):
         self.agent.use_veth_interconnection = True
