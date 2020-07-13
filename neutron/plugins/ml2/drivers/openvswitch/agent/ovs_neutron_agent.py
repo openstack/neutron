@@ -1366,28 +1366,13 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.int_ofports[physical_network] = int_ofport
             self.phys_ofports[physical_network] = phys_ofport
 
-            # following drop operations are not necessary for
-            # dvr agent setup_dvr_flows. So skip it if dvr enabled
-            # the reason is for br_int it is duplicate
-            # for br_physical drop_port is dangerous because when dvr
-            # enabled the highest flow on table=0 is 2 which means
-            # basically everything will be dropped until setup_dvr_flows
-            # got executed.
+            # Drop packets from physical bridges that have not matched a higher
+            # priority flow to set a local vlan. This prevents these stray
+            # packets from being forwarded to other physical bridges which
+            # could cause a network loop in the physical network.
+            self.int_br.drop_port(in_port=int_ofport)
+
             if not self.enable_distributed_routing:
-                # These two drop flows are the root cause for the bug #1803919.
-                # And now we add a rpc check during agent start procedure. If
-                # ovs agent can not reach any neutron server, or all neutron
-                # servers are down, these flows will not be installed anymore.
-                # Bug #1803919 was fixed in that way.
-                # And as a reminder, we can not do much work on this. Because
-                # the bridge mappings can be varied. Provider (external)
-                # network can be implicitly set on any physical bridge
-                # due to the basic NORMAL flow.
-                # Different vlan range networks can also have many
-                # bridge map settings, these tenant network traffic can also be
-                # blocked by the following drop flows.
-                # block all untranslated traffic between bridges
-                self.int_br.drop_port(in_port=int_ofport)
                 br.drop_port(in_port=phys_ofport)
 
             if self.use_veth_interconnection:
