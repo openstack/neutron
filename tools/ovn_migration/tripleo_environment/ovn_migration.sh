@@ -30,6 +30,7 @@ LANG=C
 : ${OVERCLOUD_OVN_DEPLOY_SCRIPT:=~/overcloud-deploy-ovn.sh}
 
 : ${OPT_WORKDIR:=$PWD}
+: ${STACK_NAME:=overcloud}
 : ${PUBLIC_NETWORK_NAME:=public}
 : ${IMAGE_NAME:=cirros}
 : ${SERVER_USER_NAME:=cirros}
@@ -127,7 +128,7 @@ generate_ansible_inventory_file() {
     echo "[ovn-dbs]"  > hosts_for_migration
     ovn_central=True
     inventory_file=$(mktemp --tmpdir ansible-inventory-XXXXXXXX.yaml)
-    /usr/bin/tripleo-ansible-inventory --static-yaml-inventory "$inventory_file"
+    /usr/bin/tripleo-ansible-inventory --stack $STACK_NAME --static-yaml-inventory "$inventory_file"
     # We want to run ovn_dbs where neutron_api is running
     OVN_DBS=$(get_group_hosts "$inventory_file" neutron_api)
     for node_name in $OVN_DBS; do
@@ -188,6 +189,16 @@ EOF
     echo "***************************************"
     echo "Generated the inventory file - hosts_for_migration"
     echo "Please review the file before running the next command - setup-mtu-t1"
+}
+
+# Check if the stack exists
+function check_stack {
+    source $STACKRC_FILE
+    openstack stack show $STACK_NAME 1> /dev/null || {
+        echo "ERROR: STACK_NAME=${STACK_NAME} does not exist. Please provide the stack name or its ID "
+        echo "       via STACK_NAME environment variable."
+        exit 1
+    }
 }
 
 # Check if the public network exists, and if it has floating ips available
@@ -307,6 +318,7 @@ command=$1
 ret_val=0
 case $command in
     generate-inventory)
+        check_stack
         oc_check_public_network
         generate_ansible_inventory_file
         generate_ansible_config_file
