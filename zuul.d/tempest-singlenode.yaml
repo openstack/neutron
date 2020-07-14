@@ -1,6 +1,8 @@
 - job:
-    name: neutron-tempest-dvr
+    name: neutron-tempest-base
+    description: Base job for tempest to test Neutron
     parent: tempest-integrated-networking
+    abstract: true
     timeout: 10800
     required-projects:
       - openstack/devstack-gate
@@ -8,6 +10,36 @@
       - openstack/tempest
     vars:
       tempest_concurrency: 4
+      devstack_localrc:
+        Q_ML2_TENANT_NETWORK_TYPE: vxlan
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+      devstack_services:
+        # OVN services
+        ovn-controller: false
+        ovn-northd: false
+        ovs-vswitchd: false
+        ovsdb-server: false
+        q-ovn-metadata-agent: false
+        # Neutron services
+        q-agt: true
+        q-dhcp: true
+        q-l3: true
+        q-meta: true
+        q-metering: true
+        q-svc: true
+
+- job:
+    name: neutron-ovs-base
+    description: Base job for tempest to test Neutron with ML2/OVS driver
+    parent: neutron-tempest-base
+    vars:
+      devstack_localrc:
+        Q_AGENT: openvswitch
+
+- job:
+    name: neutron-tempest-dvr
+    parent: neutron-ovs-base
+    vars:
       devstack_localrc:
         Q_DVR_MODE: dvr_snat
       devstack_services:
@@ -25,30 +57,19 @@
       - ^tox.ini$
       - ^vagrant/.*$
       - ^migration/.*$
+
 - job:
     name: neutron-tempest-linuxbridge
-    parent: tempest-integrated-networking
-    timeout: 10800
-    required-projects:
-      - openstack/devstack-gate
-      - openstack/neutron
-      - openstack/tempest
+    parent: neutron-tempest-base
     vars:
-      tempest_concurrency: 4
       devstack_localrc:
         Q_AGENT: linuxbridge
     irrelevant-files: *irrelevant-files
 
 - job:
     name: neutron-tempest-iptables_hybrid
-    parent: tempest-integrated-networking
-    timeout: 10800
-    required-projects:
-      - openstack/devstack-gate
-      - openstack/neutron
-      - openstack/tempest
+    parent: neutron-ovs-base
     vars:
-      tempest_concurrency: 4
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
