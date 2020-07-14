@@ -569,6 +569,10 @@ class UpdatePortBindingExtIdsCommand(UpdateObjectExtIdsCommand):
     field = 'logical_port'
 
 
+class UpdateLbExternalIds(UpdateObjectExtIdsCommand):
+    table = 'Load_Balancer'
+
+
 class AddDHCPOptionsCommand(command.BaseCommand):
     def __init__(self, api, subnet_id, port_id=None, may_exist=True,
                  **columns):
