@@ -8,27 +8,6 @@ It is not a complete list, but is enough to be used as a starting point for
 implementors working on closing these gaps. A TODO list for OVN is located
 at [1]_.
 
-* Port forwarding
-
-  Currently ML2/OVS supports Port Forwarding in the North/South plane.
-  Specific L4 Ports of the Floating IP can be directed to a specific
-  FixedIP:PortNumber of a VM, so that different services running in a VM
-  can be isolated, and can communicate with external networks easily.
-
-  This is a relatively new extension, support would need to be added to OVN.
-
-  One possible way would be to use the OVN native load balancing feature.
-  An OVN load balancer is expressed in the OVN northbound load_balancer
-  table. Normally the VIP and its members are expressed as [2]_:
-
-  .. code-block:: console
-
-     VIP:PORT = MEMBER1:MPORT1, MEMBER2:MPORT2
-
-     The same could be extended for port forwarding as:
-
-     FIP:PORT = PRIVATE_IP:PRIV_PORT
-
 * Security Groups logging API
 
   Currently ML2/OVS, with the OpenvSwitch firewall, supports a log file where
@@ -48,9 +27,9 @@ at [1]_.
 
   Currently the Neutron L3-agent supports floating IP and gateway IP bandwidth
   limiting based on Linux TC. Networking-ovn L3 had a prototype
-  implementation [3]_ based on the meter of openvswitch [4]_ utility that
+  implementation [2]_ based on the meter of openvswitch [3]_ utility that
   has been abandoned. This is supported in user space datapath only, or
-  kernel versions 4.15+ [5]_.
+  kernel versions 4.15+ [4]_.
 
 * QoS Minimum Bandwidth support
 
@@ -67,7 +46,7 @@ at [1]_.
   The core OVN DHCP server implementation does not have support for
   sending different boot options based on the ``gpxe`` DHCP Option
   (no. 175). Also, Ironic uses dnsmasq syntax when configuring the DHCP
-  options for Neutron [6]_ which is not understood by the OVN driver.
+  options for Neutron [5]_ which is not understood by the OVN driver.
 
 * Availability Zones
 
@@ -78,7 +57,7 @@ at [1]_.
   to see how they would fit in the OVN model. For example, in the router
   availability zone case, the OVN driver should schedule the router
   ports on a Chassis (a "node" in OVN terms) where the availability
-  zones match with the router availability zones [7]_.
+  zones match with the router availability zones [6]_.
 
 * Routed provider networks
 
@@ -86,17 +65,16 @@ at [1]_.
   represent multiple L2 domains (segments). The OVN driver does not
   understand this feature yet and will need to account for multiple
   physical networks associated with a single OVN Logical Switch (a
-  network in Neutron terms) [8]_.
+  network in Neutron terms) [7]_.
 
 
 References
 ----------
 
 .. [1] https://github.com/ovn-org/ovn/blob/master/TODO.rst
-.. [2] https://github.com/ovn-org/ovn/blob/master/ovn-nb.ovsschema#L160
-.. [3] https://review.opendev.org/#/c/539826/
-.. [4] https://github.com/openvswitch/ovs/commit/66d89287269ca7e2f7593af0920e910d7f9bcc38
-.. [5] https://github.com/torvalds/linux/blob/master/net/openvswitch/meter.h
-.. [6] https://github.com/openstack/ironic/blob/123cb22c731f93d0c608d791b41e05884fe18c04/ironic/common/pxe_utils.py#L447-L462>
-.. [7] https://docs.openstack.org/neutron/latest/admin/config-az.html
-.. [8] https://bugs.launchpad.net/neutron/+bug/1865889
+.. [2] https://review.opendev.org/#/c/539826/
+.. [3] https://github.com/openvswitch/ovs/commit/66d89287269ca7e2f7593af0920e910d7f9bcc38
+.. [4] https://github.com/torvalds/linux/blob/master/net/openvswitch/meter.h
+.. [5] https://github.com/openstack/ironic/blob/123cb22c731f93d0c608d791b41e05884fe18c04/ironic/common/pxe_utils.py#L447-L462>
+.. [6] https://docs.openstack.org/neutron/latest/admin/config-az.html
+.. [7] https://bugs.launchpad.net/neutron/+bug/1865889
