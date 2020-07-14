@@ -253,6 +253,14 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self.mock_rules.assert_called_once_with(
             mock.ANY, port.id, port.network_id, self.qos_policies[0].id, None)
 
+    def test_delete_port(self):
+        self.mock_rules.reset_mock()
+        self.qos_driver.delete_port(mock.ANY, self.ports[1])
+
+        # Assert that rules are deleted
+        self.mock_rules.assert_called_once_with(
+            mock.ANY, self.ports[1].id, self.ports[1].network_id, None, None)
+
     def test_update_network(self):
         """Test update network.
 
