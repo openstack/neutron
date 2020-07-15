@@ -186,6 +186,25 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
             self.br.db_get_val('Bridge', self.br.br_name, 'protocols'),
             ['OpenFlow10', 'OpenFlow12', 'OpenFlow13'])
 
+    def _test_set_igmp_snooping_state(self, state):
+        self.br.set_igmp_snooping_state(state)
+        self.assertEqual(
+            state,
+            self.br.db_get_val(
+                'Bridge', self.br.br_name, 'mcast_snooping_enable'))
+        br_other_config = self.ovs.ovsdb.db_find(
+            'Bridge', ('name', '=', self.br.br_name), columns=['other_config']
+        ).execute()[0]['other_config']
+        self.assertEqual(
+            str(state),
+            br_other_config['mcast-snooping-disable-flood-unregistered'])
+
+    def test_set_igmp_snooping_enabled(self):
+        self._test_set_igmp_snooping_state(True)
+
+    def test_set_igmp_snooping_disabled(self):
+        self._test_set_igmp_snooping_state(False)
+
     def test_get_datapath_id(self):
         brdev = ip_lib.IPDevice(self.br.br_name)
         dpid = brdev.link.attributes['link/ether'].replace(':', '')
