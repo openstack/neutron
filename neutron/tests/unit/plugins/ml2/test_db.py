@@ -22,6 +22,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import api as db_api
+from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc
@@ -34,6 +35,7 @@ from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import models
+from neutron.services.segments import exceptions as seg_exc
 from neutron.tests.unit import testlib_api
 
 
@@ -299,6 +301,43 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self.assertEqual(5, len(macs))
         for mac in macs:
             self.assertIsNotNone(re.search(mac_regex, mac))
+
+    def test__prevent_segment_delete_with_port_bound_raise(self):
+        payload_mock = mock.Mock()
+        payload_mock.metadata.get.return_value = False
+        payload_mock.context = self.ctx
+        with mock.patch.object(
+                 port_obj.Port,
+                 'get_auto_deletable_port_ids_and_proper_port_count_by_segment'
+             ) as mock_get:
+            mock_get.return_value = ([], 1)
+            self.assertRaises(
+                seg_exc.SegmentInUse,
+                ml2_db._prevent_segment_delete_with_port_bound,
+                resource=mock.Mock(),
+                event=mock.Mock(),
+                trigger=mock.Mock(),
+                payload=payload_mock,
+            )
+
+    def test__prevent_segment_delete_with_port_bound_auto_delete(self):
+        payload_mock = mock.Mock()
+        payload_mock.metadata.get.return_value = False
+        payload_mock.context = self.ctx
+        plugin = directory.get_plugin()
+        with mock.patch.object(
+                 port_obj.Port,
+                 'get_auto_deletable_port_ids_and_proper_port_count_by_segment'
+             ) as mock_get, \
+                mock.patch.object(plugin, 'delete_port') as mock_delete_port:
+            mock_get.return_value = (['fake-port'], 0)
+            ml2_db._prevent_segment_delete_with_port_bound(
+                resource=mock.Mock(),
+                event=mock.Mock(),
+                trigger=mock.Mock(),
+                payload=payload_mock,
+            )
+            mock_delete_port.assert_called_with(mock.ANY, 'fake-port')
 
 
 class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
