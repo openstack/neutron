@@ -42,6 +42,8 @@ from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.scheduler import l3_ovn_scheduler
 
+from neutron.services.ovn_l3 import exceptions as ovn_l3_exc
+
 
 LOG = log.getLogger(__name__)
 
@@ -108,7 +110,17 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
     @property
     def _plugin_driver(self):
         if self._mech is None:
-            self._mech = self._plugin.mechanism_manager.mech_drivers['ovn'].obj
+            drivers = ('ovn', 'ovn-sync')
+            for driver in drivers:
+                try:
+                    self._mech = self._plugin.mechanism_manager.mech_drivers[
+                        driver].obj
+                    break
+                except KeyError:
+                    pass
+            else:
+                raise ovn_l3_exc.MechanismDriverNotFound(
+                        mechanism_drivers=drivers)
         return self._mech
 
     def get_plugin_type(self):
