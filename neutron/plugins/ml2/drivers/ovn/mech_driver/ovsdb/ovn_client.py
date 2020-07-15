@@ -612,6 +612,18 @@ class OVNClient(object):
         if not router_id:
             return
 
+        # FIPs used for port forwarding have no fixed address
+        # configured. Also, OVN handler for port forwarding
+        # is delegated to OVNPortForwarding. Nothing further
+        # to do here.
+        if floatingip['fixed_ip_address'] is None:
+            LOG.debug("Skipping NAT for floating ip %(id)s, external ip "
+                      "%(fip_ip)s on router %(rtr_id)s: no logical_ip",
+                      {'id': floatingip['id'],
+                       'fip_ip': floatingip['floating_ip_address'],
+                       'rtr_id': router_id})
+            return
+
         commands = []
         admin_context = n_context.get_admin_context()
         fip_db = self._l3_plugin._get_floatingip(

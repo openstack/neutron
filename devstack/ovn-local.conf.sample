@@ -47,6 +47,7 @@ disable_service q-meta
 enable_plugin neutron https://opendev.org/openstack/neutron
 enable_service q-trunk
 enable_service q-dns
+enable_service q-port-forwarding
 enable_service q-qos
 
 # Enable neutron tempest plugin tests

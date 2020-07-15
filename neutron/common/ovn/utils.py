@@ -35,6 +35,7 @@ from oslo_utils import strutils
 from ovs.db import idl
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp.backend.ovs_idl import idlutils
+from ovsdbapp import constants as ovsdbapp_const
 
 from neutron._i18n import _
 from neutron.common.ovn import constants
@@ -545,3 +546,22 @@ def get_chassis_availability_zones(chassis):
         azs = [az.strip() for az in values.split(':') if az.strip()]
         break
     return azs
+
+
+def parse_ovn_lb_port_forwarding(ovn_rtr_lb_pfs):
+    """Return a dictionary compatible with port forwarding from OVN lb."""
+    result = {}
+    for ovn_lb in ovn_rtr_lb_pfs:
+        ext_ids = ovn_lb.external_ids
+        fip_id = ext_ids.get(constants.OVN_FIP_EXT_ID_KEY)
+        protocol = (ovn_lb.protocol[0]
+                    if ovn_lb.protocol else ovsdbapp_const.PROTO_TCP)
+        fip_dict = result.get(fip_id, {})
+        fip_dict_proto = fip_dict.get(protocol, set())
+        ovn_vips = ovn_lb.vips
+        for vip, ips in ovn_vips.items():
+            for ip in ips.split(','):
+                fip_dict_proto.add("{} {}".format(vip, ip))
+        fip_dict[protocol] = fip_dict_proto
+        result[fip_id] = fip_dict
+    return result

@@ -20,6 +20,7 @@ from neutron._i18n import _
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import exceptions as ovn_exc
 from neutron.common.ovn import utils
+from neutron.services.portforwarding.constants import PORT_FORWARDING_PREFIX
 
 RESOURCE_TYPE_MAP = {
     ovn_const.TYPE_NETWORKS: 'Logical_Switch',
@@ -708,7 +709,13 @@ class CheckRevisionNumberCommand(command.BaseCommand):
         self.resource_type = resource_type
         self.if_exists = if_exists
 
-    def _get_floatingip(self):
+    def _get_floatingip_or_pf(self):
+        # TYPE_FLOATINGIPS: Determine table to use based on name.
+        # Floating ip port forwarding resources are kept in load
+        # balancer table and have a well known name.
+        if self.name.startswith(PORT_FORWARDING_PREFIX):
+            return self.api.lookup('Load_Balancer', self.name)
+
         # TODO(lucasagomes): We can't use self.api.lookup() because that
         # method does not introspect map type columns. We could either:
         # 1. Enhance it to look into maps or, 2. Add a new ``name`` column
@@ -747,7 +754,7 @@ class CheckRevisionNumberCommand(command.BaseCommand):
 
             ovn_resource = None
             if self.resource_type == ovn_const.TYPE_FLOATINGIPS:
-                ovn_resource = self._get_floatingip()
+                ovn_resource = self._get_floatingip_or_pf()
             elif self.resource_type == ovn_const.TYPE_SUBNETS:
                 ovn_resource = self._get_subnet()
             else:

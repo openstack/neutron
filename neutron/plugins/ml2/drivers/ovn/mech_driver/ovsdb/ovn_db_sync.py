@@ -300,10 +300,14 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
 
         LOG.debug('ACL-SYNC: finished @ %s', str(datetime.now()))
 
-    def _calculate_fips_differences(self, ovn_fips, db_fips):
+    def _calculate_fips_differences(self, ovn_fips, ovn_rtr_lb_pfs, db_fips):
         to_add = []
         to_remove = []
+        ovn_pfs = utils.parse_ovn_lb_port_forwarding(ovn_rtr_lb_pfs)
         for db_fip in db_fips:
+            # skip fips that are used for port forwarding
+            if db_fip['id'] in ovn_pfs:
+                continue
             for ovn_fip in ovn_fips:
                 if (ovn_fip['logical_ip'] == db_fip['fixed_ip_address'] and
                    ovn_fip['external_ip'] == db_fip['floating_ip_address']):
@@ -400,6 +404,8 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         update_snats_list = []
         update_fips_list = []
         for lrouter in lrouters:
+            ovn_rtr_lb_pfs = self.ovn_api.get_router_floatingip_lbs(
+                utils.ovn_name(lrouter['name']))
             if lrouter['name'] in db_routers:
                 for lrport, lrport_nets in lrouter['ports'].items():
                     if lrport in db_router_ports:
@@ -428,7 +434,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 ovn_fips = lrouter['dnat_and_snats']
                 db_fips = db_extends[lrouter['name']]['fips']
                 add_fips, del_fips = self._calculate_fips_differences(
-                    ovn_fips, db_fips)
+                    ovn_fips, ovn_rtr_lb_pfs, db_fips)
                 update_fips_list.append({'id': lrouter['name'],
                                          'add': add_fips,
                                          'del': del_fips})

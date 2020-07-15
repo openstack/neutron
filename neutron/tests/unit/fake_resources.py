@@ -113,6 +113,8 @@ class FakeOvsdbNbOvnIdl(object):
         # remove it in the Rocky release.
         self.get_floatingip_by_ips = mock.Mock()
         self.get_floatingip_by_ips.return_value = None
+        self.get_router_floatingip_lbs = mock.Mock()
+        self.get_router_floatingip_lbs.return_value = []
         self.is_col_present = mock.Mock()
         self.is_col_present.return_value = False
         self.get_lrouter = mock.Mock()
@@ -137,6 +139,10 @@ class FakeOvsdbNbOvnIdl(object):
         self.db_remove = mock.Mock()
         self.set_lswitch_port_to_virtual_type = mock.Mock()
         self.unset_lswitch_port_to_virtual_type = mock.Mock()
+        self.update_lb_external_ids = mock.Mock()
+        self.lb_add = mock.Mock()
+        self.lb_del = mock.Mock()
+        self.lr_lb_add = mock.Mock()
         self.ls_get = mock.Mock()
         self.check_liveness = mock.Mock()
         self.ha_chassis_group_get = mock.Mock()

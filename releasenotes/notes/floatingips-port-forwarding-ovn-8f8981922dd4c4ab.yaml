@@ -1,0 +1,6 @@
+---
+prelude: >
+    Added support for floating IPs port forwarding in OVN.
+features:
+    - |
+      Support for floating IPs port forwarding has been added to OVN backend.

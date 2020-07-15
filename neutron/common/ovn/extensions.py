@@ -14,6 +14,9 @@
 
 from neutron_lib.api.definitions import agent as agent_def
 from neutron_lib.api.definitions import availability_zone as az_def
+from neutron_lib.api.definitions import expose_port_forwarding_in_fip
+from neutron_lib.api.definitions import fip_pf_description
+from neutron_lib.api.definitions import floating_ip_port_forwarding
 from neutron_lib.api.definitions import router_availability_zone as raz_def
 from neutron_lib.api.definitions import segment as seg_def
 
@@ -63,4 +66,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     'trunk',
     'quota_details',
     seg_def.ALIAS,
+    expose_port_forwarding_in_fip.ALIAS,
+    fip_pf_description.ALIAS,
+    floating_ip_port_forwarding.ALIAS,
 ]

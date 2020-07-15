@@ -15,5 +15,9 @@
 
 # String literals representing core resources.
 # TODO(flaviof): move to neutron_lib/callbacks/resources.py
+from ovsdbapp import constants as const
+
 PORT_FORWARDING = 'port_forwarding'
 PORT_FORWARDING_PLUGIN = 'port_forwarding_plugin'
+PORT_FORWARDING_PREFIX = 'pf-floatingip'
+LB_PROTOCOL_MAP = {'udp': const.PROTO_UDP, 'tcp': const.PROTO_TCP}

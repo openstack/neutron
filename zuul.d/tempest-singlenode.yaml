@@ -282,6 +282,7 @@
         s-proxy: false
         tls-proxy: true
         q-qos: true
+        q-port-forwarding: true
 
 - job:
     name: neutron-ovn-tempest-ovs-master
