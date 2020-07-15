@@ -373,20 +373,8 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         return cmd.DelStaticRouteCommand(self, lrouter, ip_prefix, nexthop,
                                          if_exists)
 
-    def create_address_set(self, name, may_exist=True, **columns):
-        return cmd.AddAddrSetCommand(self, name, may_exist, **columns)
-
     def delete_address_set(self, name, if_exists=True, **columns):
         return cmd.DelAddrSetCommand(self, name, if_exists)
-
-    def update_address_set(self, name, addrs_add, addrs_remove,
-                           if_exists=True):
-        return cmd.UpdateAddrSetCommand(self, name, addrs_add, addrs_remove,
-                                        if_exists)
-
-    def update_address_set_ext_ids(self, name, external_ids, if_exists=True):
-        return cmd.UpdateAddrSetExtIdsCommand(self, name, external_ids,
-                                              if_exists)
 
     def _get_logical_router_port_gateway_chassis(self, lrp):
         """Get the list of chassis hosting this gateway port.
@@ -657,14 +645,6 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
                nat['external_ip'] == external_ip):
                 return nat
 
-    def get_address_set(self, addrset_id, ip_version='ip4'):
-        addr_name = utils.ovn_addrset_name(addrset_id, ip_version)
-        try:
-            return idlutils.row_by_value(self.idl, 'Address_Set',
-                                         'name', addr_name)
-        except idlutils.RowNotFound:
-            return None
-
     def check_revision_number(self, name, resource, resource_type,
                               if_exists=True):
         return cmd.CheckRevisionNumberCommand(
@@ -690,9 +670,6 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
 
     def delete_lrouter_ext_gw(self, lrouter_name, if_exists=True):
         return cmd.DeleteLRouterExtGwCommand(self, lrouter_name, if_exists)
-
-    def is_port_groups_supported(self):
-        return self.is_table_present('Port_Group')
 
     def get_port_group(self, pg_name):
         if uuidutils.is_uuid_like(pg_name):

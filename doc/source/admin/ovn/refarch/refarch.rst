@@ -218,10 +218,23 @@ for the compute node.
 Security Groups/Rules
 ---------------------
 
-Each security group will map to 2 Address_Sets in the OVN NB and SB
-tables, one for ipv4 and another for ipv6, which will be used to hold ip
-addresses for the ports that belong to the security group, so that rules
-with remote_group_id can be efficiently applied.
+When a Neutron Security Group is created, the equivalent Port Group in OVN
+(pg-<security_group_id> is created). This Port Group references Neutron SG id
+in its external_ids column.
+
+When a Neutron Port is created, the equivalent Logical Port in OVN is added to
+those Port Groups associated to the Neutron Security Groups this port belongs
+to.
+
+When a Neutron Port is deleted, the associated Logical Port in OVN is deleted.
+Since the schema includes a weak reference to the port, when the LSP gets
+deleted, it is automatically deleted from any Port Group entry where it was
+previously present.
+
+Every time a security group rule is created, instead of figuring out the ports
+affected by its SG and inserting an ACL row which will be referenced by
+different Logical Switches, we just reference it from the associated
+Port Group.
 
 .. todo: add block with openstack security group rule example
 
@@ -229,36 +242,52 @@ OVN operations
 ~~~~~~~~~~~~~~
 
 #. Creating a security group will cause the OVN mechanism driver to create
-   2 new entries in the Address Set table of the northbound DB:
+   a port group in the Port_Group table of the northbound DB:
 
    .. code-block:: console
 
-      _uuid               : 9a9d01bd-4afc-4d12-853a-cd21b547911d
-      addresses           : []
-      external_ids        : {"neutron:security_group_name"=default}
-      name                : "as_ip4_90a78a43_b549_4bee_8822_21fcccab58dc"
+      _uuid               : e96c5994-695d-4b9c-a17b-c7375ad281e2
+      acls                : [33c3c2d0-bc7b-421b-ace9-10884851521a, c22170ec-da5d-4a59-b118-f7f0e370ebc4]
+      external_ids        : {"neutron:security_group_id"="ccbeffee-7b98-4b6f-adf7-d42027ca6447"}
+      name                : pg_ccbeffee_7b98_4b6f_adf7_d42027ca6447
+      ports               : []
 
-      _uuid               : 27a91327-636e-4125-99f0-6f2937a3b6d8
-      addresses           : []
-      external_ids        : {"neutron:security_group_name"=default}
-      name                : "as_ip6_90a78a43_b549_4bee_8822_21fcccab58dc"
-
-   In the above entries, the address set name include the protocol (IPv4
-   or IPv6, written as ip4 or ip6) and the UUID of the Openstack security
-   group, dashes translated to underscores.
-
-#. In turn, these new entries will be translated by the OVN northd daemon
-   into entries in the southbound DB:
+   And it also creates the default ACLs for egress traffic in the ACL table of
+   the northbound DB:
 
    .. code-block:: console
 
-      _uuid               : 886d7b3a-e460-470f-8af2-7c7d88ce45d2
-      addresses           : []
-      name                : "as_ip4_90a78a43_b549_4bee_8822_21fcccab58dc"
+      _uuid               : 33c3c2d0-bc7b-421b-ace9-10884851521a
+      action              : allow-related
+      direction           : from-lport
+      external_ids        : {"neutron:security_group_rule_id"="655b0d7e-144e-4bd8-9243-10a261b91041"}
+      log                 : false
+      match               : "inport == @pg_ccbeffee_7b98_4b6f_adf7_d42027ca6447 && ip4"
+      meter               : []
+      name                : []
+      priority            : 1002
+      severity            : []
 
-      _uuid               : 355ddcba-941d-4f1c-b823-dc811cec59ca
-      addresses           : []
-      name                : "as_ip6_90a78a43_b549_4bee_8822_21fcccab58dc"
+      _uuid               : c22170ec-da5d-4a59-b118-f7f0e370ebc4
+      action              : allow-related
+      direction           : from-lport
+      external_ids        : {"neutron:security_group_rule_id"="a303a34f-5f19-494f-a9e2-e23f246bfcad"}
+      log                 : false
+      match               : "inport == @pg_ccbeffee_7b98_4b6f_adf7_d42027ca6447 && ip6"
+      meter               : []
+      name                : []
+      priority            : 1002
+      severity            : []
+
+Ports with no security groups
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a port doesn't belong to any Security Group and port security is enabled,
+we, by default, drop all the traffic to/from that port. In order to implement
+this through Port Groups, we'll create a special Port Group with a fixed name
+(``neutron_pg_drop``) which holds the ACLs to drop all the traffic.
+
+This PG is created automatically once before neutron-server forks into workers.
 
 Networks
 --------

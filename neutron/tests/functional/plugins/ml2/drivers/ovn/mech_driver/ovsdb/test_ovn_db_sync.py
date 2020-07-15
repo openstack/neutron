@@ -12,8 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
-
 from neutron.common.ovn import acl as acl_utils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
@@ -59,9 +57,6 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         self.delete_lrouter_routes = []
         self.delete_lrouter_nats = []
         self.delete_acls = []
-        self.create_address_sets = []
-        self.delete_address_sets = []
-        self.update_address_sets = []
         self.create_port_groups = []
         self.delete_port_groups = []
         self.expected_dhcp_options_rows = []
@@ -582,17 +577,6 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                                           'neutron-' + r1['id']))
         self.delete_lrouters.append('neutron-' + r2['id'])
 
-        address_set_name = n1_prtr['port']['security_groups'][0]
-        self.create_address_sets.extend([('fake_sg', 'ip4'),
-                                         ('fake_sg', 'ip6')])
-        self.delete_address_sets.append((address_set_name, 'ip6'))
-        address_adds = ['10.0.0.101', '10.0.0.102']
-        address_dels = []
-        for address in n1_prtr['port']['fixed_ips']:
-            address_dels.append(address['ip_address'])
-        self.update_address_sets.append((address_set_name, 'ip4',
-                                         address_adds, address_dels))
-
         self.create_port_groups.extend([{'name': 'pg1', 'acls': []},
                                         {'name': 'pg2', 'acls': []}])
         self.delete_port_groups.append(
@@ -761,26 +745,10 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 txn.add(self.nb_api.delete_acl(lswitch_name,
                                                lport_name, True))
 
-            for name, ip_version in self.create_address_sets:
-                ovn_name = utils.ovn_addrset_name(name, ip_version)
-                external_ids = {ovn_const.OVN_SG_EXT_ID_KEY: name}
-                txn.add(self.nb_api.create_address_set(
-                    ovn_name, True, external_ids=external_ids))
-
-            for name, ip_version in self.delete_address_sets:
-                ovn_name = utils.ovn_addrset_name(name, ip_version)
-                txn.add(self.nb_api.delete_address_set(ovn_name, True))
-
-            for name, ip_version, ip_adds, ip_dels in self.update_address_sets:
-                ovn_name = utils.ovn_addrset_name(name, ip_version)
-                txn.add(self.nb_api.update_address_set(ovn_name,
-                                                       ip_adds, ip_dels, True))
-
-            if self.nb_api.is_port_groups_supported():
-                for pg in self.create_port_groups:
-                    txn.add(self.nb_api.pg_add(**pg))
-                for pg in self.delete_port_groups:
-                    txn.add(self.nb_api.pg_del(pg))
+            for pg in self.create_port_groups:
+                txn.add(self.nb_api.pg_add(**pg))
+            for pg in self.delete_port_groups:
+                txn.add(self.nb_api.pg_del(pg))
 
             for lport_name in self.reset_lport_dhcpv4_options:
                 txn.add(self.nb_api.set_lswitch_port(lport_name, True,
@@ -1087,54 +1055,39 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
     def _validate_acls(self, should_match=True):
         # Get the neutron DB ACLs.
         db_acls = []
-        sg_cache = {}
-        subnet_cache = {}
 
         _plugin_nb_ovn = self.mech_driver._nb_ovn
-        if not _plugin_nb_ovn.is_port_groups_supported():
-            for db_port in self._list('ports')['ports']:
-                acls = acl_utils.add_acls(self.plugin,
-                                          context.get_admin_context(),
-                                          db_port,
-                                          sg_cache,
-                                          subnet_cache,
-                                          self.mech_driver._nb_ovn)
-                for acl in acls:
-                    db_acls.append(acl_utils.filter_acl_dict(acl))
-        else:
-            # ACLs due to SGs and default drop port group
-            for sg in self._list('security-groups')['security_groups']:
-                for sgr in sg['security_group_rules']:
-                    acl = acl_utils._add_sg_rule_acl_for_port_group(
-                        utils.ovn_port_group_name(sg['id']), sgr,
-                        self.mech_driver._nb_ovn)
-                    db_acls.append(TestOvnNbSync._build_acl_for_pgs(**acl))
 
-            for acl in acl_utils.add_acls_for_drop_port_group(
-                    ovn_const.OVN_DROP_PORT_GROUP_NAME):
+        # ACLs due to SGs and default drop port group
+        for sg in self._list('security-groups')['security_groups']:
+            for sgr in sg['security_group_rules']:
+                acl = acl_utils._add_sg_rule_acl_for_port_group(
+                    utils.ovn_port_group_name(sg['id']), sgr)
                 db_acls.append(TestOvnNbSync._build_acl_for_pgs(**acl))
+
+        for acl in acl_utils.add_acls_for_drop_port_group(
+                ovn_const.OVN_DROP_PORT_GROUP_NAME):
+            db_acls.append(TestOvnNbSync._build_acl_for_pgs(**acl))
 
         # Get the list of ACLs stored in the OVN plugin IDL.
         plugin_acls = []
         for row in _plugin_nb_ovn._tables['Logical_Switch'].rows.values():
             for acl in getattr(row, 'acls', []):
                 plugin_acls.append(self._build_acl_to_compare(acl))
-        if self.nb_api.is_port_groups_supported():
-            for row in _plugin_nb_ovn._tables['Port_Group'].rows.values():
-                for acl in getattr(row, 'acls', []):
-                    plugin_acls.append(
-                        self._build_acl_to_compare(
-                            acl, extra_fields=['external_ids']))
+        for row in _plugin_nb_ovn._tables['Port_Group'].rows.values():
+            for acl in getattr(row, 'acls', []):
+                plugin_acls.append(
+                    self._build_acl_to_compare(
+                        acl, extra_fields=['external_ids']))
 
         # Get the list of ACLs stored in the OVN monitor IDL.
         monitor_acls = []
         for row in self.nb_api.tables['Logical_Switch'].rows.values():
             for acl in getattr(row, 'acls', []):
                 monitor_acls.append(self._build_acl_to_compare(acl))
-        if _plugin_nb_ovn.is_port_groups_supported():
-            for row in self.nb_api.tables['Port_Group'].rows.values():
-                for acl in getattr(row, 'acls', []):
-                    monitor_acls.append(self._build_acl_to_compare(acl))
+        for row in self.nb_api.tables['Port_Group'].rows.values():
+            for acl in getattr(row, 'acls', []):
+                monitor_acls.append(self._build_acl_to_compare(acl))
 
         if should_match:
             self.assertItemsEqual(db_acls, plugin_acls)
@@ -1356,57 +1309,8 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                     AssertionError, self.assertItemsEqual, r_nats,
                     monitor_nats)
 
-    def _validate_address_sets(self, should_match=True):
-        _plugin_nb_ovn = self.mech_driver._nb_ovn
-        if _plugin_nb_ovn.is_port_groups_supported():
-            # If Port Groups are supported, no Address Sets are expected.
-            # This validation is still useful as we expect existing ones to
-            # be deleted after the sync.
-            db_sgs = []
-        else:
-            db_ports = self._list('ports')['ports']
-            sgs = self._list('security-groups')['security_groups']
-            db_sgs = {}
-            for sg in sgs:
-                for ip_version in ['ip4', 'ip6']:
-                    name = utils.ovn_addrset_name(sg['id'], ip_version)
-                    db_sgs[name] = []
-
-            for port in db_ports:
-                sg_ids = utils.get_lsp_security_groups(port)
-                addresses = acl_utils.acl_port_ips(port)
-                for sg_id in sg_ids:
-                    for ip_version in addresses:
-                        name = utils.ovn_addrset_name(sg_id, ip_version)
-                        db_sgs[name].extend(addresses[ip_version])
-
-        nb_address_sets = _plugin_nb_ovn.get_address_sets()
-        nb_sgs = {}
-        for nb_sgid, nb_values in nb_address_sets.items():
-            nb_sgs[nb_sgid] = nb_values['addresses']
-
-        mn_sgs = {}
-        for row in self.nb_api.tables['Address_Set'].rows.values():
-            mn_sgs[getattr(row, 'name')] = getattr(row, 'addresses')
-
-        if should_match:
-            self.assertItemsEqual(nb_sgs, db_sgs)
-            self.assertItemsEqual(mn_sgs, db_sgs)
-        else:
-            # This condition is to cover the case when we use Port Groups
-            # and we completely deleted the NB DB. At this point, the expected
-            # number of Address Sets is 0 and the observed number in NB is
-            # also 0 so we can't have the asserts below as both will be empty.
-            if _plugin_nb_ovn.is_port_groups_supported() and nb_sgs:
-                self.assertRaises(AssertionError, self.assertItemsEqual,
-                                  nb_sgs, db_sgs)
-                self.assertRaises(AssertionError, self.assertItemsEqual,
-                                  mn_sgs, db_sgs)
-
     def _validate_port_groups(self, should_match=True):
         _plugin_nb_ovn = self.mech_driver._nb_ovn
-        if not _plugin_nb_ovn.is_port_groups_supported():
-            return
 
         db_pgs = []
         for sg in self._list('security-groups')['security_groups']:
@@ -1479,7 +1383,6 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         self._validate_dhcp_opts(should_match=should_match)
         self._validate_acls(should_match=should_match)
         self._validate_routers_and_router_ports(should_match=should_match)
-        self._validate_address_sets(should_match=should_match)
         self._validate_port_groups(should_match=should_match)
         self._validate_dns_records(should_match=should_match)
 
@@ -1628,9 +1531,3 @@ class TestOvnNbSyncOverSsl(TestOvnNbSync):
 class TestOvnSbSyncOverSsl(TestOvnSbSync):
     def get_ovsdb_server_protocol(self):
         return 'ssl'
-
-
-@mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.impl_idl_ovn.'
-            'OvsdbNbOvnIdl.is_port_groups_supported', lambda *args: False)
-class TestOvnNbSyncNoPgs(TestOvnNbSync):
-    pass
