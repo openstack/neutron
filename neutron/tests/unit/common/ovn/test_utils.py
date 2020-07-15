@@ -88,6 +88,12 @@ class TestUtils(base.BaseTestCase):
         self.assertEqual(
             [], utils.get_chassis_availability_zones(chassis))
 
+    def test_is_security_groups_enabled(self):
+        self.assertTrue(utils.is_security_groups_enabled(
+            {constants.PORT_SECURITYGROUPS: ['fake']}))
+        self.assertFalse(utils.is_security_groups_enabled(
+            {}))
+
 
 class TestGateWayChassisValidity(base.BaseTestCase):
 

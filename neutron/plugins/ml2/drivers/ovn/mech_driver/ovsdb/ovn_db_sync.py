@@ -220,8 +220,8 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                     # already exists in OVN. The rest will be added during the
                     # ports sync operation later.
                     for n_port in db_ports:
-                        if ((n_port['security_groups'] or
-                                n_port['port_security_enabled']) and
+                        if ((utils.is_security_groups_enabled(n_port) or
+                                utils.is_port_security_enabled(n_port)) and
                                 n_port['id'] in ovn_ports):
                             txn.add(self.ovn_api.pg_add_ports(
                                 pg, n_port['id']))
