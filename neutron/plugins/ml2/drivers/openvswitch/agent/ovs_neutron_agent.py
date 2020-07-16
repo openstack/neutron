@@ -2364,6 +2364,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             added_bridges = idl_monitor.bridges_added + self.added_bridges
             bridges_recreated = self._reconfigure_physical_bridges(
                 added_bridges)
+            if bridges_recreated:
+                # In case when any bridge was "re-created", we need to ensure
+                # that there is no any stale flows in bridges left
+                need_clean_stale_flow = True
             sync |= bridges_recreated
             # Notify the plugin of tunnel IP
             if self.enable_tunneling and tunnel_sync:
@@ -2422,11 +2426,16 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                 ovs_restarted or bridges_recreated)
                         failed_devices = self.process_network_ports(
                             port_info, provisioning_needed)
-                        if need_clean_stale_flow:
-                            self.cleanup_stale_flows()
-                            need_clean_stale_flow = False
                         LOG.info("Agent rpc_loop - iteration:%(iter_num)d - "
                                  "ports processed. Elapsed:%(elapsed).3f",
+                                 {'iter_num': self.iter_num,
+                                  'elapsed': time.time() - start})
+
+                    if need_clean_stale_flow:
+                        self.cleanup_stale_flows()
+                        need_clean_stale_flow = False
+                        LOG.info("Agent rpc_loop - iteration:%(iter_num)d - "
+                                 "cleanup stale flows. Elapsed:%(elapsed).3f",
                                  {'iter_num': self.iter_num,
                                   'elapsed': time.time() - start})
 
