@@ -1618,6 +1618,56 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 self.context, self.l3_agent, [router1['id'], router3['id']])
             self.assertEqual({router1['id'], router3['id']}, set(ids))
 
+    def test__get_router_ids_for_agent_related_router(self):
+        router1 = self._create_router()
+        router2 = self._create_router()
+        router3 = self._create_router()
+        arg_list = (portbindings.HOST_ID,)
+        dvr_l3_agent = helpers.register_l3_agent(
+            host="host1", agent_mode=constants.L3_AGENT_MODE_DVR)
+        host = dvr_l3_agent['host']
+        with self.subnet() as wan_subnet,\
+                self.subnet(cidr='20.0.0.0/24') as subnet1,\
+                self.subnet(cidr='30.0.0.0/24') as subnet2,\
+                self.subnet(cidr='40.0.0.0/24') as subnet3,\
+                self.port(subnet=wan_subnet) as wan_port1,\
+                self.port(subnet=wan_subnet) as wan_port2,\
+                self.port(subnet=subnet1,
+                          device_owner=constants.DEVICE_OWNER_DHCP,
+                          arg_list=arg_list,
+                          **{portbindings.HOST_ID: host}):
+
+            self.l3_plugin.add_router_interface(
+                self.context, router1['id'],
+                {'subnet_id': subnet1['subnet']['id']})
+            self.l3_plugin.add_router_interface(
+                self.context, router2['id'],
+                {'subnet_id': subnet2['subnet']['id']})
+            # Router3 is here just to be sure that it will not be returned as
+            # is not related to the router1 and router2 in any way
+            self.l3_plugin.add_router_interface(
+                self.context, router3['id'],
+                {'subnet_id': subnet3['subnet']['id']})
+
+            self.l3_plugin.add_router_interface(
+                self.context, router1['id'],
+                {'port_id': wan_port1['port']['id']})
+            self.l3_plugin.add_router_interface(
+                self.context, router2['id'],
+                {'port_id': wan_port2['port']['id']})
+
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, dvr_l3_agent, [])
+            self.assertEqual({router1['id'], router2['id']}, set(ids))
+
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, dvr_l3_agent, [router2['id']])
+            self.assertEqual({router1['id'], router2['id']}, set(ids))
+
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, dvr_l3_agent, [router1['id']])
+            self.assertEqual({router1['id'], router2['id']}, set(ids))
+
     def test_remove_router_interface(self):
         HOST1 = 'host1'
         helpers.register_l3_agent(
