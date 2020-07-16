@@ -1539,7 +1539,8 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         fake_nat_uuid = uuidutils.generate_uuid()
         nat_row = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'_uuid': fake_nat_uuid, 'external_ids': {
-                ovn_const.OVN_FIP_EXT_MAC_KEY: fake_ext_mac_key}})
+                ovn_const.OVN_FIP_EXT_MAC_KEY: fake_ext_mac_key},
+                'external_mac': 'aa:aa:aa:aa:aa:aa'})
 
         fake_db_find = mock.Mock()
         fake_db_find.execute.return_value = [nat_row]

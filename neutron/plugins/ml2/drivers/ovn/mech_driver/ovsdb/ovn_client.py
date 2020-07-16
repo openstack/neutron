@@ -614,6 +614,8 @@ class OVNClient(object):
         admin_context = n_context.get_admin_context()
         fip_db = self._l3_plugin._get_floatingip(
             admin_context, floatingip['id'])
+        port_db = self._plugin.get_port(
+            admin_context, fip_db['floating_port_id'])
 
         gw_lrouter_name = utils.ovn_name(router_id)
         # TODO(chandrav): Since the floating ip port is not
@@ -631,18 +633,16 @@ class OVNClient(object):
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(utils.get_revision_number(
                 floatingip, ovn_const.TYPE_FLOATINGIPS)),
             ovn_const.OVN_FIP_PORT_EXT_ID_KEY: floatingip['port_id'],
-            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: gw_lrouter_name}
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: gw_lrouter_name,
+            ovn_const.OVN_FIP_EXT_MAC_KEY: port_db['mac_address']}
         columns = {'type': 'dnat_and_snat',
                    'logical_ip': floatingip['fixed_ip_address'],
-                   'external_ip': floatingip['floating_ip_address']}
+                   'external_ip': floatingip['floating_ip_address'],
+                   'logical_port': floatingip['port_id']}
 
         if ovn_conf.is_ovn_distributed_floating_ip():
-            port = self._plugin.get_port(
-                admin_context, fip_db['floating_port_id'])
-            columns['logical_port'] = floatingip['port_id']
-            ext_ids[ovn_const.OVN_FIP_EXT_MAC_KEY] = port['mac_address']
             if self._nb_idl.lsp_get_up(floatingip['port_id']).execute():
-                columns['external_mac'] = port['mac_address']
+                columns['external_mac'] = port_db['mac_address']
 
         # TODO(dalvarez): remove this check once the minimum OVS required
         # version contains the column (when OVS 2.8.2 is released).
