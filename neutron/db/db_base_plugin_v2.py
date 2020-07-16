@@ -46,6 +46,7 @@ from sqlalchemy import not_
 
 from neutron._i18n import _
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
+from neutron.common import _constants
 from neutron.common import ipv6_utils
 from neutron.common import utils
 from neutron.db import db_base_plugin_common
@@ -67,15 +68,6 @@ from neutron.objects import subnetpool as subnetpool_obj
 
 
 LOG = logging.getLogger(__name__)
-
-# Ports with the following 'device_owner' values will not prevent
-# network deletion.  If delete_network() finds that all ports on a
-# network have these owners, it will explicitly delete each port
-# and allow network deletion to continue.  Similarly, if delete_subnet()
-# finds out that all existing IP Allocations are associated with ports
-# with these owners, it will allow subnet deletion to proceed with the
-# IP allocations being cleaned up by cascade.
-AUTO_DELETE_PORT_OWNERS = [constants.DEVICE_OWNER_DHCP]
 
 
 def _ensure_subnet_not_used(context, subnet_id):
@@ -472,7 +464,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def _ensure_network_not_in_use(self, context, net_id):
         non_auto_ports = context.session.query(
             models_v2.Port.id).filter_by(network_id=net_id).filter(
-            ~models_v2.Port.device_owner.in_(AUTO_DELETE_PORT_OWNERS))
+            ~models_v2.Port.device_owner.in_(
+                _constants.AUTO_DELETE_PORT_OWNERS))
         if non_auto_ports.count():
             raise exc.NetworkInUse(net_id=net_id)
 
@@ -485,7 +478,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         with db_api.CONTEXT_READER.using(context):
             auto_delete_port_ids = [p.id for p in context.session.query(
                 models_v2.Port.id).filter_by(network_id=id).filter(
-                models_v2.Port.device_owner.in_(AUTO_DELETE_PORT_OWNERS))]
+                models_v2.Port.device_owner.in_(
+                    _constants.AUTO_DELETE_PORT_OWNERS))]
         for port_id in auto_delete_port_ids:
             try:
                 self.delete_port(context.elevated(), port_id)
@@ -1002,7 +996,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def _subnet_get_user_allocation(self, context, subnet_id):
         """Check if there are any user ports on subnet and return first."""
         return port_obj.IPAllocation.get_alloc_by_subnet_id(
-            context, subnet_id, AUTO_DELETE_PORT_OWNERS)
+            context, subnet_id, _constants.AUTO_DELETE_PORT_OWNERS)
 
     def _subnet_check_ip_allocations_internal_router_ports(self, context,
                                                            subnet_id):
