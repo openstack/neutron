@@ -240,7 +240,9 @@
           (tempest.(api|scenario|thirdparty))).*$"
       devstack_localrc:
         OVN_BRANCH: master
+        OVS_BRANCH: master
     group-vars:
       subnode:
         devstack_localrc:
           OVN_BRANCH: master
+          OVS_BRANCH: master

@@ -22,6 +22,9 @@
 source ${TOP_DIR}/lib/neutron_plugins/ovs_base
 source ${TOP_DIR}/lib/neutron_plugins/openvswitch_agent
 
+# Load devstack ovs base functions
+source $NEUTRON_DIR/devstack/lib/ovs
+
 
 # Defaults
 # --------
@@ -30,13 +33,7 @@ source ${TOP_DIR}/lib/neutron_plugins/openvswitch_agent
 OVN_REPO=${OVN_REPO:-https://github.com/ovn-org/ovn.git}
 OVN_REPO_NAME=$(basename ${OVN_REPO} | cut -f1 -d'.')
 OVN_REPO_NAME=${OVN_REPO_NAME:-ovn}
-OVN_BRANCH=${OVN_BRANCH:-master}
-
-# Set variables for building OVS from source
-OVS_REPO=${OVS_REPO:-https://github.com/openvswitch/ovs.git}
-OVS_REPO_NAME=$(basename ${OVS_REPO} | cut -f1 -d'.')
-OVS_REPO_NAME=${OVS_REPO_NAME:-ovs}
-OVS_BRANCH=${OVS_BRANCH:-master}
+OVN_BRANCH=${OVN_BRANCH:-v20.03.0}
 
 if is_service_enabled tls-proxy; then
     OVN_PROTO=ssl
@@ -289,93 +286,6 @@ function _disable_libvirt_apparmor {
 # OVN compilation functions
 # -------------------------
 
-# Fetch the ovs git repository and install packages needed for
-# the compilation.
-function _prepare_for_ovs_compilation {
-    local build_modules=$1
-    clone_repository $OVS_REPO $DEST/$OVS_REPO_NAME $OVS_BRANCH
-
-    if [[ "$build_modules" == "False" ]]; then
-        return
-    fi
-
-    KERNEL_VERSION=`uname -r`
-    if is_fedora ; then
-        # is_fedora covers Fedora, RHEL, CentOS, etc...
-        if [[ "$os_VENDOR" == "Fedora" ]]; then
-            install_package elfutils-libelf-devel
-            KERNEL_VERSION=`echo $KERNEL_VERSION | cut --delimiter='-' --field 1`
-        elif [[ ${KERNEL_VERSION:0:2} != "3." ]]; then
-            # dash is illegal character in rpm version so replace
-            # them with underscore like it is done in the kernel
-            # https://github.com/torvalds/linux/blob/master/scripts/package/mkspec#L25
-            # but only for latest series of the kernel, not 3.x
-
-            KERNEL_VERSION=`echo $KERNEL_VERSION | tr - _`
-        fi
-
-        echo NOTE: if kernel-devel-$KERNEL_VERSION or kernel-headers-$KERNEL_VERSION installation
-        echo failed, please, provide a repository with the package, or yum update / reboot
-        echo your machine to get the latest kernel.
-
-        install_package kernel-devel-$KERNEL_VERSION
-        install_package kernel-headers-$KERNEL_VERSION
-
-    elif is_ubuntu ; then
-        install_package linux-headers-$KERNEL_VERSION
-    fi
-}
-
-# Reload the ovs kernel modules
-function _reload_ovs_kernel_modules {
-    set +e
-    ovs_system=$(sudo ovs-dpctl dump-dps | grep ovs-system)
-    if [ -n "$ovs_system" ]; then
-        sudo ovs-dpctl del-dp ovs-system
-    fi
-    set -e
-    sudo modprobe -r vport_geneve
-    sudo modprobe -r openvswitch
-    sudo modprobe openvswitch || (dmesg && die $LINENO "FAILED TO LOAD openvswitch")
-    sudo modprobe vport-geneve || (dmesg && echo "FAILED TO LOAD vport-geneve")
-}
-
-# Compile openvswitch and its kernel module
-function _compile_ovs {
-    local build_modules=$1
-
-    # Install the dependencies
-    install_package autoconf automake libtool gcc patch make
-    # TODO(flaviof): Would prefer to use pip_install wrapper, but that is not
-    # useable right now because REQUIREMENTS_DIR variable is hard coded in
-    # starckrc
-    sudo pip3 install six
-
-    _prepare_for_ovs_compilation $build_modules
-
-    pushd $DEST/$OVS_REPO_NAME
-    [ -f configure ] || ./boot.sh
-    if [ ! -f config.status ] || [ configure -nt config.status ] ; then
-        if [[ "$build_modules" == "True" ]]; then
-            ./configure --with-linux=/lib/modules/$(uname -r)/build
-        else
-            ./configure
-        fi
-    fi
-
-    make -j$(($(nproc) + 1))
-    sudo make install
-    if [[ "$build_modules" == "True" ]]; then
-        sudo make INSTALL_MOD_DIR=kernel/net/openvswitch modules_install
-        if [ $? -eq 0 ]; then
-            _reload_ovs_kernel_modules
-        else
-            echo "Compiling OVS kernel modules failed"
-        fi
-    fi
-    popd
-}
-
 # compile_ovn() - Compile OVN from source and load needed modules
 #                 Accepts three parameters:
 #                   - first optional is False by default and means that
@@ -446,7 +356,6 @@ function install_ovn {
 
     # Install tox, used to generate the config (see devstack/override-defaults)
     pip_install tox
-    source $NEUTRON_DIR/devstack/lib/ovs
     remove_ovs_packages
     sudo rm -f $OVS_RUNDIR/*
 
