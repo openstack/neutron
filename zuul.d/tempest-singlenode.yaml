@@ -289,3 +289,7 @@
     description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch and Fedora
     parent: neutron-ovn-tempest-ovs-master
     nodeset: devstack-single-node-fedora-latest
+    vars:
+      devstack_localrc:
+        OVN_BRANCH: master
+        OVS_BRANCH: master
