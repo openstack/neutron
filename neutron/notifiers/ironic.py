@@ -67,7 +67,8 @@ class Notifier(object):
             IRONIC_SESSION = self._get_session(IRONIC_CONF_SECTION)
 
         return connection.Connection(
-            session=IRONIC_SESSION, oslo_conf=cfg.CONF).baremetal
+            session=IRONIC_SESSION, oslo_conf=cfg.CONF,
+            connect_retries=cfg.CONF.http_retries).baremetal
 
     def send_events(self, batched_events):
         try:
