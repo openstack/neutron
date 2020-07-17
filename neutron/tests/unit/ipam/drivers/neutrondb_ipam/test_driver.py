@@ -381,6 +381,31 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
                           ipam_subnet.bulk_allocate,
                           ipam_req.BulkAddressRequest(target_ip_count))
 
+    def test_bulk_allocate_multiple_address_pools(self):
+        target_ip_count = 10
+        # 11 addresses available
+        allocation_pools = [{'start': '192.168.0.5', 'end': '192.168.0.9'},
+                            {'start': '192.168.0.15', 'end': '192.168.0.20'}]
+        ipam_subnet = self._create_and_allocate_ipam_subnet(
+            '192.168.0.0/24', allocation_pools=allocation_pools,
+            ip_version=constants.IP_VERSION_4)[0]
+        ip_addresses = ipam_subnet.bulk_allocate(
+            ipam_req.BulkAddressRequest(target_ip_count))
+        self.assertEqual(target_ip_count, len(ip_addresses))
+        self.assertRaises(ipam_exc.IpAddressGenerationFailure,
+                          ipam_subnet.bulk_allocate,
+                          ipam_req.BulkAddressRequest(2))
+
+    def test_prefernext_allocate_multiple_address_pools(self):
+        ipam_subnet = self._create_and_allocate_ipam_subnet(
+            '192.168.0.0/30', ip_version=constants.IP_VERSION_4)[0]
+
+        ipam_subnet.allocate(ipam_req.PreferNextAddressRequest())
+        # The second address generation request on a /30 for v4 net must fail
+        self.assertRaises(ipam_exc.IpAddressGenerationFailure,
+                          ipam_subnet.allocate,
+                          ipam_req.PreferNextAddressRequest)
+
     def _test_deallocate_address(self, cidr, ip_version):
         ipam_subnet = self._create_and_allocate_ipam_subnet(
             cidr, ip_version=ip_version)[0]
