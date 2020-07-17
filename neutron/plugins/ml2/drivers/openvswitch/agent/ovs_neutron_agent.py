@@ -1230,9 +1230,16 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.int_ofports[physical_network] = int_ofport
             self.phys_ofports[physical_network] = phys_ofport
 
-            # block all untranslated traffic between bridges
-            self.int_br.drop_port(in_port=int_ofport)
-            br.drop_port(in_port=phys_ofport)
+            # following drop operations are not necessary for
+            # dvr agent setup_dvr_flows. So skip it if dvr enabled
+            # the reason is for br_int it is duplicate
+            # for br_physical drop_port is dangerous because when dvr
+            # enabled the highest flow on table=0 is 2 which means
+            # basically everything will be dropped until setup_dvr_flows
+            # got executed.
+            if not self.enable_distributed_routing:
+                self.int_br.drop_port(in_port=int_ofport)
+                br.drop_port(in_port=phys_ofport)
 
             if self.use_veth_interconnection:
                 # enable veth to pass traffic
