@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    A new configuration option ``http_retries`` was added. This option allows
+    configuring the number of times the nova or ironic client should retry on
+    a failed HTTP call.
