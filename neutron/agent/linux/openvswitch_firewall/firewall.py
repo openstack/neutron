@@ -671,6 +671,10 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             # If port doesn't exist in ovsdb, lets ensure that there are no
             # leftovers
             self.remove_port_filter(port)
+        except exceptions.OVSFWTagNotFound as tag_not_found:
+            LOG.info("Tag was not found for port %(port_id)s: %(err)s.",
+                     {'port_id': port['device'],
+                      'err': tag_not_found})
 
     def _set_port_filters(self, of_port):
         self.initialize_port_flows(of_port)
