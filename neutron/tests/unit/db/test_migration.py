@@ -359,12 +359,12 @@ class TestCli(base.BaseTestCase):
     @mock.patch('alembic.script.ScriptDirectory.walk_revisions')
     def test_upgrade_milestone_expand_before_contract(self, walk_mock):
         c_revs = [FakeRevision(labels={cli.CONTRACT_BRANCH}) for r in range(5)]
-        c_revs[1].module.neutron_milestone = [migration.LIBERTY]
+        c_revs[1].module.neutron_milestone = [migration.MITAKA]
         e_revs = [FakeRevision(labels={cli.EXPAND_BRANCH}) for r in range(5)]
-        e_revs[3].module.neutron_milestone = [migration.LIBERTY]
+        e_revs[3].module.neutron_milestone = [migration.MITAKA]
         walk_mock.return_value = c_revs + e_revs
         self._main_test_helper(
-            ['prog', '--subproject', 'neutron', 'upgrade', 'liberty'],
+            ['prog', '--subproject', 'neutron', 'upgrade', 'mitaka'],
             'upgrade',
             [{'desc': cli.EXPAND_BRANCH,
               'revision': e_revs[3].revision,
@@ -713,40 +713,40 @@ class TestCli(base.BaseTestCase):
     @mock.patch('alembic.script.ScriptDirectory.walk_revisions')
     def test__find_milestone_revisions_one_branch(self, walk_mock):
         c_revs = [FakeRevision(labels={cli.CONTRACT_BRANCH}) for r in range(5)]
-        c_revs[1].module.neutron_milestone = [migration.LIBERTY]
+        c_revs[1].module.neutron_milestone = [migration.MITAKA]
 
         walk_mock.return_value = c_revs
-        m = cli._find_milestone_revisions(self.configs[0], 'liberty',
+        m = cli._find_milestone_revisions(self.configs[0], 'mitaka',
                                           cli.CONTRACT_BRANCH)
         self.assertEqual(1, len(m))
-        m = cli._find_milestone_revisions(self.configs[0], 'liberty',
+        m = cli._find_milestone_revisions(self.configs[0], 'mitaka',
                                           cli.EXPAND_BRANCH)
         self.assertEqual(0, len(m))
 
     @mock.patch('alembic.script.ScriptDirectory.walk_revisions')
     def test__find_milestone_revisions_two_branches(self, walk_mock):
         c_revs = [FakeRevision(labels={cli.CONTRACT_BRANCH}) for r in range(5)]
-        c_revs[1].module.neutron_milestone = [migration.LIBERTY]
+        c_revs[1].module.neutron_milestone = [migration.MITAKA]
         e_revs = [FakeRevision(labels={cli.EXPAND_BRANCH}) for r in range(5)]
-        e_revs[3].module.neutron_milestone = [migration.LIBERTY]
+        e_revs[3].module.neutron_milestone = [migration.MITAKA]
 
         walk_mock.return_value = c_revs + e_revs
-        m = cli._find_milestone_revisions(self.configs[0], 'liberty')
+        m = cli._find_milestone_revisions(self.configs[0], 'mitaka')
         self.assertEqual(2, len(m))
 
-        m = cli._find_milestone_revisions(self.configs[0], 'mitaka')
+        m = cli._find_milestone_revisions(self.configs[0], 'newton')
         self.assertEqual(0, len(m))
 
     @mock.patch('alembic.script.ScriptDirectory.walk_revisions')
     def test__find_milestone_revisions_branchless(self, walk_mock):
         revisions = [FakeRevision() for r in range(5)]
-        revisions[2].module.neutron_milestone = [migration.LIBERTY]
+        revisions[2].module.neutron_milestone = [migration.MITAKA]
 
         walk_mock.return_value = revisions
-        m = cli._find_milestone_revisions(self.configs[0], 'liberty')
+        m = cli._find_milestone_revisions(self.configs[0], 'mitaka')
         self.assertEqual(1, len(m))
 
-        m = cli._find_milestone_revisions(self.configs[0], 'mitaka')
+        m = cli._find_milestone_revisions(self.configs[0], 'newton')
         self.assertEqual(0, len(m))
 
 

@@ -44,6 +44,35 @@ def upgrade():
         sa.PrimaryKeyConstraint('id'))
 
     op.create_table(
+        'quotausages',
+        sa.Column('tenant_id', sa.String(length=255),
+                  nullable=False, primary_key=True, index=True),
+        sa.Column('resource', sa.String(length=255),
+                  nullable=False, primary_key=True, index=True),
+        sa.Column('dirty', sa.Boolean(), nullable=False,
+                  server_default=sa.sql.false()),
+        sa.Column('in_use', sa.Integer(), nullable=False,
+                  server_default='0'),
+        sa.Column('reserved', sa.Integer(), nullable=False,
+                  server_default='0'))
+
+    op.create_table(
+        'reservations',
+        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('expiration', sa.DateTime(), nullable=True),
+        sa.PrimaryKeyConstraint('id'))
+
+    op.create_table(
+        'resourcedeltas',
+        sa.Column('resource', sa.String(length=255), nullable=False),
+        sa.Column('reservation_id', sa.String(length=36), nullable=False),
+        sa.Column('amount', sa.Integer(), nullable=True),
+        sa.ForeignKeyConstraint(['reservation_id'], ['reservations.id'],
+                                ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('resource', 'reservation_id'))
+
+    op.create_table(
         'allowedaddresspairs',
         sa.Column('port_id', sa.String(length=36), nullable=False),
         sa.Column('mac_address', sa.String(length=32), nullable=False),
@@ -87,6 +116,10 @@ def upgrade():
                     sa.Column('max_prefixlen', sa.Integer(), nullable=False),
                     sa.Column('shared', sa.Boolean(), nullable=False),
                     sa.Column('default_quota', sa.Integer(), nullable=True),
+                    sa.Column('address_scope_id', sa.String(length=36),
+                              nullable=True),
+                    sa.Column('hash', sa.String(36), nullable=False,
+                              server_default=''),
                     sa.PrimaryKeyConstraint('id'))
     op.create_table('subnetpoolprefixes',
                     sa.Column('cidr', sa.String(length=64), nullable=False),
@@ -97,3 +130,12 @@ def upgrade():
                                             ['subnetpools.id'],
                                             ondelete='CASCADE'),
                     sa.PrimaryKeyConstraint('cidr', 'subnetpool_id'))
+
+    op.create_table(
+        'address_scopes',
+        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('name', sa.String(length=255), nullable=False),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
+        sa.Column('shared', sa.Boolean(), nullable=False),
+        sa.PrimaryKeyConstraint('id'))

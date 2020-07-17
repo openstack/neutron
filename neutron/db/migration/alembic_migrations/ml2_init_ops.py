@@ -48,6 +48,14 @@ def upgrade():
         sa.PrimaryKeyConstraint('ip_address'))
 
     op.create_table(
+        'ml2_geneve_endpoints',
+        sa.Column('ip_address', sa.String(length=64), nullable=False),
+        sa.Column('host', sa.String(length=255), nullable=True),
+        sa.PrimaryKeyConstraint('ip_address'),
+        sa.UniqueConstraint('host', name='unique_ml2_geneve_endpoints0host'),
+    )
+
+    op.create_table(
         'ml2_vxlan_allocations',
         sa.Column('vxlan_vni', sa.Integer(), autoincrement=False,
                   nullable=False),
@@ -62,6 +70,15 @@ def upgrade():
         sa.Column('allocated', sa.Boolean(), nullable=False,
                   server_default=sa.sql.false(), index=True),
         sa.PrimaryKeyConstraint('gre_id'))
+
+    op.create_table(
+        'ml2_geneve_allocations',
+        sa.Column('geneve_vni', sa.Integer(),
+                  autoincrement=False, nullable=False),
+        sa.Column('allocated', sa.Boolean(), nullable=False,
+                  server_default=sa.sql.false(), index=True),
+        sa.PrimaryKeyConstraint('geneve_vni'),
+    )
 
     op.create_table(
         'ml2_flat_allocations',

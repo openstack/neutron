@@ -39,7 +39,6 @@ EXPAND_HEAD_FILENAME = 'EXPAND_HEAD'
 
 CURRENT_RELEASE = migration.VICTORIA
 RELEASES = (
-    migration.LIBERTY,
     migration.MITAKA,
     migration.NEWTON,
     migration.OCATA,
@@ -235,32 +234,10 @@ def do_revision(config, cmd):
     update_head_files(config)
 
 
-def _get_release_labels(labels):
-    result = set()
-    for label in labels:
-        # release labels were introduced Liberty for a short time and dropped
-        # in that same release cycle
-        result.add('%s_%s' % (migration.LIBERTY, label))
-    return result
-
-
 def _compare_labels(revision, expected_labels):
     # validate that the script has expected labels only
     bad_labels = revision.branch_labels - expected_labels
     if bad_labels:
-        # NOTE(ihrachyshka): this hack is temporary to accommodate those
-        # projects that already initialized their branches with liberty_*
-        # labels. Let's notify them about the deprecation for now and drop it
-        # later.
-        bad_labels_with_release = (revision.branch_labels -
-                                   _get_release_labels(expected_labels))
-        if not bad_labels_with_release:
-            log_warning(
-                _('Release aware branch labels (%s) are deprecated. '
-                  'Please switch to expand@ and contract@ '
-                  'labels.') % bad_labels)
-            return
-
         script_name = os.path.basename(revision.path)
         log_error(
             _('Unexpected label for script %(script_name)s: %(labels)s') %
