@@ -19,8 +19,10 @@ from oslo_config import cfg
 
 from futurist import periodics
 from neutron_lib.api.definitions import external_net as extnet_apidef
+from neutron_lib.api.definitions import floating_ip_port_forwarding as pf_def
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
+from neutron_lib.exceptions import l3 as lib_l3_exc
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
@@ -97,34 +99,36 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
         opt_string = ','.join(['{0}:{1}'.format(key, value)
                                for key, value
                                in opts.items()])
-        if ip_version == 6:
+        if ip_version == n_const.IP_VERSION_6:
             ovn_config.cfg.CONF.set_override('ovn_dhcp6_global_options',
                                              opt_string,
                                              group='ovn')
-        if ip_version == 4:
+        if ip_version == n_const.IP_VERSION_4:
             ovn_config.cfg.CONF.set_override('ovn_dhcp4_global_options',
                                              opt_string,
                                              group='ovn')
 
     def _unset_global_dhcp_opts(self, ip_version):
-        if ip_version == 6:
+        if ip_version == n_const.IP_VERSION_6:
             ovn_config.cfg.CONF.clear_override('ovn_dhcp6_global_options',
                                                group='ovn')
-        if ip_version == 4:
+        if ip_version == n_const.IP_VERSION_4:
             ovn_config.cfg.CONF.clear_override('ovn_dhcp4_global_options',
                                                group='ovn')
 
-    def _create_subnet(self, name, net_id, ip_version=4):
+    def _create_subnet(self, name, net_id, ip_version=n_const.IP_VERSION_4,
+                       **kwargs):
+        if ip_version == n_const.IP_VERSION_4:
+            cidr = '10.0.0.0/24'
+        else:
+            cidr = '2001:db8::/64'
         data = {'subnet': {'name': name,
-                           'tenant_id': self._tenant_id,
                            'network_id': net_id,
                            'ip_version': ip_version,
+                           'tenant_id': self._tenant_id,
+                           'cidr': cidr,
                            'enable_dhcp': True}}
-        if ip_version == 4:
-            data['subnet']['cidr'] = '10.0.0.0/24'
-        else:
-            data['subnet']['cidr'] = 'eef0::/64'
-
+        data['subnet'].update(kwargs)
         req = self.new_create_request('subnets', data, self.fmt)
         res = req.get_response(self.api)
         return self.deserialize(self.fmt, res)['subnet']
@@ -209,6 +213,21 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
         for row in self.nb_api._tables['Logical_Router_Port'].rows.values():
             if row.name == utils.ovn_lrouter_port_name(port_id):
                 return row
+
+    def _find_nat_rule(self, router_id, external_ip, logical_ip=None,
+                       nat_type='dnat_and_snat'):
+        rules = self.nb_api.get_lrouter_nat_rules(utils.ovn_name(router_id))
+        return next((r for r in rules
+                     if r['type'] == nat_type and
+                     r['external_ip'] == external_ip and
+                     (not logical_ip or r['logical_ip'] == logical_ip)),
+                    None)
+
+    def _find_pf_lb(self, router_id, fip_id=None):
+        lbs = self.nb_api.get_router_floatingip_lbs(utils.ovn_name(router_id))
+        return [lb for lb in lbs
+                if (not fip_id or
+                    fip_id == lb.external_ids[ovn_const.OVN_FIP_EXT_ID_KEY])]
 
 
 class TestMaintenance(_TestMaintenanceHelper):
@@ -357,7 +376,8 @@ class TestMaintenance(_TestMaintenanceHelper):
         self.assertIsNone(ovn_obj.options.get('ntp_server', None))
 
         # Set some global DHCP Options
-        self._set_global_dhcp_opts(ip_version=4, opts=options)
+        self._set_global_dhcp_opts(ip_version=n_const.IP_VERSION_4,
+                                   opts=options)
 
         # Run the maintenance task to add the new options
         self.assertRaises(periodics.NeverAgain,
@@ -366,12 +386,13 @@ class TestMaintenance(_TestMaintenanceHelper):
         # Assert that the option was added
         ovn_obj = self._find_subnet_row_by_id(neutron_sub['id'])
         self.assertEqual(
-            ovn_obj.options.get('ntp_server', None),
-            '1.2.3.4')
+            '1.2.3.4',
+            ovn_obj.options.get('ntp_server', None))
 
         # Change the global option
         new_options = {'ntp_server': '4.3.2.1'}
-        self._set_global_dhcp_opts(ip_version=4, opts=new_options)
+        self._set_global_dhcp_opts(ip_version=n_const.IP_VERSION_4,
+                                   opts=new_options)
 
         # Run the maintenance task to update the options
         self.assertRaises(periodics.NeverAgain,
@@ -380,12 +401,13 @@ class TestMaintenance(_TestMaintenanceHelper):
         # Assert that the option was changed
         ovn_obj = self._find_subnet_row_by_id(neutron_sub['id'])
         self.assertEqual(
-            ovn_obj.options.get('ntp_server', None),
-            '4.3.2.1')
+            '4.3.2.1',
+            ovn_obj.options.get('ntp_server', None))
 
         # Change the global option to null
         new_options = {'ntp_server': ''}
-        self._set_global_dhcp_opts(ip_version=4, opts=new_options)
+        self._set_global_dhcp_opts(ip_version=n_const.IP_VERSION_4,
+                                   opts=new_options)
 
         # Run the maintenance task to update the options
         self.assertRaises(periodics.NeverAgain,
@@ -401,14 +423,16 @@ class TestMaintenance(_TestMaintenanceHelper):
         neutron_net = self._create_network('network1')
 
         # Create a subnet without global options
-        neutron_sub = self._create_subnet(obj_name, neutron_net['id'], 6)
+        neutron_sub = self._create_subnet(obj_name, neutron_net['id'],
+                                          n_const.IP_VERSION_6)
 
         # Assert that the option is not set
         ovn_obj = self._find_subnet_row_by_id(neutron_sub['id'])
         self.assertIsNone(ovn_obj.options.get('ntp_server', None))
 
         # Set some global DHCP Options
-        self._set_global_dhcp_opts(ip_version=6, opts=options)
+        self._set_global_dhcp_opts(ip_version=n_const.IP_VERSION_6,
+                                   opts=options)
 
         # Run the maintenance task to add the new options
         self.assertRaises(periodics.NeverAgain,
@@ -417,12 +441,13 @@ class TestMaintenance(_TestMaintenanceHelper):
         # Assert that the option was added
         ovn_obj = self._find_subnet_row_by_id(neutron_sub['id'])
         self.assertEqual(
-            ovn_obj.options.get('ntp_server', None),
-            '1.2.3.4')
+            '1.2.3.4',
+            ovn_obj.options.get('ntp_server', None))
 
         # Change the global option
         new_options = {'ntp_server': '4.3.2.1'}
-        self._set_global_dhcp_opts(ip_version=6, opts=new_options)
+        self._set_global_dhcp_opts(ip_version=n_const.IP_VERSION_6,
+                                   opts=new_options)
 
         # Run the maintenance task to update the options
         self.assertRaises(periodics.NeverAgain,
@@ -431,12 +456,13 @@ class TestMaintenance(_TestMaintenanceHelper):
         # Assert that the option was changed
         ovn_obj = self._find_subnet_row_by_id(neutron_sub['id'])
         self.assertEqual(
-            ovn_obj.options.get('ntp_server', None),
-            '4.3.2.1')
+            '4.3.2.1',
+            ovn_obj.options.get('ntp_server', None))
 
         # Change the global option to null
         new_options = {'ntp_server': ''}
-        self._set_global_dhcp_opts(ip_version=6, opts=new_options)
+        self._set_global_dhcp_opts(ip_version=n_const.IP_VERSION_6,
+                                   opts=new_options)
 
         # Run the maintenance task to update the options
         self.assertRaises(periodics.NeverAgain,
@@ -821,3 +847,199 @@ class TestMaintenance(_TestMaintenanceHelper):
         self.assertEqual('true', ls['other_config'][ovn_const.MCAST_SNOOP])
         self.assertEqual(
             'true', ls['other_config'][ovn_const.MCAST_FLOOD_UNREGISTERED])
+
+    def test_floating_ip(self):
+        ext_net = self._create_network('ext_networktest', external=True)
+        ext_subnet = self._create_subnet(
+            'ext_subnettest',
+            ext_net['id'],
+            **{'cidr': '100.0.0.0/24',
+               'gateway_ip': '100.0.0.254',
+               'allocation_pools': [
+                   {'start': '100.0.0.2', 'end': '100.0.0.253'}],
+               'enable_dhcp': False})
+        net1 = self._create_network('network1test', external=False)
+        subnet1 = self._create_subnet('subnet1test', net1['id'])
+        external_gateway_info = {
+            'enable_snat': True,
+            'network_id': ext_net['id'],
+            'external_fixed_ips': [
+                {'ip_address': '100.0.0.2', 'subnet_id': ext_subnet['id']}]}
+        router = self._create_router(
+            'routertest', external_gateway_info=external_gateway_info)
+        self._add_router_interface(router['id'], subnet1['id'])
+
+        p1 = self._create_port('testp1', net1['id'])
+        logical_ip = p1['fixed_ips'][0]['ip_address']
+        fip_info = {'floatingip': {
+            'description': 'test_fip',
+            'tenant_id': self._tenant_id,
+            'floating_network_id': ext_net['id'],
+            'port_id': p1['id'],
+            'fixed_ip_address': logical_ip}}
+
+        # > Create
+        with mock.patch.object(self._l3_ovn_client, 'create_floatingip'):
+            fip = self.l3_plugin.create_floatingip(self.context, fip_info)
+
+        floating_ip_address = fip['floating_ip_address']
+        self.assertEqual(router['id'], fip['router_id'])
+        self.assertEqual('testp1', fip['port_details']['name'])
+        self.assertIsNotNone(self.nb_api.get_lswitch_port(fip['port_id']))
+
+        # Assert the dnat_and_snat rule doesn't exist in OVN
+        self.assertIsNone(
+            self._find_nat_rule(router['id'], floating_ip_address, logical_ip))
+
+        # Call the maintenance thread to fix the problem
+        self.maint.check_for_inconsistencies()
+
+        # Assert the rule for the fip is now present
+        self.assertIsNotNone(
+            self._find_nat_rule(router['id'], floating_ip_address, logical_ip))
+
+        # > Update
+        p2 = self._create_port('testp2', net1['id'])
+        logical_ip = p2['fixed_ips'][0]['ip_address']
+        fip_info = {'floatingip': {
+            'port_id': p2['id'],
+            'fixed_ip_address': logical_ip}}
+
+        with mock.patch.object(self._l3_ovn_client, 'update_floatingip'):
+            self.l3_plugin.update_floatingip(self.context, fip['id'], fip_info)
+
+        # Assert the dnat_and_snat rule in OVN is still using p1's address
+        stale_nat_rule = self._find_nat_rule(router['id'], floating_ip_address)
+        self.assertEqual(p1['fixed_ips'][0]['ip_address'],
+                         stale_nat_rule['logical_ip'])
+
+        # Call the maintenance thread to fix the problem
+        self.maint.check_for_inconsistencies()
+
+        # Assert the rule for the fip is now updated
+        self.assertIsNotNone(
+            self._find_nat_rule(router['id'], floating_ip_address, logical_ip))
+
+        # > Delete
+        with mock.patch.object(self._l3_ovn_client, 'delete_floatingip'):
+            self.l3_plugin.delete_floatingip(self.context, fip['id'])
+
+        self.assertRaises(
+            lib_l3_exc.FloatingIPNotFound,
+            self.l3_plugin.get_floatingip, self.context, fip['id'])
+
+        # Assert the dnat_and_snat rule in OVN is still present
+        self.assertIsNotNone(
+            self._find_nat_rule(router['id'], floating_ip_address, logical_ip))
+
+        # Call the maintenance thread to fix the problem
+        self.maint.check_for_inconsistencies()
+
+        # Assert the rule for the fip is now gone
+        self.assertIsNone(
+            self._find_nat_rule(router['id'], floating_ip_address))
+
+        # Assert the router snat rule is still there
+        snat_rule = self._find_nat_rule(
+            router['id'], '100.0.0.2', nat_type='snat')
+        self.assertEqual(subnet1['cidr'], snat_rule['logical_ip'])
+
+    def test_port_forwarding(self):
+        fip_attrs = lambda args: {
+            pf_def.RESOURCE_NAME: {pf_def.RESOURCE_NAME: args}}
+
+        def _verify_lb(test, protocol, vip_ext_port, vip_int_port):
+            ovn_lbs = self._find_pf_lb(router_id, fip_id)
+            test.assertEqual(1, len(ovn_lbs))
+            test.assertEqual('pf-floatingip-{}-{}'.format(fip_id, protocol),
+                             ovn_lbs[0].name)
+            test.assertEqual(
+                {'{}:{}'.format(fip_ip, vip_ext_port):
+                 '{}:{}'.format(p1_ip, vip_int_port)},
+                ovn_lbs[0].vips)
+
+        ext_net = self._create_network('ext_networktest', external=True)
+        ext_subnet = self._create_subnet(
+            'ext_subnettest',
+            ext_net['id'],
+            **{'cidr': '100.0.0.0/24',
+               'gateway_ip': '100.0.0.254',
+               'allocation_pools': [
+                   {'start': '100.0.0.2', 'end': '100.0.0.253'}],
+               'enable_dhcp': False})
+        net1 = self._create_network('network1test', external=False)
+        subnet1 = self._create_subnet('subnet1test', net1['id'])
+        external_gateway_info = {
+            'enable_snat': True,
+            'network_id': ext_net['id'],
+            'external_fixed_ips': [
+                {'ip_address': '100.0.0.2', 'subnet_id': ext_subnet['id']}]}
+        router = self._create_router(
+            'routertest', external_gateway_info=external_gateway_info)
+        router_id = router['id']
+        self._add_router_interface(router['id'], subnet1['id'])
+
+        fip_info = {'floatingip': {
+            'tenant_id': self._tenant_id,
+            'floating_network_id': ext_net['id'],
+            'port_id': None,
+            'fixed_ip_address': None}}
+        fip = self.l3_plugin.create_floatingip(self.context, fip_info)
+        fip_id = fip['id']
+        fip_ip = fip['floating_ip_address']
+        p1 = self._create_port('testp1', net1['id'])
+        p1_ip = p1['fixed_ips'][0]['ip_address']
+
+        with mock.patch('neutron_lib.callbacks.registry.notify') as m_notify:
+            # > Create
+            fip_pf_args = {
+                pf_def.EXTERNAL_PORT: 2222,
+                pf_def.INTERNAL_PORT: 22,
+                pf_def.INTERNAL_PORT_ID: p1['id'],
+                pf_def.PROTOCOL: 'tcp',
+                pf_def.INTERNAL_IP_ADDRESS: p1_ip}
+            pf_obj = self.pf_plugin.create_floatingip_port_forwarding(
+                self.context, fip_id, **fip_attrs(fip_pf_args))
+            m_notify.assert_called_once()
+
+            # Assert load balancer for port forwarding was not created
+            self.assertFalse(self._find_pf_lb(router_id, fip_id))
+
+            # Call the maintenance thread to fix the problem
+            self.maint.check_for_inconsistencies()
+
+            # Assert load balancer for port forwarding was created
+            _verify_lb(self, 'tcp', 2222, 22)
+
+            # > Update
+            fip_pf_args = {pf_def.EXTERNAL_PORT: 5353,
+                           pf_def.INTERNAL_PORT: 53,
+                           pf_def.PROTOCOL: 'udp'}
+            m_notify.reset_mock()
+            self.pf_plugin.update_floatingip_port_forwarding(
+                self.context, pf_obj['id'], fip_id, **fip_attrs(fip_pf_args))
+            m_notify.assert_called_once()
+
+            # Assert load balancer for port forwarding is stale
+            _verify_lb(self, 'tcp', 2222, 22)
+
+            # Call the maintenance thread to fix the problem
+            self.maint.check_for_inconsistencies()
+
+            # Assert load balancer for port forwarding was updated
+            _verify_lb(self, 'udp', 5353, 53)
+
+            # > Delete
+            m_notify.reset_mock()
+            self.pf_plugin.delete_floatingip_port_forwarding(
+                self.context, pf_obj['id'], fip_id)
+            m_notify.assert_called_once()
+
+            # Assert load balancer for port forwarding is stale
+            _verify_lb(self, 'udp', 5353, 53)
+
+            # Call the maintenance thread to fix the problem
+            self.maint.check_for_inconsistencies()
+
+            # Assert load balancer for port forwarding is gone
+            self.assertFalse(self._find_pf_lb(router_id, fip_id))
