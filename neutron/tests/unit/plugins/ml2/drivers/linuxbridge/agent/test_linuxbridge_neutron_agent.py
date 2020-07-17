@@ -525,25 +525,48 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             bridge_device.setfd.return_value = True
             bridge_device.disable_stp.return_value = True
             bridge_device.disable_ipv6.return_value = False
-            bridge_device.link.set_up.return_value = 0
+            bridge_device.link.set_up.return_value = False
+            bridge_device.get_interfaces.return_value = []
             self.assertEqual("br0", self.lbm.ensure_bridge("br0", None))
 
             bridge_device.owns_interface.return_value = False
+            bridge_device.get_interfaces.return_value = []
             self.lbm.ensure_bridge("br0", "eth0")
             upd_fn.assert_called_with("br0", "eth0")
             bridge_device.owns_interface.assert_called_with("eth0")
 
             de_fn.return_value = True
             bridge_device.delif.side_effect = Exception()
+            bridge_device.get_interfaces.return_value = []
             self.lbm.ensure_bridge("br0", "eth0")
             bridge_device.owns_interface.assert_called_with("eth0")
 
             de_fn.return_value = True
             bridge_device.owns_interface.return_value = False
+            bridge_device.get_interfaces.return_value = []
             get_if_br_fn.return_value = bridge_device_old
             bridge_device.addif.reset_mock()
             self.lbm.ensure_bridge("br0", "eth0")
             bridge_device_old.delif.assert_called_once_with('eth0')
+            bridge_device.addif.assert_called_once_with('eth0')
+
+    def test_ensure_bridge_with_bond(self):
+        bridge_device = mock.Mock()
+        with mock.patch.object(ip_lib,
+                               'ensure_device_is_ready') as de_fn,\
+                mock.patch.object(bridge_lib, "BridgeDevice",
+                                  return_value=bridge_device),\
+                mock.patch.object(self.lbm,
+                                  'update_interface_ip_details'),\
+                mock.patch.object(bridge_lib, 'is_bridged_interface'),\
+                mock.patch.object(bridge_lib.BridgeDevice,
+                                  'get_interface_bridge'):
+            de_fn.return_value = True
+            bridge_device.owns_interface.return_value = False
+            bridge_device.get_interfaces.return_value = ['bond0']
+            self.lbm.ensure_bridge("br0", "eth0")
+            bridge_device.owns_interface.assert_called_with("eth0")
+            bridge_device.delif.assert_called_once_with('bond0')
             bridge_device.addif.assert_called_once_with('eth0')
 
     def test_ensure_physical_in_bridge(self):

@@ -465,6 +465,12 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             if bridge:
                 bridge.delif(interface)
 
+            # Check if other bond interfaces are part of the bridge and
+            # remove them
+            for iface in bridge_device.get_interfaces():
+                if iface.startswith('bond'):
+                    bridge_device.delif(iface)
+
             if not bridge_device.addif(interface):
                 LOG.error("Unable to add %(interface)s to %(bridge_name)s",
                           {'interface': interface, 'bridge_name': bridge_name})
