@@ -77,35 +77,23 @@ file again."
 get_host_ip() {
     inventory_file=$1
     host_name=$2
-    ip=`jq -r --arg role _meta --arg hostname $host_name 'to_entries[] | select(.key == $role) | .value.hostvars[$hostname].ansible_host' $inventory_file`
-    if [[ "x$ip" == "x" ]] || [[ "x$ip" == "xnull" ]]; then
-        # This file does not provide translation from the hostname to the IP, or
-        # we already have an IP (Queens backwards compatibility)
-        echo $host_name
+    host_vars=$(ansible-inventory -i "$inventory_file" --host "$host_name" 2>/dev/null)
+    if [[ $? -eq 0 ]]; then
+        echo "$host_vars" | jq -r \.ansible_host
     else
-        echo $ip
+        echo $host_name
     fi
 }
 
-get_role_hosts() {
+get_group_hosts() {
     inventory_file=$1
-    role_name=$2
-    roles=`jq -r  \.$role_name\.children\[\] $inventory_file`
-    for role in $roles; do
-        # During the rocky cycle the format changed to have .value.hosts
-        hosts=`jq -r --arg role "$role" 'to_entries[] | select(.key == $role) | .value.hosts[]' $inventory_file`
-        if [[ "x$hosts" == "x" ]]; then
-            # But we keep backwards compatibility with nested childrens (Queens)
-            hosts=`jq -r --arg role "$role" 'to_entries[] | select(.key == $role) | .value.children[]' $inventory_file`
-
-            for host in $hosts; do
-                HOSTS="$HOSTS `jq -r --arg host "$host" 'to_entries[] | select(.key == $host) | .value.hosts[0]' $inventory_file`"
-            done
-        else
-            HOSTS="${hosts} ${HOSTS}"
-        fi
-    done
-    echo $HOSTS
+    group_name=$2
+    group_graph=$(ansible-inventory -i "$inventory_file" --graph "$group_name" 2>/dev/null)
+    if [[ $? -eq 0 ]]; then
+        echo "$group_graph" | sed -ne 's/^[ \t|]\+--\([a-z0-9\-]\+\)$/\1/p'
+    else
+        echo ""
+    fi
 }
 
 # Generate the ansible.cfg file
@@ -138,11 +126,12 @@ generate_ansible_inventory_file() {
     source $STACKRC_FILE
     echo "[ovn-dbs]"  > hosts_for_migration
     ovn_central=True
-    /usr/bin/tripleo-ansible-inventory --list > /tmp/ansible-inventory.txt
+    inventory_file=$(mktemp --tmpdir ansible-inventory-XXXXXXXX.yaml)
+    /usr/bin/tripleo-ansible-inventory --static-yaml-inventory "$inventory_file"
     # We want to run ovn_dbs where neutron_api is running
-    OVN_DBS=$(get_role_hosts /tmp/ansible-inventory.txt neutron_api)
+    OVN_DBS=$(get_group_hosts "$inventory_file" neutron_api)
     for node_name in $OVN_DBS; do
-        node_ip=$(get_host_ip /tmp/ansible-inventory.txt $node_name)
+        node_ip=$(get_host_ip "$inventory_file" $node_name)
         node="$node_name ansible_host=$node_ip"
         if [ "$ovn_central" == "True" ]; then
             ovn_central=False
@@ -155,12 +144,12 @@ generate_ansible_inventory_file() {
     echo "[ovn-controllers]" >> hosts_for_migration
 
     # We want to run ovn-controller where OVS agent was running before the migration
-    OVN_CONTROLLERS=$(get_role_hosts /tmp/ansible-inventory.txt neutron_ovs_agent)
+    OVN_CONTROLLERS=$(get_group_hosts "$inventory_file" neutron_ovs_agent)
     for node_name in $OVN_CONTROLLERS; do
-        node_ip=$(get_host_ip /tmp/ansible-inventory.txt $node_name)
+        node_ip=$(get_host_ip "$inventory_file" $node_name)
         echo $node_name ansible_host=$node_ip ansible_ssh_user=heat-admin ansible_become=true ovn_controller=true >> hosts_for_migration
     done
-    rm -f /tmp/ansible-inventory.txt
+    rm -f "$inventory_file"
     echo "" >> hosts_for_migration
 
     cat >> hosts_for_migration << EOF
