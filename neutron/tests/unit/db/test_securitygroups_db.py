@@ -20,6 +20,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.objects import exceptions as obj_exc
 import sqlalchemy
 import testtools
 
@@ -517,3 +518,49 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         for rule in (rule for rule in rules_after if rule not in rules_before):
             self.assertEqual('tenant_1', rule['tenant_id'])
             self.assertEqual(self.sg_user['id'], rule['security_group_id'])
+
+    def test__ensure_default_security_group(self):
+        with mock.patch.object(
+                self.mixin, '_get_default_sg_id') as get_default_sg_id,\
+                mock.patch.object(
+                        self.mixin, 'create_security_group') as create_sg:
+            get_default_sg_id.return_value = None
+            self.mixin._ensure_default_security_group(self.ctx, 'tenant_1')
+            create_sg.assert_called_once_with(
+                self.ctx,
+                {'security_group': {
+                    'name': 'default',
+                    'tenant_id': 'tenant_1',
+                    'description': securitygroups_db.DEFAULT_SG_DESCRIPTION}},
+                default_sg=True)
+            get_default_sg_id.assert_called_once_with(self.ctx, 'tenant_1')
+
+    def test__ensure_default_security_group_already_exists(self):
+        with mock.patch.object(
+                self.mixin, '_get_default_sg_id') as get_default_sg_id,\
+                mock.patch.object(
+                        self.mixin, 'create_security_group') as create_sg:
+            get_default_sg_id.return_value = 'default_sg_id'
+            self.mixin._ensure_default_security_group(self.ctx, 'tenant_1')
+            create_sg.assert_not_called()
+            get_default_sg_id.assert_called_once_with(self.ctx, 'tenant_1')
+
+    def test__ensure_default_security_group_created_in_parallel(self):
+        with mock.patch.object(
+                self.mixin, '_get_default_sg_id') as get_default_sg_id,\
+                mock.patch.object(
+                        self.mixin, 'create_security_group') as create_sg:
+            get_default_sg_id.side_effect = [None, 'default_sg_id']
+            create_sg.side_effect = obj_exc.NeutronDbObjectDuplicateEntry(
+                mock.Mock(), mock.Mock())
+            self.mixin._ensure_default_security_group(self.ctx, 'tenant_1')
+            create_sg.assert_called_once_with(
+                self.ctx,
+                {'security_group': {
+                    'name': 'default',
+                    'tenant_id': 'tenant_1',
+                    'description': securitygroups_db.DEFAULT_SG_DESCRIPTION}},
+                default_sg=True)
+            get_default_sg_id.assert_has_calls([
+                mock.call(self.ctx, 'tenant_1'),
+                mock.call(self.ctx, 'tenant_1')])
