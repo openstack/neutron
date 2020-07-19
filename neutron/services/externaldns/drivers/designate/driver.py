@@ -61,6 +61,11 @@ def get_clients(context):
     return client, admin_client
 
 
+def get_all_projects_client(context):
+    auth = token_endpoint.Token(CONF.designate.url, context.auth_token)
+    return d_client.Client(session=_SESSION, auth=auth, all_projects=True)
+
+
 class Designate(driver.ExternalDNSService):
     """Driver for Designate."""
 
@@ -146,18 +151,25 @@ class Designate(driver.ExternalDNSService):
                     CONF.designate.ipv6_ptr_zone_prefix_size) / 4)
 
     def delete_record_set(self, context, dns_domain, dns_name, records):
-        designate, designate_admin = get_clients(context)
-        ids_to_delete = self._get_ids_ips_to_delete(
-            dns_domain, '%s.%s' % (dns_name, dns_domain), records, designate)
+        client, admin_client = get_clients(context)
+        try:
+            ids_to_delete = self._get_ids_ips_to_delete(
+                dns_domain, '%s.%s' % (dns_name, dns_domain), records, client)
+        except dns_exc.DNSDomainNotFound:
+            # Try whether we have admin powers and can see all projects
+            client = get_all_projects_client(context)
+            ids_to_delete = self._get_ids_ips_to_delete(
+                dns_domain, '%s.%s' % (dns_name, dns_domain), records, client)
+
         for _id in ids_to_delete:
-            designate.recordsets.delete(dns_domain, _id)
+            client.recordsets.delete(dns_domain, _id)
         if not CONF.designate.allow_reverse_dns_lookup:
             return
 
         for record in records:
             in_addr_name = netaddr.IPAddress(record).reverse_dns
             in_addr_zone_name = self._get_in_addr_zone_name(in_addr_name)
-            designate_admin.recordsets.delete(in_addr_zone_name, in_addr_name)
+            admin_client.recordsets.delete(in_addr_zone_name, in_addr_name)
 
     def _get_ids_ips_to_delete(self, dns_domain, name, records,
                                designate_client):
