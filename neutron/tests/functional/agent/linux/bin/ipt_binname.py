@@ -20,7 +20,7 @@ from __future__ import print_function
 
 import sys
 
-import eventlet
+from oslo_config import cfg  # noqa
 
 
 def print_binary_name():
@@ -33,6 +33,9 @@ def print_binary_name():
 
 
 if __name__ == "__main__":
+
+    import eventlet
+
     if 'spawn' in sys.argv:
         eventlet.spawn(print_binary_name).wait()
     else:
