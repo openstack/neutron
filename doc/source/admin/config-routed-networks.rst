@@ -27,7 +27,10 @@ A routed provider network enables a single provider network to represent
 multiple layer-2 networks (broadcast domains) or segments and enables the
 operator to present one network to users. However, the particular IP
 addresses available to an instance depend on the segment of the network
-available on the particular compute node.
+available on the particular compute node. Neutron port could be associated
+with only one network segment, but there is an exception for OVN distributed
+services like OVN Metadata.
+
 
 Similar to conventional networking, layer-2 (switching) handles transit of
 traffic between ports on the same segment and layer-3 (routing) handles
