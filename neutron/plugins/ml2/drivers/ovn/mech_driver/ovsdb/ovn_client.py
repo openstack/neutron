@@ -564,17 +564,13 @@ class OVNClient(object):
         if ovn_port is None:
             return
 
-        network_id = ovn_port.external_ids.get(
+        ovn_network_name = ovn_port.external_ids.get(
             ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY)
-
-        # TODO(lucasagomes): For backward compatibility, if network_id
-        # is not in the OVNDB, look at the port_object
-        if not network_id and port_object:
-            network_id = port_object['network_id']
+        network_id = ovn_network_name.strip('neutron-')
 
         with self._nb_idl.transaction(check_error=True) as txn:
             txn.add(self._nb_idl.delete_lswitch_port(
-                port_id, network_id))
+                port_id, ovn_network_name))
 
             p_object = ({'id': port_id, 'network_id': network_id}
                         if not port_object else port_object)
@@ -586,7 +582,7 @@ class OVNClient(object):
             # Check if the port being deleted is a virtual parent
             if (ovn_port.type != ovn_const.LSP_TYPE_VIRTUAL and
                     self._is_virtual_port_supported()):
-                ls = self._nb_idl.ls_get(network_id).execute(
+                ls = self._nb_idl.ls_get(ovn_network_name).execute(
                     check_error=True)
                 cmd = self._nb_idl.unset_lswitch_port_to_virtual_type
                 for lsp in ls.ports:

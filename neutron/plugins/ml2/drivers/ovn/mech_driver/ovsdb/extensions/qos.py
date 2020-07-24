@@ -188,7 +188,7 @@ class OVNClientQosExtension(object):
 
     def update_port(self, txn, port, original_port, reset=False, delete=False,
                     qos_rules=None):
-        if not reset and not original_port:
+        if (not reset and not original_port) and not delete:
             # If there is no information about the previous QoS policy, do not
             # make any change, unless the port is new or the QoS information
             # must be reset (delete any previous configuration and set new
