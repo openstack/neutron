@@ -125,6 +125,7 @@ class AddLSwitchPortCommand(command.BaseCommand):
 
         port = txn.insert(self.api._tables['Logical_Switch_Port'])
         port.name = self.lport
+        port.tag = self.columns.pop('tag', []) or []
         dhcpv4_options = self.columns.pop('dhcpv4_options', [])
         if isinstance(dhcpv4_options, list):
             port.dhcpv4_options = dhcpv4_options
