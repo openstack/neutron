@@ -252,15 +252,6 @@ class DbBasePluginCommon(object):
             raise exceptions.NetworkNotFound(net_id=id)
         return network
 
-    def _get_subnet(self, context, id):
-        # TODO(slaweq): remove this method when all will be switched to use OVO
-        # objects only
-        try:
-            subnet = model_query.get_by_id(context, models_v2.Subnet, id)
-        except exc.NoResultFound:
-            raise exceptions.SubnetNotFound(subnet_id=id)
-        return subnet
-
     def _get_subnet_object(self, context, id):
         subnet = subnet_obj.Subnet.get_object(context, id=id)
         if not subnet:
