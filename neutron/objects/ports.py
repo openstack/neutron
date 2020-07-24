@@ -21,7 +21,6 @@ from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.common import _constants
-from neutron.common import utils
 from neutron.db.models import dns as dns_models
 from neutron.db.models import l3
 from neutron.db.models import securitygroup as sg_models
@@ -406,7 +405,6 @@ class Port(base.NeutronDbObject):
         )
 
     @classmethod
-    @utils.timecost
     def get_objects(cls, context, _pager=None, validate_filters=True,
                     security_group_ids=None, **kwargs):
         if security_group_ids:
