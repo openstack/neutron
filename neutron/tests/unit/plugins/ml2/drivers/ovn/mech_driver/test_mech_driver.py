@@ -275,16 +275,22 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         self.assertIsNone(
             self.mech_driver._validate_port_extra_dhcp_opts(port))
 
-    def test__validate_port_extra_dhcp_opts_invalid(self):
+    @mock.patch.object(mech_driver.LOG, 'info')
+    def test__validate_port_extra_dhcp_opts_invalid(self, mock_log):
+        port_id = 'fake-port'
         opt = {'opt_name': 'not-valid',
                'opt_value': 'spongebob squarepants',
                'ip_version': 4}
-        port = {edo_ext.EXTRADHCPOPTS: [opt], 'id': 'fake-port'}
-        self.assertRaises(mech_driver.OVNPortUpdateError,
-                          self.mech_driver._validate_port_extra_dhcp_opts,
-                          port)
+        port = {edo_ext.EXTRADHCPOPTS: [opt], 'id': port_id}
+        self.mech_driver._validate_port_extra_dhcp_opts(port)
+        # Assert the log message contained the invalid DHCP options
+        expected_call = mock.call(
+            mock.ANY, {'port_id': port_id, 'ipv4_opts': 'not-valid',
+                       'ipv6_opts': ''})
+        mock_log.assert_has_calls([expected_call])
 
-    def test_create_port_invalid_extra_dhcp_opts(self):
+    @mock.patch.object(mech_driver.LOG, 'info')
+    def test_create_port_invalid_extra_dhcp_opts(self, mock_log):
         extra_dhcp_opts = {
             'extra_dhcp_opts': [{'ip_version': 4, 'opt_name': 'banana',
                                  'opt_value': 'banana'},
@@ -294,15 +300,17 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         with self.network() as n:
             with self.subnet(n):
                 res = self._create_port(self.fmt, n['network']['id'],
-                                        arg_list=('extra_dhcp_opts',),
-                                        **extra_dhcp_opts)
-                # Assert 400 (BadRequest) was returned
-                self.assertEqual(400, res.status_code)
-                response = self.deserialize(self.fmt, res)
-                self.assertIn('banana', response['NeutronError']['message'])
-                self.assertIn('orange', response['NeutronError']['message'])
+                                  arg_list=('extra_dhcp_opts',),
+                                  **extra_dhcp_opts)
+                port_id = self.deserialize(self.fmt, res)['port']['id']
+                # Assert the log message contained the invalid DHCP options
+                expected_call = mock.call(
+                    mock.ANY, {'port_id': port_id, 'ipv4_opts': 'banana',
+                               'ipv6_opts': 'orange'})
+                mock_log.assert_has_calls([expected_call])
 
-    def test_update_port_invalid_extra_dhcp_opts(self):
+    @mock.patch.object(mech_driver.LOG, 'info')
+    def test_update_port_invalid_extra_dhcp_opts(self, mock_log):
         data = {
             'port': {'extra_dhcp_opts': [{'ip_version': 4, 'opt_name': 'apple',
                                          'opt_value': 'apple'},
@@ -312,10 +320,14 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
             with self.subnet(network=net) as subnet:
                 with self.port(subnet=subnet,
                                set_context=True, tenant_id='test') as port:
-                    res = self._update('ports', port['port']['id'], data,
-                                       expected_code=400)
-                    self.assertIn('apple', res['NeutronError']['message'])
-                    self.assertIn('grape', res['NeutronError']['message'])
+                    port_id = port['port']['id']
+                    self._update('ports', port_id, data)
+
+                    # Assert the log message contained the invalid DHCP options
+                    expected_call = mock.call(
+                        mock.ANY, {'port_id': port_id, 'ipv4_opts': 'apple',
+                                   'ipv6_opts': 'grape'})
+                    mock_log.assert_has_calls([expected_call])
 
     def test_create_and_update_ignored_fip_port(self):
         with self.network(set_context=True, tenant_id='test') as net1:

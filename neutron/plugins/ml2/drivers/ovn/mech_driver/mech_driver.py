@@ -512,12 +512,10 @@ class OVNMechanismDriver(api.MechanismDriver):
             return
         ipv4_opts = ', '.join(result.invalid_ipv4)
         ipv6_opts = ', '.join(result.invalid_ipv6)
-        msg = (_('The following extra DHCP options for port %(port_id)s '
+        LOG.info('The following extra DHCP options for port %(port_id)s '
                  'are not supported by OVN. IPv4: "%(ipv4_opts)s" and '
-                 'IPv6: "%(ipv6_opts)s"') %
-               {'port_id': port['id'], 'ipv4_opts': ipv4_opts,
-                'ipv6_opts': ipv6_opts})
-        raise OVNPortUpdateError(resource='port', msg=msg)
+                 'IPv6: "%(ipv6_opts)s"', {'port_id': port['id'],
+                 'ipv4_opts': ipv4_opts, 'ipv6_opts': ipv6_opts})
 
     def create_port_precommit(self, context):
         """Allocate resources for a new port.
