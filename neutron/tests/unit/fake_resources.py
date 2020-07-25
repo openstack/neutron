@@ -358,9 +358,29 @@ class FakeOvsdbRow(FakeResource):
         ovsdb_row_attrs.update(attrs)
         ovsdb_row_methods.update(methods)
 
-        return FakeResource(info=copy.deepcopy(ovsdb_row_attrs),
-                            loaded=True,
-                            methods=copy.deepcopy(ovsdb_row_methods))
+        result = FakeResource(info=copy.deepcopy(ovsdb_row_attrs),
+                              loaded=True,
+                              methods=copy.deepcopy(ovsdb_row_methods))
+        result.setkey.side_effect = lambda col, k, v: (
+                getattr(result, col).__setitem__(k, v))
+
+        def fake_addvalue(col, val):
+            try:
+                getattr(result, col).append(val)
+            except AttributeError:
+                # Not all tests set up fake rows to have all used cols
+                pass
+
+        def fake_delvalue(col, val):
+            try:
+                getattr(result, col).remove(val)
+            except (AttributeError, ValueError):
+                # Some tests also fake adding values
+                pass
+
+        result.addvalue.side_effect = fake_addvalue
+        result.delvalue.side_effect = fake_delvalue
+        return result
 
 
 class FakeOvsdbTable(FakeResource):
