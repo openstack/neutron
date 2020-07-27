@@ -165,6 +165,7 @@
         s-proxy: false
         tls-proxy: true
         q-qos: true
+        neutron-segments: True
     group-vars:
       subnode:
         devstack_services:

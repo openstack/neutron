@@ -15,6 +15,7 @@
 from neutron_lib.api.definitions import agent as agent_def
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import router_availability_zone as raz_def
+from neutron_lib.api.definitions import segment as seg_def
 
 # NOTE(russellb) This remains in its own file (vs constants.py) because we want
 # to be able to easily import it and export the info without any dependencies
@@ -61,4 +62,5 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     'standard-attr-timestamp',
     'trunk',
     'quota_details',
+    seg_def.ALIAS,
 ]
