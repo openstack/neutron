@@ -344,7 +344,6 @@ def enable_tests_from_config():
     run all necessary tests, just by passing in the appropriate configs.
     """
 
-    cfg.CONF.set_default('vf_management', True)
     cfg.CONF.set_default('arp_header_match', True)
     cfg.CONF.set_default('icmpv6_header_match', True)
     if 'vxlan' in cfg.CONF.AGENT.tunnel_types:
@@ -375,9 +374,6 @@ def enable_tests_from_config():
         cfg.CONF.set_default('ipset_installed', True)
     if cfg.CONF.SECURITYGROUP.enable_security_group:
         cfg.CONF.set_default('ip6tables_installed', True)
-    if ('sriovnicswitch' in cfg.CONF.ml2.mechanism_drivers and
-            'qos' in cfg.CONF.ml2.extension_drivers):
-        cfg.CONF.set_default('vf_extended_management', True)
     if cfg.CONF.SECURITYGROUP.firewall_driver in (
         'iptables',
         'iptables_hybrid',
