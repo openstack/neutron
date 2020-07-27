@@ -396,7 +396,8 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
 
     def test_service_plugins_values(self):
         exp_default_plugins = ['router']
-        supported_plugins = ['router', 'ovn-router']
+        ovn_rtr_full = 'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin'
+        supported_plugins = ['router', 'ovn-router', ovn_rtr_full]
         same_as_input = 'same_as_input'
         TC = namedtuple('TC', 'input exp_plugins exp_uses_rpc description')
         test_cases = [
@@ -408,17 +409,23 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
             TC(['foo', 'router'], exp_default_plugins, True,
                "default from valid cfg"),
             TC(['router'], same_as_input, True, "valid cfg 1"),
-            TC(['router'], same_as_input, True, "valid cfg 1"),
             TC(['ovn-router'], same_as_input, False, "valid cfg 2"),
-            TC(['ovn-router', 'router'], supported_plugins, True,
-               "valid cfg 3"),
-            TC(['router', 'ovn-router'], supported_plugins, True,
+            TC([ovn_rtr_full], same_as_input, False, "valid cfg 3"),
+            TC(['ovn-router', ovn_rtr_full, 'router'], supported_plugins, True,
                "valid cfg 4"),
-            TC(['bar', 'router', 'foo'], ['router'], True, "valid cfg 5"),
-            TC(['bar', 'ovn-router', 'foo'], ['ovn-router'], False,
+            TC(['router', 'ovn-router'], same_as_input, True,
+               "valid cfg 5"),
+            TC(['router', ovn_rtr_full], same_as_input, True,
                "valid cfg 6"),
-            TC(['bar', 'router', 123, 'ovn-router', 'foo', 'kitchen', 'sink'],
-               supported_plugins, True, "valid cfg 7"),
+            TC([ovn_rtr_full, 'ovn-router'], ['ovn-router', ovn_rtr_full],
+               False, "valid cfg 7"),
+            TC(['bar', 'router', 'foo'], ['router'], True, "valid cfg 8"),
+            TC(['bar', 'ovn-router', 'foo'], ['ovn-router'], False,
+               "valid cfg 9"),
+            TC(['bar', ovn_rtr_full, 'foo'], [ovn_rtr_full], False,
+               "valid cfg 10"),
+            TC(['bar', 'router', 123, 'ovn-router', 'foo', 'kitchen', 'sink',
+                ovn_rtr_full], supported_plugins, True, "valid cfg 11"),
         ]
         for tc in test_cases:
             cfg.CONF.set_override("service_plugins", tc.input)

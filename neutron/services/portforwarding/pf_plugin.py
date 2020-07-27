@@ -58,7 +58,10 @@ PORT_FORWARDING_FLOATINGIP_KEY = '_pf_floatingips'
 def _required_service_plugins():
     SvcPlugin = collections.namedtuple('SvcPlugin', 'plugin uses_rpc')
     l3_router = SvcPlugin(l3.ROUTER, True)
-    supported_svc_plugins = [l3_router, SvcPlugin('ovn-router', False)]
+    supported_svc_plugins = [
+        l3_router,
+        SvcPlugin('ovn-router', False),
+        SvcPlugin('neutron.services.ovn_l3.plugin.OVNL3RouterPlugin', False)]
     plugins = []
     rpc_required = False
     try:
