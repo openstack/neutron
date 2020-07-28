@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Neutron supports ECMP routes now, with this change, neutron will
+    consolidate multiple routes with the same destination address into
+    a single ECMP route. For more information see bug
+    `1880532 <https://bugs.launchpad.net/neutron/+bug/1880532>`_.

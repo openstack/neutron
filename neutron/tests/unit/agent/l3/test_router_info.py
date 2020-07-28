@@ -52,6 +52,74 @@ class TestRouterInfo(base.BaseTestCase):
                            self.mock_delete_ip_route)
             mock_method.assert_has_calls(mock_calls, any_order=True)
 
+    def _check_ip_wrapper_method_called(self, calls):
+        self.mock_ip.netns.execute.assert_has_calls(
+            [mock.call(call, check_exit_code=False) for call in calls],
+            any_order=True)
+
+    def test_update_routing_table_ecmp(self):
+        ri = router_info.RouterInfo(mock.Mock(), _uuid(), {}, **self.ri_kwargs)
+        ri.router = {}
+        fake_route_list = [{'destination': '135.207.111.111/32',
+                            'nexthop': '135.207.111.112'},
+                           {'destination': '135.207.111.111/32',
+                            'nexthop': '135.207.111.113'}]
+        expected_dst = '135.207.111.111/32'
+        expected_next_hops = [{'via': '135.207.111.112'},
+                              {'via': '135.207.111.113'}]
+        ri.update_routing_table_ecmp(fake_route_list)
+        self.mock_add_ip_route.assert_called_once_with(
+            ri.ns_name,
+            expected_dst,
+            via=expected_next_hops)
+
+    def test_check_and_remove_ecmp_route(self):
+        ri = router_info.RouterInfo(mock.Mock(), _uuid(), {}, **self.ri_kwargs)
+        ri.router = {}
+        fake_old_routes1 = [{'destination': '135.207.111.111/32',
+                             'nexthop': '135.207.111.112'},
+                            {'destination': '135.207.111.111/32',
+                             'nexthop': '135.207.111.113'}]
+        fake_route1 = {'destination': '135.207.111.111/32',
+                       'nexthop': '135.207.111.113'}
+        fake_old_routes2 = [{'destination': '135.207.111.111/32',
+                             'nexthop': '135.207.111.112'},
+                            {'destination': '135.207.111.111/32',
+                             'nexthop': '135.207.111.113'},
+                            {'destination': '135.207.111.111/32',
+                             'nexthop': '135.207.111.114'}]
+        fake_route2 = [{'destination': '135.207.111.111/32',
+                        'nexthop': '135.207.111.113'},
+                       {'destination': '135.207.111.111/32',
+                        'nexthop': '135.207.111.114'}]
+        fake_remove_route = {'destination': '135.207.111.111/32',
+                             'nexthop': '135.207.111.112'}
+        ri.update_routing_table = mock.Mock()
+
+        ri.check_and_remove_ecmp_route(fake_old_routes1, fake_remove_route)
+        ri.update_routing_table.assert_called_once_with('replace',
+                                                        fake_route1)
+
+        ri.update_routing_table_ecmp = mock.Mock()
+        ri.check_and_remove_ecmp_route(fake_old_routes2, fake_remove_route)
+        ri.update_routing_table_ecmp.assert_called_once_with(fake_route2)
+
+    def test_check_and_add_ecmp_route(self):
+        ri = router_info.RouterInfo(mock.Mock(), _uuid(), {}, **self.ri_kwargs)
+        ri.router = {}
+        fake_old_routes = [{'destination': '135.207.111.111/32',
+                            'nexthop': '135.207.111.112'}]
+        fake_new_route = {'destination': '135.207.111.111/32',
+                          'nexthop': '135.207.111.113'}
+        ri.update_routing_table_ecmp = mock.Mock()
+
+        ri.check_and_add_ecmp_route(fake_old_routes, fake_new_route)
+        expected_routes = [{'destination': '135.207.111.111/32',
+                            'nexthop': '135.207.111.112'},
+                           {'destination': '135.207.111.111/32',
+                            'nexthop': '135.207.111.113'}]
+        ri.update_routing_table_ecmp.assert_called_once_with(expected_routes)
+
     def test_routing_table_update(self):
         ri = router_info.RouterInfo(mock.Mock(), _uuid(), {}, **self.ri_kwargs)
         ri.router = {}
