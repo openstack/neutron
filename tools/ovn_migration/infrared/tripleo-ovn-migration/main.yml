@@ -35,15 +35,15 @@
             state: directory
             path: "{{ ovn_migration_working_dir }}"
 
-      - name: Set the docker registry information
+      - name: Set the image registry information
         block:
-            - name: Get the docker registry info (infrared deployment)
+            - name: Get the image registry info (infrared deployment)
               block:
                   - name: Set is_infrard deployment
                     set_fact:
                         is_infrared: True
 
-                  - name: Save the docker reg
+                  - name: Save the image reg
                     set_fact:
                         container_image_prepare:
                             namespace: "{{ install.get('registry', {}).namespace|default(False)|ternary(install.get('registry', {}).namespace, install.get('registry', {}).mirror + '/' + 'rhosp' +  install.version) }}"
@@ -54,13 +54,13 @@
               when:
                   - install is defined
 
-            - name: Get the docker registry info (tripleo deployment)
+            - name: Get the image registry info (tripleo deployment)
               block:
                   - name: Set is_infrard deployment
                     set_fact:
                         is_infrared: False
 
-                  - name: Save the docker reg
+                  - name: Save the image reg
                     set_fact:
                         container_image_prepare:
                             namespace: "{{ registry_namespace }}"

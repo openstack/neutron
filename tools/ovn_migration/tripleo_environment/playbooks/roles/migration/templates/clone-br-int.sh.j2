@@ -73,5 +73,5 @@ function copy_interfaces_to_br_migration() {
 }
 
 recreate_bridge_mappings
-docker restart ovn_controller
+podman restart ovn_controller
 copy_interfaces_to_br_migration

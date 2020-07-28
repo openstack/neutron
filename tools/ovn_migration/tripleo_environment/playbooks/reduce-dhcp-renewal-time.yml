@@ -13,12 +13,7 @@
     ignore_errors: yes
 
   - block:
-    - name: Get the neutron dhcp agent docker id
-      shell:
-        docker ps | grep neutron_dhcp | awk '{print $1}'
-      register: dhcp_agent_docker_id
-      ignore_errors: yes
-
     - name: Restart neutron dhcp agent
-      command: docker restart {{ dhcp_agent_docker_id.stdout }}
+      shell:
+        podman restart $(podman ps --filter "name=neutron_dhcp" --format {% raw %}"{{.ID}}"{% endraw %})
       ignore_errors: yes
