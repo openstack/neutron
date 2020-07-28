@@ -231,12 +231,14 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         p = port['port']
         fixed_configured = p['fixed_ips'] is not constants.ATTR_NOT_SPECIFIED
         fixed_ips = p['fixed_ips'] if fixed_configured else []
-        subnets = self._ipam_get_subnets(context,
-                                         network_id=p['network_id'],
-                                         host=p.get(portbindings.HOST_ID),
-                                         service_type=p.get('device_owner'),
-                                         fixed_configured=fixed_configured,
-                                         fixed_ips=fixed_ips)
+        subnets = self._ipam_get_subnets(
+            context,
+            network_id=p['network_id'],
+            host=p.get(portbindings.HOST_ID),
+            service_type=p.get('device_owner'),
+            fixed_configured=fixed_configured,
+            fixed_ips=fixed_ips,
+            distributed_service=self._is_distributed_service(p))
 
         v4, v6_stateful, v6_stateless = self._classify_subnets(
             context, subnets)
@@ -348,7 +350,8 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             subnets = self._ipam_get_subnets(
                 context, network_id=port['network_id'], host=host,
                 service_type=port.get('device_owner'), fixed_configured=True,
-                fixed_ips=changes.add + changes.original)
+                fixed_ips=changes.add + changes.original,
+                distributed_service=self._is_distributed_service(port))
         except ipam_exc.DeferIpam:
             subnets = []
 
