@@ -615,7 +615,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         admin_context = n_context.get_admin_context()
         cmds = []
         for ls in self._nb_idl.ls_list().execute(check_error=True):
-            network_id = ls.name.strip('neutron-')
+            network_id = ls.name.replace('neutron-', '')
             legacy_name = utils.ovn_provnet_port_name(network_id)
             legacy_port = None
             segment_id = None
