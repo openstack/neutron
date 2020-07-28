@@ -61,7 +61,7 @@ defaults
     timeout http-keep-alive 30s
 
 listen listener
-    bind 0.0.0.0:%(port)s
+    bind %(host)s:%(port)s
     server metadata %(unix_socket_path)s
     http-request add-header X-Neutron-%(res_type)s-ID %(res_id)s
 """
@@ -72,13 +72,14 @@ class InvalidUserOrGroupException(Exception):
 
 
 class HaproxyConfigurator(object):
-    def __init__(self, network_id, router_id, unix_socket_path, port, user,
-                 group, state_path, pid_file):
+    def __init__(self, network_id, router_id, unix_socket_path, host, port,
+                 user, group, state_path, pid_file):
         self.network_id = network_id
         self.router_id = router_id
         if network_id is None and router_id is None:
             raise exceptions.NetworkIdOrRouterIdRequiredError()
 
+        self.host = host
         self.port = port
         self.user = user
         self.group = group
@@ -116,6 +117,7 @@ class HaproxyConfigurator(object):
                     _("Invalid group/gid: '%s'") % self.group)
 
         cfg_info = {
+            'host': self.host,
             'port': self.port,
             'unix_socket_path': self.unix_socket_path,
             'user': username,
@@ -201,8 +203,8 @@ class MetadataDriver(object):
         return user, group
 
     @classmethod
-    def _get_metadata_proxy_callback(cls, port, conf, network_id=None,
-                                     router_id=None):
+    def _get_metadata_proxy_callback(cls, bind_address, port, conf,
+                                     network_id=None, router_id=None):
         def callback(pid_file):
             metadata_proxy_socket = conf.metadata_proxy_socket
             user, group = (
@@ -210,6 +212,7 @@ class MetadataDriver(object):
             haproxy = HaproxyConfigurator(network_id,
                                           router_id,
                                           metadata_proxy_socket,
+                                          bind_address,
                                           port,
                                           user,
                                           group,
@@ -224,10 +227,12 @@ class MetadataDriver(object):
 
     @classmethod
     def spawn_monitored_metadata_proxy(cls, monitor, ns_name, port, conf,
-                                       network_id=None, router_id=None):
+                                       bind_address="0.0.0.0", network_id=None,
+                                       router_id=None):
         uuid = network_id or router_id
         callback = cls._get_metadata_proxy_callback(
-            port, conf, network_id=network_id, router_id=router_id)
+            bind_address, port, conf, network_id=network_id,
+            router_id=router_id)
         pm = cls._get_metadata_proxy_process_manager(uuid, conf,
                                                      ns_name=ns_name,
                                                      callback=callback)
@@ -282,7 +287,7 @@ def after_router_added(resource, event, l3_agent, **kwargs):
     router = kwargs['router']
     proxy = l3_agent.metadata_driver
     for c, r in proxy.metadata_filter_rules(proxy.metadata_port,
-                                           proxy.metadata_access_mark):
+                                            proxy.metadata_access_mark):
         router.iptables_manager.ipv4['filter'].add_rule(c, r)
     for c, r in proxy.metadata_nat_rules(proxy.metadata_port):
         router.iptables_manager.ipv4['nat'].add_rule(c, r)

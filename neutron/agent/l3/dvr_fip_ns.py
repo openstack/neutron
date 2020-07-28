@@ -201,16 +201,8 @@ class FipNamespace(namespaces.Namespace):
         LOG.debug("DVR: add fip namespace: %s", self.name)
         # parent class will ensure the namespace exists and turn-on forwarding
         super(FipNamespace, self).create()
-        # Somewhere in the 3.19 kernel timeframe ip_nonlocal_bind was
-        # changed to be a per-namespace attribute.  To be backwards
-        # compatible we need to try both if at first we fail.
-        failed = ip_lib.set_ip_nonlocal_bind(
-                value=1, namespace=self.name, log_fail_as_error=False)
-        if failed:
-            LOG.debug('DVR: fip namespace (%s) does not support setting '
-                      'net.ipv4.ip_nonlocal_bind, trying in root namespace',
-                      self.name)
-            ip_lib.set_ip_nonlocal_bind(value=1)
+        ip_lib.set_ip_nonlocal_bind_for_namespace(self.name, 1,
+                                                  root_namespace=True)
 
         # no connection tracking needed in fip namespace
         self._iptables_manager.ipv4['raw'].add_rule('PREROUTING',

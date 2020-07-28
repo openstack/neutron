@@ -32,7 +32,7 @@ class SnatNamespace(namespaces.Namespace):
         super(SnatNamespace, self).create()
         # This might be an HA router namespaces and it should not have
         # ip_nonlocal_bind enabled
-        ip_lib.set_ip_nonlocal_bind_for_namespace(self.name)
+        ip_lib.set_ip_nonlocal_bind_for_namespace(self.name, 0)
         # Set nf_conntrack_tcp_loose to 0 to ensure mid-stream
         # TCP conversations aren't taken over by SNAT
         cmd = ['net.netfilter.nf_conntrack_tcp_loose=0']
