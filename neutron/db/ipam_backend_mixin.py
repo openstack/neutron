@@ -77,6 +77,11 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                 raise exc.InvalidAllocationPool(pool=ip_pool)
         return ip_range_pools
 
+    @staticmethod
+    def _is_distributed_service(port):
+        return (port.get('device_owner') == const.DEVICE_OWNER_DHCP and
+                port.get('device_id').startswith('ovn'))
+
     def delete_subnet(self, context, subnet_id):
         pass
 
@@ -642,7 +647,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         return fixed_ip_list
 
     def _ipam_get_subnets(self, context, network_id, host, service_type=None,
-                          fixed_configured=False, fixed_ips=None):
+                          fixed_configured=False, fixed_ips=None,
+                          distributed_service=False):
         """Return eligible subnets
 
         If no eligible subnets are found, determine why and potentially raise
@@ -650,7 +656,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         """
         subnets = subnet_obj.Subnet.find_candidate_subnets(
             context, network_id, host, service_type, fixed_configured,
-            fixed_ips)
+            fixed_ips, distributed_service=distributed_service)
         if subnets:
             subnet_dicts = [self._make_subnet_dict(subnet, context=context)
                             for subnet in subnets]
@@ -712,7 +718,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             if old_ips and new_host_requested and not fixed_ips_requested:
                 valid_subnets = self._ipam_get_subnets(
                     context, old_port['network_id'], host,
-                    service_type=old_port.get('device_owner'))
+                    service_type=old_port.get('device_owner'),
+                    distributed_service=self._is_distributed_service(old_port))
                 valid_subnet_ids = {s['id'] for s in valid_subnets}
                 for fixed_ip in old_ips:
                     if fixed_ip['subnet_id'] not in valid_subnet_ids:

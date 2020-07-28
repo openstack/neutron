@@ -690,11 +690,47 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         mocks['ipam']._ipam_get_subnets.assert_called_once_with(
             context, network_id=port_dict['network_id'], fixed_configured=True,
             fixed_ips=[ip_dict], host=None,
-            service_type=port_dict['device_owner'])
+            service_type=port_dict['device_owner'],
+            distributed_service=False)
         # Validate port_dict is passed into address_factory
         address_factory.get_request.assert_called_once_with(context,
                                                             port_dict,
                                                             ip_dict)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_update_ips_for_port_ovn_distributed_svc(self, pool_mock):
+        address_factory = mock.Mock()
+        mocks = self._prepare_mocks_with_pool_mock(
+            pool_mock, address_factory=address_factory)
+        context = mock.Mock()
+        new_ips = mock.Mock()
+        original_ips = mock.Mock()
+        mac = mock.Mock()
+
+        ip_dict = {'ip_address': '192.1.1.10',
+                   'subnet_id': uuidutils.generate_uuid()}
+        changes = ipam_pluggable_backend.IpamPluggableBackend.Changes(
+            add=[ip_dict], original=[], remove=[])
+        changes_mock = mock.Mock(return_value=changes)
+        fixed_ips_mock = mock.Mock(return_value=changes.add)
+        mocks['ipam'] = ipam_pluggable_backend.IpamPluggableBackend()
+        mocks['ipam']._get_changed_ips_for_port = changes_mock
+        mocks['ipam']._ipam_get_subnets = mock.Mock(return_value=[])
+        mocks['ipam']._test_fixed_ips_for_port = fixed_ips_mock
+        mocks['ipam']._update_ips_for_pd_subnet = mock.Mock(return_value=[])
+
+        port_dict = {
+            'device_owner': constants.DEVICE_OWNER_DHCP,
+            'device_id': 'ovnmeta-%s' % uuidutils.generate_uuid(),
+            'network_id': uuidutils.generate_uuid()}
+
+        mocks['ipam']._update_ips_for_port(context, port_dict, None,
+                                           original_ips, new_ips, mac)
+        mocks['ipam']._ipam_get_subnets.assert_called_once_with(
+            context, network_id=port_dict['network_id'], fixed_configured=True,
+            fixed_ips=[ip_dict], host=None,
+            service_type=port_dict['device_owner'],
+            distributed_service=True)
 
     @mock.patch('neutron.ipam.driver.Pool')
     def test_update_ips_for_port_passes_port_id_to_factory(self, pool_mock):
