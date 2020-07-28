@@ -512,6 +512,8 @@ class OVS_Lib_Test(base.BaseTestCase):
                        if_exists=True)])
 
     def test_get_port_ofport_retry(self):
+        # Increase this value to avoid a timeout during the test execution
+        self.br.ovsdb.ovsdb_connection.timeout = 10
         with mock.patch.object(
                 self.br, 'db_get_val',
                 side_effect=[[], [], [], [], 1]):
@@ -519,7 +521,7 @@ class OVS_Lib_Test(base.BaseTestCase):
 
     def test_get_port_ofport_retry_fails(self):
         # reduce timeout for faster execution
-        self.br.ovsdb_timeout = 1
+        self.br.ovsdb.ovsdb_connection.timeout = 1
         # after 7 calls the retry will timeout and raise
         with mock.patch.object(
                 self.br, 'db_get_val',
