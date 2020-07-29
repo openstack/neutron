@@ -52,7 +52,6 @@
       jobs:
         - neutron-functional
         - neutron-tempest-postgres-full
-        - neutron-tempest-with-ryu-master
     experimental:
       jobs:
         - neutron-functional-python35
@@ -125,17 +124,6 @@
               - ^tools/.*$
               - ^tox.ini$
         - legacy-tempest-dsvm-neutron-dvr-multinode-full:
-            irrelevant-files:
-              - ^(test-|)requirements.txt$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^neutron/tests/unit/.*$
-              - ^releasenotes/.*$
-              - ^setup.cfg$
-              - ^tools/.*$
-              - ^tox.ini$
-        - legacy-tempest-dsvm-neutron-with-ryu-master:
             irrelevant-files:
               - ^(test-|)requirements.txt$
               - ^.*\.rst$
@@ -421,17 +409,6 @@
     parent: legacy-dsvm-base
     run: playbooks/legacy/neutron-tempest-postgres-full/run.yaml
     post-run: playbooks/legacy/neutron-tempest-postgres-full/post.yaml
-    timeout: 7800
-    required-projects:
-      - openstack/devstack-gate
-      - openstack/neutron
-      - openstack/tempest
-
-- job:
-    name: neutron-tempest-with-ryu-master
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-tempest-with-ryu-master/run.yaml
-    post-run: playbooks/legacy/neutron-tempest-with-ryu-master/post.yaml
     timeout: 7800
     required-projects:
       - openstack/devstack-gate
