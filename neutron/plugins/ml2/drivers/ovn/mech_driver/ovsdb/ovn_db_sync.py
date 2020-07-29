@@ -71,6 +71,11 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
             core_plugin, ovn_api, ovn_driver)
         self.mode = mode
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
+        self.pf_plugin = directory.get_plugin(plugin_constants.PORTFORWARDING)
+        if not self.pf_plugin:
+            self.pf_plugin = (
+                manager.NeutronManager.load_class_for_provider(
+                    'neutron.service_plugins', 'port_forwarding')())
         self._ovn_client = ovn_client.OVNClient(ovn_api, sb_ovn)
         self.segments_plugin = directory.get_plugin('segments')
         if not self.segments_plugin:
@@ -325,6 +330,62 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
 
         return to_add, to_remove
 
+    def _calculate_fip_pfs_differences(self, ovn_rtr_lb_pfs, db_pfs):
+        to_add_or_update = set()
+        to_remove = []
+        ovn_pfs = utils.parse_ovn_lb_port_forwarding(ovn_rtr_lb_pfs)
+
+        # check that all pfs are accounted for in ovn_pfs by building
+        # a set for each protocol and then comparing it with ovn_pfs
+        db_mapped_pfs = {}
+        for db_pf in db_pfs:
+            fip_id = db_pf.get('floatingip_id')
+            protocol = self.l3_plugin.port_forwarding.ovn_lb_protocol(
+                db_pf.get('protocol'))
+            db_vip = "{}:{} {}:{}".format(
+                db_pf.get('floating_ip_address'), db_pf.get('external_port'),
+                db_pf.get('internal_ip_address'), db_pf.get('internal_port'))
+
+            fip_dict = db_mapped_pfs.get(fip_id, {})
+            fip_dict_proto = fip_dict.get(protocol, set())
+            fip_dict_proto.add(db_vip)
+            if protocol not in fip_dict:
+                fip_dict[protocol] = fip_dict_proto
+            if fip_id not in db_mapped_pfs:
+                db_mapped_pfs[fip_id] = fip_dict
+        for fip_id in db_mapped_pfs:
+            ovn_pfs_fip_id = ovn_pfs.get(fip_id, {})
+            # check for cases when ovn has lbs for protocols that are not in
+            # neutron db
+            if len(db_mapped_pfs[fip_id]) != len(ovn_pfs_fip_id):
+                to_add_or_update.add(fip_id)
+                continue
+            # check that vips in each protocol are an exact match
+            for protocol in db_mapped_pfs[fip_id]:
+                ovn_fip_dict_proto = ovn_pfs_fip_id.get(protocol)
+                if db_mapped_pfs[fip_id][protocol] != ovn_fip_dict_proto:
+                    to_add_or_update.add(fip_id)
+
+        # remove pf entries that exist in ovn lb but have no fip in
+        # neutron db.
+        for fip_id in ovn_pfs:
+            for db_pf in db_pfs:
+                pf_fip_id = db_pf.get('floatingip_id')
+                if pf_fip_id == fip_id:
+                    break
+            else:
+                to_remove.append(fip_id)
+
+        return list(to_add_or_update), to_remove
+
+    def _create_or_update_floatingip_pfs(self, context, fip_id, txn):
+        self.l3_plugin.port_forwarding.db_sync_create_or_update(
+            context, fip_id, txn)
+
+    def _delete_floatingip_pfs(self, context, fip_id, txn):
+        self.l3_plugin.port_forwarding.db_sync_delete(
+            context, fip_id, txn)
+
     def sync_routers_and_rports(self, ctx):
         """Sync Routers between neutron and NB.
 
@@ -358,6 +419,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
             db_extends[router['id']]['routes'] = []
             db_extends[router['id']]['snats'] = []
             db_extends[router['id']]['fips'] = []
+            db_extends[router['id']]['fips_pfs'] = []
             if not router.get(l3.EXTERNAL_GW_INFO):
                 continue
             gateways = self._ovn_client._get_gw_info(ctx, router)
@@ -385,6 +447,11 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
             ctx, {'router_id': list(db_routers.keys())})
         for fip in fips:
             db_extends[fip['router_id']]['fips'].append(fip)
+            if self.pf_plugin:
+                fip_pfs = self.pf_plugin.get_floatingip_port_forwardings(
+                    ctx, fip['id'])
+                for fip_pf in fip_pfs:
+                    db_extends[fip['router_id']]['fips_pfs'].append(fip_pf)
         interfaces = self.l3_plugin._get_sync_interfaces(
             ctx, list(db_routers.keys()),
             [constants.DEVICE_OWNER_ROUTER_INTF,
@@ -403,6 +470,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         update_lrport_list = []
         update_snats_list = []
         update_fips_list = []
+        update_pfs_list = []
         for lrouter in lrouters:
             ovn_rtr_lb_pfs = self.ovn_api.get_router_floatingip_lbs(
                 utils.ovn_name(lrouter['name']))
@@ -438,6 +506,12 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 update_fips_list.append({'id': lrouter['name'],
                                          'add': add_fips,
                                          'del': del_fips})
+                db_fips_pfs = db_extends[lrouter['name']]['fips_pfs']
+                add_fip_pfs, del_fip_pfs = self._calculate_fip_pfs_differences(
+                    ovn_rtr_lb_pfs, db_fips_pfs)
+                update_pfs_list.append({'id': lrouter['name'],
+                                        'add': add_fip_pfs,
+                                        'del': del_fip_pfs})
                 ovn_nats = lrouter['snats']
                 db_snats = db_extends[lrouter['name']]['snats']
                 add_snats, del_snats = helpers.diff_list_of_dict(
@@ -478,6 +552,14 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                         update_fips_list.append(
                             {'id': router['id'],
                              'add': db_extends[router['id']]['fips'],
+                             'del': []})
+                    if 'fips_pfs' in db_extends[router['id']]:
+                        add_fip_pfs = {
+                            db_pf['floatingip_id'] for
+                            db_pf in db_extends[router['id']]['fips_pfs']}
+                        update_pfs_list.append(
+                            {'id': router['id'],
+                             'add': list(add_fip_pfs),
                              'del': []})
                 except RuntimeError:
                     LOG.warning("Create router in OVN NB failed for router %s",
@@ -578,6 +660,32 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                         for nat in fip['add']:
                             self._ovn_client._create_or_update_floatingip(
                                 nat, txn=txn)
+
+            for pf in update_pfs_list:
+                if pf['del']:
+                    LOG.warning("Router %(id)s port forwarding for floating "
+                                "ips %(fip)s found in OVN but not in Neutron",
+                                {'id': pf['id'], 'fip': pf['del']})
+                    if self.mode == SYNC_MODE_REPAIR:
+                        LOG.warning(
+                            "Delete port forwarding for fips %s from "
+                            "OVN NB DB",
+                            pf['del'])
+                        for pf_id in pf['del']:
+                            self._delete_floatingip_pfs(ctx, pf_id, txn)
+                if pf['add']:
+                    LOG.warning("Router %(id)s port forwarding for floating "
+                                "ips %(fip)s Neutron out of sync or missing "
+                                "in OVN",
+                                {'id': pf['id'], 'fip': pf['add']})
+                    if self.mode == SYNC_MODE_REPAIR:
+                        LOG.warning("Add port forwarding for fips %s "
+                                    "to OVN NB DB",
+                                    pf['add'])
+                        for pf_fip_id in pf['add']:
+                            self._create_or_update_floatingip_pfs(
+                                ctx, pf_fip_id, txn)
+
             for snat in update_snats_list:
                 if snat['del']:
                     LOG.warning("Router %(id)s snat %(snat)s "
