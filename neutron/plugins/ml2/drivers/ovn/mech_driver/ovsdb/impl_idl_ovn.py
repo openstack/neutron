@@ -33,6 +33,7 @@ from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as cfg
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import commands as cmd
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
+from neutron.services.portforwarding import constants as pf_const
 
 
 LOG = log.getLogger(__name__)
@@ -617,6 +618,26 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
 
         return (ls, None)
 
+    def get_router_floatingip_lbs(self, lrouter_name):
+        rc = self.db_find_rows('Load_Balancer', (
+            'external_ids', '=',
+            {ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
+                pf_const.PORT_FORWARDING_PLUGIN,
+             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: lrouter_name}))
+        return [ovn_obj for ovn_obj in rc.execute(check_error=True)
+                if ovn_const.OVN_FIP_EXT_ID_KEY in ovn_obj.external_ids]
+
+    def get_floatingip_in_nat_or_lb(self, fip_id):
+        fip = self.get_floatingip(fip_id)
+        if fip:
+            return fip
+        result = self.db_find('Load_Balancer', (
+            'external_ids', '=',
+            {ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
+                pf_const.PORT_FORWARDING_PLUGIN,
+             ovn_const.OVN_FIP_EXT_ID_KEY: fip_id})).execute(check_error=True)
+        return result[0] if result else None
+
     def get_floatingip(self, fip_id):
         # TODO(dalvarez): remove this check once the minimum OVS required
         # version contains the column (when OVS 2.8.2 is released).
@@ -716,6 +737,9 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
                                            virtual_parent, if_exists=True):
         return cmd.UnsetLSwitchPortToVirtualTypeCommand(
             self, lport_name, virtual_parent, if_exists)
+
+    def update_lb_external_ids(self, lb_name, values, if_exists=True):
+        return cmd.UpdateLbExternalIds(self, lb_name, values, if_exists)
 
 
 class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):

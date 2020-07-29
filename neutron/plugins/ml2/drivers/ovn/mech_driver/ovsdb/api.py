@@ -570,6 +570,42 @@ class API(api.API, metaclass=abc.ABCMeta):
         :returns:               :class:`Command` with no result
         """
 
+    @abc.abstractmethod
+    def update_lb_external_ids(self, lb_name, values, if_exists=True):
+        """Set the external_ids field of a given Load Balancer.
+
+        :param lb_name:         The name of the load_balancer
+        :type lb_name:          string
+        :param values:          Values to be set in external_ids
+        :type values:           dict
+        :param if_exists:       Do not fail if lb_name does not exist
+        :type if_exists:        bool
+        :returns:               :class:`Command` with no result
+        """
+
+    @abc.abstractmethod
+    def get_router_floatingip_lbs(self, lrouter_name):
+        """Get Load Balancers used as port forwarding by a Logical Router.
+
+        :param lrouter_name: The name of the logical router
+        :type lrouter_name: string
+        :returns: a list of Load_Balancer rows matched
+        """
+
+    @abc.abstractmethod
+    def get_floatingip_in_nat_or_lb(self, fip_id):
+        """Get a Floating IP from either NAT or Load Balancer table by its ID
+
+        NAT rows in OVN are mapped for floating IPs, except for port
+        forwarding. In such cases, Load Balancer table is used . This function
+        returns a row from NAT, if there is one. Otherwise, it will lookup
+        for the FIP ID in the LB table and return the first match.
+
+        :param fip_id: The floating IP id
+        :type fip_id: string
+        :returns: The NAT rule row or Load_Balancer row or None
+        """
+
 
 class SbAPI(api.API, metaclass=abc.ABCMeta):
 

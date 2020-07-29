@@ -22,6 +22,7 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
+from neutron.services.portforwarding import constants as pf_const
 from neutron.tests import base
 from neutron.tests.unit import fake_resources as fakes
 
@@ -278,7 +279,21 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             {'name': '$as_ip4_id_5',
              'addresses': ['20.0.2.1', '20.0.2.2'],
              'external_ids': {ovn_const.OVN_SG_EXT_ID_KEY: 'id_5'}}],
-            }
+        'lbs': [
+            {'name': 'lb_1',
+             'external_ids': {
+                 ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
+                     pf_const.PORT_FORWARDING_PLUGIN,
+                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'rtr_name',
+                 ovn_const.OVN_FIP_EXT_ID_KEY: 'fip_id_1'}},
+            {'name': 'lb_2',
+             'external_ids': {
+                 ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
+                     pf_const.PORT_FORWARDING_PLUGIN,
+                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'rtr_name',
+                 ovn_const.OVN_FIP_EXT_ID_KEY: 'fip_id_2'}},
+            {'name': 'lb_3', 'external_ids': {}}],
+    }
 
     fake_associations = {
         'lstolsp': {
@@ -328,6 +343,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self.acl_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
         self.dhcp_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
         self.address_set_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
+        self.lb_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
 
         self._tables = {}
         self._tables['Logical_Switch'] = self.lswitch_table
@@ -338,6 +354,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self._tables['ACL'] = self.acl_table
         self._tables['DHCP_Options'] = self.dhcp_table
         self._tables['Address_Set'] = self.address_set_table
+        self._tables['Load_Balancer'] = self.lb_table
 
         with mock.patch.object(impl_idl_ovn, 'get_connection',
                                return_value=mock.Mock()):
@@ -399,6 +416,9 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         # Load address sets
         fake_address_sets = TestNBImplIdlOvn.fake_set['address_sets']
         self._load_ovsdb_fake_rows(self.address_set_table, fake_address_sets)
+        # Load load balancers
+        fake_lbs = TestNBImplIdlOvn.fake_set['lbs']
+        self._load_ovsdb_fake_rows(self.lb_table, fake_lbs)
 
     @mock.patch.object(ovs_idl.Backend, 'autocreate_indices', mock.Mock(),
                        create=True)
@@ -781,6 +801,31 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self._tables.pop('Port_Group', None)
         port_groups = self.nb_ovn_idl.get_sg_port_groups()
         self.assertEqual({}, port_groups)
+
+    def test_get_router_floatingip_lbs(self):
+        lrouter_name = 'rtr_name'
+        # Empty
+        lbs = self.nb_ovn_idl.get_router_floatingip_lbs(lrouter_name)
+        self.assertEqual([], lbs)
+        self._load_nb_db()
+        lbs = self.nb_ovn_idl.get_router_floatingip_lbs('not_there')
+        self.assertEqual([], lbs)
+        lb1_row = self._find_ovsdb_fake_row(self.lb_table, 'name', 'lb_1')
+        lb2_row = self._find_ovsdb_fake_row(self.lb_table, 'name', 'lb_2')
+        lbs = self.nb_ovn_idl.get_router_floatingip_lbs(lrouter_name)
+        self.assertEqual(lbs, [lb1_row, lb2_row])
+
+    def test_get_floatingip_in_nat_or_lb(self):
+        fip_id = 'fip_id_2'
+        # Empty
+        lb = self.nb_ovn_idl.get_floatingip_in_nat_or_lb(fip_id)
+        self.assertIsNone(lb)
+        self._load_nb_db()
+        lb = self.nb_ovn_idl.get_floatingip_in_nat_or_lb('not_there')
+        self.assertIsNone(lb)
+        lb_row = self._find_ovsdb_fake_row(self.lb_table, 'name', 'lb_2')
+        lb = self.nb_ovn_idl.get_floatingip_in_nat_or_lb(fip_id)
+        self.assertEqual(lb['_uuid'], lb_row.uuid)
 
 
 class TestSBImplIdlOvn(TestDBImplIdlOvn):
