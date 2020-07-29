@@ -21,6 +21,7 @@ import signal
 import threading
 import types
 
+import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib.callbacks import events
@@ -360,9 +361,39 @@ class OVNMechanismDriver(api.MechanismDriver):
         elif event == events.BEFORE_DELETE:
             sg_rule = self._plugin.get_security_group_rule(
                 kwargs['context'], kwargs.get('security_group_rule_id'))
+            if sg_rule.get('remote_ip_prefix') is not None:
+                if self._sg_has_rules_with_same_normalized_cidr(sg_rule):
+                    return
             self._ovn_client.delete_security_group_rule(
                 kwargs['context'],
                 sg_rule)
+
+    def _sg_has_rules_with_same_normalized_cidr(self, sg_rule):
+        compare_keys = [
+            'ethertype', 'direction', 'protocol',
+            'port_range_min', 'port_range_max']
+        sg_rules = self._plugin.get_security_group_rules(
+            n_context.get_admin_context(),
+            {'security_group_id': [sg_rule['security_group_id']]})
+        cidr_sg_rule = netaddr.IPNetwork(sg_rule['remote_ip_prefix'])
+        normalized_sg_rule_prefix = "%s/%s" % (cidr_sg_rule.network,
+                                               cidr_sg_rule.prefixlen)
+
+        def _rules_equal(rule1, rule2):
+            return not any(
+                rule1.get(key) != rule2.get(key) for key in compare_keys)
+
+        for rule in sg_rules:
+            if not rule.get('remote_ip_prefix') or rule['id'] == sg_rule['id']:
+                continue
+            cidr_rule = netaddr.IPNetwork(rule['remote_ip_prefix'])
+            normalized_rule_prefix = "%s/%s" % (cidr_rule.network,
+                                                cidr_rule.prefixlen)
+            if normalized_sg_rule_prefix != normalized_rule_prefix:
+                continue
+            if _rules_equal(sg_rule, rule):
+                return True
+        return False
 
     def _is_network_type_supported(self, network_type):
         return (network_type in [const.TYPE_LOCAL,
