@@ -75,8 +75,6 @@
             voting: false
         - neutron-ovn-tempest-slow:
             voting: false
-        - neutron-ovn-tempest-full-multinode-ovs-master:
-            voting: false
         - openstack-tox-py36:  # from openstack-python3-ussuri-jobs template
             timeout: 3600
         - openstack-tox-py37:  # from openstack-python3-ussuri-jobs template
@@ -112,7 +110,6 @@
 
     experimental:
       jobs:
-        - neutron-ovn-tempest-ovs-master
         - neutron-ovn-grenade
 
     periodic:
@@ -120,5 +117,3 @@
         - neutron-functional
         - neutron-tempest-postgres-full
         - neutron-tempest-mariadb-full
-        - neutron-tempest-with-os-ken-master
-        - neutron-ovn-tempest-ovs-master-fedora
