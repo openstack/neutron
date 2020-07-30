@@ -25,7 +25,7 @@ services:
 
 * DPDK
 
-  OVN and ovn mechanism driver may be used with OVS using either the Linux
+  OVN and the OVN mechanism driver may be used with OVS using either the Linux
   kernel datapath or the DPDK datapath.
 
 * Trunk driver
@@ -36,13 +36,19 @@ services:
 
 * VLAN tenant networks
 
-  The ovn driver does support VLAN tenant networks when used
+  The OVN driver does support VLAN tenant networks when used
   with OVN version 2.11 (or higher).
 
 * DNS
 
   Native implementation. Since the version 2.8 OVN contains a built-in
   DNS implementation.
+
+* Port Forwarding
+
+  The OVN driver supports port forwarding as an extension of floating
+  IPs. Enable the 'port_forwarding' service plugin in neutron configuration
+  files to use this feature.
 
 
 The following Neutron API extensions are supported with OVN:
@@ -99,4 +105,6 @@ The following Neutron API extensions are supported with OVN:
 | Time Stamp Fields                | standard-attr-timestamp   |
 +----------------------------------+---------------------------+
 | Domain Name System (DNS)         | dns_integration           |
++----------------------------------+---------------------------+
+| Port Forwarding                  | port_forwarding           |
 +----------------------------------+---------------------------+
