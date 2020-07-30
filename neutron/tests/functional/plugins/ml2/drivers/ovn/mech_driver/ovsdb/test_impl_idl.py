@@ -12,21 +12,38 @@
 #    under the License.
 #
 
+import copy
 import uuid
 
+from ovsdbapp import constants as const
 from ovsdbapp import event as ovsdb_event
 from ovsdbapp.tests.functional import base
 from ovsdbapp.tests import utils
 
+from neutron.common.ovn import constants as ovn_const
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb \
     import impl_idl_ovn as impl
+from neutron.services.portforwarding import constants as pf_const
 from neutron.tests.functional import base as n_base
 from neutron.tests.functional.resources.ovsdb import events
 
+OWNER = ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY
+PF_PLUGIN = pf_const.PORT_FORWARDING_PLUGIN
 
-class TestSbApi(n_base.BaseLoggingTestCase,
-                base.FunctionalTestCase):
+
+class BaseOvnIdlTest(n_base.BaseLoggingTestCase,
+                     base.FunctionalTestCase):
     schemas = ['OVN_Southbound', 'OVN_Northbound']
+
+    def setUp(self):
+        super(BaseOvnIdlTest, self).setUp()
+        self.api = impl.OvsdbSbOvnIdl(self.connection['OVN_Southbound'])
+        self.nbapi = impl.OvsdbNbOvnIdl(self.connection['OVN_Northbound'])
+        self.handler = ovsdb_event.RowEventHandler()
+        self.api.idl.notify = self.handler.notify
+
+
+class TestSbApi(BaseOvnIdlTest):
 
     def setUp(self):
         super(TestSbApi, self).setUp()
@@ -40,11 +57,7 @@ class TestSbApi(n_base.BaseLoggingTestCase,
                                   'public:br-ex'}},
             ]
         }
-        self.api = impl.OvsdbSbOvnIdl(self.connection['OVN_Southbound'])
-        self.nbapi = impl.OvsdbNbOvnIdl(self.connection['OVN_Northbound'])
         self.load_test_data()
-        self.handler = ovsdb_event.RowEventHandler()
-        self.api.idl.notify = self.handler.notify
 
     def load_test_data(self):
         with self.api.transaction(check_error=True) as txn:
@@ -147,3 +160,102 @@ class TestSbApi(n_base.BaseLoggingTestCase,
         self.assertEqual(
             (chassis.name, str(binding.datapath.uuid)),
             self.api.get_logical_port_chassis_and_datapath(port.name))
+
+
+class TestNbApi(BaseOvnIdlTest):
+
+    def setUp(self):
+        super(TestNbApi, self).setUp()
+        self.data = {
+            'lbs': [
+                {'name': 'pf-floatingip-fip_id1-tcp',
+                 'protocol': const.PROTO_TCP,
+                 'vips': {"172.24.4.8:2020": ["10.0.0.10:22"],
+                          "172.24.4.8:2021": ["10.0.0.11:22"]},
+                 'external_ids': {
+                     ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
+                         pf_const.PORT_FORWARDING_PLUGIN,
+                     ovn_const.OVN_FIP_EXT_ID_KEY: 'fip_id1',
+                     ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
+                     ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'neutron-rtr1_id'}},
+                {'name': 'pf-floatingip-fip_id1-udp',
+                 'protocol': const.PROTO_UDP,
+                 'vips': {"172.24.4.8:53": ["10.0.0.10:53"]},
+                 'external_ids': {
+                     ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
+                         pf_const.PORT_FORWARDING_PLUGIN,
+                     ovn_const.OVN_FIP_EXT_ID_KEY: 'fip_id1',
+                     ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
+                     ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'neutron-rtr1_id'}},
+                {'name': 'pf-floatingip-fip_id2-tcp',
+                 'protocol': const.PROTO_TCP,
+                 'vips': {"172.24.4.100:2020": ["10.0.0.10:22"]},
+                 'external_ids': {
+                     ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
+                         pf_const.PORT_FORWARDING_PLUGIN,
+                     ovn_const.OVN_FIP_EXT_ID_KEY: 'fip_id2',
+                     ovn_const.OVN_REV_NUM_EXT_ID_KEY: '10',
+                     ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'neutron-rtr2_id'}},
+                {'name': 'octavia_lb1_id',
+                 'vips': {"172.24.4.250:80": ["10.0.0.10:8080",
+                                              "10.0.0.11:8080"]},
+                 'selection_fields': ['ip_dst', 'ip_src', 'tp_dst', 'tp_src'],
+                 'external_ids': {
+                     'enabled': 'True',
+                     'lr_ref': 'neutron-rtr1_id',
+                     'ls_refs': str({'neutron-net1_id': 1}),
+                     ovn_const.LB_EXT_IDS_VIP_KEY: '172.24.4.250',
+                     ovn_const.LB_EXT_IDS_VIP_PORT_ID_KEY: 'neutron-port1_id',
+                 }},
+            ],
+        }
+        self.load_test_data()
+
+    def load_test_data(self):
+        with self.nbapi.transaction(check_error=True) as txn:
+            for lb in copy.deepcopy(self.data['lbs']):
+                lb_name = lb.pop('name')
+                for vip, ips in lb.pop('vips').items():
+                    txn.add(self.nbapi.lb_add(
+                        lb_name, vip, ips, may_exist=True, **lb))
+
+    def test_lb_list(self):
+        lbs = self.nbapi.lb_list().execute(check_error=True)
+        self.assertEqual(len(self.data['lbs']), len(lbs))
+        exp_values = [(lb['name'], lb['external_ids'])
+                      for lb in self.data['lbs']]
+        lbs_values = [(lb.name, lb.external_ids) for lb in lbs]
+        self.assertItemsEqual(exp_values, lbs_values)
+
+    def test_get_router_floatingip_lbs(self):
+        f = self.nbapi.get_router_floatingip_lbs
+        self.assertEqual([], f('unused_router_name'))
+        for exp_router_name in ['neutron-rtr1_id', 'neutron-rtr2_id']:
+            exp_values = [
+                (lb['name'], lb['external_ids'])
+                for lb in self.data['lbs']
+                if all([lb['external_ids'].get(OWNER) == PF_PLUGIN,
+                        lb['external_ids'].get(
+                            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY) ==
+                        exp_router_name])]
+            lbs_values = [(lb.name, lb.external_ids)
+                          for lb in f(exp_router_name)]
+            self.assertTrue(exp_values)
+            self.assertItemsEqual(exp_values, lbs_values)
+
+    def test_get_floatingip_in_nat_or_lb(self):
+        f = self.nbapi.get_floatingip_in_nat_or_lb
+        self.assertIsNone(f('unused_fip_id'))
+        for exp_fip_id in ['fip_id1', 'fip_id2']:
+            exp_values = [
+                (lb['name'], lb['external_ids'])
+                for lb in self.data['lbs']
+                if all([lb['external_ids'].get(OWNER) == PF_PLUGIN,
+                        lb['external_ids'].get(
+                            ovn_const.OVN_FIP_EXT_ID_KEY) == exp_fip_id])]
+            # get_floatingip_in_nat_or_lb returns the first entry
+            # it finds for the fip_id provided. Make sure that it
+            # is present in exp_values.
+            lb_match = f(exp_fip_id)
+            self.assertIn((lb_match['name'], lb_match['external_ids']),
+                          exp_values)
