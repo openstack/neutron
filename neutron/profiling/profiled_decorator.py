@@ -13,12 +13,12 @@
 
 import cProfile
 from datetime import datetime
+import functools
 import io
 import pstats
 
 from oslo_config import cfg
 from oslo_log import log
-import six
 
 from neutron.common import utils
 from neutron.conf import profiling as profiling_conf_opts
@@ -40,7 +40,7 @@ def profile(f):
     the result.
     """
 
-    @six.wraps(f)
+    @functools.wraps(f)
     def profile_wrapper(*args, **kwargs):
 
         try:

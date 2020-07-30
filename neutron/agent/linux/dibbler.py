@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import io
 import os
 import shutil
 
@@ -21,7 +22,6 @@ from neutron_lib import constants as lib_const
 from neutron_lib.utils import file as file_utils
 from oslo_config import cfg
 from oslo_log import log as logging
-import six
 
 from neutron.agent.linux import external_process
 from neutron.agent.linux import pd
@@ -86,7 +86,7 @@ class PDDibbler(pd_driver.PDDriverBase):
     def _generate_dibbler_conf(self, ex_gw_ifname, lla, hint_prefix):
         dcwa = self.dibbler_client_working_area
         script_path = utils.get_conf_file_name(dcwa, 'notify', 'sh', True)
-        buf = six.StringIO()
+        buf = io.StringIO()
         buf.write('%s' % SCRIPT_TEMPLATE.render(
                              prefix_path=self.prefix_path,
                              l3_agent_pid=os.getpid()))
@@ -94,7 +94,7 @@ class PDDibbler(pd_driver.PDDriverBase):
         os.chmod(script_path, 0o744)
 
         dibbler_conf = utils.get_conf_file_name(dcwa, 'client', 'conf', False)
-        buf = six.StringIO()
+        buf = io.StringIO()
         buf.write('%s' % CONFIG_TEMPLATE.render(
                              enterprise_number=cfg.CONF.vendor_pen,
                              va_id='0x%s' % self.converted_subnet_id,

@@ -19,7 +19,6 @@ from unittest import mock
 from neutron_lib import constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
-import six
 
 from neutron.agent.l2.extensions.fdb_population import (
         FdbPopulationAgentExtension)
@@ -50,7 +49,7 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
     def _get_existing_device(self):
         device_mappings = helpers.parse_mappings(
             cfg.CONF.FDB.shared_physical_device_mappings, unique_keys=False)
-        DEVICES = six.next(six.itervalues(device_mappings))
+        DEVICES = next(iter(device_mappings.values()))
         return DEVICES[0]
 
     def _get_fdb_extension(self, mock_execute, fdb_table):

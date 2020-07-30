@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import urllib
+
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import subnet as subnet_def
@@ -22,7 +24,6 @@ from oslo_config import cfg
 from oslo_log import log
 import pecan
 from pecan import request
-from six.moves import urllib
 
 from neutron._i18n import _
 from neutron.api.views import versions as versions_view

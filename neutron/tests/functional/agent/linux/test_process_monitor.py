@@ -16,7 +16,6 @@ import os
 import sys
 
 from oslo_config import cfg
-from six import moves
 
 from neutron.agent.linux import external_process
 from neutron.common import utils
@@ -57,7 +56,7 @@ class BaseTestProcessMonitor(base.BaseLoggingTestCase):
 
     def spawn_n_children(self, n, service=None):
         self._child_processes = []
-        for child_number in moves.range(n):
+        for child_number in range(n):
             uuid = self._child_uuid(child_number)
             _callback = self._make_cmdline_callback(uuid)
             pm = external_process.ProcessManager(

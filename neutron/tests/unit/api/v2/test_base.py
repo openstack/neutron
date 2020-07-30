@@ -15,6 +15,7 @@
 
 import os
 from unittest import mock
+import urllib
 
 from neutron_lib.api import attributes
 from neutron_lib.api import converters
@@ -31,7 +32,6 @@ from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
-from six.moves import urllib
 import webob
 from webob import exc
 import webtest

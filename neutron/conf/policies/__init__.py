@@ -10,10 +10,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import importlib
 import inspect
 import itertools
-
-import six
 
 from neutron.conf.policies import address_scope
 from neutron.conf.policies import agent
@@ -78,4 +77,4 @@ def reload_default_policies():
                 module.__name__.startswith(__package__)):
             # NOTE: pylint checks function args wrongly.
             # pylint: disable=too-many-function-args
-            six.moves.reload_module(module)
+            importlib.reload(module)

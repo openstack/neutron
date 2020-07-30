@@ -13,6 +13,7 @@
 import io
 import re
 import tokenize
+from unittest import mock
 
 import testtools
 
@@ -223,6 +224,19 @@ class HackingTestCase(base.BaseTestCase):
                 1, len(list(
                     checks.check_no_import_mock(
                         fail_line, "neutron/tests/test_fake.py", None))))
+
+    def test_check_no_import_six(self):
+        pass_line = 'from other_library import six'
+        fail_lines = ('import six',
+                      'import six as six_lib',
+                      'from six import moves')
+        self.assertEqual(
+            0,
+            len(list(checks.check_no_import_six(pass_line, mock.ANY, None))))
+        for fail_line in fail_lines:
+            self.assertEqual(
+                1, len(list(checks.check_no_import_six(
+                    fail_line, mock.ANY, None))))
 
     def test_check_oslo_i18n_wrapper(self):
         def _pass(line, filename, noqa=False):

@@ -19,7 +19,6 @@ from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
-import six
 
 from neutron.common import utils
 from neutron.db import db_base_plugin_v2
@@ -74,7 +73,7 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
         return resources
 
     def _return_by_timedelay(self, resource, timedelay):
-        resource_type = six.next(six.iterkeys(resource))
+        resource_type = next(iter(resource))
         time_create = timeutils.parse_isotime(
             resource[resource_type]['updated_at'])
         time_before = datetime.timedelta(seconds=timedelay)
@@ -85,7 +84,7 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
                                                  addedtime_string)
 
     def _update_test_resource_by_name(self, resource):
-        resource_type = six.next(six.iterkeys(resource))
+        resource_type = next(iter(resource))
         name = resource[resource_type]['name']
         data = {resource_type: {'name': '%s_new' % name}}
         req = self.new_update_request('%ss' % resource_type,
@@ -104,7 +103,7 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
     def _list_resources_with_changed_since(self, resource):
         # assert list results contain the net info when
         # changed_since equal with the net updated time.
-        resource_type = six.next(six.iterkeys(resource))
+        resource_type = next(iter(resource))
         if resource_type in ['network', 'port']:
             self._set_timestamp_by_show(resource, resource_type)
         resources = self._get_resp_with_changed_since(resource_type,
@@ -125,7 +124,7 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
         self.assertEqual([], resources[resource_type + 's'])
 
     def _test_list_mutiple_resources_with_changed_since(self, first, second):
-        resource_type = six.next(six.iterkeys(first))
+        resource_type = next(iter(first))
         if resource_type in ['network', 'port']:
             self._set_timestamp_by_show(first, resource_type)
             self._set_timestamp_by_show(second, resource_type)

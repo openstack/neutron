@@ -21,7 +21,6 @@ from neutron_lib.objects import common_types
 from neutron_lib.utils import net as net_utils
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
-import six
 from sqlalchemy import func
 
 from neutron.db.models import dvr as dvr_models
@@ -353,7 +352,8 @@ class FloatingIP(base.NeutronDbObject):
 
         # Just hit the first row of each group
         for key, value in group_iterator:
-            row = [r for r in six.next(value)]
+            # pylint: disable=stop-iteration-return
+            row = list(next(value))
             yield (cls._load_object(context, row[0]), row[1])
 
 

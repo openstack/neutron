@@ -15,6 +15,7 @@
 
 import copy
 import sys
+import urllib
 import uuid
 from wsgiref import simple_server as wsgi_simple_server
 
@@ -22,7 +23,6 @@ from oslo_config import cfg
 from oslo_config import types
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
-from six.moves import urllib
 
 from neutron.common import config as common_config
 

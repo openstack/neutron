@@ -739,15 +739,14 @@ class TestPciOsWrapper(base.BaseTestCase):
             self.assertTrue(esm.PciOsWrapper.pf_device_exists('p6p1'))
 
     def test_get_numvfs(self):
-        with mock.patch("six.moves.builtins.open",
+        with mock.patch("builtins.open",
                         mock.mock_open(read_data="63")) as mock_open:
             self.assertEqual(63, esm.PciOsWrapper.get_numvfs('dev1'))
             mock_open.assert_called_once_with(
                 esm.PciOsWrapper.NUMVFS_PATH % 'dev1')
 
     def test_get_numvfs_no_file(self):
-        with mock.patch("six.moves.builtins.open",
-                        side_effect=IOError()) as mock_open:
+        with mock.patch("builtins.open", side_effect=IOError()) as mock_open:
             self.assertEqual(-1, esm.PciOsWrapper.get_numvfs('dev1'))
             mock_open.assert_called_once_with(
                 esm.PciOsWrapper.NUMVFS_PATH % 'dev1')

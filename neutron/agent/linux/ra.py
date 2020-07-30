@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import io
 import os
 import pwd
 
@@ -23,7 +24,6 @@ import netaddr
 from neutron_lib import constants
 from neutron_lib.utils import file as file_utils
 from oslo_log import log as logging
-import six
 
 from neutron.agent.linux import external_process
 from neutron.agent.linux import utils
@@ -93,7 +93,7 @@ class DaemonMonitor(object):
                                               self._router_id,
                                               'radvd.conf',
                                               True)
-        buf = six.StringIO()
+        buf = io.StringIO()
         for p in router_ports:
             subnets = p.get('subnets', [])
             v6_subnets = [subnet for subnet in subnets if

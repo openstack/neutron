@@ -21,7 +21,6 @@ import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants
 from neutron_lib.exceptions import l3 as l3_exc
-import six
 import testtools
 
 from neutron.agent.l3 import agent as neutron_l3_agent
@@ -1703,7 +1702,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
                 ip_version=lib_constants.IP_VERSION_4,
                 table=router_fip_table_idx,
                 via=str(next_hop))
-            expected_extra_route = [{'cidr': six.u(destination),
+            expected_extra_route = [{'cidr': str(destination),
                                      'device': fg_port_name,
                                      'table': router_fip_table_idx,
                                      'via': next_hop}]
@@ -1766,11 +1765,11 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
                 str(net_addr_2) + '/' +
                 str(fixed_ips_2[0]['prefixlen']))
             expected_routes = [{'device': fpr_device_name,
-                                'cidr': six.u(route_cidr_1),
+                                'cidr': str(route_cidr_1),
                                 'via': str(rtr_2_fip.ip),
                                 'table': 'main'},
                                {'device': fpr_device_name,
-                                'cidr': six.u(route_cidr_2),
+                                'cidr': str(route_cidr_2),
                                 'via': str(rtr_2_fip.ip),
                                 'table': 'main'}]
             # Comparing the static routes for both internal interfaces on the

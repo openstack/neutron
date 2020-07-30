@@ -20,7 +20,6 @@ from neutron_lib import context
 from neutron_lib import exceptions as exc
 from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
-from six import moves
 import testtools
 from testtools import matchers
 
@@ -176,7 +175,7 @@ class TunnelTypeTestMixin(object):
                  api.PHYSICAL_NETWORK: 'None',
                  api.SEGMENTATION_ID: None}
 
-        for x in moves.range(TUN_MIN, TUN_MAX + 1):
+        for x in range(TUN_MIN, TUN_MAX + 1):
             segment = self.driver.reserve_provider_segment(self.context,
                                                            specs)
             self.assertEqual(self.TYPE, segment[api.NETWORK_TYPE])
@@ -207,7 +206,7 @@ class TunnelTypeTestMixin(object):
 
     def test_allocate_tenant_segment(self):
         tunnel_ids = set()
-        for x in moves.range(TUN_MIN, TUN_MAX + 1):
+        for x in range(TUN_MIN, TUN_MAX + 1):
             segment = self.driver.allocate_tenant_segment(self.context)
             self.assertThat(segment[api.SEGMENTATION_ID],
                             matchers.GreaterThan(TUN_MIN - 1))

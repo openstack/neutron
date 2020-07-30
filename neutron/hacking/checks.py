@@ -39,6 +39,8 @@ tests_imports_from2 = re.compile(r"\bfrom[\s]+neutron[\s]+import[\s]+tests\b")
 
 import_mock = re.compile(r"\bimport[\s]+mock\b")
 import_from_mock = re.compile(r"\bfrom[\s]+mock[\s]+import\b")
+import_six = re.compile(r"\bimport[\s]+six\b")
+import_from_six = re.compile(r"\bfrom[\s]+six[\s]+import\b")
 
 
 @core.flake8ext
@@ -236,5 +238,19 @@ def check_no_import_mock(logical_line, filename, noqa):
         return
 
     for regex in import_mock, import_from_mock:
+        if re.match(regex, logical_line):
+            yield(0, msg)
+
+
+@core.flake8ext
+def check_no_import_six(logical_line, filename, noqa):
+    """N348 - Test code must not import six library
+    """
+    msg = "N348: Test code must not import six library"
+
+    if noqa:
+        return
+
+    for regex in import_six, import_from_six:
         if re.match(regex, logical_line):
             yield(0, msg)

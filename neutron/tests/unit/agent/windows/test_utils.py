@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import builtins
 import io
 from unittest import mock
 
@@ -20,7 +21,6 @@ import ddt
 import eventlet
 from eventlet import tpool
 from neutron_lib import exceptions
-import six
 
 from neutron.agent.windows import utils
 from neutron.tests import base
@@ -62,7 +62,7 @@ class WindowsUtilsTestCase(base.BaseTestCase):
             preexec_fn=None,
             close_fds=False)
 
-        file_type = getattr(six.moves.builtins, 'file', io.IOBase)
+        file_type = getattr(builtins, 'file', io.IOBase)
         mock_tpool_proxy.assert_called_once_with(
             mock_popen.return_value, autowrap=(file_type, ))
 
@@ -196,8 +196,9 @@ class WindowsUtilsTestCase(base.BaseTestCase):
             mock.sentinel.cmd, addl_env=mock.sentinel.env,
             tpool_proxy=False)
         mock_avoid_blocking_call.assert_called_once_with(
-            mock_popen.communicate, six.b(fake_stdin))
-        mock_popen.communicate.assert_called_once_with(six.b(fake_stdin))
+            mock_popen.communicate, bytes(fake_stdin, 'utf-8'))
+        mock_popen.communicate.assert_called_once_with(
+            bytes(fake_stdin, 'utf-8'))
         mock_popen.stdin.close.assert_called_once_with()
 
     def test_get_root_helper_child_pid(self):

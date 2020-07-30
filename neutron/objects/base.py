@@ -29,7 +29,6 @@ from oslo_utils import versionutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import exception as obj_exception
 from oslo_versionedobjects import fields as obj_fields
-import six
 from sqlalchemy import orm
 
 from neutron._i18n import _
@@ -55,7 +54,7 @@ def register_filter_hook_on_model(model, filter_name):
     obj_class.add_extra_filter_name(filter_name)
 
 
-class LazyQueryIterator(six.Iterator):
+class LazyQueryIterator(object):
     def __init__(self, obj_class, lazy_query):
         self.obj_class = obj_class
         self.context = None

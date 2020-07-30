@@ -23,7 +23,6 @@ SQLAlchemy>=1.2.0 # MIT
 WebOb>=1.8.2 # MIT
 keystoneauth1>=3.14.0 # Apache-2.0
 alembic>=0.8.10 # MIT
-six>=1.10.0 # MIT
 stevedore>=1.20.0 # Apache-2.0
 oslo.cache>=1.26.0 # Apache-2.0
 oslo.concurrency>=3.26.0 # Apache-2.0
