@@ -106,6 +106,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             l3plugin.prevent_l3_port_deletion(
                 payload.context, payload.resource_id)
 
+    @staticmethod
+    def _validate_subnet_address_mode(subnet):
+        if (subnet['ip_version'] == 6 and subnet['ipv6_ra_mode'] is None and
+                subnet['ipv6_address_mode'] is not None):
+            msg = (_('IPv6 subnet %s configured to receive RAs from an '
+                   'external router cannot be added to Neutron Router.') %
+                   subnet['id'])
+            raise n_exc.BadRequest(resource='router', msg=msg)
+
     @property
     def _is_dns_integration_supported(self):
         if self._dns_integration is None:
@@ -627,6 +636,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if not port['fixed_ips']:
             msg = _('Router port must have at least one fixed IP')
             raise n_exc.BadRequest(resource='router', msg=msg)
+
+        fixed_ips = [ip for ip in port['fixed_ips']]
+        for fixed_ip in fixed_ips:
+            subnet = self._core_plugin.get_subnet(
+                context, fixed_ip['subnet_id'])
+            self._validate_subnet_address_mode(subnet)
+
         return port
 
     def _validate_port_in_range_or_admin(self, context, subnets, port):
@@ -751,12 +767,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             msg = (_('Cannot add interface to router because subnet %s is not '
                      'owned by project making the request') % subnet_id)
             raise n_exc.BadRequest(resource='router', msg=msg)
-        if (subnet['ip_version'] == 6 and subnet['ipv6_ra_mode'] is None and
-                subnet['ipv6_address_mode'] is not None):
-            msg = (_('IPv6 subnet %s configured to receive RAs from an '
-                   'external router cannot be added to Neutron Router.') %
-                   subnet['id'])
-            raise n_exc.BadRequest(resource='router', msg=msg)
+        self._validate_subnet_address_mode(subnet)
         self._check_for_dup_router_subnets(context, router,
                                            subnet['network_id'], [subnet])
         fixed_ip = {'ip_address': subnet['gateway_ip'],
