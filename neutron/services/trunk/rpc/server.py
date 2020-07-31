@@ -111,9 +111,8 @@ class TrunkSkeleton(object):
                 if try_cnt < db_api.MAX_RETRIES - 1:
                     LOG.debug("Got StaleDataError exception: %s", e)
                     continue
-                else:
-                    # re-raise when all tries failed
-                    raise
+                # re-raise when all tries failed
+                raise
 
     def update_trunk_status(self, context, trunk_id, status):
         """Update the trunk status to reflect outcome of data plane wiring."""

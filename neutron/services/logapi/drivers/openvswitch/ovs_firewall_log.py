@@ -49,6 +49,7 @@ REMOTE_RULE_PRIORITY = 70
 def setup_logging():
     log_file = cfg.CONF.network_log.local_output_log_base
     if log_file:
+        # pylint: disable=import-outside-toplevel
         from logging import handlers as watch_handler
         log_file_handler = watch_handler.WatchedFileHandler(log_file)
         log_file_handler.setLevel(

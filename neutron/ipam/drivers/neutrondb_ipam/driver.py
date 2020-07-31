@@ -209,14 +209,13 @@ class NeutronDbSubnet(ipam_base.Subnet):
 
             if window < allocated_num_addresses:
                 continue
-            else:
-                # Maximize randomness by using the random module's built in
-                # sampling function
-                av_ips = list(itertools.islice(av_set, 0, window))
-                allocated_ip_pool = random.sample(av_ips,
-                                                  allocated_num_addresses)
-                allocated_ips.extend([str(allocated_ip)
-                                      for allocated_ip in allocated_ip_pool])
+            # Maximize randomness by using the random module's built in
+            # sampling function
+            av_ips = list(itertools.islice(av_set, 0, window))
+            allocated_ip_pool = random.sample(av_ips,
+                                              allocated_num_addresses)
+            allocated_ips.extend([str(allocated_ip)
+                                  for allocated_ip in allocated_ip_pool])
 
             requested_num_addresses -= allocated_num_addresses
             if requested_num_addresses:

@@ -85,7 +85,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
             for port in ports:
                 subports[port['id']]['mac_address'] = port['mac_address']
             trunk_details = {'trunk_id': port_db.trunk_port.id,
-                             'sub_ports': [x for x in subports.values()]}
+                             'sub_ports': list(subports.values())}
             port_res['trunk_details'] = trunk_details
 
         return port_res
@@ -318,8 +318,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
             # back to ACTIVE or ERROR.
             if trunk.status == constants.TRUNK_ERROR_STATUS:
                 raise trunk_exc.TrunkInErrorState(trunk_id=trunk_id)
-            else:
-                trunk.update(status=constants.TRUNK_DOWN_STATUS)
+            trunk.update(status=constants.TRUNK_DOWN_STATUS)
 
             for subport in subports:
                 obj = trunk_objects.SubPort(

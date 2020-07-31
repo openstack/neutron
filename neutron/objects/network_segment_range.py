@@ -148,8 +148,7 @@ class NetworkSegmentRange(base.NeutronDbObject):
                 .filter(
                     segments_model.NetworkSegment.network_id ==
                     models_v2.Network.id)).all()
-        return {segmentation_id: project_id
-                for segmentation_id, project_id in alloc_used}
+        return dict(alloc_used)
 
     @classmethod
     def _build_query_segments(cls, context, model, network_type, **filters):

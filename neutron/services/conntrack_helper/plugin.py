@@ -117,7 +117,7 @@ class Plugin(l3_conntrack_helper.ConntrackHelperPluginBase):
     def _check_conntrack_helper_constraints(self, cth_obj):
         if cth_obj.helper not in self.constraints:
             raise cth_exc.ConntrackHelperNotAllowed(helper=cth_obj.helper)
-        elif cth_obj.protocol not in self.constraints[cth_obj.helper]:
+        if cth_obj.protocol not in self.constraints[cth_obj.helper]:
             raise cth_exc.InvalidProtocolForHelper(
                 helper=cth_obj.helper, protocol=cth_obj.protocol,
                 supported_protocols=', '.join(

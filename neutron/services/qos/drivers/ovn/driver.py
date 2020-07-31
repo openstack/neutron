@@ -55,6 +55,8 @@ class OVNQosDriver(base.DriverBase):
 
     @property
     def is_loaded(self):
+        # TODO(bcafarel): should be fixed in DriverBase in neutron-lib
+        # pylint:disable=invalid-overridden-method
         return OVN_QOS in cfg.CONF.ml2.extension_drivers
 
     def update_policy(self, context, policy):

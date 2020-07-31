@@ -238,7 +238,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         if network_type != constants.TYPE_VLAN:
             msg = (_('Only VLAN type networks can be updated.'))
             raise exc.InvalidInput(error_message=msg)
-        elif not segmentation_id:
+        if not segmentation_id:
             msg = (_('Only %s field can be updated in VLAN type networks') %
                    api.SEGMENTATION_ID)
             raise exc.InvalidInput(error_message=msg)

@@ -951,13 +951,12 @@ class Dnsmasq(DhcpLocalProcess):
                     if line.startswith('duid'):
                         if not server_id:
                             server_id = line.strip().split()[1]
-                            continue
                         else:
                             LOG.warning('Multiple DUID entries in %s '
                                         'lease file, dnsmasq is possibly '
                                         'not functioning properly',
                                         filename)
-                            continue
+                        continue
                     parts = line.strip().split()
                     if len(parts) != 5:
                         LOG.warning('Invalid lease entry %s found in %s '

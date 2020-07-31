@@ -429,18 +429,16 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                     if self.enable_ipset:
                         port_sg_rules.append(rule)
                         break
-                    else:
-                        port_sg_rules.extend(
-                            self._expand_sg_rule_with_remote_ips(
-                                rule, port, constants.INGRESS_DIRECTION))
-                        if port_sg_rules:
-                            break
-                        else:
-                            port_sg_rules.extend(
-                                self._expand_sg_rule_with_remote_ips(
-                                    rule, port, constants.EGRESS_DIRECTION))
-                            if port_sg_rules:
-                                break
+                    port_sg_rules.extend(
+                        self._expand_sg_rule_with_remote_ips(
+                            rule, port, constants.INGRESS_DIRECTION))
+                    if port_sg_rules:
+                        break
+                    port_sg_rules.extend(
+                        self._expand_sg_rule_with_remote_ips(
+                            rule, port, constants.EGRESS_DIRECTION))
+                    if port_sg_rules:
+                        break
         return port_sg_rules
 
     @staticmethod

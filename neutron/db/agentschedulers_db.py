@@ -146,15 +146,14 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
                 binding_resource_id = getattr(binding, resource_id_attr)
                 if binding_agent_id in agents_back_online:
                     continue
-                else:
-                    # we need new context to make sure we use different DB
-                    # transaction - otherwise we may fetch same agent record
-                    # each time due to REPEATABLE_READ isolation level
-                    context = ncontext.get_admin_context()
-                    agent = self._get_agent(context, binding_agent_id)
-                    if agent.is_active:
-                        agents_back_online.add(binding_agent_id)
-                        continue
+                # we need new context to make sure we use different DB
+                # transaction - otherwise we may fetch same agent record
+                # each time due to REPEATABLE_READ isolation level
+                context = ncontext.get_admin_context()
+                agent = self._get_agent(context, binding_agent_id)
+                if agent.is_active:
+                    agents_back_online.add(binding_agent_id)
+                    continue
 
                 LOG.warning(
                     "Rescheduling %(resource_name)s %(resource)s from agent "
@@ -299,8 +298,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             down_bindings = network.NetworkDhcpAgentBinding.get_down_bindings(
                 context, cutoff)
             dhcp_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_DHCP)
-            dead_bindings = [b for b in
-                             self._filter_bindings(context, down_bindings)]
+            dead_bindings = list(self._filter_bindings(context, down_bindings))
             agents = self.get_agent_objects(
                 context, {'agent_type': [constants.AGENT_TYPE_DHCP]})
             if not agents:
