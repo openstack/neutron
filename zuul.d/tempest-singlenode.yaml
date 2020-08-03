@@ -8,6 +8,7 @@
       - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
+    pre-run: playbooks/configure_ebtables.yaml
     vars:
       tempest_concurrency: 4
       devstack_localrc:
