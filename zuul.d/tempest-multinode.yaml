@@ -28,6 +28,8 @@
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron.git
       devstack_local_conf:
         post-config:
           $NEUTRON_CONF:
@@ -58,6 +60,8 @@
               availability_zone: nova
     group-vars:
       subnode:
+        devstack_plugins:
+          neutron: https://opendev.org/openstack/neutron.git
         devstack_services:
           q-agt: true
           q-l3: true
@@ -94,6 +98,8 @@
     irrelevant-files: *irrelevant-files
     vars:
       tox_envlist: integrated-network
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron.git
 
 - job:
     name: neutron-ovn-multinode-base
