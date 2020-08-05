@@ -15,6 +15,7 @@
 import functools
 import random
 import threading
+from unittest import mock
 
 import netaddr
 from neutron_lib import constants as n_cons
@@ -660,3 +661,29 @@ class ListNamespacePids(functional_base.BaseSudoTestCase):
 
     def test_list_namespace_not_created(self):
         self.assertTrue(self._check_pids(0, namespace='othernamespace'))
+
+
+class GetLinkIdTestCase(functional_base.BaseSudoTestCase):
+
+    def _remove_device(self, device_name):
+        priv_ip_lib.delete_interface(device_name, None)
+
+    def test_get_link_id_device_found(self):
+        device_name = 'dev_' + uuidutils.generate_uuid()[:11]
+        ip_lib.IPWrapper().add_dummy(device_name)
+        ip_lib.IPDevice(device_name)
+        self.addCleanup(self._remove_device, device_name)
+        self.assertGreater(priv_ip_lib.get_link_id(device_name, None), 0)
+
+    def test_get_link_id_device_not_found_raise_exception(self):
+        device_name = 'strange_device'
+        self.assertRaises(priv_ip_lib.NetworkInterfaceNotFound,
+                          priv_ip_lib.get_link_id, device_name, None)
+
+    def test_get_link_id_device_not_found_do_not_raise_exception(self):
+        device_name = 'strange_device'
+        with mock.patch.object(priv_ip_lib, 'LOG') as mock_log:
+            priv_ip_lib.get_link_id(device_name, None, raise_exception=False)
+        mock_log.debug.assert_called_once_with(
+            'Interface %(dev)s not found in namespace %(namespace)s',
+            {'dev': device_name, 'namespace': None})

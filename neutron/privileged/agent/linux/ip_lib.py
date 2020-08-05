@@ -241,7 +241,12 @@ def _translate_ip_device_exception(e, device=None, namespace=None):
 
 def get_link_id(device, namespace, raise_exception=True):
     with get_iproute(namespace) as ip:
-        link_id = ip.link_lookup(ifname=device)
+        # TODO(ralonsoh): remove try block when the mininimum pyroute2 version
+        # is >= 0.5.13
+        try:
+            link_id = ip.link_lookup(ifname=device)
+        except NetlinkError:
+            link_id = None
     if not link_id or len(link_id) < 1:
         if raise_exception:
             raise NetworkInterfaceNotFound(device=device, namespace=namespace)
