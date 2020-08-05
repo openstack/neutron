@@ -12,9 +12,11 @@
 
 from neutron._i18n import _
 from neutron.objects import address_group
+from neutron.objects import agent
 from neutron.objects import conntrack_helper
 from neutron.objects import local_ip
 from neutron.objects.logapi import logging_resource as log_object
+from neutron.objects import ndp_proxy
 from neutron.objects import network
 from neutron.objects import port_forwarding
 from neutron.objects import ports
@@ -38,6 +40,8 @@ PORTFORWARDING = port_forwarding.PortForwarding.obj_name()
 CONNTRACKHELPER = conntrack_helper.ConntrackHelper.obj_name()
 ADDRESSGROUP = address_group.AddressGroup.obj_name()
 LOCAL_IP_ASSOCIATION = local_ip.LocalIPAssociation.obj_name()
+NDPPROXY = ndp_proxy.NDPProxy.obj_name()
+AGENT = agent.Agent.obj_name()
 
 
 _VALID_CLS = (
@@ -54,6 +58,8 @@ _VALID_CLS = (
     conntrack_helper.ConntrackHelper,
     address_group.AddressGroup,
     local_ip.LocalIPAssociation,
+    ndp_proxy.NDPProxy,
+    agent.Agent,
 )
 
 _TYPE_TO_CLS_MAP = {cls.obj_name(): cls for cls in _VALID_CLS}
