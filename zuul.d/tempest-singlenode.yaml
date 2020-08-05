@@ -13,6 +13,8 @@
       devstack_localrc:
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
         # OVN services
         ovn-controller: false
@@ -127,6 +129,8 @@
       - openstack/neutron
       - openstack/tempest
     vars:
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
         postgresql: true
         mysql: false
@@ -145,6 +149,8 @@
     vars:
       devstack_localrc:
         MYSQL_SERVICE_NAME: mariadb
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
@@ -162,6 +168,9 @@
       - openstack/neutron
       - openstack/tempest
       - openstack/os-ken
+    vars:
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron.git
 
 - job:
     name: neutron-tempest-with-neutron-lib-master
@@ -172,6 +181,9 @@
       - openstack/neutron
       - openstack/tempest
       - openstack/neutron-lib
+    vars:
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron.git
 
 - job:
     name: neutron-tempest-with-uwsgi
@@ -181,6 +193,8 @@
     vars:
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: true
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
