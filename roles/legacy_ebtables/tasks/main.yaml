@@ -1,0 +1,16 @@
+- name: Ensure legacy ebtables is installed
+  package:
+    name: 'ebtables'
+    state: latest
+  become: yes
+
+- name: Switch to legacy ebtables
+  shell:
+    cmd: /usr/bin/update-alternatives --set ebtables /usr/sbin/ebtables-legacy
+    executable: /bin/bash
+  become: yes
+  when:
+    - ansible_facts['distribution_release'] == "focal"
+    - ansible_facts['distribution'] == "Ubuntu"
+
+
