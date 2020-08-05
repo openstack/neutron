@@ -16,6 +16,7 @@ import collections
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import portbindings_extended
+from neutron_lib.api.definitions import router_admin_state_down_before_update
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
@@ -45,7 +46,6 @@ from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db.models import allowed_address_pair as aap_models
 from neutron.db import models_v2
-from neutron.extensions import _admin_state_down_before_update_lib
 from neutron.ipam import utils as ipam_utils
 from neutron.objects import agent as ag_obj
 from neutron.objects import l3agent as rb_obj
@@ -61,7 +61,7 @@ def is_admin_state_down_necessary():
     global _IS_ADMIN_STATE_DOWN_NECESSARY
     if _IS_ADMIN_STATE_DOWN_NECESSARY is None:
         _IS_ADMIN_STATE_DOWN_NECESSARY = \
-            _admin_state_down_before_update_lib.ALIAS in (extensions.
+            router_admin_state_down_before_update.ALIAS in (extensions.
                     PluginAwareExtensionManager.get_instance().extensions)
     return _IS_ADMIN_STATE_DOWN_NECESSARY
 

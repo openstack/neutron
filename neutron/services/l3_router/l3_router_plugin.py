@@ -25,6 +25,8 @@ from neutron_lib.api.definitions import l3_ext_ha_mode
 from neutron_lib.api.definitions import l3_flavors
 from neutron_lib.api.definitions import l3_port_ip_change_not_allowed
 from neutron_lib.api.definitions import qos_gateway_ip
+from neutron_lib.api.definitions import \
+    router_admin_state_down_before_update as r_admin_state_down_before_update
 from neutron_lib.api.definitions import router_availability_zone
 from neutron_lib import constants as n_const
 from neutron_lib.db import resource_extend
@@ -49,7 +51,6 @@ from neutron.db import l3_gateway_ip_qos
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
 from neutron.db.models import l3 as l3_models
-from neutron.extensions import _admin_state_down_before_update_lib
 from neutron.quota import resource_registry
 from neutron import service
 from neutron.services.l3_router.service_providers import driver_controller
@@ -63,6 +64,8 @@ def disable_dvr_extension_by_config(aliases):
         LOG.info('Disabled DVR extension.')
         if 'dvr' in aliases:
             aliases.remove('dvr')
+        if r_admin_state_down_before_update.ALIAS in aliases:
+            aliases.remove(r_admin_state_down_before_update.ALIAS)
 
 
 def disable_l3_qos_extension_by_plugins(ext, aliases):
@@ -104,7 +107,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
                                     floatingip_pools.ALIAS,
                                     qos_gateway_ip.ALIAS,
                                     l3_port_ip_change_not_allowed.ALIAS,
-                                    _admin_state_down_before_update_lib.ALIAS]
+                                    r_admin_state_down_before_update.ALIAS]
 
     __native_pagination_support = True
     __native_sorting_support = True
