@@ -471,7 +471,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                                      msg=message)
 
     def _check_port_forwarding_update(self, context, pf_obj):
-        def _check_port_forwarding_update_failed(conflict):
+        def _raise_port_forwarding_update_failed(conflict):
             message = _("Another port forwarding entry with the same "
                         "attributes already exists, conflicting "
                         "values are %s") % conflict
@@ -499,7 +499,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
             # Ensure there are no conflicts on the outside
             if (obj.floating_ip_address == pf_obj.floating_ip_address and
                     obj.external_port == pf_obj.external_port):
-                _check_port_forwarding_update_failed(
+                _raise_port_forwarding_update_failed(
                     {'floating_ip_address': str(obj.floating_ip_address),
                      'external_port': obj.external_port})
             # Ensure there are no conflicts in the inside
@@ -507,7 +507,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
             if (obj.internal_port_id == pf_obj.internal_port_id and
                     obj.internal_ip_address == pf_obj.internal_ip_address and
                     obj.internal_port == pf_obj.internal_port):
-                _check_port_forwarding_update_failed(
+                _raise_port_forwarding_update_failed(
                     {'internal_port_id': obj.internal_port_id,
                      'internal_ip_address': str(obj.internal_ip_address),
                      'internal_port': obj.internal_port})
