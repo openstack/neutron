@@ -441,8 +441,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         return subnetpool_res
 
     def _create_port(self, fmt, net_id, expected_res_status=None,
-                     arg_list=None, set_context=False, tenant_id=None,
-                     **kwargs):
+                     arg_list=None, set_context=False, is_admin=False,
+                     tenant_id=None, **kwargs):
         tenant_id = tenant_id or self._tenant_id
         data = {'port': {'network_id': net_id,
                          'tenant_id': tenant_id}}
@@ -466,7 +466,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         if set_context and tenant_id:
             # create a specific auth context for this request
             port_req.environ['neutron.context'] = context.Context(
-                '', tenant_id)
+                '', tenant_id, is_admin=is_admin)
 
         port_res = port_req.get_response(self.api)
         if expected_res_status:
