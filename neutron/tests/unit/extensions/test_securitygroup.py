@@ -789,7 +789,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         plugin = directory.get_plugin()
         if not hasattr(plugin, '_get_security_groups_on_port'):
             self.skipTest("plugin doesn't use the mixin with this method")
-        neutron_context = context.get_admin_context()
+        neutron_context = context.Context('user', 'tenant')
         res = self._create_security_group(self.fmt, 'webservers', 'webservers',
                                           tenant_id='bad_tenant')
         sg1 = self.deserialize(self.fmt, res)
@@ -799,6 +799,21 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 {'port': {'security_groups': [sg1['security_group']['id']],
                           'tenant_id': 'tenant'}}
             )
+
+    def test_get_security_group_on_port_with_admin_from_other_tenant(self):
+        plugin = directory.get_plugin()
+        if not hasattr(plugin, '_get_security_groups_on_port'):
+            self.skipTest("plugin doesn't use the mixin with this method")
+        neutron_context = context.get_admin_context()
+        res = self._create_security_group(self.fmt, 'webservers', 'webservers',
+                                          tenant_id='other_tenant')
+        sg1 = self.deserialize(self.fmt, res)
+        sgs = plugin._get_security_groups_on_port(
+            neutron_context,
+            {'port': {'security_groups': [sg1['security_group']['id']],
+                      'tenant_id': 'tenant'}})
+        sg1_id = sg1['security_group']['id']
+        self.assertEqual(sg1_id, sgs[0])
 
     def test_delete_security_group(self):
         name = 'webservers'
