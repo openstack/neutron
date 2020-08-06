@@ -566,7 +566,7 @@ class OVNClient(object):
 
         ovn_network_name = ovn_port.external_ids.get(
             ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY)
-        network_id = ovn_network_name.strip('neutron-')
+        network_id = ovn_network_name.replace('neutron-', '')
 
         with self._nb_idl.transaction(check_error=True) as txn:
             txn.add(self._nb_idl.delete_lswitch_port(
