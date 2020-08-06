@@ -895,7 +895,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
 
         valid_groups = set(
             g.id for g in sg_objs
-            if (not tenant_id or g.tenant_id == tenant_id or
+            if (context.is_admin or not tenant_id or
+                g.tenant_id == tenant_id or
                 sg_obj.SecurityGroup.is_shared_with_tenant(
                     context, g.id, tenant_id))
         )
