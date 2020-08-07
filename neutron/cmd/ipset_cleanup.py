@@ -19,6 +19,7 @@ from oslo_log import log as logging
 from neutron.agent.linux import utils
 from neutron.common import config
 from neutron.conf.agent import cmd as command
+from neutron.conf.agent import common as agent_config
 
 
 LOG = logging.getLogger(__name__)
@@ -31,6 +32,7 @@ def setup_conf():
     from the main config that do not apply during clean-up.
     """
     conf = cfg.CONF
+    agent_config.register_root_helper(conf=conf)
     command.register_cmd_opts(command.ip_opts, conf)
     return conf
 
