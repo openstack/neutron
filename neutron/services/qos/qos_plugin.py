@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from keystoneauth1 import exceptions as ks_exc
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import port_resource_request
 from neutron_lib.api.definitions import portbindings
@@ -32,9 +33,12 @@ from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import qos as qos_exc
+from neutron_lib.placement import client as pl_client
 from neutron_lib.placement import constants as pl_constants
 from neutron_lib.placement import utils as pl_utils
 from neutron_lib.services.qos import constants as qos_consts
+from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.db import db_base_plugin_common
@@ -44,8 +48,12 @@ from neutron.objects import network as network_object
 from neutron.objects import ports as ports_object
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import qos_policy_validator as checker
+from neutron.objects.qos import rule as rule_object
 from neutron.objects.qos import rule_type as rule_type_object
 from neutron.services.qos.drivers import manager
+
+
+LOG = logging.getLogger(__name__)
 
 
 @resource_extend.has_resource_extenders
@@ -72,11 +80,19 @@ class QoSPlugin(qos.QoSPluginBase):
     def __init__(self):
         super(QoSPlugin, self).__init__()
         self.driver_manager = manager.QosServiceDriverManager()
+        self._placement_client = pl_client.PlacementAPIClient(cfg.CONF)
 
         callbacks_registry.subscribe(
             self._validate_create_port_callback,
             callbacks_resources.PORT,
             callbacks_events.PRECOMMIT_CREATE)
+        # TODO(lajoskatona): PORT BEFORE_UPDATE is a notify, so
+        # "old style" kwargs instead of payload object, let's change it
+        # to notify and payload.
+        callbacks_registry.subscribe(
+            self._check_port_for_placement_allocation_change,
+            callbacks_resources.PORT,
+            callbacks_events.BEFORE_UPDATE)
         callbacks_registry.subscribe(
             self._validate_update_port_callback,
             callbacks_resources.PORT,
@@ -171,6 +187,81 @@ class QoSPlugin(qos.QoSPluginBase):
         policy = policy_object.QosPolicy.get_object(
             context.elevated(), id=policy_id)
         self.validate_policy_for_port(context, policy, port)
+
+    def _check_port_for_placement_allocation_change(self, resource, event,
+                                                    trigger, **kwargs):
+        context = kwargs['context']
+        orig_port = kwargs['original_port']
+        original_policy_id = orig_port.get(qos_consts.QOS_POLICY_ID)
+        policy_id = kwargs['port'].get(qos_consts.QOS_POLICY_ID)
+
+        if policy_id == original_policy_id:
+            return
+
+        # Do this only for compute bound ports
+        if (nl_constants.DEVICE_OWNER_COMPUTE_PREFIX in
+                orig_port['device_owner']):
+            original_policy = policy_object.QosPolicy.get_object(
+                context.elevated(), id=original_policy_id)
+            policy = policy_object.QosPolicy.get_object(
+                context.elevated(), id=policy_id)
+            self._change_placement_allocation(original_policy, policy,
+                                              orig_port)
+
+    def _prepare_allocation_needs(self, original_rule, desired_rule):
+        if (isinstance(desired_rule, rule_object.QosMinimumBandwidthRule) or
+                isinstance(desired_rule, dict)):
+            o_dir = original_rule.get('direction')
+            o_minkbps = original_rule.get('min_kbps')
+            d_minkbps = desired_rule.get('min_kbps')
+            d_dir = desired_rule.get('direction')
+            if o_dir == d_dir and o_minkbps != d_minkbps:
+                diff = d_minkbps - o_minkbps
+                # TODO(lajoskatona): move this to neutron-lib, see similar
+                # dict @l125.
+                if d_dir == 'egress':
+                    drctn = pl_constants.CLASS_NET_BW_EGRESS_KBPS
+                else:
+                    drctn = pl_constants.CLASS_NET_BW_INGRESS_KBPS
+                return {drctn: diff}
+        return {}
+
+    def _change_placement_allocation(self, original_policy, desired_policy,
+                                     orig_port):
+        alloc_diff = {}
+        original_rules = []
+        rp_uuid = orig_port['binding:profile'].get('allocation')
+        device_id = orig_port['device_id']
+        if original_policy:
+            original_rules = original_policy.get('rules')
+        if desired_policy:
+            desired_rules = desired_policy.get('rules')
+        else:
+            desired_rules = [{'direction': 'egress', 'min_kbps': 0},
+                             {'direction': 'ingress', 'min_kbps': 0}]
+
+        any_rules_minbw = any(
+            [isinstance(r, rule_object.QosMinimumBandwidthRule)
+             for r in desired_rules])
+        if (not original_rules and any_rules_minbw) or not rp_uuid:
+            LOG.warning("There was no QoS policy with minimum_bandwidth rule "
+                        "attached to the port %s, there is no allocation "
+                        "record in placement for it, only the dataplane "
+                        "enforcement will happen!", orig_port['id'])
+            return
+        for o_rule in original_rules:
+            if isinstance(o_rule, rule_object.QosMinimumBandwidthRule):
+                for d_rule in desired_rules:
+                    alloc_diff.update(
+                        self._prepare_allocation_needs(o_rule, d_rule))
+        if alloc_diff:
+            try:
+                self._placement_client.update_qos_minbw_allocation(
+                    consumer_uuid=device_id, minbw_alloc_diff=alloc_diff,
+                    rp_uuid=rp_uuid)
+            except ks_exc.Conflict:
+                raise qos_exc.QosPlacementAllocationConflict(
+                    consumer=device_id, rp=rp_uuid)
 
     def _validate_update_port_callback(self, resource, event, trigger,
                                        payload=None):

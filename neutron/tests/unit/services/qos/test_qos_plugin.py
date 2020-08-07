@@ -13,12 +13,14 @@
 import copy
 from unittest import mock
 
+from keystoneauth1 import exceptions as ks_exc
 import netaddr
 from neutron_lib.api.definitions import qos
 from neutron_lib.callbacks import events
 from neutron_lib import constants as lib_constants
 from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
+from neutron_lib.exceptions import placement as pl_exc
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.objects import utils as obj_utils
 from neutron_lib.placement import constants as pl_constants
@@ -1221,6 +1223,14 @@ class TestQosPluginDB(base.BaseQosTestCase):
         qos_policy.create()
         return qos_policy
 
+    def _make_qos_minbw_rule(self, policy_id, direction='ingress',
+                             min_kbps=1000):
+        qos_rule = rule_object.QosMinimumBandwidthRule(
+            self.context, project_id=self.project_id,
+            qos_policy_id=policy_id, direction=direction, min_kbps=min_kbps)
+        qos_rule.create()
+        return qos_rule
+
     def _make_port(self, network_id, qos_policy_id=None):
         base_mac = ['aa', 'bb', 'cc', 'dd', 'ee', 'ff']
         mac = netaddr.EUI(next(net_utils.random_mac_generator(base_mac)))
@@ -1277,3 +1287,204 @@ class TestQosPluginDB(base.BaseQosTestCase):
 
     def test_validate_create_port_callback_no_policy(self):
         self._test_validate_create_port_callback()
+
+    def _prepare_for_port_placement_allocation_change(self, qos1, qos2):
+        qos1_id = qos1.id if qos1 else None
+        qos2_id = qos2.id if qos2 else None
+
+        network = self._make_network()
+        port = self._make_port(network.id, qos_policy_id=qos1_id)
+
+        return {"context": self.context,
+                "original_port": {
+                      "id": port.id,
+                      "device_owner": "compute:uu:id",
+                      "qos_policy_id": qos1_id},
+                "port": {"id": port.id, "qos_policy_id": qos2_id}}
+
+    def test_check_port_for_placement_allocation_change_no_qos_change(self):
+        qos1_obj = self._make_qos_policy()
+        kwargs = self._prepare_for_port_placement_allocation_change(
+            qos1=qos1_obj, qos2=qos1_obj)
+        with mock.patch.object(
+                self.qos_plugin,
+                '_change_placement_allocation') as mock_alloc_change:
+            self.qos_plugin._check_port_for_placement_allocation_change(
+                'PORT', 'before_update', 'test_plugin', **kwargs)
+        mock_alloc_change.assert_not_called()
+
+    def test_check_port_for_placement_allocation_change(self):
+        qos1_obj = self._make_qos_policy()
+        qos2_obj = self._make_qos_policy()
+        kwargs = self._prepare_for_port_placement_allocation_change(
+            qos1=qos1_obj, qos2=qos2_obj)
+
+        with mock.patch.object(
+                self.qos_plugin,
+                '_change_placement_allocation') as mock_alloc_change:
+            self.qos_plugin._check_port_for_placement_allocation_change(
+                'PORT', 'before_update', 'test_plugin', **kwargs)
+        mock_alloc_change.assert_called_once_with(
+            qos1_obj, qos2_obj, kwargs['original_port'])
+
+    def test_check_port_for_placement_allocation_change_no_new_policy(self):
+        qos1_obj = self._make_qos_policy()
+        kwargs = self._prepare_for_port_placement_allocation_change(
+            qos1=qos1_obj, qos2=None)
+
+        with mock.patch.object(
+                self.qos_plugin,
+                '_change_placement_allocation') as mock_alloc_change:
+            self.qos_plugin._check_port_for_placement_allocation_change(
+                'PORT', 'before_update', 'test_plugin', **kwargs)
+        mock_alloc_change.assert_called_once_with(
+            qos1_obj, None, kwargs['original_port'])
+
+    def _prepare_port_for_placement_allocation(self, qos1, qos2=None,
+                                               min_kbps1=1000, min_kbps2=2000):
+        rule1_obj = self._make_qos_minbw_rule(qos1.id, min_kbps=min_kbps1)
+        qos1.rules = [rule1_obj]
+        if qos2:
+            rule2_obj = self._make_qos_minbw_rule(qos2.id, min_kbps=min_kbps2)
+            qos2.rules = [rule2_obj]
+        orig_port = {'binding:profile': {'allocation': 'rp:uu:id'},
+                     'device_id': 'uu:id'}
+        return orig_port
+
+    def test_change_placement_allocation_increase(self):
+        qos1 = self._make_qos_policy()
+        qos2 = self._make_qos_policy()
+        port = self._prepare_port_for_placement_allocation(qos1, qos2)
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_minbw_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(qos1, qos2, port)
+        mock_update_qos_alloc.assert_called_once_with(
+            consumer_uuid='uu:id',
+            minbw_alloc_diff={'NET_BW_IGR_KILOBIT_PER_SEC': 1000},
+            rp_uuid='rp:uu:id')
+
+    def test_test_change_placement_allocation_decrease(self):
+        qos1 = self._make_qos_policy()
+        qos2 = self._make_qos_policy()
+        port = self._prepare_port_for_placement_allocation(qos2, qos1)
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_minbw_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(qos1, qos2, port)
+        mock_update_qos_alloc.assert_called_once_with(
+            consumer_uuid='uu:id',
+            minbw_alloc_diff={'NET_BW_IGR_KILOBIT_PER_SEC': -1000},
+            rp_uuid='rp:uu:id')
+
+    def test_change_placement_allocation_no_original_qos(self):
+        qos1 = None
+        qos2 = self._make_qos_policy()
+        rule2_obj = self._make_qos_minbw_rule(qos2.id, min_kbps=1000)
+        qos2.rules = [rule2_obj]
+        orig_port = {'id': 'u:u', 'device_id': 'i:d', 'binding:profile': {}}
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_minbw_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(
+                qos1, qos2, orig_port)
+        mock_update_qos_alloc.assert_not_called()
+
+    def test_change_placement_allocation_no_original_allocation(self):
+        qos1 = self._make_qos_policy()
+        rule1_obj = self._make_qos_minbw_rule(qos1.id, min_kbps=500)
+        qos1.rules = [rule1_obj]
+        qos2 = self._make_qos_policy()
+        rule2_obj = self._make_qos_minbw_rule(qos2.id, min_kbps=1000)
+        qos2.rules = [rule2_obj]
+        orig_port = {'id': 'u:u', 'device_id': 'i:d', 'binding:profile': {}}
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_minbw_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(
+                qos1, qos2, orig_port)
+        mock_update_qos_alloc.assert_not_called()
+
+    def test_change_placement_allocation_new_policy_empty(self):
+        qos1 = self._make_qos_policy()
+        port = self._prepare_port_for_placement_allocation(qos1)
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_minbw_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(qos1, None, port)
+        mock_update_qos_alloc.assert_called_once_with(
+            consumer_uuid='uu:id',
+            minbw_alloc_diff={'NET_BW_IGR_KILOBIT_PER_SEC': -1000},
+            rp_uuid='rp:uu:id')
+
+    def test_change_placement_allocation_no_min_bw(self):
+        qos1 = self._make_qos_policy()
+        qos2 = self._make_qos_policy()
+        bw_limit_rule1 = rule_object.QosDscpMarkingRule(dscp_mark=16)
+        bw_limit_rule2 = rule_object.QosDscpMarkingRule(dscp_mark=18)
+        qos1.rules = [bw_limit_rule1]
+        qos2.rules = [bw_limit_rule2]
+        port = {'binding:profile': {'allocation': 'rp:uu:id'},
+                'device_id': 'uu:id'}
+
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_minbw_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(qos1, None, port)
+        mock_update_qos_alloc.assert_not_called()
+
+    def test_change_placement_allocation_old_rule_not_min_bw(self):
+        qos1 = self._make_qos_policy()
+        qos2 = self._make_qos_policy()
+        bw_limit_rule = rule_object.QosDscpMarkingRule(dscp_mark=16)
+        port = self._prepare_port_for_placement_allocation(qos1, qos2)
+        qos1.rules = [bw_limit_rule]
+
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_minbw_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(qos1, qos2, port)
+        mock_update_qos_alloc.assert_not_called()
+
+    def test_change_placement_allocation_new_rule_not_min_bw(self):
+        qos1 = self._make_qos_policy()
+        qos2 = self._make_qos_policy()
+        bw_limit_rule = rule_object.QosDscpMarkingRule(dscp_mark=16)
+        qos2.rules = [bw_limit_rule]
+        port = self._prepare_port_for_placement_allocation(qos1)
+
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_minbw_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(qos1, qos2, port)
+        mock_update_qos_alloc.assert_not_called()
+
+    def test_change_placement_allocation_equal_minkbps(self):
+        qos1 = self._make_qos_policy()
+        qos2 = self._make_qos_policy()
+        port = self._prepare_port_for_placement_allocation(qos1, qos2, 1000,
+                                                           1000)
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_minbw_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(qos1, qos2, port)
+        mock_update_qos_alloc.assert_not_called()
+
+    def test_change_placement_allocation_update_conflict(self):
+        qos1 = self._make_qos_policy()
+        qos2 = self._make_qos_policy()
+        port = self._prepare_port_for_placement_allocation(qos1, qos2)
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_minbw_allocation') as mock_update_qos_alloc:
+            mock_update_qos_alloc.side_effect = ks_exc.Conflict(
+                response={'errors': [{'code': 'placement.concurrent_update'}]}
+            )
+            self.assertRaises(
+                qos_exc.QosPlacementAllocationConflict,
+                self.qos_plugin._change_placement_allocation,
+                qos1, qos2, port)
+
+    def test_change_placement_allocation_update_generation_conflict(self):
+        qos1 = self._make_qos_policy()
+        qos2 = self._make_qos_policy()
+        port = self._prepare_port_for_placement_allocation(qos1, qos2)
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_minbw_allocation') as mock_update_qos_alloc:
+            mock_update_qos_alloc.side_effect = (
+                pl_exc.PlacementAllocationGenerationConflict(
+                    consumer='rp:uu:id'))
+            self.assertRaises(
+                pl_exc.PlacementAllocationGenerationConflict,
+                self.qos_plugin._change_placement_allocation,
+                qos1, qos2, port)
