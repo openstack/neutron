@@ -190,7 +190,7 @@ def get_iproute(namespace):
     # `NetNS` -- RTNL API to another network namespace
     if namespace:
         # do not try and create the namespace
-        return pyroute2.NetNS(namespace, flags=0)
+        return pyroute2.NetNS(namespace, flags=0, libc=priv_linux.get_cdll())
     else:
         return pyroute2.IPRoute()
 
