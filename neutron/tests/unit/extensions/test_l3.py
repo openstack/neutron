@@ -1418,6 +1418,33 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                                   None,
                                                   p['port']['id'])
 
+    def test_update_router_interface_port_ipv6_subnet_ext_ra(self):
+        use_cases = [{'msg': 'IPv6 Subnet Modes (none, slaac)',
+                      'ra_mode': None,
+                      'address_mode': lib_constants.IPV6_SLAAC},
+                     {'msg': 'IPv6 Subnet Modes (none, dhcpv6-stateful)',
+                      'ra_mode': None,
+                      'address_mode': lib_constants.DHCPV6_STATEFUL},
+                     {'msg': 'IPv6 Subnet Modes (none, dhcpv6-stateless)',
+                      'ra_mode': None,
+                      'address_mode': lib_constants.DHCPV6_STATELESS}]
+        for uc in use_cases:
+            with self.network() as network, self.router() as router:
+                with self.subnet(
+                        network=network, cidr='fd00::/64',
+                        ip_version=lib_constants.IP_VERSION_6,
+                        ipv6_ra_mode=uc['ra_mode'],
+                        ipv6_address_mode=uc['address_mode']) as subnet:
+                    fixed_ips = [{'subnet_id': subnet['subnet']['id']}]
+                    with self.port(subnet=subnet, fixed_ips=fixed_ips) as port:
+                        self._router_interface_action(
+                            'add',
+                            router['router']['id'],
+                            None,
+                            port['port']['id'],
+                            expected_code=exc.HTTPBadRequest.code,
+                            msg=uc['msg'])
+
     def _assert_body_port_id_and_update_port(self, body, mock_update_port,
                                              port_id, device_id):
         self.assertNotIn('port_id', body)
