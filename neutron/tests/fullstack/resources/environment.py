@@ -39,7 +39,8 @@ class EnvironmentDescription(object):
                  service_plugins='router', arp_responder=False,
                  agent_down_time=75, router_scheduler=None,
                  global_mtu=common_const.DEFAULT_NETWORK_MTU,
-                 debug_iptables=False, log=False, report_bandwidths=False):
+                 debug_iptables=False, log=False, report_bandwidths=False,
+                 ml2_extension_drivers=None):
         self.network_type = network_type
         self.l2_pop = l2_pop
         self.qos = qos
@@ -57,6 +58,7 @@ class EnvironmentDescription(object):
             self.service_plugins += ',qos'
         if self.log:
             self.service_plugins += ',log'
+        self.ml2_extension_drivers = ml2_extension_drivers
 
     @property
     def tunneling_enabled(self):
