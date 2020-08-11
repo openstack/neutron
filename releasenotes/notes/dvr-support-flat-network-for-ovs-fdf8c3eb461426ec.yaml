@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    ``DVR`` routers now support ``flat`` networks.
+fixes:
+  - |
+    Fixed bug `1876092 <https://bugs.launchpad.net/neutron/+bug/1876092>`_
+    which caused DUP ICMP replies on the ``flat`` networks used with ``DVR``
+    routers.
