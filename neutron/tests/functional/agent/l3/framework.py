@@ -36,6 +36,7 @@ from neutron.agent.linux import keepalived
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as agent_config
+from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf import common as common_config
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import net_helpers
@@ -93,6 +94,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         self.mock_plugin_api = mock.patch(
             'neutron.agent.l3.agent.L3PluginApi').start().return_value
         mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()
+        l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
         self.conf = self._configure_agent('agent1')
         self.agent = neutron_l3_agent.L3NATAgentWithStateReport('agent1',
                                                                 self.conf)
