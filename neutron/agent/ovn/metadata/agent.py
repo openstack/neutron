@@ -470,8 +470,8 @@ class MetadataAgent(object):
 
         # Spawn metadata proxy if it's not already running.
         metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
-            self._process_monitor, namespace, ovn_const.METADATA_PORT,
-            self.conf, bind_address=ovn_const.METADATA_DEFAULT_IP,
+            self._process_monitor, namespace, n_const.METADATA_PORT,
+            self.conf, bind_address=n_const.METADATA_V4_IP,
             network_id=datapath)
 
         self.update_chassis_metadata_networks(datapath)

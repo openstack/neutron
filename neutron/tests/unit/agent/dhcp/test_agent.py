@@ -217,8 +217,6 @@ fake_down_network = dhcp.NetModel(id='12345678-dddd-dddd-1234567890ab',
 
 class TestDhcpAgent(base.BaseTestCase):
 
-    METADATA_DEFAULT_IP = dhcp.METADATA_DEFAULT_IP
-
     def setUp(self):
         super(TestDhcpAgent, self).setUp()
         entry.register_options(cfg.CONF)
@@ -580,7 +578,7 @@ class TestDhcpAgent(base.BaseTestCase):
             dhcp.configure_dhcp_for_network(fake_network)
             md_cls.spawn_monitored_metadata_proxy.assert_called_once_with(
                 mock.ANY, mock.ANY, mock.ANY, mock.ANY,
-                bind_address=self.METADATA_DEFAULT_IP,
+                bind_address=const.METADATA_V4_IP,
                 network_id=fake_network.id)
             md_cls.reset_mock()
             dhcp.disable_dhcp_helper(fake_network.id)
@@ -599,7 +597,7 @@ class TestDhcpAgent(base.BaseTestCase):
                 mock.ANY, fake_network.id, mock.ANY, fake_network.namespace)
             md_cls.spawn_monitored_metadata_proxy.assert_called_once_with(
                 mock.ANY, mock.ANY, mock.ANY, mock.ANY,
-                bind_address=self.METADATA_DEFAULT_IP,
+                bind_address=const.METADATA_V4_IP,
                 network_id=fake_network.id)
 
     def test_report_state_revival_logic(self):
@@ -1001,10 +999,10 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                        '.spawn_monitored_metadata_proxy')
         with mock.patch(method_path) as spawn:
             self.dhcp.enable_isolated_metadata_proxy(network)
-            metadata_ip = dhcp.METADATA_DEFAULT_IP
+            metadata_ip = const.METADATA_V4_IP
             spawn.assert_called_once_with(self.dhcp._process_monitor,
                                           network.namespace,
-                                          dhcp.METADATA_PORT,
+                                          const.METADATA_PORT,
                                           cfg.CONF,
                                           bind_address=metadata_ip,
                                           router_id='forzanapoli')
@@ -1031,7 +1029,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.dhcp.enable_isolated_metadata_proxy(network)
             spawn.assert_called_once_with(self.dhcp._process_monitor,
                                           network.namespace,
-                                          dhcp.METADATA_PORT,
+                                          const.METADATA_PORT,
                                           cfg.CONF,
                                           bind_address='169.254.169.254',
                                           network_id=network.id,

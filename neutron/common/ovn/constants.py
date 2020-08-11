@@ -278,11 +278,6 @@ LSP_OPTIONS_VIRTUAL_IP_KEY = 'virtual-ip'
 HA_CHASSIS_GROUP_DEFAULT_NAME = 'default_ha_chassis_group'
 HA_CHASSIS_GROUP_HIGHEST_PRIORITY = 32767
 
-# TODO(lucasagomes): Move this to neutron-lib later.
-# Metadata constants
-METADATA_DEFAULT_IP = '169.254.169.254'
-METADATA_PORT = 80
-
 # OVN igmp options
 MCAST_SNOOP = 'mcast_snoop'
 MCAST_FLOOD_UNREGISTERED = 'mcast_flood_unregistered'

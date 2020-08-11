@@ -1079,11 +1079,12 @@ class RouterInfo(BaseRouterInfo):
         # requests that arrive before the filter metadata redirect
         # rule is installed will be dropped.
         mark_metadata_for_internal_interfaces = (
-            '-d 169.254.169.254/32 '
+            '-d %(metadata_cidr)s '
             '-i %(interface_name)s '
             '-p tcp -m tcp --dport 80 '
             '-j MARK --set-xmark %(value)s/%(mask)s' %
-            {'interface_name': INTERNAL_DEV_PREFIX + '+',
+            {'metadata_cidr': lib_constants.METADATA_V4_CIDR,
+             'interface_name': INTERNAL_DEV_PREFIX + '+',
              'value': self.agent_conf.metadata_access_mark,
              'mask': lib_constants.ROUTER_MARK_MASK})
         self.iptables_manager.ipv4['mangle'].add_rule(
@@ -1091,11 +1092,12 @@ class RouterInfo(BaseRouterInfo):
 
         if netutils.is_ipv6_enabled():
             mark_metadata_v6_for_internal_interfaces = (
-                '-d fe80::a9fe:a9fe/128 '
+                '-d %(metadata_v6_ip)s/128 '
                 '-i %(interface_name)s '
                 '-p tcp -m tcp --dport 80 '
                 '-j MARK --set-xmark %(value)s/%(mask)s' %
-                {'interface_name': INTERNAL_DEV_PREFIX + '+',
+                {'metadata_v6_ip': lib_constants.METADATA_V6_IP,
+                 'interface_name': INTERNAL_DEV_PREFIX + '+',
                  'value': self.agent_conf.metadata_access_mark,
                  'mask': lib_constants.ROUTER_MARK_MASK})
             self.iptables_manager.ipv6['mangle'].add_rule(

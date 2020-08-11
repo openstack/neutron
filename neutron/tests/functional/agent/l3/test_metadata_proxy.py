@@ -15,11 +15,11 @@
 import os.path
 import time
 
+from neutron_lib import constants
 import webob
 import webob.dec
 import webob.exc
 
-from neutron.agent.linux import dhcp
 from neutron.agent.linux import utils
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
@@ -59,8 +59,8 @@ class MetadataL3AgentTestCase(framework.L3AgentTestFramework):
                      workers=0, backlog=4096, mode=self.SOCKET_MODE)
 
     def _query_metadata_proxy(self, machine):
-        url = 'http://%(host)s:%(port)s' % {'host': dhcp.METADATA_DEFAULT_IP,
-                                            'port': dhcp.METADATA_PORT}
+        url = 'http://%(host)s:%(port)s' % {'host': constants.METADATA_V4_IP,
+                                            'port': constants.METADATA_PORT}
         cmd = 'curl', '--max-time', METADATA_REQUEST_TIMEOUT, '-D-', url
         i = 0
         CONNECTION_REFUSED_TIMEOUT = METADATA_REQUEST_TIMEOUT // 2

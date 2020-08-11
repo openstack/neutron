@@ -747,7 +747,7 @@ class DhcpAgent(manager.Manager):
                 ]
                 if len(dhcp_ifaces) == 1:
                     kwargs['bind_interface'] = dhcp_ifaces[0]
-                    kwargs['bind_address_v6'] = dhcp.METADATA_V6_IP
+                    kwargs['bind_address_v6'] = constants.METADATA_V6_IP
                 else:
                     LOG.error(
                         'Unexpected number of DHCP interfaces for metadata '
@@ -761,8 +761,8 @@ class DhcpAgent(manager.Manager):
                     self.dhcp_driver_class)
 
         metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
-            self._process_monitor, network.namespace, dhcp.METADATA_PORT,
-            self.conf, bind_address=dhcp.METADATA_DEFAULT_IP, **kwargs)
+            self._process_monitor, network.namespace, constants.METADATA_PORT,
+            self.conf, bind_address=constants.METADATA_V4_IP, **kwargs)
 
     def disable_isolated_metadata_proxy(self, network):
         if (self.conf.enable_metadata_network and
