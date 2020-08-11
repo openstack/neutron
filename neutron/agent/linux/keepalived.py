@@ -105,7 +105,7 @@ class KeepalivedVipAddress(object):
         result = '%s dev %s' % (self.ip_address, self.interface_name)
         if self.scope:
             result += ' scope %s' % self.scope
-        if not self.track:
+        if cfg.CONF.keepalived_use_no_track and not self.track:
             result += ' no_track'
         return result
 
@@ -128,7 +128,8 @@ class KeepalivedVirtualRoute(object):
             output += ' dev %s' % self.interface_name
         if self.scope:
             output += ' scope %s' % self.scope
-        output += ' no_track'
+        if cfg.CONF.keepalived_use_no_track:
+            output += ' no_track'
         return output
 
 
