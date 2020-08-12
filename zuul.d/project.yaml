@@ -14,9 +14,7 @@
       - release-notes-jobs-python3
     check:
       jobs:
-        - neutron-functional
         - neutron-functional-with-uwsgi
-        - neutron-fullstack
         - neutron-fullstack-with-uwsgi
         - neutron-rally-task
         - neutron-grenade-multinode
@@ -85,8 +83,9 @@
             timeout: 4800
     gate:
       jobs:
-        - neutron-functional
-        - neutron-fullstack
+        - neutron-functional-with-uwsgi
+        - neutron-fullstack-with-uwsgi
+        - neutron-tempest-with-uwsgi
         - neutron-tempest-linuxbridge
         - neutron-tempest-iptables_hybrid
         - neutron-tempest-multinode-full-py3
@@ -112,6 +111,7 @@
     periodic:
       jobs:
         - neutron-functional
+        - neutron-fullstack
         - neutron-tempest-postgres-full
         - neutron-tempest-mariadb-full
         - neutron-tempest-with-os-ken-master
