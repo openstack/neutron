@@ -13,13 +13,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log as logging
 from oslo_serialization import jsonutils
+
 from pecan import hooks
 import webob.exc
 
 from neutron._i18n import _
 from neutron.api.v2 import base as v2_base
 from neutron.pecan_wsgi.hooks import utils
+
+LOG = logging.getLogger(__name__)
 
 
 class BodyValidationHook(hooks.PecanHook):
@@ -53,13 +57,19 @@ class BodyValidationHook(hooks.PecanHook):
             return
         # Prepare data to be passed to the plugin from request body
         controller = utils.get_controller(state)
-        data = v2_base.Controller.prepare_request_body(
-            neutron_context,
-            json_data,
-            is_create,
-            resource,
-            controller.resource_info,
-            allow_bulk=is_create)
+        try:
+            data = v2_base.Controller.prepare_request_body(
+                neutron_context,
+                json_data,
+                is_create,
+                resource,
+                controller.resource_info,
+                allow_bulk=is_create)
+        except Exception as e:
+            LOG.warning("An exception happened while processing the request "
+                        "body. The exception message is [%s].", e)
+            raise e
+
         if collection in data:
             state.request.context['resources'] = [item[resource] for item in
                                                   data[collection]]

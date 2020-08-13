@@ -20,6 +20,7 @@ from neutron_lib.db import constants as const
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import importutils
 import webob
 
@@ -41,6 +42,7 @@ DB_QUOTA_DRIVER = 'neutron.db.quota.driver.DbQuotaDriver'
 EXTENDED_ATTRIBUTES_2_0 = {
     RESOURCE_COLLECTION: {}
 }
+LOG = logging.getLogger(__name__)
 
 
 def validate_policy(context, policy_name):
@@ -118,9 +120,15 @@ class QuotaSetsController(wsgi.Controller):
         validate_policy(request.context, "update_quota")
         if self._update_extended_attributes:
             self._update_attributes()
-        body = base.Controller.prepare_request_body(
-            request.context, body, False, self._resource_name,
-            EXTENDED_ATTRIBUTES_2_0[RESOURCE_COLLECTION])
+        try:
+            body = base.Controller.prepare_request_body(
+                request.context, body, False, self._resource_name,
+                EXTENDED_ATTRIBUTES_2_0[RESOURCE_COLLECTION])
+        except Exception as e:
+            LOG.warning(
+                "An exception happened while processing the request "
+                "body. The exception message is [%s].", e)
+            raise e
         for key, value in body[self._resource_name].items():
             self._driver.update_quota_limit(request.context, id, key, value)
         return {self._resource_name: self._get_quotas(request, id)}

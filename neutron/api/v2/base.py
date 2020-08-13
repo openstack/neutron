@@ -440,10 +440,15 @@ class Controller(object):
     def _create(self, request, body, **kwargs):
         """Creates a new instance of the requested entity."""
         parent_id = kwargs.get(self._parent_id_name)
-        body = Controller.prepare_request_body(request.context,
-                                               body, True,
-                                               self._resource, self._attr_info,
-                                               allow_bulk=self._allow_bulk)
+        try:
+            body = Controller.prepare_request_body(
+                request.context, body, True, self._resource, self._attr_info,
+                allow_bulk=self._allow_bulk)
+        except Exception as e:
+            LOG.warning("An exception happened while processing the request "
+                        "body. The exception message is [%s].", e)
+            raise e
+
         action = self._plugin_handlers[self.CREATE]
         # Check authz
         if self._collection in body:
@@ -626,10 +631,15 @@ class Controller(object):
 
     @db_api.retry_db_errors
     def _update(self, request, id, body, **kwargs):
-        body = Controller.prepare_request_body(request.context,
-                                               body, False,
-                                               self._resource, self._attr_info,
-                                               allow_bulk=self._allow_bulk)
+        try:
+            body = Controller.prepare_request_body(
+                request.context, body, False, self._resource, self._attr_info,
+                allow_bulk=self._allow_bulk)
+        except Exception as e:
+            LOG.warning("An exception happened while processing the request "
+                        "body. The exception message is [%s].", e)
+            raise e
+
         action = self._plugin_handlers[self.UPDATE]
         # Load object to check authz
         # but pass only attributes in the original body and required
@@ -724,13 +734,20 @@ class Controller(object):
                                                      "not supported"))
                 if not body[collection]:
                     raise webob.exc.HTTPBadRequest(_("Resources required"))
-                bulk_body = [
-                    Controller.prepare_request_body(
-                        context, item if resource in item
-                        else {resource: item}, is_create, resource, attr_info,
-                        allow_bulk) for item in body[collection]
-                ]
-                return {collection: bulk_body}
+                try:
+                    bulk_body = [
+                        Controller.prepare_request_body(
+                            context, item if resource in item
+                            else {resource: item}, is_create, resource,
+                            attr_info, allow_bulk) for item in body[collection]
+                    ]
+                    return {collection: bulk_body}
+                except Exception as e:
+                    LOG.warning(
+                        "An exception happened while processing the request "
+                        "body. The exception message is [%s].", e)
+                    raise e
+
             res_dict = body.get(resource)
         except (AttributeError, TypeError):
             msg = _("Body contains invalid data")
