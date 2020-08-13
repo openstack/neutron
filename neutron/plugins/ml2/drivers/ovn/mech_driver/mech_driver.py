@@ -48,6 +48,7 @@ from neutron.db import ovn_hash_ring_db
 from neutron.db import ovn_revision_numbers_db
 from neutron.db import provisioning_blocks
 from neutron.plugins.ml2 import db as ml2_db
+from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent as n_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
@@ -1087,87 +1088,35 @@ class OVNMechanismDriver(api.MechanismDriver):
                             " networking-ovn-metadata-agent status/logs.",
                             port_id)
 
-    def agent_alive(self, chassis, type_, update_db):
-        nb_cfg = chassis.nb_cfg
-        key = ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY
-        if type_ == ovn_const.OVN_METADATA_AGENT:
-            nb_cfg = int(chassis.external_ids.get(
-                ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY, 0))
-            key = ovn_const.METADATA_LIVENESS_CHECK_EXT_ID_KEY
-
-        try:
-            updated_at = timeutils.parse_isotime(chassis.external_ids[key])
-        except KeyError:
-            updated_at = timeutils.utcnow(with_timezone=True)
-            update_db = True
-
+    def agent_alive(self, agent, update_db):
         # Allow a maximum of 1 difference between expected and read values
         # to avoid false positives.
-        if self._nb_ovn.nb_global.nb_cfg - nb_cfg <= 1:
+        if self._nb_ovn.nb_global.nb_cfg - agent.nb_cfg <= 1:
             if update_db:
-                # Update the time of our successful check
-                value = timeutils.utcnow(with_timezone=True).isoformat()
-                self._sb_ovn.db_set('Chassis', chassis.uuid,
-                                    ('external_ids', {key: value})).execute(
-                    check_error=True)
+                self.mark_agent_alive(agent)
             return True
-        now = timeutils.utcnow(with_timezone=True)
 
-        if (now - updated_at).total_seconds() < cfg.CONF.agent_down_time:
+        now = timeutils.utcnow(with_timezone=True)
+        if (now - agent.updated_at).total_seconds() < cfg.CONF.agent_down_time:
             # down, but not yet timed out
             return True
         return False
 
-    def _format_agent_info(self, chassis, binary, agent_id, type_,
-                           description, alive):
-        return {
-            'binary': binary,
-            'host': chassis.hostname,
-            'heartbeat_timestamp': timeutils.utcnow(),
-            'availability_zone': ', '.join(
-                ovn_utils.get_chassis_availability_zones(chassis)),
-            'topic': 'n/a',
-            'description': description,
-            'configurations': {
-                'chassis_name': chassis.name,
-                'bridge-mappings':
-                    chassis.external_ids.get('ovn-bridge-mappings', '')},
-            'start_flag': True,
-            'agent_type': type_,
-            'id': agent_id,
-            'alive': alive,
-            'admin_state_up': True}
+    def mark_agent_alive(self, agent):
+        # Update the time of our successful check
+        value = timeutils.utcnow(with_timezone=True).isoformat()
+        self._sb_ovn.db_set('Chassis', agent.chassis.uuid,
+                            ('external_ids', {agent.key: value})).execute(
+            check_error=True)
 
     def agents_from_chassis(self, chassis, update_db=True):
         agent_dict = {}
-
-        # Check for ovn-controller / ovn-controller gateway
-        agent_type = ovn_const.OVN_CONTROLLER_AGENT
-        # Only the chassis name stays consistent after ovn-controller restart
-        agent_id = chassis.name
-        if ('enable-chassis-as-gw' in
-                chassis.external_ids.get('ovn-cms-options', [])):
-            agent_type = ovn_const.OVN_CONTROLLER_GW_AGENT
-
-        alive = self.agent_alive(chassis, agent_type, update_db)
-        description = chassis.external_ids.get(
-            ovn_const.OVN_AGENT_DESC_KEY, '')
-        agent_dict[agent_id] = self._format_agent_info(
-            chassis, 'ovn-controller', agent_id, agent_type, description,
-            alive)
-
-        # Check for the metadata agent
-        metadata_agent_id = chassis.external_ids.get(
-            ovn_const.OVN_AGENT_METADATA_ID_KEY)
-        if metadata_agent_id:
-            agent_type = ovn_const.OVN_METADATA_AGENT
-            alive = self.agent_alive(chassis, agent_type, update_db)
-            description = chassis.external_ids.get(
-                ovn_const.OVN_AGENT_METADATA_DESC_KEY, '')
-            agent_dict[metadata_agent_id] = self._format_agent_info(
-                chassis, 'networking-ovn-metadata-agent',
-                metadata_agent_id, agent_type, description, alive)
-
+        # Iterate over each unique Agent subclass
+        for agent in [a(chassis) for a in n_agent.NeutronAgent.agent_types()]:
+            if not agent.agent_id:
+                continue
+            alive = self.agent_alive(agent, update_db)
+            agent_dict[agent.agent_id] = agent.as_dict(alive)
         return agent_dict
 
     def patch_plugin_merge(self, method_name, new_fn, op=operator.add):
@@ -1194,7 +1143,7 @@ class OVNMechanismDriver(api.MechanismDriver):
 
         setattr(self._plugin, method_name, types.MethodType(fn, self._plugin))
 
-    def ping_chassis(self):
+    def ping_all_chassis(self):
         """Update NB_Global.nb_cfg so that Chassis.nb_cfg will increment
 
         :returns: (bool) True if nb_cfg was updated. False if it was updated
@@ -1244,7 +1193,7 @@ def populate_agents(driver):
 
 
 def get_agents(self, context, filters=None, fields=None, _driver=None):
-    update_db = _driver.ping_chassis()
+    update_db = _driver.ping_all_chassis()
     filters = filters or {}
     agent_list = []
     populate_agents(_driver)
