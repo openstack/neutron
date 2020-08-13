@@ -40,6 +40,7 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 # Load all the models to register them into SQLAlchemy metadata before using
 # the SqlFixture
 from neutron.db import models  # noqa
+from neutron import manager
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
 from neutron.plugins.ml2.drivers import type_geneve  # noqa
 from neutron.tests import base
@@ -183,6 +184,10 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self.mech_driver = mm.mech_drivers['ovn'].obj
         self.l3_plugin = directory.get_plugin(constants.L3)
         self.segments_plugin = directory.get_plugin('segments')
+        # OVN does not use RPC: disable it for port-forwarding tests
+        self.pf_plugin = manager.NeutronManager.load_class_for_provider(
+            'neutron.service_plugins', 'port_forwarding')()
+        self.pf_plugin._rpc_notifications_required = False
         self.ovsdb_server_mgr = None
         self.ovn_northd_mgr = None
         self.maintenance_worker = maintenance_worker

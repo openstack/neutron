@@ -41,6 +41,8 @@ from neutron.db import l3_fip_port_details
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.scheduler import l3_ovn_scheduler
+from neutron.services.portforwarding.drivers.ovn import driver \
+    as port_forwarding
 
 from neutron.services.ovn_l3 import exceptions as ovn_l3_exc
 
@@ -76,6 +78,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         self._mech = None
         self._ovn_client_inst = None
         self.scheduler = l3_ovn_scheduler.get_scheduler()
+        self.port_forwarding = port_forwarding.OVNPortForwarding(self)
         self._register_precommit_callbacks()
 
     def _register_precommit_callbacks(self):

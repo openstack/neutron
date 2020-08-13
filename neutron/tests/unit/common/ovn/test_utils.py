@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from collections import namedtuple
 from unittest import mock
 
 import fixtures
@@ -94,6 +95,51 @@ class TestUtils(base.BaseTestCase):
             {constants.PORT_SECURITYGROUPS: ['fake']}))
         self.assertFalse(utils.is_security_groups_enabled(
             {}))
+
+    def test_parse_ovn_lb_port_forwarding(self):
+        TC = namedtuple('TC', 'input output description')
+        fake_ovn_lb = namedtuple('fake_ovn_lb', 'external_ids protocol vips')
+        test_cases = [
+            TC([], {}, "empty"),
+            TC([{'external_ids': {'neutron:fip_id': 'fip1'},
+                 'protocol': None,
+                 'vips': {'172.24.4.8:2020': '10.0.0.10:22'}}],
+                {'fip1': {'tcp': {'172.24.4.8:2020 10.0.0.10:22'}}},
+                "simple"),
+            TC([{'external_ids': {'neutron:fip_id': 'fip1'},
+                 'protocol': [],
+                 'vips': {'172.24.4.8:2020': '10.0.0.10:22',
+                          '172.24.4.8:2021': '10.0.0.11:22',
+                          '172.24.4.8:8080': '10.0.0.10:80'}}],
+                {'fip1': {'tcp': {'172.24.4.8:8080 10.0.0.10:80',
+                                  '172.24.4.8:2021 10.0.0.11:22',
+                                  '172.24.4.8:2020 10.0.0.10:22'}}},
+                "multiple vips"),
+            TC([{'external_ids': {'neutron:fip_id': 'fip1'},
+                 'protocol': ['tcp'],
+                 'vips': {'ext_ip:ext_port1': 'int_ip1:int_port1'}},
+                {'external_ids': {'neutron:fip_id': 'fip1'},
+                 'protocol': ['udp'],
+                 'vips': {'ext_ip:ext_port1': 'int_ip1:int_port1'}}],
+                {'fip1': {'tcp': {'ext_ip:ext_port1 int_ip1:int_port1'},
+                          'udp': {'ext_ip:ext_port1 int_ip1:int_port1'}}},
+                "2 protocols"),
+            TC([{'external_ids': {'neutron:fip_id': 'fip1'},
+                 'protocol': ['tcp'],
+                 'vips': {'ext_ip:ext_port1': 'int_ip1:int_port1'}},
+                {'external_ids': {'neutron:fip_id': 'fip2'},
+                 'protocol': ['tcp'],
+                 'vips': {'ext_ip:ext_port1': 'int_ip1:int_port1'}}],
+                {'fip1': {'tcp': {'ext_ip:ext_port1 int_ip1:int_port1'}},
+                 'fip2': {'tcp': {'ext_ip:ext_port1 int_ip1:int_port1'}}},
+                "2 fips"),
+        ]
+        for tc in test_cases:
+            tc_lbs = [
+                fake_ovn_lb(lb['external_ids'], lb['protocol'], lb['vips'])
+                for lb in tc.input]
+            rc = utils.parse_ovn_lb_port_forwarding(tc_lbs)
+            self.assertEqual(rc, tc.output, tc.description)
 
 
 class TestGateWayChassisValidity(base.BaseTestCase):

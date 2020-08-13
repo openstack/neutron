@@ -172,6 +172,7 @@
         tls-proxy: true
         q-qos: true
         neutron-segments: True
+        q-port-forwarding: true
     group-vars:
       subnode:
         devstack_services:

@@ -157,10 +157,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             },
             ovn_const.TYPE_FLOATINGIPS: {
                 'neutron_get': self._ovn_client._l3_plugin.get_floatingip,
-                'ovn_get': self._nb_idl.get_floatingip,
-                'ovn_create': self._ovn_client.create_floatingip,
-                'ovn_update': self._ovn_client.update_floatingip,
-                'ovn_delete': self._ovn_client.delete_floatingip,
+                'ovn_get': self._nb_idl.get_floatingip_in_nat_or_lb,
+                'ovn_create': self._create_floatingip_and_pf,
+                'ovn_update': self._update_floatingip_and_pf,
+                'ovn_delete': self._delete_floatingip_and_pf,
             },
             ovn_const.TYPE_ROUTERS: {
                 'neutron_get': self._ovn_client._l3_plugin.get_router,
@@ -428,6 +428,21 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                           subnet['id'], inconsistent_opts)
                 inconsistent_subnets.append(subnet)
         return inconsistent_subnets
+
+    def _create_floatingip_and_pf(self, context, floatingip):
+        self._ovn_client.create_floatingip(context, floatingip)
+        self._ovn_client._l3_plugin.port_forwarding.maintenance_create(
+            context, floatingip)
+
+    def _update_floatingip_and_pf(self, context, floatingip):
+        self._ovn_client.update_floatingip(context, floatingip)
+        self._ovn_client._l3_plugin.port_forwarding.maintenance_update(
+            context, floatingip)
+
+    def _delete_floatingip_and_pf(self, context, fip_id):
+        self._ovn_client._l3_plugin.port_forwarding.maintenance_delete(
+            context, fip_id)
+        self._ovn_client.delete_floatingip(context, fip_id)
 
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
