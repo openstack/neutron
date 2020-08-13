@@ -1,0 +1,7 @@
+---
+deprecations:
+  - |
+    Deprecate the use of ``remote_ip_prefix`` in metering label rules, and it
+    will be removed in future releases. One should use instead the
+    ``source_ip_prefix`` and/or ``destination_ip_prefix`` parameters. For more
+    details, please refer to the spec: https://review.opendev.org/#/c/744702/.

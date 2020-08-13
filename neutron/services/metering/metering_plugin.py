@@ -21,6 +21,10 @@ from neutron.db.metering import metering_db
 from neutron.db.metering import metering_rpc
 from neutron import service
 
+from oslo_log import log as logging
+
+LOG = logging.getLogger(__name__)
+
 
 class MeteringPlugin(metering_db.MeteringDbMixin):
     """Implementation of the Neutron Metering Service Plugin."""
@@ -64,6 +68,14 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
     def create_metering_label_rule(self, context, metering_label_rule):
         rule = super(MeteringPlugin, self).create_metering_label_rule(
             context, metering_label_rule)
+
+        if rule.get("remote_ip_prefix"):
+            LOG.warning("The use of 'remote_ip_prefix' in metering label "
+                        "rules is deprecated and will be removed in future "
+                        "releases. One should use instead the "
+                        "'source_ip_prefix' and/or 'destination_ip_prefix' "
+                        "parameters. For more details, you can check the "
+                        "spec: https://review.opendev.org/#/c/744702/.")
 
         data = self.get_sync_data_for_rule(context, rule)
         self.meter_rpc.add_metering_label_rule(context, data)
