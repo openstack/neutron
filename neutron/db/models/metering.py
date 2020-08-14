@@ -23,6 +23,8 @@ class MeteringLabelRule(model_base.BASEV2, model_base.HasId):
     direction = sa.Column(sa.Enum('ingress', 'egress',
                                   name='meteringlabels_direction'))
     remote_ip_prefix = sa.Column(sa.String(64))
+    source_ip_prefix = sa.Column(sa.String(64))
+    destination_ip_prefix = sa.Column(sa.String(64))
     metering_label_id = sa.Column(sa.String(36),
                                   sa.ForeignKey("meteringlabels.id",
                                                 ondelete="CASCADE"),
