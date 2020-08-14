@@ -20,7 +20,6 @@ from oslo_utils import excutils
 from pyroute2.netlink import exceptions as pyroute2_exc
 
 from neutron.agent.common import ovs_lib
-from neutron.agent.linux import ethtool
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
@@ -28,6 +27,7 @@ from neutron.conf.agent import common as config
 from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as ovs_const
+from neutron.privileged.agent.linux import ethtool
 from neutron.tests import base
 
 
@@ -78,8 +78,8 @@ class TestBase(base.BaseTestCase):
         self.conf = config.setup_conf()
         ovs_conf.register_ovs_opts(self.conf)
         config.register_interface_opts(self.conf)
-        self.eth_tool_p = mock.patch.object(ethtool, 'Ethtool')
-        self.eth_tool = self.eth_tool_p.start()
+        self.eth_offload_p = mock.patch.object(ethtool, 'offload')
+        self.eth_offload = self.eth_offload_p.start()
         self.ip_dev_p = mock.patch.object(ip_lib, 'IPDevice')
         self.ip_dev = self.ip_dev_p.start()
         self.ip_p = mock.patch.object(ip_lib, 'IPWrapper')
@@ -591,9 +591,8 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
             self.ip.assert_has_calls(expected)
             root_dev.assert_has_calls([mock.call.link.set_up()])
             ns_dev.assert_has_calls([mock.call.link.set_up()])
-            self.eth_tool.assert_has_calls([mock.call.offload(
-                                            devname, rx=False,
-                                            tx=False, namespace=namespace)])
+            self.eth_offload.assert_has_calls(
+                [mock.call(devname, rx=False, tx=False, namespace=namespace)])
 
     def test_plug_new(self):
         # The purpose of test_plug_new in parent class(TestOVSInterfaceDriver)

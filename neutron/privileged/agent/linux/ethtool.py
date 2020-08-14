@@ -1,4 +1,4 @@
-# Copyright 2020 OpenStack Foundation
+# Copyright 2020 Red Hat, Inc.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,22 +13,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.agent.linux import ip_lib
+from oslo_concurrency import processutils
+
+from neutron import privileged
+
+COMMAND = 'ethtool'
 
 
-class Ethtool(object):
-
-    COMMAND = 'ethtool'
-
-    @staticmethod
-    def _cmd(cmd, namespace, **kwargs):
-        ip_wrapper = ip_lib.IPWrapper(namespace)
-        return ip_wrapper.netns.execute(cmd, run_as_root=True, **kwargs)
-
-    @classmethod
-    def offload(cls, device, rx, tx, namespace=None):
-        rx = 'on' if rx else 'off'
-        tx = 'on' if tx else 'off'
-        cmd = ['--offload', device, 'rx', rx, 'tx', tx]
-        cmd = [cls.COMMAND] + cmd
-        cls._cmd(cmd, namespace)
+@privileged.default.entrypoint
+def offload(device, rx, tx, namespace=None):
+    cmd = []
+    if namespace:
+        cmd += ['ip', 'netns', 'exec', namespace]
+    rx = 'on' if rx else 'off'
+    tx = 'on' if tx else 'off'
+    cmd += [COMMAND, '--offload', device, 'rx', rx, 'tx', tx]
+    return processutils.execute(*cmd)
