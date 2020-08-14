@@ -59,7 +59,7 @@ object_data = {
     'L3HARouterNetwork': '1.0-87acea732853f699580179a94d2baf91',
     'L3HARouterVRIdAllocation': '1.0-37502aebdbeadc4f9e3bd5e9da714ab9',
     'MeteringLabel': '1.0-cc4b620a3425222447cbe459f62de533',
-    'MeteringLabelRule': '1.0-b5c5717e7bab8d1af1623156012a5842',
+    'MeteringLabelRule': '2.0-0ad09894c62e1ce6e868f725158959ba',
     'Log': '1.0-6391351c0f34ed34375a19202f361d24',
     'Network': '1.1-c3e9ecc0618ee934181d91b143a48901',
     'NetworkDhcpAgentBinding': '1.1-d9443c88809ffa4c45a0a5a48134b54a',
