@@ -101,6 +101,9 @@ class FipNamespace(namespaces.Namespace):
         self._subscribers.discard(external_net_id)
         return not self.has_subscribers()
 
+    def lookup_rule_priority(self, floating_ip):
+        return self._rule_priorities.lookup(floating_ip)
+
     def allocate_rule_priority(self, floating_ip):
         return self._rule_priorities.allocate(floating_ip)
 
