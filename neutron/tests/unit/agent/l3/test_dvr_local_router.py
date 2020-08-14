@@ -154,7 +154,9 @@ class TestDvrRouterOperations(base.BaseTestCase):
         kwargs['router'] = router
         kwargs['agent_conf'] = self.conf
         kwargs['interface_driver'] = mock.Mock()
-        return dvr_router.DvrLocalRouter(HOSTNAME, **kwargs)
+        with mock.patch.object(dvr_router.DvrLocalRouter,
+                               'load_used_fip_information'):
+            return dvr_router.DvrLocalRouter(HOSTNAME, **kwargs)
 
     def _set_ri_kwargs(self, agent, router_id, router):
         self.ri_kwargs['agent'] = agent
@@ -221,6 +223,33 @@ class TestDvrRouterOperations(base.BaseTestCase):
                 ri._add_interface_route_to_fip_ns.called)
             self.assertTrue(
                 ri.fip_ns.create_rtr_2_fip_link.called)
+
+    def test_load_used_fip_information(self):
+        router = mock.MagicMock()
+        with mock.patch.object(dvr_router.DvrLocalRouter,
+                               'get_floating_ips') as mock_get_floating_ips:
+            with mock.patch.object(dvr_router.DvrLocalRouter,
+                                   'get_ex_gw_port') as mock_ext_port:
+                mock_ext_port.return_value = {'network_id': _uuid()}
+                fip = {'id': _uuid(),
+                       'host': HOSTNAME,
+                       'floating_ip_address': '15.1.2.3',
+                       'fixed_ip_address': '192.168.0.1',
+                       'floating_network_id': _uuid(),
+                       'port_id': _uuid()}
+                fip_ns = mock.MagicMock()
+                fip_ns.lookup_rule_priority.return_value = 1234
+                mock_get_floating_ips.return_value = [fip]
+                mock_agent = mock.MagicMock()
+                mock_agent.get_fip_ns.return_value = fip_ns
+                kwargs = {'agent': mock_agent,
+                          'router_id': _uuid(),
+                          'router': mock.Mock(),
+                          'agent_conf': self.conf,
+                          'interface_driver': mock.Mock()}
+                router = dvr_router.DvrLocalRouter(HOSTNAME, **kwargs)
+                self.assertEqual({'15.1.2.3': ('192.168.0.1', 1234)},
+                                 router.floating_ips_dict)
 
     def test_get_floating_ips_dvr(self):
         router = mock.MagicMock()
