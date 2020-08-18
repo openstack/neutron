@@ -246,7 +246,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         mock_pf_get_objects.return_value = [pf_obj, other_pf_obj]
         self.assertRaisesRegex(
             lib_exc.BadRequest,
-            "already exist.*same_fip_addr.*same_ext_port",
+            "already exist.*same_fip_addr",
             self.pf_plugin._check_port_forwarding_update,
             self.ctxt, pf_obj)
         mock_get_port.assert_called_once_with(self.ctxt, mock.ANY)
@@ -269,8 +269,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         mock_pf_get_objects.return_value = [pf_obj, other_pf_obj]
         self.assertRaisesRegex(
             lib_exc.BadRequest,
-            "already exist.*same_int_port_id.*{}.*same_int_port".format(
-                same_internal_ip),
+            "already exist.*{}".format(same_internal_ip),
             self.pf_plugin._check_port_forwarding_update,
             self.ctxt, pf_obj)
         mock_get_port.assert_called_once_with(self.ctxt, 'same_int_port_id')
