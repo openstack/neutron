@@ -373,6 +373,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         ovn_api = ovn_nb_synchronizer.ovn_api
         ovn_driver = ovn_nb_synchronizer.ovn_driver
         l3_plugin = ovn_nb_synchronizer.l3_plugin
+        pf_plugin = ovn_nb_synchronizer.pf_plugin
         segments_plugin = ovn_nb_synchronizer.segments_plugin
 
         core_plugin.get_networks = mock.Mock()
@@ -445,6 +446,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         # end of router-sync block
         l3_plugin.get_floatingips = mock.Mock()
         l3_plugin.get_floatingips.return_value = self.floating_ips
+        pf_plugin.get_floatingip_port_forwardings = mock.Mock(return_value=[])
         ovn_api.get_all_logical_switches_with_ports = mock.Mock()
         ovn_api.get_all_logical_switches_with_ports.return_value = (
             self.lswitches_with_ports)

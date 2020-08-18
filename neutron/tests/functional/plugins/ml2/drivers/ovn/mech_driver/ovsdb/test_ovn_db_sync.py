@@ -12,23 +12,30 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from collections import namedtuple
+
 from neutron.common.ovn import acl as acl_utils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
+from neutron.services.portforwarding.drivers.ovn.driver import \
+    OVNPortForwarding as ovn_pf
 from neutron.services.segments import db as segments_db
 from neutron.tests.functional import base
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.extensions import test_extraroute
 from neutron.tests.unit.extensions import test_securitygroup
 from neutron_lib.api.definitions import dns as dns_apidef
+from neutron_lib.api.definitions import fip_pf_description as ext_pf_def
+from neutron_lib.api.definitions import floating_ip_port_forwarding as pf_def
 from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import port_security as ps
 from neutron_lib import constants
 from neutron_lib import context
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
+from ovsdbapp import constants as ovsdbapp_const
 
 
 class TestOvnNbSync(base.TestOVNFunctionalBase):
@@ -56,6 +63,8 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         self.delete_lrouter_ports = []
         self.delete_lrouter_routes = []
         self.delete_lrouter_nats = []
+        self.create_fip_fws = []
+        self.delete_fip_fws = []
         self.delete_acls = []
         self.create_port_groups = []
         self.delete_port_groups = []
@@ -136,6 +145,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         update_port_ids_v4 = []
         update_port_ids_v6 = []
         n1_port_dict = {}
+        n1_port_details_dict = {}
         for p in ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7']:
             if p in ['p1', 'p5']:
                 port_kwargs = {
@@ -152,6 +162,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                                     **port_kwargs)
             port = self.deserialize(self.fmt, res)
             n1_port_dict[p] = port['port']['id']
+            n1_port_details_dict[p] = port['port']
             lport_name = port['port']['id']
 
             lswitch_name = 'neutron-' + n1['network']['id']
@@ -432,6 +443,45 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             self.context, r1_f2['id'], {'floatingip': {
                 'port_id': n1_port_dict['p2']}})
 
+        # Floating ip used for exercising port forwarding (via ovn lb)
+        r1_f3 = self.l3_plugin.create_floatingip(
+            self.context, {'floatingip': {
+                'tenant_id': self._tenant_id,
+                'floating_network_id': e1['network']['id'],
+                'floating_ip_address': '100.0.0.22',
+                'subnet_id': None,
+                'port_id': None}})
+
+        p5_ip = n1_port_details_dict['p5']['fixed_ips'][0]['ip_address']
+        fip_pf_args = {
+            pf_def.EXTERNAL_PORT: 2222,
+            pf_def.INTERNAL_PORT: 22,
+            pf_def.INTERNAL_PORT_ID: n1_port_dict['p5'],
+            pf_def.PROTOCOL: "tcp",
+            ext_pf_def.DESCRIPTION_FIELD: 'PortFwd r1_f3_p5:22 tcp',
+            pf_def.INTERNAL_IP_ADDRESS: p5_ip}
+        fip_args = {pf_def.RESOURCE_NAME: {pf_def.RESOURCE_NAME: fip_pf_args}}
+        self.pf_plugin.create_floatingip_port_forwarding(
+            self.context, r1_f3['id'], **fip_args)
+
+        # Add port forwarding with same external and internal value
+        fip_pf_args[pf_def.EXTERNAL_PORT] = 80
+        fip_pf_args[pf_def.INTERNAL_PORT] = 80
+        fip_pf_args[ext_pf_def.DESCRIPTION_FIELD] = 'PortFwd r1_f3_p5:80 tcp'
+        self.pf_plugin.create_floatingip_port_forwarding(
+            self.context, r1_f3['id'], **fip_args)
+
+        fip_pf_args = {
+            pf_def.EXTERNAL_PORT: 5353,
+            pf_def.INTERNAL_PORT: 53,
+            pf_def.INTERNAL_PORT_ID: n1_port_dict['p5'],
+            pf_def.PROTOCOL: "udp",
+            ext_pf_def.DESCRIPTION_FIELD: 'PortFwd r1_f3_p5:53 udp',
+            pf_def.INTERNAL_IP_ADDRESS: p5_ip}
+        fip_args = {pf_def.RESOURCE_NAME: {pf_def.RESOURCE_NAME: fip_pf_args}}
+        self.pf_plugin.create_floatingip_port_forwarding(
+            self.context, r1_f3['id'], **fip_args)
+
         # update External subnet gateway ip to test function _subnet_update
         #  of L3 OVN plugin.
         data = {'subnet': {'gateway_ip': '100.0.0.1'}}
@@ -480,6 +530,21 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                                           'logical_ip':
                                              r1_f1['fixed_ip_address'],
                                           'type': 'dnat_and_snat'}))
+        # Floating IP Port Forwardings
+        self.create_fip_fws.append(('pf-floatingip-{}-tcp'.format(r1_f3['id']),
+                                    {'vip': '{}:8080'.format(
+                                        r1_f3['floating_ip_address']),
+                                     'ips': ['{}:80'.format(p5_ip)],
+                                     'protocol': 'tcp',
+                                     'may_exist': False},
+                                    'neutron-' + r1['id'],))
+        self.delete_fip_fws.append(('pf-floatingip-{}-udp'.format(r1_f3['id']),
+                                    {'vip': '{}:5353'.format(
+                                        r1_f3['floating_ip_address']),
+                                     'if_exists': False}))
+        self.delete_fip_fws.append(('pf-floatingip-{}-tcp'.format(r1_f3['id']),
+                                    {'vip': '100.9.0.99:9999',
+                                     'if_exists': True}))
 
         res = self._create_network(self.fmt, 'n4', True, **net_kwargs)
         n4 = self.deserialize(self.fmt, res)
@@ -735,6 +800,14 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             for lrouter_name, nat_dict in self.delete_lrouter_nats:
                 txn.add(self.nb_api.delete_nat_rule_in_lrouter(
                     lrouter_name, if_exists=True, **nat_dict))
+
+            for lb_name, lb_dict, lrouter_name in self.create_fip_fws:
+                txn.add(self.nb_api.lb_add(lb_name, **lb_dict))
+                txn.add(self.nb_api.lr_lb_add(lrouter_name, lb_name,
+                                              may_exist=True))
+
+            for lb_name, lb_dict in self.delete_fip_fws:
+                txn.add(self.nb_api.lb_del(lb_name, **lb_dict))
 
             for acl in self.create_acls:
                 txn.add(self.nb_api.add_acl(**acl))
@@ -1139,9 +1212,12 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 fip_port = ''
                 if fip['id'] in fip_macs:
                     fip_port = fip['port_id']
-                db_nats[fip['router_id']].append(
-                    fip['floating_ip_address'] + fip['fixed_ip_address'] +
-                    'dnat_and_snat' + mac_address + fip_port)
+                # Fips that do not have fip_port are used as port forwarding,
+                # and we shall skip those in this iteration
+                if fip_port:
+                    db_nats[fip['router_id']].append(
+                        fip['floating_ip_address'] + fip['fixed_ip_address'] +
+                        'dnat_and_snat' + mac_address + fip_port)
 
         _plugin_nb_ovn = self.mech_driver._nb_ovn
         plugin_lrouter_ids = [
@@ -1307,6 +1383,57 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                     AssertionError, self.assertItemsEqual, r_nats,
                     monitor_nats)
 
+    def _validate_fip_port_forwarding(self, should_match=True):
+        fip_pf_cmp = namedtuple(
+            'fip_pf_cmp',
+            'fip_id proto rtr_name ext_ip ext_port int_ip int_port')
+
+        # Helper function to break a single ovn lb entry into multiple
+        # floating ip port forwarding entries.
+        def _parse_ovn_lb_pf(ovn_lb):
+            protocol = (ovn_lb.protocol[0]
+                        if ovn_lb.protocol else ovsdbapp_const.PROTO_TCP)
+            ext_ids = ovn_lb.external_ids
+            fip_id = ext_ids[ovn_const.OVN_FIP_EXT_ID_KEY]
+            router_name = ext_ids[ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY]
+            for vip, ips in ovn_lb.vips.items():
+                ext_ip, ext_port = vip.split(':')
+                for ip in ips.split(','):
+                    int_ip, int_port = ip.split(':')
+                    yield fip_pf_cmp(fip_id, protocol, router_name,
+                                     ext_ip, int(ext_port),
+                                     int_ip, int(int_port))
+
+        _plugin_nb_ovn = self.mech_driver._nb_ovn
+        db_pfs = []
+        fips = self._list('floatingips')
+        for fip in fips['floatingips']:
+            for pf in self.pf_plugin.get_floatingip_port_forwardings(
+                    self.ctx, floatingip_id=fip['id']):
+                db_pfs.append(fip_pf_cmp(
+                    fip['id'],
+                    ovn_pf.ovn_lb_protocol(pf['protocol']),
+                    utils.ovn_name(pf['router_id']),
+                    pf['floating_ip_address'],
+                    pf['external_port'],
+                    pf['internal_ip_address'],
+                    pf['internal_port'],
+                ))
+
+        nb_pfs = []
+        rtr_names = [row.name for row in _plugin_nb_ovn._tables[
+            'Logical_Router'].rows.values()]
+        for rtr_name in rtr_names:
+            for ovn_lb in _plugin_nb_ovn.get_router_floatingip_lbs(rtr_name):
+                for pf in _parse_ovn_lb_pf(ovn_lb):
+                    nb_pfs.append(pf)
+
+        if should_match:
+            self.assertItemsEqual(nb_pfs, db_pfs)
+        else:
+            self.assertRaises(AssertionError, self.assertItemsEqual,
+                              nb_pfs, db_pfs)
+
     def _validate_port_groups(self, should_match=True):
         _plugin_nb_ovn = self.mech_driver._nb_ovn
 
@@ -1381,6 +1508,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         self._validate_dhcp_opts(should_match=should_match)
         self._validate_acls(should_match=should_match)
         self._validate_routers_and_router_ports(should_match=should_match)
+        self._validate_fip_port_forwarding(should_match=should_match)
         self._validate_port_groups(should_match=should_match)
         self._validate_dns_records(should_match=should_match)
 
