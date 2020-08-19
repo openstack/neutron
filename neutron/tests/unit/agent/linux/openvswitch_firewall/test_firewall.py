@@ -350,9 +350,10 @@ class TestConjIPFlowManager(base.BaseTestCase):
     def test_update_flows_for_vlan_no_ports_but_members(self):
         remote_group = self.driver.sg_port_map.get_sg.return_value
         remote_group.ports = set()
-        remote_group.members = {constants.IPv4: ['10.22.3.4']}
+        remote_group.members = {constants.IPv4: [
+            ('10.22.3.4', 'fa:16:3e:aa:bb:cc'), ]}
         remote_group.get_ethertype_filtered_addresses.return_value = [
-            '10.22.3.4']
+            ('10.22.3.4', 'fa:16:3e:aa:bb:cc'), ]
         with mock.patch.object(self.manager.conj_id_map,
                                'get_conj_id') as get_conj_id_mock:
             get_conj_id_mock.return_value = self.conj_id
@@ -365,7 +366,7 @@ class TestConjIPFlowManager(base.BaseTestCase):
     def test_update_flows_for_vlan(self):
         remote_group = self.driver.sg_port_map.get_sg.return_value
         remote_group.get_ethertype_filtered_addresses.return_value = [
-            '10.22.3.4']
+            ('10.22.3.4', 'fa:16:3e:aa:bb:cc'), ]
         with mock.patch.object(self.manager.conj_id_map,
                                'get_conj_id') as get_conj_id_mock:
             get_conj_id_mock.return_value = self.conj_id
