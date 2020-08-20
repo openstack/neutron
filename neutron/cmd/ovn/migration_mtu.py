@@ -16,10 +16,18 @@
 import os
 import sys
 
+from neutron_lib import constants
 from openstack import connection
 
-# TODO(dalvarez): support also GRE
-GENEVE_TO_VXLAN_OVERHEAD = 8
+
+# Overhead size of Geneve is configurable, use the recommended value
+GENEVE_ENCAP_OVERHEAD = 38
+# map of network types to migrate and the difference in overhead size when
+# converted to Geneve.
+NETWORK_TYPE_OVERHEAD_DIFF = {
+    'vxlan': GENEVE_ENCAP_OVERHEAD - constants.VXLAN_ENCAP_OVERHEAD,
+    'gre': GENEVE_ENCAP_OVERHEAD - constants.GRE_ENCAP_OVERHEAD,
+}
 
 
 def get_connection():
@@ -40,7 +48,7 @@ def verify_network_mtu():
     success = True
     for network in conn.network.networks():
         if network.provider_physical_network is None and (
-            network.provider_network_type == 'vxlan') and (
+            network.provider_network_type in NETWORK_TYPE_OVERHEAD_DIFF) and (
                 'adapted_mtu' not in network.tags):
             print("adapted_mtu tag is not set for the Network "
                   "[" + str(network.name) + "]")
@@ -60,7 +68,8 @@ def update_network_mtu():
     for network in conn.network.networks():
         try:
             if network.provider_physical_network is None and (
-                    network.provider_network_type == 'vxlan') and (
+                    network.provider_network_type in
+                    NETWORK_TYPE_OVERHEAD_DIFF) and (
                         'adapted_mtu' not in network.tags):
                 print("Updating the mtu and the tag 'adapted_mtu"
                       " of the network - " + str(network.name))
@@ -68,7 +77,8 @@ def update_network_mtu():
                 new_tags.append('adapted_mtu')
                 conn.network.update_network(
                     network,
-                    mtu=int(network.mtu) - GENEVE_TO_VXLAN_OVERHEAD)
+                    mtu=int(network.mtu) - NETWORK_TYPE_OVERHEAD_DIFF[
+                        network.provider_network_type])
                 conn.network.set_tags(network, new_tags)
         except Exception as e:
             print("Exception occured while updating the MTU:" + str(e))
