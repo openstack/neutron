@@ -588,7 +588,7 @@ class RouterInfo(object):
             for subnet in p['subnets']:
                 if ipv6_utils.is_ipv6_pd_enabled(subnet):
                     self.agent.pd.disable_subnet(self.router_id, subnet['id'])
-                    del self.pd_subnets[subnet['id']]
+                    self.pd_subnets.pop(subnet['id'], None)
 
         for p in new_ports:
             self.internal_network_added(p)
