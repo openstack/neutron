@@ -3815,6 +3815,53 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self._pd_assert_dibbler_calls(expected_calls,
             self.external_process.mock_calls[-len(expected_calls):])
 
+    @mock.patch.object(pd.PrefixDelegation, 'update_subnet')
+    @mock.patch.object(dibbler.PDDibbler, 'get_prefix', autospec=True)
+    @mock.patch.object(dibbler.os, 'getpid', return_value=1234)
+    @mock.patch.object(pd.PrefixDelegation, '_is_lla_active',
+                       return_value=True)
+    @mock.patch.object(dibbler.os, 'chmod')
+    @mock.patch.object(dibbler.shutil, 'rmtree')
+    @mock.patch.object(pd.PrefixDelegation, '_get_sync_data')
+    def test_pd_lla_already_exists(self, mock1, mock2, mock3, mock4,
+                                   mock_getpid, mock_get_prefix,
+                                   mock_pd_update_subnet):
+        '''Test HA in the active router
+        The intent is to test the PD code with HA. To avoid unnecessary
+        complexities, use the regular router.
+        '''
+        # Initial setup
+        agent, router, ri = self._pd_setup_agent_router(enable_ha=True)
+
+        agent.pd.intf_driver = mock.MagicMock()
+        agent.pd.intf_driver.add_ipv6_addr.side_effect = (
+                ip_lib.IpAddressAlreadyExists())
+
+        # Create one pd-enabled subnet and add router interface
+        l3_test_common.router_append_pd_enabled_subnet(router)
+        self._pd_add_gw_interface(agent, ri)
+        ri.process()
+
+        # No client should be started since it's standby router
+        agent.pd.process_prefix_update()
+        self.assertFalse(self.external_process.called)
+        self.assertFalse(mock_get_prefix.called)
+
+        update_router = copy.deepcopy(router)
+        pd_intfs = l3_test_common.get_unassigned_pd_interfaces(update_router)
+
+        # Turn the router to be active
+        agent.pd.process_ha_state(router['id'], True)
+
+        # Get prefixes
+        self._pd_get_prefixes(agent, ri, [], pd_intfs, mock_get_prefix)
+
+        # Update the router with the new prefix
+        ri.router = update_router
+        ri.process()
+
+        self._pd_verify_update_results(ri, pd_intfs, mock_pd_update_subnet)
+
     @mock.patch.object(dibbler.os, 'chmod')
     def test_pd_generate_dibbler_conf(self, mock_chmod):
         pddib = dibbler.PDDibbler("router_id", "subnet-id", "ifname")
