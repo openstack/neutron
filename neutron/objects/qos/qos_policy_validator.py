@@ -28,7 +28,7 @@ def check_bandwidth_rule_conflict(policy, rule_data):
         if rule.rule_type == qos_consts.RULE_TYPE_DSCP_MARKING:
             # Skip checks if Rule is DSCP
             continue
-        elif rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
+        if rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
             if "max_kbps" in rule_data and (
                     int(rule.min_kbps) > int(rule_data["max_kbps"])):
                 raise qos_exc.QoSRuleParameterConflict(

@@ -515,9 +515,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                 ip_proto in const.SG_PORT_PROTO_NAMES):
             if rule['port_range_min'] == 0 or rule['port_range_max'] == 0:
                 raise ext_sg.SecurityGroupInvalidPortValue(port=0)
-            elif (rule['port_range_min'] is not None and
-                  rule['port_range_max'] is not None and
-                  rule['port_range_min'] <= rule['port_range_max']):
+            if (rule['port_range_min'] is not None and
+                    rule['port_range_max'] is not None and
+                    rule['port_range_min'] <= rule['port_range_max']):
                 # When min/max are the same it is just a single port
                 pass
             else:

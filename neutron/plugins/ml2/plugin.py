@@ -1597,7 +1597,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if self._check_update_has_allowed_address_pairs(port):
             #  has address pairs in request
             raise addr_exc.AddressPairAndPortSecurityRequired()
-        elif not self._check_update_deletes_allowed_address_pairs(port):
+        if not self._check_update_deletes_allowed_address_pairs(port):
             # not a request for deleting the address-pairs
             updated_port[addr_apidef.ADDRESS_PAIRS] = (
                     self.get_allowed_address_pairs(context, id))
@@ -1611,7 +1611,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # security groups, port security is set
         if self._check_update_has_security_groups(port):
             raise psec_exc.PortSecurityAndIPRequiredForSecurityGroups()
-        elif not self._check_update_deletes_security_groups(port):
+        if not self._check_update_deletes_security_groups(port):
             if not extensions.is_extension_supported(self, 'security-group'):
                 return
             # Update did not have security groups passed in. Check

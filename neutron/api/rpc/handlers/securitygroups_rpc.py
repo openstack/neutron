@@ -288,7 +288,7 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
                                             'allowed_address_pairs'}):
             # none of the relevant fields to SG calculations changed
             return
-        sgs.update({sg_id for sg_id in updated.security_group_ids})
+        sgs.update(set(updated.security_group_ids))
         if sgs:
             self._sg_agent.security_groups_member_updated(sgs)
 

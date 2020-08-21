@@ -69,14 +69,14 @@ class FloatingIPTcCommandBase(ip_lib.IPDevice):
                 filter_id = m.group(2)
                 # It matched, so ip/32 is not here. continue
                 continue
-            elif not line.startswith('match'):
+            if not line.startswith('match'):
                 continue
             parts = line.split(" ")
             if ip + '/32' in parts:
                 filterids_for_ip.append(filter_id)
         if len(filterids_for_ip) > 1:
             raise exceptions.MultipleFilterIDForIPFound(ip=ip)
-        elif len(filterids_for_ip) == 0:
+        if len(filterids_for_ip) == 0:
             raise exceptions.FilterIDForIPNotFound(ip=ip)
         return filterids_for_ip[0]
 

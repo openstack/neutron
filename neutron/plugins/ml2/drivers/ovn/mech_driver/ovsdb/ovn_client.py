@@ -1888,7 +1888,7 @@ class OVNClient(object):
                 port, subnet['ip_version'])
             if lsp_dhcp_disabled:
                 continue
-            elif not lsp_dhcp_opts:
+            if not lsp_dhcp_opts:
                 lsp_dhcp_options = subnet_dhcp_option
             else:
                 port_dhcp_options = copy.deepcopy(dhcp_options)

@@ -81,6 +81,7 @@ def patch_supported():
 
 def nova_notify_supported():
     try:
+        # pylint:disable=import-outside-toplevel
         import neutron.notifiers.nova  # noqa since unused
         return True
     except ImportError:

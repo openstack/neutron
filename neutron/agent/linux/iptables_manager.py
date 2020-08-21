@@ -848,7 +848,7 @@ def _generate_chain_diff_iptables_commands(chain, old_chain_rules,
         if line.startswith('?'):
             # skip ? because that's a guide string for intraline differences
             continue
-        elif line.startswith('-'):  # line deleted
+        if line.startswith('-'):  # line deleted
             statements.append('-D %s %d' % (chain, old_index))
             # since we are removing a line from the old rules, we
             # backup the index by 1

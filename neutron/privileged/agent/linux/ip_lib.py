@@ -250,10 +250,9 @@ def get_link_id(device, namespace, raise_exception=True):
     if not link_id or len(link_id) < 1:
         if raise_exception:
             raise NetworkInterfaceNotFound(device=device, namespace=namespace)
-        else:
-            LOG.debug('Interface %(dev)s not found in namespace %(namespace)s',
-                      {'dev': device, 'namespace': namespace})
-            return None
+        LOG.debug('Interface %(dev)s not found in namespace %(namespace)s',
+                  {'dev': device, 'namespace': namespace})
+        return None
     return link_id[0]
 
 
@@ -645,9 +644,8 @@ def list_ip_rules(namespace, ip_version, match=None, **kwargs):
                 family=_IP_VERSION_FAMILY_MAP[ip_version],
                 match=match, **kwargs))
             for rule in rules:
-                rule['attrs'] = {
-                    key: value for key, value
-                    in ((item[0], item[1]) for item in rule['attrs'])}
+                rule['attrs'] = dict(
+                    (item[0], item[1]) for item in rule['attrs'])
             return rules
 
     except OSError as e:

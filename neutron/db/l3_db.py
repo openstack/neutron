@@ -637,7 +637,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             msg = _('Router port must have at least one fixed IP')
             raise n_exc.BadRequest(resource='router', msg=msg)
 
-        fixed_ips = [ip for ip in port['fixed_ips']]
+        fixed_ips = list(port['fixed_ips'])
         for fixed_ip in fixed_ips:
             subnet = self._core_plugin.get_subnet(
                 context, fixed_ip['subnet_id'])
@@ -684,7 +684,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                             'p': existing_port['id'],
                             'nid': existing_port['network_id']})
 
-            fixed_ips = [ip for ip in port['fixed_ips']]
+            fixed_ips = list(port['fixed_ips'])
             subnets = []
             for fixed_ip in fixed_ips:
                 subnet = self._core_plugin.get_subnet(context,

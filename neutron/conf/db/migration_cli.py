@@ -22,7 +22,7 @@ migration_entrypoints = {
     for entrypoint in pkg_resources.iter_entry_points(MIGRATION_ENTRYPOINTS)
 }
 
-INSTALLED_SUBPROJECTS = [project_ for project_ in migration_entrypoints]
+INSTALLED_SUBPROJECTS = list(migration_entrypoints)
 
 CORE_OPTS = [
     cfg.StrOpt('subproject',

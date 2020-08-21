@@ -50,6 +50,7 @@ class DriverBase(object):
     # the log driver.
     @registry.receives(log_const.LOGGING_PLUGIN, [events.AFTER_INIT])
     def _register(self, resource, event, trigger, payload=None):
+        # pylint: disable=using-constant-test
         if self.is_loaded:
             # trigger is the LoggingServiceDriverManager
             trigger.register_driver(self)

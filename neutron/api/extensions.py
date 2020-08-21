@@ -394,14 +394,13 @@ class ExtensionManager(object):
         if not faulty_extensions <= default_extensions:
             raise exceptions.ExtensionsNotFound(
                 extensions=list(faulty_extensions))
-        else:
-            # Remove the faulty extensions so that they do not show during
-            # ext-list
-            for ext in faulty_extensions:
-                try:
-                    del self.extensions[ext]
-                except KeyError:
-                    pass
+        # Remove the faulty extensions so that they do not show during
+        # ext-list
+        for ext in faulty_extensions:
+            try:
+                del self.extensions[ext]
+            except KeyError:
+                pass
 
     def _check_extension(self, extension):
         """Checks for required methods in extension objects."""

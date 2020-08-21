@@ -124,7 +124,7 @@ class RouterExtraAttributes(base.NeutronDbObject):
         query = (context.session.query(l3.Router, sub_query.c.count).
                  outerjoin(sub_query))
 
-        return [(router, agent_count) for router, agent_count in query]
+        return list(query)
 
 
 @base.NeutronObjectRegistry.register

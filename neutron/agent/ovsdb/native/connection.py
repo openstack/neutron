@@ -51,7 +51,7 @@ def configure_ssl_conn():
     for ssl_opt, ssl_file in req_ssl_opts.items():
         if not ssl_file:
             raise ovsdb_exc.OvsdbSslRequiredOptError(ssl_opt=ssl_opt)
-        elif not os.path.exists(ssl_file):
+        if not os.path.exists(ssl_file):
             raise ovsdb_exc.OvsdbSslConfigNotFound(ssl_file=ssl_file)
     # TODO(ihrachys): move to ovsdbapp
     Stream.ssl_set_private_key_file(req_ssl_opts['ssl_key_file'])

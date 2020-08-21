@@ -22,6 +22,7 @@ def get_device_port_name(port_id):
 
 def get_iptables_driver_instance():
     """Load hybrid iptables firewall driver."""
+    # pylint: disable=import-outside-toplevel
     from neutron.agent.linux import iptables_firewall
 
     class HybridIptablesHelper(

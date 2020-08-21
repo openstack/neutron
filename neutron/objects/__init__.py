@@ -16,6 +16,7 @@ import sys
 
 def register_objects():
     # local import to avoid circular import failure
+    # pylint: disable=import-outside-toplevel
     from neutron.common import utils
     dirn = os.path.dirname(sys.modules[__name__].__file__)
     utils.import_modules_recursively(dirn)

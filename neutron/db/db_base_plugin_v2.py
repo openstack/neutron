@@ -158,6 +158,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 cfg.CONF.notify_nova_on_port_data_changes):
             # Import nova conditionally to support the use case of Neutron
             # being used outside of an OpenStack context.
+            # pylint: disable=import-outside-toplevel
             from neutron.notifiers import nova
             self.nova_notifier = nova.Notifier.get_instance()
             # NOTE(arosen) These event listeners are here to hook into when
@@ -172,6 +173,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     self.nova_notifier.record_port_status_changed)
         if cfg.CONF.ironic.enable_notifications:
             # Import ironic notifier conditionally
+            # pylint: disable=import-outside-toplevel
             from neutron.notifiers import ironic
             self.ironic_notifier = ironic.Notifier.get_instance()
 
@@ -600,11 +602,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 error_message = _("Multicast IP subnet is not supported "
                                   "if enable_dhcp is True")
                 raise exc.InvalidInput(error_message=error_message)
-            elif net.is_loopback():
+            if net.is_loopback():
                 error_message = _("Loopback IP subnet is not supported "
                                   "if enable_dhcp is True")
                 raise exc.InvalidInput(error_message=error_message)
-            elif ip_ver == constants.IP_VERSION_4 and net.first == 0:
+            if ip_ver == constants.IP_VERSION_4 and net.first == 0:
                 error_message = _("First IP '0.0.0.0' of network is not "
                                   "supported if enable_dhcp is True.")
                 raise exc.InvalidInput(error_message=error_message)
@@ -1636,7 +1638,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 return {'prefixes': subnetpool.prefixes}
 
             all_prefix_set = netaddr.IPSet(subnetpool.prefixes)
-            removal_prefix_set = netaddr.IPSet([x for x in prefixes])
+            removal_prefix_set = netaddr.IPSet(list(prefixes))
             if all_prefix_set.isdisjoint(removal_prefix_set):
                 # The prefixes requested for removal are not in the prefix
                 # list making this a no-op, so simply return.

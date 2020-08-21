@@ -112,8 +112,7 @@ class AsyncProcess(object):
         LOG.debug('Launching async process [%s].', self.cmd)
         if self._is_running:
             raise AsyncProcessException(_('Process is already started'))
-        else:
-            self._spawn()
+        self._spawn()
 
         if block:
             common_utils.wait_until_true(self.is_active)

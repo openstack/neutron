@@ -132,7 +132,7 @@ class TrunkPortValidator(object):
         ]
         if len(drivers) > 1:
             raise trunk_exc.TrunkPluginDriverConflict()
-        elif len(drivers) == 1:
+        if len(drivers) == 1:
             return drivers[0].can_trunk_bound_port
         else:
             return False
