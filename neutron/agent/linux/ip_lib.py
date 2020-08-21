@@ -1422,6 +1422,9 @@ def get_devices_with_ip(namespace, name=None, **kwargs):
     link_args = {}
     if name:
         link_args['ifname'] = name
+    scope = kwargs.pop('scope', None)
+    if scope:
+        kwargs['scope'] = IP_ADDRESS_SCOPE_NAME[scope]
     devices = privileged.get_link_devices(namespace, **link_args)
     retval = []
     for parsed_ips in (_parse_link_device(namespace, device, **kwargs)
