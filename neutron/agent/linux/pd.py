@@ -26,6 +26,7 @@ from oslo_log import log as logging
 from oslo_utils import netutils
 from stevedore import driver
 
+from neutron.agent.linux import ip_lib
 from neutron.common import utils
 
 LOG = logging.getLogger(__name__)
@@ -208,16 +209,20 @@ class PrefixDelegation(object):
 
     def _add_lla(self, router, lla_with_mask):
         if router['gw_interface']:
-            self.intf_driver.add_ipv6_addr(router['gw_interface'],
-                                           lla_with_mask,
-                                           router['ns_name'],
-                                           'link')
-            # There is a delay before the LLA becomes active.
-            # This is because the kernel runs DAD to make sure LLA uniqueness
-            # Spawn a thread to wait for the interface to be ready
-            self._spawn_lla_thread(router['gw_interface'],
-                                   router['ns_name'],
-                                   lla_with_mask)
+            try:
+                self.intf_driver.add_ipv6_addr(router['gw_interface'],
+                                               lla_with_mask,
+                                               router['ns_name'],
+                                               'link')
+                # There is a delay before the LLA becomes active.
+                # This is because the kernel runs DAD to make sure LLA
+                # uniqueness
+                # Spawn a thread to wait for the interface to be ready
+                self._spawn_lla_thread(router['gw_interface'],
+                                       router['ns_name'],
+                                       lla_with_mask)
+            except ip_lib.IpAddressAlreadyExists:
+                pass
 
     def _spawn_lla_thread(self, gw_ifname, ns_name, lla_with_mask):
         eventlet.spawn_n(self._ensure_lla_task,
