@@ -120,6 +120,9 @@ class OVNMechanismDriver(api.MechanismDriver):
         self.subscribe()
         self.qos_driver = qos_driver.OVNQosDriver.create(self)
         self.trunk_driver = trunk_driver.OVNTrunkDriver.create(self)
+        # The agent_chassis_table will be changed to Chassis_Private if it
+        # exists, we need to have a connection in order to check that.
+        self.agent_chassis_table = 'Chassis'
 
     @property
     def _plugin(self):
@@ -261,6 +264,9 @@ class OVNMechanismDriver(api.MechanismDriver):
 
         self._nb_ovn, self._sb_ovn = impl_idl_ovn.get_ovn_idls(
             self, trigger, binding_events=not is_maintenance)
+
+        if self._sb_ovn.is_table_present('Chassis_Private'):
+            self.agent_chassis_table = 'Chassis_Private'
 
         # AGENTS must be populated after fork so if ovn-controller is stopped
         # before a worker handles a get_agents request, we still show agents
@@ -1105,14 +1111,15 @@ class OVNMechanismDriver(api.MechanismDriver):
     def mark_agent_alive(self, agent):
         # Update the time of our successful check
         value = timeutils.utcnow(with_timezone=True).isoformat()
-        self._sb_ovn.db_set('Chassis', agent.chassis.uuid,
-                            ('external_ids', {agent.key: value})).execute(
-            check_error=True)
+        self._sb_ovn.db_set(
+            self.agent_chassis_table, agent.chassis_private.uuid,
+            ('external_ids', {agent.key: value})).execute(check_error=True)
 
-    def agents_from_chassis(self, chassis, update_db=True):
+    def agents_from_chassis(self, chassis_private, update_db=True):
         agent_dict = {}
         # Iterate over each unique Agent subclass
-        for agent in [a(chassis) for a in n_agent.NeutronAgent.agent_types()]:
+        for agent in [a(chassis_private)
+                      for a in n_agent.NeutronAgent.agent_types()]:
             if not agent.agent_id:
                 continue
             alive = self.agent_alive(agent, update_db)
@@ -1186,7 +1193,7 @@ class OVNMechanismDriver(api.MechanismDriver):
 
 
 def populate_agents(driver):
-    for ch in driver._sb_ovn.tables['Chassis'].rows.values():
+    for ch in driver._sb_ovn.tables[driver.agent_chassis_table].rows.values():
         # update the cache, rows are hashed on uuid but it is the name that
         # stays consistent across ovn-controller restarts
         AGENTS.update({ch.name: ch})
@@ -1207,11 +1214,12 @@ def get_agents(self, context, filters=None, fields=None, _driver=None):
 def get_agent(self, context, id, fields=None, _driver=None):
     chassis = None
     try:
-        # look up Chassis by *name*, which the id attribte is
-        chassis = _driver._sb_ovn.lookup('Chassis', id)
+        # look up Chassis by *name*, which the id attribute is
+        chassis = _driver._sb_ovn.lookup(_driver.agent_chassis_table, id)
     except idlutils.RowNotFound:
         # If the UUID is not found, check for the metadata agent ID
-        for ch in _driver._sb_ovn.tables['Chassis'].rows.values():
+        for ch in _driver._sb_ovn.tables[
+                _driver.agent_chassis_table].rows.values():
             metadata_agent_id = ch.external_ids.get(
                 ovn_const.OVN_AGENT_METADATA_ID_KEY)
             if id == metadata_agent_id:

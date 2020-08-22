@@ -169,6 +169,8 @@ class FakeOvsdbSbOvnIdl(object):
         self.db_set = mock.Mock()
         self.lookup = mock.MagicMock()
         self.chassis_list = mock.MagicMock()
+        self.is_table_present = mock.Mock()
+        self.is_table_present.return_value = False
 
 
 class FakeOvsdbTransaction(object):
