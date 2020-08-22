@@ -31,14 +31,49 @@ NETWORK_TYPE_OVERHEAD_DIFF = {
 
 
 def get_connection():
-    user_domain_id = os.environ.get('OS_USER_DOMAIN_ID', 'default')
-    project_domain_id = os.environ.get('OS_PROJECT_DOMAIN_ID', 'default')
+    """Get OpenStack SDK Connection object with parameters from environment.
+
+    Project scoped authorization is used and the following environment
+    variables are required:
+
+        OS_AUTH_URL     URL to OpenStack Identity service
+        OS_PROJECT_NAME Name of project for authorization
+        OS_USERNAME     Username for authentication
+        OS_PASSWORD     Password for authentication
+
+    Which domain to use for authentication and authorization may be specified
+    by domain name or domain ID. If none of the domain selection variables are
+    set the tool will default to use the domain with literal ID of 'default'.
+
+    To select domain by name set both of these envornment variables:
+
+        OS_USER_DOMAIN_NAME    Name of domain to authenticate to
+        OS_PROJECT_DOMAIN_NAME Name of domain for authorization
+
+    To select domain by ID set both of these environment variables:
+
+        OS_USER_DOMAIN_ID    ID of domain to authenticate to
+        OS_PROJECT_DOMAIN_ID ID of domain for authorization
+
+    NOTE: If both OS_*_DOMAIN_NAME and OS_*_DOMAIN_ID variables are present in
+    the environment the OS_*_DOMAIN_NAME variables will be used.
+    """
+    user_domain_name = os.environ.get('OS_USER_DOMAIN_NAME')
+    project_domain_name = os.environ.get('OS_PROJECT_DOMAIN_NAME')
+    user_domain_id = os.environ.get(
+        'OS_USER_DOMAIN_ID',
+        'default') if not user_domain_name else None
+    project_domain_id = os.environ.get(
+        'OS_PROJECT_DOMAIN_ID',
+        'default') if not project_domain_name else None
     conn = connection.Connection(auth_url=os.environ['OS_AUTH_URL'],
                                  project_name=os.environ['OS_PROJECT_NAME'],
                                  username=os.environ['OS_USERNAME'],
                                  password=os.environ['OS_PASSWORD'],
                                  user_domain_id=user_domain_id,
-                                 project_domain_id=project_domain_id)
+                                 project_domain_id=project_domain_id,
+                                 user_domain_name=user_domain_name,
+                                 project_domain_name=project_domain_name)
     return conn
 
 
