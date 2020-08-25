@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import errno
 import os
 import shutil
 import signal
@@ -193,7 +194,11 @@ class HaRouter(router.RouterInfo):
             return
         self.keepalived_manager.disable()
         conf_dir = self.keepalived_manager.get_conf_dir()
-        shutil.rmtree(conf_dir)
+        try:
+            shutil.rmtree(conf_dir)
+        except EnvironmentError as e:
+            if e.errno != errno.ENOENT:
+                raise
 
     def _get_keepalived_instance(self):
         return self.keepalived_manager.config.get_instance(self.ha_vr_id)
