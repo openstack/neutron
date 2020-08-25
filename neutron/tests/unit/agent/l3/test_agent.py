@@ -2853,6 +2853,16 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router.distributed = True
         router.ha = True
         router_info = mock.MagicMock()
+
+        def mock_get(name):
+            if name == 'ha':
+                return router.ha
+            if name == 'distributed':
+                return router.distributed
+            return mock.Mock()
+
+        router_info.router.get.side_effect = mock_get
+
         agent.router_info[router.id] = router_info
         updated_router = {'id': '1234',
                           'distributed': True,
@@ -2885,6 +2895,16 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router._ha_interface = True
         router.ha = True
         router_info = mock.MagicMock()
+
+        def mock_get(name):
+            if name == 'ha':
+                return router.ha
+            if name == 'distributed':
+                return router.distributed
+            return mock.Mock()
+
+        router_info.router.get.side_effect = mock_get
+
         agent.router_info[router.id] = router_info
         updated_router = {'id': '1234',
                           'distributed': True, 'ha': True,
@@ -2948,6 +2968,46 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         agent._process_router_if_compatible(router)
         self.assertIn(router['id'], agent.router_info)
+
+    def test_process_router_if_compatible_type_match(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+
+        router = {'id': _uuid(),
+                  'routes': [],
+                  'admin_state_up': True,
+                  'ha': False, 'distributed': False,
+                  'external_gateway_info': {'network_id': 'aaa'}}
+
+        ri = mock.Mock(router=router)
+        agent.router_info[router['id']] = ri
+        with mock.patch.object(agent, "_create_router") as create_router_mock:
+            agent._process_router_if_compatible(router)
+        create_router_mock.assert_not_called()
+        self.assertIn(router['id'], agent.router_info)
+        self.assertFalse(agent.router_info[router['id']].router['ha'])
+        self.assertFalse(agent.router_info[router['id']].router['distributed'])
+
+    def test_process_router_if_compatible_type_changed(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+
+        router = {'id': _uuid(),
+                  'routes': [],
+                  'admin_state_up': True,
+                  'revision_number': 1,
+                  'ha': True, 'distributed': False,
+                  'external_gateway_info': {'network_id': 'aaa'}}
+
+        ri = mock.Mock(router=router)
+        agent.router_info[router['id']] = ri
+        new_router = copy.deepcopy(router)
+        new_router['ha'] = False
+        with mock.patch.object(agent, "_create_router") as create_router_mock:
+            agent._process_router_if_compatible(new_router)
+        create_router_mock.assert_called_once_with(
+            new_router['id'], new_router)
+        self.assertIn(router['id'], agent.router_info)
+        self.assertFalse(agent.router_info[router['id']].router['ha'])
+        self.assertFalse(agent.router_info[router['id']].router['distributed'])
 
     def test_nonexistent_interface_driver(self):
         self.conf.set_override('interface_driver', None)
