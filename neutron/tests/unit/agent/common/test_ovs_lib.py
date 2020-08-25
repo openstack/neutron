@@ -498,9 +498,9 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.br.ovsdb.list_ports.return_value.execute.return_value = [
             'qvo1', 'qvo2', 'qvo4']
         by_id = self.br.get_vifs_by_ids(['pid1', 'pid2', 'pid3', 'pid4'])
-        # pid3 isn't on bridge and pid4 doesn't have a valid ofport
+        # pid3 isn't on bridge
         self.assertIsNone(by_id['pid3'])
-        self.assertIsNone(by_id['pid4'])
+        self.assertEqual(-1, by_id['pid4'].ofport)
         self.assertEqual('pid1', by_id['pid1'].vif_id)
         self.assertEqual('qvo1', by_id['pid1'].port_name)
         self.assertEqual(1, by_id['pid1'].ofport)

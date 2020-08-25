@@ -23,6 +23,7 @@ import oslo_messaging
 from oslo_utils import excutils
 from osprofiler import profiler
 
+from neutron.agent.common import ovs_lib
 from neutron.agent.linux.openvswitch_firewall import firewall as ovs_firewall
 from neutron.common import utils as n_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
@@ -424,6 +425,13 @@ class OVSDVRNeutronAgent(object):
                   local_compute_ports)
         vif_by_id = self.int_br.get_vifs_by_ids(
             [local_port['id'] for local_port in local_compute_ports])
+
+        # A router port has an OVS interface with type internal. Once the
+        # interface is created, a valid ofport will be assigned.
+        vif_by_id = {k: v for k, v in vif_by_id.items()
+                     if not v or v.ofport not in
+                     (ovs_lib.INVALID_OFPORT, ovs_lib.UNASSIGNED_OFPORT)}
+
         for local_port in local_compute_ports:
             vif = vif_by_id.get(local_port['id'])
             if not vif:
@@ -605,6 +613,10 @@ class OVSDVRNeutronAgent(object):
                      "%(ofport)s, rebinding.",
                      {'vif': port.vif_id, 'ofport': port.ofport})
             self.unbind_port_from_dvr(port, local_vlan_map)
+            if port.ofport in (ovs_lib.INVALID_OFPORT,
+                               ovs_lib.UNASSIGNED_OFPORT):
+                return
+
         if device_owner == n_const.DEVICE_OWNER_DVR_INTERFACE:
             self._bind_distributed_router_interface_port(port,
                                                          local_vlan_map,

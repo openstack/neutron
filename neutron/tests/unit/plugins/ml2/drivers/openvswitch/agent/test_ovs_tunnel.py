@@ -14,6 +14,7 @@
 #    under the License.
 #
 
+import collections
 import time
 from unittest import mock
 
@@ -30,6 +31,8 @@ from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
     import test_vlanmanager
 
 
+Switch = collections.namedtuple('Switch', ['br_name'])
+
 # Useful global dummy variables.
 NET_UUID = '3faeebfe-5d37-11e1-a64b-000c29d5f0a7'
 LS_ID = 420
@@ -38,8 +41,8 @@ LV_IDS = [42, 43]
 VIF_ID = '404deaec-5d37-11e1-a64b-000c29d5f0a8'
 VIF_MAC = '3c:09:24:1e:78:23'
 OFPORT_NUM = 1
-VIF_PORT = ovs_lib.VifPort('port', OFPORT_NUM,
-                           VIF_ID, VIF_MAC, 'switch')
+VIF_PORT = ovs_lib.VifPort('port', OFPORT_NUM, VIF_ID, VIF_MAC,
+                           Switch(br_name='br_name'))
 VIF_PORTS = {VIF_ID: VIF_PORT}
 FIXED_IPS = [{'subnet_id': 'my-subnet-uuid',
               'ip_address': '1.1.1.1'}]

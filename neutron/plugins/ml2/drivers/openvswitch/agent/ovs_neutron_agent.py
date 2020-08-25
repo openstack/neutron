@@ -1911,6 +1911,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         devices = devices_details_list.get('devices')
         vif_by_id = self.int_br.get_vifs_by_ids(
             [vif['device'] for vif in devices])
+        devices_not_in_datapath = set()
         for details in devices:
             device = details['device']
             LOG.debug("Processing port: %s", device)
@@ -1922,6 +1923,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 self.ext_manager.delete_port(self.context, {'port_id': device})
                 skipped_devices.append(device)
                 continue
+
+            if not port.ofport or port.ofport == ovs_lib.INVALID_OFPORT:
+                devices_not_in_datapath.add(device)
 
             if 'port_id' in details:
                 LOG.info("Port %(device)s updated. Details: %(details)s",
@@ -1942,7 +1946,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                           details['network_id'])
                 if details['device'] in re_added:
                     self.ext_manager.delete_port(self.context, details)
-                self.ext_manager.handle_port(self.context, details)
+                if device not in devices_not_in_datapath:
+                    self.ext_manager.handle_port(self.context, details)
+
             else:
                 if n_const.NO_ACTIVE_BINDING in details:
                     # Port was added to the bridge, but its binding in this
@@ -1958,7 +1964,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 if (port and port.ofport != -1):
                     self.port_dead(port)
         return (skipped_devices, binding_no_activated_devices,
-                need_binding_devices, failed_devices)
+                need_binding_devices, failed_devices, devices_not_in_datapath)
 
     def _update_port_network(self, port_id, network_id):
         self._clean_network_ports(port_id)
@@ -2051,10 +2057,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         need_binding_devices = []
         skipped_devices = set()
         binding_no_activated_devices = set()
+        devices_not_in_datapath = set()
         start = time.time()
         if devices_added_updated:
             (skipped_devices, binding_no_activated_devices,
-             need_binding_devices, failed_devices['added']) = (
+             need_binding_devices, failed_devices['added'],
+             devices_not_in_datapath) = (
                 self.treat_devices_added_or_updated(
                     devices_added_updated, provisioning_needed, re_added))
             LOG.info("process_network_ports - iteration:%(iter_num)d - "
@@ -2079,11 +2087,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         added_ports = (port_info.get('added', set()) - skipped_devices -
                        binding_no_activated_devices)
         self._add_port_tag_info(need_binding_devices)
-
         self.process_install_ports_egress_flows(need_binding_devices)
-
-        self.sg_agent.setup_port_filters(added_ports,
+        added_to_datapath = added_ports - devices_not_in_datapath
+        self.sg_agent.setup_port_filters(added_to_datapath,
                                          port_info.get('updated', set()))
+
         LOG.info("process_network_ports - iteration:%(iter_num)d - "
                  "agent port security group processed in %(elapsed).3f",
                  {'iter_num': self.iter_num,

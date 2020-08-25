@@ -632,21 +632,10 @@ class OVSBridge(BaseOVS):
                          {'port_id': port_id, 'br_name': self.br_name})
                 continue
             pinfo = by_id[port_id]
-            if not self._check_ofport(port_id, pinfo):
-                continue
             mac = pinfo['external_ids'].get('attached-mac')
             result[port_id] = VifPort(pinfo['name'], pinfo['ofport'],
                                       port_id, mac, self)
         return result
-
-    @staticmethod
-    def _check_ofport(port_id, port_info):
-        if port_info['ofport'] in [UNASSIGNED_OFPORT, INVALID_OFPORT]:
-            LOG.warning("ofport: %(ofport)s for VIF: %(vif)s "
-                        "is not a positive integer",
-                        {'ofport': port_info['ofport'], 'vif': port_id})
-            return False
-        return True
 
     def get_vif_port_by_id(self, port_id):
         ports = self.ovsdb.db_find(
@@ -655,8 +644,6 @@ class OVSBridge(BaseOVS):
             columns=['external_ids', 'name', 'ofport']).execute()
         for port in ports:
             if self.br_name != self.get_bridge_for_iface(port['name']):
-                continue
-            if not self._check_ofport(port_id, port):
                 continue
             mac = port['external_ids'].get('attached-mac')
             return VifPort(port['name'], port['ofport'], port_id, mac, self)
