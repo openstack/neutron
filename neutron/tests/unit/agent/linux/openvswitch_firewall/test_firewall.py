@@ -281,23 +281,50 @@ class TestConjIdMap(base.BaseTestCase):
                           constants.IPv6)
 
     def test_delete_sg(self):
-        test_data = [('sg1', 'sg1'), ('sg1', 'sg2')]
+        test_data = [
+            # conj_id: 8
+            ('sg1', 'sg1', constants.INGRESS_DIRECTION, constants.IPv6, 0),
+            # conj_id: 10
+            ('sg1', 'sg1', constants.INGRESS_DIRECTION, constants.IPv6, 1),
+            # conj_id: 12
+            ('sg1', 'sg1', constants.INGRESS_DIRECTION, constants.IPv6, 2),
+            # conj_id: 16
+            ('sg2', 'sg1', constants.EGRESS_DIRECTION, constants.IPv6, 0),
+            # conj_id: 24
+            ('sg1', 'sg3', constants.INGRESS_DIRECTION, constants.IPv6, 0),
+            # conj_id: 36 (and 32 without priority offset, stored in id_map)
+            ('sg3', 'sg4', constants.INGRESS_DIRECTION, constants.IPv4, 2),
+            # conj_id: 40
+            ('sg5', 'sg4', constants.EGRESS_DIRECTION, constants.IPv4, 0),
+        ]
 
         ids = []
-        for sg_id, remote_sg_id in test_data:
-            ids.append(self.conj_id_map.get_conj_id(
-                sg_id, remote_sg_id,
-                constants.INGRESS_DIRECTION, constants.IPv6))
+        conj_id_segment = set([])  # see ConjIPFlowManager.get_conj_id
+        # This is similar to ConjIPFlowManager.add method
+        for sg_id, rsg_id, direction, ip_version, prio_offset in test_data:
+            conj_id_tuple = (sg_id, rsg_id, direction, ip_version)
+            conj_id = self.conj_id_map.get_conj_id(*conj_id_tuple)
+            conj_id_segment.add(conj_id)
+            conj_id_plus_prio = conj_id + prio_offset * 2
+            self.conj_id_map.id_map_group[conj_id_tuple].add(conj_id_plus_prio)
+            ids.append(conj_id_plus_prio)
 
         result = self.conj_id_map.delete_sg('sg1')
-        self.assertIn(('sg1', ids[0]), result)
-        self.assertIn(('sg2', ids[1]), result)
-        self.assertFalse(self.conj_id_map.id_map)
+        self.assertEqual(
+            {('sg3', 24), ('sg1', 12), ('sg1', 16), ('sg1', 8), ('sg1', 10)},
+            result)
+        result = self.conj_id_map.delete_sg('sg3')
+        self.assertEqual({('sg4', 32), ('sg4', 36)}, result)
+        result = self.conj_id_map.delete_sg('sg4')
+        self.assertEqual({('sg4', 40)}, result)
+        self.assertEqual({}, self.conj_id_map.id_map)
+        self.assertEqual({}, self.conj_id_map.id_map_group)
 
-        reallocated = self.conj_id_map.get_conj_id(
-            'sg-foo', 'sg-foo', constants.INGRESS_DIRECTION,
-            constants.IPv6)
-        self.assertIn(reallocated, ids)
+        reallocated = set([])
+        for sg_id, rsg_id, direction, ip_version, _ in test_data:
+            conj_id_tuple = (sg_id, rsg_id, direction, ip_version)
+            reallocated.add(self.conj_id_map.get_conj_id(*conj_id_tuple))
+        self.assertEqual(reallocated, conj_id_segment)
 
 
 class TestConjIPFlowManager(base.BaseTestCase):
@@ -362,7 +389,7 @@ class TestConjIPFlowManager(base.BaseTestCase):
                        dl_type=2048, nw_src='10.22.3.4/32', priority=73,
                        reg_net=self.vlan_tag, table=82)])
 
-    def test_sg_removed(self):
+    def _sg_removed(self, sg_name):
         with mock.patch.object(self.manager.conj_id_map,
                                'get_conj_id') as get_id_mock, \
              mock.patch.object(self.manager.conj_id_map,
@@ -375,11 +402,26 @@ class TestConjIPFlowManager(base.BaseTestCase):
                 constants.INGRESS_DIRECTION, constants.IPv4)] = {
                     '10.22.3.4': [self.conj_id]}
 
-            self.manager.sg_removed('sg')
+            self.manager.sg_removed(sg_name)
+
+    def test_sg_removed(self):
+        self._sg_removed('sg')
         self.driver._add_flow.assert_not_called()
-        self.driver.delete_flows_for_ip_addresses.assert_called_once_with(
-            {'10.22.3.4'}, constants.INGRESS_DIRECTION, constants.IPv4,
-            self.vlan_tag)
+        self.driver.delete_flows_for_flow_state.assert_called_once_with(
+            {'10.22.3.4': [self.conj_id]}, {},
+            constants.INGRESS_DIRECTION, constants.IPv4, self.vlan_tag)
+        self.driver.delete_flow_for_ip.assert_not_called()
+
+    def test_remote_sg_removed(self):
+        self._sg_removed('remote_id')
+        self.driver._add_flow.assert_not_called()
+        self.driver.delete_flows_for_flow_state.assert_called_once_with(
+            {'10.22.3.4': [self.conj_id]}, {},
+            constants.INGRESS_DIRECTION, constants.IPv4, self.vlan_tag)
+        # "conj_id_to_remove" is populated with the remote_sg conj_id assigned,
+        # "_update_flows_for_vlan_subr" will call "delete_flow_for_ip".
+        self.driver.delete_flow_for_ip.assert_called_once_with(
+            '10.22.3.4', 'ingress', 'IPv4', 100, {self.conj_id})
 
 
 class FakeOVSPort(object):
@@ -400,7 +442,6 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         self.fake_ovs_port = FakeOVSPort('port', 1, '00:00:00:00:00:00')
         self.mock_bridge.br.get_vif_port_by_id.return_value = \
             self.fake_ovs_port
-        cfg.CONF.set_override('explicitly_egress_direct', True, 'AGENT')
 
     def _prepare_security_group(self):
         security_group_rules = [
@@ -923,6 +964,43 @@ class TestOVSFirewallDriver(base.BaseTestCase):
     def test_remove_trusted_ports_not_managed_port(self):
         """Check that exception is not propagated outside."""
         self.firewall.remove_trusted_ports(['port_id'])
+
+    def _test_delete_flows_for_flow_state(self, addr_to_conj,
+                                          explicitly_egress_direct=True):
+        direction = 'one_direction'
+        ethertype = 'ethertype'
+        vlan_tag = 'taaag'
+        with mock.patch.object(self.firewall, 'delete_flow_for_ip') as \
+                mock_delete_flow_for_ip:
+            flow_state = {'addr1': {8, 16, 24}, 'addr2': {32, 40}}
+            cfg.CONF.set_override('explicitly_egress_direct',
+                                  explicitly_egress_direct, 'AGENT')
+            self.firewall.delete_flows_for_flow_state(
+                flow_state, addr_to_conj, direction, ethertype, vlan_tag)
+        calls = []
+        for removed_ip in set(flow_state.keys()) - set(addr_to_conj.keys()):
+            calls.append(mock.call(removed_ip, direction, ethertype, vlan_tag,
+                                   flow_state[removed_ip]))
+            if explicitly_egress_direct:
+                calls.append(mock.call(removed_ip, direction, ethertype,
+                                       vlan_tag, [0]))
+        mock_delete_flow_for_ip.assert_has_calls(calls)
+
+    def test_delete_flows_for_flow_state_no_removed_ips_exp_egress(self):
+        addr_to_conj = {'addr1': {8, 16, 24}, 'addr2': {32, 40}}
+        self._test_delete_flows_for_flow_state(addr_to_conj)
+
+    def test_delete_flows_for_flow_state_no_removed_ips_no_exp_egress(self):
+        addr_to_conj = {'addr1': {8, 16, 24}, 'addr2': {32, 40}}
+        self._test_delete_flows_for_flow_state(addr_to_conj, False)
+
+    def test_delete_flows_for_flow_state_removed_ips_exp_egress(self):
+        addr_to_conj = {'addr2': {32, 40}}
+        self._test_delete_flows_for_flow_state(addr_to_conj)
+
+    def test_delete_flows_for_flow_state_removed_ips_no_exp_egress(self):
+        addr_to_conj = {'addr1': {8, 16, 24}}
+        self._test_delete_flows_for_flow_state(addr_to_conj, False)
 
 
 class TestCookieContext(base.BaseTestCase):
