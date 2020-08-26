@@ -17,7 +17,7 @@ decorator==3.4.0
 deprecation==1.0
 doc8==0.6.0
 docutils==0.11
-dogpile.cache==0.6.2
+dogpile.cache==0.6.5
 dulwich==0.15.0
 eventlet==0.18.2
 extras==1.0.0
@@ -39,12 +39,12 @@ jsonpointer==1.13
 jsonschema==2.6.0
 keystoneauth1==3.14.0
 keystonemiddleware==4.17.0
-kombu==4.0.0
+kombu==4.6.1
 linecache2==1.0.0
 logilab-common==1.4.1
 logutils==0.3.5
 Mako==0.4.0
-MarkupSafe==1.0
+MarkupSafe==1.1.1
 monotonic==0.6;python_version<'3.3'
 mox3==0.20.0
 msgpack-python==0.4.0
@@ -63,7 +63,7 @@ oslo.cache==1.26.0
 oslo.concurrency==3.26.0
 oslo.config==5.2.0
 oslo.context==2.20.0
-oslo.db==4.37.0
+oslo.db==4.44.0
 oslo.i18n==3.20.0
 oslo.log==4.2.1
 oslo.messaging==5.29.0
@@ -108,7 +108,7 @@ python-neutronclient==6.7.0
 python-novaclient==9.1.0
 python-subunit==1.0.0
 pytz==2013.6
-PyYAML==3.12
+PyYAML==3.13
 reno==3.1.0
 repoze.lru==0.7
 requests==2.14.2
@@ -125,7 +125,7 @@ statsd==3.2.1
 stestr==1.0.0
 stevedore==1.20.0
 Tempita==0.5.2
-tenacity==4.4.0
+tenacity==6.0.0
 testrepository==0.0.18
 testresources==2.0.0
 testscenarios==0.4
