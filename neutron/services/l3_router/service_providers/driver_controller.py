@@ -190,7 +190,7 @@ class DriverController(object):
             router = self.l3_plugin.get_router(context, router_id)
             driver = self._attrs_to_driver(router)
             driver_name = driver.name
-            with context.session.begin(subtransactions=True):
+            with db_api.CONTEXT_WRITER.using(context):
                 self._stm.add_resource_association(
                     context, plugin_constants.L3,
                     driver_name, router_id)
