@@ -15,6 +15,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import context as n_context
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.services.trunk import constants as trunk_consts
 from oslo_config import cfg
@@ -45,7 +46,7 @@ class OVNTrunkHandler(object):
         txn = self.plugin_driver._nb_ovn.transaction
         context = n_context.get_admin_context()
         for port in subports:
-            with context.session.begin(subtransactions=True), (
+            with db_api.CONTEXT_WRITER.using(context), (
                     txn(check_error=True)) as ovn_txn:
                 self._set_binding_profile(context, port, parent_port, ovn_txn)
 
@@ -53,7 +54,7 @@ class OVNTrunkHandler(object):
         txn = self.plugin_driver._nb_ovn.transaction
         context = n_context.get_admin_context()
         for port in subports:
-            with context.session.begin(subtransactions=True), (
+            with db_api.CONTEXT_WRITER.using(context), (
                     txn(check_error=True)) as ovn_txn:
                 self._unset_binding_profile(context, port, ovn_txn)
 
