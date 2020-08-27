@@ -12,6 +12,7 @@
 
 import ddt
 from neutron_lib.api.definitions import uplink_status_propagation as apidef
+from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 
 from neutron.db import db_base_plugin_v2
@@ -34,7 +35,7 @@ class UplinkStatusPropagationExtensionTestPlugin(
             port_res, port_db)
 
     def create_port(self, context, port):
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             new_port = super(UplinkStatusPropagationExtensionTestPlugin,
                             self).create_port(context, port)
             # Update the propagate_uplink_status in the database
