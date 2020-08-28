@@ -350,6 +350,9 @@ APIs at the same time.
       this is that Compute security group APIs are instances based and
       not port based as Networking.
 
+   -  When creating or updating a port with a specified security group,
+      the admin tenant can use the security groups of other tenants.
+
 Basic security group operations
 -------------------------------
 

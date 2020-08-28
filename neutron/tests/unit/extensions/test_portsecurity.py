@@ -293,6 +293,57 @@ class TestPortSecurity(PortSecurityDBTestCase):
         self.assertEqual(port['port']['security_groups'], [security_group_id])
         self._delete('ports', port['port']['id'])
 
+    def test_create_port_with_admin_use_other_tenant_security_group(self):
+        if self._skip_security_group:
+            self.skipTest("Plugin does not support security groups")
+        res = self._create_network('json', 'net1', True,
+                                   arg_list=('port_security_enabled',),
+                                   set_context=True,
+                                   tenant_id='admin_tenant',
+                                   port_security_enabled=False)
+        net = self.deserialize('json', res)
+        self._create_subnet('json', net['network']['id'], '10.0.0.0/24')
+        security_group = self.deserialize(
+            'json', self._create_security_group(self.fmt, 'asdf', 'asdf',
+                                                tenant_id='other_tenant'))
+        security_group_id = security_group['security_group']['id']
+        res = self._create_port('json', net['network']['id'],
+                                arg_list=('security_groups',
+                                    'port_security_enabled'),
+                                set_context=True,
+                                is_admin=True,
+                                tenant_id='admin_tenant',
+                                port_security_enabled=True,
+                                security_groups=[security_group_id])
+        port = self.deserialize('json', res)
+        self.assertTrue(port['port'][psec.PORTSECURITY])
+        self.assertEqual(port['port']['security_groups'], [security_group_id])
+        self._delete('ports', port['port']['id'])
+
+    def test_create_port_with_no_admin_use_other_tenant_security_group(self):
+        if self._skip_security_group:
+            self.skipTest("Plugin does not support security groups")
+        res = self._create_network('json', 'net1', True,
+                                   arg_list=('port_security_enabled',),
+                                   set_context=True,
+                                   tenant_id='demo_tenant',
+                                   port_security_enabled=False)
+        net = self.deserialize('json', res)
+        self._create_subnet('json', net['network']['id'], '10.0.0.0/24',
+                            set_context=True, tenant_id='demo_tenant')
+        security_group = self.deserialize(
+            'json', self._create_security_group(self.fmt, 'asdf', 'asdf',
+                                                tenant_id='other_tenant'))
+        security_group_id = security_group['security_group']['id']
+        res = self._create_port('json', net['network']['id'],
+                                arg_list=('security_groups',
+                                    'port_security_enabled'),
+                                set_context=True,
+                                tenant_id='demo_tenant',
+                                port_security_enabled=True,
+                                security_groups=[security_group_id])
+        self.assertEqual(404, res.status_int)
+
     def test_create_port_without_security_group_and_net_sec_false(self):
         res = self._create_network('json', 'net1', True,
                                    arg_list=('port_security_enabled',),
@@ -325,6 +376,54 @@ class TestPortSecurity(PortSecurityDBTestCase):
 
                 self.deserialize('json', req.get_response(self.api))
                 self._delete('ports', port['port']['id'])
+
+    def test_update_port_with_admin_use_other_tenant_security_group(self):
+        if self._skip_security_group:
+            self.skipTest("Plugin does not support security groups")
+        with self.network() as net:
+            with self.subnet(network=net):
+                res = self._create_port('json', net['network']['id'],
+                                        set_context=True, is_admin=True,
+                                        tenant_id='admin_tenant',)
+                port = self.deserialize('json', res)
+                self.assertTrue(port['port'][psec.PORTSECURITY])
+
+                security_group = self.deserialize('json',
+                    self._create_security_group(self.fmt, 'asdf', 'asdf',
+                                                tenant_id='other_tenant'))
+                security_group_id = security_group['security_group']['id']
+                update_port = {'port':
+                               {'security_groups': [security_group_id]}}
+                req = self.new_update_request('ports', update_port,
+                                              port['port']['id'])
+                port = self.deserialize('json', req.get_response(self.api))
+                security_groups = port['port']['security_groups']
+                self.assertIn(security_group_id, security_groups)
+                self._delete('ports', port['port']['id'])
+
+    def test_update_port_with_no_admin_use_other_tenant_security_group(self):
+        if self._skip_security_group:
+            self.skipTest("Plugin does not support security groups")
+        with self.network(tenant_id='demo_tenant') as net:
+            with self.subnet(network=net, tenant_id='demo_tenant'):
+                res = self._create_port('json', net['network']['id'],
+                                        set_context=True,
+                                        tenant_id='demo_tenant',)
+                port = self.deserialize('json', res)
+                self.assertTrue(port['port'][psec.PORTSECURITY])
+
+                security_group = self.deserialize('json',
+                    self._create_security_group(self.fmt, 'asdf', 'asdf',
+                                                tenant_id='other_tenant'))
+                security_group_id = security_group['security_group']['id']
+                update_port = {'port':
+                               {'security_groups': [security_group_id]}}
+                req = self.new_update_request('ports', update_port,
+                                              port['port']['id'])
+                req.environ['neutron.context'] = context.Context(
+                    '', 'other_tenant')
+                res = req.get_response(self.api)
+                self.assertEqual(404, res.status_int)
 
     def test_update_port_remove_port_security_security_group(self):
         if self._skip_security_group:
