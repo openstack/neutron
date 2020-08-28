@@ -47,6 +47,13 @@ class Quota(model_base.BASEV2, model_base.HasId, model_base.HasProject):
     resource = sa.Column(sa.String(255))
     limit = sa.Column(sa.Integer)
 
+    __table_args__ = (sa.UniqueConstraint(
+        'project_id',
+        'resource',
+        name='uniq_quotas0project_id0resource'),
+        model_base.BASEV2.__table_args__
+    )
+
 
 class QuotaUsage(model_base.BASEV2, model_base.HasProjectPrimaryKeyIndex):
     """Represents the current usage for a given resource."""
