@@ -205,7 +205,10 @@ class HaRouter(router.RouterInfo):
             return
         self.keepalived_manager.disable()
         conf_dir = self.keepalived_manager.get_conf_dir()
-        shutil.rmtree(conf_dir)
+        try:
+            shutil.rmtree(conf_dir)
+        except FileNotFoundError:
+            pass
 
     def _get_keepalived_instance(self):
         return self.keepalived_manager.config.get_instance(self.ha_vr_id)
