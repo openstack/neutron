@@ -106,6 +106,12 @@ OPTS = [
                        'the state change monitor. NOTE: Setting to True '
                        'could affect the data plane when stopping or '
                        'restarting the L3 agent.')),
+    cfg.BoolOpt('keepalived_use_no_track',
+                default=True,
+                help=_('If keepalived without support for "no_track" option '
+                       'is used, this should be set to False. '
+                       'Support for this option was introduced in keepalived '
+                       '2.x'))
 ]
 
 

@@ -35,6 +35,7 @@ from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils as agent_utils
 from neutron.cmd import runtime_checks
 from neutron.common import utils as common_utils
+from neutron.conf.agent.l3 import config as l3_config
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as ovs_const
 
@@ -259,6 +260,7 @@ def bridge_firewalling_enabled():
 
 class KeepalivedIPv6Test(object):
     def __init__(self, ha_port, gw_port, gw_vip, default_gw):
+        l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
         self.ha_port = ha_port
         self.gw_port = gw_port
         self.gw_vip = gw_vip
