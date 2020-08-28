@@ -2,8 +2,8 @@
 other:
   - |
     Add new configuration group ``ovs_driver`` and new configuration option
-    under it ``vnic_type_blacklist``, to make the previously hardcoded
+    under it ``vnic_type_prohibit_list``, to make the previously hardcoded
     ``supported_vnic_types`` parameter of the OpenvswitchMechanismDriver
     configurable.
-    The ``vnic_types`` listed in the blacklist will be removed from the
+    The ``vnic_types`` listed in the prohibit list will be removed from the
     supported_vnic_types list.

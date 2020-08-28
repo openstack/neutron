@@ -335,9 +335,9 @@ class OpenvswitchMechVnicTypesTestCase(OpenvswitchMechanismBaseTestCase):
                        portbindings.VNIC_SMARTNIC]
 
     def setUp(self):
-        self.blacklist_cfg = {
+        self.prohibit_list_cfg = {
             'OVS_DRIVER': {
-                'vnic_type_blacklist': []
+                'vnic_type_prohibit_list': []
             }
         }
         self.default_supported_vnics = self.supported_vnics
@@ -347,13 +347,13 @@ class OpenvswitchMechVnicTypesTestCase(OpenvswitchMechanismBaseTestCase):
         self.assertEqual(self.default_supported_vnics,
                          self.driver.supported_vnic_types)
 
-    def test_vnic_type_blacklist_valid_item(self):
-        self.blacklist_cfg['OVS_DRIVER']['vnic_type_blacklist'] = \
+    def test_vnic_type_prohibit_list_valid_item(self):
+        self.prohibit_list_cfg['OVS_DRIVER']['vnic_type_prohibit_list'] = \
             [portbindings.VNIC_DIRECT]
 
         fake_conf = cfg.CONF
         fake_conf_fixture = base.MechDriverConfFixture(
-            fake_conf, self.blacklist_cfg,
+            fake_conf, self.prohibit_list_cfg,
             mech_ovs_conf.register_ovs_mech_driver_opts)
         self.useFixture(fake_conf_fixture)
 
@@ -364,24 +364,25 @@ class OpenvswitchMechVnicTypesTestCase(OpenvswitchMechanismBaseTestCase):
         self.assertEqual(len(self.default_supported_vnics) - 1,
                          len(supported_vnic_types))
 
-    def test_vnic_type_blacklist_not_valid_item(self):
-        self.blacklist_cfg['OVS_DRIVER']['vnic_type_blacklist'] = ['foo']
+    def test_vnic_type_prohibit_list_not_valid_item(self):
+        self.prohibit_list_cfg['OVS_DRIVER']['vnic_type_prohibit_list'] = \
+            ['foo']
 
         fake_conf = cfg.CONF
         fake_conf_fixture = base.MechDriverConfFixture(
-            fake_conf, self.blacklist_cfg,
+            fake_conf, self.prohibit_list_cfg,
             mech_ovs_conf.register_ovs_mech_driver_opts)
         self.useFixture(fake_conf_fixture)
 
         self.assertRaises(ValueError,
                           mech_openvswitch.OpenvswitchMechanismDriver)
 
-    def test_vnic_type_blacklist_all_items(self):
-        self.blacklist_cfg['OVS_DRIVER']['vnic_type_blacklist'] = \
+    def test_vnic_type_prohibit_list_all_items(self):
+        self.prohibit_list_cfg['OVS_DRIVER']['vnic_type_prohibit_list'] = \
             self.supported_vnics
         fake_conf = cfg.CONF
         fake_conf_fixture = base.MechDriverConfFixture(
-            fake_conf, self.blacklist_cfg,
+            fake_conf, self.prohibit_list_cfg,
             mech_ovs_conf.register_ovs_mech_driver_opts)
         self.useFixture(fake_conf_fixture)
 

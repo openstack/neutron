@@ -256,11 +256,11 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
         virt_port = self._create_port()
         virt_ip = virt_port['fixed_ips'][0]['ip_address']
 
-        # Create the master port with the VIP address already set in
+        # Create the primary port with the VIP address already set in
         # the allowed_address_pairs field
-        master = self._create_port(allowed_address=virt_ip)
+        primary = self._create_port(allowed_address=virt_ip)
 
-        # Assert the virt port has the type virtual and master is set
+        # Assert the virt port has the type virtual and primary is set
         # as parent
         self._check_port_type(virt_port['id'], ovn_const.LSP_TYPE_VIRTUAL)
         ovn_vport = self._find_port_row(virt_port['id'])
@@ -268,7 +268,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
             virt_ip,
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY])
         self.assertEqual(
-            master['id'],
+            primary['id'],
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY])
 
         # Create the backport parent port
@@ -281,7 +281,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
             virt_ip,
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY])
         self.assertIn(
-            master['id'],
+            primary['id'],
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY])
         self.assertIn(
             backup['id'],
@@ -289,7 +289,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
 
     @tests_base.unstable_test("bug 1865453")
     def test_virtual_port_update_address_pairs(self):
-        master = self._create_port()
+        primary = self._create_port()
         backup = self._create_port()
         virt_port = self._create_port()
         virt_ip = virt_port['fixed_ips'][0]['ip_address']
@@ -303,8 +303,8 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
         self.assertNotIn(ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY,
                          ovn_vport.options)
 
-        # Set the virt IP to the allowed address pairs of the master port
-        self._set_allowed_address_pair(master['id'], virt_ip)
+        # Set the virt IP to the allowed address pairs of the primary port
+        self._set_allowed_address_pair(primary['id'], virt_ip)
 
         # Assert the virt port is now updated
         self._check_port_type(virt_port['id'], ovn_const.LSP_TYPE_VIRTUAL),
@@ -313,7 +313,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
             virt_ip,
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY])
         self.assertEqual(
-            master['id'],
+            primary['id'],
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY])
 
         # Set the virt IP to the allowed address pairs of the backup port
@@ -326,14 +326,14 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
             virt_ip,
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY])
         self.assertIn(
-            master['id'],
+            primary['id'],
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY])
         self.assertIn(
             backup['id'],
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY])
 
-        # Remove the address pairs from the master port
-        self._unset_allowed_address_pair(master['id'])
+        # Remove the address pairs from the primary port
+        self._unset_allowed_address_pair(primary['id'])
 
         # Assert the virt port now only has the backup port as a parent
         self._check_port_type(virt_port['id'], ovn_const.LSP_TYPE_VIRTUAL),
@@ -359,13 +359,13 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
 
     @tests_base.unstable_test("bug 1865453")
     def test_virtual_port_created_after(self):
-        master = self._create_port(fixed_ip='10.0.0.11')
+        primary = self._create_port(fixed_ip='10.0.0.11')
         backup = self._create_port(fixed_ip='10.0.0.12')
         virt_ip = '10.0.0.55'
 
-        # Set the virt IP to the master and backup ports *before* creating
+        # Set the virt IP to the primary and backup ports *before* creating
         # the virtual port
-        self._set_allowed_address_pair(master['id'], virt_ip)
+        self._set_allowed_address_pair(primary['id'], virt_ip)
         self._set_allowed_address_pair(backup['id'], virt_ip)
 
         virt_port = self._create_port(fixed_ip=virt_ip)
@@ -378,7 +378,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
             virt_ip,
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY])
         self.assertIn(
-            master['id'],
+            primary['id'],
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY])
         self.assertIn(
             backup['id'],
@@ -386,7 +386,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
 
     @tests_base.unstable_test("bug 1865453")
     def test_virtual_port_delete_parents(self):
-        master = self._create_port()
+        primary = self._create_port()
         backup = self._create_port()
         virt_port = self._create_port()
         virt_ip = virt_port['fixed_ips'][0]['ip_address']
@@ -400,8 +400,8 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
         self.assertNotIn(ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY,
                          ovn_vport.options)
 
-        # Set allowed address paris to the master and backup ports
-        self._set_allowed_address_pair(master['id'], virt_ip)
+        # Set allowed address paris to the primary and backup ports
+        self._set_allowed_address_pair(primary['id'], virt_ip)
         self._set_allowed_address_pair(backup['id'], virt_ip)
 
         # Assert the virtual port is correct
@@ -411,7 +411,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
             virt_ip,
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY])
         self.assertIn(
-            master['id'],
+            primary['id'],
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY])
         self.assertIn(
             backup['id'],
@@ -420,18 +420,18 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
         # Delete the backup port
         self._delete('ports', backup['id'])
 
-        # Assert the virt port now only has the master port as a parent
+        # Assert the virt port now only has the primary port as a parent
         ovn_vport = self._find_port_row(virt_port['id'])
         self.assertEqual(ovn_const.LSP_TYPE_VIRTUAL, ovn_vport.type)
         self.assertEqual(
             virt_ip,
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY])
         self.assertEqual(
-            master['id'],
+            primary['id'],
             ovn_vport.options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY])
 
-        # Delete the master port
-        self._delete('ports', master['id'])
+        # Delete the primary port
+        self._delete('ports', primary['id'])
 
         # Assert the virt port is not type virtual anymore and the virtual
         # port options are cleared

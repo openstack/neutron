@@ -1,0 +1,10 @@
+---
+deprecations:
+  - |
+    Terminology such as ``master`` and ``slave`` have been replaced with
+    more inclusive words, such as ``primary`` and ``backup`` wherever
+    possible.
+
+    The configuration option ``vnic_type_blacklist`` has been deprecated
+    for both the OpenvSwitch and SRIOV mechanism drivers, and replaced with
+    ``vnic_type_prohibit_list``. They will be removed in a future release.

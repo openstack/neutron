@@ -88,8 +88,8 @@ class ExclusiveResourceProcessor(object):
 
     Other instances may be created for the same ID while the first
     instance has exclusive access.  If that happens then it doesn't block and
-    wait for access.  Instead, it signals to the master instance that an update
-    came in with the timestamp.
+    wait for access.  Instead, it signals to the primary instance that an
+    update came in with the timestamp.
 
     This way, a thread will not block to wait for access to a resource.
     Instead it effectively signals to the thread that is working on the
@@ -102,27 +102,27 @@ class ExclusiveResourceProcessor(object):
     as possible.  The timestamp should not be recorded, however, until the
     resource has been processed using the fetch data.
     """
-    _masters = {}
+    _primaries = {}
     _resource_timestamps = {}
 
     def __init__(self, id):
         self._id = id
 
-        if id not in self._masters:
-            self._masters[id] = self
+        if id not in self._primaries:
+            self._primaries[id] = self
             self._queue = queue.PriorityQueue(-1)
 
-        self._master = self._masters[id]
+        self._primary = self._primaries[id]
 
-    def _i_am_master(self):
-        return self == self._master
+    def _i_am_primary(self):
+        return self == self._primary
 
     def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
-        if self._i_am_master():
-            del self._masters[self._id]
+        if self._i_am_primary():
+            del self._primaries[self._id]
 
     def _get_resource_data_timestamp(self):
         return self._resource_timestamps.get(self._id,
@@ -140,16 +140,16 @@ class ExclusiveResourceProcessor(object):
         resource is being processed.  These updates have already bubbled to
         the front of the ResourceProcessingQueue.
         """
-        self._master._queue.put(update)
+        self._primary._queue.put(update)
 
     def updates(self):
         """Processes the resource until updates stop coming
 
-        Only the master instance will process the resource.  However, updates
+        Only the primary instance will process the resource.  However, updates
         may come in from other workers while it is in progress.  This method
         loops until they stop coming.
         """
-        while self._i_am_master():
+        while self._i_am_primary():
             if self._queue.empty():
                 return
             # Get the update from the queue even if it is old.
@@ -177,10 +177,10 @@ class ResourceProcessingQueue(object):
         next_update = self._queue.get()
 
         with ExclusiveResourceProcessor(next_update.id) as rp:
-            # Queue the update whether this worker is the master or not.
+            # Queue the update whether this worker is the primary or not.
             rp.queue_update(next_update)
 
-            # Here, if the current worker is not the master, the call to
+            # Here, if the current worker is not the primary, the call to
             # rp.updates() will not yield and so this will essentially be a
             # noop.
             for update in rp.updates():

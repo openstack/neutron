@@ -166,8 +166,8 @@ If a vnic_type is supported by default by multiple ML2 mechanism
 drivers (e.g. ``vnic_type=direct`` by both ``openvswitch`` and
 ``sriovnicswitch``) and multiple agents' resources are also meant to be
 tracked by Placement, then the admin must decide which driver to take
-ports of that vnic_type by blacklisting the vnic_type for the unwanted
-drivers. Use :oslo.config:option:`ovs_driver.vnic_type_blacklist` in this
+ports of that vnic_type by prohibiting the vnic_type for the unwanted
+drivers. Use :oslo.config:option:`ovs_driver.vnic_type_prohibit_list` in this
 case. Valid values are all the ``supported_vnic_types`` of the
 `respective mechanism drivers
 <https://docs.openstack.org/neutron/latest/admin/config-ml2.html#supported-vnic-types>`_.
@@ -177,10 +177,10 @@ case. Valid values are all the ``supported_vnic_types`` of the
 .. code-block:: ini
 
     [ovs_driver]
-    vnic_type_blacklist = direct
+    vnic_type_prohibit_list = direct
 
     [sriov_driver]
-    #vnic_type_blacklist = direct
+    #vnic_type_prohibit_list = direct
 
 neutron-openvswitch-agent config
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

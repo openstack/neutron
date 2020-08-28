@@ -750,10 +750,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             if ha_binding_state != constants.HA_ROUTER_STATE_ACTIVE:
                 continue
             # For create router gateway, the gateway port may not be ACTIVE
-            # yet, so we return 'master' host directly.
+            # yet, so we return 'primary' host directly.
             if gateway_port_status != constants.PORT_STATUS_ACTIVE:
                 return ha_binding_agent.host
-            # Do not let the original 'master' (current is backup) host,
+            # Do not let the original 'primary' (current is backup) host,
             # override the gateway port binding host.
             if (gateway_port_status == constants.PORT_STATUS_ACTIVE and
                     ha_binding_agent.host == gateway_port_binding_host):

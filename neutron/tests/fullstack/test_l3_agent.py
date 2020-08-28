@@ -453,15 +453,15 @@ class TestHAL3Agent(TestL3Agent):
         with open(keepalived_state_file, "r") as fd:
             return fd.read()
 
-    def _get_state_file_for_master_agent(self, router_id):
+    def _get_state_file_for_primary_agent(self, router_id):
         for host in self.environment.hosts:
             keepalived_state_file = os.path.join(
                 host.neutron_config.state_path, "ha_confs", router_id, "state")
 
-            if self._get_keepalived_state(keepalived_state_file) == "master":
+            if self._get_keepalived_state(keepalived_state_file) == "primary":
                 return keepalived_state_file
 
-    def test_keepalived_multiple_sighups_does_not_forfeit_mastership(self):
+    def test_keepalived_multiple_sighups_does_not_forfeit_primary(self):
         """Setup a complete "Neutron stack" - both an internal and an external
            network+subnet, and a router connected to both.
         """
@@ -479,7 +479,7 @@ class TestHAL3Agent(TestL3Agent):
                 self._is_ha_router_active_on_one_agent,
                 router['id']),
             timeout=90)
-        keepalived_state_file = self._get_state_file_for_master_agent(
+        keepalived_state_file = self._get_state_file_for_primary_agent(
             router['id'])
         self.assertIsNotNone(keepalived_state_file)
         network = self.safe_client.create_network(tenant_id)
@@ -498,8 +498,9 @@ class TestHAL3Agent(TestL3Agent):
                 tenant_id, ext_net['id'], vm.ip, vm.neutron_port['id'])
 
         # Check that the keepalived's state file has not changed and is still
-        # master. This will indicate that the Throttler works. We want to check
-        # for ha_vrrp_advert_int (the default is 2 seconds), plus a bit more.
+        # primary. This will indicate that the Throttler works. We want to
+        # check for ha_vrrp_advert_int (the default is 2 seconds), plus a bit
+        # more.
         time_to_stop = (time.time() +
                         (common_utils.DEFAULT_THROTTLER_VALUE *
                          ha_router.THROTTLER_MULTIPLIER * 1.3))
@@ -507,7 +508,7 @@ class TestHAL3Agent(TestL3Agent):
             if time.time() > time_to_stop:
                 break
             self.assertEqual(
-                "master",
+                "primary",
                 self._get_keepalived_state(keepalived_state_file))
 
     @tests_base.unstable_test("bug 1798475")

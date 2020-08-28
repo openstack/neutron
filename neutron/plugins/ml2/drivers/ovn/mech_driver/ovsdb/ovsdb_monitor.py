@@ -220,7 +220,7 @@ class PortBindingChassisEvent(row_event.RowEvent):
     When a chassisredirect port is updated with chassis, this event get
     generated. We will update corresponding router's gateway port with
     the chassis's host_id. Later, users can check router's gateway port
-    host_id to find the location of master HA router.
+    host_id to find the location of primary HA router.
     """
 
     def __init__(self, driver):

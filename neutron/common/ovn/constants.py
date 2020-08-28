@@ -174,7 +174,7 @@ DHCPV6_STATELESS_OPT = 'dhcpv6_stateless'
 # When setting global DHCP options, these options will be ignored
 # as they are required for basic network functions and will be
 # set by Neutron.
-GLOBAL_DHCP_OPTS_BLACKLIST = {
+GLOBAL_DHCP_OPTS_PROHIBIT_LIST = {
     4: ['server_id', 'lease_time', 'mtu', 'router', 'server_mac',
         'dns_server', 'classless_static_route'],
     6: ['dhcpv6_stateless', 'dns_server', 'server_id']}

@@ -69,14 +69,14 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             portbindings.VIF_TYPE_OVS,
             vif_details)
 
-        # TODO(lajoskatona): move this blacklisting to
-        # SimpleAgentMechanismDriverBase. By that e blacklisting and validation
+        # TODO(lajoskatona): move this prohibition to
+        # SimpleAgentMechanismDriverBase. By that, prohibition and validation
         # of the vnic_types would be available for all mechanism drivers.
-        self.supported_vnic_types = self.blacklist_supported_vnic_types(
+        self.supported_vnic_types = self.prohibit_list_supported_vnic_types(
             vnic_types=[portbindings.VNIC_NORMAL,
                         portbindings.VNIC_DIRECT,
                         portbindings.VNIC_SMARTNIC],
-            blacklist=cfg.CONF.OVS_DRIVER.vnic_type_blacklist
+            prohibit_list=cfg.CONF.OVS_DRIVER.vnic_type_prohibit_list
         )
         LOG.info("%s's supported_vnic_types: %s",
                  self.agent_type, self.supported_vnic_types)

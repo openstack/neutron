@@ -183,26 +183,26 @@ class FakePortContext(api.PortContext):
 
 class MechDriverConfFixture(config_fixture.Config):
 
-    def __init__(self, conf=cfg.CONF, blacklist_cfg=None,
+    def __init__(self, conf=cfg.CONF, prohibit_list_cfg=None,
                  registration_func=None):
-        """ConfigFixture for vnic_type_blacklist
+        """ConfigFixture for vnic_type_prohibit_list
 
         :param conf: The driver configuration object
-        :param blacklist_cfg: A dictionary in the form
+        :param prohibit_list_cfg: A dictionary in the form
                               {'group': {'opt': 'value'}}, i.e.:
-                              {'OVS_DRIVER': {'vnic_type_blacklist':
+                              {'OVS_DRIVER': {'vnic_type_prohibit_list':
                                               ['foo']}}
         :param registration_func: The method which do the config group's
                                   registration.
         """
         super(MechDriverConfFixture, self).__init__(conf)
-        self.blacklist_cfg = blacklist_cfg
+        self.prohibit_list_cfg = prohibit_list_cfg
         self.registration_func = registration_func
 
     def setUp(self):
         super(MechDriverConfFixture, self).setUp()
         self.registration_func(self.conf)
-        for group, option in self.blacklist_cfg.items():
+        for group, option in self.prohibit_list_cfg.items():
             self.config(group=group, **option)
 
 

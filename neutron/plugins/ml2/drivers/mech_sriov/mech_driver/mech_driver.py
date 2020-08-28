@@ -69,12 +69,12 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         """
         self.agent_type = agent_type
 
-        # TODO(lajoskatona): move this blacklisting to
-        # SimpleAgentMechanismDriverBase. By that e blacklisting and validation
+        # TODO(lajoskatona): move this prohibition to
+        # SimpleAgentMechanismDriverBase. By that, prohibition and validation
         # of the vnic_types would be available for all mechanism drivers.
-        self.supported_vnic_types = self.blacklist_supported_vnic_types(
+        self.supported_vnic_types = self.prohibit_list_supported_vnic_types(
             vnic_types=supported_vnic_types,
-            blacklist=cfg.CONF.SRIOV_DRIVER.vnic_type_blacklist
+            prohibit_list=cfg.CONF.SRIOV_DRIVER.vnic_type_prohibit_list
         )
 
         # NOTE(ndipanov): PF passthrough requires a different vif type

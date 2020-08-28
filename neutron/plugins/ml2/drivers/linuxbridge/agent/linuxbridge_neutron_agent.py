@@ -458,7 +458,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         # Check if the interface is part of the bridge
         if not bridge_device.owns_interface(interface):
             try:
-                # Check if the interface is not enslaved in another bridge
+                # Check if the interface is attached to another bridge
                 bridge = bridge_lib.BridgeDevice.get_interface_bridge(
                     interface)
                 if bridge:

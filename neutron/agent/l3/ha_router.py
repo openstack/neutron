@@ -55,7 +55,7 @@ class HaRouterNamespace(namespaces.RouterNamespace):
     It does so to prevent sending gratuitous ARPs for interfaces that got VIP
     removed in the middle of processing.
     It also disables ipv6 forwarding by default. Forwarding will be
-    enabled during router configuration processing only for the master node.
+    enabled during router configuration processing only for the primary node.
     It has to be disabled on all other nodes to avoid sending MLD packets
     which cause lost connectivity to Floating IPs.
     """
@@ -96,12 +96,12 @@ class HaRouter(router.RouterInfo):
         return self.router.get('ha_vr_id')
 
     def _check_and_set_real_state(self):
-        # When the physical host was down/up, the 'master' router may still
+        # When the physical host was down/up, the 'primary' router may still
         # have its original state in the _ha_state_path file. We directly
         # reset it to 'backup'.
         if (not self.keepalived_manager.check_processes() and
                 os.path.exists(self.ha_state_path) and
-                self.ha_state == 'master'):
+                self.ha_state == 'primary'):
             self.ha_state = 'backup'
 
     @property
@@ -110,7 +110,12 @@ class HaRouter(router.RouterInfo):
             return self._ha_state
         try:
             with open(self.ha_state_path, 'r') as f:
-                self._ha_state = f.read()
+                # TODO(haleyb): put old code back after a couple releases,
+                # Y perhaps, just for backwards-compat
+                # self._ha_state = f.read()
+                ha_state = f.read()
+                ha_state = 'primary' if ha_state == 'master' else ha_state
+                self._ha_state = ha_state
         except (OSError, IOError):
             LOG.debug('Error while reading HA state for %s', self.router_id)
         return self._ha_state or 'unknown'
@@ -129,7 +134,7 @@ class HaRouter(router.RouterInfo):
     def ha_namespace(self):
         return self.ns_name
 
-    def is_router_master(self):
+    def is_router_primary(self):
         """this method is normally called before the ha_router object is fully
         initialized
         """
@@ -298,14 +303,14 @@ class HaRouter(router.RouterInfo):
             onlink_route_cidr in onlink_route_cidrs]
 
     def _should_delete_ipv6_lladdr(self, ipv6_lladdr):
-        """Only the master should have any IP addresses configured.
+        """Only the primary should have any IP addresses configured.
         Let keepalived manage IPv6 link local addresses, the same way we let
-        it manage IPv4 addresses. If the router is not in the master state,
+        it manage IPv4 addresses. If the router is not in the primary state,
         we must delete the address first as it is autoconfigured by the kernel.
         """
         manager = self.keepalived_manager
         if manager.get_process().active:
-            if self.ha_state != 'master':
+            if self.ha_state != 'primary':
                 conf = manager.get_conf_on_disk()
                 managed_by_keepalived = conf and ipv6_lladdr in conf
                 if managed_by_keepalived:
@@ -317,7 +322,7 @@ class HaRouter(router.RouterInfo):
     def _disable_ipv6_addressing_on_interface(self, interface_name):
         """Disable IPv6 link local addressing on the device and add it as
         a VIP to keepalived. This means that the IPv6 link local address
-        will only be present on the master.
+        will only be present on the primary.
         """
         device = ip_lib.IPDevice(interface_name, namespace=self.ha_namespace)
         ipv6_lladdr = ip_lib.get_ipv6_lladdr(device.link.address)
@@ -446,7 +451,7 @@ class HaRouter(router.RouterInfo):
                                                name=self.get_ha_device_name())
         cidrs = (address['cidr'] for address in addresses)
         ha_cidr = self._get_primary_vip()
-        state = 'master' if ha_cidr in cidrs else 'backup'
+        state = 'primary' if ha_cidr in cidrs else 'backup'
         self.ha_state = state
         callback(self.router_id, state)
 
@@ -468,10 +473,10 @@ class HaRouter(router.RouterInfo):
         self._add_gateway_vip(ex_gw_port, interface_name)
         self._disable_ipv6_addressing_on_interface(interface_name)
 
-        # Enable RA and IPv6 forwarding only for master instances. This will
+        # Enable RA and IPv6 forwarding only for primary instances. This will
         # prevent backup routers from sending packets to the upstream switch
         # and disrupt connections.
-        enable = self.ha_state == 'master'
+        enable = self.ha_state == 'primary'
         self._configure_ipv6_params_on_gw(ex_gw_port, self.ns_name,
                                           interface_name, enable)
 
@@ -486,11 +491,11 @@ class HaRouter(router.RouterInfo):
     def external_gateway_removed(self, ex_gw_port, interface_name):
         self._clear_vips(interface_name)
 
-        if self.ha_state == 'master':
+        if self.ha_state == 'primary':
             super(HaRouter, self).external_gateway_removed(ex_gw_port,
                                                            interface_name)
         else:
-            # We are not the master node, so no need to delete ip addresses.
+            # We are not the primary node, so no need to delete ip addresses.
             self.driver.unplug(interface_name,
                                namespace=self.ns_name,
                                prefix=router.EXTERNAL_DEV_PREFIX)
@@ -526,13 +531,13 @@ class HaRouter(router.RouterInfo):
     @runtime.synchronized('enable_radvd')
     def enable_radvd(self, internal_ports=None):
         if (self.keepalived_manager.get_process().active and
-                self.ha_state == 'master'):
+                self.ha_state == 'primary'):
             super(HaRouter, self).enable_radvd(internal_ports)
 
     def external_gateway_link_up(self):
         # Check HA router ha_state for its gateway port link state.
         # 'backup' instance will not link up the gateway port.
-        return self.ha_state == 'master'
+        return self.ha_state == 'primary'
 
     def set_external_gw_port_link_status(self, link_up, set_gw=False):
         link_state = "up" if link_up else "down"

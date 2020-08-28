@@ -1415,7 +1415,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.nb_idl().get_gateway_chassis_binding.side_effect = (
             existing_port_bindings)
         # for 1. port schedule untouched, add only 3'rd chassis
-        # for 2. port master scheduler somewhere else
+        # for 2. port primary scheduler somewhere else
         # for 3. port schedule all
         self.mock_schedule.side_effect = [
             ['chassis1', 'chassis2', 'chassis3'],
@@ -1435,7 +1435,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                       'lrp-foo-2', [], ['chassis2']),
             mock.call(self.nb_idl(), self.sb_idl(),
                       'lrp-foo-3', [], [])])
-        # make sure that for second port master chassis stays untouched
+        # make sure that for second port primary chassis stays untouched
         self.nb_idl().update_lrouter_port.assert_has_calls([
             mock.call('lrp-foo-1',
                       gateway_chassis=['chassis1', 'chassis2', 'chassis3']),

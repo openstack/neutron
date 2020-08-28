@@ -157,7 +157,7 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
         self._run_monitor()
         msg = 'Wrote router %s state %s'
         self.router.port.addr.add(self.cidr)
-        self._search_in_file(self.log_file, msg % (self.router_id, 'master'))
+        self._search_in_file(self.log_file, msg % (self.router_id, 'primary'))
         self.router.port.addr.delete(self.cidr)
         self._search_in_file(self.log_file, msg % (self.router_id, 'backup'))
 
@@ -184,8 +184,8 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
         msg = 'Initial status of router %s is %s' % (self.router_id, 'backup')
         self._search_in_file(self.log_file, msg)
 
-    def test_handle_initial_state_master(self):
+    def test_handle_initial_state_primary(self):
         self.router.port.addr.add(self.cidr)
         self._run_monitor()
-        msg = 'Initial status of router %s is %s' % (self.router_id, 'master')
+        msg = 'Initial status of router %s is %s' % (self.router_id, 'primary')
         self._search_in_file(self.log_file, msg)

@@ -138,19 +138,20 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
         return True. Otherwise, it must return False.
         """
 
-    def blacklist_supported_vnic_types(self, vnic_types, blacklist):
-        """Validate the blacklist and blacklist the supported_vnic_types
+    def prohibit_list_supported_vnic_types(self, vnic_types, prohibit_list):
+        """Validate the prohibit_list and prohibit the supported_vnic_types
 
         :param vnic_types: The supported_vnic_types list
-        :param blacklist: The blacklist as in vnic_type_blacklist
-        :return The blacklisted vnic_types
+        :param prohibit_list: The prohibit_list as in vnic_type_prohibit_list
+        :return The prohibited vnic_types
         """
-        if not blacklist:
+        if not prohibit_list:
             return vnic_types
 
-        # Not valid values in the blacklist:
-        if not all(bl in vnic_types for bl in blacklist):
-            raise ValueError(_("Not all of the items from vnic_type_blacklist "
+        # Not valid values in the prohibit_list:
+        if not all(bl in vnic_types for bl in prohibit_list):
+            raise ValueError(_("Not all of the items from "
+                               "vnic_type_prohibit_list "
                                "are valid vnic_types for %(agent)s mechanism "
                                "driver. The valid values are: "
                                "%(valid_vnics)s.") %
@@ -158,11 +159,11 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
                               'valid_vnics': vnic_types})
 
         supported_vnic_types = [vnic_t for vnic_t in vnic_types if
-                                vnic_t not in blacklist]
+                                vnic_t not in prohibit_list]
 
         # Nothing left in the supported vnict types list:
         if len(supported_vnic_types) < 1:
-            raise ValueError(_("All possible vnic_types were blacklisted for "
+            raise ValueError(_("All possible vnic_types were prohibited for "
                                "%s mechanism driver!") % self.agent_type)
         return supported_vnic_types
 

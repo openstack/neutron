@@ -16,15 +16,15 @@ SNAT high availability is implemented in a manner similar to the
 :ref:`deploy-lb-ha-vrrp` and :ref:`deploy-ovs-ha-vrrp` examples where
 ``keepalived`` uses VRRP to provide quick failover of SNAT services.
 
-During normal operation, the master router periodically transmits *heartbeat*
+During normal operation, the primary router periodically transmits *heartbeat*
 packets over a hidden project network that connects all HA routers for a
 particular project.
 
 If the DVR/SNAT backup router stops receiving these packets, it assumes failure
-of the master DVR/SNAT router and promotes itself to master router by
+of the primary DVR/SNAT router and promotes itself to primary router by
 configuring IP addresses on the interfaces in the ``snat`` namespace. In
 environments with more than one backup router, the rules of VRRP are followed
-to select a new master router.
+to select a new primary router.
 
 .. warning::
 
