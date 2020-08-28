@@ -521,8 +521,7 @@ To enable prefix delegation, edit the ``/etc/neutron/neutron.conf`` file.
 
       pd_dhcp_driver = <class path to driver>
 
-   Drivers other than the default one may require extra configuration,
-   please refer to :ref:`extra-driver-conf`
+   Drivers other than the default one may require extra configuration.
 
 This tells OpenStack Networking to use the prefix delegation mechanism for
 subnet allocation when the user does not provide a CIDR or subnet pool id when
@@ -756,32 +755,3 @@ References
 The following presentation from the Barcelona Summit provides a great guide for
 setting up IPv6 with OpenStack: `Deploying IPv6 in OpenStack Environments
 <https://www.youtube.com/watch?v=j5hy11YlSOU>`_.
-
-.. _extra-driver-conf:
-
-Extra configuration
--------------------
-
-Neutron dhcpv6_pd_agent
-^^^^^^^^^^^^^^^^^^^^^^^
-
-To enable the driver for the dhcpv6_pd_agent, set pd_dhcp_driver to this in
-``/etc/neutron/neutron.conf``:
-
-.. code-block:: console
-
-   pd_dhcp_driver = neutron_pd_agent
-
-To allow the neutron-pd-agent to communicate with prefix delegation servers,
-you must set which network interface to use for external communication. In
-DevStack the default for this is ``br-ex``:
-
-.. code-block:: console
-
-   pd_interface = br-ex
-
-Once you have stacked run the command below to start the neutron-pd-agent:
-
-.. code-block:: console
-
-   neutron-pd-agent --config-file /etc/neutron/neutron.conf
