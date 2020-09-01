@@ -177,7 +177,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         pg_name = ovn_utils.ovn_port_group_name(self.fake_sg['id'])
 
         self.nb_ovn.pg_del.assert_called_once_with(
-            name=pg_name)
+            if_exists=True, name=pg_name)
 
         mock_del_rev.assert_called_once_with(
             mock.ANY, self.fake_sg['id'], ovn_const.TYPE_SECURITY_GROUPS)
@@ -2844,7 +2844,7 @@ class TestOVNMechanismDriverSecurityGroup(
 
         expected_pg_name = ovn_utils.ovn_port_group_name(sg['id'])
         expected_pg_del_calls = [
-            mock.call(name=expected_pg_name),
+            mock.call(if_exists=True, name=expected_pg_name),
         ]
         self.mech_driver._nb_ovn.pg_del.assert_has_calls(
             expected_pg_del_calls)

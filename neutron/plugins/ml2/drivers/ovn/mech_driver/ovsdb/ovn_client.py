@@ -2018,7 +2018,7 @@ class OVNClient(object):
     def delete_security_group(self, context, security_group_id):
         with self._nb_idl.transaction(check_error=True) as txn:
             name = utils.ovn_port_group_name(security_group_id)
-            txn.add(self._nb_idl.pg_del(name=name))
+            txn.add(self._nb_idl.pg_del(name=name, if_exists=True))
         db_rev.delete_revision(context, security_group_id,
                                ovn_const.TYPE_SECURITY_GROUPS)
 
