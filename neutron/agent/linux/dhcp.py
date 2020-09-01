@@ -136,7 +136,8 @@ class DictModel(collections.abc.MutableMapping):
     def __copy__(self):
         return type(self)(self)
 
-    def __deepcopy__(self, memo):  # pylint: disable=no-value-for-parameter
+    def __deepcopy__(self, memo):
+        # pylint: disable=no-value-for-parameter
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
