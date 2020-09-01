@@ -36,6 +36,7 @@ from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import iptables
 from neutron.agent.linux.openvswitch_firewall import rules
+from neutron.common import _constants as n_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
 
@@ -479,6 +480,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self.sg_port_map = SGPortMap()
         self.conj_ip_manager = ConjIPFlowManager(self)
         self.sg_to_delete = set()
+        self.vlan_rule_ofports = collections.defaultdict(
+            lambda: collections.defaultdict(set))
         self._update_cookie = None
         self._deferred = False
         self.iptables_helper = iptables.Helper(self.int_br.br)
@@ -848,6 +851,31 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                                      dl_dst=mac,
                                      vlan_tci=ovs_consts.FLAT_VLAN_TCI)
 
+    def setup_multicast_traffic(self, phy_br_ofports, tun_br_ofports,
+                                enable_tunneling):
+        ofports = list(phy_br_ofports.values())
+        if enable_tunneling:
+            for network_type in ovs_consts.TUNNEL_NETWORK_TYPES:
+                ofports += list(tun_br_ofports[network_type].values())
+
+        actions = ''
+        for ofport in ofports:
+            actions += 'output:{:d},'.format(ofport)
+        actions += 'resubmit(,{:d})'.format(
+            ovs_consts.MCAST_RULES_INGRESS_TABLE)
+
+        self._add_flow(
+            table=ovs_consts.MCAST_INGRESS_TABLE,
+            priority=70,
+            actions=actions)
+        self._add_flow(
+            table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
+            priority=95,
+            dl_type=lib_const.ETHERTYPE_IP,
+            nw_dst=n_const.LOCAL_NETWORK_CONTROL_BLOCK,
+            actions='resubmit(,{:d})'.format(
+                ovs_consts.MCAST_RULES_INGRESS_TABLE))
+
     def initialize_port_flows(self, port):
         """Set base flows for port
 
@@ -889,6 +917,19 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                             ovsfw_consts.REG_NET,
                             ovs_consts.BASE_INGRESS_TABLE),
             )
+
+        self._add_flow(
+            table=ovs_consts.TRANSIENT_TABLE,
+            priority=50,
+            dl_vlan='0x%x' % port.vlan_tag,
+            dl_type=lib_const.ETHERTYPE_IP,
+            nw_dst=n_const.LOCAL_NETWORK_CONTROL_BLOCK,
+            actions='set_field:{:d}->reg{:d},'
+                    'strip_vlan,resubmit(,{:d})'.format(
+                        port.vlan_tag,
+                        ovsfw_consts.REG_NET,
+                        ovs_consts.MCAST_INGRESS_TABLE),
+        )
 
         self._initialize_egress(port)
         self._initialize_ingress(port)
@@ -1440,6 +1481,21 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         self.conj_ip_manager.update_flows_for_vlan(port.vlan_tag)
 
+        modified_vlan_protocols = set()
+        for rule in self._create_rules_generator_for_port(port):
+            if (rule['ethertype'] != lib_const.IPv4 or
+                    rule['direction'] != lib_const.INGRESS_DIRECTION or
+                    not rule.get('protocol')):
+                continue
+            self.vlan_rule_ofports[port.vlan_tag][
+                rule['protocol']].add(port.ofport)
+            modified_vlan_protocols.add((port.vlan_tag, rule['protocol']))
+
+        for vlan_tag, protocol in modified_vlan_protocols:
+            flow = rules.create_mcast_flow_from_vlan_protocol(
+                vlan_tag, protocol, self.vlan_rule_ofports[vlan_tag][protocol])
+            self._add_flow(**flow)
+
     def _create_rules_generator_for_port(self, port):
         for sec_group in port.sec_groups:
             for rule in sec_group.raw_rules:
@@ -1467,6 +1523,28 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                                  table=ovs_consts.TRANSIENT_TABLE,
                                  in_port=port.ofport)
         self._delete_flows(reg_port=port.ofport)
+
+        modified_vlan_protocols = set()
+        for protocol, ofports in self.vlan_rule_ofports[port.vlan_tag].items():
+            if port.ofport not in ofports:
+                continue
+            self.vlan_rule_ofports[port.vlan_tag][protocol].discard(
+                port.ofport)
+            modified_vlan_protocols.add((port.vlan_tag, protocol))
+
+        for vlan_tag, protocol in modified_vlan_protocols:
+            ofports = self.vlan_rule_ofports[vlan_tag][protocol]
+            if ofports:
+                flow = rules.create_mcast_flow_from_vlan_protocol(
+                    vlan_tag, protocol, ofports)
+                self._add_flow(**flow)
+            else:
+                self._strict_delete_flow(
+                    priority=70,
+                    table=ovs_consts.MCAST_RULES_INGRESS_TABLE,
+                    dl_type=lib_const.ETHERTYPE_IP,
+                    nw_proto=protocol,
+                    reg_net=vlan_tag)
 
     def delete_flows_for_flow_state(
             self, flow_state, addr_to_conj, direction, ethertype, vlan_tag):
