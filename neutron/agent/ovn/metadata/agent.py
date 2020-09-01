@@ -111,7 +111,7 @@ class PortBindingChassisDeletedEvent(PortBindingChassisEvent):
             return False
 
 
-class ChassisCreateEvent(row_event.RowEvent):
+class ChassisCreateEventBase(row_event.RowEvent):
     """Row create event - Chassis name == our_chassis.
 
     On connection, we get a dump of all chassis so if we catch a creation
@@ -119,14 +119,14 @@ class ChassisCreateEvent(row_event.RowEvent):
     to do a full sync to make sure that we capture all changes while the
     connection to OVSDB was down.
     """
+    table = None
 
     def __init__(self, metadata_agent):
         self.agent = metadata_agent
         self.first_time = True
-        table = 'Chassis'
         events = (self.ROW_CREATE,)
-        super(ChassisCreateEvent, self).__init__(
-            events, table, (('name', '=', self.agent.chassis),))
+        super(ChassisCreateEventBase, self).__init__(
+            events, self.table, (('name', '=', self.agent.chassis),))
         self.event_name = self.__class__.__name__
 
     def run(self, event, row, old):
@@ -141,6 +141,14 @@ class ChassisCreateEvent(row_event.RowEvent):
             self.agent.sync()
 
 
+class ChassisCreateEvent(ChassisCreateEventBase):
+    table = 'Chassis'
+
+
+class ChassisPrivateCreateEvent(ChassisCreateEventBase):
+    table = 'Chassis_Private'
+
+
 class SbGlobalUpdateEvent(row_event.RowEvent):
     """Row update event on SB_Global table."""
 
@@ -152,8 +160,12 @@ class SbGlobalUpdateEvent(row_event.RowEvent):
         self.event_name = self.__class__.__name__
 
     def run(self, event, row, old):
-        self.agent.sb_idl.update_metadata_health_status(
-            self.agent.chassis, row.nb_cfg).execute()
+        table = ('Chassis_Private' if self.agent.has_chassis_private
+                 else 'Chassis')
+        self.agent.sb_idl.db_set(
+            table, self.agent.chassis, ('external_ids', {
+                ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY:
+                    str(row.nb_cfg)})).execute()
 
 
 class MetadataAgent(object):
@@ -189,13 +201,26 @@ class MetadataAgent(object):
         proxy = metadata_server.UnixDomainMetadataProxy(self.conf)
         proxy.run()
 
+        tables = ('Encap', 'Port_Binding', 'Datapath_Binding', 'SB_Global',
+                  'Chassis')
+        events = (PortBindingChassisCreatedEvent(self),
+                  PortBindingChassisDeletedEvent(self),
+                  SbGlobalUpdateEvent(self))
+
+        # TODO(lucasagomes): Remove this in the future. Try to register
+        # the Chassis_Private table, if not present, fallback to the normal
+        # Chassis table.
         # Open the connection to OVN SB database.
-        self.sb_idl = ovsdb.MetadataAgentOvnSbIdl(
-            chassis=self.chassis,
-            events=[PortBindingChassisCreatedEvent(self),
-                    PortBindingChassisDeletedEvent(self),
-                    ChassisCreateEvent(self),
-                    SbGlobalUpdateEvent(self)]).start()
+        self.has_chassis_private = False
+        try:
+            self.sb_idl = ovsdb.MetadataAgentOvnSbIdl(
+                chassis=self.chassis, tables=tables + ('Chassis_Private', ),
+                events=events + (ChassisPrivateCreateEvent(self), )).start()
+            self.has_chassis_private = True
+        except AssertionError:
+            self.sb_idl = ovsdb.MetadataAgentOvnSbIdl(
+                chassis=self.chassis, tables=tables,
+                events=events + (ChassisCreateEvent(self), )).start()
 
         # Do the initial sync.
         self.sync()
@@ -208,9 +233,10 @@ class MetadataAgent(object):
     def register_metadata_agent(self):
         # NOTE(lucasagomes): db_add() will not overwrite the UUID if
         # it's already set.
+        table = ('Chassis_Private' if self.has_chassis_private else 'Chassis')
         ext_ids = {
             ovn_const.OVN_AGENT_METADATA_ID_KEY: uuidutils.generate_uuid()}
-        self.sb_idl.db_add('Chassis', self.chassis, 'external_ids',
+        self.sb_idl.db_add(table, self.chassis, 'external_ids',
                            ext_ids).execute(check_error=True)
 
     def _get_own_chassis_name(self):

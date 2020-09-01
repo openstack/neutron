@@ -28,8 +28,13 @@ class NeutronAgent(abc.ABC):
         for _type in cls.types:
             NeutronAgent.types[_type] = cls
 
-    def __init__(self, chassis):
-        self.chassis = chassis
+    def __init__(self, chassis_private):
+        self.chassis_private = chassis_private
+        try:
+            self.chassis = self.chassis_private.chassis[0]
+        except (AttributeError, IndexError):
+            # No Chassis_Private support, just use Chassis
+            self.chassis = self.chassis_private
 
     @property
     def updated_at(self):
@@ -58,8 +63,8 @@ class NeutronAgent(abc.ABC):
             'admin_state_up': True}
 
     @classmethod
-    def from_type(cls, _type, chassis):
-        return cls.types[_type](chassis)
+    def from_type(cls, _type, chassis_private):
+        return cls.types[_type](chassis_private)
 
     @staticmethod
     def agent_types():
@@ -85,15 +90,15 @@ class ControllerAgent(NeutronAgent):
 
     @property
     def nb_cfg(self):
-        return self.chassis.nb_cfg
+        return self.chassis_private.nb_cfg
 
     @property
     def agent_id(self):
-        return self.chassis.name
+        return self.chassis_private.name
 
     @property
     def description(self):
-        return self.chassis.external_ids.get(
+        return self.chassis_private.external_ids.get(
             ovn_const.OVN_AGENT_DESC_KEY, '')
 
 
@@ -105,15 +110,15 @@ class MetadataAgent(NeutronAgent):
 
     @property
     def nb_cfg(self):
-        return int(self.chassis.external_ids.get(
+        return int(self.chassis_private.external_ids.get(
             ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY, 0))
 
     @property
     def agent_id(self):
-        return self.chassis.external_ids.get(
+        return self.chassis_private.external_ids.get(
             ovn_const.OVN_AGENT_METADATA_ID_KEY)
 
     @property
     def description(self):
-        return self.chassis.external_ids.get(
+        return self.chassis_private.external_ids.get(
             ovn_const.OVN_AGENT_METADATA_DESC_KEY, '')
