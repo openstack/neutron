@@ -262,7 +262,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
 
         ensure_dir.assert_called_once_with('/the', mode=0o755)
         server.assert_has_calls([
-            mock.call('networking-ovn-metadata-agent'),
+            mock.call('neutron-ovn-metadata-agent'),
             mock.call().start(handler.return_value,
                               '/the/path', workers=0,
                               backlog=128, mode=0o644)]

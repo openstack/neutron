@@ -198,7 +198,7 @@ class UnixDomainMetadataProxy(object):
 
     def run(self):
         self.server = agent_utils.UnixDomainWSGIServer(
-            'networking-ovn-metadata-agent')
+            'neutron-ovn-metadata-agent')
         self.server.start(MetadataProxyHandler(self.conf),
                           self.conf.metadata_proxy_socket,
                           workers=self.conf.metadata_workers,
