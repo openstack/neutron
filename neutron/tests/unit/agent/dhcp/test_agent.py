@@ -122,7 +122,8 @@ fake_dhcp_port = dhcp.DictModel(
     allocation_pools=fake_subnet1_allocation_pools,
     mac_address='aa:bb:cc:dd:ee:22',
     network_id=FAKE_NETWORK_UUID,
-    fixed_ips=[fake_fixed_ip2])
+    fixed_ips=[fake_fixed_ip2],
+    admin_state_up=True)
 
 fake_port2 = dhcp.DictModel(id='12345678-1234-aaaa-123456789000',
                             device_id='dhcp-12345678-1234-aaaa-123456789000',
@@ -365,6 +366,14 @@ class TestDhcpAgent(base.BaseTestCase):
             trace_level='warning',
             expected_sync=False)
 
+    def test_call_driver_get_metadata_bind_interface_returns(self):
+        network = mock.Mock()
+        self.driver().get_metadata_bind_interface.return_value = 'iface0'
+        agent = dhcp_agent.DhcpAgent(cfg.CONF)
+        self.assertEqual(
+            'iface0',
+            agent.call_driver('get_metadata_bind_interface', network))
+
     def _test_sync_state_helper(self, known_net_ids, active_net_ids):
         active_networks = set(mock.Mock(id=netid) for netid in active_net_ids)
 
@@ -553,14 +562,18 @@ class TestDhcpAgent(base.BaseTestCase):
         self.assertEqual(all_ports, ports_ready)
 
     def test_dhcp_ready_ports_updates_after_enable_dhcp(self):
-        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-        self.assertEqual(set(), dhcp.dhcp_ready_ports)
-        dhcp.configure_dhcp_for_network(fake_network)
-        self.assertEqual({fake_port1.id}, dhcp.dhcp_ready_ports)
+        with mock.patch('neutron.agent.linux.ip_lib.'
+                        'IpAddrCommand.wait_until_address_ready') as mock_wait:
+            mock_wait.return_value = True
+            dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+            self.assertEqual(set(), dhcp.dhcp_ready_ports)
+            dhcp.configure_dhcp_for_network(fake_network)
+            self.assertEqual({fake_port1.id}, dhcp.dhcp_ready_ports)
 
     def test_dhcp_metadata_destroy(self):
         cfg.CONF.set_override('force_metadata', True)
         cfg.CONF.set_override('enable_isolated_metadata', False)
+
         with mock.patch.object(metadata_driver,
                                'MetadataDriver') as md_cls:
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
@@ -569,9 +582,25 @@ class TestDhcpAgent(base.BaseTestCase):
                 mock.ANY, mock.ANY, mock.ANY, mock.ANY,
                 bind_address=self.METADATA_DEFAULT_IP,
                 network_id=fake_network.id)
+            md_cls.reset_mock()
             dhcp.disable_dhcp_helper(fake_network.id)
             md_cls.destroy_monitored_metadata_proxy.assert_called_once_with(
                 mock.ANY, fake_network.id, mock.ANY, fake_network.namespace)
+
+    def test_agent_start_restarts_metadata_proxy(self):
+        cfg.CONF.set_override('force_metadata', True)
+        cfg.CONF.set_override('enable_isolated_metadata', False)
+
+        with mock.patch.object(metadata_driver,
+                               'MetadataDriver') as md_cls:
+            dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+            dhcp.configure_dhcp_for_network(fake_network)
+            md_cls.destroy_monitored_metadata_proxy.assert_called_once_with(
+                mock.ANY, fake_network.id, mock.ANY, fake_network.namespace)
+            md_cls.spawn_monitored_metadata_proxy.assert_called_once_with(
+                mock.ANY, mock.ANY, mock.ANY, mock.ANY,
+                bind_address=self.METADATA_DEFAULT_IP,
+                network_id=fake_network.id)
 
     def test_report_state_revival_logic(self):
         dhcp = dhcp_agent.DhcpAgentWithStateReport(HOSTNAME)
@@ -758,6 +787,11 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.mock_resize_p = mock.patch('neutron.agent.dhcp.agent.'
                                         'DhcpAgent._resize_process_pool')
         self.mock_resize = self.mock_resize_p.start()
+        self.mock_wait_until_address_ready_p = mock.patch(
+            'neutron.agent.linux.ip_lib.'
+            'IpAddrCommand.wait_until_address_ready')
+        self.mock_wait_until_address_ready_p.start()
+        self.addCleanup(self.mock_wait_until_address_ready_p.stop)
 
     def _process_manager_constructor_call(self, ns=FAKE_NETWORK_DHCP_NS):
         return mock.call(conf=cfg.CONF,
@@ -983,6 +1017,42 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_enable_isolated_metadata_proxy_with_dist_network(self):
         self._test_enable_isolated_metadata_proxy(fake_dist_network)
+
+    def _test_enable_isolated_metadata_proxy_ipv6(self, network):
+        cfg.CONF.set_override('enable_metadata_network', True)
+        cfg.CONF.set_override('debug', True)
+        cfg.CONF.set_override('log_file', 'test.log')
+        method_path = ('neutron.agent.metadata.driver.MetadataDriver'
+                       '.spawn_monitored_metadata_proxy')
+        with mock.patch(method_path) as spawn, \
+             mock.patch.object(netutils, 'is_ipv6_enabled') as mock_ipv6:
+            mock_ipv6.return_value = True
+            self.call_driver.return_value = 'fake-interface'
+            self.dhcp.enable_isolated_metadata_proxy(network)
+            spawn.assert_called_once_with(self.dhcp._process_monitor,
+                                          network.namespace,
+                                          dhcp.METADATA_PORT,
+                                          cfg.CONF,
+                                          bind_address='169.254.169.254',
+                                          network_id=network.id,
+                                          bind_interface='fake-interface',
+                                          bind_address_v6='fe80::a9fe:a9fe')
+
+    def test_enable_isolated_metadata_proxy_with_metadata_network_ipv6(self):
+        network = copy.deepcopy(fake_meta_network)
+        network.ports = [fake_dhcp_port]
+        self._test_enable_isolated_metadata_proxy_ipv6(network)
+
+    def test_enable_isolated_metadata_proxy_with_metadata_network_dvr_ipv6(
+            self):
+        network = copy.deepcopy(fake_meta_dvr_network)
+        network.ports = [fake_dhcp_port]
+        self._test_enable_isolated_metadata_proxy_ipv6(network)
+
+    def test_enable_isolated_metadata_proxy_with_dist_network_ipv6(self):
+        network = copy.deepcopy(fake_dist_network)
+        network.ports = [fake_dhcp_port]
+        self._test_enable_isolated_metadata_proxy_ipv6(network)
 
     def _test_disable_isolated_metadata_proxy(self, network):
         cfg.CONF.set_override('enable_metadata_network', True)
@@ -1823,6 +1893,9 @@ class TestDeviceManager(base.BaseTestCase):
                             const.METADATA_CIDR]
         else:
             expected_ips = ['172.9.9.9/24', const.METADATA_CIDR]
+
+        if ipv6_enabled:
+            expected_ips.append(const.METADATA_V6_CIDR)
 
         expected = [mock.call.get_device_name(port)]
 

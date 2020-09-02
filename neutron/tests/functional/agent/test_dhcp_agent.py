@@ -343,17 +343,31 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
             exception=RuntimeError("Stale metadata proxy didn't get killed"))
 
     def _test_metadata_proxy_spawn_kill_with_subnet_create_delete(self):
-        network = self.network_dict_for_dhcp(ip_version=lib_const.IP_VERSION_6)
+        network = self.network_dict_for_dhcp(
+            ip_version=lib_const.IP_VERSION_6,
+            dhcp_enabled=False)
         self.configure_dhcp_for_network(network=network)
         pm = self._get_metadata_proxy_process(network)
 
-        # A newly created network with ipv6 subnet will not have metadata proxy
         self.assertFalse(pm.active)
 
         new_network = copy.deepcopy(network)
         dhcp_enabled_ipv4_subnet = self.create_subnet_dict(network.id)
         new_network.subnets.append(dhcp_enabled_ipv4_subnet)
+
         self.mock_plugin_api.get_network_info.return_value = new_network
+        fixed_ip_mock = mock.Mock(
+            ip_address='192.168.10.2',
+            subnet_id=dhcp_enabled_ipv4_subnet.id)
+        dhcp_port_mock = mock.Mock(
+            dns_assignment={},
+            extra_dhcp_opts=[],
+            fixed_ips=[fixed_ip_mock],
+            id=new_network.ports[0].id,
+            mac_address=str(self._DHCP_PORT_MAC_ADDRESS))
+        self.mock_plugin_api.get_dhcp_port.return_value = dhcp_port_mock
+        self.mock_plugin_api.update_dhcp_port.return_value = dhcp_port_mock
+
         self.agent.refresh_dhcp_helper(network.id)
         # Metadata proxy should be spawned for the newly added subnet
         common_utils.wait_until_true(

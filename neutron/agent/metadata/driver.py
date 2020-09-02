@@ -30,6 +30,7 @@ from neutron._i18n import _
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
+from neutron.agent.linux import ip_lib
 
 
 LOG = logging.getLogger(__name__)
@@ -64,6 +65,7 @@ defaults
 
 listen listener
     bind %(host)s:%(port)s
+    %(bind_v6_line)s
     server metadata %(unix_socket_path)s
     http-request del-header X-Neutron-%(res_type_del)s-ID
     http-request set-header X-Neutron-%(res_type)s-ID %(res_id)s
@@ -76,13 +78,16 @@ class InvalidUserOrGroupException(Exception):
 
 class HaproxyConfigurator(object):
     def __init__(self, network_id, router_id, unix_socket_path, host, port,
-                 user, group, state_path, pid_file):
+                 user, group, state_path, pid_file, host_v6=None,
+                 bind_interface=None):
         self.network_id = network_id
         self.router_id = router_id
         if network_id is None and router_id is None:
             raise exceptions.NetworkIdOrRouterIdRequiredError()
 
         self.host = host
+        self.host_v6 = host_v6
+        self.bind_interface = bind_interface
         self.port = port
         self.user = user
         self.group = group
@@ -127,8 +132,14 @@ class HaproxyConfigurator(object):
             'group': groupname,
             'pidfile': self.pidfile,
             'log_level': self.log_level,
-            'log_tag': self.log_tag
+            'log_tag': self.log_tag,
+            'bind_v6_line': '',
         }
+        if self.host_v6 and self.bind_interface:
+            cfg_info['bind_v6_line'] = (
+                'bind %s:%s interface %s' % (
+                    self.host_v6, self.port, self.bind_interface)
+            )
         # If using the network ID, delete any spurious router ID that might
         # have been in the request, same for network ID when using router ID.
         if self.network_id:
@@ -211,7 +222,9 @@ class MetadataDriver(object):
 
     @classmethod
     def _get_metadata_proxy_callback(cls, bind_address, port, conf,
-                                     network_id=None, router_id=None):
+                                     network_id=None, router_id=None,
+                                     bind_address_v6=None,
+                                     bind_interface=None):
         def callback(pid_file):
             metadata_proxy_socket = conf.metadata_proxy_socket
             user, group = (
@@ -224,7 +237,9 @@ class MetadataDriver(object):
                                           user,
                                           group,
                                           conf.state_path,
-                                          pid_file)
+                                          pid_file,
+                                          bind_address_v6,
+                                          bind_interface)
             haproxy.create_config_file()
             proxy_cmd = [HAPROXY_SERVICE,
                          '-f', haproxy.cfg_path]
@@ -235,14 +250,23 @@ class MetadataDriver(object):
     @classmethod
     def spawn_monitored_metadata_proxy(cls, monitor, ns_name, port, conf,
                                        bind_address="0.0.0.0", network_id=None,
-                                       router_id=None):
+                                       router_id=None, bind_address_v6=None,
+                                       bind_interface=None):
         uuid = network_id or router_id
         callback = cls._get_metadata_proxy_callback(
-            bind_address, port, conf, network_id=network_id,
-            router_id=router_id)
+            bind_address, port, conf,
+            network_id=network_id, router_id=router_id,
+            bind_address_v6=bind_address_v6, bind_interface=bind_interface)
         pm = cls._get_metadata_proxy_process_manager(uuid, conf,
                                                      ns_name=ns_name,
                                                      callback=callback)
+        if bind_interface is not None and bind_address_v6 is not None:
+            # HAProxy cannot bind() until IPv6 Duplicate Address Detection
+            # completes. We must wait until the address leaves its 'tentative'
+            # state.
+            ip_lib.IpAddrCommand(
+                parent=ip_lib.IPDevice(name=bind_interface, namespace=ns_name)
+            ).wait_until_address_ready(address=bind_address_v6)
         pm.enable()
         monitor.register(uuid, METADATA_SERVICE_NAME, pm)
         cls.monitors[router_id] = pm

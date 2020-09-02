@@ -2950,6 +2950,10 @@ class TestDnsmasq(TestBase):
         self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(
             self.conf, FakeV4NetworkNoRouter()))
 
+    def test_should_enable_metadata_isolated_network_returns_true_ipv6(self):
+        self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(
+            self.conf, FakeV6Network()))
+
     def test_should_enable_metadata_non_isolated_network_returns_false(self):
         self.assertFalse(dhcp.Dnsmasq.should_enable_metadata(
             self.conf, FakeV4NetworkDistRouter()))
@@ -3147,7 +3151,9 @@ class TestDeviceManager(TestConfBase):
 
             expect_ips = ['192.168.0.6/24', 'fdca:3ba5:a17a:4ba3::2/64']
             if enable_isolated_metadata or force_metadata:
-                expect_ips.append(constants.METADATA_CIDR)
+                expect_ips.extend([
+                    constants.METADATA_CIDR,
+                    dhcp.METADATA_V6_CIDR])
             mgr.driver.init_l3.assert_called_with('ns-XXX',
                                                   expect_ips,
                                                   namespace='qdhcp-ns')

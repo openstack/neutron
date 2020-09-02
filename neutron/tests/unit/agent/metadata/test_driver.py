@@ -128,13 +128,17 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                            return_value=test_utils.FakeUser(self.EUNAME)),\
                 mock.patch('grp.getgrnam',
                            return_value=test_utils.FakeGroup(self.EGNAME)),\
-                mock.patch('os.makedirs'):
+                mock.patch('os.makedirs'),\
+                mock.patch(
+                    'neutron.agent.linux.ip_lib.'
+                    'IpAddrCommand.wait_until_address_ready') as mock_wait:
             cfg_file = os.path.join(
                 metadata_driver.HaproxyConfigurator.get_config_path(
                     agent.conf.state_path),
                 "%s.conf" % router_id)
             mock_open = self.useFixture(
                 lib_fixtures.OpenFixture(cfg_file)).mock_open
+            mock_wait.return_value = True
             agent.metadata_driver.spawn_monitored_metadata_proxy(
                 agent.process_monitor,
                 router_ns,
@@ -160,7 +164,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 'res_type_del': 'Network',
                 'pidfile': self.PIDFILE,
                 'log_level': 'debug',
-                'log_tag': log_tag}
+                'log_tag': log_tag,
+                'bind_v6_line': ''}
 
             mock_open.assert_has_calls([
                 mock.call(cfg_file, 'w'),
