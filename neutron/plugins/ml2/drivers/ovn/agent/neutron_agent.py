@@ -25,16 +25,19 @@ class NeutronAgent(abc.ABC):
 
     def __init_subclass__(cls):
         # Register the subclasses to be looked up by their type
-        for _type in cls.types:
-            NeutronAgent.types[_type] = cls
+        NeutronAgent.types[cls.agent_type] = cls
 
     def __init__(self, chassis_private):
         self.chassis_private = chassis_private
+        self.chassis = self.get_chassis(chassis_private)
+
+    @staticmethod
+    def get_chassis(chassis_private):
         try:
-            self.chassis = self.chassis_private.chassis[0]
+            return chassis_private.chassis[0]
         except (AttributeError, IndexError):
             # No Chassis_Private support, just use Chassis
-            self.chassis = self.chassis_private
+            return chassis_private
 
     @property
     def updated_at(self):
@@ -67,8 +70,15 @@ class NeutronAgent(abc.ABC):
         return cls.types[_type](chassis_private)
 
     @staticmethod
-    def agent_types():
-        return NeutronAgent.__subclasses__()
+    def matches_chassis(chassis):
+        """Is this Agent type found on the passed in chassis?"""
+        return True
+
+    @classmethod
+    def agents_from_chassis(cls, chassis_private):
+        return [AgentCls(chassis_private)
+                for AgentCls in cls.types.values()
+                if AgentCls.matches_chassis(cls.get_chassis(chassis_private))]
 
     @property
     @abc.abstractmethod
@@ -77,16 +87,14 @@ class NeutronAgent(abc.ABC):
 
 
 class ControllerAgent(NeutronAgent):
-    types = [ovn_const.OVN_CONTROLLER_AGENT, ovn_const.OVN_CONTROLLER_GW_AGENT]
+    agent_type = ovn_const.OVN_CONTROLLER_AGENT
     binary = 'ovn-controller'
     key = ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY
 
-    @property
-    def agent_type(self):
-        if ('enable-chassis-as-gw' in
-                self.chassis.external_ids.get('ovn-cms-options', [])):
-            return ovn_const.OVN_CONTROLLER_GW_AGENT
-        return ovn_const.OVN_CONTROLLER_AGENT
+    @staticmethod
+    def matches_chassis(chassis):
+        return ('enable-chassis-as-gw' not in
+                chassis.external_ids.get('ovn-cms-options', []))
 
     @property
     def nb_cfg(self):
@@ -102,9 +110,17 @@ class ControllerAgent(NeutronAgent):
             ovn_const.OVN_AGENT_DESC_KEY, '')
 
 
+class ControllerGatewayAgent(ControllerAgent):
+    agent_type = ovn_const.OVN_CONTROLLER_GW_AGENT
+
+    @staticmethod
+    def matches_chassis(chassis):
+        return ('enable-chassis-as-gw' in
+                chassis.external_ids.get('ovn-cms-options', []))
+
+
 class MetadataAgent(NeutronAgent):
     agent_type = ovn_const.OVN_METADATA_AGENT
-    types = [agent_type]
     binary = 'networking-ovn-metadata-agent'
     key = ovn_const.METADATA_LIVENESS_CHECK_EXT_ID_KEY
 

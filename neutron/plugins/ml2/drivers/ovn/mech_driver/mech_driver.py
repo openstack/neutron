@@ -1117,9 +1117,9 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def agents_from_chassis(self, chassis_private, update_db=True):
         agent_dict = {}
-        # Iterate over each unique Agent subclass
-        for agent in [a(chassis_private)
-                      for a in n_agent.NeutronAgent.agent_types()]:
+        # For each Chassis there will possibly be a Metadata agent and either
+        # a Controller or Controller Gateway agent.
+        for agent in n_agent.NeutronAgent.agents_from_chassis(chassis_private):
             if not agent.agent_id:
                 continue
             alive = self.agent_alive(agent, update_db)
