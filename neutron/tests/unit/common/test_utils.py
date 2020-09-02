@@ -162,8 +162,7 @@ class TestExceptionLogger(base.BaseTestCase):
         def func(i):
             if i == 2:
                 raise RuntimeError(2)
-            else:
-                calls(i)
+            calls(i)
 
         pool = eventlet.GreenPool(4)
         for i in range(0, 4):
