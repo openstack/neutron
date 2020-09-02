@@ -361,7 +361,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             with mock.patch.object(ovs_idl.Backend, 'autocreate_indices',
                                    create=True):
                 impl_idl_ovn.OvsdbNbOvnIdl.ovsdb_connection = None
-                self.nb_ovn_idl = impl_idl_ovn.OvsdbNbOvnIdl(mock.Mock())
+                self.nb_ovn_idl = impl_idl_ovn.OvsdbNbOvnIdl(mock.MagicMock())
 
         self.nb_ovn_idl.idl.tables = self._tables
 
