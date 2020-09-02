@@ -111,7 +111,7 @@ function _install_base_deps {
         install_package $PACKAGES
 
         source $NEUTRON_DIR/devstack/lib/ovs
-        source $NEUTRON_DIR/devstack/lib/ovn_agent
+        source $DEVSTACK_PATH/lib/neutron_plugins/ovn_agent
         echo_summary "OVN_BRANCH: ${OVN_BRANCH} OVS_BRANCH: ${OVS_BRANCH}"
         compile_ovs False /usr /var
         compile_ovn False /usr /var
