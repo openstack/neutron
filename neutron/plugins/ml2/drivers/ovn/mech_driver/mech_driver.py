@@ -1091,7 +1091,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                 # the agent is not running or it crashed. We'll complete the
                 # provisioning block though.
                 LOG.warning("Metadata service is not ready for port %s, check"
-                            " networking-ovn-metadata-agent status/logs.",
+                            " neutron-ovn-metadata-agent status/logs.",
                             port_id)
 
     def agent_alive(self, agent, update_db):

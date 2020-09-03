@@ -121,7 +121,7 @@ class ControllerGatewayAgent(ControllerAgent):
 
 class MetadataAgent(NeutronAgent):
     agent_type = ovn_const.OVN_METADATA_AGENT
-    binary = 'networking-ovn-metadata-agent'
+    binary = 'neutron-ovn-metadata-agent'
     key = ovn_const.METADATA_LIVENESS_CHECK_EXT_ID_KEY
 
     @property
