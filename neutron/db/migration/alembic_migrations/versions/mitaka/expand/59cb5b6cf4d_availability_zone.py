@@ -15,17 +15,20 @@
 from alembic import op
 import sqlalchemy as sa
 
+from neutron.db.migration import cli
+
 """Add availability zone
 
 Revision ID: 59cb5b6cf4d
-Revises: 34af2b5c5a59
+Revises: None
 Create Date: 2015-01-20 14:38:47.156574
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '59cb5b6cf4d'
-down_revision = '34af2b5c5a59'
+down_revision = 'liberty'
+branch_labels = (cli.EXPAND_BRANCH,)
 
 
 def upgrade():

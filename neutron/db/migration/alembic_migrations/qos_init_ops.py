@@ -1,4 +1,5 @@
-# Copyright 2015 Huawei Technologies India Pvt Ltd, Inc
+# Copyright (c) 2020 Red Hat, Inc.
+# All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -11,22 +12,9 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
 
 from alembic import op
 import sqlalchemy as sa
-
-"""qos db changes
-
-Revision ID: 48153cb5f051
-Revises: 1b4c6e320f79
-Create Date: 2015-06-24 17:03:34.965101
-
-"""
-
-# revision identifiers, used by Alembic.
-revision = '48153cb5f051'
-down_revision = '1b4c6e320f79'
 
 
 def upgrade():

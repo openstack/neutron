@@ -1,4 +1,5 @@
-# Copyright 2015 OpenStack Foundation
+# Copyright (c) 2020 Red Hat, Inc.
+# All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -11,22 +12,9 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
 
 from alembic import op
 import sqlalchemy as sa
-
-"""neutrodb_ipam
-
-Revision ID: 599c6a226151
-Revises: 354db87e3225
-Create Date: 2015-03-08 18:12:08.962378
-
-"""
-
-# revision identifiers, used by Alembic.
-revision = '599c6a226151'
-down_revision = '354db87e3225'
 
 
 def upgrade():

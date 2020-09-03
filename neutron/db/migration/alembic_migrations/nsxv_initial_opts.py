@@ -135,3 +135,16 @@ def upgrade():
         sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('router_id'))
+
+    op.create_table(
+        'nsxv_vdr_dhcp_bindings',
+        sa.Column('vdr_router_id', sa.String(length=36), nullable=False),
+        sa.Column('dhcp_router_id', sa.String(length=36), nullable=False),
+        sa.Column('dhcp_edge_id', sa.String(length=36), nullable=False),
+        sa.PrimaryKeyConstraint('vdr_router_id'),
+        sa.UniqueConstraint(
+            'dhcp_router_id',
+            name='unique_nsxv_vdr_dhcp_bindings0dhcp_router_id'),
+        sa.UniqueConstraint(
+            'dhcp_edge_id',
+            name='unique_nsxv_vdr_dhcp_bindings0dhcp_edge_id'))
