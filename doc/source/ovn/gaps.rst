@@ -67,6 +67,11 @@ at [1]_.
   physical networks associated with a single OVN Logical Switch (a
   network in Neutron terms) [7]_.
 
+* QoS minimum bandwidth allocation in Placement API
+
+  ML2/OVN integration with the Nova placement API to provide guaranteed
+  minimum bandwidth for ports [8]_.
+
 
 References
 ----------
@@ -78,3 +83,4 @@ References
 .. [5] https://github.com/openstack/ironic/blob/123cb22c731f93d0c608d791b41e05884fe18c04/ironic/common/pxe_utils.py#L447-L462>
 .. [6] https://docs.openstack.org/neutron/latest/admin/config-az.html
 .. [7] https://bugs.launchpad.net/neutron/+bug/1865889
+.. [8] https://specs.openstack.org/openstack/neutron-specs/specs/rocky/minimum-bandwidth-allocation-placement-api.html
