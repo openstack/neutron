@@ -166,7 +166,8 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
 
     @property
     def nb_global(self):
-        return next(iter(self.tables['NB_Global'].rows.values()))
+        return next(iter(self.db_list_rows('NB_Global').execute(
+            check_error=True)))
 
     def create_transaction(self, check_error=False, log_errors=True,
                            bump_nb_cfg=False):
