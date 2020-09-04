@@ -15,6 +15,7 @@
 from unittest import mock
 
 import ddt
+import netaddr
 from neutron_lib import constants as n_const
 import testtools
 import webob
@@ -22,6 +23,7 @@ import webob
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
 from oslo_utils import fileutils
+from oslo_utils import netutils
 
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent.metadata import agent
@@ -82,6 +84,18 @@ class TestMetadataProxyHandlerRpc(TestMetadataProxyHandlerBase):
                     'network_id': networks,
                     'fixed_ips': {'ip_address': [ip]}}
         actual = self.handler._get_port_filters(router_id, ip, networks)
+        self.assertEqual(expected, actual)
+
+    def test_get_port_filters_mac(self):
+        router_id = 'test_router_id'
+        networks = ('net_id1', 'net_id2')
+        mac = '11:22:33:44:55:66'
+        expected = {'device_id': [router_id],
+                    'device_owner': n_const.ROUTER_INTERFACE_OWNERS,
+                    'network_id': networks,
+                    'mac_address': [mac]}
+        actual = self.handler._get_port_filters(
+            router_id=router_id, networks=networks, mac_address=mac)
         self.assertEqual(expected, actual)
 
     def test_get_router_networks(self):
@@ -215,6 +229,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
                                             router_id)
             mock_get_ip_addr.assert_called_once_with(remote_address,
                                                      networks,
+                                                     remote_mac=None,
                                                      skip_cache=False)
             self.assertFalse(mock_get_router_networks.called)
         self.assertEqual(expected, ports)
@@ -237,7 +252,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
             mock_get_router_networks.assert_called_once_with(
                 router_id, skip_cache=False)
             mock_get_ip_addr.assert_called_once_with(
-                remote_address, networks, skip_cache=False)
+                remote_address, networks, remote_mac=None, skip_cache=False)
             self.assertEqual(expected, ports)
 
     def test_get_ports_no_id(self):
@@ -269,19 +284,29 @@ class _TestMetadataProxyHandlerCacheMixin(object):
                 )
             )
 
-        expected.append(
-            mock.call(
-                mock.ANY,
-                {'network_id': networks,
-                 'fixed_ips': {'ip_address': ['192.168.1.1']}}
+        remote_ip = netaddr.IPAddress(remote_address)
+        if remote_ip.is_link_local():
+            expected.append(
+                mock.call(
+                    mock.ANY,
+                    {'network_id': networks,
+                     'mac_address': [netutils.get_mac_addr_by_ipv6(remote_ip)]}
+                )
             )
-        )
+        else:
+            expected.append(
+                mock.call(
+                    mock.ANY,
+                    {'network_id': networks,
+                     'fixed_ips': {'ip_address': ['192.168.1.1']}}
+                )
+            )
 
         self.handler.plugin_rpc.get_ports.assert_has_calls(expected)
 
         return (instance_id, tenant_id)
 
-    @ddt.data('192.168.1.1', '::ffff:192.168.1.1')
+    @ddt.data('192.168.1.1', '::ffff:192.168.1.1', 'fe80::5054:ff:fede:5bbf')
     def test_get_instance_id_router_id(self, remote_address):
         router_id = 'the_id'
         headers = {
@@ -302,7 +327,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
                 remote_address=remote_address)
         )
 
-    @ddt.data('192.168.1.1', '::ffff:192.168.1.1')
+    @ddt.data('192.168.1.1', '::ffff:192.168.1.1', 'fe80::5054:ff:fede:5bbf')
     def test_get_instance_id_router_id_no_match(self, remote_address):
         router_id = 'the_id'
         headers = {
@@ -321,7 +346,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
                 remote_address=remote_address)
         )
 
-    @ddt.data('192.168.1.1', '::ffff:192.168.1.1')
+    @ddt.data('192.168.1.1', '::ffff:192.168.1.1', 'fe80::5054:ff:fede:5bbf')
     def test_get_instance_id_network_id(self, remote_address):
         network_id = 'the_id'
         headers = {
@@ -341,7 +366,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
                 remote_address=remote_address)
         )
 
-    @ddt.data('192.168.1.1', '::ffff:192.168.1.1')
+    @ddt.data('192.168.1.1', '::ffff:192.168.1.1', 'fe80::5054:ff:fede:5bbf')
     def test_get_instance_id_network_id_no_match(self, remote_address):
         network_id = 'the_id'
         headers = {
@@ -357,7 +382,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
                 remote_address=remote_address)
         )
 
-    @ddt.data('192.168.1.1', '::ffff:192.168.1.1')
+    @ddt.data('192.168.1.1', '::ffff:192.168.1.1', 'fe80::5054:ff:fede:5bbf')
     def test_get_instance_id_network_id_and_router_id_invalid(
             self, remote_address):
         network_id = 'the_nid'

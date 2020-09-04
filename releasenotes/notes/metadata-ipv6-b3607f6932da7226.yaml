@@ -1,0 +1,39 @@
+---
+features:
+  - |
+    Make the metadata service available over the IPv6 link-local
+    address ``fe80::a9fe:a9fe``. Metadata over IPv6 works on both
+    isolated networks and networks with an IPv6 subnet connected
+    to a Neutron router as well as on dual-stack and on IPv6-only
+    networks.  There are no new config options. The usual config
+    options (``enable_isolated_metadata``, ``force_metadata``,
+    ``enable_metadata_proxy``) now control the metadata service over
+    both IPv4 and IPv6.  This change only affects the guests' access to
+    the metadata service over tenant networks. This feature changes
+    nothing about how the metadata-agent talks to Nova's metadata service.
+    The guest OS is expected to pick up routes from Router Advertisements
+    for this feature to work on networks connected to a router.
+    At least the following IPv6 subnet modes work:
+
+    * ``--ipv6-ra-mode slaac --ipv6-address-mode slaac``
+    * ``--ipv6-ra-mode dhcpv6-stateless --ipv6-address-mode dhcpv6-stateless``
+    * ``--ipv6-ra-mode dhcpv6-stateful --ipv6-address-mode dhcpv6-stateful``
+
+    Please note that the metadata IPv6 address (being link-local)
+    is not complete without a zone identifier (in a Linux guest
+    that is usually the interface name concatenated after a percent
+    sign). Please also note that in URLs you should URL-encode
+    the percent sign itself. For example, assuming that the primary
+    network interface in the guest is ``eth0`` the base metadata URL is
+    ``http://[fe80::a9fe:a9fe%25eth0]:80/``.
+upgrade:
+  - |
+    The metadata over IPv6 feature makes each dhcp-agent restart
+    trigger a quick restart of dhcp-agent-controlled metadata-proxies,
+    so they can pick up their new config making them also bind to
+    ``fe80::a9fe:a9fe``. These restarts make the metadata service
+    transiently unavailable. This is done in order to enable the metadata
+    service on pre-existing isolated networks during an upgrade. Please
+    also note that pre-existing instances may need to re-acquire all
+    information acquired over Router Discovery and/or DHCP for this
+    feature to start working.
