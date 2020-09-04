@@ -24,6 +24,7 @@ import mock
 from neutron_lib import worker as neutron_worker
 from oslo_config import cfg
 import psutil
+import six
 
 from neutron.common import utils
 from neutron import manager
@@ -221,7 +222,7 @@ class TestWsgiServer(TestNeutronServer):
 
             # Memorize a port that was chosen for the service
             self.port = server.port
-            os.write(self.pipeout, bytes(self.port))
+            os.write(self.pipeout, six.b(str(self.port)))
 
             server.wait()
 
