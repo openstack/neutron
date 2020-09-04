@@ -67,22 +67,23 @@ LB entry. See the diagram below for an example of how that looks like:
      | +-----------------+ |              | BB TCP            |
      +---------------------+              +-------------------+
 
-The OVN LB entries have names that include the id of the FIP and a protocol suffix.
-That protocol portion is needed because a single FIP can have multiple UDP and TCP port
-forwarding entries while a given LB entry can either be one or the other protocol (not both).
-Based on that, the format used to specify an LB entry is:
+The OVN LB entries have names that include the id of the FIP and a protocol
+suffix. That protocol portion is needed because a single FIP can have multiple
+UDP and TCP port forwarding entries while a given LB entry can either be one
+or the other protocol (not both). Based on that, the format used to specify an
+LB entry is:
 
   .. code-block:: ini
 
    pf-floatingip-<NEUTRON_FIP_ID>-<PROTOCOL>
 
 A revision value is present in external_ids of each OVN load balancer entry.
-That number is synchronized with floating IP entries (NOT the port forwarding!) of the Neutron
-database.
+That number is synchronized with floating IP entries (NOT the port
+forwarding!) of the Neutron database.
 
-In order to differentiate a load balancer entry that was created by port forwarding
-vs load balancer entries maintained by ovn-octavia-provider, the external_ids field also
-has an owner value:
+In order to differentiate a load balancer entry that was created by port
+forwarding vs load balancer entries maintained by ovn-octavia-provider, the
+external_ids field also has an owner value:
 
   .. code-block:: python
 
@@ -93,8 +94,8 @@ has an owner value:
       neutron:revision_number: fip_obj.revision_number,
    }
 
-The following registry (API) neutron events trigger the OVN backend to map port forwarding
-into LB:
+The following registry (API) neutron events trigger the OVN backend to map port
+forwarding into LB:
 
   .. code-block:: python
 
