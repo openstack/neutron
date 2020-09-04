@@ -50,6 +50,8 @@ def disable_security_group_extension_by_config(aliases):
         _disable_extension(stateful_sg.ALIAS, aliases)
         LOG.info('Disabled allowed-address-pairs extension.')
         _disable_extension('allowed-address-pairs', aliases)
+        LOG.info('Disabled address-group extension.')
+        _disable_extension('address-group', aliases)
 
 
 class SecurityGroupAgentRpc(object):
