@@ -25,10 +25,12 @@ from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import netutils
 
 from neutron._i18n import _
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
+from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 
@@ -205,12 +207,14 @@ class MetadataDriver(object):
                  '-j DROP' % port)]
 
     @classmethod
-    def metadata_nat_rules(cls, port):
-        return [('PREROUTING', '-d 169.254.169.254/32 '
+    def metadata_nat_rules(
+            cls, port, metadata_address=(dhcp.METADATA_DEFAULT_IP + '/32')):
+        return [('PREROUTING', '-d %(metadata_address)s '
                  '-i %(interface_name)s '
                  '-p tcp -m tcp --dport 80 -j REDIRECT '
                  '--to-ports %(port)s' %
-                 {'interface_name': namespaces.INTERNAL_DEV_PREFIX + '+',
+                 {'metadata_address': metadata_address,
+                  'interface_name': namespaces.INTERNAL_DEV_PREFIX + '+',
                   'port': port})]
 
     @classmethod
@@ -297,20 +301,34 @@ class MetadataDriver(object):
 def after_router_added(resource, event, l3_agent, **kwargs):
     router = kwargs['router']
     proxy = l3_agent.metadata_driver
+    ipv6_enabled = netutils.is_ipv6_enabled()
     for c, r in proxy.metadata_filter_rules(proxy.metadata_port,
                                             proxy.metadata_access_mark):
         router.iptables_manager.ipv4['filter'].add_rule(c, r)
+    if ipv6_enabled:
+        for c, r in proxy.metadata_filter_rules(proxy.metadata_port,
+                                                proxy.metadata_access_mark):
+            router.iptables_manager.ipv6['filter'].add_rule(c, r)
     for c, r in proxy.metadata_nat_rules(proxy.metadata_port):
         router.iptables_manager.ipv4['nat'].add_rule(c, r)
+    if ipv6_enabled:
+        for c, r in proxy.metadata_nat_rules(
+                proxy.metadata_port,
+                metadata_address=(dhcp.METADATA_V6_IP + '/128')):
+            router.iptables_manager.ipv6['nat'].add_rule(c, r)
     router.iptables_manager.apply()
 
     if not isinstance(router, ha_router.HaRouter):
+        spawn_kwargs = {}
+        if ipv6_enabled:
+            spawn_kwargs['bind_address'] = '::'
         proxy.spawn_monitored_metadata_proxy(
             l3_agent.process_monitor,
             router.ns_name,
             proxy.metadata_port,
             l3_agent.conf,
-            router_id=router.router_id)
+            router_id=router.router_id,
+            **spawn_kwargs)
 
 
 def after_router_updated(resource, event, l3_agent, **kwargs):
@@ -318,12 +336,16 @@ def after_router_updated(resource, event, l3_agent, **kwargs):
     proxy = l3_agent.metadata_driver
     if (not proxy.monitors.get(router.router_id) and
             not isinstance(router, ha_router.HaRouter)):
+        spawn_kwargs = {}
+        if netutils.is_ipv6_enabled():
+            spawn_kwargs['bind_address'] = '::'
         proxy.spawn_monitored_metadata_proxy(
             l3_agent.process_monitor,
             router.ns_name,
             proxy.metadata_port,
             l3_agent.conf,
-            router_id=router.router_id)
+            router_id=router.router_id,
+            **spawn_kwargs)
 
 
 def before_router_removed(resource, event, l3_agent, payload=None):

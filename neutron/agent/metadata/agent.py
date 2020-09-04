@@ -16,6 +16,8 @@ import hashlib
 import hmac
 import urllib
 
+import netaddr
+
 from neutron_lib.agent import topics
 from neutron_lib import constants
 from neutron_lib import context
@@ -168,7 +170,7 @@ class MetadataProxyHandler(object):
                                                   skip_cache=skip_cache)
 
     def _get_instance_and_tenant_id(self, req, skip_cache=False):
-        remote_address = req.headers.get('X-Forwarded-For')
+        forwarded_for = req.headers.get('X-Forwarded-For')
         network_id = req.headers.get('X-Neutron-Network-ID')
         router_id = req.headers.get('X-Neutron-Router-ID')
 
@@ -179,12 +181,19 @@ class MetadataProxyHandler(object):
                       "dropping")
             return None, None
 
-        ports = self._get_ports(remote_address, network_id, router_id,
+        remote_ip = netaddr.IPAddress(forwarded_for)
+        if remote_ip.version == constants.IP_VERSION_6:
+            if remote_ip.is_ipv4_mapped():
+                # When haproxy listens on v4 AND v6 then it inserts ipv4
+                # addresses as ipv4-mapped v6 addresses into X-Forwarded-For.
+                forwarded_for = str(remote_ip.ipv4())
+
+        ports = self._get_ports(forwarded_for, network_id, router_id,
                                 skip_cache=skip_cache)
         LOG.debug("Gotten ports for remote_address %(remote_address)s, "
                   "network_id %(network_id)s, router_id %(router_id)s are: "
                   "%(ports)s",
-                  {"remote_address": remote_address,
+                  {"remote_address": forwarded_for,
                    "network_id": network_id,
                    "router_id": router_id,
                    "ports": ports})

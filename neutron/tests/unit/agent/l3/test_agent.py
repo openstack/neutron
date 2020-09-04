@@ -2664,28 +2664,31 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                   'distributed': False}
         driver = metadata_driver.MetadataDriver
         with mock.patch.object(
-                driver, 'destroy_monitored_metadata_proxy') as destroy_proxy:
-            with mock.patch.object(
-                    driver, 'spawn_monitored_metadata_proxy') as spawn_proxy:
-                agent._process_added_router(router)
-                if enableflag:
-                    spawn_proxy.assert_called_with(
-                        mock.ANY,
-                        mock.ANY,
-                        self.conf.metadata_port,
-                        mock.ANY,
-                        router_id=router_id
-                    )
-                else:
-                    self.assertFalse(spawn_proxy.call_count)
-                agent._safe_router_removed(router_id)
-                if enableflag:
-                    destroy_proxy.assert_called_with(mock.ANY,
-                                                     router_id,
-                                                     mock.ANY,
-                                                     'qrouter-' + router_id)
-                else:
-                    self.assertFalse(destroy_proxy.call_count)
+                driver, 'destroy_monitored_metadata_proxy') as destroy_proxy, \
+             mock.patch.object(
+                driver, 'spawn_monitored_metadata_proxy') as spawn_proxy, \
+             mock.patch.object(netutils, 'is_ipv6_enabled') as ipv6_mock:
+            ipv6_mock.return_value = True
+            agent._process_added_router(router)
+            if enableflag:
+                spawn_proxy.assert_called_with(
+                    mock.ANY,
+                    mock.ANY,
+                    self.conf.metadata_port,
+                    mock.ANY,
+                    router_id=router_id,
+                    bind_address='::',
+                )
+            else:
+                self.assertFalse(spawn_proxy.call_count)
+            agent._safe_router_removed(router_id)
+            if enableflag:
+                destroy_proxy.assert_called_with(mock.ANY,
+                                                 router_id,
+                                                 mock.ANY,
+                                                 'qrouter-' + router_id)
+            else:
+                self.assertFalse(destroy_proxy.call_count)
 
     def test_enable_metadata_proxy(self):
         self._configure_metadata_proxy()

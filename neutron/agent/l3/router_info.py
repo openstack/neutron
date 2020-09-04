@@ -20,6 +20,7 @@ from neutron_lib import constants as lib_constants
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
+from oslo_utils import netutils
 from pyroute2.netlink import exceptions as pyroute2_exc
 
 from neutron._i18n import _
@@ -1087,6 +1088,18 @@ class RouterInfo(BaseRouterInfo):
              'mask': lib_constants.ROUTER_MARK_MASK})
         self.iptables_manager.ipv4['mangle'].add_rule(
             'PREROUTING', mark_metadata_for_internal_interfaces)
+
+        if netutils.is_ipv6_enabled():
+            mark_metadata_v6_for_internal_interfaces = (
+                '-d fe80::a9fe:a9fe/128 '
+                '-i %(interface_name)s '
+                '-p tcp -m tcp --dport 80 '
+                '-j MARK --set-xmark %(value)s/%(mask)s' %
+                {'interface_name': INTERNAL_DEV_PREFIX + '+',
+                 'value': self.agent_conf.metadata_access_mark,
+                 'mask': lib_constants.ROUTER_MARK_MASK})
+            self.iptables_manager.ipv6['mangle'].add_rule(
+                'PREROUTING', mark_metadata_v6_for_internal_interfaces)
 
     def _get_port_devicename_scopemark(self, ports, name_generator):
         devicename_scopemark = {lib_constants.IP_VERSION_4: dict(),

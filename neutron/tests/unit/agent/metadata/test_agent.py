@@ -14,6 +14,7 @@
 
 from unittest import mock
 
+import ddt
 from neutron_lib import constants as n_const
 import testtools
 import webob
@@ -102,6 +103,7 @@ class TestMetadataProxyHandlerRpc(TestMetadataProxyHandlerBase):
         self.assertEqual(expected, ports)
 
 
+@ddt.ddt
 class _TestMetadataProxyHandlerCacheMixin(object):
 
     def test_call(self):
@@ -242,8 +244,8 @@ class _TestMetadataProxyHandlerCacheMixin(object):
         self.assertRaises(TypeError, self.handler._get_ports, 'remote_address')
 
     def _get_instance_and_tenant_id_helper(self, headers, list_ports_retval,
-                                           networks=None, router_id=None):
-        remote_address = '192.168.1.1'
+                                           networks=None, router_id=None,
+                                           remote_address='192.168.1.1'):
         headers['X-Forwarded-For'] = remote_address
         req = mock.Mock(headers=headers)
 
@@ -279,7 +281,8 @@ class _TestMetadataProxyHandlerCacheMixin(object):
 
         return (instance_id, tenant_id)
 
-    def test_get_instance_id_router_id(self):
+    @ddt.data('192.168.1.1', '::ffff:192.168.1.1')
+    def test_get_instance_id_router_id(self, remote_address):
         router_id = 'the_id'
         headers = {
             'X-Neutron-Router-ID': router_id
@@ -294,12 +297,13 @@ class _TestMetadataProxyHandlerCacheMixin(object):
 
         self.assertEqual(
             ('device_id', 'tenant_id'),
-            self._get_instance_and_tenant_id_helper(headers, ports,
-                                                    networks=networks,
-                                                    router_id=router_id)
+            self._get_instance_and_tenant_id_helper(
+                headers, ports, networks=networks, router_id=router_id,
+                remote_address=remote_address)
         )
 
-    def test_get_instance_id_router_id_no_match(self):
+    @ddt.data('192.168.1.1', '::ffff:192.168.1.1')
+    def test_get_instance_id_router_id_no_match(self, remote_address):
         router_id = 'the_id'
         headers = {
             'X-Neutron-Router-ID': router_id
@@ -312,12 +316,13 @@ class _TestMetadataProxyHandlerCacheMixin(object):
         ]
         self.assertEqual(
             (None, None),
-            self._get_instance_and_tenant_id_helper(headers, ports,
-                                                    networks=networks,
-                                                    router_id=router_id)
+            self._get_instance_and_tenant_id_helper(
+                headers, ports, networks=networks, router_id=router_id,
+                remote_address=remote_address)
         )
 
-    def test_get_instance_id_network_id(self):
+    @ddt.data('192.168.1.1', '::ffff:192.168.1.1')
+    def test_get_instance_id_network_id(self, remote_address):
         network_id = 'the_id'
         headers = {
             'X-Neutron-Network-ID': network_id
@@ -331,11 +336,13 @@ class _TestMetadataProxyHandlerCacheMixin(object):
 
         self.assertEqual(
             ('device_id', 'tenant_id'),
-            self._get_instance_and_tenant_id_helper(headers, ports,
-                                                    networks=('the_id',))
+            self._get_instance_and_tenant_id_helper(
+                headers, ports, networks=('the_id',),
+                remote_address=remote_address)
         )
 
-    def test_get_instance_id_network_id_no_match(self):
+    @ddt.data('192.168.1.1', '::ffff:192.168.1.1')
+    def test_get_instance_id_network_id_no_match(self, remote_address):
         network_id = 'the_id'
         headers = {
             'X-Neutron-Network-ID': network_id
@@ -345,11 +352,14 @@ class _TestMetadataProxyHandlerCacheMixin(object):
 
         self.assertEqual(
             (None, None),
-            self._get_instance_and_tenant_id_helper(headers, ports,
-                                                    networks=('the_id',))
+            self._get_instance_and_tenant_id_helper(
+                headers, ports, networks=('the_id',),
+                remote_address=remote_address)
         )
 
-    def test_get_instance_id_network_id_and_router_id_invalid(self):
+    @ddt.data('192.168.1.1', '::ffff:192.168.1.1')
+    def test_get_instance_id_network_id_and_router_id_invalid(
+            self, remote_address):
         network_id = 'the_nid'
         router_id = 'the_rid'
         headers = {
@@ -366,9 +376,9 @@ class _TestMetadataProxyHandlerCacheMixin(object):
 
         self.assertEqual(
             (None, None),
-            self._get_instance_and_tenant_id_helper(headers, ports,
-                                                    networks=(network_id,),
-                                                    router_id=router_id)
+            self._get_instance_and_tenant_id_helper(
+                headers, ports, networks=(network_id,), router_id=router_id,
+                remote_address=remote_address)
         )
 
     def _proxy_request_test_helper(self, response_code=200, method='GET'):
