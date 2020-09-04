@@ -1,3 +1,5 @@
+# Copyright (c) 2015 Thales Services SAS
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -12,19 +14,22 @@
 #
 
 from alembic import op
+import sqlalchemy as sa
 
-"""Drop embrane plugin table
+"""subnetpool hash
 
-Revision ID: 1b294093239c
-Revises: 4af11ca47297
-Create Date: 2015-10-09 14:07:59.968597
+Revision ID: 26c371498592
+Revises: 45f955889773
+Create Date: 2015-06-02 21:18:19.942076
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '1b294093239c'
-down_revision = '4af11ca47297'
+revision = '26c371498592'
+down_revision = '45f955889773'
 
 
 def upgrade():
-    op.drop_table('embrane_pool_port')
+    op.add_column(
+        'subnetpools',
+        sa.Column('hash', sa.String(36), nullable=False, server_default=''))

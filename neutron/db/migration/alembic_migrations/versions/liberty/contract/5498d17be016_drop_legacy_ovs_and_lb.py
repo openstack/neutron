@@ -1,3 +1,5 @@
+# Copyright 2015 OpenStack Foundation
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -13,18 +15,23 @@
 
 from alembic import op
 
-"""Drop embrane plugin table
+"""Drop legacy OVS and LB plugin tables
 
-Revision ID: 1b294093239c
-Revises: 4af11ca47297
-Create Date: 2015-10-09 14:07:59.968597
+Revision ID: 5498d17be016
+Revises: 4ffceebfada
+Create Date: 2015-06-25 14:08:30.984419
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '1b294093239c'
-down_revision = '4af11ca47297'
+revision = '5498d17be016'
+down_revision = '4ffceebfada'
 
 
 def upgrade():
-    op.drop_table('embrane_pool_port')
+    op.drop_table('ovs_network_bindings')
+    op.drop_table('ovs_vlan_allocations')
+    op.drop_table('network_bindings')
+    op.drop_table('ovs_tunnel_allocations')
+    op.drop_table('network_states')
+    op.drop_table('ovs_tunnel_endpoints')

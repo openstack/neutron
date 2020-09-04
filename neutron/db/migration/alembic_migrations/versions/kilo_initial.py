@@ -20,8 +20,8 @@ from neutron.db.migration.alembic_migrations import cisco_init_ops
 from neutron.db.migration.alembic_migrations import core_init_ops
 from neutron.db.migration.alembic_migrations import dvr_init_opts
 from neutron.db.migration.alembic_migrations import firewall_init_ops
-from neutron.db.migration.alembic_migrations import ipam_init_ops
 from neutron.db.migration.alembic_migrations import l3_init_ops
+from neutron.db.migration.alembic_migrations import lb_init_ops
 from neutron.db.migration.alembic_migrations import loadbalancer_init_ops
 from neutron.db.migration.alembic_migrations import metering_init_ops
 from neutron.db.migration.alembic_migrations import ml2_init_ops
@@ -30,22 +30,21 @@ from neutron.db.migration.alembic_migrations import nsxv_initial_opts
 from neutron.db.migration.alembic_migrations import nuage_init_opts
 from neutron.db.migration.alembic_migrations import other_extensions_init_ops
 from neutron.db.migration.alembic_migrations import other_plugins_init_ops
+from neutron.db.migration.alembic_migrations import ovs_init_ops
 from neutron.db.migration.alembic_migrations import portsec_init_ops
-from neutron.db.migration.alembic_migrations import qos_init_ops
-from neutron.db.migration.alembic_migrations import rbac_init_ops
 from neutron.db.migration.alembic_migrations import secgroup_init_ops
 from neutron.db.migration.alembic_migrations import vmware_init_ops
 from neutron.db.migration.alembic_migrations import vpn_init_ops
 
-"""liberty_initial
+"""kilo_initial
 
-Revision ID: liberty
+Revision ID: kilo
 Revises: None
 
 """
 
 # revision identifiers, used by Alembic.
-revision = 'liberty'
+revision = 'kilo'
 down_revision = None
 
 
@@ -57,6 +56,8 @@ def upgrade():
     secgroup_init_ops.upgrade()
     portsec_init_ops.upgrade()
     other_extensions_init_ops.upgrade()
+    lb_init_ops.upgrade()
+    ovs_init_ops.upgrade()
     ml2_init_ops.upgrade()
     dvr_init_opts.upgrade()
     firewall_init_ops.upgrade()
@@ -70,6 +71,3 @@ def upgrade():
     vmware_init_ops.upgrade()
     nuage_init_opts.upgrade()
     nsxv_initial_opts.upgrade()
-    ipam_init_ops.upgrade()
-    qos_init_ops.upgrade()
-    rbac_init_ops.upgrade()

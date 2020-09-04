@@ -1,3 +1,5 @@
+# Copyright 2015 Huawei Technologies India Pvt. Ltd.
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -12,19 +14,23 @@
 #
 
 from alembic import op
+import sqlalchemy as sa
 
-"""Drop embrane plugin table
+"""address scope support in subnetpool
 
-Revision ID: 1b294093239c
-Revises: 4af11ca47297
-Create Date: 2015-10-09 14:07:59.968597
+Revision ID: 1b4c6e320f79
+Revises: 1c844d1677f7
+Create Date: 2015-07-03 09:48:39.491058
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '1b294093239c'
-down_revision = '4af11ca47297'
+revision = '1b4c6e320f79'
+down_revision = '1c844d1677f7'
 
 
 def upgrade():
-    op.drop_table('embrane_pool_port')
+    op.add_column('subnetpools',
+                  sa.Column('address_scope_id',
+                            sa.String(length=36),
+                            nullable=True))

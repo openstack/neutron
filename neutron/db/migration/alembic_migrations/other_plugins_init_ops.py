@@ -23,6 +23,23 @@ import sqlalchemy as sa
 
 
 def upgrade():
+    # metaplugin
+    op.create_table(
+        'networkflavors',
+        sa.Column('flavor', sa.String(length=255), nullable=True),
+        sa.Column('network_id', sa.String(length=36), nullable=False),
+        sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
+                                ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('network_id'))
+
+    op.create_table(
+        'routerflavors',
+        sa.Column('flavor', sa.String(length=255), nullable=True),
+        sa.Column('router_id', sa.String(length=36), nullable=False),
+        sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
+                                ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('router_id'))
+
     # big switch
     op.create_table(
         'routerrules',
