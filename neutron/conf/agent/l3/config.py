@@ -109,6 +109,12 @@ OPTS = [
                       '(by default), the user executing the L3 agent will be '
                       'passed. If "root" specified, because radvd is spawned '
                       'as root, no "username" parameter will be passed.')),
+    cfg.BoolOpt('keepalived_use_no_track',
+                default=True,
+                help=_('If keepalived without support for "no_track" option '
+                       'is used, this should be set to False. '
+                       'Support for this option was introduced in keepalived '
+                       '2.x'))
 ]
 
 OPTS += config.EXT_NET_BRIDGE_OPTS

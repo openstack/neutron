@@ -20,6 +20,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
+from neutron.conf.agent.l3 import config as l3_config
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base
 from neutron.tests.unit.agent.linux import test_keepalived
@@ -30,6 +31,7 @@ class KeepalivedManagerTestCase(base.BaseLoggingTestCase,
 
     def setUp(self):
         super(KeepalivedManagerTestCase, self).setUp()
+        l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
         cfg.CONF.set_override('check_child_processes_interval', 1, 'AGENT')
 
         self.expected_config = self._get_config()
