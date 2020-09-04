@@ -195,7 +195,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             self._core_plugin.delete_port(
                 context, port_id, l3_port_check=False)
             registry.notify(resources.FLOATING_IP, events.AFTER_DELETE,
-                            self, **fips[0])
+                            self, context=context, **fips[0])
 
     def _get_dead_floating_port_candidates(self, context):
         filters = {'device_id': ['PENDING'],
@@ -515,6 +515,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             registry.notify(resources.ROUTER_GATEWAY,
                             events.AFTER_CREATE,
                             self._create_gw_port,
+                            context=context,
                             gw_ips=ext_ips,
                             network_id=new_network_id,
                             router_id=router_id)
@@ -1538,7 +1539,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                       floatingip.floating_port_id,
                                       l3_port_check=False)
         registry.notify(resources.FLOATING_IP, events.AFTER_DELETE,
-                        self, **floatingip_dict)
+                        self, context=context, **floatingip_dict)
         return floatingip_dict
 
     @db_api.retry_if_session_inactive()
