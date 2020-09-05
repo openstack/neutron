@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    New config option ``keepalived_use_no_track`` was added. If keepalived
+    version used on the deployment does not support ``no_track`` flag in its
+    config file (e.g. keepalived 1.x), this option should be set to ``False``.
+    Default value of this option is ``True``.
