@@ -1,3 +1,5 @@
+# Copyright 2015 OpenStack Foundation
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -12,19 +14,22 @@
 #
 
 from alembic import op
+import sqlalchemy as sa
 
-"""Drop embrane plugin table
+"""add order to dnsnameservers
 
-Revision ID: 1b294093239c
-Revises: 4af11ca47297
-Create Date: 2015-10-09 14:07:59.968597
+Revision ID: 1c844d1677f7
+Revises: 26c371498592
+Create Date: 2015-07-21 22:59:03.383850
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '1b294093239c'
-down_revision = '4af11ca47297'
+revision = '1c844d1677f7'
+down_revision = '26c371498592'
 
 
 def upgrade():
-    op.drop_table('embrane_pool_port')
+    op.add_column('dnsnameservers',
+                  sa.Column('order', sa.Integer(),
+                            server_default='0', nullable=False))

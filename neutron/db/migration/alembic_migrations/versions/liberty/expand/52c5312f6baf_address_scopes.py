@@ -1,3 +1,5 @@
+# Copyright (c) 2015 Red Hat, Inc.
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -12,19 +14,23 @@
 #
 
 from alembic import op
+import sqlalchemy as sa
 
-"""Drop embrane plugin table
-
-Revision ID: 1b294093239c
-Revises: 4af11ca47297
-Create Date: 2015-10-09 14:07:59.968597
+"""Initial operations in support of address scopes
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '1b294093239c'
-down_revision = '4af11ca47297'
+revision = '52c5312f6baf'
+down_revision = '599c6a226151'
 
 
 def upgrade():
-    op.drop_table('embrane_pool_port')
+    op.create_table(
+        'address_scopes',
+        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('name', sa.String(length=255), nullable=False),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
+        sa.Column('shared', sa.Boolean(), nullable=False),
+        sa.PrimaryKeyConstraint('id'))

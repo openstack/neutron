@@ -23,6 +23,7 @@ from sqlalchemy.engine import reflection
 from neutron._i18n import _
 
 # Neutron milestones for upgrade aliases
+LIBERTY = 'liberty'
 MITAKA = 'mitaka'
 NEWTON = 'newton'
 OCATA = 'ocata'
@@ -36,6 +37,7 @@ VICTORIA = 'victoria'
 
 NEUTRON_MILESTONES = [
     # earlier milestones were not tagged
+    LIBERTY,
     MITAKA,
     NEWTON,
     OCATA,

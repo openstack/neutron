@@ -1,3 +1,5 @@
+# Copyright 2015 OpenStack Foundation
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -13,18 +15,19 @@
 
 from alembic import op
 
-"""Drop embrane plugin table
+"""Metaplugin removal
 
-Revision ID: 1b294093239c
-Revises: 4af11ca47297
-Create Date: 2015-10-09 14:07:59.968597
+Revision ID: 2a16083502f3
+Revises: 5498d17be016
+Create Date: 2015-06-16 09:11:10.488566
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '1b294093239c'
-down_revision = '4af11ca47297'
+revision = '2a16083502f3'
+down_revision = '5498d17be016'
 
 
 def upgrade():
-    op.drop_table('embrane_pool_port')
+    op.drop_table('networkflavors')
+    op.drop_table('routerflavors')

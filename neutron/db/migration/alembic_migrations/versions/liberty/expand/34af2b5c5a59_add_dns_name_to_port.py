@@ -1,3 +1,5 @@
+# Copyright 2015 Rackspace
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -12,19 +14,29 @@
 #
 
 from alembic import op
+from neutron_lib.db import constants
+import sqlalchemy as sa
 
-"""Drop embrane plugin table
+from neutron.db import migration
 
-Revision ID: 1b294093239c
-Revises: 4af11ca47297
-Create Date: 2015-10-09 14:07:59.968597
+"""Add dns_name to Port
+
+Revision ID: 34af2b5c5a59
+Revises: 9859ac9c136
+Create Date: 2015-08-23 00:22:47.618593
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '1b294093239c'
-down_revision = '4af11ca47297'
+revision = '34af2b5c5a59'
+down_revision = '9859ac9c136'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.LIBERTY]
 
 
 def upgrade():
-    op.drop_table('embrane_pool_port')
+    op.add_column('ports',
+                  sa.Column('dns_name',
+                            sa.String(length=constants.FQDN_FIELD_SIZE),
+                            nullable=True))

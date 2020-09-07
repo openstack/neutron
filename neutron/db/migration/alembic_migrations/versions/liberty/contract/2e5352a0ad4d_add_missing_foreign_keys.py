@@ -1,3 +1,5 @@
+# Copyright 2015 Red Hat, Inc.
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -12,19 +14,31 @@
 #
 
 from alembic import op
+from sqlalchemy.engine import reflection
 
-"""Drop embrane plugin table
+from neutron.db import migration
 
-Revision ID: 1b294093239c
-Revises: 4af11ca47297
-Create Date: 2015-10-09 14:07:59.968597
+"""Add missing foreign keys
+
+Revision ID: 2e5352a0ad4d
+Revises: 2a16083502f3
+Create Date: 2015-08-20 12:43:09.110427
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '1b294093239c'
-down_revision = '4af11ca47297'
+revision = '2e5352a0ad4d'
+down_revision = '2a16083502f3'
+
+
+TABLE_NAME = 'flavorserviceprofilebindings'
 
 
 def upgrade():
-    op.drop_table('embrane_pool_port')
+    inspector = reflection.Inspector.from_engine(op.get_bind())
+    fk_constraints = inspector.get_foreign_keys(TABLE_NAME)
+    for fk in fk_constraints:
+        fk['options']['ondelete'] = 'CASCADE'
+
+    migration.remove_foreign_keys(TABLE_NAME, fk_constraints)
+    migration.create_foreign_keys(TABLE_NAME, fk_constraints)

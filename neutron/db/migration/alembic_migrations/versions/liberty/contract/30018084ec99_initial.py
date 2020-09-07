@@ -11,20 +11,21 @@
 #    under the License.
 #
 
-from alembic import op
+from neutron.db.migration import cli
 
-"""Drop embrane plugin table
+"""Initial no-op Liberty contract rule.
 
-Revision ID: 1b294093239c
-Revises: 4af11ca47297
-Create Date: 2015-10-09 14:07:59.968597
+Revision ID: 30018084ec99
+Revises: None
+Create Date: 2015-06-22 00:00:00.000000
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '1b294093239c'
-down_revision = '4af11ca47297'
+revision = '30018084ec99'
+down_revision = 'kilo'
+branch_labels = (cli.CONTRACT_BRANCH,)
 
 
 def upgrade():
-    op.drop_table('embrane_pool_port')
+    pass
