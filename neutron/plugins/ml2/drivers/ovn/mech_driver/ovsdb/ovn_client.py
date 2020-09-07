@@ -1816,8 +1816,8 @@ class OVNClient(object):
 
         routes = []
         if metadata_port_ip:
-            routes.append('%s/32,%s' % (
-                ovn_const.METADATA_DEFAULT_IP, metadata_port_ip))
+            routes.append('%s,%s' % (
+                const.METADATA_V4_CIDR, metadata_port_ip))
 
         # Add subnet host_routes to 'classless_static_route' dhcp option
         routes.extend(['%s,%s' % (route['destination'], route['nexthop'])

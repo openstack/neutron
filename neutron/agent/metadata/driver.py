@@ -30,7 +30,6 @@ from oslo_utils import netutils
 from neutron._i18n import _
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
-from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 
@@ -208,7 +207,7 @@ class MetadataDriver(object):
 
     @classmethod
     def metadata_nat_rules(
-            cls, port, metadata_address=(dhcp.METADATA_DEFAULT_IP + '/32')):
+            cls, port, metadata_address=constants.METADATA_V4_CIDR):
         return [('PREROUTING', '-d %(metadata_address)s '
                  '-i %(interface_name)s '
                  '-p tcp -m tcp --dport 80 -j REDIRECT '
@@ -314,7 +313,7 @@ def after_router_added(resource, event, l3_agent, **kwargs):
     if ipv6_enabled:
         for c, r in proxy.metadata_nat_rules(
                 proxy.metadata_port,
-                metadata_address=(dhcp.METADATA_V6_IP + '/128')):
+                metadata_address=(constants.METADATA_V6_IP + '/128')):
             router.iptables_manager.ipv6['nat'].add_rule(c, r)
     router.iptables_manager.apply()
 

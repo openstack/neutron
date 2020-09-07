@@ -48,13 +48,6 @@ from neutron.privileged.agent.linux import dhcp as priv_dhcp
 LOG = logging.getLogger(__name__)
 
 DNS_PORT = 53
-# TODO(bence romsics): use the rehomed constants when they get released:
-# https://review.opendev.org/738205
-METADATA_DEFAULT_IP = '169.254.169.254'
-METADATA_SUBNET_CIDR = '169.254.0.0/16'
-METADATA_V6_IP = 'fe80::a9fe:a9fe'
-METADATA_V6_CIDR = 'fe80::a9fe:a9fe/64'
-METADATA_PORT = 80
 WIN2k3_STATIC_DNS = 249
 NS_PREFIX = 'qdhcp-'
 DNSMASQ_SERVICE_NAME = 'dnsmasq'
@@ -1316,7 +1309,7 @@ class Dnsmasq(DhcpLocalProcess):
     @staticmethod
     def has_metadata_subnet(subnets):
         """Check if the subnets has a metadata subnet."""
-        meta_cidr = netaddr.IPNetwork(METADATA_SUBNET_CIDR)
+        meta_cidr = netaddr.IPNetwork(constants.METADATA_V4_SUBNET)
         if any(netaddr.IPNetwork(s.cidr) in meta_cidr
                for s in subnets):
             return True
@@ -1721,7 +1714,7 @@ class DeviceManager(object):
         if self.conf.force_metadata or self.conf.enable_isolated_metadata:
             ip_cidrs.append(constants.METADATA_CIDR)
             if netutils.is_ipv6_enabled():
-                ip_cidrs.append(METADATA_V6_CIDR)
+                ip_cidrs.append(constants.METADATA_V6_CIDR)
 
         self.driver.init_l3(interface_name, ip_cidrs,
                             namespace=network.namespace)

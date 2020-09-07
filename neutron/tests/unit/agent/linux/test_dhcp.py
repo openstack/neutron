@@ -3153,7 +3153,7 @@ class TestDeviceManager(TestConfBase):
             if enable_isolated_metadata or force_metadata:
                 expect_ips.extend([
                     constants.METADATA_CIDR,
-                    dhcp.METADATA_V6_CIDR])
+                    constants.METADATA_V6_CIDR])
             mgr.driver.init_l3.assert_called_with('ns-XXX',
                                                   expect_ips,
                                                   namespace='qdhcp-ns')
