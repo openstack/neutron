@@ -239,7 +239,7 @@
     name: neutron-ovn-tempest-full-multinode-ovs-master
     parent: neutron-ovn-multinode-base
     vars:
-      tox_envlist: all-plugin
+      tox_envlist: all
       tempest_test_regex: "^(?!.*\
           (?:.*\\[.*slow.*\\])|\
           (?:tempest.api.network.admin.test_quotas.QuotasTest.test_lbaas_quotas.*)|\
