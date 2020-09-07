@@ -199,9 +199,13 @@ class UnixDomainMetadataProxy(object):
     def run(self):
         self.server = agent_utils.UnixDomainWSGIServer(
             'neutron-ovn-metadata-agent')
+        # Set the default metadata_workers if not yet set in the config file
+        md_workers = self.conf.metadata_workers
+        if md_workers is None:
+            md_workers = 2
         self.server.start(MetadataProxyHandler(self.conf),
                           self.conf.metadata_proxy_socket,
-                          workers=self.conf.metadata_workers,
+                          workers=md_workers,
                           backlog=self.conf.metadata_backlog,
                           mode=self._get_socket_mode())
 

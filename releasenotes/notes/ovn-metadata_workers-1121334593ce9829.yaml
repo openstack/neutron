@@ -1,0 +1,12 @@
+---
+upgrade:
+  - |
+    The default value for the ``metadata_workers`` configuration option
+    has changed to 2 for the ML2/OVN driver. For ML2/OVS the default
+    value remains the same. Each driver has different approaches when
+    serving metadata to the instances and the previous default value of
+    "<number of CPUs> / 2" did not make sense for ML2/OVN as the OVN
+    metadata agents are distributed running on Compute nodes instead of
+    Controller nodes. In fact, the previous default value could cause
+    scalability issues with ML2/OVN and was overwritten by the deployment
+    tools to avoid problems.
