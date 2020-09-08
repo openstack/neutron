@@ -14,6 +14,7 @@
 #    under the License.
 
 import datetime
+import time
 
 import mock
 from neutron_lib import context
@@ -118,6 +119,7 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
         self.assertTrue(self.hash_ring_manager._cache_startup_timeout)
 
         # Touch the nodes (== update the updated_at column)
+        time.sleep(1)
         db_hash_ring.touch_nodes_from_host(
             self.admin_ctx, HASH_RING_TEST_GROUP)
 

@@ -14,6 +14,7 @@
 #    under the License.
 
 import datetime
+import time
 
 import mock
 from neutron_lib import context
@@ -44,9 +45,13 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
     def _get_node_row(self, node_uuid):
         try:
             with db_api.CONTEXT_WRITER.using(self.admin_ctx):
-                return self.admin_ctx.session.query(
+                node = self.admin_ctx.session.query(
                     ovn_models.OVNHashRing).filter_by(
                     node_uuid=node_uuid).one()
+                # Ignore miliseconds
+            node.created_at = node.created_at.replace(microsecond=0)
+            node.updated_at = node.updated_at.replace(microsecond=0)
+            return node
         except exc.NoResultFound:
             return
 
@@ -97,6 +102,7 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
         self.assertEqual(node_db.created_at, node_db.updated_at)
 
         # Touch the nodes from our host
+        time.sleep(1)
         ovn_hash_ring_db.touch_nodes_from_host(self.admin_ctx,
                                                HASH_RING_TEST_GROUP)
 
@@ -123,6 +129,7 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
             self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP)))
 
         # Substract 60 seconds from utcnow() and touch the nodes from our host
+        time.sleep(1)
         fake_utcnow = timeutils.utcnow() - datetime.timedelta(seconds=60)
         with mock.patch.object(timeutils, 'utcnow') as mock_utcnow:
             mock_utcnow.return_value = fake_utcnow
@@ -161,6 +168,7 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
             self.assertEqual(node_db.created_at, node_db.updated_at)
 
         # Touch one of the nodes
+        time.sleep(1)
         ovn_hash_ring_db.touch_node(self.admin_ctx, nodes[0])
 
         # Assert it has been updated
@@ -217,6 +225,7 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
             self.assertEqual(node_db.created_at, node_db.updated_at)
 
         # Touch the nodes from group1
+        time.sleep(1)
         ovn_hash_ring_db.touch_nodes_from_host(self.admin_ctx,
                                                HASH_RING_TEST_GROUP)
 
