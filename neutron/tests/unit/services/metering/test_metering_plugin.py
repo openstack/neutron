@@ -160,7 +160,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                      'tenant_id': self.tenant_id,
                      '_metering_labels': [
                          {'rules': [],
-                          'id': self.uuid}],
+                          'id': self.uuid, 'shared': False,
+                          'name': 'label'}],
                      'id': self.uuid}]
 
         tenant_id_2 = '8a268a58-1610-4890-87e0-07abb8231206'
@@ -184,13 +185,15 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                      'tenant_id': self.tenant_id,
                      '_metering_labels': [
                          {'rules': [],
-                          'id': self.uuid},
+                          'id': self.uuid, 'shared': False,
+                          'name': 'label'},
                          {'rules': [],
-                          'id': second_uuid}],
+                          'id': second_uuid, 'shared': True,
+                          'name': 'label'}],
                      'id': self.uuid}]
 
         tenant_id_2 = '8a268a58-1610-4890-87e0-07abb8231206'
-        with self.router(name='router1', tenant_id=self.tenant_id,
+        with self.router(name='router1', tenant_id=self.tenant_id, shared=True,
                          set_context=True):
             with self.metering_label(tenant_id=self.tenant_id,
                                      set_context=True):
@@ -208,7 +211,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                      'tenant_id': self.tenant_id,
                      '_metering_labels': [
                          {'rules': [],
-                          'id': self.uuid}],
+                          'id': self.uuid, 'shared': False,
+                          'name': 'label'}],
                      'id': self.uuid}]
 
         with self.router(tenant_id=self.tenant_id, set_context=True):
@@ -229,9 +233,11 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'tenant_id': self.tenant_id,
                          '_metering_labels': [
                              {'rules': [],
-                              'id': self.uuid},
+                              'id': self.uuid, 'shared': False,
+                              'name': 'label'},
                              {'rules': [],
-                              'id': second_uuid}],
+                              'id': second_uuid, 'shared': False,
+                              'name': 'label'}],
                          'id': self.uuid}]
         expected_remove = [{'status': 'ACTIVE',
                             'name': 'router1',
@@ -241,7 +247,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                             'tenant_id': self.tenant_id,
                             '_metering_labels': [
                                 {'rules': [],
-                                 'id': second_uuid}],
+                                 'id': second_uuid, 'shared': False,
+                                 'name': 'label'}],
                             'id': self.uuid}]
 
         with self.router(tenant_id=self.tenant_id, set_context=True):
@@ -384,7 +391,8 @@ class TestMeteringPluginL3AgentScheduler(
                      'tenant_id': self.tenant_id,
                      '_metering_labels': [
                          {'rules': [],
-                          'id': second_uuid}],
+                          'id': second_uuid, 'shared': False,
+                          'name': 'label'}],
                      'id': self.uuid},
                     {'status': 'ACTIVE',
                      'name': 'router2',
@@ -394,7 +402,8 @@ class TestMeteringPluginL3AgentScheduler(
                      'tenant_id': self.tenant_id,
                      '_metering_labels': [
                          {'rules': [],
-                          'id': second_uuid}],
+                          'id': second_uuid, 'shared': False,
+                          'name': 'label'}],
                      'id': second_uuid}]
 
         # bind each router to a specific agent

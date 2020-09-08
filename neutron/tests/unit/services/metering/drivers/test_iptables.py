@@ -17,6 +17,7 @@ from unittest import mock
 
 from oslo_config import cfg
 
+from neutron.conf.services import metering_agent as metering_agent_config
 from neutron.services.metering.drivers.iptables import iptables_driver
 from neutron.tests import base
 
@@ -146,6 +147,10 @@ class IptablesDriverTestCase(base.BaseTestCase):
         self.iptables_cls.return_value = self.iptables_inst
         cfg.CONF.set_override('interface_driver',
                               'neutron.agent.linux.interface.NullDriver')
+
+        metering_agent_config.register_metering_agent_opts()
+        cfg.CONF.set_override('granular_traffic_data', False)
+
         self.metering = iptables_driver.IptablesMeteringDriver('metering',
                                                                cfg.CONF)
 
@@ -717,3 +722,105 @@ class IptablesDriverTestCase(base.BaseTestCase):
         self.assertIsNotNone(rm.iptables_manager)
         self.assertEqual(
             3, self.metering._process_ns_specific_metering_label.call_count)
+
+    def test_get_traffic_counters_granular_data(self):
+        for r in TEST_ROUTERS:
+            rm = iptables_driver.RouterWithMetering(self.metering.conf, r)
+            rm.metering_labels = {r['_metering_labels'][0]['id']: 'fake'}
+            self.metering.routers[r['id']] = rm
+
+        mocked_method = self.iptables_cls.return_value.get_traffic_counters
+        mocked_method.side_effect = [{'pkts': 2, 'bytes': 5},
+                                     {'pkts': 4, 'bytes': 3}]
+
+        old_granular_traffic_data = self.metering.granular_traffic_data
+
+        expected_total_number_of_data_granularities = 9
+        expected_response = {
+            "router-373ec392-1711-44e3-b008-3251ccfc5099": {
+                "pkts": 4,
+                "bytes": 3,
+                "traffic-counter-granularity": "router"
+            },
+            "label-c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83": {
+                "pkts": 2,
+                "bytes": 5,
+                "traffic-counter-granularity": "label"
+            },
+            "router-473ec392-1711-44e3-b008-3251ccfc5099-"
+            "label-c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83": {
+                "pkts": 2,
+                "bytes": 5,
+                "traffic-counter-granularity": "label_router"
+            },
+            "label-eeef45da-c600-4a2a-b2f4-c0fb6df73c83": {
+                "pkts": 4,
+                "bytes": 3,
+                "traffic-counter-granularity": "label"
+            },
+            "project-6c5f5d2a1fa2441e88e35422926f48e8-"
+            "label-eeef45da-c600-4a2a-b2f4-c0fb6df73c83": {
+                "pkts": 4,
+                "bytes": 3,
+                "traffic-counter-granularity": "label_project"
+
+            },
+            "router-473ec392-1711-44e3-b008-3251ccfc5099": {
+                "pkts": 2,
+                "bytes": 5,
+                "traffic-counter-granularity": "router"
+            },
+            "project-6c5f5d2a1fa2441e88e35422926f48e8": {
+                "pkts": 6,
+                "bytes": 8,
+                "traffic-counter-granularity": "project"
+            },
+            "router-373ec392-1711-44e3-b008-3251ccfc5099-"
+            "label-eeef45da-c600-4a2a-b2f4-c0fb6df73c83": {
+                "pkts": 4,
+                "bytes": 3,
+                "traffic-counter-granularity": "label_router"
+            },
+            "project-6c5f5d2a1fa2441e88e35422926f48e8-"
+            "label-c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83": {
+                "pkts": 2,
+                "bytes": 5,
+                "traffic-counter-granularity": "label_project"
+            }
+        }
+        try:
+            self.metering.granular_traffic_data = True
+            counters = self.metering.get_traffic_counters(None, TEST_ROUTERS)
+
+            self.assertEqual(expected_total_number_of_data_granularities,
+                             len(counters))
+            self.assertEqual(expected_response, counters)
+        finally:
+            self.metering.granular_traffic_data = old_granular_traffic_data
+
+    def test_get_traffic_counters_legacy_mode(self):
+        for r in TEST_ROUTERS:
+            rm = iptables_driver.RouterWithMetering(self.metering.conf, r)
+            rm.metering_labels = {r['_metering_labels'][0]['id']: 'fake'}
+            self.metering.routers[r['id']] = rm
+
+        mocked_method = self.iptables_cls.return_value.get_traffic_counters
+        mocked_method.side_effect = [{'pkts': 2, 'bytes': 5},
+                                     {'pkts': 4, 'bytes': 3}]
+
+        old_granular_traffic_data = self.metering.granular_traffic_data
+
+        expected_total_number_of_data_granularity = 2
+
+        expected_response = {
+            'eeef45da-c600-4a2a-b2f4-c0fb6df73c83': {'pkts': 4, 'bytes': 3},
+            'c5df2fe5-c600-4a2a-b2f4-c0fb6df73c83': {'pkts': 2, 'bytes': 5}}
+        try:
+            self.metering.granular_traffic_data = False
+            counters = self.metering.get_traffic_counters(None, TEST_ROUTERS)
+            print("%s" % counters)
+            self.assertEqual(expected_total_number_of_data_granularity,
+                             len(counters))
+            self.assertEqual(expected_response, counters)
+        finally:
+            self.metering.granular_traffic_data = old_granular_traffic_data
