@@ -54,7 +54,11 @@ class HashRingManager(object):
         nodes = db_hash_ring.get_active_nodes(
             self.admin_ctx,
             constants.HASH_RING_CACHE_TIMEOUT, self._group, from_host=True)
-        dont_cache = nodes and nodes[0].created_at == nodes[0].updated_at
+        # created_at and updated_at differ in microseonds so we compare their
+        # difference is less than a second to be safe on slow machines
+        dont_cache = nodes and (
+            nodes[0].updated_at - nodes[0].created_at < datetime.timedelta(
+                seconds=1))
         if not dont_cache:
             self._cache_startup_timeout = False
 
