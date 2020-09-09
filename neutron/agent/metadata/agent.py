@@ -22,6 +22,7 @@ from neutron_lib.agent import topics
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import rpc as n_rpc
+from neutron_lib.utils import host
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -364,9 +365,13 @@ class UnixDomainMetadataProxy(object):
     def run(self):
         server = agent_utils.UnixDomainWSGIServer(
                      constants.AGENT_PROCESS_METADATA)
+        # Set the default metadata_workers if not yet set in the config file
+        md_workers = self.conf.metadata_workers
+        if md_workers is None:
+            md_workers = host.cpu_count() // 2
         server.start(MetadataProxyHandler(self.conf),
                      self.conf.metadata_proxy_socket,
-                     workers=self.conf.metadata_workers,
+                     workers=md_workers,
                      backlog=self.conf.metadata_backlog,
                      mode=self._get_socket_mode())
         self._init_state_reporting()
