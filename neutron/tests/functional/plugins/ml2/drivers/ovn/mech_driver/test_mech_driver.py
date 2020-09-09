@@ -687,3 +687,24 @@ class TestProvnetPorts(base.TestOVNFunctionalBase):
         ovn_localnetport = self._find_port_row_by_name(
             utils.ovn_provnet_port_name(seg_2['id']))
         self.assertIsNone(ovn_localnetport)
+
+
+class TestAgentApi(base.TestOVNFunctionalBase):
+
+    def setUp(self):
+        super().setUp()
+        self.host = 'test-host'
+        self.add_fake_chassis(self.host)
+        self.plugin = self.mech_driver._plugin
+        agent = {'agent_type': 'test', 'binary': '/bin/test',
+                 'host': self.host, 'topic': 'test_topic'}
+        self.plugin.create_or_update_agent(self.context, agent)
+
+    def get_agent(self, agent_type):
+        return next(iter(self.plugin.get_agents(
+            self.context, filters={'agent_type': agent_type})))
+
+    def test_agent_show(self):
+        for agent_type in ('test', ovn_const.OVN_CONTROLLER_AGENT):
+            agent = self.get_agent(agent_type)
+            self.assertTrue(self.plugin.get_agent(self.context, agent['id']))

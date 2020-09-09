@@ -1099,7 +1099,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             new_method = types.MethodType(new_fn, self._plugin)
             try:
                 return new_method(*args, _driver=self, **kwargs)
-            except KeyError:
+            except n_exc.NotFound:
                 return old_method(*args, **kwargs)
 
         setattr(self._plugin, method_name, types.MethodType(fn, self._plugin))
