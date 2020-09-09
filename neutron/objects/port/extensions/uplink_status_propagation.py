@@ -20,7 +20,8 @@ from neutron.objects import base
 @base.NeutronObjectRegistry.register
 class PortUplinkStatusPropagation(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = "1.0"
+    # Version 1.1: Changed default value of "propagate_uplink_status" to True
+    VERSION = "1.1"
 
     db_model = db_models.PortUplinkStatusPropagation
 
@@ -28,7 +29,7 @@ class PortUplinkStatusPropagation(base.NeutronDbObject):
 
     fields = {
         'port_id': common_types.UUIDField(),
-        'propagate_uplink_status': obj_fields.BooleanField(default=False),
+        'propagate_uplink_status': obj_fields.BooleanField(default=True),
     }
 
     foreign_keys = {'Port': {'port_id': 'id'}}

@@ -1,0 +1,5 @@
+---
+other:
+  - |
+    When ``uplink-status-propagation`` extension is enabled, new ports created
+    will default the value of ``propagate_uplink_status`` to True.
