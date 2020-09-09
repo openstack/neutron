@@ -8,7 +8,7 @@ PasteDeploy>=1.5.0 # MIT
 Routes>=2.3.1 # MIT
 debtcollector>=1.19.0 # Apache-2.0
 decorator>=3.4.0 # BSD
-eventlet!=0.18.3,!=0.20.1,>=0.18.2 # MIT
+eventlet>=0.21.0 # MIT
 pecan>=1.4.0 # BSD
 httplib2>=0.9.1 # MIT
 requests>=2.14.2 # Apache-2.0
@@ -31,7 +31,7 @@ oslo.context>=2.20.0 # Apache-2.0
 oslo.db>=4.44.0 # Apache-2.0
 oslo.i18n>=3.20.0 # Apache-2.0
 oslo.log>=4.2.1 # Apache-2.0
-oslo.messaging>=5.29.0 # Apache-2.0
+oslo.messaging>=7.0.0 # Apache-2.0
 oslo.middleware>=3.31.0 # Apache-2.0
 oslo.policy>=1.30.0 # Apache-2.0
 oslo.privsep>=2.3.0 # Apache-2.0
