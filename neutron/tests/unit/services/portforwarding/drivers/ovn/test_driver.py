@@ -86,16 +86,16 @@ class TestOVNPortForwardingHandler(TestOVNPortForwardingBase):
     def test_lb_names(self):
         expected_names = ['pf-floatingip-id-udp', 'pf-floatingip-id-tcp']
         names = self.handler.lb_names('id')
-        self.assertEqual(names, expected_names)
+        self.assertCountEqual(expected_names, names)
 
     def test_get_lb_attributes(self):
         fake_pf_obj = self._fake_pf_obj()
         lb_name, vip, internal_ip, rtr_name = self.handler._get_lb_attributes(
             fake_pf_obj)
-        self.assertEqual(lb_name, 'pf-floatingip-fip_id-udp')
-        self.assertEqual(vip, 'fip_addr:ext_port')
-        self.assertEqual(internal_ip, ['internal_addr:internal_port'])
-        self.assertEqual(rtr_name, 'neutron-rtr_id')
+        self.assertEqual('pf-floatingip-fip_id-udp', lb_name)
+        self.assertEqual('fip_addr:ext_port', vip)
+        self.assertCountEqual(['internal_addr:internal_port'], internal_ip)
+        self.assertEqual('neutron-rtr_id', rtr_name)
 
     @mock.patch.object(port_forwarding.LOG, 'info')
     def test_port_forwarding_created(self, m_info):
@@ -211,15 +211,15 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
         self.pf_plugin.get_floatingip_port_forwardings.assert_called_once_with(
             self.context, fip_id)
         for index, fake_pf_dict in enumerate(fake_pf_dicts):
-            self.assertEqual(pf_objs[index].id, fake_pf_dict['id'])
-            self.assertEqual(pf_objs[index].floatingip_id,
-                             fake_pf_dict['floatingip_id'])
-            self.assertEqual(pf_objs[index].external_port,
-                             fake_pf_dict['external_port'])
-            self.assertEqual(pf_objs[index].internal_port_id,
-                             fake_pf_dict['internal_port_id'])
-            self.assertEqual(pf_objs[index].router_id,
-                             fake_pf_dict['router_id'])
+            self.assertEqual(fake_pf_dict['id'], pf_objs[index].id)
+            self.assertEqual(fake_pf_dict['floatingip_id'],
+                             pf_objs[index].floatingip_id)
+            self.assertEqual(fake_pf_dict['external_port'],
+                             pf_objs[index].external_port)
+            self.assertEqual(fake_pf_dict['internal_port_id'],
+                             pf_objs[index].internal_port_id)
+            self.assertEqual(fake_pf_dict['router_id'],
+                             pf_objs[index].router_id)
 
     def test_get_fip_objs(self):
         pf_payload = [self._fake_pf_payload_entry(1),
@@ -228,7 +228,7 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
                       self._fake_pf_payload_entry(1, 3)]
         self.l3_plugin.get_floatingip = lambda _, fip_id: fip_id * 10
         fip_objs = self._ovn_pf._get_fip_objs(self.context, pf_payload)
-        self.assertEqual(fip_objs, {3: 30, 2: 20, 1: 10})
+        self.assertEqual({3: 30, 2: 20, 1: 10}, fip_objs)
 
     def _handle_notification_common(self, event_type, payload=None,
                                     fip_objs=None):
