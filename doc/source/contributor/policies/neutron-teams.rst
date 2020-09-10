@@ -135,9 +135,9 @@ updating the core review team for the sub-project's repositories.
 |                         +-----------------------------+-------------------+
 |                         | Dongcan Ye                  | yedongcan         |
 +-------------------------+-----------------------------+-------------------+
-| networking-midonet      | Ryu Ishimoto                | ryu25             |
+| networking-midonet      | YAMAMOTO Takashi            | yamamoto          |
 |                         +-----------------------------+-------------------+
-|                         | YAMAMOTO Takashi            | yamamoto          |
+|                         | Sam Morrison                | sorrison          |
 +-------------------------+-----------------------------+-------------------+
 | networking-odl          | Lajos Katona                | lajoskatona       |
 +-------------------------+-----------------------------+-------------------+
