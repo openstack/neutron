@@ -81,6 +81,7 @@ class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
                                          'port_range_max': None,
                                          'remote_ip_prefix': None,
                                          'remote_group_id': None,
+                                         'remote_address_group_id': None,
                                          'protocol': None,
                                          'direction': None,
                                          'ethertype': 'IPv4'}})

@@ -192,6 +192,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
                                      'remote_ip_prefix': '0.0.0.0/0',
                                      'ethertype': 'IPv4',
                                      'remote_group_id': None,
+                                     'remote_address_group_id': None,
                                      'direction': 'ingress',
                                      'security_group_id': sg['id']}}
         rule = self.cp.create_security_group_rule(self.ctx, r)

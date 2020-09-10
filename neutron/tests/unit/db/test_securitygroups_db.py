@@ -50,6 +50,7 @@ FAKE_SECGROUP_RULE = {
         'remote_ip_prefix': '10.0.0.1',
         'ethertype': 'IPv4',
         'remote_group_id': None,
+        'remote_address_group_id': None,
         'security_group_id': 'None',
         'direction': 'ingress'
     }

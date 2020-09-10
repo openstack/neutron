@@ -87,6 +87,11 @@ class SecurityGroupRule(standard_attr.HasStandardAttributes, model_base.BASEV2,
                                 sa.ForeignKey("securitygroups.id",
                                               ondelete="CASCADE"),
                                 nullable=True)
+
+    remote_address_group_id = sa.Column(sa.String(db_const.UUID_FIELD_SIZE),
+                                        sa.ForeignKey("address_groups.id",
+                                                      ondelete="CASCADE"),
+                                        nullable=True)
     revises_on_change = ('security_group', )
     direction = sa.Column(sa.Enum('ingress', 'egress',
                                   name='securitygrouprules_direction'))

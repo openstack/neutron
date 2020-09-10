@@ -16,12 +16,21 @@ from neutron_lib.callbacks import registry
 from neutron_lib import constants
 from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
+from neutron_lib import exceptions
 from neutron_lib.exceptions import address_group as ag_exc
 from oslo_utils import uuidutils
 
+from neutron._i18n import _
 from neutron.extensions import address_group as ag_ext
 from neutron.objects import address_group as ag_obj
 from neutron.objects import base as base_obj
+from neutron.objects import securitygroup as sg_obj
+
+
+# TODO(hangyang): Remove this exception once neutron_lib > 2.6.1 is released.
+class AddressGroupInUse(exceptions.InUse):
+    message = _("Address group %(address_group_id)s is in use on one or more "
+                "security group rules.")
 
 
 # TODO(mlavalle) Following line should be deleted when
@@ -43,6 +52,19 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
         res['addresses'] = [str(addr_assoc['address'])
                             for addr_assoc in address_group['addresses']]
         return db_utils.resource_fields(res, fields)
+
+    @staticmethod
+    def check_address_group(context, ag_id, project_id=None):
+        """Check if address group id exists for the given project"""
+        if project_id:
+            tmp_context_project_id = context.project_id
+            context.project_id = project_id
+        try:
+            if not ag_obj.AddressGroup.objects_exist(context, id=ag_id):
+                raise ag_exc.AddressGroupNotFound(address_group_id=ag_id)
+        finally:
+            if project_id:
+                context.project_id = tmp_context_project_id
 
     def _get_address_group(self, context, id):
         obj = ag_obj.AddressGroup.get_object(context, id=id)
@@ -150,6 +172,10 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
         ]
 
     def delete_address_group(self, context, id):
+        if sg_obj.SecurityGroupRule.get_objects(context.elevated(),
+                                                remote_address_group_id=id):
+            # TODO(hangyang): use exception from neutron_lib
+            raise AddressGroupInUse(address_group_id=id)
         address_group = self._get_address_group(context, id)
         address_group.delete()
         # TODO(mlavalle) this notification should be updated to publish when

@@ -15,6 +15,8 @@
 
 from unittest import mock
 
+from neutron_lib.api.definitions import security_groups_remote_address_group \
+    as sgag_def
 from neutron_lib import constants as n_const
 from neutron_lib import context
 from neutron_lib.db import api as db_api
@@ -113,7 +115,8 @@ class TestMaintenancePlugin(test_securitygroup.SecurityGroupTestPlugin,
     __native_pagination_support = True
     __native_sorting_support = True
 
-    supported_extension_aliases = ['external-net', 'security-group']
+    supported_extension_aliases = ['external-net', 'security-group',
+                                   sgag_def.ALIAS]
 
 
 class TestRevisionNumberMaintenance(test_securitygroup.SecurityGroupsTestCase,
