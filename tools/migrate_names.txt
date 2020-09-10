@@ -27,6 +27,7 @@ networking_ovn/ovsdb/ovn_api.py         neutron/plugins/ml2/drivers/ovn/mech_dri
 networking_ovn/ovsdb/ovsdb_monitor.py   neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/ovsdb_monitor.py
 networking_ovn/ovsdb/worker.py          neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/worker.py
 networking_ovn/agent/metadata           neutron/agent/ovn/metadata
+networking_ovn/cmd/neutron_ovn_db_sync_util.py  neutron/cmd/ovn/neutron_ovn_db_sync_util.py
 networking_ovn/cmd                      neutron/cmd
 networking_ovn/common/config.py         neutron/conf/ovn.py
 networking_ovn/common/acl.py            neutron/common/ovn/acl.py
@@ -48,8 +49,11 @@ networking_ovn/ml2/portforwarding_driver.py  neutron/services/portforwarding/dri
 networking_ovn/tests/unit/ml2/test_portforwarding_driver.py  neutron/tests/unit/services/portforwarding/drivers/ovn/test_driver.py
 networking_ovn/tests/unit/fakes.py      neutron/tests/unit/fake_resources.py
 networking_ovn/tests/unit/test_ovn_db_sync.py  neutron/tests/unit/plugins/ml2/drivers/ovn/mech_driver/ovsdb/test_ovn_db_sync.py
+networking_ovn/tests/unit/cmd/test_neutron_ovn_db_sync_util.py  neutron/tests/unit/cmd/ovn/test_neutron_ovn_db_sync_util.py
 networking_ovn/tests/unit/common/test_maintenance.py  neutron/tests/unit/plugins/ml2/drivers/ovn/mech_driver/ovsdb/test_maintenance.py
 networking_ovn/tests/unit/common        neutron/tests/unit/common/ovn
+networking_ovn/tests/unit/l3/test_l3_ovn.py  neutron/tests/unit/services/ovn_l3/test_plugin.py
+networking_ovn/tests/unit/l3/test_l3_ovn_scheduler.py  neutron/tests/unit/scheduler/test_l3_ovn_scheduler.py
 networking_ovn/tests/functional         neutron/tests/functional/plugins/ml2/drivers/ovn/mech_driver/ovsdb
 networking_ovn/tests/unit/ml2/test_mech_driver.py  neutron/tests/unit/plugins/ml2/drivers/ovn/mech_driver/test_mech_driver.py
 networking_ovn/tests/unit/ml2/test_qos_driver.py  neutron/tests/unit/services/qos/drivers/ovn/test_driver.py
