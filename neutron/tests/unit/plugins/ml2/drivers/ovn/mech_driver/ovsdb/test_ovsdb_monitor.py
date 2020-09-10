@@ -217,13 +217,18 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
             hash_ring_manager.HashRingManager,
             'get_node', return_value=self.node_uuid).start()
 
+    def _assert_has_notify_calls(self):
+        self.idl.notify_handler.notify.assert_has_calls([
+            mock.call(self.fake_event, self.fake_row, None, global_=True),
+            mock.call(self.fake_event, self.fake_row, None)])
+        self.assertEqual(2, len(self.idl.notify_handler.mock_calls))
+
     @mock.patch.object(ovn_hash_ring_db, 'touch_node')
     def test_notify(self, mock_touch_node):
         self.idl.notify(self.fake_event, self.fake_row)
 
         mock_touch_node.assert_called_once_with(mock.ANY, self.node_uuid)
-        self.idl.notify_handler.notify.assert_called_once_with(
-            self.fake_event, self.fake_row, None)
+        self._assert_has_notify_calls()
 
     @mock.patch.object(ovn_hash_ring_db, 'touch_node')
     def test_notify_skip_touch_node(self, mock_touch_node):
@@ -233,8 +238,7 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
 
         # Assert that touch_node() wasn't called
         self.assertFalse(mock_touch_node.called)
-        self.idl.notify_handler.notify.assert_called_once_with(
-            self.fake_event, self.fake_row, None)
+        self._assert_has_notify_calls()
 
     @mock.patch.object(ovn_hash_ring_db, 'touch_node')
     def test_notify_last_touch_expired(self, mock_touch_node):
@@ -250,8 +254,7 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
 
         # Assert that touch_node() was invoked
         mock_touch_node.assert_called_once_with(mock.ANY, self.node_uuid)
-        self.idl.notify_handler.notify.assert_called_once_with(
-            self.fake_event, self.fake_row, None)
+        self._assert_has_notify_calls()
 
     @mock.patch.object(ovsdb_monitor.LOG, 'exception')
     @mock.patch.object(ovn_hash_ring_db, 'touch_node')
@@ -264,14 +267,14 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
         mock_touch_node.assert_called_once_with(mock.ANY, self.node_uuid)
         # Assert we are logging the exception
         self.assertTrue(mock_log.called)
-        self.idl.notify_handler.notify.assert_called_once_with(
-            self.fake_event, self.fake_row, None)
+        self._assert_has_notify_calls()
 
     def test_notify_different_node(self):
         self.mock_get_node.return_value = 'different-node-uuid'
         self.idl.notify('fake-event', self.fake_row)
         # Assert that notify() wasn't called for a different node uuid
-        self.assertFalse(self.idl.notify_handler.notify.called)
+        self.idl.notify_handler.notify.assert_called_once_with(
+            self.fake_event, self.fake_row, None, global_=True)
 
 
 class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
@@ -420,8 +423,9 @@ class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self.idl.notify_handler.notify = mock.Mock()
         self.idl.notify("create", row)
         # Assert that if the target_node returned by the ring is different
-        # than this driver's node_uuid, notify() won't be called
-        self.assertFalse(self.idl.notify_handler.notify.called)
+        # than this driver's node_uuid, only global notify() won't be called
+        self.idl.notify_handler.notify.assert_called_once_with(
+            "create", row, None, global_=True)
 
 
 class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
@@ -432,6 +436,7 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         super(TestOvnSbIdlNotifyHandler, self).setUp()
         sb_helper = ovs_idl.SchemaHelper(schema_json=OVN_SB_SCHEMA)
         sb_helper.register_table('Chassis')
+        self.driver.agent_chassis_table = 'Chassis'
         self.sb_idl = ovsdb_monitor.OvnSbIdl(self.driver, "remote", sb_helper)
         self.sb_idl.post_connect()
         self.chassis_table = self.sb_idl.tables.get('Chassis')
