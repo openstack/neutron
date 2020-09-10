@@ -87,6 +87,11 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         super(TestOVNMechanismDriver, self).setUp()
         mm = directory.get_plugin().mechanism_manager
         self.mech_driver = mm.mech_drivers['ovn'].obj
+        neutron_agent.AgentCache(self.mech_driver)
+        # Because AgentCache is a singleton and we get a new mech_driver each
+        # setUp(), override the AgentCache driver.
+        neutron_agent.AgentCache().driver = self.mech_driver
+
         self.mech_driver._nb_ovn = fakes.FakeOvsdbNbOvnIdl()
         self.mech_driver._sb_ovn = fakes.FakeOvsdbSbOvnIdl()
         self.mech_driver._ovn_client._qos_driver = mock.Mock()
@@ -1724,73 +1729,75 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         self.plugin.update_port_status.assert_called_once_with(
             fake_context, fake_port['id'], const.PORT_STATUS_ACTIVE)
 
-    def _add_chassis_agent(self, nb_cfg, agent_type, updated_at=None):
-        updated_at = updated_at or datetime.datetime.utcnow()
+    def _add_chassis(self, nb_cfg):
         chassis_private = mock.Mock()
         chassis_private.nb_cfg = nb_cfg
         chassis_private.uuid = uuid.uuid4()
+        chassis_private.name = str(uuid.uuid4())
+        return chassis_private
+
+    def _add_chassis_agent(self, nb_cfg, agent_type, chassis_private=None,
+                           updated_at=None):
+        updated_at = updated_at or timeutils.utcnow(with_timezone=True)
+        chassis_private = chassis_private or self._add_chassis(nb_cfg)
         chassis_private.external_ids = {
             ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY:
                 datetime.datetime.isoformat(updated_at)}
         if agent_type == ovn_const.OVN_METADATA_AGENT:
             chassis_private.external_ids.update({
                 ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY: nb_cfg,
-                ovn_const.METADATA_LIVENESS_CHECK_EXT_ID_KEY:
-                datetime.datetime.isoformat(updated_at)})
+                ovn_const.OVN_AGENT_METADATA_ID_KEY: str(uuid.uuid4())})
         chassis_private.chassis = [chassis_private]
-
-        return neutron_agent.NeutronAgent.from_type(
-            agent_type, chassis_private)
+        return neutron_agent.AgentCache().update(agent_type, chassis_private,
+                                                 updated_at)
 
     def test_agent_alive_true(self):
+        chassis_private = self._add_chassis(5)
         for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
                            ovn_const.OVN_METADATA_AGENT):
             self.mech_driver._nb_ovn.nb_global.nb_cfg = 5
-            agent = self._add_chassis_agent(5, agent_type)
-            self.assertTrue(self.mech_driver.agent_alive(agent,
-                                                         update_db=True))
-        # Assert that each Chassis has been updated in the SB database
-        self.assertEqual(2, self.sb_ovn.db_set.call_count)
+            agent = self._add_chassis_agent(5, agent_type, chassis_private)
+            self.assertTrue(agent.alive, "Agent of type %s alive=%s" %
+                                         (agent.agent_type, agent.alive))
 
     def test_agent_alive_true_one_diff(self):
         # Agent should be reported as alive when the nb_cfg delta is 1
         # even if the last update time was old enough.
+        nb_cfg = 5
+        chassis_private = self._add_chassis(nb_cfg)
         for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
                            ovn_const.OVN_METADATA_AGENT):
-            self.mech_driver._nb_ovn.nb_global.nb_cfg = 5
+            self.mech_driver._nb_ovn.nb_global.nb_cfg = nb_cfg + 1
             now = timeutils.utcnow()
             updated_at = now - datetime.timedelta(cfg.CONF.agent_down_time + 1)
-            agent = self._add_chassis_agent(4, agent_type, updated_at)
-            self.assertTrue(self.mech_driver.agent_alive(agent,
-                                                         update_db=True))
+            agent = self._add_chassis_agent(nb_cfg, agent_type,
+                                            chassis_private, updated_at)
+            self.assertTrue(agent.alive, "Agent of type %s alive=%s" %
+                                         (agent.agent_type, agent.alive))
 
     def test_agent_alive_not_timed_out(self):
+        nb_cfg = 3
+        chassis_private = self._add_chassis(nb_cfg)
         for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
                            ovn_const.OVN_METADATA_AGENT):
-            self.mech_driver._nb_ovn.nb_global.nb_cfg = 5
-            agent = self._add_chassis_agent(3, agent_type)
-            self.assertTrue(self.mech_driver.agent_alive(
-                agent, update_db=True),
-                            "Agent type %s is not alive" % agent_type)
+            self.mech_driver._nb_ovn.nb_global.nb_cfg = nb_cfg + 2
+            agent = self._add_chassis_agent(nb_cfg, agent_type,
+                                            chassis_private)
+            self.assertTrue(agent.alive, "Agent of type %s alive=%s" %
+                                         (agent.agent_type, agent.alive))
 
     def test_agent_alive_timed_out(self):
+        nb_cfg = 3
+        chassis_private = self._add_chassis(nb_cfg)
         for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
                            ovn_const.OVN_METADATA_AGENT):
-            self.mech_driver._nb_ovn.nb_global.nb_cfg = 5
-            now = timeutils.utcnow()
+            self.mech_driver._nb_ovn.nb_global.nb_cfg = nb_cfg + 2
+            now = timeutils.utcnow(with_timezone=True)
             updated_at = now - datetime.timedelta(cfg.CONF.agent_down_time + 1)
-            agent = self._add_chassis_agent(3, agent_type, updated_at)
-            self.assertFalse(self.mech_driver.agent_alive(agent,
-                                                          update_db=True))
-
-    def test_agent_alive_true_skip_db_update(self):
-        for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
-                           ovn_const.OVN_METADATA_AGENT):
-            self.mech_driver._nb_ovn.nb_global.nb_cfg = 5
-            agent = self._add_chassis_agent(5, agent_type)
-            self.assertTrue(self.mech_driver.agent_alive(agent,
-                                                         update_db=False))
-            self.sb_ovn.db_set.assert_not_called()
+            agent = self._add_chassis_agent(nb_cfg, agent_type,
+                                            chassis_private, updated_at)
+            self.assertFalse(agent.alive, "Agent of type %s alive=%s" %
+                             (agent.agent_type, agent.alive))
 
     def _test__update_dnat_entry_if_needed(self, up=True):
         ovn_conf.cfg.CONF.set_override(

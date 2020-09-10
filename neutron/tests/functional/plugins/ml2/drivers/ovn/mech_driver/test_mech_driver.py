@@ -17,8 +17,10 @@ from unittest import mock
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
+from neutron_lib.exceptions import agent as agent_exc
 from oslo_config import cfg
 from oslo_utils import uuidutils
+from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.tests.functional import base as ovs_base
 
 from neutron.common.ovn import constants as ovn_const
@@ -744,23 +746,75 @@ class TestProvnetPorts(base.TestOVNFunctionalBase):
         self.assertIsNone(ovn_localnetport)
 
 
+class AgentWaitEvent(event.WaitEvent):
+    """Wait for a list of Chassis to be created"""
+
+    ONETIME = False
+
+    def __init__(self, driver, chassis_names):
+        table = driver.agent_chassis_table
+        events = (self.ROW_CREATE,)
+        self.chassis_names = chassis_names
+        super().__init__(events, table, None)
+        self.event_name = "AgentWaitEvent"
+
+    def match_fn(self, event, row, old):
+        return row.name in self.chassis_names
+
+    def run(self, event, row, old):
+        self.chassis_names.remove(row.name)
+        if not self.chassis_names:
+            self.event.set()
+
+
 class TestAgentApi(base.TestOVNFunctionalBase):
+    TEST_AGENT = 'test'
 
     def setUp(self):
         super().setUp()
-        self.host = 'test-host'
-        self.controller_agent = self.add_fake_chassis(self.host)
+        self.host = n_utils.get_rand_name(prefix='testhost-')
         self.plugin = self.mech_driver._plugin
-        agent = {'agent_type': 'test', 'binary': '/bin/test',
-                 'host': self.host, 'topic': 'test_topic'}
-        _, status = self.plugin.create_or_update_agent(self.context, agent)
-        self.test_agent = status['id']
         mock.patch.object(self.mech_driver, 'ping_all_chassis',
                           return_value=False).start()
 
-    def test_agent_show_non_ovn(self):
-        self.assertTrue(self.plugin.get_agent(self.context, self.test_agent))
+        metadata_agent_id = uuidutils.generate_uuid()
+        # To be *mostly* sure the agent cache has been updated, we need to
+        # wait for the Chassis events to run. So add a new event that should
+        # run afterthey do and wait for it. I've only had to do this when
+        # adding *a bunch* of Chassis at a time, but better safe than sorry.
+        chassis_name = uuidutils.generate_uuid()
+        agent_event = AgentWaitEvent(self.mech_driver, [chassis_name])
+        self.sb_api.idl.notify_handler.watch_event(agent_event)
 
-    def test_agent_show_ovn_controller(self):
-        self.assertTrue(self.plugin.get_agent(self.context,
-                                              self.controller_agent))
+        self.chassis = self.add_fake_chassis(self.host, name=chassis_name,
+            external_ids={
+                ovn_const.OVN_AGENT_METADATA_ID_KEY: metadata_agent_id})
+
+        self.assertTrue(agent_event.wait())
+
+        self.agent_types = {
+            self.TEST_AGENT: self._create_test_agent(),
+            ovn_const.OVN_CONTROLLER_AGENT: self.chassis,
+            ovn_const.OVN_METADATA_AGENT: metadata_agent_id,
+        }
+
+    def _create_test_agent(self):
+        agent = {'agent_type': self.TEST_AGENT, 'binary': '/bin/test',
+                 'host': self.host, 'topic': 'test_topic'}
+        _, status = self.plugin.create_or_update_agent(self.context, agent)
+        return status['id']
+
+    def test_agent_show(self):
+        for agent_id in self.agent_types.values():
+            self.assertTrue(self.plugin.get_agent(self.context, agent_id))
+
+    def test_agent_list(self):
+        agent_ids = [a['id'] for a in self.plugin.get_agents(
+            self.context, filters={'host': self.host})]
+        self.assertCountEqual(list(self.agent_types.values()), agent_ids)
+
+    def test_agent_delete(self):
+        for agent_id in self.agent_types.values():
+            self.plugin.delete_agent(self.context, agent_id)
+            self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
+                              self.context, agent_id)
