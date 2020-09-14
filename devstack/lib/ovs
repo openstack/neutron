@@ -17,7 +17,7 @@
 OVS_REPO=${OVS_REPO:-https://github.com/openvswitch/ovs.git}
 OVS_REPO_NAME=$(basename ${OVS_REPO} | cut -f1 -d'.')
 OVS_REPO_NAME=${OVS_REPO_NAME:-ovs}
-OVS_BRANCH=${OVS_BRANCH:-51e9479da62edb04a5be47a7655de75c299b9fa1}
+OVS_BRANCH=${OVS_BRANCH:-0047ca3a0290f1ef954f2c76b31477cf4b9755f5}
 
 # Functions
 
