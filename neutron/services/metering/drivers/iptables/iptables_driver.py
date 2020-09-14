@@ -470,9 +470,12 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
             chain_acc = rm.iptables_manager.get_traffic_counters(
                 chain, wrap=False, zero=True)
-        except RuntimeError:
-            LOG.exception('Failed to get traffic counters, '
-                          'router: %s', router)
+        except RuntimeError as e:
+            LOG.warning('Failed to get traffic counters for router [%s] due '
+                        'to [%s]. This error message can happen when routers '
+                        'are migrated; therefore, most of the times they can '
+                        'be ignored.', router, e)
+
             routers_to_reconfigure.add(router['id'])
             return {}
         return chain_acc
