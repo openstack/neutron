@@ -1457,6 +1457,38 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                               exc.HTTPBadRequest.code)
                 self.assertFalse(plugin.get_ports(context.get_admin_context()))
 
+    def test_router_add_interface_dup_port(self):
+        '''This tests that if multiple routers add one port as their
+        interfaces. Only the first router's interface would be added
+        to this port. All the later requests would return exceptions.
+        '''
+        with self.router() as r1, self.router() as r2, self.network() as n:
+            with self.subnet(network=n) as s:
+                with self.port(subnet=s) as p:
+                    self._router_interface_action('add',
+                                                  r1['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
+                    # mock out the sequential check
+                    plugin = 'neutron.db.l3_db.L3_NAT_dbonly_mixin'
+                    check_p = mock.patch(plugin + '._check_router_port',
+                                         port_id=p['port']['id'],
+                                         device_id=r2['router']['id'],
+                                         return_value=p['port'])
+                    checkport = check_p.start()
+                    # do regular checkport after first skip
+                    checkport.side_effect = check_p.stop()
+                    self._router_interface_action('add',
+                                                  r2['router']['id'],
+                                                  None,
+                                                  p['port']['id'],
+                                                  exc.HTTPConflict.code)
+                    # clean-up
+                    self._router_interface_action('remove',
+                                                  r1['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
+
     def test_update_router_interface_port_ipv6_subnet_ext_ra(self):
         use_cases = [{'msg': 'IPv6 Subnet Modes (none, slaac)',
                       'ra_mode': None,
