@@ -174,12 +174,14 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                     context, {'router': original_router})
 
     def _add_neutron_router_interface(self, context, router_id,
-                                      interface_info):
+                                      interface_info, may_exist=False):
         try:
             router_interface_info = (
                 super(OVNL3RouterPlugin, self).add_router_interface(
                     context, router_id, interface_info))
         except n_exc.PortInUse:
+            if not may_exist:
+                raise
             # NOTE(lucasagomes): If the port is already being used it means
             # the interface has been created already, let's just fetch it from
             # the database. Perhaps the code below should live in Neutron

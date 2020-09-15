@@ -262,9 +262,9 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         port = {'id': 'port-id',
                 'device_id': 'router-id'}
         self.periodic._create_lrouter_port(self.ctx, port)
-        l3_mock = self.periodic._ovn_client._l3_plugin
-        l3_mock.add_router_interface.assert_called_once_with(
-            self.ctx, port['device_id'], {'port_id': port['id']})
+        ovn_client_mock = self.periodic._ovn_client
+        ovn_client_mock.create_router_port.assert_called_once_with(
+            self.ctx, port['device_id'], mock.ANY)
 
     @mock.patch.object(maintenance.LOG, 'debug')
     def test__log_maintenance_inconsistencies(self, mock_log):
