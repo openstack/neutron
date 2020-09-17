@@ -72,6 +72,12 @@ at [1]_.
   ML2/OVN integration with the Nova placement API to provide guaranteed
   minimum bandwidth for ports [8]_.
 
+* IPv6 Prefix Delegation
+
+  Currently ML2/OVN doesn't implement IPv6 prefix delegation. OVN logical
+  routers have this capability implemented in [9]_ and we have an open RFE to
+  fill this gap [10]_.
+
 
 References
 ----------
@@ -84,3 +90,5 @@ References
 .. [6] https://docs.openstack.org/neutron/latest/admin/config-az.html
 .. [7] https://bugs.launchpad.net/neutron/+bug/1865889
 .. [8] https://specs.openstack.org/openstack/neutron-specs/specs/rocky/minimum-bandwidth-allocation-placement-api.html
+.. [9] https://patchwork.ozlabs.org/project/openvswitch/patch/6aec0fb280f610a2083fbb6c61e251b1d237b21f.1576840560.git.lorenzo.bianconi@redhat.com/
+.. [10] https://bugs.launchpad.net/neutron/+bug/1895972
