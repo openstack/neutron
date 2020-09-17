@@ -632,16 +632,6 @@ class OVNClient(object):
             admin_context, fip_db['floating_port_id'])
 
         gw_lrouter_name = utils.ovn_name(router_id)
-        # TODO(chandrav): Since the floating ip port is not
-        # bound to any chassis, packets destined to floating ip
-        # will be dropped. To overcome this, delete the floating
-        # ip port. Proper fix for this would be to redirect packets
-        # destined to floating ip to the router port. This would
-        # require changes in ovn-northd.
-        commands.append(self._nb_idl.delete_lswitch_port(
-                        fip_db['floating_port_id'],
-                        utils.ovn_name(floatingip['floating_network_id'])))
-
         ext_ids = {
             ovn_const.OVN_FIP_EXT_ID_KEY: floatingip['id'],
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(utils.get_revision_number(
