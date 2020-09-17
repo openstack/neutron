@@ -134,10 +134,17 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
         if driver.BASE_LABEL_TRAFFIC_COUNTER_KEY in key:
             other_ids, actual_label_id = key.split(
                 driver.BASE_LABEL_TRAFFIC_COUNTER_KEY)
-            is_label_shared = self.metering_labels[actual_label_id]['shared']
+
+            is_label_shared = None
+            label_name = actual_label_id
+
+            metering_label = self.metering_labels.get(actual_label_id)
+            if metering_label:
+                is_label_shared = metering_label['shared']
+                label_name = metering_label['name']
 
             data['label_id'] = actual_label_id
-            data['label_name'] = self.metering_labels[actual_label_id]['name']
+            data['label_name'] = label_name
             data['label_shared'] = is_label_shared
 
             if is_label_shared:

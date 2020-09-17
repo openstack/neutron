@@ -309,7 +309,8 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
         labels = router.get(constants.METERING_LABEL_KEY, [])
         for label in labels:
             label_id = label['id']
-            del rm.metering_labels[label_id]
+            if rm.metering_labels.get(label_id):
+                del rm.metering_labels[label_id]
 
     @log_helpers.log_method_call
     def add_metering_label(self, context, routers):
