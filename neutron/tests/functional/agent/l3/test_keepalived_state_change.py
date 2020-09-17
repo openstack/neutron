@@ -12,12 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import functools
 import os
 from unittest import mock
 
 import eventlet
-import netaddr
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import ha
@@ -110,49 +108,6 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
                 {'file_name': file_name, 'text': text, 'devices': devices,
                  'file_content': open(file_name).read()})
 
-    def test_new_fip_sends_garp(self):
-        ns_ip_wrapper = ip_lib.IPWrapper(self.router.namespace)
-        new_interface = ns_ip_wrapper.add_dummy('new_interface')
-        new_interface_cidr = '169.254.152.1/24'
-        new_interface.link.set_up()
-        new_interface.addr.add(new_interface_cidr)
-        self._generate_cmd_opts(monitor_interface='new_interface',
-                                cidr=new_interface_cidr)
-
-        self._run_monitor()
-
-        next_ip_cidr = net_helpers.increment_ip_cidr(self.machines.ip_cidr, 2)
-        expected_ip = str(netaddr.IPNetwork(next_ip_cidr).ip)
-        # Create incomplete ARP entry
-        self.peer.assert_no_ping(expected_ip)
-        # Wait for ping expiration
-        eventlet.sleep(1)
-        has_entry = has_expected_arp_entry(
-            self.peer.port.name,
-            self.peer.namespace,
-            expected_ip,
-            self.router.port.link.address)
-        self.assertFalse(has_entry)
-        self.router.port.addr.add(next_ip_cidr)
-        has_arp_entry_predicate = functools.partial(
-            has_expected_arp_entry,
-            self.peer.port.name,
-            self.peer.namespace,
-            expected_ip,
-            self.router.port.link.address,
-        )
-        exc = RuntimeError(
-            "No ARP entry in %s namespace containing IP address %s and MAC "
-            "address %s" % (
-                self.peer.namespace,
-                expected_ip,
-                self.router.port.link.address))
-        utils.wait_until_true(has_arp_entry_predicate, timeout=15,
-                              exception=exc)
-        msg = ('Sent GARP to %(cidr)s from %(device)s' %
-               {'cidr': expected_ip, 'device': self.router.port.name})
-        self._search_in_file(self.log_file, msg)
-
     def test_read_queue_change_state(self):
         self._run_monitor()
         msg = 'Wrote router %s state %s'
@@ -160,22 +115,6 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
         self._search_in_file(self.log_file, msg % (self.router_id, 'primary'))
         self.router.port.addr.delete(self.cidr)
         self._search_in_file(self.log_file, msg % (self.router_id, 'backup'))
-
-    def test_read_queue_send_garp(self):
-        self._run_monitor()
-        dev_dummy = 'dev_dummy'
-        ip_wrapper = ip_lib.IPWrapper(namespace=self.router.namespace)
-        ip_wrapper.add_dummy(dev_dummy)
-        ip_device = ip_lib.IPDevice(dev_dummy, namespace=self.router.namespace)
-        ip_device.link.set_up()
-        msg = 'Sent GARP to %(ip_address)s from %(device_name)s'
-        for idx in range(2, 20):
-            next_cidr = net_helpers.increment_ip_cidr(self.cidr, idx)
-            ip_device.addr.add(next_cidr)
-            msg_args = {'ip_address': str(netaddr.IPNetwork(next_cidr).ip),
-                        'device_name': dev_dummy}
-            self._search_in_file(self.log_file, msg % msg_args)
-            ip_device.addr.delete(next_cidr)
 
     def test_handle_initial_state_backup(self):
         # No tracked IP (self.cidr) is configured in the monitored interface
