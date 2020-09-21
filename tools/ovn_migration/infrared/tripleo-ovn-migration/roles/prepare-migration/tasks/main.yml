@@ -31,6 +31,16 @@
   set_fact:
       overcloud_deploy_ovn_script: '~/overcloud-deploy-ovn.sh'
 
+- name: Remove ml2ovs-specific environment files from overcloud deploy ovn script
+  lineinfile:
+      dest: "{{ overcloud_deploy_ovn_script }}"
+      state: absent
+      regexp: "{{ item }}"
+  with_items:
+      - "^.*openstack-tripleo-heat-templates.*ovs.*yaml"
+      - ".*neutron-sriov.yaml.*"
+  when: infrared_deployment|bool
+
 - name: Set container images environment file
   set_fact:
       output_env_file: /home/stack/container-images-ovn.yaml
