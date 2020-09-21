@@ -1212,8 +1212,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertIsNone(res_ip)
             self.assertTrue(log_error.called)
 
+    @mock.patch.object(dvr_router.DvrEdgeRouter, 'load_used_fip_information')
     @mock.patch.object(dvr_router_base.LOG, 'error')
-    def test_get_snat_port_for_internal_port_ipv6_same_port(self, log_error):
+    def test_get_snat_port_for_internal_port_ipv6_same_port(self,
+                                                            log_error,
+                                                            load_used_fips):
         router = l3_test_common.prepare_router_data(
             ip_version=lib_constants.IP_VERSION_4, enable_snat=True,
             num_internal_ports=1)
