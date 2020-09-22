@@ -189,6 +189,23 @@ class TestDvrRouterOperations(base.BaseTestCase):
     def test_create_dvr_fip_interfaces_with_address_scope_mismatch(self):
         self._setup_create_dvr_fip_interfaces_for_setting_routing_rules()
 
+    def test__get_address_scope_mark(self):
+        ri = self._create_router()
+        fake_fip_ns = mock.Mock(return_value=True)
+        fake_fip_ns.get_name = mock.Mock(return_value="fip-fakenamespace")
+        fake_fip_ns.get_int_device_name = mock.Mock(
+            return_value="fake-int-device-name")
+        ri.fip_ns = fake_fip_ns
+        ri.get_external_device_interface_name = mock.Mock(
+            return_value="fake-ext-device-name")
+        ri.get_ex_gw_port = mock.Mock(
+            return_value={"id": "fake-ext-port-id",
+                          "fixed_ips": [{"ip_address": "1.1.1.1"},
+                                        {"ip_address": "1111::1111"}]})
+
+        scope_mark = ri._get_address_scope_mark()
+        self.assertNotEqual({}, scope_mark[6])
+
     def _setup_create_dvr_fip_interfaces_for_setting_routing_rules(
             self, address_scopes_match=False):
         ri = self._create_router()

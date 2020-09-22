@@ -1103,11 +1103,15 @@ class RouterInfo(BaseRouterInfo):
             self.iptables_manager.ipv6['mangle'].add_rule(
                 'PREROUTING', mark_metadata_v6_for_internal_interfaces)
 
-    def _get_port_devicename_scopemark(self, ports, name_generator):
+    def _get_port_devicename_scopemark(
+            self, ports, name_generator, interface_name=None):
         devicename_scopemark = {lib_constants.IP_VERSION_4: dict(),
                                 lib_constants.IP_VERSION_6: dict()}
         for p in ports:
-            device_name = name_generator(p['id'])
+            if interface_name is None:
+                device_name = name_generator(p['id'])
+            else:
+                device_name = interface_name
             ip_cidrs = common_utils.fixed_ip_cidrs(p['fixed_ips'])
             port_as_marks = self.get_port_address_scope_mark(p)
             for ip_version in {common_utils.get_ip_version(cidr)

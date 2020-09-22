@@ -649,10 +649,13 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         if not ext_device_name:
             return ports_scopemark
 
-        ext_scope = self._get_external_address_scope()
-        ext_scope_mark = self.get_address_scope_mark_mask(ext_scope)
-        ports_scopemark[lib_constants.IP_VERSION_4][ext_device_name] = (
-            ext_scope_mark)
+        ext_scope_mark = self._get_port_devicename_scopemark(
+                [ext_port], self.get_internal_device_name,
+                interface_name=ext_device_name)
+        for ip_version in (lib_constants.IP_VERSION_4,
+                           lib_constants.IP_VERSION_6):
+            ports_scopemark[ip_version].update(
+                ext_scope_mark[ip_version])
         return ports_scopemark
 
     def _check_if_floatingip_bound_to_host(self, fip):
