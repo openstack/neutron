@@ -13,6 +13,8 @@
 #    under the License.
 
 
+import copy
+
 import mock
 
 import netaddr
@@ -1047,6 +1049,69 @@ class TestDNSRecords(base.TestOVNFunctionalBase):
         self._delete('ports', n1p2['port']['id'])
         self._delete('networks', nets[0]['network']['id'])
         self._validate_dns_records([])
+
+
+class TestPortExternalIds(base.TestOVNFunctionalBase):
+
+    def _get_lsp_external_id(self, port_id):
+        ovn_port = self.nb_api.lookup('Logical_Switch_Port', port_id)
+        return copy.deepcopy(ovn_port.external_ids)
+
+    def _set_lsp_external_id(self, port_id, **pairs):
+        external_ids = self._get_lsp_external_id(port_id)
+        for key, val in pairs.items():
+            external_ids[key] = val
+        self.nb_api.set_lswitch_port(lport_name=port_id,
+                                     external_ids=external_ids).execute()
+
+    def _create_lsp(self):
+        n1 = self._make_network(self.fmt, 'n1', True)
+        res = self._create_subnet(self.fmt, n1['network']['id'], '10.0.0.0/24')
+        subnet = self.deserialize(self.fmt, res)['subnet']
+        p = self._make_port(self.fmt, n1['network']['id'],
+                            fixed_ips=[{'subnet_id': subnet['id']}])
+        port_id = p['port']['id']
+        return port_id, self._get_lsp_external_id(port_id)
+
+    def test_port_update_has_ext_ids(self):
+        port_id, ext_ids = self._create_lsp()
+        self.assertIsNotNone(ext_ids)
+
+    def test_port_update_add_ext_id(self):
+        port_id, ext_ids = self._create_lsp()
+        ext_ids['another'] = 'value'
+        self._set_lsp_external_id(port_id, another='value')
+        self.assertEqual(ext_ids, self._get_lsp_external_id(port_id))
+
+    def test_port_update_change_ext_id_value(self):
+        port_id, ext_ids = self._create_lsp()
+        ext_ids['another'] = 'value'
+        self._set_lsp_external_id(port_id, another='value')
+        self.assertEqual(ext_ids, self._get_lsp_external_id(port_id))
+        ext_ids['another'] = 'value2'
+        self._set_lsp_external_id(port_id, another='value2')
+        self.assertEqual(ext_ids, self._get_lsp_external_id(port_id))
+
+    def test_port_update_with_foreign_ext_ids(self):
+        port_id, ext_ids = self._create_lsp()
+        new_ext_ids = {ovn_const.OVN_PORT_FIP_EXT_ID_KEY: '1.11.11.1',
+                       'foreign_key2': 'value1234'}
+        self._set_lsp_external_id(port_id, **new_ext_ids)
+        ext_ids.update(new_ext_ids)
+        self.assertEqual(ext_ids, self._get_lsp_external_id(port_id))
+        # invoke port update and make sure the the values we added to the
+        # external_ids remain undisturbed.
+        data = {'port': {'extra_dhcp_opts': [{'ip_version': 4,
+                                              'opt_name': 'ip-forward-enable',
+                                              'opt_value': '0'}]}}
+        port_req = self.new_update_request('ports', data, port_id)
+        port_req.get_response(self.api)
+        actual_ext_ids = self._get_lsp_external_id(port_id)
+        # update port should have not removed keys it does not use from the
+        # external ids of the lsp.
+        self.assertEqual('1.11.11.1',
+                         actual_ext_ids.get(ovn_const.OVN_PORT_FIP_EXT_ID_KEY))
+        self.assertEqual('value1234', actual_ext_ids.get('foreign_key2'))
 
 
 class TestNBDbResourcesOverTcp(TestNBDbResources):
