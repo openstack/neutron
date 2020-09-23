@@ -509,6 +509,11 @@ class OVNClient(object):
                     context, txn, port, addr_pairs_diff.removed,
                     unset=True)
 
+            # Keep key value pairs that were in the original external ids
+            # of the ovn port and we did not touch.
+            for k, v in ovn_port.external_ids.items():
+                external_ids.setdefault(k, v)
+
             # NOTE(lizk): Fail port updating if port doesn't exist. This
             # prevents any new inserted resources to be orphan, such as port
             # dhcp options or ACL rules for port, e.g. a port was created
