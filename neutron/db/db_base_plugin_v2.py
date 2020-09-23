@@ -405,7 +405,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             args = {'tenant_id': n['tenant_id'],
                     'id': n.get('id') or uuidutils.generate_uuid(),
                     'name': n['name'],
-                    'mtu': n.get('mtu', constants.DEFAULT_NETWORK_MTU),
+                    'mtu': n.get('mtu', 0),
                     'admin_state_up': n['admin_state_up'],
                     'status': n.get('status', constants.NET_STATUS_ACTIVE),
                     'description': n.get('description')}
