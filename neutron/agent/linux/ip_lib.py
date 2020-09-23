@@ -958,8 +958,8 @@ def ensure_device_is_ready(device_name, namespace=None):
         # Ensure the device has a MAC address and is up, even if it is already
         # up.
         if not dev.link.exists or not dev.link.address:
-            LOG.error("Device %s cannot be used as it has no MAC "
-                      "address", device_name)
+            LOG.info("Device %s cannot be used as it has no MAC "
+                     "address", device_name)
             return False
         dev.link.set_up()
     except RuntimeError:
