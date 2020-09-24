@@ -356,7 +356,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self._tables['Address_Set'] = self.address_set_table
         self._tables['Load_Balancer'] = self.lb_table
 
-        with mock.patch.object(impl_idl_ovn, 'get_connection',
+        with mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'from_worker',
                                return_value=mock.Mock()):
             with mock.patch.object(ovs_idl.Backend, 'autocreate_indices',
                                    create=True):
@@ -423,7 +423,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
     @mock.patch.object(ovs_idl.Backend, 'autocreate_indices', mock.Mock(),
                        create=True)
     @mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'ovsdb_connection', None)
-    @mock.patch.object(impl_idl_ovn, 'get_connection', mock.Mock())
+    @mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'from_worker', mock.Mock())
     def test_setting_ovsdb_probe_timeout_default_value(self):
         inst = impl_idl_ovn.OvsdbNbOvnIdl(mock.Mock())
         inst.idl._session.reconnect.set_probe_interval.assert_called_with(
@@ -432,7 +432,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
     @mock.patch.object(ovs_idl.Backend, 'autocreate_indices', mock.Mock(),
                        create=True)
     @mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'ovsdb_connection', None)
-    @mock.patch.object(impl_idl_ovn, 'get_connection', mock.Mock())
+    @mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'from_worker', mock.Mock())
     @mock.patch.object(ovn_conf, 'get_ovn_ovsdb_probe_interval')
     def test_setting_ovsdb_probe_timeout(self, mock_get_probe_interval):
         mock_get_probe_interval.return_value = 5000
@@ -850,7 +850,7 @@ class TestSBImplIdlOvn(TestDBImplIdlOvn):
         self._tables = {}
         self._tables['Chassis'] = self.chassis_table
 
-        with mock.patch.object(impl_idl_ovn, 'get_connection',
+        with mock.patch.object(impl_idl_ovn.OvsdbSbOvnIdl, 'from_worker',
                                return_value=mock.Mock()):
             with mock.patch.object(ovs_idl.Backend, 'autocreate_indices',
                                    create=True):
@@ -867,7 +867,7 @@ class TestSBImplIdlOvn(TestDBImplIdlOvn):
     @mock.patch.object(ovs_idl.Backend, 'autocreate_indices', mock.Mock(),
                        create=True)
     @mock.patch.object(impl_idl_ovn.OvsdbSbOvnIdl, 'ovsdb_connection', None)
-    @mock.patch.object(impl_idl_ovn, 'get_connection', mock.Mock())
+    @mock.patch.object(impl_idl_ovn.OvsdbSbOvnIdl, 'from_worker', mock.Mock())
     def test_setting_ovsdb_probe_timeout_default_value(self):
         inst = impl_idl_ovn.OvsdbSbOvnIdl(mock.Mock())
         inst.idl._session.reconnect.set_probe_interval.assert_called_with(
@@ -876,7 +876,7 @@ class TestSBImplIdlOvn(TestDBImplIdlOvn):
     @mock.patch.object(ovs_idl.Backend, 'autocreate_indices', mock.Mock(),
                        create=True)
     @mock.patch.object(impl_idl_ovn.OvsdbSbOvnIdl, 'ovsdb_connection', None)
-    @mock.patch.object(impl_idl_ovn, 'get_connection', mock.Mock())
+    @mock.patch.object(impl_idl_ovn.OvsdbSbOvnIdl, 'from_worker', mock.Mock())
     @mock.patch.object(ovn_conf, 'get_ovn_ovsdb_probe_interval')
     def test_setting_ovsdb_probe_timeout(self, mock_get_probe_interval):
         mock_get_probe_interval.return_value = 5000

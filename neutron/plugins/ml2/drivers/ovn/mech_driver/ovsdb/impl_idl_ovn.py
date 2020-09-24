@@ -33,6 +33,7 @@ from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as cfg
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import commands as cmd
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
 from neutron.services.portforwarding import constants as pf_const
 
 
@@ -123,39 +124,19 @@ class OvsdbConnectionUnavailable(n_exc.ServiceUnavailable):
 # Retry forever to get the OVN NB and SB IDLs. Wait 2^x * 1 seconds between
 # each retry, up to 'max_interval' seconds, then interval will be fixed
 # to 'max_interval' seconds afterwards. The default 'max_interval' is 180.
-def get_ovn_idls(driver, trigger, binding_events=False):
+def get_ovn_idls(driver, trigger):
     @tenacity.retry(
         wait=tenacity.wait_exponential(
             max=cfg.get_ovn_ovsdb_retry_max_interval()),
         reraise=True)
-    def get_ovn_idl_retry(cls):
+    def get_ovn_idl_retry(api_cls):
         trigger_class = utils.get_method_class(trigger)
         LOG.info('Getting %(cls)s for %(trigger)s with retry',
-                 {'cls': cls.__name__, 'trigger': trigger_class.__name__})
-        return cls(get_connection(cls, trigger, driver, binding_events))
+                 {'cls': api_cls.__name__, 'trigger': trigger_class.__name__})
+        return api_cls.from_worker(trigger_class, driver)
 
     vlog.use_python_logger(max_level=cfg.get_ovn_ovsdb_log_level())
     return tuple(get_ovn_idl_retry(c) for c in (OvsdbNbOvnIdl, OvsdbSbOvnIdl))
-
-
-def get_connection(db_class, trigger=None, driver=None, binding_events=False):
-    if db_class == OvsdbNbOvnIdl:
-        args = (cfg.get_ovn_nb_connection(), 'OVN_Northbound')
-    elif db_class == OvsdbSbOvnIdl:
-        args = (cfg.get_ovn_sb_connection(), 'OVN_Southbound')
-
-    if binding_events:
-        if db_class == OvsdbNbOvnIdl:
-            idl_ = ovsdb_monitor.OvnNbIdl.from_server(*args, driver=driver)
-        else:
-            idl_ = ovsdb_monitor.OvnSbIdl.from_server(*args, driver=driver)
-    else:
-        if db_class == OvsdbNbOvnIdl:
-            idl_ = ovsdb_monitor.BaseOvnIdl.from_server(*args)
-        else:
-            idl_ = ovsdb_monitor.BaseOvnSbIdl.from_server(*args)
-
-    return connection.Connection(idl_, timeout=cfg.get_ovn_ovsdb_timeout())
 
 
 class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
@@ -163,6 +144,16 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         super(OvsdbNbOvnIdl, self).__init__(connection)
         self.idl._session.reconnect.set_probe_interval(
             cfg.get_ovn_ovsdb_probe_interval())
+
+    @classmethod
+    def from_worker(cls, worker_class, driver=None):
+        args = (cfg.get_ovn_nb_connection(), 'OVN_Northbound')
+        if worker_class == worker.MaintenanceWorker:
+            idl_ = ovsdb_monitor.BaseOvnIdl.from_server(*args)
+        else:
+            idl_ = ovsdb_monitor.OvnNbIdl.from_server(*args, driver=driver)
+        conn = connection.Connection(idl_, timeout=cfg.get_ovn_ovsdb_timeout())
+        return cls(conn)
 
     @property
     def nb_global(self):
@@ -750,6 +741,16 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         # favor of a backend-agnostic method
         self.idl._session.reconnect.set_probe_interval(
             cfg.get_ovn_ovsdb_probe_interval())
+
+    @classmethod
+    def from_worker(cls, worker_class, driver=None):
+        args = (cfg.get_ovn_sb_connection(), 'OVN_Southbound')
+        if worker_class == worker.MaintenanceWorker:
+            idl_ = ovsdb_monitor.BaseOvnSbIdl.from_server(*args)
+        else:
+            idl_ = ovsdb_monitor.OvnSbIdl.from_server(*args, driver=driver)
+        conn = connection.Connection(idl_, timeout=cfg.get_ovn_ovsdb_timeout())
+        return cls(conn)
 
     def _get_chassis_physnets(self, chassis):
         bridge_mappings = chassis.external_ids.get('ovn-bridge-mappings', '')
