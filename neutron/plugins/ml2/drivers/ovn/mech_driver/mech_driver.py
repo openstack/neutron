@@ -233,8 +233,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             self.node_uuid = ovn_hash_ring_db.add_node(admin_context,
                                                        self.hash_ring_group)
 
-        self._nb_ovn, self._sb_ovn = impl_idl_ovn.get_ovn_idls(
-            self, trigger, binding_events=not is_maintenance)
+        self._nb_ovn, self._sb_ovn = impl_idl_ovn.get_ovn_idls(self, trigger)
 
         if self._sb_ovn.is_table_present('Chassis_Private'):
             self.agent_chassis_table = 'Chassis_Private'

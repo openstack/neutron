@@ -337,7 +337,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self._tables['DHCP_Options'] = self.dhcp_table
         self._tables['Address_Set'] = self.address_set_table
 
-        with mock.patch.object(impl_idl_ovn, 'get_connection',
+        with mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'from_worker',
                                return_value=mock.Mock()):
             impl_idl_ovn.OvsdbNbOvnIdl.ovsdb_connection = None
             self.nb_ovn_idl = impl_idl_ovn.OvsdbNbOvnIdl(mock.Mock())
