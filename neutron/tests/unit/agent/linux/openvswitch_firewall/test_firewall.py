@@ -933,6 +933,14 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         with testtools.ExpectedException(exceptions.OVSFWPortNotFound):
             self.firewall.get_ovs_port('port_id')
 
+    def test_get_ovs_port_invalid(self):
+        vif_port = ovs_lib.VifPort('name', 'ofport', 'id', 'mac', 'switch')
+        self.mock_bridge.br.get_vif_port_by_id.return_value = vif_port
+        for ofport in (ovs_lib.UNASSIGNED_OFPORT, ovs_lib.INVALID_OFPORT):
+            vif_port.ofport = ofport
+            with testtools.ExpectedException(exceptions.OVSFWPortNotFound):
+                self.firewall.get_ovs_port('port_id')
+
     def test__initialize_egress_no_port_security_sends_to_egress(self):
         self.mock_bridge.br.db_get_val.return_value = {'tag': TESTING_VLAN_TAG}
         self.firewall._initialize_egress_no_port_security('port_id')
