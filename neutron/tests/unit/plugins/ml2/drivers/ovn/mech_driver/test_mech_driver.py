@@ -50,6 +50,7 @@ from neutron.db import securitygroups_db
 from neutron.db import segments_db
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.plugins.ml2.drivers import type_geneve  # noqa
@@ -84,6 +85,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         ovn_conf.cfg.CONF.set_override('dns_servers', ['8.8.8.8'],
                                        group='ovn')
         cfg.CONF.set_override('vlan_transparent', True)
+        mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super(TestOVNMechanismDriver, self).setUp()
         mm = directory.get_plugin().mechanism_manager
         self.mech_driver = mm.mech_drivers['ovn'].obj
@@ -1954,6 +1956,7 @@ class OVNMechanismDriverTestCase(test_plugin.Ml2PluginV2TestCase):
                               ['1:65536'],
                               group='ml2_type_geneve')
         ovn_conf.cfg.CONF.set_override('dns_servers', ['8.8.8.8'], group='ovn')
+        mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super(OVNMechanismDriverTestCase, self).setUp()
         # Make sure the node and target_node for the hash ring in the
         # mechanism driver matches
@@ -2103,6 +2106,7 @@ class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
     _mechanism_drivers = ['logger', 'ovn']
 
     def setUp(self):
+        mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super(TestOVNMechanismDriverSegment, self).setUp()
         mm = directory.get_plugin().mechanism_manager
         self.mech_driver = mm.mech_drivers['ovn'].obj
@@ -2900,6 +2904,7 @@ class TestOVNMechanismDriverSecurityGroup(
                               ['logger', 'ovn'],
                               'ml2')
         cfg.CONF.set_override('dns_servers', ['8.8.8.8'], group='ovn')
+        mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super(TestOVNMechanismDriverSecurityGroup, self).setUp()
         mm = directory.get_plugin().mechanism_manager
         self.mech_driver = mm.mech_drivers['ovn'].obj
@@ -3212,6 +3217,7 @@ class TestOVNMechanismDriverMetadataPort(test_plugin.Ml2PluginV2TestCase):
     _mechanism_drivers = ['logger', 'ovn']
 
     def setUp(self):
+        mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super(TestOVNMechanismDriverMetadataPort, self).setUp()
         mm = directory.get_plugin().mechanism_manager
         self.mech_driver = mm.mech_drivers['ovn'].obj

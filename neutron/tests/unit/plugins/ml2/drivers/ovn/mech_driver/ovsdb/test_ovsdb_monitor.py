@@ -33,6 +33,7 @@ from neutron.common.ovn import hash_ring_manager
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.services.ovn_l3 import plugin  # noqa
 from neutron.tests import base
@@ -168,7 +169,9 @@ class TestOvnConnection(base.BaseTestCase):
                                idl_class, schema):
         mock_gsh.return_value = ovs_idl.SchemaHelper(
             location=schema_files[schema])
-        _idl = idl_class.from_server('punix:/tmp/fake', schema, mock.Mock())
+        impl_idl_ovn.Backend.schema = schema
+        helper = impl_idl_ovn.OvsdbNbOvnIdl.schema_helper
+        _idl = idl_class.from_server('punix:/fake', helper, mock.Mock())
         self.ovn_connection = connection.Connection(_idl, mock.Mock())
         with mock.patch.object(poller, 'Poller'), \
                 mock.patch('threading.Thread'):

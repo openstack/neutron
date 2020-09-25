@@ -19,9 +19,9 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 
 
 class OVNIdlConnectionFixture(fixtures.Fixture):
-    def __init__(self, idl=None, constr=None, schema=None, timeout=60):
+    def __init__(self, idl=None, constr=None, helper=None, timeout=60):
         self.idl = idl or ovsdb_monitor.BaseOvnIdl.from_server(
-            constr, schema)
+            constr, helper)
         self.connection = connection.Connection(
             idl=self.idl, timeout=timeout)
 

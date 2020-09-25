@@ -69,7 +69,6 @@ def config_decorator(method_to_decorate, config_tuples):
 
 class BaseLoggingTestCase(base.BaseTestCase):
     def setUp(self):
-        super(BaseLoggingTestCase, self).setUp()
         # NOTE(slaweq): Because of issue with stestr and Python3, we need
         # to avoid too much output to be produced during tests, so we will
         # ignore python warnings here
@@ -77,6 +76,8 @@ class BaseLoggingTestCase(base.BaseTestCase):
         base.setup_test_logging(
             cfg.CONF, DEFAULT_LOG_DIR, "%s.txt" % self.id())
         cfg.CONF.set_override('use_helper_for_ns_read', False, group='AGENT')
+        super().setUp()
+        warnings.simplefilter("ignore")  # warnings get reset by super
 
 
 class BaseSudoTestCase(BaseLoggingTestCase):
@@ -162,6 +163,10 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
     _counter = 0
     l3_plugin = 'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin'
 
+    def preSetUp(self):
+        self.temp_dir = self.useFixture(fixtures.TempDir()).path
+        self._start_ovsdb_server()
+
     def setUp(self, maintenance_worker=False):
         ml2_config.cfg.CONF.set_override('extension_drivers',
                                      self._extension_drivers,
@@ -178,6 +183,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         ovn_conf.cfg.CONF.set_override('api_workers', 1)
 
         self.addCleanup(exts.PluginAwareExtensionManager.clear_instance)
+        self.ovsdb_server_mgr = None
         super(TestOVNFunctionalBase, self).setUp()
         self.test_log_dir = os.path.join(DEFAULT_LOG_DIR, self.id())
         base.setup_test_logging(
@@ -191,11 +197,9 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self.pf_plugin = manager.NeutronManager.load_class_for_provider(
             'neutron.service_plugins', 'port_forwarding')()
         self.pf_plugin._rpc_notifications_required = False
-        self.ovsdb_server_mgr = None
         self.ovn_northd_mgr = None
         self.maintenance_worker = maintenance_worker
-        self.temp_dir = self.useFixture(fixtures.TempDir()).path
-        self._start_ovsdb_server_and_idls()
+        self._start_idls()
         self._start_ovn_northd()
 
     def _get_install_share_path(self):
@@ -248,7 +252,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
                               ovn_nb_db, ovn_sb_db,
                               protocol=self._ovsdb_protocol))
 
-    def _start_ovsdb_server_and_idls(self):
+    def _start_ovsdb_server(self):
         # Start 2 ovsdb-servers one each for OVN NB DB and OVN SB DB
         # ovsdb-server with OVN SB DB can be used to test the chassis up/down
         # events.
@@ -276,7 +280,9 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         cfg.CONF.set_override(
             'ovsdb_connection_timeout', 30,
             'ovn')
+        self.addCleanup(self._collect_processes_logs)
 
+    def _start_idls(self):
         class TriggerCls(mock.MagicMock):
             def trigger(self):
                 pass
@@ -288,7 +294,6 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         else:
             trigger_cls.trigger.__self__.__class__ = neutron.wsgi.WorkerService
 
-        self.addCleanup(self._collect_processes_logs)
         self.addCleanup(self.stop)
         self.mech_driver.pre_fork_initialize(
             mock.ANY, mock.ANY, trigger_cls.trigger)
@@ -333,7 +338,8 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
             self.ovn_northd_mgr.stop()
 
         self.ovsdb_server_mgr.delete_dbs()
-        self._start_ovsdb_server_and_idls()
+        self._start_ovsdb_server()
+        self._start_idls()
         self._start_ovn_northd()
 
     def add_fake_chassis(self, host, physical_nets=None, external_ids=None,
