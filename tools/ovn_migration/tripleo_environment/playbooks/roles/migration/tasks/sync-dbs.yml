@@ -1,7 +1,7 @@
 ---
 - name: Get the neutron container ID
   shell:
-    podman ps --filter "name=neutron-server-ovn" --format {% raw %}"{{.ID}}"{% endraw %}
+    podman ps --filter "name=neutron_api" --format {% raw %}"{{.ID}}"{% endraw %}
   register: neutron_id
 
 - name: Sync neutron db with OVN db (container) - Run 1
