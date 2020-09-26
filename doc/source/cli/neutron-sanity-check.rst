@@ -36,14 +36,12 @@ neutron-sanity-check usage
                                [--noovs_conntrack] [--noovs_geneve]
                                [--noovs_patch] [--noovs_vxlan] [--noovsdb_native]
                                [--noread_netns] [--nouse-syslog] [--nova_notify]
-                               [--noverbose] [--novf_extended_management]
-                               [--novf_management] [--nowatch-log-file]
+                               [--noverbose] [--nowatch-log-file]
                                [--ovs_conntrack] [--ovs_geneve] [--ovs_patch]
                                [--ovs_vxlan] [--ovsdb_native] [--read_netns]
                                [--state_path STATE_PATH]
                                [--syslog-log-facility SYSLOG_LOG_FACILITY]
                                [--use-syslog] [--verbose] [--version]
-                               [--vf_extended_management] [--vf_management]
                                [--watch-log-file]
 
 neutron-sanity-check optional arguments
@@ -200,12 +198,6 @@ neutron-sanity-check optional arguments
 ``--noverbose``
   The inverse of --verbose
 
-``--novf_extended_management``
-   The inverse of --vf_extended_management
-
-``--novf_management``
-  The inverse of --vf_management
-
 ``--nowatch-log-file``
   The inverse of --watch-log-file
 
@@ -243,12 +235,6 @@ neutron-sanity-check optional arguments
 
 ``--version``
   show program's version number and exit
-
-``--vf_extended_management``
-  Check for VF extended management support
-
-``--vf_management``
-  Check for VF management support
 
 ``--watch-log-file``
   Uses logging handler designed to watch file system.
