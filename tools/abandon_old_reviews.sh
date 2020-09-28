@@ -96,19 +96,19 @@ function unassign_and_new_bug {
 
 PROJECTS="($(
 python - <<EOF
-import urllib2
+from urllib.request import urlopen
 import yaml
 
 project = "$CLEAN_PROJECT"
-data = urllib2.urlopen("https://raw.githubusercontent.com/openstack/"
+data = urlopen("https://raw.githubusercontent.com/openstack/"
                        "governance/master/reference/projects.yaml")
 governance = yaml.safe_load(data)
 stadium = governance["neutron"]["deliverables"].keys()
 query = ["project:openstack/%s" % p for p in stadium]
 if project:
-    print project if project in query else ""
+    print(project if project in query else "")
 else:
-    print ' OR '.join(query)
+    print( ' OR '.join(query))
 EOF
 ))"
 
