@@ -1310,6 +1310,18 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
         )
 
+        # NOTE: The OUTPUT action is used instead of NORMAL action to reduce
+        # cpu utilization, but it causes the datapath rule to be flood rule.
+        # This is due to mac learning not happened on ingress traffic.
+        # While this is ok for no offload case, in ovs offload flood rule
+        # is not offloaded. Therefore, we change the action to be NORMAL in
+        # offload case. In case the explicitly_egress_direct is used the
+        # pipeline don't contain action NORMAL so we don't have flood rule
+        # issue.
+        actions = 'output:{:d}'.format(port.ofport)
+        if (self.int_br.br.is_hw_offload_enabled and
+                not cfg.CONF.AGENT.explicitly_egress_direct):
+            actions = 'mod_vlan_vid:{:d},normal'.format(port.vlan_tag)
         # Allow established and related connections
         for state in (ovsfw_consts.OF_STATE_ESTABLISHED_REPLY,
                       ovsfw_consts.OF_STATE_RELATED):
@@ -1320,7 +1332,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 ct_state=state,
                 ct_mark=ovsfw_consts.CT_MARK_NORMAL,
                 ct_zone=port.vlan_tag,
-                actions='output:{:d}'.format(port.ofport)
+                actions=actions
             )
         self._add_flow(
             table=ovs_consts.RULES_INGRESS_TABLE,
