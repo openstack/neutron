@@ -22,6 +22,8 @@ from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from neutron_lib.tests import tools
 from neutron_lib.utils import net as net_utils
+
+from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
@@ -275,6 +277,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                                  'remote_ip_prefix':
                                      net_utils.AuthenticIPNetwork(
                                          '10.0.0.0/24'),
+                                 'destination_ip_prefix': None,
+                                 'source_ip_prefix': None,
                                  'direction': 'ingress',
                                  'metering_label_id': self.uuid,
                                  'excluded': False,
@@ -293,6 +297,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                                  'remote_ip_prefix':
                                      net_utils.AuthenticIPNetwork(
                                          '10.0.0.0/24'),
+                                 'destination_ip_prefix': None,
+                                 'source_ip_prefix': None,
                                  'direction': 'ingress',
                                  'metering_label_id': self.uuid,
                                  'excluded': False,
@@ -300,17 +306,257 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                                  'id': self.uuid}],
                          'id': self.uuid}]
 
+        remote_ip_prefix = {'remote_ip_prefix': '10.0.0.0/24'}
         with self.router(tenant_id=self.tenant_id, set_context=True):
             with self.metering_label(tenant_id=self.tenant_id,
                                      set_context=True) as label:
                 la = label['metering_label']
                 self.mock_uuid.return_value = second_uuid
-                with self.metering_label_rule(la['id']):
+                with self.metering_label_rule(la['id'], **remote_ip_prefix):
                     self.mock_add_rule.assert_called_with(self.ctx,
                                                           expected_add)
                     self._delete('metering-label-rules', second_uuid)
                 self.mock_remove_rule.assert_called_with(self.ctx,
                                                          expected_del)
+
+    def test_add_and_remove_metering_label_rule_source_ip_only(self):
+        second_uuid = 'e27fe2df-376e-4ac7-ae13-92f050a21f84'
+        expected_add = [{'status': 'ACTIVE',
+                         'name': 'router1',
+                         'gw_port_id': None,
+                         'admin_state_up': True,
+                         'distributed': False,
+                         'tenant_id': self.tenant_id,
+                         '_metering_labels': [
+                             {'rule': {
+                                 'source_ip_prefix':
+                                     net_utils.AuthenticIPNetwork(
+                                         '10.0.0.0/24'),
+                                 'destination_ip_prefix': None,
+                                 'remote_ip_prefix': None,
+                                 'direction': 'ingress',
+                                 'metering_label_id': self.uuid,
+                                 'excluded': False,
+                                 'id': second_uuid},
+                              'id': self.uuid}],
+                         'id': self.uuid}]
+
+        expected_del = [{'status': 'ACTIVE',
+                         'name': 'router1',
+                         'gw_port_id': None,
+                         'admin_state_up': True,
+                         'distributed': False,
+                         'tenant_id': self.tenant_id,
+                         '_metering_labels': [
+                             {'rule': {
+                                 'source_ip_prefix':
+                                     net_utils.AuthenticIPNetwork(
+                                         '10.0.0.0/24'),
+                                 'destination_ip_prefix': None,
+                                 'remote_ip_prefix': None,
+                                 'direction': 'ingress',
+                                 'metering_label_id': self.uuid,
+                                 'excluded': False,
+                                 'id': second_uuid},
+                              'id': self.uuid}],
+                         'id': self.uuid}]
+
+        source_ip_prefix = {'source_ip_prefix': '10.0.0.0/24'}
+        with self.router(tenant_id=self.tenant_id, set_context=True):
+            with self.metering_label(tenant_id=self.tenant_id,
+                                     set_context=True) as label:
+                la = label['metering_label']
+                self.mock_uuid.return_value = second_uuid
+                with self.metering_label_rule(la['id'],
+                                              **source_ip_prefix):
+                    self.mock_add_rule.assert_called_with(self.ctx,
+                                                          expected_add)
+                    self._delete('metering-label-rules', second_uuid)
+                self.mock_remove_rule.assert_called_with(self.ctx,
+                                                         expected_del)
+
+    def test_add_and_remove_metering_label_rule_dest_ip_only(self):
+        second_uuid = 'e27fe2df-376e-4ac7-ae13-92f050a21f84'
+        expected_add = [{'status': 'ACTIVE',
+                         'name': 'router1',
+                         'gw_port_id': None,
+                         'admin_state_up': True,
+                         'distributed': False,
+                         'tenant_id': self.tenant_id,
+                         '_metering_labels': [
+                             {'rule': {
+                                 'destination_ip_prefix':
+                                     net_utils.AuthenticIPNetwork(
+                                         '10.0.0.0/24'),
+                                 'source_ip_prefix': None,
+                                 'remote_ip_prefix': None,
+                                 'direction': 'ingress',
+                                 'metering_label_id': self.uuid,
+                                 'excluded': False,
+                                 'id': second_uuid},
+                              'id': self.uuid}],
+                         'id': self.uuid}]
+
+        expected_del = [{'status': 'ACTIVE',
+                         'name': 'router1',
+                         'gw_port_id': None,
+                         'admin_state_up': True,
+                         'distributed': False,
+                         'tenant_id': self.tenant_id,
+                         '_metering_labels': [
+                             {'rule': {
+                                 'destination_ip_prefix':
+                                     net_utils.AuthenticIPNetwork(
+                                         '10.0.0.0/24'),
+                                 'source_ip_prefix': None,
+                                 'remote_ip_prefix': None,
+                                 'direction': 'ingress',
+                                 'metering_label_id': self.uuid,
+                                 'excluded': False,
+                                 'id': second_uuid},
+                              'id': self.uuid}],
+                         'id': self.uuid}]
+
+        source_ip_prefix = {'destination_ip_prefix': '10.0.0.0/24'}
+        with self.router(tenant_id=self.tenant_id, set_context=True):
+            with self.metering_label(tenant_id=self.tenant_id,
+                                     set_context=True) as label:
+                la = label['metering_label']
+                self.mock_uuid.return_value = second_uuid
+                with self.metering_label_rule(la['id'],
+                                              **source_ip_prefix):
+                    self.mock_add_rule.assert_called_with(self.ctx,
+                                                          expected_add)
+                    self._delete('metering-label-rules', second_uuid)
+                self.mock_remove_rule.assert_called_with(self.ctx,
+                                                         expected_del)
+
+    def test_add_and_remove_metering_label_rule_src_and_dest_ip_only(self):
+        second_uuid = 'e27fe2df-376e-4ac7-ae13-92f050a21f84'
+        expected_add = [{'status': 'ACTIVE',
+                         'name': 'router1',
+                         'gw_port_id': None,
+                         'admin_state_up': True,
+                         'distributed': False,
+                         'tenant_id': self.tenant_id,
+                         '_metering_labels': [
+                             {'rule': {
+                                 'destination_ip_prefix':
+                                     net_utils.AuthenticIPNetwork('0.0.0.0/0'),
+                                 'source_ip_prefix':
+                                     net_utils.AuthenticIPNetwork(
+                                         '10.0.0.0/24'),
+                                 'remote_ip_prefix': None,
+                                 'direction': 'ingress',
+                                 'metering_label_id': self.uuid,
+                                 'excluded': False,
+                                 'id': second_uuid},
+                              'id': self.uuid}],
+                         'id': self.uuid}]
+
+        expected_del = [{'status': 'ACTIVE',
+                         'name': 'router1',
+                         'gw_port_id': None,
+                         'admin_state_up': True,
+                         'distributed': False,
+                         'tenant_id': self.tenant_id,
+                         '_metering_labels': [
+                             {'rule': {
+                                 'destination_ip_prefix':
+                                     net_utils.AuthenticIPNetwork('0.0.0.0/0'),
+                                 'source_ip_prefix':
+                                     net_utils.AuthenticIPNetwork(
+                                         '10.0.0.0/24'),
+                                 'remote_ip_prefix': None,
+                                 'direction': 'ingress',
+                                 'metering_label_id': self.uuid,
+                                 'excluded': False,
+                                 'id': second_uuid},
+                              'id': self.uuid}],
+                         'id': self.uuid}]
+
+        ip_prefixes = {'source_ip_prefix': '10.0.0.0/24',
+                       'destination_ip_prefix': '00.0.0.0/0'}
+        with self.router(tenant_id=self.tenant_id, set_context=True):
+            with self.metering_label(tenant_id=self.tenant_id,
+                                     set_context=True) as label:
+                la = label['metering_label']
+                self.mock_uuid.return_value = second_uuid
+                with self.metering_label_rule(la['id'],
+                                              **ip_prefixes):
+                    self.mock_add_rule.assert_called_with(self.ctx,
+                                                          expected_add)
+                    self._delete('metering-label-rules', second_uuid)
+                self.mock_remove_rule.assert_called_with(self.ctx,
+                                                         expected_del)
+
+    def test_add_and_remove_metering_label_rule_src_and_remote_ip(self):
+        with self.router(tenant_id=self.tenant_id, set_context=True):
+            with self.metering_label(tenant_id=self.tenant_id,
+                                     set_context=True) as label:
+                la = label['metering_label']
+
+                res = self._create_metering_label_rule(
+                    self.fmt, la['id'], 'ingress', False,
+                    remote_ip_prefix='0.0.0.0/0',
+                    source_ip_prefix='10.0.0.0/24')
+
+                expected_error_code = 500
+                self.assertEqual(expected_error_code, res.status_int)
+
+                expected_error_message = "Cannot use 'remote-ip-prefix' in " \
+                                         "conjunction with " \
+                                         "'source-ip-prefix' or " \
+                                         "'destination-ip-prefix'."
+
+                self.assertEqual(
+                    expected_error_message, jsonutils.loads(res.body)[
+                        "NeutronError"]["message"])
+
+    def test_add_and_remove_metering_label_rule_dest_and_remote_ip(self):
+        with self.router(tenant_id=self.tenant_id, set_context=True):
+            with self.metering_label(tenant_id=self.tenant_id,
+                                     set_context=True) as label:
+                la = label['metering_label']
+
+                res = self._create_metering_label_rule(
+                    self.fmt, la['id'], 'ingress', False,
+                    remote_ip_prefix='0.0.0.0/0',
+                    destination_ip_prefix='8.8.8.8/32')
+
+                expected_error_code = 500
+                self.assertEqual(expected_error_code, res.status_int)
+
+                expected_error_message = "Cannot use 'remote-ip-prefix' in " \
+                                         "conjunction with " \
+                                         "'source-ip-prefix' or " \
+                                         "'destination-ip-prefix'."
+
+                self.assertEqual(
+                    expected_error_message, jsonutils.loads(res.body)[
+                        "NeutronError"]["message"])
+
+    def test_add_and_remove_metering_label_rule_no_ip_prefix_entered(self):
+        with self.router(tenant_id=self.tenant_id, set_context=True):
+            with self.metering_label(tenant_id=self.tenant_id,
+                                     set_context=True) as label:
+                la = label['metering_label']
+
+                res = self._create_metering_label_rule(
+                    self.fmt, la['id'], 'ingress', False)
+
+                expected_error_code = 500
+                self.assertEqual(expected_error_code, res.status_int)
+
+                expected_error_message = "You must define at least one of " \
+                                         "the following parameters " \
+                                         "'remote_ip_prefix', or " \
+                                         "'source_ip_prefix' or " \
+                                         "'destination_ip_prefix'."
+
+                self.assertEqual(
+                    expected_error_message, jsonutils.loads(res.body)[
+                        "NeutronError"]["message"])
 
     def test_delete_metering_label_does_not_clear_router_tenant_id(self):
         tenant_id = '654f6b9d-0f36-4ae5-bd1b-01616794ca60'

@@ -23,7 +23,8 @@ from neutron.objects import base
 @base.NeutronObjectRegistry.register
 class MeteringLabelRule(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 2.0: Source and destination field for the metering label rule
+    VERSION = '2.0'
 
     db_model = metering_models.MeteringLabelRule
 
@@ -33,6 +34,8 @@ class MeteringLabelRule(base.NeutronDbObject):
         'id': common_types.UUIDField(),
         'direction': common_types.FlowDirectionEnumField(nullable=True),
         'remote_ip_prefix': common_types.IPNetworkField(nullable=True),
+        'source_ip_prefix': common_types.IPNetworkField(nullable=True),
+        'destination_ip_prefix': common_types.IPNetworkField(nullable=True),
         'metering_label_id': common_types.UUIDField(),
         'excluded': obj_fields.BooleanField(default=False),
     }
@@ -42,18 +45,33 @@ class MeteringLabelRule(base.NeutronDbObject):
     @classmethod
     def modify_fields_from_db(cls, db_obj):
         result = super(MeteringLabelRule, cls).modify_fields_from_db(db_obj)
-        if 'remote_ip_prefix' in result:
-            result['remote_ip_prefix'] = net_utils.AuthenticIPNetwork(
-                result['remote_ip_prefix'])
+
+        cls.ip_field_from_db(result, "remote_ip_prefix")
+        cls.ip_field_from_db(result, "source_ip_prefix")
+        cls.ip_field_from_db(result, "destination_ip_prefix")
+
         return result
+
+    @classmethod
+    def ip_field_from_db(cls, result, attribute_name):
+        if attribute_name in result:
+            result[attribute_name] = net_utils.AuthenticIPNetwork(
+                result[attribute_name])
 
     @classmethod
     def modify_fields_to_db(cls, fields):
         result = super(MeteringLabelRule, cls).modify_fields_to_db(fields)
-        if 'remote_ip_prefix' in result:
-            result['remote_ip_prefix'] = cls.filter_to_str(
-                result['remote_ip_prefix'])
+
+        cls.ip_field_to_db(result, "remote_ip_prefix")
+        cls.ip_field_to_db(result, "source_ip_prefix")
+        cls.ip_field_to_db(result, "destination_ip_prefix")
+
         return result
+
+    @classmethod
+    def ip_field_to_db(cls, result, attribute_name):
+        if attribute_name in result:
+            result[attribute_name] = cls.filter_to_str(result[attribute_name])
 
 
 @base.NeutronObjectRegistry.register
