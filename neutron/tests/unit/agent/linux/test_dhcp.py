@@ -1286,6 +1286,21 @@ class TestDnsmasq(TestBase):
         def mock_get_conf_file_name(kind):
             return '/dhcp/%s/%s' % (network.id, kind)
 
+        # Empty string passed to --conf-file in dnsmasq is invalid
+        # we must force '' to '/dev/null' because the dhcp agent
+        # does the same. Therefore we allow empty string to
+        # be passed to neutron but not to dnsmasq.
+        def check_conf_file_empty(cmd_list):
+            for i in cmd_list:
+                conf_file = ''
+                value = ''
+                if i.startswith('--conf-file='):
+                    conf_file = i
+                    value = i[12:].strip()
+                    if not value:
+                        idx = cmd_list.index(conf_file)
+                        cmd_list[idx] = '--conf-file=/dev/null'
+
         # if you need to change this path here, think twice,
         # that means pid files will move around, breaking upgrades
         # or backwards-compatibility
@@ -1347,7 +1362,9 @@ class TestDnsmasq(TestBase):
             expected.append('--dhcp-option-force=option:T1,%ds' % dhcp_t1)
         if dhcp_t2:
             expected.append('--dhcp-option-force=option:T2,%ds' % dhcp_t2)
+
         expected.extend(extra_options)
+        check_conf_file_empty(expected)
 
         self.execute.return_value = ('', '')
 
