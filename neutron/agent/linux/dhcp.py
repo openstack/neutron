@@ -424,7 +424,8 @@ class Dnsmasq(DhcpLocalProcess):
             cmd.append('--dhcp-option-force=option:T2,%ds' %
                        self.conf.dhcp_rebinding_time)
 
-        cmd.append('--conf-file=%s' % self.conf.dnsmasq_config_file)
+        cmd.append('--conf-file=%s' %
+                   (self.conf.dnsmasq_config_file.strip() or '/dev/null'))
         for server in self.conf.dnsmasq_dns_servers:
             cmd.append('--server=%s' % server)
 
