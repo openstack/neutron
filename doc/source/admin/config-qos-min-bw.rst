@@ -61,6 +61,26 @@ Limitations
   effect. That is ports of the QoS policy are not yet used by Nova. Requests
   to change guarantees of in-use policies are rejected.
 
+* Changing the QoS policy of the port with new ``minimum_bandwidth`` rules
+  changes placement ``allocations`` from Victoria release.
+  If the VM was booted with port without QoS policy and ``minimum_bandwidth``
+  rules the port update succeeds but placement allocations will not change.
+  The same is true if the port has no ``binding:profile``, thus no placement
+  allocation record exists for it. But if the VM was booted with a port with
+  QoS policy and ``minimum_bandwidth`` rules the update is possible and the
+  allocations are changed in placement as well.
+
+.. note::
+
+  As it is possible to update a port to remove the QoS policy, updating it
+  back to have QoS policy with ``minimum_bandwidth`` rule will not result in
+  ``placement allocation`` record, only the dataplane enforcement will happen.
+
+.. note::
+
+  updating the ``minimum_bandwidth`` rule of a QoS policy that is attached
+  to a port which is bound to a VM is still not possible.
+
 * The first data-plane-only Guaranteed Minimum Bandwidth implementation
   (for SR-IOV egress traffic) was released in the Newton
   release of Neutron.  Because of the known lack of

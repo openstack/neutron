@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Update of an ``already bound port`` with ``QoS minimum_bandwidth`` rule
+    with new ``QoS policy`` with ``minimum_bandwidth`` rule changes the
+    allocations in placement as well. ``NOTE``: updating the
+    ``minimum_bandwidth`` rule of a QoS policy that is attached to a port
+    which is bound to a VM is still not possible.
