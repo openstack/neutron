@@ -21,7 +21,6 @@ import signal
 import sys
 import time
 
-import eventlet
 import netaddr
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.agent import topics
@@ -2168,8 +2167,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 for port in ports:
                     try:
                         self.install_accepted_egress_direct_flow(port, int_br)
-                        # give other coroutines a chance to run
-                        eventlet.sleep(0)
                     except Exception as err:
                         LOG.debug("Failed to install accepted egress flows "
                                   "for port %s, error: %s",
@@ -2380,6 +2377,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         if elapsed < self.polling_interval:
             time.sleep(self.polling_interval - elapsed)
         else:
+            time.sleep(0)
             LOG.debug("Loop iteration exceeded interval "
                       "(%(polling_interval)s vs. %(elapsed)s)!",
                       {'polling_interval': self.polling_interval,
