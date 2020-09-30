@@ -42,23 +42,23 @@ CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
    MinRtrAdvInterval {{ min_rtr_adv_interval }};
    MaxRtrAdvInterval {{ max_rtr_adv_interval }};
 
-   {% if network_mtu >= constants.IPV6_MIN_MTU %}
+   {%- if network_mtu >= constants.IPV6_MIN_MTU %}
    AdvLinkMTU {{network_mtu}};
    {% endif %}
 
-   {% if constants.DHCPV6_STATELESS in ra_modes %}
+   {%- if constants.DHCPV6_STATELESS in ra_modes %}
    AdvOtherConfigFlag on;
    {% endif %}
 
-   {% if constants.DHCPV6_STATEFUL in ra_modes %}
+   {%- if constants.DHCPV6_STATEFUL in ra_modes %}
    AdvManagedFlag on;
    {% endif %}
 
-   {% if dns_servers %}
+   {%- if dns_servers %}
    RDNSS {% for dns in dns_servers %} {{ dns }} {% endfor %} {};
    {% endif %}
 
-   {% for prefix in auto_config_prefixes %}
+   {%- for prefix in auto_config_prefixes %}
    prefix {{ prefix }}
    {
         AdvOnLink on;
@@ -66,7 +66,7 @@ CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
    };
    {% endfor %}
 
-   {% for prefix in stateful_config_prefixes %}
+   {%- for prefix in stateful_config_prefixes %}
    prefix {{ prefix }}
    {
         AdvOnLink on;
