@@ -122,9 +122,9 @@ class TestAddressGroup(AddressGroupTestCase):
         expected_ag = {'name': 'foo',
                        'description': 'bar',
                        'tenant_id': self._tenant_id,
-                       'addresses': ['10.0.1.255/28', '192.168.0.1/32']}
+                       'addresses': ['10.0.1.0/24', '192.168.0.1/32']}
         self._test_create_address_group(name='foo', description='bar',
-                                        addresses=['10.0.1.255/28',
+                                        addresses=['10.0.1.0/24',
                                                    '192.168.0.1/32'],
                                         expected=expected_ag)
 
@@ -164,11 +164,14 @@ class TestAddressGroup(AddressGroupTestCase):
         self._show('address-groups', ag['address_group']['id'],
                    expected_code=webob.exc.HTTPNotFound.code)
 
-    def test_add_valid_addresses(self):
+    def test_normalize_and_deduplicate_in_add_addresses(self):
         ag = self._test_create_address_group(name='foo')
-        data = {'addresses': ['10.0.0.1/32', '2001::/32']}
+        data = {'addresses': ['10.0.1.0/24', '10.0.1.2/24', '2001:db8::/16']}
         self._test_address_group_actions(ag['address_group']['id'], data,
-                                         'add_addresses', expected=data)
+                                         'add_addresses', expected={
+                                             'addresses': ['10.0.1.0/24',
+                                                           '2001::/16']
+                                         })
 
     def test_add_invalid_addresses(self):
         ag = self._test_create_address_group(name='foo')
@@ -179,27 +182,27 @@ class TestAddressGroup(AddressGroupTestCase):
 
     def test_add_duplicated_addresses(self):
         ag = self._test_create_address_group(name='foo',
-                                             addresses=['10.0.0.1/32'])
-        data = {'addresses': ['10.0.0.1/32']}
+                                             addresses=['10.0.1.0/24'])
+        data = {'addresses': ['10.0.1.2/24']}
         res = self._test_address_group_actions(ag['address_group']['id'],
                                                data, 'add_addresses')
         self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
-    def test_remove_valid_addresses(self):
+    def test_normalize_and_deduplicate_in_remove_addresses(self):
         ag = self._test_create_address_group(name='foo',
-                                             addresses=['10.0.0.1/32',
-                                                        '2001::/32'])
-        data = {'addresses': ['10.0.0.1/32']}
+                                             addresses=['10.0.1.0/24',
+                                                        '2001::/16'])
+        data = {'addresses': ['10.0.1.0/24', '10.0.1.2/24', '2001:db8::/16']}
         self._test_address_group_actions(ag['address_group']['id'],
                                          data, 'remove_addresses',
                                          expected={
-                                             'addresses': ['2001::/32']
+                                             'addresses': []
                                          })
 
     def test_remove_absent_addresses(self):
         ag = self._test_create_address_group(name='foo',
                                              addresses=['10.0.0.1/32'])
-        data = {'addresses': ['2001::/32']}
+        data = {'addresses': ['2001::/16']}
         res = self._test_address_group_actions(ag['address_group']['id'],
                                                data, 'remove_addresses')
         self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
