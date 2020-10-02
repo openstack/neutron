@@ -302,8 +302,6 @@ with them::
     ...
     +--------------------------------------+------+-------------------+-----------------------------------------------------------------------------------------------------+--------+
 
-    $ TEST1_PORT_ID=97c970b0-485d-47ec-868d-783c2f7acde3
-    $ TEST2_PORT_ID=e003044d-334a-4de3-96d9-35b2d2280454
 
 Now we can look at OVN using ``ovn-nbctl`` to see the logical switch ports
 that were created for these two Neutron ports.  The first part of the output
@@ -330,6 +328,7 @@ network.
 
 ::
 
+    $ TEST1_PORT_ID=$(openstack port list --server test1 -c id -f value)
     $ openstack floating ip create --port $TEST1_PORT_ID public
     +---------------------+--------------------------------------+
     | Field               | Value                                |
