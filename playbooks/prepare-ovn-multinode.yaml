@@ -1,0 +1,7 @@
+- hosts: all
+  roles:
+    # TODO(slaweq): remove it when nftables will support syntax for src and
+    # destination IP addresses in arp tables:
+    - legacy_ebtables
+    - multi-node-bridge
+    - multi-node-setup
