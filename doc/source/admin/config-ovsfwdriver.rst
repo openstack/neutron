@@ -67,3 +67,25 @@ kernel modules at boot time, for example, ``/etc/modules``. Check with your
 distribution for further information.
 
 This isn't necessary to use ``gre`` tunnel network type Neutron.
+
+Differences between OVS and iptables firewall drivers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Both OVS and iptables firewall drivers should always behave in the same way if
+the same rules are configured for the security group. But in some cases that is
+not true and there may be slight differences between those drivers.
+
++----------------------------------------+-----------------------+-----------------------+
+| Case                                   | OVS                   | iptables              |
++========================================+=======================+=======================+
+| Traffic marked as INVALID by conntrack | Blocked               | Allowed because it    |
+| but matching some of the SG rules      |                       | first matches SG rule,|
+| (please check [1]_  and [2]_           |                       | never reaches rule to |
+| for details)                           |                       | drop invalid packets  |
++----------------------------------------+-----------------------+-----------------------+
+
+References
+~~~~~~~~~~
+
+.. [1] https://bugs.launchpad.net/neutron/+bug/1460741
+.. [2] https://bugs.launchpad.net/neutron/+bug/1896587
