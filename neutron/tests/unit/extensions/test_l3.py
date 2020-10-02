@@ -4606,6 +4606,11 @@ class L3DBFloatingIpTestCaseLogging(L3BaseForSepTests, L3NatTestCaseMixin):
                         'assoc': 'associated'}
             self.mock_log.info.assert_called_once_with(l3_db.FIP_ASSOC_MSG,
                                                        msg_vars)
+            self.mock_log.reset_mock()
+
+        msg_vars['assoc'] = 'disassociated (deleted)'
+        self.mock_log.info.assert_called_once_with(l3_db.FIP_ASSOC_MSG,
+                                                   msg_vars)
 
     def test_update_floatingip_event_logging(self):
         with self.port() as port:
@@ -4624,6 +4629,11 @@ class L3DBFloatingIpTestCaseLogging(L3BaseForSepTests, L3NatTestCaseMixin):
                             'assoc': 'associated'}
                 self.mock_log.info.assert_called_once_with(l3_db.FIP_ASSOC_MSG,
                                                            msg_vars)
+                self.mock_log.reset_mock()
+
+        msg_vars['assoc'] = 'disassociated (deleted)'
+        self.mock_log.info.assert_called_once_with(l3_db.FIP_ASSOC_MSG,
+                                                   msg_vars)
 
     def test_update_floatingip_event_logging_disassociate(self):
         with self.floatingip_with_assoc() as fip:
@@ -4639,3 +4649,6 @@ class L3DBFloatingIpTestCaseLogging(L3BaseForSepTests, L3NatTestCaseMixin):
                         'assoc': 'disassociated'}
             self.mock_log.info.assert_called_once_with(l3_db.FIP_ASSOC_MSG,
                                                        msg_vars)
+            self.mock_log.reset_mock()
+
+        self.mock_log.assert_not_called()

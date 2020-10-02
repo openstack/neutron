@@ -1483,6 +1483,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                       l3_port_check=False)
         registry.notify(resources.FLOATING_IP, events.AFTER_DELETE,
                         self, context=context, **floatingip_dict)
+        if floatingip.fixed_port_id:
+            LOG.info(FIP_ASSOC_MSG,
+                     {'fip_id': floatingip.id,
+                      'ext_ip': str(floatingip.floating_ip_address),
+                      'port_id': floatingip.fixed_port_id,
+                      'assoc': 'disassociated (deleted)'})
         return floatingip_dict
 
     @db_api.retry_if_session_inactive()
