@@ -643,7 +643,8 @@ class OVNClient(object):
                 floatingip, ovn_const.TYPE_FLOATINGIPS)),
             ovn_const.OVN_FIP_PORT_EXT_ID_KEY: floatingip['port_id'],
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: gw_lrouter_name,
-            ovn_const.OVN_FIP_EXT_MAC_KEY: port_db['mac_address']}
+            ovn_const.OVN_FIP_EXT_MAC_KEY: port_db['mac_address'],
+            ovn_const.OVN_FIP_NET_ID: floatingip['floating_network_id']}
         columns = {'type': 'dnat_and_snat',
                    'logical_ip': floatingip['fixed_ip_address'],
                    'external_ip': floatingip['floating_ip_address'],
@@ -879,7 +880,9 @@ class OVNClient(object):
 
     def create_floatingip(self, context, floatingip):
         try:
-            self._create_or_update_floatingip(floatingip)
+            with self._nb_idl.transaction(check_error=True) as txn:
+                self._create_or_update_floatingip(floatingip, txn=txn)
+                self._qos_driver.create_floatingip(txn, floatingip)
         except Exception as e:
             with excutils.save_and_reraise_exception():
                 LOG.error('Unable to create floating ip in gateway '
@@ -896,20 +899,10 @@ class OVNClient(object):
                 n_context.get_admin_context(), floatingip['id'],
                 const.FLOATINGIP_STATUS_ACTIVE)
 
-    # TODO(lucasagomes): The ``fip_object`` parameter was added to
-    # keep things backward compatible since old FIPs might not have
-    # the OVN_FIP_EXT_ID_KEY in their external_ids field. Remove it
-    # in the Rocky release.
-    def update_floatingip(self, context, floatingip, fip_object=None):
+    def update_floatingip(self, context, floatingip):
         fip_status = None
         router_id = None
         ovn_fip = self._nb_idl.get_floatingip(floatingip['id'])
-
-        if not ovn_fip and fip_object:
-            router_id = fip_object.get('router_id')
-            ovn_fip = self._nb_idl.get_floatingip_by_ips(
-                router_id, fip_object['fixed_ip_address'],
-                fip_object['floating_ip_address'])
 
         check_rev_cmd = self._nb_idl.check_revision_number(
             floatingip['id'], floatingip, ovn_const.TYPE_FLOATINGIPS)
@@ -926,6 +919,8 @@ class OVNClient(object):
                 self._create_or_update_floatingip(floatingip, txn=txn)
                 fip_status = const.FLOATINGIP_STATUS_ACTIVE
 
+            self._qos_driver.update_floatingip(txn, floatingip)
+
         if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
             db_rev.bump_revision(
                 context, floatingip, ovn_const.TYPE_FLOATINGIPS)
@@ -934,26 +929,20 @@ class OVNClient(object):
             self._l3_plugin.update_floatingip_status(
                 context, floatingip['id'], fip_status)
 
-    # TODO(lucasagomes): The ``fip_object`` parameter was added to
-    # keep things backward compatible since old FIPs might not have
-    # the OVN_FIP_EXT_ID_KEY in their external_ids field. Remove it
-    # in the Rocky release.
-    def delete_floatingip(self, context, fip_id, fip_object=None):
+    def delete_floatingip(self, context, fip_id):
         router_id = None
         ovn_fip = self._nb_idl.get_floatingip(fip_id)
-
-        if not ovn_fip and fip_object:
-            router_id = fip_object.get('router_id')
-            ovn_fip = self._nb_idl.get_floatingip_by_ips(
-                router_id, fip_object['fixed_ip_address'],
-                fip_object['floating_ip_address'])
 
         if ovn_fip:
             lrouter = ovn_fip['external_ids'].get(
                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY,
                 utils.ovn_name(router_id))
+            fip_net_id = ovn_fip['external_ids'].get(ovn_const.OVN_FIP_NET_ID)
+            fip_dict = {'floating_network_id': fip_net_id, 'id': fip_id}
             try:
-                self._delete_floatingip(ovn_fip, lrouter)
+                with self._nb_idl.transaction(check_error=True) as txn:
+                    self._delete_floatingip(ovn_fip, lrouter, txn=txn)
+                    self._qos_driver.delete_floatingip(txn, fip_dict)
             except Exception as e:
                 with excutils.save_and_reraise_exception():
                     LOG.error('Unable to delete floating ip in gateway '

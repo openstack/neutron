@@ -17,6 +17,12 @@ from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import expose_port_forwarding_in_fip
 from neutron_lib.api.definitions import fip_pf_description
 from neutron_lib.api.definitions import floating_ip_port_forwarding
+from neutron_lib.api.definitions import port_resource_request
+from neutron_lib.api.definitions import qos
+from neutron_lib.api.definitions import qos_bw_limit_direction
+from neutron_lib.api.definitions import qos_default
+from neutron_lib.api.definitions import qos_rule_type_details
+from neutron_lib.api.definitions import qos_rules_alias
 from neutron_lib.api.definitions import router_availability_zone as raz_def
 from neutron_lib.api.definitions import segment as seg_def
 
@@ -32,6 +38,7 @@ ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     'ext-gw-mode',
     'fip-port-details',
     'pagination',
+    'qos-fip',
     'sorting',
     'project-id',
     'dns-integration',
@@ -54,6 +61,12 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     'network-ip-availability',
     'port-security',
     'provider',
+    port_resource_request.ALIAS,
+    qos.ALIAS,
+    qos_bw_limit_direction.ALIAS,
+    qos_default.ALIAS,
+    qos_rule_type_details.ALIAS,
+    qos_rules_alias.ALIAS,
     'quotas',
     'rbac-address-scope',
     'rbac-policies',

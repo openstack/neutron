@@ -74,6 +74,12 @@ def ovn_lrouter_port_name(id):
     return constants.LRP_PREFIX + '%s' % id
 
 
+def ovn_cr_lrouter_port_name(_id):
+    # The name of the OVN chassisredirect lrouter port entry will be
+    # cr-lrp-<UUID>
+    return 'cr-lrp-%s' % _id
+
+
 def ovn_provnet_port_name(network_id):
     # The name of OVN lswitch provider network port entry will be
     # provnet-<Network-UUID>. The port is created for network having

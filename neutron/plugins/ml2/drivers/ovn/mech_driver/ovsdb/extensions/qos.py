@@ -19,10 +19,12 @@ from neutron.objects.qos import policy as qos_policy
 from neutron.objects.qos import rule as qos_rule
 from neutron_lib import constants
 from neutron_lib import context as n_context
+from neutron_lib.plugins import constants as plugins_const
 from neutron_lib.plugins import directory
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log as logging
 
+from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 
 
@@ -38,12 +40,19 @@ class OVNClientQosExtension(object):
         super(OVNClientQosExtension, self).__init__()
         self._driver = driver
         self._plugin_property = None
+        self._plugin_l3_property = None
 
     @property
     def _plugin(self):
         if self._plugin_property is None:
             self._plugin_property = directory.get_plugin()
         return self._plugin_property
+
+    @property
+    def _plugin_l3(self):
+        if self._plugin_l3_property is None:
+            self._plugin_l3_property = directory.get_plugin(plugins_const.L3)
+        return self._plugin_l3_property
 
     @staticmethod
     def _qos_rules(context, policy_id):
@@ -81,8 +90,25 @@ class OVNClientQosExtension(object):
                              'policy_id': policy_id})
         return qos_rules
 
+    @staticmethod
+    def _ovn_qos_rule_match(direction, port_id, ip_address):
+        if direction == constants.EGRESS_DIRECTION:
+            in_or_out = 'inport'
+            src_or_dst = 'src'
+        else:
+            in_or_out = 'outport'
+            src_or_dst = 'dst'
+
+        match = '%s == "%s"' % (in_or_out, port_id)
+        if ip_address:
+            match += (' && ip4.%s == %s && is_chassis_resident("%s")' %
+                      (src_or_dst, ip_address,
+                       utils.ovn_cr_lrouter_port_name(port_id)))
+
+        return match
+
     def _ovn_qos_rule(self, rules_direction, rules, port_id, network_id,
-                      delete=False):
+                      fip_id=None, ip_address=None, delete=False):
         """Generate an OVN QoS register based on several Neutron QoS rules
 
         A OVN QoS register can contain "bandwidth" and "action" parameters.
@@ -96,8 +122,13 @@ class OVNClientQosExtension(object):
         :param rules_direction: (string) rules direction (egress, ingress).
         :param rules: (dict) {bw_limit: {max_kbps, max_burst_kbps},
                               dscp: {dscp_mark}}
-        :param port_id: (string) port ID.
+        :param port_id: (string) port ID; for L3 floating IP bandwidth
+                        limit this is the router gateway port ID.
         :param network_id: (string) network ID.
+        :param fip_id: (string) floating IP ID, for L3 floating IP bandwidth
+                       limit.
+        :param ip_address: (string) IP address, for L3 floating IP bandwidth
+                           limit.
         :param delete: (bool) defines if this rule if going to be a partial
                        one (without any bandwidth or DSCP information) to be
                        used only as deletion rule.
@@ -108,17 +139,17 @@ class OVNClientQosExtension(object):
             return
 
         lswitch_name = utils.ovn_name(network_id)
-
-        if rules_direction == constants.EGRESS_DIRECTION:
-            direction = 'from-lport'
-            match = 'inport == "{}"'.format(port_id)
-        else:
-            direction = 'to-lport'
-            match = 'outport == "{}"'.format(port_id)
+        direction = (
+            'from-lport' if rules_direction == constants.EGRESS_DIRECTION else
+            'to-lport')
+        match = self._ovn_qos_rule_match(rules_direction, port_id, ip_address)
 
         ovn_qos_rule = {'switch': lswitch_name, 'direction': direction,
                         'priority': OVN_QOS_DEFAULT_RULE_PRIORITY,
                         'match': match}
+        if fip_id:
+            ovn_qos_rule['external_ids'] = {
+                ovn_const.OVN_FIP_EXT_ID_KEY: fip_id}
 
         if delete:
             # Any specific rule parameter is left undefined.
@@ -234,6 +265,42 @@ class OVNClientQosExtension(object):
 
         return updated_port_ids
 
+    def create_floatingip(self, txn, floatingip):
+        self.update_floatingip(txn, floatingip)
+
+    def update_floatingip(self, txn, floatingip):
+        router_id = floatingip.get('router_id')
+        qos_policy_id = floatingip.get('qos_policy_id')
+        if floatingip['floating_network_id']:
+            lswitch_name = utils.ovn_name(floatingip['floating_network_id'])
+            txn.add(self._driver._nb_idl.qos_del_ext_ids(
+                lswitch_name,
+                {ovn_const.OVN_FIP_EXT_ID_KEY: floatingip['id']}))
+
+        if not (router_id and qos_policy_id):
+            return
+
+        admin_context = n_context.get_admin_context()
+        router_db = self._plugin_l3._get_router(admin_context, router_id)
+        gw_port_id = router_db.get('gw_port_id')
+        if not gw_port_id:
+            return
+
+        qos_rules = self._qos_rules(admin_context, qos_policy_id)
+        for direction, rules in qos_rules.items():
+            ovn_rule = self._ovn_qos_rule(
+                direction, rules, gw_port_id,
+                floatingip['floating_network_id'], fip_id=floatingip['id'],
+                ip_address=floatingip['floating_ip_address'])
+            if ovn_rule:
+                txn.add(self._driver._nb_idl.qos_add(**ovn_rule))
+
+    def delete_floatingip(self, txn, floatingip):
+        self.update_floatingip(txn, floatingip)
+
+    def disassociate_floatingip(self, txn, floatingip):
+        self.delete_floatingip(txn, floatingip)
+
     def update_policy(self, context, policy):
         updated_port_ids = set([])
         bound_networks = policy.get_bound_networks()
@@ -256,3 +323,8 @@ class OVNClientQosExtension(object):
                                                filters={'id': port_ids}):
                 self.update_port(txn, port, {}, reset=True,
                                  qos_rules=qos_rules)
+
+            for fip_binding in policy.get_bound_floatingips():
+                fip = self._plugin_l3.get_floatingip(context,
+                                                     fip_binding.fip_id)
+                self.update_floatingip(txn, fip)

@@ -12,12 +12,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 from unittest import mock
 
 from neutron_lib import constants
 from neutron_lib.services.qos import constants as qos_constants
 
 from neutron.common.ovn import utils as ovn_utils
+from neutron.db import l3_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import qos as qos_extension
 from neutron.tests.functional import base
@@ -63,19 +65,32 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
         self._add_logical_switch()
         _ovn_client = _OVNClient(self.nb_api)
         self.qos_driver = qos_extension.OVNClientQosExtension(_ovn_client)
+        self.gw_port_id = 'gw_port_id'
+        self._mock_get_router = mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
+                                                  '_get_router')
+        self.mock_get_router = self._mock_get_router.start()
+        self.mock_get_router.return_value = {'gw_port_id': self.gw_port_id}
+        self._mock_qos_rules = mock.patch.object(self.qos_driver,
+                                                 '_qos_rules')
+        self.mock_qos_rules = self._mock_qos_rules.start()
+        self.fip = {'router_id': 'router_id', 'qos_policy_id': 'qos_policy_id',
+                    'floating_network_id': self.network_1,
+                    'id': 'fip_id', 'floating_ip_address': '1.2.3.4'}
 
     def _add_logical_switch(self):
         self.network_1 = 'network_1'
         with self.nb_api.transaction(check_error=True) as txn:
             txn.add(self.nb_api.ls_add(ovn_utils.ovn_name(self.network_1)))
 
-    def _check_rules(self, rules, port_id, network_id):
+    def _check_rules(self, rules, port_id, network_id, fip_id=None,
+                     ip_address=None):
         egress_ovn_rule = self.qos_driver._ovn_qos_rule(
             constants.EGRESS_DIRECTION, rules.get(constants.EGRESS_DIRECTION),
-            port_id, network_id)
+            port_id, network_id, fip_id=fip_id, ip_address=ip_address)
         ingress_ovn_rule = self.qos_driver._ovn_qos_rule(
             constants.INGRESS_DIRECTION,
-            rules.get(constants.INGRESS_DIRECTION), port_id, network_id)
+            rules.get(constants.INGRESS_DIRECTION), port_id, network_id,
+            fip_id=fip_id, ip_address=ip_address)
 
         with self.nb_api.transaction(check_error=True):
             ls = self.qos_driver._driver._nb_idl.lookup(
@@ -100,10 +115,8 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
         port = 'port1'
 
         def update_and_check(qos_rules):
-            with self.nb_api.transaction(check_error=True) as txn, \
-                    mock.patch.object(self.qos_driver,
-                                      '_qos_rules') as mock_rules:
-                mock_rules.return_value = qos_rules
+            with self.nb_api.transaction(check_error=True) as txn:
+                self.mock_qos_rules.return_value = qos_rules
                 self.qos_driver._update_port_qos_rules(
                     txn, port, self.network_1, 'qos1', None)
             self._check_rules(qos_rules, port, self.network_1)
@@ -112,3 +125,27 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
         update_and_check(QOS_RULES_2)
         update_and_check(QOS_RULES_3)
         update_and_check({})
+
+    def _update_fip_and_check(self, fip, qos_rules):
+        with self.nb_api.transaction(check_error=True) as txn:
+            self.mock_qos_rules.return_value = qos_rules
+            self.qos_driver.update_floatingip(txn, fip)
+        self._check_rules(qos_rules, self.gw_port_id, self.network_1,
+                          fip_id='fip_id', ip_address='1.2.3.4')
+
+    def test_create_floatingip(self):
+        self._update_fip_and_check(self.fip, QOS_RULES_1)
+
+    def test_update_floatingip(self):
+        fip_updated = copy.deepcopy(self.fip)
+        fip_updated['qos_policy_id'] = 'another_qos_policy'
+        self._update_fip_and_check(self.fip, QOS_RULES_1)
+        self._update_fip_and_check(fip_updated, QOS_RULES_2)
+        self._update_fip_and_check(fip_updated, QOS_RULES_3)
+        self._update_fip_and_check(fip_updated, {})
+
+    def test_delete_floatingip(self):
+        self._update_fip_and_check(self.fip, QOS_RULES_1)
+        fip_dict = {'floating_network_id': self.fip['floating_network_id'],
+                    'id': self.fip['id']}
+        self._update_fip_and_check(fip_dict, {})

@@ -20,6 +20,7 @@ from neutron.quota import resource_registry
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib.api.definitions import qos as qos_api
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -30,6 +31,7 @@ from neutron_lib.exceptions import availability_zone as az_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
+from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import excutils
 
@@ -38,7 +40,9 @@ from neutron.common.ovn import extensions
 from neutron.common.ovn import utils
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import l3_fip_port_details
+from neutron.db import l3_fip_qos
 from neutron.db import ovn_revision_numbers_db as db_rev
+from neutron.extensions import qos_fip as qos_fip_api
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.scheduler import l3_ovn_scheduler
 from neutron.services.portforwarding.drivers.ovn import driver \
@@ -56,7 +60,8 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                         l3_gwmode_db.L3_NAT_db_mixin,
                         dns_db.DNSDbMixin,
                         l3_fip_port_details.Fip_port_details_db_mixin,
-                        router_az_db.RouterAvailabilityZoneMixin):
+                        router_az_db.RouterAvailabilityZoneMixin,
+                        l3_fip_qos.FloatingQoSDbMixin):
     """Implementation of the OVN L3 Router Service Plugin.
 
     This class implements a L3 service plugin that provides
@@ -66,7 +71,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
 
     # TODO(mjozefcz): Start consuming it from neutron-lib
     # once available.
-    supported_extension_aliases = (
+    _supported_extension_aliases = (
         extensions.ML2_SUPPORTED_API_EXTENSIONS_OVN_L3)
 
     @resource_registry.tracked_resources(router=l3_models.Router,
@@ -88,6 +93,19 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         registry.subscribe(
             self.create_floatingip_precommit, resources.FLOATING_IP,
             events.PRECOMMIT_CREATE)
+
+    @staticmethod
+    def disable_qos_fip_extension_by_extension_drivers(aliases):
+        if (qos_api.ALIAS not in cfg.CONF.ml2.extension_drivers and
+                qos_fip_api.FIP_QOS_ALIAS in aliases):
+            aliases.remove(qos_fip_api.FIP_QOS_ALIAS)
+
+    @property
+    def supported_extension_aliases(self):
+        if not hasattr(self, '_aliases'):
+            self._aliases = self._supported_extension_aliases[:]
+            self.disable_qos_fip_extension_by_extension_drivers(self._aliases)
+        return self._aliases
 
     @property
     def _ovn_client(self):
@@ -242,25 +260,13 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         return fip
 
     def delete_floatingip(self, context, id):
-        # TODO(lucasagomes): Passing ``original_fip`` object as a
-        # parameter to the OVNClient's delete_floatingip() method is done
-        # for backward-compatible reasons. Remove it in the Rocky release
-        # of OpenStack.
-        original_fip = self.get_floatingip(context, id)
         super(OVNL3RouterPlugin, self).delete_floatingip(context, id)
-        self._ovn_client.delete_floatingip(context, id,
-                                           fip_object=original_fip)
+        self._ovn_client.delete_floatingip(context, id)
 
     def update_floatingip(self, context, id, floatingip):
-        # TODO(lucasagomes): Passing ``original_fip`` object as a
-        # parameter to the OVNClient's update_floatingip() method is done
-        # for backward-compatible reasons. Remove it in the Rocky release
-        # of OpenStack.
-        original_fip = self.get_floatingip(context, id)
         fip = super(OVNL3RouterPlugin, self).update_floatingip(context, id,
                                                                floatingip)
-        self._ovn_client.update_floatingip(context, fip,
-                                           fip_object=original_fip)
+        self._ovn_client.update_floatingip(context, fip)
         return fip
 
     def update_floatingip_status(self, context, floatingip_id, status):
