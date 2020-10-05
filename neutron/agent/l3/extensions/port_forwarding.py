@@ -169,7 +169,7 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
                 iptables_manager.ipv4['nat'].add_chain(chain)
             iptables_manager.ipv4['nat'].add_rule(chain, rule, tag=rule_tag)
 
-    @coordination.synchronized('port-forwarding-{namespace}')
+    @coordination.synchronized('router-lock-ns-{namespace}')
     def _process_create(self, port_forwardings, ri, interface_name, namespace,
                         iptables_manager):
         if not port_forwardings:
@@ -301,7 +301,7 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
                 context, [port_forwarding], ri, interface_name, namespace,
                 iptables_manager)
 
-    @coordination.synchronized('port-forwarding-{namespace}')
+    @coordination.synchronized('router-lock-ns-{namespace}')
     def _process_update(self, port_forwardings, iptables_manager,
                         interface_name, namespace):
         if not port_forwardings:
@@ -326,7 +326,7 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
         iptables_manager.apply()
         self._store_local(port_forwardings, events.UPDATED)
 
-    @coordination.synchronized('port-forwarding-{namespace}')
+    @coordination.synchronized('router-lock-ns-{namespace}')
     def _process_delete(self, context, port_forwardings, ri, interface_name,
                         namespace, iptables_manager):
         if not port_forwardings:
