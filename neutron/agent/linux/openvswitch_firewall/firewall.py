@@ -585,7 +585,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
     def get_ovs_port(self, port_id):
         ovs_port = self.int_br.br.get_vif_port_by_id(port_id)
-        if not ovs_port:
+        if not ovs_port or ovs_port.ofport in (ovs_lib.UNASSIGNED_OFPORT,
+                                               ovs_lib.INVALID_OFPORT):
             raise exceptions.OVSFWPortNotFound(port_id=port_id)
         return ovs_port
 
