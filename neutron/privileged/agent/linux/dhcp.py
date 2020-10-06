@@ -23,7 +23,7 @@ def dhcp_release(interface_name, ip_address, mac_address, client_id,
         cmd += ['ip', 'netns', 'exec', namespace]
     cmd += ['dhcp_release', interface_name, ip_address, mac_address]
     if client_id:
-        cmd += client_id
+        cmd.append(client_id)
     log_errors = processutils.LOG_FINAL_ERROR
     return processutils.execute(*cmd, log_errors=log_errors)
 
