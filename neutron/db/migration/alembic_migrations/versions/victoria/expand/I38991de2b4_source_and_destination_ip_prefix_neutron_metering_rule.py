@@ -14,8 +14,9 @@
 #
 
 from alembic import op
-
 import sqlalchemy as sa
+
+from neutron.db import migration
 
 """Add source and destination IP prefixes to neutron metering system
 Revision ID: I38991de2b4
@@ -27,6 +28,9 @@ Create Date: 2020-08-20 10:00:00.000000
 # revision identifiers, used by Alembic.
 revision = 'I38991de2b4'
 down_revision = '49d8622c5221'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.VICTORIA]
 
 metering_label_rules_table_name = 'meteringlabelrules'
 
