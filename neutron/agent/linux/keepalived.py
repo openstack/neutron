@@ -26,6 +26,7 @@ from oslo_utils import fileutils
 
 from neutron._i18n import _
 from neutron.agent.linux import external_process
+from neutron.cmd import runtime_checks as checks
 from neutron.common import utils
 
 VALID_STATES = ['MASTER', 'BACKUP']
@@ -37,8 +38,17 @@ KEEPALIVED_EMAIL_FROM = 'neutron@openstack.local'
 KEEPALIVED_ROUTER_ID = 'neutron'
 GARP_PRIMARY_DELAY = 60
 HEALTH_CHECK_NAME = 'ha_health_check'
+_IS_NO_TRACK_SUPPORTED = None
 
 LOG = logging.getLogger(__name__)
+
+
+def _is_keepalived_use_no_track_supported():
+    global _IS_NO_TRACK_SUPPORTED
+    if _IS_NO_TRACK_SUPPORTED is None:
+        _IS_NO_TRACK_SUPPORTED = (
+            checks.keepalived_use_no_track_support())
+    return _IS_NO_TRACK_SUPPORTED
 
 
 def get_free_range(parent_range, excluded_ranges, size=PRIMARY_VIP_RANGE_SIZE):
@@ -106,7 +116,12 @@ class KeepalivedVipAddress(object):
         if self.scope:
             result += ' scope %s' % self.scope
         if cfg.CONF.keepalived_use_no_track and not self.track:
-            result += ' no_track'
+            if _is_keepalived_use_no_track_supported():
+                result += ' no_track'
+            else:
+                LOG.warning("keepalived_use_no_track cfg option is True but "
+                            "keepalived on host seems to not support this "
+                            "option")
         return result
 
 
@@ -129,7 +144,12 @@ class KeepalivedVirtualRoute(object):
         if self.scope:
             output += ' scope %s' % self.scope
         if cfg.CONF.keepalived_use_no_track:
-            output += ' no_track'
+            if _is_keepalived_use_no_track_supported():
+                output += ' no_track'
+            else:
+                LOG.warning("keepalived_use_no_track cfg option is True but "
+                            "keepalived on host seems to not support this "
+                            "option")
         return output
 
 
