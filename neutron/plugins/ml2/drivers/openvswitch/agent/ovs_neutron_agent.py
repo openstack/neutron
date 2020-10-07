@@ -53,7 +53,6 @@ from neutron.agent.common import ip_lib
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils
-from neutron.agent import firewall as agent_firewall
 from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent.linux import xenapi_root_helper
 from neutron.agent import rpc as agent_rpc
@@ -2134,11 +2133,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     @property
     def direct_for_non_openflow_firewall(self):
-        return ((isinstance(self.sg_agent.firewall,
-                            agent_firewall.NoopFirewallDriver) or
+        return ((self.sg_agent.noopfirewall_or_firewall_disabled or
                  getattr(self.sg_agent.firewall,
-                         'OVS_HYBRID_PLUG_REQUIRED', False) or
-                 not agent_sg_rpc.is_firewall_enabled()) and
+                         'OVS_HYBRID_PLUG_REQUIRED', False)) and
                 self.conf.AGENT.explicitly_egress_direct)
 
     def install_ingress_direct_goto_flows(self):
