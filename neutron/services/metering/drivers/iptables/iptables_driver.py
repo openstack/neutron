@@ -213,6 +213,10 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
     def _add_rule_to_chain(self, ext_dev, rule, im,
                            label_chain, rules_chain):
         ipt_rule = self._prepare_rule(ext_dev, rule, label_chain)
+
+        LOG.debug("Adding IPtables rule [%s] for configurations [%s].",
+                  ipt_rule, rule)
+
         if rule['excluded']:
             im.ipv4['filter'].add_rule(rules_chain, ipt_rule,
                                        wrap=False, top=True)
@@ -223,6 +227,10 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
     def _remove_rule_from_chain(self, ext_dev, rule, im,
                                 label_chain, rules_chain):
         ipt_rule = self._prepare_rule(ext_dev, rule, label_chain)
+
+        LOG.debug("Removing IPtables rule [%s] for configurations [%s].",
+                  ipt_rule, rule)
+
         if rule['excluded']:
             im.ipv4['filter'].remove_rule(rules_chain, ipt_rule,
                                           wrap=False, top=True)
@@ -231,16 +239,43 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
                                           wrap=False, top=False)
 
     def _prepare_rule(self, ext_dev, rule, label_chain):
-        remote_ip = rule['remote_ip_prefix']
-        if rule['direction'] == 'egress':
-            dir_opt = '-s %s -o %s' % (remote_ip, ext_dev)
+        if rule.get('remote_ip_prefix'):
+            ipt_rule = IptablesMeteringDriver.\
+                prepare_source_and_destination_rule_legacy(ext_dev, rule)
         else:
-            dir_opt = '-d %s -i %s' % (remote_ip, ext_dev)
+            ipt_rule = IptablesMeteringDriver.\
+                prepare_source_and_destination_rule(ext_dev, rule)
 
         if rule['excluded']:
-            ipt_rule = '%s -j RETURN' % dir_opt
+            ipt_rule = '%s -j RETURN' % ipt_rule
         else:
-            ipt_rule = '%s -j %s' % (dir_opt, label_chain)
+            ipt_rule = '%s -j %s' % (ipt_rule, label_chain)
+        return ipt_rule
+
+    @staticmethod
+    def prepare_source_and_destination_rule(ext_dev, rule):
+        if rule['direction'] == 'egress':
+            iptables_rule = '-o %s' % ext_dev
+        else:
+            iptables_rule = '-i %s' % ext_dev
+
+        source_ip_prefix = rule.get('source_ip_prefix')
+        if source_ip_prefix:
+            iptables_rule = "-s %s %s" % (source_ip_prefix, iptables_rule)
+
+        destination_ip_prefix = rule.get('destination_ip_prefix')
+        if destination_ip_prefix:
+            iptables_rule = "-d %s %s" % (destination_ip_prefix, iptables_rule)
+
+        return iptables_rule
+
+    @staticmethod
+    def prepare_source_and_destination_rule_legacy(ext_dev, rule):
+        remote_ip = rule['remote_ip_prefix']
+        if rule['direction'] == 'egress':
+            ipt_rule = '-s %s -o %s' % (remote_ip, ext_dev)
+        else:
+            ipt_rule = '-d %s -i %s' % (remote_ip, ext_dev)
         return ipt_rule
 
     def _process_ns_specific_metering_label(self, router, ext_dev, im):
