@@ -161,32 +161,6 @@
     irrelevant-files: *irrelevant-files
 
 - job:
-    name: neutron-tempest-with-os-ken-master
-    parent: tempest-integrated-networking
-    timeout: 10800
-    required-projects:
-      - openstack/devstack-gate
-      - openstack/neutron
-      - openstack/tempest
-      - openstack/os-ken
-    vars:
-      devstack_plugins:
-        neutron: https://opendev.org/openstack/neutron.git
-
-- job:
-    name: neutron-tempest-with-neutron-lib-master
-    parent: tempest-integrated-networking
-    timeout: 10800
-    required-projects:
-      - openstack/devstack-gate
-      - openstack/neutron
-      - openstack/tempest
-      - openstack/neutron-lib
-    vars:
-      devstack_plugins:
-        neutron: https://opendev.org/openstack/neutron.git
-
-- job:
     name: neutron-tempest-with-uwsgi
     parent: tempest-integrated-networking
     description: Run neutron Tempest tests with uwsgi
@@ -285,14 +259,6 @@
         q-port-forwarding: true
 
 - job:
-    name: neutron-ovn-tempest-ovs-master
-    description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch
-    parent: neutron-ovn-base
-    vars:
-      devstack_localrc:
-        OVN_BRANCH: master
-
-- job:
     name: neutron-ovn-tempest-ovs-ipv6-only-base
     description: Base job for devstack/tempest to test Neutron with ovn driver in an IPv6-only deployment
     parent: devstack-tempest-ipv6
@@ -320,13 +286,3 @@
         OVN_BRANCH: v20.06.1
         # TODO(jlibosva): v2.13.0 is incompatible with kernel 4.15.0, sticking to commit hash until new v2.13 tag is created
         OVS_BRANCH: 51e9479da62edb04a5be47a7655de75c299b9fa1
-
-- job:
-    name: neutron-ovn-tempest-ovs-master-fedora
-    description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch and Fedora
-    parent: neutron-ovn-tempest-ovs-master
-    nodeset: devstack-single-node-fedora-latest
-    vars:
-      devstack_localrc:
-        OVN_BRANCH: master
-        OVS_BRANCH: master

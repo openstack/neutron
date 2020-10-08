@@ -73,8 +73,6 @@
             voting: false
         - neutron-ovn-tempest-slow:
             voting: false
-        - neutron-ovn-tempest-full-multinode-ovs-master:
-            voting: false
         - openstack-tox-py36:  # from openstack-python3-victoria-jobs template
             timeout: 3600
         - openstack-tox-py38:  # from openstack-python3-victoria-jobs template
@@ -105,15 +103,9 @@
         #- neutron-ovn-rally-task
         #- neutron-ovn-tripleo-ci-centos-8-containers-multinode
 
-    experimental:
-      jobs:
-        - neutron-ovn-tempest-ovs-master
-
     periodic:
       jobs:
         - neutron-functional
         - neutron-fullstack
         - neutron-tempest-postgres-full
         - neutron-tempest-mariadb-full
-        - neutron-tempest-with-os-ken-master
-        - neutron-ovn-tempest-ovs-master-fedora
