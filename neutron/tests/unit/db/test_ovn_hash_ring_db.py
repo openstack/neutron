@@ -48,7 +48,11 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
                 node = self.admin_ctx.session.query(
                     ovn_models.OVNHashRing).filter_by(
                     node_uuid=node_uuid).one()
-                # Ignore miliseconds
+            # When a record is created, the difference between "created_at" and
+            # "updated_at" should be tiny, just some microseconds.
+            if (node.updated_at - node.created_at).total_seconds() < 0.01:
+                node.updated_at = node.created_at
+            # Ignore miliseconds
             node.created_at = node.created_at.replace(microsecond=0)
             node.updated_at = node.updated_at.replace(microsecond=0)
             return node
