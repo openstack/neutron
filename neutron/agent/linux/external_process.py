@@ -115,7 +115,7 @@ class ProcessManager(MonitoredProcess):
                 if sig == '9':
                     fileutils.delete_if_exists(self.get_pid_file_name())
         elif pid:
-            LOG.debug('%{service}s process for %(uuid)s pid %(pid)d is stale, '
+            LOG.debug('%(service)s process for %(uuid)s pid %(pid)d is stale, '
                       'ignoring signal %(signal)s',
                       {'service': self.service, 'uuid': self.uuid,
                        'pid': pid, 'signal': sig})
