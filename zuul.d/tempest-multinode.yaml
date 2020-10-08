@@ -116,7 +116,7 @@
     roles:
       - zuul: zuul/zuul-jobs
       - zuul: openstack/neutron-tempest-plugin
-    pre-run: playbooks/multinode-setup.yaml
+    pre-run: playbooks/prepare-ovn-multinode.yaml
     vars:
       devstack_local_conf:
         test-config:
