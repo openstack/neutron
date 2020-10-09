@@ -982,3 +982,34 @@ class IpRouteCommandTestCase(functional_base.BaseSudoTestCase):
             self.device.route.flush(ip_version, table=table)
             routes = self.device.route.list_routes(ip_version, table=table)
             self.assertEqual([], routes)
+
+
+class IpAddrCommandTestCase(functional_base.BaseSudoTestCase):
+
+    def setUp(self):
+        super(IpAddrCommandTestCase, self).setUp()
+        self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
+        ip_lib.IPWrapper(self.namespace).add_dummy('test_device')
+        self.device = ip_lib.IPDevice('test_device', namespace=self.namespace)
+        self.device.link.set_up()
+
+    def test_list_with_scope(self):
+        scope_ip = [
+            ('global', '192.168.100.1/24'),
+            ('global', '2001:db8::1/64'),
+            ('link', '192.168.101.1/24'),
+            ('link', 'fe80::1:1/64'),
+            ('site', 'fec0:0:0:f101::1/64'),
+            ('host', '192.168.102.1/24')]
+        for scope, _ip in scope_ip:
+            self.device.addr.add(_ip, scope=scope)
+
+        devices = self.device.addr.list()
+        devices_cidr = {device['cidr'] for device in devices}
+        for scope in scope_ip:
+            self.assertIn(scope[1], devices_cidr)
+
+        for scope, _ip in scope_ip:
+            devices_filtered = self.device.addr.list(scope=scope)
+            devices_cidr = {device['cidr'] for device in devices_filtered}
+            self.assertIn(_ip, devices_cidr)
