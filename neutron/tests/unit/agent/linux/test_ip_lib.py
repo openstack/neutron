@@ -791,7 +791,7 @@ class TestIpAddrCommand(TestIPCmdBase):
         self.addr_cmd.list(scope='link')
         mock_get_dev_ip.assert_called_once_with('test_ns',
                                                 name=self.addr_cmd.name,
-                                                scope=253)
+                                                scope='link')
 
     @mock.patch.object(ip_lib, 'get_devices_with_ip')
     def test_list_to(self, mock_get_dev_ip):
