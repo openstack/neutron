@@ -45,6 +45,7 @@ from neutron.db import db_base_plugin_common as db_base
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as linuxbridge_agent
 from neutron.tests.common import base as common_base
+from neutron.tests.common import helpers
 from neutron.tests import tools
 
 LOG = logging.getLogger(__name__)
@@ -612,10 +613,18 @@ class NamespaceFixture(fixtures.Fixture):
         self.addCleanup(self.destroy)
 
     def destroy(self):
-        if self.ip_wrapper.netns.exists(self.name):
-            for pid in ip_lib.list_namespace_pids(self.name):
-                utils.kill_process(pid, signal.SIGKILL, run_as_root=True)
-            self.ip_wrapper.netns.delete(self.name)
+        # TODO(ralonsoh): once the issue in LP#1838793 is properly fixed, we
+        # can remove this workaround (TestTimer context).
+        with helpers.TestTimer(5):
+            try:
+                if self.ip_wrapper.netns.exists(self.name):
+                    for pid in ip_lib.list_namespace_pids(self.name):
+                        utils.kill_process(pid, signal.SIGKILL,
+                                           run_as_root=True)
+                    self.ip_wrapper.netns.delete(self.name)
+            except helpers.TestTimerTimeout:
+                LOG.warning('Namespace %s was not deleted due to a timeout.',
+                            self.name)
 
 
 class VethFixture(fixtures.Fixture):

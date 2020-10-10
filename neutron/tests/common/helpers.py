@@ -15,8 +15,10 @@
 import datetime
 from distutils import version
 import functools
+import math
 import os
 import random
+import signal
 
 from neutron_lib.agent import topics
 from neutron_lib import constants
@@ -229,3 +231,47 @@ def skip_if_ovs_older_than(ovs_version):
             return f(test)
         return check_ovs_and_skip
     return skip_if_bad_ovs
+
+
+class TestTimerTimeout(Exception):
+    pass
+
+
+class TestTimer(object):
+    """Timer context manager class for testing.
+
+    This class can be used inside a fixtures._fixtures.timeout.Timeout context.
+    This class will halt the timeout counter and divert temporary the fixtures
+    timeout exception. The goal of this class is to use the SIGALRM event
+    without affecting the test case timeout counter.
+    """
+    def __init__(self, timeout):
+        self._timeout = int(timeout)
+        self._old_handler = None
+        self._old_timer = None
+        self._alarm_fn = getattr(signal, 'alarm', None)
+
+    def _timeout_handler(self, *args, **kwargs):
+        raise TestTimerTimeout()
+
+    def __enter__(self):
+        self._old_handler = signal.signal(signal.SIGALRM,
+                                          self._timeout_handler)
+        self._old_timer = math.ceil(signal.getitimer(signal.ITIMER_REAL)[0])
+        if self._alarm_fn:
+            self._alarm_fn(self._timeout)
+        return self
+
+    def __exit__(self, exc, value, traceback):
+        if self._old_handler:
+            signal.signal(signal.SIGALRM, self._old_handler)
+
+        if self._old_timer == 0:
+            return
+
+        # If timer has expired, set the minimum required value (1) to activate
+        # the SIGALRM event.
+        timeout = self._old_timer - self._timeout
+        timeout = 1 if timeout <= 0 else timeout
+        if self._alarm_fn:
+            self._alarm_fn(timeout)
