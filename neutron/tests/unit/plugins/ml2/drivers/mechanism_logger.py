@@ -25,6 +25,9 @@ class LoggerMechanismDriver(api.MechanismDriver):
 
     Generally used for testing and debugging.
     """
+    def __init__(self, *args, **kwargs):
+        super(LoggerMechanismDriver, self).__init__(*args, **kwargs)
+        self._supported_extensions = set()
 
     def initialize(self):
         pass
@@ -140,3 +143,8 @@ class LoggerMechanismDriver(api.MechanismDriver):
                  "%(segments)s, candidate hosts %(hosts)s ",
                  {'segments': segments, 'hosts': candidate_hosts})
         return set()
+
+    def supported_extensions(self, extensions):
+        if self._supported_extensions:
+            return extensions & self._supported_extensions
+        return extensions

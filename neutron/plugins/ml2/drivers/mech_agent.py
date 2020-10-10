@@ -49,6 +49,7 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
         :param agent_type: Constant identifying agent type in agents_db
         :param supported_vnic_types: The binding:vnic_type values we can bind
         """
+        super(AgentMechanismDriverBase, self).__init__()
         self.agent_type = agent_type
         self.supported_vnic_types = supported_vnic_types
 

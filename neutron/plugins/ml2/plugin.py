@@ -227,7 +227,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             sg_rpc.disable_security_group_extension_by_config(aliases)
             vlantransparent._disable_extension_by_config(aliases)
             filter_validation._disable_extension_by_config(aliases)
-            self._aliases = aliases
+            self._aliases = self._filter_extensions_by_mech_driver(aliases)
         return self._aliases
 
     def __new__(cls, *args, **kwargs):
@@ -291,6 +291,17 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     raise ml2_exc.ExtensionDriverNotFound(
                         driver=extension_driver, service_plugin=service_plugin
                     )
+
+    def _filter_extensions_by_mech_driver(self, aliases):
+        """Return the supported extensions by the loaded mech drivers"""
+        if not self.mechanism_manager.ordered_mech_drivers:
+            return aliases
+
+        supported_extensions = set([])
+        for mech_driver in self.mechanism_manager.ordered_mech_drivers:
+            supported_extensions |= mech_driver.obj.supported_extensions(
+                set(aliases))
+        return list(supported_extensions)
 
     @registry.receives(resources.PORT,
                        [provisioning_blocks.PROVISIONING_COMPLETE])

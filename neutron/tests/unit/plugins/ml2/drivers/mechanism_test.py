@@ -32,6 +32,7 @@ class TestMechanismDriver(api.MechanismDriver):
     def __init__(self, *args, **kwargs):
         super(TestMechanismDriver, self).__init__(*args, **kwargs)
         self._supported_vnic_types = ('test_mechanism_driver_vnic_type', )
+        self._supported_extensions = set([])
 
     def initialize(self):
         self.bound_ports = set()
@@ -266,6 +267,11 @@ class TestMechanismDriver(api.MechanismDriver):
 
     def get_standard_device_mappings(self, agent):
         return {}
+
+    def supported_extensions(self, extensions):
+        if self._supported_extensions:
+            return extensions & self._supported_extensions
+        return extensions
 
 
 class TestMechanismDriverWithAgent(mech_agent.AgentMechanismDriverBase,
