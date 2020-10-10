@@ -20,7 +20,6 @@ from neutron.quota import resource_registry
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
-from neutron_lib.api.definitions import qos as qos_api
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -31,7 +30,6 @@ from neutron_lib.exceptions import availability_zone as az_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
-from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import excutils
 
@@ -96,8 +94,9 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
 
     @staticmethod
     def disable_qos_fip_extension_by_extension_drivers(aliases):
-        if (qos_api.ALIAS not in cfg.CONF.ml2.extension_drivers and
-                qos_fip_api.FIP_QOS_ALIAS in aliases):
+        qos_service_plugin = directory.get_plugin(plugin_constants.QOS)
+        qos_aliases = qos_fip_api.FIP_QOS_ALIAS in aliases
+        if not qos_service_plugin and qos_aliases:
             aliases.remove(qos_fip_api.FIP_QOS_ALIAS)
 
     @property
