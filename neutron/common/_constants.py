@@ -77,3 +77,8 @@ IDPOOL_SELECT_SIZE = 100
 # IP allocations being cleaned up by cascade.
 AUTO_DELETE_PORT_OWNERS = [constants.DEVICE_OWNER_DHCP,
                            constants.DEVICE_OWNER_DISTRIBUTED]
+
+# NOTE(ralonsoh): move to n-lib
+# https://www.iana.org/assignments/multicast-addresses/
+# multicast-addresses.xhtml#multicast-addresses-1
+LOCAL_NETWORK_CONTROL_BLOCK = '224.0.0.0/24'

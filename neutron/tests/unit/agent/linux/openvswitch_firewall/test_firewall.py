@@ -27,6 +27,7 @@ from neutron.agent.common import utils
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
+from neutron.common import _constants as n_const
 from neutron.conf.agent import securitygroups_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
@@ -508,7 +509,12 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             mock.call(actions='drop', priority=0,
                       table=ovs_consts.BASE_INGRESS_TABLE),
             mock.call(actions='drop', priority=0,
-                      table=ovs_consts.RULES_INGRESS_TABLE)]
+                      table=ovs_consts.RULES_INGRESS_TABLE),
+            mock.call(actions='drop', priority=0,
+                      table=ovs_consts.MCAST_INGRESS_TABLE),
+            mock.call(actions='drop', priority=0,
+                      table=ovs_consts.MCAST_RULES_INGRESS_TABLE),
+        ]
         actual_calls = self.firewall.int_br.br.add_flow.call_args_list
         self.assertEqual(expected_calls, actual_calls)
 
@@ -1045,6 +1051,29 @@ class TestOVSFirewallDriver(base.BaseTestCase):
     def test_delete_flows_for_flow_state_removed_ips_no_exp_egress(self):
         addr_to_conj = {'addr1': {8, 16, 24}}
         self._test_delete_flows_for_flow_state(addr_to_conj, False)
+
+    def test_setup_multicast_traffic(self):
+        phy_br_ofports = {1: 1, 2: 2}
+        tun_br_ofports = {constants.TYPE_GRE: {'ip': 3},
+                          constants.TYPE_VXLAN: {'ip': 4},
+                          constants.TYPE_GENEVE: {'ip': 5}}
+
+        actions1 = ''
+        for ofport in range(1, 6):
+            actions1 += 'output:%s,' % ofport
+        actions1 += 'resubmit(,%s)' % ovs_consts.MCAST_RULES_INGRESS_TABLE
+        actions2 = 'resubmit(,%s)' % ovs_consts.MCAST_RULES_INGRESS_TABLE
+
+        with mock.patch.object(self.firewall, '_add_flow') as mock_add_flow:
+            self.firewall.setup_multicast_traffic(phy_br_ofports,
+                                                  tun_br_ofports, True)
+            calls = [mock.call(table=ovs_consts.MCAST_INGRESS_TABLE,
+                               priority=70, actions=actions1),
+                     mock.call(table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
+                               priority=95, dl_type=constants.ETHERTYPE_IP,
+                               nw_dst=n_const.LOCAL_NETWORK_CONTROL_BLOCK,
+                               actions=actions2)]
+            mock_add_flow.assert_has_calls(calls)
 
 
 class TestCookieContext(base.BaseTestCase):

@@ -132,6 +132,12 @@ class SecurityGroupAgentRpc(object):
         dvr_agent.set_firewall(self.firewall)
 
     @skip_if_noopfirewall_or_firewall_disabled
+    def setup_multicast_traffic(self, phy_br_ofports, tun_br_ofports,
+                                enable_tunneling):
+        self.firewall.setup_multicast_traffic(phy_br_ofports, tun_br_ofports,
+                                              enable_tunneling)
+
+    @skip_if_noopfirewall_or_firewall_disabled
     def prepare_devices_filter(self, device_ids):
         if not device_ids:
             return
