@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2020-04-24 10:48+0000\n"
+"POT-Creation-Date: 2020-10-10 20:44+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -365,9 +365,6 @@ msgstr "Проверить на наличие поддержки Geneve OVS"
 
 msgid "Check for OVS vxlan support"
 msgstr "Проверить на наличие поддержки OVS vxlan"
-
-msgid "Check for VF management support"
-msgstr "Проверить наличия поддержки управления VF"
 
 msgid "Check for iproute2 vxlan support"
 msgstr "Проверка наличия поддержки iproute2 vxlan"
@@ -770,14 +767,6 @@ msgstr ""
 
 msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr "Существующие префиксы должны быть подмножеством новых префиксов"
-
-#, python-format
-msgid ""
-"Exit code: %(returncode)d; Stdin: %(stdin)s; Stdout: %(stdout)s; Stderr: "
-"%(stderr)s"
-msgstr ""
-"Код возврата: %(returncode)d; Stdin: %(stdin)s; Stdout: %(stdout)s; Stderr: "
-"%(stderr)s"
 
 #, python-format
 msgid "Extension %(driver)s failed."
@@ -1483,13 +1472,6 @@ msgstr ""
 "Количество правил защиты на одного арендатора. Отрицательное значение - не "
 "ограничено."
 
-msgid ""
-"Number of separate worker processes for metadata server (defaults to half of "
-"the number of CPUs)"
-msgstr ""
-"Количество отдельных процессов обработчика для сервера метаданных (значение "
-"по умолчанию: половина от количества процессоров)"
-
 msgid "Number of subnets allowed per tenant, A negative value means unlimited."
 msgstr ""
 "Количество подсетей на одного арендатора. Отрицательное значение - не "
@@ -1533,10 +1515,6 @@ msgstr ""
 
 msgid "Only remote_ip_prefix or remote_group_id may be provided."
 msgstr "Можно задать только remote_ip_prefix или remote_group_id."
-
-#, python-format
-msgid "Operation not supported on device %(dev_name)s"
-msgstr "Операция не поддерживается в устройстве %(dev_name)s"
 
 msgid ""
 "Ordered list of network_types to allocate as tenant networks. The default "
@@ -2381,18 +2359,6 @@ msgstr "имеет владельца устройства %s"
 
 msgid "in use"
 msgstr "Используется"
-
-#, python-format
-msgid "ip command failed on device %(dev_name)s: %(reason)s"
-msgstr "Не удалось выполнить команду ip на устройстве %(dev_name)s: %(reason)s"
-
-#, python-format
-msgid "ip link capability %(capability)s is not supported"
-msgstr "Функция ip link %(capability)s не поддерживается"
-
-#, python-format
-msgid "ip link command is not supported: %(reason)s"
-msgstr "Команда ip link не поддерживается: %(reason)s"
 
 msgid "ip_version must be specified in the absence of cidr and subnetpool_id"
 msgstr "ip_version должно быть указано при отсутствии cidr and subnetpool_id"

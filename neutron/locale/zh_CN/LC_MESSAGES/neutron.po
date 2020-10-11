@@ -17,7 +17,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2020-04-24 10:48+0000\n"
+"POT-Creation-Date: 2020-10-10 20:44+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -347,9 +347,6 @@ msgstr "检查 OVS Geneve 支持"
 
 msgid "Check for OVS vxlan support"
 msgstr "检查OVS vxlan支持"
-
-msgid "Check for VF management support"
-msgstr "检查 VF 管理支持"
 
 msgid "Check for iproute2 vxlan support"
 msgstr "检查 iproute2 vxlan 支持"
@@ -715,14 +712,6 @@ msgstr ""
 
 msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr "现有前缀必须是新前缀的子集"
-
-#, python-format
-msgid ""
-"Exit code: %(returncode)d; Stdin: %(stdin)s; Stdout: %(stdout)s; Stderr: "
-"%(stderr)s"
-msgstr ""
-"退出代码：%(returncode)d；Stdin：%(stdin)s；Stdout：%(stdout)s；Stderr："
-"%(stderr)s"
 
 #, python-format
 msgid "Extension %(driver)s failed."
@@ -1352,11 +1341,6 @@ msgid ""
 "unlimited."
 msgstr "每个租户允许的安全性规则数。负值表示无限。"
 
-msgid ""
-"Number of separate worker processes for metadata server (defaults to half of "
-"the number of CPUs)"
-msgstr "元数据服务器的单独工作程序进程数（缺省设置为 CPU 数目的一半）"
-
 msgid "Number of subnets allowed per tenant, A negative value means unlimited."
 msgstr "每个租户允许的子网数。负值表示无限。"
 
@@ -1392,10 +1376,6 @@ msgstr "一次仅允许为一个安全概要文件更新规则"
 
 msgid "Only remote_ip_prefix or remote_group_id may be provided."
 msgstr "只能提供 remote_ip_prefix 或 remote_group_id。"
-
-#, python-format
-msgid "Operation not supported on device %(dev_name)s"
-msgstr "操作在设备 %(dev_name)s 上不受支持"
 
 msgid ""
 "Ordered list of network_types to allocate as tenant networks. The default "
@@ -2168,18 +2148,6 @@ msgstr "具有设备所有者 %s"
 
 msgid "in use"
 msgstr "正在使用"
-
-#, python-format
-msgid "ip command failed on device %(dev_name)s: %(reason)s"
-msgstr "对设备 %(dev_name)s 执行 IP 命令失败：%(reason)s"
-
-#, python-format
-msgid "ip link capability %(capability)s is not supported"
-msgstr "IP 链接功能 %(capability)s 不受支持"
-
-#, python-format
-msgid "ip link command is not supported: %(reason)s"
-msgstr "ip 链路命令未支持: %(reason)s"
 
 msgid "ip_version must be specified in the absence of cidr and subnetpool_id"
 msgstr "在缺少 cidr 和 subnetpool_id 的情况下，必须指定 ip_version"

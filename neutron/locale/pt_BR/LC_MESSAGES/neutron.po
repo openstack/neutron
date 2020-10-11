@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2020-04-24 10:48+0000\n"
+"POT-Creation-Date: 2020-10-10 20:44+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -372,9 +372,6 @@ msgstr "Verificar suporte a OVS Geneve"
 
 msgid "Check for OVS vxlan support"
 msgstr "Verifique o suporte do vxlan do OVS"
-
-msgid "Check for VF management support"
-msgstr "Verifique o suporte de gerenciamento de VF"
 
 msgid "Check for iproute2 vxlan support"
 msgstr "Verifique o suporte do vxlan do iproute2"
@@ -783,14 +780,6 @@ msgstr ""
 
 msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr "Prefixos existentes devem ser um subconjunto dos novos prefixos"
-
-#, python-format
-msgid ""
-"Exit code: %(returncode)d; Stdin: %(stdin)s; Stdout: %(stdout)s; Stderr: "
-"%(stderr)s"
-msgstr ""
-"Código de saída: %(returncode)d; Stdin: %(stdin)s; Stdout: %(stdout)s; "
-"Stderr: %(stderr)s"
 
 #, python-format
 msgid "Extension %(driver)s failed."
@@ -1492,13 +1481,6 @@ msgstr ""
 "Número de regras de segurança permitidas por locatário. Um valor negativo "
 "significa ilimitado."
 
-msgid ""
-"Number of separate worker processes for metadata server (defaults to half of "
-"the number of CPUs)"
-msgstr ""
-"Número de processos do trabalhador separados para o servidor de metadados "
-"(padrão para metade do número de CPUs)"
-
 msgid "Number of subnets allowed per tenant, A negative value means unlimited."
 msgstr ""
 "Número de sub-redes permitidas por locatário. Um valor negativo significa "
@@ -1543,10 +1525,6 @@ msgstr "Permitido apenas atualizar regras para um perfil de segurança por vez"
 
 msgid "Only remote_ip_prefix or remote_group_id may be provided."
 msgstr "Apenas remote_ip_prefix ou remote_group_id pode ser fornecido."
-
-#, python-format
-msgid "Operation not supported on device %(dev_name)s"
-msgstr "Operação não suportada no dispositivo %(dev_name)s"
 
 msgid ""
 "Ordered list of network_types to allocate as tenant networks. The default "
@@ -2392,18 +2370,6 @@ msgstr "possui o proprietário do dispositivo %s"
 
 msgid "in use"
 msgstr "em uso"
-
-#, python-format
-msgid "ip command failed on device %(dev_name)s: %(reason)s"
-msgstr "comando ip falhou no dispositivo %(dev_name)s:%(reason)s"
-
-#, python-format
-msgid "ip link capability %(capability)s is not supported"
-msgstr "a capacidade %(capability)s de link de IP não é suportada"
-
-#, python-format
-msgid "ip link command is not supported: %(reason)s"
-msgstr "o comando de link do IP não é suportado: %(reason)s"
 
 msgid "ip_version must be specified in the absence of cidr and subnetpool_id"
 msgstr ""
