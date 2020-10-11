@@ -12,11 +12,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2020-05-03 01:59+0000\n"
+"POT-Creation-Date: 2020-10-10 20:44+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2020-04-25 10:33+0000\n"
+"PO-Revision-Date: 2020-04-25 10:32+0000\n"
 "Last-Translator: Andreas Jaeger <jaegerandi@gmail.com>\n"
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -399,9 +399,6 @@ msgstr "Auf OVS-Geneve-Unterstützung überprüfen"
 
 msgid "Check for OVS vxlan support"
 msgstr "Überprüfen Sie, ob OVS-VXLAN-Unterstützung vorliegt"
-
-msgid "Check for VF management support"
-msgstr "Überprüfen Sie, ob VF-Management unterstützt wird"
 
 msgid "Check for iproute2 vxlan support"
 msgstr "Überprüfen Sie, ob iproute2-VXLAN-Unterstützung vorliegt"
@@ -854,14 +851,6 @@ msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr "Vorhandene Präfixe müssen eine Untergruppe der neuen Präfixe sein"
 
 #, python-format
-msgid ""
-"Exit code: %(returncode)d; Stdin: %(stdin)s; Stdout: %(stdout)s; Stderr: "
-"%(stderr)s"
-msgstr ""
-"Exit-Code: %(returncode)d; Standardeingabe: %(stdin)s; Standardausgabe: "
-"%(stdout)s; Standardfehler: %(stderr)s"
-
-#, python-format
 msgid "Extension %(driver)s failed."
 msgstr "Erweiterungs-%(driver)s fehlgeschlagen."
 
@@ -1195,10 +1184,6 @@ msgstr "Ungültiges Diensteanbieterformat"
 #, python-format
 msgid "Invalid user/uid: '%s'"
 msgstr "Ungültiger Benutzer/Benutzer ID: '%s'"
-
-#, python-format
-msgid "Invalid value %(value)s for parameter %(parameter)s provided."
-msgstr "Ungültiger Wert %(value)s für Parameter '%(parameter)s' angegeben."
 
 #, python-format
 msgid ""
@@ -1634,13 +1619,6 @@ msgstr ""
 "Anzahl an zulässigen Sicherheitsregeln pro Nutzer. Ein negativer Wert "
 "bedeutet unbegrenzt."
 
-msgid ""
-"Number of separate worker processes for metadata server (defaults to half of "
-"the number of CPUs)"
-msgstr ""
-"Anzahl der separaten Worker-Prozesse für Metadatenserver (wird standardmäßig "
-"auf die Hälfte der Anzahl der CPUs festgelegt)"
-
 msgid "Number of subnets allowed per tenant, A negative value means unlimited."
 msgstr ""
 "Anzahl an zulässigen Teilnetzen pro Nutzer. Ein negativer Wert bedeutet "
@@ -1692,10 +1670,6 @@ msgstr ""
 
 msgid "Only remote_ip_prefix or remote_group_id may be provided."
 msgstr "Nur Angabe von 'remote_ip_prefix' oder 'remote_group_id' ist zulässig."
-
-#, python-format
-msgid "Operation not supported on device %(dev_name)s"
-msgstr "Operation auf Einheit %(dev_name)s nicht unterstützt"
 
 msgid ""
 "Ordered list of network_types to allocate as tenant networks. The default "
@@ -2604,18 +2578,6 @@ msgstr "hat Geräteeigentümer %s"
 
 msgid "in use"
 msgstr "im Gebrauch"
-
-#, python-format
-msgid "ip command failed on device %(dev_name)s: %(reason)s"
-msgstr "IP-Befehl fehlgeschlagen auf Einheit %(dev_name)s: %(reason)s"
-
-#, python-format
-msgid "ip link capability %(capability)s is not supported"
-msgstr "IP-Link-Fähigkeit %(capability)s wird nicht unterstützt"
-
-#, python-format
-msgid "ip link command is not supported: %(reason)s"
-msgstr "IP-Link-Befehl wird nicht unterstützt: %(reason)s"
 
 msgid "ip_version must be specified in the absence of cidr and subnetpool_id"
 msgstr ""

@@ -1,0 +1,427 @@
+# Andi Chandler <andi@gowling.com>, 2017. #zanata
+# Andi Chandler <andi@gowling.com>, 2020. #zanata
+msgid ""
+msgstr ""
+"Project-Id-Version: Neutron Release Notes\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-10-10 20:41+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2020-10-10 02:16+0000\n"
+"Last-Translator: Andi Chandler <andi@gowling.com>\n"
+"Language-Team: English (United Kingdom)\n"
+"Language: en_GB\n"
+"X-Generator: Zanata 4.3.3\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+
+msgid ""
+"**Avoid using \"prelude\" section** for individual release notes. \"prelude"
+"\" section is for general comments about the release."
+msgstr ""
+"**Avoid using \"prelude\" section** for individual release notes. \"prelude"
+"\" section is for general comments about the release."
+
+msgid ""
+"**Use one entry per section** (like \"feature\" or \"upgrade\"). All entries "
+"which belong to a same release will be merged and rendered, so there is less "
+"meaning to use multiple entries by a single topic."
+msgstr ""
+"**Use one entry per section** (like \"feature\" or \"upgrade\"). All entries "
+"which belong to a same release will be merged and rendered, so there is less "
+"meaning to use multiple entries by a single topic."
+
+msgid "10.0.0"
+msgstr "10.0.0"
+
+msgid "10.0.3"
+msgstr "10.0.3"
+
+msgid "10.0.5"
+msgstr "10.0.5"
+
+msgid "10.0.7-88"
+msgstr "10.0.7-88"
+
+msgid "11.0.0"
+msgstr "11.0.0"
+
+msgid "11.0.2"
+msgstr "11.0.2"
+
+msgid "11.0.3"
+msgstr "11.0.3"
+
+msgid "11.0.5"
+msgstr "11.0.5"
+
+msgid "11.0.6"
+msgstr "11.0.6"
+
+msgid "11.0.7"
+msgstr "11.0.7"
+
+msgid "11.0.8-45"
+msgstr "11.0.8-45"
+
+msgid "12.0.0"
+msgstr "12.0.0"
+
+msgid "12.0.1"
+msgstr "12.0.1"
+
+msgid "12.0.2"
+msgstr "12.0.2"
+
+msgid "12.0.3"
+msgstr "12.0.3"
+
+msgid "12.0.4"
+msgstr "12.0.4"
+
+msgid "12.0.6"
+msgstr "12.0.6"
+
+msgid "12.1.0"
+msgstr "12.1.0"
+
+msgid "12.1.1"
+msgstr "12.1.1"
+
+msgid "12.1.1-88"
+msgstr "12.1.1-88"
+
+msgid "13.0.0"
+msgstr "13.0.0"
+
+msgid "13.0.1"
+msgstr "13.0.1"
+
+msgid "13.0.3"
+msgstr "13.0.3"
+
+msgid "13.0.4"
+msgstr "13.0.4"
+
+msgid "13.0.5"
+msgstr "13.0.5"
+
+msgid "13.0.6"
+msgstr "13.0.6"
+
+msgid "13.0.7"
+msgstr "13.0.7"
+
+msgid "13.0.7-60"
+msgstr "13.0.7-60"
+
+msgid "14.0.0"
+msgstr "14.0.0"
+
+msgid "14.0.2"
+msgstr "14.0.2"
+
+msgid "14.0.3"
+msgstr "14.0.3"
+
+msgid "14.0.4"
+msgstr "14.0.4"
+
+msgid "14.1.0"
+msgstr "14.1.0"
+
+msgid "14.2.0"
+msgstr "14.2.0"
+
+msgid "14.3.0"
+msgstr "14.3.0"
+
+msgid "14.3.1"
+msgstr "14.3.1"
+
+msgid "14.4.0"
+msgstr "14.4.0"
+
+msgid "15.0.0"
+msgstr "15.0.0"
+
+msgid "15.0.1"
+msgstr "15.0.1"
+
+msgid "15.0.2"
+msgstr "15.0.2"
+
+msgid "15.1.0"
+msgstr "15.1.0"
+
+msgid "15.2.0"
+msgstr "15.2.0"
+
+msgid "15.3.0"
+msgstr "15.3.0"
+
+msgid "16.0.0"
+msgstr "16.0.0"
+
+msgid "16.1.0"
+msgstr "16.1.0"
+
+msgid "16.2.0"
+msgstr "16.2.0"
+
+msgid "17.0.0.0rc1"
+msgstr "17.0.0.0rc1"
+
+msgid "7.0.1"
+msgstr "7.0.1"
+
+msgid "7.0.3"
+msgstr "7.0.3"
+
+msgid "7.0.4"
+msgstr "7.0.4"
+
+msgid "7.1.0"
+msgstr "7.1.0"
+
+msgid "7.2.0"
+msgstr "7.2.0"
+
+msgid "8.0.0"
+msgstr "8.0.0"
+
+msgid "8.1.0"
+msgstr "8.1.0"
+
+msgid "8.2.0"
+msgstr "8.2.0"
+
+msgid "8.3.0"
+msgstr "8.3.0"
+
+msgid "8.4.0"
+msgstr "8.4.0"
+
+msgid "9.0.0"
+msgstr "9.0.0"
+
+msgid "9.1.0"
+msgstr "9.1.0"
+
+msgid "9.2.0"
+msgstr "9.2.0"
+
+msgid "9.4.0"
+msgstr "9.4.0"
+
+msgid "9.4.1"
+msgstr "9.4.1"
+
+msgid ""
+"A DHCP agent is assigned to an availability zone; the network will be hosted "
+"by the DHCP agent with availability zone specified by the user."
+msgstr ""
+"A DHCP agent is assigned to an availability zone; the network will be hosted "
+"by the DHCP agent with availability zone specified by the user."
+
+msgid ""
+"A change was made to the metadata proxy to not allow a user to override "
+"header values, it will now always insert the correct information and remove "
+"unnecessary fields before sending requests to the metadata agent. For more "
+"information, see bug `1865036 <https://bugs.launchpad.net/neutron/"
+"+bug/1865036>`_."
+msgstr ""
+"A change was made to the metadata proxy to not allow a user to override "
+"header values, it will now always insert the correct information and remove "
+"unnecessary fields before sending requests to the metadata agent. For more "
+"information, see bug `1865036 <https://bugs.launchpad.net/neutron/"
+"+bug/1865036>`_."
+
+msgid "A floating IP can have many ``port_forwardings``."
+msgstr "A floating IP can have many ``port_forwardings``."
+
+msgid ""
+"Avoid modifying an existing release note file even though it is related to "
+"your change. If you modify a release note file of a past release, the whole "
+"content will be shown in a latest release. The only allowed case is to "
+"update a release note in a same release."
+msgstr ""
+"Avoid modifying an existing release note file even though it is related to "
+"your change. If you modify a release note file of a past release, the whole "
+"content will be shown in a latest release. The only allowed case is to "
+"update a release note in a same release."
+
+msgid "Current Series Release Notes"
+msgstr "Current Series Release Notes"
+
+msgid ""
+"For information on how to create release notes, please consult the `reno "
+"documentation <https://docs.openstack.org/reno/latest/user/usage.html>`__."
+msgstr ""
+"For information on how to create release notes, please consult the `reno "
+"documentation <https://docs.openstack.org/reno/latest/user/usage.html>`__."
+
+msgid ""
+"If you need to update a release note of a past release, edit a corresponding "
+"release note file in a stable branch directly."
+msgstr ""
+"If you need to update a release note of a past release, edit a corresponding "
+"release note file in a stable branch directly."
+
+msgid "Liberty Series Release Notes"
+msgstr "Liberty Series Release Notes"
+
+msgid "Maintaining release notes"
+msgstr "Maintaining release notes"
+
+msgid "Mitaka Series Release Notes"
+msgstr "Mitaka Series Release Notes"
+
+msgid "Neutron Release Notes"
+msgstr "Neutron Release Notes"
+
+msgid "Neutron Release Notes Howto"
+msgstr "Neutron Release Notes Howto"
+
+msgid "Newton Series Release Notes"
+msgstr "Newton Series Release Notes"
+
+msgid "Ocata Series Release Notes"
+msgstr "Ocata Series Release Notes"
+
+msgid "Pike Series Release Notes"
+msgstr "Pike Series Release Notes"
+
+msgid "Please keep the following in your mind when you write release notes."
+msgstr "Please keep the following in your mind when you write release notes."
+
+msgid "Queens Series Release Notes"
+msgstr "Queens Series Release Notes"
+
+msgid ""
+"Release notes are a new feature for documenting new features in OpenStack "
+"projects. Background on the process, tooling, and methodology is documented "
+"in a `mailing list post by Doug Hellmann <http://lists.openstack.org/"
+"pipermail/openstack-dev/2015-November/078301.html>`_."
+msgstr ""
+"Release notes are a new feature for documenting new features in OpenStack "
+"projects. Background on the process, tooling, and methodology is documented "
+"in a `mailing list post by Doug Hellmann <http://lists.openstack.org/"
+"pipermail/openstack-dev/2015-November/078301.html>`_."
+
+msgid "Rocky Series Release Notes"
+msgstr "Rocky Series Release Notes"
+
+msgid "Stein Series Release Notes"
+msgstr "Stein Series Release Notes"
+
+msgid "Train Series Release Notes"
+msgstr "Train Series Release Notes"
+
+msgid "Ussuri Series Release Notes"
+msgstr "Ussuri Series Release Notes"
+
+msgid "Victoria Series Release Notes"
+msgstr "Victoria Series Release Notes"
+
+msgid "Writing release notes"
+msgstr "Writing release notes"
+
+msgid ""
+"max_fixed_ips_per_port has been deprecated and will be removed in the Newton "
+"or Ocata cycle depending on when all identified usecases of the options are "
+"satisfied via another quota system."
+msgstr ""
+"max_fixed_ips_per_port has been deprecated and will be removed in the Newton "
+"or Ocata cycle depending on when all identified use-cases of the options are "
+"satisfied via another quota system."
+
+msgid ""
+"max_fixed_ips_per_port has been deprecated and will be removed in the Newton "
+"or Ocata cycle depending on when all identified usecases of the options are "
+"satisfied via another quota system. If you depend on this configuration "
+"option to stop tenants from consuming IP addresses, please leave a comment "
+"on the `bug report <https://launchpad.net/bugs/1502356>`_."
+msgstr ""
+"max_fixed_ips_per_port has been deprecated and will be removed in the Newton "
+"or Ocata cycle depending on when all identified use-cases of the options are "
+"satisfied via another quota system. If you depend on this configuration "
+"option to stop tenants from consuming IP addresses, please leave a comment "
+"on the `bug report <https://launchpad.net/bugs/1502356>`_."
+
+msgid ""
+"net-mtu extension now recalculates network MTU on each network access, not "
+"just on creation. It now allows operators to tweak MTU related configuration "
+"options and see them applied to all network resources right after controller "
+"restart, both old and new."
+msgstr ""
+"net-mtu extension now recalculates network MTU on each network access, not "
+"just on creation. It now allows operators to tweak MTU related configuration "
+"options and see them applied to all network resources right after controller "
+"restart, both old and new."
+
+msgid ""
+"notification_drivers from [qos] section has been deprecated. It will be "
+"removed in a future release."
+msgstr ""
+"notification_drivers from [qos] section has been deprecated. It will be "
+"removed in a future release."
+
+msgid "oslo.messaging.notify.drivers entry points are deprecated"
+msgstr "oslo.messaging.notify.drivers entry points are deprecated"
+
+msgid "partially closes bug 1468803"
+msgstr "partially closes bug 1468803"
+
+msgid ""
+"security groups do not work in conjunction with the iptables-based firewall "
+"driver."
+msgstr ""
+"security groups do not work in conjunction with the iptables-based firewall "
+"driver."
+
+msgid ""
+"tenant_id column has been renamed to project_id. This database migration is "
+"required to be applied as offline migration."
+msgstr ""
+"tenant_id column has been renamed to project_id. This database migration is "
+"required to be applied as offline migration."
+
+msgid ""
+"the ``tos`` configuration option in vxlan group for linuxbridge is "
+"deprecated and replaced with the more precise option ``dscp``. The TOS value "
+"is made of DSCP and ECN bits. It is not possible to set the ECN value "
+"through the TOS value, and ECN is always inherited from the inner in case of "
+"tunneling."
+msgstr ""
+"the ``tos`` configuration option in VXLAN group for linuxbridge is "
+"deprecated and replaced with the more precise option ``dscp``. The TOS value "
+"is made of DSCP and ECN bits. It is not possible to set the ECN value "
+"through the TOS value, and ECN is always inherited from the inner in case of "
+"tunnelling."
+
+msgid ""
+"vhost-user reconnect is a mechanism  which allows a vhost-user frontend to "
+"reconnect to a vhost-user backend in the event the backend terminates either "
+"as a result of a graceful shutdown or a crash.  This allows a VM utilising a "
+"vhost-user interface to reconnect automatically to the backend e.g.  Open "
+"vSwitch without requiring the VM to reboot.  In this release, support was "
+"added to the neutron Open vSwitch agent and ``ml2`` driver for vhost-user "
+"reconnect."
+msgstr ""
+"vhost-user reconnect is a mechanism  which allows a vhost-user frontend to "
+"reconnect to a vhost-user backend in the event the backend terminates either "
+"as a result of a graceful shutdown or a crash.  This allows a VM utilising a "
+"vhost-user interface to reconnect automatically to the backend e.g.  Open "
+"vSwitch without requiring the VM to reboot.  In this release, support was "
+"added to the neutron Open vSwitch agent and ``ml2`` driver for vhost-user "
+"reconnect."
+
+msgid ""
+"vhost-user reconnect requires dpdk 16.07 and qemu 2.7 and openvswitch 2.6 to "
+"function. if an older qemu is used, reconnect will not be available but "
+"vhost-user will still function."
+msgstr ""
+"vhost-user reconnect requires dpdk 16.07 and QEMU 2.7 and Open vSwitch 2.6 "
+"to function. if an older QEMU is used, reconnect will not be available but "
+"vhost-user will still function."

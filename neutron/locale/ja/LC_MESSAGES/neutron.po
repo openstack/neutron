@@ -17,7 +17,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2020-04-24 10:48+0000\n"
+"POT-Creation-Date: 2020-10-10 20:44+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -377,9 +377,6 @@ msgstr "OVS Geneve サポートの検査"
 
 msgid "Check for OVS vxlan support"
 msgstr "OVS vxlan サポートの検査"
-
-msgid "Check for VF management support"
-msgstr "VF 管理サポートの検査"
 
 msgid "Check for iproute2 vxlan support"
 msgstr "iproute2 vxlan サポートの検査"
@@ -783,14 +780,6 @@ msgstr ""
 msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr ""
 "既存のプレフィックスは新規プレフィックスのサブセットでなければなりません"
-
-#, python-format
-msgid ""
-"Exit code: %(returncode)d; Stdin: %(stdin)s; Stdout: %(stdout)s; Stderr: "
-"%(stderr)s"
-msgstr ""
-"終了コード: %(returncode)d、Stdin: %(stdin)s、Stdout: %(stdout)s、Stderr: "
-"%(stderr)s"
 
 #, python-format
 msgid "Extension %(driver)s failed."
@@ -1484,12 +1473,6 @@ msgstr ""
 "テナント当たりに許可されるセキュリティールール数。負の値は無制限を意味しま"
 "す。 "
 
-msgid ""
-"Number of separate worker processes for metadata server (defaults to half of "
-"the number of CPUs)"
-msgstr ""
-"メタデータサーバーの個別のワーカープロセスの数 (デフォルト値は CPU 数の半数)"
-
 msgid "Number of subnets allowed per tenant, A negative value means unlimited."
 msgstr "テナント当たりに許可されるサブネット数。負の値は無制限を意味します。"
 
@@ -1530,10 +1513,6 @@ msgstr "一度に 1 つのセキュリティープロファイルのルールの
 
 msgid "Only remote_ip_prefix or remote_group_id may be provided."
 msgstr "remote_ip_prefix または remote_group_id のみを指定できます。"
-
-#, python-format
-msgid "Operation not supported on device %(dev_name)s"
-msgstr "デバイス %(dev_name)s でサポートされない処理"
 
 msgid ""
 "Ordered list of network_types to allocate as tenant networks. The default "
@@ -2375,18 +2354,6 @@ msgstr "デバイス所有者 %s"
 
 msgid "in use"
 msgstr "使用されています"
-
-#, python-format
-msgid "ip command failed on device %(dev_name)s: %(reason)s"
-msgstr "ip コマンドがデバイス %(dev_name)s で失敗しました: %(reason)s"
-
-#, python-format
-msgid "ip link capability %(capability)s is not supported"
-msgstr "ip リンク機能 %(capability)s はサポートされていません"
-
-#, python-format
-msgid "ip link command is not supported: %(reason)s"
-msgstr "ip リンクコマンドはサポートされていません: %(reason)s"
 
 msgid "ip_version must be specified in the absence of cidr and subnetpool_id"
 msgstr "cidr および subnetpool_id がない場合、ip_version の指定は必須です"

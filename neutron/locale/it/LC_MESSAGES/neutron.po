@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2020-04-24 10:48+0000\n"
+"POT-Creation-Date: 2020-10-10 20:44+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -367,9 +367,6 @@ msgstr "Verifica il supporto OVS Geneve"
 
 msgid "Check for OVS vxlan support"
 msgstr "Verifica il supporto OVS vxlan"
-
-msgid "Check for VF management support"
-msgstr "Verifica il supporto di gestione VF management"
 
 msgid "Check for iproute2 vxlan support"
 msgstr "Verifica il supporto iproute2 vxlan"
@@ -778,14 +775,6 @@ msgstr ""
 
 msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr "I prefissi esistenti devono essere un sottoinsieme dei nuovi prefissi"
-
-#, python-format
-msgid ""
-"Exit code: %(returncode)d; Stdin: %(stdin)s; Stdout: %(stdout)s; Stderr: "
-"%(stderr)s"
-msgstr ""
-"Codice uscita: %(returncode)d; Stdin: %(stdin)s; Stdout: %(stdout)s; Stderr: "
-"%(stderr)s"
 
 #, python-format
 msgid "Extension %(driver)s failed."
@@ -1503,13 +1492,6 @@ msgstr ""
 "Numero di regole di sicurezza consentite per tenant. Un valore negativo "
 "indica un numero illimitato."
 
-msgid ""
-"Number of separate worker processes for metadata server (defaults to half of "
-"the number of CPUs)"
-msgstr ""
-"Numero di processi worker separati per server di metadati (il valore "
-"predefinito è metà del numero di CPU)"
-
 msgid "Number of subnets allowed per tenant, A negative value means unlimited."
 msgstr ""
 "Numero di sottoreti consentite per tenant. Un valore negativo indica un "
@@ -1553,10 +1535,6 @@ msgstr ""
 
 msgid "Only remote_ip_prefix or remote_group_id may be provided."
 msgstr "È possibile fornire solo remote_ip_prefix o remote_group_id."
-
-#, python-format
-msgid "Operation not supported on device %(dev_name)s"
-msgstr "Operazione non supportata sul dispositivo %(dev_name)s"
 
 msgid ""
 "Ordered list of network_types to allocate as tenant networks. The default "
@@ -2411,18 +2389,6 @@ msgstr "ha il proprietario del dispositivo %s"
 
 msgid "in use"
 msgstr "in uso"
-
-#, python-format
-msgid "ip command failed on device %(dev_name)s: %(reason)s"
-msgstr "comando ip non riuscito sul dispositivo %(dev_name)s: %(reason)s"
-
-#, python-format
-msgid "ip link capability %(capability)s is not supported"
-msgstr "La funzione ip link %(capability)s non è supportata"
-
-#, python-format
-msgid "ip link command is not supported: %(reason)s"
-msgstr "Il comando ip link non è supportato: %(reason)s"
 
 msgid "ip_version must be specified in the absence of cidr and subnetpool_id"
 msgstr "è necessario specificare ip_version in assenza di cidr e subnetpool_id"
