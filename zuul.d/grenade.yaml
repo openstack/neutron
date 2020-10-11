@@ -106,16 +106,118 @@
                 availability_zone: nova
 
 - job:
-    name: neutron-ovn-grenade
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-ovn-grenade/run.yaml
-    post-run: playbooks/legacy/neutron-ovn-grenade/post.yaml
+    name: neutron-grenade-ovn
+    parent: grenade-multinode
     timeout: 9000
     irrelevant-files: *irrelevant-files
+    roles:
+      - zuul: openstack/neutron-tempest-plugin
     required-projects:
       - openstack/grenade
-      - openstack/devstack-gate
+      - openstack/neutron
       - openstack/neutron-tempest-plugin
-      - openstack/tempest
-      - openstack/networking-ovn
-
+    pre-run: playbooks/multinode-setup.yaml
+    vars:
+      devstack_local_conf:
+        test-config:
+          $TEMPEST_CONFIG:
+            neutron_plugin_options:
+              is_igmp_snooping_enabled: True
+      grenade_devstack_localrc:
+        old:
+          Q_BUILD_OVS_FROM_GIT: true
+          # TODO(jlibosva): v2.13.1 is incompatible with kernel 4.15.0-118, sticking to commit hash until new v2.13 tag is created
+          OVS_BRANCH: 0047ca3a0290f1ef954f2c76b31477cf4b9755f5
+          # TODO(mjozefcz): Stop compiling OVS modules when meter action in kernel
+          # will be released in Ubuntu Bionic.
+          # More info: https://mail.openvswitch.org/pipermail/ovs-discuss/2018-December/048009.html
+          OVN_BUILD_MODULES: true
+          OVN_BRANCH: v20.06.1
+        new:
+          Q_BUILD_OVS_FROM_GIT: false
+          OVN_BUILD_MODULES: false
+        shared:
+          Q_AGENT: ovn
+          Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
+          Q_ML2_TENANT_NETWORK_TYPE: geneve
+          Q_USE_PROVIDERNET_FOR_PUBLIC: true
+          PHYSICAL_NETWORK: public
+          ENABLE_CHASSIS_AS_GW: true
+          OVN_L3_CREATE_PUBLIC_NETWORK: true
+          OVN_DBS_LOG_LEVEL: dbg
+          OVN_IGMP_SNOOPING_ENABLE: True
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron
+        neutron-tempest-plugin: https://opendev.org/openstack/neutron-tempest-plugin
+      zuul_copy_output:
+        '{{ devstack_base_dir }}/data/ovs': 'logs'
+        '{{ devstack_base_dir }}/data/ovn': 'logs'
+      extensions_to_txt:
+        db: true
+      devstack_services:
+        c-bak: false
+        etcd: false
+        br-ex-tcpdump: true
+        br-int-flows: true
+        q-ovn-metadata-agent: true
+        ovn-controller: true
+        ovn-northd: true
+        ovs-vswitchd: true
+        ovsdb-server: true
+        placement-api: true
+        peakmem_tracker: false
+        q-svc: true
+        q-agt: false
+        q-dhcp: false
+        q-l3: false
+        q-meta: false
+        q-metering: false
+        q-dns: true
+        # When running python3 Swift should be disabled for now
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
+        tls-proxy: false
+        q-qos: true
+    group-vars:
+      subnode:
+        devstack_services:
+          br-ex-tcpdump: true
+          br-int-flows: true
+          ovn-controller: true
+          ovn-northd: false
+          ovs-vswitchd: true
+          ovsdb-server: true
+          # NOTE(slaweq): it's just to check if this will force devstack to
+          # configure neutron and ML2 plugin on subnodes
+          q-fake: true
+          q-svc: false
+          q-agt: false
+          q-dhcp: false
+          q-l3: false
+          q-meta: false
+          q-metering: false
+          q-ovn-metadata-agent: true
+          tls-proxy: false
+        grenade_devstack_localrc:
+          old:
+            Q_BUILD_OVS_FROM_GIT: true
+            # TODO(jlibosva): v2.13.1 is incompatible with kernel 4.15.0-118, sticking to commit hash until new v2.13 tag is created
+            OVS_BRANCH: 0047ca3a0290f1ef954f2c76b31477cf4b9755f5
+            # TODO(mjozefcz): Stop compiling OVS modules when meter action in kernel
+            # will be released in Ubuntu Bionic.
+            # More info: https://mail.openvswitch.org/pipermail/ovs-discuss/2018-December/048009.html
+            OVN_BUILD_MODULES: true
+            OVN_BRANCH: v20.06.1
+          new:
+            Q_BUILD_OVS_FROM_GIT: false
+            OVN_BUILD_MODULES: false
+          shared:
+            Q_AGENT: ovn
+            Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
+            Q_ML2_TENANT_NETWORK_TYPE: geneve
+            Q_USE_PROVIDERNET_FOR_PUBLIC: true
+            PHYSICAL_NETWORK: public
+            ENABLE_CHASSIS_AS_GW: false
+            OVN_DBS_LOG_LEVEL: dbg
