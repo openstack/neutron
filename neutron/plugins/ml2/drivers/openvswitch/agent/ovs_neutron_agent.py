@@ -553,7 +553,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                             local_link[0]['port_id'],
                             port_data['id'],
                             port_binding['vif_type'],
-                            port_data['device_id'])
+                            port_data['device_id'],
+                            self._get_network_mtu(port_data['network_id']))
                 elif (not port_binding['host'] and port_binding['vif_type'] ==
                       portbindings.VIF_TYPE_UNBOUND and port['id'] in
                       self.current_smartnic_ports_map.keys()):
@@ -578,9 +579,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         rep_port = smartnic_port_data['vif_name']
         iface_id = smartnic_port_data['iface_id']
         vif_type = smartnic_port_data['vif_type']
+        mtu = smartnic_port_data['mtu']
 
         instance_info = vif_instance_object.InstanceInfo(uuid=vm_uuid)
-        vif = self._get_vif_object(iface_id, rep_port, mac)
+        vif = self._get_vif_object(iface_id, rep_port, mac, mtu)
         try:
             if vif_type == portbindings.VIF_TYPE_OVS:
                 os_vif.plug(vif, instance_info)
@@ -605,9 +607,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                        'port_id': iface_id,
                        'error': e})
 
-    def _get_vif_object(self, iface_id, rep_port, mac):
+    def _get_vif_object(self, iface_id, rep_port, mac, mtu):
         network = vif_network_object.Network(
-            bridge=self.conf.OVS.integration_bridge)
+            bridge=self.conf.OVS.integration_bridge, mtu=mtu)
         port_profile = vif_obj.VIFPortProfileOpenVSwitch(
             interface_id=iface_id, create_port=True)
         return vif_obj.VIFOpenVSwitch(
@@ -615,13 +617,15 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             network=network, address=str(mac))
 
     def _add_port_to_updated_smartnic_ports(self, mac, vif_name, iface_id,
-                                            vif_type, vm_uuid=''):
+                        vif_type, vm_uuid='',
+                        mtu=plugin_utils.get_deployment_physnet_mtu()):
         self.updated_smartnic_ports.append({
             'mac': mac,
             'vm_uuid': vm_uuid,
             'vif_name': vif_name,
             'iface_id': iface_id,
-            'vif_type': vif_type})
+            'vif_type': vif_type,
+            'mtu': mtu})
 
     @profiler.trace("rpc")
     def port_delete(self, context, **kwargs):
@@ -749,7 +753,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                         local_link[0]['port_id'],
                         smartnic_port['id'],
                         smartnic_port['binding:vif_type'],
-                        smartnic_port['device_id'])
+                        smartnic_port['device_id'],
+                        self._get_network_mtu(smartnic_port['network_id']))
 
         def _process_removed_ports(removed_ports):
             for ovs_port in removed_ports:
@@ -2771,6 +2776,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             raise ValueError(_("DVR deployments for VXLAN/GRE/Geneve "
                                "underlays require L2-pop to be enabled, "
                                "in both the Agent and Server side."))
+
+    def _get_network_mtu(self, network_id):
+        port_network = self.plugin_rpc.get_network_details(self.context,
+                network_id, self.agent_id, self.conf.host)
+        return port_network['mtu']
 
 
 def validate_local_ip(local_ip):
