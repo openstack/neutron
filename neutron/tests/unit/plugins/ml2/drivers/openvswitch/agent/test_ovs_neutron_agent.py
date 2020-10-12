@@ -66,6 +66,8 @@ TEST_PORT_ID3 = 'port-id-3'
 TEST_NETWORK_ID1 = 'net-id-1'
 TEST_NETWORK_ID2 = 'net-id-2'
 
+TEST_MTU = 7824
+
 DEVICE_OWNER_COMPUTE = n_const.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 
 
@@ -1280,13 +1282,19 @@ class TestOvsNeutronAgent(object):
 
     def test_port_update_smartnic(self):
         cfg.CONF.set_default('baremetal_smartnic', True, group='AGENT')
-        port_arg = {"id": TEST_PORT_ID1}
+        network_id = 'e850ed99-5f46-47bc-8c06-86d9d519c46b'
+        port_arg = {"id": TEST_PORT_ID1, "network_id": network_id}
+        network = {'id': network_id, 'mtu': TEST_MTU}
         with mock.patch.object(self.agent.plugin_rpc.remote_resource_cache,
-                               "get_resource_by_id") as mocked_resource:
+                               "get_resource_by_id") as mocked_resource,\
+            mock.patch.object(self.agent.plugin_rpc,
+                              "get_network_details",
+                              return_value=network):
             port = Port()
             port['id'] = 'd850ed99-5f46-47bc-8c06-86d9d519c46a'
             port['mac_address'] = netaddr.EUI(FAKE_MAC)
             port['device_id'] = '0'
+            port['network_id'] = network_id
             bindings_data = PortBinding()
             bindings_data['host'] = 'host'
             bindings_data['vnic_type'] = portbindings.VNIC_SMARTNIC
@@ -1302,7 +1310,8 @@ class TestOvsNeutronAgent(object):
                 'vm_uuid': port['device_id'],
                 'vif_name': 'rep_port',
                 'iface_id': port['id'],
-                'vif_type': bindings_data['vif_type']
+                'vif_type': bindings_data['vif_type'],
+                'mtu': TEST_MTU
             }
             self.assertEqual({TEST_PORT_ID1}, self.agent.updated_ports)
             self.assertEqual([expected_smartnic_port_data],
@@ -1314,6 +1323,7 @@ class TestOvsNeutronAgent(object):
         vif_name = "rep0-0"
         vif_id = port_arg["id"]
         vif_mac = FAKE_MAC
+        default_mtu = 1500
         self.agent.current_smartnic_ports_map = {
             vif_id: {
                 'vif_mac': vif_mac,
@@ -1339,7 +1349,8 @@ class TestOvsNeutronAgent(object):
                 'vm_uuid': '',
                 'vif_name': 'rep0-0',
                 'iface_id': port['id'],
-                'vif_type': portbindings.VIF_TYPE_UNBOUND
+                'vif_type': portbindings.VIF_TYPE_UNBOUND,
+                'mtu': default_mtu
             }]
             mocked_resource.assert_called_with(resources.PORT, port['id'])
             self.assertEqual({port['id']}, self.agent.updated_ports)
@@ -2653,12 +2664,13 @@ class TestOvsNeutronAgent(object):
             'vm_uuid': vm_uuid,
             'vif_name': rep_port,
             'iface_id': iface_id,
-            'vif_type': vif_type}
+            'vif_type': vif_type,
+            'mtu': TEST_MTU}
 
         cfg.CONF.set_default('baremetal_smartnic', True, group='AGENT')
         agent = self._make_agent()
         instance_info = vif_instance_object.InstanceInfo(uuid=vm_uuid)
-        vif = agent._get_vif_object(iface_id, rep_port, mac)
+        vif = agent._get_vif_object(iface_id, rep_port, mac, TEST_MTU)
         with mock.patch.object(os_vif, 'plug') as plug_mock, \
                 mock.patch.object(os_vif, 'unplug') as unplug_mock, \
                 mock.patch('os_vif.objects.instance_info.InstanceInfo',
@@ -2688,12 +2700,14 @@ class TestOvsNeutronAgent(object):
         ovs_port.port_name = rep_port
         ovs_port.vif_id = port_id
         ports_int_br = [ovs_port]
+        default_mtu = 1500
         expected_smartnic_ports_processed_list = [
             {'iface_id': port_id,
              'vif_name': rep_port,
              'mac': mac,
              'vif_type': portbindings.VIF_TYPE_UNBOUND,
-             'vm_uuid': ''}]
+             'vm_uuid': '',
+             'mtu': default_mtu}]
         expected_current_smartnic_ports_map = {
             port_id: {
                 'vif_mac': mac,
@@ -2719,6 +2733,8 @@ class TestOvsNeutronAgent(object):
         ovs_port.port_name = rep_port
         ovs_port.vif_id = port_id
         ports_int_br = [ovs_port]
+        default_mtu = 1500
+        network = {'id': TEST_NETWORK_ID1, 'mtu': TEST_MTU}
 
         PORT_TO_PROCESS = {
             'binding:profile': {'local_link_information': [
@@ -2726,19 +2742,22 @@ class TestOvsNeutronAgent(object):
             'mac_address': FAKE_MAC,
             'device_id': "407a79e0-e0be-4b7d-92a6-513b2161011e",
             'id': "407a79e0-e0be-4b7d-92a6-513b2161011c",
-            'binding:vif_type': portbindings.VIF_TYPE_OVS
+            'binding:vif_type': portbindings.VIF_TYPE_OVS,
+            'network_id': TEST_NETWORK_ID1
         }
         expected_smartnic_ports_processed_list = [
             {'iface_id': port_id,
              'vif_name': rep_port,
              'mac': mac,
              'vif_type': portbindings.VIF_TYPE_UNBOUND,
-             'vm_uuid': ''},
+             'vm_uuid': '',
+             'mtu': default_mtu},
             {'iface_id': "407a79e0-e0be-4b7d-92a6-513b2161011c",
              'vif_name': rep_port,
              'mac': mac,
              'vif_type': portbindings.VIF_TYPE_OVS,
-             'vm_uuid': "407a79e0-e0be-4b7d-92a6-513b2161011e"}]
+             'vm_uuid': "407a79e0-e0be-4b7d-92a6-513b2161011e",
+             'mtu': TEST_MTU}]
         expected_current_smartnic_ports_map = {
             port_id: {
                 'vif_mac': mac,
@@ -2748,7 +2767,10 @@ class TestOvsNeutronAgent(object):
                                return_value=[PORT_TO_PROCESS]),\
             mock.patch.object(self.agent.int_br,
                               "get_vif_ports",
-                              return_value=ports_int_br):
+                              return_value=ports_int_br),\
+            mock.patch.object(self.agent.plugin_rpc,
+                              "get_network_details",
+                              return_value=network):
             self.agent.process_smartnic_ports()
             self.assertEqual(expected_smartnic_ports_processed_list,
                              self.agent.updated_smartnic_ports)
@@ -2765,14 +2787,16 @@ class TestOvsNeutronAgent(object):
             rep_port,
             iface_id,
             portbindings.VIF_TYPE_OVS,
-            vm_uuid,)
+            vm_uuid,
+            TEST_MTU)
 
         smartnic_data = {
             'mac': mac,
             'vm_uuid': vm_uuid,
             'vif_name': rep_port,
             'iface_id': iface_id,
-            'vif_type': portbindings.VIF_TYPE_OVS}
+            'vif_type': portbindings.VIF_TYPE_OVS,
+            'mtu': TEST_MTU}
         self.assertEqual([smartnic_data],
                          self.agent.updated_smartnic_ports)
 
@@ -2784,13 +2808,15 @@ class TestOvsNeutronAgent(object):
             vif_mac,
             vif_name,
             vif_id,
-            portbindings.VIF_TYPE_UNBOUND)
+            portbindings.VIF_TYPE_UNBOUND,
+            mtu=TEST_MTU)
         smartnic_data = {
             'mac': vif_mac,
             'vm_uuid': '',
             'vif_name': vif_name,
             'iface_id': vif_id,
-            'vif_type': portbindings.VIF_TYPE_UNBOUND}
+            'vif_type': portbindings.VIF_TYPE_UNBOUND,
+            'mtu': TEST_MTU}
         self.assertEqual([smartnic_data],
                          self.agent.updated_smartnic_ports)
 
