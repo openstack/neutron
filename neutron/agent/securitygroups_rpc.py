@@ -210,9 +210,12 @@ class SecurityGroupAgentRpc(object):
         LOG.debug("Update security group information")
         for sg_id, sg_rules in security_groups.items():
             self.firewall.update_security_group_rules(sg_id, sg_rules)
-        for remote_sg_id, member_ips in security_group_member_ips.items():
+        # NOTE(hangyang) security_group_member_ips contains IPs from remote
+        # security groups and remote address groups. Both are handled by
+        # the same firewall functions.
+        for remote_id, member_ips in security_group_member_ips.items():
             self.firewall.update_security_group_members(
-                remote_sg_id, member_ips)
+                remote_id, member_ips)
 
     def security_groups_rule_updated(self, security_groups):
         LOG.info("Security group "

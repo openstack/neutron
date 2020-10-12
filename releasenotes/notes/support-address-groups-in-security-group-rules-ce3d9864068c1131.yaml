@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    A new API resource ``address group`` and its CRUD operations are introduced
+    to represent a group of IPv4 and IPv6 address blocks. A new option
+    ``--remote-address-group`` is added to the ``security group rule create``
+    command to allow network connectivity with a group of address blocks. And
+    the backend support is added to the ``openvswitch`` firewall.  When IP
+    addresses are updated in the address groups, changes will also be reflected
+    in the firewall rules of the associated security group rules.
+    For more information, see RFE:
+    `1592028 <https://bugs.launchpad.net/neutron/+bug/1592028>`_

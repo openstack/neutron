@@ -74,9 +74,12 @@ class TestSecurityGroup(base.BaseTestCase):
     def test_update_rules_split(self):
         rules = [
             {'foo': 'bar', 'rule': 'all'}, {'bar': 'foo'},
-            {'remote_group_id': '123456', 'foo': 'bar'}]
+            {'remote_group_id': '123456', 'foo': 'bar'},
+            {'remote_address_group_id': 'fake_ag_id', 'bar': 'foo'}]
         expected_raw_rules = [{'foo': 'bar', 'rule': 'all'}, {'bar': 'foo'}]
-        expected_remote_rules = [{'remote_group_id': '123456', 'foo': 'bar'}]
+        expected_remote_rules = [{'remote_group_id': '123456', 'foo': 'bar'},
+                                 {'remote_address_group_id': 'fake_ag_id',
+                                  'bar': 'foo'}]
         self.sg.update_rules(rules)
 
         self.assertEqual(expected_raw_rules, self.sg.raw_rules)
@@ -365,7 +368,7 @@ class TestConjIPFlowManager(base.BaseTestCase):
         self.assertTrue(remote_group.get_ethertype_filtered_addresses.called)
         self.assertTrue(self.driver._add_flow.called)
 
-    def test_update_flows_for_vlan(self):
+    def test_update_flows_for_vlan_remote_group(self):
         remote_group = self.driver.sg_port_map.get_sg.return_value
         remote_group.get_ethertype_filtered_addresses.return_value = [
             ('10.22.3.4', 'fa:16:3e:aa:bb:cc'), ]
@@ -461,7 +464,12 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             {'ethertype': constants.IPv6,
              'protocol': constants.PROTO_NAME_TCP,
              'remote_group_id': 2,
-             'direction': constants.EGRESS_DIRECTION}]
+             'direction': constants.EGRESS_DIRECTION},
+            {'ethertype': constants.IPv4,
+             'protocol': constants.PROTO_NAME_TCP,
+             'remote_address_group_id': 3,
+             'direction': constants.EGRESS_DIRECTION}
+        ]
         self.firewall.update_security_group_rules(2, security_group_rules)
 
     @property
@@ -813,8 +821,10 @@ class TestOVSFirewallDriver(base.BaseTestCase):
 
         self.firewall.update_port_filter(port_dict)
         self.assertTrue(self.mock_bridge.br.delete_flows.called)
-        conj_id = self.firewall.conj_ip_manager.conj_id_map.get_conj_id(
+        rsg_conj_id = self.firewall.conj_ip_manager.conj_id_map.get_conj_id(
             2, 2, constants.EGRESS_DIRECTION, constants.IPv6)
+        rag_conj_id = self.firewall.conj_ip_manager.conj_id_map.get_conj_id(
+            2, 3, constants.EGRESS_DIRECTION, constants.IPv4)
         filter_rules = [mock.call(
             actions='resubmit(,{:d})'.format(
                 ovs_consts.ACCEPT_OR_INGRESS_TABLE),
@@ -825,12 +835,20 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             reg5=self.port_ofport,
             table=ovs_consts.RULES_EGRESS_TABLE),
                         mock.call(
-            actions='conjunction({:d},2/2)'.format(conj_id + 6),
+            actions='conjunction({:d},2/2)'.format(rsg_conj_id + 6),
             ct_state=ovsfw_consts.OF_STATE_ESTABLISHED_NOT_REPLY,
             dl_type=mock.ANY,
             nw_proto=6,
             priority=73, reg5=self.port_ofport,
-            table=ovs_consts.RULES_EGRESS_TABLE)]
+            table=ovs_consts.RULES_EGRESS_TABLE),
+                        mock.call(
+            actions='conjunction({:d},2/2)'.format(rag_conj_id + 6),
+            ct_state=ovsfw_consts.OF_STATE_ESTABLISHED_NOT_REPLY,
+            dl_type=mock.ANY,
+            nw_proto=6,
+            priority=73, reg5=self.port_ofport,
+            table=ovs_consts.RULES_EGRESS_TABLE)
+        ]
         self.mock_bridge.br.add_flow.assert_has_calls(
             filter_rules, any_order=True)
 

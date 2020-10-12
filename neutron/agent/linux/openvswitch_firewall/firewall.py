@@ -148,7 +148,7 @@ class SecurityGroup(object):
                 else:
                     rule['protocol'] = lib_const.IP_PROTOCOL_MAP.get(
                         protocol, protocol)
-            if 'remote_group_id' in rule:
+            if 'remote_group_id' in rule or 'remote_address_group_id' in rule:
                 self.remote_rules.append(rule)
             else:
                 self.raw_rules.append(rule)
@@ -269,8 +269,8 @@ class ConjIdMap(object):
     def __init__(self):
         self.id_map = collections.defaultdict(self._conj_id_factory)
         # Stores the set of conjuntion IDs used for each unique tuple
-        # (sg_id, remote_sg_id, direction, ethertype). Each tuple can have up
-        # to 8 conjuntion IDs (see ConjIPFlowManager.add()).
+        # (sg_id, remote_id, direction, ethertype). Each tuple
+        # can have up to 8 conjuntion IDs (see ConjIPFlowManager.add()).
         self.id_map_group = collections.defaultdict(set)
         self.id_free = collections.deque()
         self.max_id = 0
@@ -283,7 +283,7 @@ class ConjIdMap(object):
         self.max_id += 8
         return self.max_id
 
-    def get_conj_id(self, sg_id, remote_sg_id, direction, ethertype):
+    def get_conj_id(self, sg_id, remote_id, direction, ethertype):
         """Return a conjunction ID specified by the arguments.
         Allocate one if necessary.  The returned ID is divisible by 8,
         as there are 4 priority levels (see rules.flow_priority_offset)
@@ -295,7 +295,7 @@ class ConjIdMap(object):
         if ethertype not in [lib_const.IPv4, lib_const.IPv6]:
             raise ValueError(_("Invalid ethertype '%s'") % ethertype)
 
-        return self.id_map[(sg_id, remote_sg_id, direction, ethertype)]
+        return self.id_map[(sg_id, remote_id, direction, ethertype)]
 
     def delete_sg(self, sg_id):
         """Free all conj_ids associated with the sg_id and
@@ -344,18 +344,18 @@ class ConjIPFlowManager(object):
         self.flow_state = collections.defaultdict(
             lambda: collections.defaultdict(dict))
 
-    def _build_addr_conj_id_map(self, ethertype, sg_conj_id_map):
+    def _build_addr_conj_id_map(self, ethertype, sg_ag_conj_id_map):
         """Build a map of addr -> list of conj_ids."""
         addr_to_conj = collections.defaultdict(list)
-        for remote_id, conj_id_set in sg_conj_id_map.items():
+        for remote_id, conj_id_set in sg_ag_conj_id_map.items():
             remote_group = self.driver.sg_port_map.get_sg(remote_id)
             if not remote_group or not remote_group.members:
-                LOG.debug('No member for SG %s', remote_id)
+                LOG.debug('No member for security group or'
+                          'address group %s', remote_id)
                 continue
             for addr in remote_group.get_ethertype_filtered_addresses(
                     ethertype):
                 addr_to_conj[addr].extend(conj_id_set)
-
         return addr_to_conj
 
     def _update_flows_for_vlan_subr(self, direction, ethertype, vlan_tag,
@@ -368,16 +368,39 @@ class ConjIPFlowManager(object):
         self.driver.delete_flows_for_flow_state(
             flow_state, addr_to_conj, direction, ethertype, vlan_tag)
         for conj_id_set in conj_id_to_remove:
-            # Remove any remaining flow with remote SG ID conj_id_to_remove
+            # Remove any remaining flow with remote SG/AG ID conj_id_to_remove
             for current_ip, conj_ids in flow_state.items():
                 conj_ids_to_remove = conj_id_set & set(conj_ids)
                 self.driver.delete_flow_for_ip(
                     current_ip, direction, ethertype, vlan_tag,
                     conj_ids_to_remove)
 
+        # NOTE(hangyang): Handle add/delete overlapped IPs among
+        # remote security groups and remote address groups
+        removed_ips = set([str(netaddr.IPNetwork(addr[0]).cidr) for addr in (
+                set(flow_state.keys()) - set(addr_to_conj.keys()))])
+        ip_to_conj = collections.defaultdict(set)
         for addr, conj_ids in addr_to_conj.items():
+            # Addresses from remote security groups have mac addresses,
+            # others from remote address groups have not.
+            ip_to_conj[str(netaddr.IPNetwork(addr[0]).cidr)].update(conj_ids)
+
+        for addr in addr_to_conj.keys():
+            ip_cidr = str(netaddr.IPNetwork(addr[0]).cidr)
+            # When the overlapped IP in remote security group and remote
+            # address group have different conjunction ids but with the
+            # same priority offset, we need to combine the conj_ids together
+            # before create flows otherwise flows will be overridden in the
+            # creation sequence.
+            conj_ids = list(ip_to_conj[ip_cidr])
             conj_ids.sort()
-            if flow_state.get(addr) == conj_ids:
+            if flow_state.get(addr) == conj_ids and ip_cidr not in removed_ips:
+                # When there are IP overlaps among remote security groups
+                # and remote address groups, removal of the overlapped ips
+                # from one remote group will also delete the flows for the
+                # other groups because the non-strict delete method cannot
+                # match flow priority or actions for different conjunction
+                # ids, therefore we need to recreate the affected flows.
                 continue
             for flow in rules.create_flows_for_ip_address(
                     addr, direction, ethertype, vlan_tag, conj_ids):
@@ -385,40 +408,41 @@ class ConjIPFlowManager(object):
 
     def update_flows_for_vlan(self, vlan_tag, conj_id_to_remove=None):
         """Install action=conjunction(conj_id, 1/2) flows,
-        which depend on IP addresses of remote_group_id.
+        which depend on IP addresses of remote_group_id or
+        remote_address_group_id.
         """
-        for (direction, ethertype), sg_conj_id_map in (
+        for (direction, ethertype), sg_ag_conj_id_map in (
                 self.conj_ids[vlan_tag].items()):
             # TODO(toshii): optimize when remote_groups have
             # no address overlaps.
             addr_to_conj = self._build_addr_conj_id_map(
-                ethertype, sg_conj_id_map)
+                ethertype, sg_ag_conj_id_map)
             self._update_flows_for_vlan_subr(
                 direction, ethertype, vlan_tag,
                 self.flow_state[vlan_tag][(direction, ethertype)],
                 addr_to_conj, conj_id_to_remove)
             self.flow_state[vlan_tag][(direction, ethertype)] = addr_to_conj
 
-    def add(self, vlan_tag, sg_id, remote_sg_id, direction, ethertype,
+    def add(self, vlan_tag, sg_id, remote_id, direction, ethertype,
             priority_offset):
         """Get conj_id specified by the arguments
         and notify the manager that
-        (remote_sg_id, direction, ethertype, conj_id) flows need to be
-        populated on the vlan_tag network.
+        (remote_id, direction, ethertype, conj_id) flows need
+        to be populated on the vlan_tag network.
 
         A caller must call update_flows_for_vlan to have the change in effect.
 
         """
         conj_id = self.conj_id_map.get_conj_id(
-            sg_id, remote_sg_id, direction, ethertype) + priority_offset * 2
+            sg_id, remote_id, direction, ethertype) + priority_offset * 2
 
         if (direction, ethertype) not in self.conj_ids[vlan_tag]:
             self.conj_ids[vlan_tag][(direction, ethertype)] = (
                 collections.defaultdict(set))
-        self.conj_ids[vlan_tag][(direction, ethertype)][remote_sg_id].add(
+        self.conj_ids[vlan_tag][(direction, ethertype)][remote_id].add(
             conj_id)
 
-        conj_id_tuple = (sg_id, remote_sg_id, direction, ethertype)
+        conj_id_tuple = (sg_id, remote_id, direction, ethertype)
         self.conj_id_map.id_map_group[conj_id_tuple].add(conj_id)
         return conj_id
 
@@ -1390,20 +1414,28 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             protocol = rule.get('protocol')
             priority_offset = rules.flow_priority_offset(rule)
 
+            if rule.get('remote_group_id'):
+                remote_type = 'security group'
+                remote_id = rule.get('remote_group_id')
+            else:
+                remote_type = 'address group'
+                remote_id = rule.get('remote_address_group_id')
             conj_id = self.conj_ip_manager.add(port.vlan_tag, sec_group_id,
-                                               rule['remote_group_id'],
+                                               remote_id,
                                                direction, ethertype,
                                                priority_offset)
             LOG.debug("Created conjunction %(conj_id)s for SG %(sg_id)s "
-                      "referencing remote SG ID %(remote_sg_id)s on port "
-                      "%(port_id)s.",
+                      "referencing remote %(remote_type)s ID %(remote_id)s "
+                      "on port %(port_id)s.",
                       {'conj_id': conj_id,
                        'sg_id': sec_group_id,
-                       'remote_sg_id': rule['remote_group_id'],
+                       'remote_type': remote_type,
+                       'remote_id': remote_id,
                        'port_id': port.id})
 
             rule1 = rule.copy()
-            del rule1['remote_group_id']
+            rule1.pop('remote_group_id', None)
+            rule1.pop('remote_address_group_id', None)
             port_rules_key = (direction, ethertype, protocol)
             port_rules[port_rules_key].append((rule1, conj_id))
 

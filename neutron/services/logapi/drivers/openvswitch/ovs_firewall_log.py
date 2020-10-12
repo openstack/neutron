@@ -385,7 +385,8 @@ class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
     def _create_conj_flows_log(self, remote_rule, port):
         ethertype = remote_rule['ethertype']
         direction = remote_rule['direction']
-        remote_sg_id = remote_rule['remote_group_id']
+        remote_sg_id = remote_rule.get('remote_group_id')
+        remote_ag_id = remote_rule.get('remote_address_group_id')
         secgroup_id = remote_rule['security_group_id']
         # we only want to log first accept packet, that means a packet with
         # ct_state=+new-est, reg_remote_group=conj_id + 1 will be logged
@@ -394,7 +395,8 @@ class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
             'dl_type': ovsfw_consts.ethertype_to_dl_type_map[ethertype],
             'reg_port': port.ofport,
             'reg_remote_group': self.conj_id_map.get_conj_id(
-                secgroup_id, remote_sg_id, direction, ethertype) + 1,
+                secgroup_id, remote_sg_id or remote_ag_id,
+                direction, ethertype) + 1,
         }
         if direction == lib_const.INGRESS_DIRECTION:
             flow_template['table'] = ovs_consts.RULES_INGRESS_TABLE
@@ -406,7 +408,7 @@ class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
         cookie = self.generate_cookie(port.id, log_const.ACCEPT_EVENT,
                                       log_id, project_id)
         for rule in self.create_rules_generator_for_port(port):
-            if 'remote_group_id' in rule:
+            if 'remote_group_id' in rule or 'remote_address_group_id' in rule:
                 flows = self._create_conj_flows_log(rule, port)
             else:
                 flows = rules.create_flows_from_rule_and_port(rule, port)
@@ -465,7 +467,7 @@ class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
         if not cookie:
             return
         for rule in del_rules:
-            if 'remote_group_id' in rule:
+            if 'remote_group_id' in rule or 'remote_address_group_id' in rule:
                 flows = self._create_conj_flows_log(rule, port)
             else:
                 flows = rules.create_flows_from_rule_and_port(rule, port)

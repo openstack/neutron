@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
+
 from neutron_lib.api.definitions import address_group as apidef
 from neutron_lib import context
 import webob.exc
@@ -93,6 +95,15 @@ class AddressGroupTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             return addr_group
 
         return act_res
+
+    @contextlib.contextmanager
+    def address_group(self, name='test_ag', description='test_ag',
+                      addresses=None, fmt=None):
+        if not fmt:
+            fmt = self.fmt
+        res = self._create_address_group(name=name, description=description,
+                                         addresses=addresses)
+        yield self.deserialize(fmt, res)
 
 
 class AddressGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
