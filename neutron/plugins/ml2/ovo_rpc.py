@@ -27,6 +27,7 @@ from oslo_log import log as logging
 from neutron._i18n import _
 from neutron.api.rpc.callbacks import events as rpc_events
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.objects import address_group
 from neutron.objects import network
 from neutron.objects import ports
 from neutron.objects import securitygroup
@@ -147,6 +148,10 @@ class OVOServerRpcInterface(object):
             resources.NETWORK: network.Network,
             resources.SECURITY_GROUP: securitygroup.SecurityGroup,
             resources.SECURITY_GROUP_RULE: securitygroup.SecurityGroupRule,
+            # TODO(mlavalle) Following line should be replaced by:
+            # resources.ADDRESS_GROUP: address_group.AddressGroup,
+            # when https://review.opendev.org/#/c/756927/ is released
+            'address_group': address_group.AddressGroup,
         }
         self._resource_handlers = {
             res: _ObjectChangeHandler(res, obj_class, self._rpc_pusher)
