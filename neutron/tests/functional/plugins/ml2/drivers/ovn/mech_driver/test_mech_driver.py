@@ -749,19 +749,18 @@ class TestAgentApi(base.TestOVNFunctionalBase):
     def setUp(self):
         super().setUp()
         self.host = 'test-host'
-        self.add_fake_chassis(self.host)
+        self.controller_agent = self.add_fake_chassis(self.host)
         self.plugin = self.mech_driver._plugin
         agent = {'agent_type': 'test', 'binary': '/bin/test',
                  'host': self.host, 'topic': 'test_topic'}
-        self.plugin.create_or_update_agent(self.context, agent)
+        _, status = self.plugin.create_or_update_agent(self.context, agent)
+        self.test_agent = status['id']
         mock.patch.object(self.mech_driver, 'ping_all_chassis',
                           return_value=False).start()
 
-    def get_agent(self, agent_type):
-        return next(iter(self.plugin.get_agents(
-            self.context, filters={'agent_type': agent_type})))
+    def test_agent_show_non_ovn(self):
+        self.assertTrue(self.plugin.get_agent(self.context, self.test_agent))
 
-    def test_agent_show(self):
-        for agent_type in ('test', ovn_const.OVN_CONTROLLER_AGENT):
-            agent = self.get_agent(agent_type)
-            self.assertTrue(self.plugin.get_agent(self.context, agent['id']))
+    def test_agent_show_ovn_controller(self):
+        self.assertTrue(self.plugin.get_agent(self.context,
+                                              self.controller_agent))
