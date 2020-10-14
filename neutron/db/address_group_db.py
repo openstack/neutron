@@ -41,22 +41,31 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
             raise ag_exc.AddressGroupNotFound(address_group_id=id)
         return obj
 
-    def _dedup_and_compare_addresses(self, ag_obj, req_addrs):
+    def _process_requested_addresses(self, ag_obj, req_addrs):
+        """Process the requested addresses.
+
+        Deduplicate, normalize and compare the requested addresses
+        with existing addresses in the address group.
+        """
         ag_addrs = set(self._make_address_group_dict(
             ag_obj, fields=['addresses'])['addresses'])
-        req_addrs = set(str(netaddr.IPNetwork(addr)) for addr in req_addrs)
+        normalized_addrs = set()
+        for addr in req_addrs:
+            addr = netaddr.IPNetwork(addr)
+            normalized_addr = "%s/%s" % (addr.network, addr.prefixlen)
+            normalized_addrs.add(normalized_addr)
         addrs_in_ag = []
         addrs_not_in_ag = []
-        for req_addr in req_addrs:
-            if req_addr in ag_addrs:
-                addrs_in_ag.append(req_addr)
+        for addr in normalized_addrs:
+            if addr in ag_addrs:
+                addrs_in_ag.append(addr)
             else:
-                addrs_not_in_ag.append(req_addr)
+                addrs_not_in_ag.append(addr)
         return addrs_in_ag, addrs_not_in_ag
 
     def add_addresses(self, context, address_group_id, addresses):
         ag = self._get_address_group(context, address_group_id)
-        addrs_in_ag, addrs_not_in_ag = self._dedup_and_compare_addresses(
+        addrs_in_ag, addrs_not_in_ag = self._process_requested_addresses(
             ag, addresses['addresses'])
         if addrs_in_ag:
             raise ag_exc.AddressesAlreadyExist(
@@ -72,7 +81,7 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
 
     def remove_addresses(self, context, address_group_id, addresses):
         ag = self._get_address_group(context, address_group_id)
-        addrs_in_ag, addrs_not_in_ag = self._dedup_and_compare_addresses(
+        addrs_in_ag, addrs_not_in_ag = self._process_requested_addresses(
             ag, addresses['addresses'])
         if addrs_not_in_ag:
             raise ag_exc.AddressesNotFound(
@@ -86,7 +95,7 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
     def create_address_group(self, context, address_group):
         """Create an address group."""
         fields = address_group['address_group']
-        args = {'project_id': fields['tenant_id'],
+        args = {'project_id': fields['project_id'],
                 'id': uuidutils.generate_uuid(),
                 'name': fields['name'],
                 'description': fields['description']}
