@@ -442,8 +442,8 @@ more will be added over time if needed.
 | ovn_                          | A bug affecting ML2/OVN                 | Jakub Libosvar/          |
 |                               |                                         | Lucas Alvares Gomes      |
 +-------------------------------+-----------------------------------------+--------------------------+
-| ovn-octavia-provider_         | A bug affecting OVN Octavia provider    | Maciej Jozefczyk/        |
-|                               | driver                                  | Brian Haley              |
+| ovn-octavia-provider_         | A bug affecting OVN Octavia provider    | Brian Haley/             |
+|                               | driver                                  | Flavio Fernandes         |
 +-------------------------------+-----------------------------------------+--------------------------+
 | ovs_                          | A bug affecting ML2/OVS                 | Miguel Lavalle           |
 +-------------------------------+-----------------------------------------+--------------------------+
