@@ -77,6 +77,12 @@ class SecurityGroupTestExtensionManager(object):
     def get_request_extensions(self):
         return []
 
+    def update_attributes_map(self, attributes):
+        for resource, attrs in ext_sg.RESOURCE_ATTRIBUTE_MAP.items():
+            extended_attrs = attributes.get(resource)
+            if extended_attrs:
+                attrs.update(extended_attrs)
+
 
 class SecurityGroupsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 

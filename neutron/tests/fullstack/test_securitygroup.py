@@ -691,3 +691,18 @@ class SecurityGroupRulesTest(base.BaseFullStackTestCase):
 
         self.assertRaises(nc_exc.OverQuotaClient,
                           self.safe_client.create_security_group, project_id)
+
+    def test_normalized_cidr_in_rule(self):
+        project_id = uuidutils.generate_uuid()
+        sg = self.safe_client.create_security_group(project_id)
+
+        rule = self.safe_client.create_security_group_rule(
+            project_id, sg['id'], direction='ingress',
+            remote_ip_prefix='10.0.0.34/24')
+        self.assertEqual('10.0.0.0/24', rule['normalized_cidr'])
+        self.assertEqual('10.0.0.34/24', rule['remote_ip_prefix'])
+
+        rule = self.safe_client.create_security_group_rule(
+            project_id, sg['id'], direction='ingress')
+        self.assertIsNone(rule['normalized_cidr'])
+        self.assertIsNone(rule['remote_ip_prefix'])

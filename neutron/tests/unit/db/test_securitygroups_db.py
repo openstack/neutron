@@ -125,7 +125,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             with testtools.ExpectedException(
                     securitygroup.SecurityGroupConflict):
                 self.mixin.create_security_group_rule(
-                    self.ctx, mock.MagicMock())
+                    self.ctx, FAKE_SECGROUP_RULE)
 
     def test__check_for_duplicate_rules_does_not_drop_protocol(self):
         with mock.patch.object(self.mixin, 'get_security_group',
