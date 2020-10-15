@@ -41,6 +41,7 @@ from ovsdbapp.backend.ovs_idl import idlutils
 from neutron._i18n import _
 from neutron.common.ovn import acl as ovn_acl
 from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import extensions as ovn_extensions
 from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
@@ -169,6 +170,9 @@ class OVNMechanismDriver(api.MechanismDriver):
             portbindings.VIF_DETAILS_CONNECTIVITY:
                 portbindings.CONNECTIVITY_L2,
         }
+
+    def supported_extensions(self, extensions):
+        return set(ovn_extensions.ML2_SUPPORTED_API_EXTENSIONS) & extensions
 
     def subscribe(self):
         registry.subscribe(self.pre_fork_initialize,
