@@ -13,6 +13,8 @@
 #    under the License.
 
 import functools
+import os
+import signal
 
 from neutron.agent.common import async_process
 from neutron.agent.linux import utils
@@ -91,3 +93,28 @@ class TestGetRootHelperChildPid(functional_base.BaseSudoTestCase):
         with open('/proc/%s/cmdline' % child_pid, 'r') as f_proc_cmdline:
             cmdline = f_proc_cmdline.readline().split('\0')[0]
         self.assertIn('bash', cmdline)
+
+
+class TestFindParentPid(functional_base.BaseSudoTestCase):
+
+    def _stop_process(self, process):
+        process.stop(kill_signal=signal.SIGKILL)
+
+    def _test_process(self, run_as_root):
+        test_pid = str(os.getppid())
+        cmd = ['bash', '-c', '(sleep 10)']
+        proc = async_process.AsyncProcess(cmd, run_as_root=run_as_root)
+        proc.start()
+        self.addCleanup(self._stop_process, proc)
+        common_utils.wait_until_true(lambda: proc._process.pid,
+                                     sleep=0.5, timeout=10)
+
+        bash_pid = utils.find_parent_pid(proc._process.pid)
+        testcase_pid = utils.find_parent_pid(bash_pid)
+        self.assertEqual(test_pid, testcase_pid)
+
+    def test_root_process(self):
+        self._test_process(run_as_root=True)
+
+    def test_non_root_process(self):
+        self._test_process(run_as_root=False)

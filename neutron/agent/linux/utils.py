@@ -33,6 +33,7 @@ from oslo_rootwrap import client
 from oslo_utils import encodeutils
 from oslo_utils import excutils
 from oslo_utils import fileutils
+import psutil
 
 from neutron._i18n import _
 from neutron.agent.linux import xenapi_root_helper
@@ -186,18 +187,10 @@ def find_parent_pid(pid):
     If the pid doesn't exist in the system, this function will return
     None
     """
-    try:
-        ppid = execute(['ps', '-o', 'ppid=', pid],
-                       log_fail_as_error=False)
-    except exceptions.ProcessExecutionError as e:
-        # Unexpected errors are the responsibility of the caller
-        with excutils.save_and_reraise_exception() as ctxt:
-            # Exception has already been logged by execute
-            no_such_pid = e.returncode == 1
-            if no_such_pid:
-                ctxt.reraise = False
-                return
-    return ppid.strip()
+    process = psutil.Process(pid=int(pid))
+    if process:
+        return str(process.parent().pid)
+    return None
 
 
 def get_process_count_by_name(name):
