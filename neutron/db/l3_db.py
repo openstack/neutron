@@ -1347,14 +1347,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                     context, floatingip_dict, fip)
             if self._is_fip_qos_supported:
                 self._process_extra_fip_qos_create(context, fip_id, fip)
-            floatingip_obj = l3_obj.FloatingIP.get_object(
-                context, id=floatingip_obj.id)
-            floatingip_db = floatingip_obj.db_obj
 
             registry.notify(resources.FLOATING_IP, events.PRECOMMIT_CREATE,
                             self, context=context, floatingip=fip,
                             floatingip_id=fip_id,
-                            floatingip_db=floatingip_db)
+                            floatingip_db=floatingip_obj.db_obj)
 
         self._core_plugin.update_port(
             context.elevated(), external_port['id'],
@@ -1378,7 +1375,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # TODO(lujinluo): Change floatingip_db to floatingip_obj once all
         # codes are migrated to use Floating IP OVO object.
         resource_extend.apply_funcs(l3_apidef.FLOATINGIPS, floatingip_dict,
-                                    floatingip_db)
+                                    floatingip_obj.db_obj)
         return floatingip_dict
 
     @db_api.retry_if_session_inactive()
