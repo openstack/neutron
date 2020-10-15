@@ -325,14 +325,21 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                    'other_config': {
                         constants.MCAST_SNOOP: 'true',
                         constants.MCAST_FLOOD_UNREGISTERED: 'false'}})
+        ls3 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': '',
+                   'other_config': {}})
+        ls4 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': '',
+                   'other_config': {constants.MCAST_SNOOP: 'false'}})
 
-        nb_idl.ls_list.return_value.execute.return_value = [ls0, ls1, ls2]
+        nb_idl.ls_list.return_value.execute.return_value = [ls0, ls1, ls2, ls3,
+                                                            ls4]
 
         self.assertRaises(periodics.NeverAgain,
                           self.periodic.check_for_igmp_snoop_support)
 
         # "ls2" is not part of the transaction because it already
-        # have the right value set
+        # have the right value set; "ls3" and "ls4" do not have a name set.
         expected_calls = [
             mock.call('Logical_Switch', 'ls0',
                       ('other_config', {

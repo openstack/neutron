@@ -560,7 +560,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             value = ('true' if ovn_conf.is_igmp_snooping_enabled()
                      else 'false')
             for ls in self._nb_idl.ls_list().execute(check_error=True):
-                if ls.other_config.get(ovn_const.MCAST_SNOOP, None) == value:
+                if (ls.other_config.get(ovn_const.MCAST_SNOOP,
+                                        None) == value or not ls.name):
                     continue
                 txn.add(self._nb_idl.db_set(
                     'Logical_Switch', ls.name,
