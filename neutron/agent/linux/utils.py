@@ -164,20 +164,14 @@ def find_child_pids(pid, recursive=False):
     It can also find all children through the hierarchy if recursive=True
     """
     try:
-        raw_pids = execute(['ps', '--ppid', pid, '-o', 'pid='],
-                           log_fail_as_error=False)
-    except exceptions.ProcessExecutionError as e:
-        # Unexpected errors are the responsibility of the caller
-        with excutils.save_and_reraise_exception() as ctxt:
-            # Exception has already been logged by execute
-            no_children_found = e.returncode == 1
-            if no_children_found:
-                ctxt.reraise = False
-                return []
-    child_pids = [x.strip() for x in raw_pids.split('\n') if x.strip()]
+        process = psutil.Process(pid=int(pid))
+    except psutil.NoSuchProcess:
+        return []
+
+    child_pids = [str(p.pid) for p in process.children()]
     if recursive:
         for child in child_pids:
-            child_pids = child_pids + find_child_pids(child, True)
+            child_pids += find_child_pids(child, recursive=True)
     return child_pids
 
 

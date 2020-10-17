@@ -313,37 +313,6 @@ class TestGetCmdlineFromPid(base.BaseTestCase):
         self.assertEqual([], cmdline)
 
 
-class TestFindChildPids(base.BaseTestCase):
-
-    def test_returns_empty_list_for_exit_code_1(self):
-        with mock.patch.object(utils, 'execute',
-                               side_effect=exceptions.ProcessExecutionError(
-                                   '', returncode=1)):
-            self.assertEqual([], utils.find_child_pids(-1))
-
-    def test_returns_empty_list_for_no_output(self):
-        with mock.patch.object(utils, 'execute', return_value=''):
-            self.assertEqual([], utils.find_child_pids(-1))
-
-    def test_returns_list_of_child_process_ids_for_good_ouput(self):
-        with mock.patch.object(utils, 'execute', return_value=' 123 \n 185\n'):
-            self.assertEqual(utils.find_child_pids(-1), ['123', '185'])
-
-    def test_returns_list_of_child_process_ids_recursively(self):
-        with mock.patch.object(utils, 'execute',
-                               side_effect=[' 123 \n 185\n',
-                                            ' 40 \n', '\n',
-                                            '41\n', '\n']):
-            actual = utils.find_child_pids(-1, True)
-            self.assertEqual(actual, ['123', '185', '40', '41'])
-
-    def test_raises_unknown_exception(self):
-        with testtools.ExpectedException(RuntimeError):
-            with mock.patch.object(utils, 'execute',
-                                   side_effect=RuntimeError()):
-                utils.find_child_pids(-1)
-
-
 class TestGetRoothelperChildPid(base.BaseTestCase):
     def _test_get_root_helper_child_pid(self, expected=_marker,
                                         run_as_root=False, pids=None,

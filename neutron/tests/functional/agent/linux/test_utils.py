@@ -141,3 +141,34 @@ class TestGetProcessCountByName(functional_base.BaseSudoTestCase):
         # NOTE(ralonsoh): other tests can spawn sleep processes too, but at
         # this point we know there are, at least, 20 "sleep" processes running.
         self.assertLessEqual(20, number_of_sleep)
+
+
+class TestFindChildPids(functional_base.BaseSudoTestCase):
+
+    def _stop_process(self, process):
+        process.stop(kill_signal=signal.SIGKILL)
+
+    def test_find_child_pids(self):
+        pid = os.getppid()
+        child_pids = utils.find_child_pids(pid)
+        child_pids_recursive = utils.find_child_pids(pid, recursive=True)
+        for _pid in child_pids:
+            self.assertIn(_pid, child_pids_recursive)
+
+        cmd = ['sleep', '100']
+        process = async_process.AsyncProcess(cmd)
+        process.start()
+        common_utils.wait_until_true(lambda: process._process.pid,
+                                     sleep=0.5, timeout=10)
+        self.addCleanup(self._stop_process, process)
+
+        child_pids_after = utils.find_child_pids(pid)
+        child_pids_recursive_after = utils.find_child_pids(pid, recursive=True)
+        self.assertEqual(child_pids, child_pids_after)
+        for _pid in child_pids + [process.pid]:
+            self.assertIn(_pid, child_pids_recursive_after)
+
+    def test_find_non_existing_process(self):
+        with open('/proc/sys/kernel/pid_max', 'r') as fd:
+            pid_max = int(fd.readline().strip())
+        self.assertEqual([], utils.find_child_pids(pid_max))
