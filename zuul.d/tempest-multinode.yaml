@@ -177,6 +177,10 @@
         q-qos: true
         neutron-segments: True
         q-port-forwarding: true
+        # NOTE(slaweq): disable dstat until bug
+        # https://bugs.launchpad.net/ubuntu/+source/dstat/+bug/1866619 will be
+        # fixed
+        dstat: false
     group-vars:
       subnode:
         devstack_services:
@@ -197,6 +201,10 @@
           q-metering: false
           q-ovn-metadata-agent: true
           tls-proxy: true
+          # NOTE(slaweq): disable dstat until bug
+          # https://bugs.launchpad.net/ubuntu/+source/dstat/+bug/1866619 will be
+          # fixed
+          dstat: false
         devstack_localrc:
           Q_AGENT: ovn
           Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
