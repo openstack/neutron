@@ -208,7 +208,8 @@ class CacheBackedPluginApi(PluginApi):
                       resources.SECURITYGROUP,
                       resources.SECURITYGROUPRULE,
                       resources.NETWORK,
-                      resources.SUBNET]
+                      resources.SUBNET,
+                      resources.ADDRESSGROUP]
 
     def __init__(self, *args, **kwargs):
         super(CacheBackedPluginApi, self).__init__(*args, **kwargs)

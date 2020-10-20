@@ -22,6 +22,7 @@ from neutron.agent import resource_cache
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron import objects
+from neutron.objects import address_group
 from neutron.objects.port.extensions import port_security as psec
 from neutron.objects import ports
 from neutron.objects import securitygroup
@@ -70,7 +71,7 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
         super(SecurityGroupServerAPIShimTestCase, self).setUp()
         objects.register_objects()
         resource_types = [resources.PORT, resources.SECURITYGROUP,
-                          resources.SECURITYGROUPRULE]
+                          resources.SECURITYGROUPRULE, resources.ADDRESSGROUP]
         self.rcache = resource_cache.RemoteResourceCache(resource_types)
         # prevent any server lookup attempts
         mock.patch.object(self.rcache, '_flood_cache_for_query').start()
@@ -92,6 +93,26 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
         p = ports.Port(self.ctx, **attrs)
         self.rcache.record_resource_update(self.ctx, 'Port', p)
         return p
+
+    def _make_address_group_ovo(self):
+        id = uuidutils.generate_uuid()
+        address_associations = [
+            address_group.AddressAssociation(
+                self.ctx,
+                address=netaddr.IPNetwork('10.0.0.1/32'),
+                address_group_id=id),
+            address_group.AddressAssociation(
+                self.ctx,
+                address=netaddr.IPNetwork('2001:db8::/32'),
+                address_group_id=id)
+        ]
+        ag = address_group.AddressGroup(self.ctx, id=id,
+                                        name='an-address-group',
+                                        description='An address group',
+                                        addresses=address_associations)
+        self.rcache.record_resource_update(self.ctx, resources.ADDRESSGROUP,
+                                           ag)
+        return ag
 
     @mock.patch.object(securitygroup.SecurityGroup, 'is_shared_with_tenant',
                        return_value=False)
@@ -172,3 +193,22 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
         self.rcache.record_resource_delete(self.ctx, 'Port', p1.id)
         self.sg_agent.security_groups_member_updated.assert_called_with(
             {s1.id})
+
+    def test_get_address_group_details(self):
+        ag = self._make_address_group_ovo()
+        retrieved_ag = self.shim.get_address_group_details(ag.id)
+        self.assertEqual(ag.id, retrieved_ag.id)
+        self.assertEqual(ag.name, retrieved_ag.name)
+        self.assertEqual(ag.description, retrieved_ag.description)
+        self.assertEqual(ag.addresses[0].address,
+                         retrieved_ag.addresses[0].address)
+        self.assertEqual(ag.addresses[1].address,
+                         retrieved_ag.addresses[1].address)
+
+    def test_address_group_update_events(self):
+        ag = self._make_address_group_ovo()
+        self.sg_agent.address_group_updated.assert_called_with(ag.id)
+        self.sg_agent.address_group_updated.reset_mock()
+        self.rcache.record_resource_delete(self.ctx, resources.ADDRESSGROUP,
+            ag.id)
+        self.sg_agent.address_group_deleted.assert_called_with(ag.id)

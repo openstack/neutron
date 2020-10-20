@@ -228,6 +228,12 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
                            'Port', events.AFTER_DELETE)
         registry.subscribe(self._handle_sg_member_update,
                            'Port', events.AFTER_UPDATE)
+        self._register_legacy_ag_notification_callbacks(sg_agent)
+
+    def _register_legacy_ag_notification_callbacks(self, sg_agent):
+        for event in (events.AFTER_UPDATE, events.AFTER_DELETE):
+            registry.subscribe(self._handle_address_group_event,
+                               resources.ADDRESSGROUP, event)
 
     def security_group_info_for_devices(self, context, devices):
         ports = self._get_devices_info(context, devices)
@@ -239,6 +245,14 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
         # security_group_info_for_devices will never throw an unsupported
         # error.
         raise NotImplementedError()
+
+    def get_address_group_details(self, address_group_id):
+        ag_obj = self.rcache.get_resource_by_id(resources.ADDRESSGROUP,
+                                                address_group_id)
+        if not ag_obj:
+            LOG.debug("Address group %s does not exist in cache.",
+                      address_group_id)
+        return ag_obj
 
     def _add_child_sg_rules(self, rtype, event, trigger, context, updated,
                             **kwargs):
@@ -291,6 +305,13 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
         sgs.update(set(updated.security_group_ids))
         if sgs:
             self._sg_agent.security_groups_member_updated(sgs)
+
+    def _handle_address_group_event(self, rtype, event, trigger, context,
+                                    resource_id, **kwargs):
+        if event == events.AFTER_UPDATE:
+            self._sg_agent.address_group_updated(resource_id)
+        else:
+            self._sg_agent.address_group_deleted(resource_id)
 
     def _get_devices_info(self, context, devices):
         # NOTE(kevinbenton): this format is required by the sg code, it is
