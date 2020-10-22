@@ -117,3 +117,4 @@
         - neutron-tempest-mariadb-full
         - neutron-tempest-with-os-ken-master
         - neutron-ovn-tempest-ovs-master-fedora
+        - devstack-tobiko-faults-centos
