@@ -134,6 +134,12 @@ its display name. As a consequence, at the end of the boot process, the
 allocated ports will be known in the dnsmasq associated to their networks by
 their instance ``hostname``.
 
+.. note::
+   To avoid dns_name conflicts in designate if the dns_name already exists
+   in designate zone records a dns_name is generated using the IP of the
+   port like dns_name.ip_hash, this helps also in the case of adding
+   multiple ports to the same instance
+
 The following is an example of an instance creation, showing how its
 ``hostname`` populates the ``dns_name`` attribute of the allocated port:
 
