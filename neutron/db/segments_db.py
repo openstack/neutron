@@ -77,12 +77,12 @@ def update_network_segment(context, segment_id, segmentation_id):
              {'id': segment_id, 'segmentation_id': segmentation_id})
 
 
-def get_network_segments(context, network_id, filter_dynamic=False):
+def get_network_segments(context, network_id, filter_dynamic=None):
     return get_networks_segments(
         context, [network_id], filter_dynamic)[network_id]
 
 
-def get_networks_segments(context, network_ids, filter_dynamic=False):
+def get_networks_segments(context, network_ids, filter_dynamic=None):
     if not network_ids:
         return {}
 
