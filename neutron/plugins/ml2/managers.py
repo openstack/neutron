@@ -375,7 +375,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                     context, segment)
             segments_db.add_network_segment(context, network_id,
                                             dynamic_segment,
-                                            is_dynamic=True)
+                                            is_dynamic=True, segment_index=1)
         return dynamic_segment
 
     @db_api.retry_if_session_inactive()
