@@ -10,3 +10,7 @@ stestr>=1.0.0 # Apache-2.0
 ddt>=1.0.1 # MIT
 # Needed to run DB commands in virtualenvs
 PyMySQL>=0.7.6 # MIT License
+
+# neutron-lib SAPCC specific branch
+git+https://github.com/sapcc/neutron-lib.git@stable/yoga-m3#egg=neutron-lib
+
