@@ -1,0 +1,31 @@
+# init reaper
+dumb-init
+
+# sentry client
+raven
+
+# agent checks for neutron
+openstack-agent-checks
+
+# for memcached based oslo.cache
+python-memcached
+pymemcache
+
+# 3rd party middleware
+git+https://github.com/sapcc/openstack-watcher-middleware.git#egg=watcher-middleware
+git+https://github.com/sapcc/openstack-audit-middleware.git@master#egg=audit-middleware
+
+# Networking Drivers
+-e git+https://github.com/sapcc/asr1k-neutron-l3@stable/ussuri-m3#egg=asr1k-neutron-l3
+-e git+https://github.com/sapcc/networking-aci.git@stable/ussuri-m3#egg=networking_aci
+-e git+https://github.com/sapcc/networking-manila.git@stable/ussuri-m3#egg=networking_manila
+-e git+https://github.com/sapcc/networking-f5.git@stable/ussuri-m3#egg=networking_f5
+-e git+https://github.com/sapcc/networking-ucsm-bm.git@stable/ussuri-m3#egg=networking-ucsm-bm
+-e git+https://github.com/sapcc/networking-arista.git@stable/ussuri-m3#egg=networking_arista
+
+# Todo: Policy API USSURI
+-e git+https://github.com/sapcc/networking-nsx-t.git@stable/train-m3#egg=networking_nsxv3
+
+# Upstream
+-e git+https://github.com/openstack/networking-bgpvpn@stable/ussuri#egg=networking-bgpvpn
+
