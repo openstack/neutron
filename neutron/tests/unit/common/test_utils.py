@@ -544,13 +544,13 @@ class TimerTestCase(base.BaseTestCase):
     def test__getattr(self):
         with utils.Timer() as timer:
             time.sleep(1)
-        self.assertEqual(1, round(timer.total_seconds()))
+        self.assertLess(timer.total_seconds(), 2)
         self.assertEqual(1, timer.delta.seconds)
 
     def test__enter_with_timeout(self):
         with utils.Timer(timeout=10) as timer:
             time.sleep(1)
-        self.assertEqual(1, round(timer.total_seconds()))
+        self.assertLess(timer.total_seconds(), 2)
 
     def test__enter_with_timeout_exception(self):
         msg = r'Timer timeout expired after 1 second\(s\).'
