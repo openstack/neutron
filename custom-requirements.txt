@@ -1,0 +1,44 @@
+# jaeger osprofiler
+jaeger-client
+
+# init reaper
+dumb-init
+
+# sentry client
+raven
+
+# agent checks for neutron
+openstack-agent-checks
+
+# uwsgi plugins
+uwsgi-dogstatsd
+uwsgi-shortmsecs
+
+# for memcached based oslo.cache
+python-memcached
+pymemcache
+
+#mysql
+pymysql
+
+# neutron-lib SAPCC specific branch
+git+https://github.com/sapcc/neutron-lib.git@stable/yoga-m3#egg=neutron-lib
+
+# 3rd party middleware
+git+https://github.com/sapcc/openstack-watcher-middleware.git#egg=watcher-middleware
+git+https://github.com/sapcc/openstack-audit-middleware.git@master#egg=audit-middleware
+git+https://github.com/sapcc/openstack-manhole-middleware.git@main#egg=manhole-middleware
+git+https://github.com/sapcc/openstack-uwsgi-middleware.git@main#egg=uwsgi-middleware
+
+# Networking Drivers
+-e git+https://github.com/sapcc/asr1k-neutron-l3@stable/yoga-m3#egg=asr1k-neutron-l3
+-e git+https://github.com/sapcc/networking-aci.git@stable/yoga-m3#egg=networking_aci[acicobra]
+-e git+https://github.com/sapcc/networking-manila.git@stable/yoga-m3#egg=networking_manila
+-e git+https://github.com/sapcc/networking-f5.git@stable/yoga-m3#egg=networking_f5
+-e git+https://github.com/sapcc/networking-ucsm-bm.git@stable/yoga-m3#egg=networking-ucsm-bm
+-e git+https://github.com/sapcc/networking-arista.git@stable/yoga-m3#egg=networking_arista
+-e git+https://github.com/sapcc/networking-nsx-t.git@stable/yoga-m3#egg=networking_nsxv3
+-e git+https://github.com/sapcc/networking-bgpvpn@stable/yoga-m3#egg=networking-bgpvpn
+-e git+https://github.com/sapcc/networking-interconnection@stable/yoga-m3#egg=networking_interconnection
+-e git+https://github.com/sapcc/networking-ccloud@stable/yoga-m3#egg=networking_ccloud
+
