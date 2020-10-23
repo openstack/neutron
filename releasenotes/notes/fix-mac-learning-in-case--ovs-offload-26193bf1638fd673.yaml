@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+     Fixed MAC learning issue when ovs offload enabled. OVS firewall reduce
+     the usage of normal actions to reduce cpu utilization. This causing flood
+     rule because there is no MAC learning on ingress traffic. While this ok
+     for none offload case, when using ovs offload flood rule is not
+     offloaded. This fix the MAC learning in the offload, so we avoid flood
+     rule.
+     `#1897637 <https://bugs.launchpad.net/neutron/+bug/1897637>`_.
