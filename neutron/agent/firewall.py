@@ -160,11 +160,6 @@ class FirewallDriver(object, metaclass=abc.ABCMeta):
     def remove_trusted_ports(self, port_ids):
         pass
 
-    def setup_multicast_traffic(self, phy_br_ofports, tun_br_ofports,
-                                enable_tunneling):
-        """Setup filters for multicast traffic"""
-        pass
-
 
 class NoopFirewallDriver(FirewallDriver):
     """Noop Firewall Driver.

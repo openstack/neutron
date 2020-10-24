@@ -495,51 +495,6 @@ same as in |table_72|.
   migrated to a port on a different node, then the new port won't contain
   conntrack information about previous traffic that happened with VIP.
 
-Multicast traffic for addresses in 224.0.0.X
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-By default, as commented in [1]_, "packets with a destination IP (DIP) address
-in the 224.0.0.X range which are not IGMP must be forwarded on all ports." That
-means those packets will be forwarded to all ports regardless of any ingress
-rule. Therefore those packets are processed independently. Any ingress packet
-incoming from an local VM is sent to the multicast ingress table, |table_101|.
-This table has one rule that sends the received packets directly to the
-physical bridges, the tunnel bridges and the multicast rule processing table,
-|table_102|. Port 1 (output:1) is the integration bridge to physical bridge
-patch port.
-
-::
-
- table=60, priority=50,ip,dl_vlan=1,nw_dst=224.0.0.0/24 actions=load:0x1->NXM_NX_REG6[],strip_vlan,resubmit(,101)
- table=60, priority=50,ip,dl_vlan=1,nw_dst=224.0.0.0/24 actions=load:0x2->NXM_NX_REG6[],strip_vlan,resubmit(,101)
- table=101, priority=70 actions=output:1,resubmit(,102)
- table=101, priority=0 actions=drop
-
-The goal of this table is to avoid the NORMAl action processing for those
-packets, not allowing OVS to forward them to all ports. Instead of this, those
-packets are sent to other hosts via the physical and the tunnel bridges.
-
-The packets comming from external sources are sent directly to |table_102|.
-
-::
-
- table=73, priority=95,ip,nw_dst=224.0.0.0/24 actions=resubmit(,102)
-
-The next table will process the ingress rules for those multicast packets
-according to the protocol number defined in each rule, per network (internal
-VLAN used by Neutron to segment the tenant traffic). The OVS firewall class
-``OVSFirewallDriver`` instance will keep a list of ports per internal VLAN and
-rule. When a rule is added or updated, a OpenFlow rule will be added to this
-|table_102|. This rule matches the rule protocol and outputs the packets to all
-ports assigned to this rule in a specific VLAN network.
-
-::
-
- table=102, priority=70,ip,reg6=0x1,nw_proto=112 actions=output:11
- table=102, priority=70,ip,reg6=0x2,nw_proto=122 actions=output:12
- table=102, priority=0 actions=drop
-
-
 OVS firewall integration points
 -------------------------------
 
@@ -613,5 +568,3 @@ switched to the OVS driver.
 .. |table_92| replace:: ``table 92`` (ACCEPTED_INGRESS_TRAFFIC)
 .. |table_93| replace:: ``table 93`` (DROPPED_TRAFFIC)
 .. |table_94| replace:: ``table 94`` (ACCEPTED_EGRESS_TRAFFIC_NORMAL)
-.. |table_101| replace:: ``table 101`` (MCAST_INGRESS_TABLE)
-.. |table_102| replace:: ``table 102`` (MCAST_RULES_INGRESS_TABLE)

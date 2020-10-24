@@ -204,22 +204,6 @@ def create_flows_from_rule_and_port(rule, port, conjunction=False):
     return flows
 
 
-def create_mcast_flow_from_vlan_protocol(vlan_tag, protocol, ofports):
-    """Create ingress flows for multicast traffic, destination IP 224.0.0.x"""
-    flow = {
-        'table': ovs_consts.MCAST_RULES_INGRESS_TABLE,
-        'priority': 70,
-        'dl_type': n_consts.ETHERTYPE_IP,
-        'nw_proto': protocol,
-        'reg_net': vlan_tag}
-
-    flow['actions'] = ''
-    for ofport in ofports:
-        flow['actions'] += 'output:{:d},'.format(ofport)
-
-    return flow
-
-
 def populate_flow_common(direction, flow_template, port):
     """Initialize common flow fields."""
     if direction == n_consts.INGRESS_DIRECTION:
