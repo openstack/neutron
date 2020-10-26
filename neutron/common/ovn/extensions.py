@@ -11,20 +11,43 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
+from neutron_lib.api.definitions import address_scope
 from neutron_lib.api.definitions import agent as agent_def
+from neutron_lib.api.definitions import allowedaddresspairs
+from neutron_lib.api.definitions import auto_allocated_topology
 from neutron_lib.api.definitions import availability_zone as az_def
+from neutron_lib.api.definitions import default_subnetpools
+from neutron_lib.api.definitions import dns
 from neutron_lib.api.definitions import expose_port_forwarding_in_fip
+from neutron_lib.api.definitions import external_net
+from neutron_lib.api.definitions import extra_dhcp_opt
+from neutron_lib.api.definitions import extraroute
 from neutron_lib.api.definitions import fip_pf_description
+from neutron_lib.api.definitions import fip_port_details
 from neutron_lib.api.definitions import floating_ip_port_forwarding
+from neutron_lib.api.definitions import l3
+from neutron_lib.api.definitions import l3_ext_gw_mode
+from neutron_lib.api.definitions import multiprovidernet
+from neutron_lib.api.definitions import network_availability_zone
+from neutron_lib.api.definitions import network_ip_availability
+from neutron_lib.api.definitions import network_mtu
+from neutron_lib.api.definitions import pagination
 from neutron_lib.api.definitions import port_resource_request
+from neutron_lib.api.definitions import port_security
+from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import project_id
+from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import qos
 from neutron_lib.api.definitions import qos_bw_limit_direction
 from neutron_lib.api.definitions import qos_default
 from neutron_lib.api.definitions import qos_rule_type_details
 from neutron_lib.api.definitions import qos_rules_alias
+from neutron_lib.api.definitions import rbac_address_scope
 from neutron_lib.api.definitions import router_availability_zone as raz_def
 from neutron_lib.api.definitions import segment as seg_def
+from neutron_lib.api.definitions import sorting
+from neutron_lib.api.definitions import trunk
+from neutron_lib import constants
 
 # NOTE(russellb) This remains in its own file (vs constants.py) because we want
 # to be able to easily import it and export the info without any dependencies
@@ -33,34 +56,34 @@ from neutron_lib.api.definitions import segment as seg_def
 # NOTE(russellb) If you update these lists, please also update
 # doc/source/features.rst and the current release note.
 ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
-    'router',
-    'extraroute',
-    'ext-gw-mode',
-    'fip-port-details',
-    'pagination',
+    l3.ALIAS,
+    extraroute.ALIAS,
+    l3_ext_gw_mode.ALIAS,
+    fip_port_details.ALIAS,
+    pagination.ALIAS,
     'qos-fip',
-    'sorting',
-    'project-id',
-    'dns-integration',
+    sorting.ALIAS,
+    project_id.ALIAS,
+    dns.ALIAS,
     agent_def.ALIAS,
     az_def.ALIAS,
     raz_def.ALIAS,
 ]
 ML2_SUPPORTED_API_EXTENSIONS = [
-    'address-scope',
-    'agent',
-    'allowed-address-pairs',
-    'auto-allocated-topology',
-    'binding',
-    'default-subnetpools',
-    'external-net',
-    'extra_dhcp_opt',
-    'multi-provider',
-    'net-mtu',
-    'network_availability_zone',
-    'network-ip-availability',
-    'port-security',
-    'provider',
+    address_scope.ALIAS,
+    agent_def.ALIAS,
+    allowedaddresspairs.ALIAS,
+    auto_allocated_topology.ALIAS,
+    portbindings.ALIAS,
+    default_subnetpools.ALIAS,
+    external_net.ALIAS,
+    extra_dhcp_opt.ALIAS,
+    multiprovidernet.ALIAS,
+    network_mtu.ALIAS,
+    network_availability_zone.ALIAS,
+    network_ip_availability.ALIAS,
+    port_security.ALIAS,
+    provider_net.ALIAS,
     port_resource_request.ALIAS,
     qos.ALIAS,
     qos_bw_limit_direction.ALIAS,
@@ -68,15 +91,15 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     qos_rule_type_details.ALIAS,
     qos_rules_alias.ALIAS,
     'quotas',
-    'rbac-address-scope',
+    rbac_address_scope.ALIAS,
     'rbac-policies',
     'standard-attr-revisions',
     'security-group',
     'standard-attr-description',
-    'subnet_allocation',
+    constants.SUBNET_ALLOCATION_EXT_ALIAS,
     'standard-attr-tag',
     'standard-attr-timestamp',
-    'trunk',
+    trunk.ALIAS,
     'quota_details',
     seg_def.ALIAS,
     expose_port_forwarding_in_fip.ALIAS,
