@@ -1,0 +1,5 @@
+---
+deprecations:
+  - Deprecate ``keepalived_use_no_track`` config option, as keepalived
+    version check is a safe source to decide if ``no_track`` can be
+    used in keepalived configuration file.

@@ -108,6 +108,11 @@ OPTS = [
                        'restarting the L3 agent.')),
     cfg.BoolOpt('keepalived_use_no_track',
                 default=True,
+                deprecated_for_removal=True,
+                deprecated_reason='By keepalived version detection introduced '
+                                  'by https://review.opendev.org/757620 there '
+                                  'is no need for this config option. To be '
+                                  'removed in X.',
                 help=_('If keepalived without support for "no_track" option '
                        'is used, this should be set to False. '
                        'Support for this option was introduced in keepalived '
