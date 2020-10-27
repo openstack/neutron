@@ -116,7 +116,7 @@ rules = [
         'Onboard existing subnet into a subnetpool',
         [
             {
-                'method': 'Put',
+                'method': 'PUT',
                 'path': ONBOARD_PATH,
             },
         ]
@@ -127,7 +127,7 @@ rules = [
         'Add prefixes to a subnetpool',
         [
             {
-                'method': 'Put',
+                'method': 'PUT',
                 'path': ADD_PREFIXES_PATH,
             },
         ]
@@ -138,7 +138,7 @@ rules = [
         'Remove unallocated prefixes from a subnetpool',
         [
             {
-                'method': 'Put',
+                'method': 'PUT',
                 'path': REMOVE_PREFIXES_PATH,
             },
         ]
