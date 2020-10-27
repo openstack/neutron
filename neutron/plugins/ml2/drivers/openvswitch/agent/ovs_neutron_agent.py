@@ -170,12 +170,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                               datapath_type=ovs_conf.datapath_type)
             for b in ('br_int', 'br_phys', 'br_tun'))
 
-        self.use_veth_interconnection = ovs_conf.use_veth_interconnection
-        if self.use_veth_interconnection:
-            LOG.warning("Usage of veth instead of patch ports for bridges "
-                        "interconnection is deprecated in Victoria and will "
-                        "be removed in W release. Please use patch ports "
-                        "instead.")
         self.veth_mtu = agent_conf.veth_mtu
         self.available_local_vlans = set(range(n_const.MIN_VLAN_TAG,
                                                n_const.MAX_VLAN_TAG + 1))
@@ -1488,7 +1482,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.int_ofports = {}
         self.phys_ofports = {}
         datapath_ids_set = set()
-        ip_wrapper = ip_lib.IPWrapper()
         ovs = ovs_lib.BaseOVS()
         ovs_bridges = ovs.get_bridges()
         for physical_network, bridge in bridge_mappings.items():
@@ -1526,45 +1519,31 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             # be same, so check only one of them.
             # Not logging error here, as the interface may not exist yet.
             # Type check is done to cleanup wrong interface if any.
+
+            # TODO(slaweq) In X release we can remove code which is here just
+            # to move from old "veth" interconnection between bridges to the
+            # patch ports (L1527 - L1547)
             int_type = self.int_br.db_get_val("Interface", int_if_name, "type",
                                               log_errors=False)
-            if self.use_veth_interconnection:
-                # Drop ports if the interface types doesn't match the
-                # configuration value.
-                if int_type == 'patch':
-                    self.int_br.delete_port(int_if_name)
-                    br.delete_port(phys_if_name)
-                device = ip_lib.IPDevice(int_if_name)
-                if device.exists():
-                    device.link.delete()
-                    # Give udev a chance to process its rules here, to avoid
-                    # race conditions between commands launched by udev rules
-                    # and the subsequent call to ip_wrapper.add_veth
-                    utils.execute(['udevadm', 'settle', '--timeout=10'])
-                int_veth, phys_veth = ip_wrapper.add_veth(int_if_name,
-                                                          phys_if_name)
-                int_ofport = self.int_br.add_port(int_if_name)
-                phys_ofport = br.add_port(phys_if_name)
-            else:
-                # Drop ports if the interface type doesn't match the
-                # configuration value
-                if int_type == 'veth':
-                    self.int_br.delete_port(int_if_name)
-                    br.delete_port(phys_if_name)
+            # Drop ports if the interface type doesn't match the
+            # configuration value
+            if int_type == 'veth':
+                self.int_br.delete_port(int_if_name)
+                br.delete_port(phys_if_name)
 
-                # Setup int_br to physical bridge patches.  If they already
-                # exist we leave them alone, otherwise we create them but don't
-                # connect them until after the drop rules are in place.
-                if self.int_br.port_exists(int_if_name):
-                    int_ofport = self.int_br.get_port_ofport(int_if_name)
-                else:
-                    int_ofport = self.int_br.add_patch_port(
-                        int_if_name, constants.NONEXISTENT_PEER)
-                if br.port_exists(phys_if_name):
-                    phys_ofport = br.get_port_ofport(phys_if_name)
-                else:
-                    phys_ofport = br.add_patch_port(
-                        phys_if_name, constants.NONEXISTENT_PEER)
+            # Setup int_br to physical bridge patches.  If they already
+            # exist we leave them alone, otherwise we create them but don't
+            # connect them until after the drop rules are in place.
+            if self.int_br.port_exists(int_if_name):
+                int_ofport = self.int_br.get_port_ofport(int_if_name)
+            else:
+                int_ofport = self.int_br.add_patch_port(
+                    int_if_name, constants.NONEXISTENT_PEER)
+            if br.port_exists(phys_if_name):
+                phys_ofport = br.get_port_ofport(phys_if_name)
+            else:
+                phys_ofport = br.add_patch_port(
+                    phys_if_name, constants.NONEXISTENT_PEER)
 
             self.int_ofports[physical_network] = int_ofport
             self.phys_ofports[physical_network] = phys_ofport
@@ -1578,20 +1557,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             if not self.enable_distributed_routing:
                 br.drop_port(in_port=phys_ofport)
 
-            if self.use_veth_interconnection:
-                # enable veth to pass traffic
-                int_veth.link.set_up()
-                phys_veth.link.set_up()
-                if self.veth_mtu:
-                    # set up mtu size for veth interfaces
-                    int_veth.link.set_mtu(self.veth_mtu)
-                    phys_veth.link.set_mtu(self.veth_mtu)
-            else:
-                # associate patch ports to pass traffic
-                self.int_br.set_db_attribute('Interface', int_if_name,
-                                             'options', {'peer': phys_if_name})
-                br.set_db_attribute('Interface', phys_if_name,
-                                    'options', {'peer': int_if_name})
+            # associate patch ports to pass traffic
+            self.int_br.set_db_attribute('Interface', int_if_name,
+                                         'options', {'peer': phys_if_name})
+            br.set_db_attribute('Interface', phys_if_name,
+                                'options', {'peer': int_if_name})
 
     def update_stale_ofport_rules(self):
         # ARP spoofing rules and drop-flow upon port-delete

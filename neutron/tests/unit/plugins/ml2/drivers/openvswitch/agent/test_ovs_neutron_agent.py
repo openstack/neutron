@@ -1609,46 +1609,6 @@ class TestOvsNeutronAgent(object):
     def test_setup_physical_bridges_dvr_enabled(self):
         self._test_setup_physical_bridges(dvr_enabled=True)
 
-    def test_setup_physical_bridges_using_veth_interconnection(self):
-        self.agent.use_veth_interconnection = True
-        with mock.patch.object(ip_lib.IPDevice, "exists") as devex_fn,\
-                mock.patch.object(sys, "exit"),\
-                mock.patch.object(utils, "execute") as utilsexec_fn,\
-                mock.patch.object(self.agent, 'br_phys_cls') as phys_br_cls,\
-                mock.patch.object(self.agent, 'int_br') as int_br,\
-                mock.patch.object(self.agent, '_check_bridge_datapath_id'),\
-                mock.patch.object(ip_lib.IPWrapper, "add_veth") as addveth_fn,\
-                mock.patch.object(ip_lib.IpLinkCommand,
-                                  "delete") as linkdel_fn,\
-                mock.patch.object(ip_lib.IpLinkCommand, "set_up"),\
-                mock.patch.object(ip_lib.IpLinkCommand, "set_mtu"),\
-                mock.patch.object(ovs_lib.BaseOVS, "get_bridges") as get_br_fn:
-            devex_fn.return_value = True
-            parent = mock.MagicMock()
-            parent.attach_mock(utilsexec_fn, 'utils_execute')
-            parent.attach_mock(linkdel_fn, 'link_delete')
-            parent.attach_mock(addveth_fn, 'add_veth')
-            addveth_fn.return_value = (ip_lib.IPDevice("int-br-eth1"),
-                                       ip_lib.IPDevice("phy-br-eth1"))
-            phys_br = phys_br_cls()
-            phys_br.add_port.return_value = "phys_veth_ofport"
-            int_br.add_port.return_value = "int_veth_ofport"
-            get_br_fn.return_value = ["br-eth"]
-            self.agent.setup_physical_bridges({"physnet1": "br-eth"})
-            expected_calls = [mock.call.link_delete(),
-                              mock.call.utils_execute(['udevadm',
-                                                       'settle',
-                                                       '--timeout=10']),
-                              mock.call.add_veth('int-br-eth',
-                                                 'phy-br-eth')]
-            parent.assert_has_calls(expected_calls, any_order=False)
-            self.assertEqual("int_veth_ofport",
-                             self.agent.int_ofports["physnet1"])
-            self.assertEqual("phys_veth_ofport",
-                             self.agent.phys_ofports["physnet1"])
-            int_br.add_port.assert_called_with("int-br-eth")
-            phys_br.add_port.assert_called_with("phy-br-eth")
-
     def _test_setup_physical_bridges_change_from_veth_to_patch_conf(
             self, port_exists=False):
         with mock.patch.object(sys, "exit"),\

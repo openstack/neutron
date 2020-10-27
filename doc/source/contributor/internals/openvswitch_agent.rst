@@ -466,8 +466,7 @@ Implementation Trunk Bridge (Option C)
 
 This implementation is based on this `etherpad <https://etherpad.openstack.org/p/trunk-bridge-tagged-patch-experiment>`_.
 Credits to Bence Romsics.
-The option use_veth_interconnection=true won't be supported, it is deprecated since Victoria,
-see [1]. The IDs used for bridge and port names are truncated.
+The IDs used for bridge and port names are truncated.
 
 ::
 
@@ -498,8 +497,6 @@ tpt-parent-id: trunk bridge side of the patch port that implements a trunk.
 tpi-parent-id: int bridge side of the patch port that implements a trunk.
 spt-subport-id: trunk bridge side of the patch port that implements a subport.
 spi-subport-id: int bridge side of the patch port that implements a subport.
-
-[1] https://bugs.launchpad.net/neutron/+bug/1587296
 
 Trunk creation
 ++++++++++++++
