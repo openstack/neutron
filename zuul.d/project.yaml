@@ -59,7 +59,16 @@
         #    irrelevant-files: *irrelevant-files
         - openstacksdk-functional-devstack-networking:
             voting: false
-        - neutron-centos-8-tripleo-standalone
+        - tripleo-ci-centos-8-content-provider:
+            voting: false
+        - neutron-centos-8-tripleo-standalone:
+            vars: &consumer_vars
+              consumer_job: true
+              build_container_images: false
+              remove_tags:
+                - build
+            dependencies: &consumer_deps
+              - tripleo-ci-centos-8-content-provider
         - neutron-ovn-rally-task:
             voting: false
         # TripleO jobs that deploy OVN.
@@ -71,6 +80,8 @@
         # failures, please reach us on #tripleo IRC channel.
         - neutron-ovn-tripleo-ci-centos-8-containers-multinode:
             voting: false
+            vars: *consumer_vars
+            dependencies: *consumer_deps
         - neutron-ovn-tempest-slow:
             voting: false
         - openstack-tox-py36:  # from openstack-python3-victoria-jobs template
