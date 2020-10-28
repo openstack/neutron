@@ -1,0 +1,14 @@
+---
+features:
+  - |
+    A new vnic type ``vdpa`` has been added to allow requesting port that
+    utilize a vHost-vDPA offload. The ML2/OVS and ML2/OVN mech drivers now
+    have support for the vHost-vDPA vnic type. vHost-vDPA is similar to
+    vHost-user or kernel vhost offload but utilizes the newly added vDPA bus
+    introduced in the Linux 5.7 kernel. vDPA interface can be implemented in
+    software or hardware, when implemented in hardware they provide equivalent
+    performance to SR-IOV or hardware offloaded OVS while providing two main
+    advantages over both SR-IOV and hardware offloaded OVS. Unlike the
+    alternatives, vHost-vDPA enables live migration of instance transparently
+    and provides a standard virtio-net interface to the guest avoiding the
+    need to install vendor specific drivers in the guest.

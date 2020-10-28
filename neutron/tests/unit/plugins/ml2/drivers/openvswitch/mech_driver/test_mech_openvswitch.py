@@ -332,7 +332,9 @@ class OpenvswitchMechVnicTypesTestCase(OpenvswitchMechanismBaseTestCase):
 
     supported_vnics = [portbindings.VNIC_NORMAL,
                        portbindings.VNIC_DIRECT,
-                       portbindings.VNIC_SMARTNIC]
+                       portbindings.VNIC_SMARTNIC,
+                       portbindings.VNIC_VHOST_VDPA,
+                       ]
 
     def setUp(self):
         self.prohibit_list_cfg = {
