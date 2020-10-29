@@ -549,7 +549,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         self._test_mocks_helper(ovn_nb_synchronizer)
 
         ovn_api = ovn_nb_synchronizer.ovn_api
-        mock.patch.object(impl_idl_ovn, 'get_connection').start()
+        mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'from_worker').start()
 
         ovn_nb_synchronizer.do_sync()
 
