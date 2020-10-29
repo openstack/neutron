@@ -436,7 +436,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         # when retrieving the port and the network list.
         self.mock_rules.assert_has_calls(calls, any_order=True)
         fip = self.qos_driver._plugin_l3._make_floatingip_dict(self.fips[0])
-        mock_update_fip.asssert_called_once_with(self.txn, fip, reset=True)
+        mock_update_fip.assert_called_once_with(self.txn, fip)
 
     def test_update_floatingip(self):
         nb_idl = self.qos_driver._driver._nb_idl
