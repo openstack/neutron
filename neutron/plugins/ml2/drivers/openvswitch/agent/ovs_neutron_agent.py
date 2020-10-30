@@ -1477,15 +1477,15 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         updated_ports.update({p['name'] for p in events['modified']})
 
         ports_re_added = added_ports & removed_ports
-        for p in ports_re_added:
-            if ovs_lib.BaseOVS().port_exists(p):
-                events['re_added'] = [e for e in events['removed']
-                                      if e['name'] == p]
-                events['removed'] = [e for e in events['removed']
-                                     if e['name'] != p]
-            else:
-                events['added'] = [e for e in events['added']
-                                   if e['name'] != p]
+        ports_re_added = [p for p in ports_re_added if
+                          ovs_lib.BaseOVS().port_exists(p)]
+        events['re_added'] = [e for e in events['removed']
+                              if e['name'] in ports_re_added]
+        events['removed'] = [e for e in events['removed'] if e['name']
+                             not in ports_re_added]
+        ports_removed = [p['name'] for p in events['removed']]
+        events['added'] = [e for e in events['added'] if e['name'] not in
+                           ports_removed]
 
         # TODO(rossella_s): scanning the ancillary bridge won't be needed
         # anymore when https://review.openstack.org/#/c/203381 since the bridge
