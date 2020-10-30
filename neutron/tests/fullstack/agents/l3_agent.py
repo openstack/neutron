@@ -15,6 +15,8 @@
 
 import sys
 
+from oslo_config import cfg  # noqa
+
 from neutron.common import eventlet_utils
 from neutron.tests.common.agents import l3_agent
 
