@@ -188,32 +188,6 @@ class AgentUtilsExecuteEncodeTest(base.BaseTestCase):
         self.assertEqual((str_data, ''), result)
 
 
-class TestFindParentPid(base.BaseTestCase):
-    def setUp(self):
-        super(TestFindParentPid, self).setUp()
-        self.m_execute = mock.patch.object(utils, 'execute').start()
-
-    def test_returns_none_for_no_valid_pid(self):
-        self.m_execute.side_effect = exceptions.ProcessExecutionError(
-            '', returncode=1)
-        self.assertIsNone(utils.find_parent_pid(-1))
-
-    def test_returns_parent_id_for_good_ouput(self):
-        self.m_execute.return_value = '123 \n'
-        self.assertEqual(utils.find_parent_pid(-1), '123')
-
-    def test_raises_exception_returncode_0(self):
-        with testtools.ExpectedException(exceptions.ProcessExecutionError):
-            self.m_execute.side_effect = \
-                exceptions.ProcessExecutionError('', returncode=0)
-            utils.find_parent_pid(-1)
-
-    def test_raises_unknown_exception(self):
-        with testtools.ExpectedException(RuntimeError):
-            self.m_execute.side_effect = RuntimeError()
-            utils.find_parent_pid(-1)
-
-
 class TestFindForkTopParent(base.BaseTestCase):
     def _test_find_fork_top_parent(self, expected=_marker,
                                    find_parent_pid_retvals=None,
