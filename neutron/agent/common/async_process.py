@@ -59,7 +59,8 @@ class AsyncProcess(object):
     """
 
     def __init__(self, cmd, run_as_root=False, respawn_interval=None,
-                 namespace=None, log_output=False, die_on_error=False):
+                 namespace=None, log_output=False, die_on_error=False,
+                 process_name=None):
         """Constructor.
 
         :param cmd: The list of command arguments to invoke.
@@ -71,6 +72,8 @@ class AsyncProcess(object):
                namespace.
         :param log_output: Optional, also log received output.
         :param die_on_error: Optional, kills the process on stderr output.
+        :param process_name: Optional, process name set manually by Neutron to
+               nominate a specific process (e.g.: OVS agent, DHCP agent, etc.).
         """
         self.cmd_without_namespace = cmd
         self._cmd = ip_lib.add_namespace_to_cmd(cmd, namespace)
@@ -86,6 +89,7 @@ class AsyncProcess(object):
         self._watchers = []
         self.log_output = log_output
         self.die_on_error = die_on_error
+        self.process_name = process_name
 
     @property
     def cmd(self):
@@ -100,7 +104,8 @@ class AsyncProcess(object):
         # spawns rootwrap and rootwrap spawns the process. self.pid will make
         # sure to get the correct pid.
         return utils.pid_invoked_with_cmdline(
-            self.pid, self.cmd_without_namespace)
+            self.pid, self.cmd_without_namespace,
+            process_name=self.process_name)
 
     def start(self, block=False):
         """Launch a process and monitor it asynchronously.

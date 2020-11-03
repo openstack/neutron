@@ -69,7 +69,8 @@ class ProcessFixture(fixtures.Fixture):
         for filename in self.config_filenames:
             cmd += ['--config-file', filename]
         self.process = async_process.AsyncProcess(
-            cmd, run_as_root=run_as_root, namespace=self.namespace
+            cmd, run_as_root=run_as_root, namespace=self.namespace,
+            process_name=self.process_name
         )
         self.process.start(block=True)
         LOG.debug("Process started: %s", self.process_name)
