@@ -551,7 +551,7 @@ class IpAddrCommand(IpDeviceCommandBase):
             if not common_utils.is_cidr_host(cidr):
                 kwargs['mask'] = common_utils.cidr_mask_length(cidr)
         if scope:
-            kwargs['scope'] = IP_ADDRESS_SCOPE_NAME[scope]
+            kwargs['scope'] = scope
         if ip_version:
             kwargs['family'] = common_utils.get_socket_address_family(
                 ip_version)
