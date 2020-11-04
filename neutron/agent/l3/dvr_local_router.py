@@ -48,6 +48,27 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         self.fip_ns = None
         self._pending_arp_set = set()
 
+        self.load_used_fip_information()
+
+    def load_used_fip_information(self):
+        """Some information needed to remove a floating ip e.g. it's associated
+        ip rule priorities, are stored in memory to avoid extra db lookups.
+        Since this is lost on agent restart we need to reload them.
+        """
+        ex_gw_port = self.get_ex_gw_port()
+        if ex_gw_port:
+            fip_ns = self.agent.get_fip_ns(ex_gw_port['network_id'])
+
+            for fip in self.get_floating_ips():
+                floating_ip = fip['floating_ip_address']
+                fixed_ip = fip['fixed_ip_address']
+                rule_pr = fip_ns.lookup_rule_priority(floating_ip)
+                if rule_pr:
+                    self.floating_ips_dict[floating_ip] = (fixed_ip, rule_pr)
+                else:
+                    LOG.error("Rule priority not found for floating ip %s",
+                              floating_ip)
+
     def migrate_centralized_floating_ip(self, fip, interface_name, device):
         # Remove the centralized fip first and then add fip to the host
         ip_cidr = common_utils.ip_to_cidr(fip['floating_ip_address'])
@@ -161,7 +182,11 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                                   table=dvr_fip_ns.FIP_RT_TBL,
                                   priority=int(str(rule_pr)))
             self.fip_ns.deallocate_rule_priority(floating_ip)
-            # TODO(rajeev): Handle else case - exception/log?
+        else:
+            LOG.error("Unable to find necessary information to complete "
+                      "removal of floating ip rules for %s - will require "
+                      "manual cleanup (see LP 1891673 for details).",
+                      floating_ip)
 
     def floating_ip_removed_dist(self, fip_cidr):
         """Remove floating IP from FIP namespace."""

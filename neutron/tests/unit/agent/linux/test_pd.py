@@ -46,7 +46,9 @@ class TestPrefixDelegation(tests_base.DietTestCase):
         pd_router = l3_agent.pd.routers.get(router.router_id)
         self.assertEqual(ns_name, pd_router.get('ns_name'))
 
-    def test_add_update_dvr_edge_router(self):
+    @mock.patch.object(dvr_edge_router.DvrEdgeRouter,
+                       'load_used_fip_information')
+    def test_add_update_dvr_edge_router(self, load_used_fip_info):
         l3_agent = mock.Mock()
         l3_agent.pd.routers = {}
         router_id = '1'
@@ -59,7 +61,9 @@ class TestPrefixDelegation(tests_base.DietTestCase):
         ns_name = ri.snat_namespace.name
         self._test_add_update_pd(l3_agent, ri, ns_name)
 
-    def test_add_update_dvr_local_router(self):
+    @mock.patch.object(dvr_local_router.DvrLocalRouter,
+                       'load_used_fip_information')
+    def test_add_update_dvr_local_router(self, load_used_fip_info):
         l3_agent = mock.Mock()
         l3_agent.pd.routers = {}
         router_id = '1'
