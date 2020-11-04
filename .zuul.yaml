@@ -12,7 +12,6 @@
     check:
       jobs:
         - neutron-functional
-        - neutron-rally-task
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
         # We don't run the job on things like neutron docs-only changes
@@ -203,29 +202,6 @@
       - ^neutron/locale/.*$
       - ^releasenotes/.*$
     voting: false
-
-- job:
-    name: neutron-rally-task
-    parent: rally-task-neutron
-    timeout: 7800
-    vars:
-      devstack_plugins:
-        rally-openstack: https://opendev.org/openstack/rally-openstack
-        neutron: https://opendev.org/openstack/neutron
-      devstack_services:
-        neutron-trunk: true
-      rally_task: rally-jobs/task-neutron.yaml
-    required-projects:
-      - name: openstack/rally-openstack
-        override-checkout: 1.7.0
-    irrelevant-files:
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^tools/.*$
-      - ^tox.ini$
 
 - job:
     name: neutron-tempest-dvr
