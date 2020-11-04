@@ -412,7 +412,15 @@ class OVNMechanismDriver(api.MechanismDriver):
                                  const.TYPE_VXLAN,
                                  const.TYPE_VLAN])
 
+    def _get_max_tunid(self):
+        try:
+            return int(self._nb_ovn.nb_global.options.get('max_tunid'))
+        except (ValueError, TypeError):
+            # max_tunid may be absent in older OVN versions, return None
+            pass
+
     def _validate_network_segments(self, network_segments):
+        max_tunid = self._get_max_tunid()
         for network_segment in network_segments:
             network_type = network_segment['network_type']
             segmentation_id = network_segment['segmentation_id']
@@ -427,6 +435,12 @@ class OVNMechanismDriver(api.MechanismDriver):
             if not self._is_network_type_supported(network_type):
                 msg = _('Network type %s is not supported') % network_type
                 raise n_exc.InvalidInput(error_message=msg)
+            if segmentation_id and max_tunid and segmentation_id > max_tunid:
+                m = (
+                    _('Segmentation ID should be lower or equal to %d') %
+                    max_tunid
+                )
+                raise n_exc.InvalidInput(error_message=m)
 
     def create_segment_provnet_port(self, resource, event, trigger,
                                     context, segment, payload=None):

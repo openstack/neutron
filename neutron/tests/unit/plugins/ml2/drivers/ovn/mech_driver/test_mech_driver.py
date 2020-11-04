@@ -155,6 +155,38 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                           self.mech_driver._create_neutron_pg_drop)
         self.assertEqual(2, m_ovsdb_api.get_port_group.call_count)
 
+    def test__get_max_tunid_no_key_set(self):
+        self.mech_driver._nb_ovn.nb_global.options.get.return_value = None
+        self.assertIsNone(self.mech_driver._get_max_tunid())
+
+    def test__get_max_tunid_wrong_key_value(self):
+        self.mech_driver._nb_ovn.nb_global.options.get.return_value = '11wrong'
+        self.assertIsNone(self.mech_driver._get_max_tunid())
+
+    def test__get_max_tunid_key_set(self):
+        self.mech_driver._nb_ovn.nb_global.options.get.return_value = '100'
+        self.assertEqual(100, self.mech_driver._get_max_tunid())
+
+    def _test__validate_network_segments_id_succeed(self, val):
+        segment = {
+            "network_type": const.TYPE_VXLAN,
+            "segmentation_id": val,
+            "physical_network": "physnet1",
+        }
+        self.mech_driver._nb_ovn.nb_global.options.get.return_value = '200'
+        self.mech_driver._validate_network_segments([segment])
+
+    def test__validate_network_segments_id_below_max_limit(self):
+        self._test__validate_network_segments_id_succeed(100)
+
+    def test__validate_network_segments_id_eq_max_limit(self):
+        self._test__validate_network_segments_id_succeed(200)
+
+    def test__validate_network_segments_id_above_max_limit(self):
+        self.assertRaises(
+            n_exc.InvalidInput,
+            self._test__validate_network_segments_id_succeed, 300)
+
     @mock.patch.object(ovn_revision_numbers_db, 'bump_revision')
     def test__create_security_group(self, mock_bump):
         self.mech_driver._create_security_group(
