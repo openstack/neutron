@@ -306,8 +306,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.sg_agent)
 
         self.sg_agent.init_ovs_dvr_firewall(self.dvr_agent)
-        self.sg_agent.setup_multicast_traffic(
-            self.phys_ofports, self.tun_br_ofports, self.enable_tunneling)
 
         # we default to False to provide backward compat with out of tree
         # firewall drivers that expect the logic that existed on the Neutron
