@@ -1045,14 +1045,22 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.get_port.return_value = self.member_port
         self.l3_inst._ovn.lookup.return_value = self.lb_network
         self.l3_inst._ovn.get_lswitch_port.return_value = self.member_lsp
-        self.l3_inst.create_floatingip(self.context, 'floatingip')
+        fip = self.l3_inst.create_floatingip(self.context, 'floatingip')
         # Validate that there is no external_mac and logical_port while
         # setting the NAT entry.
+        expected_ext_ids = {
+              ovn_const.OVN_FIP_EXT_ID_KEY: fip['id'],
+              ovn_const.OVN_REV_NUM_EXT_ID_KEY: mock.ANY,
+              ovn_const.OVN_FIP_PORT_EXT_ID_KEY: fip['port_id'],
+              ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'neutron-router-id',
+              ovn_const.OVN_FIP_EXT_MAC_KEY: self.member_port['mac_address'],
+              ovn_const.OVN_FIP_NET_ID: fip['floating_network_id']}
         self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
             external_ip='192.168.0.10',
             logical_ip='10.0.0.10',
-            type='dnat_and_snat')
+            type='dnat_and_snat',
+            external_ids=expected_ext_ids)
 
     def test_create_floatingip_lb_vip_fip(self):
         config.cfg.CONF.set_override(
@@ -1065,15 +1073,23 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             [self.fake_ovn_nat_rule],
         ]
         self.l3_inst._ovn.lookup.return_value = self.lb_network
+        fip = self.l3_inst.create_floatingip(self.context, 'floatingip')
+        expected_ext_ids = {
+              ovn_const.OVN_FIP_EXT_ID_KEY: fip['id'],
+              ovn_const.OVN_REV_NUM_EXT_ID_KEY: mock.ANY,
+              ovn_const.OVN_FIP_PORT_EXT_ID_KEY: fip['port_id'],
+              ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'neutron-router-id',
+              ovn_const.OVN_FIP_EXT_MAC_KEY: self.member_port['mac_address'],
+              ovn_const.OVN_FIP_NET_ID: fip['floating_network_id']}
 
-        self.l3_inst.create_floatingip(self.context, 'floatingip')
         self.l3_inst._ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
             external_ip='192.168.0.10',
             external_mac='aa:aa:aa:aa:aa:aa',
             logical_ip='10.0.0.10',
             logical_port='port_id',
-            type='dnat_and_snat')
+            type='dnat_and_snat',
+            external_ids=expected_ext_ids)
         self.l3_inst._ovn.db_find_rows.assert_called_with(
             'NAT', ('external_ids', '=', {ovn_const.OVN_FIP_PORT_EXT_ID_KEY:
                                           self.member_lsp.name}))
@@ -1664,8 +1680,13 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
     def test_router_update_gateway_upon_subnet_create_max_ips_ipv6(self):
         super(OVNL3ExtrarouteTests, self). \
             test_router_update_gateway_upon_subnet_create_max_ips_ipv6()
+        expected_ext_ids = {
+                ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
+                ovn_const.OVN_SUBNET_EXT_ID_KEY: mock.ANY}
         add_static_route_calls = [
-            mock.call(mock.ANY, ip_prefix='0.0.0.0/0', nexthop='10.0.0.1'),
-            mock.call(mock.ANY, ip_prefix='::/0', nexthop='2001:db8::')]
+            mock.call(mock.ANY, ip_prefix='0.0.0.0/0', nexthop='10.0.0.1',
+                external_ids=expected_ext_ids),
+            mock.call(mock.ANY, ip_prefix='::/0', nexthop='2001:db8::',
+                external_ids=expected_ext_ids)]
         self.l3_inst._ovn.add_static_route.assert_has_calls(
             add_static_route_calls, any_order=True)

@@ -347,14 +347,7 @@ class UpdateLRouterPortCommand(command.BaseCommand):
             msg = _("Logical Router Port %s does not exist") % self.name
             raise RuntimeError(msg)
 
-        # TODO(lucasagomes): Remove this check once we drop the support
-        # for OVS versions <= 2.8
-        ipv6_ra_configs_supported = self.api.is_col_present(
-            'Logical_Router_Port', 'ipv6_ra_configs')
         for col, val in self.columns.items():
-            if col == 'ipv6_ra_configs' and not ipv6_ra_configs_supported:
-                continue
-
             if col == 'gateway_chassis':
                 col, val = _add_gateway_chassis(self.api, txn, self.name,
                                                 val)
@@ -746,12 +739,6 @@ class CheckRevisionNumberCommand(command.BaseCommand):
     def run_idl(self, txn):
         try:
             ovn_table = RESOURCE_TYPE_MAP[self.resource_type]
-            # TODO(lucasagomes): After OVS 2.8.2 is released all tables should
-            # have the external_ids column. We can remove this conditional
-            # here by then.
-            if not self.api.is_col_present(ovn_table, 'external_ids'):
-                return
-
             ovn_resource = None
             if self.resource_type == ovn_const.TYPE_FLOATINGIPS:
                 ovn_resource = self._get_floatingip_or_pf()
@@ -791,13 +778,6 @@ class DeleteLRouterExtGwCommand(command.BaseCommand):
         self.if_exists = if_exists
 
     def run_idl(self, txn):
-        # TODO(lucasagomes): Remove this check after OVS 2.8.2 is tagged
-        # (prior to that, the external_ids column didn't exist in this
-        # table).
-        if not self.api.is_col_present('Logical_Router_Static_Route',
-                                       'external_ids'):
-            return
-
         try:
             lrouter = idlutils.row_by_value(self.api.idl, 'Logical_Router',
                                             'name', self.lrouter)

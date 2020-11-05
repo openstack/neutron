@@ -372,15 +372,10 @@ def is_lsp_router_port(port):
 
 
 def get_lrouter_ext_gw_static_route(ovn_router):
-    # TODO(lucasagomes): Remove the try...except block after OVS 2.8.2
-    # is tagged.
-    try:
-        return [route for route in getattr(ovn_router, 'static_routes', []) if
-                strutils.bool_from_string(getattr(
-                    route, 'external_ids', {}).get(
-                        constants.OVN_ROUTER_IS_EXT_GW, 'false'))]
-    except KeyError:
-        pass
+    return [route for route in getattr(ovn_router, 'static_routes', []) if
+            strutils.bool_from_string(getattr(
+                route, 'external_ids', {}).get(
+                    constants.OVN_ROUTER_IS_EXT_GW, 'false'))]
 
 
 def get_lrouter_snats(ovn_router):
@@ -389,19 +384,14 @@ def get_lrouter_snats(ovn_router):
 
 def get_lrouter_non_gw_routes(ovn_router):
     routes = []
-    # TODO(lucasagomes): Remove the try...except block after OVS 2.8.2
-    # is tagged.
-    try:
-        for route in getattr(ovn_router, 'static_routes', []):
-            external_ids = getattr(route, 'external_ids', {})
-            if strutils.bool_from_string(
-                    external_ids.get(constants.OVN_ROUTER_IS_EXT_GW, 'false')):
-                continue
+    for route in getattr(ovn_router, 'static_routes', []):
+        external_ids = getattr(route, 'external_ids', {})
+        if strutils.bool_from_string(
+                external_ids.get(constants.OVN_ROUTER_IS_EXT_GW, 'false')):
+            continue
 
-            routes.append({'destination': route.ip_prefix,
-                           'nexthop': route.nexthop})
-    except KeyError:
-        pass
+        routes.append({'destination': route.ip_prefix,
+                       'nexthop': route.nexthop})
     return routes
 
 
