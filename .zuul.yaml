@@ -241,12 +241,26 @@
     irrelevant-files: *tempest-irrelevant-files
     vars:
       devstack_services:
-        c-bak: false
         etcd: false
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
         s-account: false
         s-container: false
         s-object: false
         s-proxy: false
+    group-vars:
+      subnode:
+        devstack_services:
+          # Cinder services
+          c-bak: false
+          c-vol: false
 
 - job:
     name: neutron-grenade-dvr-multinode
@@ -260,8 +274,16 @@
     irrelevant-files: *tempest-irrelevant-files
     vars:
       devstack_services:
-        c-bak: false
         etcd: false
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
         s-account: false
         s-container: false
         s-object: false
@@ -299,6 +321,9 @@
           q-agt: true
           q-l3: true
           q-meta: true
+          # Cinder services
+          c-bak: false
+          c-vol: false
         devstack_local_conf:
           post-config:
             $NEUTRON_CONF:
