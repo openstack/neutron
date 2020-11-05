@@ -21,7 +21,6 @@
         - neutron-grenade-dvr-multinode
         - neutron-grenade-ovn:
             voting: false
-        - neutron-tempest-with-uwsgi
         - neutron-tempest-multinode-full-py3
         - neutron-tempest-dvr-ha-multinode-full
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
@@ -118,7 +117,6 @@
       jobs:
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
-        - neutron-tempest-with-uwsgi
         - neutron-tempest-multinode-full-py3
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
