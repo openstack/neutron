@@ -78,6 +78,12 @@ at [1]_.
   routers have this capability implemented in [9]_ and we have an open RFE to
   fill this gap [10]_.
 
+* East/West Fragmentation
+
+  The core OVN implementation does not support east/west fragmentation. There is
+  no known production use-case for this feature hence we don't even have an RFE
+  open for it and it's not on the roadmap to be implemented.
+
 
 References
 ----------
