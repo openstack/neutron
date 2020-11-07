@@ -17,6 +17,7 @@ from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib.plugins import directory
 
+from neutron.objects import address_group
 from neutron.objects import network
 from neutron.objects import securitygroup
 from neutron.objects import subnet
@@ -101,3 +102,20 @@ class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
                                               'description': 'desc',
                                               'name': 'test'}})
             self.assertEqual([], self.received)
+
+    def test_address_group_lifecycle(self):
+        ag = self.plugin.create_address_group(self.ctx,
+            {'address_group': {'project_id': self._tenant_id,
+                               'name': 'an-address-group',
+                               'description': 'An address group',
+                               'addresses': ['10.0.0.1/32',
+                                             '2001:db8::/32']}})
+        self._assert_object_received(
+            address_group.AddressGroup, ag['id'], 'updated')
+        self.plugin.update_address_group(self.ctx, ag['id'],
+            {'address_group': {'name': 'an-address-group-other-name'}})
+        self._assert_object_received(
+            address_group.AddressGroup, ag['id'], 'updated')
+        self.plugin.delete_address_group(self.ctx, ag['id'])
+        self._assert_object_received(
+            address_group.AddressGroup, ag['id'], 'deleted')

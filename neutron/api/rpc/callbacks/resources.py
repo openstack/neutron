@@ -11,6 +11,7 @@
 #    under the License.
 
 from neutron._i18n import _
+from neutron.objects import address_group
 from neutron.objects import conntrack_helper
 from neutron.objects.logapi import logging_resource as log_object
 from neutron.objects import network
@@ -34,6 +35,7 @@ SECURITYGROUP = securitygroup.SecurityGroup.obj_name()
 SECURITYGROUPRULE = securitygroup.SecurityGroupRule.obj_name()
 PORTFORWARDING = port_forwarding.PortForwarding.obj_name()
 CONNTRACKHELPER = conntrack_helper.ConntrackHelper.obj_name()
+ADDRESSGROUP = address_group.AddressGroup.obj_name()
 
 
 _VALID_CLS = (
@@ -48,6 +50,7 @@ _VALID_CLS = (
     log_object.Log,
     port_forwarding.PortForwarding,
     conntrack_helper.ConntrackHelper,
+    address_group.AddressGroup,
 )
 
 _TYPE_TO_CLS_MAP = {cls.obj_name(): cls for cls in _VALID_CLS}
