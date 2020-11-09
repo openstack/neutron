@@ -63,6 +63,11 @@ class SecurityGroupAgentRpc(object):
         self.plugin_rpc = plugin_rpc
         self.init_firewall(defer_refresh_firewall, integration_bridge)
 
+    @property
+    def noopfirewall_or_firewall_disabled(self):
+        return (isinstance(self.firewall, firewall.NoopFirewallDriver) or
+                not is_firewall_enabled())
+
     def _get_trusted_devices(self, device_ids, devices):
         trusted_devices = []
         # Devices which are already added in firewall ports should
@@ -117,8 +122,7 @@ class SecurityGroupAgentRpc(object):
     def skip_if_noopfirewall_or_firewall_disabled(func):
         @functools.wraps(func)
         def decorated_function(self, *args, **kwargs):
-            if (isinstance(self.firewall, firewall.NoopFirewallDriver) or
-                    not is_firewall_enabled()):
+            if self.noopfirewall_or_firewall_disabled:
                 LOG.info("Skipping method %s as firewall is disabled "
                          "or configured as NoopFirewallDriver.",
                          func.__name__)
