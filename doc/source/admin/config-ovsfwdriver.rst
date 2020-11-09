@@ -83,9 +83,14 @@ not true and there may be slight differences between those drivers.
 | (please check [1]_  and [2]_           |                       | never reaches rule to |
 | for details)                           |                       | drop invalid packets  |
 +----------------------------------------+-----------------------+-----------------------+
+| Multicast traffic sent in the group    | Allowed always        | Blocked,              |
+| 224.0.0.X                              |                       | Can be enabled by SG  |
+| (please check [3]_ for details)        |                       | rule.                 |
++----------------------------------------+-----------------------+-----------------------+
 
 References
 ~~~~~~~~~~
 
 .. [1] https://bugs.launchpad.net/neutron/+bug/1460741
 .. [2] https://bugs.launchpad.net/neutron/+bug/1896587
+.. [3] https://bugs.launchpad.net/neutron/+bug/1889631
