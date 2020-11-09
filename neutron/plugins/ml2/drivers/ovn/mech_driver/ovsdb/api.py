@@ -626,7 +626,8 @@ class SbAPI(api.API, metaclass=abc.ABCMeta):
         value. And hostname and physnets are related to the same host.
         """
 
-    def get_gateway_chassis_from_cms_options(self):
+    @abc.abstractmethod
+    def get_gateway_chassis_from_cms_options(self, name_only=True):
         """Get chassis eligible for external connectivity from CMS options.
 
         When admin wants to enable router gateway on few chassis,
@@ -635,7 +636,10 @@ class SbAPI(api.API, metaclass=abc.ABCMeta):
         ovs-vsctl set open .
            external_ids:ovn-cms-options="enable-chassis-as-gw"
         In this function, we parse ovn-cms-options and return these chassis
-        :returns:              List with chassis names.
+
+        :param name_only: Return only the chassis names instead of
+                          objects. Defaults to True.
+        :returns: List with chassis.
         """
 
     @abc.abstractmethod

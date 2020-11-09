@@ -424,7 +424,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 ovn_const.OVN_GW_PORT_EXT_ID_KEY: '',
                 ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router',
-                ovn_const.OVN_ROUTER_AZ_HINTS_EXT_ID_KEY: ''})
+                ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ''})
 
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_router')
@@ -443,7 +443,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             external_ids={ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'test',
                           ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                           ovn_const.OVN_GW_PORT_EXT_ID_KEY: '',
-                          ovn_const.OVN_ROUTER_AZ_HINTS_EXT_ID_KEY: ''})
+                          ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ''})
 
     @mock.patch.object(utils, 'get_lrouter_non_gw_routes')
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.update_router')
@@ -537,7 +537,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         external_ids = {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router',
                         ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                         ovn_const.OVN_GW_PORT_EXT_ID_KEY: 'gw-port-id',
-                        ovn_const.OVN_ROUTER_AZ_HINTS_EXT_ID_KEY: ''}
+                        ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ''}
         self.l3_inst._ovn.create_lrouter.assert_called_once_with(
             'neutron-router-id', external_ids=external_ids,
             enabled=True, options={})
@@ -1567,7 +1567,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     def _test_get_router_availability_zones(self, azs, expected):
         lr = fake_resources.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'id': 'fake-router', 'external_ids': {
-                ovn_const.OVN_ROUTER_AZ_HINTS_EXT_ID_KEY: azs}})
+                ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: azs}})
         self.l3_inst._ovn.get_lrouter.return_value = lr
         azs_list = self.l3_inst.get_router_availability_zones(lr)
         self.assertEqual(sorted(expected), sorted(azs_list))

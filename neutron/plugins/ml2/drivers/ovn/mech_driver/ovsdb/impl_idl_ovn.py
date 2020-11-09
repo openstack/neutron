@@ -848,13 +848,11 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
             chassis_info_dict[ch.hostname] = self._get_chassis_physnets(ch)
         return chassis_info_dict
 
-    def get_gateway_chassis_from_cms_options(self):
-        gw_chassis = []
-        for ch in self.chassis_list().execute(check_error=True):
-            cms_options = ch.external_ids.get('ovn-cms-options', '')
-            if 'enable-chassis-as-gw' in cms_options.split(','):
-                gw_chassis.append(ch.name)
-        return gw_chassis
+    def get_gateway_chassis_from_cms_options(self, name_only=True):
+        return [ch.name if name_only else ch
+                for ch in self.chassis_list().execute(check_error=True)
+                if ovn_const.CMS_OPT_CHASSIS_AS_GW in
+                ch.external_ids.get(ovn_const.OVN_CMS_OPTIONS, '').split(',')]
 
     def get_chassis_and_physnets(self):
         chassis_info_dict = {}

@@ -987,5 +987,5 @@ def get_sql_random_method(sql_dialect_name):
 
 def get_az_hints(resource):
     """Return the availability zone hints from a given resource."""
-    return (resource.get(az_def.AZ_HINTS) or
+    return (sorted(resource.get(az_def.AZ_HINTS, [])) or
             cfg.CONF.default_availability_zones)

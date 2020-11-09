@@ -470,11 +470,6 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
                                   '10.0.0.0/24')
         self.sub = self.deserialize(self.fmt, res)
 
-        # The default group will be created by the maintenance task (
-        # which is disabled in the functional jobs). So let's add it
-        self.default_ch_grp = self.nb_api.ha_chassis_group_add(
-            ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME).execute(check_error=True)
-
     def _find_port_row_by_name(self, name):
         cmd = self.nb_api.db_find_rows(
             'Logical_Switch_Port', ('name', '=', name))
@@ -482,8 +477,9 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         return rows[0] if rows else None
 
     def _test_external_port_create(self, vnic_type):
+        net_id = self.n1['network']['id']
         port_data = {
-            'port': {'network_id': self.n1['network']['id'],
+            'port': {'network_id': net_id,
                      'tenant_id': self._tenant_id,
                      portbindings.VNIC_TYPE: vnic_type}}
 
@@ -494,8 +490,8 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         ovn_port = self._find_port_row_by_name(port['id'])
         self.assertEqual(ovn_const.LSP_TYPE_EXTERNAL, ovn_port.type)
         self.assertEqual(1, len(ovn_port.ha_chassis_group))
-        self.assertEqual(str(self.default_ch_grp.uuid),
-                         str(ovn_port.ha_chassis_group[0].uuid))
+        self.assertEqual(utils.ovn_name(net_id),
+                         str(ovn_port.ha_chassis_group[0].name))
 
     def test_external_port_create_vnic_direct(self):
         self._test_external_port_create(portbindings.VNIC_DIRECT)
@@ -507,8 +503,9 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         self._test_external_port_create(portbindings.VNIC_MACVTAP)
 
     def _test_external_port_update(self, vnic_type):
+        net_id = self.n1['network']['id']
         port_data = {
-            'port': {'network_id': self.n1['network']['id'],
+            'port': {'network_id': net_id,
                      'tenant_id': self._tenant_id}}
 
         port_req = self.new_create_request('ports', port_data, self.fmt)
@@ -529,8 +526,8 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         ovn_port = self._find_port_row_by_name(port['id'])
         self.assertEqual(ovn_const.LSP_TYPE_EXTERNAL, ovn_port.type)
         self.assertEqual(1, len(ovn_port.ha_chassis_group))
-        self.assertEqual(str(self.default_ch_grp.uuid),
-                         str(ovn_port.ha_chassis_group[0].uuid))
+        self.assertEqual(utils.ovn_name(net_id),
+                         str(ovn_port.ha_chassis_group[0].name))
 
     def test_external_port_update_vnic_direct(self):
         self._test_external_port_update(portbindings.VNIC_DIRECT)
@@ -571,8 +568,9 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         self._test_external_port_create_switchdev(portbindings.VNIC_MACVTAP)
 
     def _test_external_port_update_switchdev(self, vnic_type):
+        net_id = self.n1['network']['id']
         port_data = {
-            'port': {'network_id': self.n1['network']['id'],
+            'port': {'network_id': net_id,
                      'tenant_id': self._tenant_id,
                      portbindings.VNIC_TYPE: vnic_type}}
 
@@ -585,8 +583,8 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         ovn_port = self._find_port_row_by_name(port['id'])
         self.assertEqual(ovn_const.LSP_TYPE_EXTERNAL, ovn_port.type)
         self.assertEqual(1, len(ovn_port.ha_chassis_group))
-        self.assertEqual(str(self.default_ch_grp.uuid),
-                         str(ovn_port.ha_chassis_group[0].uuid))
+        self.assertEqual(utils.ovn_name(net_id),
+                         str(ovn_port.ha_chassis_group[0].name))
 
         # Now, update the port to add a "switchdev" capability and make
         # sure it's not treated as an "external" port anymore nor it's

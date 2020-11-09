@@ -31,6 +31,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import availability_zone as az_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
@@ -316,6 +317,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         # Override availability zone methods
         self.patch_plugin_merge("get_availability_zones",
                                 get_availability_zones)
+        self.patch_plugin_choose("validate_availability_zones",
+                                 validate_availability_zones)
 
         # Now IDL connections can be safely used.
         self._post_fork_event.set()
@@ -1245,3 +1248,16 @@ def get_availability_zones(cls, context, _driver, filters=None, fields=None,
                            sorts=None, limit=None, marker=None,
                            page_reverse=False):
     return list(_driver.list_availability_zones(context, filters).values())
+
+
+def validate_availability_zones(cls, context, resource_type,
+                                availability_zones, _driver):
+    if not availability_zones or resource_type != 'network':
+        return
+
+    azs = {az['name'] for az in
+           _driver.list_availability_zones(context).values()}
+    diff = set(availability_zones) - azs
+    if diff:
+        raise az_exc.AvailabilityZoneNotFound(
+            availability_zone=', '.join(diff))

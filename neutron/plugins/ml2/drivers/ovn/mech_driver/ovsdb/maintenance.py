@@ -571,10 +571,18 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
+    def _delete_default_ha_chassis_group(self, txn):
+        # TODO(lucasgomes): Remove the deletion of the
+        # HA_CHASSIS_GROUP_DEFAULT_NAME in the Y cycle. We no longer
+        # have a default HA Chassis Group.
+        cmd = [self._nb_idl.ha_chassis_group_del(
+            ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME, if_exists=True)]
+        self._ovn_client._transaction(cmd, txn=txn)
+
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
     @periodics.periodic(spacing=600, run_immediately=True)
-    def check_for_ha_chassis_group_address(self):
+    def check_for_ha_chassis_group(self):
         # If external ports is not supported stop running
         # this periodic task
         if not self._ovn_client.is_external_ports_supported():
@@ -583,44 +591,27 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         if not self.has_lock:
             return
 
-        default_ch_grp = self._nb_idl.ha_chassis_group_add(
-            ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME, may_exist=True).execute(
-            check_error=True)
+        external_ports = self._nb_idl.db_find_rows(
+            'Logical_Switch_Port', ('type', '=', ovn_const.LSP_TYPE_EXTERNAL)
+        ).execute(check_error=True)
 
-        # NOTE(lucasagomes): Find the existing chassis with the highest
-        # priority and keep it as being the highest to avoid moving
-        # things around
-        high_prio_ch = max(default_ch_grp.ha_chassis, key=lambda x: x.priority,
-                           default=None)
-
-        all_ch = self._sb_idl.get_all_chassis()
-        gw_ch = self._sb_idl.get_gateway_chassis_from_cms_options()
-        ch_to_del = set(all_ch) - set(gw_ch)
-
+        context = n_context.get_admin_context()
         with self._nb_idl.transaction(check_error=True) as txn:
-            for ch in ch_to_del:
-                txn.add(self._nb_idl.ha_chassis_group_del_chassis(
-                        ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME, ch,
-                        if_exists=True))
+            for port in external_ports:
+                network_id = port.external_ids[
+                    ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY].replace(
+                        ovn_const.OVN_NAME_PREFIX, '')
+                ha_ch_grp = self._ovn_client.sync_ha_chassis_group(
+                    context, network_id, txn)
+                try:
+                    port_ha_ch_uuid = port.ha_chassis_group[0].uuid
+                except IndexError:
+                    port_ha_ch_uuid = None
+                if port_ha_ch_uuid != ha_ch_grp:
+                    txn.add(self._nb_idl.set_lswitch_port(
+                        port.name, ha_chassis_group=ha_ch_grp))
 
-            # NOTE(lucasagomes): If the high priority chassis is in
-            # the list of chassis to be added/updated. Add it first with
-            # the highest priority number possible and then add the rest
-            # (the priority of the rest of the chassis does not matter
-            # since only the highest one is active)
-            priority = ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY
-            if high_prio_ch and high_prio_ch.chassis_name in gw_ch:
-                txn.add(self._nb_idl.ha_chassis_group_add_chassis(
-                        ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME,
-                        high_prio_ch.chassis_name, priority=priority))
-                gw_ch.remove(high_prio_ch.chassis_name)
-                priority -= 1
-
-            for ch in gw_ch:
-                txn.add(self._nb_idl.ha_chassis_group_add_chassis(
-                        ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME,
-                        ch, priority=priority))
-                priority -= 1
+            self._delete_default_ha_chassis_group(txn)
 
         raise periodics.NeverAgain()
 

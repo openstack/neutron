@@ -15,6 +15,7 @@
 
 import collections
 import copy
+import random
 
 import netaddr
 from neutron_lib.api.definitions import l3
@@ -321,10 +322,74 @@ class OVNClient(object):
                            parent_name, tag, dhcpv4_options, dhcpv6_options,
                            cidrs.strip(), device_owner, sg_ids)
 
-    def _get_default_ha_chassis_group(self):
-        return self._nb_idl.ha_chassis_group_get(
-            ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME).execute(
-            check_error=True).uuid
+    def sync_ha_chassis_group(self, context, network_id, txn):
+        """Return the UUID of the HA Chassis Group.
+
+        Given the Neutron Network ID, this method will return (or create
+        and then return) the appropriate HA Chassis Group the external
+        port (in that network) needs to be associated with.
+
+        :param context: Neutron API context.
+        :param network_id: The Neutron network ID.
+        :param txn: The ovsdbapp transaction object.
+        :returns: An HA Chassis Group UUID.
+        """
+        az_hints = common_utils.get_az_hints(
+            self._plugin.get_network(context, network_id))
+
+        ha_ch_grp_name = utils.ovn_name(network_id)
+        # FIXME(lucasagomes): Couldn't find a better way of doing this
+        # without a sub-transaction. This shouldn't be a problem since
+        # the HA Chassis Group associated with a network will be deleted
+        # as part of the network delete method (if present)
+        with self._nb_idl.create_transaction(check_error=True) as sub_txn:
+            sub_txn.add(self._nb_idl.ha_chassis_group_add(
+                ha_ch_grp_name, may_exist=True))
+
+        ha_ch_grp = self._nb_idl.ha_chassis_group_get(
+            ha_ch_grp_name).execute(check_error=True)
+        txn.add(self._nb_idl.db_set(
+            'HA_Chassis_Group', ha_ch_grp_name, ('external_ids',
+            {ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ','.join(az_hints)})))
+
+        # Get the chassis belonging to the AZ hints
+        ch_list = self._sb_idl.get_gateway_chassis_from_cms_options(
+            name_only=False)
+        if not az_hints:
+            az_chassis = utils.get_gateway_chassis_without_azs(ch_list)
+        else:
+            az_chassis = utils.get_chassis_in_azs(ch_list, az_hints)
+
+        # Remove any chassis that no longer belongs to the AZ hints
+        all_ch = {ch.chassis_name for ch in ha_ch_grp.ha_chassis}
+        ch_to_del = all_ch - az_chassis
+        for ch in ch_to_del:
+            txn.add(self._nb_idl.ha_chassis_group_del_chassis(
+                    ha_ch_grp_name, ch, if_exists=True))
+
+        # Find the highest priority chassis in the HA Chassis Group. If
+        # it exists and still belongs to the same AZ, keep it as the highest
+        # priority in the group to avoid ports already bond to it from
+        # moving to another chassis.
+        high_prio_ch = max(ha_ch_grp.ha_chassis, key=lambda x: x.priority,
+                           default=None)
+        priority = ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY
+        if high_prio_ch and high_prio_ch.chassis_name in az_chassis:
+            txn.add(self._nb_idl.ha_chassis_group_add_chassis(
+                    ha_ch_grp_name, high_prio_ch.chassis_name,
+                    priority=priority))
+            az_chassis.remove(high_prio_ch.chassis_name)
+            priority -= 1
+
+        # Randomize the order so that networks belonging to the same
+        # availability zones do not necessarily end up with the same
+        # Chassis as the highest priority one.
+        for ch in random.sample(list(az_chassis), len(az_chassis)):
+            txn.add(self._nb_idl.ha_chassis_group_add_chassis(
+                    ha_ch_grp_name, ch, priority=priority))
+            priority -= 1
+
+        return ha_ch_grp.uuid
 
     def create_port(self, context, port):
         if utils.is_lsp_ignored(port):
@@ -390,7 +455,8 @@ class OVNClient(object):
             if (self.is_external_ports_supported() and
                     port_info.type == ovn_const.LSP_TYPE_EXTERNAL):
                 kwargs['ha_chassis_group'] = (
-                    self._get_default_ha_chassis_group())
+                    self.sync_ha_chassis_group(
+                        context, port['network_id'], txn))
 
             # NOTE(mjozefcz): Do not set addresses if the port is not
             # bound, has no device_owner and it is OVN LB VIP port.
@@ -510,7 +576,8 @@ class OVNClient(object):
             if self.is_external_ports_supported():
                 if port_info.type == ovn_const.LSP_TYPE_EXTERNAL:
                     columns_dict['ha_chassis_group'] = (
-                        self._get_default_ha_chassis_group())
+                        self.sync_ha_chassis_group(
+                            context, port['network_id'], txn))
                 else:
                     # Clear the ha_chassis_group field
                     columns_dict['ha_chassis_group'] = []
@@ -1147,7 +1214,7 @@ class OVNClient(object):
                 router.get('gw_port_id') or '',
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(utils.get_revision_number(
                 router, ovn_const.TYPE_ROUTERS)),
-            ovn_const.OVN_ROUTER_AZ_HINTS_EXT_ID_KEY:
+            ovn_const.OVN_AZ_HINTS_EXT_ID_KEY:
                 ','.join(common_utils.get_az_hints(router))}
 
     def create_router(self, context, router, add_external_gateway=True):
@@ -1606,7 +1673,9 @@ class OVNClient(object):
             ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: network['name'],
             ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: str(network['mtu']),
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(
-                utils.get_revision_number(network, ovn_const.TYPE_NETWORKS))}}
+                utils.get_revision_number(network, ovn_const.TYPE_NETWORKS)),
+            ovn_const.OVN_AZ_HINTS_EXT_ID_KEY:
+                ','.join(common_utils.get_az_hints(network))}}
 
         # Enable IGMP snooping if igmp_snooping_enable is enabled in Neutron
         value = 'true' if ovn_conf.is_igmp_snooping_enabled() else 'false'
@@ -1639,13 +1708,13 @@ class OVNClient(object):
 
     def delete_network(self, context, network_id):
         with self._nb_idl.transaction(check_error=True) as txn:
-            ls, ls_dns_record = self._nb_idl.get_ls_and_dns_record(
-                utils.ovn_name(network_id))
+            ls_name = utils.ovn_name(network_id)
+            ls, ls_dns_record = self._nb_idl.get_ls_and_dns_record(ls_name)
 
-            txn.add(self._nb_idl.ls_del(utils.ovn_name(network_id),
-                    if_exists=True))
+            txn.add(self._nb_idl.ls_del(ls_name, if_exists=True))
             if ls_dns_record:
                 txn.add(self._nb_idl.dns_del(ls_dns_record.uuid))
+            txn.add(self._nb_idl.ha_chassis_group_del(ls_name, if_exists=True))
         db_rev.delete_revision(
             context, network_id, ovn_const.TYPE_NETWORKS)
 
@@ -1713,6 +1782,19 @@ class OVNClient(object):
                     # make sure to use admin context as this is a providernet
                     self.set_gateway_mtu(n_context.get_admin_context(),
                                          network, txn)
+
+            if self.is_external_ports_supported():
+                # If there are no external ports in this  network, there's
+                # no need to check the AZs
+                if any([p for p in lswitch.ports if
+                        p.type == ovn_const.LSP_TYPE_EXTERNAL]):
+                    # Check for changes in the network Availability Zones
+                    ovn_ls_azs = lswitch_name.external_ids.get(
+                        ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '')
+                    neutron_net_azs = lswitch_params['external_ids'].get(
+                        ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '')
+                    if ovn_ls_azs != neutron_net_azs:
+                        self.sync_ha_chassis_group(context, network['id'], txn)
 
             self._qos_driver.update_network(txn, network, original_network)
 

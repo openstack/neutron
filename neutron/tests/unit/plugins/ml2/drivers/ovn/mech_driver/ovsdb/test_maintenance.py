@@ -352,61 +352,65 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         ]
         nb_idl.db_set.assert_has_calls(expected_calls)
 
-    def test_check_for_ha_chassis_group_address_not_supported(self):
+    def test_check_for_ha_chassis_group_not_supported(self):
         self.fake_ovn_client.is_external_ports_supported.return_value = False
         self.assertRaises(periodics.NeverAgain,
-                          self.periodic.check_for_ha_chassis_group_address)
+                          self.periodic.check_for_ha_chassis_group)
         self.assertFalse(
             self.fake_ovn_client._nb_idl.ha_chassis_group_add.called)
 
-    def test_check_for_ha_chassis_group_address(self):
+    def test_check_for_ha_chassis_group_no_external_ports(self):
         self.fake_ovn_client.is_external_ports_supported.return_value = True
         nb_idl = self.fake_ovn_client._nb_idl
-        sb_idl = self.fake_ovn_client._sb_idl
+        nb_idl.db_find_rows.return_value.execute.return_value = []
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.check_for_ha_chassis_group)
+        self.assertFalse(
+            self.fake_ovn_client.sync_ha_chassis_group.called)
 
-        gw_chassis_0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'priority': 1,
-                   'name': 'gw_chassis_0',
-                   'chassis_name': 'gw_chassis_0'})
-        gw_chassis_1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'priority': 2,
-                   'name': 'gw_chassis_1',
-                   'chassis_name': 'gw_chassis_1'})
-        non_gw_chassis_0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'name': 'non_gw_chassis_0'})
-        default_ha_group = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'ha_chassis': [gw_chassis_0, gw_chassis_1]})
+    def test_check_for_ha_chassis_group(self):
+        self.fake_ovn_client.is_external_ports_supported.return_value = True
+        nb_idl = self.fake_ovn_client._nb_idl
 
-        nb_idl.ha_chassis_group_add.return_value.execute.return_value = (
-            default_ha_group)
-        sb_idl.get_all_chassis.return_value = [
-            non_gw_chassis_0.name, gw_chassis_0.name, gw_chassis_1.name]
-        sb_idl.get_gateway_chassis_from_cms_options.return_value = [
-            gw_chassis_0.name, gw_chassis_1.name]
+        hcg0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'uuid': '1f4323db-fb58-48e9-adae-6c6e833c581d',
+                   'name': 'test-ha-grp'})
+        hcg1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'uuid': 'e95ff98f-7f03-484b-a156-d8c7e366dd3d',
+                   'name': 'another-test-ha-grp'})
+        p0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'type': constants.LSP_TYPE_EXTERNAL,
+                   'name': 'p0',
+                   'ha_chassis_group': [hcg0],
+                   'external_ids': {
+                       constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'neutron-net0'}})
+        p1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'type': constants.LSP_TYPE_EXTERNAL,
+                   'name': 'p1',
+                   'ha_chassis_group': [hcg1],
+                   'external_ids': {
+                       constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'neutron-net1'}})
+
+        nb_idl.db_find_rows.return_value.execute.return_value = [p0, p1]
+        self.fake_ovn_client.sync_ha_chassis_group.return_value = hcg0.uuid
 
         # Invoke the periodic method, it meant to run only once at startup
         # so NeverAgain will be raised at the end
         self.assertRaises(periodics.NeverAgain,
-                          self.periodic.check_for_ha_chassis_group_address)
+                          self.periodic.check_for_ha_chassis_group)
 
-        # Make sure the non GW chassis has been removed from the
-        # default HA_CHASSIS_GROUP
-        nb_idl.ha_chassis_group_del_chassis.assert_called_once_with(
-            constants.HA_CHASSIS_GROUP_DEFAULT_NAME, non_gw_chassis_0.name,
-            if_exists=True)
-
-        # Assert the GW chassis are being added to the
-        # default HA_CHASSIS_GROUP
+        # Assert sync_ha_chassis_group() is called for both networks
         expected_calls = [
-            mock.call(constants.HA_CHASSIS_GROUP_DEFAULT_NAME,
-                      gw_chassis_1.chassis_name,
-                      priority=constants.HA_CHASSIS_GROUP_HIGHEST_PRIORITY),
-            # Note that the second chassis is getting priority -1
-            mock.call(constants.HA_CHASSIS_GROUP_DEFAULT_NAME,
-                      gw_chassis_0.chassis_name,
-                      priority=constants.HA_CHASSIS_GROUP_HIGHEST_PRIORITY - 1)
-        ]
-        nb_idl.ha_chassis_group_add_chassis.assert_has_calls(expected_calls)
+            mock.call(mock.ANY, 'net0', mock.ANY),
+            mock.call(mock.ANY, 'net1', mock.ANY)]
+        self.fake_ovn_client.sync_ha_chassis_group.assert_has_calls(
+            expected_calls)
+
+        # Assert set_lswitch_port() is only called for p1 because
+        # the ha_chassis_group is different than what was returned
+        # by sync_ha_chassis_group()
+        nb_idl.set_lswitch_port.assert_called_once_with(
+            'p1', ha_chassis_group=hcg0.uuid)
 
     def test_check_for_mcast_flood_reports(self):
         nb_idl = self.fake_ovn_client._nb_idl

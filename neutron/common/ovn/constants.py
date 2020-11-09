@@ -23,7 +23,7 @@ OVN_NETWORK_MTU_EXT_ID_KEY = 'neutron:mtu'
 OVN_PORT_NAME_EXT_ID_KEY = 'neutron:port_name'
 OVN_PORT_FIP_EXT_ID_KEY = 'neutron:port_fip'
 OVN_ROUTER_NAME_EXT_ID_KEY = 'neutron:router_name'
-OVN_ROUTER_AZ_HINTS_EXT_ID_KEY = 'neutron:availability_zone_hints'
+OVN_AZ_HINTS_EXT_ID_KEY = 'neutron:availability_zone_hints'
 OVN_ROUTER_IS_EXT_GW = 'neutron:is_ext_gw'
 OVN_GW_PORT_EXT_ID_KEY = 'neutron:gw_port_id'
 OVN_SUBNET_EXT_ID_KEY = 'neutron:subnet_id'
@@ -58,6 +58,7 @@ OVN_DROP_PORT_GROUP_NAME = 'neutron_pg_drop'
 OVN_ROUTER_PORT_GW_MTU_OPTION = 'gateway_mtu'
 
 OVN_PROVNET_PORT_NAME_PREFIX = 'provnet-'
+OVN_NAME_PREFIX = 'neutron-'
 
 # Agent extension constants
 OVN_AGENT_DESC_KEY = 'neutron:description'
