@@ -83,6 +83,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                                        group='ovn')
         ovn_conf.cfg.CONF.set_override('dns_servers', ['8.8.8.8'],
                                        group='ovn')
+        cfg.CONF.set_override('vlan_transparent', True)
         super(TestOVNMechanismDriver, self).setUp()
         mm = directory.get_plugin().mechanism_manager
         self.mech_driver = mm.mech_drivers['ovn'].obj
@@ -717,13 +718,33 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
             ovn_utils.ovn_name(net['id']), external_ids=mock.ANY,
             may_exist=True,
             other_config={ovn_const.MCAST_SNOOP: value,
-                          ovn_const.MCAST_FLOOD_UNREGISTERED: value})
+                          ovn_const.MCAST_FLOOD_UNREGISTERED: value,
+                          ovn_const.VLAN_PASSTHRU: 'false'})
 
     def test_create_network_igmp_snoop_enabled(self):
         self._create_network_igmp_snoop(enabled=True)
 
     def test_create_network_igmp_snoop_disabled(self):
         self._create_network_igmp_snoop(enabled=False)
+
+    def _create_network_vlan_passthru(self, enabled):
+        nb_idl = self.mech_driver._ovn_client._nb_idl
+        net = self._make_network(self.fmt, name='net1',
+                                 admin_state_up=True,
+                                 vlan_transparent=enabled)['network']
+        value = 'true' if enabled else 'false'
+        nb_idl.ls_add.assert_called_once_with(
+            ovn_utils.ovn_name(net['id']), external_ids=mock.ANY,
+            may_exist=True,
+            other_config={ovn_const.MCAST_SNOOP: 'false',
+                          ovn_const.MCAST_FLOOD_UNREGISTERED: 'false',
+                          ovn_const.VLAN_PASSTHRU: value})
+
+    def test_create_network_vlan_passthru_enabled(self):
+        self._create_network_vlan_passthru(enabled=True)
+
+    def test_create_network_vlan_passthru_disabled(self):
+        self._create_network_vlan_passthru(enabled=False)
 
     def test_create_network_create_localnet_port_tunnel_network_type(self):
         nb_idl = self.mech_driver._ovn_client._nb_idl

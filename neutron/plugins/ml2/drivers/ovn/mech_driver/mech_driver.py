@@ -152,6 +152,10 @@ class OVNMechanismDriver(api.MechanismDriver):
     def sb_ovn(self):
         return self._sb_ovn
 
+    def check_vlan_transparency(self, context):
+        """OVN driver vlan transparency support."""
+        return True
+
     def _setup_vif_port_bindings(self):
         self.supported_vnic_types = [portbindings.VNIC_NORMAL,
                                      portbindings.VNIC_DIRECT,

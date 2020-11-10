@@ -291,3 +291,6 @@ NEUTRON_AVAILABILITY_ZONES = 'neutron-availability-zones'
 OVN_CMS_OPTIONS = 'ovn-cms-options'
 CMS_OPT_CHASSIS_AS_GW = 'enable-chassis-as-gw'
 CMS_OPT_AVAILABILITY_ZONES = 'availability-zones'
+
+# OVN vlan transparency option
+VLAN_PASSTHRU = 'vlan-passthru'
