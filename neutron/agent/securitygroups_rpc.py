@@ -216,6 +216,16 @@ class SecurityGroupAgentRpc(object):
             else:
                 self.refresh_firewall(devices)
 
+    def address_group_updated(self, address_group_id):
+        LOG.info("Address group updated %r", address_group_id)
+        # TODO(mlavalle) A follow up patch in the address groups implementation
+        # series will add more code here
+
+    def address_group_deleted(self, address_group_id):
+        LOG.info("Address group deleted %r", address_group_id)
+        # TODO(mlavalle) A follow up patch in the address groups implementation
+        # series will add more code here
+
     def remove_devices_filter(self, device_ids):
         if not device_ids:
             return
