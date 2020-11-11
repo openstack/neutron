@@ -30,6 +30,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
 from neutron.common import constants as const
 from neutron.common import utils as common_utils
+from neutron.ipam import utils as ipam_utils
 
 LOG = logging.getLogger(__name__)
 HA_DEV_PREFIX = 'ha-'
@@ -270,6 +271,14 @@ class HaRouter(router.RouterInfo):
 
         default_gw_rts = []
         instance = self._get_keepalived_instance()
+        for subnet in ex_gw_port.get('subnets', []):
+            is_gateway_not_in_subnet = (subnet['gateway_ip'] and
+                                        not ipam_utils.check_subnet_ip(
+                                            subnet['cidr'],
+                                            subnet['gateway_ip']))
+            if is_gateway_not_in_subnet:
+                default_gw_rts.append(keepalived.KeepalivedVirtualRoute(
+                    subnet['gateway_ip'], None, interface_name, scope='link'))
         for gw_ip in gateway_ips:
             # TODO(Carl) This is repeated everywhere.  A method would
             # be nice.
