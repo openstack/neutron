@@ -1340,6 +1340,19 @@ class TestQosPluginDB(base.BaseQosTestCase):
         mock_alloc_change.assert_called_once_with(
             qos1_obj, None, kwargs['original_port'])
 
+    def test_check_port_for_placement_allocation_change_no_qos_update(self):
+        qos1_obj = self._make_qos_policy()
+        kwargs = self._prepare_for_port_placement_allocation_change(
+            qos1=qos1_obj, qos2=None)
+        kwargs['port'].pop('qos_policy_id')
+
+        with mock.patch.object(
+                self.qos_plugin,
+                '_change_placement_allocation') as mock_alloc_change:
+            self.qos_plugin._check_port_for_placement_allocation_change(
+                'PORT', 'before_update', 'test_plugin', **kwargs)
+        mock_alloc_change.assert_not_called()
+
     def _prepare_port_for_placement_allocation(self, qos1, qos2=None,
                                                min_kbps1=1000, min_kbps2=2000):
         rule1_obj = self._make_qos_minbw_rule(qos1.id, min_kbps=min_kbps1)

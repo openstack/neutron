@@ -193,6 +193,8 @@ class QoSPlugin(qos.QoSPluginBase):
         context = kwargs['context']
         orig_port = kwargs['original_port']
         original_policy_id = orig_port.get(qos_consts.QOS_POLICY_ID)
+        if qos_consts.QOS_POLICY_ID not in kwargs['port']:
+            return
         policy_id = kwargs['port'].get(qos_consts.QOS_POLICY_ID)
 
         if policy_id == original_policy_id:
