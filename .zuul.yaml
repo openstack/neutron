@@ -180,6 +180,19 @@
         neutron: https://opendev.org/openstack/neutron
       devstack_services:
         neutron-trunk: true
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
     required-projects:
       - openstack/rally
       - name: openstack/rally-openstack
@@ -362,6 +375,20 @@
     irrelevant-files: *tempest-irrelevant-files
     voting: false
     vars:
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
       devstack_local_conf:
         post-config:
           $NEUTRON_CONF:
@@ -393,9 +420,22 @@
     group-vars:
       subnode:
         devstack_services:
+          br-ex-tcpdump: true
+          br-int-flows: true
           q-agt: true
           q-l3: true
           q-meta: true
+          # Cinder services
+          c-api: false
+          c-bak: false
+          c-sch: false
+          c-vol: false
+          cinder: false
+          # Swift services
+          s-account: false
+          s-container: false
+          s-object: false
+          s-proxy: false
         devstack_localrc:
           USE_PYTHON3: true
         devstack_local_conf:
@@ -522,6 +562,20 @@
     vars:
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: true
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
     irrelevant-files: *tempest-irrelevant-files
 
 - job:
