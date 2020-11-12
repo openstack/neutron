@@ -14,6 +14,17 @@
         neutron: https://opendev.org/openstack/neutron
       devstack_services:
         neutron-trunk: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
       devstack_local_conf:
         post-config:
           $NEUTRON_CONF:
@@ -67,6 +78,17 @@
         q-meta: false
         q-metering: false
         q-dns: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
       devstack_localrc:
         Q_AGENT: ovn
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger

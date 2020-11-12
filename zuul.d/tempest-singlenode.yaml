@@ -104,6 +104,17 @@
       devstack_services:
         postgresql: true
         mysql: false
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
     irrelevant-files: *irrelevant-files
 
 - job:
@@ -117,6 +128,18 @@
     vars:
       devstack_localrc:
         MYSQL_SERVICE_NAME: mariadb
+      devstack_services:
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
     # NOTE(ralonsoh): once MariaDB default version in Ubuntu is bumped to
     # >10.1, this workaround can be removed (bug 1855912)
     pre-run: playbooks/add_mariadb_repo.yaml
@@ -130,6 +153,18 @@
     vars:
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: true
+      devstack_services:
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
     irrelevant-files: *irrelevant-files
 
 - job:
@@ -177,9 +212,6 @@
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
-        c-api: true
-        c-sch: true
-        c-vol: true
         dstat: true
         g-api: true
         g-reg: true
@@ -200,7 +232,6 @@
         placement-api: true
         q-svc: true
         q-dns: true
-        c-bak: false
         etcd: false
         peakmem_tracker: false
         q-agt: false
@@ -215,6 +246,12 @@
         s-proxy: false
         tls-proxy: true
         q-qos: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
 
 - job:
     name: neutron-ovn-tempest-ovs-ipv6-only-base
