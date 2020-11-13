@@ -16,6 +16,7 @@
 
 import mock
 
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import ovs_bridge_test_base
 
@@ -80,7 +81,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 ],
                 match=ofpp.OFPMatch(),
                 priority=3,
-                table_id=61)),
+                table_id=constants.TRANSIENT_EGRESS_TABLE)),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
