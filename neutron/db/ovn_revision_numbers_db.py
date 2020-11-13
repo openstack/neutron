@@ -100,12 +100,12 @@ def _get_standard_attr_id(context, resource_uuid, resource_type):
 @db_api.retry_if_session_inactive()
 def create_initial_revision(context, resource_uuid, resource_type,
                             revision_number=INITIAL_REV_NUM,
-                            may_exist=False):
+                            may_exist=False, std_attr_id=None):
     LOG.debug('create_initial_revision uuid=%s, type=%s, rev=%s',
               resource_uuid, resource_type, revision_number)
     db_func = context.session.merge if may_exist else context.session.add
     with context.session.begin(subtransactions=True):
-        std_attr_id = _get_standard_attr_id(
+        std_attr_id = std_attr_id or _get_standard_attr_id(
             context, resource_uuid, resource_type)
         row = ovn_models.OVNRevisionNumbers(
             resource_uuid=resource_uuid, resource_type=resource_type,
@@ -124,7 +124,7 @@ def delete_revision(context, resource_uuid, resource_type):
             context.session.delete(row)
 
 
-def _ensure_revision_row_exist(context, resource, resource_type):
+def _ensure_revision_row_exist(context, resource, resource_type, std_attr_id):
     """Ensure the revision row exists.
 
     Ensure the revision row exist before we try to bump its revision
@@ -145,7 +145,8 @@ def _ensure_revision_row_exist(context, resource, resource_type):
                 '%(res_type)s) when bumping the revision number. '
                 'Creating one.', {'res_uuid': resource['id'],
                                   'res_type': resource_type})
-            create_initial_revision(context, resource['id'], resource_type)
+            create_initial_revision(context, resource['id'], resource_type,
+                                    std_attr_id=std_attr_id)
 
 
 @db_api.retry_if_session_inactive()
@@ -163,9 +164,16 @@ def get_revision_row(context, resource_uuid):
 def bump_revision(context, resource, resource_type):
     revision_number = ovn_utils.get_revision_number(resource, resource_type)
     with context.session.begin(subtransactions=True):
-        _ensure_revision_row_exist(context, resource, resource_type)
-        std_attr_id = _get_standard_attr_id(
-            context, resource['id'], resource_type)
+        # NOTE(ralonsoh): "resource" could be a dict or an OVO.
+        try:
+            std_attr_id = resource.db_obj.standard_attr.id
+        except AttributeError:
+            std_attr_id = resource.get('standard_attr_id', None)
+        _ensure_revision_row_exist(context, resource, resource_type,
+                                   std_attr_id)
+        std_attr_id = (std_attr_id or
+                       _get_standard_attr_id(context, resource['id'],
+                                             resource_type))
         row = context.session.merge(ovn_models.OVNRevisionNumbers(
             standard_attr_id=std_attr_id, resource_uuid=resource['id'],
             resource_type=resource_type))

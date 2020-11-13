@@ -337,7 +337,8 @@ class OVNMechanismDriver(api.MechanismDriver):
                                          **kwargs):
         ovn_revision_numbers_db.create_initial_revision(
             kwargs['context'], kwargs['security_group']['id'],
-            ovn_const.TYPE_SECURITY_GROUPS)
+            ovn_const.TYPE_SECURITY_GROUPS,
+            std_attr_id=kwargs['security_group']['standard_attr_id'])
 
     def _create_security_group(self, resource, event, trigger,
                                security_group, **kwargs):
@@ -361,7 +362,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         sg_rule = kwargs.get('security_group_rule')
         context = kwargs.get('context')
         ovn_revision_numbers_db.create_initial_revision(
-            context, sg_rule['id'], ovn_const.TYPE_SECURITY_GROUP_RULES)
+            context, sg_rule['id'], ovn_const.TYPE_SECURITY_GROUP_RULES,
+            std_attr_id=sg_rule['standard_attr_id'])
 
     def _process_sg_rule_notification(
             self, resource, event, trigger, **kwargs):
@@ -470,7 +472,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._validate_network_segments(context.network_segments)
         ovn_revision_numbers_db.create_initial_revision(
             context._plugin_context, context.current['id'],
-            ovn_const.TYPE_NETWORKS)
+            ovn_const.TYPE_NETWORKS,
+            std_attr_id=context.current['standard_attr_id'])
 
     def create_network_postcommit(self, context):
         """Create a network.
@@ -547,7 +550,8 @@ class OVNMechanismDriver(api.MechanismDriver):
     def create_subnet_precommit(self, context):
         ovn_revision_numbers_db.create_initial_revision(
             context._plugin_context, context.current['id'],
-            ovn_const.TYPE_SUBNETS)
+            ovn_const.TYPE_SUBNETS,
+            std_attr_id=context.current['standard_attr_id'])
 
     def create_subnet_postcommit(self, context):
         self._ovn_client.create_subnet(context._plugin_context,
@@ -593,14 +597,16 @@ class OVNMechanismDriver(api.MechanismDriver):
                                                  port['id'])
 
         ovn_revision_numbers_db.create_initial_revision(
-            context._plugin_context, port['id'], ovn_const.TYPE_PORTS)
+            context._plugin_context, port['id'], ovn_const.TYPE_PORTS,
+            std_attr_id=context.current['standard_attr_id'])
 
         # in the case of router ports we also need to
         # track the creation and update of the LRP OVN objects
         if ovn_utils.is_lsp_router_port(port):
             ovn_revision_numbers_db.create_initial_revision(
                 context._plugin_context, port['id'],
-                ovn_const.TYPE_ROUTER_PORTS)
+                ovn_const.TYPE_ROUTER_PORTS,
+                std_attr_id=context.current['standard_attr_id'])
 
     def _is_port_provisioning_required(self, port, host, original_host=None):
         vnic_type = port.get(portbindings.VNIC_TYPE, portbindings.VNIC_NORMAL)
@@ -714,7 +720,8 @@ class OVNMechanismDriver(api.MechanismDriver):
             if not ovn_utils.is_lsp_router_port(original_port):
                 ovn_revision_numbers_db.create_initial_revision(
                     context._plugin_context, port['id'],
-                    ovn_const.TYPE_ROUTER_PORTS, may_exist=True)
+                    ovn_const.TYPE_ROUTER_PORTS, may_exist=True,
+                    std_attr_id=context.current['standard_attr_id'])
 
     def update_port_postcommit(self, context):
         """Update a port.

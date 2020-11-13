@@ -327,7 +327,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                'name': security_group['name'],
                'stateful': security_group['stateful'],
                'tenant_id': security_group['tenant_id'],
-               'description': security_group['description']}
+               'description': security_group['description'],
+               'standard_attr_id': security_group.db_obj.standard_attr.id,
+               }
         if security_group.rules:
             res['security_group_rules'] = [
                 self._make_security_group_rule_dict(r.db_obj)
@@ -661,7 +663,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                'port_range_min': security_group_rule['port_range_min'],
                'port_range_max': security_group_rule['port_range_max'],
                'remote_ip_prefix': security_group_rule['remote_ip_prefix'],
-               'remote_group_id': security_group_rule['remote_group_id']}
+               'remote_group_id': security_group_rule['remote_group_id'],
+               'standard_attr_id': security_group_rule.standard_attr.id,
+               }
 
         resource_extend.apply_funcs(ext_sg.SECURITYGROUPRULES, res,
                                     security_group_rule)

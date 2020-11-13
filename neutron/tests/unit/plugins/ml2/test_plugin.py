@@ -1181,6 +1181,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         with self.port() as port:
             port_id = port['port']['id']
             new_port = plugin.update_port(ctx, port_id, {"port": {}})
+            new_port.pop('standard_attr_id')
             self.assertEqual(port["port"], new_port)
 
     def _add_fake_dhcp_agent(self):
@@ -2076,6 +2077,7 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
             self.assertEqual(1, publish.call_count)
             # needed for a full match in the assertion below
             port['port']['extra_dhcp_opts'] = []
+            port['port']['standard_attr_id'] = mock.ANY
             expected = [mock.call(resources.PORT, events.PRECOMMIT_DELETE,
                                   mock.ANY, network=mock.ANY, bind=mock.ANY,
                                   port=port['port'], port_db=mock.ANY,
