@@ -18,14 +18,26 @@
       - ^migration/.*$
     vars:
       devstack_services:
-        c-bak: false
         etcd: false
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
         s-account: false
         s-container: false
         s-object: false
         s-proxy: false
-        br-ex-tcpdump: true
-        br-int-flows: true
+    group-vars:
+      subnode:
+        devstack_services:
+          # Cinder services
+          c-bak: false
+          c-vol: false
 
 - job:
     name: neutron-grenade-dvr-multinode
@@ -39,14 +51,20 @@
     irrelevant-files: *irrelevant-files
     vars:
       devstack_services:
-        c-bak: false
         etcd: false
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
         s-account: false
         s-container: false
         s-object: false
         s-proxy: false
-        br-ex-tcpdump: true
-        br-int-flows: true
       devstack_local_conf:
         post-config:
           $NEUTRON_CONF:
@@ -82,6 +100,9 @@
           q-meta: true
           br-ex-tcpdump: true
           br-int-flows: true
+          # Cinder services
+          c-bak: false
+          c-vol: false
         devstack_local_conf:
           post-config:
             $NEUTRON_CONF:
@@ -155,7 +176,6 @@
       extensions_to_txt:
         db: true
       devstack_services:
-        c-bak: false
         etcd: false
         br-ex-tcpdump: true
         br-int-flows: true
@@ -173,6 +193,12 @@
         q-meta: false
         q-metering: false
         q-dns: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
         # When running python3 Swift should be disabled for now
         s-account: false
         s-container: false
@@ -200,6 +226,9 @@
           q-metering: false
           q-ovn-metadata-agent: true
           tls-proxy: false
+          # Cinder services
+          c-bak: false
+          c-vol: false
         grenade_devstack_localrc:
           old:
             Q_BUILD_OVS_FROM_GIT: true
