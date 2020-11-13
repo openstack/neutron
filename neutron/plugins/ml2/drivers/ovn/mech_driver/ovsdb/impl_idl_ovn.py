@@ -649,12 +649,10 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def get_lrouter(self, lrouter_name):
         if uuidutils.is_uuid_like(lrouter_name):
             lrouter_name = utils.ovn_name(lrouter_name)
-
-        # TODO(lucasagomes): Use lr_get() once we start refactoring this
-        # API to use methods from ovsdbapp.
-        lr = self.db_find_rows('Logical_Router', ('name', '=', lrouter_name))
-        result = lr.execute(check_error=True)
-        return result[0] if result else None
+        try:
+            return self.lr_get(lrouter_name).execute(check_error=True)
+        except idlutils.RowNotFound:
+            return None
 
     def get_lrouter_port(self, lrp_name):
         # TODO(mangelajo): Implement lrp_get() ovsdbapp and use from here

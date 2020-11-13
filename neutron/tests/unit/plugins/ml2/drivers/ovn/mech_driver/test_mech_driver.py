@@ -1785,8 +1785,8 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                 self.mech_driver.update_network_postcommit(fake_ctx)
 
                 lrp_name = ovn_utils.ovn_lrouter_port_name(port['port']['id'])
-                self.nb_ovn.update_lrouter_port.assert_called_once_with(
-                    if_exists=True, name=lrp_name, options=expected_opts)
+                self.nb_ovn.lrp_set_options.assert_called_once_with(
+                    lrp_name, expected_opts)
 
     def test_update_network_need_to_frag_enabled(self):
         ovn_conf.cfg.CONF.set_override('ovn_emit_need_to_frag', True,
