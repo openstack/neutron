@@ -219,6 +219,8 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
         self.mock_get_node = mock.patch.object(
             hash_ring_manager.HashRingManager,
             'get_node', return_value=self.node_uuid).start()
+        self.mock_update_tables = mock.patch.object(
+            self.idl, 'update_tables').start()
 
     def _assert_has_notify_calls(self):
         self.idl.notify_handler.notify.assert_has_calls([
@@ -279,6 +281,69 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
         self.idl.notify_handler.notify.assert_called_once_with(
             self.fake_event, self.fake_row, None, global_=True)
 
+    @staticmethod
+    def _create_fake_row(table_name):
+        # name is a parameter in Mock() so it can't be passed to constructor
+        table = mock.Mock()
+        table.name = table_name
+        return fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'_table': table, 'schema': ['foo']})
+
+    def test_handle_db_schema_changes_no_match_events(self):
+        other_table_row = self._create_fake_row('other')
+        database_table_row = self._create_fake_row('Database')
+
+        self.idl.handle_db_schema_changes(
+            ovsdb_monitor.BaseEvent.ROW_UPDATE, other_table_row)
+        self.idl.handle_db_schema_changes(
+            ovsdb_monitor.BaseEvent.ROW_CREATE, other_table_row)
+        self.idl.handle_db_schema_changes(
+            ovsdb_monitor.BaseEvent.ROW_UPDATE, database_table_row)
+
+        self.assertFalse(self.mock_update_tables.called)
+
+    def _test_handle_db_schema(self, agent_table, chassis_private_present):
+        database_table_row = self._create_fake_row('Database')
+        self.idl._tables_to_register[database_table_row.name] = 'foo'
+
+        self.fake_driver.agent_chassis_table = agent_table
+        if chassis_private_present:
+            self.idl.tables['Chassis_Private'] = 'foo'
+        else:
+            try:
+                del self.idl.tables['Chassis_Private']
+            except KeyError:
+                pass
+
+        self.idl.handle_db_schema_changes(
+            ovsdb_monitor.BaseEvent.ROW_CREATE, database_table_row)
+
+    def test_handle_db_schema_changes_old_schema_to_old_schema(self):
+        """Agents use Chassis and should keep using Chassis table"""
+        self._test_handle_db_schema('Chassis', chassis_private_present=False)
+        self.assertEqual('Chassis', self.fake_driver.agent_chassis_table)
+
+    def test_handle_db_schema_changes_old_schema_to_new_schema(self):
+        """Agents use Chassis and should start using Chassis_Private table"""
+        self._test_handle_db_schema('Chassis', chassis_private_present=True)
+        self.assertEqual('Chassis_Private',
+                         self.fake_driver.agent_chassis_table)
+
+    def test_handle_db_schema_changes_new_schema_to_old_schema(self):
+        """Agents use Chassis_Private and should start using Chassis table"""
+        self._test_handle_db_schema('Chassis_Private',
+                                    chassis_private_present=False)
+        self.assertEqual('Chassis', self.fake_driver.agent_chassis_table)
+
+    def test_handle_db_schema_changes_new_schema_to_new_schema(self):
+        """Agents use Chassis_Private and should keep using Chassis_Private
+           table.
+        """
+        self._test_handle_db_schema('Chassis_Private',
+                                    chassis_private_present=True)
+        self.assertEqual('Chassis_Private',
+                         self.fake_driver.agent_chassis_table)
+
 
 class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
     def setUp(self):
@@ -319,6 +384,7 @@ class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self.lp_table = self.idl.tables.get('Logical_Switch_Port')
         self.driver.set_port_status_up = mock.Mock()
         self.driver.set_port_status_down = mock.Mock()
+        mock.patch.object(self.idl, 'handle_db_schema_changes').start()
 
     def _test_lsp_helper(self, event, new_row_json, old_row_json=None,
                          table=None):
