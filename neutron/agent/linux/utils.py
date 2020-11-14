@@ -195,13 +195,8 @@ def find_parent_pid(pid):
 
 def get_process_count_by_name(name):
     """Find the process count by name."""
-    try:
-        out = execute(['ps', '-C', name, '-o', 'comm='],
-                      log_fail_as_error=False)
-    except exceptions.ProcessExecutionError:
-        with excutils.save_and_reraise_exception(reraise=False):
-            return 0
-    return len(out.strip('\n').split('\n'))
+    return len([p for p in psutil.process_iter(['name']) if
+                p.info['name'] == name])
 
 
 def find_fork_top_parent(pid):

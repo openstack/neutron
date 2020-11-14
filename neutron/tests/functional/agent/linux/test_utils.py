@@ -118,3 +118,26 @@ class TestFindParentPid(functional_base.BaseSudoTestCase):
 
     def test_non_root_process(self):
         self._test_process(run_as_root=False)
+
+
+class TestGetProcessCountByName(functional_base.BaseSudoTestCase):
+
+    def _stop_processes(self, processes):
+        for process in processes:
+            process.stop(kill_signal=signal.SIGKILL)
+
+    def test_root_process(self):
+        cmd = ['sleep', '100']
+        processes = []
+        for _ in range(20):
+            process = async_process.AsyncProcess(cmd)
+            process.start()
+            processes.append(process)
+        for process in processes:
+            common_utils.wait_until_true(lambda: process._process.pid,
+                                         sleep=0.5, timeout=5)
+        self.addCleanup(self._stop_processes, processes)
+        number_of_sleep = utils.get_process_count_by_name('sleep')
+        # NOTE(ralonsoh): other tests can spawn sleep processes too, but at
+        # this point we know there are, at least, 20 "sleep" processes running.
+        self.assertLessEqual(20, number_of_sleep)
