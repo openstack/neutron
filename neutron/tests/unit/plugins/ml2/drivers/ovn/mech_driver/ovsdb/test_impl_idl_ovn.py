@@ -355,6 +355,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self._tables['DHCP_Options'] = self.dhcp_table
         self._tables['Address_Set'] = self.address_set_table
         self._tables['Load_Balancer'] = self.lb_table
+        self._tables['NAT'] = self.nat_table
 
         with mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'from_worker',
                                return_value=mock.Mock()):

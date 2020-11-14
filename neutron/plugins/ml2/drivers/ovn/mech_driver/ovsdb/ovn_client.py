@@ -648,16 +648,12 @@ class OVNClient(object):
         columns = {'type': 'dnat_and_snat',
                    'logical_ip': floatingip['fixed_ip_address'],
                    'external_ip': floatingip['floating_ip_address'],
-                   'logical_port': floatingip['port_id']}
+                   'logical_port': floatingip['port_id'],
+                   'external_ids': ext_ids}
 
         if ovn_conf.is_ovn_distributed_floating_ip():
             if self._nb_idl.lsp_get_up(floatingip['port_id']).execute():
                 columns['external_mac'] = port_db['mac_address']
-
-        # TODO(dalvarez): remove this check once the minimum OVS required
-        # version contains the column (when OVS 2.8.2 is released).
-        if self._nb_idl.is_col_present('NAT', 'external_ids'):
-            columns['external_ids'] = ext_ids
 
         # TODO(mjozefcz): Remove this workaround when OVN LB
         # will support both decentralized FIPs on LB and member.
@@ -1026,22 +1022,12 @@ class OVNClient(object):
         port = self._plugin.get_port(context, gw_port_id)
         self._create_lrouter_port(context, router, port, txn=txn)
 
-        def _build_extids(gw_info):
-            # TODO(lucasagomes): Remove this check after OVS 2.8.2 is tagged
-            # (prior to that, the external_ids column didn't exist in this
-            # table).
-            columns = {}
-            if self._nb_idl.is_col_present('Logical_Router_Static_Route',
-                                           'external_ids'):
-                columns['external_ids'] = {
-                    ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
-                    ovn_const.OVN_SUBNET_EXT_ID_KEY: gw_info.subnet_id}
-            return columns
-
         # 2. Add default route with nexthop as gateway ip
         lrouter_name = utils.ovn_name(router['id'])
         for gw_info in gateways:
-            columns = _build_extids(gw_info)
+            columns = {'external_ids': {
+                ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
+                ovn_const.OVN_SUBNET_EXT_ID_KEY: gw_info.subnet_id}}
             txn.add(self._nb_idl.add_static_route(
                 lrouter_name, ip_prefix=gw_info.ip_prefix,
                 nexthop=gw_info.gateway_ip, **columns))
