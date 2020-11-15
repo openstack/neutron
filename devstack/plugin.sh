@@ -18,6 +18,7 @@ source $LIBDIR/fip_port_forwarding
 source $LIBDIR/uplink_status_propagation
 source $LIBDIR/tag_ports_during_bulk_creation
 source $LIBDIR/octavia
+source $LIBDIR/loki
 
 Q_BUILD_OVS_FROM_GIT=$(trueorfalse False Q_BUILD_OVS_FROM_GIT)
 
@@ -108,6 +109,9 @@ if [[ "$1" == "stack" ]]; then
                 if is_service_enabled q-port-forwarding neutron-port-forwarding; then
                     configure_port_forwarding
                 fi
+            fi
+            if is_service_enabled neutron-loki; then
+                configure_loki
             fi
             ;;
         extra)
