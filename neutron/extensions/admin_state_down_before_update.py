@@ -10,7 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.extensions import _admin_state_down_before_update_lib as apidef
+from neutron_lib.api.definitions import \
+    router_admin_state_down_before_update as apidef
 from neutron_lib.api import extensions
 
 
