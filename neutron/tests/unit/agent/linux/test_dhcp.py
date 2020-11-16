@@ -1227,6 +1227,7 @@ class TestDhcpLocalProcess(TestBase):
             mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
             lp = LocalChild(self.conf, network)
             lp.disable(retain_port=True)
+            self.rmtree.assert_not_called()
             self._assert_disabled(lp)
 
     def test_disable(self):
@@ -1238,6 +1239,8 @@ class TestDhcpLocalProcess(TestBase):
             with mock.patch('neutron.agent.linux.ip_lib.'
                             'delete_network_namespace') as delete_ns:
                 lp.disable()
+                self.rmtree.assert_called_once_with(mock.ANY,
+                                                    ignore_errors=True)
 
             self._assert_disabled(lp)
 
@@ -1559,6 +1562,68 @@ class TestDnsmasq(TestBase):
         # when duration is infinite, lease db timestamp should be 0
         timestamp = 0
         self._test_output_init_lease_file(timestamp)
+
+    @mock.patch('time.time')
+    @mock.patch('os.path.isfile', return_value=True)
+    def test_output_init_lease_file_existing(self, isfile, tmock):
+
+        duid = 'duid 00:01:00:01:27:da:58:97:fa:16:3e:6c:ad:c1'
+        ipv4_leases = (
+            '1623162161 00:00:80:aa:bb:cc 192.168.0.2 host-192-168-0-2 *\n'
+            '1623147425 00:00:0f:aa:bb:cc 192.168.0.3 host-192-168-0-3 '
+            'ff:b5:5e:67:ff:00:02:00:00:ab:11:43:e5:86:52:f3:d7:2c:97\n'
+            '1623138717 00:00:0f:rr:rr:rr 192.168.0.1 host-192-168-0-1 '
+            'ff:b5:5e:67:ff:00:02:00:00:ab:11:f6:f2:aa:cb:94:c1:b4:86'
+        )
+        ipv6_lease_v6_port = (
+            '1623083263 755752236 fdca:3ba5:a17a:4ba3::2 '
+            'host-fdca-3ba5-a17a-4ba3--2 '
+            '00:01:00:01:28:50:e8:31:5a:42:2d:0b:dd:2c'
+        )
+        additional_ipv6_leases = (
+            '1623143299 3042863103 2001:db8::45 host-2001-db8--45 '
+            '00:02:00:00:ab:11:fa:c9:0e:0f:3d:90:73:f0\n'
+            '1623134168 3042863103 2001:db8::12 host-2001-db8--12 '
+            '00:02:00:00:ab:11:f6:f2:aa:cb:94:c1:b4:86'
+        )
+        existing_leases = '\n'.join((ipv4_leases, duid, ipv6_lease_v6_port,
+                                     additional_ipv6_leases))
+
+        # lease duration should be added to current time
+        timestamp = 1000000 + 500
+        # The expected lease file contains:
+        # * The DHCPv6 servers DUID
+        # * A lease for all IPv4 addresses
+        # * A lease for the IPv6 addresses present in the existing lease file
+        #   (IPv6 of FakeV6Port)
+        # * No lease for the IPv6 addresses NOT present in the existing lease
+        #   file (IPv6 of FakeDualPort)
+        # * No lease for the IPv6 addresses present in the existing lease file
+        #   which are no longer assigned to any port
+        expected = (
+            '%s\n'
+            '%s 00:00:80:aa:bb:cc 192.168.0.2 * *\n'
+            '%s\n'
+            '%s 00:00:0f:aa:bb:cc 192.168.0.3 * *\n'
+            '%s 00:00:0f:rr:rr:rr 192.168.0.1 * *\n'
+        ) % (duid, timestamp, ipv6_lease_v6_port, timestamp, timestamp)
+
+        self.conf.set_override('dhcp_lease_duration', 500)
+        tmock.return_value = 1000000
+
+        with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
+            conf_fn.return_value = '/foo/leases'
+            dm = self._get_dnsmasq(FakeDualNetwork())
+
+            # Patch __iter__ into mock for Python < 3.8 compatibility
+            open_mock = mock.mock_open(read_data=existing_leases)
+            open_mock.return_value.__iter__ = lambda s: iter(s.readline, '')
+
+            with mock.patch('six.moves.builtins.open', open_mock):
+                dm._output_init_lease_file()
+
+        # Assert the lease file contains the existing ipv6_leases
+        self.safe.assert_called_once_with('/foo/leases', expected)
 
     def _test_output_opts_file(self, expected, network, ipm_retval=None):
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
