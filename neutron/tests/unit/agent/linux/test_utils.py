@@ -402,14 +402,29 @@ class TestPathUtilities(base.BaseTestCase):
 
     def test_cmd_matches_expected_matches_abs_path(self):
         cmd = ['/bar/../foo']
-        self.assertTrue(utils.cmd_matches_expected(cmd, cmd))
+        self.assertTrue(utils.cmd_matches_expected(cmd, cmd, None))
 
     def test_cmd_matches_expected_matches_script(self):
         self.assertTrue(utils.cmd_matches_expected(['python', 'script'],
-                                                   ['script']))
+                                                   ['script'], None))
 
     def test_cmd_matches_expected_doesnt_match(self):
-        self.assertFalse(utils.cmd_matches_expected('foo', 'bar'))
+        self.assertFalse(utils.cmd_matches_expected('foo', 'bar', None))
+
+    def test_cmd_matches_expected_matches_script_with_procname(self):
+        self.assertTrue(utils.cmd_matches_expected(
+            ['proc_name', '(python', 'script)'], ['script'], 'proc_name'))
+
+    def test_cmd_matches_expected_matches_abs_path_script_with_procname(self):
+        self.assertTrue(utils.cmd_matches_expected(
+            ['proc_name', '(python', '/bar/../foo)'], ['/bar/../foo'],
+            'proc_name'))
+        self.assertTrue(utils.cmd_matches_expected(
+            ['proc_name', '(python', '/bar/../foo', 'input_param)'],
+            ['/bar/../foo', 'input_param'], 'proc_name'))
+        self.assertTrue(utils.cmd_matches_expected(
+            ['proc_name', '(/bar/../foo', 'input_param)'],
+            ['/bar/../foo', 'input_param'], 'proc_name'))
 
 
 class FakeUser(object):

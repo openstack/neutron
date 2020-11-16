@@ -334,7 +334,14 @@ def get_cmdline_from_pid(pid):
     return cmdline
 
 
-def cmd_matches_expected(cmd, expected_cmd):
+def cmd_matches_expected(cmd, expected_cmd, process_name):
+    if process_name and cmd and cmd[0] == process_name:
+        # If Neutron has defined the title (setproctitle) of the running
+        # process, the "ps" output will be "<process_name> (cmd)"
+        cmd = cmd[1:]
+        cmd[0] = cmd[0].strip('(')
+        cmd[-1] = cmd[-1].strip(')')
+
     abs_cmd = remove_abs_path(cmd)
     abs_expected_cmd = remove_abs_path(expected_cmd)
     if abs_cmd != abs_expected_cmd:
@@ -345,12 +352,12 @@ def cmd_matches_expected(cmd, expected_cmd):
     return abs_cmd == abs_expected_cmd
 
 
-def pid_invoked_with_cmdline(pid, expected_cmd):
+def pid_invoked_with_cmdline(pid, expected_cmd, process_name=None):
     """Validate process with given pid is running with provided parameters
 
     """
     cmd = get_cmdline_from_pid(pid)
-    return cmd_matches_expected(cmd, expected_cmd)
+    return cmd_matches_expected(cmd, expected_cmd, process_name)
 
 
 def ensure_directory_exists_without_file(path):
