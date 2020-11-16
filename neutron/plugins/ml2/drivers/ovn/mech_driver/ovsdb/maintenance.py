@@ -566,7 +566,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     'Logical_Switch', ls.name,
                     ('other_config', {
                         ovn_const.MCAST_SNOOP: value,
-                        ovn_const.MCAST_FLOOD_UNREGISTERED: value})))
+                        ovn_const.MCAST_FLOOD_UNREGISTERED: 'false'})))
 
         raise periodics.NeverAgain()
 
