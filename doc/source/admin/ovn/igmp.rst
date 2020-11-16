@@ -35,15 +35,15 @@ OVN Database information
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``igmp_snooping_enable`` configuration from Neutron is translated
-into the ``mcast_snoop`` and ``mcast_flood_unregistered`` options set
-in the ``other_config`` column from the ``Logical_Switch`` table in the
-OVN Northbound Database:
+into the ``mcast_snoop`` option set in the ``other_config`` column
+from the ``Logical_Switch`` table in the OVN Northbound Database
+(``mcast_flood_unregistered`` is always "false"):
 
 .. code-block:: bash
 
    $ ovn-nbctl list Logical_Switch
    _uuid               : d6a2fbcd-aaa4-4b9e-8274-184238d66a15
-   other_config        : {mcast_flood_unregistered="true", mcast_snoop="true"}
+   other_config        : {mcast_flood_unregistered="false", mcast_snoop="true"}
    ...
 
 .. end
