@@ -1,0 +1,8 @@
+---
+issues:
+  - |
+    Even with the "igmp_snooping_enable" configuration option stating that
+    traffic would not be flooded to unregistered VMs when this option was
+    enabled, the ML2/OVN driver didn't follow that behavior. This
+    has now been fixed and ML2/OVN will no longer flood traffic to
+    unregistered VMs when this configuration option is set to True.
