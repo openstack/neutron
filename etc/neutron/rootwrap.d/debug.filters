@@ -14,5 +14,3 @@
 #   (used by NeutronDebugAgent.ping_all)
 ping: CommandFilter, ping, root
 ping6: CommandFilter, ping6, root
-ping_exec: IpNetnsExecFilter, ping, root
-ping6_exec: IpNetnsExecFilter, ping6, root
