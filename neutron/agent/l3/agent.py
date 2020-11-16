@@ -593,11 +593,17 @@ class L3NATAgent(ha.AgentMixin,
 
     def _process_router_update(self):
         for rp, update in self._queue.each_update_to_next_resource():
-            LOG.debug("Starting router update for %s, action %s, priority %s",
-                      update.id, update.action, update.priority)
+            LOG.info("Starting router update for %s, action %s, priority %s, "
+                     "update_id %s. Wait time elapsed: %.3f",
+                     update.id, update.action, update.priority,
+                     update.update_id,
+                     update.time_elapsed_since_create)
             if update.action == PD_UPDATE:
                 self.pd.process_prefix_update()
-                LOG.debug("Finished a router update for %s", update.id)
+                LOG.info("Finished a router update for %s IPv6 PD, "
+                         "update_id. %s. Time elapsed: %.3f",
+                         update.id, update.update_id,
+                         update.time_elapsed_since_start)
                 continue
 
             routers = [update.resource] if update.resource else []
@@ -633,7 +639,10 @@ class L3NATAgent(ha.AgentMixin,
                     # processing queue (like events from fullsync) in order to
                     # prevent deleted router re-creation
                     rp.fetched_and_processed(update.timestamp)
-                LOG.debug("Finished a router update for %s", update.id)
+                LOG.info("Finished a router update for %s, update_id %s. "
+                         "Time elapsed: %.3f",
+                         update.id, update.update_id,
+                         update.time_elapsed_since_start)
                 continue
 
             if not self._process_routers_if_compatible(routers, update):
@@ -641,7 +650,10 @@ class L3NATAgent(ha.AgentMixin,
                 continue
 
             rp.fetched_and_processed(update.timestamp)
-            LOG.debug("Finished a router update for %s", update.id)
+            LOG.info("Finished a router update for %s, update_id %s. "
+                     "Time elapsed: %.3f",
+                     update.id, update.update_id,
+                     update.time_elapsed_since_start)
 
     def _process_routers_if_compatible(self, routers, update):
         process_result = True
