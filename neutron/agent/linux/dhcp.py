@@ -269,7 +269,7 @@ class DhcpLocalProcess(DhcpBase):
             common_utils.wait_until_true(lambda: not self.active)
         if not retain_port:
             self._destroy_namespace_and_port()
-        self._remove_config_files()
+            self._remove_config_files()
 
     def _destroy_namespace_and_port(self):
         try:
@@ -671,17 +671,50 @@ class Dnsmasq(DhcpLocalProcess):
         dhcpv4_enabled_subnet_ids = [
             s.id for s in self._get_all_subnets(self.network)
             if s.enable_dhcp and s.ip_version == constants.IP_VERSION_4]
+        dhcpv6_enabled_subnet_ids = [
+            s.id for s in self._get_all_subnets(self.network)
+            if s.enable_dhcp and s.ip_version == constants.IP_VERSION_6]
+
+        existing_ipv6_leases = {}
+        if os.path.isfile(filename):
+            # The IPv6 leases can't be generated as their IAID is unknown. To
+            # not loose active leases, read the existing leases and add them to
+            # the generated file.
+            LOG.debug('Reading IPv6 leases from existing lease file.')
+            with open(filename) as leasefile:
+                for line in leasefile:
+                    if line.startswith('duid '):
+                        # Keep the DUID
+                        buf.write(line)
+                        continue
+                    try:
+                        ts, mac, ip, host, iaid = line.split(' ')
+                    except ValueError:
+                        # not the correct format for a lease, skip this line
+                        continue
+
+                    if netaddr.valid_ipv6(ip):
+                        existing_ipv6_leases[netaddr.IPAddress(ip)] = line
+
         for host_tuple in self._iter_hosts():
             port, alloc, hostname, name, no_dhcp, no_opts = host_tuple
-            # don't write ip address which belongs to a dhcp disabled subnet
-            # or an IPv6 subnet.
-            if no_dhcp or alloc.subnet_id not in dhcpv4_enabled_subnet_ids:
+
+            if no_dhcp:
                 continue
 
-            # all that matters is the mac address and IP. the hostname and
-            # client ID will be overwritten on the next renewal.
-            buf.write('%s %s %s * *\n' %
-                      (timestamp, port.mac_address, alloc.ip_address))
+            if alloc.subnet_id in dhcpv4_enabled_subnet_ids:
+                # all that matters is the mac address and IP. the hostname and
+                # client ID will be overwritten on the next renewal.
+                buf.write('%s %s %s * *\n' %
+                          (timestamp, port.mac_address, alloc.ip_address))
+            elif (alloc.subnet_id in dhcpv6_enabled_subnet_ids and
+                  netaddr.IPAddress(alloc.ip_address) in existing_ipv6_leases):
+                # Keep the existing IPv6 lease if the port still exists and is
+                # still configured for DHCPv6
+                buf.write(
+                    existing_ipv6_leases[netaddr.IPAddress(alloc.ip_address)]
+                )
+
         contents = buf.getvalue()
         file_utils.replace_file(filename, contents)
         LOG.debug('Done building initial lease file %s with contents:\n%s',
