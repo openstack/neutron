@@ -20,12 +20,8 @@ TEST_SET_ID = 'fake_sgid'
 ETHERTYPE = 'IPv4'
 TEST_SET_NAME = ipset_manager.IpsetManager.get_name(TEST_SET_ID, ETHERTYPE)
 TEST_SET_NAME_NEW = TEST_SET_NAME + ipset_manager.SWAP_SUFFIX
-FAKE_IPS = [('10.0.0.1', 'fa:16:3e:aa:bb:c1'),
-            ('10.0.0.2', 'fa:16:3e:aa:bb:c2'),
-            ('10.0.0.3', 'fa:16:3e:aa:bb:c3'),
-            ('10.0.0.4', 'fa:16:3e:aa:bb:c4'),
-            ('10.0.0.5', 'fa:16:3e:aa:bb:c5'),
-            ('10.0.0.6', 'fa:16:3e:aa:bb:c6')]
+FAKE_IPS = ['10.0.0.1', '10.0.0.2', '10.0.0.3', '10.0.0.4',
+            '10.0.0.5', '10.0.0.6']
 
 
 class BaseIpsetManagerTest(base.BaseTestCase):
@@ -153,15 +149,13 @@ class IpsetManagerTestCase(BaseIpsetManagerTest):
         self.verify_mock_calls()
 
     def test_set_members_adding_all_zero_ipv4(self):
-        self.expect_set([('0.0.0.0/0', 'fa:16:3e:aa:bb:c1'), ])
-        self.ipset.set_members(TEST_SET_ID, ETHERTYPE,
-                               [('0.0.0.0/0', 'fa:16:3e:aa:bb:c1'), ])
+        self.expect_set(['0.0.0.0/0'])
+        self.ipset.set_members(TEST_SET_ID, ETHERTYPE, ['0.0.0.0/0'])
         self.verify_mock_calls()
 
     def test_set_members_adding_all_zero_ipv6(self):
-        self.expect_set([('::/0', 'fa:16:3e:aa:bb:c1'), ])
-        self.ipset.set_members(TEST_SET_ID, ETHERTYPE,
-                               [('::/0', 'fa:16:3e:aa:bb:c1'), ])
+        self.expect_set(['::/0'])
+        self.ipset.set_members(TEST_SET_ID, ETHERTYPE, ['::/0'])
         self.verify_mock_calls()
 
     def test_destroy(self):

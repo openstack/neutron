@@ -351,10 +351,9 @@ class TestConjIPFlowManager(base.BaseTestCase):
     def test_update_flows_for_vlan_no_ports_but_members(self):
         remote_group = self.driver.sg_port_map.get_sg.return_value
         remote_group.ports = set()
-        remote_group.members = {constants.IPv4: [
-            ('10.22.3.4', 'fa:16:3e:aa:bb:cc'), ]}
+        remote_group.members = {constants.IPv4: ['10.22.3.4']}
         remote_group.get_ethertype_filtered_addresses.return_value = [
-            ('10.22.3.4', 'fa:16:3e:aa:bb:cc'), ]
+            '10.22.3.4']
         with mock.patch.object(self.manager.conj_id_map,
                                'get_conj_id') as get_conj_id_mock:
             get_conj_id_mock.return_value = self.conj_id
@@ -367,7 +366,7 @@ class TestConjIPFlowManager(base.BaseTestCase):
     def test_update_flows_for_vlan(self):
         remote_group = self.driver.sg_port_map.get_sg.return_value
         remote_group.get_ethertype_filtered_addresses.return_value = [
-            ('10.22.3.4', 'fa:16:3e:aa:bb:cc'), ]
+            '10.22.3.4']
         with mock.patch.object(self.manager.conj_id_map,
                                'get_conj_id') as get_conj_id_mock:
             get_conj_id_mock.return_value = self.conj_id
@@ -1040,7 +1039,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
     def test_delete_flow_for_ip_using_cookie_any(self):
         with mock.patch.object(self.firewall, '_delete_flows') as \
                 mock_delete_flows:
-            self.firewall.delete_flow_for_ip(('10.1.2.3', None),
+            self.firewall.delete_flow_for_ip('10.1.2.3',
                                              constants.INGRESS_DIRECTION,
                                              constants.IPv4, 100, [0])
             _, kwargs = mock_delete_flows.call_args
