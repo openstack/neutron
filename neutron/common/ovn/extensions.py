@@ -32,6 +32,7 @@ from neutron_lib.api.definitions import network_availability_zone
 from neutron_lib.api.definitions import network_ip_availability
 from neutron_lib.api.definitions import network_mtu
 from neutron_lib.api.definitions import pagination
+from neutron_lib.api.definitions import port_numa_affinity_policy
 from neutron_lib.api.definitions import port_resource_request
 from neutron_lib.api.definitions import port_security
 from neutron_lib.api.definitions import portbindings
@@ -82,6 +83,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     network_mtu.ALIAS,
     network_availability_zone.ALIAS,
     network_ip_availability.ALIAS,
+    port_numa_affinity_policy.ALIAS,
     port_security.ALIAS,
     provider_net.ALIAS,
     port_resource_request.ALIAS,
