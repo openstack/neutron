@@ -1,0 +1,7 @@
+---
+deprecations:
+  - |
+    Removed ``XenAPI`` support in Neutron. This driver is no longer supported
+    in Nova and Neutron.
+    The configuration options have been marked as "deprecated for removal" and
+    will be removed in X release.

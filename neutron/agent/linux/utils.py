@@ -36,7 +36,6 @@ from oslo_utils import fileutils
 import psutil
 
 from neutron._i18n import _
-from neutron.agent.linux import xenapi_root_helper
 from neutron.common import utils
 from neutron.conf.agent import common as config
 from neutron import wsgi
@@ -57,12 +56,8 @@ class RootwrapDaemonHelper(object):
     def get_client(cls):
         with cls.__lock:
             if cls.__client is None:
-                if (xenapi_root_helper.ROOT_HELPER_DAEMON_TOKEN ==
-                        cfg.CONF.AGENT.root_helper_daemon):
-                    cls.__client = xenapi_root_helper.XenAPIClient()
-                else:
-                    cls.__client = client.Client(
-                        shlex.split(cfg.CONF.AGENT.root_helper_daemon))
+                cls.__client = client.Client(
+                    shlex.split(cfg.CONF.AGENT.root_helper_daemon))
             return cls.__client
 
 

@@ -58,7 +58,6 @@ os-client-config==1.28.0
 os-ken==0.3.0
 os-service-types==1.7.0
 os-vif==1.15.1
-os-xenapi==0.3.4
 osc-lib==1.8.0
 oslo.cache==1.26.0
 oslo.concurrency==3.26.0

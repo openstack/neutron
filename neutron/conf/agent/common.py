@@ -105,10 +105,6 @@ in "daemon mode" which has been reported to improve performance at scale. For
 more information on running rootwrap in "daemon mode", see:
 
 https://docs.openstack.org/oslo.rootwrap/latest/user/usage.html#daemon-mode
-
-For the agent which needs to execute commands in Dom0 in the hypervisor of
-XenServer, this option should be set to 'xenapi_root_helper', so that it will
-keep a XenAPI session to pass commands to Dom0.
 """)),
 ]
 
