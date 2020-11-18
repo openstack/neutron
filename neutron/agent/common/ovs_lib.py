@@ -74,6 +74,9 @@ _SENTINEL = object()
 CTRL_RATE_LIMIT_MIN = 100
 CTRL_BURST_LIMIT_MIN = 25
 
+# TODO(slaweq): move this to neutron_lib.constants
+TYPE_GRE_IP6 = 'ip6gre'
+
 
 def _ovsdb_result_pending(result):
     """Return True if ovsdb indicates the result is still pending."""
@@ -98,6 +101,13 @@ def _ovsdb_retry(fn):
                 self.ovsdb_timeout))(fn)
         return new_fn(*args, **kwargs)
     return wrapped
+
+
+def get_gre_tunnel_port_type(remote_ip, local_ip):
+    if (common_utils.get_ip_version(remote_ip) == p_const.IP_VERSION_6 or
+            common_utils.get_ip_version(local_ip) == p_const.IP_VERSION_6):
+        return TYPE_GRE_IP6
+    return p_const.TYPE_GRE
 
 
 class VifPort(object):
@@ -509,6 +519,8 @@ class OVSBridge(BaseOVS):
                         dont_fragment=True,
                         tunnel_csum=False,
                         tos=None):
+        if tunnel_type == p_const.TYPE_GRE:
+            tunnel_type = get_gre_tunnel_port_type(remote_ip, local_ip)
         attrs = [('type', tunnel_type)]
         # TODO(twilson) This is an OrderedDict solely to make a test happy
         options = collections.OrderedDict()
@@ -532,6 +544,10 @@ class OVSBridge(BaseOVS):
             options['csum'] = str(tunnel_csum).lower()
         if tos:
             options['tos'] = str(tos)
+        if tunnel_type == TYPE_GRE_IP6:
+            # NOTE(slaweq) According to the OVS documentation L3 GRE tunnels
+            # over IPv6 are not supported.
+            options['packet_type'] = 'legacy'
         attrs.append(('options', options))
 
         return self.add_port(port_name, *attrs)
