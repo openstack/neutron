@@ -40,9 +40,6 @@ l3_tc_add_filter_egress:  RegExpFilter, tc, root, tc, filter, add, dev, .+, pare
 # For ip monitor
 kill_ip_monitor: KillFilter, root, ip, -9
 
-# ovs_lib (if OVSInterfaceDriver is used)
-ovs-vsctl: CommandFilter, ovs-vsctl, root
-
 # iptables_manager
 iptables-save: CommandFilter, iptables-save, root
 iptables-restore: CommandFilter, iptables-restore, root

@@ -18,7 +18,6 @@ kill_dnsmasq_usr: KillFilter, root, /usr/sbin/dnsmasq, -9, -HUP, -15
 # dnsmasq kill script filter
 kill_dnsmasq_script: CommandFilter, dnsmasq-kill, root
 
-ovs-vsctl: CommandFilter, ovs-vsctl, root
 mm-ctl: CommandFilter, mm-ctl, root
 
 # haproxy
