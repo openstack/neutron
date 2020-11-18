@@ -17,7 +17,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.synced_folder ".", "/vagrant", disabled: true
   config.vm.synced_folder File.expand_path(".."), "/vagrant"
-  config.vm.synced_folder File.expand_path("../.."), "/home/vagrant/neutron"
+  config.vm.synced_folder File.expand_path("../../.."), "/home/vagrant/neutron"
 
   # Use the ipaddr library to calculate the netmask of a given network
   net = IPAddr.new vagrant_config['provider_network']
