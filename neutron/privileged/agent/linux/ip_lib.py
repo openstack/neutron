@@ -720,11 +720,12 @@ def _make_pyroute2_route_args(namespace, ip_version, cidr, device, via, table,
 
 @privileged.default.entrypoint
 def add_ip_route(namespace, cidr, ip_version, device=None, via=None,
-                 table=None, metric=None, scope=None, **kwargs):
+                 table=None, metric=None, scope=None, proto='static',
+                 **kwargs):
     """Add an IP route"""
     kwargs.update(_make_pyroute2_route_args(
         namespace, ip_version, cidr, device, via, table, metric, scope,
-        'static'))
+        proto))
     try:
         with get_iproute(namespace) as ip:
             ip.route('replace', **kwargs)

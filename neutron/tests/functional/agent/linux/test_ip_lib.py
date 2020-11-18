@@ -919,7 +919,8 @@ class IpRouteCommandTestCase(functional_base.BaseSudoTestCase):
                'scope': scope,
                'device': 'test_device',
                'via': via,
-               'metric': metric}
+               'metric': metric,
+               'proto': 'static'}
         try:
             utils.wait_until_true(fn, timeout=5)
         except utils.WaitTimeout:

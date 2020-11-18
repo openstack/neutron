@@ -19,6 +19,7 @@ import netaddr
 from neutron_lib import constants as lib_constants
 from oslo_log import log as logging
 from oslo_utils import excutils
+from pyroute2.netlink import exceptions as pyroute2_exc
 
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_router_base
@@ -800,16 +801,17 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
     def _update_fip_route_table_with_next_hop_routes(self, operation, route,
                                                      fip_ns_name, tbl_index):
-        cmd = ['ip', 'route', operation, 'to', route['destination'],
-               'via', route['nexthop'], 'table', tbl_index]
-        ip_wrapper = ip_lib.IPWrapper(namespace=fip_ns_name)
-        if ip_wrapper.netns.exists(fip_ns_name):
-            ip_wrapper.netns.execute(cmd, check_exit_code=False,
-                                     privsep_exec=True)
-        else:
+        cmd = (ip_lib.add_ip_route if operation == 'replace' else
+               ip_lib.delete_ip_route)
+        try:
+            cmd(fip_ns_name, route['destination'], via=route['nexthop'],
+                table=tbl_index, proto='boot')
+        except priv_ip_lib.NetworkNamespaceNotFound:
             LOG.debug("The FIP namespace %(ns)s does not exist for "
                       "router %(id)s",
                       {'ns': fip_ns_name, 'id': self.router_id})
+        except (OSError, pyroute2_exc.NetlinkError):
+            pass
 
     def _check_if_route_applicable_to_fip_namespace(self, route,
                                                     agent_gateway_port):

@@ -22,6 +22,7 @@ from neutron_lib import constants as n_cons
 from oslo_utils import uuidutils
 from pyroute2.ipdb import routes as ipdb_routes
 from pyroute2.iproute import linux as iproute_linux
+from pyroute2.netlink import rtnl
 import testtools
 
 from neutron.agent.linux import ip_lib
@@ -476,7 +477,7 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
         self.device.link.set_up()
 
     def _check_routes(self, cidrs, table=None, gateway=None, metric=None,
-                      scope=None):
+                      scope=None, proto='static'):
         table = table or iproute_linux.DEFAULT_TABLE
         if not scope:
             scope = 'universe' if gateway else 'link'
@@ -503,6 +504,7 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
                 self.assertEqual(metric,
                                  ip_lib.get_attr(route, 'RTA_PRIORITY'))
                 self.assertEqual(scope, route['scope'])
+                self.assertEqual(rtnl.rt_proto[proto], route['proto'])
                 break
             else:
                 self.fail('CIDR %s not found in the list of routes' % cidr)
@@ -533,16 +535,17 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
                       % gateway)
 
     def _add_route_device_and_check(self, table=None, metric=None,
-                                    scope='link'):
+                                    scope='link', proto='static'):
         cidrs = ['192.168.0.0/24', '172.90.0.0/16', '10.0.0.0/8',
                  '2001:db8::/64']
         for cidr in cidrs:
             ip_version = common_utils.get_ip_version(cidr)
             priv_ip_lib.add_ip_route(self.namespace, cidr, ip_version,
                                      device=self.device_name, table=table,
-                                     metric=metric, scope=scope)
+                                     metric=metric, scope=scope, proto=proto)
 
-        self._check_routes(cidrs, table=table, metric=metric, scope=scope)
+        self._check_routes(cidrs, table=table, metric=metric, scope=scope,
+                           proto=proto)
 
     def test_add_route_device(self):
         self._add_route_device_and_check(table=None)
@@ -564,6 +567,18 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
 
     def test_add_route_device_scope_host(self):
         self._add_route_device_and_check(scope='host')
+
+    def test_add_route_device_proto_static(self):
+        self._add_route_device_and_check(proto='static')  # default
+
+    def test_add_route_device_proto_redirect(self):
+        self._add_route_device_and_check(proto='redirect')
+
+    def test_add_route_device_proto_kernel(self):
+        self._add_route_device_and_check(proto='kernel')
+
+    def test_add_route_device_proto_boot(self):
+        self._add_route_device_and_check(proto='boot')
 
     def test_add_route_via_ipv4(self):
         cidrs = ['192.168.0.0/24', '172.90.0.0/16', '10.0.0.0/8']
