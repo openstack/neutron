@@ -10,7 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.extensions import _availability_zone_filter_lib as apidef
+from neutron_lib.api.definitions import availability_zone_filter as apidef
 from neutron_lib.api import extensions
 
 

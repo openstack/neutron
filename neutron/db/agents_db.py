@@ -20,6 +20,7 @@ from eventlet import greenthread
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.api import converters
 from neutron_lib.api.definitions import agent as agent_apidef
+from neutron_lib.api.definitions import availability_zone_filter as azfil_ext
 from neutron_lib.api import extensions
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -43,7 +44,6 @@ from neutron.agent.common import utils
 from neutron.api.rpc.callbacks import version_manager
 from neutron.conf.agent.database import agents_db
 from neutron.db.models import agent as agent_model
-from neutron.extensions import _availability_zone_filter_lib as azfil_ext
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import availability_zone as az_ext
 from neutron.objects import agent as agent_obj
