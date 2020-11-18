@@ -297,9 +297,6 @@ def create_flows_for_ip_address(ip_address, direction, ethertype,
     """Create flows from a rule and an ip_address derived from
     remote_group_id
     """
-    ip_address, mac_address = ip_address
-    net = netaddr.IPNetwork(str(ip_address))
-    any_src_ip = net.prefixlen == 0
 
     # Group conj_ids per priority.
     conj_id_lists = [[] for i in range(4)]
@@ -323,9 +320,6 @@ def create_flows_for_ip_address(ip_address, direction, ethertype,
 
     flow_template[FLOW_FIELD_FOR_IPVER_AND_DIRECTION[(
         ip_ver, direction)]] = ip_prefix
-
-    if any_src_ip:
-        flow_template['dl_src'] = mac_address
 
     result = []
     for offset, conj_id_list in enumerate(conj_id_lists):
