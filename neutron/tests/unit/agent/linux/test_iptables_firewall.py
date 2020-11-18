@@ -1492,16 +1492,12 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
         if ethertype == "IPv4":
             ethertype = "ipv4"
-            members_add = {'IPv4': [('10.0.0.2', 'fa:16:3e:aa:bb:c1'),
-                                    ('10.0.0.3', 'fa:16:3e:aa:bb:c2')]}
-            members_after_delete = {
-                'IPv4': [('10.0.0.3', 'fa:16:3e:aa:bb:c2'), ]}
+            members_add = {'IPv4': ['10.0.0.2', '10.0.0.3']}
+            members_after_delete = {'IPv4': ['10.0.0.3']}
         else:
             ethertype = "ipv6"
-            members_add = {'IPv6': [('fe80::2', 'fa:16:3e:aa:bb:c3'),
-                                    ('fe80::3', 'fa:16:3e:aa:bb:c4')]}
-            members_after_delete = {
-                'IPv6': [('fe80::3', 'fa:16:3e:aa:bb:c4'), ]}
+            members_add = {'IPv6': ['fe80::2', 'fe80::3']}
+            members_after_delete = {'IPv6': ['fe80::3']}
 
         with mock.patch.dict(self.firewall.ipconntrack._device_zone_map,
                              {port['network_id']: ct_zone}):
@@ -2273,12 +2269,10 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         self.firewall.ipset.assert_has_calls(calls, True)
 
     def test_sg_rule_expansion_with_remote_ips(self):
-        other_ips = [('10.0.0.2', 'fa:16:3e:aa:bb:c1'),
-                     ('10.0.0.3', 'fa:16:3e:aa:bb:c2'),
-                     ('10.0.0.4', 'fa:16:3e:aa:bb:c3')]
+        other_ips = ['10.0.0.2', '10.0.0.3', '10.0.0.4']
         self.firewall.sg_members = {'fake_sgid': {
-            'IPv4': [(FAKE_IP['IPv4'], 'fa:16:3e:aa:bb:c4'), ] + other_ips,
-            'IPv6': [(FAKE_IP['IPv6'], 'fa:16:3e:aa:bb:c5'), ]}}
+            'IPv4': [FAKE_IP['IPv4']] + other_ips,
+            'IPv6': [FAKE_IP['IPv6']]}}
 
         port = self._fake_port()
         rule = self._fake_sg_rule_for_ethertype(_IPv4, FAKE_SGID)
@@ -2287,7 +2281,7 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         self.assertEqual(list(rules),
                          [dict(list(rule.items()) +
                                [('source_ip_prefix', '%s/32' % ip)])
-                          for ip, _mac in other_ips])
+                          for ip in other_ips])
 
     def test_build_ipv4v6_mac_ip_list(self):
         mac_oth = 'ffff-ff0f-ffff'

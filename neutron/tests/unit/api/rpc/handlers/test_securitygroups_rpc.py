@@ -13,7 +13,6 @@
 #    under the License.
 
 import mock
-import netaddr
 from neutron_lib import context
 from oslo_utils import uuidutils
 
@@ -127,30 +126,19 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
 
     def test_security_group_info_for_devices(self):
         s1 = self._make_security_group_ovo()
-        mac_1 = 'fa:16:3e:aa:bb:c1'
-        p1 = self._make_port_ovo(ip='1.1.1.1',
-                                 mac_address=netaddr.EUI(mac_1),
-                                 security_group_ids={s1.id})
-        mac_2 = 'fa:16:3e:aa:bb:c2'
+        p1 = self._make_port_ovo(ip='1.1.1.1', security_group_ids={s1.id})
         p2 = self._make_port_ovo(
             ip='2.2.2.2',
-            mac_address=netaddr.EUI(mac_2),
             security_group_ids={s1.id},
             security=psec.PortSecurity(port_security_enabled=False))
-        mac_3 = 'fa:16:3e:aa:bb:c3'
-        p3 = self._make_port_ovo(ip='3.3.3.3',
-                                 mac_address=netaddr.EUI(mac_3),
-                                 security_group_ids={s1.id},
+        p3 = self._make_port_ovo(ip='3.3.3.3', security_group_ids={s1.id},
                                  device_owner='network:dhcp')
 
         ids = [p1.id, p2.id, p3.id]
         info = self.shim.security_group_info_for_devices(self.ctx, ids)
-        self.assertIn(('1.1.1.1', str(netaddr.EUI(mac_1))),
-                      info['sg_member_ips'][s1.id]['IPv4'])
-        self.assertIn(('2.2.2.2', str(netaddr.EUI(mac_2))),
-                      info['sg_member_ips'][s1.id]['IPv4'])
-        self.assertIn(('3.3.3.3', str(netaddr.EUI(mac_3))),
-                      info['sg_member_ips'][s1.id]['IPv4'])
+        self.assertIn('1.1.1.1', info['sg_member_ips'][s1.id]['IPv4'])
+        self.assertIn('2.2.2.2', info['sg_member_ips'][s1.id]['IPv4'])
+        self.assertIn('3.3.3.3', info['sg_member_ips'][s1.id]['IPv4'])
         self.assertIn(p1.id, info['devices'].keys())
         self.assertIn(p2.id, info['devices'].keys())
         # P3 is a trusted port so it doesn't have rules
