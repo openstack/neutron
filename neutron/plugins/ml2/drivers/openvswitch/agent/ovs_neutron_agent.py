@@ -1757,7 +1757,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     LOG.info(
                         "Port '%(port_name)s' has lost "
                         "its vlan tag '%(vlan_tag)d'! "
-                        "Current vlan tag on this port is '%(new_vlan_tag)d'.",
+                        "Current vlan tag on this port is '%(new_vlan_tag)s'.",
                         {'port_name': port.port_name,
                          'vlan_tag': lvm.vlan,
                          'new_vlan_tag': port_tags[port.port_name]}
