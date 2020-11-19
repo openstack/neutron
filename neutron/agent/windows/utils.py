@@ -167,7 +167,7 @@ def process_is_running(pid):
     return _get_wmi_process(pid) is not None
 
 
-def pid_invoked_with_cmdline(pid, expected_cmd):
+def pid_invoked_with_cmdline(pid, expected_cmd, process_name=None):
     process = _get_wmi_process(pid)
     if not process:
         return False
