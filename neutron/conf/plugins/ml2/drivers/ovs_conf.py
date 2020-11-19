@@ -100,15 +100,6 @@ ovs_opts = [
                        "See also: "
                        "https://docs.openstack.org/api-ref/placement/"
                        "#update-resource-provider-inventories")),
-    cfg.BoolOpt('use_veth_interconnection', default=False,
-                deprecated_for_removal=True,
-                deprecated_since="Victoria",
-                deprecated_reason="Patch ports should be used to provide "
-                                  "bridges interconnection.",
-                help=_("Use veths instead of patch ports to interconnect the "
-                       "integration bridge to physical networks. "
-                       "Support kernel without Open vSwitch patch port "
-                       "support so long as it is set to True.")),
     cfg.StrOpt('datapath_type', default=constants.OVS_DATAPATH_SYSTEM,
                choices=[constants.OVS_DATAPATH_SYSTEM,
                         constants.OVS_DATAPATH_NETDEV],

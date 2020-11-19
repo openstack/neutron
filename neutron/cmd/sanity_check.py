@@ -296,7 +296,7 @@ OPTS = [
                     help=_('Check for OVS Geneve support')),
     BoolOptCallback('iproute2_vxlan', check_iproute2_vxlan, default=False,
                     help=_('Check for iproute2 vxlan support')),
-    BoolOptCallback('ovs_patch', check_ovs_patch, default=False,
+    BoolOptCallback('ovs_patch', check_ovs_patch, default=True,
                     help=_('Check for patch port support')),
     BoolOptCallback('nova_notify', check_nova_notify,
                     help=_('Check for nova notification support')),
@@ -366,10 +366,6 @@ def enable_tests_from_config():
     if ('vxlan' in cfg.CONF.ml2.type_drivers or
             cfg.CONF.VXLAN.enable_vxlan):
         cfg.CONF.set_default('iproute2_vxlan', True)
-    if cfg.CONF.AGENT.tunnel_types:
-        cfg.CONF.set_default('ovs_patch', True)
-    if not cfg.CONF.OVS.use_veth_interconnection:
-        cfg.CONF.set_default('ovs_patch', True)
     if (cfg.CONF.notify_nova_on_port_status_changes or
             cfg.CONF.notify_nova_on_port_data_changes):
         cfg.CONF.set_default('nova_notify', True)

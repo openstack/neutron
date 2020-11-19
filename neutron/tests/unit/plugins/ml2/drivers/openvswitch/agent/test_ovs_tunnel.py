@@ -66,7 +66,6 @@ class DummyVlanBinding(object):
 
 
 class TunnelTest(object):
-    USE_VETH_INTERCONNECTION = False
     VETH_MTU = None
 
     def setUp(self):
@@ -312,8 +311,6 @@ class TunnelTest(object):
         cfg.CONF.set_override('tunnel_types', ['gre'], 'AGENT')
         cfg.CONF.set_override('veth_mtu', self.VETH_MTU, 'AGENT')
         cfg.CONF.set_override('minimize_polling', False, 'AGENT')
-        cfg.CONF.set_override('use_veth_interconnection',
-                              self.USE_VETH_INTERCONNECTION, 'OVS')
 
         for k, v in config_opts_agent.items():
             cfg.CONF.set_override(k, v, 'AGENT')
@@ -344,7 +341,6 @@ class TunnelTest(object):
         self._verify_mock_call(self.mock_aux_bridge,
                                self.mock_aux_bridge_expected)
         self._verify_mock_call(self.ipdevice, self.ipdevice_expected)
-        self._verify_mock_call(self.ipwrapper, self.ipwrapper_expected)
         self._verify_mock_call(self.get_bridges, self.get_bridges_expected)
         self._verify_mock_call(self.inta, self.inta_expected)
         self._verify_mock_call(self.intb, self.intb_expected)
@@ -672,128 +668,4 @@ class TunnelTest(object):
 
 
 class TunnelTestOSKen(TunnelTest, ovs_test_base.OVSOSKenTestBase):
-    pass
-
-
-class TunnelTestUseVethInterco(TunnelTest):
-    USE_VETH_INTERCONNECTION = True
-
-    def _define_expected_calls(self, arp_responder=False, igmp_snooping=False):
-        self.mock_int_bridge_cls_expected = [
-            mock.call(self.INT_BRIDGE,
-                      datapath_type=mock.ANY),
-        ]
-        self.mock_phys_bridge_cls_expected = [
-            mock.call(self.MAP_TUN_BRIDGE,
-                      datapath_type=mock.ANY),
-        ]
-        self.mock_tun_bridge_cls_expected = [
-            mock.call(self.TUN_BRIDGE,
-                      datapath_type=mock.ANY),
-        ]
-
-        self.mock_int_bridge_expected = [
-            mock.call.create(),
-            mock.call.set_secure_mode(),
-            mock.call.setup_controllers(mock.ANY),
-            mock.call.set_igmp_snooping_state(igmp_snooping),
-            mock.call.setup_default_table(),
-        ]
-
-        self.mock_map_tun_bridge_expected = [
-            mock.call.create(),
-            mock.call.set_secure_mode(),
-            mock.call.setup_controllers(mock.ANY),
-            mock.call.setup_default_table(),
-            mock.call.add_port('phy-%s' % self.MAP_TUN_BRIDGE),
-        ]
-        self.mock_int_bridge_expected += [
-            mock.call.db_get_val('Interface', 'int-%s' % self.MAP_TUN_BRIDGE,
-                                 'type', log_errors=False),
-            mock.call.add_port('int-%s' % self.MAP_TUN_BRIDGE)
-        ]
-
-        self.mock_int_bridge_expected += [
-            mock.call.drop_port(in_port=self.MAP_TUN_INT_OFPORT),
-        ]
-        self.mock_map_tun_bridge_expected += [
-            mock.call.drop_port(in_port=self.MAP_TUN_PHY_OFPORT),
-        ]
-
-        self.mock_aux_bridge = self.ovs_bridges[self.AUX_BRIDGE]
-        self.mock_aux_bridge_expected = [
-        ]
-
-        self.mock_tun_bridge_expected = [
-            mock.call.create(secure_mode=True),
-            mock.call.setup_controllers(mock.ANY),
-            mock.call.port_exists('patch-int'),
-            mock.ANY,
-            mock.call.add_patch_port('patch-int', 'patch-tun'),
-        ]
-        self.mock_int_bridge_expected += [
-            mock.call.port_exists('patch-tun'),
-            mock.call.add_patch_port('patch-tun', 'patch-int')
-        ]
-        self.mock_int_bridge_expected += [
-            mock.call.get_vif_ports((ovs_lib.INVALID_OFPORT,
-                                     ovs_lib.UNASSIGNED_OFPORT)),
-            mock.call.get_ports_attributes(
-                'Port', columns=['name', 'other_config', 'tag'], ports=[])
-        ]
-        self.mock_tun_bridge_expected += [
-            mock.call.setup_default_table(self.INT_OFPORT, arp_responder),
-        ]
-
-        self.ipdevice_expected = [
-            mock.call('int-%s' % self.MAP_TUN_BRIDGE),
-            mock.call().exists(),
-            mock.ANY,
-            mock.call().link.delete()
-        ]
-        self.ipwrapper_expected = [
-            mock.call(),
-            mock.call().add_veth('int-%s' % self.MAP_TUN_BRIDGE,
-                                 'phy-%s' % self.MAP_TUN_BRIDGE)
-        ]
-
-        self.get_bridges_expected = [mock.call(), mock.call()]
-
-        self.inta_expected = [mock.call.link.set_up()]
-        self.intb_expected = [mock.call.link.set_up()]
-        self.execute_expected = [mock.call(['udevadm', 'settle',
-                                            '--timeout=10'])]
-
-        self.mock_int_bridge_expected += [
-            mock.call.install_goto(
-                dest_table_id=constants.LOCAL_MAC_DIRECT,
-                in_port=self.MAP_TUN_INT_OFPORT,
-                priority=4, table_id=constants.TRANSIENT_TABLE),
-            mock.call.install_goto(
-                dest_table_id=constants.LOCAL_MAC_DIRECT,
-                in_port=self.TUN_OFPORT,
-                priority=4, table_id=constants.TRANSIENT_TABLE),
-            mock.call.install_goto(
-                dest_table_id=constants.TRANSIENT_EGRESS_TABLE,
-                table_id=constants.LOCAL_MAC_DIRECT),
-        ]
-
-
-class TunnelTestUseVethIntercoOSKen(TunnelTestUseVethInterco,
-                                  ovs_test_base.OVSOSKenTestBase):
-    pass
-
-
-class TunnelTestWithMTU(TunnelTestUseVethInterco):
-    VETH_MTU = 1500
-
-    def _define_expected_calls(self, arp_responder=False, igmp_snooping=False):
-        super(TunnelTestWithMTU, self)._define_expected_calls(
-            arp_responder, igmp_snooping)
-        self.inta_expected.append(mock.call.link.set_mtu(self.VETH_MTU))
-        self.intb_expected.append(mock.call.link.set_mtu(self.VETH_MTU))
-
-
-class TunnelTestWithMTUOSKen(TunnelTestWithMTU,
-                           ovs_test_base.OVSOSKenTestBase):
     pass
