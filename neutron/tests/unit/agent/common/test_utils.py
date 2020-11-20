@@ -89,6 +89,7 @@ class TestDefaultRpHypervisors(base.BaseTestCase):
             utils.default_rp_hypervisors(
                 hypervisors={},
                 device_mappings={'physnet0': ['eth0', 'eth1']},
+                default_hypervisor=None,
             )
         )
 
@@ -97,5 +98,24 @@ class TestDefaultRpHypervisors(base.BaseTestCase):
             utils.default_rp_hypervisors(
                 hypervisors={'eth0': 'thathost'},
                 device_mappings={'physnet0': ['eth0', 'eth1']},
+                default_hypervisor=None,
+            )
+        )
+
+        self.assertEqual(
+            {'eth0': 'defaulthost', 'eth1': 'defaulthost'},
+            utils.default_rp_hypervisors(
+                hypervisors={},
+                device_mappings={'physnet0': ['eth0', 'eth1']},
+                default_hypervisor='defaulthost',
+            )
+        )
+
+        self.assertEqual(
+            {'eth0': 'thathost', 'eth1': 'defaulthost'},
+            utils.default_rp_hypervisors(
+                hypervisors={'eth0': 'thathost'},
+                device_mappings={'physnet0': ['eth0', 'eth1']},
+                default_hypervisor='defaulthost',
             )
         )

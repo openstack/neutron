@@ -522,7 +522,8 @@ class SriovNicAgentConfigParser(object):
             cfg.CONF.SRIOV_NIC.resource_provider_inventory_defaults)
         self.rp_hypervisors = utils.default_rp_hypervisors(
             cfg.CONF.SRIOV_NIC.resource_provider_hypervisors,
-            self.device_mappings
+            self.device_mappings,
+            cfg.CONF.SRIOV_NIC.resource_provider_default_hypervisor,
         )
         self._validate()
 
