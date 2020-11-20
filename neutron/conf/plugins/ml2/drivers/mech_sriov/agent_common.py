@@ -65,8 +65,13 @@ sriov_nic_opts = [
                        "hypervisor name is used to locate the parent of the "
                        "resource provider tree. Only needs to be set in the "
                        "rare case when the hypervisor name is different from "
-                       "the DEFAULT.host config option value as known by the "
-                       "nova-compute managing that hypervisor.")),
+                       "the resource_provider_default_hypervisor config "
+                       "option value as known by the nova-compute managing "
+                       "that hypervisor.")),
+    cfg.StrOpt('resource_provider_default_hypervisor',
+               help=_("The default hypervisor name used to locate the parent "
+                      "of the resource provider. If this option is not set, "
+                      "socket.gethostname() is used")),
     cfg.DictOpt('resource_provider_inventory_defaults',
                 default={'allocation_ratio': 1.0,
                          'min_unit': 1,
