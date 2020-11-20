@@ -31,6 +31,7 @@ from neutron_lib.api.definitions import multiprovidernet
 from neutron_lib.api.definitions import network_availability_zone
 from neutron_lib.api.definitions import network_ip_availability
 from neutron_lib.api.definitions import network_mtu
+from neutron_lib.api.definitions import network_mtu_writable
 from neutron_lib.api.definitions import pagination
 from neutron_lib.api.definitions import port_numa_affinity_policy
 from neutron_lib.api.definitions import port_resource_request
@@ -81,6 +82,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     extra_dhcp_opt.ALIAS,
     multiprovidernet.ALIAS,
     network_mtu.ALIAS,
+    network_mtu_writable.ALIAS,
     network_availability_zone.ALIAS,
     network_ip_availability.ALIAS,
     port_numa_affinity_policy.ALIAS,
