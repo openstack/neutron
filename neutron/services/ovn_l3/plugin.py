@@ -154,7 +154,8 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
     def create_router_precommit(self, resource, event, trigger, context,
                                 router, router_id, router_db):
         db_rev.create_initial_revision(
-            context, router_id, ovn_const.TYPE_ROUTERS)
+            context, router_id, ovn_const.TYPE_ROUTERS,
+            std_attr_id=router_db.standard_attr.id)
 
     def create_router(self, context, router):
         router = super(OVNL3RouterPlugin, self).create_router(context, router)
@@ -249,7 +250,8 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
     def create_floatingip_precommit(self, resource, event, trigger, context,
                                     floatingip, floatingip_id, floatingip_db):
         db_rev.create_initial_revision(
-            context, floatingip_id, ovn_const.TYPE_FLOATINGIPS)
+            context, floatingip_id, ovn_const.TYPE_FLOATINGIPS,
+            std_attr_id=floatingip_db.standard_attr.id)
 
     def create_floatingip(self, context, floatingip,
                           initial_status=n_const.FLOATINGIP_STATUS_DOWN):

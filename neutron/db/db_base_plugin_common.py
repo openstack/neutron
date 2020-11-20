@@ -143,6 +143,11 @@ class DbBasePluginCommon(object):
         allocated.create()
 
     def _make_subnet_dict(self, subnet, fields=None, context=None):
+        if isinstance(subnet, subnet_obj.Subnet):
+            standard_attr_id = subnet.db_obj.standard_attr.id
+        else:
+            standard_attr_id = subnet.standard_attr.id
+
         res = {'id': subnet['id'],
                'name': subnet['name'],
                'tenant_id': subnet['tenant_id'],
@@ -152,6 +157,7 @@ class DbBasePluginCommon(object):
                'enable_dhcp': subnet['enable_dhcp'],
                'ipv6_ra_mode': subnet['ipv6_ra_mode'],
                'ipv6_address_mode': subnet['ipv6_address_mode'],
+               'standard_attr_id': standard_attr_id,
                }
         res['gateway_ip'] = str(
                 subnet['gateway_ip']) if subnet['gateway_ip'] else None
@@ -218,6 +224,13 @@ class DbBasePluginCommon(object):
     def _make_port_dict(self, port, fields=None,
                         process_extensions=True,
                         with_fixed_ips=True):
+        if isinstance(port, port_obj.Port):
+            port_data = port.db_obj
+            standard_attr_id = port.db_obj.standard_attr.id
+        else:
+            port_data = port
+            standard_attr_id = port.standard_attr.id
+
         mac = port["mac_address"]
         if isinstance(mac, netaddr.EUI):
             mac.dialect = netaddr.mac_unix_expanded
@@ -229,7 +242,9 @@ class DbBasePluginCommon(object):
                "admin_state_up": port["admin_state_up"],
                "status": port["status"],
                "device_id": port["device_id"],
-               "device_owner": port["device_owner"]}
+               "device_owner": port["device_owner"],
+               'standard_attr_id': standard_attr_id,
+               }
         if with_fixed_ips:
             res["fixed_ips"] = [
                 {'subnet_id': ip["subnet_id"],
@@ -237,9 +252,6 @@ class DbBasePluginCommon(object):
                      ip["ip_address"])} for ip in port["fixed_ips"]]
         # Call auxiliary extend functions, if any
         if process_extensions:
-            port_data = port
-            if isinstance(port, port_obj.Port):
-                port_data = port.db_obj
             resource_extend.apply_funcs(
                 port_def.COLLECTION_NAME, res, port_data)
         return db_utils.resource_fields(res, fields)
@@ -310,7 +322,8 @@ class DbBasePluginCommon(object):
                'mtu': network.get('mtu', constants.DEFAULT_NETWORK_MTU),
                'status': network['status'],
                'subnets': [subnet['id']
-                           for subnet in network['subnets']]}
+                           for subnet in network['subnets']],
+               'standard_attr_id': network.standard_attr.id}
         res['shared'] = self._is_network_shared(context, network.rbac_entries)
         # Call auxiliary extend functions, if any
         if process_extensions:

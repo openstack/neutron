@@ -3995,7 +3995,8 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                     project_id=f['floatingip']['project_id'],
                     router_id=f['floatingip']['router_id'],
                     status=f['floatingip']['status'],
-                    tenant_id=f['floatingip']['tenant_id'])
+                    tenant_id=f['floatingip']['tenant_id'],
+                    standard_attr_id=mock.ANY)
         finally:
             registry.unsubscribe(fake_method, resources.FLOATING_IP,
                                  events.AFTER_DELETE)

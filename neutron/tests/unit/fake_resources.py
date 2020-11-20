@@ -187,6 +187,16 @@ class FakePlugin(object):
         self._get_port_security_group_bindings = mock.Mock()
 
 
+class FakeStandardAttribute(object):
+
+    def __init__(self, _id=1, resource_type=mock.ANY, description=mock.ANY,
+                 revision_number=1):
+        self.id = _id
+        self.resource_type = resource_type
+        self.description = description
+        self.revision_number = revision_number
+
+
 class FakeResource(dict):
 
     def __init__(self, manager=None, info=None, loaded=False, methods=None):
@@ -282,6 +292,7 @@ class FakeNetwork(object):
             'availability_zones': [],
             'availability_zone_hints': [],
             'is_default': False,
+            'standard_attr_id': 1,
         }
 
         # Overwrite default attributes.
@@ -659,6 +670,7 @@ class FakeFloatingIp(object):
             'dns_domain': '',
             'dns_name': '',
             'project_id': '',
+            'standard_attr': FakeStandardAttribute(),
         }
 
         # Overwrite default attributes.
