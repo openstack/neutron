@@ -178,7 +178,8 @@ class DhcpBase(object, metaclass=abc.ABCMeta):
         self.disable(retain_port=True, block=True)
         self.enable()
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def active(self):
         """Boolean representing the running state of the DHCP server."""
 

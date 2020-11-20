@@ -37,7 +37,8 @@ agent_cfg.register_process_monitor_opts(cfg.CONF)
 
 
 class MonitoredProcess(object, metaclass=abc.ABCMeta):
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def active(self):
         """Boolean representing the running state of the process."""
 
