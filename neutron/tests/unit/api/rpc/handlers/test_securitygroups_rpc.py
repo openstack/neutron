@@ -126,6 +126,8 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
             port_range_min=400,
             remote_group_id=attrs['id'],
             revision_number=1,
+            remote_address_group_id=kwargs.get('remote_address_group_id',
+                                               None),
         )
         attrs['rules'] = [sg_rule]
         attrs.update(**kwargs)
@@ -194,16 +196,15 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
         self.sg_agent.security_groups_member_updated.assert_called_with(
             {s1.id})
 
-    def test_get_address_group_details(self):
+    def test_get_secgroup_ids_for_address_group(self):
         ag = self._make_address_group_ovo()
-        retrieved_ag = self.shim.get_address_group_details(ag.id)
-        self.assertEqual(ag.id, retrieved_ag.id)
-        self.assertEqual(ag.name, retrieved_ag.name)
-        self.assertEqual(ag.description, retrieved_ag.description)
-        self.assertEqual(ag.addresses[0].address,
-                         retrieved_ag.addresses[0].address)
-        self.assertEqual(ag.addresses[1].address,
-                         retrieved_ag.addresses[1].address)
+        sg1 = self._make_security_group_ovo(remote_address_group_id=ag.id)
+        sg2 = self._make_security_group_ovo(remote_address_group_id=ag.id)
+        sg3 = self._make_security_group_ovo()
+        sec_group_ids = self.shim.get_secgroup_ids_for_address_group(ag.id)
+        self.assertEqual(set([sg1.id, sg2.id]), set(sec_group_ids))
+        self.assertEqual(2, len(sec_group_ids))
+        self.assertNotIn(sg3.id, sec_group_ids)
 
     def test_address_group_update_events(self):
         ag = self._make_address_group_ovo()

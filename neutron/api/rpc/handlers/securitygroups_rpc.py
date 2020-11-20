@@ -246,13 +246,10 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
         # error.
         raise NotImplementedError()
 
-    def get_address_group_details(self, address_group_id):
-        ag_obj = self.rcache.get_resource_by_id(resources.ADDRESSGROUP,
-                                                address_group_id)
-        if not ag_obj:
-            LOG.debug("Address group %s does not exist in cache.",
-                      address_group_id)
-        return ag_obj
+    def get_secgroup_ids_for_address_group(self, address_group_id):
+        filters = {'remote_address_group_id': (address_group_id, )}
+        return set([rule.security_group_id for rule in
+                    self.rcache.get_resources('SecurityGroupRule', filters)])
 
     def _add_child_sg_rules(self, rtype, event, trigger, context, updated,
                             **kwargs):

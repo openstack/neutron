@@ -248,13 +248,17 @@ class SecurityGroupAgentRpc(object):
 
     def address_group_updated(self, address_group_id):
         LOG.info("Address group updated %r", address_group_id)
-        # TODO(mlavalle) A follow up patch in the address groups implementation
-        # series will add more code here
+        security_group_ids = (
+            self.plugin_rpc.get_secgroup_ids_for_address_group(
+                address_group_id))
+        self.security_groups_rule_updated(security_group_ids)
 
     def address_group_deleted(self, address_group_id):
         LOG.info("Address group deleted %r", address_group_id)
-        # TODO(mlavalle) A follow up patch in the address groups implementation
-        # series will add more code here
+        security_group_ids = (
+            self.plugin_rpc.get_secgroup_ids_for_address_group(
+                address_group_id))
+        self.security_groups_rule_updated(security_group_ids)
 
     def remove_devices_filter(self, device_ids):
         if not device_ids:
