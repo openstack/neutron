@@ -1020,34 +1020,36 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
         expected_calls_and_values = [
             (mock.call(['iptables', '-t', 'filter', '-L', 'OUTPUT',
                         '-n', '-v', '-x', '-w', '10'],
-                       run_as_root=True),
+                       run_as_root=True, log_fail_as_error=False),
              TRAFFIC_COUNTERS_DUMP),
             (mock.call(['iptables', '-t', 'raw', '-L', 'OUTPUT', '-n',
                         '-v', '-x', '-w', '10'],
-                       run_as_root=True),
+                       run_as_root=True, log_fail_as_error=False),
              ''),
             (mock.call(['iptables', '-t', 'mangle', '-L', 'OUTPUT', '-n',
                         '-v', '-x', '-w', '10'],
-                       run_as_root=True),
+                       run_as_root=True, log_fail_as_error=False),
              ''),
             (mock.call(['iptables', '-t', 'nat', '-L', 'OUTPUT', '-n',
                         '-v', '-x', '-w', '10'],
-                       run_as_root=True),
+                       run_as_root=True, log_fail_as_error=False),
              ''),
         ]
         if self.use_ipv6:
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'raw', '-L', 'OUTPUT',
-                           '-n', '-v', '-x', '-w', '10'], run_as_root=True),
+                           '-n', '-v', '-x', '-w', '10'], run_as_root=True,
+                           log_fail_as_error=False),
                  ''))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'filter', '-L', 'OUTPUT',
                            '-n', '-v', '-x', '-w', '10'],
-                           run_as_root=True),
+                           run_as_root=True, log_fail_as_error=False),
                  TRAFFIC_COUNTERS_DUMP))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'mangle', '-L', 'OUTPUT',
-                           '-n', '-v', '-x', '-w', '10'], run_as_root=True),
+                           '-n', '-v', '-x', '-w', '10'], run_as_root=True,
+                           log_fail_as_error=False),
                  ''))
             exp_packets *= 2
             exp_bytes *= 2
@@ -1068,36 +1070,36 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
         expected_calls_and_values = [
             (mock.call(['iptables', '-t', 'filter', '-L', 'OUTPUT',
                         '-n', '-v', '-x', '-w', '10', '-Z'],
-                       run_as_root=True),
+                       run_as_root=True, log_fail_as_error=False),
              TRAFFIC_COUNTERS_DUMP),
             (mock.call(['iptables', '-t', 'raw', '-L', 'OUTPUT', '-n',
                         '-v', '-x', '-w', '10', '-Z'],
-                       run_as_root=True),
+                       run_as_root=True, log_fail_as_error=False),
              ''),
             (mock.call(['iptables', '-t', 'mangle', '-L', 'OUTPUT', '-n',
                         '-v', '-x', '-w', '10', '-Z'],
-                       run_as_root=True),
+                       run_as_root=True, log_fail_as_error=False),
              ''),
             (mock.call(['iptables', '-t', 'nat', '-L', 'OUTPUT', '-n',
                         '-v', '-x', '-w', '10', '-Z'],
-                       run_as_root=True),
+                       run_as_root=True, log_fail_as_error=False),
              '')
         ]
         if self.use_ipv6:
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'raw', '-L', 'OUTPUT',
                             '-n', '-v', '-x', '-w', '10', '-Z'],
-                           run_as_root=True),
+                           run_as_root=True, log_fail_as_error=False),
                  ''))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'filter', '-L', 'OUTPUT',
                             '-n', '-v', '-x', '-w', '10', '-Z'],
-                           run_as_root=True),
+                           run_as_root=True, log_fail_as_error=False),
                  TRAFFIC_COUNTERS_DUMP))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'mangle', '-L', 'OUTPUT',
                             '-n', '-v', '-x', '-w', '10', '-Z'],
-                           run_as_root=True),
+                           run_as_root=True, log_fail_as_error=False),
                  ''))
             exp_packets *= 2
             exp_bytes *= 2

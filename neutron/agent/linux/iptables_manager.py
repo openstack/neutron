@@ -775,7 +775,15 @@ class IptablesManager(object):
                 args.append('-Z')
             if self.namespace:
                 args = ['ip', 'netns', 'exec', self.namespace] + args
-            current_table = self.execute(args, run_as_root=True)
+
+            # Execute iptables command in the linux host.
+            # When routers migrate from a host,an exception might happen here,
+            # and we do not care about it. Therefore, we do not need to log
+            # this error in production environments. Only when debug mode is
+            # enabled is that we need to log the error. This is used to avoid
+            # generating alarms that will be ignored by  operators.
+            current_table = self.execute(
+                args, run_as_root=True, log_fail_as_error=cfg.CONF.debug)
             current_lines = current_table.split('\n')
 
             for line in current_lines[2:]:
