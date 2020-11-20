@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    The new ``resource_provider_defualt_hypervisor`` option has been added,
+    to replace the default hypervisor name to locates the root resource
+    provider without giving a complete list of interfaces or bridges in
+    the ``resource_provider_hypervisors`` option. This option is located in
+    the ``[ovs]`` ini-section for ``ovs-agent`` and ``[sriov_nic]`` ini-section
+    for ``sriov-agent``.

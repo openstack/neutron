@@ -228,7 +228,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             ovs_conf.resource_provider_inventory_defaults)
         self.rp_hypervisors = utils.default_rp_hypervisors(
             ovs_conf.resource_provider_hypervisors,
-            {k: [v] for k, v in self.bridge_mappings.items()}
+            {k: [v] for k, v in self.bridge_mappings.items()},
+            ovs_conf.resource_provider_default_hypervisor
         )
 
         self.setup_physical_bridges(self.bridge_mappings)
