@@ -308,7 +308,8 @@ class IptablesManager(object):
     _random_fully = None
 
     def __init__(self, _execute=None, state_less=False, use_ipv6=False,
-                 nat=True, namespace=None, binary_name=binary_name):
+                 nat=True, namespace=None, binary_name=binary_name,
+                 external_lock=True):
         if _execute:
             self.execute = _execute
         else:
@@ -318,6 +319,7 @@ class IptablesManager(object):
         self.namespace = namespace
         self.iptables_apply_deferred = False
         self.wrap_name = binary_name[:16]
+        self.external_lock = external_lock
 
         self.ipv4 = {'filter': IptablesTable(binary_name=self.wrap_name)}
         self.ipv6 = {'filter': IptablesTable(binary_name=self.wrap_name)}
@@ -463,7 +465,8 @@ class IptablesManager(object):
         # NOTE(ihrachys) we may get rid of the lock once all supported
         # platforms get iptables with 999eaa241212d3952ddff39a99d0d55a74e3639e
         # ("iptables-restore: support acquiring the lock.")
-        with lockutils.lock(lock_name, runtime.SYNCHRONIZED_PREFIX, True):
+        with lockutils.lock(lock_name, runtime.SYNCHRONIZED_PREFIX,
+                            external=self.external_lock):
             first = self._apply_synchronized()
             if not cfg.CONF.AGENT.debug_iptables_rules:
                 return first

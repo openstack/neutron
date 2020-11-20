@@ -235,7 +235,9 @@ class TestMetadataAgent(base.BaseTestCase):
                     'update_chassis_metadata_networks') as update_chassis,\
                 mock.patch.object(
                     driver.MetadataDriver,
-                    'spawn_monitored_metadata_proxy') as spawn_mdp:
+                    'spawn_monitored_metadata_proxy') as spawn_mdp, \
+                mock.patch.object(
+                    self.agent, '_ensure_datapath_checksum') as mock_checksum:
 
             # Simulate that the VETH pair was already present in 'br-fake'.
             # We need to assert that it was deleted first.
@@ -268,6 +270,7 @@ class TestMetadataAgent(base.BaseTestCase):
                 bind_address=n_const.METADATA_V4_IP, network_id='1')
             # Check that the chassis has been updated with the datapath.
             update_chassis.assert_called_once_with('1')
+            mock_checksum.assert_called_once_with('namespace')
 
     def _test_update_chassis_metadata_networks_helper(
             self, dp, remove, expected_dps, txn_called=True):
