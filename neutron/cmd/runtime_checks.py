@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import packaging
+from packaging import version
 
 from neutron_lib import exceptions
 from oslo_log import log as logging
@@ -41,14 +41,14 @@ def keepalived_use_no_track_support():
     cmd = ['keepalived', '--version']
     env = {'LC_ALL': 'C', 'PATH': '/sbin:/usr/sbin'}
 
-    keepalived_with_track = packaging.version.parse("2.0.0")
+    keepalived_with_track = version.parse("2.0.0")
     try:
         # keepalived --version returns with stderr only
         res = agent_utils.execute(cmd, addl_env=env, log_fail_as_error=False,
                                   return_stderr=True)
         # First line is the interesting one here from stderr
         version_line = res[1].split('\n')[0]
-        keepalived_version = packaging.version.parse(version_line.split()[1])
+        keepalived_version = version.parse(version_line.split()[1])
         return keepalived_version >= keepalived_with_track
     except exceptions.ProcessExecutionError:
         return False
