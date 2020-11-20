@@ -457,9 +457,9 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         if device_owner in const.ROUTER_INTERFACE_OWNERS_SNAT:
             return True
 
-        subnet_obj = self._get_subnet_object(context, subnet_id)
-        return not (ipv6_utils.is_auto_address_subnet(subnet_obj) and
-                    not ipv6_utils.is_ipv6_pd_enabled(subnet_obj))
+        _subnet_obj = self._get_subnet_object(context, subnet_id)
+        return not (ipv6_utils.is_auto_address_subnet(_subnet_obj) and
+                    not ipv6_utils.is_ipv6_pd_enabled(_subnet_obj))
 
     def _get_changed_ips_for_port(self, context, original_ips,
                                   new_ips, device_owner):
@@ -575,9 +575,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         if segment_id:
             # TODO(slaweq): integrate check if segment exists in
             # self._validate_segment() method
-            segment = network_obj.NetworkSegment.get_object(context,
-                                                            id=segment_id)
-            if not segment:
+            if not network_obj.NetworkSegment.get_object(context,
+                                                         id=segment_id):
                 raise segment_exc.SegmentNotFound(segment_id=segment_id)
 
         subnet = subnet_obj.Subnet(context, **subnet_args)
