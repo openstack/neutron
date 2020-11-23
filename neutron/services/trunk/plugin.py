@@ -79,16 +79,43 @@ class TrunkPlugin(service_base.ServicePluginBase):
                             'port_id': x.port_id}
                 for x in port_db.trunk_port.sub_ports
             }
-            core_plugin = directory.get_plugin()
-            ports = core_plugin.get_ports(
-                context.get_admin_context(), filters={'id': subports})
-            for port in ports:
-                subports[port['id']]['mac_address'] = port['mac_address']
+            if not port_res.get('bulk'):
+                core_plugin = directory.get_plugin()
+                ports = core_plugin.get_ports(
+                    context.get_admin_context(), filters={'id': subports})
+                for port in ports:
+                    subports[port['id']]['mac_address'] = port['mac_address']
             trunk_details = {'trunk_id': port_db.trunk_port.id,
                              'sub_ports': list(subports.values())}
             port_res['trunk_details'] = trunk_details
 
         return port_res
+
+    @staticmethod
+    # TODO(obondarev): use neutron_lib constant
+    @resource_extend.extends(['ports_bulk'])
+    def _extend_port_trunk_details_bulk(ports_res, noop):
+        """Add trunk subport details to a list of ports."""
+        subport_ids = []
+        trunk_ports = []
+        for p in ports_res:
+            if 'trunk_details' in p and 'subports' in p['trunk_details']:
+                trunk_ports.append(p)
+                for subp in p['trunk_details']['subports']:
+                    subport_ids.append(subp['port_id'])
+        if not subport_ids:
+            return ports_res
+
+        core_plugin = directory.get_plugin()
+        subports = core_plugin.get_ports(
+            context.get_admin_context(), filters={'id': subport_ids})
+        subport_macs = {p['id']: p['mac_address'] for p in subports}
+
+        for tp in trunk_ports:
+            for subp in tp['trunk_details']['subports']:
+                subp['mac_address'] = subport_macs[subp['port_id']]
+
+        return ports_res
 
     def check_compatibility(self):
         """Verify the plugin can load correctly and fail otherwise."""
