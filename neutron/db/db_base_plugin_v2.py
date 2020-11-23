@@ -1570,7 +1570,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                       sorts=sorts, limit=limit,
                                       marker_obj=marker_obj,
                                       page_reverse=page_reverse)
-        items = [self._make_port_dict(c, fields) for c in query]
+        items = [self._make_port_dict(c, fields, bulk=True) for c in query]
+        # TODO(obondarev): use neutron_lib constant
+        resource_extend.apply_funcs('ports_bulk', items, None)
         if limit and page_reverse:
             items.reverse()
         return items
