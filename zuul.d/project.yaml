@@ -21,11 +21,9 @@
         - neutron-grenade-dvr-multinode
         - neutron-grenade-ovn:
             voting: false
-        - neutron-tempest-linuxbridge
         - neutron-tempest-with-uwsgi
         - neutron-tempest-multinode-full-py3
         - neutron-tempest-dvr-ha-multinode-full
-        - neutron-tempest-iptables_hybrid
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             voting: false
             # We don't run the job on things like neutron docs-only changes
@@ -100,8 +98,6 @@
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
         - neutron-tempest-with-uwsgi
-        - neutron-tempest-linuxbridge
-        - neutron-tempest-iptables_hybrid
         - neutron-tempest-multinode-full-py3
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
