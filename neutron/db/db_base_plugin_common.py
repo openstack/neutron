@@ -223,7 +223,8 @@ class DbBasePluginCommon(object):
 
     def _make_port_dict(self, port, fields=None,
                         process_extensions=True,
-                        with_fixed_ips=True):
+                        with_fixed_ips=True,
+                        bulk=False):
         if isinstance(port, port_obj.Port):
             port_data = port.db_obj
             standard_attr_id = port.db_obj.standard_attr.id
@@ -252,8 +253,10 @@ class DbBasePluginCommon(object):
                      ip["ip_address"])} for ip in port["fixed_ips"]]
         # Call auxiliary extend functions, if any
         if process_extensions:
+            res['bulk'] = bulk
             resource_extend.apply_funcs(
                 port_def.COLLECTION_NAME, res, port_data)
+            res.pop('bulk')
         return db_utils.resource_fields(res, fields)
 
     def _get_network(self, context, id):
