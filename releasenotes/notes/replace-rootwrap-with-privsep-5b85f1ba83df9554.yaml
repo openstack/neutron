@@ -1,0 +1,17 @@
+---
+other:
+  - |
+    As defined in `Migrate from oslo.rootwrap to oslo.privsep
+    <https://opendev.org/openstack/governance/src/branch/master/goals/selected/wallaby/migrate-to-privsep.rst>`_,
+    all OpenStack proyects should migrate from oslo.rootwrap to oslo.privsep
+    because "oslo.privsep offers a superior security model, faster and more
+    secure".
+    This migration will end with the deprecation and removal of oslo.rootwrap
+    from Neutron. To ensure the quality of the Neutron code, this migration
+    will be done sequentially in several patches, checking none of them breaks
+    the current functionality.
+    In order to easily migrate to execute all external commands inside a
+    privsep context, a new input variable "privsep_exec", that defaults to
+    "False", is added to ``neutron.agent.linux.utils.execute``. That will
+    divert the code to a privsep decorated executor.
+    Once the migration finishes, this new input parameter will be removed.

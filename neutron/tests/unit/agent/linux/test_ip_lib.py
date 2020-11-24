@@ -858,7 +858,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
                 ['ip', 'netns', 'exec', 'ns',
                  'sysctl', '-w', 'net.ipv4.conf.all.promote_secondaries=1'],
                 run_as_root=True, check_exit_code=True, extra_ok_codes=None,
-                log_fail_as_error=True)
+                log_fail_as_error=True, privsep_exec=True)
 
     @mock.patch.object(priv_lib, 'remove_netns')
     def test_delete_namespace(self, remove):
@@ -899,7 +899,8 @@ class TestIpNetnsCommand(TestIPCmdBase):
                                             run_as_root=True,
                                             check_exit_code=True,
                                             extra_ok_codes=None,
-                                            log_fail_as_error=True)
+                                            log_fail_as_error=True,
+                                            privsep_exec=False)
 
     def test_execute_env_var_prepend(self):
         self.parent.namespace = 'ns'
@@ -911,7 +912,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
                 ['%s=%s' % (k, v) for k, v in env.items()] +
                 ['ip', 'link', 'list'],
                 run_as_root=True, check_exit_code=True, extra_ok_codes=None,
-                log_fail_as_error=True)
+                log_fail_as_error=True, privsep_exec=False)
 
     def test_execute_nosudo_with_no_namespace(self):
         with mock.patch('neutron.agent.common.utils.execute') as execute:
@@ -921,7 +922,8 @@ class TestIpNetnsCommand(TestIPCmdBase):
                                             check_exit_code=True,
                                             extra_ok_codes=None,
                                             run_as_root=False,
-                                            log_fail_as_error=True)
+                                            log_fail_as_error=True,
+                                            privsep_exec=False)
 
 
 class TestDeviceExists(base.BaseTestCase):
@@ -1378,12 +1380,18 @@ class TestArpPing(TestIPCmdBase):
         self.assertTrue(spawn_n.called)
         mIPWrapper.assert_has_calls([
             mock.call(namespace=mock.sentinel.ns_name),
-            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1]),
-            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1]),
-            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2]),
-            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2]),
-            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2]),
-            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2])])
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1],
+                                      privsep_exec=True),
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1],
+                                      privsep_exec=True),
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2],
+                                      privsep_exec=True),
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2],
+                                      privsep_exec=True),
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2],
+                                      privsep_exec=True),
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2],
+                                      privsep_exec=True)])
 
         ip_wrapper = mIPWrapper(namespace=mock.sentinel.ns_name)
 
@@ -1395,7 +1403,8 @@ class TestArpPing(TestIPCmdBase):
                           '-w', mock.ANY,
                           address]
             ip_wrapper.netns.execute.assert_any_call(arping_cmd,
-                                                     extra_ok_codes=mock.ANY)
+                                                     extra_ok_codes=mock.ANY,
+                                                     privsep_exec=True)
 
     @mock.patch.object(ip_lib, 'IPWrapper')
     @mock.patch('eventlet.spawn_n')
@@ -1415,7 +1424,8 @@ class TestArpPing(TestIPCmdBase):
         # should return early with a single call when ENODEV
         mIPWrapper.assert_has_calls([
             mock.call(namespace=mock.sentinel.ns_name),
-            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1])
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1],
+                                      privsep_exec=True)
         ] * 1)
 
     @mock.patch('eventlet.spawn_n')
@@ -1458,7 +1468,7 @@ class TestSysctl(base.BaseTestCase):
             dev.disable_ipv6()
             self.execute.assert_called_once_with(
                 ['sysctl', '-w', 'net.ipv6.conf.tap0.disable_ipv6=1'],
-                log_fail_as_error=True, run_as_root=True)
+                log_fail_as_error=True, run_as_root=True, privsep_exec=True)
 
     def test_disable_ipv6_when_ipv6_globally_disabled(self):
         dev = ip_lib.IPDevice('tap0', 'ns1')
@@ -1483,7 +1493,8 @@ class TestConntrack(base.BaseTestCase):
                       '--dport', dport]
         device.delete_socket_conntrack_state(ip_str, dport, protocol)
         self.execute.assert_called_once_with(expect_cmd, check_exit_code=True,
-                                             extra_ok_codes=[1])
+                                             extra_ok_codes=[1],
+                                             privsep_exec=True)
 
 
 class ParseIpRuleTestCase(base.BaseTestCase):

@@ -192,7 +192,7 @@ class FipNamespace(namespaces.Namespace):
         self.agent_gateway_port = ex_gw_port
 
         cmd = ['sysctl', '-w', 'net.ipv4.conf.%s.proxy_arp=1' % interface_name]
-        ip_wrapper.netns.execute(cmd, check_exit_code=False)
+        ip_wrapper.netns.execute(cmd, check_exit_code=False, privsep_exec=True)
 
     def create(self):
         LOG.debug("DVR: add fip namespace: %s", self.name)

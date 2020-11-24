@@ -217,13 +217,14 @@ class TestDvrFipNs(base.BaseTestCase):
         bind_cmd = ['sysctl', '-w', 'net.ipv4.ip_nonlocal_bind=1']
         expected = [mock.call(netns_cmd + bind_cmd, check_exit_code=True,
                               extra_ok_codes=None, log_fail_as_error=False,
-                              run_as_root=True)]
+                              run_as_root=True, privsep_exec=True)]
 
         if old_kernel:
             expected.append(mock.call(bind_cmd, check_exit_code=True,
                                       extra_ok_codes=None,
                                       log_fail_as_error=True,
-                                      run_as_root=True))
+                                      run_as_root=True,
+                                      privsep_exec=True))
 
         execute.assert_has_calls(expected)
 

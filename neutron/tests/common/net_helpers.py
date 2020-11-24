@@ -620,7 +620,8 @@ class NamespaceFixture(fixtures.Fixture):
                 if self.ip_wrapper.netns.exists(self.name):
                     for pid in ip_lib.list_namespace_pids(self.name):
                         utils.kill_process(pid, signal.SIGKILL,
-                                           run_as_root=True)
+                                           run_as_root=True,
+                                           privsep_exec=True)
                     self.ip_wrapper.netns.delete(self.name)
             except helpers.TestTimerTimeout:
                 LOG.warning('Namespace %s was not deleted due to a timeout.',

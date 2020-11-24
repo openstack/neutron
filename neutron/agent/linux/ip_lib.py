@@ -354,7 +354,7 @@ class IPDevice(SubProcessBase):
         try:
             ip_wrapper.netns.execute(["conntrack", "-D", "-d", ip_str],
                                      check_exit_code=True,
-                                     extra_ok_codes=[1])
+                                     extra_ok_codes=[1], privsep_exec=True)
 
         except RuntimeError:
             LOG.exception("Failed deleting ingress connection state of"
@@ -364,7 +364,7 @@ class IPDevice(SubProcessBase):
         try:
             ip_wrapper.netns.execute(["conntrack", "-D", "-q", ip_str],
                                      check_exit_code=True,
-                                     extra_ok_codes=[1])
+                                     extra_ok_codes=[1], privsep_exec=True)
         except RuntimeError:
             LOG.exception("Failed deleting egress connection state of"
                           " floatingip %s", ip_str)
@@ -376,7 +376,7 @@ class IPDevice(SubProcessBase):
                '--dport', dport]
         try:
             ip_wrapper.netns.execute(cmd, check_exit_code=True,
-                                     extra_ok_codes=[1])
+                                     extra_ok_codes=[1], privsep_exec=True)
 
         except RuntimeError:
             LOG.exception("Failed deleting ingress connection state of "
@@ -699,7 +699,8 @@ class IpNetnsCommand(IpCommandBase):
         create_network_namespace(name)
         wrapper = IPWrapper(namespace=name)
         wrapper.netns.execute(['sysctl', '-w',
-                               'net.ipv4.conf.all.promote_secondaries=1'])
+                               'net.ipv4.conf.all.promote_secondaries=1'],
+                              privsep_exec=True)
         return wrapper
 
     def delete(self, name):
@@ -707,7 +708,7 @@ class IpNetnsCommand(IpCommandBase):
 
     def execute(self, cmds, addl_env=None, check_exit_code=True,
                 log_fail_as_error=True, extra_ok_codes=None,
-                run_as_root=False):
+                run_as_root=False, privsep_exec=False):
         ns_params = []
         if self._parent.namespace:
             run_as_root = True
@@ -721,7 +722,8 @@ class IpNetnsCommand(IpCommandBase):
         return utils.execute(cmd, check_exit_code=check_exit_code,
                              extra_ok_codes=extra_ok_codes,
                              log_fail_as_error=log_fail_as_error,
-                             run_as_root=run_as_root)
+                             run_as_root=run_as_root,
+                             privsep_exec=privsep_exec)
 
     def exists(self, name):
         return network_namespace_exists(name)
@@ -1014,7 +1016,8 @@ def _arping(ns_name, iface_name, address, count, log_exception):
                           '-w', 2, address]
             try:
                 ip_wrapper.netns.execute(arping_cmd,
-                                         extra_ok_codes=extra_ok_codes)
+                                         extra_ok_codes=extra_ok_codes,
+                                         privsep_exec=True)
             except Exception as exc:
                 # Since this is spawned in a thread and executed 2 seconds
                 # apart, something may have been deleted while we were
@@ -1101,7 +1104,8 @@ def sysctl(cmd, namespace=None, log_fail_as_error=True):
     ip_wrapper = IPWrapper(namespace=namespace)
     try:
         ip_wrapper.netns.execute(cmd, run_as_root=True,
-                                 log_fail_as_error=log_fail_as_error)
+                                 log_fail_as_error=log_fail_as_error,
+                                 privsep_exec=True)
     except RuntimeError as rte:
         LOG.warning(
             "Setting %(cmd)s in namespace %(ns)s failed: %(err)s.",
@@ -1127,7 +1131,8 @@ def get_ip_nonlocal_bind(namespace=None):
     """Get kernel option value of ip_nonlocal_bind in given namespace."""
     cmd = ['sysctl', '-bn', IP_NONLOCAL_BIND]
     ip_wrapper = IPWrapper(namespace)
-    return int(ip_wrapper.netns.execute(cmd, run_as_root=True))
+    return int(ip_wrapper.netns.execute(cmd, run_as_root=True,
+                                        privsep_exec=True))
 
 
 def set_ip_nonlocal_bind(value, namespace=None, log_fail_as_error=True):
@@ -1162,7 +1167,8 @@ def get_ipv6_forwarding(device, namespace=None):
     """Get kernel value of IPv6 forwarding for device in given namespace."""
     cmd = ['sysctl', '-b', "net.ipv6.conf.%s.forwarding" % device]
     ip_wrapper = IPWrapper(namespace)
-    return int(ip_wrapper.netns.execute(cmd, run_as_root=True))
+    return int(ip_wrapper.netns.execute(cmd, run_as_root=True,
+                                        privsep_exec=True))
 
 
 def _parse_ip_rule(rule, ip_version):

@@ -47,6 +47,8 @@ class KeepalivedBaseTestCase(base.BaseTestCase):
     def setUp(self):
         super(KeepalivedBaseTestCase, self).setUp()
         l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
+        self._mock_no_track_supported = mock.patch.object(
+            keepalived, '_is_keepalived_use_no_track_supported')
 
 
 class KeepalivedGetFreeRangeTestCase(KeepalivedBaseTestCase):
@@ -193,6 +195,7 @@ class KeepalivedConfTestCase(KeepalivedBaseTestCase,
             self.assertEqual(self.expected, config.get_config_str())
 
     def test_config_generation_no_track_not_supported(self):
+        self._mock_no_track_supported.start().return_value = False
         config = self._get_config()
         with mock.patch.object(
                 keepalived, '_is_keepalived_use_no_track_supported',

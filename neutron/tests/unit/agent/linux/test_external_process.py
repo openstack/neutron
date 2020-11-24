@@ -138,7 +138,8 @@ class TestProcessManager(base.BaseTestCase):
                                                      check_exit_code=True,
                                                      extra_ok_codes=None,
                                                      run_as_root=False,
-                                                     log_fail_as_error=True)
+                                                     log_fail_as_error=True,
+                                                     privsep_exec=False)
 
     def test_enable_with_namespace(self):
         callback = mock.Mock()
@@ -228,7 +229,8 @@ class TestProcessManager(base.BaseTestCase):
                     manager.disable()
                     utils.assert_has_calls([
                         mock.call.execute(['kill', '-9', 4],
-                                          run_as_root=False)])
+                                          run_as_root=False,
+                                          privsep_exec=False)])
 
     def test_disable_namespace(self):
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:
@@ -242,7 +244,8 @@ class TestProcessManager(base.BaseTestCase):
                     manager.disable()
                     utils.assert_has_calls([
                         mock.call.execute(['kill', '-9', 4],
-                                          run_as_root=True)])
+                                          run_as_root=True,
+                                          privsep_exec=False)])
 
     def test_disable_not_active(self):
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:
@@ -284,7 +287,8 @@ class TestProcessManager(base.BaseTestCase):
                                           return_value=kill_script_exists):
                     manager.disable()
                     utils.execute.assert_called_with(
-                        expected_cmd, run_as_root=bool(namespace))
+                        expected_cmd, run_as_root=bool(namespace),
+                        privsep_exec=False)
 
     def test_disable_custom_kill_script_no_namespace(self):
         self._test_disable_custom_kill_script(

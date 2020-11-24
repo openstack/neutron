@@ -33,7 +33,8 @@ class FloatingIPTcCommandBase(ip_lib.IPDevice):
     def _execute_tc_cmd(self, cmd, **kwargs):
         cmd = ['tc'] + cmd
         ip_wrapper = ip_lib.IPWrapper(self.namespace)
-        return ip_wrapper.netns.execute(cmd, run_as_root=True, **kwargs)
+        return ip_wrapper.netns.execute(cmd, run_as_root=True,
+                                        privsep_exec=True, **kwargs)
 
     def _get_qdisc_id_for_filter(self, direction):
         qdiscs = tc_lib.list_tc_qdiscs(self.name, namespace=self.namespace)
