@@ -51,7 +51,8 @@ class RBACColumns(model_base.HasId, model_base.HasProject):
 
     action = sa.Column(sa.String(255), nullable=False)
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def object_type(self):
         # this determines the name that users will use in the API
         # to reference the type. sub-classes should set their own

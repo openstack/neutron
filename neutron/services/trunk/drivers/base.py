@@ -43,7 +43,8 @@ class DriverBase(object):
         self.agent_type = agent_type
         self.can_trunk_bound_port = can_trunk_bound_port
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def is_loaded(self):
         """True if the driver is active for the Neutron Server.
 
