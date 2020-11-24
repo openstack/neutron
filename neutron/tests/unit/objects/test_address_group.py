@@ -29,6 +29,23 @@ class AddressGroupDbObjectTestCase(
     def setUp(self):
         super(AddressGroupDbObjectTestCase, self).setUp()
 
+    def _create_test_address_group(self):
+        self.objs[0].create()
+        return self.objs[0]
+
+    def test_object_version_degradation_1_1_to_1_0_no_standard_attrs(self):
+        ag_obj = self._create_test_address_group()
+        ag_obj_1_0 = ag_obj.obj_to_primitive('1.0')
+        self.assertNotIn('revision_number',
+                         ag_obj_1_0['versioned_object.data'])
+        self.assertNotIn('created_at',
+                         ag_obj_1_0['versioned_object.data'])
+        self.assertNotIn('updated_at',
+                         ag_obj_1_0['versioned_object.data'])
+        # description filed was added to initial version separately
+        self.assertIn('description',
+                      ag_obj_1_0['versioned_object.data'])
+
 
 class AddressAssociationIfaceObjectTestCase(
         obj_test_base.BaseObjectIfaceTestCase):

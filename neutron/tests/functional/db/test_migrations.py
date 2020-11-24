@@ -272,7 +272,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
             """Identify excepted operations that are allowed for the branch."""
             # For alembic the clause is AddColumn or DropColumn
             column = clauseelement.column.name
-            table = clauseelement.column.table.name
+            table = clauseelement.table_name
             element_name = '.'.join([table, column])
             for alembic_type, excepted_names in exceptions.items():
                 if alembic_type == sqlalchemy.Column:

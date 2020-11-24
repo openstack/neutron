@@ -12,6 +12,7 @@
 
 import netaddr
 from neutron_lib.objects import common_types
+from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import address_group as models
@@ -22,18 +23,26 @@ from neutron.objects import base
 class AddressGroup(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
+    # Version 1.1: Added standard attributes
+    VERSION = '1.1'
 
     db_model = models.AddressGroup
 
     fields = {
         'id': common_types.UUIDField(),
         'name': obj_fields.StringField(nullable=True),
-        'description': obj_fields.StringField(nullable=True),
         'project_id': obj_fields.StringField(),
         'addresses': obj_fields.ListOfObjectsField('AddressAssociation',
                                                    nullable=True)
     }
     synthetic_fields = ['addresses']
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):
+            standard_fields = ['revision_number', 'created_at', 'updated_at']
+            for f in standard_fields:
+                primitive.pop(f, None)
 
 
 @base.NeutronObjectRegistry.register
