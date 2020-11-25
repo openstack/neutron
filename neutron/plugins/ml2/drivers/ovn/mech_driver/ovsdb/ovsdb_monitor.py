@@ -364,8 +364,15 @@ class OvnDbNotifyHandler(event.RowEventHandler):
         self.driver = driver
 
 
-class BaseOvnIdl(connection.OvsdbIdl):
+class Ml2OvnIdlBase(connection.OvsdbIdl):
+    def __init__(self, remote, schema, probe_interval=(), **kwargs):
+        if probe_interval == ():  # None is a valid value to pass
+            probe_interval = ovn_conf.get_ovn_ovsdb_probe_interval()
+        super(Ml2OvnIdlBase, self).__init__(
+            remote, schema, probe_interval=probe_interval, **kwargs)
 
+
+class BaseOvnIdl(Ml2OvnIdlBase):
     def __init__(self, remote, schema):
         self.notify_handler = event.RowEventHandler()
         super(BaseOvnIdl, self).__init__(remote, schema)
@@ -381,7 +388,7 @@ class BaseOvnIdl(connection.OvsdbIdl):
         self.notify_handler.notify(event, row, updates)
 
 
-class BaseOvnSbIdl(connection.OvsdbIdl):
+class BaseOvnSbIdl(Ml2OvnIdlBase):
     @classmethod
     def from_server(cls, connection_string, schema_name):
         _check_and_set_ssl_files(schema_name)
