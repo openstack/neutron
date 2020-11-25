@@ -66,9 +66,9 @@ class MetadataAgentOvsIdl(object):
         tables = ('Open_vSwitch', 'Bridge', 'Port', 'Interface')
         for table in tables:
             helper.register_table(table)
-        ovs_idl = idl.Idl(connection_string, helper)
-        ovs_idl._session.reconnect.set_probe_interval(
-            config.get_ovn_ovsdb_probe_interval())
+        ovs_idl = idl.Idl(
+            connection_string, helper,
+            probe_interval=config.get_ovn_ovsdb_probe_interval())
         conn = connection.Connection(
             ovs_idl, timeout=config.cfg.CONF.ovs.ovsdb_connection_timeout)
         return idl_ovs.OvsdbIdl(conn)
