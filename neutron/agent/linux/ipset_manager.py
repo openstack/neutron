@@ -44,7 +44,7 @@ class IpsetManager(object):
         /1's to represent the /0.
         """
         sanitized_addresses = []
-        for ip, _mac in addresses:
+        for ip in addresses:
             ip = netaddr.IPNetwork(ip)
             if ip.prefixlen == 0:
                 if ip.version == 4:
