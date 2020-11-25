@@ -46,16 +46,26 @@ MINIMUM_DIBBLER_VERSION = '1.0.1'
 
 
 def ovs_vxlan_supported(from_ip='192.0.2.1', to_ip='192.0.2.2'):
-    name = common_utils.get_rand_device_name(prefix='vxlantest-')
-    with ovs_lib.OVSBridge(name) as br:
-        port = br.add_tunnel_port(from_ip, to_ip, n_consts.TYPE_VXLAN)
+    br_name = common_utils.get_rand_device_name(prefix='vxlantest-')
+    port_name = common_utils.get_rand_device_name(prefix='vxlantest-')
+    with ovs_lib.OVSBridge(br_name) as br:
+        port = br.add_tunnel_port(
+            port_name=port_name,
+            remote_ip=from_ip,
+            local_ip=to_ip,
+            tunnel_type=n_consts.TYPE_VXLAN)
         return port != ovs_lib.INVALID_OFPORT
 
 
 def ovs_geneve_supported(from_ip='192.0.2.3', to_ip='192.0.2.4'):
-    name = common_utils.get_rand_device_name(prefix='genevetest-')
-    with ovs_lib.OVSBridge(name) as br:
-        port = br.add_tunnel_port(from_ip, to_ip, n_consts.TYPE_GENEVE)
+    br_name = common_utils.get_rand_device_name(prefix='genevetest-')
+    port_name = common_utils.get_rand_device_name(prefix='genevetest-')
+    with ovs_lib.OVSBridge(br_name) as br:
+        port = br.add_tunnel_port(
+            port_name=port_name,
+            remote_ip=from_ip,
+            local_ip=to_ip,
+            tunnel_type=n_consts.TYPE_GENEVE)
         return port != ovs_lib.INVALID_OFPORT
 
 
