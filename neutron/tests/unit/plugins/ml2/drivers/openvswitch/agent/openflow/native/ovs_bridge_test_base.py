@@ -150,9 +150,12 @@ class OVSBridgeTestBase(ovs_test_base.OVSOSKenTestBase):
                                       'set_controllers_connection_mode')
 
         with m_set_ccm as set_ccm:
-            with m_set_controller, m_add_protocols, m_set_probe:
-                self.br.setup_controllers(cfg)
-                set_ccm.assert_called_once_with("out-of-band")
+            with m_add_protocols as add_protocols:
+                with m_set_controller, m_set_probe:
+                    self.br.setup_controllers(cfg)
+                    set_ccm.assert_called_once_with("out-of-band")
+                    add_protocols.assert_called_once_with(
+                        constants.OPENFLOW10, constants.OPENFLOW13)
 
 
 class OVSDVRProcessTestMixin(object):
