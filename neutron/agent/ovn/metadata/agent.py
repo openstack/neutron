@@ -16,6 +16,14 @@ import collections
 import functools
 import re
 
+from neutron_lib import constants as n_const
+from oslo_concurrency import lockutils
+from oslo_log import log
+from oslo_utils import uuidutils
+from ovsdbapp.backend.ovs_idl import event as row_event
+from ovsdbapp.backend.ovs_idl import vlog
+import tenacity
+
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
@@ -25,12 +33,6 @@ from neutron.agent.ovn.metadata import server as metadata_server
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as config
-from neutron_lib import constants as n_const
-from oslo_concurrency import lockutils
-from oslo_log import log
-from oslo_utils import uuidutils
-from ovsdbapp.backend.ovs_idl import event as row_event
-from ovsdbapp.backend.ovs_idl import vlog
 
 
 LOG = log.getLogger(__name__)
@@ -249,6 +251,10 @@ class MetadataAgent(object):
 
         proxy.wait()
 
+    @tenacity.retry(
+        wait=tenacity.wait_exponential(
+            max=config.get_ovn_ovsdb_retry_max_interval()),
+        reraise=True)
     def register_metadata_agent(self):
         # NOTE(lucasagomes): db_add() will not overwrite the UUID if
         # it's already set.
