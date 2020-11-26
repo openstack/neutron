@@ -312,16 +312,6 @@ bridge connected to that port. The test is a true integration test, in the
 sense that it invokes the API and then asserts that Neutron interacted with
 the hypervisor appropriately.
 
-Gate exceptions
-+++++++++++++++
-
-Currently we compile openvswitch kernel module from source for fullstack job on
-the gate. The reason is to fix bug related to local VXLAN tunneling which is
-present in current Ubuntu Xenial 16.04 kernel. Kernel was fixed with this
-`commit <https://github.com/torvalds/linux/commit/bbec7802c6948c8626b71a4fe31283cb4691c358>`_
-and backported with this
-`openvswitch commit <https://github.com/openvswitch/ovs/commit/b1c74f35273122db4ce2728a70fd34b98f525434>`_.
-
 API Tests
 ~~~~~~~~~
 
