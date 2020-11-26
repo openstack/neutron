@@ -1,0 +1,8 @@
+---
+upgrade:
+  - |
+    Update from versions ``14.3.1``, ``14.4.0`` or ``14.4.1`` versions to
+    the ``14.4.2`` or newer will cause problem with compatibility between
+    older neutron agents and new neutron server. For more information see bug
+    `1903531 <https://bugs.launchpad.net/neutron/+bug/1903531>`_.
+    Update from older versions will not cause the same problem.
