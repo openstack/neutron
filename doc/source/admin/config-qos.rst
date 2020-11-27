@@ -248,13 +248,13 @@ not automatically copied to the outer header.
    If the ``dscp_inherit`` option is set to true, the previous ``dscp`` option
    is overwritten.
 
-Trusted projects policy.json configuration
+Trusted projects policy.yaml configuration
 ------------------------------------------
 
 If projects are trusted to administrate their own QoS policies in
-your cloud, neutron's file ``policy.json`` can be modified to allow this.
+your cloud, neutron's file ``policy.yaml`` can be modified to allow this.
 
-Modify ``/etc/neutron/policy.json`` policy entries as follows:
+Modify ``/etc/neutron/policy.yaml`` policy entries as follows:
 
 .. code-block:: none
 
@@ -294,12 +294,12 @@ To enable minimum bandwidth rule:
 User workflow
 ~~~~~~~~~~~~~
 
-QoS policies are only created by admins with the default ``policy.json``.
+QoS policies are only created by admins with the default ``policy.yaml``.
 Therefore, you should have the cloud operator set them up on
 behalf of the cloud projects.
 
 If projects are trusted to create their own policies, check the trusted
-projects ``policy.json`` configuration section.
+projects ``policy.yaml`` configuration section.
 
 First, create a QoS policy and its bandwidth limit rule:
 

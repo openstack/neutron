@@ -86,7 +86,7 @@ The ``_build_match_rule`` routine returns a ``oslo_policy.RuleCheck`` instance
 built in the following way:
 
 * Always add a check for the action being performed. This will match
-  a policy like create_network in ``policy.json``;
+  a policy like create_network in ``policy.yaml``;
 * Return for ``GET`` operations; more detailed checks will be performed anyway
   when building the response;
 * For each attribute which has been explicitly specified in the request
@@ -226,7 +226,7 @@ keyword, and provides a way to perform fine grained checks on resource
 attributes. For instance, using this class of rules it is possible to specify
 a rule for granting every project read access to shared resources.
 
-In policy.json, a FieldCheck rules is specified in the following way::
+In policy.yaml, a FieldCheck rules is specified in the following way::
 
 > field: <resource>:<field>=<value>
 
@@ -291,7 +291,7 @@ Notes
 * There is no way at the moment to specify an ``OR`` relationship between two
   attributes of a given resource (eg.: ``port.name == 'meh' or
   port.status == 'DOWN'``), unless the rule with the or condition is explicitly
-  added to the policy.json file.
+  added to the policy.yaml file.
 * ``OwnerCheck`` performs a plugin access; this will likely require a database
   access, but since the behaviour is implementation specific it might also
   imply a round-trip to the backend. This class of checks, when involving

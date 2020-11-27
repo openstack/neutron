@@ -100,7 +100,7 @@ class NeutronConfigFixture(ConfigFixture):
             self.config['DEFAULT']['api_paste_config'] = (
                 self._generate_api_paste())
 
-        policy_file = self._generate_policy_json()
+        policy_file = self._generate_policy_yaml()
         if policy_file:
             self.config['oslo_policy'] = {'policy_file': policy_file}
 
@@ -154,8 +154,8 @@ class NeutronConfigFixture(ConfigFixture):
     def _generate_api_paste(self):
         return c_helpers.find_sample_file('api-paste.ini')
 
-    def _generate_policy_json(self):
-        return c_helpers.find_sample_file('policy.json')
+    def _generate_policy_yaml(self):
+        return c_helpers.find_sample_file('policy.yaml')
 
     def get_host(self):
         return self.config['DEFAULT']['host']

@@ -157,7 +157,7 @@ class DefaultPolicyTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(DefaultPolicyTestCase, self).setUp()
-        tmpfilename = self.get_temp_file_path('policy.json')
+        tmpfilename = self.get_temp_file_path('policy.yaml')
         self.rules = {
             "default": '',
             "example:exist": '!',

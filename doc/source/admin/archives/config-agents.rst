@@ -372,11 +372,11 @@ correctly using these
       > cd C:\OpenStack\neutron\
       > python setup.py install
 
-#. Copy the ``policy.json`` file:
+#. Copy the ``policy.yaml`` file:
 
    .. code-block:: console
 
-      > xcopy C:\OpenStack\neutron\etc\policy.json C:\etc\
+      > xcopy C:\OpenStack\neutron\etc\policy.yaml C:\etc\
 
 #. Create the ``C:\etc\neutron-hyperv-agent.conf`` file and add the proper
    configuration options and the `Hyper-V related
@@ -386,7 +386,7 @@ correctly using these
 
       [DEFAULT]
       control_exchange = neutron
-      policy_file = C:\etc\policy.json
+      policy_file = C:\etc\policy.yaml
       rpc_backend = neutron.openstack.common.rpc.impl_kombu
       rabbit_host = IP_ADDRESS
       rabbit_port = 5672

@@ -71,7 +71,7 @@ at the cost of flexibility. By default only administrators can create or
 update provider networks because they require configuration of physical
 network infrastructure. It is possible to change the user who is allowed to
 create or update provider networks with the following parameters of
-``policy.json``:
+``policy.yaml``:
 
 * ``create_network:provider:physical_network``
 * ``update_network:provider:physical_network``

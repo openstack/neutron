@@ -28,6 +28,7 @@ from neutron_lib.services import constants as service_const
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
+from oslo_policy import opts
 from oslo_policy import policy
 from oslo_utils import excutils
 import stevedore
@@ -49,6 +50,13 @@ _RESOURCE_FOREIGN_KEYS = {
     # securitygroups api def will be moved to neutron-lib
     'security_groups': 'security_group_id'
 }
+
+
+# TODO(gmann): Remove setting the default value of config policy_file
+# once oslo_policy change the default value to 'policy.yaml'.
+# https://github.com/openstack/oslo.policy/blob/a626ad12fe5a3abd49d70e3e5b95589d279ab578/oslo_policy/opts.py#L49
+DEFAULT_POLICY_FILE = 'policy.yaml'
+opts.set_defaults(cfg.CONF, DEFAULT_POLICY_FILE)
 
 
 def reset():
@@ -226,7 +234,7 @@ def _build_match_rule(action, target, pluralized):
 # This check is registered as 'tenant_id' so that it can override
 # GenericCheck which was used for validating parent resource ownership.
 # This will prevent us from having to handling backward compatibility
-# for policy.json
+# for policy.yaml
 # TODO(salv-orlando): Reinstate GenericCheck for simple tenant_id checks
 @policy.register('tenant_id')
 class OwnerCheck(policy.Check):

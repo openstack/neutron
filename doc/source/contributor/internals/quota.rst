@@ -112,7 +112,7 @@ an attribute is added for every resource managed by the quota engine.
 Request authorisation is performed in this controller, and only 'admin' users
 are allowed to modify quotas for projects. As the neutron policy engine is not
 used, it is not possible to configure which users should be allowed to manage
-quotas using policy.json.
+quotas using policy.yaml.
 
 The driver operations dealing with quota management are:
 

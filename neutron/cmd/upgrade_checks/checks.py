@@ -17,6 +17,7 @@ from neutron_lib import context
 from neutron_lib.db import model_query
 from oslo_config import cfg
 from oslo_serialization import jsonutils
+from oslo_upgradecheck import common_checks
 from oslo_upgradecheck import upgradecheck
 from sqlalchemy import or_
 
@@ -97,6 +98,8 @@ class CoreChecks(base.BaseChecks):
              self.nic_switch_agent_min_kernel_check),
             (_("VLAN allocations valid segmentation ID check"),
              self.vlan_allocations_segid_check),
+            (_('Policy File JSON to YAML Migration'),
+             (common_checks.check_policy_json, {'conf': cfg.CONF})),
         ]
 
     @staticmethod

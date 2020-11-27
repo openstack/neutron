@@ -26,6 +26,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_middleware import cors
+from oslo_policy import opts
 from oslo_service import wsgi
 
 from neutron._i18n import _
@@ -137,6 +138,11 @@ def load_paste_app(app_name):
 def set_config_defaults():
     """This method updates all configuration default values."""
     set_cors_middleware_defaults()
+
+    # TODO(gmann): Remove setting the default value of config policy_file
+    # once oslo_policy change the default value to 'policy.yaml'.
+    # https://github.com/openstack/oslo.policy/blob/a626ad12fe5a3abd49d70e3e5b95589d279ab578/oslo_policy/opts.py#L49
+    opts.set_defaults(cfg.CONF, policy.DEFAULT_POLICY_FILE)
 
 
 def set_cors_middleware_defaults():

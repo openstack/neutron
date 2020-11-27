@@ -378,7 +378,7 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+--------------------------+
 | Tag                           | Description                             | Contact                  |
 +===============================+=========================================+==========================+
-| access-control_               | A bug affecting RBAC and policy.json    | Miguel Lavalle           |
+| access-control_               | A bug affecting RBAC and policy.yaml    | Miguel Lavalle           |
 +-------------------------------+-----------------------------------------+--------------------------+
 | api_                          | A bug affecting the API layer           | Akihiro Motoki           |
 +-------------------------------+-----------------------------------------+--------------------------+
