@@ -130,10 +130,8 @@ class TestQosPlugin(base.BaseQosTestCase):
 
         if has_qos_policy:
             self.port_data['port']['qos_policy_id'] = self.policy.id
-            self.policy.rules = bw_rules
         elif has_net_qos_policy:
             self.port_data['port']['qos_network_policy_id'] = self.policy.id
-            self.policy.rules = bw_rules
 
         self.port = ports_object.Port(
             self.ctxt, **self.port_data['port'])
@@ -144,8 +142,10 @@ class TestQosPlugin(base.BaseQosTestCase):
 
         with mock.patch('neutron.objects.network.NetworkSegment.get_objects',
                         return_value=[segment_mock]), \
-                mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
-                           return_value=self.policy):
+                mock.patch(
+                    'neutron.objects.qos.rule.QosMinimumBandwidthRule.'
+                    'get_objects',
+                    return_value=bw_rules):
             return qos_plugin.QoSPlugin._extend_port_resource_request(
                 port_res, self.port)
 
@@ -186,7 +186,7 @@ class TestQosPlugin(base.BaseQosTestCase):
         )
 
     def test__extend_port_resource_request_non_min_bw_rule(self):
-        port = self._create_and_extend_port([self.rule])
+        port = self._create_and_extend_port([])
 
         self.assertIsNone(port.get('resource_request'))
 
@@ -204,7 +204,6 @@ class TestQosPlugin(base.BaseQosTestCase):
 
     def test__extend_port_resource_request_inherited_policy(self):
         self.min_rule.direction = lib_constants.EGRESS_DIRECTION
-        self.policy.rules = [self.min_rule]
         self.min_rule.qos_policy_id = self.policy.id
 
         port = self._create_and_extend_port([self.min_rule],
