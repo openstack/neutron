@@ -43,6 +43,7 @@ from neutron.objects import network as network_object
 from neutron.objects import ports as ports_object
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import qos_policy_validator as checker
+from neutron.objects.qos import rule as rule_object
 from neutron.objects.qos import rule_type as rule_type_object
 from neutron.services.qos.drivers import manager
 
@@ -100,8 +101,6 @@ class QoSPlugin(qos.QoSPluginBase):
         port_res['resource_request'] = None
         if not qos_id:
             return port_res
-        qos_policy = policy_object.QosPolicy.get_object(
-            context.get_admin_context(), id=qos_id)
 
         resources = {}
         # NOTE(ralonsoh): we should move this translation dict to n-lib.
@@ -111,9 +110,10 @@ class QoSPlugin(qos.QoSPluginBase):
             nl_constants.EGRESS_DIRECTION:
                 pl_constants.CLASS_NET_BW_EGRESS_KBPS
         }
-        for rule in qos_policy.rules:
-            if rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
-                resources[rule_direction_class[rule.direction]] = rule.min_kbps
+        min_bw_rules = rule_object.QosMinimumBandwidthRule.get_objects(
+            context.get_admin_context(), qos_policy_id=qos_id)
+        for rule in min_bw_rules:
+            resources[rule_direction_class[rule.direction]] = rule.min_kbps
         if not resources:
             return port_res
 
