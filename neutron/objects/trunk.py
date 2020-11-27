@@ -30,7 +30,6 @@ class SubPort(base.NeutronDbObject):
     VERSION = '1.0'
 
     db_model = models.SubPort
-    new_facade = True
 
     primary_keys = ['port_id']
     foreign_keys = {'Trunk': {'trunk_id': 'id'}}
@@ -89,7 +88,6 @@ class Trunk(base.NeutronDbObject):
     VERSION = '1.1'
 
     db_model = models.Trunk
-    new_facade = True
 
     fields = {
         'admin_state_up': obj_fields.BooleanField(),

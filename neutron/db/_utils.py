@@ -31,6 +31,14 @@ def _noop_context_manager():
     yield
 
 
+def context_if_transaction(context, transaction, writer=True):
+    if transaction:
+        return (db_api.CONTEXT_WRITER.using(context) if writer else
+                db_api.CONTEXT_READER.using(context))
+    else:
+        return _noop_context_manager()
+
+
 def safe_creation(context, create_fn, delete_fn, create_bindings,
                   transaction=True):
     '''This function wraps logic of object creation in safe atomic way.
@@ -55,12 +63,11 @@ def safe_creation(context, create_fn, delete_fn, create_bindings,
     :param transaction: if true the whole operation will be wrapped in a
         transaction. if false, no transaction will be used.
     '''
-    cm = (db_api.CONTEXT_WRITER.using(context)
-          if transaction else _noop_context_manager())
-    with cm:
+    with context_if_transaction(context, transaction):
         obj = create_fn()
         try:
-            value = create_bindings(obj['id'])
+            updated_obj, value = create_bindings(obj['id'])
+            obj = updated_obj or obj
         except Exception:
             with excutils.save_and_reraise_exception():
                 try:

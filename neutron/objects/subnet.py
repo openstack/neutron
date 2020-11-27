@@ -69,8 +69,6 @@ class Route(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
-    new_facade = True
-
     db_model = models_v2.SubnetRoute
 
     primary_keys = ['destination', 'nexthop', 'subnet_id']
@@ -196,7 +194,6 @@ class Subnet(base.NeutronDbObject):
     VERSION = '1.1'
 
     db_model = models_v2.Subnet
-    new_facade = True
 
     fields = {
         'id': common_types.UUIDField(),
@@ -500,7 +497,6 @@ class NetworkSubnetLock(base.NeutronDbObject):
     VERSION = '1.0'
 
     db_model = models_v2.NetworkSubnetLock
-    new_facade = True
     primary_keys = ['network_id']
 
     fields = {

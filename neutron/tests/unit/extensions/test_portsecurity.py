@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import copy
+from unittest import mock
 
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
@@ -28,6 +29,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup as ext_sg
+from neutron import quota
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_securitygroup
 
@@ -65,9 +67,9 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     supported_extension_aliases = ["security-group", psec.ALIAS]
 
     def create_network(self, context, network):
-        tenant_id = network['network'].get('tenant_id')
-        self._ensure_default_security_group(context, tenant_id)
         with db_api.CONTEXT_WRITER.using(context):
+            tenant_id = network['network'].get('tenant_id')
+            self._ensure_default_security_group(context, tenant_id)
             neutron_db = super(PortSecurityTestPlugin, self).create_network(
                 context, network)
             neutron_db.update(network['network'])
@@ -177,6 +179,14 @@ class PortSecurityDBTestCase(PortSecurityTestCase):
 
 
 class TestPortSecurity(PortSecurityDBTestCase):
+
+    def setUp(self, plugin=None, service_plugins=None):
+        super().setUp(plugin)
+        make_res = mock.patch.object(quota.QuotaEngine, 'make_reservation')
+        commit_res = mock.patch.object(quota.QuotaEngine, 'commit_reservation')
+        self.mock_quota_make_res = make_res.start()
+        self.mock_quota_commit_res = commit_res.start()
+
     def test_create_network_with_portsecurity_mac(self):
         res = self._create_network('json', 'net1', True)
         net = self.deserialize('json', res)

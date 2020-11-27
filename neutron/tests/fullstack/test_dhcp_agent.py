@@ -226,6 +226,9 @@ class TestDhcpAgentHARaceCondition(BaseDhcpAgentTest):
         self._simulate_concurrent_requests_process_and_raise(funcs, args)
 
     def test_dhcp_agent_ha_with_race_condition(self):
+        # NOTE(ralonsoh): the concurrent creation in the same thread could
+        # fail because the context and the session is the same for all DB
+        # calls.
         network_dhcp_agents = self.client.list_dhcp_agent_hosting_networks(
             self.network['id'])['agents']
         self.assertEqual(1, len(network_dhcp_agents))

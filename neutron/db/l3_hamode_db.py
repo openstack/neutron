@@ -143,7 +143,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                         context, network_id=network_id, vr_id=vr_id)
                     allocation.create()
 
-                    router_db.extra_attributes.ha_vr_id = allocation.vr_id
+                    router_db.extra_attributes.update(
+                        {'ha_vr_id': allocation.vr_id})
+                    context.session.add(router_db.extra_attributes)
+
                     LOG.debug(
                         "Router %(router_id)s has been allocated a ha_vr_id "
                         "%(ha_vr_id)d.",
@@ -200,7 +203,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             # and the process is started over where the existing
             # network will be selected.
             raise db_exc.DBDuplicateEntry(columns=['tenant_id'])
-        return ha_network
+        return None, ha_network
 
     def _add_ha_network_settings(self, network):
         if cfg.CONF.l3_ha_network_type:
@@ -267,7 +270,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 context, port_id=port_id, router_id=router_id)
             portbinding.create()
 
-            return portbinding
+            return None, portbinding
         except db_exc.DBReferenceError as e:
             with excutils.save_and_reraise_exception() as ctxt:
                 if isinstance(e.inner_exception, sql_exc.IntegrityError):

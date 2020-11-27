@@ -821,8 +821,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_update_gateway(self):
         with self.router() as r:
-            with self.subnet() as s1:
-                with self.subnet() as s2:
+            with self.subnet(cidr='10.51.0.0/24') as s1:
+                with self.subnet(cidr='10.52.0.0/24') as s2:
                     self._set_net_external(s1['subnet']['network_id'])
                     self._add_external_gateway_to_router(
                         r['router']['id'],

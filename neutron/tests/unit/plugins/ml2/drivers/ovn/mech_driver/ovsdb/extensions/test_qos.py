@@ -18,6 +18,7 @@ import netaddr
 from neutron_lib.api.definitions import qos as qos_api
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib.services.qos import constants as qos_constants
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -435,7 +436,9 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         # We can't ensure the call order because we are not enforcing any order
         # when retrieving the port and the network list.
         self.mock_rules.assert_has_calls(calls, any_order=True)
-        fip = self.qos_driver._plugin_l3._make_floatingip_dict(self.fips[0])
+        with db_api.CONTEXT_READER.using(self.ctx):
+            fip = self.qos_driver._plugin_l3.get_floatingip(self.ctx,
+                                                            self.fips[0].id)
         mock_update_fip.assert_called_once_with(self.txn, fip)
 
     def test_update_floatingip(self):

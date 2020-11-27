@@ -405,9 +405,6 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
     # should be overridden for all rbac aware objects
     rbac_db_cls = None
 
-    # whether to use new engine facade for the object
-    new_facade = False
-
     primary_keys = ['id']
 
     # 'unique_keys' is a list of unique keys that can be used with get_object
@@ -571,16 +568,12 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
     @classmethod
     def db_context_writer(cls, context):
         """Return read-write session activation decorator."""
-        if cls.new_facade or cls._use_db_facade(context):
-            return db_api.CONTEXT_WRITER.using(context)
-        return db_api.autonested_transaction(context.session)
+        return db_api.CONTEXT_WRITER.using(context)
 
     @classmethod
     def db_context_reader(cls, context):
         """Return read-only session activation decorator."""
-        if cls.new_facade or cls._use_db_facade(context):
-            return db_api.CONTEXT_READER.using(context)
-        return db_api.autonested_transaction(context.session)
+        return db_api.CONTEXT_READER.using(context)
 
     @classmethod
     def get_object(cls, context, fields=None, **kwargs):

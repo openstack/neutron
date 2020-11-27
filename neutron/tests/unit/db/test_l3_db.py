@@ -21,6 +21,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
@@ -39,9 +40,11 @@ from neutron.tests import base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
-class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
-    def setUp(self):
-        super(TestL3_NAT_dbonly_mixin, self).setUp()
+class TestL3_NAT_dbonly_mixin(
+        test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(TestL3_NAT_dbonly_mixin, self).setUp(*args, **kwargs)
         self.db = l3_db.L3_NAT_dbonly_mixin()
 
     def test__each_port_having_fixed_ips_none(self):
@@ -289,6 +292,9 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
                 **kwargs)
 
     def test__create_gw_port(self):
+        # NOTE(slaweq): this test is probably wrong
+        # returing dict as gw_port breaks test later in L334 in
+        # neutron.db.l3_db file
         router_id = '2afb8434-7380-43a2-913f-ba3a5ad5f349'
         router = l3_models.Router(id=router_id)
         new_network_id = 'net-id'
@@ -298,37 +304,42 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
                    'id': '8742d007-6f05-4b7e-abdb-11818f608959'}
         ctx = context.get_admin_context()
 
-        with mock.patch.object(directory, 'get_plugin') as get_p, \
-                mock.patch.object(get_p(), 'get_subnets_by_network',
-                                  return_value=mock.ANY), \
-                mock.patch.object(get_p(), '_get_port',
-                                  return_value=gw_port), \
-                mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
-                                  '_check_for_dup_router_subnets') as cfdrs,\
-                mock.patch.object(plugin_utils, 'create_port',
-                                  return_value=gw_port), \
-                mock.patch.object(ctx.session, 'add'), \
-                mock.patch.object(base_obj.NeutronDbObject, 'create'), \
-                mock.patch.object(l3_db.registry, 'publish') as mock_notify:
+        with db_api.CONTEXT_WRITER.using(ctx):
+            with mock.patch.object(directory, 'get_plugin') as get_p, \
+                    mock.patch.object(get_p(), 'get_subnets_by_network',
+                                      return_value=mock.ANY), \
+                    mock.patch.object(get_p(), '_get_port',
+                                      return_value=gw_port), \
+                    mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
+                                      '_check_for_dup_router_subnets') as \
+                    cfdrs, \
+                    mock.patch.object(plugin_utils, 'create_port',
+                                      return_value=gw_port), \
+                    mock.patch.object(ctx.session, 'add'), \
+                    mock.patch.object(base_obj.NeutronDbObject, 'create'), \
+                    mock.patch.object(l3_db.registry, 'publish') as \
+                    mock_notify, \
+                    mock.patch.object(l3_db.L3_NAT_dbonly_mixin, '_get_router',
+                                      return_value=router):
 
-            self.db._create_gw_port(ctx, router_id=router_id,
-                                    router=router,
-                                    new_network_id=new_network_id,
-                                    ext_ips=ext_ips)
+                self.db._create_gw_port(ctx, router_id=router_id,
+                                        router=router,
+                                        new_network_id=new_network_id,
+                                        ext_ips=ext_ips)
 
-            expected_gw_ips = ['1.1.1.1']
+                expected_gw_ips = ['1.1.1.1']
 
-            self.assertTrue(cfdrs.called)
-            mock_notify.assert_called_with(
-                resources.ROUTER_GATEWAY, events.AFTER_CREATE,
-                self.db._create_gw_port, payload=mock.ANY)
-            cb_payload = mock_notify.mock_calls[1][2]['payload']
-            self.assertEqual(ctx, cb_payload.context)
-            self.assertEqual(expected_gw_ips,
-                             cb_payload.metadata.get('gateway_ips'))
-            self.assertEqual(new_network_id,
-                             cb_payload.metadata.get('network_id'))
-            self.assertEqual(router_id, cb_payload.resource_id)
+                self.assertTrue(cfdrs.called)
+                mock_notify.assert_called_with(
+                    resources.ROUTER_GATEWAY, events.AFTER_CREATE,
+                    self.db._create_gw_port, payload=mock.ANY)
+                cb_payload = mock_notify.mock_calls[1][2]['payload']
+                self.assertEqual(ctx, cb_payload.context)
+                self.assertEqual(expected_gw_ips,
+                                 cb_payload.metadata.get('gateway_ips'))
+                self.assertEqual(new_network_id,
+                                 cb_payload.metadata.get('network_id'))
+                self.assertEqual(router_id, cb_payload.resource_id)
 
 
 class L3_NAT_db_mixin(base.BaseTestCase):
@@ -428,20 +439,20 @@ class L3TestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         l3_obj.Router.get_object(self.ctx, id=self.router['id']).delete()
 
     def create_router(self, router):
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(self.ctx):
             return self.mixin.create_router(self.ctx, router)
 
     def create_port(self, net_id, port_info):
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(self.ctx):
             return self._make_port(self.fmt, net_id, **port_info)
 
     def create_network(self, name=None, **kwargs):
         name = name or 'network1'
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(self.ctx):
             return self._make_network(self.fmt, name, True, **kwargs)
 
     def create_subnet(self, network, gateway, cidr, **kwargs):
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(self.ctx):
             return self._make_subnet(self.fmt, network, gateway, cidr,
                                      **kwargs)
 

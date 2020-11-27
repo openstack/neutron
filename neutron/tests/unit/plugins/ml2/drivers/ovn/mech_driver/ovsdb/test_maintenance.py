@@ -17,6 +17,7 @@ from unittest import mock
 
 from futurist import periodics
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from oslo_config import cfg
 
 from neutron.common.ovn import constants
@@ -139,39 +140,40 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                                                      never_again=False)
 
     def _test_fix_create_update_network(self, ovn_rev, neutron_rev):
-        self.net['revision_number'] = neutron_rev
+        with db_api.CONTEXT_WRITER.using(self.ctx):
+            self.net['revision_number'] = neutron_rev
 
-        # Create an entry to the revision_numbers table and assert the
-        # initial revision_number for our test object is the expected
-        ovn_revision_numbers_db.create_initial_revision(
-            self.ctx, self.net['id'], constants.TYPE_NETWORKS,
-            revision_number=ovn_rev)
-        row = ovn_revision_numbers_db.get_revision_row(self.ctx,
-                                                       self.net['id'])
-        self.assertEqual(ovn_rev, row.revision_number)
+            # Create an entry to the revision_numbers table and assert the
+            # initial revision_number for our test object is the expected
+            ovn_revision_numbers_db.create_initial_revision(
+                self.ctx, self.net['id'], constants.TYPE_NETWORKS,
+                revision_number=ovn_rev)
+            row = ovn_revision_numbers_db.get_revision_row(self.ctx,
+                                                           self.net['id'])
+            self.assertEqual(ovn_rev, row.revision_number)
 
-        if ovn_rev < 0:
-            self.fake_ovn_client._nb_idl.get_lswitch.return_value = None
-        else:
-            fake_ls = mock.Mock(external_ids={
-                constants.OVN_REV_NUM_EXT_ID_KEY: ovn_rev})
-            self.fake_ovn_client._nb_idl.get_lswitch.return_value = fake_ls
+            if ovn_rev < 0:
+                self.fake_ovn_client._nb_idl.get_lswitch.return_value = None
+            else:
+                fake_ls = mock.Mock(external_ids={
+                    constants.OVN_REV_NUM_EXT_ID_KEY: ovn_rev})
+                self.fake_ovn_client._nb_idl.get_lswitch.return_value = fake_ls
 
-        self.fake_ovn_client._plugin.get_network.return_value = self.net
-        self.periodic._fix_create_update(self.ctx, row)
+            self.fake_ovn_client._plugin.get_network.return_value = self.net
+            self.periodic._fix_create_update(self.ctx, row)
 
-        # Since the revision number was < 0, make sure create_network()
-        # is invoked with the latest version of the object in the neutron
-        # database
-        if ovn_rev < 0:
-            self.fake_ovn_client.create_network.assert_called_once_with(
-                self.ctx, self.net)
-        # If the revision number is > 0 it means that the object already
-        # exist and we just need to update to match the latest in the
-        # neutron database so, update_network() should be called.
-        else:
-            self.fake_ovn_client.update_network.assert_called_once_with(
-                self.ctx, self.net)
+            # Since the revision number was < 0, make sure create_network()
+            # is invoked with the latest version of the object in the neutron
+            # database
+            if ovn_rev < 0:
+                self.fake_ovn_client.create_network.assert_called_once_with(
+                    self.ctx, self.net)
+            # If the revision number is > 0 it means that the object already
+            # exist and we just need to update to match the latest in the
+            # neutron database so, update_network() should be called.
+            else:
+                self.fake_ovn_client.update_network.assert_called_once_with(
+                    self.ctx, self.net)
 
     def test_fix_network_create(self):
         self._test_fix_create_update_network(ovn_rev=-1, neutron_rev=2)
@@ -180,40 +182,41 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self._test_fix_create_update_network(ovn_rev=5, neutron_rev=7)
 
     def _test_fix_create_update_port(self, ovn_rev, neutron_rev):
-        self.port['revision_number'] = neutron_rev
+        _nb_idl = self.fake_ovn_client._nb_idl
+        with db_api.CONTEXT_WRITER.using(self.ctx):
+            self.port['revision_number'] = neutron_rev
 
-        # Create an entry to the revision_numbers table and assert the
-        # initial revision_number for our test object is the expected
-        ovn_revision_numbers_db.create_initial_revision(
-            self.ctx, self.port['id'], constants.TYPE_PORTS,
-            revision_number=ovn_rev)
-        row = ovn_revision_numbers_db.get_revision_row(self.ctx,
-                                                       self.port['id'])
-        self.assertEqual(ovn_rev, row.revision_number)
+            # Create an entry to the revision_numbers table and assert the
+            # initial revision_number for our test object is the expected
+            ovn_revision_numbers_db.create_initial_revision(
+                self.ctx, self.port['id'], constants.TYPE_PORTS,
+                revision_number=ovn_rev)
+            row = ovn_revision_numbers_db.get_revision_row(self.ctx,
+                                                           self.port['id'])
+            self.assertEqual(ovn_rev, row.revision_number)
 
-        if ovn_rev < 0:
-            self.fake_ovn_client._nb_idl.get_lswitch_port.return_value = None
-        else:
-            fake_lsp = mock.Mock(external_ids={
-                constants.OVN_REV_NUM_EXT_ID_KEY: ovn_rev})
-            self.fake_ovn_client._nb_idl.get_lswitch_port.return_value = (
-                fake_lsp)
+            if ovn_rev < 0:
+                _nb_idl.get_lswitch_port.return_value = None
+            else:
+                fake_lsp = mock.Mock(external_ids={
+                    constants.OVN_REV_NUM_EXT_ID_KEY: ovn_rev})
+                _nb_idl.get_lswitch_port.return_value = fake_lsp
 
-        self.fake_ovn_client._plugin.get_port.return_value = self.port
-        self.periodic._fix_create_update(self.ctx, row)
+            self.fake_ovn_client._plugin.get_port.return_value = self.port
+            self.periodic._fix_create_update(self.ctx, row)
 
-        # Since the revision number was < 0, make sure create_port()
-        # is invoked with the latest version of the object in the neutron
-        # database
-        if ovn_rev < 0:
-            self.fake_ovn_client.create_port.assert_called_once_with(
-                self.ctx, self.port)
-        # If the revision number is > 0 it means that the object already
-        # exist and we just need to update to match the latest in the
-        # neutron database so, update_port() should be called.
-        else:
-            self.fake_ovn_client.update_port.assert_called_once_with(
-                self.ctx, self.port)
+            # Since the revision number was < 0, make sure create_port()
+            # is invoked with the latest version of the object in the neutron
+            # database
+            if ovn_rev < 0:
+                self.fake_ovn_client.create_port.assert_called_once_with(
+                    self.ctx, self.port)
+            # If the revision number is > 0 it means that the object already
+            # exist and we just need to update to match the latest in the
+            # neutron database so, update_port() should be called.
+            else:
+                self.fake_ovn_client.update_port.assert_called_once_with(
+                    self.ctx, self.port)
 
     def test_fix_port_create(self):
         self._test_fix_create_update_port(ovn_rev=-1, neutron_rev=2)
@@ -223,14 +226,16 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
 
     @mock.patch.object(ovn_revision_numbers_db, 'bump_revision')
     def _test_fix_security_group_create(self, mock_bump, revision_number):
-        sg_name = utils.ovn_addrset_name('fake_id', 'ip4')
-        sg = self._make_security_group(self.fmt, sg_name, '')['security_group']
+        with db_api.CONTEXT_WRITER.using(self.ctx):
+            sg_name = utils.ovn_addrset_name('fake_id', 'ip4')
+            sg = self._make_security_group(
+                self.fmt, sg_name, '')['security_group']
 
-        ovn_revision_numbers_db.create_initial_revision(
-            self.ctx, sg['id'], constants.TYPE_SECURITY_GROUPS,
-            revision_number=revision_number)
-        row = ovn_revision_numbers_db.get_revision_row(self.ctx, sg['id'])
-        self.assertEqual(revision_number, row.revision_number)
+            ovn_revision_numbers_db.create_initial_revision(
+                self.ctx, sg['id'], constants.TYPE_SECURITY_GROUPS,
+                revision_number=revision_number)
+            row = ovn_revision_numbers_db.get_revision_row(self.ctx, sg['id'])
+            self.assertEqual(revision_number, row.revision_number)
 
         if revision_number < 0:
             self.fake_ovn_client._nb_idl.get_address_set.return_value = None

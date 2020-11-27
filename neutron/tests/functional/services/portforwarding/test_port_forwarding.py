@@ -14,7 +14,6 @@ from unittest import mock
 
 from neutron_lib.api.definitions import fip_pf_description as ext_apidef
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
-from neutron_lib.callbacks import exceptions as c_exc
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import l3 as lib_l3_exc
 from neutron_lib.plugins import constants as plugin_constants
@@ -386,70 +385,6 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         self.assertRaises(pf_exc.PortForwardingNotFound,
                           self.pf_plugin.delete_floatingip_port_forwarding,
                           self.context, res['id'], uuidutils.generate_uuid())
-
-    def test_concurrent_create_port_forwarding_delete_fip(self):
-
-        func1 = self.pf_plugin.create_floatingip_port_forwarding
-        func2 = self._delete_floatingip
-        funcs = [func1, func2]
-        args_list = [(self.context, self.fip['id'], self.port_forwarding),
-                     (self.fip['id'],)]
-        self.assertRaises(c_exc.CallbackFailure,
-                          self._simulate_concurrent_requests_process_and_raise,
-                          funcs, args_list)
-
-        port_forwardings = self.pf_plugin.get_floatingip_port_forwardings(
-            self.context, floatingip_id=self.fip['id'], fields=['id'])
-        self.pf_plugin.delete_floatingip_port_forwarding(
-            self.context, port_forwardings[0][apidef.ID],
-            floatingip_id=self.fip['id'])
-
-        funcs.reverse()
-        args_list.reverse()
-        self.assertRaises(lib_l3_exc.FloatingIPNotFound,
-                          self._simulate_concurrent_requests_process_and_raise,
-                          funcs, args_list)
-
-    def test_concurrent_create_port_forwarding_update_fip(self):
-        newport = self._create_port(self.fmt, self.net['id']).json['port']
-        func1 = self.pf_plugin.create_floatingip_port_forwarding
-        func2 = self._update_floatingip
-        funcs = [func1, func2]
-        args_list = [(self.context, self.fip['id'], self.port_forwarding),
-                     (self.fip['id'], {'port_id': newport['id']})]
-        self.assertRaises(c_exc.CallbackFailure,
-                          self._simulate_concurrent_requests_process_and_raise,
-                          funcs, args_list)
-
-        funcs.reverse()
-        args_list.reverse()
-        self.assertRaises(c_exc.CallbackFailure,
-                          self._simulate_concurrent_requests_process_and_raise,
-                          funcs, args_list)
-
-    def test_concurrent_create_port_forwarding_update_port(self):
-        new_ip = self._find_ip_address(
-            self.subnet,
-            exclude=self._get_network_port_ips(),
-            is_random=True)
-        funcs = [self.pf_plugin.create_floatingip_port_forwarding,
-                 self._update_port]
-        args_list = [(self.context, self.fip['id'], self.port_forwarding),
-                     (self.port['id'], {
-                         'fixed_ips': [{'subnet_id': self.subnet['id'],
-                                        'ip_address': new_ip}]})]
-        self._simulate_concurrent_requests_process_and_raise(funcs, args_list)
-        self.assertEqual([], self.pf_plugin.get_floatingip_port_forwardings(
-            self.context, floatingip_id=self.fip['id']))
-
-    def test_concurrent_create_port_forwarding_delete_port(self):
-        funcs = [self.pf_plugin.create_floatingip_port_forwarding,
-                 self._delete_port]
-        args_list = [(self.context, self.fip['id'], self.port_forwarding),
-                     (self.port['id'],)]
-        self._simulate_concurrent_requests_process_and_raise(funcs, args_list)
-        self.assertEqual([], self.pf_plugin.get_floatingip_port_forwardings(
-            self.context, floatingip_id=self.fip['id']))
 
     def test_create_floatingip_port_forwarding_port_in_use(self):
         res = self.pf_plugin.create_floatingip_port_forwarding(

@@ -24,8 +24,6 @@ class StandardAttribute(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
-    new_facade = True
-
     db_model = standard_attr.StandardAttribute
 
     fields = {

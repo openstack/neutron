@@ -363,7 +363,6 @@ class DvrFipGatewayPortAgentBinding(base.NeutronDbObject):
     VERSION = '1.0'
 
     db_model = dvr_models.DvrFipGatewayPortAgentBinding
-    new_facade = True
 
     primary_keys = ['network_id', 'agent_id']
 

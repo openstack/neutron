@@ -546,7 +546,7 @@ class QoSPlugin(qos.QoSPluginBase):
         return rule
 
     def _get_policy_id(self, context, rule_cls, rule_id):
-        with db_api.autonested_transaction(context.session):
+        with db_api.CONTEXT_READER.using(context):
             rule_object = rule_cls.get_object(context, id=rule_id)
             if not rule_object:
                 raise qos_exc.QosRuleNotFound(policy_id="", rule_id=rule_id)

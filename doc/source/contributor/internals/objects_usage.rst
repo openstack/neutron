@@ -355,48 +355,6 @@ model, the nullable parameter is by default :code:`True`, while for OVO fields,
 the nullable is set to :code:`False`. Make sure you correctly map database
 column nullability properties to relevant object fields.
 
-Database session activation
----------------------------
-
-By default, all objects use old ``oslo.db`` engine facade. To enable the new
-facade for a particular object, set ``new_facade`` class attribute to ``True``:
-
-.. code-block:: Python
-
-    @obj_base.VersionedObjectRegistry.register
-    class ExampleObject(base.NeutronDbObject):
-        new_facade = True
-
-It will make all OVO actions - ``get_object``, ``update``, ``count`` etc. - to
-use new ``reader.using`` or ``writer.using`` decorators to manage database
-transactions.
-
-Whenever you need to open a new subtransaction in scope of OVO code, use the
-following database session decorators:
-
-.. code-block:: Python
-
-    @obj_base.VersionedObjectRegistry.register
-    class ExampleObject(base.NeutronDbObject):
-
-        @classmethod
-        def get_object(cls, context, **kwargs):
-            with cls.db_context_reader(context):
-                super(ExampleObject,  cls).get_object(context, **kwargs)
-                # fetch more data in the same transaction
-
-        def create(self):
-            with self.db_context_writer(self.obj_context):
-                super(ExampleObject, self).create()
-                # apply more changes in the same transaction
-
-``db_context_reader`` and ``db_context_writer`` decorators abstract the choice
-of engine facade used for particular object from action implementation.
-
-Alternatively, you can call all OVO actions under an active ``reader.using`` /
-``writer.using`` context manager (or ``session.begin``). In this case, OVO will
-pick the appropriate method to open a subtransaction.
-
 Synthetic fields
 ----------------
 :code:`synthetic_fields` is a list of fields, that are not directly backed by
