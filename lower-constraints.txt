@@ -38,7 +38,7 @@ jsonpatch==1.16
 jsonpointer==1.13
 jsonschema==2.6.0
 keystoneauth1==3.14.0
-keystonemiddleware==4.17.0
+keystonemiddleware==5.1.0
 kombu==4.6.1
 linecache2==1.0.0
 logilab-common==1.4.1
@@ -62,13 +62,13 @@ osc-lib==1.8.0
 oslo.cache==1.26.0
 oslo.concurrency==3.26.0
 oslo.config==5.2.0
-oslo.context==2.20.0
+oslo.context==2.22.0
 oslo.db==4.44.0
 oslo.i18n==3.20.0
-oslo.log==4.2.1
+oslo.log==4.3.0
 oslo.messaging==7.0.0
 oslo.middleware==3.31.0
-oslo.policy==1.30.0
+oslo.policy==3.6.0
 oslo.privsep==2.3.0
 oslo.reports==1.18.0
 oslo.rootwrap==5.8.0
