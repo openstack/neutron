@@ -38,7 +38,8 @@ class SecurityGroup(rbac_db.NeutronRbacObject):
     # Version 1.0: Initial version
     # Version 1.1: Add RBAC support
     # Version 1.2: Added stateful support
-    VERSION = '1.2'
+    # Version 1.3: Added support for remote_address_group_id in rules
+    VERSION = '1.3'
 
     # required by RbacNeutronMetaclass
     rbac_db_cls = SecurityGroupRBAC
@@ -93,10 +94,21 @@ class SecurityGroup(rbac_db.NeutronRbacObject):
 
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
+
+        def filter_remote_address_group_id_from_rules(rules):
+            sg_rule = SecurityGroupRule()
+            for rule in rules:
+                sg_rule.obj_make_compatible(
+                    rule['versioned_object.data'], '1.0')
+                rule['versioned_object.version'] = '1.0'
+
         if _target_version < (1, 1):
             primitive.pop('shared')
         if _target_version < (1, 2):
             primitive.pop('stateful')
+        if _target_version < (1, 3):
+            if 'rules' in primitive:
+                filter_remote_address_group_id_from_rules(primitive['rules'])
 
     @classmethod
     def get_bound_tenant_ids(cls, context, obj_id):
@@ -125,7 +137,8 @@ class DefaultSecurityGroup(base.NeutronDbObject):
 @base.NeutronObjectRegistry.register
 class SecurityGroupRule(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Add remote address group support
+    VERSION = '1.1'
 
     db_model = sg_models.SecurityGroupRule
 
@@ -140,11 +153,18 @@ class SecurityGroupRule(base.NeutronDbObject):
         'port_range_min': common_types.PortRangeWith0Field(nullable=True),
         'port_range_max': common_types.PortRangeWith0Field(nullable=True),
         'remote_ip_prefix': common_types.IPNetworkField(nullable=True),
+        'remote_address_group_id': common_types.UUIDField(nullable=True),
     }
 
     foreign_keys = {'SecurityGroup': {'security_group_id': 'id'}}
 
-    fields_no_update = ['project_id', 'security_group_id', 'remote_group_id']
+    fields_no_update = ['project_id', 'security_group_id', 'remote_group_id',
+                        'remote_address_group_id']
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):
+            primitive.pop('remote_address_group_id', None)
 
     # TODO(sayalilunkad): get rid of it once we switch the db model to using
     # custom types.

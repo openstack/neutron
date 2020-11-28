@@ -95,9 +95,9 @@ class SecurityGroupRulesNotSingleTenant(exceptions.InvalidInput):
                 " not allowed")
 
 
-class SecurityGroupRemoteGroupAndRemoteIpPrefix(exceptions.InvalidInput):
-    message = _("Only remote_ip_prefix or remote_group_id may "
-                "be provided.")
+class SecurityGroupMultipleRemoteEntites(exceptions.InvalidInput):
+    message = _("Only one of remote_ip_prefix or remote_group_id or "
+                "remote_address_group_id may be provided.")
 
 
 class SecurityGroupProtocolRequiredWithPorts(exceptions.InvalidInput):

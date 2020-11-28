@@ -35,6 +35,7 @@ from sqlalchemy.orm import scoped_session
 
 from neutron._i18n import _
 from neutron.common import _constants as const
+from neutron.db import address_group_db as ag_db
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.extensions import securitygroup as ext_sg
@@ -426,6 +427,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             'security_group_id': rule_dict['security_group_id'],
             'direction': rule_dict['direction'],
             'remote_group_id': rule_dict.get('remote_group_id'),
+            'remote_address_group_id': rule_dict.get(
+                'remote_address_group_id'),
             'ethertype': rule_dict['ethertype'],
             'protocol': protocol,
             'remote_ip_prefix': remote_ip_prefix,
@@ -621,8 +624,12 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         self._validate_ip_prefix(rule)
         self._validate_ethertype_and_protocol(rule)
 
-        if rule['remote_ip_prefix'] and rule['remote_group_id']:
-            raise ext_sg.SecurityGroupRemoteGroupAndRemoteIpPrefix()
+        remote = None
+        for key in ['remote_ip_prefix', 'remote_group_id',
+                    'remote_address_group_id']:
+            if remote and rule.get(key):
+                raise ext_sg.SecurityGroupMultipleRemoteEntites()
+            remote = rule.get(key) or remote
 
         remote_group_id = rule['remote_group_id']
         # Check that remote_group_id exists for tenant
@@ -630,8 +637,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             self._check_security_group(context, remote_group_id,
                                        tenant_id=rule['tenant_id'])
 
-        security_group_id = rule['security_group_id']
+        remote_address_group_id = rule['remote_address_group_id']
+        # Check that remote_address_group_id exists for project
+        if remote_address_group_id:
+            ag_db.AddressGroupDbMixin.check_address_group(
+                context, remote_address_group_id,
+                project_id=rule['project_id'])
 
+        security_group_id = rule['security_group_id']
         # Confirm that the tenant has permission
         # to add rules to this security group.
         self._check_security_group(context, security_group_id,
@@ -663,6 +676,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                'port_range_min': security_group_rule['port_range_min'],
                'port_range_max': security_group_rule['port_range_max'],
                'remote_ip_prefix': security_group_rule['remote_ip_prefix'],
+               'remote_address_group_id': security_group_rule[
+                   'remote_address_group_id'],
                'remote_group_id': security_group_rule['remote_group_id'],
                'standard_attr_id': security_group_rule.standard_attr.id,
                }
@@ -694,6 +709,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             'port_range_min',
             'protocol',
             'remote_group_id',
+            'remote_address_group_id',
             'remote_ip_prefix',
             'security_group_id'
         ]

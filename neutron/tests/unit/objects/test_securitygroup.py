@@ -76,6 +76,25 @@ class SecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
         self.objs[0].create()
         return self.objs[0]
 
+    def _create_test_security_group_with_rule(self):
+        sg_obj = self._create_test_security_group()
+        rule_params = {
+            'project_id': sg_obj.project_id,
+            'security_group_id': sg_obj.id,
+            'remote_address_group_id': None}
+        sg_rule = securitygroup.SecurityGroupRule(
+            self.context, **rule_params)
+        sg_obj.rules = [sg_rule]
+        return sg_obj
+
+    def test_object_version_degradation_1_3_to_1_2_no_remote_ag(self):
+        sg_obj = self._create_test_security_group_with_rule()
+        sg_obj_1_2 = sg_obj.obj_to_primitive('1.2')
+        for rule in sg_obj_1_2['versioned_object.data']['rules']:
+            self.assertEqual('1.0', rule['versioned_object.version'])
+            self.assertNotIn('remote_address_group_id',
+                             rule['versioned_object.data'])
+
     def test_object_version_degradation_1_2_to_1_1_no_stateful(self):
         sg_stateful_obj = self._create_test_security_group()
         sg_no_stateful_obj = sg_stateful_obj.obj_to_primitive('1.1')
@@ -213,8 +232,14 @@ class SecurityGroupRuleDbObjTestCase(test_base.BaseDbObjectTestCase,
                 'security_group_id':
                     lambda: self._create_test_security_group_id(),
                 'remote_group_id':
-                    lambda: self._create_test_security_group_id()
+                    lambda: self._create_test_security_group_id(),
+                'remote_address_group_id':
+                    lambda: self._create_test_address_group_id()
             })
+
+    def _create_test_security_group_rule(self):
+        self.objs[0].create()
+        return self.objs[0]
 
     def test_get_security_group_rule_ids(self):
         """Retrieve the SG rules associated to a project (see method desc.)
@@ -250,3 +275,9 @@ class SecurityGroupRuleDbObjTestCase(test_base.BaseDbObjectTestCase,
             rule_ids_ref = set(rules_per_project[projects[idx]])
             rule_ids_ref.update(set(rules_per_sg[sgs[idx]]))
             self.assertEqual(rule_ids_ref, set(rule_ids))
+
+    def test_object_version_degradation_1_1_to_1_0_no_remote_ag(self):
+        rule_remote_ag_obj = self._create_test_security_group_rule()
+        rule_no_remote_ag_obj = rule_remote_ag_obj.obj_to_primitive('1.0')
+        self.assertNotIn('remote_address_group_id',
+                         rule_no_remote_ag_obj['versioned_object.data'])

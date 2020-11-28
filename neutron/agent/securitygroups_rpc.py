@@ -17,6 +17,8 @@
 import functools
 
 from neutron_lib.api.definitions import rbac_security_groups as rbac_sg_apidef
+from neutron_lib.api.definitions import security_groups_remote_address_group \
+    as sgag_def
 from neutron_lib.api.definitions import stateful_security_group as stateful_sg
 from oslo_concurrency import lockutils
 from oslo_config import cfg
@@ -49,6 +51,7 @@ def disable_security_group_extension_by_config(aliases):
         _disable_extension('security-group', aliases)
         _disable_extension(rbac_sg_apidef.ALIAS, aliases)
         _disable_extension(stateful_sg.ALIAS, aliases)
+        _disable_extension(sgag_def.ALIAS, aliases)
         LOG.info('Disabled allowed-address-pairs extension.')
         _disable_extension('allowed-address-pairs', aliases)
         LOG.info('Disabled address-group extension.')

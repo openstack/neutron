@@ -1,6 +1,7 @@
 # Keep entries alphabetically
 # NOTE: The first entry should not use '+=' and a comma.
-NETWORK_API_EXTENSIONS="address-scope"
+NETWORK_API_EXTENSIONS="address-group"
+NETWORK_API_EXTENSIONS+=",address-scope"
 NETWORK_API_EXTENSIONS+=",agent"
 NETWORK_API_EXTENSIONS+=",allowed-address-pairs"
 NETWORK_API_EXTENSIONS+=",auto-allocated-topology"
@@ -52,6 +53,7 @@ NETWORK_API_EXTENSIONS+=",router"
 NETWORK_API_EXTENSIONS+=",router-admin-state-down-before-update"
 NETWORK_API_EXTENSIONS+=",router_availability_zone"
 NETWORK_API_EXTENSIONS+=",security-group"
+NETWORK_API_EXTENSIONS+=",security-groups-remote-address-group"
 NETWORK_API_EXTENSIONS+=",port-mac-address-regenerate"
 NETWORK_API_EXTENSIONS+=",port-numa-affinity-policy"
 NETWORK_API_EXTENSIONS+=",port-security-groups-filtering"
