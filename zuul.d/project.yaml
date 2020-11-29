@@ -68,6 +68,26 @@
                 - build
             dependencies: &consumer_deps
               - tripleo-ci-centos-8-content-provider
+            irrelevant-files: &consumer_irrelevant_files
+              # use same list as dependency job
+              # synced from tripleo-ci-base-centos-8 base
+              - ^.*\.md$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^etc/.*$
+              - ^metadata.json$
+              - ^releasenotes/.*$
+              # do not put requirements.txt here, as it can have a huge impact
+              - ^test-requirements.txt$
+              - ^lower-constraints.txt$
+              - ^spec/.*$
+              - ^Puppetfile.*$
+              - tox.ini
+              - ^setup.*$
+              - ^vars/sova-patterns.yml$
+               ^.ansible-lint$
+              - ^.pre-commit-config.yaml$
+              - ^.yamllint$
         - neutron-ovn-rally-task:
             voting: false
         # TripleO jobs that deploy OVN.
@@ -81,6 +101,7 @@
             voting: false
             vars: *consumer_vars
             dependencies: *consumer_deps
+            irrelevant-files: *consumer_irrelevant_files
         - neutron-ovn-tempest-slow:
             voting: false
         - neutron-ovn-tempest-full-multinode-ovs-master:
