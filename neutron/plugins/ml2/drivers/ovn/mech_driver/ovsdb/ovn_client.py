@@ -1577,7 +1577,7 @@ class OVNClient(object):
         vlan_transparent = (
             'true' if network.get('vlan_transparent') else 'false')
         params['other_config'] = {ovn_const.MCAST_SNOOP: value,
-                                  ovn_const.MCAST_FLOOD_UNREGISTERED: value,
+                                  ovn_const.MCAST_FLOOD_UNREGISTERED: 'false',
                                   ovn_const.VLAN_PASSTHRU: vlan_transparent}
         return params
 
