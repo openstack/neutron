@@ -12,9 +12,11 @@
 #    under the License.
 #
 
+from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -98,11 +100,19 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         if not qos_service_plugin and qos_aliases:
             aliases.remove(qos_fip_api.FIP_QOS_ALIAS)
 
+    @staticmethod
+    def disable_dns_extension_by_extension_drivers(aliases):
+        core_plugin = directory.get_plugin()
+        if not api_extensions.is_extension_supported(
+                core_plugin, dns_apidef.ALIAS):
+            aliases.remove(dns_apidef.ALIAS)
+
     @property
     def supported_extension_aliases(self):
         if not hasattr(self, '_aliases'):
             self._aliases = self._supported_extension_aliases[:]
             self.disable_qos_fip_extension_by_extension_drivers(self._aliases)
+            self.disable_dns_extension_by_extension_drivers(self._aliases)
         return self._aliases
 
     @property
