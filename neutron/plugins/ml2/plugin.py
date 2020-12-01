@@ -731,8 +731,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                             "port %s", port_id)
                 levels = db.get_binding_level_objs(plugin_context, port_id,
                                                    cur_binding.host)
-                for level in levels:
-                    cur_context._push_binding_level(level)
+                if levels:
+                    for level in levels:
+                        cur_context._push_binding_level(level)
                 # refresh context with a snapshot of the current binding state
                 cur_context._binding = driver_context.InstanceSnapshot(
                     cur_binding)
