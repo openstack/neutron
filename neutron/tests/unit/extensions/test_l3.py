@@ -283,8 +283,7 @@ class TestL3NatBasePlugin(TestL3PluginBaseAttributes,
 
     def update_port(self, context, id, port):
         original_port = self.get_port(context, id)
-        session = context.session
-        with session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             new_port = super(TestL3NatBasePlugin, self).update_port(
                 context, id, port)
         # Notifications must be sent after the above transaction is complete
