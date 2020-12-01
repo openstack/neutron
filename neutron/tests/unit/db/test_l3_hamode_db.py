@@ -850,9 +850,10 @@ class L3HATestCase(L3HATestFramework):
         router1 = self._create_router()
         router2 = self._create_router()
         ctx = self.admin_ctx
-        bindings = self.plugin.get_ha_router_port_bindings(
-            ctx, [router1['id'], router2['id']])
-        self.plugin.delete_router(self.admin_ctx, router1['id'])
+        with db_api.CONTEXT_READER.using(ctx):
+            bindings = self.plugin.get_ha_router_port_bindings(
+                ctx, [router1['id'], router2['id']])
+        self.plugin.delete_router(ctx, router1['id'])
         self.plugin._set_router_states(
             ctx, bindings, {router1['id']: 'active',
                             router2['id']: 'active'})
@@ -1258,11 +1259,12 @@ class L3HAModeDbTestCase(L3HATestFramework):
                                          router['id'],
                                          interface_info)
         ctx = self.admin_ctx
-        bindings = self.plugin.get_ha_router_port_bindings(
-            ctx, router_ids=[router['id']],
-            host=self.agent2['host'])
-        self.plugin._set_router_states(ctx, bindings,
-                                       {router['id']: 'active'})
+        with db_api.CONTEXT_WRITER.using(ctx):
+            bindings = self.plugin.get_ha_router_port_bindings(
+                ctx, router_ids=[router['id']],
+                host=self.agent2['host'])
+            self.plugin._set_router_states(ctx, bindings,
+                                           {router['id']: 'active'})
         callback = l3_rpc.L3RpcCallback()
         callback._l3plugin = self.plugin
         # Get router with interfaces
