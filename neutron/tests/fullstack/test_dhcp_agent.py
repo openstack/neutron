@@ -38,6 +38,7 @@ class BaseDhcpAgentTest(base.BaseFullStackTestCase):
     ]
     boot_vm_for_test = True
     dhcp_scheduler_class = None
+    api_workers = 1
 
     def setUp(self):
         host_descriptions = [
@@ -52,6 +53,7 @@ class BaseDhcpAgentTest(base.BaseFullStackTestCase):
                 arp_responder=False,
                 agent_down_time=self.agent_down_time,
                 dhcp_scheduler_class=self.dhcp_scheduler_class,
+                api_workers=self.api_workers,
             ),
             host_descriptions)
 
@@ -205,6 +207,7 @@ class TestDhcpAgentHARaceCondition(BaseDhcpAgentTest):
     agent_down_time = 30
     number_of_hosts = 2
     boot_vm_for_test = False
+    api_workers = 2
     dhcp_scheduler_class = ('neutron.tests.fullstack.schedulers.dhcp.'
                             'AlwaysTheOtherAgentScheduler')
 

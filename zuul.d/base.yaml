@@ -24,6 +24,7 @@
       devstack_services:
         # Ignore any default set by devstack. Emit a "disable_all_services".
         base: false
+        etcd3: false
       devstack_localrc:
         INSTALL_TESTONLY_PACKAGES: true
         DATABASE_PASSWORD: stackdb
