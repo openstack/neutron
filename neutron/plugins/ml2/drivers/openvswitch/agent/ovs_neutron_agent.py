@@ -191,8 +191,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                         "DVR and tunneling are enabled, setting to True.")
             self.arp_responder_enabled = True
 
-        host = self.conf.host
-        self.agent_id = 'ovs-agent-%s' % host
+        self.host = self.conf.host
+        self.agent_id = 'ovs-agent-%s' % self.host
 
         # Validate agent configurations
         self._check_agent_configurations()
@@ -277,7 +277,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.phys_ofports,
             self.patch_int_ofport,
             self.patch_tun_ofport,
-            host,
+            self.host,
             self.enable_tunneling,
             self.enable_distributed_routing)
 
@@ -323,7 +323,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         #                  or which are used by specific extensions.
         self.agent_state = {
             'binary': n_const.AGENT_PROCESS_OVS,
-            'host': host,
+            'host': self.host,
             'topic': n_const.L2_AGENT_TOPIC,
             'configurations': {'bridge_mappings': self.bridge_mappings,
                                n_const.RP_BANDWIDTHS: self.rp_bandwidths,
@@ -1930,6 +1930,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         skipped_devices = []
         need_binding_devices = []
         binding_no_activated_devices = set()
+        migrating_devices = set()
         agent_restarted = self.iter_num == 0
         devices_details_list = (
             self.plugin_rpc.get_devices_details_list_and_failed_devices(
@@ -1958,6 +1959,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
             if not port.ofport or port.ofport == ovs_lib.INVALID_OFPORT:
                 devices_not_in_datapath.add(device)
+
+            migrating_to = details.get('migrating_to')
+            if migrating_to and migrating_to != self.host:
+                LOG.info('Port %(device)s is being migrated to host %(host)s.',
+                         {'device': device, 'host': migrating_to})
+                migrating_devices.add(device)
 
             if 'port_id' in details:
                 LOG.info("Port %(device)s updated. Details: %(details)s",
@@ -1996,7 +2003,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 if (port and port.ofport != -1):
                     self.port_dead(port)
         return (skipped_devices, binding_no_activated_devices,
-                need_binding_devices, failed_devices, devices_not_in_datapath)
+                need_binding_devices, failed_devices, devices_not_in_datapath,
+                migrating_devices)
 
     def _update_port_network(self, port_id, network_id):
         self._clean_network_ports(port_id)
@@ -2091,11 +2099,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         skipped_devices = set()
         binding_no_activated_devices = set()
         devices_not_in_datapath = set()
+        migrating_devices = set()
         start = time.time()
         if devices_added_updated:
             (skipped_devices, binding_no_activated_devices,
              need_binding_devices, failed_devices['added'],
-             devices_not_in_datapath) = (
+             devices_not_in_datapath, migrating_devices) = (
                 self.treat_devices_added_or_updated(
                     devices_added_updated, provisioning_needed, re_added))
             LOG.info("process_network_ports - iteration:%(iter_num)d - "
@@ -2118,7 +2127,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # TODO(salv-orlando): Optimize avoiding applying filters
         # unnecessarily, (eg: when there are no IP address changes)
         added_ports = (port_info.get('added', set()) - skipped_devices -
-                       binding_no_activated_devices)
+                       binding_no_activated_devices - migrating_devices)
         self._add_port_tag_info(need_binding_devices)
         self.process_install_ports_egress_flows(need_binding_devices)
         added_to_datapath = added_ports - devices_not_in_datapath

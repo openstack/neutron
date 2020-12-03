@@ -22,7 +22,9 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import rpc as n_rpc
+from oslo_config import cfg
 from oslo_context import context as oslo_context
+from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 
 from neutron.agent import rpc
@@ -305,6 +307,7 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
         self.assertEqual(self._port_id, entry['port_id'])
         self.assertEqual(self._network_id, entry['network_id'])
         self.assertNotIn(constants.NO_ACTIVE_BINDING, entry)
+        self.assertIsNone(entry['migrating_to'])
 
     def test_get_device_details_binding_not_in_host(self):
         self._api.remote_resource_cache.get_resource_by_id.side_effect = [
@@ -314,7 +317,25 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
         self.assertEqual(self._port_id, entry['device'])
         self.assertNotIn('port_id', entry)
         self.assertNotIn('network_id', entry)
+        self.assertNotIn('migrating_to', entry)
         self.assertIn(constants.NO_ACTIVE_BINDING, entry)
+
+    def test_get_device_details_migrating_to_host(self):
+        for live_migration_events, migrating_to in ((True, 'host2'),
+                                                    (False, 'irrelevant')):
+            cfg.CONF.set_override('live_migration_events',
+                                  live_migration_events, group='nova')
+            profile = jsonutils.dumps({'migrating_to': migrating_to})
+            self._port.bindings[0].profile = profile
+            self._api.remote_resource_cache.get_resource_by_id.side_effect = [
+                self._port, self._network]
+            entry = self._api.get_device_details(mock.ANY, self._port_id,
+                                                 mock.ANY, 'host2')
+            if live_migration_events:
+                self.assertEqual('host2', entry['migrating_to'])
+            else:
+                self.assertTrue(entry[constants.NO_ACTIVE_BINDING])
+                self.assertNotIn('migrating_to', entry)
 
     @mock.patch('neutron.agent.resource_cache.RemoteResourceCache')
     def test_initialization_with_default_resources(self, rcache_class):
