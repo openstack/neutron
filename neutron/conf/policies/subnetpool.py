@@ -10,10 +10,13 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
 
+DEPRECATED_REASON = (
+    "The subnet pool API now supports system scope and default roles.")
 
 COLLECTION_PATH = '/subnetpools'
 RESOURCE_PATH = '/subnetpools/{id}'
@@ -24,49 +27,72 @@ REMOVE_PREFIXES_PATH = '/subnetpools/{id}/remove_prefixes'
 
 rules = [
     policy.RuleDefault(
-        'shared_subnetpools',
-        'field:subnetpools:shared=True',
-        'Definition of a shared subnetpool'
+        name='shared_subnetpools',
+        check_str='field:subnetpools:shared=True',
+        description='Definition of a shared subnetpool'
     ),
     policy.DocumentedRuleDefault(
-        'create_subnetpool',
-        base.RULE_ANY,
-        'Create a subnetpool',
-        [
+        name='create_subnetpool',
+        check_str=base.PROJECT_MEMBER,
+        scope_types=['project', 'system'],
+        description='Create a subnetpool',
+        operations=[
             {
                 'method': 'POST',
                 'path': COLLECTION_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_subnetpool',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_subnetpool:shared',
-        base.RULE_ADMIN_ONLY,
-        'Create a shared subnetpool',
-        [
+        name='create_subnetpool:shared',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Create a shared subnetpool',
+        operations=[
             {
                 'method': 'POST',
                 'path': COLLECTION_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_subnetpool:shared',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_subnetpool:is_default',
-        base.RULE_ADMIN_ONLY,
-        'Specify ``is_default`` attribute when creating a subnetpool',
-        [
+        name='create_subnetpool:is_default',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description=(
+            'Specify ``is_default`` attribute when creating a subnetpool'
+        ),
+        operations=[
             {
                 'method': 'POST',
                 'path': COLLECTION_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_subnetpool:is_default',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'get_subnetpool',
-        base.policy_or(base.RULE_ADMIN_OR_OWNER,
-                       'rule:shared_subnetpools'),
-        'Get a subnetpool',
-        [
+        name='get_subnetpool',
+        check_str=base.policy_or(
+            base.SYSTEM_OR_PROJECT_READER,
+            'rule:shared_subnetpools'
+        ),
+        scope_types=['system', 'project'],
+        description='Get a subnetpool',
+        operations=[
             {
                 'method': 'GET',
                 'path': COLLECTION_PATH,
@@ -75,73 +101,116 @@ rules = [
                 'method': 'GET',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_subnetpool',
+            check_str=base.policy_or(
+                base.RULE_ADMIN_OR_OWNER,
+                'rule:shared_subnetpools')),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'update_subnetpool',
-        base.RULE_ADMIN_OR_OWNER,
-        'Update a subnetpool',
-        [
+        name='update_subnetpool',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Update a subnetpool',
+        operations=[
             {
                 'method': 'PUT',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_subnetpool',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'update_subnetpool:is_default',
-        base.RULE_ADMIN_ONLY,
-        'Update ``is_default`` attribute of a subnetpool',
-        [
+        name='update_subnetpool:is_default',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update ``is_default`` attribute of a subnetpool',
+        operations=[
             {
                 'method': 'PUT',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_subnetpool:is_default',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'delete_subnetpool',
-        base.RULE_ADMIN_OR_OWNER,
-        'Delete a subnetpool',
-        [
+        name='delete_subnetpool',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Delete a subnetpool',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_subnetpool',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'onboard_network_subnets',
-        base.RULE_ADMIN_OR_OWNER,
-        'Onboard existing subnet into a subnetpool',
-        [
+        name='onboard_network_subnets',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Onboard existing subnet into a subnetpool',
+        operations=[
             {
                 'method': 'PUT',
                 'path': ONBOARD_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='onboard_network_subnets',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'add_prefixes',
-        base.RULE_ADMIN_OR_OWNER,
-        'Add prefixes to a subnetpool',
-        [
+        name='add_prefixes',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Add prefixes to a subnetpool',
+        operations=[
             {
                 'method': 'PUT',
                 'path': ADD_PREFIXES_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='add_prefixes',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'remove_prefixes',
-        base.RULE_ADMIN_OR_OWNER,
-        'Remove unallocated prefixes from a subnetpool',
-        [
+        name='remove_prefixes',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Remove unallocated prefixes from a subnetpool',
+        operations=[
             {
                 'method': 'PUT',
                 'path': REMOVE_PREFIXES_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='remove_prefixes',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 ]
 
