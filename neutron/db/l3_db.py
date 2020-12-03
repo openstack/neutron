@@ -55,6 +55,7 @@ from neutron.objects import base as base_obj
 from neutron.objects import port_forwarding
 from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
+from neutron.objects import subnet as subnet_obj
 from neutron import worker as neutron_worker
 
 LOG = logging.getLogger(__name__)
@@ -912,9 +913,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             context, port_id, {'port': {'device_id': router_id,
                                         'device_owner': device_owner}})
 
-    def _check_router_interface_not_in_use(self, router_id, subnet_id):
+    def _check_router_interface_not_in_use(self, router_id, subnet):
         context = n_ctx.get_admin_context()
-        subnet = self._core_plugin.get_subnet(context, subnet_id)
         subnet_cidr = netaddr.IPNetwork(subnet['cidr'])
 
         fip_objs = l3_obj.FloatingIP.get_objects(context, router_id=router_id)
@@ -932,23 +932,23 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         pf_obj.internal_ip_address in subnet_cidr):
                     if pf_obj.internal_port_id in subnet_port_ids:
                         raise l3_exc.RouterInterfaceInUseByFloatingIP(
-                            router_id=router_id, subnet_id=subnet_id)
+                            router_id=router_id, subnet_id=subnet['id'])
 
         for fip_obj in fip_objs:
             if (fip_obj.fixed_ip_address and
                     fip_obj.fixed_ip_address in subnet_cidr):
                 if fip_obj.fixed_port_id in subnet_port_ids:
                     raise l3_exc.RouterInterfaceInUseByFloatingIP(
-                        router_id=router_id, subnet_id=subnet_id)
+                        router_id=router_id, subnet_id=subnet['id'])
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
-                                             subnet_id):
+                                             subnet):
         try:
             registry.publish(
                 resources.ROUTER_INTERFACE,
                 events.BEFORE_DELETE, self,
                 payload=events.DBEventPayload(
-                    context, metadata={'subnet_id': subnet_id},
+                    context, metadata={'subnet_id': subnet['id']},
                     resource_id=router_id))
         except exceptions.CallbackFailure as e:
             # NOTE(armax): preserve old check's behavior
@@ -956,7 +956,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 raise e.errors[0].error
             raise l3_exc.RouterInUse(router_id=router_id, reason=e)
 
-        self._check_router_interface_not_in_use(router_id, subnet_id)
+        self._check_router_interface_not_in_use(router_id, subnet)
 
     def _remove_interface_by_port(self, context, router_id,
                                   port_id, subnet_id, owner):
@@ -972,11 +972,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if subnet_id and subnet_id not in port_subnet_ids:
             raise n_exc.SubnetMismatchForPort(
                 port_id=port_id, subnet_id=subnet_id)
-        subnets = [self._core_plugin.get_subnet(context, port_subnet_id)
-                   for port_subnet_id in port_subnet_ids]
-        for port_subnet_id in port_subnet_ids:
+        subnets = subnet_obj.Subnet.get_objects(context, id=port_subnet_ids)
+        for subnet in subnets:
             self._confirm_router_interface_not_in_use(
-                    context, router_id, port_subnet_id)
+                    context, router_id, subnet)
         self._core_plugin.delete_port(context, port['id'],
                                       l3_port_check=False)
         return port, subnets
@@ -988,7 +987,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             context, router_id, owner, subnet['network_id'])
         if ports:
             self._confirm_router_interface_not_in_use(
-                context, router_id, subnet_id)
+                context, router_id, subnet)
 
         for p in ports:
             try:
