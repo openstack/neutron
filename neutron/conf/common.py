@@ -174,6 +174,24 @@ nova_opts = [
                help=_('Type of the nova endpoint to use.  This endpoint will'
                       ' be looked up in the keystone catalog and should be'
                       ' one of public, internal or admin.')),
+    cfg.BoolOpt('live_migration_events', default=False,
+                help=_('When this option is enabled, during the live '
+                       'migration, the OVS agent will only send the '
+                       '"vif-plugged-event" when the destination host '
+                       'interface is bound. This option also disables any '
+                       'other agent (like DHCP) to send to Nova this event '
+                       'when the port is provisioned.'
+                       'This option can be enabled if Nova patch '
+                       'https://review.opendev.org/c/openstack/nova/+/767368 '
+                       'is in place.'
+                       'This option is temporary and will be removed in Y and '
+                       'the behavior will be "True".'),
+                deprecated_for_removal=True,
+                deprecated_reason=(
+                    'In Y the Nova patch '
+                    'https://review.opendev.org/c/openstack/nova/+/767368 '
+                    'will be in the code even when running a Nova server in '
+                    'X.')),
 ]
 
 
