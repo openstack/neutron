@@ -17,9 +17,11 @@ import collections
 import imp
 import os
 
+from keystoneauth1 import loading as ks_loading
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
+from openstack import connection
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_middleware import base
@@ -39,6 +41,7 @@ LOG = logging.getLogger(__name__)
 
 EXTENSION_SUPPORTED_CHECK_MAP = {}
 _PLUGIN_AGNOSTIC_EXTENSIONS = set()
+_NOVA_CONNECTION = None
 
 
 def register_custom_supported_check(alias, f, plugin_agnostic=False):
@@ -640,3 +643,28 @@ def append_api_extensions_path(paths):
     paths = list(set([cfg.CONF.api_extensions_path] + paths))
     cfg.CONF.set_override('api_extensions_path',
                           ':'.join([p for p in paths if p]))
+
+
+class ProjectIdMiddleware(base.ConfigurableMiddleware):
+
+    @webob.dec.wsgify
+    def __call__(self, req):
+        # NOTE(ralonsoh): this method uses Nova Keystone user to retrieve the
+        # project because (1) it is allowed to retrieve the projects and (2)
+        # Neutron avoids adding another user section in the configuration
+        # (Nova user will be always used).
+        global _NOVA_CONNECTION
+        project = req.params.get('project_id') or req.params.get('tenant_id')
+        if project:
+            if not _NOVA_CONNECTION:
+                auth = ks_loading.load_auth_from_conf_options(cfg.CONF, 'nova')
+                keystone_session = ks_loading.load_session_from_conf_options(
+                    cfg.CONF, 'nova', auth=auth)
+                _NOVA_CONNECTION = connection.Connection(
+                    session=keystone_session, oslo_conf=cfg.CONF,
+                    connect_retries=cfg.CONF.http_retries)
+            if not _NOVA_CONNECTION.get_project(project):
+                return webob.exc.HTTPNotFound(
+                    comment='Project %s does not exist' % project)
+
+        return req.get_response(self.application)
