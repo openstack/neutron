@@ -37,3 +37,12 @@ dhcp_release_cmd = priv_context.PrivContext(
     capabilities=[caps.CAP_SYS_ADMIN,
                   caps.CAP_NET_ADMIN]
 )
+
+
+ovs_vsctl_cmd = priv_context.PrivContext(
+    __name__,
+    cfg_section='privsep_ovs_vsctl',
+    pypath=__name__ + '.ovs_vsctl_cmd',
+    capabilities=[caps.CAP_SYS_ADMIN,
+                  caps.CAP_NET_ADMIN]
+)
