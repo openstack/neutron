@@ -10,22 +10,31 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
 
+DEPRECATED_REASON = (
+    "The Floating IP Pool API now supports system scope and default roles.")
 
 rules = [
     policy.DocumentedRuleDefault(
-        'get_floatingip_pool',
-        base.RULE_ANY,
-        'Get floating IP pools',
-        [
+        name='get_floatingip_pool',
+        check_str=base.SYSTEM_OR_PROJECT_READER,
+        description='Get floating IP pools',
+        operations=[
             {
                 'method': 'GET',
                 'path': '/floatingip_pools',
             },
-        ]
+        ],
+        scope_types=['admin', 'project'],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_floatingip_pool',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 ]
 
