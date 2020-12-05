@@ -74,7 +74,7 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
         url = ipv6_utils.valid_ipv6_url(conf.OVS.of_listen_address,
                                         conf.OVS.of_listen_port)
         controllers = ["tcp:" + url]
-        self.add_protocols(ovs_consts.OPENFLOW13)
+        self.add_protocols(ovs_consts.OPENFLOW10, ovs_consts.OPENFLOW13)
         self.set_controller(controllers)
 
         # NOTE(ivc): Force "out-of-band" controller connection mode (see
