@@ -1620,12 +1620,8 @@ class OVNClient(object):
         commands = []
         for port in ports:
             lrp_name = utils.ovn_lrouter_port_name(port['id'])
-            # TODO(lucasagomes): Use lrp_set_options() once
-            # https://review.opendev.org/671765 is merged and a new version
-            # of ovsdbapp is released
             options = self._gen_router_port_options(port, prov_net)
-            commands.append(self._nb_idl.update_lrouter_port(
-                            name=lrp_name, if_exists=True, options=options))
+            commands.append(self._nb_idl.lrp_set_options(lrp_name, options))
         self._transaction(commands, txn=txn)
 
     def update_network(self, context, network, original_network=None):
