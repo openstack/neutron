@@ -16,6 +16,7 @@ import ddt
 from neutron_lib.api.definitions import port_numa_affinity_policy as apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 
 from neutron.db import db_base_plugin_v2
 from neutron.db import port_numa_affinity_policy_db as pnap_db
@@ -30,7 +31,7 @@ class PortNumaAffinityPolicyExtensionExtensionTestPlugin(
     supported_extension_aliases = [apidef.ALIAS]
 
     def create_port(self, context, port):
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             new_port = super(
                 PortNumaAffinityPolicyExtensionExtensionTestPlugin,
                 self).create_port(context, port)
@@ -38,7 +39,7 @@ class PortNumaAffinityPolicyExtensionExtensionTestPlugin(
         return new_port
 
     def update_port(self, context, id, port):
-        with context.session.begin(subtransactions=True):
+        with db_api.CONTEXT_WRITER.using(context):
             updated_port = super(
                 PortNumaAffinityPolicyExtensionExtensionTestPlugin,
                 self).update_port(context, id, port)
