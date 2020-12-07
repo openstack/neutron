@@ -43,11 +43,13 @@ from neutron.db import models  # noqa
 from neutron import manager
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
 from neutron.plugins.ml2.drivers import type_geneve  # noqa
+from neutron import service  # noqa
 from neutron.tests import base
 from neutron.tests.common import base as common_base
 from neutron.tests.common import helpers
 from neutron.tests.functional.resources import process
 from neutron.tests.unit.plugins.ml2 import test_plugin
+import neutron.wsgi
 
 LOG = log.getLogger(__name__)
 
@@ -173,6 +175,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         ovn_conf.cfg.CONF.set_override('dns_servers',
                                        ['10.10.10.10'],
                                        group='ovn')
+        ovn_conf.cfg.CONF.set_override('api_workers', 1)
 
         self.addCleanup(exts.PluginAwareExtensionManager.clear_instance)
         super(TestOVNFunctionalBase, self).setUp()
@@ -282,6 +285,8 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         if self.maintenance_worker:
             trigger_cls.trigger.__self__.__class__ = worker.MaintenanceWorker
             cfg.CONF.set_override('neutron_sync_mode', 'off', 'ovn')
+        else:
+            trigger_cls.trigger.__self__.__class__ = neutron.wsgi.WorkerService
 
         self.addCleanup(self._collect_processes_logs)
         self.addCleanup(self.stop)
