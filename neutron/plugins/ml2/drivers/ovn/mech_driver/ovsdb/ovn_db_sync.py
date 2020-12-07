@@ -19,6 +19,7 @@ from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
@@ -164,7 +165,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
 
         neutron_sgs = {}
         neutron_pgs = set()
-        with ctx.session.begin(subtransactions=True):
+        with db_api.CONTEXT_READER.using(ctx):
             for sg in self.core_plugin.get_security_groups(ctx):
                 pg_name = utils.ovn_port_group_name(sg['id'])
                 neutron_pgs.add(pg_name)
