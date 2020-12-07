@@ -58,6 +58,7 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
 from neutron.services.qos.drivers.ovn import driver as qos_driver
 from neutron.services.segments import db as segment_service_db
 from neutron.services.trunk.drivers.ovn import trunk_driver
+import neutron.wsgi
 
 
 LOG = log.getLogger(__name__)
@@ -248,16 +249,22 @@ class OVNMechanismDriver(api.MechanismDriver):
                 else:
                     raise
 
+    @staticmethod
+    def should_post_fork_initialize(worker_class):
+        return worker_class in (neutron.wsgi.WorkerService,
+                                worker.MaintenanceWorker)
+
     def post_fork_initialize(self, resource, event, trigger, payload=None):
-        # NOTE(rtheis): This will initialize all workers (API, RPC,
-        # plugin service and OVN) with OVN IDL connections.
+        # Initialize API/Maintenance workers with OVN IDL connections
+        worker_class = ovn_utils.get_method_class(trigger)
+        if not self.should_post_fork_initialize(worker_class):
+            return
+
         self._post_fork_event.clear()
         self._wait_for_pg_drop_event()
         self._ovn_client_inst = None
 
-        is_maintenance = (ovn_utils.get_method_class(trigger) ==
-                          worker.MaintenanceWorker)
-        if not is_maintenance:
+        if worker_class == neutron.wsgi.WorkerService:
             admin_context = n_context.get_admin_context()
             self.node_uuid = ovn_hash_ring_db.add_node(admin_context,
                                                        self.hash_ring_group)
@@ -284,7 +291,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         # Now IDL connections can be safely used.
         self._post_fork_event.set()
 
-        if is_maintenance:
+        if worker_class == worker.MaintenanceWorker:
             # Call the synchronization task if its maintenance worker
             # This sync neutron DB to OVN-NB DB only in inconsistent states
             self.nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
