@@ -21,6 +21,7 @@ Tests in this module will be skipped unless:
 
  - sudo testing is enabled (see neutron.tests.functional.base for details)
 """
+import time
 
 from oslo_config import cfg
 
@@ -129,6 +130,9 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
             lambda: self._expected_devices_events(removed_devices, 'removed'))
         # restart
         self.monitor.stop(block=True)
+        # NOTE(slaweq): lets give async process few more seconds to receive
+        # "error" from the old ovsdb monitor process and then start new one
+        time.sleep(5)
         self.monitor.start(block=True, timeout=60)
         try:
             utils.wait_until_true(
