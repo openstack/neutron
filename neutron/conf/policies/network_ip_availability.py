@@ -10,17 +10,23 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
 
+DEPRECATED_REASON = """
+The network IP availability API now support system scope and default roles.
+"""
+
 
 rules = [
     policy.DocumentedRuleDefault(
-        'get_network_ip_availability',
-        base.RULE_ADMIN_ONLY,
-        'Get network IP availability',
-        [
+        name='get_network_ip_availability',
+        check_str=base.SYSTEM_READER,
+        scope_types=['system'],
+        description='Get network IP availability',
+        operations=[
             {
                 'method': 'GET',
                 'path': '/network-ip-availabilities',
@@ -29,7 +35,12 @@ rules = [
                 'method': 'GET',
                 'path': '/network-ip-availabilities/{network_id}',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_network_ip_availability',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 ]
 
