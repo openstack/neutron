@@ -10,10 +10,14 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
 
+DEPRECATED_REASON = """
+The network API now supports system scope and default roles.
+"""
 
 COLLECTION_PATH = '/networks'
 RESOURCE_PATH = '/networks/{id}'
@@ -35,165 +39,338 @@ ACTION_GET = [
 
 rules = [
     policy.RuleDefault(
-        'external',
-        'field:networks:router:external=True',
-        'Definition of an external network'),
+        name='external',
+        check_str='field:networks:router:external=True',
+        description='Definition of an external network'),
 
     policy.DocumentedRuleDefault(
-        'create_network',
-        base.RULE_ANY,
-        'Create a network',
-        ACTION_POST
+        name='create_network',
+        check_str=base.PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Create a network',
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_network',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_network:shared',
-        base.RULE_ADMIN_ONLY,
-        'Create a shared network',
-        ACTION_POST
+        name='create_network:shared',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Create a shared network',
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_network:shared',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_network:router:external',
-        base.RULE_ADMIN_ONLY,
-        'Create an external network',
-        ACTION_POST
+        name='create_network:router:external',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Create an external network',
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_network:router:external',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_network:is_default',
-        base.RULE_ADMIN_ONLY,
-        'Specify ``is_default`` attribute when creating a network',
-        ACTION_POST
+        name='create_network:is_default',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Specify ``is_default`` attribute when creating a network',
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_network:is_default',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_network:port_security_enabled',
-        base.RULE_ANY,
-        'Specify ``port_security_enabled`` attribute when creating a network',
-        ACTION_POST
+        name='create_network:port_security_enabled',
+        check_str=base.PROJECT_MEMBER,
+        scope_types=['project'],
+        description=(
+            'Specify ``port_security_enabled`` '
+            'attribute when creating a network'
+        ),
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_network:port_security_enabled',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_network:segments',
-        base.RULE_ADMIN_ONLY,
-        'Specify ``segments`` attribute when creating a network',
-        ACTION_POST
+        name='create_network:segments',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Specify ``segments`` attribute when creating a network',
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_network:segments',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_network:provider:network_type',
-        base.RULE_ADMIN_ONLY,
-        'Specify ``provider:network_type`` when creating a network',
-        ACTION_POST
+        name='create_network:provider:network_type',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description=(
+            'Specify ``provider:network_type`` '
+            'when creating a network'
+        ),
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_network:provider:network_type',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_network:provider:physical_network',
-        base.RULE_ADMIN_ONLY,
-        'Specify ``provider:physical_network`` when creating a network',
-        ACTION_POST
+        name='create_network:provider:physical_network',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description=(
+            'Specify ``provider:physical_network`` '
+            'when creating a network'
+        ),
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_network:provider:physical_network',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_network:provider:segmentation_id',
-        base.RULE_ADMIN_ONLY,
-        'Specify ``provider:segmentation_id`` when creating a network',
-        ACTION_POST
-    ),
-
-    policy.DocumentedRuleDefault(
-        'get_network',
-        base.policy_or(base.RULE_ADMIN_OR_OWNER,
-                       'rule:shared',
-                       'rule:external',
-                       base.RULE_ADVSVC),
-        'Get a network',
-        ACTION_GET
-    ),
-    policy.DocumentedRuleDefault(
-        'get_network:router:external',
-        base.RULE_ANY,
-        'Get ``router:external`` attribute of a network',
-        ACTION_GET
-    ),
-    policy.DocumentedRuleDefault(
-        'get_network:segments',
-        base.RULE_ADMIN_ONLY,
-        'Get ``segments`` attribute of a network',
-        ACTION_GET
-    ),
-    policy.DocumentedRuleDefault(
-        'get_network:provider:network_type',
-        base.RULE_ADMIN_ONLY,
-        'Get ``provider:network_type`` attribute of a network',
-        ACTION_GET
-    ),
-    policy.DocumentedRuleDefault(
-        'get_network:provider:physical_network',
-        base.RULE_ADMIN_ONLY,
-        'Get ``provider:physical_network`` attribute of a network',
-        ACTION_GET
-    ),
-    policy.DocumentedRuleDefault(
-        'get_network:provider:segmentation_id',
-        base.RULE_ADMIN_ONLY,
-        'Get ``provider:segmentation_id`` attribute of a network',
-        ACTION_GET
-    ),
-
-    policy.DocumentedRuleDefault(
-        'update_network',
-        base.RULE_ADMIN_OR_OWNER,
-        'Update a network',
-        ACTION_PUT
-    ),
-    policy.DocumentedRuleDefault(
-        'update_network:segments',
-        base.RULE_ADMIN_ONLY,
-        'Update ``segments`` attribute of a network',
-        ACTION_PUT
-    ),
-    policy.DocumentedRuleDefault(
-        'update_network:shared',
-        base.RULE_ADMIN_ONLY,
-        'Update ``shared`` attribute of a network',
-        ACTION_PUT
-    ),
-    policy.DocumentedRuleDefault(
-        'update_network:provider:network_type',
-        base.RULE_ADMIN_ONLY,
-        'Update ``provider:network_type`` attribute of a network',
-        ACTION_PUT
-    ),
-    policy.DocumentedRuleDefault(
-        'update_network:provider:physical_network',
-        base.RULE_ADMIN_ONLY,
-        'Update ``provider:physical_network`` attribute of a network',
-        ACTION_PUT
-    ),
-    policy.DocumentedRuleDefault(
-        'update_network:provider:segmentation_id',
-        base.RULE_ADMIN_ONLY,
-        'Update ``provider:segmentation_id`` attribute of a network',
-        ACTION_PUT
-    ),
-    policy.DocumentedRuleDefault(
-        'update_network:router:external',
-        base.RULE_ADMIN_ONLY,
-        'Update ``router:external`` attribute of a network',
-        ACTION_PUT
-    ),
-    policy.DocumentedRuleDefault(
-        'update_network:is_default',
-        base.RULE_ADMIN_ONLY,
-        'Update ``is_default`` attribute of a network',
-        ACTION_PUT
-    ),
-    policy.DocumentedRuleDefault(
-        'update_network:port_security_enabled',
-        base.RULE_ADMIN_OR_OWNER,
-        'Update ``port_security_enabled`` attribute of a network',
-        ACTION_PUT
+        name='create_network:provider:segmentation_id',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description=(
+            'Specify ``provider:segmentation_id`` when creating a network'
+        ),
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_network:provider:segmentation_id',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 
     policy.DocumentedRuleDefault(
-        'delete_network',
-        base.RULE_ADMIN_OR_OWNER,
-        'Delete a network',
-        ACTION_DELETE
+        name='get_network',
+        check_str=base.policy_or(
+            base.SYSTEM_OR_PROJECT_READER,
+            'rule:shared',
+            'rule:external',
+            base.RULE_ADVSVC
+        ),
+        scope_types=['system', 'project'],
+        description='Get a network',
+        operations=ACTION_GET,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_network',
+            check_str=base.policy_or(
+                base.RULE_ADMIN_OR_OWNER,
+                'rule:shared',
+                'rule:external',
+                base.RULE_ADVSVC)),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='get_network:router:external',
+        check_str=base.PROJECT_READER,
+        scope_types=['project'],
+        description='Get ``router:external`` attribute of a network',
+        operations=ACTION_GET,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_network:router:external',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='get_network:segments',
+        check_str=base.SYSTEM_READER,
+        scope_types=['system'],
+        description='Get ``segments`` attribute of a network',
+        operations=ACTION_GET,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_network:segments',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='get_network:provider:network_type',
+        check_str=base.SYSTEM_READER,
+        scope_types=['system'],
+        description='Get ``provider:network_type`` attribute of a network',
+        operations=ACTION_GET,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_network:provider:network_type',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='get_network:provider:physical_network',
+        check_str=base.SYSTEM_READER,
+        scope_types=['system'],
+        description='Get ``provider:physical_network`` attribute of a network',
+        operations=ACTION_GET,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_network:provider:physical_network',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='get_network:provider:segmentation_id',
+        check_str=base.SYSTEM_READER,
+        scope_types=['system'],
+        description='Get ``provider:segmentation_id`` attribute of a network',
+        operations=ACTION_GET,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_network:provider:segmentation_id',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+
+    policy.DocumentedRuleDefault(
+        name='update_network',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Update a network',
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_network',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_network:segments',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update ``segments`` attribute of a network',
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_network:segments',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_network:shared',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update ``shared`` attribute of a network',
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_network:shared',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_network:provider:network_type',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update ``provider:network_type`` attribute of a network',
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_network:provider:network_type',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_network:provider:physical_network',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description=(
+            'Update ``provider:physical_network`` '
+            'attribute of a network'
+        ),
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_network:provider:physical_network',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_network:provider:segmentation_id',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description=(
+            'Update ``provider:segmentation_id`` '
+            'attribute of a network'
+        ),
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_network:provider:segmentation_id',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_network:router:external',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update ``router:external`` attribute of a network',
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_network:router:external',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_network:is_default',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update ``is_default`` attribute of a network',
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_network:is_default',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_network:port_security_enabled',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Update ``port_security_enabled`` attribute of a network',
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_network:port_security_enabled',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+
+    policy.DocumentedRuleDefault(
+        name='delete_network',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Delete a network',
+        operations=ACTION_DELETE,
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_network',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 ]
 
