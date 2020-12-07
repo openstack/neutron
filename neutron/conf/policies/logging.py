@@ -10,10 +10,15 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
 
+
+DEPRECATED_REASON = """
+The logging API now supports system scope and default roles.
+"""
 
 COLLECTION_PATH = '/log/logs'
 RESOURCE_PATH = '/log/logs/{id}'
@@ -21,32 +26,45 @@ RESOURCE_PATH = '/log/logs/{id}'
 
 rules = [
     policy.DocumentedRuleDefault(
-        'get_loggable_resource',
-        base.RULE_ADMIN_ONLY,
-        'Get loggable resources',
-        [
+        name='get_loggable_resource',
+        check_str=base.SYSTEM_READER,
+        scope_types=['system'],
+        description='Get loggable resources',
+        operations=[
             {
                 'method': 'GET',
                 'path': '/log/loggable-resources',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_loggable_resource',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_log',
-        base.RULE_ADMIN_ONLY,
-        'Create a network log',
-        [
+        name='create_log',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Create a network log',
+        operations=[
             {
                 'method': 'POST',
                 'path': COLLECTION_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_log',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'get_log',
-        base.RULE_ADMIN_ONLY,
-        'Get a network log',
-        [
+        name='get_log',
+        check_str=base.SYSTEM_READER,
+        scope_types=['system'],
+        description='Get a network log',
+        operations=[
             {
                 'method': 'GET',
                 'path': COLLECTION_PATH,
@@ -55,29 +73,46 @@ rules = [
                 'method': 'GET',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_log',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'update_log',
-        base.RULE_ADMIN_ONLY,
-        'Update a network log',
-        [
+        name='update_log',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update a network log',
+        operations=[
             {
                 'method': 'PUT',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_log',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'delete_log',
-        base.RULE_ADMIN_ONLY,
-        'Delete a network log',
-        [
+        name='delete_log',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Delete a network log',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_log',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 ]
 
