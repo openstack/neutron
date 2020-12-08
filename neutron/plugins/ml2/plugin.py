@@ -1556,7 +1556,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 binding_host = pdata.get(
                     portbindings.HOST_ID, const.ATTR_NOT_SPECIFIED)
                 if binding_host != const.ATTR_NOT_SPECIFIED:
-                    binding["host"] = binding_host
+                    binding.host = binding_host
                 mech_context = driver_context.PortContext(self, context,
                                                           port_dict, network,
                                                           binding, None)

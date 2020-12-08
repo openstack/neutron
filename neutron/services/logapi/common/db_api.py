@@ -48,7 +48,7 @@ def _get_ports_filter_in_tenant(context, tenant_id):
             ports = context.session.query(
                 sg_db.SecurityGroupPortBinding.port_id).join(
                 sg_db.SecurityGroup, sg_db.SecurityGroup.id == sg_id).filter(
-                sg_db.SecurityGroup.tenant_id == tenant_id).all()
+                sg_db.SecurityGroup.project_id == tenant_id).all()
             return list({port for (port,) in ports})
     except orm_exc.NoResultFound:
         return []

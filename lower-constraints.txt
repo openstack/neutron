@@ -1,11 +1,12 @@
 alabaster==0.7.10
-alembic==0.8.10
-amqp==2.1.1
+alembic==0.9.6
+amqp==2.5.0
 appdirs==1.4.3
 Babel==2.3.4
 bashate==0.5.1
 beautifulsoup4==4.6.0
 cachetools==2.0.0
+cryptography<3.3
 cffi==1.13.2
 cliff==2.8.0
 cmd2==0.8.0
@@ -19,7 +20,7 @@ doc8==0.6.0
 docutils==0.11
 dogpile.cache==0.6.5
 dulwich==0.15.0
-eventlet==0.21.0
+eventlet==0.22.1
 extras==1.0.0
 fasteners==0.7.0
 fixtures==3.0.0
@@ -57,11 +58,11 @@ os-client-config==1.28.0
 os-ken==0.3.0
 os-service-types==1.7.0
 os-vif==1.15.1
-os-xenapi==0.3.1
+os-xenapi==0.3.4
 osc-lib==1.8.0
 oslo.cache==1.26.0
 oslo.concurrency==3.26.0
-oslo.config==5.2.0
+oslo.config==6.0.0
 oslo.context==2.22.0
 oslo.db==4.44.0
 oslo.i18n==3.20.0
@@ -73,7 +74,7 @@ oslo.privsep==2.3.0
 oslo.reports==1.18.0
 oslo.rootwrap==5.8.0
 oslo.serialization==2.25.0
-oslo.service==1.24.0
+oslo.service==1.31.0
 oslo.upgradecheck==0.1.0
 oslo.utils==4.4.0
 oslo.versionedobjects==1.35.1
@@ -100,7 +101,7 @@ pyOpenSSL==17.1.0
 pyparsing==2.1.0
 pyperclip==1.5.27
 pyroute2==0.5.13
-python-dateutil==2.5.3
+python-dateutil==2.7.0
 python-designateclient==2.7.0
 python-editor==1.0.3
 python-keystoneclient==3.8.0
@@ -109,7 +110,7 @@ python-neutronclient==6.7.0
 python-novaclient==9.1.0
 python-subunit==1.0.0
 pytz==2013.6
-PyYAML==3.13
+PyYAML==5.3.1
 reno==3.1.0
 repoze.lru==0.7
 requests==2.14.2
@@ -139,4 +140,4 @@ waitress==1.1.0
 WebOb==1.8.2
 WebTest==2.0.27
 wmi==1.4.9
-wrapt==1.7.0
+wrapt==1.12.0
