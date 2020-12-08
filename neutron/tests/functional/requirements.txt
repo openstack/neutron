@@ -5,5 +5,4 @@
 # process, which may cause wedges in the gate later.
 
 psycopg2
-psutil>=1.1.1,<3.2.2
 PyMySQL>=0.6.2  # MIT License

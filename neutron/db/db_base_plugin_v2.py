@@ -255,7 +255,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     ctx_admin, object_id=network_id, action='access_as_shared',
                     target_tenant='*'):
                 return
-            ports = ports.filter(models_v2.Port.tenant_id == tenant_id)
+            ports = ports.filter(models_v2.Port.project_id == tenant_id)
         if ports.count():
             raise exc.InvalidSharedSetting(network=network_id)
 
@@ -1425,20 +1425,20 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
             # Create the port
             db_port = self._create_db_port_obj(context, port_data)
-            p['mac_address'] = db_port['mac_address']
+            p['mac_address'] = db_port.mac_address
 
             try:
                 self.ipam.allocate_ips_for_port_and_store(
                     context, port, port_id)
-                db_port['ip_allocation'] = (ipalloc_apidef.
-                                            IP_ALLOCATION_IMMEDIATE)
+                db_port.ip_allocation = (ipalloc_apidef.
+                                         IP_ALLOCATION_IMMEDIATE)
             except ipam_exc.DeferIpam:
-                db_port['ip_allocation'] = (ipalloc_apidef.
-                                            IP_ALLOCATION_DEFERRED)
+                db_port.ip_allocation = (ipalloc_apidef.
+                                         IP_ALLOCATION_DEFERRED)
             fixed_ips = p['fixed_ips']
             if validators.is_attr_set(fixed_ips) and not fixed_ips:
                 # [] was passed explicitly as fixed_ips. An unaddressed port.
-                db_port['ip_allocation'] = ipalloc_apidef.IP_ALLOCATION_NONE
+                db_port.ip_allocation = ipalloc_apidef.IP_ALLOCATION_NONE
 
         return db_port
 

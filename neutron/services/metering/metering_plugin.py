@@ -13,6 +13,7 @@
 # under the License.
 
 import ipaddress
+
 import netaddr
 
 from neutron_lib.agent import topics
@@ -66,12 +67,10 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
 
     def delete_metering_label(self, context, label_id):
         data = self.get_sync_data_metering(context, label_id)
-        label = super(MeteringPlugin, self).delete_metering_label(
+        super(MeteringPlugin, self).delete_metering_label(
             context, label_id)
 
         self.meter_rpc.remove_metering_label(context, data)
-
-        return label
 
     def create_metering_label_rule(self, context, metering_label_rule):
         metering_label_rule = metering_label_rule['metering_label_rule']

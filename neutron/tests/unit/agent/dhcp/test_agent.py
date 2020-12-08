@@ -1023,7 +1023,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         method_path = ('neutron.agent.metadata.driver.MetadataDriver'
                        '.spawn_monitored_metadata_proxy')
         with mock.patch(method_path) as spawn, \
-             mock.patch.object(netutils, 'is_ipv6_enabled') as mock_ipv6:
+                mock.patch.object(netutils, 'is_ipv6_enabled') as mock_ipv6:
             mock_ipv6.return_value = True
             self.call_driver.return_value = 'fake-interface'
             self.dhcp.enable_isolated_metadata_proxy(network)

@@ -2668,9 +2668,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         driver = metadata_driver.MetadataDriver
         with mock.patch.object(
                 driver, 'destroy_monitored_metadata_proxy') as destroy_proxy, \
-             mock.patch.object(
-                driver, 'spawn_monitored_metadata_proxy') as spawn_proxy, \
-             mock.patch.object(netutils, 'is_ipv6_enabled') as ipv6_mock:
+                mock.patch.object(
+                    driver, 'spawn_monitored_metadata_proxy') as spawn_proxy, \
+                mock.patch.object(netutils, 'is_ipv6_enabled') as ipv6_mock:
             ipv6_mock.return_value = True
             agent._process_added_router(router)
             if enableflag:
