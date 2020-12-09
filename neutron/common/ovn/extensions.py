@@ -50,6 +50,7 @@ from neutron_lib.api.definitions import security_groups_remote_address_group
 from neutron_lib.api.definitions import segment as seg_def
 from neutron_lib.api.definitions import sorting
 from neutron_lib.api.definitions import trunk
+from neutron_lib.api.definitions import vlantransparent
 from neutron_lib import constants
 
 # NOTE(russellb) This remains in its own file (vs constants.py) because we want
@@ -111,4 +112,5 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     expose_port_forwarding_in_fip.ALIAS,
     fip_pf_description.ALIAS,
     floating_ip_port_forwarding.ALIAS,
+    vlantransparent.ALIAS
 ]
