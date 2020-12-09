@@ -196,8 +196,9 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
             'Bridge', ('name', '=', self.br.br_name), columns=['other_config']
         ).execute()[0]['other_config']
         self.assertEqual(
-            str(state),
-            br_other_config['mcast-snooping-disable-flood-unregistered'])
+            'false',
+            br_other_config.get(
+                'mcast-snooping-disable-flood-unregistered', '').lower())
 
     def test_set_igmp_snooping_enabled(self):
         self._test_set_igmp_snooping_state(True)
