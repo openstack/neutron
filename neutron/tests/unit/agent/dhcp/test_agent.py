@@ -33,6 +33,7 @@ from neutron.agent.dhcp import agent as dhcp_agent
 from neutron.agent import dhcp_agent as entry
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
+from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import config as common_config
 from neutron.common import utils
@@ -789,6 +790,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             'neutron.agent.linux.ip_lib.'
             'IpAddrCommand.wait_until_address_ready')
         self.mock_wait_until_address_ready_p.start()
+        mock.patch.object(linux_utils, 'delete_if_exists').start()
         self.addCleanup(self.mock_wait_until_address_ready_p.stop)
 
     def _process_manager_constructor_call(self, ns=FAKE_NETWORK_DHCP_NS):

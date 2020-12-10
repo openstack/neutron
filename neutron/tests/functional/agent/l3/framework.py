@@ -15,6 +15,7 @@
 
 import copy
 import functools
+import os
 from unittest import mock
 
 import netaddr
@@ -435,12 +436,15 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
     def _namespace_exists(self, namespace):
         return ip_lib.network_namespace_exists(namespace)
 
-    def _metadata_proxy_exists(self, conf, router):
-        pm = external_process.ProcessManager(
+    def _metadata_proxy(self, conf, router):
+        return external_process.ProcessManager(
             conf,
             router.router_id,
             router.ns_name,
             service=metadata_driver.HAPROXY_SERVICE)
+
+    def _metadata_proxy_exists(self, conf, router):
+        pm = self._metadata_proxy(conf, router)
         return pm.active
 
     def device_exists_with_ips_and_mac(self, expected_device, name_getter,
@@ -501,9 +505,19 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         # then the devices and iptable rules have also been deleted,
         # so there's no need to check that explicitly.
         self.assertFalse(self._namespace_exists(router.ns_name))
-        common_utils.wait_until_true(
-            lambda: not self._metadata_proxy_exists(self.agent.conf, router),
-            timeout=10)
+        try:
+            common_utils.wait_until_true(
+                lambda: not self._metadata_proxy_exists(self.agent.conf,
+                                                        router),
+                timeout=10)
+        except common_utils.WaitTimeout:
+            pm = self._metadata_proxy(self.agent.conf, router)
+            pid_file = pm.get_pid_file_name()
+            if os.path.exists(pid_file):
+                msg = 'PID file %s still exists and it should not.' % pid_file
+            else:
+                msg = 'PID file %s is not present.' % pid_file
+            self.fail(msg)
 
     def _assert_snat_chains(self, router):
         self.assertFalse(router.iptables_manager.is_chain_empty(
