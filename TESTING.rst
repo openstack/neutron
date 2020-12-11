@@ -58,8 +58,8 @@ that broad categorization, here are a few more characteristic:
   (tools/configure_for_func_testing.sh). Typically test a component
   such as an agent using no mocks.
 * Integration tests - Run against a running cloud, often target the API level,
-  but also 'scenarios' or 'user stories'. You may find such tests under
-  tests/fullstack, and in the Tempest, Rally and
+  but also 'scenarios', 'user stories' or 'grenade'. You may find such tests
+  under tests/fullstack, and in the Tempest, Rally, Grenade and
   neutron-tempest-plugin(neutron_tempest_plugin/api|scenario) projects.
 
 Tests in the Neutron tree are typically organized by the testing infrastructure
@@ -325,6 +325,24 @@ This is your rally scenario; 2) (optional) add a setup file under rally-jobs/ext
 This is any devstack configuration required to make sure your environment can
 successfully process your scenario requests; 3) edit neutron-neutron.yaml. This
 is your scenario 'contract' or SLA.
+
+Grenade Tests
+~~~~~~~~~~~~~
+
+Grenade is a tool to test upgrade process between OpenStack releases. It
+actually not introduces any new tests but it is a tool which uses Tempest tests
+to verify upgrade process between releases.
+Neutron runs couple of Grenade jobs in check and gate queue - see
+:ref:`CI Testing <ci_jobs>` summary.
+
+You can run Grenade tests locally on the virtual machine(s). It is pretty
+similar to deploying OpenStack using Devstack. All is described in the
+`Project's wiki <https://wiki.openstack.org/wiki/Grenade>`_ and `documentation
+<https://opendev.org/openstack/grenade/src/branch/master/README.rst>`_.
+
+More info about how to troubleshoot Grenade failures in the CI jobs can be found
+in the :ref:`Troubleshooting Grenade jobs <troubleshooting-grenade-jobs>`
+document.
 
 Development Process
 -------------------

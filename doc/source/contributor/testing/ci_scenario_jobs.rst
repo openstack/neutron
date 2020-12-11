@@ -20,6 +20,7 @@
       '''''''  Heading 4
       (Avoid deeper levels because they do not render well.)
 
+.. _ci_jobs:
 
 Neutron jobs running in Zuul CI
 ===============================

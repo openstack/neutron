@@ -72,6 +72,47 @@ Troubleshooting functional/fullstack job
    from testr_results.html.gz.
 5. Create an :ref:`Elastic Recheck Query <elastic-recheck-query>`
 
+
+.. _troubleshooting-grenade-jobs:
+
+Troubleshooting Grenade jobs
+----------------------------
+Grenade is used in the Neutron gate to test every patch proposed to Neutron to
+ensure it will not break the upgrade process.
+Upgrading from the N-1 to the N branch is constantly being tested. So if you
+send patch to the Neutron ``master`` branch Grenade jobs will first deploy
+Neutron from the last stable release and then upgrade it to the master branch
+with your patch.
+Details about how Grenade works are available in
+`the documentation <https://docs.openstack.org/grenade/latest/readme.html>`_.
+
+In Neutron CI jobs that use Grenade are run in the multinode jobs configuration
+which means that we have deployed OpenStack on 2 VMs:
+
+- one called ``controller`` which is in an "all in one"
+  node so it runs neutron-server, as well as the neutron-ovs-agent and
+  nova-compute services,
+
+- one called ``compute1`` which runs only services like nova-compute and
+  neutron-ovs-agent.
+
+Neutron supports that neutron-server in N version will always work with the
+agents which runs in N-1 version. To test such scenario all our Grenade jobs
+upgrade OpenStack services only on the ``controller`` node. Services which run
+on the ``compute1`` node are always run with the "old" release during that job.
+
+Debugging of failures in the Grenade job is very similar to debugging any
+other Tempest based job.
+The difference is that in the logs of the Grenade job, there is always
+"logs/old" and "logs/new" directories which contain Devstack logs from each run
+of the Devstack's stack.sh script.
+In the "logs/grenade.sh_log.txt" file there is a full log of the grenade.sh run
+and you should always start checking failures from that file.
+Logs of the Neutron services for "old" and "new" versions are in the same files,
+like, for example, "logs/screen-q-svc.txt" for neutron-server logs. You will
+find in that log when the service was restarted - that is the moment when it
+was upgraded by Grenade and it is now running the new version.
+
 Advanced Troubleshooting of Gate Jobs
 -------------------------------------
 As a first step of troubleshooting a failing gate job, you should always check
