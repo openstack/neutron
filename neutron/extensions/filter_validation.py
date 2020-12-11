@@ -16,7 +16,7 @@ from neutron_lib.api import extensions
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron.extensions import _filter_validation_lib as apidef
+from neutron_lib.api.definitions import filter_validation as apidef
 
 
 LOG = logging.getLogger(__name__)
