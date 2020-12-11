@@ -17,20 +17,26 @@ from oslo_config import cfg
 
 from neutron._i18n import _
 
-XENAPI_CONF_SECTION = 'xenapi'
 
+XENAPI_DEPRECATION_REASON = ('XenAPI support has been removed from Nova, it '
+                             'will be removed in X.')
 XENAPI_OPTS = [
     cfg.StrOpt('connection_url',
-               help=_("URL for connection to XenServer/Xen Cloud Platform.")),
+               help=_("URL for connection to XenServer/Xen Cloud Platform."),
+               deprecated_for_removal=True,
+               deprecated_since='Wallaby',
+               deprecated_reason=XENAPI_DEPRECATION_REASON),
     cfg.StrOpt('connection_username',
                help=_("Username for connection to XenServer/Xen Cloud "
-                      "Platform.")),
+                      "Platform."),
+               deprecated_for_removal=True,
+               deprecated_since='Wallaby',
+               deprecated_reason=XENAPI_DEPRECATION_REASON),
     cfg.StrOpt('connection_password',
                help=_("Password for connection to XenServer/Xen Cloud "
                       "Platform."),
-               secret=True)
+               secret=True,
+               deprecated_for_removal=True,
+               deprecated_since='Wallaby',
+               deprecated_reason=XENAPI_DEPRECATION_REASON)
 ]
-
-
-def register_xenapi_opts(cfg=cfg.CONF):
-    cfg.register_opts(XENAPI_OPTS, group=XENAPI_CONF_SECTION)

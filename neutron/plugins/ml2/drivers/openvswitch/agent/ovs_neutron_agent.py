@@ -53,7 +53,6 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils
 from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
-from neutron.agent.linux import xenapi_root_helper
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as agent_sg_rpc
 from neutron.api.rpc.callbacks import resources
@@ -62,7 +61,6 @@ from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config
 from neutron.common import utils as n_utils
 from neutron.conf.agent import common as agent_config
-from neutron.conf.agent import xenapi_conf
 from neutron.conf import service as service_conf
 from neutron.plugins.ml2.drivers.agent import capabilities
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
@@ -2769,20 +2767,7 @@ def validate_tunnel_config(tunnel_types, local_ip):
             raise SystemExit(1)
 
 
-def prepare_xen_compute():
-    is_xen_compute_host = 'rootwrap-xen-dom0' in cfg.CONF.AGENT.root_helper \
-        or xenapi_root_helper.ROOT_HELPER_DAEMON_TOKEN == \
-        cfg.CONF.AGENT.root_helper_daemon
-    if is_xen_compute_host:
-        xenapi_conf.register_xenapi_opts()
-        # Force ip_lib to always use the root helper to ensure that ip
-        # commands target xen dom0 rather than domU.
-        cfg.CONF.register_opts(ip_lib.OPTS)
-        cfg.CONF.set_default('ip_lib_force_root', True)
-
-
 def main(bridge_classes):
-    prepare_xen_compute()
     ovs_capabilities.register()
     ext_manager.register_opts(cfg.CONF)
     agent_config.setup_privsep()
