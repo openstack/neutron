@@ -1001,6 +1001,16 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         addr_to_conj = {'addr1': {8, 16, 24}}
         self._test_delete_flows_for_flow_state(addr_to_conj, False)
 
+    def test_delete_flow_for_ip_using_cookie_any(self):
+        with mock.patch.object(self.firewall, '_delete_flows') as \
+                mock_delete_flows:
+            self.firewall.delete_flow_for_ip('10.1.2.3',
+                                             constants.INGRESS_DIRECTION,
+                                             constants.IPv4, 100, [0])
+            _, kwargs = mock_delete_flows.call_args
+            self.assertIn('cookie', kwargs)
+            self.assertIs(ovs_lib.COOKIE_ANY, kwargs['cookie'])
+
 
 class TestCookieContext(base.BaseTestCase):
     def setUp(self):
