@@ -15,6 +15,7 @@
 import errno
 import itertools
 import os
+import signal
 
 import netaddr
 from neutron_lib import constants
@@ -39,6 +40,7 @@ GARP_MASTER_DELAY = 60
 HEALTH_CHECK_NAME = 'ha_health_check'
 
 LOG = logging.getLogger(__name__)
+SIGTERM_TIMEOUT = 5
 
 
 def get_free_range(parent_range, excluded_ranges, size=PRIMARY_VIP_RANGE_SIZE):
@@ -457,7 +459,15 @@ class KeepalivedManager(object):
                                         service_name=KEEPALIVED_SERVICE_NAME)
 
         pm = self.get_process()
-        pm.disable(sig='15')
+        pm.disable(sig=str(int(signal.SIGTERM)))
+        try:
+            utils.wait_until_true(lambda: not pm.active,
+                                  timeout=SIGTERM_TIMEOUT)
+        except utils.WaitTimeout:
+            LOG.warning('Keepalived process %s did not finish after SIGTERM '
+                        'signal in %s seconds, sending SIGKILL signal',
+                        pm.pid, SIGTERM_TIMEOUT)
+            pm.disable(sig=str(int(signal.SIGKILL)))
 
     def check_processes(self):
         keepalived_pm = self.get_process()
