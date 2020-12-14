@@ -46,6 +46,9 @@ networking_ovn/ml2/trunk_driver.py      neutron/services/trunk/drivers/ovn/trunk
 networking_ovn/l3/l3_ovn.py             neutron/services/ovn_l3/plugin.py
 networking_ovn/l3/l3_ovn_scheduler.py   neutron/scheduler/ovn_l3_scheduler.py
 networking_ovn/ml2/portforwarding_driver.py  neutron/services/portforwarding/drivers/ovn/driver.py
+networking_ovn/tests/functional/test_metadata_agent.py  neutron/tests/functional/agent/ovn/metadata/test_metadata_agent.py
+networking_ovn/tests/functional         neutron/tests/functional/plugins/ml2/drivers/ovn/mech_driver/ovsdb
+networking_ovn/tests/unit/agent/metadata  neutron/tests/unit/agent/ovn/metadata
 networking_ovn/tests/unit/ml2/test_portforwarding_driver.py  neutron/tests/unit/services/portforwarding/drivers/ovn/test_driver.py
 networking_ovn/tests/unit/fakes.py      neutron/tests/unit/fake_resources.py
 networking_ovn/tests/unit/test_ovn_db_sync.py  neutron/tests/unit/plugins/ml2/drivers/ovn/mech_driver/ovsdb/test_ovn_db_sync.py
@@ -54,7 +57,6 @@ networking_ovn/tests/unit/common/test_maintenance.py  neutron/tests/unit/plugins
 networking_ovn/tests/unit/common        neutron/tests/unit/common/ovn
 networking_ovn/tests/unit/l3/test_l3_ovn.py  neutron/tests/unit/services/ovn_l3/test_plugin.py
 networking_ovn/tests/unit/l3/test_l3_ovn_scheduler.py  neutron/tests/unit/scheduler/test_l3_ovn_scheduler.py
-networking_ovn/tests/functional         neutron/tests/functional/plugins/ml2/drivers/ovn/mech_driver/ovsdb
 networking_ovn/tests/unit/ml2/test_mech_driver.py  neutron/tests/unit/plugins/ml2/drivers/ovn/mech_driver/test_mech_driver.py
 networking_ovn/tests/unit/ml2/test_qos_driver.py  neutron/tests/unit/services/qos/drivers/ovn/test_driver.py
 networking_ovn/tests/unit/ml2/test_trunk_driver.py  neutron/tests/unit/services/trunk/drivers/ovn/test_trunk_driver.py
