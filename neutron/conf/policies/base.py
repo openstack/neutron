@@ -33,6 +33,51 @@ RULE_ADMIN_OR_NET_OWNER_OR_ADVSVC = policy_or(RULE_ADMIN_OR_NET_OWNER,
                                               RULE_ADVSVC)
 RULE_ADMIN_OR_PARENT_OWNER = 'rule:admin_or_ext_parent_owner'
 
+# Generic policy check string for system administrators. These are the people
+# who need the highest level of authorization to operate the deployment.
+# They're allowed to create, read, update, or delete any system-specific
+# resource. They can also operate on project-specific resources where
+# applicable (e.g., removing networks or routers)
+SYSTEM_ADMIN = 'role:admin and system_scope:all'
+
+# Generic policy check string for system users who don't require all the
+# authorization that system administrators typically have. This persona, or
+# check string, typically isn't used by default, but it's existence it useful
+# in the event a deployment wants to offload some administrative action from
+# system administrator to system members
+SYSTEM_MEMBER = 'role:member and system_scope:all'
+
+# Generic policy check string for read-only access to system-level resources.
+# This persona is useful for someone who needs access for auditing or even
+# support. These users are also able to view project-specific resources where
+# applicable (e.g., listing all networks in the deployment, regardless of the
+# project they belong to).
+SYSTEM_READER = 'role:reader and system_scope:all'
+
+# This check string is reserved for actions that require the highest level of
+# authorization on a project or resources within the project (e.g., setting the
+# creating QoS policies)
+PROJECT_ADMIN = 'role:admin and project_id:%(project_id)s'
+
+# This check string is the primary use case for typical end-users, who are
+# working with resources that belong to a project (e.g., creating ports and
+# routers).
+PROJECT_MEMBER = 'role:member and project_id:%(project_id)s'
+
+# This check string should only be used to protect read-only project-specific
+# resources. It should not be used to protect APIs that make writable changes
+# (e.g., updating a router or deleting a port).
+PROJECT_READER = 'role:reader and project_id:%(project_id)s'
+
+# The following are common composite check strings that are useful for
+# protecting APIs designed to operate with multiple scopes (e.g., a system
+# administrator should be able to delete any router in the deployment, a
+# project member should only be able to delete routers in their project).
+SYSTEM_ADMIN_OR_PROJECT_MEMBER = (
+    '(' + SYSTEM_ADMIN + ') or (' + PROJECT_MEMBER + ')')
+SYSTEM_OR_PROJECT_READER = (
+    '(' + SYSTEM_READER + ') or (' + PROJECT_READER + ')')
+
 
 rules = [
     policy.RuleDefault(
