@@ -22,7 +22,6 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
-from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
 from neutron.db import l3_dvr_db
 from neutron.extensions import metering
 from neutron.objects import base as base_obj
@@ -33,9 +32,6 @@ LOG = logging.getLogger(__name__)
 
 
 class MeteringDbMixin(metering.MeteringPluginBase):
-
-    def __init__(self):
-        self.meter_rpc = metering_rpc_agent_api.MeteringAgentNotifyAPI()
 
     @staticmethod
     def _make_metering_label_dict(metering_label, fields=None):
