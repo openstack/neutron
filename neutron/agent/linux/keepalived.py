@@ -15,6 +15,7 @@
 import errno
 import itertools
 import os
+import signal
 
 import netaddr
 from neutron_lib import constants
@@ -41,6 +42,7 @@ HEALTH_CHECK_NAME = 'ha_health_check'
 _IS_NO_TRACK_SUPPORTED = None
 
 LOG = logging.getLogger(__name__)
+SIGTERM_TIMEOUT = 5
 
 
 def _is_keepalived_use_no_track_supported():
@@ -477,7 +479,15 @@ class KeepalivedManager(object):
                                         service_name=KEEPALIVED_SERVICE_NAME)
 
         pm = self.get_process()
-        pm.disable(sig='15')
+        pm.disable(sig=str(int(signal.SIGTERM)))
+        try:
+            utils.wait_until_true(lambda: not pm.active,
+                                  timeout=SIGTERM_TIMEOUT)
+        except utils.WaitTimeout:
+            LOG.warning('Keepalived process %s did not finish after SIGTERM '
+                        'signal in %s seconds, sending SIGKILL signal',
+                        pm.pid, SIGTERM_TIMEOUT)
+            pm.disable(sig=str(int(signal.SIGKILL)))
 
     def check_processes(self):
         keepalived_pm = self.get_process()
