@@ -307,23 +307,47 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 allowed_address_pairs=address_pairs)
             yield self.deserialize(self.fmt, res1)
 
-    def test_security_group_info_for_devices_ipv4_addr_pair(self):
+    def _test_security_group_info_for_devices_ipv4_addr_pair(
+            self, call_version=None):
         with self._port_with_addr_pairs_and_security_group() as port:
             port_id = port['port']['id']
             sg_id = port['port']['security_groups'][0]
             devices = [port_id, 'no_exist_device']
             ctx = context.get_admin_context()
             # verify that address pairs are included in remote SG IPs
-            sg_member_ips = self.rpc.security_group_info_for_devices(
-                ctx, devices=devices)['sg_member_ips']
-            expected_member_ips = [
-                ('10.0.1.0/24', '00:00:00:00:00:01'),
-                ('11.0.0.1', '00:00:00:00:00:01'),
-                (port['port']['fixed_ips'][0]['ip_address'],
-                 None)]
+            if call_version is not None:
+                sg_member_ips = self.rpc.security_group_info_for_devices(
+                    ctx, devices=devices,
+                    call_version=call_version)['sg_member_ips']
+            else:
+                sg_member_ips = self.rpc.security_group_info_for_devices(
+                    ctx, devices=devices)['sg_member_ips']
+            if call_version == '1.3':
+                expected_member_ips = [
+                    ('10.0.1.0/24', '00:00:00:00:00:01'),
+                    ('11.0.0.1', '00:00:00:00:00:01'),
+                    (port['port']['fixed_ips'][0]['ip_address'],
+                     None)]
+            else:
+                expected_member_ips = [
+                    '10.0.1.0/24',
+                    '11.0.0.1',
+                    port['port']['fixed_ips'][0]['ip_address']]
             self.assertEqual(sorted(expected_member_ips),
                              sorted(sg_member_ips[sg_id]['IPv4']))
             self._delete('ports', port_id)
+
+    def test_security_group_info_for_devices_ipv4_addr_pair(self):
+        self._test_security_group_info_for_devices_ipv4_addr_pair(
+            call_version='1.3')
+
+    def test_security_group_info_for_devices_ipv4_addr_pair_low_version(self):
+        self._test_security_group_info_for_devices_ipv4_addr_pair(
+            call_version='1.2')
+
+    def test_security_group_info_for_devices_ipv4_addr_pair_backward_cmp(
+            self):
+        self._test_security_group_info_for_devices_ipv4_addr_pair()
 
     def test_security_group_rules_for_devices_ipv4_ingress_addr_pair(self):
         fake_prefix = FAKE_PREFIX[const.IPv4]
@@ -512,7 +536,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
             port_ip2 = ports_rest2['port']['fixed_ips'][0]['ip_address']
             ctx = context.get_admin_context()
             ports_rpc = self.rpc.security_group_info_for_devices(
-                ctx, devices=devices)
+                ctx, devices=devices, call_version='1.3')
             expected = {
                 'security_groups': {sg1_id: [
                     {'direction': 'egress', 'ethertype': const.IPv4,
