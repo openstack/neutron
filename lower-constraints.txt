@@ -3,7 +3,6 @@ alembic==0.9.6
 amqp==2.5.0
 appdirs==1.4.3
 Babel==2.3.4
-bashate==0.5.1
 beautifulsoup4==4.6.0
 cachetools==2.0.0
 cryptography<3.3
