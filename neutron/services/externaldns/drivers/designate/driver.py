@@ -177,7 +177,7 @@ class Designate(driver.ExternalDNSService):
         try:
             recordsets = designate_client.recordsets.list(
                 dns_domain, criterion={"name": "%s" % name})
-        except d_exc.NotFound:
+        except (d_exc.NotFound, d_exc.Forbidden):
             raise dns_exc.DNSDomainNotFound(dns_domain=dns_domain)
         ids = [rec['id'] for rec in recordsets]
         ips = [str(ip) for rec in recordsets for ip in rec['records']]
