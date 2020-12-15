@@ -100,7 +100,7 @@ positional==1.2.1
 prettytable==0.7.2
 psutil==3.2.2
 pycadf==1.1.0
-pycodestyle==2.4.0
+pycodestyle==2.0.0
 pycparser==2.18
 pyflakes==0.8.1
 Pygments==2.2.0
