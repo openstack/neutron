@@ -522,24 +522,23 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
 
     def add_auto_addrs_on_network_ports(self, context, subnet, ipam_subnet):
         """For an auto-address subnet, add addrs for ports on the net."""
-        # TODO(ataraday): switched for writer when flush_on_subtransaction
-        # will be available for neutron
-        with context.session.begin(subtransactions=True):
-            network_id = subnet['network_id']
+        network_id = subnet['network_id']
+        with db_api.CONTEXT_READER.using(context):
             ports = port_obj.Port.get_objects(
                 context, network_id=network_id,
                 device_owner=obj_utils.NotIn(
                     constants.ROUTER_INTERFACE_OWNERS_SNAT))
-            updated_ports = []
-            ipam_driver = driver.Pool.get_instance(None, context)
-            factory = ipam_driver.get_address_request_factory()
-            for port in ports:
-                # Find candidate subnets based on host_id and existing
-                # fixed_ips. This will filter subnets on other segments. Only
-                # allocate if this subnet is a valid candidate.
-                p = self._make_port_dict(port)
-                fixed_configured = (p['fixed_ips'] is not
-                                    constants.ATTR_NOT_SPECIFIED)
+        updated_ports = []
+        ipam_driver = driver.Pool.get_instance(None, context)
+        factory = ipam_driver.get_address_request_factory()
+        for port in ports:
+            # Find candidate subnets based on host_id and existing
+            # fixed_ips. This will filter subnets on other segments. Only
+            # allocate if this subnet is a valid candidate.
+            p = self._make_port_dict(port)
+            fixed_configured = (p['fixed_ips'] is not
+                                constants.ATTR_NOT_SPECIFIED)
+            with db_api.CONTEXT_READER.using(context):
                 subnet_candidates = obj_subnet.Subnet.find_candidate_subnets(
                     context,
                     network_id,
@@ -550,12 +549,13 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 if subnet['id'] not in [s['id'] for s in subnet_candidates]:
                     continue
 
-                ip = {'subnet_id': subnet['id'],
-                      'subnet_cidr': subnet['cidr'],
-                      'eui64_address': True,
-                      'mac': port.mac_address}
-                ip_request = factory.get_request(context, port, ip)
-                try:
+            ip = {'subnet_id': subnet['id'],
+                  'subnet_cidr': subnet['cidr'],
+                  'eui64_address': True,
+                  'mac': port.mac_address}
+            ip_request = factory.get_request(context, port, ip)
+            try:
+                with db_api.CONTEXT_WRITER.using(context):
                     ip_address = ipam_subnet.allocate(ip_request)
                     allocated = port_obj.IPAllocation(
                         context, network_id=network_id, port_id=port.id,
@@ -568,21 +568,22 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     # it explicitly here.
                     allocated.create()
                     updated_ports.append(port.id)
-                except db_exc.DBReferenceError:
-                    LOG.debug("Port %s was deleted while updating it with an "
-                              "IPv6 auto-address. Ignoring.", port.id)
-                    LOG.debug("Reverting IP allocation for %s", ip_address)
-                    # Do not fail if reverting allocation was unsuccessful
+            except db_exc.DBReferenceError:
+                LOG.debug("Port %s was deleted while updating it with an "
+                          "IPv6 auto-address. Ignoring.", port.id)
+                LOG.debug("Reverting IP allocation for %s", ip_address)
+                # Do not fail if reverting allocation was unsuccessful
+                with db_api.CONTEXT_WRITER.using(context):
                     try:
                         ipam_subnet.deallocate(ip_address)
                     except Exception:
                         LOG.debug("Reverting IP allocation failed for %s",
                                   ip_address)
-                except ipam_exc.IpAddressAlreadyAllocated:
-                    LOG.debug("Port %s got IPv6 auto-address in a concurrent "
-                              "create or update port request. Ignoring.",
-                              port.id)
-            return updated_ports
+            except ipam_exc.IpAddressAlreadyAllocated:
+                LOG.debug("Port %s got IPv6 auto-address in a concurrent "
+                          "create or update port request. Ignoring.",
+                          port.id)
+        return updated_ports
 
     def allocate_subnet(self, context, network, subnet, subnetpool_id):
         subnetpool = None

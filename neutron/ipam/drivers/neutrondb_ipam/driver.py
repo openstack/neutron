@@ -17,6 +17,7 @@ import itertools
 import random
 
 import netaddr
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
@@ -249,13 +250,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
         # The only defined status at this stage is 'ALLOCATED'.
         # More states will be available in the future - e.g.: RECYCLABLE
         try:
-            # TODO(ataraday): revisit this after objects switched to
-            # new enginefacade
-            with self._context.session.begin(subtransactions=True):
-                # NOTE(kevinbenton): we use a subtransaction to force
-                # a flush here so we can capture DBReferenceErrors due
-                # to concurrent subnet deletions. (galera would deadlock
-                # later on final commit)
+            with db_api.CONTEXT_WRITER.using(self._context):
                 self.subnet_manager.create_allocation(self._context,
                                                       ip_address)
         except db_exc.DBReferenceError:
@@ -274,7 +269,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
                                                num_addrs)
         # Create IP allocation request objects
         try:
-            with self._context.session.begin(subtransactions=True):
+            with db_api.CONTEXT_WRITER.using(self._context):
                 for ip_address in allocated_ip_pool:
                     self.subnet_manager.create_allocation(self._context,
                                                           ip_address)
