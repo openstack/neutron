@@ -45,8 +45,10 @@
             irrelevant-files: *tempest-irrelevant-files
         - tempest-slow-py3:
             irrelevant-files: *tempest-irrelevant-files
-        - networking-ovn-tempest-dsvm-ovs-release:
-            irrelevant-files: *tempest-irrelevant-files
+        # TODO(bcafarel): disable this job to get pip resolver fixes in for
+        # neutron and networking-ovn (as fixes depend on each other)
+        #- networking-ovn-tempest-dsvm-ovs-release:
+        #    irrelevant-files: *tempest-irrelevant-files
         - networking-midonet-tempest-aio-ml2-centos-7:
             voting: false
             irrelevant-files: *tempest-irrelevant-files

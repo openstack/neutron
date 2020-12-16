@@ -6,7 +6,7 @@ pbr>=4.0.0 # Apache-2.0
 Paste>=2.0.2 # MIT
 PasteDeploy>=1.5.0 # MIT
 Routes>=2.3.1 # MIT
-debtcollector>=1.2.0 # Apache-2.0
+debtcollector>=1.19.0 # Apache-2.0
 decorator>=3.4.0 # BSD
 eventlet!=0.18.3,!=0.20.1,>=0.18.2 # MIT
 pecan>=1.3.2 # BSD
@@ -21,7 +21,7 @@ python-neutronclient>=6.7.0 # Apache-2.0
 tenacity>=3.2.1 # Apache-2.0
 SQLAlchemy>=1.2.0 # MIT
 WebOb>=1.8.2 # MIT
-keystoneauth1>=3.4.0 # Apache-2.0
+keystoneauth1>=3.14.0 # Apache-2.0
 alembic>=0.8.10 # MIT
 six>=1.10.0 # MIT
 stevedore>=1.20.0 # Apache-2.0
@@ -46,7 +46,7 @@ oslo.versionedobjects>=1.35.1 # Apache-2.0
 osprofiler>=2.3.0 # Apache-2.0
 os-ken >= 0.3.0 # Apache-2.0
 ovs>=2.8.0 # Apache-2.0
-ovsdbapp>=0.9.1 # Apache-2.0
+ovsdbapp>=0.12.1 # Apache-2.0
 psutil>=3.2.2 # BSD
 pyroute2>=0.5.3;sys_platform!='win32' # Apache-2.0 (+ dual licensed GPL2)
 weakrefmethod>=1.0.2;python_version=='2.7' # PSF

@@ -3,7 +3,7 @@
 # process, which may cause wedges in the gate later.
 hacking>=1.1.0,<1.2.0 # Apache-2.0
 
-bandit!=1.6.0,>=1.1.0 # Apache-2.0
+bandit!=1.6.0,>=1.1.0,<=1.6.2 # Apache-2.0
 coverage!=4.4,>=4.0 # Apache-2.0
 fixtures>=3.0.0 # Apache-2.0/BSD
 flake8-import-order==0.12 # LGPLv3
