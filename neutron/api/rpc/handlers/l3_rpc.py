@@ -25,6 +25,7 @@ from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from sqlalchemy import orm
 
 
 LOG = logging.getLogger(__name__)
@@ -89,8 +90,13 @@ class L3RpcCallback(object):
                   "setting HA network ports %(ha_ports)s status to DOWN.",
                   {"host": host, "ha_ports": ha_ports})
         for p in ha_ports:
-            self.plugin.update_port(
-                context, p, {'port': {'status': constants.PORT_STATUS_DOWN}})
+            try:
+                self.plugin.update_port(
+                    context, p,
+                    {'port': {'status': constants.PORT_STATUS_DOWN}})
+            except (orm.exc.StaleDataError, orm.exc.ObjectDeletedError,
+                    exceptions.PortNotFound):
+                pass
 
     def get_router_ids(self, context, host):
         """Returns IDs of routers scheduled to l3 agent on <host>
