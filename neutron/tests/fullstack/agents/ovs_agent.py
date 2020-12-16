@@ -19,6 +19,7 @@ from unittest import mock
 from oslo_config import cfg
 
 from neutron.agent.common import ovs_lib
+from neutron.agent.common import polling
 from neutron.agent.l2.extensions import qos as qos_extension
 from neutron.services.trunk.drivers.openvswitch.agent \
     import driver as trunk_driver
@@ -46,6 +47,15 @@ def monkeypatch_qos():
                           '_process_reset_port').start()
 
 
+def monkeypatch_event_filtering():
+    def filter_bridge_names(br_names):
+        if 'trunk' in cfg.CONF.service_plugins:
+            return []
+        return br_names
+
+    polling.filter_bridge_names = filter_bridge_names
+
+
 def main():
     # TODO(slaweq): this monkepatch will not be necessary when
     # https://review.opendev.org/#/c/506722/ will be merged and ovsdb-server
@@ -53,6 +63,7 @@ def main():
     # namespace
     monkeypatch_init_handler()
     monkeypatch_qos()
+    monkeypatch_event_filtering()
     ovs_agent.main()
 
 

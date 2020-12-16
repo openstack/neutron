@@ -30,10 +30,12 @@ LOG = logging.getLogger(__name__)
 @contextlib.contextmanager
 def get_polling_manager(minimize_polling=False,
                         ovsdb_monitor_respawn_interval=(
-                            constants.DEFAULT_OVSDBMON_RESPAWN)):
+                            constants.DEFAULT_OVSDBMON_RESPAWN),
+                        bridge_names=None, ovs=None):
     if minimize_polling:
         pm = InterfacePollingMinimizer(
-            ovsdb_monitor_respawn_interval=ovsdb_monitor_respawn_interval)
+            ovsdb_monitor_respawn_interval=ovsdb_monitor_respawn_interval,
+            bridge_names=bridge_names, ovs=ovs)
         pm.start()
     else:
         pm = base_polling.AlwaysPoll()
@@ -49,12 +51,14 @@ class InterfacePollingMinimizer(base_polling.BasePollingManager):
 
     def __init__(
             self,
-            ovsdb_monitor_respawn_interval=constants.DEFAULT_OVSDBMON_RESPAWN):
+            ovsdb_monitor_respawn_interval=constants.DEFAULT_OVSDBMON_RESPAWN,
+            bridge_names=None, ovs=None):
 
         super(InterfacePollingMinimizer, self).__init__()
         self._monitor = ovsdb_monitor.SimpleInterfaceMonitor(
             respawn_interval=ovsdb_monitor_respawn_interval,
-            ovsdb_connection=cfg.CONF.OVS.ovsdb_connection)
+            ovsdb_connection=cfg.CONF.OVS.ovsdb_connection,
+            bridge_names=bridge_names, ovs=ovs)
 
     def start(self):
         self._monitor.start(block=True)
@@ -73,3 +77,16 @@ class InterfacePollingMinimizer(base_polling.BasePollingManager):
 
     def get_events(self):
         return self._monitor.get_events()
+
+
+def filter_bridge_names(br_names):
+    """Bridge names to filter events received in the Interface monitor
+
+    This method is used only in fullstack testing. Because several OVS agents
+    are executed in the same host and share the same OVS switch, this filtering
+    will remove events of other agents; the Interface monitor will only return
+    events of Interfaces attached to Ports that belong to bridges "br_names".
+
+    If the list is empty, no filtering is done.
+    """
+    return []
