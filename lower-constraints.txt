@@ -51,7 +51,7 @@ msgpack-python==0.4.0
 munch==2.1.0
 netaddr==0.7.18
 netifaces==0.10.4
-neutron-lib==2.6.1
+neutron-lib==2.8.0
 openstacksdk==0.31.2
 os-client-config==1.28.0
 os-ken==0.3.0
@@ -60,7 +60,7 @@ os-vif==1.15.1
 osc-lib==1.8.0
 oslo.cache==1.26.0
 oslo.concurrency==3.26.0
-oslo.config==6.8.0
+oslo.config==8.0.0
 oslo.context==2.22.0
 oslo.db==4.44.0
 oslo.i18n==3.20.0

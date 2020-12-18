@@ -44,6 +44,7 @@ from neutron.objects import base
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import flavor
 from neutron.objects import network as net_obj
+from neutron.objects.port.extensions import port_device_profile
 from neutron.objects.port.extensions import port_numa_affinity_policy
 from neutron.objects import ports
 from neutron.objects.qos import policy as qos_policy
@@ -542,6 +543,8 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.StringField: lambda: helpers.get_random_string(10),
     port_numa_affinity_policy.NumaAffinityPoliciesEnumField:
         tools.get_random_port_numa_affinity_policy,
+    port_device_profile.PortDeviceProfile:
+        lambda: helpers.get_random_string(255)
 }
 
 

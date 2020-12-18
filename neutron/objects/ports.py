@@ -274,7 +274,8 @@ class Port(base.NeutronDbObject):
     # Version 1.4: Attribute binding becomes ListOfObjectsField
     # Version 1.5: Added qos_network_policy_id field
     # Version 1.6: Added numa_affinity_policy field
-    VERSION = '1.6'
+    # Version 1.7: Added port_device field
+    VERSION = '1.7'
 
     db_model = models_v2.Port
 
@@ -325,6 +326,7 @@ class Port(base.NeutronDbObject):
             'PortBindingLevel', nullable=True
         ),
         'numa_affinity_policy': obj_fields.StringField(nullable=True),
+        'device_profile': obj_fields.StringField(nullable=True),
 
         # TODO(ihrachys): consider adding a 'dns_assignment' fully synthetic
         # field in later object iterations
@@ -339,6 +341,7 @@ class Port(base.NeutronDbObject):
         'bindings',
         'binding_levels',
         'data_plane_status',
+        'device_profile',
         'dhcp_options',
         'distributed_bindings',
         'dns',
@@ -509,6 +512,10 @@ class Port(base.NeutronDbObject):
                 db_obj.numa_affinity_policy.numa_affinity_policy)
             fields_to_change.append('numa_affinity_policy')
 
+        if db_obj.get('device_profile'):
+            self.device_profile = db_obj.device_profile.device_profile
+            fields_to_change.append('device_profile')
+
         self.obj_reset_changes(fields_to_change)
 
     def obj_make_compatible(self, primitive, target_version):
@@ -539,6 +546,8 @@ class Port(base.NeutronDbObject):
             primitive.pop('qos_network_policy_id', None)
         if _target_version < (1, 6):
             primitive.pop('numa_affinity_policy', None)
+        if _target_version < (1, 7):
+            primitive.pop('device_profile', None)
 
     @classmethod
     def get_ports_by_router_and_network(cls, context, router_id, owner,
