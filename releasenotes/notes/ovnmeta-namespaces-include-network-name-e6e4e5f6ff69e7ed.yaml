@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    The ``OVN Metadata Agent`` now creates the network namespaces including the
+    Neutron network UUID in its name. Previously, the OVN datapath UUID was used
+    and it was not obvious for operators and during debugging to figure out which
+    namespace corresponded to what Neutron network.

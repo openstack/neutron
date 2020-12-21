@@ -545,3 +545,7 @@ def get_chassis_availability_zones(chassis):
         azs = [az.strip() for az in values.split(':') if az.strip()]
         break
     return azs
+
+
+def get_network_name_from_datapath(datapath):
+    return datapath.external_ids['name'].replace('neutron-', '')
