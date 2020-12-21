@@ -171,13 +171,19 @@ class ML2ConfigFixture(ConfigFixture):
         if self.env_desc.l2_pop:
             mechanism_drivers += ',l2population'
 
+        net_vlan_ranges_extra = ''
+        if 'segments' in env_desc.service_plugins:
+            net_vlan_ranges_extra = (',' + PHYSICAL_NETWORK_NAME +
+                                     '_lb:1050:1059')
+
         self.config.update({
             'ml2': {
                 'tenant_network_types': tenant_network_types,
                 'mechanism_drivers': mechanism_drivers,
             },
             'ml2_type_vlan': {
-                'network_vlan_ranges': PHYSICAL_NETWORK_NAME + ':1000:1029',
+                'network_vlan_ranges': PHYSICAL_NETWORK_NAME + ':1000:1029' +
+                net_vlan_ranges_extra,
             },
             'ml2_type_gre': {
                 'tunnel_id_ranges': '1:30',
@@ -337,6 +343,8 @@ class LinuxBridgeConfigFixture(ConfigFixture):
             env_desc, host_desc, temp_dir,
             base_filename="linuxbridge_agent.ini"
         )
+        self.service_plugins = env_desc.service_plugins
+
         self.config.update({
             'VXLAN': {
                 'enable_vxlan': str(self.env_desc.tunneling_enabled),
@@ -376,7 +384,10 @@ class LinuxBridgeConfigFixture(ConfigFixture):
             })
 
     def _generate_bridge_mappings(self, device_name):
-        return '%s:%s' % (PHYSICAL_NETWORK_NAME, device_name)
+        bridge_mappings_extra = ('_lb' if 'segments' in self.service_plugins
+                                 else '')
+        return '%s%s:%s' % (PHYSICAL_NETWORK_NAME, bridge_mappings_extra,
+                            device_name)
 
 
 class L3ConfigFixture(ConfigFixture):
