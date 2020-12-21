@@ -13,26 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from os_ken.base import app_manager
-from os_ken.controller import handler
-from os_ken.controller import ofp_event
-from os_ken.ofproto import ofproto_v1_3
-from oslo_log import log as logging
-
-LOG = logging.getLogger(__name__)
+from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
+    import base_oskenapp
 
 
-class OVSLogOSKenApp(app_manager.OSKenApp):
-    OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
-    packet_in_handlers = []
-
-    def register_packet_in_handler(self, caller):
-        self.packet_in_handlers.append(caller)
-
-    def unregister_packet_in_handler(self, caller):
-        self.packet_in_handlers.remove(caller)
-
-    @handler.set_ev_cls(ofp_event.EventOFPPacketIn, handler.MAIN_DISPATCHER)
-    def packet_in_handler(self, ev):
-        for caller in self.packet_in_handlers:
-            caller(ev)
+class OVSLogOSKenApp(base_oskenapp.BaseNeutronAgentOSKenApp):
+    pass

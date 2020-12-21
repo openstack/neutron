@@ -19,10 +19,11 @@ import functools
 import os_ken.app.ofctl.api  # noqa
 from os_ken.base import app_manager
 from os_ken.lib import hub
-from os_ken.ofproto import ofproto_v1_3
 from oslo_log import log as logging
 from oslo_utils import excutils
 
+from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
+    import base_oskenapp
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import br_int
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
@@ -49,9 +50,7 @@ def agent_main_wrapper(bridge_classes):
         hub.spawn(app_manager.AppManager.get_instance().close)
 
 
-class OVSNeutronAgentOSKenApp(app_manager.OSKenApp):
-    OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
-
+class OVSNeutronAgentOSKenApp(base_oskenapp.BaseNeutronAgentOSKenApp):
     def start(self):
         # Start os-ken event loop thread
         super(OVSNeutronAgentOSKenApp, self).start()
