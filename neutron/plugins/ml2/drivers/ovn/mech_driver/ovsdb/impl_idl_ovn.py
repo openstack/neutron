@@ -827,8 +827,14 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         rows = self.db_list_rows('Port_Binding').execute(check_error=True)
         # TODO(twilson) It would be useful to have a db_find that takes a
         # comparison function
+        # TODO(dalvarez): Remove the comparison to r.datapath.uuid in Y cycle
+        # when we are sure that all namespaces will be created with the
+        # Neutron network UUID and not anymore with the OVN datapath UUID.
         return [r for r in rows
-                if (r.mac and str(r.datapath.uuid) == network) and
+                if (r.mac and (
+                    str(r.datapath.uuid) == network or
+                    utils.get_network_name_from_datapath(
+                        r.datapath) == network)) and
                 ip_address in r.mac[0].split(' ')]
 
     def set_port_cidrs(self, name, cidrs):

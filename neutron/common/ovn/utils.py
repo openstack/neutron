@@ -565,3 +565,7 @@ def parse_ovn_lb_port_forwarding(ovn_rtr_lb_pfs):
         fip_dict[protocol] = fip_dict_proto
         result[fip_id] = fip_dict
     return result
+
+
+def get_network_name_from_datapath(datapath):
+    return datapath.external_ids['name'].replace('neutron-', '')
