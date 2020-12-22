@@ -84,10 +84,12 @@ class BaseIptablesFirewallTestCase(base.BaseTestCase):
         self.v4filter_inst = mock.Mock()
         self.v6filter_inst = mock.Mock()
         self.iptables_inst.ipv4 = {'filter': self.v4filter_inst,
-                                   'raw': self.v4filter_inst
+                                   'raw': self.v4filter_inst,
+                                   'nat': self.v4filter_inst
                                    }
         self.iptables_inst.ipv6 = {'filter': self.v6filter_inst,
-                                   'raw': self.v6filter_inst
+                                   'raw': self.v6filter_inst,
+                                   'nat': self.v6filter_inst
                                    }
         iptables_cls.return_value = self.iptables_inst
 
@@ -141,6 +143,14 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     comment=None),
                  mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
                                     comment=None),
+                 mock.call.add_rule('PREROUTING',
+                                    '-m physdev --physdev-out tapfake_dev '
+                                    '-j ACCEPT',
+                                    top=False, comment=ic.TRUSTED_ACCEPT),
+                 mock.call.add_rule('PREROUTING',
+                                    '-m physdev --physdev-in tapfake_dev '
+                                    '-j ACCEPT',
+                                    top=False, comment=ic.TRUSTED_ACCEPT),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-out tapfake_dev '
@@ -1172,6 +1182,16 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                    '-m physdev --physdev-in tapfake_dev '
                                    '--physdev-is-bridged -j ACCEPT',
                                    top=False, comment=ic.TRUSTED_ACCEPT))
+            calls.append(
+                mock.call.add_rule('PREROUTING',
+                                   '-m physdev --physdev-out tapfake_dev '
+                                   '-j ACCEPT',
+                                   top=False, comment=ic.TRUSTED_ACCEPT))
+            calls.append(
+                mock.call.add_rule('PREROUTING',
+                                   '-m physdev --physdev-in tapfake_dev '
+                                   '-j ACCEPT',
+                                   top=False, comment=ic.TRUSTED_ACCEPT))
 
         self.firewall.process_trusted_ports([port['id']])
 
@@ -1262,6 +1282,16 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     comment=None),
                  mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
                                     comment=None),
+                 mock.call.add_rule('PREROUTING',
+                                    "-m physdev --physdev-out tapfake_dev "
+                                    "-j ACCEPT",
+                                    comment=ic.TRUSTED_ACCEPT,
+                                    top=False),
+                 mock.call.add_rule('PREROUTING',
+                                    "-m physdev --physdev-in tapfake_dev "
+                                    "-j ACCEPT",
+                                    comment=ic.TRUSTED_ACCEPT,
+                                    top=False),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-out tapfake_dev '
@@ -1615,6 +1645,16 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     comment=None),  # zone set
                  mock.call.add_rule('PREROUTING', mock.ANY,
                                     comment=None),  # zone set
+                 mock.call.add_rule(
+                     'PREROUTING',
+                     '-m physdev --physdev-out tapfake_dev '
+                     '-j ACCEPT',
+                     comment=ic.TRUSTED_ACCEPT, top=False),
+                 mock.call.add_rule(
+                     'PREROUTING',
+                     '-m physdev --physdev-in tapfake_dev '
+                     '-j ACCEPT',
+                     comment=ic.TRUSTED_ACCEPT, top=False),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule(
                      'FORWARD',
@@ -1696,6 +1736,14 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.remove_rule('PREROUTING', mock.ANY),  # zone set
                  mock.call.remove_rule('PREROUTING', mock.ANY),  # zone set
                  mock.call.remove_rule('PREROUTING', mock.ANY),  # zone set
+                 mock.call.remove_rule(
+                     'PREROUTING',
+                     '-m physdev --physdev-out tapfake_dev '
+                     '-j ACCEPT'),
+                 mock.call.remove_rule(
+                     'PREROUTING',
+                     '-m physdev --physdev-in tapfake_dev '
+                     '-j ACCEPT'),
                  mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain'),
                  mock.call.add_rule('PREROUTING', mock.ANY,
@@ -1704,6 +1752,16 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     comment=None),  # zone set
                  mock.call.add_rule('PREROUTING', mock.ANY,
                                     comment=None),  # zone set
+                 mock.call.add_rule(
+                     'PREROUTING',
+                     '-m physdev --physdev-out tapfake_dev '
+                     '-j ACCEPT',
+                     comment=ic.TRUSTED_ACCEPT, top=False),
+                 mock.call.add_rule(
+                     'PREROUTING',
+                     '-m physdev --physdev-in tapfake_dev '
+                     '-j ACCEPT',
+                     comment=ic.TRUSTED_ACCEPT, top=False),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule(
                      'FORWARD',
@@ -1786,6 +1844,14 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.remove_rule('PREROUTING', mock.ANY),  # zone set
                  mock.call.remove_rule('PREROUTING', mock.ANY),  # zone set
                  mock.call.remove_rule('PREROUTING', mock.ANY),  # zone set
+                 mock.call.remove_rule(
+                     'PREROUTING',
+                     '-m physdev --physdev-out tapfake_dev '
+                     '-j ACCEPT'),
+                 mock.call.remove_rule(
+                     'PREROUTING',
+                     '-m physdev --physdev-in tapfake_dev '
+                     '-j ACCEPT'),
                  mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain')]
 
@@ -1926,6 +1992,14 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     comment=None),
                  mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
                                     comment=None),
+                 mock.call.add_rule('PREROUTING',
+                                    '-m physdev --physdev-out tapfake_dev '
+                                    '-j ACCEPT',
+                                    top=False, comment=ic.TRUSTED_ACCEPT),
+                 mock.call.add_rule('PREROUTING',
+                                    '-m physdev --physdev-in tapfake_dev '
+                                    '-j ACCEPT',
+                                    top=False, comment=ic.TRUSTED_ACCEPT),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-out tapfake_dev '
@@ -2019,6 +2093,14 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     comment=None),
                  mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
                                     comment=None),
+                 mock.call.add_rule('PREROUTING',
+                                    '-m physdev --physdev-out '
+                                    'tapfake_dev -j ACCEPT',
+                                    comment=ic.TRUSTED_ACCEPT, top=False),
+                 mock.call.add_rule('PREROUTING',
+                                    '-m physdev --physdev-in '
+                                    'tapfake_dev -j ACCEPT',
+                                    comment=ic.TRUSTED_ACCEPT, top=False),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-out tapfake_dev '
