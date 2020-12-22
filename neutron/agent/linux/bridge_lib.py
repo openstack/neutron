@@ -34,15 +34,17 @@ BRIDGE_PATH_FOR_DEVICE = BRIDGE_PORT_FS_FOR_DEVICE + '/bridge'
 
 
 def catch_exceptions(function):
-    """Catch bridge command exceptions and mimic $? output"""
+    """Catch bridge command exceptions
 
+    Returns True if succeeds and False if fails
+    """
     @functools.wraps(function)
     def decorated_function(self, *args, **kwargs):
         try:
             function(self, *args, **kwargs)
-            return 0
+            return True
         except (RuntimeError, OSError, netlink_exceptions.NetlinkError):
-            return 1
+            return False
 
     return decorated_function
 
