@@ -104,6 +104,43 @@ and 50-54.  The full list of valid DSCP marks is:
 0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 46, 48, 56
 
 
+L3 QoS support
+~~~~~~~~~~~~~~
+
+The Neutron L3 services have implemented their own QoS extensions. Currently
+only bandwidth limit QoS is provided. This is the L3 QoS extension list:
+
+* Floating IP bandwidth limit: the rate limit is applied per floating IP
+  address independently.
+
+* Gateway IP bandwidth limit: the rate limit is applied in the router namespace
+  gateway port (or in the SNAT namespace in case of DVR edge router). The rate
+  limit applies to the gateway IP; that means all traffic using this gateway IP
+  will be limited. This rate limit does not apply to the floating IP traffic.
+
+
+L3 services that provide QoS extensions:
+
+* L3 router: implements the rate limit using `Linux TC
+  <https://man7.org/linux/man-pages/man8/tc.8.html>`_.
+
+* OVN L3: implements the rate limit using the `OVN QoS metering rules
+  <https://man7.org/linux/man-pages/man8/ovn-nbctl.8.html#LOGICAL_SWITCH_QOS_RULE_COMMANDS>`_.
+
+
+The following table shows the L3 service, the QoS supported extension, and
+traffic directions (from the VM point of view) for **bandwidth limiting**.
+
+.. table:: **L3 service, supported extension, and traffic direction**
+
+    ====================  ===================  ===================
+     Rule \\ L3 service    L3 router            OVN L3
+    ====================  ===================  ===================
+     Floating IP           Egress \\ Ingress    Egress \\ Ingress
+     Gateway IP            Egress \\ Ingress    -
+    ====================  ===================  ===================
+
+
 Configuration
 ~~~~~~~~~~~~~
 
