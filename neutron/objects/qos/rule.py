@@ -32,6 +32,9 @@ DSCP_MARK = 'dscp_mark'
 
 def get_rules(obj_cls, context, qos_policy_id):
     all_rules = []
+    if not qos_policy_id:
+        return all_rules
+
     with obj_cls.db_context_reader(context):
         for rule_type in qos_consts.VALID_RULE_TYPES:
             rule_cls_name = 'Qos%sRule' % helpers.camelize(rule_type)
