@@ -10,10 +10,13 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
 
+DEPRECATED_REASON = (
+    "The segment API now supports system scope and default roles.")
 
 COLLECTION_PATH = '/segments'
 RESOURCE_PATH = '/segments/{id}'
@@ -21,21 +24,28 @@ RESOURCE_PATH = '/segments/{id}'
 
 rules = [
     policy.DocumentedRuleDefault(
-        'create_segment',
-        base.RULE_ADMIN_ONLY,
-        'Create a segment',
-        [
+        name='create_segment',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Create a segment',
+        operations=[
             {
                 'method': 'POST',
                 'path': COLLECTION_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_segment',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'get_segment',
-        base.RULE_ADMIN_ONLY,
-        'Get a segment',
-        [
+        name='get_segment',
+        check_str=base.SYSTEM_READER,
+        scope_types=['system'],
+        description='Get a segment',
+        operations=[
             {
                 'method': 'GET',
                 'path': COLLECTION_PATH,
@@ -44,29 +54,46 @@ rules = [
                 'method': 'GET',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_segment',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'update_segment',
-        base.RULE_ADMIN_ONLY,
-        'Update a segment',
-        [
+        name='update_segment',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update a segment',
+        operations=[
             {
                 'method': 'PUT',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_segment',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'delete_segment',
-        base.RULE_ADMIN_ONLY,
-        'Delete a segment',
-        [
+        name='delete_segment',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Delete a segment',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_segment',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 ]
 
