@@ -33,6 +33,7 @@ import oslo_messaging
 from oslo_service import service
 from oslo_utils import excutils
 
+from neutron._i18n import _
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
@@ -436,9 +437,9 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                       "%(interface)s",
                       {'bridge_name': bridge_name, 'interface': interface})
             bridge_device = bridge_lib.BridgeDevice.addbr(bridge_name)
-            if bridge_device.setfd(0):
+            if not bridge_device.setfd(0):
                 return
-            if bridge_device.disable_stp():
+            if not bridge_device.disable_stp():
                 return
             if bridge_device.link.set_up():
                 return
@@ -457,19 +458,14 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
 
         # Check if the interface is part of the bridge
         if not bridge_device.owns_interface(interface):
-            try:
-                # Check if the interface is attached to another bridge
-                bridge = bridge_lib.BridgeDevice.get_interface_bridge(
-                    interface)
-                if bridge:
-                    bridge.delif(interface)
+            # Check if the interface is attached to another bridge
+            bridge = bridge_lib.BridgeDevice.get_interface_bridge(interface)
+            if bridge:
+                bridge.delif(interface)
 
-                bridge_device.addif(interface)
-            except Exception as e:
-                LOG.error("Unable to add %(interface)s to %(bridge_name)s"
-                          "! Exception: %(e)s",
-                          {'interface': interface, 'bridge_name': bridge_name,
-                           'e': e})
+            if not bridge_device.addif(interface):
+                LOG.error("Unable to add %(interface)s to %(bridge_name)s",
+                          {'interface': interface, 'bridge_name': bridge_name})
                 return
         return bridge_name
 
@@ -562,7 +558,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                         'bridge_name': bridge_name}
                 LOG.debug("Adding device %(tap_device_name)s to bridge "
                           "%(bridge_name)s", data)
-                if bridge_lib.BridgeDevice(bridge_name).addif(tap_device_name):
+                if not bridge_lib.BridgeDevice(bridge_name).addif(
+                        tap_device_name):
                     return False
         else:
             data = {'tap_device_name': tap_device_name,
@@ -636,24 +633,24 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                       "%(bridge_name)s",
                       {'interface_name': interface_name,
                        'bridge_name': bridge_name})
-            try:
-                bridge_device.delif(interface_name)
+
+            if bridge_device.delif(interface_name):
                 LOG.debug("Done removing device %(interface_name)s from "
                           "bridge %(bridge_name)s",
                           {'interface_name': interface_name,
                            'bridge_name': bridge_name})
                 return True
-            except RuntimeError:
-                with excutils.save_and_reraise_exception() as ctxt:
-                    if not bridge_device.owns_interface(interface_name):
-                        # the exception was likely a side effect of the tap
-                        # being deleted by some other agent during handling
-                        ctxt.reraise = False
-                        LOG.debug("Cannot remove %(interface_name)s from "
-                                  "%(bridge_name)s. It is not on the bridge.",
-                                  {'interface_name': interface_name,
-                                   'bridge_name': bridge_name})
-                        return False
+            else:
+                if not bridge_device.owns_interface(interface_name):
+                    LOG.debug("Cannot remove %(interface_name)s from "
+                              "%(bridge_name)s. It is not on the bridge.",
+                              {'interface_name': interface_name,
+                               'bridge_name': bridge_name})
+                    return False
+                msg = _("Error deleting %(interface_name)s from bridge "
+                        "%(bridge_name)s") % {'interface_name': interface_name,
+                                              'bridge_name': bridge_name}
+                raise RuntimeError(msg)
         else:
             LOG.debug("Cannot remove device %(interface_name)s bridge "
                       "%(bridge_name)s does not exist",
