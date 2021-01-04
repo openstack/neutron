@@ -23,7 +23,7 @@ from neutron.db import port_numa_affinity_policy_db as pnap_db
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
-class PortNumaAffinityPolicyExtensionExtensionTestPlugin(
+class PortNumaAffinityPolicyExtensionTestPlugin(
         db_base_plugin_v2.NeutronDbPluginV2,
         pnap_db.PortNumaAffinityPolicyDbMixin):
     """Test plugin to mixin the port NUMA affinity policy extension."""
@@ -33,7 +33,7 @@ class PortNumaAffinityPolicyExtensionExtensionTestPlugin(
     def create_port(self, context, port):
         with db_api.CONTEXT_WRITER.using(context):
             new_port = super(
-                PortNumaAffinityPolicyExtensionExtensionTestPlugin,
+                PortNumaAffinityPolicyExtensionTestPlugin,
                 self).create_port(context, port)
             self._process_create_port(context, port['port'], new_port)
         return new_port
@@ -41,7 +41,7 @@ class PortNumaAffinityPolicyExtensionExtensionTestPlugin(
     def update_port(self, context, id, port):
         with db_api.CONTEXT_WRITER.using(context):
             updated_port = super(
-                PortNumaAffinityPolicyExtensionExtensionTestPlugin,
+                PortNumaAffinityPolicyExtensionTestPlugin,
                 self).update_port(context, id, port)
             updated_port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_UNBOUND
             self._process_update_port(context, port['port'], updated_port)
@@ -49,14 +49,14 @@ class PortNumaAffinityPolicyExtensionExtensionTestPlugin(
 
 
 @ddt.ddt
-class PortNumaAffinityPolicyExtensionExtensionTestCase(
+class PortNumaAffinityPolicyExtensionTestCase(
          test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     """Test API extension numa_affinity_policy attributes."""
 
     def setUp(self, *args):
         plugin = ('neutron.tests.unit.extensions.test_port_numa_affinity_'
-                  'policy.PortNumaAffinityPolicyExtensionExtensionTestPlugin')
-        super(PortNumaAffinityPolicyExtensionExtensionTestCase,
+                  'policy.PortNumaAffinityPolicyExtensionTestPlugin')
+        super(PortNumaAffinityPolicyExtensionTestCase,
               self).setUp(plugin=plugin)
 
     def _create_and_check_port_nap(self, numa_affinity_policy):
