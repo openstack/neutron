@@ -916,6 +916,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
         fip_objs = l3_obj.FloatingIP.get_objects(context, router_id=router_id)
         pf_plugin = directory.get_plugin(plugin_constants.PORTFORWARDING)
+        subnet_port_ids = [
+            port.id for port in
+            port_obj.Port.get_ports_allocated_by_subnet_id(
+                context, subnet_id=subnet['id'])]
         if pf_plugin:
             fip_ids = [fip_obj.id for fip_obj in fip_objs]
             pf_objs = port_forwarding.PortForwarding.get_objects(
@@ -923,14 +927,16 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             for pf_obj in pf_objs:
                 if (pf_obj.internal_ip_address and
                         pf_obj.internal_ip_address in subnet_cidr):
-                    raise l3_exc.RouterInterfaceInUseByFloatingIP(
-                        router_id=router_id, subnet_id=subnet_id)
+                    if pf_obj.internal_port_id in subnet_port_ids:
+                        raise l3_exc.RouterInterfaceInUseByFloatingIP(
+                            router_id=router_id, subnet_id=subnet_id)
 
         for fip_obj in fip_objs:
             if (fip_obj.fixed_ip_address and
                     fip_obj.fixed_ip_address in subnet_cidr):
-                raise l3_exc.RouterInterfaceInUseByFloatingIP(
-                    router_id=router_id, subnet_id=subnet_id)
+                if fip_obj.fixed_port_id in subnet_port_ids:
+                    raise l3_exc.RouterInterfaceInUseByFloatingIP(
+                        router_id=router_id, subnet_id=subnet_id)
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
@@ -974,11 +980,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _remove_interface_by_subnet(self, context,
                                     router_id, subnet_id, owner):
-        self._confirm_router_interface_not_in_use(
-            context, router_id, subnet_id)
         subnet = self._core_plugin.get_subnet(context, subnet_id)
         ports = port_obj.Port.get_ports_by_router_and_network(
             context, router_id, owner, subnet['network_id'])
+        if ports:
+            self._confirm_router_interface_not_in_use(
+                context, router_id, subnet_id)
 
         for p in ports:
             try:
