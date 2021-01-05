@@ -160,8 +160,6 @@ def get_connection(db_class, trigger=None, driver=None, binding_events=False):
 class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def __init__(self, connection):
         super(OvsdbNbOvnIdl, self).__init__(connection)
-        self.idl._session.reconnect.set_probe_interval(
-            cfg.get_ovn_ovsdb_probe_interval())
 
     @property
     def nb_global(self):
@@ -722,10 +720,6 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
 class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
     def __init__(self, connection):
         super(OvsdbSbOvnIdl, self).__init__(connection)
-        # TODO(twilson) This direct access of the idl should be removed in
-        # favor of a backend-agnostic method
-        self.idl._session.reconnect.set_probe_interval(
-            cfg.get_ovn_ovsdb_probe_interval())
 
     def _get_chassis_physnets(self, chassis):
         bridge_mappings = chassis.external_ids.get('ovn-bridge-mappings', '')

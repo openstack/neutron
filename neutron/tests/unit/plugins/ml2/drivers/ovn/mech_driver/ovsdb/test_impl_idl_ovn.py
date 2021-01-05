@@ -19,7 +19,6 @@ import mock
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
-from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.tests import base
 from neutron.tests.unit import fake_resources as fakes
@@ -397,21 +396,6 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         fake_address_sets = TestNBImplIdlOvn.fake_set['address_sets']
         self._load_ovsdb_fake_rows(self.address_set_table, fake_address_sets)
 
-    @mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'ovsdb_connection', None)
-    @mock.patch.object(impl_idl_ovn, 'get_connection', mock.Mock())
-    def test_setting_ovsdb_probe_timeout_default_value(self):
-        inst = impl_idl_ovn.OvsdbNbOvnIdl(mock.Mock())
-        inst.idl._session.reconnect.set_probe_interval.assert_called_with(
-            60000)
-
-    @mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'ovsdb_connection', None)
-    @mock.patch.object(impl_idl_ovn, 'get_connection', mock.Mock())
-    @mock.patch.object(ovn_conf, 'get_ovn_ovsdb_probe_interval')
-    def test_setting_ovsdb_probe_timeout(self, mock_get_probe_interval):
-        mock_get_probe_interval.return_value = 5000
-        inst = impl_idl_ovn.OvsdbNbOvnIdl(mock.Mock())
-        inst.idl._session.reconnect.set_probe_interval.assert_called_with(5000)
-
     def test_get_all_logical_switches_with_ports(self):
         # Test empty
         mapping = self.nb_ovn_idl.get_all_logical_switches_with_ports()
@@ -774,53 +758,3 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self._tables.pop('Port_Group', None)
         port_groups = self.nb_ovn_idl.get_port_groups()
         self.assertEqual({}, port_groups)
-
-
-class TestSBImplIdlOvn(TestDBImplIdlOvn):
-
-    fake_set = {
-        'chassis': [
-            {'name': 'host-1', 'hostname': 'host-1.localdomain.com',
-             'external_ids': {'ovn-bridge-mappings':
-                              'public:br-ex,private:br-0'}},
-            {'name': 'host-2', 'hostname': 'host-2.localdomain.com',
-             'external_ids': {'ovn-bridge-mappings':
-                              'public:br-ex,public2:br-ex'}},
-            {'name': 'host-3', 'hostname': 'host-3.localdomain.com',
-             'external_ids': {'ovn-bridge-mappings':
-                              'public:br-ex'}}],
-    }
-
-    def setUp(self):
-        super(TestSBImplIdlOvn, self).setUp()
-
-        self.chassis_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
-        self._tables = {}
-        self._tables['Chassis'] = self.chassis_table
-
-        with mock.patch.object(impl_idl_ovn, 'get_connection',
-                               return_value=mock.Mock()):
-            impl_idl_ovn.OvsdbSbOvnIdl.ovsdb_connection = None
-            self.sb_ovn_idl = impl_idl_ovn.OvsdbSbOvnIdl(mock.Mock())
-
-        self.sb_ovn_idl.idl.tables = self._tables
-
-    def _load_sb_db(self):
-        # Load Chassis
-        fake_chassis = TestSBImplIdlOvn.fake_set['chassis']
-        self._load_ovsdb_fake_rows(self.chassis_table, fake_chassis)
-
-    @mock.patch.object(impl_idl_ovn.OvsdbSbOvnIdl, 'ovsdb_connection', None)
-    @mock.patch.object(impl_idl_ovn, 'get_connection', mock.Mock())
-    def test_setting_ovsdb_probe_timeout_default_value(self):
-        inst = impl_idl_ovn.OvsdbSbOvnIdl(mock.Mock())
-        inst.idl._session.reconnect.set_probe_interval.assert_called_with(
-            60000)
-
-    @mock.patch.object(impl_idl_ovn.OvsdbSbOvnIdl, 'ovsdb_connection', None)
-    @mock.patch.object(impl_idl_ovn, 'get_connection', mock.Mock())
-    @mock.patch.object(ovn_conf, 'get_ovn_ovsdb_probe_interval')
-    def test_setting_ovsdb_probe_timeout(self, mock_get_probe_interval):
-        mock_get_probe_interval.return_value = 5000
-        inst = impl_idl_ovn.OvsdbSbOvnIdl(mock.Mock())
-        inst.idl._session.reconnect.set_probe_interval.assert_called_with(5000)
