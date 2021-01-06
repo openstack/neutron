@@ -27,6 +27,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import ipam_backend_mixin
 from neutron.db import portbindings_db
 from neutron.objects import subnet as subnet_obj
+from neutron.services.segments import db as segments_db
 from neutron.tests import base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -346,7 +347,8 @@ class TestIpamBackendMixin(base.BaseTestCase):
 
 
 class TestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
-                 portbindings_db.PortBindingMixin):
+                 portbindings_db.PortBindingMixin,
+                 segments_db.SegmentDbMixin):
     __native_pagination_support = True
     __native_sorting_support = True
 

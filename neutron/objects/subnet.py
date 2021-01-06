@@ -20,6 +20,7 @@ from neutron_lib.utils import net as net_utils
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import and_, or_
+from sqlalchemy.sql import exists
 
 from neutron.db.models import dns as dns_models
 from neutron.db.models import segment as segment_model
@@ -489,6 +490,32 @@ class Subnet(base.NeutronDbObject):
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 1):  # version 1.1 adds "dns_publish_fixed_ip"
             primitive.pop('dns_publish_fixed_ip', None)
+
+    @classmethod
+    def get_subnet_segment_ids(cls, context, network_id,
+                               ignored_service_type=None,
+                               subnet_id=None):
+        query = context.session.query(cls.db_model.segment_id)
+        query = query.filter(cls.db_model.network_id == network_id)
+
+        # NOTE(zigo): Subnet who hold the type ignored_service_type should be
+        # removed from the segment list, as they can be part of a segmented
+        # network but they don't have a segment ID themselves.
+        if ignored_service_type:
+            service_type_model = SubnetServiceType.db_model
+            query = query.filter(~exists().where(and_(
+                     cls.db_model.id == service_type_model.subnet_id,
+                     service_type_model.service_type == ignored_service_type)))
+
+        # (zigo): When a subnet is created, at this point in the code,
+        # its service_types aren't populated in the subnet_service_types
+        # object, so the subnet to create isn't filtered by the ~exists
+        # above. So we just filter out the subnet to create completely
+        # from the result set.
+        if subnet_id:
+            query = query.filter(cls.db_model.id != subnet_id)
+
+        return [segment_id for (segment_id,) in query.all()]
 
 
 @base.NeutronObjectRegistry.register
