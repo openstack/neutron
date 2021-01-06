@@ -31,7 +31,6 @@ greenlet==0.4.14
 httplib2==0.9.1
 imagesize==0.7.1
 iso8601==0.1.11
-isort==4.3.21
 Jinja2==2.10
 jmespath==0.9.0
 jsonpatch==1.16
@@ -109,7 +108,6 @@ python-novaclient==9.1.0
 python-subunit==1.0.0
 pytz==2013.6
 PyYAML==5.3.1
-reno==3.1.0
 repoze.lru==0.7
 requests==2.14.2
 requestsexceptions==1.2.0
