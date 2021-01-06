@@ -16,6 +16,7 @@ from ovsdbapp import constants as ovsdbapp_const
 
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib import constants as const
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 
@@ -182,14 +183,23 @@ class OVNPortForwarding(object):
                 for pf_payload in payload:
                     self._handler.port_forwarding_created(ovn_txn, ovn_nb,
                         pf_payload.current_pf)
+                    self._l3_plugin.update_floatingip_status(
+                        context, pf_payload.current_pf.floatingip_id,
+                        const.FLOATINGIP_STATUS_ACTIVE)
             elif event_type == events.AFTER_UPDATE:
                 for pf_payload in payload:
                     self._handler.port_forwarding_updated(ovn_txn, ovn_nb,
                         pf_payload.current_pf, pf_payload.original_pf)
             elif event_type == events.AFTER_DELETE:
                 for pf_payload in payload:
+                    pfs = _pf_plugin.get_floatingip_port_forwardings(
+                        context, pf_payload.original_pf.floatingip_id)
                     self._handler.port_forwarding_deleted(ovn_txn, ovn_nb,
                         pf_payload.original_pf)
+                    if not pfs:
+                        self._l3_plugin.update_floatingip_status(
+                            context, pf_payload.original_pf.floatingip_id,
+                            const.FLOATINGIP_STATUS_DOWN)
 
             # Collect the revision numbers of all floating ips visited and
             # update the corresponding load balancer entries affected.
