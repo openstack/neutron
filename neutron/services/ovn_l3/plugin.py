@@ -12,11 +12,6 @@
 #    under the License.
 #
 
-from neutron.db import dns_db
-from neutron.db import extraroute_db
-from neutron.db import l3_gwmode_db
-from neutron.db.models import l3 as l3_models
-from neutron.quota import resource_registry
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
@@ -37,14 +32,18 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import extensions
 from neutron.common.ovn import utils
 from neutron.db.availability_zone import router as router_az_db
+from neutron.db import dns_db
+from neutron.db import extraroute_db
 from neutron.db import l3_fip_port_details
+from neutron.db import l3_gwmode_db
+from neutron.db.models import l3 as l3_models
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
+from neutron.quota import resource_registry
 from neutron.scheduler import l3_ovn_scheduler
+from neutron.services.ovn_l3 import exceptions as ovn_l3_exc
 from neutron.services.portforwarding.drivers.ovn import driver \
     as port_forwarding
-
-from neutron.services.ovn_l3 import exceptions as ovn_l3_exc
 
 
 LOG = log.getLogger(__name__)
