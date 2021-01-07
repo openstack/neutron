@@ -60,7 +60,7 @@ def encode_body(body):
 class WorkerService(neutron_worker.NeutronBaseWorker):
     """Wraps a worker to be handled by ProcessLauncher"""
     def __init__(self, service, application, set_proctitle, disable_ssl=False,
-                 worker_process_count=0):
+                 worker_process_count=0, desc=None):
         super(WorkerService, self).__init__(worker_process_count,
                                             set_proctitle)
 
@@ -68,8 +68,10 @@ class WorkerService(neutron_worker.NeutronBaseWorker):
         self._application = application
         self._disable_ssl = disable_ssl
         self._server = None
+        self.desc = desc
 
     def start(self, desc=None):
+        desc = desc or self.desc
         super(WorkerService, self).start(desc=desc)
         # When api worker is stopped it kills the eventlet wsgi server which
         # internally closes the wsgi server socket object. This server socket
@@ -172,12 +174,12 @@ class Server(object):
                                         self._port,
                                         backlog=backlog)
 
-        self._launch(application, workers)
+        self._launch(application, workers, desc)
 
     def _launch(self, application, workers=0, desc=None):
         set_proctitle = "off" if desc is None else CONF.setproctitle
         service = WorkerService(self, application, set_proctitle,
-                                self.disable_ssl, workers)
+                                self.disable_ssl, workers, desc)
         if workers < 1:
             # The API service should run in the current process.
             self._server = service
