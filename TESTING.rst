@@ -236,6 +236,12 @@ reproducible way to verify code while you're still writing it.
 
 More details can be found in :ref:`FullStack Testing<fullstack_testing>` guide.
 
+Integration - tempest tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Tempest is the integration test suit of Openstack, more details can be found in
+:ref:`Tempest testing<tempest_testing>`
+
 API Tests
 ~~~~~~~~~
 
