@@ -319,7 +319,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             attrs={'name': 'ls2',
                    'other_config': {
                         constants.MCAST_SNOOP: 'true',
-                        constants.MCAST_FLOOD_UNREGISTERED: 'true'}})
+                        constants.MCAST_FLOOD_UNREGISTERED: 'false'}})
 
         nb_idl.ls_list.return_value.execute.return_value = [ls0, ls1, ls2]
 
@@ -332,11 +332,11 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             mock.call('Logical_Switch', 'ls0',
                       ('other_config', {
                            constants.MCAST_SNOOP: 'true',
-                           constants.MCAST_FLOOD_UNREGISTERED: 'true'})),
+                           constants.MCAST_FLOOD_UNREGISTERED: 'false'})),
             mock.call('Logical_Switch', 'ls1',
                       ('other_config', {
                            constants.MCAST_SNOOP: 'true',
-                           constants.MCAST_FLOOD_UNREGISTERED: 'true'})),
+                           constants.MCAST_FLOOD_UNREGISTERED: 'false'})),
         ]
         nb_idl.db_set.assert_has_calls(expected_calls)
 
