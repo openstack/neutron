@@ -1,0 +1,10 @@
+---
+upgrade:
+  - |
+    Address group now has standard attributes. In the alembic migration,
+    the original ``description`` column of ``address_groups`` is dropped after
+    data migrated to the ``standardattributes`` table. The ``description``
+    field is also removed from the address group object and DB model. This
+    change requires a restart of ``neutron-server`` service after the DB
+    migration otherwise users will get server errors when making calls to
+    address group APIs.

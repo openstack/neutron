@@ -10,10 +10,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import address_group as ag
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
+
+from neutron.db import standard_attr
 
 
 class AddressAssociation(model_base.BASEV2):
@@ -26,16 +29,18 @@ class AddressAssociation(model_base.BASEV2):
                                  sa.ForeignKey("address_groups.id",
                                                ondelete="CASCADE"),
                                  nullable=False, primary_key=True)
+    revises_on_change = ('address_groups',)
 
 
-class AddressGroup(model_base.BASEV2, model_base.HasId, model_base.HasProject):
+class AddressGroup(standard_attr.HasStandardAttributes,
+                   model_base.BASEV2, model_base.HasId, model_base.HasProject):
     """Represents a neutron address group."""
     __tablename__ = "address_groups"
 
     name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
-    description = sa.Column(sa.String(db_const.LONG_DESCRIPTION_FIELD_SIZE))
     addresses = orm.relationship(AddressAssociation,
                                  backref=orm.backref('address_groups',
                                                      load_on_pending=True),
                                  lazy='subquery',
                                  cascade='all, delete-orphan')
+    api_collections = [ag.ALIAS]
