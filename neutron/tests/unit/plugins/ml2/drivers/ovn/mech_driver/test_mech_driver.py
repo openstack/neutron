@@ -683,7 +683,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
             ovn_utils.ovn_name(net['id']), external_ids=mock.ANY,
             may_exist=True,
             other_config={ovn_const.MCAST_SNOOP: value,
-                          ovn_const.MCAST_FLOOD_UNREGISTERED: value})
+                          ovn_const.MCAST_FLOOD_UNREGISTERED: 'false'})
 
     def test_create_network_igmp_snoop_enabled(self):
         self._create_network_igmp_snoop(enabled=True)
