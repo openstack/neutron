@@ -141,8 +141,10 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         * Check that the MAC_Binding entry gets deleted.
         """
         net_name = 'network1'
-        self._make_network(self.fmt, net_name, True)
         row_event = WaitForDataPathBindingCreateEvent(net_name)
+        self.mech_driver._sb_ovn.idl.notify_handler.watch_event(row_event)
+        self._make_network(self.fmt, net_name, True)
+        self.assertTrue(row_event.wait())
         dp = self.sb_api.db_find(
             'Datapath_Binding',
             ('external_ids', '=', {'name2': net_name})).execute()
