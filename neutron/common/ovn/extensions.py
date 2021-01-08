@@ -58,7 +58,7 @@ from neutron_lib import constants
 # on external imports.
 
 # NOTE(russellb) If you update these lists, please also update
-# doc/source/features.rst and the current release note.
+# doc/source/admin/ovn/features.rst and the current release note.
 ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     l3.ALIAS,
     extraroute.ALIAS,
