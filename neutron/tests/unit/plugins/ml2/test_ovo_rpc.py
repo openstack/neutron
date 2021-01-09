@@ -39,14 +39,24 @@ class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
         self.ovo_push_interface_p.stop()
         self.plugin.ovo_notifier = ovo_rpc.OVOServerRpcInterface()
 
-    def _assert_object_received(self, ovotype, oid=None, event=None):
+    def _assert_object_received(self, ovotype, oid=None, event=None,
+                                count=1):
         self.plugin.ovo_notifier.wait()
+        match = 0
         for obj, evt in self.received:
             if isinstance(obj, ovotype):
                 if (obj.id == oid or not oid) and (not event or event == evt):
-                    return obj
-        self.fail("Could not find OVO %s with ID %s in %s" %
-                  (ovotype, oid, self.received))
+                    match += 1
+                    if count == 1:
+                        return obj
+        if count > 1:
+            self.assertEqual(
+                match, count,
+                "Could not find match %s for OVO %s with ID %s in %s" %
+                (match, ovotype, oid, self.received))
+            return
+        self.fail("Could not find OVO %s with ID %s or event %s in %s" %
+                  (ovotype, oid, event, self.received))
 
     def test_network_lifecycle(self):
         with self.network() as n:
@@ -112,11 +122,19 @@ class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
                                'addresses': ['10.0.0.1/32',
                                              '2001:db8::/32']}})
         self._assert_object_received(
-            address_group.AddressGroup, ag['id'], 'updated')
+            address_group.AddressGroup, ag['id'], 'updated', 2)
         self.plugin.update_address_group(self.ctx, ag['id'],
             {'address_group': {'name': 'an-address-group-other-name'}})
         self._assert_object_received(
-            address_group.AddressGroup, ag['id'], 'updated')
+            address_group.AddressGroup, ag['id'], 'updated', 3)
+        self.plugin.add_addresses(self.ctx, ag['id'],
+            {'addresses': ['10.0.0.2/32']})
+        self._assert_object_received(
+            address_group.AddressGroup, ag['id'], 'updated', 4)
+        self.plugin.remove_addresses(self.ctx, ag['id'],
+            {'addresses': ['10.0.0.1/32']})
+        self._assert_object_received(
+            address_group.AddressGroup, ag['id'], 'updated', 5)
         self.plugin.delete_address_group(self.ctx, ag['id'])
         self._assert_object_received(
             address_group.AddressGroup, ag['id'], 'deleted')

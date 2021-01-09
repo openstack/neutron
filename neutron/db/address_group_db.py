@@ -108,6 +108,12 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
             addr_assoc = ag_obj.AddressAssociation(context, **args)
             addr_assoc.create()
         ag.update()  # reload synthetic fields
+        # TODO(hangyang) this notification should be updated to publish when
+        # the callback handler handle_event, class _ObjectChangeHandler in
+        # neutron.plugins.ml2.ovo_rpc is updated to receive notifications with
+        # new style payload objects as argument.
+        registry.notify(ADDRESS_GROUP, events.AFTER_UPDATE, self,
+                        context=context, address_group_id=ag.id)
         return {'address_group': self._make_address_group_dict(ag)}
 
     def remove_addresses(self, context, address_group_id, addresses):
@@ -121,6 +127,12 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
             ag_obj.AddressAssociation.delete_objects(
                 context, address_group_id=address_group_id, address=addr)
         ag.update()  # reload synthetic fields
+        # TODO(hangyang) this notification should be updated to publish when
+        # the callback handler handle_event, class _ObjectChangeHandler in
+        # neutron.plugins.ml2.ovo_rpc is updated to receive notifications with
+        # new style payload objects as argument.
+        registry.notify(ADDRESS_GROUP, events.AFTER_UPDATE, self,
+                        context=context, address_group_id=ag.id)
         return {'address_group': self._make_address_group_dict(ag)}
 
     def create_address_group(self, context, address_group):
@@ -132,15 +144,15 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
                 'description': fields['description']}
         ag = ag_obj.AddressGroup(context, **args)
         ag.create()
-        if fields.get('addresses') is not constants.ATTR_NOT_SPECIFIED:
-            self.add_addresses(context, ag.id, fields)
-        ag.update()  # reload synthetic fields
         # TODO(mlavalle) this notification should be updated to publish when
         # the callback handler handle_event, class _ObjectChangeHandler in
         # neutron.plugins.ml2.ovo_rpc is updated to receive notifications with
         # new style payload objects as argument.
         registry.notify(ADDRESS_GROUP, events.AFTER_CREATE, self,
                         context=context, address_group_id=ag.id)
+        if fields.get('addresses') is not constants.ATTR_NOT_SPECIFIED:
+            self.add_addresses(context, ag.id, fields)
+        ag.update()  # reload synthetic fields
         return self._make_address_group_dict(ag)
 
     def update_address_group(self, context, id, address_group):
