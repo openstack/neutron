@@ -27,7 +27,6 @@ from ovs.stream import Stream
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp.backend.ovs_idl import event as row_event
 from ovsdbapp.backend.ovs_idl import idlutils
-from ovsdbapp import event
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import exceptions
@@ -358,7 +357,7 @@ class NeutronPgDropPortGroupCreated(row_event.WaitEvent):
         self.event_name = 'PortGroupCreated'
 
 
-class OvnDbNotifyHandler(event.RowEventHandler):
+class OvnDbNotifyHandler(row_event.RowEventHandler):
     def __init__(self, driver):
         super(OvnDbNotifyHandler, self).__init__()
         self.driver = driver
@@ -374,7 +373,7 @@ class Ml2OvnIdlBase(connection.OvsdbIdl):
 
 class BaseOvnIdl(Ml2OvnIdlBase):
     def __init__(self, remote, schema):
-        self.notify_handler = event.RowEventHandler()
+        self.notify_handler = row_event.RowEventHandler()
         super(BaseOvnIdl, self).__init__(remote, schema)
 
     @classmethod
