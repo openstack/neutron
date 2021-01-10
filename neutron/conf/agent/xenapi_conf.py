@@ -17,6 +17,7 @@ from oslo_config import cfg
 
 from neutron._i18n import _
 
+XENAPI_CONF_SECTION = 'xenapi'
 
 XENAPI_DEPRECATION_REASON = ('XenAPI support has been removed from Nova, it '
                              'will be removed in X.')
@@ -40,3 +41,7 @@ XENAPI_OPTS = [
                deprecated_since='Wallaby',
                deprecated_reason=XENAPI_DEPRECATION_REASON)
 ]
+
+
+def register_xenapi_opts(cfg=cfg.CONF):
+    cfg.register_opts(XENAPI_OPTS, group=XENAPI_CONF_SECTION)
