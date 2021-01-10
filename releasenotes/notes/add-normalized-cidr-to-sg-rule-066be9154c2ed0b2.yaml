@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Security group rule has now new, read only attribute ``normalized_cidr``
+    which contains network address from the CIDR provided in the
+    ``remote_ip_prefix`` attribute.
+    This new attribute shows actual CIDR used by backend firewall drivers.

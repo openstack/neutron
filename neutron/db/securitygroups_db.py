@@ -667,6 +667,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         return sg_id
 
     def _make_security_group_rule_dict(self, security_group_rule, fields=None):
+
+        # TODO(slaweq): switch this to use OVO instead of db object
         res = {'id': security_group_rule['id'],
                'tenant_id': security_group_rule['tenant_id'],
                'security_group_id': security_group_rule['security_group_id'],
@@ -678,6 +680,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                'remote_ip_prefix': security_group_rule['remote_ip_prefix'],
                'remote_address_group_id': security_group_rule[
                    'remote_address_group_id'],
+               'normalized_cidr': self._get_normalized_cidr_from_rule(
+                   security_group_rule),
                'remote_group_id': security_group_rule['remote_group_id'],
                'standard_attr_id': security_group_rule.standard_attr.id,
                }
@@ -685,6 +689,15 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         resource_extend.apply_funcs(ext_sg.SECURITYGROUPRULES, res,
                                     security_group_rule)
         return db_utils.resource_fields(res, fields)
+
+    @staticmethod
+    def _get_normalized_cidr_from_rule(rule):
+        normalized_cidr = None
+        remote_ip_prefix = rule.get('remote_ip_prefix')
+        if remote_ip_prefix:
+            normalized_cidr = str(
+                net.AuthenticIPNetwork(remote_ip_prefix).cidr)
+        return normalized_cidr
 
     def _rule_to_key(self, rule):
         def _normalize_rule_value(key, value):

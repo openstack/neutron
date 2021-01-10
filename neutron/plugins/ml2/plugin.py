@@ -48,6 +48,7 @@ from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import rbac_address_scope
 from neutron_lib.api.definitions import rbac_security_groups as rbac_sg_apidef
 from neutron_lib.api.definitions import rbac_subnetpool
+from neutron_lib.api.definitions import security_groups_normalized_cidr
 from neutron_lib.api.definitions import security_groups_port_filtering
 from neutron_lib.api.definitions import security_groups_remote_address_group
 from neutron_lib.api.definitions import stateful_security_group
@@ -206,6 +207,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     default_subnetpools.ALIAS,
                                     "subnet-service-types",
                                     ip_substring_port_filtering.ALIAS,
+                                    security_groups_normalized_cidr.ALIAS,
                                     security_groups_port_filtering.ALIAS,
                                     security_groups_remote_address_group.ALIAS,
                                     empty_string_filtering.ALIAS,
