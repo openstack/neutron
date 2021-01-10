@@ -20,6 +20,7 @@ from neutron_lib import constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
+from pyroute2.netlink import exceptions as netlink_exceptions
 
 from neutron.agent.linux import bridge_lib
 from neutron.conf.agent import l2_ext_fdb_population
@@ -70,13 +71,14 @@ class FdbPopulationAgentExtension(
             # update macs already in the physical interface's FDB table
             for device in devices:
                 try:
-                    _stdout = bridge_lib.FdbInterface.show(device)
-                except RuntimeError as e:
+                    rules = bridge_lib.FdbInterface.show(dev=device)
+                except (OSError, netlink_exceptions.NetlinkError) as e:
                     LOG.warning(
                         'Unable to find FDB Interface %(device)s. '
                         'Exception: %(e)s', {'device': device, 'e': e})
                     continue
-                self.device_to_macs[device] = _stdout.split()[::3]
+                self.device_to_macs[device] = [rule['mac'] for rule in
+                                               rules[device]]
 
         def update_port(self, device, port_id, mac):
             # check if device is updated
@@ -90,14 +92,9 @@ class FdbPopulationAgentExtension(
             # check if rule for mac already exists
             if mac in self.device_to_macs[device]:
                 return
-            try:
-                bridge_lib.FdbInterface.add(mac, device)
-            except RuntimeError as e:
-                LOG.warning(
-                    'Unable to add mac %(mac)s '
-                    'to FDB Interface %(device)s. '
-                    'Exception: %(e)s',
-                    {'mac': mac, 'device': device, 'e': e})
+            if not bridge_lib.FdbInterface.add(mac, device):
+                LOG.warning('Unable to add mac %(mac)s to FDB Interface '
+                            '%(device)s.', {'mac': mac, 'device': device})
                 return
             self.device_to_macs[device].append(mac)
 
@@ -110,14 +107,10 @@ class FdbPopulationAgentExtension(
                 return
             for device in devices:
                 if mac in self.device_to_macs[device]:
-                    try:
-                        bridge_lib.FdbInterface.delete(mac, device)
-                    except RuntimeError as e:
-                        LOG.warning(
-                            'Unable to delete mac %(mac)s '
-                            'from FDB Interface %(device)s. '
-                            'Exception: %(e)s',
-                            {'mac': mac, 'device': device, 'e': e})
+                    if not bridge_lib.FdbInterface.delete(mac, device):
+                        LOG.warning('Unable to delete mac %(mac)s from FDB '
+                                    'Interface %(device)s.',
+                                    {'mac': mac, 'device': device})
                         return
                     self.device_to_macs[device].remove(mac)
                     del self.portid_to_mac[port_id]

@@ -847,60 +847,33 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                   vxlan_mcast_supported=False)
 
     def _check_vxlan_ucast_supported(
-            self, expected, l2_population, iproute_arg_supported, fdb_append):
+            self, expected, l2_population, fdb_append):
         cfg.CONF.set_override('l2_population', l2_population, 'VXLAN')
         with mock.patch.object(ip_lib, 'device_exists', return_value=False),\
                 mock.patch.object(ip_lib, 'vxlan_in_use', return_value=False),\
-                mock.patch.object(self.lbm,
-                                  'delete_interface',
-                                  return_value=None),\
-                mock.patch.object(self.lbm,
-                                  'ensure_vxlan',
-                                  return_value=None),\
-                mock.patch.object(
-                    ip_lib.IpNetnsCommand,
-                    'execute',
-                    side_effect=None if fdb_append else RuntimeError()),\
-                mock.patch.object(ip_lib,
-                                  'iproute_arg_supported',
-                                  return_value=iproute_arg_supported):
+                mock.patch.object(self.lbm, 'delete_interface'),\
+                mock.patch.object(self.lbm, 'ensure_vxlan',
+                                  return_value=None), \
+                mock.patch.object(bridge_lib.FdbInterface, 'append',
+                                  return_value=fdb_append):
             self.assertEqual(expected, self.lbm.vxlan_ucast_supported())
 
     def test_vxlan_ucast_supported(self):
         self._check_vxlan_ucast_supported(
-            expected=False,
-            l2_population=False, iproute_arg_supported=True, fdb_append=True)
+            expected=False, l2_population=False, fdb_append=mock.ANY)
         self._check_vxlan_ucast_supported(
-            expected=False,
-            l2_population=True, iproute_arg_supported=False, fdb_append=True)
+            expected=False, l2_population=True, fdb_append=False)
         self._check_vxlan_ucast_supported(
-            expected=False,
-            l2_population=True, iproute_arg_supported=True, fdb_append=False)
-        self._check_vxlan_ucast_supported(
-            expected=True,
-            l2_population=True, iproute_arg_supported=True, fdb_append=True)
+            expected=True, l2_population=True, fdb_append=True)
 
-    def _check_vxlan_mcast_supported(
-            self, expected, vxlan_group, iproute_arg_supported):
+    def _check_vxlan_mcast_supported(self, expected, vxlan_group):
         cfg.CONF.set_override('vxlan_group', vxlan_group, 'VXLAN')
-        with mock.patch.object(
-                ip_lib, 'iproute_arg_supported',
-                return_value=iproute_arg_supported):
-            self.assertEqual(expected, self.lbm.vxlan_mcast_supported())
+        self.assertEqual(expected, self.lbm.vxlan_mcast_supported())
 
     def test_vxlan_mcast_supported(self):
-        self._check_vxlan_mcast_supported(
-            expected=False,
-            vxlan_group='',
-            iproute_arg_supported=True)
-        self._check_vxlan_mcast_supported(
-            expected=False,
-            vxlan_group='224.0.0.1',
-            iproute_arg_supported=False)
-        self._check_vxlan_mcast_supported(
-            expected=True,
-            vxlan_group='224.0.0.1',
-            iproute_arg_supported=True)
+        self._check_vxlan_mcast_supported(expected=False, vxlan_group='')
+        self._check_vxlan_mcast_supported(expected=True,
+                                          vxlan_group='224.0.0.1')
 
     def _test_ensure_port_admin_state(self, admin_state):
         port_id = 'fake_id'
@@ -975,6 +948,16 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
         segment.segmentation_id = 1
         self.lb_rpc.network_map['net_id'] = segment
         cfg.CONF.set_default('host', 'host')
+        self.mock_add = mock.patch.object(
+            bridge_lib.FdbInterface, 'add').start()
+        self.mock_append = mock.patch.object(
+            bridge_lib.FdbInterface, 'append').start()
+        self.mock_replace = mock.patch.object(
+            bridge_lib.FdbInterface, 'replace').start()
+        self.mock_delete = mock.patch.object(
+            bridge_lib.FdbInterface, 'delete').start()
+        self.mock_show = mock.patch.object(
+            bridge_lib.FdbInterface, 'show').start()
 
     def test_network_delete_mapped_net(self):
         mock_net = mock.Mock()
@@ -1070,26 +1053,14 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                         'network_type': 'vxlan',
                         'segment_id': 1}}
 
-        with mock.patch.object(ip_lib.IpNetnsCommand, 'execute',
-                               return_value='') as execute_fn, \
-                mock.patch.object(ip_lib, 'add_neigh_entry',
-                                  return_value='') as add_fn:
+        with mock.patch.object(ip_lib, 'add_neigh_entry',
+                               return_value='') as add_fn:
             self.lb_rpc.fdb_add(None, fdb_entries)
-
-            expected = [
-                mock.call(['bridge', 'fdb', 'show', 'dev', 'vxlan-1'],
-                          run_as_root=True),
-                mock.call(['bridge', 'fdb', 'add',
-                           constants.FLOODING_ENTRY[0],
-                           'dev', 'vxlan-1', 'dst', 'agent_ip'],
-                          run_as_root=True,
-                          check_exit_code=False),
-                mock.call(['bridge', 'fdb', 'replace', 'port_mac', 'dev',
-                           'vxlan-1', 'dst', 'agent_ip'],
-                          run_as_root=True,
-                          check_exit_code=False),
-            ]
-            execute_fn.assert_has_calls(expected)
+            self.mock_show.assert_called_once_with(dev='vxlan-1')
+            self.mock_add.assert_called_once_with(
+                constants.FLOODING_ENTRY[0], 'vxlan-1', dst_ip='agent_ip')
+            self.mock_replace.assert_called_once_with(
+                'port_mac', 'vxlan-1', dst_ip='agent_ip')
             if proxy_enabled:
                 add_fn.assert_called_with('port_ip', 'port_mac', 'vxlan-1')
             else:
@@ -1139,24 +1110,13 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                         'network_type': 'vxlan',
                         'segment_id': 1}}
 
-        with mock.patch.object(ip_lib.IpNetnsCommand, 'execute',
-                               return_value='') as execute_fn, \
-                mock.patch.object(ip_lib, 'delete_neigh_entry',
-                                  return_value='') as del_fn:
+        with mock.patch.object(ip_lib, 'delete_neigh_entry',
+                               return_value='') as del_fn:
             self.lb_rpc.fdb_remove(None, fdb_entries)
-
-            expected = [
-                mock.call(['bridge', 'fdb', 'delete',
-                           constants.FLOODING_ENTRY[0],
-                           'dev', 'vxlan-1', 'dst', 'agent_ip'],
-                          run_as_root=True,
-                          check_exit_code=False),
-                mock.call(['bridge', 'fdb', 'delete', 'port_mac',
-                           'dev', 'vxlan-1', 'dst', 'agent_ip'],
-                          run_as_root=True,
-                          check_exit_code=False),
-            ]
-            execute_fn.assert_has_calls(expected)
+            calls = [mock.call(constants.FLOODING_ENTRY[0], 'vxlan-1',
+                               dst_ip='agent_ip'),
+                     mock.call('port_mac', 'vxlan-1', dst_ip='agent_ip')]
+            self.mock_delete.assert_has_calls(calls)
             if proxy_enabled:
                 del_fn.assert_called_with('port_ip', 'port_mac', 'vxlan-1')
             else:

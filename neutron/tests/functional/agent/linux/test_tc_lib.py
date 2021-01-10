@@ -220,10 +220,10 @@ class TcFiltersTestCase(functional_base.BaseSudoTestCase):
 
         bridge_lib.FdbInterface.append(
             '00:00:00:00:00:00', self.device_vxlan[0], namespace=self.ns[0],
-            ip_dst=str(netaddr.IPNetwork(self.ip[1]).ip))
+            dst_ip=str(netaddr.IPNetwork(self.ip[1]).ip))
         bridge_lib.FdbInterface.append(
             '00:00:00:00:00:00', self.device_vxlan[1], namespace=self.ns[1],
-            ip_dst=str(netaddr.IPNetwork(self.ip[0]).ip))
+            dst_ip=str(netaddr.IPNetwork(self.ip[0]).ip))
 
     def test_add_tc_filter_vxlan(self):
         # The traffic control is applied on the veth pair device of the first

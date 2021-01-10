@@ -761,3 +761,59 @@ def delete_ip_route(namespace, cidr, ip_version, device=None, via=None,
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
         raise
+
+
+@privileged.default.entrypoint
+def list_bridge_fdb(namespace=None, **kwargs):
+    """List bridge fdb table"""
+    # NOTE(ralonsoh): fbd does not support ifindex filtering in pyroute2 0.5.14
+    try:
+        with get_iproute(namespace) as ip:
+            return make_serializable(ip.fdb('dump', **kwargs))
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+
+
+def _command_bridge_fdb(command, mac, device, dst_ip=None, namespace=None,
+                        **kwargs):
+    try:
+        kwargs['lladdr'] = mac
+        kwargs['ifindex'] = get_link_id(device, namespace)
+        if dst_ip:
+            kwargs['dst'] = dst_ip
+        with get_iproute(namespace) as ip:
+            return make_serializable(ip.fdb(command, **kwargs))
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+
+
+@privileged.default.entrypoint
+def add_bridge_fdb(mac, device, dst_ip=None, namespace=None, **kwargs):
+    """Add a FDB entry"""
+    return _command_bridge_fdb('add', mac, device, dst_ip=dst_ip,
+                               namespace=namespace, **kwargs)
+
+
+@privileged.default.entrypoint
+def append_bridge_fdb(mac, device, dst_ip=None, namespace=None, **kwargs):
+    """Add a FDB entry"""
+    return _command_bridge_fdb('append', mac, device, dst_ip=dst_ip,
+                               namespace=namespace, **kwargs)
+
+
+@privileged.default.entrypoint
+def replace_bridge_fdb(mac, device, dst_ip=None, namespace=None, **kwargs):
+    """Add a FDB entry"""
+    return _command_bridge_fdb('replace', mac, device, dst_ip=dst_ip,
+                               namespace=namespace, **kwargs)
+
+
+@privileged.default.entrypoint
+def delete_bridge_fdb(mac, device, dst_ip=None, namespace=None, **kwargs):
+    """Add a FDB entry"""
+    return _command_bridge_fdb('del', mac, device, dst_ip=dst_ip,
+                               namespace=namespace, **kwargs)

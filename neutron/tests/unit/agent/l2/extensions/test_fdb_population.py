@@ -19,10 +19,11 @@ from unittest import mock
 from neutron_lib import constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
+from pyroute2.netlink import exceptions as netlink_exceptions
 
 from neutron.agent.l2.extensions.fdb_population import (
         FdbPopulationAgentExtension)
-from neutron.agent.linux import ip_lib
+from neutron.agent.linux import bridge_lib
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import (
      constants as linux_bridge_constants)
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
@@ -37,14 +38,22 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
                   u'mac_address': u'fa:16:3e:ba:bc:21',
                   u'port_id': u'17ceda02-43e1-48d8-beb6-35885b20cae6'}
     DELETE_MSG = {u'port_id': u'17ceda02-43e1-48d8-beb6-35885b20cae6'}
-    FDB_TABLE = ("aa:aa:aa:aa:aa:aa self permanent\n"
-                 "bb:bb:bb:bb:bb:bb self permanent")
 
     def setUp(self):
         super(FdbPopulationExtensionTestCase, self).setUp()
         cfg.CONF.set_override('shared_physical_device_mappings',
                               ['physnet1:p1p1'], 'FDB')
         self.DEVICE = self._get_existing_device()
+        self.mock_add = mock.patch.object(
+            bridge_lib.FdbInterface, 'add', return_value=0).start()
+        self.mock_append = mock.patch.object(
+            bridge_lib.FdbInterface, 'append', return_value=0).start()
+        self.mock_replace = mock.patch.object(
+            bridge_lib.FdbInterface, 'replace', return_value=0).start()
+        self.mock_delete = mock.patch.object(
+            bridge_lib.FdbInterface, 'delete', return_value=0).start()
+        self.mock_show = mock.patch.object(
+            bridge_lib.FdbInterface, 'show').start()
 
     def _get_existing_device(self):
         device_mappings = helpers.parse_mappings(
@@ -52,14 +61,12 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
         DEVICES = next(iter(device_mappings.values()))
         return DEVICES[0]
 
-    def _get_fdb_extension(self, mock_execute, fdb_table):
-        mock_execute.return_value = fdb_table
+    def _get_fdb_extension(self):
         fdb_pop = FdbPopulationAgentExtension()
         fdb_pop.initialize(None, ovs_constants.EXTENSION_DRIVER_TYPE)
         return fdb_pop
 
-    @mock.patch('neutron.agent.common.utils.execute')
-    def test_initialize(self, mock_execute):
+    def test_initialize(self):
         fdb_extension = FdbPopulationAgentExtension()
         fdb_extension.initialize(None, ovs_constants.EXTENSION_DRIVER_TYPE)
         fdb_extension.initialize(None,
@@ -70,123 +77,101 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
         fdb_extension = FdbPopulationAgentExtension()
         self.assertRaises(SystemExit, fdb_extension.initialize, None, 'sriov')
 
-    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
-    def test_construct_empty_fdb_table(self, mock_execute):
-        self._get_fdb_extension(mock_execute, fdb_table='')
-        cmd = ['bridge', 'fdb', 'show', 'dev', self.DEVICE]
-        mock_execute.assert_called_once_with(cmd, run_as_root=True)
+    def test_construct_empty_fdb_table(self):
+        self._get_fdb_extension()
+        self.mock_show.assert_called_once_with(dev=self.DEVICE)
 
-    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
-    def test_construct_existing_fdb_table(self, mock_execute):
-        fdb_extension = self._get_fdb_extension(mock_execute,
-                                                fdb_table=self.FDB_TABLE)
-        cmd = ['bridge', 'fdb', 'show', 'dev', self.DEVICE]
-        mock_execute.assert_called_once_with(cmd, run_as_root=True)
+    def test_construct_existing_fdb_table(self):
+        self.mock_show.return_value = {
+            self.DEVICE: [{'mac': 'aa:aa:aa:aa:aa:aa'},
+                          {'mac': 'bb:bb:bb:bb:bb:bb'}]
+        }
+        fdb_extension = self._get_fdb_extension()
+        self.mock_show.assert_called_once_with(dev=self.DEVICE)
         updated_macs_for_device = (
             fdb_extension.fdb_tracker.device_to_macs.get(self.DEVICE))
-        macs = [line.split()[0] for line in self.FDB_TABLE.split('\n')]
-        for mac in macs:
-            self.assertIn(mac, updated_macs_for_device)
+        macs = ['aa:aa:aa:aa:aa:aa', 'bb:bb:bb:bb:bb:bb']
+        self.assertEqual(sorted(macs), sorted(updated_macs_for_device))
 
-    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
-    def test_update_port_add_rule(self, mock_execute):
-        fdb_extension = self._get_fdb_extension(mock_execute, self.FDB_TABLE)
-        mock_execute.reset_mock()
+    def test_update_port_add_rule(self):
+        fdb_extension = self._get_fdb_extension()
+        self.mock_add.return_value = True
         fdb_extension.handle_port(context=None, details=self.UPDATE_MSG)
-        cmd = ['bridge', 'fdb', 'add', self.UPDATE_MSG['mac_address'],
-               'dev', self.DEVICE]
-        mock_execute.assert_called_once_with(cmd, run_as_root=True)
+        self.mock_add.assert_called_once_with(self.UPDATE_MSG['mac_address'],
+                                              self.DEVICE)
         updated_macs_for_device = (
             fdb_extension.fdb_tracker.device_to_macs.get(self.DEVICE))
         mac = self.UPDATE_MSG['mac_address']
         self.assertIn(mac, updated_macs_for_device)
 
-    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
-    def test_update_port_changed_mac(self, mock_execute):
-        fdb_extension = self._get_fdb_extension(mock_execute, self.FDB_TABLE)
-        mock_execute.reset_mock()
+    def test_update_port_changed_mac(self):
+        fdb_extension = self._get_fdb_extension()
         mac = self.UPDATE_MSG['mac_address']
         updated_mac = 'fa:16:3e:ba:bc:33'
-        commands = []
+        self.mock_add.return_value = True
         fdb_extension.handle_port(context=None, details=self.UPDATE_MSG)
-        commands.append(['bridge', 'fdb', 'add', mac, 'dev', self.DEVICE])
         self.UPDATE_MSG['mac_address'] = updated_mac
+        self.mock_delete.return_value = True
         fdb_extension.handle_port(context=None, details=self.UPDATE_MSG)
-        commands.append(['bridge', 'fdb', 'delete', mac, 'dev', self.DEVICE])
-        commands.append(['bridge', 'fdb', 'add', updated_mac,
-                         'dev', self.DEVICE])
-        calls = []
-        for cmd in commands:
-            calls.append(mock.call(cmd, run_as_root=True))
-        mock_execute.assert_has_calls(calls)
+        calls_add = [mock.call(mac, self.DEVICE),
+                     mock.call(updated_mac, self.DEVICE)]
+        self.mock_add.assert_has_calls(calls_add)
+        self.mock_delete.assert_called_once_with(mac, self.DEVICE)
         updated_macs_for_device = (
             fdb_extension.fdb_tracker.device_to_macs.get(self.DEVICE))
         self.assertIn(updated_mac, updated_macs_for_device)
         self.assertNotIn(mac, updated_macs_for_device)
 
-    @mock.patch('neutron.agent.common.utils.execute')
-    def test_unpermitted_device_owner(self, mock_execute):
-        fdb_extension = self._get_fdb_extension(mock_execute, '')
-        mock_execute.reset_mock()
+    def test_unpermitted_device_owner(self):
+        fdb_extension = self._get_fdb_extension()
         details = copy.deepcopy(self.UPDATE_MSG)
         details['device_owner'] = constants.DEVICE_OWNER_LOADBALANCER
         fdb_extension.handle_port(context=None, details=details)
-        self.assertFalse(mock_execute.called)
         updated_macs_for_device = (
             fdb_extension.fdb_tracker.device_to_macs.get(self.DEVICE))
         mac = self.UPDATE_MSG['mac_address']
         self.assertNotIn(mac, updated_macs_for_device)
 
-    @mock.patch('neutron.agent.common.utils.execute')
-    def test_catch_init_exception(self, mock_execute):
-        mock_execute.side_effect = RuntimeError
-        fdb_extension = self._get_fdb_extension(mock_execute, '')
+    def test_catch_init_exception(self):
+        self.mock_add.side_effect = netlink_exceptions.NetlinkError
+        fdb_extension = self._get_fdb_extension()
         updated_macs_for_device = (
             fdb_extension.fdb_tracker.device_to_macs.get(self.DEVICE))
-        self.assertIsNone(updated_macs_for_device)
+        self.assertEqual([], updated_macs_for_device)
 
-    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
-    def test_catch_update_port_exception(self, mock_execute):
-        fdb_extension = self._get_fdb_extension(mock_execute, '')
-        mock_execute.side_effect = RuntimeError
+    def test_catch_update_port_exception(self):
+        fdb_extension = self._get_fdb_extension()
+        self.mock_add.return_value = False
         fdb_extension.handle_port(context=None, details=self.UPDATE_MSG)
         updated_macs_for_device = (
             fdb_extension.fdb_tracker.device_to_macs.get(self.DEVICE))
         mac = self.UPDATE_MSG['mac_address']
         self.assertNotIn(mac, updated_macs_for_device)
 
-    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
-    def test_catch_delete_port_exception(self, mock_execute):
-        fdb_extension = self._get_fdb_extension(mock_execute, '')
+    def test_catch_delete_port_exception(self):
+        fdb_extension = self._get_fdb_extension()
+        self.mock_add.return_value = True
         fdb_extension.handle_port(context=None, details=self.UPDATE_MSG)
-        mock_execute.side_effect = RuntimeError
+        self.mock_delete.return_value = False
         fdb_extension.delete_port(context=None, details=self.DELETE_MSG)
         updated_macs_for_device = (
             fdb_extension.fdb_tracker.device_to_macs.get(self.DEVICE))
-        mac = self.UPDATE_MSG['mac_address']
-        self.assertIn(mac, updated_macs_for_device)
+        self.assertIn(self.UPDATE_MSG['mac_address'], updated_macs_for_device)
 
-    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
-    def test_delete_port(self, mock_execute):
-        fdb_extension = self._get_fdb_extension(mock_execute, '')
+    def test_delete_port(self):
+        fdb_extension = self._get_fdb_extension()
+        self.mock_add.return_value = True
         fdb_extension.handle_port(context=None, details=self.UPDATE_MSG)
-        mock_execute.reset_mock()
+        self.mock_delete.return_value = False
         fdb_extension.delete_port(context=None, details=self.DELETE_MSG)
-        cmd = ['bridge', 'fdb', 'delete', self.UPDATE_MSG['mac_address'],
-               'dev', self.DEVICE]
-        mock_execute.assert_called_once_with(cmd, run_as_root=True)
+        self.mock_delete.assert_called_once_with(
+            self.UPDATE_MSG['mac_address'], self.DEVICE)
 
-    @mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
-    def test_multiple_devices(self, mock_execute):
+    def test_multiple_devices(self):
         cfg.CONF.set_override('shared_physical_device_mappings',
                 ['physnet1:p1p1', 'physnet1:p2p2'], 'FDB')
-
-        fdb_extension = self._get_fdb_extension(mock_execute, '')
+        fdb_extension = self._get_fdb_extension()
         fdb_extension.handle_port(context=None, details=self.UPDATE_MSG)
-        mac = self.UPDATE_MSG['mac_address']
-        calls = []
-        cmd = ['bridge', 'fdb', 'add', mac, 'dev', 'p1p1']
-        calls.append(mock.call(cmd, run_as_root=True))
-        cmd = ['bridge', 'fdb', 'add', mac, 'dev', 'p2p2']
-        calls.append(mock.call(cmd, run_as_root=True))
-        mock_execute.assert_has_calls(calls, any_order=True)
+        calls = [mock.call(self.UPDATE_MSG['mac_address'], 'p1p1'),
+                 mock.call(self.UPDATE_MSG['mac_address'], 'p2p2')]
+        self.mock_add.assert_has_calls(calls)
