@@ -68,12 +68,21 @@ def register_rules(enforcer):
     enforcer.register_defaults(itertools.chain(*policies))
 
 
-def init(conf=cfg.CONF, policy_file=None):
+def init(conf=cfg.CONF, policy_file=None, suppress_deprecation_warnings=False):
     """Init an instance of the Enforcer class."""
 
     global _ENFORCER
     if not _ENFORCER:
         _ENFORCER = policy.Enforcer(conf, policy_file=policy_file)
+        # TODO(slaweq) Explictly disable the warnings for policies
+        # changing their default check_str. During policy-defaults-refresh
+        # work, all the policy defaults have been changed and warning for
+        # each policy started filling the logs limit for various tool.
+        # Once we move to new defaults only world then we can enable these
+        # warning again.
+        _ENFORCER.suppress_default_change_warnings = True
+        if suppress_deprecation_warnings:
+            _ENFORCER.suppress_deprecation_warnings = True
         register_rules(_ENFORCER)
         _ENFORCER.load_rules(True)
 

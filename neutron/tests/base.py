@@ -394,7 +394,7 @@ class BaseTestCase(DietTestCase):
         # Give a private copy of the directory to each test.
         self.useFixture(fixture.PluginDirectoryFixture())
 
-        policy.init()
+        policy.init(suppress_deprecation_warnings=True)
         self.addCleanup(policy.reset)
         self.addCleanup(resource_registry.unregister_all_resources)
         self.addCleanup(db_api.sqla_remove_all)
