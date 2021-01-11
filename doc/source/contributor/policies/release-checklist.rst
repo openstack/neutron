@@ -81,6 +81,13 @@ In the new stable branch, you should make sure that:
    https://review.opendev.org/c/openstack/neutron/+/756695/
 #. neutron itself is capped in requirements in the new branch;
    https://review.opendev.org/c/openstack/requirements/+/764022/
+#. all new Neutron features without an API extension which have new tempest
+   tests (in ``tempest`` or in ``neutron-tempest-plugin``) must have a new
+   item in ``available_features`` list under ``network-feature-enabled``
+   section in ``tempest.conf``.
+   To make stable jobs execute only the necessary tests the list in devstack
+   (devstack/lib/tempest) must be checked and filled;
+   https://review.opendev.org/c/openstack/devstack/+/769885
 
 Note that some of those steps are covered by the OpenStack release team and its
 release bot.
