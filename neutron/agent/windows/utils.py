@@ -102,7 +102,7 @@ def kill_process(pid, signal, run_as_root=False):
 
 def execute(cmd, process_input=None, addl_env=None,
             check_exit_code=True, return_stderr=False, log_fail_as_error=True,
-            extra_ok_codes=None, run_as_root=False, do_decode=True):
+            extra_ok_codes=None, run_as_root=False):
 
     if process_input is not None:
         _process_input = encodeutils.to_utf8(process_input)
