@@ -1254,6 +1254,14 @@ class TestOvsNeutronAgent(object):
                                          self.agent.agent_state, True)
             self.systemd_notify.assert_not_called()
 
+    def test_not_report_state_when_ovs_dead(self):
+        with mock.patch.object(self.agent.state_rpc,
+                               "report_state") as report_st:
+            self.agent.ovs_status = constants.OVS_DEAD
+            self.agent._report_state()
+            report_st.assert_not_called()
+            self.systemd_notify.assert_not_called()
+
     def test_report_state_revived(self):
         with mock.patch.object(self.agent.state_rpc,
                                "report_state") as report_st:
