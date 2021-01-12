@@ -64,7 +64,16 @@
             voting: false
         - neutron-tempest-with-uwsgi:
             voting: false
-        - neutron-centos-7-tripleo-standalone
+        - tripleo-ci-centos-7-content-provider:
+            voting: false
+        - neutron-centos-7-tripleo-standalone:
+            vars:
+              consumer_job: true
+              build_container_images: false
+              remove_tags:
+                - build
+            dependencies:
+              - tripleo-ci-centos-7-content-provider
     gate:
       jobs:
         - neutron-functional
