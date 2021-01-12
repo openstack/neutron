@@ -26,7 +26,6 @@
               - ^setup.cfg$
               - ^tools/.*$
               - ^tox.ini$
-        - openstack-tox-lower-constraints
         - openstack-tox-cover
         - tempest-full:
             irrelevant-files:
@@ -45,7 +44,6 @@
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
         - neutron-tempest-iptables_hybrid
-        - openstack-tox-lower-constraints
         - openstack-tox-cover
     periodic:
       jobs:
