@@ -671,12 +671,26 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
 
     def _wait_for_min_bw_rule_applied(self, vm, min_bw, direction):
         if direction == constants.EGRESS_DIRECTION:
-            utils.wait_until_true(
-                lambda: vm.bridge.get_egress_min_bw_for_port(
-                    vm.neutron_port['id']) == min_bw)
+            try:
+                utils.wait_until_true(
+                    lambda: vm.bridge.get_egress_min_bw_for_port(
+                        vm.neutron_port['id']) == min_bw)
+            except utils.WaitTimeout:
+                qoses, queues = self._qos_info(vm.bridge)
+                msg = ('QoS for port %s failed to apply minimum BW rule %s' %
+                       (vm.neutron_port['id'], min_bw))
+                self.fail(msg + qoses + queues)
+
         elif direction == constants.INGRESS_DIRECTION:
             self.fail('"%s" direction not implemented'
                       % constants.INGRESS_DIRECTION)
+
+    def _qos_info(self, vm_bridge):
+        qoses = vm_bridge._list_qos()
+        queues = vm_bridge._list_queues()
+        qoses = '\nList of OVS QoS registers:\n%s' % ''.join(str(qoses))
+        queues = '\nList of OVS Queue registers:\n%s' % ''.join(str(queues))
+        return qoses, queues
 
     def _find_agent_qos_and_queue(self, vm):
         # NOTE(ralonsoh): the "_min_bw_qos_id" in vm.bridge is not the same as
@@ -699,12 +713,9 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
             utils.wait_until_true(check_qos_and_queue, timeout=10)
             return data['qos'], data['qos_queue']
         except utils.WaitTimeout:
-            qoses = vm.bridge._list_qos()
-            queues = vm.bridge._list_queues()
             queuenum = ('QoS register not found with queue-num %s' %
                         data['queue_num'])
-            qoses = '\nList of OVS QoS registers:\n%s' % '\n'.join(qoses)
-            queues = '\nList of OVS Queue registers:\n%s' % '\n'.join(queues)
+            qoses, queues = self._qos_info(vm.bridge)
             self.fail(queuenum + qoses + queues)
 
     def test_min_bw_qos_port_removed(self):
