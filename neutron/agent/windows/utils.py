@@ -114,13 +114,13 @@ def execute(cmd, process_input=None, addl_env=None,
     _stdout = helpers.safe_decode_utf8(_stdout)
     _stderr = helpers.safe_decode_utf8(_stderr)
 
-    m = _("\nCommand: %(cmd)s\nExit code: %(code)s\nStdin: %(stdin)s\n"
-          "Stdout: %(stdout)s\nStderr: %(stderr)s") % \
-        {'cmd': cmd,
-         'code': obj.returncode,
-         'stdin': process_input or '',
-         'stdout': _stdout,
-         'stderr': _stderr}
+    m = ("\nCommand: %(cmd)s\nExit code: %(code)s\nStdin: %(stdin)s\n"
+         "Stdout: %(stdout)s\nStderr: %(stderr)s" %
+         {'cmd': cmd,
+          'code': obj.returncode,
+          'stdin': process_input or '',
+          'stdout': _stdout,
+          'stderr': _stderr})
 
     extra_ok_codes = extra_ok_codes or []
     if obj.returncode and obj.returncode in extra_ok_codes:
@@ -133,8 +133,7 @@ def execute(cmd, process_input=None, addl_env=None,
         LOG.debug(log_msg)
 
     if obj.returncode and check_exit_code:
-        raise exceptions.ProcessExecutionError(m, returncode=obj.returncode)
-
+        raise exceptions.ProcessExecutionError(_(m), returncode=obj.returncode)
     return (_stdout, _stderr) if return_stderr else _stdout
 
 

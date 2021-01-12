@@ -1024,8 +1024,8 @@ def _arping(ns_name, iface_name, address, count, log_exception):
                                                         [address],
                                                         mac=None,
                                                         namespace=ns_name)
-                msg = _("Failed sending gratuitous ARP to %(addr)s on "
-                        "%(iface)s in namespace %(ns)s: %(err)s")
+                msg = ("Failed sending gratuitous ARP to %(addr)s on "
+                       "%(iface)s in namespace %(ns)s: %(err)s")
                 logger_method = LOG.exception
                 if not (log_exception and (first or exists)):
                     logger_method = LOG.info
