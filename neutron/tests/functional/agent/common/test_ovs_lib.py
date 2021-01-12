@@ -19,6 +19,7 @@ from unittest import mock
 from neutron_lib import constants as p_const
 from neutron_lib.services.qos import constants as qos_constants
 from oslo_utils import uuidutils
+from ovsdbapp.backend.ovs_idl import event
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
@@ -35,6 +36,17 @@ QUEUE_NUM_DEFAULT = 'queue_num'
 OTHER_CONFIG_DEFAULT = {'max-rate': str(MAX_RATE_DEFAULT),
                         'burst': str(BURST_DEFAULT),
                         'min-rate': str(MIN_RATE_DEFAULT)}
+
+
+class WaitForPortCreateEvent(event.WaitEvent):
+    event_name = 'WaitForPortCreateEvent'
+
+    def __init__(self, port_name):
+        table = 'Port'
+        events = (self.ROW_CREATE,)
+        conditions = (('name', '=', port_name),)
+        super(WaitForPortCreateEvent, self).__init__(
+            events, table, conditions, timeout=5)
 
 
 class BaseOVSTestCase(base.BaseSudoTestCase):
@@ -111,8 +123,11 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.elements_to_clean['bridges'].append(self.br_name)
 
     def _create_port(self, port_name):
+        row_event = WaitForPortCreateEvent(port_name)
+        self.ovs.ovsdb.idl.notify_handler.watch_event(row_event)
         self.ovs.ovsdb.add_port(self.br_name, port_name).execute(
             check_error=True)
+        self.assertTrue(row_event.wait())
 
     def _find_port_uuid(self, port_name):
         return self.ovs.ovsdb.db_get('Port', port_name, '_uuid').execute()
