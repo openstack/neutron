@@ -6,7 +6,6 @@
     templates:
       - neutron-tempest-plugin-jobs-ussuri
       - openstack-cover-jobs
-      - openstack-lower-constraints-jobs
       - openstack-python3-ussuri-jobs
       - publish-openstack-docs-pti
       - periodic-stable-jobs
@@ -92,8 +91,6 @@
             timeout: 3600
         - openstack-tox-py38:  # from openstack-python3-ussuri-jobs template
             timeout: 3600
-        - openstack-tox-lower-constraints:  # from openstack-tox-lower-constraints template
-            timeout: 3600
         - openstack-tox-cover:  # from openstack-cover-jobs template
             timeout: 4800
     gate:
@@ -113,8 +110,6 @@
         - openstack-tox-py36:  # from openstack-python3-ussuri-jobs template
             timeout: 3600
         - openstack-tox-py37:  # from openstack-python3-ussuri-jobs template
-            timeout: 3600
-        - openstack-tox-lower-constraints:  # from openstack-tox-lower-constraints template
             timeout: 3600
         #- neutron-ovn-rally-task
         #- neutron-ovn-tripleo-ci-centos-8-containers-multinode
