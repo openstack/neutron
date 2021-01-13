@@ -14,10 +14,13 @@
 
 import abc
 
+from oslo_config import cfg
 from oslo_utils import timeutils
 
+from neutron._i18n import _
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
+from neutron.common import utils
 
 
 class NeutronAgent(abc.ABC):
@@ -27,26 +30,26 @@ class NeutronAgent(abc.ABC):
         # Register the subclasses to be looked up by their type
         NeutronAgent.types[cls.agent_type] = cls
 
-    def __init__(self, chassis_private):
-        self.chassis_private = chassis_private
-        self.chassis = self.get_chassis(chassis_private)
+    def __init__(self, chassis_private, driver, updated_at=None):
+        self.driver = driver
+        self.set_down = False
+        self.update(chassis_private, updated_at)
 
-    @staticmethod
-    def get_chassis(chassis_private):
-        try:
-            return chassis_private.chassis[0]
-        except (AttributeError, IndexError):
-            # No Chassis_Private support, just use Chassis
-            return chassis_private
+    def update(self, chassis_private, updated_at=None, clear_down=False):
+        self.chassis_private = chassis_private
+        self.updated_at = updated_at or timeutils.utcnow(with_timezone=True)
+        if clear_down:
+            self.set_down = False
 
     @property
-    def updated_at(self):
+    def chassis(self):
         try:
-            return timeutils.parse_isotime(self.chassis.external_ids[self.key])
-        except KeyError:
-            return timeutils.utcnow(with_timezone=True)
+            return self.chassis_private.chassis[0]
+        except (AttributeError, IndexError):
+            # No Chassis_Private support, just use Chassis
+            return self.chassis_private
 
-    def as_dict(self, alive):
+    def as_dict(self):
         return {
             'binary': self.binary,
             'host': self.chassis.hostname,
@@ -62,39 +65,62 @@ class NeutronAgent(abc.ABC):
             'start_flag': True,
             'agent_type': self.agent_type,
             'id': self.agent_id,
-            'alive': alive,
+            'alive': self.alive,
             'admin_state_up': True}
 
-    @classmethod
-    def from_type(cls, _type, chassis_private):
-        return cls.types[_type](chassis_private)
+    @property
+    def alive(self):
+        if self.set_down:
+            return False
+        # TODO(twilson) Determine if we can go back to just checking:
+        # if self.driver._nb_ovn.nb_global.nb_cfg == self.nb_cfg:
+        if self.driver._nb_ovn.nb_global.nb_cfg - self.nb_cfg <= 1:
+            return True
+        now = timeutils.utcnow(with_timezone=True)
+        if (now - self.updated_at).total_seconds() < cfg.CONF.agent_down_time:
+            # down, but not yet timed out
+            return True
+        return False
 
-    @staticmethod
-    def matches_chassis(chassis):
-        """Is this Agent type found on the passed in chassis?"""
-        return True
-
     @classmethod
-    def agents_from_chassis(cls, chassis_private):
-        return [AgentCls(chassis_private)
-                for AgentCls in cls.types.values()
-                if AgentCls.matches_chassis(cls.get_chassis(chassis_private))]
+    def from_type(cls, _type, chassis_private, driver, updated_at=None):
+        return cls.types[_type](chassis_private, driver, updated_at)
 
     @property
     @abc.abstractmethod
     def agent_type(self):
         pass
 
+    @property
+    @abc.abstractmethod
+    def binary(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def nb_cfg(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def agent_id(self):
+        pass
+
 
 class ControllerAgent(NeutronAgent):
     agent_type = ovn_const.OVN_CONTROLLER_AGENT
     binary = 'ovn-controller'
-    key = ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY
+
+    @staticmethod  # it is by default, but this makes pep8 happy
+    def __new__(cls, chassis_private, driver, updated_at=None):
+        if ('enable-chassis-as-gw' in
+                chassis_private.external_ids.get('ovn-cms-options', [])):
+            cls = ControllerGatewayAgent
+        return super().__new__(cls)
 
     @staticmethod
-    def matches_chassis(chassis):
-        return ('enable-chassis-as-gw' not in
-                chassis.external_ids.get('ovn-cms-options', []))
+    def id_from_chassis_private(chassis_private):
+        return chassis_private.name
 
     @property
     def nb_cfg(self):
@@ -102,7 +128,7 @@ class ControllerAgent(NeutronAgent):
 
     @property
     def agent_id(self):
-        return self.chassis_private.name
+        return self.id_from_chassis_private(self.chassis_private)
 
     @property
     def description(self):
@@ -113,28 +139,76 @@ class ControllerAgent(NeutronAgent):
 class ControllerGatewayAgent(ControllerAgent):
     agent_type = ovn_const.OVN_CONTROLLER_GW_AGENT
 
-    @staticmethod
-    def matches_chassis(chassis):
-        return ('enable-chassis-as-gw' in
-                chassis.external_ids.get('ovn-cms-options', []))
-
 
 class MetadataAgent(NeutronAgent):
     agent_type = ovn_const.OVN_METADATA_AGENT
     binary = 'neutron-ovn-metadata-agent'
-    key = ovn_const.METADATA_LIVENESS_CHECK_EXT_ID_KEY
+
+    @property
+    def alive(self):
+        # If ovn-controller is down, then metadata agent is down even
+        # if the metadata-agent binary is updating external_ids.
+        try:
+            if not AgentCache()[self.chassis_private.name].alive:
+                return False
+        except KeyError:
+            return False
+        return super().alive
 
     @property
     def nb_cfg(self):
         return int(self.chassis_private.external_ids.get(
             ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY, 0))
 
+    @staticmethod
+    def id_from_chassis_private(chassis_private):
+        return chassis_private.external_ids.get(
+            ovn_const.OVN_AGENT_METADATA_ID_KEY)
+
     @property
     def agent_id(self):
-        return self.chassis_private.external_ids.get(
-            ovn_const.OVN_AGENT_METADATA_ID_KEY)
+        return self.id_from_chassis_private(self.chassis_private)
 
     @property
     def description(self):
         return self.chassis_private.external_ids.get(
             ovn_const.OVN_AGENT_METADATA_DESC_KEY, '')
+
+
+@utils.SingletonDecorator
+class AgentCache:
+    def __init__(self, driver=None):
+        # This is just to make pylint happy because it doesn't like calls to
+        # AgentCache() with no arguments, despite init only being called the
+        # first time--and we do really want a driver passed in.
+        if driver is None:
+            raise ValueError(_("driver cannot be None"))
+        self.agents = {}
+        self.driver = driver
+
+    def __iter__(self):
+        return iter(self.agents.values())
+
+    def __getitem__(self, key):
+        return self.agents[key]
+
+    def update(self, agent_type, row, updated_at=None, clear_down=False):
+        cls = NeutronAgent.types[agent_type]
+        try:
+            agent = self.agents[cls.id_from_chassis_private(row)]
+            agent.update(row, updated_at=updated_at, clear_down=clear_down)
+        except KeyError:
+            agent = NeutronAgent.from_type(agent_type, row, self.driver,
+                                           updated_at=updated_at)
+            self.agents[agent.agent_id] = agent
+        return agent
+
+    def __delitem__(self, agent_id):
+        del self.agents[agent_id]
+
+    def agents_by_chassis_private(self, chassis_private):
+        # Get unique agent ids based on the chassis_private
+        agent_ids = {cls.id_from_chassis_private(chassis_private)
+                     for cls in NeutronAgent.types.values()}
+        # Return the cached agents of agent_ids whose keys are in the cache
+        return (self.agents[id_] for id_ in agent_ids & self.agents.keys())

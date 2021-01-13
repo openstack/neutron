@@ -15,7 +15,6 @@
 from unittest import mock
 
 import fixtures as og_fixtures
-from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.common.ovn import constants as ovn_const
@@ -68,6 +67,10 @@ class DistributedLockTestEvent(event.WaitEvent):
     def run(self, event, row, old):
         self.COUNTER += 1
         self.event.set()
+
+
+class GlobalTestEvent(DistributedLockTestEvent):
+    GLOBAL = True
 
 
 class TestNBDbMonitor(base.TestOVNFunctionalBase):
@@ -198,15 +201,12 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         self._test_port_binding_and_status(port['id'], 'bind', 'ACTIVE')
         self._test_port_binding_and_status(port['id'], 'unbind', 'DOWN')
 
-    def test_distributed_lock(self):
-        api_workers = 11
-        cfg.CONF.set_override('api_workers', api_workers)
-        row_event = DistributedLockTestEvent()
+    def _create_workers(self, row_event, worker_num):
         self.mech_driver._nb_ovn.idl.notify_handler.watch_event(row_event)
-        worker_list = [self.mech_driver._nb_ovn, ]
+        worker_list = [self.mech_driver._nb_ovn]
 
         # Create 10 fake workers
-        for _ in range(api_workers - len(worker_list)):
+        for _ in range(worker_num):
             node_uuid = uuidutils.generate_uuid()
             db_hash_ring.add_node(
                 self.context, ovn_const.HASH_RING_ML2_GROUP, node_uuid)
@@ -228,11 +228,17 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
 
         # Assert we have 11 active workers in the ring
         self.assertEqual(
-            11, len(db_hash_ring.get_active_nodes(
-                    self.context,
-                    interval=ovn_const.HASH_RING_NODES_TIMEOUT,
-                    group_name=ovn_const.HASH_RING_ML2_GROUP)))
+            worker_num + 1,
+            len(db_hash_ring.get_active_nodes(
+                self.context,
+                interval=ovn_const.HASH_RING_NODES_TIMEOUT,
+                group_name=ovn_const.HASH_RING_ML2_GROUP)))
 
+        return worker_list
+
+    def test_distributed_lock(self):
+        row_event = DistributedLockTestEvent()
+        self._create_workers(row_event, worker_num=10)
         # Trigger the event
         self.create_port()
 
@@ -241,6 +247,30 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
 
         # Assert that only one worker handled the event
         self.assertEqual(1, row_event.COUNTER)
+
+    def test_global_events(self):
+        worker_num = 10
+        distributed_event = DistributedLockTestEvent()
+        global_event = GlobalTestEvent()
+        worker_list = self._create_workers(distributed_event, worker_num)
+        for worker in worker_list:
+            worker.idl.notify_handler.watch_event(global_event)
+
+        # This should generate one distributed even handled by a single worker
+        # and one global event, that should be handled by all workers
+        self.create_port()
+
+        # Wait for the distributed event to complete
+        self.assertTrue(distributed_event.wait())
+
+        # Assert that only one worker handled the distributed event
+        self.assertEqual(1, distributed_event.COUNTER)
+
+        n_utils.wait_until_true(
+            lambda: global_event.COUNTER == worker_num + 1,
+            exception=Exception(
+                "Fanout event didn't get handled expected %d times" %
+                (worker_num + 1)))
 
 
 class TestNBDbMonitorOverTcp(TestNBDbMonitor):

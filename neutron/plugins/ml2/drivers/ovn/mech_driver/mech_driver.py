@@ -36,7 +36,6 @@ from oslo_config import cfg
 from oslo_db import exception as os_db_exc
 from oslo_log import log
 from oslo_utils import timeutils
-from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron._i18n import _
 from neutron.common.ovn import acl as ovn_acl
@@ -64,7 +63,6 @@ import neutron.wsgi
 
 LOG = log.getLogger(__name__)
 METADATA_READY_WAIT_TIMEOUT = 15
-AGENTS = {}
 
 
 class MetadataServiceReadyWaitTimeoutException(Exception):
@@ -277,14 +275,11 @@ class OVNMechanismDriver(api.MechanismDriver):
             self.node_uuid = ovn_hash_ring_db.add_node(admin_context,
                                                        self.hash_ring_group)
 
+        n_agent.AgentCache(self)  # Initialize singleton agent cache
         self._nb_ovn, self._sb_ovn = impl_idl_ovn.get_ovn_idls(self, trigger)
 
         if self._sb_ovn.is_table_present('Chassis_Private'):
             self.agent_chassis_table = 'Chassis_Private'
-
-        # AGENTS must be populated after fork so if ovn-controller is stopped
-        # before a worker handles a get_agents request, we still show agents
-        populate_agents(self)
 
         # Override agents API methods
         self.patch_plugin_merge("get_agents", get_agents)
@@ -1132,38 +1127,6 @@ class OVNMechanismDriver(api.MechanismDriver):
                             " neutron-ovn-metadata-agent status/logs.",
                             port_id)
 
-    def agent_alive(self, agent, update_db):
-        # Allow a maximum of 1 difference between expected and read values
-        # to avoid false positives.
-        if self._nb_ovn.nb_global.nb_cfg - agent.nb_cfg <= 1:
-            if update_db:
-                self.mark_agent_alive(agent)
-            return True
-
-        now = timeutils.utcnow(with_timezone=True)
-        if (now - agent.updated_at).total_seconds() < cfg.CONF.agent_down_time:
-            # down, but not yet timed out
-            return True
-        return False
-
-    def mark_agent_alive(self, agent):
-        # Update the time of our successful check
-        value = timeutils.utcnow(with_timezone=True).isoformat()
-        self._sb_ovn.db_set(
-            self.agent_chassis_table, agent.chassis_private.uuid,
-            ('external_ids', {agent.key: value})).execute(check_error=True)
-
-    def agents_from_chassis(self, chassis_private, update_db=True):
-        agent_dict = {}
-        # For each Chassis there will possibly be a Metadata agent and either
-        # a Controller or Controller Gateway agent.
-        for agent in n_agent.NeutronAgent.agents_from_chassis(chassis_private):
-            if not agent.agent_id:
-                continue
-            alive = self.agent_alive(agent, update_db)
-            agent_dict[agent.agent_id] = agent.as_dict(alive)
-        return agent_dict
-
     def patch_plugin_merge(self, method_name, new_fn, op=operator.add):
         old_method = getattr(self._plugin, method_name)
 
@@ -1230,42 +1193,22 @@ class OVNMechanismDriver(api.MechanismDriver):
         return azs
 
 
-def populate_agents(driver):
-    for ch in driver._sb_ovn.tables[driver.agent_chassis_table].rows.values():
-        # update the cache, rows are hashed on uuid but it is the name that
-        # stays consistent across ovn-controller restarts
-        AGENTS.update({ch.name: ch})
-
-
 def get_agents(self, context, filters=None, fields=None, _driver=None):
-    update_db = _driver.ping_all_chassis()
+    _driver.ping_all_chassis()
     filters = filters or {}
     agent_list = []
-    populate_agents(_driver)
-    for ch in AGENTS.values():
-        for agent in _driver.agents_from_chassis(ch, update_db).values():
-            if all(agent[k] in v for k, v in filters.items()):
-                agent_list.append(agent)
+    for agent in n_agent.AgentCache():
+        agent_dict = agent.as_dict()
+        if all(agent_dict[k] in v for k, v in filters.items()):
+            agent_list.append(agent_dict)
     return agent_list
 
 
 def get_agent(self, context, id, fields=None, _driver=None):
-    chassis = None
     try:
-        # look up Chassis by *name*, which the id attribute is
-        chassis = _driver._sb_ovn.lookup(_driver.agent_chassis_table, id)
-    except idlutils.RowNotFound:
-        # If the UUID is not found, check for the metadata agent ID
-        for ch in _driver._sb_ovn.tables[
-                _driver.agent_chassis_table].rows.values():
-            metadata_agent_id = ch.external_ids.get(
-                ovn_const.OVN_AGENT_METADATA_ID_KEY)
-            if id == metadata_agent_id:
-                chassis = ch
-                break
-        else:
-            raise n_exc.agent.AgentNotFound(id=id)
-    return _driver.agents_from_chassis(chassis)[id]
+        return n_agent.AgentCache()[id].as_dict()
+    except KeyError:
+        raise n_exc.agent.AgentNotFound(id=id)
 
 
 def update_agent(self, context, id, agent, _driver=None):
@@ -1291,9 +1234,28 @@ def update_agent(self, context, id, agent, _driver=None):
 
 
 def delete_agent(self, context, id, _driver=None):
-    get_agent(self, None, id, _driver=_driver)
-    raise n_exc.BadRequest(resource='agent',
-                           msg='OVN agents cannot be deleted')
+    # raise AgentNotFound if this isn't an ml2/ovn-related agent
+    agent = get_agent(self, None, id, _driver=_driver)
+
+    # NOTE(twilson) According to the API docs, an agent must be disabled
+    # before deletion. Otherwise, behavior seems to be undefined. We could
+    # check that alive=False before allowing deletion, but depending on the
+    # agent_down_time setting, that could take quite a while.
+    # If ovn-controller is up, the Chassis will be recreated and so the agent
+    # will still show as up. The recreated Chassis will cause all kinds of
+    # events to fire. But again, undefined behavior.
+    chassis_name = agent['configurations']['chassis_name']
+    _driver._sb_ovn.chassis_del(chassis_name, if_exists=True).execute(
+        check_error=True)
+    # Send a specific event that all API workers can get to delete the agent
+    # from their caches. Ideally we could send a single transaction that both
+    # created and deleted the key, but alas python-ovs is too "smart"
+    _driver._sb_ovn.db_set(
+        'SB_Global', '.', ('external_ids', {'delete_agent': str(id)})).execute(
+            check_error=True)
+    _driver._sb_ovn.db_remove(
+        'SB_Global', '.', 'external_ids', delete_agent=str(id),
+        if_exists=True).execute(check_error=True)
 
 
 def create_default_drop_port_group(nb_idl):

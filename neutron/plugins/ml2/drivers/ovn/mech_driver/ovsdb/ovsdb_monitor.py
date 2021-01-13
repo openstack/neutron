@@ -34,6 +34,7 @@ from neutron.common.ovn import hash_ring_manager
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
+from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent as n_agent
 
 
 CONF = cfg.CONF
@@ -213,6 +214,92 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
         self.driver.set_port_status_up(row.logical_port)
 
 
+class ChassisAgentEvent(BaseEvent):
+    GLOBAL = True
+
+    # NOTE (twilson) Do not run new transactions out of a GLOBAL Event since
+    # it will be running on every single process, and you almost certainly
+    # don't want to insert/update/delete something a bajillion times.
+    def __init__(self, driver):
+        self.driver = driver
+        super().__init__()
+
+    @property
+    def table(self):
+        # It probably doesn't matter, but since agent_chassis_table changes
+        # in post_fork_initialize(), resolve this at runtime
+        return self.driver.agent_chassis_table
+
+    @table.setter
+    def table(self, value):
+        pass
+
+
+class ChassisAgentDownEvent(ChassisAgentEvent):
+    events = (BaseEvent.ROW_DELETE,)
+
+    def run(self, event, row, old):
+        for agent in n_agent.AgentCache().agents_by_chassis_private(row):
+            agent.set_down = True
+
+    def match_fn(self, event, row, old=None):
+        return True
+
+
+class ChassisAgentDeleteEvent(ChassisAgentEvent):
+    events = (BaseEvent.ROW_UPDATE,)
+    table = 'SB_Global'
+
+    def match_fn(self, event, row, old=None):
+        try:
+            return (old.external_ids.get('delete_agent') !=
+                    row.external_ids['delete_agent'])
+        except (AttributeError, KeyError):
+            return False
+
+    def run(self, event, row, old):
+        del n_agent.AgentCache()[row.external_ids['delete_agent']]
+
+
+class ChassisAgentWriteEvent(ChassisAgentEvent):
+    events = (BaseEvent.ROW_CREATE, BaseEvent.ROW_UPDATE)
+
+    def match_fn(self, event, row, old=None):
+        return event == self.ROW_CREATE or getattr(old, 'nb_cfg', False)
+
+    def run(self, event, row, old):
+        n_agent.AgentCache().update(ovn_const.OVN_CONTROLLER_AGENT, row,
+                                    clear_down=event == self.ROW_CREATE)
+
+
+class ChassisMetadataAgentWriteEvent(ChassisAgentEvent):
+    events = (BaseEvent.ROW_CREATE, BaseEvent.ROW_UPDATE)
+
+    @staticmethod
+    def _metadata_nb_cfg(row):
+        return int(
+            row.external_ids.get(ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY, -1))
+
+    @staticmethod
+    def agent_id(row):
+        return row.external_ids.get(ovn_const.OVN_AGENT_METADATA_ID_KEY)
+
+    def match_fn(self, event, row, old=None):
+        if not self.agent_id(row):
+            # Don't create a cached object with an agent_id of 'None'
+            return False
+        if event == self.ROW_CREATE:
+            return True
+        try:
+            return self._metadata_nb_cfg(row) != self._metadata_nb_cfg(old)
+        except (AttributeError, KeyError):
+            return False
+
+    def run(self, event, row, old):
+        n_agent.AgentCache().update(ovn_const.OVN_METADATA_AGENT, row,
+                                    clear_down=True)
+
+
 class PortBindingChassisEvent(row_event.RowEvent):
     """Port_Binding update event - set chassis for chassisredirect port.
 
@@ -359,8 +446,24 @@ class NeutronPgDropPortGroupCreated(row_event.WaitEvent):
 
 class OvnDbNotifyHandler(row_event.RowEventHandler):
     def __init__(self, driver):
-        super(OvnDbNotifyHandler, self).__init__()
         self.driver = driver
+        super(OvnDbNotifyHandler, self).__init__()
+        try:
+            self._lock = self._RowEventHandler__lock
+            self._watched_events = self._RowEventHandler__watched_events
+        except AttributeError:
+            pass
+
+    def notify(self, event, row, updates=None, global_=False):
+        matching = self.matching_events(event, row, updates, global_)
+        for match in matching:
+            self.notifications.put((match, event, row, updates))
+
+    def matching_events(self, event, row, updates, global_=False):
+        with self._lock:
+            return tuple(t for t in self._watched_events
+                         if getattr(t, 'GLOBAL', False) == global_ and
+                         self.match(t, event, row, updates))
 
 
 class Ml2OvnIdlBase(connection.OvsdbIdl):
@@ -448,12 +551,12 @@ class OvnIdlDistributedLock(BaseOvnIdl):
         self._last_touch = None
 
     def notify(self, event, row, updates=None):
+        self.notify_handler.notify(event, row, updates, global_=True)
         try:
             target_node = self._hash_ring.get_node(str(row.uuid))
         except exceptions.HashRingIsEmpty as e:
             LOG.error('HashRing is empty, error: %s', e)
             return
-
         if target_node != self._node_uuid:
             return
 
@@ -530,6 +633,14 @@ class OvnNbIdl(OvnIdlDistributedLock):
 
 class OvnSbIdl(OvnIdlDistributedLock):
 
+    def __init__(self, driver, remote, schema):
+        super(OvnSbIdl, self).__init__(driver, remote, schema)
+        self.notify_handler.watch_events([
+            ChassisAgentDeleteEvent(self.driver),
+            ChassisAgentDownEvent(self.driver),
+            ChassisAgentWriteEvent(self.driver),
+            ChassisMetadataAgentWriteEvent(self.driver)])
+
     @classmethod
     def from_server(cls, connection_string, schema_name, driver):
         _check_and_set_ssl_files(schema_name)
@@ -541,6 +652,7 @@ class OvnSbIdl(OvnIdlDistributedLock):
         helper.register_table('Port_Binding')
         helper.register_table('Datapath_Binding')
         helper.register_table('MAC_Binding')
+        helper.register_columns('SB_Global', ['external_ids'])
         return cls(driver, connection_string, helper)
 
     def post_connect(self):
