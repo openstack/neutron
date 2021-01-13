@@ -368,6 +368,30 @@
         cinder: false
 
 - job:
+    name: neutron-tempest-ipv6-only
+    parent: tempest-ipv6-only
+    timeout: 10800
+    irrelevant-files: *irrelevant-files
+    vars:
+      tox_envlist: integrated-network
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron.git
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
+
+- job:
     name: neutron-ovn-tempest-ovs-master
     description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch
     parent: neutron-ovn-base
