@@ -144,6 +144,35 @@
           c-vol: false
 
 - job:
+    name: neutron-tempest-slow-py3
+    parent: tempest-slow-py3
+    timeout: 10800
+    irrelevant-files: *irrelevant-files
+    vars:
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron.git
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
+    group-vars:
+      subnode:
+        devstack_services:
+          # Cinder services
+          c-bak: false
+          c-vol: false
+
+- job:
     name: neutron-ovn-multinode-base
     description: Base multinode job for devstack/tempest to test Neutron with ovn driver.
     abstract: true

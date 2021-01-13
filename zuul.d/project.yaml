@@ -41,10 +41,8 @@
               - ^vagrant/.*$
               - ^migration/.*$
               - ^devstack/.*\.sample$
-        - tempest-slow-py3:
-            irrelevant-files: *irrelevant-files
-        - tempest-ipv6-only:
-            irrelevant-files: *irrelevant-files
+        - neutron-tempest-slow-py3
+        - neutron-tempest-ipv6-only
         - neutron-tempest-with-neutron-lib-master:
             voting: false
             irrelevant-files: *irrelevant-files
@@ -99,10 +97,8 @@
         - neutron-tempest-multinode-full-py3
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
-        - tempest-slow-py3:
-            irrelevant-files: *irrelevant-files
-        - tempest-ipv6-only:
-            irrelevant-files: *irrelevant-files
+        - neutron-tempest-slow-py3
+        - neutron-tempest-ipv6-only
         - neutron-ovn-tempest-ovs-release
         - openstack-tox-py36:  # from openstack-python3-victoria-jobs template
             timeout: 3600
