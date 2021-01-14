@@ -147,8 +147,8 @@ infrastructure.
 .. warning::
 
    This option lacks support for self-service (private) networks, layer-3
-   (routing) services, and advanced services such as FireWall-as-a-Service
-   (FWaaS).
+   (routing) services, and advanced services such as LoadBalancer-as-a-Service
+   (Octavia).
    Consider the self-service networks option below if you desire these features.
 
 .. _figure-network1-services:
@@ -167,7 +167,7 @@ self-service networks using overlay segmentation methods such
 as Virtual Extensible LAN (VXLAN). Essentially, it routes
 virtual networks to physical networks using Network Address
 Translation (NAT). Additionally, this option provides the foundation for
-advanced services such as FWaaS.
+advanced services such as LoadBalancer-as-a-service.
 
 The OpenStack user can create virtual networks without the knowledge
 of underlying infrastructure on the data network. This can also include

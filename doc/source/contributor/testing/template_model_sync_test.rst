@@ -69,8 +69,6 @@ names, which were moved out of Neutron: ::
 
  VPNAAS_TABLES = [...]
 
- FWAAS_TABLES = [...]
-
  # Arista ML2 driver Models moved to openstack/networking-arista
  REPO_ARISTA_TABLES = [...]
 
@@ -79,7 +77,7 @@ names, which were moved out of Neutron: ::
 
  ...
 
- TABLES = (FWAAS_TABLES + VPNAAS_TABLES + ...
+ TABLES = (VPNAAS_TABLES + ...
            + REPO_ARISTA_TABLES + REPO_CISCO_TABLES)
 
 

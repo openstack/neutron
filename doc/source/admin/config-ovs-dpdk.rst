@@ -151,7 +151,7 @@ Known limitations
   If huge pages are not present in the guest, the interface will appear but
   will not function.
 * Expect performance degradation of services using tap devices: these devices
-  do not support DPDK. Example services include DVR and FWaaS.
+  do not support DPDK. Example services include DVR.
 * When the ``ovs_use_veth`` option is set to ``True``, any traffic sent
   from a DHCP namespace will have an incorrect TCP checksum.
   This means that if ``enable_isolated_metadata`` is set to ``True`` and

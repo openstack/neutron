@@ -41,20 +41,6 @@ To enable the logging service, follow the below steps.
      [agent]
      extensions = log
 
-   .. note::
-
-       Fwaas v2 log is currently only supported by openvswitch, the firewall
-       logging driver of linuxbridge is not implemented.
-
-#. To enable logging service for ``firewall_group`` in Layer 3, add
-   ``fwaas_v2_log`` to option ``extensions`` in section ``[AGENT]`` in
-   ``/etc/neutron/l3_agent.ini`` for network nodes. For example:
-
-   .. code-block:: ini
-
-     [AGENT]
-     extensions = fwaas_v2,fwaas_v2_log
-
 #. On compute/network nodes, add configuration for logging service to
    ``[network_log]`` in ``/etc/neutron/plugins/ml2/openvswitch_agent.ini`` and in
    ``/etc/neutron/l3_agent.ini`` as shown bellow:

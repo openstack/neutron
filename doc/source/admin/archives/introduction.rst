@@ -104,11 +104,6 @@ Set these options to configure SSL:
 ``backlog = 4096``
     Number of backlog requests with which to configure the socket.
 
-Firewall-as-a-Service (FWaaS) overview
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-For information on Firewall-as-a-Service (FWaaS), please consult the :doc:`Networking Guide <../fwaas>`.
-
 Allowed-address-pairs
 ~~~~~~~~~~~~~~~~~~~~~
 

@@ -30,6 +30,10 @@ Historically, Neutron supported the following advanced services:
 #. **VPNaaS** (*VPN-as-a-Service*): derives from L3 agent to add
    VPNaaS functionality.
 
+.. note::
+
+   neutron-fwaas is deprecated and no more maintained!
+
 Starting with the Kilo release, these services are split into separate
 repositories, and more extensions are being developed as well. Service
 plugins are a clean way of adding functionality in a cohesive manner

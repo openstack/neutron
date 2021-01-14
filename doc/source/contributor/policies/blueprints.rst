@@ -26,7 +26,7 @@ Sub-Projects and Specs
 
 The `neutron-specs <http://opendev.org/openstack/neutron-specs>`_
 repository is only meant for specs from Neutron itself, and the advanced
-services repositories as well. This includes FWaaS and VPNaaS. Other
+services repositories as well. This includes VPNaaS for example. Other
 sub-projects are encouraged to fold their specs into their own devref code
 in their sub-project gerrit repositories. Please see additional comments
 in the Neutron teams :ref:`section <specs-core-reviewer-team>`

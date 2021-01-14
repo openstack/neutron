@@ -3,7 +3,7 @@
 Neutron Bugs
 ============
 
-Neutron (client, core, FwaaS, VPNaaS) maintains all of its bugs in the following
+Neutron (client, core, VPNaaS) maintains all of its bugs in the following
 Launchpad projects:
 
 * `Launchpad Neutron <https://bugs.launchpad.net/neutron>`_

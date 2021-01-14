@@ -37,7 +37,7 @@ services. Among those of special interest:
    responsible for wiring and securing virtual interfaces (usually both Compute
    and Network nodes).
 #. Layer3 agent that runs on Network node and provides East-West and
-   North-South routing plus some advanced services such as FWaaS or VPNaaS.
+   North-South routing plus some advanced services such as VPNaaS.
 
 For the purpose of this document, we call all services, servers and agents that
 run on any node as just "services".
