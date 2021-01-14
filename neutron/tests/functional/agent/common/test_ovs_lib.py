@@ -111,7 +111,8 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.elements_to_clean['bridges'].append(self.br_name)
 
     def _create_port(self, port_name):
-        self.ovs.ovsdb.add_port(self.br_name, port_name).execute()
+        self.ovs.ovsdb.add_port(self.br_name, port_name).execute(
+            check_error=True)
 
     def _find_port_uuid(self, port_name):
         return self.ovs.ovsdb.db_get('Port', port_name, '_uuid').execute()
@@ -275,7 +276,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self._check_value((qos_id, queues), self.ovs._find_qos)
 
     def test__set_port_qos(self):
-        port_name = 'test_port'
+        port_name = ('port-' + uuidutils.generate_uuid())[:8]
         self._create_bridge()
         self._create_port(port_name)
         self._check_value([], self._find_port_qos, port_name)
@@ -317,7 +318,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.assertNotIn(expected, flows)
 
     def test_update_minimum_bandwidth_queue(self):
-        port_name = 'test_output_port_1'
+        port_name = ('port-' + uuidutils.generate_uuid())[:8]
         self._create_bridge()
         self._create_port(port_name)
         queue_num = 1
@@ -341,7 +342,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self._check_value(expected, self._list_queues, queue_id)
 
     def test_update_minimum_bandwidth_queue_no_qos_no_queue(self):
-        port_name = 'test_output_port_2'
+        port_name = ('port-' + uuidutils.generate_uuid())[:8]
         self._create_bridge()
         self._create_port(port_name)
         queue_num = 1
