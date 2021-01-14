@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import trunk as trunk_def
+from neutron_lib.db import resource_extend
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import common_types
 from neutron_lib.objects import exceptions as o_exc
@@ -125,13 +127,7 @@ class Trunk(base.NeutronDbObject):
         self.update_fields(kwargs)
         super(Trunk, self).update()
 
-    # TODO(hichihara): For tag mechanism. This will be removed in bug/1704137
     def to_dict(self):
         _dict = super(Trunk, self).to_dict()
-        try:
-            _dict['tags'] = [t.tag for t in self.db_obj.standard_attr.tags]
-        except AttributeError:
-            # AttrtibuteError can be raised when accessing self.db_obj
-            # or self.db_obj.standard_attr
-            pass
+        resource_extend.apply_funcs(trunk_def.TRUNKS, _dict, self.db_obj)
         return _dict
