@@ -310,10 +310,7 @@ class TestSubnetDeleteRace(BaseDhcpAgentTest):
         self.assertEqual(1, len(dhcp_ports))
         self.assertEqual('ACTIVE', dhcp_ports[0]['status'])
 
-        port_id = self.vm.neutron_port['id']
-        self.vm.destroy()
-
-        self.client.delete_port(port_id)
+        self.vm.destroy(delete_port=True)
 
         dhcp_ports = self.safe_client.list_ports(**{
             'device_owner': 'network:dhcp',
