@@ -527,6 +527,23 @@ class L3NATAgent(ha.AgentMixin,
 
     def _process_updated_router(self, router):
         ri = self.router_info[router['id']]
+
+        router_ha = router.get('ha')
+        router_distributed = router.get('distributed')
+        if ((router_ha is not None and ri.router.get('ha') != router_ha) or
+                (router_distributed is not None and
+                 ri.router.get('distributed') != router_distributed)):
+            LOG.warning('Type of the router %(id)s changed. '
+                        'Old type: ha=%(old_ha)s; distributed=%(old_dvr)s; '
+                        'New type: ha=%(new_ha)s; distributed=%(new_dvr)s',
+                        {'id': router['id'],
+                         'old_ha': ri.router.get('ha'),
+                         'old_dvr': ri.router.get('distributed'),
+                         'new_ha': router.get('ha'),
+                         'new_dvr': router.get('distributed')})
+            ri = self._create_router(router['id'], router)
+            self.router_info[router['id']] = ri
+
         is_dvr_snat_agent = (self.conf.agent_mode ==
                              lib_const.L3_AGENT_MODE_DVR_SNAT)
         is_dvr_only_agent = (self.conf.agent_mode in
