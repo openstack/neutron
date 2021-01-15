@@ -733,7 +733,7 @@ class IpMonitorTestCase(testscenarios.WithScenarios,
                 if ip_address not in registers:
                     return False
             return True
-        except (OSError, IOError):
+        except (OSError, IOError, ValueError):
             return False
 
     def _check_read_file(self, ip_addresses):
