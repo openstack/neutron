@@ -145,7 +145,14 @@ core_opts = [
                       "Setting to any positive integer means that on failure "
                       "the connection is retried that many times. "
                       "For example, setting to 3 means total attempts to "
-                      "connect will be 4."))
+                      "connect will be 4.")),
+    cfg.BoolOpt('enable_traditional_dhcp', default=True,
+                help=_('If False, neutron-server will disable the following '
+                       'DHCP-agent related functions:'
+                       '1. DHCP provisioning block '
+                       '2. DHCP scheduler API extension '
+                       '3. Network scheduling mechanism '
+                       '4. DHCP RPC/notification')),
 ]
 
 core_cli_opts = [
