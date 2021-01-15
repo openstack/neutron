@@ -23,6 +23,7 @@ from neutron_lib import rpc as n_rpc
 from neutron_lib.utils import net
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_utils import versionutils
 
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
@@ -56,9 +57,11 @@ class SecurityGroupServerRpcApi(object):
     def security_group_info_for_devices(self, context, devices):
         LOG.debug("Get security group information for devices via rpc %r",
                   devices)
-        cctxt = self.client.prepare(version='1.2')
+        call_version = '1.3'
+        cctxt = self.client.prepare(version=call_version)
         return cctxt.call(context, 'security_group_info_for_devices',
-                          devices=devices)
+                          devices=devices,
+                          call_version=call_version)
 
 
 class SecurityGroupServerRpcCallback(object):
@@ -72,10 +75,12 @@ class SecurityGroupServerRpcCallback(object):
     # API version history:
     #   1.1 - Initial version
     #   1.2 - security_group_info_for_devices introduced as an optimization
+    #   1.3 - security_group_info_for_devices returns member_ips with new
+    #         structure.
 
     # NOTE: target must not be overridden in subclasses
     # to keep RPC API version consistent across plugins.
-    target = oslo_messaging.Target(version='1.2',
+    target = oslo_messaging.Target(version='1.3',
                                    namespace=constants.RPC_NAMESPACE_SECGROUP)
 
     @property
@@ -115,9 +120,34 @@ class SecurityGroupServerRpcCallback(object):
 
         Note that sets are serialized into lists by rpc code.
         """
+        # The original client RPC version was 1.2 before this change.
+        call_version = kwargs.pop("call_version", '1.2')
+        _target_version = versionutils.convert_version_to_tuple(call_version)
         devices_info = kwargs.get('devices')
         ports = self._get_devices_info(context, devices_info)
-        return self.plugin.security_group_info_for_ports(context, ports)
+        sg_info = self.plugin.security_group_info_for_ports(context, ports)
+        if _target_version < (1, 3):
+            LOG.warning("RPC security_group_info_for_devices call has "
+                        "inconsistent version between server and agents. "
+                        "The server supports RPC version is 1.3 while "
+                        "the agent is %s.", call_version)
+            return self.make_compatible_sg_member_ips(sg_info)
+        return sg_info
+
+    def make_compatible_sg_member_ips(self, sg_info):
+        sg_member_ips = sg_info.get('sg_member_ips', {})
+        sg_ids = sg_member_ips.keys()
+        for sg_id in sg_ids:
+            member_ips = sg_member_ips.get(sg_id, {})
+            ipv4_ips = member_ips.get("IPv4", set())
+            comp_ipv4_ips = set([ip for ip, _mac in ipv4_ips])
+            ipv6_ips = member_ips.get("IPv6", set())
+            comp_ipv6_ips = set([ip for ip, _mac in ipv6_ips])
+            comp_ips = {"IPv4": comp_ipv4_ips,
+                        "IPv6": comp_ipv6_ips}
+            sg_member_ips[sg_id] = comp_ips
+        sg_info['sg_member_ips'] = sg_member_ips
+        return sg_info
 
 
 class SecurityGroupAgentRpcApiMixin(object):
