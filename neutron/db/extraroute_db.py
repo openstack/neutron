@@ -139,17 +139,16 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
         return self._make_extra_route_list(router_objs)
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
-                                             subnet_id):
+                                             subnet):
         super(ExtraRoute_dbonly_mixin,
               self)._confirm_router_interface_not_in_use(
-            context, router_id, subnet_id)
-        subnet = self._core_plugin.get_subnet(context, subnet_id)
+            context, router_id, subnet)
         subnet_cidr = netaddr.IPNetwork(subnet['cidr'])
         extra_routes = self._get_extra_routes_by_router_id(context, router_id)
         for route in extra_routes:
             if netaddr.all_matching_cidrs(route['nexthop'], [subnet_cidr]):
                 raise xroute_exc.RouterInterfaceInUseByRoute(
-                    router_id=router_id, subnet_id=subnet_id)
+                    router_id=router_id, subnet_id=subnet['id'])
 
     @staticmethod
     def _add_extra_routes(old, add):
