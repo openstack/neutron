@@ -15,7 +15,6 @@
 import os
 from unittest import mock
 
-import eventlet
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import ha
@@ -67,7 +66,7 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
     def _run_monitor(self):
         self.ext_process.enable()
         self.addCleanup(self.ext_process.disable)
-        eventlet.sleep(5)
+        self._search_in_file(self.log_file, 'Initial status of router')
 
     def _callback(self, *args):
         return self.cmd_opts
