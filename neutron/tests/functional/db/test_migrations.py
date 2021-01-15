@@ -592,18 +592,18 @@ class _TestWalkMigrations(object):
             # Destination, current
             yield rev.revision, rev.down_revision
 
-    def _migrate_up(self, config, engine, dest, curr, with_data=False):
-        if with_data:
-            data = None
-            pre_upgrade = getattr(
-                self, "_pre_upgrade_%s" % dest, None)
-            if pre_upgrade:
-                data = pre_upgrade(engine)
-        migration.do_alembic_command(config, 'upgrade', dest)
-        if with_data:
-            check = getattr(self, "_check_%s" % dest, None)
-            if check and data:
-                check(engine, data)
+    def _migrate_up(self, config, engine, dest, curr):
+        data = None
+        check = getattr(self, "_check_%s" % dest, None)
+        pre_upgrade = getattr(self, "_pre_upgrade_%s" % dest, None)
+        if pre_upgrade:
+            if curr:
+                migration.do_alembic_command(config, 'upgrade', curr)
+            data = pre_upgrade(engine)
+
+        if check and data:
+            migration.do_alembic_command(config, 'upgrade', dest)
+            check(engine, data)
 
     def test_walk_versions(self):
         """Test migrations ability to upgrade and downgrade.
@@ -613,7 +613,10 @@ class _TestWalkMigrations(object):
         config = self._get_alembic_config(engine.url)
         revisions = self._revisions()
         for dest, curr in revisions:
-            self._migrate_up(config, engine, dest, curr, with_data=True)
+            self._migrate_up(config, engine, dest, curr)
+
+        if dest:
+            migration.do_alembic_command(config, 'upgrade', dest)
 
 
 class TestWalkMigrationsMysql(testlib_api.MySQLTestCaseMixin,
