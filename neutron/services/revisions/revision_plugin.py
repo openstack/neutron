@@ -259,7 +259,12 @@ class RevisionPlugin(service_base.ServicePluginBase):
         to match.
         """
         context = session.info.get('using_context')
-        criteria = context.get_transaction_constraint() if context else None
+        if context:
+            # NOTE(ralonsoh): use "pop_transaction_constraint" once implemented
+            criteria = context.get_transaction_constraint()
+            context.clear_transaction_constraint()
+        else:
+            criteria = None
         if not criteria:
             return None, None
         match = criteria.if_revision_match

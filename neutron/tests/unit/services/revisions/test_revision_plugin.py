@@ -155,8 +155,20 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
                 raise db_exc.DBDeadlock()
             db_api.sqla_listen(se.Session, 'before_commit',
                                concurrent_increment)
+
+            # Despite the revision number is bumped twice during the session
+            # transaction, the revision number is tested only once the first
+            # time the revision number service is executed for this session and
+            # object.
             self._update('ports', port['port']['id'], new,
                          headers={'If-Match': 'revision_number=%s' % rev},
+                         expected_code=exc.HTTPOk.code)
+            self._update('ports', port['port']['id'], new,
+                         headers={'If-Match': 'revision_number=%s' %
+                                              str(int(rev) + 2)},
+                         expected_code=exc.HTTPOk.code)
+            self._update('ports', port['port']['id'], new,
+                         headers={'If-Match': 'revision_number=1'},
                          expected_code=exc.HTTPPreconditionFailed.code)
 
     def test_port_ip_update_revises(self):
