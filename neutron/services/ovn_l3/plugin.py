@@ -12,9 +12,11 @@
 #    under the License.
 #
 
+from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -65,7 +67,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
 
     # TODO(mjozefcz): Start consuming it from neutron-lib
     # once available.
-    supported_extension_aliases = (
+    _supported_extension_aliases = (
         extensions.ML2_SUPPORTED_API_EXTENSIONS_OVN_L3)
 
     @resource_registry.tracked_resources(router=l3_models.Router,
@@ -87,6 +89,20 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         registry.subscribe(
             self.create_floatingip_precommit, resources.FLOATING_IP,
             events.PRECOMMIT_CREATE)
+
+    @staticmethod
+    def disable_dns_extension_by_extension_drivers(aliases):
+        core_plugin = directory.get_plugin()
+        if not api_extensions.is_extension_supported(
+                core_plugin, dns_apidef.ALIAS):
+            aliases.remove(dns_apidef.ALIAS)
+
+    @property
+    def supported_extension_aliases(self):
+        if not hasattr(self, '_aliases'):
+            self._aliases = self._supported_extension_aliases[:]
+            self.disable_dns_extension_by_extension_drivers(self._aliases)
+        return self._aliases
 
     @property
     def _ovn_client(self):
