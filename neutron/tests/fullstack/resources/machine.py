@@ -197,15 +197,16 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
             )
         )
 
-    def destroy(self):
+    def destroy(self, delete_port=False):
         """Destroy this fake machine.
 
         This should simulate deletion of a vm. It doesn't call cleanUp().
         """
-        self.safe_client.client.update_port(
-            self.neutron_port['id'],
-            {'port': {pbs.HOST_ID: ''}}
-        )
+        if delete_port:
+            self.safe_client.client.delete_port(self.neutron_port['id'])
+        else:
+            self.safe_client.client.update_port(self.neutron_port['id'],
+                                                {'port': {pbs.HOST_ID: ''}})
         # All associated vlan interfaces are deleted too
         # If VM is connected to Linuxbridge it hasn't got "delete_port" method
         # and it is not necessary to delete tap port connected to this bridge.

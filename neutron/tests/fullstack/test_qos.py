@@ -380,7 +380,7 @@ class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
             vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.direction)
 
         # Delete port with qos policy attached
-        vm.destroy()
+        vm.destroy(delete_port=True)
         self._wait_for_bw_rule_removed(vm, self.direction)
         self.assertIsNone(vm.bridge.find_qos(vm.port.name))
         self.assertIsNone(vm.bridge.find_queue(vm.port.name,
@@ -511,7 +511,7 @@ class _TestDscpMarkingQoS(BaseQoSRuleTestCase):
         self._wait_for_dscp_marking_rule_applied(vm, DSCP_MARK)
 
         # Delete port with qos policy attached
-        vm.destroy()
+        vm.destroy(delete_port=True)
         self._wait_for_dscp_marking_rule_removed(vm)
 
 
@@ -746,7 +746,7 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
         self.assertEqual(queue.uuid, queues[0]['_uuid'])
 
         # Delete port with qos policy attached
-        vm_qos.destroy()
+        vm_qos.destroy(delete_port=True)
         self._wait_for_min_bw_rule_removed(vm_qos, self.direction)
         self.assertEqual(
             [],
