@@ -23,6 +23,7 @@ from neutron.tests import base
 from neutron.tests.unit import fake_resources
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib import constants as const
 from neutron_lib.plugins import constants as plugin_constants
 from oslo_utils import uuidutils
 from ovsdbapp import constants as ovsdbapp_const
@@ -238,7 +239,8 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
             fip_objs = {}
         with mock.patch.object(self._ovn_pf, '_get_fip_objs',
                                return_value=fip_objs) as mock_get_fip_objs:
-            self._ovn_pf._handle_notification(None, event_type, None, payload)
+            self._ovn_pf._handle_notification(None, event_type,
+                                              self.pf_plugin, payload)
             self.assertTrue(self.fake_db_rev.called or not fip_objs)
             if not payload:
                 return
@@ -273,6 +275,10 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
         calls = [mock.call(mock.ANY, self.l3_plugin._ovn, entry.current_pf)
                  for entry in fake_payload]
         self.handler.port_forwarding_created.assert_has_calls(calls)
+        update_calls = [mock.call(
+            self.context, entry.current_pf.floatingip_id,
+            const.FLOATINGIP_STATUS_ACTIVE) for entry in fake_payload]
+        self.l3_plugin.update_floatingip_status.assert_has_calls(update_calls)
 
     def test_handle_notification_update(self):
         fip_objs = {100: {'description': 'hundred'}, 101: {}}
@@ -289,11 +295,20 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
                     2: {'description': 'two', 'revision_number': '222'}}
         fake_payload = [self._fake_pf_payload_entry(None, id)
                         for id in range(1, 4)]
-        self._handle_notification_common(events.AFTER_DELETE, fake_payload,
-                                         fip_objs)
-        calls = [mock.call(mock.ANY, self.l3_plugin._ovn, entry.original_pf)
-                 for entry in fake_payload]
-        self.handler.port_forwarding_deleted.assert_has_calls(calls)
+        with mock.patch.object(
+                self.pf_plugin, 'get_floatingip_port_forwardings',
+                return_value=[]):
+            self._handle_notification_common(
+                events.AFTER_DELETE, fake_payload, fip_objs)
+            calls = [mock.call(
+                mock.ANY, self.l3_plugin._ovn, entry.original_pf)
+                     for entry in fake_payload]
+            self.handler.port_forwarding_deleted.assert_has_calls(calls)
+            update_calls = [mock.call(
+                self.context, entry.original_pf.floatingip_id,
+                const.FLOATINGIP_STATUS_DOWN) for entry in fake_payload]
+            self.l3_plugin.update_floatingip_status.assert_has_calls(
+                update_calls)
 
     def test_maintenance_create_or_update(self):
         pf_objs = [self._fake_pf_obj()]
