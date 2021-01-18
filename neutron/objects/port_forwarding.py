@@ -20,7 +20,6 @@ from neutron_lib.objects import common_types
 from neutron.db.models import l3
 from neutron.db.models import port_forwarding as models
 from neutron.objects import base
-from neutron.objects import router
 from neutron_lib import constants as lib_const
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
@@ -92,10 +91,7 @@ class PortForwarding(base.NeutronDbObject):
         super(PortForwarding, self).obj_load_attr(attrname)
 
     def _load_attr_from_fip(self, attrname):
-        # get all necessary info from fip obj
-        fip_obj = router.FloatingIP.get_object(
-            self.obj_context, id=self.floatingip_id)
-        value = getattr(fip_obj, attrname)
+        value = getattr(self.db_obj.floating_ip, attrname)
         setattr(self, attrname, value)
         self.obj_reset_changes([attrname])
 

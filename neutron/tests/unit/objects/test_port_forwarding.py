@@ -15,6 +15,7 @@
 from unittest import mock
 
 import netaddr
+from oslo_utils import uuidutils
 
 from neutron.objects import port_forwarding
 from neutron.objects import router
@@ -29,8 +30,6 @@ class PortForwardingObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
 
     def setUp(self):
         super(PortForwardingObjectTestCase, self).setUp()
-        self.fip_db_fields = self.get_random_db_fields(router.FloatingIP)
-        del self.fip_db_fields['floating_ip_address']
         # 'portforwardings' table will store the 'internal_ip_address' and
         # 'internal_port' as a single 'socket' column.
         # Port forwarding object accepts 'internal_ip_address' and
@@ -43,19 +42,41 @@ class PortForwardingObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
         self.valid_field = [f for f in self._test_class.fields
                             if f not in invalid_fields][0]
 
-        def random_generate_fip_obj(db_fields, **floatingip):
-            if db_fields.get(
-                    'id', None) and floatingip.get(
-                 'id', None) and db_fields.get('id') == floatingip.get('id'):
-                return db_fields
-            db_fields['id'] = floatingip.get('id', None)
-            db_fields['floating_ip_address'] = tools.get_random_ip_address(
-                version=4)
-            return self.fip_db_fields
-        self.mock_fip_obj = mock.patch.object(
-            router.FloatingIP, 'get_object',
-            side_effect=lambda _, **y: router.FloatingIP.db_model(
-                **random_generate_fip_obj(self.fip_db_fields, **y))).start()
+        self.mock_load_fip = mock.patch.object(
+            self._test_class, '_load_attr_from_fip', autospec=True,
+            side_effect=self._mock_load_attr_from_fip).start()
+
+        for obj_fields in self.obj_fields:
+            obj_fields['floating_ip_address'] = tools.get_random_ip_address(4)
+            obj_fields['router_id'] = uuidutils.generate_uuid()
+
+    def _mock_load_attr_from_fip(self, fp_obj, attrname):
+        def random_generate_fip_db(fip_id):
+            fip_fields = self.get_random_db_fields(router.FloatingIP)
+            fip_fields['id'] = fip_id
+            fip_fields['floating_ip_address'] = tools.get_random_ip_address(4)
+            return router.FloatingIP.db_model(**fip_fields)
+
+        if not fp_obj.db_obj:
+            fp_db_attrs = {
+                'floatingip_id': fp_obj.floatingip_id,
+                'external_port': fp_obj.external_port,
+                'internal_neutron_port_id': fp_obj.internal_port_id,
+                'protocol': fp_obj.protocol,
+                'socket': fp_obj.internal_port,
+                'floating_ip': random_generate_fip_db(fp_obj.floatingip_id)
+            }
+            fp_obj._captured_db_model = (
+                port_forwarding.PortForwarding.db_model(**fp_db_attrs))
+
+        if not fp_obj.db_obj.floating_ip:
+            fp_obj.db_obj.floating_ip = random_generate_fip_db(
+                fp_obj.floatingip_id)
+
+        # From PortForwarding._load_attr_from_fip
+        value = getattr(fp_obj.db_obj.floating_ip, attrname)
+        setattr(self, attrname, value)
+        fp_obj.obj_reset_changes([attrname])
 
 
 class PortForwardingDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
