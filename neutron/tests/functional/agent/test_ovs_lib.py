@@ -211,11 +211,12 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
                                  self.br.br_name, 'datapath_id', dpid)
         self.assertIn(dpid, self.br.get_datapath_id())
 
-    def _test_add_tunnel_port(self, attrs):
+    def _test_add_tunnel_port(self, attrs,
+                              expected_tunnel_type=const.TYPE_GRE):
         port_name = utils.get_rand_device_name(net_helpers.PORT_PREFIX)
         self.br.add_tunnel_port(port_name, attrs['remote_ip'],
                                 attrs['local_ip'])
-        self.assertEqual('gre',
+        self.assertEqual(expected_tunnel_type,
                          self.ovs.db_get_val('Interface', port_name, 'type'))
         options = self.ovs.db_get_val('Interface', port_name, 'options')
         for attr, val in attrs.items():
@@ -233,7 +234,8 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
             'remote_ip': '2001:db8:200::1',
             'local_ip': '2001:db8:100::1',
         }
-        self._test_add_tunnel_port(attrs)
+        self._test_add_tunnel_port(
+            attrs, expected_tunnel_type=ovs_lib.TYPE_GRE_IP6)
 
     def test_add_tunnel_port_custom_port(self):
         port_name = utils.get_rand_device_name(net_helpers.PORT_PREFIX)
