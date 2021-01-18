@@ -16,6 +16,7 @@
 import functools
 
 import mock
+from neutron_lib import constants as p_const
 from neutron_lib.services.qos import constants as qos_constants
 from oslo_utils import uuidutils
 import six
@@ -438,3 +439,30 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.assertEqual(8000,
                          self.ovs.db_get_val('Controller', self.br_name,
                                              'inactivity_probe'))
+
+    def test_add_gre_tunnel_port(self):
+        ipv4_tunnel_port = "test-ipv4-port"
+        ipv6_tunnel_port = "test-ipv6-port"
+        self._create_bridge()
+        self.ovs.add_tunnel_port(
+            ipv4_tunnel_port, "10.0.0.1", "10.0.0.2",
+            tunnel_type=p_const.TYPE_GRE)
+        self.ovs.add_tunnel_port(
+            ipv6_tunnel_port, "2001:db8::1", "2001:db8:2",
+            tunnel_type=p_const.TYPE_GRE)
+        interfaces = self.ovs.get_ports_attributes(
+            "Interface", columns=["name", "type", "options"],
+            if_exists=True)
+
+        ipv4_port_type = None
+        ipv6_port_type = None
+        ipv6_port_options = {}
+        for interface in interfaces:
+            if interface['name'] == ipv4_tunnel_port:
+                ipv4_port_type = interface['type']
+            elif interface['name'] == ipv6_tunnel_port:
+                ipv6_port_type = interface['type']
+                ipv6_port_options = interface['options']
+        self.assertEqual(p_const.TYPE_GRE, ipv4_port_type)
+        self.assertEqual(ovs_lib.TYPE_GRE_IP6, ipv6_port_type)
+        self.assertEqual('legacy', ipv6_port_options.get('packet_type'))
