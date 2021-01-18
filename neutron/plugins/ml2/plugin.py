@@ -91,6 +91,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import exc as sa_exc
 
 from neutron._i18n import _
+from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
@@ -342,8 +343,19 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             LOG.debug("Port %s is administratively disabled so it will "
                       "not transition to active.", port_id)
             return
-        self.update_port_status(
-            payload.context, port_id, const.PORT_STATUS_ACTIVE)
+
+        host_migrating = agent_rpc.migrating_to_host(
+            getattr(port, 'port_bindings', []))
+        if (host_migrating and cfg.CONF.nova.live_migration_events and
+                self.nova_notifier):
+            send_nova_event = bool(trigger ==
+                                   provisioning_blocks.L2_AGENT_ENTITY)
+            with self.nova_notifier.context_enabled(send_nova_event):
+                self.update_port_status(payload.context, port_id,
+                                        const.PORT_STATUS_ACTIVE)
+        else:
+            self.update_port_status(payload.context, port_id,
+                                    const.PORT_STATUS_ACTIVE)
 
     @log_helpers.log_method_call
     def _start_rpc_notifiers(self):

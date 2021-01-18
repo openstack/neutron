@@ -136,6 +136,11 @@
         s-container: false
         s-object: false
         s-proxy: false
+      devstack_local_conf:
+        post-config:
+          $NEUTRON_CONF:
+            nova:
+              live_migration_events: True
     group-vars:
       subnode:
         devstack_services:

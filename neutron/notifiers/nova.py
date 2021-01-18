@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
+
 from keystoneauth1 import loading as ks_loading
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -66,6 +68,16 @@ class Notifier(object):
             if ext.name == "server_external_events"]
         self.batch_notifier = batch_notifier.BatchNotifier(
             cfg.CONF.send_events_interval, self.send_events)
+        self._enabled = True
+
+    @contextlib.contextmanager
+    def context_enabled(self, enabled):
+        stored_enabled = self._enabled
+        try:
+            self._enabled = enabled
+            yield
+        finally:
+            self._enabled = stored_enabled
 
     def _get_nova_client(self):
         global_id = common_context.generate_request_id()
@@ -164,6 +176,10 @@ class Notifier(object):
                 return self._get_network_changed_event(port)
 
     def _can_notify(self, port):
+        if not self._enabled:
+            LOG.debug("Nova notifier disabled")
+            return False
+
         if not port.id:
             LOG.warning("Port ID not set! Nova will not be notified of "
                         "port status change.")
