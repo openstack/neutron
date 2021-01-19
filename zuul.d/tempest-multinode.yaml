@@ -107,6 +107,7 @@
               ovs:
                 tunnel_bridge: br-tun
                 bridge_mappings: public:br-ex
+                resource_provider_bandwidths: br-ex:1000000:1000000
             $NEUTRON_L3_CONF:
               DEFAULT:
                 agent_mode: dvr_snat
