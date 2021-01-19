@@ -8,6 +8,7 @@
       - openstack-cover-jobs
       - openstack-lower-constraints-jobs
       - openstack-python3-wallaby-jobs
+      - openstack-python3-wallaby-jobs-arm64
       - publish-openstack-docs-pti
       - periodic-stable-jobs
       - check-requirements
