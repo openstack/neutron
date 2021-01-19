@@ -701,11 +701,11 @@ as any other RBAC ``access_as_external`` policy.
 Preventing regular users from sharing objects with each other
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The default ``policy.json`` file will not allow regular
+The default ``policy.yaml`` file will not allow regular
 users to share objects with every other project using a wildcard;
 however, it will allow them to share objects with specific project
 IDs.
 
 If an operator wants to prevent normal users from doing this, the
-``"create_rbac_policy":`` entry in ``policy.json`` can be adjusted
+``"create_rbac_policy":`` entry in ``policy.yaml`` can be adjusted
 from ``""`` to ``"rule:admin_only"``.

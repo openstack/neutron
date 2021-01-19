@@ -615,7 +615,7 @@ Other repo-split items
 
 (These are still TBD.)
 
-* Splitting policy.json? **ToDo** Armando will investigate.
+* Splitting policy.yaml? **ToDo** Armando will investigate.
 
 * Generic instructions (or a template) for installing an out-of-tree plugin or
   driver for Neutron. Possibly something for the networking guide, and/or a

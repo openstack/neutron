@@ -31,7 +31,7 @@ Networking handles two kind of authorization policies:
    The actual authorization policies enforced in Networking might vary
    from deployment to deployment.
 
-The policy engine reads entries from the ``policy.json`` file. The
+The policy engine reads entries from the ``policy.yaml`` file. The
 actual location of this file might vary from distribution to
 distribution. Entries can be updated while the system is running, and no
 service restart is required. Every time the policy file is updated, the
@@ -84,7 +84,7 @@ terminal rules:
    in the resource is equal to the project identifier of the user
    submitting the request.
 
-This extract is from the default ``policy.json`` file:
+This extract is from the default ``policy.yaml`` file:
 
 -  A rule that evaluates successfully if the current user is an
    administrator or the owner of the resource specified in the request
@@ -92,49 +92,42 @@ This extract is from the default ``policy.json`` file:
 
    .. code-block:: none
 
-      {
-       "admin_or_owner": "role:admin",
-       "tenant_id:%(tenant_id)s",
-       "admin_or_network_owner": "role:admin",
-       "tenant_id:%(network_tenant_id)s",
-       "admin_only": "role:admin",
-       "regular_user": "",
-       "shared":"field:networks:shared=True",
-       "default":
+      "admin_or_owner": "role:admin or tenant_id:%(tenant_id)s"
+      "admin_or_network_owner": "role:admin or tenant_id:%(network_tenant_id)s"
+      "admin_only": "role:admin"
+      "regular_user": ""
+      "shared": "field:networks:shared=True"
 
 -  The default policy that is always evaluated if an API operation does
-   not match any of the policies in ``policy.json``.
+   not match any of the policies in ``policy.yaml``.
 
    .. code-block:: none
 
-        "rule:admin_or_owner",
-        "create_subnet": "rule:admin_or_network_owner",
-        "get_subnet": "rule:admin_or_owner",
-        "rule:shared",
-        "update_subnet": "rule:admin_or_network_owner",
-        "delete_subnet": "rule:admin_or_network_owner",
-        "create_network": "",
-        "get_network": "rule:admin_or_owner",
+      "default": "rule:admin_or_owner"
+      "create_subnet": "rule:admin_or_network_owner"
+      "get_subnet": "rule:admin_or_owner or rule:shared"
+      "update_subnet": "rule:admin_or_network_owner"
+      "delete_subnet": "rule:admin_or_network_owner"
+      "create_network": ""
 
 -  This policy evaluates successfully if either *admin_or_owner*, or
    *shared* evaluates successfully.
 
    .. code-block:: none
 
-         "rule:shared",
-         "create_network:shared": "rule:admin_only"
+       "get_network": "rule:admin_or_owner or rule:shared"
+       "create_network:shared": "rule:admin_only"
 
 -  This policy restricts the ability to manipulate the *shared*
    attribute for a network to administrators only.
 
    .. code-block:: none
 
-         ,
-         "update_network": "rule:admin_or_owner",
-        "delete_network": "rule:admin_or_owner",
-        "create_port": "",
-        "create_port:mac_address": "rule:admin_or_network_owner",
-        "create_port:fixed_ips":
+       "update_network": "rule:admin_or_owner"
+       "delete_network": "rule:admin_or_owner"
+       "create_port": ""
+       "create_port:mac_address": "rule:admin_or_network_owner"
+       "create_port:fixed_ips": "rule:admin_or_network_owner"
 
 -  This policy restricts the ability to manipulate the *mac_address*
    attribute for a port only to administrators and the owner of the
@@ -142,11 +135,9 @@ This extract is from the default ``policy.json`` file:
 
    .. code-block:: none
 
-         "rule:admin_or_network_owner",
-        "get_port": "rule:admin_or_owner",
-        "update_port": "rule:admin_or_owner",
-         "delete_port": "rule:admin_or_owner"
-       }
+       "get_port": "rule:admin_or_owner"
+       "update_port": "rule:admin_or_owner"
+       "delete_port": "rule:admin_or_owner"
 
 In some cases, some operations are restricted to administrators only.
 This example shows you how to modify a policy file to permit project to
@@ -155,21 +146,20 @@ perform all other operations:
 
 .. code-block:: none
 
-    {
-            "admin_or_owner": "role:admin", "tenant_id:%(tenant_id)s",
-            "admin_only": "role:admin", "regular_user": "",
-            "default": "rule:admin_only",
-            "create_subnet": "rule:admin_only",
-            "get_subnet": "rule:admin_or_owner",
-            "update_subnet": "rule:admin_only",
-            "delete_subnet": "rule:admin_only",
-            "create_network": "",
-            "get_network": "rule:admin_or_owner",
-            "create_network:shared": "rule:admin_only",
-            "update_network": "rule:admin_or_owner",
-            "delete_network": "rule:admin_or_owner",
-            "create_port": "rule:admin_only",
-            "get_port": "rule:admin_or_owner",
-            "update_port": "rule:admin_only",
+            "admin_or_owner": "role:admin or tenant_id:%(tenant_id)s"
+            "admin_only": "role:admin"
+            "regular_user": ""
+            "default": "rule:admin_only"
+            "create_subnet": "rule:admin_only"
+            "get_subnet": "rule:admin_or_owner"
+            "update_subnet": "rule:admin_only"
+            "delete_subnet": "rule:admin_only"
+            "create_network": ""
+            "get_network": "rule:admin_or_owner"
+            "create_network:shared": "rule:admin_only"
+            "update_network": "rule:admin_or_owner"
+            "delete_network": "rule:admin_or_owner"
+            "create_port": "rule:admin_only"
+            "get_port": "rule:admin_or_owner"
+            "update_port": "rule:admin_only"
             "delete_port": "rule:admin_only"
-    }

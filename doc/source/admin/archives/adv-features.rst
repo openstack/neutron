@@ -418,7 +418,7 @@ VMware NSX QoS extension
 The VMware NSX QoS extension rate-limits network ports to guarantee a
 specific amount of bandwidth for each port. This extension, by default,
 is only accessible by a project with an admin role but is configurable
-through the ``policy.json`` file. To use this extension, create a queue
+through the ``policy.yaml`` file. To use this extension, create a queue
 and specify the min/max bandwidth rates (kbps) and optionally set the
 QoS Marking and DSCP value (if your network fabric uses these values to
 make forwarding decisions). Once created, you can associate a queue with

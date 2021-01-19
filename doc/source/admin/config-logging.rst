@@ -80,16 +80,16 @@ To enable the logging service, follow the below steps.
        - If we don't specify ``local_output_log_base``, logged packets will be
          stored in system journal like ``/var/log/syslog`` by default.
 
-Trusted projects policy.json configuration
+Trusted projects policy.yaml configuration
 ----------------------------------------------
 
-With the default ``/etc/neutron/policy.json``, administrators must set up
+With the default ``/etc/neutron/policy.yaml``, administrators must set up
 resource logging on behalf of the cloud projects.
 
 If projects are trusted to administer their own loggable resources  in their
-cloud, neutron's policy file ``policy.json`` can be modified to allow this.
+cloud, neutron's policy file ``policy.yaml`` can be modified to allow this.
 
-Modify ``/etc/neutron/policy.json`` entries as follows:
+Modify ``/etc/neutron/policy.yaml`` entries as follows:
 
 .. code-block:: none
 
