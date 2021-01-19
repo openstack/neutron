@@ -81,11 +81,13 @@ something like this:
 
 ::
 
+  from neutron.db import api as db_api
+
   def create_port(context, ip_address, mac_address):
       _ensure_mac_not_in_use(context, mac_address)
       _ensure_ip_not_in_use(context, ip_address)
       try:
-          with context.session.begin():
+          with db_api.CONTEXT_READER.using(context):
              port_obj = Port(ip=ip_address, mac=mac_address)
              do_expensive_thing(...)
              do_extra_other_thing(...)
@@ -124,7 +126,7 @@ code cleaner.
   def create_port(context, ip_address, mac_address):
       _ensure_mac_not_in_use(context, mac_address)
       _ensure_ip_not_in_use(context, ip_address)
-      with context.session.begin():
+      with db_api.CONTEXT_READER.using(context):
          port_obj = Port(ip=ip_address, mac=mac_address)
          do_expensive_thing(...)
          do_extra_other_thing(...)
@@ -163,7 +165,7 @@ Here are some usage examples:
 
   @db_api.retry_if_session_inactive()
   def atomic_bulk_create_elephants(context, elephants):
-      with context.session.begin():
+      with db_api.CONTEXT_WRITER.using(context):
           for elephant in elephants:
               # note that if create_elephant throws a retriable
               # exception, the decorator around it will not retry

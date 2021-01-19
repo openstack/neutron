@@ -140,43 +140,6 @@ Document common pitfalls as well as good practices done during database developm
   `patch 257086 <https://review.opendev.org/#/c/257086/>`_ which changed the
   availability zone code from the incorrect style to a database friendly one.
 
-* Sometimes in code we use the following structures:
-
-  .. code:: python
-
-     def create():
-        with context.session.begin(subtransactions=True):
-            create_something()
-            try:
-                _do_other_thing_with_created_object()
-            except Exception:
-                with excutils.save_and_reraise_exception():
-                    delete_something()
-
-     def _do_other_thing_with_created_object():
-        with context.session.begin(subtransactions=True):
-            ....
-
-  The problem is that when exception is raised in ``_do_other_thing_with_created_object``
-  it is caught in except block, but the object cannot be deleted in except
-  section because internal transaction from ``_do_other_thing_with_created_object``
-  has been rolled back. To avoid this nested transactions should be used.
-  For such cases help function ``safe_creation`` has been created in
-  ``neutron/db/_utils.py``.
-  So, the example above should be replaced with:
-
-  .. code:: python
-
-     _safe_creation(context, create_something, delete_something,
-                    _do_other_thing_with_created_object)
-
-  Where nested transaction is used in _do_other_thing_with_created_object
-  function.
-
-  The ``_safe_creation function can also be passed the ``transaction=False``
-  argument to prevent any transaction from being created just to leverage
-  the automatic deletion on exception logic.
-
 * Beware of ResultProxy.inserted_primary_key which returns a list of last
   inserted primary keys not the last inserted primary key:
 
