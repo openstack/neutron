@@ -402,7 +402,8 @@ class TestRouter(base.TestOVNFunctionalBase):
 
         # Set chassis on chassisredirect port in Port_Binding table
         logical_port = 'cr-lrp-%s' % gw_port_id
-        self.assertTrue(self.cr_lrp_pb_event.wait(logical_port))
+        self.assertTrue(self.cr_lrp_pb_event.wait(logical_port),
+                        msg='lrp %s failed to bind' % logical_port)
         self.sb_api.lsp_bind(logical_port, self.chassis1,
                              may_exist=True).execute(check_error=True)
 
@@ -493,7 +494,8 @@ class TestRouter(base.TestOVNFunctionalBase):
             router = self._create_router('router%d' % i, gw_info=gw_info)
             gw_port_id = router.get('gw_port_id')
             logical_port = 'cr-lrp-%s' % gw_port_id
-            self.assertTrue(self.cr_lrp_pb_event.wait(logical_port))
+            self.assertTrue(self.cr_lrp_pb_event.wait(logical_port),
+                            msg='lrp %s failed to bind' % logical_port)
             self.sb_api.lsp_bind(logical_port, chassis4,
                                  may_exist=True).execute(check_error=True)
         self.l3_plugin.schedule_unhosted_gateways()
@@ -541,7 +543,8 @@ class TestRouter(base.TestOVNFunctionalBase):
         router = self._create_router('router', gw_info=gw_info)
         gw_port_id = router.get('gw_port_id')
         logical_port = 'cr-lrp-%s' % gw_port_id
-        self.assertTrue(self.cr_lrp_pb_event.wait(logical_port))
+        self.assertTrue(self.cr_lrp_pb_event.wait(logical_port),
+                        msg='lrp %s failed to bind' % logical_port)
         self.sb_api.lsp_bind(logical_port, chassis_list[0],
                              may_exist=True).execute(check_error=True)
 
