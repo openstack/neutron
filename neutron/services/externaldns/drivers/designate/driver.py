@@ -23,6 +23,7 @@ from keystoneauth1 import token_endpoint
 from neutron_lib import constants
 from neutron_lib.exceptions import dns as dns_exc
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.conf.services import extdns_designate_driver
 from neutron.services.externaldns import driver
@@ -36,6 +37,8 @@ _SESSION = None
 
 CONF = cfg.CONF
 extdns_designate_driver.register_designate_opts()
+
+LOG = logging.getLogger(__name__)
 
 
 def get_clients(context):
@@ -62,9 +65,26 @@ def get_clients(context):
     return client, admin_client
 
 
-def get_all_projects_client(context):
+def get_all_projects_client(context, edit_managed=False):
     auth = token_endpoint.Token(CONF.designate.url, context.auth_token)
-    return d_client.Client(session=_SESSION, auth=auth, all_projects=True)
+    client = d_client.Client(session=_SESSION, auth=auth,
+                             all_projects=True,
+                             edit_managed=edit_managed)
+    if CONF.designate.auth_type:
+        admin_auth = loading.load_auth_from_conf_options(
+            CONF, 'designate')
+    else:
+        admin_auth = password.Password(
+            auth_url=CONF.designate.admin_auth_url,
+            username=CONF.designate.admin_username,
+            password=CONF.designate.admin_password,
+            tenant_name=CONF.designate.admin_tenant_name,
+            tenant_id=CONF.designate.admin_tenant_id)
+    admin_client = d_client.Client(session=_SESSION, auth=admin_auth,
+                                   endpoint_override=CONF.designate.url,
+                                   all_projects=True,
+                                   edit_managed=edit_managed)
+    return client, admin_client
 
 
 class Designate(driver.ExternalDNSService):
@@ -153,24 +173,38 @@ class Designate(driver.ExternalDNSService):
 
     def delete_record_set(self, context, dns_domain, dns_name, records):
         client, admin_client = get_clients(context)
-        try:
-            ids_to_delete = self._get_ids_ips_to_delete(
-                dns_domain, '%s.%s' % (dns_name, dns_domain), records, client)
-        except dns_exc.DNSDomainNotFound:
-            # Try whether we have admin powers and can see all projects
-            client = get_all_projects_client(context)
-            ids_to_delete = self._get_ids_ips_to_delete(
-                dns_domain, '%s.%s' % (dns_name, dns_domain), records, client)
+        if dns_domain and dns_name:
+            try:
+                ids_to_delete = self._get_ids_ips_to_delete(
+                    dns_domain, '%s.%s' % (dns_name, dns_domain),
+                    records, client)
+            except dns_exc.DNSDomainNotFound:
+                # Try whether we have admin powers and can see all projects
+                client, admin_client = get_all_projects_client(context)
+                ids_to_delete = self._get_ids_ips_to_delete(
+                    dns_domain, '%s.%s' % (dns_name, dns_domain),
+                    records, client)
 
-        for _id in ids_to_delete:
-            client.recordsets.delete(dns_domain, _id)
+            for _id in ids_to_delete:
+                client.recordsets.delete(dns_domain, _id)
+
         if not CONF.designate.allow_reverse_dns_lookup:
             return
 
-        for record in records:
-            in_addr_name = netaddr.IPAddress(record).reverse_dns
-            in_addr_zone_name = self._get_in_addr_zone_name(in_addr_name)
-            admin_client.recordsets.delete(in_addr_zone_name, in_addr_name)
+        if not dns_domain and not dns_name:
+            client, admin_client = get_all_projects_client(context, True)
+
+        try:
+            for record in records:
+                in_addr_name = netaddr.IPAddress(record).reverse_dns
+                in_addr_zone_name = self._get_in_addr_zone_name(in_addr_name)
+                admin_client.recordsets.delete(in_addr_zone_name, in_addr_name)
+        except d_exc.NotFound as e:
+            if dns_domain and dns_name:
+                raise e
+            else:
+                LOG.debug("PTR record not found for floating IP "
+                          "created without dns_domain and dns_name")
 
     def _get_ids_ips_to_delete(self, dns_domain, name, records,
                                designate_client):

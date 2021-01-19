@@ -187,6 +187,10 @@ class DNSDbMixin(object):
                 context, dns_data_db['published_dns_domain'],
                 dns_data_db['published_dns_name'],
                 [floatingip_data['floating_ip_address']])
+        else:
+            self._delete_floatingip_from_external_dns_service(
+                context, None, None,
+                [floatingip_data['floating_ip_address']])
 
     def _validate_floatingip_dns(self, dns_name, dns_domain):
         if dns_domain and not dns_name:
