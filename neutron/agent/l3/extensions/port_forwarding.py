@@ -72,11 +72,11 @@ class RouterFipPortForwardingMapping(object):
             if not self.managed_port_forwardings.get(port_forwarding.id):
                 continue
             self.managed_port_forwardings.pop(port_forwarding.id)
-            self.fip_port_forwarding[port_forwarding.floatingip_id].remove(
+            self.fip_port_forwarding[port_forwarding.floatingip_id].discard(
                 port_forwarding.id)
             if not self.fip_port_forwarding[port_forwarding.floatingip_id]:
                 self.fip_port_forwarding.pop(port_forwarding.floatingip_id)
-                self.router_fip_mapping[port_forwarding.router_id].remove(
+                self.router_fip_mapping[port_forwarding.router_id].discard(
                     port_forwarding.floatingip_id)
                 if not self.router_fip_mapping[port_forwarding.router_id]:
                     del self.router_fip_mapping[port_forwarding.router_id]
@@ -88,7 +88,7 @@ class RouterFipPortForwardingMapping(object):
 
     @lockutils.synchronized('port-forwarding-cache')
     def clear_by_fip(self, fip_id, router_id):
-        self.router_fip_mapping[router_id].remove(fip_id)
+        self.router_fip_mapping[router_id].discard(fip_id)
         if len(self.router_fip_mapping[router_id]) == 0:
             del self.router_fip_mapping[router_id]
         for pf_id in self.fip_port_forwarding[fip_id]:
