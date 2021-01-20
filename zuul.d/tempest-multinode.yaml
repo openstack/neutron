@@ -249,10 +249,9 @@
         neutron: https://opendev.org/openstack/neutron
         neutron-tempest-plugin: https://opendev.org/openstack/neutron-tempest-plugin
       zuul_copy_output:
-        '{{ devstack_base_dir }}/data/ovs': 'logs'
-        '{{ devstack_base_dir }}/data/ovn': 'logs'
-        '{{ devstack_log_dir }}/ovsdb-server-nb.log': 'logs'
-        '{{ devstack_log_dir }}/ovsdb-server-sb.log': 'logs'
+        '/var/log/ovn': 'logs'
+        '/var/log/openvswitch': 'logs'
+        '/var/lib/ovn': 'logs'
       extensions_to_txt:
         db: true
       devstack_services:
