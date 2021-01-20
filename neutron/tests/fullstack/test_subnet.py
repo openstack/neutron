@@ -14,6 +14,7 @@
 
 import netaddr
 from neutron_lib import constants
+from neutronclient.common import exceptions as nclient_exceptions
 from oslo_utils import uuidutils
 
 from neutron.tests.common.exclusive_resources import ip_network
@@ -38,16 +39,23 @@ class TestSubnet(base.BaseFullStackTestCase):
     def _create_network(self, project_id, name='test_network'):
         return self.safe_client.create_network(project_id, name=name)
 
-    def _create_subnet(self, project_id, network_id, cidr,
+    def _create_subnetpool(self, project_id, min_prefixlen, max_prefixlen,
+                           default_prefixlen, prefixes):
+        return self.safe_client.create_subnetpool(
+            project_id=project_id, min_prefixlen=min_prefixlen,
+            max_prefixlen=max_prefixlen,
+            default_prefixlen=default_prefixlen, prefixes=prefixes)
+
+    def _create_subnet(self, project_id, network_id, cidr=None,
                        ipv6_address_mode=None, ipv6_ra_mode=None,
-                       subnetpool_id=None):
-        ip_version = None
+                       subnetpool_id=None, ip_version=None, gateway_ip=None):
         if ipv6_address_mode or ipv6_ra_mode:
             ip_version = constants.IP_VERSION_6
         return self.safe_client.create_subnet(
-            project_id, network_id, cidr, enable_dhcp=True,
+            project_id, network_id, cidr=cidr, enable_dhcp=True,
             ipv6_address_mode=ipv6_address_mode, ipv6_ra_mode=ipv6_ra_mode,
-            subnetpool_id=subnetpool_id, ip_version=ip_version)
+            subnetpool_id=subnetpool_id, ip_version=ip_version,
+            gateway_ip=gateway_ip)
 
     def _show_subnet(self, subnet_id):
         return self.client.show_subnet(subnet_id)
@@ -80,3 +88,47 @@ class TestSubnet(base.BaseFullStackTestCase):
                                      subnetpool_id='prefix_delegation')
         subnet = self._show_subnet(subnet['id'])
         self.assertIsNone(subnet['subnet']['gateway_ip'])
+
+    def test_create_subnet_ipv4_with_subnetpool(self):
+        subnetpool_cidr = self.useFixture(
+            ip_network.ExclusiveIPNetwork(
+                '240.0.0.0', '240.255.255.255', '16')).network
+        subnetpool = self._create_subnetpool(self._project_id, 8, 24, 24,
+                                             [subnetpool_cidr])
+        subnets = list(subnetpool_cidr.subnet(24))
+
+        # Request from subnetpool.
+        subnet = self._create_subnet(self._project_id, self._network['id'],
+                                     subnetpool_id=subnetpool['id'],
+                                     ip_version=4)
+        subnet = self._show_subnet(subnet['id'])
+        self.assertEqual(subnet['subnet']['cidr'], str(subnets[0].cidr))
+        self.assertEqual(subnet['subnet']['gateway_ip'],
+                         str(subnets[0].network + 1))
+
+        # Request from subnetpool with gateway_ip.
+        gateway_ip = subnets[1].ip + 10
+        subnet = self._create_subnet(self._project_id, self._network['id'],
+                                     subnetpool_id=subnetpool['id'],
+                                     ip_version=4, gateway_ip=gateway_ip)
+        subnet = self._show_subnet(subnet['id'])
+        self.assertEqual(subnet['subnet']['cidr'], str(subnets[1].cidr))
+        self.assertEqual(subnet['subnet']['gateway_ip'], str(gateway_ip))
+
+        # Request from subnetpool with incorrect gateway_ip (cannot be the
+        # network broadcast IP).
+        gateway_ip = subnets[2].ip
+        self.assertRaises(nclient_exceptions.Conflict,
+                          self._create_subnet, self._project_id,
+                          self._network['id'], subnetpool_id=subnetpool['id'],
+                          ip_version=4, gateway_ip=gateway_ip)
+
+        # Request from subnetpool using a correct gateway_ip from the same
+        # CIDR; that means this subnet has not been allocated yet.
+        gateway_ip += 1
+        subnet = self._create_subnet(self._project_id, self._network['id'],
+                                     subnetpool_id=subnetpool['id'],
+                                     ip_version=4, gateway_ip=gateway_ip)
+        subnet = self._show_subnet(subnet['id'])
+        self.assertEqual(subnet['subnet']['cidr'], str(subnets[2].cidr))
+        self.assertEqual(subnet['subnet']['gateway_ip'], str(gateway_ip))

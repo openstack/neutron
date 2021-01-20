@@ -118,7 +118,7 @@ class ClientFixture(fixtures.Fixture):
         return self._delete_resource('network', id)
 
     def create_subnet(self, tenant_id, network_id,
-                      cidr, gateway_ip=None, name=None, enable_dhcp=True,
+                      cidr=None, gateway_ip=None, name=None, enable_dhcp=True,
                       ipv6_address_mode='slaac', ipv6_ra_mode='slaac',
                       subnetpool_id=None, ip_version=None):
         resource_type = 'subnet'
@@ -138,6 +138,22 @@ class ClientFixture(fixtures.Fixture):
             spec['subnetpool_id'] = subnetpool_id
         if cidr:
             spec['cidr'] = cidr
+
+        return self._create_resource(resource_type, spec)
+
+    def create_subnetpool(self, project_id, name=None, min_prefixlen=8,
+                          max_prefixlen=24, default_prefixlen=24,
+                          prefixes=None):
+        resource_type = 'subnetpool'
+        name = name or utils.get_rand_name(prefix=resource_type)
+        spec = {'project_id': project_id,
+                'name': name,
+                'min_prefixlen': min_prefixlen,
+                'max_prefixlen': max_prefixlen,
+                'default_prefixlen': default_prefixlen,
+                'is_default': False,
+                'shared': False,
+                'prefixes': prefixes}
 
         return self._create_resource(resource_type, spec)
 

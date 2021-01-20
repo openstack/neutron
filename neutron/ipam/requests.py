@@ -21,6 +21,7 @@ from oslo_utils import uuidutils
 from neutron._i18n import _
 from neutron.common import utils as common_utils
 from neutron.ipam import exceptions as ipam_exc
+from neutron.ipam import utils as ipam_utils
 
 
 class SubnetPool(object, metaclass=abc.ABCMeta):
@@ -110,6 +111,17 @@ class SubnetRequest(object, metaclass=abc.ABCMeta):
                     raise ipam_exc.IpamValueInvalid(_(
                                 "allocation_pools are not in the subnet"))
 
+    @staticmethod
+    def _validate_gateway_ip_in_subnet(subnet_cidr, gateway_ip):
+        if not gateway_ip:
+            return
+
+        if ipam_utils.check_gateway_invalid_in_subnet(subnet_cidr, gateway_ip):
+            raise ipam_exc.IpamValueInvalid(_(
+                'Gateway IP %(gateway_ip)s cannot be allocated in CIDR '
+                '%(subnet_cidr)s' % {'gateway_ip': gateway_ip,
+                                     'subnet_cidr': subnet_cidr}))
+
 
 class AnySubnetRequest(SubnetRequest):
     """A template for allocating an unspecified subnet from IPAM
@@ -171,6 +183,7 @@ class SpecificSubnetRequest(SubnetRequest):
 
         self._subnet_cidr = netaddr.IPNetwork(subnet_cidr)
         self._validate_with_subnet(self._subnet_cidr)
+        self._validate_gateway_ip_in_subnet(self._subnet_cidr, self.gateway_ip)
 
     @property
     def subnet_cidr(self):
@@ -299,9 +312,12 @@ class SubnetRequestFactory(object):
     @classmethod
     def get_request(cls, context, subnet, subnetpool):
         cidr = subnet.get('cidr')
+        cidr = cidr if validators.is_attr_set(cidr) else None
+        gateway_ip = subnet.get('gateway_ip')
+        gateway_ip = gateway_ip if validators.is_attr_set(gateway_ip) else None
         subnet_id = subnet.get('id', uuidutils.generate_uuid())
-        is_any_subnetpool_request = not validators.is_attr_set(cidr)
 
+        is_any_subnetpool_request = not (cidr or gateway_ip)
         if is_any_subnetpool_request:
             prefixlen = subnet['prefixlen']
             if not validators.is_attr_set(prefixlen):
@@ -313,8 +329,20 @@ class SubnetRequestFactory(object):
                 common_utils.ip_version_from_int(subnetpool['ip_version']),
                 prefixlen)
         else:
-            return SpecificSubnetRequest(subnet['tenant_id'],
-                                         subnet_id,
-                                         cidr,
-                                         subnet.get('gateway_ip'),
-                                         subnet.get('allocation_pools'))
+            alloc_pools = subnet.get('allocation_pools')
+            alloc_pools = (alloc_pools if validators.is_attr_set(alloc_pools)
+                           else None)
+            if not cidr and gateway_ip:
+                prefixlen = subnet['prefixlen']
+                if not validators.is_attr_set(prefixlen):
+                    prefixlen = int(subnetpool['default_prefixlen'])
+                gw_ip_net = netaddr.IPNetwork('%s/%s' %
+                                              (gateway_ip, prefixlen))
+                cidr = gw_ip_net.cidr
+
+            return SpecificSubnetRequest(
+                subnet['tenant_id'],
+                subnet_id,
+                cidr,
+                gateway_ip=gateway_ip,
+                allocation_pools=alloc_pools)
