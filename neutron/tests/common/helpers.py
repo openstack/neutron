@@ -263,15 +263,16 @@ class TestTimer(object):
         return self
 
     def __exit__(self, exc, value, traceback):
-        if self._old_handler:
+        if self._old_handler is not None:
             signal.signal(signal.SIGALRM, self._old_handler)
 
         if self._old_timer == 0:
-            return
+            timeout = 0
+        else:
+            # If timer has expired, set the minimum required value (1) to
+            # activate the SIGALRM event.
+            timeout = self._old_timer - self._timeout
+            timeout = 1 if timeout <= 0 else timeout
 
-        # If timer has expired, set the minimum required value (1) to activate
-        # the SIGALRM event.
-        timeout = self._old_timer - self._timeout
-        timeout = 1 if timeout <= 0 else timeout
         if self._alarm_fn:
             self._alarm_fn(timeout)
