@@ -584,7 +584,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 if p.get('device_owner') == DEVICE_OWNER_ROUTER_GW:
                     ext_subts = self._core_plugin.get_subnets(
                         context.elevated(),
-                        filters={'network_id': p['network_id']})
+                        filters={'network_id': [p['network_id']]})
                     for sub in ext_subts:
                         router_subnets.append(sub['id'])
                 else:
