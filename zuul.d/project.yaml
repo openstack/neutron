@@ -20,8 +20,6 @@
         - neutron-rally-task
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
-        - neutron-grenade-ovn:
-            voting: false
         - neutron-tempest-multinode-full-py3
         - neutron-tempest-dvr-ha-multinode-full
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
@@ -49,8 +47,6 @@
             irrelevant-files: *irrelevant-files
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only
-        - neutron-tempest-with-uwsgi-loki:
-            voting: false
         # TODO(slaweq): add this job again to the check queue when it will be
         # working fine on python 3
         #- networking-midonet-tempest-aio-ml2-centos-7:
@@ -102,10 +98,6 @@
             vars: *consumer_vars
             dependencies: *consumer_deps
             irrelevant-files: *consumer_irrelevant_files
-        - neutron-ovn-tempest-slow:
-            voting: false
-        - neutron-ovn-tempest-full-multinode-ovs-master:
-            voting: false
         - openstack-tox-py36:  # from openstack-python3-wallaby-jobs template
             timeout: 3600
         - openstack-tox-py38:  # from openstack-python3-wallaby-jobs template
@@ -137,6 +129,10 @@
     experimental:
       jobs:
         - neutron-ovn-tempest-ovs-master
+        - neutron-grenade-ovn
+        - neutron-tempest-with-uwsgi-loki
+        - neutron-ovn-tempest-slow
+        - neutron-ovn-tempest-full-multinode-ovs-master
 
     periodic:
       jobs:
