@@ -3073,6 +3073,15 @@ class TestOvsDvrNeutronAgent(object):
         self._compute_fixed_ips = [{'subnet_id': 'my-subnet-uuid',
                                     'ip_address': '1.1.1.3'}]
 
+    def _setup_extra_port_for_dvr(self):
+        self._port_nongateway = mock.Mock()
+        self._port_nongateway.ofport = 11
+        self._port_nongateway.vif_id = "1234-5678-99"
+        self._port_nongateway.vif_mac = 'aa:bb:cc:11:22:44'
+        self._port_nongateway.dvr_mac = self.agent.dvr_agent.dvr_mac_address
+        self._fixed_ips_nongateway = [{'subnet_id': 'my-subnet-uuid',
+                                       'ip_address': '1.1.1.11'}]
+
     @staticmethod
     def _expected_port_bound(port, lvid, is_dvr=True,
                              network_type=n_const.TYPE_VXLAN):
@@ -3476,6 +3485,155 @@ class TestOvsDvrNeutronAgent(object):
                 n_const.DEVICE_OWNER_ROUTER_SNAT,
                 False)
             self.assertFalse(int_br.install_dvr_to_src_mac.called)
+
+    def _test_port_unbound_dvr_router_port_on_vxlan_network(
+            self, port_type='gateway', ip_version=n_const.IP_VERSION_4):
+        """Test DVR ovs flows when router port is unbound.
+
+        Setup 2 ports from same subnet to a DVR router. Add an instance port.
+        Remove one of the router ports based on port_type passed to the
+        function. port_type='gateway' removes the gateway port, port_type
+        nongateway removes the non-gateway port. port_type='all' removes
+        both the ports. Verify if the corresponding ovs flows are updated.
+        """
+        self._setup_for_dvr_test()
+        self._setup_extra_port_for_dvr()
+
+        if ip_version == n_const.IP_VERSION_4:
+            gateway_ip = '1.1.1.1'
+            cidr = '1.1.1.0/24'
+        else:
+            gateway_ip = '2001:db8:100::1'
+            cidr = '2001:db8:100::0/64'
+            self._fixed_ips = [{'subnet_id': 'my-subnet-uuid',
+                               'ip_address': '2001:db8:100::1'}]
+            self._fixed_ips_nongateway = [{'subnet_id': 'my-subnet-uuid',
+                                          'ip_address': '2001:db8:100::10'}]
+        network_type = n_const.TYPE_VXLAN
+        self._port.vif_mac = gateway_mac = 'aa:bb:cc:11:22:33'
+        self._port.dvr_mac = self.agent.dvr_agent.dvr_mac_address
+        self._compute_port.vif_mac = '77:88:99:00:11:22'
+        physical_network = self._physical_network
+        segmentation_id = self._segmentation_id
+
+        int_br = mock.create_autospec(self.agent.int_br)
+        tun_br = mock.create_autospec(self.agent.tun_br)
+        phys_br = mock.create_autospec(self.br_phys_cls('br-phys'))
+        int_br.set_db_attribute.return_value = True
+        int_br.db_get_val.return_value = {}
+        with mock.patch.object(self.agent.dvr_agent.plugin_rpc,
+                               'get_subnet_for_dvr',
+                               return_value={'gateway_ip': gateway_ip,
+                                             'cidr': cidr,
+                                             'ip_version': ip_version,
+                                             'gateway_mac': gateway_mac}),\
+                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
+                                  'get_ports_on_host_by_subnet',
+                                  return_value=[]),\
+                mock.patch.object(self.agent.dvr_agent.int_br,
+                                  'get_vif_port_by_id',
+                                  return_value=self._port),\
+                mock.patch.object(self.agent, 'int_br', new=int_br),\
+                mock.patch.object(self.agent, 'tun_br', new=tun_br),\
+                mock.patch.dict(self.agent.phys_brs,
+                                {physical_network: phys_br}),\
+                mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br),\
+                mock.patch.object(self.agent.dvr_agent, 'tun_br', new=tun_br),\
+                mock.patch.dict(self.agent.dvr_agent.phys_brs,
+                                {physical_network: phys_br}):
+            self.agent.port_bound(
+                self._port, self._net_uuid, network_type,
+                physical_network, segmentation_id, self._fixed_ips,
+                n_const.DEVICE_OWNER_DVR_INTERFACE, False)
+
+            lvid = self.agent.vlan_manager.get(self._net_uuid).vlan
+
+            # Bound non-gateway port
+            self.agent.port_bound(
+                self._port_nongateway, self._net_uuid, network_type,
+                physical_network, segmentation_id, self._fixed_ips_nongateway,
+                n_const.DEVICE_OWNER_DVR_INTERFACE, False)
+
+            # Bound compute port
+            self.agent.port_bound(self._compute_port, self._net_uuid,
+                                  network_type, physical_network,
+                                  segmentation_id,
+                                  self._compute_fixed_ips,
+                                  DEVICE_OWNER_COMPUTE, False)
+
+            int_br.reset_mock()
+            tun_br.reset_mock()
+            phys_br.reset_mock()
+
+            ports_to_unbind = {}
+            expected_br_int_mock_calls_gateway_port = 2
+            expected_br_int_mock_calls_nongateway_port = 1
+            if port_type == 'gateway':
+                ports_to_unbind = {
+                    self._port: expected_br_int_mock_calls_gateway_port
+                }
+            elif port_type == 'nongateway':
+                ports_to_unbind = {
+                    self._port_nongateway:
+                    expected_br_int_mock_calls_nongateway_port
+                }
+            else:
+                ports_to_unbind = {
+                    self._port:
+                    expected_br_int_mock_calls_gateway_port,
+                    self._port_nongateway:
+                    expected_br_int_mock_calls_nongateway_port
+                }
+
+            for port_to_unbind, br_int_mock_calls in ports_to_unbind.items():
+                self.agent.port_unbound(port_to_unbind.vif_id)
+                expected_on_int_br = self._expected_port_unbound(
+                    port_to_unbind, lvid, True, network_type)
+
+                if ip_version == n_const.IP_VERSION_4:
+                    expected_on_tun_br = [
+                        mock.call.delete_dvr_process_ipv4(
+                            vlan_tag=lvid,
+                            gateway_ip=gateway_ip),
+                    ]
+                else:
+                    expected_on_tun_br = [
+                        mock.call.delete_dvr_process_ipv6(
+                            vlan_tag=lvid,
+                            gateway_mac=gateway_mac),
+                    ]
+                expected_on_tun_br.extend([
+                    mock.call.delete_dvr_process(
+                        vlan_tag=lvid,
+                        vif_mac=port_to_unbind.vif_mac),
+                ])
+
+                int_br.assert_has_calls(expected_on_int_br)
+                self.assertEqual(br_int_mock_calls, len(int_br.mock_calls))
+                tun_br.assert_has_calls(expected_on_tun_br)
+                int_br.reset_mock()
+                tun_br.reset_mock()
+                phys_br.assert_not_called()
+                phys_br.reset_mock()
+
+    def test_port_unbound_dvr_router_port(self):
+        self._test_port_unbound_dvr_router_port_on_vxlan_network(
+            port_type='gateway')
+        self._test_port_unbound_dvr_router_port_on_vxlan_network(
+            port_type='nongateway')
+        # Unbound all the dvr router ports
+        self._test_port_unbound_dvr_router_port_on_vxlan_network(
+            port_type='all')
+        self._test_port_unbound_dvr_router_port_on_vxlan_network(
+            port_type='gateway',
+            ip_version=n_const.IP_VERSION_6)
+        self._test_port_unbound_dvr_router_port_on_vxlan_network(
+            port_type='nongateway',
+            ip_version=n_const.IP_VERSION_6)
+        # Unbound all the dvr router ports
+        self._test_port_unbound_dvr_router_port_on_vxlan_network(
+            port_type='all',
+            ip_version=n_const.IP_VERSION_6)
 
     def test_treat_devices_removed_for_dvr_interface(self):
         self._test_treat_devices_removed_for_dvr_interface()
