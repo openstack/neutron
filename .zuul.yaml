@@ -119,6 +119,7 @@
       devstack_services:
         # Ignore any default set by devstack. Emit a "disable_all_services".
         base: false
+        etcd3: false
       devstack_localrc:
         USE_PYTHON3: true
         INSTALL_TESTONLY_PACKAGES: true
