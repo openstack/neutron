@@ -317,10 +317,8 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
             sg_member_ips = self.rpc.security_group_info_for_devices(
                 ctx, devices=devices)['sg_member_ips']
             expected_member_ips = [
-                ('10.0.1.0/24', '00:00:00:00:00:01'),
-                ('11.0.0.1', '00:00:00:00:00:01'),
-                (port['port']['fixed_ips'][0]['ip_address'],
-                 None)]
+                '10.0.1.0/24', '11.0.0.1',
+                port['port']['fixed_ips'][0]['ip_address']]
             self.assertEqual(sorted(expected_member_ips),
                              sorted(sg_member_ips[sg_id]['IPv4']))
             self._delete('ports', port_id)
@@ -524,7 +522,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                      'remote_group_id': sg2_id}
                 ]},
                 'sg_member_ips': {sg2_id: {
-                    'IPv4': set([(port_ip2, None), ]),
+                    'IPv4': set([port_ip2]),
                     'IPv6': set(),
                 }}
             }
@@ -2918,9 +2916,7 @@ class TestSecurityGroupAgentEnhancedRpcWithIptables(
         self.devices_info1 = {'security_groups': {'security_group1': rule1},
                          'sg_member_ips': {
                              'security_group1': {
-                                 'IPv4': [('10.0.0.3/32',
-                                           'fa:16:3e:aa:bb:c1'), ],
-                                 'IPv6': []}},
+                                 'IPv4': ['10.0.0.3/32'], 'IPv6': []}},
                          'devices': devices_info1}
         devices_info2 = collections.OrderedDict([
             ('tap_port1', self._device('tap_port1',
@@ -2935,19 +2931,13 @@ class TestSecurityGroupAgentEnhancedRpcWithIptables(
         self.devices_info2 = {'security_groups': {'security_group1': rule1},
                          'sg_member_ips': {
                              'security_group1': {
-                                 'IPv4': [('10.0.0.3/32',
-                                           'fa:16:3e:aa:bb:c1'),
-                                          ('10.0.0.4/32',
-                                           'fa:16:3e:aa:bb:c2')],
+                                 'IPv4': ['10.0.0.3/32', '10.0.0.4/32'],
                                  'IPv6': []}},
                          'devices': devices_info2}
         self.devices_info3 = {'security_groups': {'security_group1': rule2},
                          'sg_member_ips': {
                              'security_group1': {
-                                 'IPv4': [('10.0.0.3/32',
-                                           'fa:16:3e:aa:bb:c1'),
-                                          ('10.0.0.4/32',
-                                           'fa:16:3e:aa:bb:c2')],
+                                 'IPv4': ['10.0.0.3/32', '10.0.0.4/32'],
                                  'IPv6': []}},
                          'devices': devices_info2}
 

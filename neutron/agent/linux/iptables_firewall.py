@@ -534,7 +534,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             ethertype = rule['ethertype']
             port_ips = port.get('fixed_ips', [])
 
-            for ip, _mac in self.sg_members[remote_group_id][ethertype]:
+            for ip in self.sg_members[remote_group_id][ethertype]:
                 if ip not in port_ips:
                     ip_rule = rule.copy()
                     direction_ip_prefix = firewall.DIRECTION_IP_PREFIX[

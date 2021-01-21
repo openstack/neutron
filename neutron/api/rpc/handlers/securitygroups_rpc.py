@@ -326,10 +326,8 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
 
         filters = {'security_group_ids': tuple(remote_group_ids)}
         for p in self.rcache.get_resources('Port', filters):
-            allowed_ips = [(str(addr.ip_address), str(addr.mac_address))
-                           for addr in p.allowed_address_pairs]
-            port_ips = [(str(addr.ip_address), str(p.mac_address))
-                        for addr in p.fixed_ips] + allowed_ips
+            port_ips = [str(addr.ip_address)
+                        for addr in p.fixed_ips + p.allowed_address_pairs]
             for sg_id in p.security_group_ids:
                 if sg_id in ips_by_group:
                     ips_by_group[sg_id].update(set(port_ips))
