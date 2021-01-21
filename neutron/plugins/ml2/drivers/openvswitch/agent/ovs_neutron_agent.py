@@ -316,6 +316,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.prevent_arp_spoofing = (
             not self.sg_agent.firewall.provides_arp_spoofing_protection)
 
+        self.ovs_status = None
         self.failed_report_state = False
         # TODO(mangelajo): optimize resource_versions to only report
         #                  versions about resources which are common,
@@ -382,6 +383,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             raise ValueError(_("Parsing bridge_mappings failed: %s.") % e)
 
     def _report_state(self):
+        # return and skip reporting agent state if OVS is dead
+        if self.ovs_status == constants.OVS_DEAD:
+            LOG.error("OVS is down, not reporting state to server")
+            return
+
         # How many devices are likely used by a VM
         self.agent_state.get('configurations')['devices'] = (
             self.int_br_device_count)
@@ -2591,12 +2597,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             start = time.time()
             LOG.info("Agent rpc_loop - iteration:%d started",
                      self.iter_num)
-            ovs_status = self.check_ovs_status()
+            self.ovs_status = self.check_ovs_status()
             bridges_recreated = False
-            if ovs_status == constants.OVS_RESTARTED:
+            if self.ovs_status == constants.OVS_RESTARTED:
                 self._handle_ovs_restart(polling_manager)
                 tunnel_sync = self.enable_tunneling or tunnel_sync
-            elif ovs_status == constants.OVS_DEAD:
+            elif self.ovs_status == constants.OVS_DEAD:
                 # Agent doesn't apply any operations when ovs is dead, to
                 # prevent unexpected failure or crash. Sleep and continue
                 # loop in which ovs status will be checked periodically.
@@ -2621,7 +2627,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 except Exception:
                     LOG.exception("Error while configuring tunnel endpoints")
                     tunnel_sync = True
-            ovs_restarted |= (ovs_status == constants.OVS_RESTARTED)
+            ovs_restarted |= (self.ovs_status == constants.OVS_RESTARTED)
             devices_need_retry = (any(failed_devices.values()) or
                                   any(failed_ancillary_devices.values()) or
                                   ports_not_ready_yet)

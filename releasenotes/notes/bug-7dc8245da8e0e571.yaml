@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Stop sending agent heartbeat from ovs agent when it detects
+    OVS is dead. This helps to alarm cloud operators that there
+    is something wrong on the given node.
