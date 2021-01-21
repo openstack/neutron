@@ -14,13 +14,16 @@
 #
 
 import os
+import signal
 import textwrap
 
 import mock
 from neutron_lib import constants as n_consts
 from oslo_config import cfg
+from oslo_utils import uuidutils
 import testtools
 
+from neutron.agent.linux import external_process
 from neutron.agent.linux import keepalived
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.tests import base
@@ -543,3 +546,40 @@ ping6 -c 1 -w 1 2001:db8::1 1>/dev/null || exit 1""",
         with mock.patch.object(keepalived, 'file_utils') as patched_utils:
             ts.write_check_script()
             patched_utils.replace_file.assert_not_called()
+
+
+class KeepalivedManagerTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super(KeepalivedManagerTestCase, self).setUp()
+        self.mock_config = mock.Mock()
+        self.mock_config.AGENT.check_child_processes_interval = False
+        self.process_monitor = external_process.ProcessMonitor(
+            self.mock_config, mock.ANY)
+        self.uuid = uuidutils.generate_uuid()
+        self.process_monitor.register(
+            self.uuid, keepalived.KEEPALIVED_SERVICE_NAME, mock.ANY)
+        self.keepalived_manager = keepalived.KeepalivedManager(
+            self.uuid, self.mock_config, self.process_monitor, mock.ANY)
+        self.mock_get_process = mock.patch.object(self.keepalived_manager,
+                                                  'get_process')
+
+    def test_destroy(self):
+        mock_get_process = self.mock_get_process.start()
+        process = mock.Mock()
+        mock_get_process.return_value = process
+        process.active = False
+        self.keepalived_manager.disable()
+        process.disable.assert_called_once_with(
+            sig=str(int(signal.SIGTERM)))
+
+    def test_destroy_force(self):
+        mock_get_process = self.mock_get_process.start()
+        with mock.patch.object(keepalived, 'SIGTERM_TIMEOUT', 0):
+            process = mock.Mock()
+            mock_get_process.return_value = process
+            process.active = True
+            self.keepalived_manager.disable()
+            process.disable.assert_has_calls([
+                mock.call(sig=str(int(signal.SIGTERM))),
+                mock.call(sig=str(int(signal.SIGKILL)))])
