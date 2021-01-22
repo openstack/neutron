@@ -199,8 +199,9 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         self.addCleanup(netcat.stop_processes)
 
         def assert_num_of_conntrack_rules(n):
-            out = router_ns.netns.execute(["conntrack", "-L",
-                                           "--orig-src", client_address])
+            out = router_ns.netns.execute(
+                ["conntrack", "-L", "--orig-src", client_address],
+                privsep_exec=True)
             self.assertEqual(
                 n, len([line for line in out.strip().split('\n') if line]))
 
@@ -274,8 +275,9 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         ip_wrapper = ip_lib.IPWrapper(namespace=ns_name)
 
         def _ipv6_accept_ra_state():
-            ra_state = ip_wrapper.netns.execute(['sysctl', '-b',
-                'net.ipv6.conf.%s.accept_ra' % device_name])
+            ra_state = ip_wrapper.netns.execute(
+                ['sysctl', '-b', 'net.ipv6.conf.%s.accept_ra' % device_name],
+                privsep_exec=True)
             return (
                 enabled == (int(ra_state) != constants.ACCEPT_RA_DISABLED))
 

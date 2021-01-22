@@ -92,7 +92,8 @@ class KeepalivedManagerTestCase(base.BaseSudoTestCase,
 
         # Exit the process, and see that when it comes back
         # It's indeed a different process
-        self.ip_wrapper.netns.execute(['kill', exit_code, pid])
+        self.ip_wrapper.netns.execute(['kill', exit_code, pid],
+                                      privsep_exec=True)
         common_utils.wait_until_true(
             lambda: process.active and pid != process.pid,
             timeout=5,

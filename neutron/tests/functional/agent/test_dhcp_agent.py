@@ -178,7 +178,8 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
 
     def assert_accept_ra_disabled(self, namespace):
         actual = ip_lib.IPWrapper(namespace=namespace).netns.execute(
-            ['sysctl', '-b', 'net.ipv6.conf.default.accept_ra'])
+            ['sysctl', '-b', 'net.ipv6.conf.default.accept_ra'],
+            privsep_exec=True)
         self.assertEqual('0', actual)
 
     def assert_dhcp_device(self, namespace, dhcp_iface_name, dhcp_enabled):
