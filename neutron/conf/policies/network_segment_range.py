@@ -13,10 +13,14 @@
 #    under the License.
 #
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
 
+DEPRECATED_REASON = """
+The network segment range API now supports system scope and default roles.
+"""
 
 COLLECTION_PATH = '/network_segment_ranges'
 RESOURCE_PATH = '/network_segment_ranges/{id}'
@@ -24,21 +28,28 @@ RESOURCE_PATH = '/network_segment_ranges/{id}'
 
 rules = [
     policy.DocumentedRuleDefault(
-        'create_network_segment_range',
-        base.RULE_ADMIN_ONLY,
-        'Create a network segment range',
-        [
+        name='create_network_segment_range',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Create a network segment range',
+        operations=[
             {
                 'method': 'POST',
                 'path': COLLECTION_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_network_segment_range',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'get_network_segment_range',
-        base.RULE_ADMIN_ONLY,
-        'Get a network segment range',
-        [
+        name='get_network_segment_range',
+        check_str=base.SYSTEM_READER,
+        scope_types=['system'],
+        description='Get a network segment range',
+        operations=[
             {
                 'method': 'GET',
                 'path': COLLECTION_PATH,
@@ -47,29 +58,46 @@ rules = [
                 'method': 'GET',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_network_segment_range',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'update_network_segment_range',
-        base.RULE_ADMIN_ONLY,
-        'Update a network segment range',
-        [
+        name='update_network_segment_range',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update a network segment range',
+        operations=[
             {
                 'method': 'PUT',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_network_segment_range',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'delete_network_segment_range',
-        base.RULE_ADMIN_ONLY,
-        'Delete a network segment range',
-        [
+        name='delete_network_segment_range',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Delete a network segment range',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_network_segment_range',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 ]
 
