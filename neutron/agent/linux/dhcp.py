@@ -35,7 +35,6 @@ from oslo_utils import fileutils
 from oslo_utils import netutils
 from oslo_utils import uuidutils
 
-from neutron._i18n import _
 from neutron.agent.common import utils as agent_common_utils
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
@@ -304,17 +303,13 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     def _get_value_from_conf_file(self, kind, converter=None):
         """A helper function to read a value from one of the state files."""
         file_name = self.get_conf_file_name(kind)
-        msg = _('Error while reading %s')
-
         try:
             with open(file_name, 'r') as f:
-                try:
-                    return converter(f.read()) if converter else f.read()
-                except ValueError:
-                    msg = _('Unable to convert value in %s')
+                return converter(f.read()) if converter else f.read()
+        except ValueError:
+            msg = "Unable to convert value in %s"
         except IOError:
-            msg = _('Unable to access %s')
-
+            msg = "Unable to access %s"
         LOG.debug(msg, file_name)
         return None
 

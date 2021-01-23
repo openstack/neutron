@@ -128,23 +128,22 @@ def execute(cmd, process_input=None, addl_env=None,
 
         extra_ok_codes = extra_ok_codes or []
         if returncode and returncode not in extra_ok_codes:
-            msg = _("Exit code: %(returncode)d; "
-                    "Cmd: %(cmd)s; "
-                    "Stdin: %(stdin)s; "
-                    "Stdout: %(stdout)s; "
-                    "Stderr: %(stderr)s") % {
+            msg = ("Exit code: %(returncode)d; "
+                   "Cmd: %(cmd)s; "
+                   "Stdin: %(stdin)s; "
+                   "Stdout: %(stdout)s; "
+                   "Stderr: %(stderr)s" % {
                         'returncode': returncode,
                         'cmd': cmd,
                         'stdin': process_input or '',
                         'stdout': _stdout,
-                        'stderr': _stderr}
+                        'stderr': _stderr})
 
             if log_fail_as_error:
                 LOG.error(msg)
             if check_exit_code:
-                raise exceptions.ProcessExecutionError(msg,
+                raise exceptions.ProcessExecutionError(_(msg),
                                                        returncode=returncode)
-
     finally:
         # NOTE(termie): this appears to be necessary to let the subprocess
         #               call clean something up in between calls, without

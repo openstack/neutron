@@ -94,8 +94,8 @@ class DhcpAgent(manager.Manager):
         # If 'resync_throttle' is configured more than 'resync_interval' by
         # mistake, raise exception and log with message.
         if self.conf.resync_throttle > self.conf.resync_interval:
-            msg = _("DHCP agent must have resync_throttle <= resync_interval")
-            LOG.exception(msg)
+            LOG.exception("DHCP agent must have resync_throttle <= "
+                          "resync_interval")
             raise exceptions.InvalidConfigurationOption(
                 opt_name='resync_throttle',
                 opt_value=self.conf.resync_throttle)
