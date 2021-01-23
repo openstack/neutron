@@ -27,6 +27,7 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import ra
+from neutron.common import coordination
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.ipam import utils as ipam_utils
@@ -983,6 +984,7 @@ class RouterInfo(BaseRouterInfo):
         finally:
             self.update_fip_statuses(fip_statuses)
 
+    @coordination.synchronized('router-lock-ns-{self.ns_name}')
     def process_external(self):
         fip_statuses = {}
         try:
@@ -1191,6 +1193,7 @@ class RouterInfo(BaseRouterInfo):
             self.get_address_scope_mark_mask(address_scope))
         iptables_manager.ipv4['nat'].add_rule('snat', rule)
 
+    @coordination.synchronized('router-lock-ns-{self.ns_name}')
     def process_address_scope(self):
         with self.iptables_manager.defer_apply():
             self.process_ports_address_scope_iptables()
