@@ -46,6 +46,7 @@ subparsers:
                         - "15"
                         - "16"
                         - "16.1"
+                        - "16.2"
                         - kilo
                         - liberty
                         - mitaka
