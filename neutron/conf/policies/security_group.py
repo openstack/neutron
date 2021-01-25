@@ -10,9 +10,13 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
+
+DEPRECATED_REASON = (
+    "The security group API now supports system scope and default roles.")
 
 
 SG_COLLECTION_PATH = '/security-groups'
@@ -26,34 +30,43 @@ RULE_ADMIN_OWNER_OR_SG_OWNER = 'rule:admin_owner_or_sg_owner'
 
 rules = [
     policy.RuleDefault(
-        'admin_or_sg_owner',
-        base.policy_or('rule:context_is_admin',
-                       'tenant_id:%(security_group:tenant_id)s'),
+        name='admin_or_sg_owner',
+        check_str=base.policy_or(
+            'rule:context_is_admin',
+            'tenant_id:%(security_group:tenant_id)s'),
         description='Rule for admin or security group owner access'),
     policy.RuleDefault(
-        'admin_owner_or_sg_owner',
-        base.policy_or('rule:owner',
-                       RULE_ADMIN_OR_SG_OWNER),
+        name='admin_owner_or_sg_owner',
+        check_str=base.policy_or(
+            'rule:owner',
+            RULE_ADMIN_OR_SG_OWNER),
         description=('Rule for resource owner, '
                      'admin or security group owner access')),
     # TODO(amotoki): admin_or_owner is the right rule?
     # Does an empty string make more sense for create_security_group?
     policy.DocumentedRuleDefault(
-        'create_security_group',
-        base.RULE_ADMIN_OR_OWNER,
-        'Create a security group',
-        [
+        name='create_security_group',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Create a security group',
+        operations=[
             {
                 'method': 'POST',
                 'path': SG_COLLECTION_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_security_group',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'get_security_group',
-        base.RULE_ANY,
-        'Get a security group',
-        [
+        name='get_security_group',
+        check_str=base.SYSTEM_OR_PROJECT_READER,
+        scope_types=['system', 'project'],
+        description='Get a security group',
+        operations=[
             {
                 'method': 'GET',
                 'path': SG_COLLECTION_PATH,
@@ -62,49 +75,75 @@ rules = [
                 'method': 'GET',
                 'path': SG_RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_security_group',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'update_security_group',
-        base.RULE_ADMIN_OR_OWNER,
-        'Update a security group',
-        [
+        name='update_security_group',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Update a security group',
+        operations=[
             {
                 'method': 'PUT',
                 'path': SG_RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_security_group',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'delete_security_group',
-        base.RULE_ADMIN_OR_OWNER,
-        'Delete a security group',
-        [
+        name='delete_security_group',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Delete a security group',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': SG_RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_security_group',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 
     # TODO(amotoki): admin_or_owner is the right rule?
     # Does an empty string make more sense for create_security_group_rule?
     policy.DocumentedRuleDefault(
-        'create_security_group_rule',
-        base.RULE_ADMIN_OR_OWNER,
-        'Create a security group rule',
-        [
+        name='create_security_group_rule',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Create a security group rule',
+        operations=[
             {
                 'method': 'POST',
                 'path': RULE_COLLECTION_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_security_group_rule',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'get_security_group_rule',
-        RULE_ADMIN_OWNER_OR_SG_OWNER,
-        'Get a security group rule',
-        [
+        name='get_security_group_rule',
+        check_str=base.policy_or(
+            base.SYSTEM_OR_PROJECT_READER,
+            RULE_ADMIN_OWNER_OR_SG_OWNER),
+        scope_types=['system', 'project'],
+        description='Get a security group rule',
+        operations=[
             {
                 'method': 'GET',
                 'path': RULE_COLLECTION_PATH,
@@ -113,18 +152,29 @@ rules = [
                 'method': 'GET',
                 'path': RULE_RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_security_group_rule',
+            check_str=RULE_ADMIN_OWNER_OR_SG_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'delete_security_group_rule',
-        base.RULE_ADMIN_OR_OWNER,
-        'Delete a security group rule',
-        [
+        name='delete_security_group_rule',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Delete a security group rule',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': RULE_RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_security_group_rule',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 ]
 
