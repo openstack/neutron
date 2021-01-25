@@ -313,7 +313,7 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         self.assertFalse(event.wait())
 
     def test__ensure_datapath_checksum_if_dpdk(self):
-        self.mock_ovsdb_idl.db_get.return_value = (
+        self.mock_ovsdb_idl.db_get.return_value.execute.return_value = (
             ovn_const.CHASSIS_DATAPATH_NETDEV)
         regex = re.compile(r'-A POSTROUTING -p tcp -m tcp '
                            r'-j CHECKSUM --checksum-fill')
