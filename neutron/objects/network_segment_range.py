@@ -15,7 +15,9 @@
 import copy
 import itertools
 
+from neutron_lib.api.definitions import network_segment_range as nsr_def
 from neutron_lib import constants
+from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import common_types
@@ -75,17 +77,12 @@ class NetworkSegmentRange(base.NeutronDbObject):
         # fields
         _dict.update({'available': self._get_available_allocation()})
         _dict.update({'used': self._get_used_allocation_mapping()})
-        # TODO(kailun): For tag mechanism. This will be removed in bug/1704137
-        try:
-            _dict['tags'] = [t.tag for t in self.db_obj.standard_attr.tags]
-        except AttributeError:
-            # AttrtibuteError can be raised when accessing self.db_obj
-            # or self.db_obj.standard_attr
-            pass
         # NOTE(ralonsoh): this workaround should be removed once the migration
         # from "tenant_id" to "project_id" is finished.
         _dict = db_utils.resource_fields(_dict, fields)
         _dict.pop('tenant_id', None)
+        resource_extend.apply_funcs(nsr_def.COLLECTION_NAME, _dict,
+                                    self.db_obj)
         return _dict
 
     def _check_shared_project_id(self, action):

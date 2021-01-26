@@ -15,6 +15,8 @@
 
 import itertools
 
+from neutron_lib.api.definitions import qos as qos_def
+from neutron_lib.db import resource_extend
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.objects import common_types
 from oslo_db import exception as db_exc
@@ -121,15 +123,9 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         raise qos_exc.QosRuleNotFound(policy_id=self.id,
                                       rule_id=rule_id)
 
-    # TODO(hichihara): For tag mechanism. This will be removed in bug/1704137
     def to_dict(self):
         _dict = super(QosPolicy, self).to_dict()
-        try:
-            _dict['tags'] = [t.tag for t in self.db_obj.standard_attr.tags]
-        except AttributeError:
-            # AttrtibuteError can be raised when accessing self.db_obj
-            # or self.db_obj.standard_attr
-            pass
+        resource_extend.apply_funcs(qos_def.POLICIES, _dict, self.db_obj)
         return _dict
 
     @classmethod
