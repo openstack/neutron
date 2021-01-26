@@ -535,6 +535,8 @@ class DhcpAgent(manager.Manager):
     def port_update_end(self, context, payload):
         """Handle the port.update.end notification event."""
         updated_port = dhcp.DictModel(payload['port'])
+        if not dhcp.port_requires_dhcp_configuration(updated_port):
+            return
         if self.cache.is_port_message_stale(updated_port):
             LOG.debug("Discarding stale port update: %s", updated_port)
             return
@@ -560,6 +562,8 @@ class DhcpAgent(manager.Manager):
     def reload_allocations(self, port, network, prio=False):
         LOG.info("Trigger reload_allocations for port %s on network %s",
                  port, network)
+        if not dhcp.port_requires_dhcp_configuration(port):
+            return
         driver_action = 'reload_allocations'
         if self._is_port_on_this_agent(port):
             orig = self.cache.get_port_by_id(port['id'])
@@ -598,6 +602,8 @@ class DhcpAgent(manager.Manager):
     def port_create_end(self, context, payload):
         """Handle the port.create.end notification event."""
         created_port = dhcp.DictModel(payload['port'])
+        if not dhcp.port_requires_dhcp_configuration(created_port):
+            return
         update = queue.ResourceUpdate(created_port.network_id,
                                       payload.get('priority',
                                                   DEFAULT_PRIORITY),
