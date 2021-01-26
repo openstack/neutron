@@ -27,7 +27,8 @@ from neutron.tests import base as test_base
 # alphabetic order.
 object_data = {
     'AddressAssociation': '1.0-b92160a3dd2fb7b951adcd2e6ae1665a',
-    'AddressGroup': '1.1-78c35b6ac495407be56b8fcdbeda4d67',
+    'AddressGroup': '1.2-1ddbf0a9f61785033ce31818ac62687e',
+    'AddressGroupRBAC': '1.0-192845c5ed0718e1c54fac36936fcd7d',
     'AddressScope': '1.1-dd0dfdb67775892d3adc090e28e43bd8',
     'AddressScopeRBAC': '1.0-192845c5ed0718e1c54fac36936fcd7d',
     'Agent': '1.1-64b670752d57b3c7602cb136e0338507',

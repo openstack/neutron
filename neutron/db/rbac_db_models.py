@@ -149,3 +149,14 @@ class SubnetPoolRBAC(RBACColumns, model_base.BASEV2):
     @staticmethod
     def get_valid_actions():
         return (ACCESS_SHARED,)
+
+
+class AddressGroupRBAC(RBACColumns, model_base.BASEV2):
+    """RBAC table for address_group."""
+
+    object_id = _object_id_column('address_groups.id')
+    object_type = 'address_group'
+
+    @staticmethod
+    def get_valid_actions():
+        return (ACCESS_SHARED,)

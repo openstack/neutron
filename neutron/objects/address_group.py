@@ -16,15 +16,30 @@ from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import address_group as models
+from neutron.db import rbac_db_models
 from neutron.objects import base
+from neutron.objects import rbac
+from neutron.objects import rbac_db
+from neutron.objects import securitygroup
 
 
 @base.NeutronObjectRegistry.register
-class AddressGroup(base.NeutronDbObject):
+class AddressGroupRBAC(rbac.RBACBaseObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
+
+    db_model = rbac_db_models.AddressGroupRBAC
+
+
+@base.NeutronObjectRegistry.register
+class AddressGroup(rbac_db.NeutronRbacObject):
+    # Version 1.0: Initial version
     # Version 1.1: Added standard attributes
-    VERSION = '1.1'
+    # Version 1.2: Added RBAC support
+    VERSION = '1.2'
+
+    # required by RbacNeutronMetaclass
+    rbac_db_cls = AddressGroupRBAC
 
     db_model = models.AddressGroup
 
@@ -32,6 +47,7 @@ class AddressGroup(base.NeutronDbObject):
         'id': common_types.UUIDField(),
         'name': obj_fields.StringField(nullable=True),
         'project_id': obj_fields.StringField(),
+        'shared': obj_fields.BooleanField(default=False),
         'addresses': obj_fields.ListOfObjectsField('AddressAssociation',
                                                    nullable=True)
     }
@@ -43,6 +59,14 @@ class AddressGroup(base.NeutronDbObject):
             standard_fields = ['revision_number', 'created_at', 'updated_at']
             for f in standard_fields:
                 primitive.pop(f, None)
+        if _target_version < (1, 2):
+            primitive.pop('shared', None)
+
+    @classmethod
+    def get_bound_tenant_ids(cls, context, obj_id):
+        ag_objs = securitygroup.SecurityGroupRule.get_objects(
+            context, remote_address_group_id=[obj_id])
+        return {ag.tenant_id for ag in ag_objs}
 
 
 @base.NeutronObjectRegistry.register

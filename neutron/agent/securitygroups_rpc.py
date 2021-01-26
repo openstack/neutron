@@ -16,6 +16,7 @@
 
 import functools
 
+from neutron_lib.api.definitions import rbac_address_groups as rbac_ag_apidef
 from neutron_lib.api.definitions import rbac_security_groups as rbac_sg_apidef
 from neutron_lib.api.definitions import security_groups_normalized_cidr
 from neutron_lib.api.definitions import security_groups_remote_address_group \
@@ -58,6 +59,7 @@ def disable_security_group_extension_by_config(aliases):
         _disable_extension('allowed-address-pairs', aliases)
         LOG.info('Disabled address-group extension.')
         _disable_extension('address-group', aliases)
+        _disable_extension(rbac_ag_apidef.ALIAS, aliases)
 
 
 class SecurityGroupAgentRpc(object):

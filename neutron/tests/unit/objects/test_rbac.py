@@ -13,6 +13,7 @@ import random
 
 from unittest import mock
 
+from neutron.objects import address_group
 from neutron.objects import address_scope
 from neutron.objects import network
 from neutron.objects.qos import policy
@@ -37,7 +38,8 @@ class TestRBACObjectMixin(object):
 class RBACBaseObjectTestCase(neutron_test_base.BaseTestCase):
 
     def test_get_type_class_map(self):
-        class_map = {'address_scope': address_scope.AddressScopeRBAC,
+        class_map = {'address_group': address_group.AddressGroupRBAC,
+                     'address_scope': address_scope.AddressScopeRBAC,
                      'qos_policy': policy.QosPolicyRBAC,
                      'network': network.NetworkRBAC,
                      'security_group': securitygroup.SecurityGroupRBAC,
