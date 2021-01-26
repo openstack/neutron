@@ -74,6 +74,10 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         self.setup_coreplugin(core_plugin=DB_PLUGIN_KLASS)
         self.ctx = context.get_admin_context()
         self.mixin = SecurityGroupDbMixinImpl()
+        is_ext_supported = mock.patch(
+            'neutron_lib.api.extensions.is_extension_supported')
+        self.is_ext_supported = is_ext_supported.start()
+        self.is_ext_supported.return_value = True
 
     def test_create_security_group_conflict(self):
         with mock.patch.object(registry, "notify") as mock_notify:
@@ -564,3 +568,13 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             get_default_sg_id.assert_has_calls([
                 mock.call(self.ctx, 'tenant_1'),
                 mock.call(self.ctx, 'tenant_1')])
+
+    def test__ensure_default_security_group_when_disabled(self):
+        with mock.patch.object(
+                    self.mixin, '_get_default_sg_id') as get_default_sg_id,\
+                mock.patch.object(
+                        self.mixin, 'create_security_group') as create_sg:
+            self.is_ext_supported.return_value = False
+            self.mixin._ensure_default_security_group(self.ctx, 'tenant_1')
+            create_sg.assert_not_called()
+            get_default_sg_id.assert_not_called()
