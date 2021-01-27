@@ -174,10 +174,20 @@ agent_opts = [
                        "traffic.")),
 ]
 
+dhcp_opts = [
+    cfg.IntOpt('renewal_time', default=0,
+               help=_("DHCP renewal time T1 (in seconds). If set to 0, it "
+                      "will default to half of the lease time.")),
+    cfg.IntOpt('rebinding_time', default=0,
+               help=_("DHCP rebinding time T2 (in seconds). If set to 0, it "
+                      "will default to 7/8 of the lease time.")),
+]
+
 
 def register_ovs_agent_opts(cfg=cfg.CONF):
     cfg.register_opts(ovs_opts, "OVS")
     cfg.register_opts(agent_opts, "AGENT")
+    cfg.register_opts(dhcp_opts, "DHCP")
 
 
 def register_ovs_opts(cfg=cfg.CONF):
