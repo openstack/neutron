@@ -10,10 +10,13 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
 
+DEPRECATED_REASON = (
+    "The router API now supports system scope and default roles.")
 
 COLLECTION_PATH = '/routers'
 RESOURCE_PATH = '/routers/{id}'
@@ -35,144 +38,266 @@ ACTION_GET = [
 
 rules = [
     policy.DocumentedRuleDefault(
-        'create_router',
-        base.RULE_ANY,
-        'Create a router',
-        ACTION_POST
+        name='create_router',
+        check_str=base.PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Create a router',
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_router',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_router:distributed',
-        base.RULE_ADMIN_ONLY,
-        'Specify ``distributed`` attribute when creating a router',
-        ACTION_POST
+        name='create_router:distributed',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Specify ``distributed`` attribute when creating a router',
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_router:distributed',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_router:ha',
-        base.RULE_ADMIN_ONLY,
-        'Specify ``ha`` attribute when creating a router',
-        ACTION_POST
+        name='create_router:ha',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Specify ``ha`` attribute when creating a router',
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_router:ha',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_router:external_gateway_info',
-        base.RULE_ADMIN_OR_OWNER,
-        'Specify ``external_gateway_info`` information when creating a router',
-        ACTION_POST
+        name='create_router:external_gateway_info',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description=('Specify ``external_gateway_info`` '
+                     'information when creating a router'),
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_router:external_gateway_info',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_router:external_gateway_info:network_id',
-        base.RULE_ADMIN_OR_OWNER,
-        ('Specify ``network_id`` in ``external_gateway_info`` information '
-         'when creating a router'),
-        ACTION_POST
+        name='create_router:external_gateway_info:network_id',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description=('Specify ``network_id`` in ``external_gateway_info`` '
+                     'information when creating a router'),
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_router:external_gateway_info:network_id',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_router:external_gateway_info:enable_snat',
-        base.RULE_ADMIN_ONLY,
-        ('Specify ``enable_snat`` in ``external_gateway_info`` information '
-         'when creating a router'),
-        ACTION_POST
+        name='create_router:external_gateway_info:enable_snat',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description=('Specify ``enable_snat`` in ``external_gateway_info`` '
+                     'information when creating a router'),
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_router:external_gateway_info:enable_snat',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_router:external_gateway_info:external_fixed_ips',
-        base.RULE_ADMIN_ONLY,
-        ('Specify ``external_fixed_ips`` in ``external_gateway_info`` '
-         'information when creating a router'),
-        ACTION_POST
-    ),
-
-    policy.DocumentedRuleDefault(
-        'get_router',
-        base.RULE_ADMIN_OR_OWNER,
-        'Get a router',
-        ACTION_GET
-    ),
-    policy.DocumentedRuleDefault(
-        'get_router:distributed',
-        base.RULE_ADMIN_ONLY,
-        'Get ``distributed`` attribute of a router',
-        ACTION_GET
-    ),
-    policy.DocumentedRuleDefault(
-        'get_router:ha',
-        base.RULE_ADMIN_ONLY,
-        'Get ``ha`` attribute of a router',
-        ACTION_GET
-    ),
-
-    policy.DocumentedRuleDefault(
-        'update_router',
-        base.RULE_ADMIN_OR_OWNER,
-        'Update a router',
-        ACTION_PUT
-    ),
-    policy.DocumentedRuleDefault(
-        'update_router:distributed',
-        base.RULE_ADMIN_ONLY,
-        'Update ``distributed`` attribute of a router',
-        ACTION_PUT
-    ),
-    policy.DocumentedRuleDefault(
-        'update_router:ha',
-        base.RULE_ADMIN_ONLY,
-        'Update ``ha`` attribute of a router',
-        ACTION_PUT
-    ),
-    policy.DocumentedRuleDefault(
-        'update_router:external_gateway_info',
-        base.RULE_ADMIN_OR_OWNER,
-        'Update ``external_gateway_info`` information of a router',
-        ACTION_PUT
-    ),
-    policy.DocumentedRuleDefault(
-        'update_router:external_gateway_info:network_id',
-        base.RULE_ADMIN_OR_OWNER,
-        ('Update ``network_id`` attribute of ``external_gateway_info`` '
-         'information of a router'),
-        ACTION_PUT
-    ),
-    policy.DocumentedRuleDefault(
-        'update_router:external_gateway_info:enable_snat',
-        base.RULE_ADMIN_ONLY,
-        ('Update ``enable_snat`` attribute of ``external_gateway_info`` '
-         'information of a router'),
-        ACTION_PUT
-    ),
-    policy.DocumentedRuleDefault(
-        'update_router:external_gateway_info:external_fixed_ips',
-        base.RULE_ADMIN_ONLY,
-        ('Update ``external_fixed_ips`` attribute of '
-         '``external_gateway_info`` information of a router'),
-        ACTION_PUT
+        name='create_router:external_gateway_info:external_fixed_ips',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description=('Specify ``external_fixed_ips`` in '
+                     '``external_gateway_info`` information when creating a '
+                     'router'),
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_router:external_gateway_info:external_fixed_ips',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 
     policy.DocumentedRuleDefault(
-        'delete_router',
-        base.RULE_ADMIN_OR_OWNER,
-        'Delete a router',
-        ACTION_DELETE
+        name='get_router',
+        check_str=base.SYSTEM_OR_PROJECT_READER,
+        scope_types=['system', 'project'],
+        description='Get a router',
+        operations=ACTION_GET,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_router',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='get_router:distributed',
+        check_str=base.SYSTEM_READER,
+        scope_types=['system'],
+        description='Get ``distributed`` attribute of a router',
+        operations=ACTION_GET,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_router:distributed',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='get_router:ha',
+        check_str=base.SYSTEM_READER,
+        scope_types=['system'],
+        description='Get ``ha`` attribute of a router',
+        operations=ACTION_GET,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_router:ha',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 
     policy.DocumentedRuleDefault(
-        'add_router_interface',
-        base.RULE_ADMIN_OR_OWNER,
-        'Add an interface to a router',
-        [
+        name='update_router',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Update a router',
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_router',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_router:distributed',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update ``distributed`` attribute of a router',
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_router:distributed',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_router:ha',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update ``ha`` attribute of a router',
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_router:ha',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_router:external_gateway_info',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Update ``external_gateway_info`` information of a router',
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_router:external_gateway_info',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_router:external_gateway_info:network_id',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description=('Update ``network_id`` attribute of '
+                     '``external_gateway_info`` information of a router'),
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_router:external_gateway_info:network_id',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_router:external_gateway_info:enable_snat',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description=('Update ``enable_snat`` attribute of '
+                     '``external_gateway_info`` information of a router'),
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_router:external_gateway_info:enable_snat',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_router:external_gateway_info:external_fixed_ips',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description=('Update ``external_fixed_ips`` attribute of '
+                     '``external_gateway_info`` information of a router'),
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_router:external_gateway_info:external_fixed_ips',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+
+    policy.DocumentedRuleDefault(
+        name='delete_router',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Delete a router',
+        operations=ACTION_DELETE,
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_router',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
+    ),
+
+    policy.DocumentedRuleDefault(
+        name='add_router_interface',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Add an interface to a router',
+        operations=[
             {
                 'method': 'PUT',
                 'path': '/routers/{id}/add_router_interface',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='add_router_interface',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'remove_router_interface',
-        base.RULE_ADMIN_OR_OWNER,
-        'Remove an interface from a router',
-        [
+        name='remove_router_interface',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Remove an interface from a router',
+        operations=[
             {
                 'method': 'PUT',
                 'path': '/routers/{id}/remove_router_interface',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='remove_router_interface',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 ]
 
