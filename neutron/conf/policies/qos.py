@@ -10,17 +10,23 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
 
+DEPRECATED_REASON = """
+The QoS API now supports system scope and default roles.
+"""
+
 
 rules = [
     policy.DocumentedRuleDefault(
-        'get_policy',
-        base.RULE_ANY,
-        'Get QoS policies',
-        [
+        name='get_policy',
+        check_str=base.SYSTEM_OR_PROJECT_READER,
+        scope_types=['system', 'project'],
+        description='Get QoS policies',
+        operations=[
             {
                 'method': 'GET',
                 'path': '/qos/policies',
@@ -29,47 +35,71 @@ rules = [
                 'method': 'GET',
                 'path': '/qos/policies/{id}',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_policy',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_policy',
-        base.RULE_ADMIN_ONLY,
-        'Create a QoS policy',
-        [
+        name='create_policy',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Create a QoS policy',
+        operations=[
             {
                 'method': 'POST',
                 'path': '/qos/policies',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_policy',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'update_policy',
-        base.RULE_ADMIN_ONLY,
-        'Update a QoS policy',
-        [
+        name='update_policy',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update a QoS policy',
+        operations=[
             {
                 'method': 'PUT',
                 'path': '/qos/policies/{id}',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_policy',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'delete_policy',
-        base.RULE_ADMIN_ONLY,
-        'Delete a QoS policy',
-        [
+        name='delete_policy',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Delete a QoS policy',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': '/qos/policies/{id}',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_policy',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 
     policy.DocumentedRuleDefault(
-        'get_rule_type',
-        base.RULE_ANY,
-        'Get available QoS rule types',
-        [
+        name='get_rule_type',
+        check_str=base.SYSTEM_OR_PROJECT_READER,
+        scope_types=['system', 'project'],
+        description='Get available QoS rule types',
+        operations=[
             {
                 'method': 'GET',
                 'path': '/qos/rule-types',
@@ -78,14 +108,20 @@ rules = [
                 'method': 'GET',
                 'path': '/qos/rule-types/{rule_type}',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_rule_type',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 
     policy.DocumentedRuleDefault(
-        'get_policy_bandwidth_limit_rule',
-        base.RULE_ANY,
-        'Get a QoS bandwidth limit rule',
-        [
+        name='get_policy_bandwidth_limit_rule',
+        check_str=base.SYSTEM_OR_PROJECT_READER,
+        scope_types=['system', 'project'],
+        description='Get a QoS bandwidth limit rule',
+        operations=[
             {
                 'method': 'GET',
                 'path': '/qos/policies/{policy_id}/bandwidth_limit_rules',
@@ -95,49 +131,73 @@ rules = [
                 'path': ('/qos/policies/{policy_id}/'
                          'bandwidth_limit_rules/{rule_id}'),
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_policy_bandwidth_limit_rule',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_policy_bandwidth_limit_rule',
-        base.RULE_ADMIN_ONLY,
-        'Create a QoS bandwidth limit rule',
-        [
+        name='create_policy_bandwidth_limit_rule',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Create a QoS bandwidth limit rule',
+        operations=[
             {
                 'method': 'POST',
                 'path': '/qos/policies/{policy_id}/bandwidth_limit_rules',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_policy_bandwidth_limit_rule',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'update_policy_bandwidth_limit_rule',
-        base.RULE_ADMIN_ONLY,
-        'Update a QoS bandwidth limit rule',
-        [
+        name='update_policy_bandwidth_limit_rule',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update a QoS bandwidth limit rule',
+        operations=[
             {
                 'method': 'PUT',
                 'path': ('/qos/policies/{policy_id}/'
                          'bandwidth_limit_rules/{rule_id}'),
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_policy_bandwidth_limit_rule',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'delete_policy_bandwidth_limit_rule',
-        base.RULE_ADMIN_ONLY,
-        'Delete a QoS bandwidth limit rule',
-        [
+        name='delete_policy_bandwidth_limit_rule',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Delete a QoS bandwidth limit rule',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': ('/qos/policies/{policy_id}/'
                          'bandwidth_limit_rules/{rule_id}'),
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_policy_bandwidth_limit_rule',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 
     policy.DocumentedRuleDefault(
-        'get_policy_dscp_marking_rule',
-        base.RULE_ANY,
-        'Get a QoS DSCP marking rule',
-        [
+        name='get_policy_dscp_marking_rule',
+        check_str=base.SYSTEM_OR_PROJECT_READER,
+        scope_types=['system', 'project'],
+        description='Get a QoS DSCP marking rule',
+        operations=[
             {
                 'method': 'GET',
                 'path': '/qos/policies/{policy_id}/dscp_marking_rules',
@@ -147,49 +207,73 @@ rules = [
                 'path': ('/qos/policies/{policy_id}/'
                          'dscp_marking_rules/{rule_id}'),
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_policy_dscp_marking_rule',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_policy_dscp_marking_rule',
-        base.RULE_ADMIN_ONLY,
-        'Create a QoS DSCP marking rule',
-        [
+        name='create_policy_dscp_marking_rule',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Create a QoS DSCP marking rule',
+        operations=[
             {
                 'method': 'POST',
                 'path': '/qos/policies/{policy_id}/dscp_marking_rules',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_policy_dscp_marking_rule',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'update_policy_dscp_marking_rule',
-        base.RULE_ADMIN_ONLY,
-        'Update a QoS DSCP marking rule',
-        [
+        name='update_policy_dscp_marking_rule',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update a QoS DSCP marking rule',
+        operations=[
             {
                 'method': 'PUT',
                 'path': ('/qos/policies/{policy_id}/'
                          'dscp_marking_rules/{rule_id}'),
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_policy_dscp_marking_rule',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'delete_policy_dscp_marking_rule',
-        base.RULE_ADMIN_ONLY,
-        'Delete a QoS DSCP marking rule',
-        [
+        name='delete_policy_dscp_marking_rule',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Delete a QoS DSCP marking rule',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': ('/qos/policies/{policy_id}/'
                          'dscp_marking_rules/{rule_id}'),
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_policy_dscp_marking_rule',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 
     policy.DocumentedRuleDefault(
-        'get_policy_minimum_bandwidth_rule',
-        base.RULE_ANY,
-        'Get a QoS minimum bandwidth rule',
-        [
+        name='get_policy_minimum_bandwidth_rule',
+        check_str=base.SYSTEM_OR_PROJECT_READER,
+        scope_types=['system', 'project'],
+        description='Get a QoS minimum bandwidth rule',
+        operations=[
             {
                 'method': 'GET',
                 'path': '/qos/policies/{policy_id}/minimum_bandwidth_rules',
@@ -199,48 +283,71 @@ rules = [
                 'path': ('/qos/policies/{policy_id}/'
                          'minimum_bandwidth_rules/{rule_id}'),
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_policy_minimum_bandwidth_rule',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'create_policy_minimum_bandwidth_rule',
-        base.RULE_ADMIN_ONLY,
-        'Create a QoS minimum bandwidth rule',
-        [
+        name='create_policy_minimum_bandwidth_rule',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Create a QoS minimum bandwidth rule',
+        operations=[
             {
                 'method': 'POST',
                 'path': '/qos/policies/{policy_id}/minimum_bandwidth_rules',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_policy_minimum_bandwidth_rule',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'update_policy_minimum_bandwidth_rule',
-        base.RULE_ADMIN_ONLY,
-        'Update a QoS minimum bandwidth rule',
-        [
+        name='update_policy_minimum_bandwidth_rule',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update a QoS minimum bandwidth rule',
+        operations=[
             {
                 'method': 'PUT',
                 'path': ('/qos/policies/{policy_id}/'
                          'minimum_bandwidth_rules/{rule_id}'),
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_policy_minimum_bandwidth_rule',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'delete_policy_minimum_bandwidth_rule',
-        base.RULE_ADMIN_ONLY,
-        'Delete a QoS minimum bandwidth rule',
-        [
+        name='delete_policy_minimum_bandwidth_rule',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Delete a QoS minimum bandwidth rule',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': ('/qos/policies/{policy_id}/'
                          'minimum_bandwidth_rules/{rule_id}'),
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_policy_minimum_bandwidth_rule',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'get_alias_bandwidth_limit_rule',
-        'rule:get_policy_bandwidth_limit_rule',
-        'Get a QoS bandwidth limit rule through alias',
-        [
+        name='get_alias_bandwidth_limit_rule',
+        check_str='rule:get_policy_bandwidth_limit_rule',
+        description='Get a QoS bandwidth limit rule through alias',
+        operations=[
             {
                 'method': 'GET',
                 'path': '/qos/alias_bandwidth_limit_rules/{rule_id}/',
@@ -248,10 +355,10 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
-        'update_alias_bandwidth_limit_rule',
-        'rule:update_policy_bandwidth_limit_rule',
-        'Update a QoS bandwidth limit rule through alias',
-        [
+        name='update_alias_bandwidth_limit_rule',
+        check_str='rule:update_policy_bandwidth_limit_rule',
+        description='Update a QoS bandwidth limit rule through alias',
+        operations=[
             {
                 'method': 'PUT',
                 'path': '/qos/alias_bandwidth_limit_rules/{rule_id}/',
@@ -259,10 +366,10 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
-        'delete_alias_bandwidth_limit_rule',
-        'rule:delete_policy_bandwidth_limit_rule',
-        'Delete a QoS bandwidth limit rule through alias',
-        [
+        name='delete_alias_bandwidth_limit_rule',
+        check_str='rule:delete_policy_bandwidth_limit_rule',
+        description='Delete a QoS bandwidth limit rule through alias',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': '/qos/alias_bandwidth_limit_rules/{rule_id}/',
@@ -270,10 +377,10 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
-        'get_alias_dscp_marking_rule',
-        'rule:get_policy_dscp_marking_rule',
-        'Get a QoS DSCP marking rule through alias',
-        [
+        name='get_alias_dscp_marking_rule',
+        check_str='rule:get_policy_dscp_marking_rule',
+        description='Get a QoS DSCP marking rule through alias',
+        operations=[
             {
                 'method': 'GET',
                 'path': '/qos/alias_dscp_marking_rules/{rule_id}/',
@@ -281,10 +388,10 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
-        'update_alias_dscp_marking_rule',
-        'rule:update_policy_dscp_marking_rule',
-        'Update a QoS DSCP marking rule through alias',
-        [
+        name='update_alias_dscp_marking_rule',
+        check_str='rule:update_policy_dscp_marking_rule',
+        description='Update a QoS DSCP marking rule through alias',
+        operations=[
             {
                 'method': 'PUT',
                 'path': '/qos/alias_dscp_marking_rules/{rule_id}/',
@@ -292,10 +399,10 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
-        'delete_alias_dscp_marking_rule',
-        'rule:delete_policy_dscp_marking_rule',
-        'Delete a QoS DSCP marking rule through alias',
-        [
+        name='delete_alias_dscp_marking_rule',
+        check_str='rule:delete_policy_dscp_marking_rule',
+        description='Delete a QoS DSCP marking rule through alias',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': '/qos/alias_dscp_marking_rules/{rule_id}/',
@@ -303,10 +410,10 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
-        'get_alias_minimum_bandwidth_rule',
-        'rule:get_policy_minimum_bandwidth_rule',
-        'Get a QoS minimum bandwidth rule through alias',
-        [
+        name='get_alias_minimum_bandwidth_rule',
+        check_str='rule:get_policy_minimum_bandwidth_rule',
+        description='Get a QoS minimum bandwidth rule through alias',
+        operations=[
             {
                 'method': 'GET',
                 'path': '/qos/alias_minimum_bandwidth_rules/{rule_id}/',
@@ -314,10 +421,10 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
-        'update_alias_minimum_bandwidth_rule',
-        'rule:update_policy_minimum_bandwidth_rule',
-        'Update a QoS minimum bandwidth rule through alias',
-        [
+        name='update_alias_minimum_bandwidth_rule',
+        check_str='rule:update_policy_minimum_bandwidth_rule',
+        description='Update a QoS minimum bandwidth rule through alias',
+        operations=[
             {
                 'method': 'PUT',
                 'path': '/qos/alias_minimum_bandwidth_rules/{rule_id}/',
@@ -325,10 +432,10 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
-        'delete_alias_minimum_bandwidth_rule',
-        'rule:delete_policy_minimum_bandwidth_rule',
-        'Delete a QoS minimum bandwidth rule through alias',
-        [
+        name='delete_alias_minimum_bandwidth_rule',
+        check_str='rule:delete_policy_minimum_bandwidth_rule',
+        description='Delete a QoS minimum bandwidth rule through alias',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': '/qos/alias_minimum_bandwidth_rules/{rule_id}/',
