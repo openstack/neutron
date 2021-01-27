@@ -131,6 +131,9 @@ class NeutronConfigFixture(ConfigFixture):
             self.config['DEFAULT']['network_scheduler_driver'] = (
                 env_desc.dhcp_scheduler_class)
 
+        self.config['DEFAULT']['enable_traditional_dhcp'] = str(
+            env_desc.enable_traditional_dhcp)
+
         net_helpers.set_local_port_range(CLIENT_CONN_PORT_START,
                                          CLIENT_CONN_PORT_END)
 
@@ -252,6 +255,14 @@ class OVSConfigFixture(ConfigFixture):
                 'network_log': {
                     'local_output_log_base':
                         self._generate_temp_log_file(test_name)}
+            })
+        if not env_desc.enable_traditional_dhcp:
+            self.config['agent']['extensions'] = 'dhcp'
+            self.config.update({
+                'dhcp': {
+                    'enable_ipv6': 'True',
+                    'renewal_time': '0',
+                    'rebinding_time': '0'}
             })
 
     def _setUp(self):

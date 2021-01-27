@@ -120,7 +120,8 @@ class ClientFixture(fixtures.Fixture):
     def create_subnet(self, tenant_id, network_id,
                       cidr=None, gateway_ip=None, name=None, enable_dhcp=True,
                       ipv6_address_mode='slaac', ipv6_ra_mode='slaac',
-                      subnetpool_id=None, ip_version=None):
+                      subnetpool_id=None, ip_version=None,
+                      host_routes=None):
         resource_type = 'subnet'
 
         name = name or utils.get_rand_name(prefix=resource_type)
@@ -138,6 +139,8 @@ class ClientFixture(fixtures.Fixture):
             spec['subnetpool_id'] = subnetpool_id
         if cidr:
             spec['cidr'] = cidr
+        if host_routes:
+            spec['host_routes'] = host_routes
 
         return self._create_resource(resource_type, spec)
 
