@@ -194,8 +194,11 @@ class KeepalivedConfTestCase(KeepalivedBaseTestCase,
 
     def test_config_generation_no_track_not_supported(self):
         config = self._get_config()
-        self.assertEqual(self.expected.replace(' no_track', ''),
-                         config.get_config_str())
+        with mock.patch.object(
+                keepalived, '_is_keepalived_use_no_track_supported',
+                return_value=False):
+            self.assertEqual(self.expected.replace(' no_track', ''),
+                             config.get_config_str())
 
     def test_config_with_reset(self):
         with mock.patch.object(
@@ -340,9 +343,12 @@ class KeepalivedInstanceRoutesTestCase(KeepalivedBaseTestCase):
         return expected
 
     def test_build_config_no_track_not_supported(self):
-        routes = self._get_instance_routes()
-        self.assertEqual(self._get_no_track_less_expected_config(),
-                         '\n'.join(routes.build_config()))
+        with mock.patch.object(
+                keepalived, '_is_keepalived_use_no_track_supported',
+                return_value=False):
+            routes = self._get_instance_routes()
+            self.assertEqual(self._get_no_track_less_expected_config(),
+                             '\n'.join(routes.build_config()))
 
     def test_build_config_without_no_track_option(self):
         cfg.CONF.set_override('keepalived_use_no_track', False)
@@ -418,7 +424,10 @@ class KeepalivedInstanceTestCase(KeepalivedBaseTestCase,
             self._test_remove_addresses_by_interface(" no_track")
 
     def test_remove_address_by_interface_no_track_not_supported(self):
-        self._test_remove_addresses_by_interface("")
+        with mock.patch.object(
+                keepalived, '_is_keepalived_use_no_track_supported',
+                return_value=False):
+            self._test_remove_addresses_by_interface("")
 
     def test_remove_addresses_by_interface_without_no_track(self):
         cfg.CONF.set_override('keepalived_use_no_track', False)
@@ -493,10 +502,13 @@ class KeepalivedVirtualRouteTestCase(KeepalivedBaseTestCase):
                              route.build_config())
 
     def test_virtual_route_with_dev_no_track_not_supported(self):
-        route = keepalived.KeepalivedVirtualRoute(
-            n_consts.IPv4_ANY, '1.2.3.4', 'eth0')
-        self.assertEqual('0.0.0.0/0 via 1.2.3.4 dev eth0',
-                         route.build_config())
+        with mock.patch.object(
+                keepalived, '_is_keepalived_use_no_track_supported',
+                return_value=False):
+            route = keepalived.KeepalivedVirtualRoute(
+                n_consts.IPv4_ANY, '1.2.3.4', 'eth0')
+            self.assertEqual('0.0.0.0/0 via 1.2.3.4 dev eth0',
+                             route.build_config())
 
     def test_virtual_route_with_dev_without_no_track(self):
         cfg.CONF.set_override('keepalived_use_no_track', False)
@@ -514,9 +526,12 @@ class KeepalivedVirtualRouteTestCase(KeepalivedBaseTestCase):
                              route.build_config())
 
     def test_virtual_route_without_dev_no_track_not_supported(self):
-        route = keepalived.KeepalivedVirtualRoute('50.0.0.0/8', '1.2.3.4')
-        self.assertEqual('50.0.0.0/8 via 1.2.3.4',
-                         route.build_config())
+        with mock.patch.object(
+                keepalived, '_is_keepalived_use_no_track_supported',
+                return_value=False):
+            route = keepalived.KeepalivedVirtualRoute('50.0.0.0/8', '1.2.3.4')
+            self.assertEqual('50.0.0.0/8 via 1.2.3.4',
+                             route.build_config())
 
     def test_virtual_route_without_dev_without_no_track(self):
         cfg.CONF.set_override('keepalived_use_no_track', False)
