@@ -385,7 +385,8 @@ class MetadataAgent(object):
         "netdev"), the checksum between the metadata namespace and OVS is not
         correctly populated.
         """
-        if (self.ovs_idl.db_get('Bridge', self.ovn_bridge, 'datapath_type') !=
+        if (self.ovs_idl.db_get(
+                'Bridge', self.ovn_bridge, 'datapath_type').execute() !=
                 ovn_const.CHASSIS_DATAPATH_NETDEV):
             return
 
