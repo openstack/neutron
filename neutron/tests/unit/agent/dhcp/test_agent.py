@@ -15,6 +15,7 @@
 
 import collections
 import copy
+import datetime
 import sys
 from unittest import mock
 import uuid
@@ -2378,3 +2379,63 @@ class TestDeviceManager(base.BaseTestCase):
         self.assertEqual(2, device.route.get_gateway.call_count)
         self.assertFalse(device.route.delete_gateway.called)
         device.route.add_gateway.assert_has_calls(expected)
+
+
+class TestDHCPResourceUpdate(base.BaseTestCase):
+
+    date1 = datetime.datetime(year=2021, month=2, day=1, hour=9, minute=1,
+                              second=2)
+    date2 = datetime.datetime(year=2021, month=2, day=1, hour=9, minute=1,
+                              second=1)  # older than date1
+
+    def test__lt__no_port_event(self):
+        # Lower numerical priority always gets precedence. DHCPResourceUpdate
+        # (and ResourceUpdate) objects with more precedence will return as
+        # "lower" in a "__lt__" method comparison.
+        update1 = dhcp_agent.DHCPResourceUpdate('id1', 5, obj_type='network')
+        update2 = dhcp_agent.DHCPResourceUpdate('id2', 6, obj_type='network')
+        self.assertLess(update1, update2)
+
+    def test__lt__no_port_event_timestamp(self):
+        update1 = dhcp_agent.DHCPResourceUpdate(
+            'id1', 5, timestamp=self.date1, obj_type='network')
+        update2 = dhcp_agent.DHCPResourceUpdate(
+            'id2', 6, timestamp=self.date2, obj_type='network')
+        self.assertLess(update1, update2)
+
+    def test__lt__port_no_fixed_ips(self):
+        update1 = dhcp_agent.DHCPResourceUpdate(
+            'id1', 5, timestamp=self.date1, resource={}, obj_type='port')
+        update2 = dhcp_agent.DHCPResourceUpdate(
+            'id2', 6, timestamp=self.date2, resource={}, obj_type='port')
+        self.assertLess(update1, update2)
+
+    def test__lt__port_fixed_ips_not_matching(self):
+        resource1 = {'fixed_ips': [
+            {'subnet_id': 'subnet1', 'ip_address': '10.0.0.1'}]}
+        resource2 = {'fixed_ips': [
+            {'subnet_id': 'subnet1', 'ip_address': '10.0.0.2'},
+            {'subnet_id': 'subnet2', 'ip_address': '10.0.1.1'}]}
+        update1 = dhcp_agent.DHCPResourceUpdate(
+            'id1', 5, timestamp=self.date1, resource=resource1,
+            obj_type='port')
+        update2 = dhcp_agent.DHCPResourceUpdate(
+            'id2', 6, timestamp=self.date2, resource=resource2,
+            obj_type='port')
+        self.assertLess(update1, update2)
+
+    def test__lt__port_fixed_ips_matching(self):
+        resource1 = {'fixed_ips': [
+            {'subnet_id': 'subnet1', 'ip_address': '10.0.0.1'}]}
+        resource2 = {'fixed_ips': [
+            {'subnet_id': 'subnet1', 'ip_address': '10.0.0.1'},
+            {'subnet_id': 'subnet2', 'ip_address': '10.0.0.2'}]}
+        update1 = dhcp_agent.DHCPResourceUpdate(
+            'id1', 5, timestamp=self.date1, resource=resource1,
+            obj_type='port')
+        update2 = dhcp_agent.DHCPResourceUpdate(
+            'id2', 6, timestamp=self.date2, resource=resource2,
+            obj_type='port')
+        # In this case, both "port" events have matching IPs. "__lt__" method
+        # uses the timestamp: date2 < date1
+        self.assertLess(update2, update1)
