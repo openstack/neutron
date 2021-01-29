@@ -74,6 +74,35 @@ def _wait_if_syncing(f):
     return wrapped
 
 
+class DHCPResourceUpdate(queue.ResourceUpdate):
+
+    def __init__(self, _id, priority, action=None, resource=None,
+                 timestamp=None, tries=5, obj_type=None):
+        super().__init__(_id, priority, action=action, resource=resource,
+                         timestamp=timestamp, tries=tries)
+        self.obj_type = obj_type
+
+    def __lt__(self, other):
+        if other.obj_type == self.obj_type == 'port':
+            # NOTE(ralonsoh): both resources should have "fixed_ips"
+            # information. That key was added to the deleted ports in this
+            # patch but this code runs in the Neutron API (server). Both the
+            # server and the DHCP agent should be updated.
+            # This check could be removed in Y release.
+            if ('fixed_ips' not in self.resource or
+                    'fixed_ips' not in other.resource):
+                return super().__lt__(other)
+
+            self_ips = set(str(fixed_ip['ip_address']) for
+                           fixed_ip in self.resource['fixed_ips'])
+            other_ips = set(str(fixed_ip['ip_address']) for
+                            fixed_ip in other.resource['fixed_ips'])
+            if self_ips & other_ips:
+                return self.timestamp < other.timestamp
+
+        return super().__lt__(other)
+
+
 class DhcpAgent(manager.Manager):
     """DHCP agent service manager.
 
@@ -429,11 +458,10 @@ class DhcpAgent(manager.Manager):
 
     def network_create_end(self, context, payload):
         """Handle the network.create.end notification event."""
-        update = queue.ResourceUpdate(payload['network']['id'],
-                                      payload.get('priority',
-                                                  DEFAULT_PRIORITY),
-                                      action='_network_create',
-                                      resource=payload)
+        update = DHCPResourceUpdate(payload['network']['id'],
+                                    payload.get('priority', DEFAULT_PRIORITY),
+                                    action='_network_create',
+                                    resource=payload, obj_type='network')
         self._queue.add(update)
 
     @_wait_if_syncing
@@ -444,11 +472,10 @@ class DhcpAgent(manager.Manager):
 
     def network_update_end(self, context, payload):
         """Handle the network.update.end notification event."""
-        update = queue.ResourceUpdate(payload['network']['id'],
-                                      payload.get('priority',
-                                                  DEFAULT_PRIORITY),
-                                      action='_network_update',
-                                      resource=payload)
+        update = DHCPResourceUpdate(payload['network']['id'],
+                                    payload.get('priority', DEFAULT_PRIORITY),
+                                    action='_network_update',
+                                    resource=payload, obj_type='network')
         self._queue.add(update)
 
     @_wait_if_syncing
@@ -462,11 +489,10 @@ class DhcpAgent(manager.Manager):
 
     def network_delete_end(self, context, payload):
         """Handle the network.delete.end notification event."""
-        update = queue.ResourceUpdate(payload['network_id'],
-                                      payload.get('priority',
-                                                  DEFAULT_PRIORITY),
-                                      action='_network_delete',
-                                      resource=payload)
+        update = DHCPResourceUpdate(payload['network_id'],
+                                    payload.get('priority', DEFAULT_PRIORITY),
+                                    action='_network_delete',
+                                    resource=payload, obj_type='network')
         self._queue.add(update)
 
     @_wait_if_syncing
@@ -477,11 +503,10 @@ class DhcpAgent(manager.Manager):
 
     def subnet_update_end(self, context, payload):
         """Handle the subnet.update.end notification event."""
-        update = queue.ResourceUpdate(payload['subnet']['network_id'],
-                                      payload.get('priority',
-                                                  DEFAULT_PRIORITY),
-                                      action='_subnet_update',
-                                      resource=payload)
+        update = DHCPResourceUpdate(payload['subnet']['network_id'],
+                                    payload.get('priority', DEFAULT_PRIORITY),
+                                    action='_subnet_update',
+                                    resource=payload, obj_type='subnet')
         self._queue.add(update)
 
     @_wait_if_syncing
@@ -516,11 +541,10 @@ class DhcpAgent(manager.Manager):
         network_id = self._get_network_lock_id(payload)
         if not network_id:
             return
-        update = queue.ResourceUpdate(network_id,
-                                      payload.get('priority',
-                                                  DEFAULT_PRIORITY),
-                                      action='_subnet_delete',
-                                      resource=payload)
+        update = DHCPResourceUpdate(network_id,
+                                    payload.get('priority', DEFAULT_PRIORITY),
+                                    action='_subnet_delete',
+                                    resource=payload, obj_type='subnet')
         self._queue.add(update)
 
     @_wait_if_syncing
@@ -564,11 +588,10 @@ class DhcpAgent(manager.Manager):
         if self.cache.is_port_message_stale(updated_port):
             LOG.debug("Discarding stale port update: %s", updated_port)
             return
-        update = queue.ResourceUpdate(updated_port.network_id,
-                                      payload.get('priority',
-                                                  DEFAULT_PRIORITY),
-                                      action='_port_update',
-                                      resource=updated_port)
+        update = DHCPResourceUpdate(updated_port.network_id,
+                                    payload.get('priority', DEFAULT_PRIORITY),
+                                    action='_port_update',
+                                    resource=updated_port, obj_type='port')
         self._queue.add(update)
 
     @_wait_if_syncing
@@ -624,11 +647,10 @@ class DhcpAgent(manager.Manager):
     def port_create_end(self, context, payload):
         """Handle the port.create.end notification event."""
         created_port = dhcp.DictModel(payload['port'])
-        update = queue.ResourceUpdate(created_port.network_id,
-                                      payload.get('priority',
-                                                  DEFAULT_PRIORITY),
-                                      action='_port_create',
-                                      resource=created_port)
+        update = DHCPResourceUpdate(created_port.network_id,
+                                    payload.get('priority', DEFAULT_PRIORITY),
+                                    action='_port_create',
+                                    resource=created_port, obj_type='port')
         self._queue.add(update)
 
     @_wait_if_syncing
@@ -667,11 +689,10 @@ class DhcpAgent(manager.Manager):
         network_id = self._get_network_lock_id(payload)
         if not network_id:
             return
-        update = queue.ResourceUpdate(network_id,
-                                      payload.get('priority',
-                                                  DEFAULT_PRIORITY),
-                                      action='_port_delete',
-                                      resource=payload)
+        update = DHCPResourceUpdate(network_id,
+                                    payload.get('priority', DEFAULT_PRIORITY),
+                                    action='_port_delete',
+                                    resource=payload, obj_type='port')
         self._queue.add(update)
 
     @_wait_if_syncing
