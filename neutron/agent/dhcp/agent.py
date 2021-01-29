@@ -26,6 +26,7 @@ from neutron_lib import exceptions
 from neutron_lib import rpc as n_rpc
 from oslo_concurrency import lockutils
 from oslo_config import cfg
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
@@ -436,6 +437,7 @@ class DhcpAgent(manager.Manager):
         self._queue.add(update)
 
     @_wait_if_syncing
+    @log_helpers.log_method_call
     def _network_create(self, payload):
         network_id = payload['network']['id']
         self.enable_dhcp_helper(network_id)
@@ -450,6 +452,7 @@ class DhcpAgent(manager.Manager):
         self._queue.add(update)
 
     @_wait_if_syncing
+    @log_helpers.log_method_call
     def _network_update(self, payload):
         network_id = payload['network']['id']
         if payload['network']['admin_state_up']:
@@ -467,6 +470,7 @@ class DhcpAgent(manager.Manager):
         self._queue.add(update)
 
     @_wait_if_syncing
+    @log_helpers.log_method_call
     def _network_delete(self, payload):
         network_id = payload['network_id']
         self.disable_dhcp_helper(network_id)
@@ -481,6 +485,7 @@ class DhcpAgent(manager.Manager):
         self._queue.add(update)
 
     @_wait_if_syncing
+    @log_helpers.log_method_call
     def _subnet_update(self, payload):
         network_id = payload['subnet']['network_id']
         self.refresh_dhcp_helper(network_id)
@@ -519,6 +524,7 @@ class DhcpAgent(manager.Manager):
         self._queue.add(update)
 
     @_wait_if_syncing
+    @log_helpers.log_method_call
     def _subnet_delete(self, payload):
         network_id = self._get_network_lock_id(payload)
         if not network_id:
@@ -566,6 +572,7 @@ class DhcpAgent(manager.Manager):
         self._queue.add(update)
 
     @_wait_if_syncing
+    @log_helpers.log_method_call
     def _port_update(self, updated_port):
         if self.cache.is_port_message_stale(updated_port):
             LOG.debug("Discarding stale port update: %s", updated_port)
@@ -577,7 +584,8 @@ class DhcpAgent(manager.Manager):
         self.reload_allocations(updated_port, network, prio=True)
 
     def reload_allocations(self, port, network, prio=False):
-        LOG.info("Trigger reload_allocations for port %s", port)
+        LOG.info("Trigger reload_allocations for port %s on network %s",
+                 port, network)
         driver_action = 'reload_allocations'
         if self._is_port_on_this_agent(port):
             orig = self.cache.get_port_by_id(port['id'])
@@ -624,6 +632,7 @@ class DhcpAgent(manager.Manager):
         self._queue.add(update)
 
     @_wait_if_syncing
+    @log_helpers.log_method_call
     def _port_create(self, created_port):
         network = self.cache.get_network_by_id(created_port.network_id)
         if not network:
@@ -638,9 +647,18 @@ class DhcpAgent(manager.Manager):
             if (new_ips.intersection(cached_ips) and
                 (created_port['id'] != port_cached['id'] or
                  created_port['mac_address'] != port_cached['mac_address'])):
-                self.schedule_resync("Duplicate IP addresses found, "
-                                     "DHCP cache is out of sync",
-                                     created_port.network_id)
+                resync_reason = (
+                    "Duplicate IP addresses found, "
+                    "Port in cache: {cache_port_id}, "
+                    "Created port: {port_id}, "
+                    "IPs in cache: {cached_ips}, "
+                    "new IPs: {new_ips}."
+                    "DHCP cache is out of sync").format(
+                        cache_port_id=port_cached['id'],
+                        port_id=created_port['id'],
+                        cached_ips=cached_ips,
+                        new_ips=new_ips)
+                self.schedule_resync(resync_reason, created_port.network_id)
                 return
         self.reload_allocations(created_port, network, prio=True)
 
@@ -657,6 +675,7 @@ class DhcpAgent(manager.Manager):
         self._queue.add(update)
 
     @_wait_if_syncing
+    @log_helpers.log_method_call
     def _port_delete(self, payload):
         network_id = self._get_network_lock_id(payload)
         if not network_id:
