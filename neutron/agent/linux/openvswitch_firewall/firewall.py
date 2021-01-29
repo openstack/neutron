@@ -475,9 +475,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         """
         self.permitted_ethertypes = cfg.CONF.SECURITYGROUP.permitted_ethertypes
         self.int_br = self.initialize_bridge(integration_bridge)
-        self.sg_port_map = SGPortMap()
-        self.conj_ip_manager = ConjIPFlowManager(self)
-        self.sg_to_delete = set()
+        self._initialize_sg()
         self._update_cookie = None
         self._deferred = False
         self.iptables_helper = iptables.Helper(self.int_br.br)
@@ -491,7 +489,13 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
     def _init_firewall_callback(self, resource, event, trigger, **kwargs):
         LOG.info("Reinitialize Openvswitch firewall after OVS restart.")
+        self._initialize_sg()
         self._initialize_firewall()
+
+    def _initialize_sg(self):
+        self.sg_port_map = SGPortMap()
+        self.conj_ip_manager = ConjIPFlowManager(self)
+        self.sg_to_delete = set()
 
     def _initialize_firewall(self):
         self._drop_all_unmatched_flows()
