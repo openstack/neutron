@@ -33,6 +33,9 @@
             irrelevant-files: *irrelevant-files
         - neutron-rally-task:
             irrelevant-files: *irrelevant-files
+            # TODO(slaweq) make this job to be voting again when bug
+            # https://bugs.launchpad.net/neutron/+bug/1913718 will be fixed
+            voting: false
         - neutron-grenade-multinode:
             irrelevant-files: *irrelevant-files
         - neutron-grenade-dvr-multinode:
