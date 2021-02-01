@@ -54,9 +54,9 @@ router and floating IP. Add these lines to the
    quota_floatingip = 50
 
 OpenStack Networking also supports quotas for security group
-resources: number of security groups and the number of rules for
-each security group. Add these lines to the
-``quotas`` section in the ``/etc/neutron/neutron.conf`` file:
+resources: number of security groups and number of rules.
+Add these lines to the ``quotas`` section in the
+``/etc/neutron/neutron.conf`` file:
 
 .. code-block:: ini
 
