@@ -14,6 +14,7 @@
 #    under the License.
 
 import os
+import signal
 from unittest import mock
 
 from neutron_lib import constants
@@ -24,6 +25,7 @@ from oslo_utils import uuidutils
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import router_info
 from neutron.agent.linux import iptables_manager
+from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
@@ -33,6 +35,12 @@ from neutron.tests import base
 from neutron.tests.unit.agent.linux import test_utils
 
 _uuid = uuidutils.generate_uuid
+
+
+class FakeL3NATAgent(object):
+
+    def __init__(self):
+        self.conf = cfg.CONF
 
 
 class TestMetadataDriverRules(base.BaseTestCase):
@@ -80,6 +88,11 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         mock.patch('neutron.agent.l3.agent.L3PluginApi').start()
         mock.patch('neutron.agent.l3.ha.AgentMixin'
                    '._init_ha_conf_path').start()
+        self.delete_if_exists = mock.patch.object(linux_utils,
+                                                  'delete_if_exists')
+        self.mock_get_process = mock.patch.object(
+            metadata_driver.MetadataDriver,
+            '_get_metadata_proxy_process_manager')
 
         l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
         ha_conf.register_l3_agent_ha_opts()
@@ -209,3 +222,33 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                                                          mock.ANY, mock.ANY)
             self.assertRaises(metadata_driver.InvalidUserOrGroupException,
                               config.create_config_file)
+
+    def test_destroy_monitored_metadata_proxy(self):
+        delete_if_exists = self.delete_if_exists.start()
+        mproxy_process = mock.Mock(
+            active=False, get_pid_file_name=mock.Mock(return_value='pid_file'))
+        mock_get_process = self.mock_get_process.start()
+        mock_get_process.return_value = mproxy_process
+        driver = metadata_driver.MetadataDriver(FakeL3NATAgent())
+        driver.destroy_monitored_metadata_proxy(mock.Mock(), 'uuid', 'conf',
+                                                'ns_name')
+        mproxy_process.disable.assert_called_once_with(
+            sig=str(int(signal.SIGTERM)))
+        delete_if_exists.assert_has_calls([
+            mock.call('pid_file', run_as_root=True)])
+
+    def test_destroy_monitored_metadata_proxy_force(self):
+        delete_if_exists = self.delete_if_exists.start()
+        mproxy_process = mock.Mock(
+            active=True, get_pid_file_name=mock.Mock(return_value='pid_file'))
+        mock_get_process = self.mock_get_process.start()
+        mock_get_process.return_value = mproxy_process
+        driver = metadata_driver.MetadataDriver(FakeL3NATAgent())
+        with mock.patch.object(metadata_driver, 'SIGTERM_TIMEOUT', 0):
+            driver.destroy_monitored_metadata_proxy(mock.Mock(), 'uuid',
+                                                    'conf', 'ns_name')
+        mproxy_process.disable.assert_has_calls([
+            mock.call(sig=str(int(signal.SIGTERM))),
+            mock.call(sig=str(int(signal.SIGKILL)))])
+        delete_if_exists.assert_has_calls([
+            mock.call('pid_file', run_as_root=True)])
