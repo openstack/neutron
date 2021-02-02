@@ -16,6 +16,7 @@
 import collections
 import copy
 import datetime
+import signal
 import sys
 from unittest import mock
 import uuid
@@ -561,7 +562,8 @@ class TestDhcpAgent(base.BaseTestCase):
                      set(range(sync_max, sync_max + port_count)))
         self.assertEqual(all_ports, ports_ready)
 
-    def test_dhcp_ready_ports_updates_after_enable_dhcp(self):
+    @mock.patch.object(linux_utils, 'delete_if_exists')
+    def test_dhcp_ready_ports_updates_after_enable_dhcp(self, *args):
         with mock.patch('neutron.agent.linux.ip_lib.'
                         'IpAddrCommand.wait_until_address_ready') as mock_wait:
             mock_wait.return_value = True
@@ -819,7 +821,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         else:
             self.external_process.assert_has_calls([
                 self._process_manager_constructor_call(),
-                mock.call().disable()])
+                mock.call().disable(sig=str(int(signal.SIGTERM)))])
 
     def test_enable_dhcp_helper_enable_metadata_isolated_network(self):
         self._enable_dhcp_helper(isolated_network,
@@ -938,7 +940,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.call_driver.assert_called_once_with('disable', fake_network)
         self.external_process.assert_has_calls([
             self._process_manager_constructor_call(),
-            mock.call().disable()])
+            mock.call().disable(sig=str(int(signal.SIGTERM)))])
 
     def test_disable_dhcp_helper_known_network_isolated_metadata(self):
         self._disable_dhcp_helper_known_network(isolated_metadata=True)
@@ -967,7 +969,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             [mock.call.get_network_by_id(fake_network.id)])
         self.external_process.assert_has_calls([
             self._process_manager_constructor_call(),
-            mock.call().disable()
+            mock.call().disable(sig=str(int(signal.SIGTERM)))
         ])
 
     def test_disable_dhcp_helper_driver_failure_isolated_metadata(self):
