@@ -112,11 +112,13 @@
         - neutron-tempest-mariadb-full
         - neutron-tempest-with-os-ken-master
         - neutron-ovn-tempest-ovs-master-fedora
-        - devstack-tobiko-faults-centos
+        - devstack-tobiko-faults-centos:
+            voting: true
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
         - openstacksdk-functional-devstack-networking
         - tripleo-ci-centos-8-content-provider
         - neutron-centos-8-tripleo-standalone:
+            voting: true
             vars: &consumer_vars
               consumer_job: true
               build_container_images: false
@@ -125,6 +127,5 @@
             dependencies: &consumer_deps
               - tripleo-ci-centos-8-content-provider
         - neutron-ovn-tripleo-ci-centos-8-containers-multinode:
-            voting: false
             vars: *consumer_vars
             dependencies: *consumer_deps
