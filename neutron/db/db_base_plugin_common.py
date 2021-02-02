@@ -217,7 +217,8 @@ class DbBasePluginCommon(object):
 
     def _make_port_dict(self, port, fields=None,
                         process_extensions=True,
-                        with_fixed_ips=True):
+                        with_fixed_ips=True,
+                        bulk=False):
         mac = port["mac_address"]
         if isinstance(mac, netaddr.EUI):
             mac.dialect = netaddr.mac_unix_expanded
@@ -240,8 +241,10 @@ class DbBasePluginCommon(object):
             port_data = port
             if isinstance(port, port_obj.Port):
                 port_data = port.db_obj
+            res['bulk'] = bulk
             resource_extend.apply_funcs(
                 port_def.COLLECTION_NAME, res, port_data)
+            res.pop('bulk')
         return db_utils.resource_fields(res, fields)
 
     def _get_network(self, context, id):
