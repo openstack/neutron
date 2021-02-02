@@ -39,6 +39,7 @@ from neutron_lib.api.definitions import network_availability_zone
 from neutron_lib.api.definitions import network_mtu as mtu_apidef
 from neutron_lib.api.definitions import network_mtu_writable as mtuw_apidef
 from neutron_lib.api.definitions import port as port_def
+from neutron_lib.api.definitions import port_device_profile as pdp_def
 from neutron_lib.api.definitions import port_mac_address_regenerate
 from neutron_lib.api.definitions import port_numa_affinity_policy as pnap_def
 from neutron_lib.api.definitions import port_security as psec
@@ -221,6 +222,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     stateful_security_group.ALIAS,
                                     addrgrp_def.ALIAS,
                                     pnap_def.ALIAS,
+                                    pdp_def.ALIAS,
                                     ]
 
     # List of agent types for which all binding_failed ports should try to be

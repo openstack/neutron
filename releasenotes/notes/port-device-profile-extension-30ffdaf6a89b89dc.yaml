@@ -1,0 +1,13 @@
+---
+features:
+  - |
+    Introduce the attribute ``port_device_profile`` to ports that
+    specifies the device profile needed per port. This parameter is
+    a string. This parameter is passed to Nova and Nova retrieves
+    the requested profile from Cyborg:
+    `Device profiles <https://docs.openstack.org/api-ref/accelerator/v2/index.html#device-profiles>`_.
+
+    Operators can turn on this feature via the configuration option::
+
+      [ml2]
+      extension_drivers = port_device_profile
