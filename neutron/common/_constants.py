@@ -76,4 +76,5 @@ IDPOOL_SELECT_SIZE = 100
 # with these owners, it will allow subnet deletion to proceed with the
 # IP allocations being cleaned up by cascade.
 AUTO_DELETE_PORT_OWNERS = [constants.DEVICE_OWNER_DHCP,
-                           constants.DEVICE_OWNER_DISTRIBUTED]
+                           constants.DEVICE_OWNER_DISTRIBUTED,
+                           constants.DEVICE_OWNER_AGENT_GW]
