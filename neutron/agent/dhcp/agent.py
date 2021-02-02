@@ -782,7 +782,7 @@ class DhcpAgent(manager.Manager):
                     'Cannot serve metadata on IPv6 because DHCP driver '
                     'does not implement method '
                     'get_metadata_bind_interface(): %s',
-                    self.dhcp_driver_class)
+                    self.dhcp_driver_cls)
 
         metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
             self._process_monitor, network.namespace, constants.METADATA_PORT,
