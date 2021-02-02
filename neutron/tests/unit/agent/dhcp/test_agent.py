@@ -16,6 +16,7 @@
 import collections
 import copy
 import datetime
+import signal
 import sys
 import uuid
 
@@ -798,7 +799,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         else:
             self.external_process.assert_has_calls([
                 self._process_manager_constructor_call(),
-                mock.call().disable()])
+                mock.call().disable(sig=str(int(signal.SIGTERM)))])
 
     def test_enable_dhcp_helper_enable_metadata_isolated_network(self):
         self._enable_dhcp_helper(isolated_network,
@@ -917,7 +918,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.call_driver.assert_called_once_with('disable', fake_network)
         self.external_process.assert_has_calls([
             self._process_manager_constructor_call(),
-            mock.call().disable()])
+            mock.call().disable(sig=str(int(signal.SIGTERM)))])
 
     def test_disable_dhcp_helper_known_network_isolated_metadata(self):
         self._disable_dhcp_helper_known_network(isolated_metadata=True)
@@ -946,7 +947,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             [mock.call.get_network_by_id(fake_network.id)])
         self.external_process.assert_has_calls([
             self._process_manager_constructor_call(),
-            mock.call().disable()
+            mock.call().disable(sig=str(int(signal.SIGTERM)))
         ])
 
     def test_disable_dhcp_helper_driver_failure_isolated_metadata(self):

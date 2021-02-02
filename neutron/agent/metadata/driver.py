@@ -16,6 +16,7 @@
 import grp
 import os
 import pwd
+import signal
 
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -31,9 +32,12 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import coordination
+from neutron.common import utils as common_utils
 
 
 LOG = logging.getLogger(__name__)
+
+SIGTERM_TIMEOUT = 5
 
 METADATA_SERVICE_NAME = 'metadata-proxy'
 HAPROXY_SERVICE = 'haproxy'
@@ -247,10 +251,19 @@ class MetadataDriver(object):
         monitor.unregister(uuid, METADATA_SERVICE_NAME)
         pm = cls._get_metadata_proxy_process_manager(uuid, conf,
                                                      ns_name=ns_name)
-        pm.disable()
+        pm.disable(sig=str(int(signal.SIGTERM)))
+        try:
+            common_utils.wait_until_true(lambda: not pm.active,
+                                         timeout=SIGTERM_TIMEOUT)
+        except common_utils.WaitTimeout:
+            LOG.warning('Metadata process %s did not finish after SIGTERM '
+                        'signal in %s seconds, sending SIGKILL signal',
+                        pm.pid, SIGTERM_TIMEOUT)
+            pm.disable(sig=str(int(signal.SIGKILL)))
 
-        # Delete metadata proxy config file
+        # Delete metadata proxy config and PID files.
         HaproxyConfigurator.cleanup_config_file(uuid, cfg.CONF.state_path)
+        linux_utils.delete_if_exists(pm.get_pid_file_name(), run_as_root=True)
 
         cls.monitors.pop(uuid, None)
 
