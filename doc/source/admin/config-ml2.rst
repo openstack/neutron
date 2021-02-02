@@ -51,7 +51,9 @@ ML2 driver support matrix
      - VLAN
      - VXLAN
      - GRE
+     - Geneve
    * - Open vSwitch
+     - yes
      - yes
      - yes
      - yes
@@ -61,9 +63,17 @@ ML2 driver support matrix
      - yes
      - yes
      - no
+     - no
+   * - OVN
+     - yes
+     - yes
+     - yes (requires OVN 20.09+)
+     - no
+     - yes
    * - SRIOV
      - yes
      - yes
+     - no
      - no
      - no
    * - MacVTap
@@ -71,9 +81,11 @@ ML2 driver support matrix
      - yes
      - no
      - no
+     - no
    * - L2 population
      - no
      - no
+     - yes
      - yes
      - yes
 
@@ -81,7 +93,7 @@ ML2 driver support matrix
 
    L2 population is a special mechanism driver that optimizes BUM (Broadcast,
    unknown destination address, multicast) traffic in the overlay networks
-   VXLAN and GRE. It needs to be used in conjunction with either the
+   VXLAN, GRE and Geneve. It needs to be used in conjunction with either the
    Linux bridge or the Open vSwitch mechanism driver and cannot be used as
    standalone mechanism driver. For more information, see the
    *Mechanism drivers* section below.
@@ -227,6 +239,14 @@ For more details, see the
   agent configuration is required. For details, see the related *L2 agent*
   section below.
 
+* OVN
+
+  The administrator must configure some additional configuration options for
+  the mechanism driver. When this driver is used, architecture of the Neutron
+  application in the cluster is different from what it is with other drivers
+  like e.g. Open vSwitch or Linuxbridge.
+  For details, see :ref:`OVN reference architecture<refarch-refarch>`.
+
 * SRIOV
 
   The SRIOV driver accepts all PCI vendor devices.
@@ -274,6 +294,9 @@ mechanism driver's ``supported_vnic_types`` list.
      - prohibiting available
    * - Linux bridge
      - normal
+     - no
+   * - OVN
+     - normal, direct, direct_macvtap, direct_physical
      - no
    * - MacVTap
      - macvtap
@@ -442,6 +465,8 @@ implementations:
      - Open vSwitch agent
    * - Linux bridge
      - Linux bridge agent
+   * - OVN
+     - No (there is ovn-controller running on nodes)
    * - SRIOV
      - SRIOV nic switch agent
    * - MacVTap
@@ -470,6 +495,11 @@ non-L2 neutron agents:
      - yes
      - yes
      - yes
+   * - OVN
+     - no (own L3 implementation)
+     - no (DHCP provided by OVN, fully distributed)
+     - yes (running on compute nodes, fully distributed)
+     - no
    * - SRIOV & SRIOV nic switch agent
      - no
      - no
@@ -504,6 +534,11 @@ This guide characterizes the L2 reference implementations that currently exist.
 
   Can be used for instance network attachments as well as for attachments of
   other network resources like routers, DHCP, and so on.
+
+* OVN mechanism driver
+
+  Can be used for instance network attachments as well as for attachments of
+  other network resources like routers, metadata ports, and so on.
 
 * SRIOV mechanism driver and SRIOV NIC switch agent
 
