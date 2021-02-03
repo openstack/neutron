@@ -23,6 +23,7 @@ import types
 
 import netaddr
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -162,7 +163,14 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def check_vlan_transparency(self, context):
         """OVN driver vlan transparency support."""
-        return True
+        vlan_transparency_network_types = [
+            const.TYPE_LOCAL,
+            const.TYPE_GENEVE,
+            const.TYPE_VXLAN,
+            const.TYPE_VLAN
+        ]
+        return (context.current.get(provider_net.NETWORK_TYPE)
+                in vlan_transparency_network_types)
 
     def _setup_vif_port_bindings(self):
         self.supported_vnic_types = [portbindings.VNIC_NORMAL,
