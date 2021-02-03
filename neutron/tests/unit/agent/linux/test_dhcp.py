@@ -296,7 +296,6 @@ class FakeRouterPort(object):
                  ip_address='192.168.0.1', domain='openstacklocal'):
         self.id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
         self.admin_state_up = True
-        self.device_owner = constants.DEVICE_OWNER_ROUTER_INTF
         self.mac_address = '00:00:0f:rr:rr:rr'
         self.device_id = 'fake_router_port'
         self.dns_assignment = []
@@ -313,7 +312,6 @@ class FakeRouterPortNoDHCP(object):
                  ip_address='192.168.0.1', domain='openstacklocal'):
         self.id = 'ssssssss-ssss-ssss-ssss-ssssssssssss'
         self.admin_state_up = True
-        self.device_owner = constants.DEVICE_OWNER_ROUTER_INTF
         self.mac_address = '00:00:0f:rr:rr:rr'
         self.device_id = 'fake_router_port_no_dhcp'
         self.dns_assignment = []
