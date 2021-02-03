@@ -117,12 +117,21 @@ class OVNMechanismDriver(api.MechanismDriver):
         if cfg.CONF.SECURITYGROUP.firewall_driver:
             LOG.warning('Firewall driver configuration is ignored')
         self._setup_vif_port_bindings()
+        if impl_idl_ovn.OvsdbSbOvnIdl.schema_has_table('Chassis_Private'):
+            self.agent_chassis_table = 'Chassis_Private'
+        else:
+            self.agent_chassis_table = 'Chassis'
         self.subscribe()
         self.qos_driver = qos_driver.OVNQosDriver.create(self)
         self.trunk_driver = trunk_driver.OVNTrunkDriver.create(self)
-        # The agent_chassis_table will be changed to Chassis_Private if it
-        # exists, we need to have a connection in order to check that.
-        self.agent_chassis_table = 'Chassis'
+
+    @property
+    def nb_schema_helper(self):
+        return impl_idl_ovn.OvsdbNbOvnIdl.schema_helper
+
+    @property
+    def sb_schema_helper(self):
+        return impl_idl_ovn.OvsdbSbOvnIdl.schema_helper
 
     @property
     def _plugin(self):
@@ -239,7 +248,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         otherwise the error is something else and it's raised to the caller.
         """
         idl = ovsdb_monitor.OvnInitPGNbIdl.from_server(
-            ovn_conf.get_ovn_nb_connection(), 'OVN_Northbound', self)
+            ovn_conf.get_ovn_nb_connection(), self.nb_schema_helper, self)
         with ovsdb_monitor.short_living_ovsdb_api(
                 impl_idl_ovn.OvsdbNbOvnIdl, idl) as pre_ovn_nb_api:
             try:
@@ -277,9 +286,6 @@ class OVNMechanismDriver(api.MechanismDriver):
 
         n_agent.AgentCache(self)  # Initialize singleton agent cache
         self._nb_ovn, self._sb_ovn = impl_idl_ovn.get_ovn_idls(self, trigger)
-
-        if self._sb_ovn.is_table_present('Chassis_Private'):
-            self.agent_chassis_table = 'Chassis_Private'
 
         # Override agents API methods
         self.patch_plugin_merge("get_agents", get_agents)
@@ -333,7 +339,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                is available to the IDL.
         """
         idl = ovsdb_monitor.OvnInitPGNbIdl.from_server(
-            ovn_conf.get_ovn_nb_connection(), 'OVN_Northbound', self,
+            ovn_conf.get_ovn_nb_connection(), self.nb_schema_helper, self,
             pg_only=True)
         with ovsdb_monitor.short_living_ovsdb_api(
                 impl_idl_ovn.OvsdbNbOvnIdl, idl) as ovn_nb_api:

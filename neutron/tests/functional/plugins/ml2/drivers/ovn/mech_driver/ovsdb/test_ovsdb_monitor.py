@@ -29,6 +29,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from ovsdbapp.backend.ovs_idl import event
+from ovsdbapp.backend.ovs_idl import idlutils
 
 
 class WaitForMACBindingDeleteEvent(event.WaitEvent):
@@ -217,7 +218,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
                 hash_ring_group=ovn_const.HASH_RING_ML2_GROUP)
             _idl = ovsdb_monitor.OvnNbIdl.from_server(
                 self.ovsdb_server_mgr.get_ovsdb_connection_path(),
-                'OVN_Northbound', fake_driver)
+                self.nb_api.schema_helper, fake_driver)
             worker = self.useFixture(
                 fixtures.OVNIdlConnectionFixture(
                     idl=_idl, timeout=10)).connection
@@ -287,20 +288,18 @@ class TestNBDbMonitorOverSsl(TestNBDbMonitor):
 
 class TestOvnIdlProbeInterval(base.TestOVNFunctionalBase):
     def setUp(self):
-        # skip parent setUp, we don't need it, but we do need grandparent
-        # pylint: disable=bad-super-call
-        super(base.TestOVNFunctionalBase, self).setUp()
-        mm = directory.get_plugin().mechanism_manager
-        self.mech_driver = mm.mech_drivers['ovn'].obj
-        self.temp_dir = self.useFixture(og_fixtures.TempDir()).path
+        # We need an OvsdbServer that uses TCP because probe_interval is always
+        # zero for unix socket connections, which is what the parent uses
+        temp_dir = self.useFixture(og_fixtures.TempDir()).path
         install_share_path = self._get_install_share_path()
-        self.mgr = self.useFixture(
-            process.OvsdbServer(self.temp_dir, install_share_path,
+        mgr = self.useFixture(
+            process.OvsdbServer(temp_dir, install_share_path,
                                 ovn_nb_db=True, ovn_sb_db=True,
                                 protocol='tcp'))
-        connection = self.mgr.get_ovsdb_connection_path
+        connection = mgr.get_ovsdb_connection_path
         self.connections = {'OVN_Northbound': connection(),
                             'OVN_Southbound': connection(db_type='sb')}
+        super().setUp()
 
     def test_ovsdb_probe_interval(self):
         klasses = {
@@ -309,8 +308,11 @@ class TestOvnIdlProbeInterval(base.TestOVNFunctionalBase):
                                      {'driver': self.mech_driver}),
             ovsdb_monitor.OvnSbIdl: ('OVN_Southbound',
                                      {'driver': self.mech_driver})}
-        idls = [kls.from_server(self.connections[schema], schema, **kwargs)
-                for kls, (schema, kwargs) in klasses.items()]
+        idls = [
+            kls.from_server(
+                self.connections[schema],
+                idlutils.get_schema_helper(self.connections[schema], schema),
+                **kwargs) for kls, (schema, kwargs) in klasses.items()]
         interval = ovn_conf.get_ovn_ovsdb_probe_interval()
         for idl in idls:
             self.assertEqual(interval, idl._session.reconnect.probe_interval)

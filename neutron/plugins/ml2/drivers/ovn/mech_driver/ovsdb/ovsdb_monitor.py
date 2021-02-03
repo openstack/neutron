@@ -480,9 +480,7 @@ class BaseOvnIdl(Ml2OvnIdlBase):
         super(BaseOvnIdl, self).__init__(remote, schema)
 
     @classmethod
-    def from_server(cls, connection_string, schema_name):
-        _check_and_set_ssl_files(schema_name)
-        helper = idlutils.get_schema_helper(connection_string, schema_name)
+    def from_server(cls, connection_string, helper):
         helper.register_all()
         return cls(connection_string, helper)
 
@@ -492,9 +490,7 @@ class BaseOvnIdl(Ml2OvnIdlBase):
 
 class BaseOvnSbIdl(Ml2OvnIdlBase):
     @classmethod
-    def from_server(cls, connection_string, schema_name):
-        _check_and_set_ssl_files(schema_name)
-        helper = idlutils.get_schema_helper(connection_string, schema_name)
+    def from_server(cls, connection_string, helper):
         helper.register_table('Chassis')
         helper.register_table('Encap')
         helper.register_table('Port_Binding')
@@ -606,10 +602,8 @@ class OvnNbIdl(OvnIdlDistributedLock):
                                           self._fip_create_delete_event])
 
     @classmethod
-    def from_server(cls, connection_string, schema_name, driver):
+    def from_server(cls, connection_string, helper, driver):
 
-        _check_and_set_ssl_files(schema_name)
-        helper = idlutils.get_schema_helper(connection_string, schema_name)
         helper.register_all()
         return cls(driver, connection_string, helper)
 
@@ -642,9 +636,7 @@ class OvnSbIdl(OvnIdlDistributedLock):
             ChassisMetadataAgentWriteEvent(self.driver)])
 
     @classmethod
-    def from_server(cls, connection_string, schema_name, driver):
-        _check_and_set_ssl_files(schema_name)
-        helper = idlutils.get_schema_helper(connection_string, schema_name)
+    def from_server(cls, connection_string, helper, driver):
         if 'Chassis_Private' in helper.schema_json['tables']:
             helper.register_table('Chassis_Private')
         helper.register_table('Chassis')
@@ -688,10 +680,7 @@ class OvnInitPGNbIdl(OvnIdl):
         self.notify_handler.watch_event(self.neutron_pg_drop_event)
 
     @classmethod
-    def from_server(
-            cls, connection_string, schema_name, driver, pg_only=False):
-        _check_and_set_ssl_files(schema_name)
-        helper = idlutils.get_schema_helper(connection_string, schema_name)
+    def from_server(cls, connection_string, helper, driver, pg_only=False):
         if pg_only:
             helper.register_table('Port_Group')
         else:

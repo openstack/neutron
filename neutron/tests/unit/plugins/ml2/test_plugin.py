@@ -134,7 +134,11 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.useFixture(Ml2ConfFixture(parent_setup))
         self.port_create_status = 'DOWN'
 
+    def preSetUp(self):
+        pass
+
     def setUp(self):
+        self.preSetUp()
         self.ovo_push_interface_p = mock.patch(
             'neutron.plugins.ml2.ovo_rpc.OVOServerRpcInterface')
         self.ovo_push_interface_p.start()

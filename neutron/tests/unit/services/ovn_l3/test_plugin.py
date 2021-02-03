@@ -55,6 +55,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         return patch
 
     def setUp(self):
+        mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
+                   'impl_idl_ovn.Backend.schema_helper').start()
         super(TestOVNL3RouterPlugin, self).setUp()
         revision_plugin.RevisionPlugin()
         network_attrs = {external_net.EXTERNAL: True, 'mtu': 1500}
