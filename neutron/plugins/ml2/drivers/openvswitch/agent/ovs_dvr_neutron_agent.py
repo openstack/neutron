@@ -515,6 +515,14 @@ class OVSDVRNeutronAgent(object):
         self.local_ports[port.vif_id] = ovsport
         ldm.add_dvr_ofport(port.vif_id, port.ofport)
 
+        if (ip_version == n_const.IP_VERSION_4 and
+                subnet_info.get('gateway_mac')):
+            # Change ARP reply destination MAC address from
+            # dvr_host_mac to gateway_mac.
+            self.int_br.change_arp_destination_mac(
+                target_mac_address=subnet_info['gateway_mac'],
+                orig_mac_address=self.dvr_mac_address)
+
     def _bind_port_on_dvr_subnet(self, port, lvm, fixed_ips,
                                  device_owner):
         # Handle new compute port added use-case

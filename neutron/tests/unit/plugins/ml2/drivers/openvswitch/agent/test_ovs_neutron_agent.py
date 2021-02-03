@@ -3129,6 +3129,7 @@ class TestOvsDvrNeutronAgent(object):
         phys_br = mock.create_autospec(self.br_phys_cls('br-phys'))
         int_br.set_db_attribute.return_value = True
         int_br.db_get_val.return_value = {}
+        int_br.change_arp_destination_mac = mock.Mock()
         with mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                'get_subnet_for_dvr',
                                return_value={'gateway_ip': gateway_ip,
@@ -3176,6 +3177,11 @@ class TestOvsDvrNeutronAgent(object):
                 ),
             ] + self._expected_port_bound(self._port, lvid,
                                           network_type=network_type)
+            if ip_version == n_const.IP_VERSION_4:
+                expected_on_int_br += [
+                    mock.call.change_arp_destination_mac(
+                        target_mac_address=gateway_mac,
+                        orig_mac_address=self.agent.dvr_agent.dvr_mac_address)]
             int_br.assert_has_calls(expected_on_int_br, any_order=True)
             tun_br.assert_not_called()
             phys_br.assert_has_calls(expected_on_phys_br)
@@ -3222,6 +3228,7 @@ class TestOvsDvrNeutronAgent(object):
         phys_br = mock.create_autospec(self.br_phys_cls('br-phys'))
         int_br.set_db_attribute.return_value = True
         int_br.db_get_val.return_value = {}
+        int_br.change_arp_destination_mac = mock.Mock()
         with mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                'get_subnet_for_dvr',
                                return_value={'gateway_ip': gateway_ip,
@@ -3249,6 +3256,11 @@ class TestOvsDvrNeutronAgent(object):
             lvid = self.agent.vlan_manager.get(self._net_uuid).vlan
             expected_on_int_br = self._expected_port_bound(
                 self._port, lvid)
+            if ip_version == n_const.IP_VERSION_4:
+                expected_on_int_br += [
+                    mock.call.change_arp_destination_mac(
+                        target_mac_address=gateway_mac,
+                        orig_mac_address=self.agent.dvr_agent.dvr_mac_address)]
             expected_on_tun_br = [
                 mock.call.provision_local_vlan(
                     network_type=network_type,
