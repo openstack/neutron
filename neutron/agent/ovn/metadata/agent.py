@@ -17,6 +17,7 @@ import re
 
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import iptables_manager
 from neutron.agent.ovn.metadata import driver as metadata_driver
 from neutron.agent.ovn.metadata import ovsdb
 from neutron.agent.ovn.metadata import server as metadata_server
@@ -343,6 +344,24 @@ class MetadataAgent(object):
         else:
             self.teardown_datapath(datapath)
 
+    def _ensure_datapath_checksum(self, namespace):
+        """Ensure the correct checksum in the metadata packets in DPDK bridges
+
+        (LP#1904871) In DPDK deployments (integration bridge datapath_type ==
+        "netdev"), the checksum between the metadata namespace and OVS is not
+        correctly populated.
+        """
+        if (self.ovs_idl.db_get(
+                'Bridge', self.ovn_bridge, 'datapath_type').execute() !=
+                ovn_const.CHASSIS_DATAPATH_NETDEV):
+            return
+
+        iptables_mgr = iptables_manager.IptablesManager(
+            use_ipv6=True, nat=False, namespace=namespace, external_lock=False)
+        rule = '-p tcp -m tcp -j CHECKSUM --checksum-fill'
+        iptables_mgr.ipv4['mangle'].add_rule('POSTROUTING', rule, wrap=False)
+        iptables_mgr.apply()
+
     def provision_datapath(self, datapath):
         """Provision the datapath so that it can serve metadata.
 
@@ -449,6 +468,9 @@ class MetadataAgent(object):
         self.ovs_idl.db_set(
             'Interface', veth_name[0],
             ('external_ids', {'iface-id': port.logical_port})).execute()
+
+        # Ensure the correct checksum in the metadata traffic.
+        self._ensure_datapath_checksum(namespace)
 
         # Spawn metadata proxy if it's not already running.
         metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
