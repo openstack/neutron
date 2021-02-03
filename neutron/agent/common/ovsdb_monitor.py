@@ -62,10 +62,10 @@ class OvsdbMonitor(async_process.AsyncProcess):
         self.new_events = {'added': [], 'removed': [], 'modified': []}
         return events
 
-    def start(self, block=False, timeout=5):
+    def start(self, block=False, timeout=60):
         super(OvsdbMonitor, self).start()
         if block:
-            utils.wait_until_true(self.is_active)
+            utils.wait_until_true(self.is_active, timeout=timeout)
 
 
 class SimpleInterfaceMonitor(OvsdbMonitor):
