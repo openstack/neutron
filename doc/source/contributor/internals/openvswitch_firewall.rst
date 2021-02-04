@@ -110,6 +110,14 @@ conntrack first with an ``action=ct()`` rule. An accepted flow means that
 ingress packets for the connection are directly sent to the port, and egress
 packets are left to be normally switched by the integration bridge.
 
+.. note::
+
+  There is a new config option ``explicitly_egress_direct``, if it is set
+  to True, it will direct egress unicast traffic to local port directly
+  or to patch bridge port if destination is in remote host. So there is
+  no NORMAL for egress in such scenario. This option is used to overcome
+  the egress packet flooding when openflow firewall is enabled.
+
 Connections that are not matched by the above rules are sent to either the
 ingress or egress filtering table, depending on its direction. The reason the
 rules are based on security group rules in separate tables is to make it easy
@@ -196,6 +204,9 @@ the second security group. Ports have following attributes:
       - can receive TCP packets to port 80 from security group 2
       - can receive IP packets from security group 3
    - allowed address pair: 10.1.0.0/24, fa:16:3e:8c:84:14
+
+ Port 3
+   - patch bridge port (e.g. patch-tun) in OVS bridge
 
 |table_0| contains a low priority rule to continue packets processing in
 |table_60| aka TRANSIENT table. |table_0| is left for use to other
@@ -494,6 +505,23 @@ same as in |table_72|.
   only and east-west traffic. For example, if a port has a VIP that was
   migrated to a port on a different node, then the new port won't contain
   conntrack information about previous traffic that happened with VIP.
+
+By default the |table_94| will have one single flow like this:
+
+::
+
+  table=94, priority=1 actions=NORMAL
+
+If ``explicitly_egress_direct`` is set to True, flows of |table_94|
+will be:
+
+::
+
+  table=94, priority=12,reg6=0x284,dl_dst=fa:16:3e:a4:22:10 actions=output:1
+  table=94, priority=12,reg6=0x284,dl_dst=fa:16:3e:24:57:c7 actions=output:2
+  table=94, priority=10,reg6=0x284,dl_src=fa:16:3e:a4:22:10,dl_dst=00:00:00:00:00:00/01:00:00:00:00:00 actions=push_vlan:0x8100,set_field:0x1->vlan_vid,output:3
+  table=94, priority=10,reg6=0x284,dl_src=fa:16:3e:24:57:c7,dl_dst=00:00:00:00:00:00/01:00:00:00:00:00 actions=push_vlan:0x8100,set_field:0x1->vlan_vid,output:3
+  table=94, priority=1 actions=NORMAL
 
 OVS firewall integration points
 -------------------------------
