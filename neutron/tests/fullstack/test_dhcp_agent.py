@@ -36,6 +36,7 @@ class BaseDhcpAgentTest(base.BaseFullStackTestCase):
         (constants.AGENT_TYPE_LINUXBRIDGE,
          {'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE})
     ]
+    api_workers = 1
 
     def setUp(self):
         host_descriptions = [
@@ -48,7 +49,8 @@ class BaseDhcpAgentTest(base.BaseFullStackTestCase):
             environment.EnvironmentDescription(
                 l2_pop=False,
                 arp_responder=False,
-                agent_down_time=self.agent_down_time),
+                agent_down_time=self.agent_down_time,
+                api_workers=self.api_workers),
             host_descriptions)
 
         super(BaseDhcpAgentTest, self).setUp(env)
