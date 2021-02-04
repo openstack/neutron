@@ -32,6 +32,7 @@ import webob.exc
 from neutron.agent import firewall as firewall_base
 from neutron.agent.linux import ip_conntrack
 from neutron.agent.linux import iptables_manager
+from neutron.agent.linux import utils as linux_utils
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
@@ -2703,7 +2704,7 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
         # TODO(jlibosva) Get rid of mocking iptables execute and mock out
         # firewall instead
         self.iptables.use_ipv6 = True
-        self.iptables_execute = mock.patch.object(self.iptables,
+        self.iptables_execute = mock.patch.object(linux_utils,
                                                   "execute").start()
         self.iptables_execute_return_values = []
         self.expected_call_count = 0
