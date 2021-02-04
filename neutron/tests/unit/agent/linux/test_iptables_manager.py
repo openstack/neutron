@@ -230,21 +230,21 @@ class IptablesCommentsTestCase(base.BaseTestCase):
         mangle_dump = _generate_mangle_dump(IPTABLES_ARG)
 
         expected_calls_and_values = [
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(filter_dump_mod + mangle_dump +
                                       COMMENTED_NAT_DUMP + raw_dump),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(FILTER_DUMP + mangle_dump +
                                       COMMENTED_NAT_DUMP + raw_dump),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
         ]
         tools.setup_mock_calls(self.execute, expected_calls_and_values)
@@ -406,23 +406,23 @@ class IptablesManagerBaseTestCase(base.BaseTestCase):
 
     def _extend_with_ip6tables_filter_end(self, expected_calls, filter_dump):
         expected_calls.extend([
-            (mock.call(['ip6tables-save'],
-                      run_as_root=True),
+            (mock.call(['ip6tables-save'], run_as_root=True,
+                       privsep_exec=True),
              ''),
             (mock.call(['ip6tables-restore', '-n'],
-                      process_input=filter_dump,
-                      run_as_root=True, log_fail_as_error=False),
+                       process_input=filter_dump, run_as_root=True,
+                       privsep_exec=True, log_fail_as_error=False),
              None)])
 
     def _extend_with_ip6tables_filter(self, expected_calls, filter_dump):
         expected_calls.insert(2, (
             mock.call(['ip6tables-save'],
-                      run_as_root=True),
+                      run_as_root=True, privsep_exec=True),
             ''))
         expected_calls.insert(3, (
             mock.call(['ip6tables-restore', '-n'],
-                      process_input=filter_dump,
-                      run_as_root=True, log_fail_as_error=False),
+                      process_input=filter_dump, run_as_root=True,
+                      privsep_exec=True, log_fail_as_error=False),
             None))
         self._extend_with_ip6tables_filter_end(expected_calls, filter_dump)
 
@@ -459,21 +459,21 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
         filter_dump_mod = FILTER_WITH_RULES_TEMPLATE % IPTABLES_ARG
 
         expected_calls_and_values = [
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(filter_dump_mod + MANGLE_DUMP +
                                       NAT_DUMP + RAW_DUMP),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(FILTER_DUMP + MANGLE_DUMP + NAT_DUMP +
                                       RAW_DUMP),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
         ]
         if self.use_ipv6:
@@ -503,21 +503,21 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
         raw_dump = RAW_DUMP % IPTABLES_ARG
 
         expected_calls_and_values = [
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(filter_dump_mod + MANGLE_DUMP +
                                       NAT_DUMP + RAW_DUMP),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(FILTER_DUMP + MANGLE_DUMP + NAT_DUMP +
                                       RAW_DUMP),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
         ]
         if self.use_ipv6:
@@ -579,21 +579,21 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
         raw_dump = RAW_DUMP % IPTABLES_ARG
 
         expected_calls_and_values = [
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(filter_dump_mod + MANGLE_DUMP +
                                       NAT_DUMP + RAW_DUMP),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(FILTER_DUMP + MANGLE_DUMP +
                                       NAT_DUMP + RAW_DUMP),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
         ]
         if self.use_ipv6:
@@ -645,21 +645,21 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
             '# Completed by iptables_manager\n' % IPTABLES_ARG)
 
         expected_calls_and_values = [
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(FILTER_DUMP + mangle_dump_mod +
                                       NAT_DUMP + RAW_DUMP),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(FILTER_DUMP + MANGLE_DUMP +
                                       NAT_DUMP + RAW_DUMP),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
         ]
         if self.use_ipv6:
@@ -716,21 +716,21 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
         raw_dump = RAW_DUMP % IPTABLES_ARG
 
         expected_calls_and_values = [
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(FILTER_DUMP + MANGLE_DUMP +
                                       nat_dump_mod + RAW_DUMP),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(FILTER_DUMP + MANGLE_DUMP + nat_dump +
                                       RAW_DUMP),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
         ]
         if self.use_ipv6:
@@ -778,21 +778,21 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
                         % IPTABLES_ARG)
 
         expected_calls_and_values = [
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(FILTER_DUMP + MANGLE_DUMP + NAT_DUMP +
                                       raw_dump_mod),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(FILTER_DUMP + MANGLE_DUMP + NAT_DUMP +
                                       RAW_DUMP),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
         ]
         if self.use_ipv6:
@@ -912,10 +912,11 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
         self.execute.assert_has_calls(
             [mock.call(['iptables-restore', '-n'],
                        process_input=mock.ANY, run_as_root=True,
-                       log_fail_as_error=False),
+                       privsep_exec=True, log_fail_as_error=False),
              mock.call(['iptables-restore', '-n', '-w', '10',
                         '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
-                       process_input=mock.ANY, run_as_root=True)])
+                       process_input=mock.ANY, run_as_root=True,
+                       privsep_exec=True)])
 
         # The RuntimeError should have triggered a log of the input to the
         # process that it failed to execute. Verify by comparing the log
@@ -943,26 +944,29 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
 
         num_calls = 3
         expected_calls_and_values = [
-            (mock.call(['iptables-save'], run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              FILTER_DUMP),
             (mock.call(['iptables-restore', '-n'],
                        process_input=mock.ANY, run_as_root=True,
-                       log_fail_as_error=False),
+                       privsep_exec=True, log_fail_as_error=False),
              PE_error),
             (mock.call(['iptables-restore', '-n', '-w', '10',
                         '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
-                       process_input=mock.ANY, run_as_root=True),
+                       process_input=mock.ANY, run_as_root=True,
+                       privsep_exec=True),
              None),
         ]
         if self.use_ipv6:
             num_calls += 2
             expected_calls_and_values.append(
-                (mock.call(['ip6tables-save'], run_as_root=True),
+                (mock.call(['ip6tables-save'], run_as_root=True,
+                           privsep_exec=True),
                  FILTER_DUMP))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables-restore', '-n', '-w', '10',
                             '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
-                           process_input=mock.ANY, run_as_root=True),
+                           process_input=mock.ANY, run_as_root=True,
+                           privsep_exec=True),
                  None))
 
         tools.setup_mock_calls(self.execute, expected_calls_and_values)
@@ -973,22 +977,26 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
         self.execute.reset_mock()
         num_calls = 2
         expected_calls_and_values = [
-            (mock.call(['iptables-save'], run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True,
+                       privsep_exec=True),
              FILTER_DUMP),
             (mock.call(['iptables-restore', '-n', '-w', '10',
                         '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
-                       process_input=mock.ANY, run_as_root=True),
+                       process_input=mock.ANY, run_as_root=True,
+                       privsep_exec=True),
              None),
         ]
         if self.use_ipv6:
             num_calls += 2
             expected_calls_and_values.append(
-                (mock.call(['ip6tables-save'], run_as_root=True),
+                (mock.call(['ip6tables-save'], run_as_root=True,
+                           privsep_exec=True),
                  FILTER_DUMP))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables-restore', '-n', '-w', '10',
                             '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
-                           process_input=mock.ANY, run_as_root=True),
+                           process_input=mock.ANY, run_as_root=True,
+                           privsep_exec=True),
                  None))
 
         tools.setup_mock_calls(self.execute, expected_calls_and_values)
@@ -1020,36 +1028,41 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
         expected_calls_and_values = [
             (mock.call(['iptables', '-t', 'filter', '-L', 'OUTPUT',
                         '-n', '-v', '-x', '-w', '10'],
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              TRAFFIC_COUNTERS_DUMP),
             (mock.call(['iptables', '-t', 'raw', '-L', 'OUTPUT', '-n',
                         '-v', '-x', '-w', '10'],
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              ''),
             (mock.call(['iptables', '-t', 'mangle', '-L', 'OUTPUT', '-n',
                         '-v', '-x', '-w', '10'],
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              ''),
             (mock.call(['iptables', '-t', 'nat', '-L', 'OUTPUT', '-n',
                         '-v', '-x', '-w', '10'],
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              ''),
         ]
         if self.use_ipv6:
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'raw', '-L', 'OUTPUT',
                            '-n', '-v', '-x', '-w', '10'], run_as_root=True,
-                           log_fail_as_error=False),
+                           privsep_exec=True, log_fail_as_error=False),
                  ''))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'filter', '-L', 'OUTPUT',
                            '-n', '-v', '-x', '-w', '10'],
-                           run_as_root=True, log_fail_as_error=False),
+                           run_as_root=True, privsep_exec=True,
+                           log_fail_as_error=False),
                  TRAFFIC_COUNTERS_DUMP))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'mangle', '-L', 'OUTPUT',
                            '-n', '-v', '-x', '-w', '10'], run_as_root=True,
-                           log_fail_as_error=False),
+                           privsep_exec=True, log_fail_as_error=False),
                  ''))
             exp_packets *= 2
             exp_bytes *= 2
@@ -1070,36 +1083,43 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
         expected_calls_and_values = [
             (mock.call(['iptables', '-t', 'filter', '-L', 'OUTPUT',
                         '-n', '-v', '-x', '-w', '10', '-Z'],
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              TRAFFIC_COUNTERS_DUMP),
             (mock.call(['iptables', '-t', 'raw', '-L', 'OUTPUT', '-n',
                         '-v', '-x', '-w', '10', '-Z'],
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              ''),
             (mock.call(['iptables', '-t', 'mangle', '-L', 'OUTPUT', '-n',
                         '-v', '-x', '-w', '10', '-Z'],
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              ''),
             (mock.call(['iptables', '-t', 'nat', '-L', 'OUTPUT', '-n',
                         '-v', '-x', '-w', '10', '-Z'],
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              '')
         ]
         if self.use_ipv6:
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'raw', '-L', 'OUTPUT',
                             '-n', '-v', '-x', '-w', '10', '-Z'],
-                           run_as_root=True, log_fail_as_error=False),
+                           run_as_root=True, privsep_exec=True,
+                           log_fail_as_error=False),
                  ''))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'filter', '-L', 'OUTPUT',
                             '-n', '-v', '-x', '-w', '10', '-Z'],
-                           run_as_root=True, log_fail_as_error=False),
+                           run_as_root=True, privsep_exec=True,
+                           log_fail_as_error=False),
                  TRAFFIC_COUNTERS_DUMP))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'mangle', '-L', 'OUTPUT',
                             '-n', '-v', '-x', '-w', '10', '-Z'],
-                           run_as_root=True, log_fail_as_error=False),
+                           run_as_root=True, privsep_exec=True,
+                           log_fail_as_error=False),
                  ''))
             exp_packets *= 2
             exp_bytes *= 2
@@ -1121,19 +1141,19 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
         filter_dump_mod = FILTER_RESTORE_DUMP % iptables_args
 
         expected_calls_and_values = [
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              (filter_dump_mod + MANGLE_RESTORE_DUMP +
               NAT_RESTORE_DUMP + RAW_RESTORE_DUMP)),
         ]
         if self.use_ipv6:
             expected_calls_and_values.append(
-                (mock.call(['ip6tables-save'], run_as_root=True),
+                (mock.call(['ip6tables-save'], run_as_root=True,
+                           privsep_exec=True),
                  FILTER_DUMP))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables-restore', '-n'],
                            process_input=mock.ANY, run_as_root=True,
-                           log_fail_as_error=False),
+                           privsep_exec=True, log_fail_as_error=False),
                  None))
 
         tools.setup_mock_calls(self.execute, expected_calls_and_values)
@@ -1164,13 +1184,13 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
                          % IPTABLES_ARG)
 
         expected_calls_and_values = [
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              (filter_dump_mod + MANGLE_RESTORE_DUMP +
               NAT_RESTORE_DUMP + RAW_RESTORE_DUMP)),
             (mock.call(['iptables-restore', '-n'],
                        process_input=RESTORE_INPUT,
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
         ]
 
@@ -1221,21 +1241,21 @@ class IptablesManagerStateFulTestCaseCustomBinaryName(
         mangle_dump = _generate_mangle_dump(iptables_args)
 
         expected_calls_and_values = [
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(filter_dump_mod + mangle_dump +
                                       nat_dump + raw_dump),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(filter_dump + mangle_dump +
                                       nat_dump + raw_dump),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
         ]
         if self.use_ipv6:
@@ -1289,21 +1309,21 @@ class IptablesManagerStateFulTestCaseEmptyCustomBinaryName(
         mangle_dump = _generate_mangle_dump(iptables_args)
 
         expected_calls_and_values = [
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(filter_dump_mod + mangle_dump +
                                       nat_dump + raw_dump),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
+            (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
              ''),
             (mock.call(['iptables-restore', '-n'],
                        process_input=(filter_dump + mangle_dump +
                                       nat_dump + raw_dump),
-                       run_as_root=True, log_fail_as_error=False),
+                       run_as_root=True, privsep_exec=True,
+                       log_fail_as_error=False),
              None),
         ]
         if self.use_ipv6:

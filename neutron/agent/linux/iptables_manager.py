@@ -478,13 +478,14 @@ class IptablesManager(object):
         args = ['iptables-save', '-t', table]
         if self.namespace:
             args = ['ip', 'netns', 'exec', self.namespace] + args
-        return linux_utils.execute(args, run_as_root=True).split('\n')
+        return linux_utils.execute(args, run_as_root=True,
+                                   privsep_exec=True).split('\n')
 
     def _get_version(self):
         # Output example is "iptables v1.6.2"
         args = ['iptables', '--version']
         version = str(linux_utils.execute(
-            args, run_as_root=True).split()[1][1:])
+            args, run_as_root=True, privsep_exec=True).split()[1][1:])
         LOG.debug("IPTables version installed: %s", version)
         return version
 
@@ -510,7 +511,7 @@ class IptablesManager(object):
         try:
             kwargs = {} if lock else {'log_fail_as_error': False}
             linux_utils.execute(args, process_input='\n'.join(commands),
-                                run_as_root=True, **kwargs)
+                                run_as_root=True, privsep_exec=True, **kwargs)
         except RuntimeError as error:
             return error
 
@@ -572,7 +573,8 @@ class IptablesManager(object):
             if self.namespace:
                 args = ['ip', 'netns', 'exec', self.namespace] + args
             try:
-                save_output = linux_utils.execute(args, run_as_root=True)
+                save_output = linux_utils.execute(args, run_as_root=True,
+                                                  privsep_exec=True)
             except RuntimeError:
                 # We could be racing with a cron job deleting namespaces.
                 # It is useless to try to apply iptables rules over and
@@ -781,7 +783,8 @@ class IptablesManager(object):
             # enabled is that we need to log the error. This is used to avoid
             # generating alarms that will be ignored by  operators.
             current_table = linux_utils.execute(
-                args, run_as_root=True, log_fail_as_error=cfg.CONF.debug)
+                args, run_as_root=True, privsep_exec=True,
+                log_fail_as_error=cfg.CONF.debug)
             current_lines = current_table.split('\n')
 
             for line in current_lines[2:]:
