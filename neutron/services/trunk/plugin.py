@@ -92,8 +92,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
         return port_res
 
     @staticmethod
-    # TODO(obondarev): use neutron_lib constant
-    @resource_extend.extends(['ports_bulk'])
+    @resource_extend.extends([port_def.COLLECTION_NAME_BULK])
     def _extend_port_trunk_details_bulk(ports_res, noop):
         """Add trunk subport details to a list of ports."""
         subport_ids = []

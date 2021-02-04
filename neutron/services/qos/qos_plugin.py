@@ -177,8 +177,7 @@ class QoSPlugin(qos.QoSPluginBase):
         return [physnet_trait, vnic_trait]
 
     @staticmethod
-    # TODO(obondarev): use neutron_lib constant
-    @resource_extend.extends(['ports_bulk'])
+    @resource_extend.extends([port_def.COLLECTION_NAME_BULK])
     def _extend_port_resource_request_bulk(ports_res, noop):
         """Add resource request to a list of ports."""
         min_bw_rules = dict()

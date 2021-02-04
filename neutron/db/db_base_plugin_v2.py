@@ -17,6 +17,7 @@ import functools
 
 import netaddr
 from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
+from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings as portbindings_def
 from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from neutron_lib.api import validators
@@ -1564,8 +1565,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                       marker_obj=marker_obj,
                                       page_reverse=page_reverse)
         items = [self._make_port_dict(c, fields, bulk=True) for c in query]
-        # TODO(obondarev): use neutron_lib constant
-        resource_extend.apply_funcs('ports_bulk', items, None)
+        resource_extend.apply_funcs(port_def.COLLECTION_NAME_BULK, items, None)
         if limit and page_reverse:
             items.reverse()
         return items
