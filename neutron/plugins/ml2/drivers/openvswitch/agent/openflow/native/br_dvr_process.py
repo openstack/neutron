@@ -24,6 +24,16 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 
 class OVSDVRInterfaceMixin(object):
 
+    def delete_arp_destination_change(self, target_mac_address,
+                                      orig_mac_address):
+        (_dp, _ofp, ofpp) = self._get_dp()
+        match = ofpp.OFPMatch(eth_dst=orig_mac_address,
+                              eth_type=ether_types.ETH_TYPE_ARP,
+                              arp_tha=target_mac_address,
+                              arp_op=arp.ARP_REPLY)
+        self.uninstall_flows(table_id=constants.LOCAL_SWITCHING,
+                             match=match)
+
     def change_arp_destination_mac(self, target_mac_address,
                                    orig_mac_address):
         """Change destination MAC from dvr_host_mac to internal gateway MAC.

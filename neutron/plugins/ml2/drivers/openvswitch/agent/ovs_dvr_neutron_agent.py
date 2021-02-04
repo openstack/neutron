@@ -742,6 +742,13 @@ class OVSDVRNeutronAgent(object):
                 self.firewall.delete_accepted_egress_direct_flow(
                     subnet_info['gateway_mac'], lvm.vlan)
 
+            if (ip_version == n_const.IP_VERSION_4 and
+                    subnet_info.get('gateway_mac')):
+                # remove ARP reply destination MAC address change flow
+                self.int_br.delete_arp_destination_change(
+                    target_mac_address=subnet_info['gateway_mac'],
+                    orig_mac_address=self.dvr_mac_address)
+
         if lvm.network_type in constants.DVR_PHYSICAL_NETWORK_TYPES:
             br = self.phys_brs[physical_network]
         if lvm.network_type in constants.TUNNEL_NETWORK_TYPES:
