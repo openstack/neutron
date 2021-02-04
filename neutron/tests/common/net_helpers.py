@@ -195,7 +195,8 @@ def _get_source_ports_from_ss_output(output):
 def get_unused_port(used, start=1024, end=None):
     if end is None:
         port_range = utils.execute(
-            ['sysctl', '-n', 'net.ipv4.ip_local_port_range'], run_as_root=True)
+            ['sysctl', '-n', 'net.ipv4.ip_local_port_range'], run_as_root=True,
+            privsep_exec=True)
         end = int(port_range.split()[0]) - 1
 
     candidates = set(range(start, end + 1))
@@ -235,11 +236,12 @@ def get_free_namespace_port(protocol, namespace=None, start=1024, end=None):
 def set_local_port_range(start, end):
     utils.execute(
         ['sysctl', '-w', 'net.ipv4.ip_local_port_range=%d %d' % (start, end)],
-        run_as_root=True)
-    utils.execute(['sysctl', '-p'], run_as_root=True)
+        run_as_root=True, privsep_exec=True)
+    utils.execute(['sysctl', '-p'], run_as_root=True, privsep_exec=True)
     # verify
     port_range = utils.execute(
-        ['sysctl', '-n', 'net.ipv4.ip_local_port_range'], run_as_root=True)
+        ['sysctl', '-n', 'net.ipv4.ip_local_port_range'], run_as_root=True,
+        privsep_exec=True)
     assert int(port_range.split()[0]) == start
     assert int(port_range.split()[1]) == end
 

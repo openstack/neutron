@@ -70,49 +70,42 @@ class BaseIpsetManagerTest(base.BaseTestCase):
         input = '\n'.join(temp_input)
         self.expected_calls.extend([
             mock.call(['ipset', 'restore', '-exist'],
-                      process_input=input,
-                      run_as_root=True,
-                      check_exit_code=True),
+                      process_input=input, run_as_root=True,
+                      check_exit_code=True, privsep_exec=True),
             mock.call(['ipset', 'swap', TEST_SET_NAME_NEW, TEST_SET_NAME],
-                      process_input=None,
-                      run_as_root=True,
-                      check_exit_code=True),
+                      process_input=None, run_as_root=True,
+                      check_exit_code=True, privsep_exec=True),
             mock.call(['ipset', 'destroy', TEST_SET_NAME_NEW],
-                      process_input=None,
-                      run_as_root=True,
-                      check_exit_code=False)])
+                      process_input=None, run_as_root=True,
+                      check_exit_code=False, privsep_exec=True)])
 
     def expect_add(self, addresses):
         self.expected_calls.extend(
             mock.call(['ipset', 'add', '-exist', TEST_SET_NAME, ip],
-                      process_input=None,
-                      run_as_root=True,
-                      check_exit_code=True)
+                      process_input=None, run_as_root=True,
+                      check_exit_code=True, privsep_exec=True)
             for ip in self.ipset._sanitize_addresses(addresses))
 
     def expect_del(self, addresses):
 
         self.expected_calls.extend(
             mock.call(['ipset', 'del', TEST_SET_NAME, ip],
-                      process_input=None,
-                      run_as_root=True,
-                      check_exit_code=False)
+                      process_input=None, run_as_root=True,
+                      check_exit_code=False, privsep_exec=True)
             for ip in self.ipset._sanitize_addresses(addresses))
 
     def expect_create(self):
         self.expected_calls.append(
             mock.call(['ipset', 'create', '-exist', TEST_SET_NAME,
                        'hash:net', 'family', 'inet'],
-                      process_input=None,
-                      run_as_root=True,
-                      check_exit_code=True))
+                      process_input=None, run_as_root=True,
+                      check_exit_code=True, privsep_exec=True))
 
     def expect_destroy(self):
         self.expected_calls.append(
             mock.call(['ipset', 'destroy', TEST_SET_NAME],
-                      process_input=None,
-                      run_as_root=True,
-                      check_exit_code=False))
+                      process_input=None, run_as_root=True,
+                      check_exit_code=False, privsep_exec=True))
 
     def add_first_ip(self):
         self.expect_set([FAKE_IPS[0]])

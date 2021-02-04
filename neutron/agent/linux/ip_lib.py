@@ -135,7 +135,7 @@ class SubProcessBase(object):
         opt_list = ['-%s' % o for o in options]
         ip_cmd = add_namespace_to_cmd(['ip'], namespace)
         cmd = ip_cmd + opt_list + [command] + list(args)
-        return utils.execute(cmd, run_as_root=run_as_root,
+        return utils.execute(cmd, run_as_root=run_as_root, privsep_exec=True,
                              log_fail_as_error=self.log_fail_as_error)
 
     def set_log_fail_as_error(self, fail_with_error):

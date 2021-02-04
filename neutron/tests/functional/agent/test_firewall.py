@@ -621,7 +621,7 @@ class FirewallTestCase(BaseFirewallTestCase):
         # destination net unreachable
         self.tester._peer.execute([
             'sysctl', '-w', 'net.ipv4.conf.%s.forwarding=1' %
-            self.tester._peer.port.name])
+            self.tester._peer.port.name], privsep_exec=True)
         self.tester.set_vm_default_gateway(self.tester.peer_ip_address)
         vm_sg_rules = [{'ethertype': 'IPv4', 'direction': 'egress',
                         'protocol': 'icmp'}]

@@ -8,11 +8,7 @@
 
 [Filters]
 
-# arping
-arping: CommandFilter, arping, root
-
 # l3_agent
-sysctl: CommandFilter, sysctl, root
 route: CommandFilter, route, root
 radvd: CommandFilter, radvd, root
 
@@ -30,12 +26,6 @@ kill_radvd_script: CommandFilter, radvd-kill, root
 ip: IpFilter, ip, root
 ip_exec: IpNetnsExecFilter, ip, root
 
-# l3_tc_lib
-l3_tc_show_filters: RegExpFilter, tc, root, tc, -p, -s, -d, filter, show, dev, .+, parent, .+, prio, 1
-l3_tc_delete_filters: RegExpFilter, tc, root, tc, filter, del, dev, .+, parent, .+, prio, 1, handle, .+, u32
-l3_tc_add_filter_ingress: RegExpFilter, tc, root, tc, filter, add, dev, .+, parent, .+, protocol, ip, prio, 1, u32, match, ip, dst, .+, police, rate, .+, burst, .+, mtu, 64kb, drop, flowid, :1
-l3_tc_add_filter_egress:  RegExpFilter, tc, root, tc, filter, add, dev, .+, parent, .+, protocol, ip, prio, 1, u32, match, ip, src, .+, police, rate, .+, burst, .+, mtu, 64kb, drop, flowid, :1
-
 # For ip monitor
 kill_ip_monitor: KillFilter, root, ip, -9
 
@@ -50,9 +40,6 @@ keepalived: CommandFilter, keepalived, root
 kill_keepalived: KillFilter, root, keepalived, -HUP, -15, -9
 # keepalived kill script filter
 kill_keepalived_script: CommandFilter, keepalived-kill, root
-
-# l3 agent to delete floatingip's conntrack state
-conntrack: CommandFilter, conntrack, root
 
 # keepalived state change monitor
 keepalived_state_change: CommandFilter, neutron-keepalived-state-change, root

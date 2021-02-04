@@ -1418,8 +1418,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
             cmd.extend(['-w', ct_zone])
             calls = [
-                mock.call(cmd, run_as_root=True, check_exit_code=True,
-                          extra_ok_codes=[1])]
+                mock.call(cmd, run_as_root=True, privsep_exec=True,
+                          check_exit_code=True, extra_ok_codes=[1])]
             self.utils_exec.assert_has_calls(calls)
 
     def test_remove_conntrack_entries_for_delete_rule_ipv4(self):
@@ -1472,8 +1472,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 if ct_zone:
                     cmd.extend(['-w', ct_zone])
                 expected_calls.append(
-                    mock.call(cmd, run_as_root=True, check_exit_code=True,
-                              extra_ok_codes=[1]))
+                    mock.call(cmd, run_as_root=True, privsep_exec=True,
+                              check_exit_code=True, extra_ok_codes=[1]))
         return expected_calls
 
     def _test_remove_conntrack_entries_for_port_sec_group_change(self,
@@ -1578,7 +1578,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 conntrack_cmd.extend([remote_ip_direction, ips[ethertype][1]])
 
                 calls.append(mock.call(conntrack_cmd,
-                                       run_as_root=True, check_exit_code=True,
+                                       run_as_root=True, privsep_exec=True,
+                                       check_exit_code=True,
                                        extra_ok_codes=[1]))
 
         self.utils_exec.assert_has_calls(calls)

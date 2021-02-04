@@ -148,7 +148,7 @@ class IpsetManager(object):
             cmd_ns.extend(['ip', 'netns', 'exec', self.namespace])
         cmd_ns.extend(cmd)
         self.execute(cmd_ns, run_as_root=True, process_input=input,
-                     check_exit_code=fail_on_errors)
+                     check_exit_code=fail_on_errors, privsep_exec=True)
 
     def _get_new_set_ips(self, set_name, expected_ips):
         new_member_ips = (set(expected_ips) -

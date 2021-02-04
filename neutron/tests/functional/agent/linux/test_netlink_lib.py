@@ -45,10 +45,9 @@ class NetlinkLibTestCase(functional_base.BaseSudoTestCase):
 
         for cmd in conntrack_cmds:
             try:
-                linux_utils.execute(cmd,
-                                    run_as_root=True,
-                                    check_exit_code=True,
-                                    extra_ok_codes=[1])
+                linux_utils.execute(
+                    cmd, run_as_root=True, check_exit_code=True,
+                    privsep_exec=True, extra_ok_codes=[1])
             except RuntimeError:
                 raise Exception('Error while creating entry')
 
@@ -66,10 +65,9 @@ class NetlinkLibTestCase(functional_base.BaseSudoTestCase):
         while start <= end:
             cmd = ['conntrack', '-L', '-w', start]
             try:
-                current_entries = linux_utils.execute(cmd,
-                                                      run_as_root=True,
-                                                      check_exit_code=True,
-                                                      extra_ok_codes=[1])
+                current_entries = linux_utils.execute(
+                    cmd, run_as_root=True, check_exit_code=True,
+                    privsep_exec=True, extra_ok_codes=[1])
             except RuntimeError:
                 raise Exception('Error while listing entries')
             if not current_entries:

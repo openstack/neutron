@@ -112,6 +112,7 @@ class TestSubProcessBase(base.BaseTestCase):
 
         self.execute.assert_called_once_with(['ip', '-o', 'link', 'list'],
                                              run_as_root=True,
+                                             privsep_exec=True,
                                              log_fail_as_error=True)
 
     def test_execute_wrapper_int_options(self):
@@ -120,6 +121,7 @@ class TestSubProcessBase(base.BaseTestCase):
 
         self.execute.assert_called_once_with(['ip', '-4', 'link', 'list'],
                                              run_as_root=False,
+                                             privsep_exec=True,
                                              log_fail_as_error=True)
 
     def test_execute_wrapper_no_options(self):
@@ -128,6 +130,7 @@ class TestSubProcessBase(base.BaseTestCase):
 
         self.execute.assert_called_once_with(['ip', 'link', 'list'],
                                              run_as_root=False,
+                                             privsep_exec=True,
                                              log_fail_as_error=True)
 
     def test_run_no_namespace(self):
@@ -135,6 +138,7 @@ class TestSubProcessBase(base.BaseTestCase):
         base._run([], 'link', ('list',))
         self.execute.assert_called_once_with(['ip', 'link', 'list'],
                                              run_as_root=False,
+                                             privsep_exec=True,
                                              log_fail_as_error=True)
 
     def test_run_namespace(self):
@@ -143,6 +147,7 @@ class TestSubProcessBase(base.BaseTestCase):
         self.execute.assert_called_once_with(['ip', 'netns', 'exec', 'ns',
                                               'ip', 'link', 'list'],
                                              run_as_root=True,
+                                             privsep_exec=True,
                                              log_fail_as_error=True)
 
     def test_as_root_namespace(self):
@@ -151,6 +156,7 @@ class TestSubProcessBase(base.BaseTestCase):
         self.execute.assert_called_once_with(['ip', 'netns', 'exec', 'ns',
                                               'ip', 'link', 'list'],
                                              run_as_root=True,
+                                             privsep_exec=True,
                                              log_fail_as_error=True)
 
 

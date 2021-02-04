@@ -163,7 +163,7 @@ class IpConntrackManager(object):
                                                   rule, remote_ip)
         for cmd in conntrack_cmds:
             try:
-                self.execute(list(cmd), run_as_root=True,
+                self.execute(list(cmd), run_as_root=True, privsep_exec=True,
                              check_exit_code=True,
                              extra_ok_codes=[1])
             except RuntimeError:
