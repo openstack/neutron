@@ -104,6 +104,43 @@ class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
         for port in updated_subports[trunk['id']]:
             self.assertEqual('trunk_host_id', port[portbindings.HOST_ID])
 
+    def test_update_subport_bindings_during_migration(self):
+        with self.port() as _parent_port:
+            parent_port = _parent_port
+        trunk = self._create_test_trunk(parent_port)
+        subports = []
+        for vid in range(0, 3):
+            with self.port() as new_port:
+                obj = trunk_obj.SubPort(
+                    context=self.context,
+                    trunk_id=trunk['id'],
+                    port_id=new_port['port']['id'],
+                    segmentation_type='vlan',
+                    segmentation_id=vid)
+                subports.append(obj)
+
+        expected_calls = [
+            mock.call(
+                mock.ANY, subport['port_id'],
+                {'port': {portbindings.HOST_ID: 'new_trunk_host_id',
+                          'device_owner': constants.TRUNK_SUBPORT_OWNER}})
+            for subport in subports]
+
+        test_obj = server.TrunkSkeleton()
+        test_obj._trunk_plugin = self.trunk_plugin
+        test_obj._core_plugin = self.core_plugin
+        port_data = {
+            portbindings.HOST_ID: 'trunk_host_id',
+            portbindings.PROFILE: {'migrating_to': 'new_trunk_host_id'}}
+        with mock.patch.object(
+                self.core_plugin, "get_port",
+                return_value=port_data), \
+            mock.patch.object(
+                test_obj, "_safe_update_trunk"):
+            test_obj.update_subport_bindings(self.context, subports=subports)
+        for expected_call in expected_calls:
+            self.assertIn(expected_call, self.mock_update_port.mock_calls)
+
     def test__handle_port_binding_binding_error(self):
         with self.port() as _trunk_port:
             trunk = self._create_test_trunk(_trunk_port)
