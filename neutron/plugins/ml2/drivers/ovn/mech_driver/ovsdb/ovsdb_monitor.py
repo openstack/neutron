@@ -456,6 +456,7 @@ class OvnDbNotifyHandler(backports.RowEventHandler):
             pass
 
     def notify(self, event, row, updates=None, global_=False):
+        row = idlutils.frozen_row(row)
         matching = self.matching_events(event, row, updates, global_)
         for match in matching:
             self.notifications.put((match, event, row, updates))
