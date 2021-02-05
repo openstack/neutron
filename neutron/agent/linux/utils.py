@@ -35,7 +35,6 @@ from oslo_utils import excutils
 from oslo_utils import fileutils
 import psutil
 
-from neutron._i18n import _
 from neutron.common import utils
 from neutron.conf.agent import common as config
 from neutron.privileged.agent.linux import utils as priv_utils
@@ -142,7 +141,7 @@ def execute(cmd, process_input=None, addl_env=None,
             if log_fail_as_error:
                 LOG.error(msg)
             if check_exit_code:
-                raise exceptions.ProcessExecutionError(_(msg),
+                raise exceptions.ProcessExecutionError(msg,
                                                        returncode=returncode)
     finally:
         # NOTE(termie): this appears to be necessary to let the subprocess

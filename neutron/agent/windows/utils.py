@@ -25,8 +25,6 @@ from neutron_lib.utils import helpers
 from oslo_log import log as logging
 from oslo_utils import encodeutils
 
-from neutron._i18n import _
-
 
 if os.name == 'nt':
     import wmi
@@ -133,7 +131,7 @@ def execute(cmd, process_input=None, addl_env=None,
         LOG.debug(log_msg)
 
     if obj.returncode and check_exit_code:
-        raise exceptions.ProcessExecutionError(_(m), returncode=obj.returncode)
+        raise exceptions.ProcessExecutionError(m, returncode=obj.returncode)
     return (_stdout, _stderr) if return_stderr else _stdout
 
 
