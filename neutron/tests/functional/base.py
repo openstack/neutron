@@ -354,9 +354,13 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         # fake chassis but from the SB db point of view, 'ip' column can be
         # any string so we could add entries with ip='172.24.4.1000'.
         self._counter += 1
-        self.sb_api.chassis_add(
+        chassis = self.sb_api.chassis_add(
             name, ['geneve'], '172.24.4.%d' % self._counter,
             external_ids=external_ids, hostname=host).execute(check_error=True)
+        if self.sb_api.is_table_present('Chassis_Private'):
+            self.sb_api.db_create(
+                'Chassis_Private', name=name, external_ids=external_ids,
+                chassis=chassis.uuid).execute(check_error=True)
         return name
 
     def del_fake_chassis(self, chassis, if_exists=True):
