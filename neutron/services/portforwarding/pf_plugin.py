@@ -31,6 +31,7 @@ from neutron_lib.exceptions import l3 as lib_l3_exc
 from neutron_lib.objects import exceptions as obj_exc
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
+from oslo_db import exception as oslo_db_exc
 from oslo_log import log as logging
 
 from neutron._i18n import _
@@ -402,7 +403,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 pf_obj.update_fields(port_forwarding, reset_changes=True)
                 self._check_port_forwarding_update(context, pf_obj)
                 pf_obj.update()
-        except obj_exc.NeutronDbObjectDuplicateEntry:
+        except oslo_db_exc.DBDuplicateEntry:
             (__, conflict_params) = self._find_existing_port_forwarding(
                 context, floatingip_id, pf_obj.to_dict())
             message = _("A duplicate port forwarding entry with same "
