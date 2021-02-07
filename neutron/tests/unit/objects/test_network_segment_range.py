@@ -180,6 +180,22 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         obj.shared = False
         self.assertRaises(n_exc.ObjectActionError, obj.update)
 
+    def _create_vlan_environment_with_multiple_phynet(
+            self, physical_networks, project_id):
+        for phynet_name, vlan_range in physical_networks.items():
+            self._create_network_segment_range(
+                    vlan_range[0], vlan_range[1],
+                    network_type=constants.TYPE_VLAN,
+                    project_id=project_id,
+                    physical_network=phynet_name,
+                    default=True, shared=True).create()
+
+            for segmentation_id in range(2, 4):
+                self._create_allocation(
+                    vlan_alloc_obj.VlanAllocation,
+                    segmentation_id=segmentation_id,
+                    physical_network=phynet_name)
+
     def _create_environment(self, default_range=True):
         self.projects = [uuidutils.generate_uuid() for _ in range(3)]
         self.segment_ranges = {
@@ -228,11 +244,13 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             range_set.difference_update(prange_set)
         return range_set
 
-    def _allocate_random_allocations(self, allocations, subclass):
+    def _allocate_random_allocations(self, allocations, subclass,
+                                     num_of_allocations=None):
         pk_cols = subclass.db_model.__table__.primary_key.columns
         primary_keys = [col.name for col in pk_cols]
         allocated = []
-        for allocation in random.sample(allocations, k=NUM_ALLOCATIONS):
+        for allocation in random.sample(
+                allocations, k=(num_of_allocations or NUM_ALLOCATIONS)):
             segment = dict((k, allocation[k]) for k in primary_keys)
             allocated.append(segment)
             self.assertEqual(1, subclass.allocate(self.context, **segment))
@@ -291,6 +309,62 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             # a segmentation ID not belonging to any project.
             for alloc in allocated:
                 self.assertEqual(1, subclass.deallocate(self.context, **alloc))
+
+    def test_get_segments_shared_without_physical_network_for_vlan(self):
+        phynet1_vlan_range = [2, 3]
+        phynet1_vlan_size = phynet1_vlan_range[1] - phynet1_vlan_range[0] + 1
+        phynet2_vlan_range = [8, 9]
+        phynet2_vlan_size = phynet2_vlan_range[1] - phynet2_vlan_range[0] + 1
+        phynets = {'phynet1': phynet1_vlan_range,
+                   'phynet2': phynet2_vlan_range}
+        project_id = uuidutils.generate_uuid()
+        self._create_vlan_environment_with_multiple_phynet(
+            phynets, project_id)
+        all_vlan_size = phynet1_vlan_size + phynet2_vlan_size
+        filters = {'project_id': project_id}
+
+        # First allocation, the phynet1's vlan id will be exhausted.
+        allocations = network_segment_range.NetworkSegmentRange. \
+            get_segments_shared(
+                self.context, vlan_alloc_obj.VlanAllocation.db_model,
+                constants.TYPE_VLAN,
+                vlan_alloc_obj.VlanAllocation.get_segmentation_id(),
+                **filters)
+        self.assertEqual(all_vlan_size, len(allocations))
+        alloc_phynet = []
+        for alloc in allocations:
+            alloc_phynet.append(alloc.physical_network)
+        alloc_phynet = set(alloc_phynet)
+        self.assertEqual(2, len(alloc_phynet))
+        allocated = self._allocate_random_allocations(
+            allocations, vlan_alloc_obj.VlanAllocation)
+        remain_vlan_size = all_vlan_size - len(allocated)
+
+        # Second allocation, all vlan id will be exhausted.
+        allocations = network_segment_range.NetworkSegmentRange. \
+            get_segments_shared(
+                self.context, vlan_alloc_obj.VlanAllocation.db_model,
+                constants.TYPE_VLAN,
+                vlan_alloc_obj.VlanAllocation.get_segmentation_id(),
+                **filters)
+        self.assertEqual(len(allocations), all_vlan_size - NUM_ALLOCATIONS)
+        self._allocate_random_allocations(allocations,
+                                          vlan_alloc_obj.VlanAllocation,
+                                          remain_vlan_size)
+        alloc_phynet = []
+        for alloc in allocations:
+            alloc_phynet.append(alloc.physical_network)
+        alloc_phynet = set(alloc_phynet)
+        self.assertEqual(1, len(alloc_phynet))
+
+        # Last allocation, we can't get any vlan segment.
+        allocations = network_segment_range.NetworkSegmentRange. \
+            get_segments_shared(
+                self.context, vlan_alloc_obj.VlanAllocation.db_model,
+                constants.TYPE_VLAN,
+                vlan_alloc_obj.VlanAllocation.get_segmentation_id(),
+                **filters)
+        self.assertEqual(0, len(allocations))
 
     def test_get_segments_shared_no_shared_ranges(self):
         self._create_environment(default_range=False)
