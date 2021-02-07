@@ -431,6 +431,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
 
         agent_state['agent_status'] = status
         agent_state['admin_state_up'] = agent.admin_state_up
+        agent_state['id'] = agent.id
         registry.publish(resources.AGENT, event_type, self,
                          payload=events.DBEventPayload(
                              context=context, metadata={
