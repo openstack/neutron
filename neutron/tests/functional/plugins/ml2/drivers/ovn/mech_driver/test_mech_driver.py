@@ -699,6 +699,8 @@ class TestAgentApi(base.TestOVNFunctionalBase):
         agent = {'agent_type': 'test', 'binary': '/bin/test',
                  'host': self.host, 'topic': 'test_topic'}
         self.plugin.create_or_update_agent(self.context, agent)
+        mock.patch.object(self.mech_driver, 'ping_all_chassis',
+                          return_value=False).start()
 
     def get_agent(self, agent_type):
         return next(iter(self.plugin.get_agents(
