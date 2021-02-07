@@ -190,7 +190,8 @@ class NetworkSegmentRange(base.NeutronDbObject):
             shared_ranges = context.session.query(cls.db_model).filter(
                 and_(cls.db_model.network_type == network_type,
                      cls.db_model.shared == sql.expression.true()))
-            if network_type == constants.TYPE_VLAN:
+            if (network_type == constants.TYPE_VLAN and
+                    'physical_network' in _filters):
                 shared_ranges.filter(cls.db_model.physical_network ==
                                      _filters['physical_network'])
             segment_ids = set([])
@@ -206,7 +207,8 @@ class NetworkSegmentRange(base.NeutronDbObject):
                 and_(cls.db_model.project_id != project_id,
                      cls.db_model.project_id.isnot(None),
                      cls.db_model.network_type == network_type))
-            if network_type == constants.TYPE_VLAN:
+            if (network_type == constants.TYPE_VLAN and
+                    'physical_network' in _filters):
                 other_project_ranges = other_project_ranges.filter(
                     cls.db_model.physical_network ==
                     _filters['physical_network'])
