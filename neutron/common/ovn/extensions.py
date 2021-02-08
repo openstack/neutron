@@ -27,6 +27,7 @@ from neutron_lib.api.definitions import fip_port_details
 from neutron_lib.api.definitions import floating_ip_port_forwarding
 from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import l3_ext_gw_mode
+from neutron_lib.api.definitions import logging
 from neutron_lib.api.definitions import multiprovidernet
 from neutron_lib.api.definitions import network_availability_zone
 from neutron_lib.api.definitions import network_ip_availability
@@ -114,5 +115,6 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     expose_port_forwarding_in_fip.ALIAS,
     fip_pf_description.ALIAS,
     floating_ip_port_forwarding.ALIAS,
-    vlantransparent.ALIAS
+    vlantransparent.ALIAS,
+    logging.ALIAS,
 ]
