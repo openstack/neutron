@@ -41,6 +41,7 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 # the SqlFixture
 from neutron.db import models  # noqa
 from neutron import manager
+from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
 from neutron.plugins.ml2.drivers import type_geneve  # noqa
 from neutron import service  # noqa
@@ -197,6 +198,10 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self.temp_dir = self.useFixture(fixtures.TempDir()).path
         self._start_ovsdb_server_and_idls()
         self._start_ovn_northd()
+        self.addCleanup(self._reset_agent_cache_singleton)
+
+    def _reset_agent_cache_singleton(self):
+        neutron_agent.AgentCache._instance = None
 
     def _get_install_share_path(self):
         lookup_paths = set()
