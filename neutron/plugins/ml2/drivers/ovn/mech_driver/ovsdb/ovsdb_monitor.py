@@ -265,7 +265,12 @@ class ChassisAgentWriteEvent(ChassisAgentEvent):
     events = (BaseEvent.ROW_CREATE, BaseEvent.ROW_UPDATE)
 
     def match_fn(self, event, row, old=None):
-        return event == self.ROW_CREATE or getattr(old, 'nb_cfg', False)
+        # On updates to Chassis_Private because the Chassis has been deleted,
+        # don't update the AgentCache. We use chassis_private.chassis to return
+        # data about the agent.
+        return event == self.ROW_CREATE or (
+            getattr(old, 'nb_cfg', False) and not
+            (self.table == 'Chassis_Private' and not row.chassis))
 
     def run(self, event, row, old):
         n_agent.AgentCache().update(ovn_const.OVN_CONTROLLER_AGENT, row,
@@ -291,6 +296,11 @@ class ChassisMetadataAgentWriteEvent(ChassisAgentEvent):
         if event == self.ROW_CREATE:
             return True
         try:
+            # On updates to Chassis_Private because the Chassis has been
+            # deleted, don't update the AgentCache. We use
+            # chassis_private.chassis to return data about the agent.
+            if self.table == 'Chassis_Private' and not row.chassis:
+                return False
             return self._metadata_nb_cfg(row) != self._metadata_nb_cfg(old)
         except (AttributeError, KeyError):
             return False
