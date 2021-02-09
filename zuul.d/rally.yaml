@@ -34,18 +34,22 @@
       - openstack/rally
       - openstack/rally-openstack
       - openstack/osprofiler
-    irrelevant-files: &irrelevant-files
+    irrelevant-files:
       - ^(test-|)requirements.txt$
-      - ^.*\.rst$
+      - ^releasenotes/.*$
       - ^doc/.*$
+      - ^setup.cfg$
+      - ^.*\.rst$
       - ^neutron/locale/.*$
       - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
       - ^tools/.*$
       - ^tox.ini$
-      - ^vagrant/.*$
-      - ^migration/.*$
+      - ^neutron/agent/ovn/.*$
+      - ^neutron/agent/windows/.*$
+      - ^neutron/plugins/ml2/drivers/linuxbridge/.*$
+      - ^neutron/plugins/ml2/drivers/macvtap/.*$
+      - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
+      - ^neutron/plugins/ml2/drivers/ovn/.*$
 
 - job:
     name: neutron-ovn-rally-task
@@ -55,7 +59,32 @@
       - name: openstack/devstack-gate
       - name: openstack/rally
       - name: openstack/rally-openstack
-    irrelevant-files: *irrelevant-files
+    irrelevant-files:
+      - ^(test-|)requirements.txt$
+      - ^releasenotes/.*$
+      - ^doc/.*$
+      - ^setup.cfg$
+      - ^.*\.rst$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^tools/.*$
+      - ^tox.ini$
+      - ^neutron/agent/dhcp/.*$
+      - ^neutron/agent/l2/.*$
+      - ^neutron/agent/l3/.*$
+      - ^neutron/agent/metadata/.*$
+      - ^neutron/agent/windows/.*$
+      - ^neutron/agent/dhcp_agent.py
+      - ^neutron/agent/l3_agent.py
+      - ^neutron/agent/metadata_agent.py
+      - ^neutron/agent/resource_cache.py
+      - ^neutron/agent/rpc.py
+      - ^neutron/agent/securitygroup_rpc.py
+      - ^neutron/plugins/ml2/drivers/linuxbridge/.*$
+      - ^neutron/plugins/ml2/drivers/openvswitch/.*$
+      - ^neutron/plugins/ml2/drivers/macvtap/.*$
+      - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
+      - ^neutron/scheduler/.*$
     vars:
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron
