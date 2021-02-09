@@ -357,6 +357,9 @@ class OwnerCheck(policy.Check):
 @policy.register('field')
 class FieldCheck(policy.Check):
     def __init__(self, kind, match):
+        self._orig_kind = kind
+        self._orig_match = match
+
         # Process the match
         resource, field_value = match.split(':', 1)
         field, value = field_value.split('=', 1)
@@ -375,6 +378,11 @@ class FieldCheck(policy.Check):
         self.resource = resource
         self.value = conv_func(value)
         self.regex = re.compile(value[1:]) if value.startswith('~') else None
+
+    # TODO(stephenfin): Remove this when we drop support for Python 3.6, since
+    # that supports copying regex objects natively
+    def __deepcopy__(self, memo):
+        return FieldCheck(self._orig_kind, self._orig_match)
 
     def __call__(self, target_dict, cred_dict, enforcer):
         target_value = self._get_target_value(target_dict)
