@@ -473,7 +473,13 @@
     parent: neutron-ovn-base
     nodeset: devstack-single-node-fedora-latest
     vars:
+      zuul_copy_output:
+        '{{ devstack_base_dir }}/data/ovs': 'logs'
+        '{{ devstack_base_dir }}/data/ovn': 'logs'
+        '{{ devstack_log_dir }}/ovsdb-server-nb.log': 'logs'
+        '{{ devstack_log_dir }}/ovsdb-server-sb.log': 'logs'
       devstack_localrc:
+        OVN_BUILD_FROM_SOURCE: True
         OVN_BRANCH: master
         OVS_BRANCH: master
       devstack_services:
