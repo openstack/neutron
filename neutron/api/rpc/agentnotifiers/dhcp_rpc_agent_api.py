@@ -268,7 +268,8 @@ class DhcpAgentNotifyAPI(object):
     def _after_router_interface_deleted(self, resource, event, trigger,
                                         **kwargs):
         self._notify_agents(kwargs['context'], 'port_delete_end',
-                            {'port_id': kwargs['port']['id']},
+                            {'port_id': kwargs['port']['id'],
+                             'fixed_ips': kwargs['port']['fixed_ips']},
                             kwargs['port']['network_id'])
 
     def _native_event_send_dhcp_notification(self, resource, event, trigger,
@@ -343,6 +344,8 @@ class DhcpAgentNotifyAPI(object):
                 payload = {obj_type + '_id': obj_value['id']}
                 if obj_type != 'network':
                     payload['network_id'] = network_id
+                if obj_type == 'port':
+                    payload['fixed_ips'] = obj_value['fixed_ips']
                 self._notify_agents(context, method_name, payload, network_id)
         else:
             self._notify_agents(context, method_name, data, network_id)
