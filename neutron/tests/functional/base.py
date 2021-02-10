@@ -69,6 +69,7 @@ def config_decorator(method_to_decorate, config_tuples):
 
 class BaseLoggingTestCase(base.BaseTestCase):
     def setUp(self):
+        super().setUp()
         # NOTE(slaweq): Because of issue with stestr and Python3, we need
         # to avoid too much output to be produced during tests, so we will
         # ignore python warnings here
@@ -76,8 +77,6 @@ class BaseLoggingTestCase(base.BaseTestCase):
         base.setup_test_logging(
             cfg.CONF, DEFAULT_LOG_DIR, "%s.txt" % self.id())
         cfg.CONF.set_override('use_helper_for_ns_read', False, group='AGENT')
-        super().setUp()
-        warnings.simplefilter("ignore")  # warnings get reset by super
 
 
 class BaseSudoTestCase(BaseLoggingTestCase):
