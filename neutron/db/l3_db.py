@@ -517,15 +517,18 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         registry.publish(resources.ROUTER, events.BEFORE_DELETE, self,
                          payload=events.DBEventPayload(
                              context, resource_id=id))
+
         # TODO(nati) Refactor here when we have router insertion model
-        with db_api.CONTEXT_WRITER.using(context):
+        with db_api.CONTEXT_READER.using(context):
             router = self._ensure_router_not_in_use(context, id)
             original = self._make_router_dict(router)
-            self._delete_current_gw_port(context, id, router, None)
+        self._delete_current_gw_port(context, id, router, None)
 
+        with db_api.CONTEXT_WRITER.using(context):
             # TODO(ralonsoh): move this section (port deletion) out of the DB
             # transaction.
-            router_ports_ids = (rp.port.id for rp in router.attached_ports)
+            router_ports_ids = (rp.port_id for rp in
+                l3_obj.RouterPort.get_objects(context, router_id=id))
             if context.session.is_active:
                 context.GUARD_TRANSACTION = False
             for rp_id in router_ports_ids:
