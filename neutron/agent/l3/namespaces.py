@@ -94,18 +94,18 @@ class Namespace(object):
         # these sysctl values.
         ip_wrapper = self.ip_wrapper_root.ensure_namespace(self.name)
         cmd = ['sysctl', '-w', 'net.ipv4.ip_forward=1']
-        ip_wrapper.netns.execute(cmd)
+        ip_wrapper.netns.execute(cmd, privsep_exec=True)
         # 1. Reply only if the target IP address is local address configured
         #    on the incoming interface; and
         # 2. Always use the best local address
         cmd = ['sysctl', '-w', 'net.ipv4.conf.all.arp_ignore=1']
-        ip_wrapper.netns.execute(cmd)
+        ip_wrapper.netns.execute(cmd, privsep_exec=True)
         cmd = ['sysctl', '-w', 'net.ipv4.conf.all.arp_announce=2']
-        ip_wrapper.netns.execute(cmd)
+        ip_wrapper.netns.execute(cmd, privsep_exec=True)
         if self.use_ipv6:
             cmd = ['sysctl', '-w',
                    'net.ipv6.conf.all.forwarding=%d' % int(ipv6_forwarding)]
-            ip_wrapper.netns.execute(cmd)
+            ip_wrapper.netns.execute(cmd, privsep_exec=True)
 
     def delete(self):
         try:

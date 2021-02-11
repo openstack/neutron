@@ -171,7 +171,8 @@ class TestFloatingIPTcCommandBase(base.BaseTestCase):
             run_as_root=True,
             check_exit_code=True,
             log_fail_as_error=True,
-            extra_ok_codes=None
+            extra_ok_codes=None,
+            privsep_exec=True
         )
 
     def _test__get_filterid_for_ip(self, filters):
@@ -236,7 +237,8 @@ class TestFloatingIPTcCommandBase(base.BaseTestCase):
             run_as_root=True,
             check_exit_code=True,
             log_fail_as_error=True,
-            extra_ok_codes=None
+            extra_ok_codes=None,
+            privsep_exec=True
         )
 
     def _test__get_qdisc_filters(self, filters):
@@ -277,7 +279,8 @@ class TestFloatingIPTcCommandBase(base.BaseTestCase):
             run_as_root=True,
             check_exit_code=True,
             log_fail_as_error=True,
-            extra_ok_codes=None
+            extra_ok_codes=None,
+            privsep_exec=True
         )
 
     def test__get_or_create_qdisc(self):
@@ -382,7 +385,8 @@ class TestFloatingIPTcCommand(base.BaseTestCase):
                         run_as_root=True,
                         check_exit_code=True,
                         log_fail_as_error=True,
-                        extra_ok_codes=None
+                        extra_ok_codes=None,
+                        privsep_exec=True
                     )
 
     def test_set_ip_rate_limit_no_qdisc_without_chain(self):
@@ -409,7 +413,8 @@ class TestFloatingIPTcCommand(base.BaseTestCase):
                     run_as_root=True,
                     check_exit_code=True,
                     log_fail_as_error=True,
-                    extra_ok_codes=None
+                    extra_ok_codes=None,
+                    privsep_exec=True
                 )
 
     def test_get_filter_id_for_ip(self):

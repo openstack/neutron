@@ -134,8 +134,8 @@ class TcPolicyClassTestCase(functional_base.BaseSudoTestCase):
 
         bytes = tc_classes[0]['stats']['bytes']
         packets = tc_classes[0]['stats']['packets']
-        net_helpers.assert_ping(self.ns[1], netaddr.IPNetwork(self.ip[0]).ip,
-                                count=1)
+        net_helpers.assert_ping(
+            self.ns[1], str(netaddr.IPNetwork(self.ip[0]).ip), count=1)
         tc_classes = tc_lib.list_tc_policy_class(self.device[0],
                                                  namespace=self.ns[0])
         self.assertGreater(tc_classes[0]['stats']['bytes'], bytes)
@@ -268,7 +268,7 @@ class TcFiltersTestCase(functional_base.BaseSudoTestCase):
                                       'device': self.device[0]})
 
         net_helpers.assert_ping(
-            self.ns[1], netaddr.IPNetwork(self.ip_vxlan[0]).ip, count=1)
+            self.ns[1], str(netaddr.IPNetwork(self.ip_vxlan[0]).ip), count=1)
         tc_classes = tc_lib.list_tc_policy_class(self.device[0],
                                                  namespace=self.ns[0])
         for tc_class in tc_classes:

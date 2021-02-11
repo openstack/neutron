@@ -35,7 +35,6 @@ from oslo_utils import excutils
 from oslo_utils import fileutils
 import psutil
 
-from neutron.common import utils
 from neutron.conf.agent import common as config
 from neutron.privileged.agent.linux import utils as priv_utils
 from neutron import wsgi
@@ -79,14 +78,24 @@ def create_process(cmd, run_as_root=False, addl_env=None):
     """
     cmd = list(map(str, addl_env_args(addl_env) + cmd))
     if run_as_root:
+        # NOTE(ralonsoh): to be removed once the migration to privsep
+        # execution is done.
         cmd = shlex.split(config.get_root_helper(cfg.CONF)) + cmd
     LOG.debug("Running command: %s", cmd)
-    obj = utils.subprocess_popen(cmd, shell=False,
-                                 stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
+    obj = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     return obj, cmd
+
+
+def _execute_process(cmd, _process_input, addl_env, run_as_root):
+    obj, cmd = create_process(cmd, run_as_root=run_as_root, addl_env=addl_env)
+    _stdout, _stderr = obj.communicate(_process_input)
+    returncode = obj.returncode
+    obj.stdin.close()
+    _stdout = helpers.safe_decode_utf8(_stdout)
+    _stderr = helpers.safe_decode_utf8(_stderr)
+    return _stdout, _stderr, returncode
 
 
 def execute_rootwrap_daemon(cmd, process_input, addl_env):
@@ -99,31 +108,34 @@ def execute_rootwrap_daemon(cmd, process_input, addl_env):
     LOG.debug("Running command (rootwrap daemon): %s", cmd)
     client = RootwrapDaemonHelper.get_client()
     try:
-        return client.execute(cmd, process_input)
+        returncode, _stdout, _stderr = client.execute(cmd, process_input)
     except Exception:
         with excutils.save_and_reraise_exception():
             LOG.error("Rootwrap error running command: %s", cmd)
 
+    _stdout = helpers.safe_decode_utf8(_stdout)
+    _stderr = helpers.safe_decode_utf8(_stderr)
+    return _stdout, _stderr, returncode
+
 
 def execute(cmd, process_input=None, addl_env=None,
             check_exit_code=True, return_stderr=False, log_fail_as_error=True,
-            extra_ok_codes=None, run_as_root=False):
+            extra_ok_codes=None, run_as_root=False, privsep_exec=False):
     try:
         if process_input is not None:
             _process_input = encodeutils.to_utf8(process_input)
         else:
             _process_input = None
-        if run_as_root and cfg.CONF.AGENT.root_helper_daemon:
-            returncode, _stdout, _stderr = (
-                execute_rootwrap_daemon(cmd, process_input, addl_env))
+
+        if run_as_root and privsep_exec:
+            _stdout, _stderr, returncode = priv_utils.execute_process(
+                cmd, _process_input, addl_env)
+        elif run_as_root and cfg.CONF.AGENT.root_helper_daemon:
+            _stdout, _stderr, returncode = execute_rootwrap_daemon(
+                cmd, process_input, addl_env)
         else:
-            obj, cmd = create_process(cmd, run_as_root=run_as_root,
-                                      addl_env=addl_env)
-            _stdout, _stderr = obj.communicate(_process_input)
-            returncode = obj.returncode
-            obj.stdin.close()
-        _stdout = helpers.safe_decode_utf8(_stdout)
-        _stderr = helpers.safe_decode_utf8(_stderr)
+            _stdout, _stderr, returncode = _execute_process(
+                cmd, _process_input, addl_env, run_as_root)
 
         extra_ok_codes = extra_ok_codes or []
         if returncode and returncode not in extra_ok_codes:
@@ -202,10 +214,11 @@ def find_fork_top_parent(pid):
             return pid
 
 
-def kill_process(pid, signal, run_as_root=False):
+def kill_process(pid, signal, run_as_root=False, privsep_exec=False):
     """Kill the process with the given pid using the given signal."""
     try:
-        execute(['kill', '-%d' % signal, pid], run_as_root=run_as_root)
+        execute(['kill', '-%d' % signal, pid], run_as_root=run_as_root,
+                privsep_exec=privsep_exec)
     except exceptions.ProcessExecutionError:
         if process_is_running(pid):
             raise

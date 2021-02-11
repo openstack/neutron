@@ -804,7 +804,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                'via', route['nexthop'], 'table', tbl_index]
         ip_wrapper = ip_lib.IPWrapper(namespace=fip_ns_name)
         if ip_wrapper.netns.exists(fip_ns_name):
-            ip_wrapper.netns.execute(cmd, check_exit_code=False)
+            ip_wrapper.netns.execute(cmd, check_exit_code=False,
+                                     privsep_exec=True)
         else:
             LOG.debug("The FIP namespace %(ns)s does not exist for "
                       "router %(id)s",

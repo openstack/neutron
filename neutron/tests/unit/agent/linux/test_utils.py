@@ -25,6 +25,7 @@ from oslo_config import cfg
 import oslo_i18n
 
 from neutron.agent.linux import utils
+from neutron.privileged.agent.linux import utils as priv_utils
 from neutron.tests import base
 
 
@@ -46,7 +47,15 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
         result = utils.execute(["ls", self.test_file])
         self.assertEqual(result, expected)
 
-    def test_with_helper(self):
+    def test_with_root_privileges_privsep(self):
+        with mock.patch.object(priv_utils, 'execute_process') as \
+                mock_execute_process:
+            mock_execute_process.return_value = ['', '', 0]
+            utils.execute(['ls', self.test_file], run_as_root=True,
+                          privsep_exec=True)
+        mock_execute_process.assert_called_once()
+
+    def test_with_root_privileges_rootwrap(self):
         expected = "ls %s\n" % self.test_file
         self.mock_popen.return_value = [expected, ""]
         self.config(group='AGENT', root_helper='echo')
@@ -54,7 +63,7 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
         self.assertEqual(result, expected)
 
     @mock.patch.object(utils.RootwrapDaemonHelper, 'get_client')
-    def test_with_helper_exception(self, get_client):
+    def test_with_root_privileges_rootwrap_exception(self, get_client):
         client_inst = mock.Mock()
         client_inst.execute.side_effect = RuntimeError
         get_client.return_value = client_inst
@@ -229,10 +238,11 @@ class TestKillProcess(base.BaseTestCase):
                                side_effect=exc) as mock_execute:
             with mock.patch.object(utils, 'process_is_running',
                                    return_value=not pid_killed):
-                utils.kill_process(pid, kill_signal, run_as_root=True)
+                utils.kill_process(pid, kill_signal, run_as_root=True,
+                                   privsep_exec=False)
 
         mock_execute.assert_called_with(['kill', '-%d' % kill_signal, pid],
-                                        run_as_root=True)
+                                        run_as_root=True, privsep_exec=False)
 
     def test_kill_process_returns_none_for_valid_pid(self):
         self._test_kill_process('1')

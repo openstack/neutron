@@ -110,8 +110,10 @@ class TestHybridIptablesHelper(base.BaseTestCase):
     def test_overloaded_remove_conntrack(self):
         with mock.patch.object(iptables_firewall.IptablesFirewallDriver,
                 '_remove_conntrack_entries_from_port_deleted') as rcefpd, \
-             mock.patch("neutron.agent.linux.ip_conntrack.IpConntrackManager"
-                        "._populate_initial_zone_map"):
+                mock.patch("neutron.agent.linux.ip_conntrack."
+                           "IpConntrackManager._populate_initial_zone_map"), \
+                mock.patch.object(iptables_firewall.IptablesFirewallDriver,
+                                  '_check_netfilter_for_bridges'):
             firewall = iptables.get_iptables_driver_instance()
             firewall._remove_conntrack_entries_from_port_deleted(None)
             rcefpd.assert_not_called()

@@ -2595,13 +2595,17 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             'qrouter-bar', self.conf, agent.driver, agent.use_ipv6)
         ns.create()
 
-        calls = [mock.call(['sysctl', '-w', 'net.ipv4.ip_forward=1']),
-                 mock.call(['sysctl', '-w', 'net.ipv4.conf.all.arp_ignore=1']),
+        calls = [mock.call(['sysctl', '-w', 'net.ipv4.ip_forward=1'],
+                           privsep_exec=True),
+                 mock.call(['sysctl', '-w', 'net.ipv4.conf.all.arp_ignore=1'],
+                           privsep_exec=True),
                  mock.call(
-                     ['sysctl', '-w', 'net.ipv4.conf.all.arp_announce=2'])]
+                     ['sysctl', '-w', 'net.ipv4.conf.all.arp_announce=2'],
+                     privsep_exec=True)]
         if agent.use_ipv6:
             calls.append(mock.call(
-                ['sysctl', '-w', 'net.ipv6.conf.all.forwarding=1']))
+                ['sysctl', '-w', 'net.ipv6.conf.all.forwarding=1'],
+                privsep_exec=True))
 
         self.mock_ip.netns.execute.assert_has_calls(calls)
 
