@@ -3501,6 +3501,7 @@ class TestOvsDvrNeutronAgent(object):
         phys_br = mock.create_autospec(self.br_phys_cls('br-phys'))
         int_br.set_db_attribute.return_value = True
         int_br.db_get_val.return_value = {}
+        int_br.delete_arp_destination_change = mock.Mock()
         with mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                'get_subnet_for_dvr',
                                return_value={'gateway_ip': gateway_ip,
@@ -3546,8 +3547,12 @@ class TestOvsDvrNeutronAgent(object):
             phys_br.reset_mock()
 
             ports_to_unbind = {}
-            expected_br_int_mock_calls_gateway_port = 2
-            expected_br_int_mock_calls_nongateway_port = 1
+            if ip_version == n_const.IP_VERSION_4:
+                expected_br_int_mock_calls_gateway_port = 3
+                expected_br_int_mock_calls_nongateway_port = 2
+            else:
+                expected_br_int_mock_calls_gateway_port = 2
+                expected_br_int_mock_calls_nongateway_port = 1
             if port_type == 'gateway':
                 ports_to_unbind = {
                     self._port: expected_br_int_mock_calls_gateway_port
@@ -3575,6 +3580,12 @@ class TestOvsDvrNeutronAgent(object):
                         mock.call.delete_dvr_process_ipv4(
                             vlan_tag=lvid,
                             gateway_ip=gateway_ip),
+                    ]
+                    host_mac = self.agent.dvr_agent.dvr_mac_address
+                    expected_on_int_br += [
+                        mock.call.delete_arp_destination_change(
+                            target_mac_address=gateway_mac,
+                            orig_mac_address=host_mac)
                     ]
                 else:
                     expected_on_tun_br = [
