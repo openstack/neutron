@@ -434,7 +434,7 @@
         OVS_BRANCH: 0047ca3a0290f1ef954f2c76b31477cf4b9755f5
       # TODO(slaweq): remove test_reboot_server_hard from the blacklist when
       # when bug https://bugs.launchpad.net/neutron/+bug/1906490 will be fixed
-      tempest_black_regex: "(^tempest.api.compute.servers.test_server_actions.ServerActionsTestJSON.test_reboot_server_hard)"
+      tempest_exclude_regex: "(^tempest.api.compute.servers.test_server_actions.ServerActionsTestJSON.test_reboot_server_hard)"
 
 - job:
     name: neutron-ovn-tempest-ovs-release
