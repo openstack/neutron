@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
 from unittest import mock
 
 import fixtures
@@ -40,10 +41,15 @@ class LinuxbridgeCleanupTest(base.BaseSudoTestCase):
         # NOTE(slaweq): use of oslo.privsep inside neutron-linuxbridge-cleanup
         # script requires rootwrap helper to be configured in this script's
         # config
+        privsep_helper = os.path.join(
+            os.getenv('VIRTUAL_ENV'), 'bin', 'privsep-helper')
         config.update({
             'AGENT': {
                 'root_helper': tests_base.get_rootwrap_cmd(),
                 'root_helper_daemon': tests_base.get_rootwrap_daemon_cmd()
+            },
+            'privsep': {
+                'helper_command': ' '.join(['sudo', '-E', privsep_helper]),
             }
         })
 
@@ -57,7 +63,7 @@ class LinuxbridgeCleanupTest(base.BaseSudoTestCase):
 
         cmd = 'neutron-linuxbridge-cleanup', '--config-file', conf.filename
         ip_wrapper = ip_lib.IPWrapper(br_fixture.namespace)
-        ip_wrapper.netns.execute(cmd)
+        ip_wrapper.netns.execute(cmd, privsep_exec=True)
 
         self.assertEqual(bridge_exists, ip_lib.device_exists(
             br_fixture.bridge.name, br_fixture.namespace))

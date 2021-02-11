@@ -638,6 +638,9 @@ class ListNamespacePids(functional_base.BaseSudoTestCase):
     @staticmethod
     def _run_sleep(namespace, timeout):
         ip_wrapper = ip_lib.IPWrapper(namespace=namespace)
+        # NOTE(ralonsoh): this is a "long" (more than one second) lived
+        # process. It should not be executed in a privsep context to avoid
+        # a possible privsep thread starvation.
         ip_wrapper.netns.execute(['sleep', timeout], check_exit_code=False)
 
     def _check_pids(self, num_pids, namespace=None):

@@ -111,8 +111,9 @@ def assert_ping(src_namespace, dst_ip, timeout=1, count=3):
     ipversion = netaddr.IPAddress(dst_ip).version
     ping_command = 'ping' if ipversion == 4 else 'ping6'
     ns_ip_wrapper = ip_lib.IPWrapper(src_namespace)
-    ns_ip_wrapper.netns.execute([ping_command, '-W', timeout, '-c', count,
-                                 dst_ip])
+    ns_ip_wrapper.netns.execute(
+        [ping_command, '-W', timeout, '-c', count, dst_ip],
+        privsep_exec=True)
 
 
 def assert_async_ping(src_namespace, dst_ip, timeout=1, count=1, interval=1):
@@ -124,8 +125,9 @@ def assert_async_ping(src_namespace, dst_ip, timeout=1, count=1, interval=1):
     # cannot be used and it needs to be done using the following workaround.
     for _index in range(count):
         start_time = time.time()
-        ns_ip_wrapper.netns.execute([ping_command, '-W', timeout, '-c', '1',
-                                     dst_ip])
+        ns_ip_wrapper.netns.execute(
+            [ping_command, '-W', timeout, '-c', '1', dst_ip],
+            privsep_exec=True)
         end_time = time.time()
         diff = end_time - start_time
         if 0 < diff < interval:
@@ -167,7 +169,7 @@ def assert_arping(src_namespace, dst_ip, source=None, timeout=1, count=1):
     if source:
         arping_cmd.extend(['-s', source])
     arping_cmd.append(dst_ip)
-    ns_ip_wrapper.netns.execute(arping_cmd)
+    ns_ip_wrapper.netns.execute(arping_cmd, privsep_exec=True)
 
 
 def assert_no_arping(src_namespace, dst_ip, source=None, timeout=1, count=1):
@@ -223,7 +225,8 @@ def get_free_namespace_port(protocol, namespace=None, start=1024, end=None):
         raise ValueError("Unsupported protocol %s" % protocol)
 
     ip_wrapper = ip_lib.IPWrapper(namespace=namespace)
-    output = ip_wrapper.netns.execute(['ss', param], run_as_root=True)
+    output = ip_wrapper.netns.execute(['ss', param], run_as_root=True,
+                                      privsep_exec=True)
     used_ports = _get_source_ports_from_ss_output(output)
 
     return get_unused_port(used_ports, start, end)

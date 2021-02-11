@@ -175,8 +175,9 @@ class ARPSpoofTestCase(OVSAgentTestBase):
         self.dst_p.addr.add('%s/24' % self.dst_addr)
         ns_ip_wrapper = ip_lib.IPWrapper(self.src_namespace)
         try:
-            ns_ip_wrapper.netns.execute(['arping', '-I', self.src_p.name,
-                                         '-c1', self.dst_addr])
+            ns_ip_wrapper.netns.execute(
+                ['arping', '-I', self.src_p.name, '-c1', self.dst_addr],
+                privsep_exec=True)
             tools.fail("arping should have failed. The arp request should "
                        "have been blocked.")
         except RuntimeError:

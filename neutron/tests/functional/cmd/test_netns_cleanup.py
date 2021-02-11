@@ -144,8 +144,8 @@ class NetnsCleanupTest(base.BaseSudoTestCase):
                 # Otherwise, it won't find the necessary packages such as
                 # oslo_config
                 ip.netns.execute(command,
-                                 addl_env={'PATH':
-                                           os.environ.get('PATH')})
+                                 addl_env={'PATH': os.environ.get('PATH')},
+                                 privsep_exec=True)
         return proc_count
 
     @staticmethod

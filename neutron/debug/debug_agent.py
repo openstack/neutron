@@ -120,6 +120,8 @@ class NeutronDebugAgent(object):
         if not command:
             return "sudo ip netns exec %s" % self._get_namespace(port)
         namespace = ip.ensure_namespace(namespace)
+        # NOTE(ralonsoh): this is going to be called from inside the
+        # "neutron-debug" shell command; privsep is not configured.
         return namespace.netns.execute(shlex.split(command))
 
     def ensure_probe(self, network_id):
