@@ -15,8 +15,6 @@ import re
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as const
 
-# TODO(lucasagomes): Remove OVN_SG_NAME_EXT_ID_KEY in the Rocky release
-OVN_SG_NAME_EXT_ID_KEY = 'neutron:security_group_name'
 OVN_SG_EXT_ID_KEY = 'neutron:security_group_id'
 OVN_SG_RULE_EXT_ID_KEY = 'neutron:security_group_rule_id'
 OVN_ML2_MECH_DRIVER_NAME = 'ovn'
