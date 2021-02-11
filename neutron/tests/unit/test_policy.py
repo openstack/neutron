@@ -15,6 +15,8 @@
 
 """Test of Policy Engine For Neutron"""
 
+import copy
+import re
 from unittest import mock
 
 from neutron_lib.api import attributes
@@ -205,6 +207,34 @@ FAKE_RESOURCES = {"%ss" % FAKE_RESOURCE_NAME:
                                          {'sub_attr_1': {'type:string': None},
                                           'sub_attr_2': {'type:string': None}}}
                             }}}
+
+
+class CustomRulesTestCase(base.BaseTestCase):
+
+    def test_field_check__boolean_value(self):
+        check = policy.FieldCheck('field', 'networks:router:external=True')
+        self.assertEqual('networks', check.resource)
+        self.assertEqual('router:external', check.field)
+        # TODO(stephenfin): I expected this to get converted to a boolean :-\
+        self.assertEqual('True', check.value)
+        self.assertIsNone(check.regex)
+
+    def test_field_check__regex_value(self):
+        check = policy.FieldCheck('field', 'port:device_owner=~^network:')
+        self.assertEqual('port', check.resource)
+        self.assertEqual('device_owner', check.field)
+        self.assertEqual('~^network:', check.value)
+        self.assertEqual(re.compile('^network:'), check.regex)
+
+    def test_field_check_deepcopy(self):
+        check_a = policy.FieldCheck('field', 'port:device_owner=~^network:')
+        check_b = copy.deepcopy(check_a)
+
+        self.assertIsNot(check_a, check_b)
+        self.assertEqual(check_a.resource, check_b.resource)
+        self.assertEqual(check_a.field, check_b.field)
+        self.assertEqual(check_a.value, check_b.value)
+        self.assertEqual(check_a.regex, check_b.regex)
 
 
 class NeutronPolicyTestCase(base.BaseTestCase):
