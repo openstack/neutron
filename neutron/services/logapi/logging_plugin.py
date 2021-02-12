@@ -140,5 +140,5 @@ class LoggingPlugin(log_ext.LoggingPluginBase):
                                sorts=None, limit=None,
                                marker=None, page_reverse=False):
         """Get supported logging types"""
-        return [{'type': type_}
+        return [{'id': None, 'type': type_}
                 for type_ in self.supported_logging_types]
