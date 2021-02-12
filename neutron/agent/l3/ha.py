@@ -20,6 +20,7 @@ import eventlet
 from neutron_lib import constants
 from oslo_log import log as logging
 from oslo_utils import fileutils
+from oslo_utils import netutils
 import webob
 
 from neutron.agent.linux import utils as agent_utils
@@ -217,9 +218,12 @@ class AgentMixin(object):
         # routers needs to serve metadata requests to local ports.
         if state == 'primary' or ri.router.get('distributed', False):
             LOG.debug('Spawning metadata proxy for router %s', router_id)
+            spawn_kwargs = {}
+            if netutils.is_ipv6_enabled():
+                spawn_kwargs['bind_address'] = '::'
             self.metadata_driver.spawn_monitored_metadata_proxy(
                 self.process_monitor, ri.ns_name, self.conf.metadata_port,
-                self.conf, router_id=ri.router_id)
+                self.conf, router_id=ri.router_id, **spawn_kwargs)
         else:
             LOG.debug('Closing metadata proxy for router %s', router_id)
             self.metadata_driver.destroy_monitored_metadata_proxy(
