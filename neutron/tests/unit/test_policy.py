@@ -236,6 +236,13 @@ class CustomRulesTestCase(base.BaseTestCase):
         self.assertEqual(check_a.value, check_b.value)
         self.assertEqual(check_a.regex, check_b.regex)
 
+    def test_owner_check_deepcopy(self):
+        check_a = policy.OwnerCheck('tenant_id', '%(tenant_id)s')
+        check_b = copy.deepcopy(check_a)
+
+        self.assertIsNot(check_a, check_b)
+        self.assertEqual(check_a.target_field, check_b.target_field)
+
 
 class NeutronPolicyTestCase(base.BaseTestCase):
 

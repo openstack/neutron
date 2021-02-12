@@ -256,6 +256,9 @@ class OwnerCheck(policy.Check):
     resource and perform the check.
     """
     def __init__(self, kind, match):
+        self._orig_kind = kind
+        self._orig_match = match
+
         # Process the match
         try:
             self.target_field = re.findall(r'^\%\((.*)\)s$',
@@ -270,6 +273,14 @@ class OwnerCheck(policy.Check):
                 reason=err_reason)
         self._cache = cache._get_memory_cache_region(expiration_time=5)
         super(OwnerCheck, self).__init__(kind, match)
+
+    # NOTE(slaweq): It seems we need to have it like that, otherwise we hit
+    # TypeError: cannot pickle '_thread.RLock' object
+    # during initialization of the policy rules when Neutron is run with
+    # mod_uwsgi, see bug https://bugs.launchpad.net/neutron/+bug/1915494 for
+    # details
+    def __deepcopy__(self, memo):
+        return OwnerCheck(self._orig_kind, self._orig_match)
 
     @cache.cache_method_results
     def _extract(self, resource_type, resource_id, field):
