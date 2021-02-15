@@ -538,10 +538,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def get_address_sets(self):
         address_sets = {}
         for row in self._tables['Address_Set'].rows.values():
-            # TODO(lucasagomes): Remove OVN_SG_NAME_EXT_ID_KEY in the
-            # Rocky release
-            if not (ovn_const.OVN_SG_EXT_ID_KEY in row.external_ids or
-               ovn_const.OVN_SG_NAME_EXT_ID_KEY in row.external_ids):
+            if not (ovn_const.OVN_SG_EXT_ID_KEY in row.external_ids):
                 continue
             name = getattr(row, 'name')
             data = {}
