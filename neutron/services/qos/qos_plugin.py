@@ -101,6 +101,10 @@ class QoSPlugin(qos.QoSPluginBase):
             self._validate_update_network_callback,
             callbacks_resources.NETWORK,
             callbacks_events.PRECOMMIT_UPDATE)
+        callbacks_registry.subscribe(
+            self._validate_create_network_callback,
+            callbacks_resources.NETWORK,
+            callbacks_events.PRECOMMIT_CREATE)
 
     @staticmethod
     @resource_extend.extends([port_def.COLLECTION_NAME])
@@ -343,6 +347,20 @@ class QoSPlugin(qos.QoSPluginBase):
 
         self.validate_policy_for_port(context, policy, updated_port)
 
+    def _validate_create_network_callback(self, resource, event, trigger,
+                                          **kwargs):
+        context = kwargs['context']
+        network_id = kwargs['network']['id']
+        network = network_object.Network.get_object(context, id=network_id)
+
+        policy_id = network.qos_policy_id
+        if policy_id is None:
+            return
+
+        policy = policy_object.QosPolicy.get_object(
+            context.elevated(), id=policy_id)
+        self.validate_policy_for_network(context, policy, network_id)
+
     def _validate_update_network_callback(self, resource, event, trigger,
                                           payload=None):
         context = payload.context
@@ -357,6 +375,9 @@ class QoSPlugin(qos.QoSPluginBase):
 
         policy = policy_object.QosPolicy.get_object(
             context.elevated(), id=policy_id)
+        self.validate_policy_for_network(
+            context, policy, network_id=updated_network['id'])
+
         ports = ports_object.Port.get_objects(
                 context, network_id=updated_network['id'])
         # Filter only this ports which don't have overwritten policy
@@ -379,6 +400,13 @@ class QoSPlugin(qos.QoSPluginBase):
                     context, rule, port):
                 raise qos_exc.QosRuleNotSupported(rule_type=rule.rule_type,
                                                   port_id=port['id'])
+
+    def validate_policy_for_network(self, context, policy, network_id):
+        for rule in policy.rules:
+            if not self.driver_manager.validate_rule_for_network(
+                    context, rule, network_id):
+                raise qos_exc.QosRuleNotSupportedByNetwork(
+                    rule_type=rule.rule_type, network_id=network_id)
 
     def reject_min_bw_rule_updates(self, context, policy):
         ports = self._get_ports_with_policy(context, policy)

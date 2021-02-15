@@ -43,3 +43,5 @@ class TestOVSDriver(base.BaseQosTestCase):
                     return_value=net):
                 test_method(self.driver.validate_rule_for_port(
                     mock.Mock(), rule, port))
+                test_method(self.driver.validate_rule_for_network(
+                    mock.Mock(), rule, network_id=mock.Mock()))
