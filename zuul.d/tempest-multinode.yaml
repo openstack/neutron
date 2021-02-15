@@ -337,16 +337,7 @@
       # tempest.scenario.test_network_v6.TestGettingAddress module from
       # prohibit list when bug https://bugs.launchpad.net/neutron/+bug/1863577
       # will be fixed
-      # TODO(mjozefcz): The test test_port_security_macspoofing_port
-      # and related bug https://bugs.launchpad.net/tempest/+bug/1728886
-      # are fixed in Core-OVN, but tempest-slow job uses stable release of
-      # core OVN now and thats why it is still failing in this job.
-      # Remove this prohibit list when OVN 20.06 will be releaseed and consumed.
-      # In addition: on next PTG we will discuss the rules of running specific
-      # jobs with OVN master and OVN release branches. Please consider
-      # specyfing explicitely the version of OVN in tempest-slow jobs.
       tempest_exclude_regex: "\
-          (?:tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port)|\
           (^tempest.scenario.test_network_v6.TestGettingAddress)"
 
 
