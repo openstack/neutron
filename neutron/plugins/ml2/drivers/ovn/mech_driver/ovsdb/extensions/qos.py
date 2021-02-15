@@ -26,6 +26,7 @@ from oslo_log import log as logging
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 
 
 LOG = logging.getLogger(__name__)
@@ -91,7 +92,7 @@ class OVNClientQosExtension(object):
         return qos_rules
 
     @staticmethod
-    def _ovn_qos_rule_match(direction, port_id, ip_address):
+    def _ovn_qos_rule_match(direction, port_id, ip_address, resident_port):
         if direction == constants.EGRESS_DIRECTION:
             in_or_out = 'inport'
             src_or_dst = 'src'
@@ -100,15 +101,15 @@ class OVNClientQosExtension(object):
             src_or_dst = 'dst'
 
         match = '%s == "%s"' % (in_or_out, port_id)
-        if ip_address:
+        if ip_address and resident_port:
             match += (' && ip4.%s == %s && is_chassis_resident("%s")' %
-                      (src_or_dst, ip_address,
-                       utils.ovn_cr_lrouter_port_name(port_id)))
+                      (src_or_dst, ip_address, resident_port))
 
         return match
 
     def _ovn_qos_rule(self, rules_direction, rules, port_id, network_id,
-                      fip_id=None, ip_address=None, delete=False):
+                      fip_id=None, ip_address=None, resident_port=None,
+                      delete=False):
         """Generate an OVN QoS register based on several Neutron QoS rules
 
         A OVN QoS register can contain "bandwidth" and "action" parameters.
@@ -129,6 +130,9 @@ class OVNClientQosExtension(object):
                        limit.
         :param ip_address: (string) IP address, for L3 floating IP bandwidth
                            limit.
+        :param resident_port: (string) for L3 floating IP bandwidth, this is
+                              a logical switch port located in the chassis
+                              where the floating IP traffic is NATed.
         :param delete: (bool) defines if this rule if going to be a partial
                        one (without any bandwidth or DSCP information) to be
                        used only as deletion rule.
@@ -142,7 +146,8 @@ class OVNClientQosExtension(object):
         direction = (
             'from-lport' if rules_direction == constants.EGRESS_DIRECTION else
             'to-lport')
-        match = self._ovn_qos_rule_match(rules_direction, port_id, ip_address)
+        match = self._ovn_qos_rule_match(rules_direction, port_id, ip_address,
+                                         resident_port)
 
         ovn_qos_rule = {'switch': lswitch_name, 'direction': direction,
                         'priority': OVN_QOS_DEFAULT_RULE_PRIORITY,
@@ -286,12 +291,20 @@ class OVNClientQosExtension(object):
         if not gw_port_id:
             return
 
+        if ovn_conf.is_ovn_distributed_floating_ip():
+            # DVR, floating IP GW is in the same compute node as private port.
+            resident_port = floatingip['port_id']
+        else:
+            # Non-DVR, floating IP GW is located where chassisredirect lrp is.
+            resident_port = utils.ovn_cr_lrouter_port_name(gw_port_id)
+
         qos_rules = self._qos_rules(admin_context, qos_policy_id)
         for direction, rules in qos_rules.items():
             ovn_rule = self._ovn_qos_rule(
                 direction, rules, gw_port_id,
                 floatingip['floating_network_id'], fip_id=floatingip['id'],
-                ip_address=floatingip['floating_ip_address'])
+                ip_address=floatingip['floating_ip_address'],
+                resident_port=resident_port)
             if ovn_rule:
                 txn.add(self._driver._nb_idl.qos_add(**ovn_rule))
 
