@@ -326,6 +326,8 @@ class TestQosPlugin(base.BaseQosTestCase):
             'neutron.objects.qos.policy.QosPolicy.get_object',
             return_value=policy_mock
         ) as get_policy, mock.patch.object(
+            self.qos_plugin, "validate_policy_for_network"
+        ) as validate_policy_for_network, mock.patch.object(
             self.qos_plugin, "validate_policy_for_ports"
         ) as validate_policy_for_ports, mock.patch.object(
             self.ctxt, "elevated", return_value=admin_ctxt
@@ -337,6 +339,7 @@ class TestQosPlugin(base.BaseQosTestCase):
                     states=(kwargs['original_network'],)))
             if policy_id is None or policy_id == original_policy_id:
                 get_policy.assert_not_called()
+                validate_policy_for_network.assert_not_called()
                 get_ports.assert_not_called()
                 validate_policy_for_ports.assert_not_called()
             else:
@@ -383,6 +386,20 @@ class TestQosPlugin(base.BaseQosTestCase):
                     self.ctxt, self.policy, port)
             except qos_exc.QosRuleNotSupported:
                 self.fail("QosRuleNotSupported exception unexpectedly raised")
+
+    def test_validate_policy_for_network(self):
+        network = uuidutils.generate_uuid()
+        with mock.patch.object(
+            self.qos_plugin.driver_manager, "validate_rule_for_network",
+            return_value=True
+        ):
+            self.policy.rules = [self.rule]
+            try:
+                self.qos_plugin.validate_policy_for_network(
+                    self.ctxt, self.policy, network_id=network)
+            except qos_exc.QosRuleNotSupportedByNetwork:
+                self.fail("QosRuleNotSupportedByNetwork "
+                          "exception unexpectedly raised")
 
     def test_create_min_bw_rule_on_bound_port(self):
         policy = self._get_policy()
@@ -1235,6 +1252,35 @@ class TestQosPluginDB(base.BaseQosTestCase):
                                          qos_policy_id=qos_policy_id)
         network.create()
         return network
+
+    def _test_validate_create_network_callback(self, network_qos=False):
+        net_qos_obj = self._make_qos_policy()
+        net_qos_id = net_qos_obj.id if network_qos else None
+        network = self._make_network(qos_policy_id=net_qos_id)
+        kwargs = {"context": self.context,
+                  "network": network}
+
+        with mock.patch.object(self.qos_plugin,
+                               'validate_policy_for_network') \
+                as mock_validate_policy:
+            self.qos_plugin._validate_create_network_callback(
+                'NETWORK', 'precommit_create', 'test_plugin', **kwargs)
+
+        qos_policy = None
+        if network_qos:
+            qos_policy = net_qos_obj
+
+        if qos_policy:
+            mock_validate_policy.assert_called_once_with(
+                self.context, qos_policy, network.id)
+        else:
+            mock_validate_policy.assert_not_called()
+
+    def test_validate_create_network_callback(self):
+        self._test_validate_create_network_callback(network_qos=True)
+
+    def test_validate_create_network_callback_no_qos(self):
+        self._test_validate_create_network_callback(network_qos=False)
 
     def _test_validate_create_port_callback(self, port_qos=False,
                                             network_qos=False):

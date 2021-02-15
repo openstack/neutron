@@ -60,11 +60,14 @@ class OVSDriver(base.DriverBase):
             requires_rpc_notifications=True)
 
     def validate_rule_for_port(self, context, rule, port):
+        return self.validate_rule_for_network(context, rule, port.network_id)
+
+    def validate_rule_for_network(self, context, rule, network_id):
         # Minimum-bandwidth rule is only supported on networks whose
         # first segment is backed by a physnet.
         if rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
             net = network_object.Network.get_object(
-                context, id=port.network_id)
+                context, id=network_id)
             physnet = net.segments[0].physical_network
             if physnet is None:
                 return False
