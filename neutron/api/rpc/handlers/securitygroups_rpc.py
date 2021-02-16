@@ -357,6 +357,7 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
             port['security_groups'] = list(ovo.security_group_ids)
             port['security_group_rules'] = []
             port['security_group_source_groups'] = []
+            port['security_group_remote_address_groups'] = []
             port['fixed_ips'] = [str(f['ip_address'])
                                  for f in port['fixed_ips']]
             # NOTE(kevinbenton): this id==device is only safe for OVS. a lookup
@@ -382,6 +383,19 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
             for sg_id in p.security_group_ids:
                 if sg_id in ips_by_group:
                     ips_by_group[sg_id].update(set(port_ips))
+        return ips_by_group
+
+    def _select_ips_for_remote_address_group(self, context,
+                                             remote_address_group_ids):
+        if not remote_address_group_ids:
+            return {}
+        ips_by_group = {ag: set() for ag in remote_address_group_ids}
+        for ag_id in remote_address_group_ids:
+            ag = self.rcache.get_resource_by_id('AddressGroup', ag_id)
+            # NOTE(hangyang) Expected data structure is (ip, mac) tuple
+            ips = [(str(addr_assoc.address), None)
+                   for addr_assoc in ag.addresses]
+            ips_by_group[ag_id].update(set(ips))
         return ips_by_group
 
     def _select_rules_for_ports(self, context, ports):

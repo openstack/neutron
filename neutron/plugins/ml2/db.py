@@ -206,6 +206,7 @@ def make_port_dict_with_security_groups(port, sec_groups):
     port_dict['security_groups'] = sec_groups
     port_dict['security_group_rules'] = []
     port_dict['security_group_source_groups'] = []
+    port_dict['security_group_remote_address_groups'] = []
     port_dict['fixed_ips'] = [ip['ip_address']
                               for ip in port['fixed_ips']]
     return port_dict

@@ -158,10 +158,13 @@ def merge_port_ranges(rule_conj_list):
 def flow_priority_offset(rule, conjunction=False):
     """Calculate flow priority offset from rule.
     Whether the rule belongs to conjunction flows or not is decided
-    upon existence of rule['remote_group_id'] but can be overridden
+    upon existence of rule['remote_group_id'] or
+    rule['remote_address_group_id'] but can be overridden
     to be True using the optional conjunction arg.
     """
-    conj_offset = 0 if 'remote_group_id' in rule or conjunction else 4
+    conj_offset = 0 if 'remote_group_id' in rule or \
+                       'remote_address_group_id' in rule or \
+                       conjunction else 4
     protocol = rule.get('protocol')
     if protocol is None:
         return conj_offset
@@ -295,7 +298,7 @@ def _flow_priority_offset_from_conj_id(conj_id):
 def create_flows_for_ip_address(ip_address, direction, ethertype,
                                 vlan_tag, conj_ids):
     """Create flows from a rule and an ip_address derived from
-    remote_group_id
+    remote_group_id or remote_address_group_id
     """
     ip_address, mac_address = ip_address
     net = netaddr.IPNetwork(str(ip_address))
@@ -324,7 +327,9 @@ def create_flows_for_ip_address(ip_address, direction, ethertype,
     flow_template[FLOW_FIELD_FOR_IPVER_AND_DIRECTION[(
         ip_ver, direction)]] = ip_prefix
 
-    if any_src_ip:
+    if any_src_ip and mac_address:
+        # A remote address group can contain an any_src_ip without
+        # mac_address and in that case we don't set the dl_src.
         flow_template['dl_src'] = mac_address
 
     result = []

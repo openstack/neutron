@@ -22,6 +22,7 @@ from neutron_lib.db import api as db_api
 from neutron_lib.utils import helpers
 
 from neutron._i18n import _
+from neutron.db.models import address_group as ag_models
 from neutron.db.models import allowed_address_pair as aap_models
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
@@ -147,6 +148,7 @@ class SecurityGroupInfoAPIMixin(object):
         - security_groups
         - security_group_rules,
         - security_group_source_groups
+        - security_group_remote_address_groups
         - fixed_ips
         """
         raise NotImplementedError(_("%s must implement get_port_from_device "
@@ -168,14 +170,20 @@ class SecurityGroupInfoAPIMixin(object):
                    'sg_member_ips': {}}
         rules_in_db = self._select_rules_for_ports(context, ports)
         remote_security_group_info = {}
+        remote_address_group_info = {}
         for (port_id, rule_in_db) in rules_in_db:
             remote_gid = rule_in_db.get('remote_group_id')
+            remote_ag_id = rule_in_db.get('remote_address_group_id')
             security_group_id = rule_in_db.get('security_group_id')
             ethertype = rule_in_db['ethertype']
             if ('security_group_source_groups'
                     not in sg_info['devices'][port_id]):
                 sg_info['devices'][port_id][
                     'security_group_source_groups'] = []
+            if ('security_group_remote_address_groups'
+                    not in sg_info['devices'][port_id]):
+                sg_info['devices'][port_id][
+                    'security_group_remote_address_groups'] = []
 
             if remote_gid:
                 if (remote_gid
@@ -188,7 +196,18 @@ class SecurityGroupInfoAPIMixin(object):
                 if ethertype not in remote_security_group_info[remote_gid]:
                     # this set will be serialized into a list by rpc code
                     remote_security_group_info[remote_gid][ethertype] = set()
-
+            elif remote_ag_id:
+                if (remote_ag_id
+                    not in sg_info['devices'][port_id][
+                        'security_group_remote_address_groups']):
+                    sg_info['devices'][port_id][
+                        'security_group_remote_address_groups'].append(
+                        remote_ag_id)
+                if remote_ag_id not in remote_address_group_info:
+                    remote_address_group_info[remote_ag_id] = {}
+                if ethertype not in remote_address_group_info[remote_ag_id]:
+                    # this set will be serialized into a list by rpc code
+                    remote_address_group_info[remote_ag_id][ethertype] = set()
             direction = rule_in_db['direction']
             stateful = self._is_security_group_stateful(context,
                                                         security_group_id)
@@ -198,7 +217,8 @@ class SecurityGroupInfoAPIMixin(object):
                 'stateful': stateful}
 
             for key in ('protocol', 'port_range_min', 'port_range_max',
-                        'remote_ip_prefix', 'remote_group_id'):
+                        'remote_ip_prefix', 'remote_group_id',
+                        'remote_address_group_id'):
                 if rule_in_db.get(key) is not None:
                     if key == 'remote_ip_prefix':
                         direction_ip_prefix = DIRECTION_IP_PREFIX[direction]
@@ -221,7 +241,13 @@ class SecurityGroupInfoAPIMixin(object):
         # rules still reside in sg_info['devices'] [port_id]
         self._apply_provider_rule(context, sg_info['devices'])
 
-        return self._get_security_group_member_ips(context, sg_info)
+        self._get_security_group_member_ips(context, sg_info)
+        # NOTE(hangyang) Remote address group IP info are also stored in
+        # sg_info['sg_member_ips'] so that the two types of remote groups
+        # can be processed by the same firewall functions.
+        sg_info['sg_member_ips'].update(remote_address_group_info)
+        return self._get_address_group_ips(context, sg_info,
+                                           remote_address_group_info)
 
     def _get_security_group_member_ips(self, context, sg_info):
         ips = self._select_ips_for_remote_group(
@@ -233,6 +259,17 @@ class SecurityGroupInfoAPIMixin(object):
                     sg_info['sg_member_ips'][sg_id][ethertype].add(ip)
         return sg_info
 
+    def _get_address_group_ips(self, context, sg_info,
+                               remote_address_group_info):
+        ips = self._select_ips_for_remote_address_group(
+            context, remote_address_group_info.keys())
+        for ag_id, ag_ips in ips.items():
+            for ip in ag_ips:
+                ethertype = 'IPv%d' % netaddr.IPNetwork(ip[0]).version
+                if ethertype in remote_address_group_info[ag_id]:
+                    sg_info['sg_member_ips'][ag_id][ethertype].add(ip)
+        return sg_info
+
     def _select_remote_group_ids(self, ports):
         remote_group_ids = []
         for port in ports.values():
@@ -242,22 +279,41 @@ class SecurityGroupInfoAPIMixin(object):
                     remote_group_ids.append(remote_group_id)
         return remote_group_ids
 
-    def _convert_remote_group_id_to_ip_prefix(self, context, ports):
+    def _select_remote_address_group_ids(self, ports):
+        remote_address_group_ids = []
+        for port in ports.values():
+            for rule in port.get('security_group_rules'):
+                remote_address_group_id = rule.get('remote_address_group_id')
+                if remote_address_group_id:
+                    remote_address_group_ids.append(remote_address_group_id)
+        return remote_address_group_ids
+
+    def _convert_remote_id_to_ip_prefix(self, context, ports):
         remote_group_ids = self._select_remote_group_ids(ports)
+        remote_address_group_ids = self._select_remote_address_group_ids(ports)
         ips = self._select_ips_for_remote_group(context, remote_group_ids)
+        ips.update(self._select_ips_for_remote_address_group(
+            context, remote_address_group_ids))
         for port in ports.values():
             updated_rule = []
             for rule in port.get('security_group_rules'):
                 remote_group_id = rule.get('remote_group_id')
+                remote_address_group_id = rule.get('remote_address_group_id')
                 direction = rule.get('direction')
                 direction_ip_prefix = DIRECTION_IP_PREFIX[direction]
-                if not remote_group_id:
+                if not (remote_group_id or remote_address_group_id):
                     updated_rule.append(rule)
                     continue
 
-                port['security_group_source_groups'].append(remote_group_id)
                 base_rule = rule
-                ip_list = [ip[0] for ip in ips[remote_group_id]]
+                if remote_group_id:
+                    port['security_group_source_groups'].append(
+                        remote_group_id)
+                    ip_list = [ip[0] for ip in ips[remote_group_id]]
+                else:
+                    port['security_group_remote_address_groups'].append(
+                        remote_address_group_id)
+                    ip_list = [ip[0] for ip in ips[remote_address_group_id]]
                 for ip in ip_list:
                     if ip in port.get('fixed_ips', []):
                         continue
@@ -324,7 +380,8 @@ class SecurityGroupInfoAPIMixin(object):
                 'ethertype': rule_in_db['ethertype'],
             }
             for key in ('protocol', 'port_range_min', 'port_range_max',
-                        'remote_ip_prefix', 'remote_group_id'):
+                        'remote_ip_prefix', 'remote_group_id',
+                        'remote_address_group_id'):
                 if rule_in_db.get(key) is not None:
                     if key == 'remote_ip_prefix':
                         direction_ip_prefix = DIRECTION_IP_PREFIX[direction]
@@ -333,12 +390,20 @@ class SecurityGroupInfoAPIMixin(object):
                     rule_dict[key] = rule_in_db[key]
             port['security_group_rules'].append(rule_dict)
         self._apply_provider_rule(context, ports)
-        return self._convert_remote_group_id_to_ip_prefix(context, ports)
+        return self._convert_remote_id_to_ip_prefix(context, ports)
 
     def _select_ips_for_remote_group(self, context, remote_group_ids):
         """Get all IP addresses (including allowed addr pairs) for each sg.
 
         Return dict of lists of IPs keyed by group_id.
+        """
+        raise NotImplementedError()
+
+    def _select_ips_for_remote_address_group(self, context,
+                                             remote_address_group_ids):
+        """Get all IP addresses for each address group.
+
+        Return dict of lists of IPs keyed by address_group_id.
         """
         raise NotImplementedError()
 
@@ -433,6 +498,25 @@ class SecurityGroupServerRpcMixin(SecurityGroupInfoAPIMixin,
             if allowed_addr_ip:
                 ips_by_group[security_group_id].add(
                     (allowed_addr_ip, mac))
+        return ips_by_group
+
+    @db_api.retry_if_session_inactive()
+    def _select_ips_for_remote_address_group(self, context,
+                                             remote_address_group_ids):
+        ips_by_group = {}
+        if not remote_address_group_ids:
+            return ips_by_group
+        for remote_ag_id in remote_address_group_ids:
+            ips_by_group[remote_ag_id] = set()
+
+        ag_assoc_ag_id = ag_models.AddressAssociation.address_group_id
+        ag_assoc_addr = ag_models.AddressAssociation.address
+        query = context.session.query(ag_assoc_ag_id, ag_assoc_addr)
+        query = query.filter(ag_assoc_ag_id.in_(remote_address_group_ids))
+        for ag_id, addr in query:
+            # In order to align the data structure expected on firewall,
+            # we set the mac address as None
+            ips_by_group[ag_id].add((addr, None))
         return ips_by_group
 
     @db_api.retry_if_session_inactive()

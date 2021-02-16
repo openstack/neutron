@@ -156,6 +156,7 @@ class SecurityGroupRpcTestPlugin(test_sg.SecurityGroupTestPlugin,
         if device:
             device['security_group_rules'] = []
             device['security_group_source_groups'] = []
+            device['security_group_remote_address_groups'] = []
             device['fixed_ips'] = [ip['ip_address']
                                    for ip in device['fixed_ips']]
         return device
@@ -507,15 +508,23 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
         with self.network() as n,\
                 self.subnet(n),\
                 self.security_group() as sg1,\
-                self.security_group() as sg2:
+                self.security_group() as sg2,\
+                self.address_group(addresses=['10.0.1.0/24']) as ag1:
             sg1_id = sg1['security_group']['id']
             sg2_id = sg2['security_group']['id']
+            ag1_id = ag1['address_group']['id']
+            ag1_ip = ag1['address_group']['addresses'][0]
             rule1 = self._build_security_group_rule(
                 sg1_id,
                 'ingress', const.PROTO_NAME_TCP, '24',
                 '25', remote_group_id=sg2['security_group']['id'])
+            rule2 = self._build_security_group_rule(
+                sg1_id,
+                'ingress', const.PROTO_NAME_TCP, '26',
+                '27', remote_address_group_id=ag1_id)
             rules = {
-                'security_group_rules': [rule1['security_group_rule']]}
+                'security_group_rules': [rule1['security_group_rule'],
+                                         rule2['security_group_rule']]}
             res = self._create_security_group_rule(self.fmt, rules)
             self.deserialize(self.fmt, res)
             self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
@@ -548,17 +557,31 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                      'ethertype': const.IPv4,
                      'port_range_max': 25, 'port_range_min': 24,
                      'remote_group_id': sg2_id,
-                     'stateful': True}
+                     'stateful': True},
+                    {'direction': u'ingress',
+                     'protocol': const.PROTO_NAME_TCP,
+                     'ethertype': const.IPv4,
+                     'port_range_max': 27, 'port_range_min': 26,
+                     'remote_address_group_id': ag1_id,
+                     'stateful': True},
                 ]},
-                'sg_member_ips': {sg2_id: {
-                    'IPv4': set([(port_ip2, None), ]),
-                    'IPv6': set(),
-                }}
+                'sg_member_ips': {
+                    sg2_id: {
+                        'IPv4': set([(port_ip2, None), ]),
+                        'IPv6': set()
+                    },
+                    ag1_id: {
+                        'IPv4': set([(ag1_ip, None), ]),
+                        'IPv6': set()
+                    },
+                },
             }
             self.assertEqual(expected['security_groups'],
                              ports_rpc['security_groups'])
             self.assertEqual(expected['sg_member_ips'][sg2_id]['IPv4'],
                              ports_rpc['sg_member_ips'][sg2_id]['IPv4'])
+            self.assertEqual(expected['sg_member_ips'][ag1_id]['IPv4'],
+                             ports_rpc['sg_member_ips'][ag1_id]['IPv4'])
             self._delete('ports', port_id1)
             self._delete('ports', port_id2)
 
@@ -633,15 +656,24 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
     def test_security_group_info_for_devices_only_ipv6_rule(self):
         with self.network() as n,\
                 self.subnet(n),\
-                self.security_group() as sg1:
+                self.security_group() as sg1,\
+                self.address_group(addresses=['2001::/16']) as ag1:
             sg1_id = sg1['security_group']['id']
+            ag1_id = ag1['address_group']['id']
+            ag1_ip = ag1['address_group']['addresses'][0]
             rule1 = self._build_security_group_rule(
                 sg1_id,
                 'ingress', const.PROTO_NAME_TCP, '22',
                 '22', remote_group_id=sg1_id,
                 ethertype=const.IPv6)
+            rule2 = self._build_security_group_rule(
+                sg1_id,
+                'ingress', const.PROTO_NAME_TCP, '23',
+                '23', remote_address_group_id=ag1_id,
+                ethertype=const.IPv6)
             rules = {
-                'security_group_rules': [rule1['security_group_rule']]}
+                'security_group_rules': [rule1['security_group_rule'],
+                                         rule2['security_group_rule']]}
             self._make_security_group_rule(self.fmt, rules)
 
             res1 = self._create_port(
@@ -666,16 +698,27 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                      'ethertype': const.IPv6,
                      'port_range_max': 22, 'port_range_min': 22,
                      'remote_group_id': sg1_id,
-                     'stateful': True}
+                     'stateful': True},
+                    {'direction': u'ingress',
+                     'protocol': const.PROTO_NAME_TCP,
+                     'ethertype': const.IPv6,
+                     'port_range_max': 23, 'port_range_min': 23,
+                     'remote_address_group_id': ag1_id,
+                     'stateful': True},
                 ]},
-                'sg_member_ips': {sg1_id: {
-                    'IPv6': set(),
-                }}
+                'sg_member_ips': {
+                    sg1_id: {'IPv6': set()},
+                    # This test uses RPC version 1.2 which gets compatible
+                    # member ips without mac address
+                    ag1_id: {'IPv6': set([ag1_ip])}
+                },
             }
             self.assertEqual(expected['security_groups'],
                              ports_rpc['security_groups'])
             self.assertEqual(expected['sg_member_ips'][sg1_id]['IPv6'],
                              ports_rpc['sg_member_ips'][sg1_id]['IPv6'])
+            self.assertEqual(expected['sg_member_ips'][ag1_id]['IPv6'],
+                             ports_rpc['sg_member_ips'][ag1_id]['IPv6'])
             self._delete('ports', port_id1)
 
     def test_security_group_rules_for_devices_ipv6_egress(self):
@@ -947,6 +990,34 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
         self.assertFalse(self.agent.refresh_firewall.called)
         self.assertFalse(self.firewall.security_group_updated.called)
 
+    def test_address_group_updated(self):
+        ag_list = ['fake_agid1', 'fake_agid2']
+        sg_list = ['fake_sgid1', 'fake_sgid2']
+        self.agent.plugin_rpc.get_secgroup_ids_for_address_group = mock.Mock(
+            return_value=sg_list
+        )
+        self.agent.security_groups_rule_updated = mock.Mock()
+        self.agent.address_group_updated(ag_list)
+        self.agent.plugin_rpc.get_secgroup_ids_for_address_group.\
+            assert_called_once_with(ag_list)
+        self.agent.security_groups_rule_updated.assert_called_once_with(
+            sg_list
+        )
+
+    def test_address_group_deleted(self):
+        ag_list = ['fake_agid1', 'fake_agid2']
+        sg_list = []
+        self.agent.plugin_rpc.get_secgroup_ids_for_address_group = mock.Mock(
+            return_value=sg_list
+        )
+        self.agent.security_groups_rule_updated = mock.Mock()
+        self.agent.address_group_updated(ag_list)
+        self.agent.plugin_rpc.get_secgroup_ids_for_address_group.\
+            assert_called_once_with(ag_list)
+        self.agent.security_groups_rule_updated.assert_called_once_with(
+            sg_list
+        )
+
     def test_refresh_firewall(self):
         self.agent.prepare_devices_filter(['fake_port_id'])
         self.agent.refresh_firewall()
@@ -1006,8 +1077,10 @@ class SecurityGroupAgentEnhancedRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
         fake_sg_info = {
             'security_groups': collections.OrderedDict([
                 ('fake_sgid2', []),
-                ('fake_sgid1', [{'remote_group_id': 'fake_sgid2'}])]),
-            'sg_member_ips': {'fake_sgid2': {'IPv4': [], 'IPv6': []}},
+                ('fake_sgid1', [{'remote_group_id': 'fake_sgid2'},
+                                {'remote_address_group_id': 'fake_agid1'}])]),
+            'sg_member_ips': {'fake_sgid2': {'IPv4': [], 'IPv6': []},
+                              'fake_agid1': {'IPv4': [], 'IPv6': []}},
             'devices': self.firewall.ports}
         self.agent.plugin_rpc.security_group_info_for_devices.return_value = (
             fake_sg_info)
@@ -1017,15 +1090,19 @@ class SecurityGroupAgentEnhancedRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
         self.agent.remove_devices_filter(['fake_device'])
         # these two mocks are too long, just use tmp_mock to replace them
         tmp_mock1 = mock.call.update_security_group_rules(
-            'fake_sgid1', [{'remote_group_id': 'fake_sgid2'}])
+            'fake_sgid1', [{'remote_group_id': 'fake_sgid2'},
+                           {'remote_address_group_id': 'fake_agid1'}])
         tmp_mock2 = mock.call.update_security_group_members(
             'fake_sgid2', {'IPv4': [], 'IPv6': []})
+        tmp_mock3 = mock.call.update_security_group_members(
+            'fake_agid1', {'IPv4': [], 'IPv6': []})
         # ignore device which is not filtered
         self.firewall.assert_has_calls([mock.call.defer_apply(),
                                         mock.call.update_security_group_rules(
                                             'fake_sgid2', []),
                                         tmp_mock1,
                                         tmp_mock2,
+                                        tmp_mock3,
                                         mock.call.prepare_port_filter(
                                             self.fake_device),
                                         mock.call.process_trusted_ports([]),
@@ -1075,17 +1152,25 @@ class SecurityGroupAgentEnhancedRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
         calls = [mock.call.defer_apply(),
                  mock.call.update_security_group_rules('fake_sgid2', []),
                  mock.call.update_security_group_rules(
-                     'fake_sgid1', [{'remote_group_id': 'fake_sgid2'}]),
+                     'fake_sgid1', [{'remote_group_id': 'fake_sgid2'},
+                                    {'remote_address_group_id': 'fake_agid1'}
+                                    ]),
                  mock.call.update_security_group_members(
                      'fake_sgid2', {'IPv4': [], 'IPv6': []}),
+                 mock.call.update_security_group_members('fake_agid1', {
+                     'IPv4': [], 'IPv6': []}),
                  mock.call.prepare_port_filter(self.fake_device),
                  mock.call.process_trusted_ports(['fake_port_id']),
                  mock.call.defer_apply(),
                  mock.call.update_security_group_rules('fake_sgid2', []),
                  mock.call.update_security_group_rules(
-                     'fake_sgid1', [{'remote_group_id': 'fake_sgid2'}]),
+                     'fake_sgid1', [{'remote_group_id': 'fake_sgid2'},
+                                    {'remote_address_group_id': 'fake_agid1'}
+                                    ]),
                  mock.call.update_security_group_members(
                      'fake_sgid2', {'IPv4': [], 'IPv6': []}),
+                 mock.call.update_security_group_members('fake_agid1', {
+                     'IPv4': [], 'IPv6': []}),
                  mock.call.update_port_filter(self.fake_device),
                  mock.call.process_trusted_ports([])]
 
@@ -1097,17 +1182,23 @@ class SecurityGroupAgentEnhancedRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
         calls = [mock.call.defer_apply(),
                  mock.call.update_security_group_rules('fake_sgid2', []),
                  mock.call.update_security_group_rules('fake_sgid1', [
-                     {'remote_group_id': 'fake_sgid2'}]),
+                     {'remote_group_id': 'fake_sgid2'},
+                     {'remote_address_group_id': 'fake_agid1'}]),
                  mock.call.update_security_group_members('fake_sgid2', {
                      'IPv4': [], 'IPv6': []
                  }),
+                 mock.call.update_security_group_members('fake_agid1', {
+                     'IPv4': [], 'IPv6': []}),
                  mock.call.prepare_port_filter(self.fake_device),
                  mock.call.process_trusted_ports([]),
                  mock.call.defer_apply(),
                  mock.call.update_security_group_rules('fake_sgid2', []),
                  mock.call.update_security_group_rules('fake_sgid1', [
-                     {'remote_group_id': 'fake_sgid2'}]),
+                     {'remote_group_id': 'fake_sgid2'},
+                     {'remote_address_group_id': 'fake_agid1'}]),
                  mock.call.update_security_group_members('fake_sgid2', {
+                     'IPv4': [], 'IPv6': []}),
+                 mock.call.update_security_group_members('fake_agid1', {
                      'IPv4': [], 'IPv6': []}),
                  mock.call.update_port_filter(self.fake_device),
                  mock.call.process_trusted_ports([]),
@@ -1127,14 +1218,22 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
             defer_refresh_firewall=True)
 
     @contextlib.contextmanager
-    def add_fake_device(self, device, sec_groups, source_sec_groups=None):
+    def add_fake_device(self, device, sec_groups, source_sec_groups=None,
+                        remote_address_groups=None):
         fake_device = {'device': device,
                        'security_groups': sec_groups,
                        'security_group_source_groups': source_sec_groups or [],
+                       'security_group_remote_address_groups':
+                           remote_address_groups or [],
                        'security_group_rules': [{'security_group_id':
                                                  'fake_sgid1',
                                                  'remote_group_id':
-                                                 'fake_sgid2'}]}
+                                                 'fake_sgid2'},
+                                                {'security_group_id':
+                                                     'fake_sgid1',
+                                                 'remote_address_group_id':
+                                                     'fake_agid1'},
+                                                ]}
         self.firewall.ports[device] = fake_device
         yield
         del self.firewall.ports[device]
