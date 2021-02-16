@@ -62,6 +62,8 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
     def setUp(self):
         cfg.CONF.set_override('extension_drivers', self._extension_drivers,
                               group='ml2')
+        cfg.CONF.set_override('enable_distributed_floating_ip', 'False',
+                              group='ovn')
         extensions.register_custom_supported_check(qos_api.ALIAS, lambda: True,
                                                    plugin_agnostic=True)
         super(TestOVNClientQosExtension, self).setUp()
@@ -188,7 +190,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         direction = constants.INGRESS_DIRECTION
         rule = {qos_constants.RULE_TYPE_BANDWIDTH_LIMIT: QOS_RULE_BW_1}
         match = self.qos_driver._ovn_qos_rule_match(
-            direction, 'port_id', ip_address)
+            direction, 'port_id', ip_address, 'resident_port')
         expected = {'burst': 100, 'rate': 200, 'direction': 'to-lport',
                     'match': match,
                     'priority': qos_extension.OVN_QOS_DEFAULT_RULE_PRIORITY,
@@ -197,7 +199,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
             expected['external_ids'] = {ovn_const.OVN_FIP_EXT_ID_KEY: fip_id}
         result = self.qos_driver._ovn_qos_rule(
             direction, rule, 'port_id', 'network_id', fip_id=fip_id,
-            ip_address=ip_address)
+            ip_address=ip_address, resident_port='resident_port')
         self.assertEqual(expected, result)
 
     def test__ovn_qos_rule_ingress(self):
@@ -210,14 +212,15 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         direction = constants.EGRESS_DIRECTION
         rule = {qos_constants.RULE_TYPE_DSCP_MARKING: QOS_RULE_DSCP_1}
         match = self.qos_driver._ovn_qos_rule_match(
-            direction, 'port_id', ip_address)
+            direction, 'port_id', ip_address, 'resident_port')
         expected = {'direction': 'from-lport', 'match': match,
                     'dscp': 16, 'switch': 'neutron-network_id',
                     'priority': qos_extension.OVN_QOS_DEFAULT_RULE_PRIORITY}
         if fip_id:
             expected['external_ids'] = {ovn_const.OVN_FIP_EXT_ID_KEY: fip_id}
         result = self.qos_driver._ovn_qos_rule(
-            direction, rule, 'port_id', 'network_id', fip_id, ip_address)
+            direction, rule, 'port_id', 'network_id', fip_id=fip_id,
+            ip_address=ip_address, resident_port='resident_port')
         self.assertEqual(expected, result)
 
         rule = {qos_constants.RULE_TYPE_BANDWIDTH_LIMIT: QOS_RULE_BW_2,
@@ -228,7 +231,8 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         if fip_id:
             expected['external_ids'] = {ovn_const.OVN_FIP_EXT_ID_KEY: fip_id}
         result = self.qos_driver._ovn_qos_rule(
-            direction, rule, 'port_id', 'network_id', fip_id, ip_address)
+            direction, rule, 'port_id', 'network_id', fip_id=fip_id,
+            ip_address=ip_address, resident_port='resident_port')
         self.assertEqual(expected, result)
 
     def test__ovn_qos_rule_egress(self):
