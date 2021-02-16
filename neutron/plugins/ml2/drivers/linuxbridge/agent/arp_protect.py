@@ -233,4 +233,4 @@ NAMESPACE = None
 def ebtables(comm, table='nat'):
     execute = ip_lib.IPWrapper(NAMESPACE).netns.execute
     return execute(['ebtables', '-t', table, '--concurrent'] + comm,
-                   run_as_root=True)
+                   run_as_root=True, privsep_exec=True)
