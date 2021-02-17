@@ -9,18 +9,6 @@
 [Filters]
 
 # neutron/agent/linux/iptables_firewall.py
-#   "iptables-save", ...
-iptables-save: CommandFilter, iptables-save, root
-iptables-restore: CommandFilter, iptables-restore, root
-ip6tables-save: CommandFilter, ip6tables-save, root
-ip6tables-restore: CommandFilter, ip6tables-restore, root
-
-# neutron/agent/linux/iptables_firewall.py
-#   "iptables", "-A", ...
-iptables: CommandFilter, iptables, root
-ip6tables: CommandFilter, ip6tables, root
-
-# neutron/agent/linux/iptables_firewall.py
 sysctl: CommandFilter, sysctl, root
 
 # neutron/agent/linux/ip_conntrack.py

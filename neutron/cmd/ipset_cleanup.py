@@ -40,7 +40,7 @@ def setup_conf():
 def remove_iptables_reference(ipset):
     # Remove any iptables reference to this IPset
     cmd = ['iptables-save'] if 'IPv4' in ipset else ['ip6tables-save']
-    iptables_save = utils.execute(cmd, run_as_root=True)
+    iptables_save = utils.execute(cmd, run_as_root=True, privsep_exec=True)
 
     if ipset in iptables_save:
         cmd = ['iptables'] if 'IPv4' in ipset else ['ip6tables']
@@ -52,7 +52,8 @@ def remove_iptables_reference(ipset):
                 params = rule.split()
                 params[0] = '-D'
                 try:
-                    utils.execute(cmd + params, run_as_root=True)
+                    utils.execute(cmd + params, run_as_root=True,
+                                  privsep_exec=True)
                 except Exception:
                     LOG.exception('Error, unable to remove iptables rule '
                                   'for IPset: %s', ipset)
@@ -67,7 +68,7 @@ def destroy_ipset(conf, ipset):
     LOG.info("Destroying IPset: %s", ipset)
     cmd = ['ipset', 'destroy', ipset]
     try:
-        utils.execute(cmd, run_as_root=True)
+        utils.execute(cmd, run_as_root=True, privsep_exec=True)
     except Exception:
         LOG.exception('Error, unable to destroy IPset: %s', ipset)
 
@@ -77,7 +78,7 @@ def cleanup_ipsets(conf):
     LOG.info("Destroying IPsets with prefix: %s", conf.prefix)
 
     cmd = ['ipset', '-L', '-n']
-    ipsets = utils.execute(cmd, run_as_root=True)
+    ipsets = utils.execute(cmd, run_as_root=True, privsep_exec=True)
     for ipset in ipsets.split('\n'):
         if conf.allsets or ipset.startswith(conf.prefix):
             destroy_ipset(conf, ipset)

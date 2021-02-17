@@ -2936,25 +2936,19 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
 
     def _replay_iptables(self, v4_filter, v6_filter, raw):
         self._register_mock_call(
-            ['iptables-save'],
-            run_as_root=True,
+            ['iptables-save'], run_as_root=True, privsep_exec=True,
             return_value='')
         self._register_mock_call(
             ['iptables-restore', '-n'],
-            process_input=self._regex(v4_filter + raw),
-            run_as_root=True,
-            log_fail_as_error=False,
-            return_value='')
+            process_input=self._regex(v4_filter + raw), run_as_root=True,
+            privsep_exec=True, log_fail_as_error=False, return_value='')
         self._register_mock_call(
-            ['ip6tables-save'],
-            run_as_root=True,
+            ['ip6tables-save'], run_as_root=True, privsep_exec=True,
             return_value='')
         self._register_mock_call(
             ['ip6tables-restore', '-n'],
-            process_input=self._regex(v6_filter + raw),
-            run_as_root=True,
-            log_fail_as_error=False,
-            return_value='')
+            process_input=self._regex(v6_filter + raw), run_as_root=True,
+            privsep_exec=True, log_fail_as_error=False, return_value='')
 
     def test_prepare_remove_port(self):
         self.ipconntrack._device_zone_map = {}
