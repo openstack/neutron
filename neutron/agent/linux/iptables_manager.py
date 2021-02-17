@@ -307,14 +307,8 @@ class IptablesManager(object):
     # Flag to denote iptables supports --random-fully argument
     _random_fully = None
 
-    def __init__(self, _execute=None, state_less=False, use_ipv6=False,
-                 nat=True, namespace=None, binary_name=binary_name,
-                 external_lock=True):
-        if _execute:
-            self.execute = _execute
-        else:
-            self.execute = linux_utils.execute
-
+    def __init__(self, state_less=False, use_ipv6=False, nat=True,
+                 namespace=None, binary_name=binary_name, external_lock=True):
         self.use_ipv6 = use_ipv6
         self.namespace = namespace
         self.iptables_apply_deferred = False
@@ -484,12 +478,13 @@ class IptablesManager(object):
         args = ['iptables-save', '-t', table]
         if self.namespace:
             args = ['ip', 'netns', 'exec', self.namespace] + args
-        return self.execute(args, run_as_root=True).split('\n')
+        return linux_utils.execute(args, run_as_root=True).split('\n')
 
     def _get_version(self):
         # Output example is "iptables v1.6.2"
         args = ['iptables', '--version']
-        version = str(self.execute(args, run_as_root=True).split()[1][1:])
+        version = str(linux_utils.execute(
+            args, run_as_root=True).split()[1][1:])
         LOG.debug("IPTables version installed: %s", version)
         return version
 
@@ -514,8 +509,8 @@ class IptablesManager(object):
             args += ['-w', self.xlock_wait_time, '-W', XLOCK_WAIT_INTERVAL]
         try:
             kwargs = {} if lock else {'log_fail_as_error': False}
-            self.execute(args, process_input='\n'.join(commands),
-                         run_as_root=True, **kwargs)
+            linux_utils.execute(args, process_input='\n'.join(commands),
+                                run_as_root=True, **kwargs)
         except RuntimeError as error:
             return error
 
@@ -577,7 +572,7 @@ class IptablesManager(object):
             if self.namespace:
                 args = ['ip', 'netns', 'exec', self.namespace] + args
             try:
-                save_output = self.execute(args, run_as_root=True)
+                save_output = linux_utils.execute(args, run_as_root=True)
             except RuntimeError:
                 # We could be racing with a cron job deleting namespaces.
                 # It is useless to try to apply iptables rules over and
@@ -785,7 +780,7 @@ class IptablesManager(object):
             # this error in production environments. Only when debug mode is
             # enabled is that we need to log the error. This is used to avoid
             # generating alarms that will be ignored by  operators.
-            current_table = self.execute(
+            current_table = linux_utils.execute(
                 args, run_as_root=True, log_fail_as_error=cfg.CONF.debug)
             current_lines = current_table.split('\n')
 

@@ -195,7 +195,7 @@ class IptablesCommentsTestCase(base.BaseTestCase):
         super(IptablesCommentsTestCase, self).setUp()
         cfg.CONF.set_override('comment_iptables_rules', True, 'AGENT')
         self.iptables = iptables_manager.IptablesManager()
-        self.execute = mock.patch.object(self.iptables, "execute").start()
+        self.execute = mock.patch.object(linux_utils, 'execute').start()
 
     def test_comments_short_enough(self):
         for attr in dir(ic):
