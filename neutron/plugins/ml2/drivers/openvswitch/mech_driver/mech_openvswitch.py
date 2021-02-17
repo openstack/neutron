@@ -75,7 +75,9 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         self.supported_vnic_types = self.prohibit_list_supported_vnic_types(
             vnic_types=[portbindings.VNIC_NORMAL,
                         portbindings.VNIC_DIRECT,
-                        portbindings.VNIC_SMARTNIC],
+                        portbindings.VNIC_SMARTNIC,
+                        portbindings.VNIC_VHOST_VDPA,
+                        ],
             prohibit_list=cfg.CONF.OVS_DRIVER.vnic_type_prohibit_list
         )
         LOG.info("%s's supported_vnic_types: %s",
@@ -121,6 +123,11 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         capabilities = []
         if profile:
             capabilities = profile.get('capabilities', [])
+        # TODO(sean-k-mooney): in the case of the Mellanox connectx6 dx and lx
+        # nics vhost-vdpa is only supported in switchdev mode but that is not
+        # strictly required by other vendors so we should ideally add a config
+        # value to control checking of switchdev support per host via the
+        # agent['configurations']
         if (vnic_type == portbindings.VNIC_DIRECT and
                 'switchdev' not in capabilities):
             LOG.debug("Refusing to bind due to unsupported vnic_type: %s with "

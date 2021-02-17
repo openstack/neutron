@@ -176,7 +176,9 @@ class OVNMechanismDriver(api.MechanismDriver):
         self.supported_vnic_types = [portbindings.VNIC_NORMAL,
                                      portbindings.VNIC_DIRECT,
                                      portbindings.VNIC_DIRECT_PHYSICAL,
-                                     portbindings.VNIC_MACVTAP]
+                                     portbindings.VNIC_MACVTAP,
+                                     portbindings.VNIC_VHOST_VDPA,
+                                     ]
         self.vif_details = {
             portbindings.VIF_TYPE_OVS: {
                 portbindings.CAP_PORT_FILTER: self.sg_enabled
