@@ -320,7 +320,7 @@
       # In addition: on next PTG we will discuss the rules of running specific
       # jobs with OVN master and OVN release branches. Please consider
       # specyfing explicitely the version of OVN in tempest-slow jobs.
-      tempest_black_regex: "\
+      tempest_exclude_regex: "\
           (?:tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port)|\
           (^tempest.scenario.test_network_v6.TestGettingAddress)"
 
