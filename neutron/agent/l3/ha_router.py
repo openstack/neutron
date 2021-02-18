@@ -66,12 +66,11 @@ class HaRouterNamespace(namespaces.RouterNamespace):
 
 
 class HaRouter(router.RouterInfo):
-    def __init__(self, state_change_callback, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(HaRouter, self).__init__(*args, **kwargs)
 
         self.ha_port = None
         self.keepalived_manager = None
-        self.state_change_callback = state_change_callback
         self._ha_state = None
         self._ha_state_path = None
 
@@ -151,7 +150,6 @@ class HaRouter(router.RouterInfo):
         self._init_keepalived_manager(process_monitor)
         self._check_and_set_real_state()
         self.ha_network_added()
-        self.update_initial_state(self.state_change_callback)
         self.spawn_state_change_monitor(process_monitor)
 
     def _init_keepalived_manager(self, process_monitor):
@@ -443,15 +441,6 @@ class HaRouter(router.RouterInfo):
                                          timeout=SIGTERM_TIMEOUT)
         except common_utils.WaitTimeout:
             pm.disable(sig=str(int(signal.SIGKILL)))
-
-    def update_initial_state(self, callback):
-        addresses = ip_lib.get_devices_with_ip(self.ha_namespace,
-                                               name=self.get_ha_device_name())
-        cidrs = (address['cidr'] for address in addresses)
-        ha_cidr = self._get_primary_vip()
-        state = 'master' if ha_cidr in cidrs else 'backup'
-        self.ha_state = state
-        callback(self.router_id, state)
 
     @staticmethod
     def _gateway_ports_equal(port1, port2):
