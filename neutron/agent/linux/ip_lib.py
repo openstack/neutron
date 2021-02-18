@@ -659,11 +659,12 @@ class IPRoute(SubProcessBase):
 class IpNeighCommand(IpDeviceCommandBase):
     COMMAND = 'neigh'
 
-    def add(self, ip_address, mac_address, **kwargs):
+    def add(self, ip_address, mac_address, nud_state=None, **kwargs):
         add_neigh_entry(ip_address,
                         mac_address,
                         self.name,
-                        self._parent.namespace,
+                        namespace=self._parent.namespace,
+                        nud_state=nud_state,
                         **kwargs)
 
     def delete(self, ip_address, mac_address, **kwargs):
@@ -685,11 +686,20 @@ class IpNeighCommand(IpDeviceCommandBase):
         Given address entry is removed from neighbour cache (ARP or NDP). To
         flush all entries pass string 'all' as an address.
 
+        From https://man.archlinux.org/man/core/iproute2/ip-neighbour.8.en:
+          "the default neighbour states to be flushed do not include permanent
+           and noarp".
+
         :param ip_version: Either 4 or 6 for IPv4 or IPv6 respectively
-        :param ip_address: The prefix selecting the neighbours to flush
+        :param ip_address: The prefix selecting the neighbours to flush or
+                           "all"
         """
-        # NOTE(haleyb): There is no equivalent to 'flush' in pyroute2
-        self._as_root([ip_version], ('flush', 'to', ip_address))
+        cidr = netaddr.IPNetwork(ip_address) if ip_address != 'all' else None
+        for entry in self.dump(ip_version):
+            if entry['state'] in ('permanent', 'noarp'):
+                continue
+            if ip_address == 'all' or entry['dst'] in cidr:
+                self.delete(entry['dst'], entry['lladdr'])
 
 
 class IpNetnsCommand(IpCommandBase):
@@ -843,20 +853,25 @@ def get_routing_table(ip_version, namespace=None):
 
 # NOTE(haleyb): These neighbour functions live outside the IpNeighCommand
 # class since not all callers require it.
-def add_neigh_entry(ip_address, mac_address, device, namespace=None, **kwargs):
+def add_neigh_entry(ip_address, mac_address, device, namespace=None,
+                    nud_state=None, **kwargs):
     """Add a neighbour entry.
 
     :param ip_address: IP address of entry to add
     :param mac_address: MAC address of entry to add
     :param device: Device name to use in adding entry
     :param namespace: The name of the namespace in which to add the entry
+    :param nud_state: The NUD (Neighbour Unreachability Detection) state of
+                      the entry; defaults to "permanent"
     """
     ip_version = common_utils.get_ip_version(ip_address)
+    nud_state = nud_state or 'permanent'
     privileged.add_neigh_entry(ip_version,
                                ip_address,
                                mac_address,
                                device,
                                namespace,
+                               nud_state,
                                **kwargs)
 
 

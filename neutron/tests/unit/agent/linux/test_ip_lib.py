@@ -551,11 +551,6 @@ class TestIPCmdBase(base.BaseTestCase):
         self.parent._run.assert_has_calls([
             mock.call(options, self.command, args)])
 
-    def _assert_sudo(self, options, args, use_root_namespace=False):
-        self.parent._as_root.assert_has_calls(
-            [mock.call(options, self.command, args,
-                       use_root_namespace=use_root_namespace)])
-
 
 class TestIpRuleCommand(TestIPCmdBase):
     def setUp(self):
@@ -1367,8 +1362,15 @@ class TestIpNeighCommand(TestIPCmdBase):
             ifindex=1)
 
     def test_flush(self):
-        self.neigh_cmd.flush(4, '192.168.0.1')
-        self._assert_sudo([4], ('flush', 'to', '192.168.0.1'))
+        with mock.patch.object(self.neigh_cmd, 'dump') as mock_dump, \
+                mock.patch.object(self.neigh_cmd, 'delete') as mock_delete:
+            mock_dump.return_value = (
+                {'state': 'permanent', 'dst': '1.2.3.4', 'lladdr': 'mac_1'},
+                {'state': 'reachable', 'dst': '1.2.3.5', 'lladdr': 'mac_2'})
+            self.neigh_cmd.flush(4, '1.2.3.4')
+            mock_delete.assert_not_called()
+            self.neigh_cmd.flush(4, '1.2.3.5')
+            mock_delete.assert_called_once_with('1.2.3.5', 'mac_2')
 
 
 class TestArpPing(TestIPCmdBase):
