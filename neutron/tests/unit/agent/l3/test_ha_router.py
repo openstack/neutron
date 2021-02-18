@@ -40,8 +40,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
             router = mock.MagicMock()
         self.agent_conf = mock.Mock()
         self.router_id = _uuid()
-        return ha_router.HaRouter(mock.sentinel.enqueue_state,
-                                  mock.sentinel.agent,
+        return ha_router.HaRouter(mock.sentinel.agent,
                                   self.router_id,
                                   router,
                                   self.agent_conf,

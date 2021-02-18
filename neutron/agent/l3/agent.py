@@ -442,7 +442,6 @@ class L3NATAgent(ha.AgentMixin,
 
         if router.get('ha'):
             features.append('ha')
-            kwargs['state_change_callback'] = self.enqueue_state_change
 
         if router.get('distributed') and router.get('ha'):
             # Case 1: If the router contains information about the HA interface
@@ -457,7 +456,6 @@ class L3NATAgent(ha.AgentMixin,
             if (not router.get(lib_const.HA_INTERFACE_KEY) or
                     self.conf.agent_mode != lib_const.L3_AGENT_MODE_DVR_SNAT):
                 features.remove('ha')
-                kwargs.pop('state_change_callback')
 
         return self.router_factory.create(features, **kwargs)
 

@@ -106,12 +106,12 @@ class MonitorDaemon(daemon.Daemon):
             for address in ip.addr.list():
                 if address.get('cidr') == self.cidr:
                     state = 'master'
-                    self.write_state_change(state)
-                    self.notify_agent(state)
                     break
 
             LOG.debug('Initial status of router %s is %s',
                       self.router_id, state)
+            self.write_state_change(state)
+            self.notify_agent(state)
         except Exception:
             LOG.exception('Failed to get initial status of router %s',
                           self.router_id)
