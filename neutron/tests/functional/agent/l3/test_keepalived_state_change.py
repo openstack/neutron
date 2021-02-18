@@ -95,8 +95,8 @@ class TestKeepalivedStateChange(base.BaseSudoTestCase):
                     self.monitor, 'notify_agent') as notify_agent:
 
             self.monitor.handle_initial_state()
-            write_state_change.assert_not_called()
-            notify_agent.assert_not_called()
+            write_state_change.assert_called_once_with("backup")
+            notify_agent.assert_called_once_with("backup")
 
     def test_handle_initial_state_master(self):
         ip = ip_lib.IPWrapper(namespace=self.monitor.namespace)
