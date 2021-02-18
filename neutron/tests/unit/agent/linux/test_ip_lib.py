@@ -487,47 +487,6 @@ class TestIPDevice(base.BaseTestCase):
         self.assertEqual(str(ip_lib.IPDevice('tap0')), 'tap0')
 
 
-class TestIPCommandBase(base.BaseTestCase):
-    def setUp(self):
-        super(TestIPCommandBase, self).setUp()
-        self.ip = mock.Mock()
-        self.ip.namespace = 'namespace'
-        self.ip_cmd = ip_lib.IpCommandBase(self.ip)
-        self.ip_cmd.COMMAND = 'foo'
-
-    def test_run(self):
-        self.ip_cmd._run([], ('link', 'show'))
-        self.ip.assert_has_calls([mock.call._run([], 'foo', ('link', 'show'))])
-
-    def test_run_with_options(self):
-        self.ip_cmd._run(['o'], ('link'))
-        self.ip.assert_has_calls([mock.call._run(['o'], 'foo', ('link'))])
-
-    def test_as_root_namespace_false(self):
-        self.ip_cmd._as_root([], ('link'))
-        self.ip.assert_has_calls(
-            [mock.call._as_root([],
-                                'foo',
-                                ('link'),
-                                use_root_namespace=False)])
-
-    def test_as_root_namespace_true(self):
-        self.ip_cmd._as_root([], ('link'), use_root_namespace=True)
-        self.ip.assert_has_calls(
-            [mock.call._as_root([],
-                                'foo',
-                                ('link'),
-                                use_root_namespace=True)])
-
-    def test_as_root_namespace_true_with_options(self):
-        self.ip_cmd._as_root('o', 'link', use_root_namespace=True)
-        self.ip.assert_has_calls(
-            [mock.call._as_root('o',
-                                'foo',
-                                ('link'),
-                                use_root_namespace=True)])
-
-
 class TestIPDeviceCommandBase(base.BaseTestCase):
     def setUp(self):
         super(TestIPDeviceCommandBase, self).setUp()
