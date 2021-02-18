@@ -557,6 +557,12 @@ use the OVS firewall, and instances from other nodes can be live-migrated to
 it. Once the first node is evacuated, its firewall driver can be then be
 switched to the OVS driver.
 
+.. note::
+
+  During upgrading to openvswitch firewall, the security rules
+  are still working for previous iptables controlled hybrid ports. But it will
+  not work if one tries to replace openvswitch firewall with iptables.
+
 .. |table_0| replace:: ``table 0`` (LOCAL_SWITCHING)
 .. |table_60| replace:: ``table 60`` (TRANSIENT)
 .. |table_71| replace:: ``table 71`` (BASE_EGRESS)
