@@ -116,6 +116,7 @@ class IpConntrackManager(object):
         ethertype = rule.get('ethertype')
         protocol = rule.get('protocol')
         direction = rule.get('direction')
+        mark = rule.get('mark')
         cmd = ['conntrack', '-D']
         if protocol is not None:
             # 0 is IP in /etc/protocols, but conntrack will throw an error
@@ -123,6 +124,8 @@ class IpConntrackManager(object):
                 protocol = 'ip'
             cmd.extend(['-p', str(protocol)])
         cmd.extend(['-f', str(ethertype).lower()])
+        if mark is not None:
+            cmd.extend(['-m', str(mark)])
         cmd.append('-d' if direction == 'ingress' else '-s')
         cmd_ns = []
         if namespace:
@@ -173,10 +176,12 @@ class IpConntrackManager(object):
         self._process(device_info_list, rule)
 
     def delete_conntrack_state_by_remote_ips(self, device_info_list,
-                                             ethertype, remote_ips):
+                                             ethertype, remote_ips, mark=None):
         for direction in ['ingress', 'egress']:
             rule = {'ethertype': str(ethertype).lower(),
                     'direction': direction}
+            if mark:
+                rule['mark'] = mark
             self._process(device_info_list, rule, remote_ips)
 
     def _populate_initial_zone_map(self):
@@ -254,3 +259,21 @@ class IpConntrackManager(object):
                 return index + ZONE_START
         # conntrack zones exhausted :( :(
         raise exceptions.CTZoneExhaustedError()
+
+
+class OvsIpConntrackManager(IpConntrackManager):
+
+    def __init__(self, execute=None):
+        super(OvsIpConntrackManager, self).__init__(
+            get_rules_for_table_func=None,
+            filtered_ports={}, unfiltered_ports={},
+            execute=execute, namespace=None, zone_per_port=False)
+
+    def _populate_initial_zone_map(self):
+        self._device_zone_map = {}
+
+    def get_device_zone(self, port, create=False):
+        of_port = port.get('of_port')
+        if of_port is None:
+            return
+        return of_port.vlan_tag

@@ -32,6 +32,7 @@ from oslo_utils import netutils
 from neutron._i18n import _
 from neutron.agent.common import ovs_lib
 from neutron.agent import firewall
+from neutron.agent.linux import ip_conntrack
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import iptables
@@ -505,6 +506,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self._deferred = False
         self.iptables_helper = iptables.Helper(self.int_br.br)
         self.iptables_helper.load_driver_if_needed()
+        self.ipconntrack = ip_conntrack.OvsIpConntrackManager()
         self._initialize_firewall()
 
         callbacks_registry.subscribe(
@@ -636,6 +638,12 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         return get_physical_network_from_other_config(
             self.int_br.br, port_name)
 
+    def _delete_invalid_conntrack_entries_for_port(self, port, of_port):
+        port['of_port'] = of_port
+        for ethertype in [lib_const.IPv4, lib_const.IPv6]:
+            self.ipconntrack.delete_conntrack_state_by_remote_ips(
+                [port], ethertype, set(), mark=ovsfw_consts.CT_MARK_INVALID)
+
     def get_ofport(self, port):
         port_id = port['device']
         return self.sg_port_map.ports.get(port_id)
@@ -690,6 +698,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 self._update_flows_for_port(of_port, old_of_port)
             else:
                 self._set_port_filters(of_port)
+            self._delete_invalid_conntrack_entries_for_port(port, of_port)
         except exceptions.OVSFWPortNotFound as not_found_error:
             LOG.info("port %(port_id)s does not exist in ovsdb: %(err)s.",
                      {'port_id': port['device'],
@@ -728,6 +737,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 self._update_flows_for_port(of_port, old_of_port)
             else:
                 self._set_port_filters(of_port)
+
+            self._delete_invalid_conntrack_entries_for_port(port, of_port)
 
         except exceptions.OVSFWPortNotFound as not_found_error:
             LOG.info("port %(port_id)s does not exist in ovsdb: %(err)s.",
