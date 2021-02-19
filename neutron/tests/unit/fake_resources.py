@@ -17,6 +17,7 @@ import copy
 from unittest import mock
 
 from neutron_lib.api.definitions import l3
+from neutron_lib import constants as n_const
 from neutron_lib.utils import net
 from oslo_utils import uuidutils
 
@@ -819,7 +820,9 @@ class FakeOVNRouter(object):
 class FakeChassis(object):
 
     @staticmethod
-    def create(attrs=None, az_list=None, chassis_as_gw=False):
+    def create(attrs=None, az_list=None, chassis_as_gw=False,
+               bridge_mappings=None, rp_bandwidths=None,
+               rp_inventory_defaults=None, rp_hypervisors=None):
         cms_opts = []
         if az_list:
             cms_opts.append("%s=%s" % (ovn_const.CMS_OPT_AVAILABILITY_ZONES,
@@ -827,9 +830,32 @@ class FakeChassis(object):
         if chassis_as_gw:
             cms_opts.append(ovn_const.CMS_OPT_CHASSIS_AS_GW)
 
+        if rp_bandwidths:
+            cms_opts.append('%s=%s' % (n_const.RP_BANDWIDTHS,
+                                       ';'.join(rp_bandwidths)))
+        elif rp_bandwidths == '':  # Test wrongly defined parameter
+            cms_opts.append('%s=' % n_const.RP_BANDWIDTHS)
+
+        if rp_inventory_defaults:
+            inv_defaults = ';'.join('%s:%s' % (key, value) for key, value in
+                                    rp_inventory_defaults.items())
+            cms_opts.append('%s=%s' % (n_const.RP_INVENTORY_DEFAULTS,
+                                       inv_defaults))
+        elif rp_inventory_defaults == '':  # Test wrongly defined parameter
+            cms_opts.append('%s=' % n_const.RP_INVENTORY_DEFAULTS)
+
+        if rp_hypervisors:
+            cms_opts.append('%s=%s' % (ovn_const.RP_HYPERVISORS,
+                                       ';'.join(rp_hypervisors)))
+        elif rp_hypervisors == '':  # Test wrongly defined parameter
+            cms_opts.append('%s=' % ovn_const.RP_HYPERVISORS)
+
         external_ids = {}
         if cms_opts:
             external_ids[ovn_const.OVN_CMS_OPTIONS] = ','.join(cms_opts)
+
+        if bridge_mappings:
+            external_ids['ovn-bridge-mappings'] = ','.join(bridge_mappings)
 
         attrs = {
             'encaps': [],
