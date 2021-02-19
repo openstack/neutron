@@ -209,16 +209,16 @@ solicitation and neighbour advertisement.
 
 ::
 
- table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=130 actions=resubmit(,94)
- table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=131 actions=resubmit(,94)
- table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=132 actions=resubmit(,94)
- table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=135 actions=resubmit(,94)
- table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=136 actions=resubmit(,94)
- table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=130 actions=resubmit(,94)
- table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=131 actions=resubmit(,94)
- table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=132 actions=resubmit(,94)
- table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=135 actions=resubmit(,94)
- table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=136 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:11,ipv6_src=fe80::11,icmp_type=130 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:11,ipv6_src=fe80::11,icmp_type=131 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:11,ipv6_src=fe80::11,icmp_type=132 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:11,ipv6_src=fe80::11,icmp_type=135 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:11,ipv6_src=fe80::11,icmp_type=136 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,dl_src=fa:16:3e:a4:22:22,ipv6_src=fe80::22,icmp_type=130 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,dl_src=fa:16:3e:a4:22:22,ipv6_src=fe80::22,icmp_type=131 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,dl_src=fa:16:3e:a4:22:22,ipv6_src=fe80::22,icmp_type=132 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,dl_src=fa:16:3e:a4:22:22,ipv6_src=fe80::22,icmp_type=135 actions=resubmit(,94)
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,dl_src=fa:16:3e:a4:22:22,ipv6_src=fe80::22,icmp_type=136 actions=resubmit(,94)
 
 Following rules implement arp spoofing protection
 
