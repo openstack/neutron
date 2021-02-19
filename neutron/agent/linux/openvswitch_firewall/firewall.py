@@ -897,19 +897,24 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self._initialize_egress(port)
         self._initialize_ingress(port)
 
-    def _initialize_egress_ipv6_icmp(self, port):
-        for icmp_type in firewall.ICMPV6_ALLOWED_EGRESS_TYPES:
-            self._add_flow(
-                table=ovs_consts.BASE_EGRESS_TABLE,
-                priority=95,
-                in_port=port.ofport,
-                reg_port=port.ofport,
-                dl_type=lib_const.ETHERTYPE_IPV6,
-                nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
-                icmp_type=icmp_type,
-                actions='resubmit(,%d)' % (
-                    ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
-            )
+    def _initialize_egress_ipv6_icmp(self, port, allowed_pairs):
+        # NOTE(slaweq): should we include also fe80::/64 (link-local) subnet
+        # in the allowed pairs here?
+        for mac_addr, ip_addr in allowed_pairs:
+            for icmp_type in firewall.ICMPV6_ALLOWED_EGRESS_TYPES:
+                self._add_flow(
+                    table=ovs_consts.BASE_EGRESS_TABLE,
+                    priority=95,
+                    in_port=port.ofport,
+                    reg_port=port.ofport,
+                    dl_type=lib_const.ETHERTYPE_IPV6,
+                    nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
+                    icmp_type=icmp_type,
+                    dl_src=mac_addr,
+                    ipv6_src=ip_addr,
+                    actions='resubmit(,%d)' % (
+                        ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
+                )
 
     def _initialize_egress_no_port_security(self, port_id, ovs_ports=None):
         try:
@@ -982,7 +987,6 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
     def _initialize_egress(self, port):
         """Identify egress traffic and send it to egress base"""
-        self._initialize_egress_ipv6_icmp(port)
 
         # Apply mac/ip pairs for IPv4
         allowed_pairs = port.allowed_pairs_v4.union(
@@ -1015,6 +1019,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         # Apply mac/ip pairs for IPv6
         allowed_pairs = port.allowed_pairs_v6.union(
             {(port.mac, ip_addr) for ip_addr in port.ipv6_addresses})
+        self._initialize_egress_ipv6_icmp(port, allowed_pairs)
         for mac_addr, ip_addr in allowed_pairs:
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
