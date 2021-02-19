@@ -79,26 +79,11 @@ Below is a summary of those jobs.
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-slow-py3                      |tempest slow tests                |   3.6   |   2   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-with-uwsgi-loki               |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
-    |(non-voting)                                  |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
-    |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
-    |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-ipv6-only                     |tempest smoke + IPv6 tests        |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovn-tempest-ovs-release               |Various tempest api, scenario     |   3.6   |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
-    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-slow                      |tempest slow tests                |   3.6   |   2   | ovn         | ovn             | ---      | False | False  | True       | No          |
-    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-multinode-ovs-master      |Various tempest api, scenario     |   3.6   |   2   | ovn         | ovn             | ---      | False | False  | True       | No          |
-    |                                              |and neutron_tempest_plugi tests   |         |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-with-neutron-lib-master       |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
-    |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
-    |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
-    |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
 
 Grenade jobs running in Neutron CI
@@ -118,6 +103,45 @@ Below is summary of those jobs.
     | neutron-grenade-dvr-multinode  |   3.6   |   2   | openvswitch | openvswitch | dvr      | False | False  | True       | Yes         |
     |                                |         |       |             |             | dvr_snat |       |        |            |             |
     +--------------------------------+---------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
+
+Tempest jobs running in Neutron experimental CI
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In upstream Neutron CI there is also queue called ``experimental``. It includes
+jobs which are not needed to be run on every patch and/or jobs which isn't
+stable enough to be run always.
+Those jobs can be run by making comment ``check experimental`` in the comment to
+the patch in Gerrit.
+
+Currently we have in that queue jobs like listed below.
+::
+
+    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    | Job name                                     | Run tests                        | python  | nodes | L2 agent    | firewall        | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
+    |                                              |                                  | version |       |             | driver          | mode     |       |        |            | queue       |
+    +==============================================+==================================+=========+=======+=============+=================+==========+=======+========+============+=============+
+    |neutron-tempest-with-neutron-lib-master       |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
+    |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
+    |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-tempest-with-uwsgi-loki               |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
+    |(non-voting)                                  |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
+    |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-slow                      |tempest slow tests                |   3.6   |   2   | ovn         | ovn             | ---      | False | False  | True       | No          |
+    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-multinode-ovs-master      |Various tempest api, scenario     |   3.6   |   2   | ovn         | ovn             | ---      | False | False  | True       | No          |
+    |                                              |and neutron_tempest_plugi tests   |         |       |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+
+And we also have Grenade jobs in the experimental queue.
+::
+
+    +--------------------------------+---------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
+    | Job name                       | python  | nodes | L2 agent    | firewall    | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
+    |                                | version |       |             | driver      | mode     |       |        |            | queue       |
+    +================================+=========+=======+=============+=============+==========+=======+========+============+=============+
     | neutron-grenade-ovn            |   3.6   |   2   | OVN         | ---         | ---      | ---   | ---    | False      | no          |
     | (non-voting)                   |         |       |             |             |          |       |        |            |             |
     +--------------------------------+---------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
