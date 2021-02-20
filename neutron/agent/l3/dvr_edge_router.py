@@ -71,8 +71,10 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             if self.snat_namespace.exists():
                 LOG.debug("SNAT was rescheduled to host %s. Clearing snat "
                           "namespace.", self.router.get('gw_port_host'))
-                return self.external_gateway_removed(
-                    ex_gw_port, interface_name)
+                self.driver.unplug(interface_name,
+                                   namespace=self.snat_namespace.name,
+                                   prefix=router.EXTERNAL_DEV_PREFIX)
+                self.snat_namespace.delete()
             return
 
         if not self.snat_namespace.exists():
@@ -185,8 +187,8 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         # TODO(mlavalle): in the near future, this method should contain the
         # code in the L3 agent that creates a gateway for a dvr. The first step
         # is to move the creation of the snat namespace here
-        self.snat_namespace.create()
-        return self.snat_namespace
+        if self._is_this_snat_host():
+            self.snat_namespace.create()
 
     def _get_snat_int_device_name(self, port_id):
         long_name = lib_constants.SNAT_INT_DEV_PREFIX + port_id
