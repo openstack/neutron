@@ -546,8 +546,30 @@ class OvnIdlDistributedLock(BaseOvnIdl):
         self._hash_ring = hash_ring_manager.HashRingManager(
             self.driver.hash_ring_group)
         self._last_touch = None
+        # This is a map of tables that may be new after OVN database is updated
+        self._tables_to_register = {
+            'OVN_Southbound': ['Chassis_Private'],
+        }
+
+    def handle_db_schema_changes(self, event, row):
+        if (event == row_event.RowEvent.ROW_CREATE and
+                row._table.name == 'Database'):
+            try:
+                tables = self._tables_to_register[row.name]
+            except KeyError:
+                return
+
+            self.update_tables(tables, row.schema[0])
+
+            if 'Chassis_Private' == self.driver.agent_chassis_table:
+                if 'Chassis_Private' not in self.tables:
+                    self.driver.agent_chassis_table = 'Chassis'
+            else:
+                if 'Chassis_Private' in self.tables:
+                    self.driver.agent_chassis_table = 'Chassis_Private'
 
     def notify(self, event, row, updates=None):
+        self.handle_db_schema_changes(event, row)
         self.notify_handler.notify(event, row, updates, global_=True)
         try:
             target_node = self._hash_ring.get_node(str(row.uuid))
