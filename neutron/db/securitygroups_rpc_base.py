@@ -221,8 +221,10 @@ class SecurityGroupInfoAPIMixin(object):
                         'remote_address_group_id'):
                 if rule_in_db.get(key) is not None:
                     if key == 'remote_ip_prefix':
+                        normalized_cidr = rule_in_db.get('normalized_cidr')
                         direction_ip_prefix = DIRECTION_IP_PREFIX[direction]
-                        rule_dict[direction_ip_prefix] = rule_in_db[key]
+                        rule_dict[direction_ip_prefix] = (
+                            normalized_cidr or rule_in_db[key])
                         continue
                     rule_dict[key] = rule_in_db[key]
             if security_group_id not in sg_info['security_groups']:
@@ -384,8 +386,10 @@ class SecurityGroupInfoAPIMixin(object):
                         'remote_address_group_id'):
                 if rule_in_db.get(key) is not None:
                     if key == 'remote_ip_prefix':
+                        normalized_cidr = rule_in_db.get('normalized_cidr')
                         direction_ip_prefix = DIRECTION_IP_PREFIX[direction]
-                        rule_dict[direction_ip_prefix] = rule_in_db[key]
+                        rule_dict[direction_ip_prefix] = (
+                            normalized_cidr or rule_in_db[key])
                         continue
                     rule_dict[key] = rule_in_db[key]
             port['security_group_rules'].append(rule_dict)
