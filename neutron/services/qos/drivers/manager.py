@@ -154,6 +154,15 @@ class QosServiceDriverManager(object):
 
         return False
 
+    def validate_rule_for_network(self, context, rule, network_id):
+        for driver in self._drivers:
+            if (driver.is_rule_supported(rule) and
+                    driver.validate_rule_for_network(context, rule,
+                                                     network_id)):
+                return True
+
+        return False
+
     @property
     def supported_rule_types(self):
         if not self._drivers:

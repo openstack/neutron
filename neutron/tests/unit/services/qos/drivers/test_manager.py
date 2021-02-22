@@ -119,6 +119,29 @@ class TestQoSDriversRulesValidations(TestQosDriversManagerBase):
         else:
             is_rule_supported_mock.assert_not_called()
 
+    def test_validate_rule_for_network(self):
+        driver_manager = self._create_manager_with_drivers({
+            'driver-A': {
+                'is_loaded': True,
+                'rules': {
+                    qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH: {
+                        "min_kbps": {'type:values': None},
+                        'direction': {
+                            'type:values': lib_consts.VALID_DIRECTIONS}
+                    }
+                }
+            }
+        })
+        rule = rule_object.QosMinimumBandwidthRule(
+            self.ctxt, id=uuidutils.generate_uuid())
+
+        is_rule_supported_mock = mock.Mock()
+        is_rule_supported_mock.return_value = True
+        driver_manager._drivers[0].is_rule_supported = is_rule_supported_mock
+        self.assertTrue(driver_manager.validate_rule_for_network(
+                         mock.Mock(), rule, mock.Mock()))
+        is_rule_supported_mock.assert_called_once_with(rule)
+
     def test_validate_rule_for_port_rule_vif_type_supported(self):
         port = self._get_port(
             portbindings.VIF_TYPE_OVS, portbindings.VNIC_NORMAL)

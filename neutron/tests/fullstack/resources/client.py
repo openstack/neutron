@@ -91,7 +91,7 @@ class ClientFixture(fixtures.Fixture):
 
     def create_network(self, tenant_id, name=None, external=False,
                        network_type=None, segmentation_id=None,
-                       physical_network=None, mtu=None):
+                       physical_network=None, mtu=None, qos_policy_id=None):
         resource_type = 'network'
 
         name = name or utils.get_rand_name(prefix=resource_type)
@@ -106,6 +106,8 @@ class ClientFixture(fixtures.Fixture):
             spec['provider:physical_network'] = physical_network
         if mtu is not None:
             spec['mtu'] = mtu
+        if qos_policy_id is not None:
+            spec['qos_policy_id'] = qos_policy_id
 
         return self._create_resource(resource_type, spec)
 
