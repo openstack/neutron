@@ -294,8 +294,11 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
             router_id = fip.get('router_id')
             fixed_ip_address = fip.get('fixed_ip_address')
             if router_id and fixed_ip_address:
-                update_fip = {'logical_ip': fixed_ip_address,
-                              'external_ip': fip['floating_ip_address']}
+                update_fip = {
+                    'id': fip['id'],
+                    'logical_ip': fixed_ip_address,
+                    'external_ip': fip['floating_ip_address'],
+                    'floating_network_id': fip['floating_network_id']}
                 try:
                     self._ovn_client.disassociate_floatingip(update_fip,
                                                              router_id)
