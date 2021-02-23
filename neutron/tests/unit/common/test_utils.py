@@ -425,7 +425,7 @@ class TestThrottler(base.BaseTestCase):
 
         def sleep_mock(amount_to_sleep):
             sleep(amount_to_sleep)
-            self.assertGreater(threshold, amount_to_sleep)
+            self.assertGreaterEqual(threshold, amount_to_sleep)
 
         with mock.patch.object(utils.eventlet, "sleep",
                                side_effect=sleep_mock):
