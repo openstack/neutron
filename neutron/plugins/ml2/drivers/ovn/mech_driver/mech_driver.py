@@ -21,7 +21,6 @@ import signal
 import threading
 import types
 
-import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import segment as segment_def
@@ -409,9 +408,6 @@ class OVNMechanismDriver(api.MechanismDriver):
         sg_rules = self._plugin.get_security_group_rules(
             n_context.get_admin_context(),
             {'security_group_id': [sg_rule['security_group_id']]})
-        cidr_sg_rule = netaddr.IPNetwork(sg_rule['remote_ip_prefix'])
-        normalized_sg_rule_prefix = "%s/%s" % (cidr_sg_rule.network,
-                                               cidr_sg_rule.prefixlen)
 
         def _rules_equal(rule1, rule2):
             return not any(
@@ -420,10 +416,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         for rule in sg_rules:
             if not rule.get('remote_ip_prefix') or rule['id'] == sg_rule['id']:
                 continue
-            cidr_rule = netaddr.IPNetwork(rule['remote_ip_prefix'])
-            normalized_rule_prefix = "%s/%s" % (cidr_rule.network,
-                                                cidr_rule.prefixlen)
-            if normalized_sg_rule_prefix != normalized_rule_prefix:
+            if sg_rule.get('normalized_cidr') != rule.get('normalized_cidr'):
                 continue
             if _rules_equal(sg_rule, rule):
                 return True

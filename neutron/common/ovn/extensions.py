@@ -47,6 +47,7 @@ from neutron_lib.api.definitions import qos_rule_type_details
 from neutron_lib.api.definitions import qos_rules_alias
 from neutron_lib.api.definitions import rbac_address_scope
 from neutron_lib.api.definitions import router_availability_zone as raz_def
+from neutron_lib.api.definitions import security_groups_normalized_cidr
 from neutron_lib.api.definitions import security_groups_remote_address_group
 from neutron_lib.api.definitions import segment as seg_def
 from neutron_lib.api.definitions import sorting
@@ -103,6 +104,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     'rbac-policies',
     'standard-attr-revisions',
     'security-group',
+    security_groups_normalized_cidr.ALIAS,
     security_groups_remote_address_group.ALIAS,
     'standard-attr-description',
     constants.SUBNET_ALLOCATION_EXT_ALIAS,

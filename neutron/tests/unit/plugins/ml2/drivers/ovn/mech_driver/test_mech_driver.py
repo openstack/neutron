@@ -17,6 +17,7 @@ import datetime
 from unittest import mock
 import uuid
 
+import netaddr
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib.api.definitions import portbindings
@@ -281,29 +282,42 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         scenarios = [
             ({'id': 'rule-id', 'security_group_id': 'sec-group-uuid',
               'remote_ip_prefix': '10.10.10.175/26',
+              'normalized_cidr': str(
+                  netaddr.IPNetwork('10.10.10.175/26').cidr),
               'protocol': 'tcp'}, False),
             ({'id': 'rule-id', 'security_group_id': 'sec-group-uuid',
               'remote_ip_prefix': '10.10.10.175/26',
+              'normalized_cidr': str(
+                  netaddr.IPNetwork('10.10.10.175/26').cidr),
               'protocol': 'udp'}, False),
             ({'id': 'rule-id', 'security_group_id': 'sec-group-uuid',
               'remote_ip_prefix': '10.10.10.175/26',
+              'normalized_cidr': str(
+                  netaddr.IPNetwork('10.10.10.175/26').cidr),
               'protocol': 'tcp'}, False),
             ({'id': 'rule-id', 'security_group_id': 'sec-group-uuid',
               'remote_ip_prefix': '10.10.10.175/26',
+              'normalized_cidr': str(
+                  netaddr.IPNetwork('10.10.10.175/26').cidr),
               'protocol': 'tcp',
               'port_range_min': '2000', 'port_range_max': '2100'}, False),
             ({'id': 'rule-id', 'security_group_id': 'sec-group-uuid',
               'remote_ip_prefix': '192.168.0.0/24',
+              'normalized_cidr': str(netaddr.IPNetwork('192.168.0.0/24').cidr),
               'protocol': 'tcp',
               'port_range_min': '2000', 'port_range_max': '3000',
               'direction': 'ingress'}, False),
             ({'id': 'rule-id', 'security_group_id': 'sec-group-uuid',
               'remote_ip_prefix': '10.10.10.175/26',
+              'normalized_cidr': str(
+                  netaddr.IPNetwork('10.10.10.175/26').cidr),
               'protocol': 'tcp',
               'port_range_min': '2000', 'port_range_max': '3000',
               'direction': 'egress'}, False),
             ({'id': 'rule-id', 'security_group_id': 'sec-group-uuid',
               'remote_ip_prefix': '10.10.10.175/26',
+              'normalized_cidr': str(
+                  netaddr.IPNetwork('10.10.10.175/26').cidr),
               'protocol': 'tcp',
               'port_range_min': '2000', 'port_range_max': '3000',
               'direction': 'ingress'}, True)]
@@ -315,6 +329,8 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
             }, {
                 'id': 'rule-2-id',
                 'remote_ip_prefix': '10.10.10.128/26',
+                'normalized_cidr': str(
+                    netaddr.IPNetwork('10.10.10.128/26').cidr),
                 'protocol': 'tcp',
                 'port_range_min': '2000',
                 'port_range_max': '3000',

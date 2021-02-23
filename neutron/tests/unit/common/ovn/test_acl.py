@@ -289,11 +289,13 @@ class TestACLs(base.BaseTestCase):
         }).info()
         ip_version = 'ip4'
         remote_ip_prefix = '10.10.0.0/24'
+        normalized_cidr = '10.10.0.0/24'
 
         match = ovn_acl.acl_remote_ip_prefix(sg_rule, ip_version)
         self.assertEqual('', match)
 
         sg_rule['remote_ip_prefix'] = remote_ip_prefix
+        sg_rule['normalized_cidr'] = normalized_cidr
         match = ovn_acl.acl_remote_ip_prefix(sg_rule, ip_version)
         expected_match = ' && %s.src == %s' % (ip_version, remote_ip_prefix)
         self.assertEqual(expected_match, match)
@@ -304,12 +306,13 @@ class TestACLs(base.BaseTestCase):
         self.assertEqual(expected_match, match)
 
     def test_acl_remote_ip_prefix_not_normalized(self):
-        sg_rule = fakes.FakeSecurityGroupRule.create_one_security_group_rule({
-            'direction': 'ingress',
-            'remote_ip_prefix': '10.10.10.175/26'
-        }).info()
         normalized_ip_prefix = '10.10.10.128/26'
         ip_version = 'ip4'
+        sg_rule = fakes.FakeSecurityGroupRule.create_one_security_group_rule({
+            'direction': 'ingress',
+            'remote_ip_prefix': '10.10.10.175/26',
+            'normalized_cidr': normalized_ip_prefix
+        }).info()
 
         match = ovn_acl.acl_remote_ip_prefix(sg_rule, ip_version)
         expected_match = ' && %s.src == %s' % (ip_version,
