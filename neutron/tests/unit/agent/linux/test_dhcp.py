@@ -307,6 +307,19 @@ class FakeRouterPort(object):
                                for ip in self.fixed_ips]
 
 
+class FakeRouterHAPort(object):
+    def __init__(self):
+        self.id = 'hahahaha-haha-haha-haha-hahahahahaha'
+        self.admin_state_up = True
+        self.device_owner = constants.DEVICE_OWNER_ROUTER_HA_INTF
+        self.mac_address = '00:00:0f:aa:aa:aa'
+        self.device_id = 'fake_router_ha_port'
+        self.dns_assignment = []
+        self.extra_dhcp_opts = []
+        self.fixed_ips = [FakeIPAllocation(
+            '169.254.169.20', 'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+
+
 class FakeRouterPortNoDHCP(object):
     def __init__(self, dev_owner=constants.DEVICE_OWNER_ROUTER_INTF,
                  ip_address='192.168.0.1', domain='openstacklocal'):
@@ -692,6 +705,7 @@ class FakeDualNetwork(object):
         self.namespace = 'qdhcp-ns'
         self.ports = [FakePort1(domain=domain), FakeV6Port(domain=domain),
                       FakeDualPort(domain=domain),
+                      FakeRouterHAPort(),
                       FakeRouterPort(domain=domain)]
 
 

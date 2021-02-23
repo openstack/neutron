@@ -58,6 +58,23 @@ HOST_DHCPV6_TAG = 'tag:dhcpv6,'
 DHCP_OPT_CLIENT_ID_NUM = 61
 
 
+def port_requires_dhcp_configuration(port):
+    if not getattr(port, 'device_owner', None):
+        # We can't check if port needs dhcp entry, so it will be better
+        # to create one
+        return True
+    # TODO(slaweq): define this list as a constant in neutron_lib.constants
+    # NOTE(slaweq): Not all port types which belongs e.g. to the routers can be
+    # excluded from that list. For some of them, like router interfaces used to
+    # plug subnet to the router should be configured in dnsmasq to provide DNS
+    # naming resolution. Otherwise it may slowdown e.g. traceroutes from the VM
+    return port.device_owner not in [
+        constants.DEVICE_OWNER_ROUTER_HA_INTF,
+        constants.DEVICE_OWNER_FLOATINGIP,
+        constants.DEVICE_OWNER_DHCP,
+        constants.DEVICE_OWNER_DISTRIBUTED]
+
+
 class DictModel(collections.abc.MutableMapping):
     """Convert dict into an object that provides attribute access to values."""
 
@@ -719,6 +736,9 @@ class Dnsmasq(DhcpLocalProcess):
                        if subnet.ip_version == 6)
 
         for port in self.network.ports:
+            if not port_requires_dhcp_configuration(port):
+                continue
+
             fixed_ips = self._sort_fixed_ips_for_dnsmasq(port.fixed_ips,
                                                          v6_nets)
             # TODO(hjensas): Drop this conditional and option once distros
