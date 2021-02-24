@@ -77,6 +77,10 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         self.mock_quota_make_res = make_res.start()
         commit_res = mock.patch.object(quota.QuotaEngine, 'commit_reservation')
         self.mock_quota_commit_res = commit_res.start()
+        is_ext_supported = mock.patch(
+            'neutron_lib.api.extensions.is_extension_supported')
+        self.is_ext_supported = is_ext_supported.start()
+        self.is_ext_supported.return_value = True
 
     def test_create_security_group_conflict(self):
         with mock.patch.object(registry, "publish") as mock_publish:
@@ -601,3 +605,13 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             get_default_sg_id.assert_has_calls([
                 mock.call(self.ctx, 'tenant_1'),
                 mock.call(self.ctx, 'tenant_1')])
+
+    def test__ensure_default_security_group_when_disabled(self):
+        with mock.patch.object(
+                    self.mixin, '_get_default_sg_id') as get_default_sg_id,\
+                mock.patch.object(
+                        self.mixin, 'create_security_group') as create_sg:
+            self.is_ext_supported.return_value = False
+            self.mixin._ensure_default_security_group(self.ctx, 'tenant_1')
+            create_sg.assert_not_called()
+            get_default_sg_id.assert_not_called()
