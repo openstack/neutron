@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+import copy
 import itertools
 import signal
 
@@ -1013,3 +1014,83 @@ class IpAddrCommandTestCase(functional_base.BaseSudoTestCase):
             devices_filtered = self.device.addr.list(scope=scope)
             devices_cidr = {device['cidr'] for device in devices_filtered}
             self.assertIn(_ip, devices_cidr)
+
+
+class GetDevicesWithIpTestCase(functional_base.BaseSudoTestCase):
+
+    def setUp(self):
+        super(GetDevicesWithIpTestCase, self).setUp()
+        self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
+        self.devices = []
+        self.num_devices = 5
+        self.num_devices_with_ip = 3
+        for idx in range(self.num_devices):
+            dev_name = 'test_device_%s' % idx
+            ip_lib.IPWrapper(self.namespace).add_dummy(dev_name)
+            device = ip_lib.IPDevice(dev_name, namespace=self.namespace)
+            device.link.set_up()
+            self.devices.append(device)
+
+        self.cidrs = [netaddr.IPNetwork('10.10.0.0/24'),
+                      netaddr.IPNetwork('10.20.0.0/24'),
+                      netaddr.IPNetwork('2001:db8:1234:1111::/64'),
+                      netaddr.IPNetwork('2001:db8:1234:2222::/64')]
+        for idx in range(self.num_devices_with_ip):
+            for cidr in self.cidrs:
+                self.devices[idx].addr.add(str(cidr.ip + idx) + '/' +
+                                           str(cidr.netmask.netmask_bits()))
+
+    @staticmethod
+    def _remove_loopback_interface(ip_addresses):
+        return [ipa for ipa in ip_addresses if
+                ipa['name'] != ip_lib.LOOPBACK_DEVNAME]
+
+    @staticmethod
+    def _remove_ipv6_scope_link(ip_addresses):
+        # Remove all IPv6 addresses with scope link (fe80::...).
+        return [ipa for ipa in ip_addresses if not (
+                ipa['scope'] == 'link' and utils.get_ip_version(ipa['cidr']))]
+
+    @staticmethod
+    def _pop_ip_address(ip_addresses, cidr):
+        for idx, ip_address in enumerate(copy.deepcopy(ip_addresses)):
+            if cidr == ip_address['cidr']:
+                ip_addresses.pop(idx)
+                return
+
+    def test_get_devices_with_ip(self):
+        ip_addresses = ip_lib.get_devices_with_ip(self.namespace)
+        ip_addresses = self._remove_loopback_interface(ip_addresses)
+        ip_addresses = self._remove_ipv6_scope_link(ip_addresses)
+        self.assertEqual(self.num_devices_with_ip * len(self.cidrs),
+                         len(ip_addresses))
+        for idx in range(self.num_devices_with_ip):
+            for cidr in self.cidrs:
+                cidr = (str(cidr.ip + idx) + '/' +
+                        str(cidr.netmask.netmask_bits()))
+                self._pop_ip_address(ip_addresses, cidr)
+
+        self.assertEqual(0, len(ip_addresses))
+
+    def test_get_devices_with_ip_name(self):
+        for idx in range(self.num_devices_with_ip):
+            dev_name = 'test_device_%s' % idx
+            ip_addresses = ip_lib.get_devices_with_ip(self.namespace,
+                                                      name=dev_name)
+            ip_addresses = self._remove_loopback_interface(ip_addresses)
+            ip_addresses = self._remove_ipv6_scope_link(ip_addresses)
+
+            for cidr in self.cidrs:
+                cidr = (str(cidr.ip + idx) + '/' +
+                        str(cidr.netmask.netmask_bits()))
+                self._pop_ip_address(ip_addresses, cidr)
+
+            self.assertEqual(0, len(ip_addresses))
+
+        for idx in range(self.num_devices_with_ip, self.num_devices):
+            dev_name = 'test_device_%s' % idx
+            ip_addresses = ip_lib.get_devices_with_ip(self.namespace,
+                                                      name=dev_name)
+            ip_addresses = self._remove_loopback_interface(ip_addresses)
+            ip_addresses = self._remove_ipv6_scope_link(ip_addresses)
+            self.assertEqual(0, len(ip_addresses))
