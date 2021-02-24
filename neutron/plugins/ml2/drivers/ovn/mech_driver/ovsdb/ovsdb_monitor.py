@@ -26,7 +26,6 @@ from ovs.stream import Stream
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp.backend.ovs_idl import event as row_event
 from ovsdbapp.backend.ovs_idl import idlutils
-from ovsdbapp import event
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import exceptions
@@ -34,6 +33,7 @@ from neutron.common.ovn import hash_ring_manager
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import backports
 
 
 CONF = cfg.CONF
@@ -346,7 +346,7 @@ class FIPAddDeleteEvent(row_event.RowEvent):
         self.driver.delete_mac_binding_entries(row.external_ip)
 
 
-class OvnDbNotifyHandler(event.RowEventHandler):
+class OvnDbNotifyHandler(backports.RowEventHandler):
     def __init__(self, driver):
         super(OvnDbNotifyHandler, self).__init__()
         self.driver = driver
@@ -362,7 +362,7 @@ class Ml2OvnIdlBase(connection.OvsdbIdl):
 
 class BaseOvnIdl(Ml2OvnIdlBase):
     def __init__(self, remote, schema):
-        self.notify_handler = event.RowEventHandler()
+        self.notify_handler = backports.RowEventHandler()
         super(BaseOvnIdl, self).__init__(remote, schema)
 
     @classmethod
