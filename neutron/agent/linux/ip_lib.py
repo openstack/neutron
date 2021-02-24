@@ -1361,35 +1361,37 @@ def _parse_ip_address(pyroute2_address, device_name):
             'event': event}
 
 
-def _parse_link_device(namespace, device, **kwargs):
-    """Parse pytoute2 link device information
-
-    For each link device, the IP address information is retrieved and returned
-    in a dictionary.
-    IP address scope: http://linux-ip.net/html/tools-ip-address.html
-    """
-    retval = []
-    name = get_attr(device, 'IFLA_IFNAME')
-    ip_addresses = privileged.get_ip_addresses(namespace,
-                                               index=device['index'],
-                                               **kwargs)
-    for ip_address in ip_addresses:
-        retval.append(_parse_ip_address(ip_address, name))
-    return retval
-
-
 def get_devices_with_ip(namespace, name=None, **kwargs):
+    retval = []
     link_args = {}
     if name:
         link_args['ifname'] = name
     scope = kwargs.pop('scope', None)
     if scope:
         kwargs['scope'] = IP_ADDRESS_SCOPE_NAME[scope]
-    devices = privileged.get_link_devices(namespace, **link_args)
-    retval = []
-    for parsed_ips in (_parse_link_device(namespace, device, **kwargs)
-                       for device in devices):
-        retval += parsed_ips
+
+    if not link_args:
+        ip_addresses = privileged.get_ip_addresses(namespace, **kwargs)
+    else:
+        device = get_devices_info(namespace, **link_args)
+        if not device:
+            return retval
+        ip_addresses = privileged.get_ip_addresses(
+            namespace, index=device[0]['index'], **kwargs)
+
+    devices = {}  # {device index: name}
+    for ip_address in ip_addresses:
+        index = ip_address['index']
+        name = get_attr(ip_address, 'IFA_LABEL') or devices.get(index)
+        if not name:
+            device = get_devices_info(namespace, index=index)
+            if not device:
+                continue
+            name = device[0]['name']
+
+        retval.append(_parse_ip_address(ip_address, name))
+        devices[index] = name
+
     return retval
 
 
