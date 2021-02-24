@@ -49,6 +49,13 @@
             irrelevant-files: *tempest-irrelevant-files
         - tempest-slow-py3:
             irrelevant-files: *tempest-irrelevant-files
+            vars:
+              devstack_localrc:
+                # to avoid https://bugs.launchpad.net/neutron/+bug/1914037
+                # as we couldn't backport the fix to stein release
+                IPV6_PUBLIC_RANGE: 2001:db8:0:10::/64
+                IPV6_PUBLIC_NETWORK_GATEWAY: 2001:db8:0:10::2
+                IPV6_ROUTER_GW_IP: 2001:db8:0:10::1
         - networking-ovn-tempest-dsvm-ovs-release:
             voting: false
             irrelevant-files: *tempest-irrelevant-files
@@ -73,6 +80,13 @@
             timeout: 10800
         - tempest-slow-py3:
             irrelevant-files: *tempest-irrelevant-files
+            vars:
+              devstack_localrc:
+                # to avoid https://bugs.launchpad.net/neutron/+bug/1914037
+                # as we couldn't backport the fix to stein release
+                IPV6_PUBLIC_RANGE: 2001:db8:0:10::/64
+                IPV6_PUBLIC_NETWORK_GATEWAY: 2001:db8:0:10::2
+                IPV6_ROUTER_GW_IP: 2001:db8:0:10::1
         - grenade-py3:
             irrelevant-files: *tempest-irrelevant-files
     periodic:
