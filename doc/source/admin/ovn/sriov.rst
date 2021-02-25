@@ -74,7 +74,7 @@ a gateway node by the ``ovn-cms-options=enable-chassis-as-gw`` and
 
 For more information about both of these options, please
 take a look at the `ovn-controller documentation
-<http://www.openvswitch.org/support/dist-docs/ovn-controller.8.html>`_.
+<http://www.ovn.org/support/dist-docs/ovn-controller.8.html>`_.
 
 These options can be set by running the following command locally on each
 gateway node (note, the ``ovn-bridge-mappings`` will need to be adapted
