@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    To improve performance of the DHCP agent, it will no longer configure the DHCP server
+    for every port type created in Neutron. For example, for floating IP or router HA
+    interfaces there is no need since a client will not make a DHCP request for them
