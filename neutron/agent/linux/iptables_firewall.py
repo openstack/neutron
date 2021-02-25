@@ -102,7 +102,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         log_warning = False
         if not a_utils.execute(
                 ['sysctl', '-N', 'net.bridge'], run_as_root=True,
-                log_fail_as_error=False, check_exit_code=False):
+                log_fail_as_error=False, check_exit_code=False,
+                privsep_exec=True):
             LOG.warning('Kernel module br_netfilter is not loaded.')
             log_warning = True
         if not log_warning:
@@ -110,7 +111,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 key = 'net.bridge.bridge-nf-call-%stables' % proto
                 enabled = a_utils.execute(
                     ['sysctl', '-b', key], run_as_root=True,
-                    log_fail_as_error=False, check_exit_code=False)
+                    log_fail_as_error=False, check_exit_code=False,
+                    privsep_exec=True)
                 if enabled == '1':
                     status = 'enabled'
                     log_method = LOG.debug

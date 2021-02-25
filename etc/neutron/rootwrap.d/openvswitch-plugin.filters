@@ -17,6 +17,3 @@ ovsdb-client: CommandFilter, ovsdb-client, root
 # ip_lib
 ip: IpFilter, ip, root
 ip_exec: IpNetnsExecFilter, ip, root
-
-# needed for FDB extension
-bridge: CommandFilter, bridge, root
