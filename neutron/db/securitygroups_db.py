@@ -59,6 +59,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
 
     __native_bulk_support = True
 
+    default_sg_cache = dict()
+
     def create_security_group_bulk(self, context, security_groups):
         return self._create_bulk('security_group', context,
                                  security_groups)
@@ -274,6 +276,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                                   exc_cls=ext_sg.SecurityGroupInUse, id=id,
                                   **kwargs)
             sg.delete()
+
+        project_id = self.default_sg_cache.pop(id, None)
+        self.default_sg_cache.pop(project_id, None)
 
         kwargs.pop('security_group')
         kwargs['name'] = sg['name']
@@ -881,11 +886,16 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                                        security_groups else [])
 
     def _get_default_sg_id(self, context, tenant_id):
+        if tenant_id in self.default_sg_cache:
+            return self.default_sg_cache[tenant_id]
+
         default_group = sg_obj.DefaultSecurityGroup.get_object(
             context,
             project_id=tenant_id,
         )
         if default_group:
+            self.default_sg_cache[tenant_id] = default_group.security_group_id
+            self.default_sg_cache[default_group.security_group_id] = tenant_id
             return default_group.security_group_id
 
     @registry.receives(resources.PORT, [events.BEFORE_CREATE,
