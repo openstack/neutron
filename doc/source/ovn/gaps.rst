@@ -17,10 +17,9 @@ at [1]_.
 * QoS for Layer 3 IPs
 
   Currently the Neutron L3-agent supports floating IP and gateway IP bandwidth
-  limiting based on Linux TC. Networking-ovn L3 had a prototype
-  implementation [2]_ based on the meter of openvswitch [3]_ utility that
-  has been abandoned. This is supported in user space datapath only, or
-  kernel versions 4.15+ [4]_.
+  limiting based on Linux TC. OVN L3 plugin supports floating IP bandwidth
+  limiting based on the OVN's QoS rules.
+  Neutron OVN backend does not yet support bandwidth limiting for gateway IP.
 
 * QoS Minimum Bandwidth support
 
@@ -37,18 +36,18 @@ at [1]_.
   The core OVN DHCP server implementation does not have support for
   sending different boot options based on the ``gpxe`` DHCP Option
   (no. 175). Also, Ironic uses dnsmasq syntax when configuring the DHCP
-  options for Neutron [5]_ which is not understood by the OVN driver.
+  options for Neutron [2]_ which is not understood by the OVN driver.
 
 * QoS minimum bandwidth allocation in Placement API
 
   ML2/OVN integration with the Nova placement API to provide guaranteed
-  minimum bandwidth for ports [6]_.
+  minimum bandwidth for ports [3]_.
 
 * IPv6 Prefix Delegation
 
   Currently ML2/OVN doesn't implement IPv6 prefix delegation. OVN logical
-  routers have this capability implemented in [7]_ and we have an open RFE to
-  fill this gap [8]_.
+  routers have this capability implemented in [4]_ and we have an open RFE to
+  fill this gap [5]_.
 
 * East/West Fragmentation
 
@@ -61,10 +60,7 @@ References
 ----------
 
 .. [1] https://github.com/ovn-org/ovn/blob/master/TODO.rst
-.. [2] https://review.opendev.org/#/c/539826/
-.. [3] https://github.com/openvswitch/ovs/commit/66d89287269ca7e2f7593af0920e910d7f9bcc38
-.. [4] https://github.com/torvalds/linux/blob/master/net/openvswitch/meter.h
-.. [5] https://github.com/openstack/ironic/blob/123cb22c731f93d0c608d791b41e05884fe18c04/ironic/common/pxe_utils.py#L447-L462>
-.. [6] https://specs.openstack.org/openstack/neutron-specs/specs/rocky/minimum-bandwidth-allocation-placement-api.html
-.. [7] https://patchwork.ozlabs.org/project/openvswitch/patch/6aec0fb280f610a2083fbb6c61e251b1d237b21f.1576840560.git.lorenzo.bianconi@redhat.com/
-.. [8] https://bugs.launchpad.net/neutron/+bug/1895972
+.. [2] https://github.com/openstack/ironic/blob/123cb22c731f93d0c608d791b41e05884fe18c04/ironic/common/pxe_utils.py#L447-L462>
+.. [3] https://specs.openstack.org/openstack/neutron-specs/specs/rocky/minimum-bandwidth-allocation-placement-api.html
+.. [4] https://patchwork.ozlabs.org/project/openvswitch/patch/6aec0fb280f610a2083fbb6c61e251b1d237b21f.1576840560.git.lorenzo.bianconi@redhat.com/
+.. [5] https://bugs.launchpad.net/neutron/+bug/1895972
