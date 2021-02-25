@@ -673,7 +673,8 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         if uuidutils.is_uuid_like(lrouter_name):
             lrouter_name = utils.ovn_name(lrouter_name)
         try:
-            return self.lr_get(lrouter_name).execute(check_error=True)
+            return self.lr_get(lrouter_name).execute(log_errors=False,
+                                                     check_error=True)
         except idlutils.RowNotFound:
             return None
 
