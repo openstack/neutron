@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Neutron supports creating IPv4 subnet with prefixlen /31 and /32,
+    via disabling dhcp on a subnet.
+    For more information, see bug
+    `1580927 <https://bugs.launchpad.net/neutron/+bug/1580927>`_.

@@ -129,7 +129,10 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
     def _configure_static_ipaddress(self):
         self.port.addr.add(self.ip_cidr)
         if self.gateway_ip:
-            net_helpers.set_namespace_gateway(self.port, self.gateway_ip)
+            net = netaddr.IPNetwork(self.ip_cidr)
+            gateway_ip = netaddr.IPAddress(self.gateway_ip)
+            if gateway_ip in net:
+                net_helpers.set_namespace_gateway(self.port, self.gateway_ip)
 
     def _configure_ipaddress_via_dhcp(self):
         self._start_async_dhclient()

@@ -62,12 +62,17 @@ def generate_pools(cidr, gateway_ip):
     if first == last:
         # handle single address subnet case
         return [netaddr.IPRange(first, last)]
-    first_ip = first + 1
-    # last address is broadcast in v4
-    last_ip = last - (ip_version == 4)
-    if first_ip >= last_ip:
-        # /31 lands here
-        return []
+    if ip_version == constants.IP_VERSION_4:
+        if net.prefixlen <= 30:
+            first_ip = first + 1
+            # last address is broadcast in v4
+            last_ip = last - (ip_version == 4)
+        else:
+            first_ip = first
+            last_ip = last
+    else:  # IPv6 case
+        first_ip = first + 1
+        last_ip = last
     ipset = netaddr.IPSet(netaddr.IPRange(first_ip, last_ip))
     if gateway_ip:
         ipset.remove(netaddr.IPAddress(gateway_ip, ip_version))

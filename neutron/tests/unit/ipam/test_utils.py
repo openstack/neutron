@@ -89,7 +89,7 @@ class TestIpamUtils(base.BaseTestCase):
 
     def test_generate_pools_v4_31(self):
         cidr = '192.168.0.0/31'
-        expected = []
+        expected = [netaddr.IPRange('192.168.0.0', '192.168.0.1')]
         self.assertEqual(expected, utils.generate_pools(cidr, None))
 
     def test_generate_pools_v4_gateway_middle(self):
