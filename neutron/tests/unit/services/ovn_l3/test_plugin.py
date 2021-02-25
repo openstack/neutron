@@ -1335,13 +1335,15 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                              'router_id': 'router-id',
                              'port_id': 'port_id',
                              'floating_port_id': 'fip-port-id1',
-                             'fixed_ip_address': '10.0.0.10'},
+                             'fixed_ip_address': '10.0.0.10',
+                             'floating_network_id': 'net1'},
                             {'id': 'fip-id2',
                              'floating_ip_address': '192.167.0.10',
                              'router_id': 'router-id',
                              'port_id': 'port_id',
                              'floating_port_id': 'fip-port-id2',
-                             'fixed_ip_address': '10.0.0.11'}]
+                             'fixed_ip_address': '10.0.0.11',
+                             'floating_network_id': 'net2'}]
         self.l3_inst.disassociate_floatingips(self.context, 'port_id',
                                               do_notify=False)
 

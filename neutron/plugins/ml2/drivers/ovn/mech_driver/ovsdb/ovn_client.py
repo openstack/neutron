@@ -948,7 +948,9 @@ class OVNClient(object):
     def disassociate_floatingip(self, floatingip, router_id):
         lrouter = utils.ovn_name(router_id)
         try:
-            self._delete_floatingip(floatingip, lrouter)
+            with self._nb_idl.transaction(check_error=True) as txn:
+                self._delete_floatingip(floatingip, lrouter, txn=txn)
+                self._qos_driver.delete_floatingip(txn, floatingip)
         except Exception as e:
             with excutils.save_and_reraise_exception():
                 LOG.error('Unable to disassociate floating ip in gateway '
