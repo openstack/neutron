@@ -6734,6 +6734,97 @@ class DbModelMixin(object):
             self.assertEqual(
                 disc, obj.standard_attr.resource_type)
 
+    def test_staledata_error_on_concurrent_object_delete_port(self):
+        ctx = context.get_admin_context()
+        network = self._make_network(ctx)
+        port = self._make_port(ctx, network.id)
+        self._test_staledata_error_on_concurrent_object_delete(
+            models_v2.Port, port['id'])
+
+    def test_staledata_error_on_concurrent_object_delete_network(self):
+        ctx = context.get_admin_context()
+        network = self._make_network(ctx)
+        self._test_staledata_error_on_concurrent_object_delete(
+            models_v2.Network, network['id'])
+
+    def test_staledata_error_on_concurrent_object_delete_subnet(self):
+        ctx = context.get_admin_context()
+        network = self._make_network(ctx)
+        subnet = self._make_subnet(ctx, network.id)
+        self._test_staledata_error_on_concurrent_object_delete(
+            models_v2.Subnet, subnet['id'])
+
+    def test_staledata_error_on_concurrent_object_delete_subnetpool(self):
+        ctx = context.get_admin_context()
+        subnetpool = self._make_subnetpool(ctx)
+        self._test_staledata_error_on_concurrent_object_delete(
+            models_v2.SubnetPool, subnetpool['id'])
+
+    def test_staledata_error_on_concurrent_object_delete_router(self):
+        ctx = context.get_admin_context()
+        router = self._make_router(ctx)
+        self._test_staledata_error_on_concurrent_object_delete(
+            l3_models.Router, router['id'])
+
+    def test_staledata_error_on_concurrent_object_delete_floatingip(self):
+        ctx = context.get_admin_context()
+        network = self._make_network(ctx)
+        port = self._make_port(ctx, network.id)
+        flip = self._make_floating_ip(ctx, port.id)
+        self._test_staledata_error_on_concurrent_object_delete(
+            flip.db_model, flip.id)
+
+    def test_staledata_error_on_concurrent_object_delete_sg(self):
+        ctx = context.get_admin_context()
+        sg, rule = self._make_security_group_and_rule(ctx)
+        self._test_staledata_error_on_concurrent_object_delete(
+            sg_models.SecurityGroup, sg['id'])
+        with testtools.ExpectedException(orm.exc.NoResultFound):
+            self._test_staledata_error_on_concurrent_object_delete(
+                sg_models.SecurityGroupRule, rule['id'])
+
+    def _test_staledata_error_on_concurrent_object_delete(self, model, dbid):
+        """Test StaleDataError on concurrent delete objects.
+        """
+        lock = functools.partial(lockutils.lock, uuidutils.generate_uuid())
+        attr_id = None
+        ctx = context.get_admin_context()
+        with db_api.CONTEXT_WRITER.using(ctx):
+            thing = ctx.session.query(model).filter_by(id=dbid).one()
+            attr_id = thing.standard_attr_id
+        self.assertIsNotNone(attr_id)
+
+        def _lock_blocked_object_delete():
+            ctx = context.get_admin_context()
+            try:
+                with db_api.CONTEXT_WRITER.using(ctx):
+                    thing = ctx.session.query(model).filter_by(id=dbid).one()
+                    eventlet.sleep(0)
+                    ctx.session.delete(thing)
+            except orm.exc.StaleDataError as e:
+                if e and "confirm_deleted_rows" in str(e):
+                    self.fail("Meets bug 1916889")
+
+        with lock():
+            coro = eventlet.spawn(_lock_blocked_object_delete)
+            ctx = context.get_admin_context()
+            with db_api.CONTEXT_WRITER.using(ctx):
+                thing = ctx.session.query(model).filter_by(id=dbid).one()
+                eventlet.sleep(0)
+                ctx.session.delete(thing)
+
+        coro.wait()
+
+        # The DB object with its standard_attr should be deleted
+        with testtools.ExpectedException(orm.exc.NoResultFound):
+            # we want to make sure that the attr resource was removed
+            self._get_neutron_attr(ctx, attr_id)
+
+        with testtools.ExpectedException(orm.exc.NoResultFound):
+            ctx = context.get_admin_context()
+            with db_api.CONTEXT_WRITER.using(ctx):
+                ctx.session.query(model).filter_by(id=dbid).one()
+
 
 class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
     def _make_network(self, ctx):
