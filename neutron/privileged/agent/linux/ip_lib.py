@@ -36,6 +36,8 @@ _IP_VERSION_FAMILY_MAP = {4: socket.AF_INET, 6: socket.AF_INET6}
 
 NETNS_RUN_DIR = '/var/run/netns'
 
+NUD_STATES = {state[1]: state[0] for state in ndmsg.states.items()}
+
 
 def _get_scope_name(scope):
     """Return the name of the scope (given as a number), or the scope number
@@ -458,13 +460,15 @@ def get_link_vfs(device, namespace):
 
 @privileged.default.entrypoint
 def add_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
-                    **kwargs):
+                    nud_state, **kwargs):
     """Add a neighbour entry.
 
     :param ip_address: IP address of entry to add
     :param mac_address: MAC address of entry to add
     :param device: Device name to use in adding entry
     :param namespace: The name of the namespace in which to add the entry
+    :param nud_state: The NUD (Neighbour Unreachability Detection) state of
+                      the entry
     """
     family = _IP_VERSION_FAMILY_MAP[ip_version]
     _run_iproute_neigh('replace',
@@ -473,7 +477,7 @@ def add_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
                        dst=ip_address,
                        lladdr=mac_address,
                        family=family,
-                       state=ndmsg.states['permanent'],
+                       state=ndmsg.states[nud_state],
                        **kwargs)
 
 
@@ -526,9 +530,10 @@ def dump_neigh_entries(ip_version, device, namespace, **kwargs):
 
     for entry in dump:
         attrs = dict(entry['attrs'])
-        entries += [{'dst': attrs['NDA_DST'],
-                     'lladdr': attrs.get('NDA_LLADDR'),
-                     'device': device}]
+        entries.append({'dst': attrs['NDA_DST'],
+                        'lladdr': attrs.get('NDA_LLADDR'),
+                        'device': device,
+                        'state': NUD_STATES[entry['state']]})
     return entries
 
 

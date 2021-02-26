@@ -46,6 +46,12 @@ WRONG_IP = '0.0.0.0'
 TEST_IP = '240.0.0.1'
 TEST_IP_NEIGH = '240.0.0.2'
 TEST_IP_SECONDARY = '240.0.0.3'
+TEST_IP6_NEIGH = 'fd00::2'
+TEST_IP6_SECONDARY = 'fd00::3'
+TEST_IP_NUD_STATES = ((TEST_IP_NEIGH, 'permanent'),
+                      (TEST_IP_SECONDARY, 'reachable'),
+                      (TEST_IP6_NEIGH, 'permanent'),
+                      (TEST_IP6_SECONDARY, 'reachable'))
 
 
 class IpLibTestFramework(functional_base.BaseSudoTestCase):
@@ -416,7 +422,8 @@ class IpLibTestCase(IpLibTestFramework):
 
         expected_neighs = [{'dst': TEST_IP_NEIGH,
                             'lladdr': mac_address,
-                            'device': attr.name}]
+                            'device': attr.name,
+                            'state': 'permanent'}]
 
         neighs = device.neigh.dump(4)
         self.assertItemsEqual(expected_neighs, neighs)
@@ -448,6 +455,41 @@ class IpLibTestCase(IpLibTestFramework):
 
         # trying to delete a non-existent entry shouldn't raise an error
         device.neigh.delete(TEST_IP_NEIGH, mac_address)
+
+    def test_flush_neigh_ipv4(self):
+        # Entry with state "reachable" deleted.
+        self._flush_neigh(constants.IP_VERSION_4, TEST_IP_SECONDARY,
+                          {TEST_IP_NEIGH})
+        # Entries belong to "ip_to_flush" passed CIDR, but "permanent" entry
+        # is not deleted.
+        self._flush_neigh(constants.IP_VERSION_4, '240.0.0.0/28',
+                          {TEST_IP_NEIGH})
+        # "all" passed, but "permanent" entry is not deleted.
+        self._flush_neigh(constants.IP_VERSION_4, 'all', {TEST_IP_NEIGH})
+
+    def test_flush_neigh_ipv6(self):
+        # Entry with state "reachable" deleted.
+        self._flush_neigh(constants.IP_VERSION_6, TEST_IP6_SECONDARY,
+                          {TEST_IP6_NEIGH})
+        # Entries belong to "ip_to_flush" passed CIDR, but "permanent" entry
+        # is not deleted.
+        self._flush_neigh(constants.IP_VERSION_6, 'fd00::0/64',
+                          {TEST_IP6_NEIGH})
+        # "all" passed, but "permanent" entry is not deleted.
+        self._flush_neigh(constants.IP_VERSION_6, 'all', {TEST_IP6_NEIGH})
+
+    def _flush_neigh(self, version, ip_to_flush, ips_expected):
+        attr = self.generate_device_details(
+            ip_cidrs=['%s/24' % TEST_IP, 'fd00::1/64'],
+            namespace=utils.get_rand_name(20, 'ns-'))
+        device = self.manage_device(attr)
+        for test_ip, nud_state in TEST_IP_NUD_STATES:
+            mac_address = net.get_random_mac('fa:16:3e:00:00:00'.split(':'))
+            device.neigh.add(test_ip, mac_address, nud_state)
+
+        device.neigh.flush(version, ip_to_flush)
+        ips = {e['dst'] for e in device.neigh.dump(version)}
+        self.assertEqual(ips_expected, ips)
 
     def _check_for_device_name(self, ip, name, should_exist):
         exist = any(d for d in ip.get_devices() if d.name == name)
