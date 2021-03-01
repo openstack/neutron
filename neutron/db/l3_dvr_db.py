@@ -13,6 +13,7 @@
 #    under the License.
 import collections
 
+import netaddr
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import portbindings
@@ -49,6 +50,7 @@ from neutron.db import models_v2
 from neutron.extensions import _admin_state_down_before_update_lib
 from neutron.ipam import utils as ipam_utils
 from neutron.objects import agent as ag_obj
+from neutron.objects import base as base_obj
 from neutron.objects import l3agent as rb_obj
 from neutron.objects import router as l3_obj
 
@@ -479,6 +481,17 @@ class DVRResourceOperationHandler(object):
                                 fixed_ip_address))
                         if not addr_pair_active_service_port_list:
                             return
+                        self._inherit_service_port_and_arp_update(
+                            context, addr_pair_active_service_port_list[0])
+
+    def _inherit_service_port_and_arp_update(self, context, service_port):
+        """Function inherits port host bindings for allowed_address_pair."""
+        service_port_dict = self.l3plugin._core_plugin._make_port_dict(
+            service_port)
+        address_pair_list = service_port_dict.get('allowed_address_pairs')
+        for address_pair in address_pair_list:
+            self.update_arp_entry_for_dvr_service_port(context,
+                                                       service_port_dict)
 
     @registry.receives(resources.ROUTER_INTERFACE, [events.BEFORE_CREATE])
     @db_api.retry_if_session_inactive()
@@ -1114,6 +1127,21 @@ class _DVRAgentInterfaceMixin(object):
         self._populate_mtu_and_subnets_for_ports(context, [agent_port])
         return agent_port
 
+    def _generate_arp_table_and_notify_agent(self, context, fixed_ip,
+                                             mac_address, notifier):
+        """Generates the arp table entry and notifies the l3 agent."""
+        ip_address = fixed_ip['ip_address']
+        subnet = fixed_ip['subnet_id']
+        arp_table = {'ip_address': ip_address,
+                     'mac_address': mac_address,
+                     'subnet_id': subnet}
+        filters = {'fixed_ips': {'subnet_id': [subnet]},
+                   'device_owner': [const.DEVICE_OWNER_DVR_INTERFACE]}
+        ports = self._core_plugin.get_ports(context, filters=filters)
+        routers = [port['device_id'] for port in ports]
+        for router_id in routers:
+            notifier(context, router_id, arp_table)
+
     def _get_subnet_id_for_given_fixed_ip(self, context, fixed_ip, port_dict):
         """Returns the subnet_id that matches the fixedip on a network."""
         filters = {'network_id': [port_dict['network_id']]}
@@ -1121,6 +1149,78 @@ class _DVRAgentInterfaceMixin(object):
         for subnet in subnets:
             if ipam_utils.check_subnet_ip(subnet['cidr'], fixed_ip):
                 return subnet['id']
+
+    def _get_allowed_address_pair_fixed_ips(self, context, port_dict):
+        """Returns all fixed_ips associated with the allowed_address_pair."""
+        aa_pair_fixed_ips = []
+        if port_dict.get('allowed_address_pairs'):
+            for address_pair in port_dict['allowed_address_pairs']:
+                aap_ip_cidr = address_pair['ip_address'].split("/")
+                if len(aap_ip_cidr) == 1 or int(aap_ip_cidr[1]) == 32:
+                    subnet_id = self._get_subnet_id_for_given_fixed_ip(
+                        context, aap_ip_cidr[0], port_dict)
+                    if subnet_id is not None:
+                        fixed_ip = {'subnet_id': subnet_id,
+                                    'ip_address': aap_ip_cidr[0]}
+                        aa_pair_fixed_ips.append(fixed_ip)
+                    else:
+                        LOG.debug("Subnet does not match for the given "
+                                  "fixed_ip %s for arp update", aap_ip_cidr[0])
+        return aa_pair_fixed_ips
+
+    def update_arp_entry_for_dvr_service_port(self, context, port_dict):
+        """Notify L3 agents of ARP table entry for dvr service port.
+
+        When a dvr service port goes up, look for the DVR router on
+        the port's subnet, and send the ARP details to all
+        L3 agents hosting the router to add it.
+        If there are any allowed_address_pairs associated with the port
+        those fixed_ips should also be updated in the ARP table.
+        """
+        fixed_ips = port_dict['fixed_ips']
+        if not fixed_ips:
+            return
+        allowed_address_pair_fixed_ips = (
+            self._get_allowed_address_pair_fixed_ips(context, port_dict))
+        changed_fixed_ips = fixed_ips + allowed_address_pair_fixed_ips
+        for fixed_ip in changed_fixed_ips:
+            self._generate_arp_table_and_notify_agent(
+                context, fixed_ip, port_dict['mac_address'],
+                self.l3_rpc_notifier.add_arp_entry)
+
+    def delete_arp_entry_for_dvr_service_port(self, context, port_dict,
+                                              fixed_ips_to_delete=None):
+        """Notify L3 agents of ARP table entry for dvr service port.
+
+        When a dvr service port goes down, look for the DVR
+        router on the port's subnet, and send the ARP details to all
+        L3 agents hosting the router to delete it.
+        If there are any allowed_address_pairs associated with the
+        port, those fixed_ips should be removed from the ARP table.
+        """
+        fixed_ips = port_dict['fixed_ips']
+        if not fixed_ips:
+            return
+        if not fixed_ips_to_delete:
+            allowed_address_pair_fixed_ips = (
+                self._get_allowed_address_pair_fixed_ips(context, port_dict))
+            fixed_ips_to_delete = fixed_ips + allowed_address_pair_fixed_ips
+        for fixed_ip in fixed_ips_to_delete:
+            self._generate_arp_table_and_notify_agent(
+                context, fixed_ip, port_dict['mac_address'],
+                self.l3_rpc_notifier.del_arp_entry)
+
+    def _get_address_pair_active_port_with_fip(
+            self, context, port_dict, port_addr_pair_ip):
+        port_valid_state = (port_dict['admin_state_up'] or
+                            port_dict['status'] == const.PORT_STATUS_ACTIVE)
+        if not port_valid_state:
+            return
+        fips = l3_obj.FloatingIP.get_objects(
+            context, _pager=base_obj.Pager(limit=1),
+            fixed_ip_address=netaddr.IPAddress(port_addr_pair_ip))
+        return self._core_plugin.get_port(
+            context, fips[0].fixed_port_id) if fips else None
 
 
 class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
