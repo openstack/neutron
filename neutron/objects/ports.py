@@ -223,6 +223,21 @@ class IPAllocation(base.NeutronDbObject):
             alloc_obj = super(IPAllocation, cls)._load_object(context, alloc)
             alloc_obj.delete()
 
+    @classmethod
+    def get_alloc_routerports(cls, context, subnet_id, gateway_ip=None,
+                              first=False):
+        alloc_qry = context.session.query(cls.db_model.port_id)
+        alloc_qry = alloc_qry.join(
+            l3.RouterPort, l3.RouterPort.port_id == cls.db_model.port_id)
+        alloc_qry = alloc_qry.filter(cls.db_model.subnet_id == subnet_id)
+        if gateway_ip:
+            alloc_qry = alloc_qry.filter(cls.db_model.ip_address == gateway_ip)
+
+        if first:
+            return alloc_qry.first()
+        else:
+            return alloc_qry.all()
+
 
 @base.NeutronObjectRegistry.register
 class PortDNS(base.NeutronDbObject):
