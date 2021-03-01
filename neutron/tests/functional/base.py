@@ -199,6 +199,12 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self.pf_plugin._rpc_notifications_required = False
         self.ovn_northd_mgr = None
         self.maintenance_worker = maintenance_worker
+        mock.patch(
+            'neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
+            'maintenance.MaintenanceThread').start()
+        mock.patch(
+            'neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
+            'maintenance.HashRingHealthCheckPeriodics').start()
         self._start_idls()
         self._start_ovn_northd()
         self.addCleanup(self._reset_agent_cache_singleton)
