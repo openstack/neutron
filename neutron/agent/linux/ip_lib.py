@@ -401,23 +401,11 @@ class IPDevice(SubProcessBase):
         self._name = name
 
 
-class IpCommandBase(object):
-    COMMAND = ''
+class IpDeviceCommandBase(object):
 
     def __init__(self, parent):
         self._parent = parent
 
-    def _run(self, options, args):
-        return self._parent._run(options, self.COMMAND, args)
-
-    def _as_root(self, options, args, use_root_namespace=False):
-        return self._parent._as_root(options,
-                                     self.COMMAND,
-                                     args,
-                                     use_root_namespace=use_root_namespace)
-
-
-class IpDeviceCommandBase(IpCommandBase):
     @property
     def name(self):
         return self._parent.name
@@ -428,7 +416,6 @@ class IpDeviceCommandBase(IpCommandBase):
 
 
 class IpLinkCommand(IpDeviceCommandBase):
-    COMMAND = 'link'
 
     def set_address(self, mac_address):
         privileged.set_link_attribute(
@@ -521,7 +508,6 @@ class IpLinkCommand(IpDeviceCommandBase):
 
 
 class IpAddrCommand(IpDeviceCommandBase):
-    COMMAND = 'addr'
 
     def add(self, cidr, scope='global', add_broadcast=True):
         add_ip_address(cidr, self.name, self._parent.namespace, scope,
@@ -594,7 +580,6 @@ class IpAddrCommand(IpDeviceCommandBase):
 
 
 class IpRouteCommand(IpDeviceCommandBase):
-    COMMAND = 'route'
 
     def __init__(self, parent, table=None):
         super(IpRouteCommand, self).__init__(parent)
@@ -657,7 +642,6 @@ class IPRoute(SubProcessBase):
 
 
 class IpNeighCommand(IpDeviceCommandBase):
-    COMMAND = 'neigh'
 
     def add(self, ip_address, mac_address, nud_state=None, **kwargs):
         add_neigh_entry(ip_address,
@@ -702,8 +686,10 @@ class IpNeighCommand(IpDeviceCommandBase):
                 self.delete(entry['dst'], entry['lladdr'])
 
 
-class IpNetnsCommand(IpCommandBase):
-    COMMAND = 'netns'
+class IpNetnsCommand(object):
+
+    def __init__(self, parent):
+        self._parent = parent
 
     def add(self, name):
         create_network_namespace(name)
