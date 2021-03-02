@@ -528,7 +528,7 @@ class OVSBridge(BaseOVS):
         if tunnel_type == TYPE_GRE_IP6:
             # NOTE(slaweq) According to the OVS documentation L3 GRE tunnels
             # over IPv6 are not supported.
-            options['packet_type'] = 'legacy'
+            options['packet_type'] = 'legacy_l2'
         attrs.append(('options', options))
 
         return self.add_port(port_name, *attrs)
