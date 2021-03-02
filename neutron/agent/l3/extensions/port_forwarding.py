@@ -97,6 +97,14 @@ class RouterFipPortForwardingMapping(object):
         old_pf = self.get_port_forwarding(new_pf.id)
         return old_pf != new_pf
 
+    @lockutils.synchronized('port-forwarding-cache')
+    def clean_port_forwardings_by_router_id(self, router_id):
+        router_fips = self.router_fip_mapping.pop(router_id, [])
+        for fip_id in router_fips:
+            pf_ids = self.fip_port_forwarding.pop(fip_id, [])
+            for pf_id in pf_ids:
+                self.managed_port_forwardings.pop(pf_id, None)
+
 
 class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
     SUPPORTED_RESOURCE_TYPES = [resources.PORTFORWARDING]
@@ -455,7 +463,7 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
         :param context: RPC context.
         :param data: Router data.
         """
-        pass
+        self.mapping.clean_port_forwardings_by_router_id(data['id'])
 
     def ha_state_change(self, context, data):
         pass
