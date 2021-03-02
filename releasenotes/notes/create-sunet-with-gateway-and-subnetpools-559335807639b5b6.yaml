@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Now it is possible to define a gateway IP when creating a subnet using a
+    subnet pool. If the gateway IP can be allocated in one of the subnet
+    pool available subnets, this subnet is created; otherwise a ``Conflict``
+    exception is raised.

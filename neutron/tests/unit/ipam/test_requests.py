@@ -328,12 +328,13 @@ class TestAddressRequestFactory(base.BaseTestCase):
 class TestSubnetRequestFactory(IpamSubnetRequestTestCase):
 
     def _build_subnet_dict(self, id=None, cidr='192.168.1.0/24',
-                           prefixlen=8, ip_version=constants.IP_VERSION_4):
+                           prefixlen=8, ip_version=constants.IP_VERSION_4,
+                           gateway_ip=None):
         subnet = {'cidr': cidr,
                   'prefixlen': prefixlen,
                   'ip_version': ip_version,
                   'tenant_id': self.tenant_id,
-                  'gateway_ip': None,
+                  'gateway_ip': gateway_ip,
                   'allocation_pools': None,
                   'id': id or self.subnet_id}
         subnetpool = {'ip_version': ip_version,
@@ -353,6 +354,21 @@ class TestSubnetRequestFactory(IpamSubnetRequestTestCase):
                                                           subnet,
                                                           subnetpool),
                 ipam_req.SpecificSubnetRequest)
+
+    def test_specific_gateway_request_is_loaded(self):
+        gw_prefixlen = [('10.12.0.15', 24), ('10.12.0.1', 8),
+                        ('fffe::1', 64), ('fffe::', 64)]
+        for gateway_ip, prefixlen in gw_prefixlen:
+            subnet, subnetpool = self._build_subnet_dict(
+                cidr=None, gateway_ip=gateway_ip, prefixlen=prefixlen)
+            request = ipam_req.SubnetRequestFactory.get_request(
+                None, subnet, subnetpool)
+
+            cidr = netaddr.IPNetwork(str(gateway_ip) + '/%s' % prefixlen).cidr
+            self.assertIsInstance(request, ipam_req.SpecificSubnetRequest)
+            self.assertEqual(cidr, request.subnet_cidr)
+            self.assertEqual(netaddr.IPAddress(gateway_ip), request.gateway_ip)
+            self.assertEqual(prefixlen, request.prefixlen)
 
     def test_any_address_request_is_loaded_for_ipv4(self):
         subnet, subnetpool = self._build_subnet_dict(
@@ -401,3 +417,19 @@ class TestGetRequestFactory(base.BaseTestCase):
         self.assertEqual(
             self.driver.get_address_request_factory(),
             ipam_req.AddressRequestFactory)
+
+
+class TestSubnetRequestMetaclass(base.BaseTestCase):
+
+    def test__validate_gateway_ip_in_subnet(self):
+        method = ipam_req.SubnetRequest._validate_gateway_ip_in_subnet
+        cidr4 = netaddr.IPNetwork('192.168.0.0/24')
+        self.assertIsNone(method(cidr4, cidr4.ip + 1))
+        self.assertRaises(ipam_exc.IpamValueInvalid, method, cidr4, cidr4.ip)
+        self.assertRaises(ipam_exc.IpamValueInvalid, method, cidr4,
+                          cidr4.broadcast)
+
+        cidr6 = netaddr.IPNetwork('2001:db8::/64')
+        self.assertIsNone(method(cidr6, cidr6.ip + 1))
+        self.assertIsNone(method(cidr6, cidr6.ip))
+        self.assertIsNone(method(cidr6, cidr6.broadcast))
