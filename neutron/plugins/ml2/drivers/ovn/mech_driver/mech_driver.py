@@ -56,6 +56,7 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
+from neutron.services.logapi.drivers.ovn import driver as log_driver
 from neutron.services.qos.drivers.ovn import driver as qos_driver
 from neutron.services.segments import db as segment_service_db
 from neutron.services.trunk.drivers.ovn import trunk_driver
@@ -125,6 +126,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         self.subscribe()
         self.qos_driver = qos_driver.OVNQosDriver.create(self)
         self.trunk_driver = trunk_driver.OVNTrunkDriver.create(self)
+        self.log_driver = log_driver.register(self)
 
     @property
     def nb_schema_helper(self):

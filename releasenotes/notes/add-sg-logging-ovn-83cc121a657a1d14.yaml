@@ -1,0 +1,7 @@
+---
+features:
+    - |
+      Support for network logging based on security groups added to
+      OVN backend.
+      For more information see bug
+      `1914757 <https://bugs.launchpad.net/neutron/+bug/1914757>`_.

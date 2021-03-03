@@ -197,6 +197,15 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self.pf_plugin = manager.NeutronManager.load_class_for_provider(
             'neutron.service_plugins', 'port_forwarding')()
         self.pf_plugin._rpc_notifications_required = False
+        self.log_plugin = directory.get_plugin(constants.LOG_API)
+        if not self.log_plugin:
+            self.log_plugin = manager.NeutronManager.load_class_for_provider(
+                'neutron.service_plugins', 'log')()
+            directory.add_plugin(constants.LOG_API, self.log_plugin)
+            self.log_plugin.driver_manager.register_driver(
+                self.mech_driver.log_driver)
+        self.mech_driver.log_driver.plugin_driver = self.mech_driver
+        self.mech_driver.log_driver._log_plugin_property = None
         self.ovn_northd_mgr = None
         self.maintenance_worker = maintenance_worker
         mock.patch(
