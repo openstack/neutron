@@ -20,6 +20,7 @@ is supported by:
 * Binding security groups to ports (since Stein).
 * Assigning address scopes to subnet pools (since Ussuri).
 * Assigning subnet pools to subnets (since Ussuri).
+* Assigning address groups to security group rules (since Wallaby).
 
 
 Sharing an object with specific projects
@@ -443,6 +444,80 @@ the subnet pool is no longer in use:
 
 This process can be repeated any number of times to share a subnet pool
 with an arbitrary number of projects.
+
+Sharing an address group with specific projects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create an address group to share:
+
+.. code-block:: console
+
+   $ openstack address group create test-ag --address 10.1.1.1
+   +-------------+--------------------------------------+
+   | Field       | Value                                |
+   +-------------+--------------------------------------+
+   | addresses   | ['10.1.1.1/32']                      |
+   | description |                                      |
+   | id          | cdb6eb3e-f9a0-4d52-8478-358eaa2c4737 |
+   | name        | test-ag                              |
+   | project_id  | 66c77cf262454777a8f455cce48c12c0     |
+   +-------------+--------------------------------------+
+
+
+Create the RBAC policy entry using the :command:`openstack network rbac create`
+command (in this example, the ID of the project we want to share with is
+``bbd82892525d4372911390b984ed3265``):
+
+.. code-block:: console
+
+   $ openstack network rbac create --target-project \
+   bbd82892525d4372911390b984ed3265 --action access_as_shared \
+   --type address_group cdb6eb3e-f9a0-4d52-8478-358eaa2c4737
+   +-------------------+--------------------------------------+
+   | Field             | Value                                |
+   +-------------------+--------------------------------------+
+   | action            | access_as_shared                     |
+   | id                | c7414ac2-9a6b-420b-84c5-4158a6cca4f9 |
+   | name              | None                                 |
+   | object_id         | cdb6eb3e-f9a0-4d52-8478-358eaa2c4737 |
+   | object_type       | address_group                        |
+   | project_id        | 66c77cf262454777a8f455cce48c12c0     |
+   | target_project_id | bbd82892525d4372911390b984ed3265     |
+   +-------------------+--------------------------------------+
+
+
+The ``target-project`` parameter specifies the project that requires
+access to the address group. The ``action`` parameter specifies what
+the project is allowed to do. The ``type`` parameter says
+that the target object is an address group. The final parameter is the ID of
+the address group we are granting access to.
+
+Project ``bbd82892525d4372911390b984ed3265`` will now be able to see
+the address group when running :command:`openstack address group list` and
+:command:`openstack address group show` and will also be able to assign
+it to its security group rules. No other users (other than admins and the
+owner) will be able to see the address group.
+
+To remove access for that project, delete the RBAC policy that allows
+it using the :command:`openstack network rbac delete` command:
+
+.. code-block:: console
+
+   $ openstack network rbac delete c7414ac2-9a6b-420b-84c5-4158a6cca4f9
+
+If that project has security group rules with the address group applied to
+them, the server will not delete the RBAC policy until the address group is no
+longer in use:
+
+.. code-block:: console
+
+   $ openstack network rbac delete c7414ac2-9a6b-420b-84c5-4158a6cca4f9
+   RBAC policy on object cdb6eb3e-f9a0-4d52-8478-358eaa2c4737
+   cannot be removed because other objects depend on it
+
+This process can be repeated any number of times to share an address group
+with an arbitrary number of projects.
+
 
 How the 'shared' flag relates to these entries
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

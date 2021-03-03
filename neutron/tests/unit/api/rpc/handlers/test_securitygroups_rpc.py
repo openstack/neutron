@@ -94,7 +94,9 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
         self.rcache.record_resource_update(self.ctx, 'Port', p)
         return p
 
-    def _make_address_group_ovo(self):
+    @mock.patch.object(address_group.AddressGroup, 'is_shared_with_tenant',
+                       return_value=False)
+    def _make_address_group_ovo(self, *args, **kwargs):
         id = uuidutils.generate_uuid()
         address_associations = [
             address_group.AddressAssociation(

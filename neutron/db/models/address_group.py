@@ -16,6 +16,7 @@ from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 
+from neutron.db import rbac_db_models
 from neutron.db import standard_attr
 
 
@@ -43,4 +44,8 @@ class AddressGroup(standard_attr.HasStandardAttributes,
                                                      load_on_pending=True),
                                  lazy='subquery',
                                  cascade='all, delete-orphan')
+    rbac_entries = sa.orm.relationship(rbac_db_models.AddressGroupRBAC,
+                                       backref='address_groups',
+                                       lazy='subquery',
+                                       cascade='all, delete, delete-orphan')
     api_collections = [ag.ALIAS]

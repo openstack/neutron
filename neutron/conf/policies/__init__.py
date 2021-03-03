@@ -14,6 +14,7 @@ import importlib
 import inspect
 import itertools
 
+from neutron.conf.policies import address_group
 from neutron.conf.policies import address_scope
 from neutron.conf.policies import agent
 from neutron.conf.policies import auto_allocated_topology
@@ -45,6 +46,7 @@ from neutron.conf.policies import trunk
 def list_rules():
     return itertools.chain(
         base.list_rules(),
+        address_group.list_rules(),
         address_scope.list_rules(),
         agent.list_rules(),
         auto_allocated_topology.list_rules(),
