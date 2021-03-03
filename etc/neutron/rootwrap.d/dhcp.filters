@@ -10,19 +10,11 @@
 
 # dhcp-agent
 dnsmasq: CommandFilter, dnsmasq, root
-# dhcp-agent uses kill as well, that's handled by the generic KillFilter
-# it looks like these are the only signals needed, per
-# neutron/agent/linux/dhcp.py
-kill_dnsmasq: KillFilter, root, /sbin/dnsmasq, -9, -HUP, -15
-kill_dnsmasq_usr: KillFilter, root, /usr/sbin/dnsmasq, -9, -HUP, -15
-# dnsmasq kill script filter
-kill_dnsmasq_script: CommandFilter, dnsmasq-kill, root
 
 mm-ctl: CommandFilter, mm-ctl, root
 
 # haproxy
 haproxy: RegExpFilter, haproxy, root, haproxy, -f, .*
-kill_haproxy: KillFilter, root, haproxy, -15, -9, -HUP
 
 # ip_lib
 ip: IpFilter, ip, root
