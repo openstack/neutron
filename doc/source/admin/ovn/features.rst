@@ -50,6 +50,11 @@ services:
   IPs. Enable the 'port_forwarding' service plugin in neutron configuration
   files to use this feature.
 
+* Packet Logging
+
+  Packet logging service is designed as a Neutron plug-in that captures network
+  packets for relevant resources when the registered events occur. OVN supports
+  this feature based on security groups.
 
 The following Neutron API extensions are supported with OVN:
 
@@ -63,6 +68,8 @@ The following Neutron API extensions are supported with OVN:
 | Availability Zone                | availability_zone         |
 +----------------------------------+---------------------------+
 | Default Subnetpools              | default-subnetpools       |
++----------------------------------+---------------------------+
+| Domain Name System (DNS)         | dns_integration           |
 +----------------------------------+---------------------------+
 | Multi Provider Network           | multi-provider            |
 +----------------------------------+---------------------------+
@@ -80,7 +87,11 @@ The following Neutron API extensions are supported with OVN:
 +----------------------------------+---------------------------+
 | Network MTU                      | net-mtu                   |
 +----------------------------------+---------------------------+
+| Packet Logging                   | logging                   |
++----------------------------------+---------------------------+
 | Port Binding                     | binding                   |
++----------------------------------+---------------------------+
+| Port Forwarding                  | port_forwarding           |
 +----------------------------------+---------------------------+
 | Port Security                    | port-security             |
 +----------------------------------+---------------------------+
@@ -103,8 +114,4 @@ The following Neutron API extensions are supported with OVN:
 | Tag support                      | standard-attr-tag         |
 +----------------------------------+---------------------------+
 | Time Stamp Fields                | standard-attr-timestamp   |
-+----------------------------------+---------------------------+
-| Domain Name System (DNS)         | dns_integration           |
-+----------------------------------+---------------------------+
-| Port Forwarding                  | port_forwarding           |
 +----------------------------------+---------------------------+

@@ -16,3 +16,4 @@ OVN Design Notes
    distributed_ovsdb_events
    l3_ha_rescheduling
    port_forwarding
+   ovn_network_logging

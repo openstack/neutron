@@ -8,15 +8,6 @@ It is not a complete list, but is enough to be used as a starting point for
 implementors working on closing these gaps. A TODO list for OVN is located
 at [1]_.
 
-* Security Groups logging API
-
-  Currently ML2/OVS, with the OpenvSwitch firewall, supports a log file where
-  security groups events are logged to be consumed by a security entity. This
-  allows users to have a way to check if an instance is trying to execute
-  restricted operations, or access restricted ports in remote servers.
-
-  This is a relatively new extension, support would need to be added to OVN.
-
 * QoS DSCP support
 
   Currently ML2/OVS supports QoS DSCP tagging and egress bandwidth limiting.
