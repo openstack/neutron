@@ -234,6 +234,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         attrs = {
             'remote_ip': '2001:db8:200::1',
             'local_ip': '2001:db8:100::1',
+            'packet_type': 'legacy_l2',
         }
         self._test_add_tunnel_port(
             attrs, expected_tunnel_type=ovs_lib.TYPE_GRE_IP6)
