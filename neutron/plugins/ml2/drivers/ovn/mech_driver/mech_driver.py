@@ -20,6 +20,7 @@ import operator
 import signal
 import threading
 import types
+import uuid
 
 import netaddr
 from neutron_lib.api.definitions import portbindings
@@ -95,6 +96,9 @@ class OVNMechanismDriver(api.MechanismDriver):
     update network/port case, all data validation must be done within
     methods that are part of the database transaction.
     """
+    resource_provider_uuid5_namespace = uuid.UUID(
+        '87ee7d5c-73bb-11e8-9008-c4d987b2a692')
+
     def initialize(self):
         """Perform driver initialization.
 
