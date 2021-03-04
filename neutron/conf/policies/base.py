@@ -78,6 +78,9 @@ SYSTEM_ADMIN_OR_PROJECT_MEMBER = (
 SYSTEM_OR_PROJECT_READER = (
     '(' + SYSTEM_READER + ') or (' + PROJECT_READER + ')')
 
+# Additional rules needed in Neutron
+RULE_NET_OWNER = 'rule:network_owner'
+RULE_PARENT_OWNER = 'rule:ext_parent_owner'
 
 rules = [
     policy.RuleDefault(

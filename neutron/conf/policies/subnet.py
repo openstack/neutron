@@ -41,7 +41,7 @@ rules = [
         name='create_subnet',
         check_str=base.policy_or(
             base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
-            base.RULE_ADMIN_OR_NET_OWNER),
+            base.RULE_NET_OWNER),
         scope_types=['system', 'project'],
         description='Create a subnet',
         operations=ACTION_POST,
@@ -111,7 +111,7 @@ rules = [
         name='update_subnet',
         check_str=base.policy_or(
             base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
-            base.RULE_ADMIN_OR_NET_OWNER),
+            base.RULE_NET_OWNER),
         scope_types=['system', 'project'],
         description='Update a subnet',
         operations=ACTION_PUT,
@@ -149,7 +149,7 @@ rules = [
         name='delete_subnet',
         check_str=base.policy_or(
             base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
-            base.RULE_ADMIN_OR_NET_OWNER),
+            base.RULE_NET_OWNER),
         scope_types=['system', 'project'],
         description='Delete a subnet',
         operations=ACTION_DELETE,
