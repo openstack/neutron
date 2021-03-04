@@ -18,6 +18,8 @@ from unittest import mock
 
 from neutron_lib.api.definitions import dhcpagentscheduler as das_apidef
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import api as db_api
@@ -1587,6 +1589,47 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
         for host, low_expecteds in expected_low_calls.items():
             for expected in low_expecteds:
                 self.assertIn(expected, self.dhcp_notifier_cast.call_args_list)
+
+    def _test_auto_schedule_new_network_segments(self, subnet_on_segment):
+        ctx = mock.Mock()
+        payload = events.DBEventPayload(
+            ctx,
+            metadata={'host': 'HOST A',
+                      'current_segment_ids': set(['segment-1'])})
+        segments_plugin = mock.Mock()
+        segments_plugin.get_segments.return_value = [
+            {'id': 'segment-1', 'hosts': ['HOST A']}]
+        dhcp_notifier = mock.Mock()
+        dhcp_mixin = agentschedulers_db.DhcpAgentSchedulerDbMixin()
+        with mock.patch(
+                'neutron_lib.plugins.directory.get_plugin',
+                return_value=segments_plugin), \
+            mock.patch(
+                'neutron.objects.subnet.Subnet.get_objects') as get_subnets, \
+            mock.patch.object(
+                dhcp_mixin, '_schedule_network') as schedule_network:
+
+            get_subnets.return_value = (
+                [subnet_on_segment] if subnet_on_segment else [])
+
+            dhcp_mixin.agent_notifiers[constants.AGENT_TYPE_DHCP] = (
+                dhcp_notifier)
+            dhcp_mixin.auto_schedule_new_network_segments(
+                resources.SEGMENT_HOST_MAPPING, events.AFTER_CREATE,
+                ctx, payload)
+            if subnet_on_segment:
+                schedule_network.assert_called_once_with(
+                    ctx, subnet_on_segment.network_id,
+                    dhcp_notifier, candidate_hosts=['HOST A'])
+            else:
+                schedule_network.assert_not_called()
+
+    def test_auto_schedule_new_network_segments(self):
+        self._test_auto_schedule_new_network_segments(
+            subnet_on_segment=mock.Mock(network_id='net-1'))
+
+    def test_auto_schedule_new_network_segments_no_networks_on_segment(self):
+        self._test_auto_schedule_new_network_segments(subnet_on_segment=None)
 
     def _is_schedule_network_called(self, device_id):
         dhcp_notifier_schedule = mock.patch(
