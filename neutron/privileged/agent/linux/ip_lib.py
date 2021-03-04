@@ -538,11 +538,19 @@ def create_netns(name, **kwargs):
 
     :param name: The name of the namespace to create
     """
-    try:
-        netns.create(name, libc=priv_linux.get_cdll())
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
+    pid = os.fork()
+    if pid == 0:
+        try:
+            netns._create(name, libc=priv_linux.get_cdll())
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                os._exit(1)
+        except Exception:
+            os._exit(1)
+        os._exit(0)
+    else:
+        if os.waitpid(pid, 0)[1]:
+            raise RuntimeError(_('Error creating namespace %s' % name))
 
 
 @privileged.default.entrypoint
