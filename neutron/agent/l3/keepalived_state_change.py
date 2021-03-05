@@ -27,11 +27,13 @@ from neutron.agent.linux import daemon
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import config
+from neutron.common import utils as common_utils
 from neutron.conf.agent.l3 import keepalived
 from neutron import privileged
 
 
 LOG = logging.getLogger(__name__)
+INITIAL_STATE_READ_TIMEOUT = 10
 
 
 class KeepalivedUnixDomainConnection(agent_utils.UnixDomainHTTPConnection):
@@ -56,10 +58,24 @@ class MonitorDaemon(daemon.Daemon):
         self.event_stop = threading.Event()
         self.event_started = threading.Event()
         self.queue = queue.Queue()
+        self._initial_state = None
         super(MonitorDaemon, self).__init__(pidfile, uuid=router_id,
                                             user=user, group=group)
 
+    @property
+    def initial_state(self):
+        return self._initial_state
+
+    @initial_state.setter
+    def initial_state(self, state):
+        if not self._initial_state:
+            LOG.debug('Initial status of router %s is %s', self.router_id,
+                      state)
+            self._initial_state = state
+
     def run(self):
+        self._thread_initial_state = threading.Thread(
+            target=self.handle_initial_state)
         self._thread_ip_monitor = threading.Thread(
             target=ip_lib.ip_monitor,
             args=(self.namespace, self.queue, self.event_stop,
@@ -67,9 +83,19 @@ class MonitorDaemon(daemon.Daemon):
         self._thread_read_queue = threading.Thread(
             target=self.read_queue,
             args=(self.queue, self.event_stop, self.event_started))
+        self._thread_initial_state.start()
         self._thread_ip_monitor.start()
         self._thread_read_queue.start()
-        self.handle_initial_state()
+
+        # NOTE(ralonsoh): if the initial status is not read in a defined
+        # timeout, "backup" state is set.
+        self._thread_initial_state.join(timeout=INITIAL_STATE_READ_TIMEOUT)
+        if not self.initial_state:
+            LOG.warning('Timeout reading the initial status of router %s, '
+                        'state is set to "backup".', self.router_id)
+            self.write_state_change('backup')
+            self.notify_agent('backup')
+
         self._thread_read_queue.join()
 
     def read_queue(self, _queue, event_stop, event_started):
@@ -93,21 +119,26 @@ class MonitorDaemon(daemon.Daemon):
     def handle_initial_state(self):
         try:
             state = 'backup'
-            ip = ip_lib.IPDevice(self.interface, self.namespace)
-            for address in ip.addr.list():
-                if address.get('cidr') == self.cidr:
+            cidr = common_utils.ip_to_cidr(self.cidr)
+            # NOTE(ralonsoh): "get_devices_with_ip" without passing an IP
+            # address performs one single pyroute2 command. Because the number
+            # of interfaces in the namespace is reduced, this is faster.
+            for address in ip_lib.get_devices_with_ip(self.namespace):
+                if (address['name'] == self.interface and
+                        address['cidr'] == cidr):
                     state = 'primary'
                     break
 
-            LOG.debug('Initial status of router %s is %s',
-                      self.router_id, state)
-            self.write_state_change(state)
-            self.notify_agent(state)
+            if not self.initial_state:
+                self.write_state_change(state)
+                self.notify_agent(state)
         except Exception:
-            LOG.exception('Failed to get initial status of router %s',
-                          self.router_id)
+            if not self.initial_state:
+                LOG.exception('Failed to get initial status of router %s',
+                              self.router_id)
 
     def write_state_change(self, state):
+        self.initial_state = state
         with open(os.path.join(
                 self.conf_dir, 'state'), 'w') as state_file:
             state_file.write(state)
