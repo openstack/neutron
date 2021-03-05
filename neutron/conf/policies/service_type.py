@@ -10,22 +10,32 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
 
 
+DEPRECATION_REASON = (
+    "The Service Providers API now supports system scope and default roles.")
+
 rules = [
     policy.DocumentedRuleDefault(
-        'get_service_provider',
-        base.RULE_ANY,
-        'Get service providers',
-        [
+        name='get_service_provider',
+        check_str=base.SYSTEM_OR_PROJECT_READER,
+        description='Get service providers',
+        operations=[
             {
                 'method': 'GET',
                 'path': '/service-providers',
             },
-        ]
+        ],
+        scope_types=['system', 'project'],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_service_provider',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATION_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 ]
 
