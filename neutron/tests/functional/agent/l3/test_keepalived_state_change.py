@@ -189,3 +189,22 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
         self._run_monitor()
         msg = 'Initial status of router %s is %s' % (self.router_id, 'primary')
         self._search_in_file(self.log_file, msg)
+
+    def test_handle_initial_state_backup_error_reading_initial_status(self):
+        # By passing this wrong IP address, the thread "_thread_initial_state"
+        # will fail generating an exception (caught inside the called method).
+        # The main thread will timeout waiting for an initial state and
+        # "backup" will be set.
+        self.router.port.addr.add(self.cidr)
+        self._generate_cmd_opts(cidr='failed_IP_address')
+        self.ext_process = external_process.ProcessManager(
+            conf=None, uuid=self.router_id, namespace=self.router.namespace,
+            service='test_ip_mon', pids_path=self.conf_dir,
+            default_cmd_callback=self._callback, run_as_root=True,
+            pid_file=self.pid_file)
+        self._run_monitor()
+        msg = ('Timeout reading the initial status of router %s' %
+               self.router_id)
+        self._search_in_file(self.log_file, msg)
+        msg = 'Initial status of router %s is %s' % (self.router_id, 'backup')
+        self._search_in_file(self.log_file, msg)
