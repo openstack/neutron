@@ -266,6 +266,11 @@ class DbBasePluginCommon(object):
             raise exceptions.NetworkNotFound(net_id=id)
         return network
 
+    def _network_exists(self, context, network_id):
+        query = model_query.query_with_hooks(
+            context, models_v2.Network, field='id')
+        return query.filter(models_v2.Network.id == network_id).first()
+
     def _get_subnet_object(self, context, id):
         subnet = subnet_obj.Subnet.get_object(context, id=id)
         if not subnet:
