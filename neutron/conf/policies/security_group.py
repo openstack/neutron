@@ -140,7 +140,7 @@ rules = [
         name='get_security_group_rule',
         check_str=base.policy_or(
             base.SYSTEM_OR_PROJECT_READER,
-            RULE_ADMIN_OWNER_OR_SG_OWNER),
+            base.RULE_SG_OWNER),
         scope_types=['system', 'project'],
         description='Get a security group rule',
         operations=[
