@@ -14,18 +14,27 @@ from oslo_policy import policy
 
 from neutron.conf.policies import base
 
+DEPRECATION_REASON = (
+    "The Availability Zone API now supports system scope and default roles.")
+
 
 rules = [
     policy.DocumentedRuleDefault(
-        'get_availability_zone',
-        base.RULE_ANY,
-        'List availability zones',
-        [
+        name='get_availability_zone',
+        check_str=base.SYSTEM_OR_PROJECT_READER,
+        description='List availability zones',
+        operations=[
             {
                 'method': 'GET',
                 'path': '/availability_zones',
             },
-        ]
+        ],
+        scope_types=['system', 'project'],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_availability_zone',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATION_REASON,
+        deprecated_since='Wallaby'
     ),
 ]
 
