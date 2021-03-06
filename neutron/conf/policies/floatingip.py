@@ -18,35 +18,49 @@ from neutron.conf.policies import base
 COLLECTION_PATH = '/floatingips'
 RESOURCE_PATH = '/floatingips/{id}'
 
+DEPRECATION_REASON = (
+    "The Floating IP API now supports system scope and default roles.")
 
 rules = [
     policy.DocumentedRuleDefault(
-        'create_floatingip',
-        base.RULE_ANY,
-        'Create a floating IP',
-        [
+        name='create_floatingip',
+        check_str=base.PROJECT_MEMBER,
+        description='Create a floating IP',
+        operations=[
             {
                 'method': 'POST',
                 'path': COLLECTION_PATH,
             },
-        ]
+        ],
+        scope_types=['project'],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_floatingip',
+            check_str=base.RULE_ANY),
+        deprecated_reason=DEPRECATION_REASON,
+        deprecated_since='Wallaby'
     ),
     policy.DocumentedRuleDefault(
-        'create_floatingip:floating_ip_address',
-        base.RULE_ADMIN_ONLY,
-        'Create a floating IP with a specific IP address',
-        [
+        name='create_floatingip:floating_ip_address',
+        check_str=base.SYSTEM_ADMIN,
+        description='Create a floating IP with a specific IP address',
+        operations=[
             {
                 'method': 'POST',
                 'path': COLLECTION_PATH,
             },
-        ]
+        ],
+        scope_types=['system', 'project'],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_floatingip:floating_ip_address',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATION_REASON,
+        deprecated_since='Wallaby'
     ),
     policy.DocumentedRuleDefault(
-        'get_floatingip',
-        base.RULE_ADMIN_OR_OWNER,
-        'Get a floating IP',
-        [
+        name='get_floatingip',
+        check_str=base.SYSTEM_OR_PROJECT_READER,
+        description='Get a floating IP',
+        operations=[
             {
                 'method': 'GET',
                 'path': COLLECTION_PATH,
@@ -55,29 +69,47 @@ rules = [
                 'method': 'GET',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        scope_types=['system', 'project'],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_floatingip',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATION_REASON,
+        deprecated_since='Wallaby'
     ),
     policy.DocumentedRuleDefault(
-        'update_floatingip',
-        base.RULE_ADMIN_OR_OWNER,
-        'Update a floating IP',
-        [
+        name='update_floatingip',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        description='Update a floating IP',
+        operations=[
             {
                 'method': 'PUT',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        scope_types=['system', 'project'],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_floatingip',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATION_REASON,
+        deprecated_since='Wallaby'
     ),
     policy.DocumentedRuleDefault(
-        'delete_floatingip',
-        base.RULE_ADMIN_OR_OWNER,
-        'Delete a floating IP',
-        [
+        name='delete_floatingip',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        description='Delete a floating IP',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        scope_types=['system', 'project'],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_floatingip',
+            check_str=base.RULE_ADMIN_OR_OWNER),
+        deprecated_reason=DEPRECATION_REASON,
+        deprecated_since='Wallaby'
     ),
 ]
 
