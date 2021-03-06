@@ -220,7 +220,7 @@ class DhcpAgentNotifyAPI(object):
             enabled_agents = self._get_enabled_agents(
                 context, network, agents, method, payload)
 
-            if method == 'port_create_end':
+            if method == 'port_create_end' and enabled_agents:
                 high_agent = enabled_agents.pop(
                     random.randint(0, len(enabled_agents) - 1))
                 self._notify_high_priority_agent(

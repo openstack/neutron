@@ -119,6 +119,7 @@ from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.db import segments_db
 from neutron.db import subnet_service_type_mixin
 from neutron.db import vlantransparent_db
+from neutron.extensions import dhcpagentscheduler as dhcp_ext
 from neutron.extensions import filter_validation
 from neutron.extensions import vlantransparent
 from neutron.ipam import exceptions as ipam_exc
@@ -239,6 +240,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             sg_rpc.disable_security_group_extension_by_config(aliases)
             vlantransparent._disable_extension_by_config(aliases)
             filter_validation._disable_extension_by_config(aliases)
+            dhcp_ext.disable_extension_by_config(aliases)
             self._aliases = self._filter_extensions_by_mech_driver(aliases)
         return self._aliases
 
@@ -288,6 +290,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _setup_dhcp(self):
         """Initialize components to support DHCP."""
+        if not cfg.CONF.enable_traditional_dhcp:
+            return
         self.network_scheduler = importutils.import_object(
             cfg.CONF.network_scheduler_driver
         )
@@ -366,9 +370,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         """Initialize RPC notifiers for agents."""
         self.ovo_notifier = ovo_rpc.OVOServerRpcInterface()
         self.notifier = rpc.AgentNotifierApi(topics.AGENT)
-        self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
-            dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
-        )
+        if cfg.CONF.enable_traditional_dhcp:
+            self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
+                dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+            )
 
     @log_helpers.log_method_call
     def start_rpc_listeners(self):
@@ -1375,6 +1380,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             raise psec_exc.PortSecurityAndIPRequiredForSecurityGroups()
 
     def _setup_dhcp_agent_provisioning_component(self, context, port):
+        if not cfg.CONF.enable_traditional_dhcp:
+            return
         subnet_ids = [f['subnet_id'] for f in port['fixed_ips']]
         if (db.is_dhcp_active_on_any_subnet(context, subnet_ids) and
             len(self.get_dhcp_agents_hosting_networks(context,

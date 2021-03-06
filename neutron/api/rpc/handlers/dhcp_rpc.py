@@ -23,6 +23,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
+from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as p_utils
 from oslo_config import cfg
@@ -88,6 +89,20 @@ class DhcpRpcCallback(object):
             nets = plugin.list_active_networks_on_active_dhcp_agent(
                 context, host)
         else:
+            # If no active DHCP agent or agent admin state is DOWN,
+            # return empty network list for RPC to avoid unexpected
+            # resource creation on remote host when the DHCP agent
+            # scheduler extension is not supported.
+            try:
+                agent = plugin._get_agent_by_type_and_host(
+                    context, constants.AGENT_TYPE_DHCP, host)
+            except agent_exc.AgentNotFoundByTypeHost:
+                LOG.debug("DHCP Agent not found on host %s", host)
+                return []
+            if not agent.admin_state_up:
+                LOG.debug("DHCP Agent admin state is down on host %s", host)
+                return []
+
             filters = dict(admin_state_up=[True])
             nets = plugin.get_networks(context, filters=filters)
         return nets

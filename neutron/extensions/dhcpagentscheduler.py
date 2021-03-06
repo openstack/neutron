@@ -22,11 +22,15 @@ from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import faults
 from neutron_lib.plugins import directory
 from neutron_lib import rpc as n_rpc
+from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.api import extensions
 from neutron.api.v2 import resource
 from neutron import policy
 from neutron import wsgi
+
+LOG = logging.getLogger(__name__)
 
 
 class NetworkSchedulerController(wsgi.Controller):
@@ -126,3 +130,10 @@ def notify(context, action, network_id, agent_id):
     info = {'id': agent_id, 'network_id': network_id}
     notifier = n_rpc.get_notifier('network')
     notifier.info(context, action, {'agent': info})
+
+
+def disable_extension_by_config(aliases):
+    if not cfg.CONF.enable_traditional_dhcp:
+        if 'dhcp_agent_scheduler' in aliases:
+            aliases.remove('dhcp_agent_scheduler')
+        LOG.info('Disabled dhcp_agent_scheduler extension.')

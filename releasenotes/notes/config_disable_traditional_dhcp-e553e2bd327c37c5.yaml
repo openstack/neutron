@@ -1,0 +1,10 @@
+---
+other:
+  - |
+    Added a new config option ``enable_traditional_dhcp`` for neutron server,
+    if it is set to False, neutron server will disable DHCP provisioning
+    block, DHCP scheduler API extension, network scheduling mechanism and
+    DHCP RPC/notification. This option can be used with the
+    ``dhcp`` extension of the OVS agent to enable distributed DHCP, or
+    for a deployment which needs
+    to disable the DHCP agent related functions permanently.
