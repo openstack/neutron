@@ -22,9 +22,13 @@ from oslo_log import log as logging
 import six
 
 from neutron.agent.common import ovs_lib
+from neutron.agent.linux import ethtool
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as n_const
 from neutron.common import exceptions
+from neutron.conf.plugins.ml2.drivers import ovs_conf
+from neutron.plugins.ml2.drivers.openvswitch.agent.common \
+    import constants as ovs_const
 
 LOG = logging.getLogger(__name__)
 
@@ -354,6 +358,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
 
     def __init__(self, conf):
         super(OVSInterfaceDriver, self).__init__(conf)
+        ovs_conf.register_ovs_agent_opts(self.conf)
         if self.conf.ovs_use_veth:
             self.DEV_NAME_PREFIX = 'ns-'
 
@@ -434,6 +439,11 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         if link_up:
             ns_dev.link.set_up()
         if self.conf.ovs_use_veth:
+            # ovs-dpdk does not do checksum calculations for veth interface
+            # (bug 1832021)
+            if self.conf.OVS.datapath_type == ovs_const.OVS_DATAPATH_NETDEV:
+                ethtool.Ethtool.offload(ns_dev.name, rx=False, tx=False,
+                                        namespace=namespace)
             root_dev.link.set_up()
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
