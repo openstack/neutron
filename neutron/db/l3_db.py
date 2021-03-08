@@ -1741,6 +1741,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     @staticmethod
     def _each_port_having_fixed_ips(ports):
         for port in ports or []:
+            # Sometime port is type None, which causes a crash, skip it
+            if port is None:
+                continue
             fixed_ips = port.get('fixed_ips', [])
             if not fixed_ips:
                 # Skip ports without IPs, which can occur if a subnet
