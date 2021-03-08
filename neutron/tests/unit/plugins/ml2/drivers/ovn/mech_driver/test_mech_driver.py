@@ -671,7 +671,9 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
             external_ids={},
             lport_name=ovn_utils.ovn_provnet_port_name(segments[0]['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']),
-            options={'network_name': 'physnet1'},
+            options={'network_name': 'physnet1',
+                     ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
+                     ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'true'},
             tag=2,
             type='localnet')
 
@@ -2075,7 +2077,9 @@ class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
             external_ids={},
             lport_name=ovn_utils.ovn_provnet_port_name(new_segment['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']),
-            options={'network_name': 'phys_net1'},
+            options={'network_name': 'phys_net1',
+                     ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
+                     ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'true'},
             tag=200,
             type='localnet')
         ovn_nb_api.create_lswitch_port.reset_mock()
@@ -2087,7 +2091,9 @@ class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
             external_ids={},
             lport_name=ovn_utils.ovn_provnet_port_name(new_segment['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']),
-            options={'network_name': 'phys_net2'},
+            options={'network_name': 'phys_net2',
+                     ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
+                     ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'true'},
             tag=300,
             type='localnet')
         segments = segments_db.get_network_segments(
