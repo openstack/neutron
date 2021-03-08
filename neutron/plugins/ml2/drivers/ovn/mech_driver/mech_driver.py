@@ -97,7 +97,7 @@ class OVNMechanismDriver(api.MechanismDriver):
     methods that are part of the database transaction.
     """
     resource_provider_uuid5_namespace = uuid.UUID(
-        '87ee7d5c-73bb-11e8-9008-c4d987b2a692')
+        '5533233b-800c-11eb-b1f4-000056b2f5b8')
 
     def initialize(self):
         """Perform driver initialization.
