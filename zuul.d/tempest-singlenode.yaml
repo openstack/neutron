@@ -5,7 +5,6 @@
     abstract: true
     timeout: 10800
     required-projects:
-      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     pre-run: playbooks/configure_ebtables.yaml
@@ -126,7 +125,6 @@
     parent: tempest-integrated-networking
     timeout: 10800
     required-projects:
-      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     vars:
@@ -144,7 +142,6 @@
     parent: tempest-integrated-networking
     timeout: 10800
     required-projects:
-      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     vars:
@@ -181,7 +178,6 @@
     parent: tempest-integrated-networking
     timeout: 10800
     required-projects: &ovn-base-required-projects
-      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     irrelevant-files: *irrelevant-files
