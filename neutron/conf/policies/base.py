@@ -112,6 +112,10 @@ rules = [
         description=('Rule for resource owner, '
                      'admin or network owner access')),
     policy.RuleDefault(
+        'network_owner',
+        'tenant_id:%(network:tenant_id)s',
+        description='Rule for network owner access'),
+    policy.RuleDefault(
         'admin_only',
         'rule:context_is_admin',
         description='Rule for admin-only access'),
@@ -132,6 +136,10 @@ rules = [
         'admin_or_ext_parent_owner',
         policy_or('rule:context_is_admin',
                   'tenant_id:%(ext_parent:tenant_id)s'),
+        description='Rule for common parent owner check'),
+    policy.RuleDefault(
+        'ext_parent_owner',
+        'tenant_id:%(ext_parent:tenant_id)s',
         description='Rule for common parent owner check'),
 ]
 
