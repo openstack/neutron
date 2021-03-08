@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    Fixes a configuration problem in the OVN driver that prevented
+    external IGMP queries from reaching the Virtual Machines. See
+    `bug 1918108 <https://bugs.launchpad.net/neutron/+bug/1918108>`_
+    for details.

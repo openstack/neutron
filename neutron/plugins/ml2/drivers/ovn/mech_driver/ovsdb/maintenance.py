@@ -661,6 +661,34 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     txn.add(cmd)
         raise periodics.NeverAgain()
 
+    # TODO(lucasagomes): Remove this in the Y cycle
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def check_for_mcast_flood_reports(self):
+        cmds = []
+        for port in self._nb_idl.lsp_list().execute(check_error=True):
+            port_type = port.type.strip()
+            if port_type in ("vtep", "localport", "router"):
+                continue
+
+            options = port.options
+            if ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS in options:
+                continue
+
+            options.update({ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true'})
+            if port_type == ovn_const.LSP_TYPE_LOCALNET:
+                options.update({ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'true'})
+
+            cmds.append(self._nb_idl.lsp_set_options(port.name, **options))
+
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+
+        raise periodics.NeverAgain()
+
 
 class HashRingHealthCheckPeriodics(object):
 
