@@ -10,9 +10,14 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
+
+DEPRECATED_REASON = """
+The quotas API now supports system scope and default roles.
+"""
 
 
 COLLECTION_PATH = '/quota'
@@ -21,10 +26,11 @@ RESOURCE_PATH = '/quota/{id}'
 
 rules = [
     policy.DocumentedRuleDefault(
-        'get_quota',
-        base.RULE_ADMIN_ONLY,
-        'Get a resource quota',
-        [
+        name='get_quota',
+        check_str=base.SYSTEM_READER,
+        scope_types=['system'],
+        description='Get a resource quota',
+        operations=[
             {
                 'method': 'GET',
                 'path': COLLECTION_PATH,
@@ -33,29 +39,46 @@ rules = [
                 'method': 'GET',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_quota',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'update_quota',
-        base.RULE_ADMIN_ONLY,
-        'Update a resource quota',
-        [
+        name='update_quota',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update a resource quota',
+        operations=[
             {
                 'method': 'PUT',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_quota',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'delete_quota',
-        base.RULE_ADMIN_ONLY,
-        'Delete a resource quota',
-        [
+        name='delete_quota',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Delete a resource quota',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_quota',
+            check_str=base.RULE_ADMIN_ONLY),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 ]
 
