@@ -35,6 +35,12 @@ FLAT_VLAN = 0
 
 
 mech_sriov_conf.register_sriov_mech_driver_opts()
+SRIOV_SUPPORTED_VNIC_TYPES = [
+    portbindings.VNIC_DIRECT,
+    portbindings.VNIC_MACVTAP,
+    portbindings.VNIC_DIRECT_PHYSICAL,
+    portbindings.VNIC_ACCELERATOR_DIRECT,
+]
 
 
 class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
@@ -53,32 +59,22 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     resource_provider_uuid5_namespace = uuid.UUID(
         '87f1895c-73bb-11e8-9008-c4d987b2a692')
 
-    def __init__(self,
-                 agent_type=constants.AGENT_TYPE_NIC_SWITCH,
-                 vif_details={portbindings.CAP_PORT_FILTER: False,
-                              portbindings.VIF_DETAILS_CONNECTIVITY:
-                                  portbindings.CONNECTIVITY_L2},
-                 supported_vnic_types=[
-                     portbindings.VNIC_DIRECT,
-                     portbindings.VNIC_MACVTAP,
-                     portbindings.VNIC_DIRECT_PHYSICAL,
-                     portbindings.VNIC_ACCELERATOR_DIRECT,
-                 ]):
+    def __init__(self):
         """Initialize base class for SriovNicSwitch L2 agent type.
 
         :param agent_type: Constant identifying agent type in agents_db
         :param vif_details: Dictionary with details for VIF driver when bound
         :param supported_vnic_types: The binding:vnic_type values we can bind
         """
-        self.agent_type = agent_type
-
-        # TODO(lajoskatona): move this prohibition to
-        # SimpleAgentMechanismDriverBase. By that, prohibition and validation
-        # of the vnic_types would be available for all mechanism drivers.
-        self.supported_vnic_types = self.prohibit_list_supported_vnic_types(
-            vnic_types=supported_vnic_types,
-            prohibit_list=cfg.CONF.SRIOV_DRIVER.vnic_type_prohibit_list
-        )
+        agent_type = constants.AGENT_TYPE_NIC_SWITCH
+        vif_details = {portbindings.CAP_PORT_FILTER: False,
+                       portbindings.VIF_DETAILS_CONNECTIVITY:
+                           portbindings.CONNECTIVITY_L2}
+        supported_vnic_types = SRIOV_SUPPORTED_VNIC_TYPES
+        prohibit_list = cfg.CONF.SRIOV_DRIVER.vnic_type_prohibit_list
+        super().__init__(agent_type, None, vif_details,
+                         supported_vnic_types=supported_vnic_types,
+                         vnic_type_prohibit_list=prohibit_list)
 
         # NOTE(ndipanov): PF passthrough requires a different vif type
         self.vnic_type_for_vif_type = (

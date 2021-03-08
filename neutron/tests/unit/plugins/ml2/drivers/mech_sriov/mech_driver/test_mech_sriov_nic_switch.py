@@ -227,15 +227,11 @@ class SriovSwitchMechVnicTypesTestCase(SriovNicSwitchMechanismBaseTestCase):
     def setUp(self):
         self.override_vnic_types = [portbindings.VNIC_DIRECT,
                                     portbindings.VNIC_MACVTAP]
-        self.driver_with_vnic_types = \
-            mech_driver.SriovNicSwitchMechanismDriver(
-                supported_vnic_types=self.override_vnic_types)
-        self.default_supported_vnics = [
-            portbindings.VNIC_DIRECT,
-            portbindings.VNIC_MACVTAP,
-            portbindings.VNIC_DIRECT_PHYSICAL,
-            portbindings.VNIC_ACCELERATOR_DIRECT,
-        ]
+        self.default_supported_vnics = list(
+            mech_driver.SRIOV_SUPPORTED_VNIC_TYPES)
+        mech_driver.SRIOV_SUPPORTED_VNIC_TYPES = self.override_vnic_types
+        self.driver_with_vnic_types = (
+            mech_driver.SriovNicSwitchMechanismDriver())
         self.prohibit_list_cfg = {
             'SRIOV_DRIVER': {
                 'vnic_type_prohibit_list': []
@@ -244,8 +240,10 @@ class SriovSwitchMechVnicTypesTestCase(SriovNicSwitchMechanismBaseTestCase):
         super(SriovSwitchMechVnicTypesTestCase, self).setUp()
 
     def test_default_vnic_types(self):
+        mech_driver.SRIOV_SUPPORTED_VNIC_TYPES = self.default_supported_vnics
+        mech_sriov = mech_driver.SriovNicSwitchMechanismDriver()
         self.assertEqual(self.default_supported_vnics,
-                         self.driver.supported_vnic_types)
+                         mech_sriov.supported_vnic_types)
 
     def test_override_default_vnic_types(self):
         self.assertEqual(
@@ -262,8 +260,8 @@ class SriovSwitchMechVnicTypesTestCase(SriovNicSwitchMechanismBaseTestCase):
             mech_sriov_conf.register_sriov_mech_driver_opts)
         self.useFixture(fake_conf_fixture)
 
-        test_driver = mech_driver.SriovNicSwitchMechanismDriver(
-            supported_vnic_types=self.default_supported_vnics)
+        mech_driver.SRIOV_SUPPORTED_VNIC_TYPES = self.default_supported_vnics
+        test_driver = mech_driver.SriovNicSwitchMechanismDriver()
 
         supported_vnic_types = test_driver.supported_vnic_types
         self.assertNotIn(portbindings.VNIC_MACVTAP, supported_vnic_types)

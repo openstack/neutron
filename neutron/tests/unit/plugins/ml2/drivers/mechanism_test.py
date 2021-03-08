@@ -279,7 +279,8 @@ class TestMechanismDriverWithAgent(mech_agent.AgentMechanismDriverBase,
     """Test mechanism driver with agent for testing mechanism driver api."""
 
     def __init__(self):
-        super(TestMechanismDriverWithAgent, self).__init__('test_agent_type')
+        super(TestMechanismDriverWithAgent, self).__init__(
+            'test_agent_type', [portbindings.VNIC_NORMAL])
         self.bound_ports = set()
         self._agent_type = 'test_mechanism_driver_agent'
 
