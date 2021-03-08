@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    Added support in SR-IOV agent for ``accelerator-direct`` VNIC
+    type. This type represents a port that supports any kind of
+    hardware acceleration and is provided by Cyborg
+    (https://wiki.openstack.org/wiki/Cyborg). `RFE: 1909100
+    <https://bugs.launchpad.net/neutron/+bug/1909100>`_.
+    ``accelerator-direct-physical`` is still not supported.
