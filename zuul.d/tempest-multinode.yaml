@@ -5,7 +5,6 @@
     roles:
       - zuul: openstack/neutron-tempest-plugin
     required-projects:
-      - openstack/devstack-gate
       - openstack/neutron
       - openstack/tempest
     pre-run: playbooks/dvr-multinode-scenario-pre-run.yaml
@@ -188,7 +187,6 @@
     parent: tempest-multinode-full-py3
     timeout: 10800
     required-projects:
-      - openstack/devstack-gate
       - openstack/neutron
       - openstack/neutron-tempest-plugin
       - openstack/tempest
