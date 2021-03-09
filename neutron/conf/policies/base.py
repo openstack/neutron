@@ -81,6 +81,7 @@ SYSTEM_OR_PROJECT_READER = (
 # Additional rules needed in Neutron
 RULE_NET_OWNER = 'rule:network_owner'
 RULE_PARENT_OWNER = 'rule:ext_parent_owner'
+RULE_SG_OWNER = 'rule:sg_owner'
 
 rules = [
     policy.RuleDefault(
@@ -141,6 +142,10 @@ rules = [
         'ext_parent_owner',
         'tenant_id:%(ext_parent:tenant_id)s',
         description='Rule for common parent owner check'),
+    policy.RuleDefault(
+        name='sg_owner',
+        check_str='tenant_id:%(security_group:tenant_id)s',
+        description='Rule for security group owner access'),
 ]
 
 
