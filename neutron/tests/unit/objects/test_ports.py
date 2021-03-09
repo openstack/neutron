@@ -13,6 +13,7 @@
 from unittest import mock
 
 import netaddr
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib.tests import tools
 from oslo_utils import uuidutils
@@ -609,3 +610,34 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             (0, 1),
             (len(dhcp_ports), count),
         )
+
+    def test_get_port_from_mac_and_pci_slot_no_ports(self):
+        self.assertIsNone(
+            ports.Port.get_port_from_mac_and_pci_slot(self.context,
+                                                      'ca:fe:ca:fe:ca:fe'))
+
+    def test_get_port_from_mac_and_pci_slot_no_pci_slot(self):
+        obj = self._make_object(self.obj_fields[0])
+        obj.create()
+        mac_address = obj.mac_address
+        port = ports.Port.get_port_from_mac_and_pci_slot(self.context,
+                                                         mac_address)
+        self.assertEqual(obj.id, port.id)
+
+    def test_get_port_from_mac_and_pci_slot(self):
+        obj = self._make_object(self.obj_fields[0])
+        obj.create()
+        mac_address = obj.mac_address
+        pci_slot = '0000:04:00.1'
+        port = ports.Port.get_port_from_mac_and_pci_slot(
+            self.context, mac_address, pci_slot=pci_slot)
+        self.assertIsNone(port)
+
+        port_binding = ports.PortBinding(
+            self.context, port_id=obj.id, host='any_host',
+            vif_type=portbindings.VIF_TYPE_OTHER,
+            vnic_type=portbindings.VNIC_DIRECT, profile={'pci_slot': pci_slot})
+        port_binding.create()
+        port = ports.Port.get_port_from_mac_and_pci_slot(
+            self.context, mac_address, pci_slot=pci_slot)
+        self.assertEqual(obj.id, port.id)

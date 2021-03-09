@@ -14,6 +14,7 @@
 
 import netaddr
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from neutron_lib.utils import net as net_utils
 from oslo_log import log as logging
@@ -688,3 +689,19 @@ class Port(base.NeutronDbObject):
         return context.session.query(models_v2.Port).filter(
             models_v2.IPAllocation.port_id == models_v2.Port.id).filter(
             models_v2.IPAllocation.subnet_id == subnet_id).all()
+
+    @classmethod
+    def get_port_from_mac_and_pci_slot(cls, context, device_mac,
+                                       pci_slot=None):
+        with db_api.CONTEXT_READER.using(context):
+            ports = cls.get_objects(context, mac_address=device_mac)
+
+        if not ports:
+            return
+        elif not pci_slot:
+            return ports.pop()
+        else:
+            for port in ports:
+                for _binding in port.bindings:
+                    if _binding.get('profile', {}).get('pci_slot') == pci_slot:
+                        return port

@@ -21,6 +21,7 @@ from neutron_lib.utils import helpers
 from oslo_log import log as logging
 
 from neutron._i18n import _
+from neutron.agent import rpc as agent_rpc
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
 from neutron.plugins.ml2.drivers.mech_sriov.agent import pci_lib
@@ -185,7 +186,8 @@ class EmbSwitch(object):
         for pci_slot, vf_index in self.pci_slot_map.items():
             mac = self.get_pci_device(pci_slot)
             if mac:
-                assigned_devices_info.append((mac, pci_slot))
+                assigned_devices_info.append(
+                    agent_rpc.DeviceInfo(mac, pci_slot))
         return assigned_devices_info
 
     def get_device_state(self, pci_slot):

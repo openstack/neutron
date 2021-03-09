@@ -2251,7 +2251,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return ports
 
     @staticmethod
-    def _device_to_port_id(context, device):
+    def _device_to_port_id(context, device, pci_slot=None):
         # REVISIT(rkukura): Consider calling into MechanismDrivers to
         # process device names, or having MechanismDrivers supply list
         # of device prefixes to strip.
@@ -2261,7 +2261,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # REVISIT(irenab): Consider calling into bound MD to
         # handle the get_device_details RPC
         if not uuidutils.is_uuid_like(device):
-            port = db.get_port_from_device_mac(context, device)
+            port = ports_obj.Port.get_port_from_mac_and_pci_slot(
+                context, device, pci_slot=pci_slot)
             if port:
                 return port.id
         return device

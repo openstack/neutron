@@ -57,8 +57,14 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
     #   1.7 Support get_ports_by_vnic_type_and_host
     #   1.8 Rename agent_restarted to refresh_tunnels in
     #       update_device_list to reflect its expanded purpose
-
-    target = oslo_messaging.Target(version='1.8')
+    #   1.9 Support for device definition as DeviceInfo(mac, pci_info) for:
+    #       - get_device_details
+    #       - get_devices_details_list (indirectly, calls get_device_details)
+    #       - update_device_down
+    #       - update_device_up
+    #       - update_device_list (indirectly, called from update_device_down
+    #         and update_device_up)
+    target = oslo_messaging.Target(version='1.9')
 
     def __init__(self, notifier, type_manager):
         self.setup_tunnel_callback_mixin(notifier, type_manager)
@@ -78,6 +84,14 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                 kwargs.get('host'),
                 kwargs.get('device') or kwargs.get('network'))
 
+    @staticmethod
+    def _device_to_mac_pci_slot(device):
+        """This method will keep backwards compatibility with agents < 1.9"""
+        # NOTE(ralonsoh): this method can be removed in Z release.
+        if isinstance(device, list):  # RPC loads from agent_rpc.DeviceInfo
+            return device[0], device[1]
+        return device, None
+
     def get_device_details(self, rpc_context, **kwargs):
         """Agent requests device details."""
         agent_id, host, device = self._get_request_details(kwargs)
@@ -90,7 +104,9 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                   {'device': device, 'agent_id': agent_id, 'host': host})
 
         plugin = directory.get_plugin()
-        port_id = plugin._device_to_port_id(rpc_context, device)
+        mac_or_port_id, pci_slot = self._device_to_mac_pci_slot(device)
+        port_id = plugin._device_to_port_id(rpc_context, mac_or_port_id,
+                                            pci_slot=pci_slot)
         port_context = plugin.get_bound_port_context(rpc_context,
                                                      port_id,
                                                      host,
@@ -98,8 +114,8 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         if not port_context:
             LOG.debug("Device %(device)s requested by agent "
                       "%(agent_id)s not found in database",
-                      {'device': device, 'agent_id': agent_id})
-            return {'device': device}
+                      {'device': mac_or_port_id, 'agent_id': agent_id})
+            return {'device': mac_or_port_id}
 
         port = port_context.current
         # caching information about networks for future use
@@ -108,7 +124,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                 cached_networks[port['network_id']] = (
                     port_context.network.current)
         result = self._get_device_details(rpc_context, agent_id=agent_id,
-                                          host=host, device=device,
+                                          host=host, device=mac_or_port_id,
                                           port_context=port_context)
         if 'network_id' in result:
             # success so we update status
@@ -244,13 +260,15 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                   "%(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
         plugin = directory.get_plugin()
-        port_id = plugin._device_to_port_id(rpc_context, device)
+        mac_or_device, pci_slot = self._device_to_mac_pci_slot(device)
+        port_id = plugin._device_to_port_id(rpc_context, mac_or_device,
+                                            pci_slot=pci_slot)
         port_exists = True
         if (host and not plugin.port_bound_to_host(rpc_context,
                                                    port_id, host)):
             LOG.debug("Device %(device)s not bound to the"
                       " agent host %(host)s",
-                      {'device': device, 'host': host})
+                      {'device': mac_or_device, 'host': host})
         else:
             try:
                 port_exists = bool(plugin.update_port_status(
@@ -259,12 +277,12 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                 port_exists = False
                 LOG.debug("delete_port and update_device_down are being "
                           "executed concurrently. Ignoring StaleDataError.")
-                return {'device': device,
+                return {'device': mac_or_device,
                         'exists': port_exists}
         self.notify_l2pop_port_wiring(port_id, rpc_context,
                                       n_const.PORT_STATUS_DOWN, host)
 
-        return {'device': device,
+        return {'device': mac_or_device,
                 'exists': port_exists}
 
     @profiler.trace("rpc")
@@ -278,12 +296,14 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         LOG.debug("Device %(device)s up at agent %(agent_id)s",
                   {'device': device, 'agent_id': agent_id})
         plugin = directory.get_plugin()
-        port_id = plugin._device_to_port_id(rpc_context, device)
+        mac_or_device, pci_slot = self._device_to_mac_pci_slot(device)
+        port_id = plugin._device_to_port_id(rpc_context, mac_or_device,
+                                            pci_slot=pci_slot)
         port = plugin.port_bound_to_host(rpc_context, port_id, host)
         if host and not port:
             LOG.debug("Device %(device)s not bound to the"
                       " agent host %(host)s",
-                      {'device': device, 'host': host})
+                      {'device': mac_or_device, 'host': host})
             # this might mean that a VM is in the process of live migration
             # and vif was plugged on the destination compute node;
             # need to notify nova explicitly

@@ -143,13 +143,6 @@ def get_port(context, port_id):
             return
 
 
-@db_api.CONTEXT_READER
-def get_port_from_device_mac(context, device_mac):
-    LOG.debug("get_port_from_device_mac() called for mac %s", device_mac)
-    ports = port_obj.Port.get_objects(context, mac_address=device_mac)
-    return ports.pop() if ports else None
-
-
 def get_ports_and_sgs(context, port_ids):
     """Get ports from database with security group info."""
 
