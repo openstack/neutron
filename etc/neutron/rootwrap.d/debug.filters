@@ -10,4 +10,3 @@
 
 # "sleep" command, only for testing
 sleep: RegExpFilter, sleep, root, sleep, \d+
-kill_sleep: KillFilter, root, sleep, -9

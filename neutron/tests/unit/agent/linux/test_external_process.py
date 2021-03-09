@@ -230,7 +230,7 @@ class TestProcessManager(base.BaseTestCase):
                     utils.assert_has_calls([
                         mock.call.execute(['kill', '-9', 4],
                                           run_as_root=False,
-                                          privsep_exec=False)])
+                                          privsep_exec=True)])
 
     def test_disable_namespace(self):
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:
@@ -245,7 +245,7 @@ class TestProcessManager(base.BaseTestCase):
                     utils.assert_has_calls([
                         mock.call.execute(['kill', '-9', 4],
                                           run_as_root=True,
-                                          privsep_exec=False)])
+                                          privsep_exec=True)])
 
     def test_disable_not_active(self):
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:
@@ -288,7 +288,7 @@ class TestProcessManager(base.BaseTestCase):
                     manager.disable()
                     utils.execute.assert_called_with(
                         expected_cmd, run_as_root=bool(namespace),
-                        privsep_exec=False)
+                        privsep_exec=True)
 
     def test_disable_custom_kill_script_no_namespace(self):
         self._test_disable_custom_kill_script(

@@ -98,7 +98,7 @@ class ProcessManager(MonitoredProcess):
         else:
             self.disable('HUP')
 
-    def disable(self, sig='9', get_stop_command=None, privsep_exec=False):
+    def disable(self, sig='9', get_stop_command=None):
         pid = self.pid
 
         if self.active:
@@ -107,11 +107,11 @@ class ProcessManager(MonitoredProcess):
                 ip_wrapper = ip_lib.IPWrapper(namespace=self.namespace)
                 ip_wrapper.netns.execute(cmd, addl_env=self.cmd_addl_env,
                                          run_as_root=self.run_as_root,
-                                         privsep_exec=privsep_exec)
+                                         privsep_exec=True)
             else:
                 cmd = self.get_kill_cmd(sig, pid)
                 utils.execute(cmd, run_as_root=self.run_as_root,
-                              privsep_exec=privsep_exec)
+                              privsep_exec=True)
                 # In the case of shutting down, remove the pid file
                 if sig == '9':
                     utils.delete_if_exists(self.get_pid_file_name(),

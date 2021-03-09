@@ -214,11 +214,11 @@ def find_fork_top_parent(pid):
             return pid
 
 
-def kill_process(pid, signal, run_as_root=False, privsep_exec=False):
+def kill_process(pid, signal, run_as_root=False):
     """Kill the process with the given pid using the given signal."""
     try:
         execute(['kill', '-%d' % signal, pid], run_as_root=run_as_root,
-                privsep_exec=privsep_exec)
+                privsep_exec=True)
     except exceptions.ProcessExecutionError:
         if process_is_running(pid):
             raise

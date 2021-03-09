@@ -238,11 +238,10 @@ class TestKillProcess(base.BaseTestCase):
                                side_effect=exc) as mock_execute:
             with mock.patch.object(utils, 'process_is_running',
                                    return_value=not pid_killed):
-                utils.kill_process(pid, kill_signal, run_as_root=True,
-                                   privsep_exec=False)
+                utils.kill_process(pid, kill_signal, run_as_root=True)
 
         mock_execute.assert_called_with(['kill', '-%d' % kill_signal, pid],
-                                        run_as_root=True, privsep_exec=False)
+                                        run_as_root=True, privsep_exec=True)
 
     def test_kill_process_returns_none_for_valid_pid(self):
         self._test_kill_process('1')
