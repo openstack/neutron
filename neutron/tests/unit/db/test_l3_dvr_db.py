@@ -1191,6 +1191,72 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                                 interface_info=interface_info)
             self._assert_mock_called_with_router(mock_notify, router_db.id)
 
+    def test__generate_arp_table_and_notify_agent(self):
+        fixed_ip = {
+            'ip_address': '1.2.3.4',
+            'subnet_id': _uuid()}
+        mac_address = "00:11:22:33:44:55"
+        expected_arp_table = {
+            'ip_address': fixed_ip['ip_address'],
+            'subnet_id': fixed_ip['subnet_id'],
+            'mac_address': mac_address}
+        notifier = mock.Mock()
+        ports = [{'id': _uuid(), 'device_id': 'router_1'},
+                 {'id': _uuid(), 'device_id': 'router_2'}]
+        with mock.patch.object(self.core_plugin, "get_ports",
+                               return_value=ports):
+            self.mixin._generate_arp_table_and_notify_agent(
+                self.ctx, fixed_ip, mac_address, notifier)
+        notifier.assert_has_calls([
+            mock.call(self.ctx, "router_1", expected_arp_table),
+            mock.call(self.ctx, "router_2", expected_arp_table)])
+
+    def _test_update_arp_entry_for_dvr_service_port(
+            self, device_owner, action):
+        router_dict = {'name': 'test_router', 'admin_state_up': True,
+                       'distributed': True}
+        router = self._create_router(router_dict)
+        plugin = mock.Mock()
+        directory.add_plugin(plugin_constants.CORE, plugin)
+        l3_notify = self.mixin.l3_rpc_notifier = mock.Mock()
+        port = {
+            'id': 'my_port_id',
+            'fixed_ips': [
+                {'subnet_id': '51edc9e0-24f9-47f2-8e1e-2a41cb691323',
+                 'ip_address': '10.0.0.11'},
+                {'subnet_id': '2b7c8a07-6f8e-4937-8701-f1d5da1a807c',
+                 'ip_address': '10.0.0.21'},
+                {'subnet_id': '48534187-f077-4e81-93ff-81ec4cc0ad3b',
+                 'ip_address': 'fd45:1515:7e0:0:f816:3eff:fe1a:1111'}],
+            'mac_address': 'my_mac',
+            'device_owner': device_owner
+        }
+        dvr_port = {
+            'id': 'dvr_port_id',
+            'fixed_ips': mock.ANY,
+            'device_owner': const.DEVICE_OWNER_DVR_INTERFACE,
+            'device_id': router['id']
+        }
+        plugin.get_ports.return_value = [dvr_port]
+        if action == 'add':
+            self.mixin.update_arp_entry_for_dvr_service_port(
+                self.ctx, port)
+            self.assertEqual(3, l3_notify.add_arp_entry.call_count)
+        elif action == 'del':
+            self.mixin.delete_arp_entry_for_dvr_service_port(
+                self.ctx, port)
+            self.assertEqual(3, l3_notify.del_arp_entry.call_count)
+
+    def test_update_arp_entry_for_dvr_service_port_added(self):
+        action = 'add'
+        device_owner = const.DEVICE_OWNER_LOADBALANCER
+        self._test_update_arp_entry_for_dvr_service_port(device_owner, action)
+
+    def test_update_arp_entry_for_dvr_service_port_deleted(self):
+        action = 'del'
+        device_owner = const.DEVICE_OWNER_LOADBALANCER
+        self._test_update_arp_entry_for_dvr_service_port(device_owner, action)
+
     def test_add_router_interface_csnat_ports_failure(self):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
                        'distributed': True}
