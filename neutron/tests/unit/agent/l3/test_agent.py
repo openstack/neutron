@@ -55,6 +55,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import pd
 from neutron.agent.linux import ra
+from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
 from neutron.conf.agent import common as agent_config
@@ -3060,9 +3061,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                             dvr_snat_ns.SNAT_NS_PREFIX + 'foo']
         other_namespaces = ['unknown']
 
-        self._cleanup_namespace_test(stale_namespaces,
-                                     [],
-                                     other_namespaces)
+        with mock.patch.object(linux_utils, 'delete_if_exists'):
+            self._cleanup_namespace_test(stale_namespaces,
+                                         [],
+                                         other_namespaces)
 
     def test_cleanup_namespace_with_registered_router_ids(self):
         stale_namespaces = [namespaces.NS_PREFIX + 'cccc',
@@ -3072,9 +3074,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                        {'id': 'aaaa', 'distributed': False}]
         other_namespaces = ['qdhcp-aabbcc', 'unknown']
 
-        self._cleanup_namespace_test(stale_namespaces,
-                                     router_list,
-                                     other_namespaces)
+        with mock.patch.object(linux_utils, 'delete_if_exists'):
+            self._cleanup_namespace_test(stale_namespaces,
+                                         router_list,
+                                         other_namespaces)
 
     def test_create_dvr_gateway(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
