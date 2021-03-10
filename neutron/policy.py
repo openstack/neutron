@@ -432,13 +432,12 @@ class FieldCheck(policy.Check):
 
 
 def _prepare_check(context, action, target, pluralized):
-    """Prepare rule, target, and credentials for the policy engine."""
+    """Prepare rule, target, and context for the policy engine."""
     # Compare with None to distinguish case in which target is {}
     if target is None:
         target = {}
     match_rule = _build_match_rule(action, target, pluralized)
-    credentials = context.to_policy_values()
-    return match_rule, target, credentials
+    return match_rule, target, context
 
 
 def log_rule_list(match_rule):
@@ -505,12 +504,9 @@ def enforce(context, action, target, plugin=None, pluralized=None):
     # additional check and authorize the operation
     if context.is_admin:
         return True
-    rule, target, credentials = _prepare_check(context,
-                                               action,
-                                               target,
-                                               pluralized)
+    rule, target, context = _prepare_check(context, action, target, pluralized)
     try:
-        result = _ENFORCER.enforce(rule, target, credentials, action=action,
+        result = _ENFORCER.enforce(rule, target, context, action=action,
                                    do_raise=True)
     except policy.PolicyNotAuthorized:
         with excutils.save_and_reraise_exception():
