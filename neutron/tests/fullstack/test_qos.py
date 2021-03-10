@@ -707,6 +707,31 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
             queues = '\nList of OVS Queue registers:\n%s' % '\n'.join(queues)
             self.fail(queuenum + qoses + queues)
 
+    def test_min_bw_qos_create_network_vxlan_not_supported(self):
+        qos_policy = self._create_qos_policy()
+        qos_policy_id = qos_policy['id']
+        self.safe_client.create_minimum_bandwidth_rule(
+            self.tenant_id, qos_policy_id, MIN_BANDWIDTH, self.direction)
+        network_args = {'network_type': 'vxlan',
+                        'qos_policy_id': qos_policy_id}
+        self.assertRaises(
+            exceptions.Conflict,
+            self.safe_client.create_network,
+            self.tenant_id, name='network-test', **network_args)
+
+    def test_min_bw_qos_update_network_vxlan_not_supported(self):
+        network_args = {'network_type': 'vxlan'}
+        network = self.safe_client.create_network(
+            self.tenant_id, name='network-test', **network_args)
+        qos_policy = self._create_qos_policy()
+        qos_policy_id = qos_policy['id']
+        self.safe_client.create_minimum_bandwidth_rule(
+            self.tenant_id, qos_policy_id, MIN_BANDWIDTH, self.direction)
+        self.assertRaises(
+            exceptions.Conflict,
+            self.client.update_network, network['id'],
+            body={'network': {'qos_policy_id': qos_policy_id}})
+
     def test_min_bw_qos_port_removed(self):
         """Test if min BW limit config is properly removed when port removed.
 
