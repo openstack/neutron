@@ -100,3 +100,13 @@ class TestPciLib(base.BaseTestCase):
         self.pci_wrapper.set_vf_rate(self.VF_INDEX, 'min_tx_rate', 10)
         vf = {'vf': self.VF_INDEX, 'rate': {'min_tx_rate': 10}}
         self.mock_ip_device.link.set_vf_feature.assert_called_once_with(vf)
+
+    @mock.patch.object(pci_lib, 'LOG')
+    def test_set_vf_rate_exception(self, mock_log):
+        self.mock_ip_device.link.set_vf_feature.side_effect = (
+            ip_lib.InvalidArgument)
+        self.pci_wrapper.set_vf_rate(self.VF_INDEX, 'min_tx_rate', 10)
+        mock_log.error.assert_called_once_with(
+            'Device %(device)s does not support ip-link vf "%(rate_type)s" '
+            'parameter.', {'device': self.DEV_NAME, 'rate_type': 'min_tx_rate'}
+        )
