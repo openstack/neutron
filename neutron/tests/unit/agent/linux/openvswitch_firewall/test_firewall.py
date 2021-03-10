@@ -23,6 +23,7 @@ import testtools
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
+from neutron.agent import firewall as agent_firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
@@ -38,8 +39,14 @@ TESTING_SEGMENT = 1000
 
 
 def create_ofport(port_dict, network_type=None, physical_network=None):
+    allowed_pairs_v4 = ovsfw.OFPort._get_allowed_pairs(
+        port_dict, version=constants.IPv4)
+    allowed_pairs_v6 = ovsfw.OFPort._get_allowed_pairs(
+        port_dict, version=constants.IPv6)
     ovs_port = mock.Mock(vif_mac='00:00:00:00:00:00', ofport=1,
-                         port_name="port-name")
+                         port_name="port-name",
+                         allowed_pairs_v4=allowed_pairs_v4,
+                         allowed_pairs_v6=allowed_pairs_v6)
     return ovsfw.OFPort(port_dict, ovs_port, vlan_tag=TESTING_VLAN_TAG,
                         segment_id=TESTING_SEGMENT,
                         network_type=network_type,
@@ -935,6 +942,38 @@ class TestOVSFirewallDriver(base.BaseTestCase):
     def test__remove_egress_no_port_security_non_existing_port(self):
         with testtools.ExpectedException(exceptions.OVSFWPortNotHandled):
             self.firewall._remove_egress_no_port_security('foo')
+
+    def test__initialize_egress_ipv6_icmp(self):
+        port_dict = {
+            'device': 'port-id',
+            'security_groups': [1],
+            'fixed_ips': ["10.0.0.1"],
+            'allowed_address_pairs': [
+                {'mac_address': 'aa:bb:cc:dd:ee:ff',
+                 'ip_address': '192.168.1.1'},
+                {'mac_address': 'aa:bb:cc:dd:ee:ff',
+                 'ip_address': '2003::1'}
+            ]}
+        of_port = create_ofport(port_dict)
+        self.mock_bridge.br.db_get_val.return_value = {'tag': TESTING_VLAN_TAG}
+        self.firewall._initialize_egress_ipv6_icmp(
+            of_port, set([('aa:bb:cc:dd:ee:ff', '2003::1')]))
+        expected_calls = []
+        for icmp_type in agent_firewall.ICMPV6_ALLOWED_EGRESS_TYPES:
+            expected_calls.append(
+                mock.call(
+                    table=ovs_consts.BASE_EGRESS_TABLE,
+                    priority=95,
+                    in_port=TESTING_VLAN_TAG,
+                    reg5=TESTING_VLAN_TAG,
+                    dl_type='0x86dd',
+                    nw_proto=constants.PROTO_NUM_IPV6_ICMP,
+                    icmp_type=icmp_type,
+                    dl_src='aa:bb:cc:dd:ee:ff',
+                    ipv6_src='2003::1',
+                    actions='resubmit(,%d)' % (
+                        ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)))
+        self.mock_bridge.br.add_flow.assert_has_calls(expected_calls)
 
     def test_process_trusted_ports_caches_port_id(self):
         vif_port = ovs_lib.VifPort('name', 1, 'id', 'mac', mock.ANY)
