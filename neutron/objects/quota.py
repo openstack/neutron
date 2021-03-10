@@ -16,6 +16,7 @@ from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 import sqlalchemy as sa
 from sqlalchemy import sql
+from sqlalchemy import types as sqltypes
 
 from neutron.db.quota import models
 from neutron.objects import base
@@ -90,7 +91,9 @@ class Reservation(base.NeutronDbObject):
         resv_query = context.session.query(
             models.ResourceDelta.resource,
             models.Reservation.expiration,
-            sql.func.sum(models.ResourceDelta.amount)).join(
+            sql.func.cast(
+                sql.func.sum(models.ResourceDelta.amount),
+                sqltypes.Integer)).join(
             models.Reservation)
         if expired:
             exp_expr = (models.Reservation.expiration < now)
