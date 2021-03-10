@@ -231,9 +231,11 @@ class SriovSwitchMechVnicTypesTestCase(SriovNicSwitchMechanismBaseTestCase):
             mech_driver.SriovNicSwitchMechanismDriver(
                 supported_vnic_types=self.override_vnic_types)
         self.default_supported_vnics = [
-                portbindings.VNIC_DIRECT,
-                portbindings.VNIC_MACVTAP,
-                portbindings.VNIC_DIRECT_PHYSICAL]
+            portbindings.VNIC_DIRECT,
+            portbindings.VNIC_MACVTAP,
+            portbindings.VNIC_DIRECT_PHYSICAL,
+            portbindings.VNIC_ACCELERATOR_DIRECT,
+        ]
         self.prohibit_list_cfg = {
             'SRIOV_DRIVER': {
                 'vnic_type_prohibit_list': []
@@ -284,7 +286,9 @@ class SriovSwitchMechVnicTypesTestCase(SriovNicSwitchMechanismBaseTestCase):
         self.prohibit_list_cfg['SRIOV_DRIVER']['vnic_type_prohibit_list'] = \
             [portbindings.VNIC_DIRECT,
              portbindings.VNIC_MACVTAP,
-             portbindings.VNIC_DIRECT_PHYSICAL]
+             portbindings.VNIC_DIRECT_PHYSICAL,
+             portbindings.VNIC_ACCELERATOR_DIRECT,
+             ]
 
         fake_conf = cfg.CONF
         fake_conf_fixture = base.MechDriverConfFixture(
