@@ -628,11 +628,6 @@ class ExtraAttributesMixinTestCase(testlib_api.SqlTestCase):
                 self.mixin.set_extra_attr_value(self.ctx, self.router,
                                                 'bad', 'value')
 
-    def test_set_attrs_and_extend_no_transaction(self):
-        with testtools.ExpectedException(RuntimeError):
-            self.mixin.set_extra_attr_value(self.ctx, self.router,
-                                            'ha_vr_id', 99)
-
     def test__extend_extra_router_dict_defaults(self):
         rdict = {}
         self.mixin._extend_extra_router_dict(rdict, self.router)
