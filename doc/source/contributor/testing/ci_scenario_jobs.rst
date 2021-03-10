@@ -43,19 +43,19 @@ Below is a summary of those jobs.
     |neutron-tempest-plugin-designate-scenario     |neutron_tempest_plugin.scenario.\ |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
     |                                              |test_dns_integration              |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-plugin-scenario-linuxbridge   |neutron_tempest_plugin.scenario   |   3.6   |   1   | linuxbridge | iptables        | legacy   | False | False  | False      | Yes         |
+    |neutron-tempest-plugin-scenario-linuxbridge   |neutron_tempest_plugin.scenario   |   3.6   |   1   | linuxbridge | iptables        | ha       | False | False  | False      | Yes         |
     |                                              |tempest.api.compute.servers.\     |         |       |             |                 |          |       |        |            |             |
     |                                              |    test_attach_interfaces        |         |       |             |                 |          |       |        |            |             |
     |                                              |tempest.api.compute.servers.\     |         |       |             |                 |          |       |        |            |             |
     |                                              |    test_multiple_create          |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-plugin-scenario-openvswitch   |neutron_tempest_plugin.scenario   |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | False      | Yes         |
+    |neutron-tempest-plugin-scenario-openvswitch   |neutron_tempest_plugin.scenario   |   3.6   |   1   | openvswitch | openvswitch     | ha       | False | False  | False      | Yes         |
     |                                              |tempest.api.compute.servers.\     |         |       |             |                 |          |       |        |            |             |
     |                                              |    test_attach_interfaces        |         |       |             |                 |          |       |        |            |             |
     |                                              |tempest.api.compute.servers.\     |         |       |             |                 |          |       |        |            |             |
     |                                              |    test_multiple_create          |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-plugin-scenario-openvswitch-\ |neutron_tempest_plugin.scenario   |   3.6   |   1   | openvswitch | iptables_hybrid | legacy   | False | False  | False      | Yes         |
+    |neutron-tempest-plugin-scenario-openvswitch-\ |neutron_tempest_plugin.scenario   |   3.6   |   1   | openvswitch | iptables_hybrid | ha       | False | False  | False      | Yes         |
     |  iptables_hybrid                             |                                  |         |       |             |                 |          |       |        |            |             |
     |                                              |tempest.api.compute.servers.\     |         |       |             |                 |          |       |        |            |             |
     |                                              |    test_attach_interfaces        |         |       |             |                 |          |       |        |            |             |
