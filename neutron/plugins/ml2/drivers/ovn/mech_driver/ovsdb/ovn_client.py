@@ -298,6 +298,14 @@ class OVNClient(object):
             options.update({'requested-chassis':
                             port.get(portbindings.HOST_ID, '')})
 
+        # TODO(lucasagomes): Enable the mcast_flood_reports by default,
+        # according to core OVN developers it shouldn't cause any harm
+        # and will be ignored when mcast_snoop is False. We can revise
+        # this once https://bugzilla.redhat.com/show_bug.cgi?id=1933990
+        # (see comment #3) is fixed in Core OVN.
+        if port_type not in ('vtep', 'localport', 'router'):
+            options.update({ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true'})
+
         device_owner = port.get('device_owner', '')
         sg_ids = ' '.join(utils.get_lsp_security_groups(port))
         return OvnPortInfo(port_type, options, addresses, port_security,
@@ -1534,6 +1542,9 @@ class OVNClient(object):
     def create_provnet_port(self, network_id, segment, txn=None):
         tag = segment.get(segment_def.SEGMENTATION_ID, [])
         physnet = segment.get(segment_def.PHYSICAL_NETWORK)
+        options = {'network_name': physnet,
+                   ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
+                   ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'true'}
         cmd = self._nb_idl.create_lswitch_port(
             lport_name=utils.ovn_provnet_port_name(segment['id']),
             lswitch_name=utils.ovn_name(network_id),
@@ -1541,7 +1552,7 @@ class OVNClient(object):
             external_ids={},
             type=ovn_const.LSP_TYPE_LOCALNET,
             tag=tag,
-            options={'network_name': physnet})
+            options=options)
         self._transaction([cmd], txn=txn)
 
     def delete_provnet_port(self, network_id, segment):
