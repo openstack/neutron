@@ -39,3 +39,26 @@ class IPConntrackTestCase(base.BaseTestCase):
         dev_info_list = [dev_info for _ in range(10)]
         self.mgr._delete_conntrack_state(dev_info_list, rule)
         self.assertEqual(1, len(self.execute.mock_calls))
+
+
+class OvsIPConntrackTestCase(IPConntrackTestCase):
+
+    def setUp(self):
+        super(IPConntrackTestCase, self).setUp()
+        self.execute = mock.Mock()
+        self.mgr = ip_conntrack.OvsIpConntrackManager(self.execute)
+
+    def test_delete_conntrack_state_dedupes(self):
+        rule = {'ethertype': 'IPv4', 'direction': 'ingress'}
+        dev_info = {
+            'device': 'tapdevice',
+            'fixed_ips': ['1.2.3.4'],
+            'of_port': mock.Mock(of_port=10)}
+        dev_info_list = [dev_info for _ in range(10)]
+        self.mgr._delete_conntrack_state(dev_info_list, rule)
+        self.assertEqual(1, len(self.execute.mock_calls))
+
+    def test_get_device_zone(self):
+        of_port = mock.Mock(vlan_tag=10)
+        port = {'id': 'port-id', 'of_port': of_port}
+        self.assertEqual(10, self.mgr.get_device_zone(port))
