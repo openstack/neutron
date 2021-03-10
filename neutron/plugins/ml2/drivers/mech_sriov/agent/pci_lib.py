@@ -100,4 +100,11 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         """
         ip = self.device(self.dev_name)
         vf_config = {'vf': vf_index, 'rate': {rate_type: int(rate_value)}}
-        ip.link.set_vf_feature(vf_config)
+        try:
+            ip.link.set_vf_feature(vf_config)
+        except ip_lib.InvalidArgument:
+            # NOTE(ralonsoh): some NICs do not support "min_tx_rate" parameter.
+            # https://bugs.launchpad.net/neutron/+bug/1918464
+            LOG.error('Device %(device)s does not support ip-link vf '
+                      '"%(rate_type)s" parameter.',
+                      {'device': self.dev_name, 'rate_type': rate_type})
