@@ -415,7 +415,7 @@ class OVNClient(object):
             if self.is_dns_required_for_port(port):
                 self.add_txns_to_sync_port_dns_records(txn, port)
 
-            self._qos_driver.create_port(txn, port)
+            self._qos_driver.create_port(txn, port, port_type=port_info.type)
 
         db_rev.bump_revision(context, port, ovn_const.TYPE_PORTS)
 
@@ -560,7 +560,8 @@ class OVNClient(object):
                   utils.is_lsp_trusted(port)):
                 self._del_port_from_drop_port_group(port['id'], txn)
 
-            self._qos_driver.update_port(txn, port, port_object)
+            self._qos_driver.update_port(txn, port, port_object,
+                                         port_type=port_info.type)
 
             if self.is_dns_required_for_port(port):
                 self.add_txns_to_sync_port_dns_records(
