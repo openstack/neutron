@@ -395,3 +395,40 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                       priority=constants.HA_CHASSIS_GROUP_HIGHEST_PRIORITY - 1)
         ]
         nb_idl.ha_chassis_group_add_chassis.assert_has_calls(expected_calls)
+
+    def test_check_for_mcast_flood_reports(self):
+        nb_idl = self.fake_ovn_client._nb_idl
+        lsp0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp0',
+                   'options': {'mcast_flood_reports': 'true'},
+                   'type': ""})
+        lsp1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp1', 'options': {}, 'type': ""})
+        lsp2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp2', 'options': {},
+                   'type': "vtep"})
+        lsp3 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp3', 'options': {},
+                   'type': "localport"})
+        lsp4 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp4', 'options': {},
+                   'type': "router"})
+        lsp5 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp5', 'options': {}, 'type': 'localnet'})
+
+        nb_idl.lsp_list.return_value.execute.return_value = [
+            lsp0, lsp1, lsp2, lsp3, lsp4, lsp5]
+
+        # Invoke the periodic method, it meant to run only once at startup
+        # so NeverAgain will be raised at the end
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.check_for_mcast_flood_reports)
+
+        # Assert only lsp1 and lsp5 were called because they are the only
+        # ones meeting the criteria ("mcast_flood_reports" not yet set,
+        # and type "" or localnet)
+        expected_calls = [
+            mock.call('lsp1', mcast_flood_reports='true'),
+            mock.call('lsp5', mcast_flood_reports='true', mcast_flood='true')]
+
+        nb_idl.lsp_set_options.assert_has_calls(expected_calls)
