@@ -41,7 +41,6 @@
     parent: rally-task-at-devstack
     required-projects:
       - name: openstack/devstack
-      - name: openstack/devstack-gate
       - name: openstack/rally
       - name: openstack/rally-openstack
     irrelevant-files: *irrelevant-files
