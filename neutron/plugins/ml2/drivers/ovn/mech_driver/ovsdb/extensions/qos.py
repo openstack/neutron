@@ -216,14 +216,19 @@ class OVNClientQosExtension(object):
             if ovn_rule:
                 txn.add(self._driver._nb_idl.qos_add(**ovn_rule))
 
-    def create_port(self, txn, port):
-        self.update_port(txn, port, None, reset=True)
+    def create_port(self, txn, port, port_type=None):
+        self.update_port(txn, port, None, reset=True, port_type=port_type)
 
     def delete_port(self, txn, port):
         self.update_port(txn, port, None, delete=True)
 
     def update_port(self, txn, port, original_port, reset=False, delete=False,
-                    qos_rules=None):
+                    qos_rules=None, port_type=None):
+        if port_type == ovn_const.LSP_TYPE_EXTERNAL:
+            # External ports (SR-IOV) QoS is handled the SR-IOV agent QoS
+            # extension.
+            return
+
         if (not reset and not original_port) and not delete:
             # If there is no information about the previous QoS policy, do not
             # make any change, unless the port is new or the QoS information
