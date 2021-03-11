@@ -288,6 +288,15 @@ def check_ip_nonlocal_bind():
     return result
 
 
+def check_min_tx_rate_support():
+    result = checks.min_tx_rate_support()
+    if not result:
+        LOG.warning('There are SR-IOV network interfaces that do not support '
+                    'setting the minimum TX rate (dataplane enforced minimum '
+                    'guaranteed bandwidth) "ip-link vf min_tx_rate".')
+    return result
+
+
 # Define CLI opts to test specific features, with a callback for the test
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
@@ -348,6 +357,10 @@ OPTS = [
                     help=_('Check ip_nonlocal_bind kernel option works with '
                            'network namespaces.'),
                     default=False),
+    BoolOptCallback('check_min_tx_rate_support', check_min_tx_rate_support,
+                    help=_('Check if the configured SR-IOV NICs support '
+                           'the "ip-link vf min_tx_rate" parameter.'),
+                    default=False),
 ]
 
 
@@ -392,6 +405,8 @@ def enable_tests_from_config():
          'OVSHybridIptablesFirewallDriver'),
     ):
         cfg.CONF.set_default('bridge_firewalling', True)
+    if cfg.CONF.SRIOV_NIC.physical_device_mappings:
+        cfg.CONF.set_default('check_min_tx_rate_support', True)
 
 
 def all_tests_passed():

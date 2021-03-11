@@ -21,6 +21,7 @@ import tempfile
 import netaddr
 from neutron_lib import constants as n_consts
 from neutron_lib import exceptions
+from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -516,3 +517,36 @@ def gre_conntrack_supported():
         return agent_utils.execute(cmd, log_fail_as_error=False)
     except exceptions.ProcessExecutionError:
         return False
+
+
+def min_tx_rate_support():
+    device_mappings = helpers.parse_mappings(
+        cfg.CONF.SRIOV_NIC.physical_device_mappings, unique_keys=False)
+    devices_to_test = set()
+    for devices_in_physnet in device_mappings.values():
+        for device in devices_in_physnet:
+            devices_to_test.add(device)
+
+    # NOTE(ralonsoh): the VF used by default is 0. Each SR-IOV configured
+    # NIC should have configured at least 1 VF.
+    VF_NUM = 0
+    devices_without_support = set()
+    for device in devices_to_test:
+        try:
+            ip_link = ip_lib.IpLinkCommand(device)
+            # NOTE(ralonsoh): to set min_tx_rate, first is needed to set
+            # max_tx_rate and max_tx_rate >= min_tx_rate.
+            vf_config = {'vf': VF_NUM, 'rate': {'min_tx_rate': int(400),
+                                                'max_tx_rate': int(500)}}
+            ip_link.set_vf_feature(vf_config)
+            vf_config = {'vf': VF_NUM, 'rate': {'min_tx_rate': 0,
+                                                'max_tx_rate': 0}}
+            ip_link.set_vf_feature(vf_config)
+        except ip_lib.InvalidArgument:
+            devices_without_support.add(device)
+
+    if devices_without_support:
+        LOG.debug('The following NICs do not support "min_tx_rate": %s',
+                  devices_without_support)
+        return False
+    return True
