@@ -379,14 +379,14 @@ oslo.policy, so we cannot determine which projects are neutron related
 projects, so the second entry point is required.
 
 The recommended entry point name is a repository name: For example,
-'neutron-fwaas' for FWaaS and 'networking-sfc' for SFC:
+'networking-sfc' for SFC:
 
 .. code-block:: none
 
    oslo.policy.policies =
-       neutron-fwaas = neutron_fwaas.policies:list_rules
+       neutron-sfc = neutron_sfc.policies:list_rules
    neutron.policies =
-       neutron-fwaas = neutron_fwaas.policies:list_rules
+       neutron-sfc = neutron_sfc.policies:list_rules
 
 Except registering the ``neutron.policies`` entry point, other steps to be done
 in each neutron related project for policy-in-code support are same for all

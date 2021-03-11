@@ -18,7 +18,7 @@ Among those of special interest are:
    responsible for wiring and securing virtual interfaces (usually both
    compute and network nodes).
 #. Layer3 agent that runs on network node and provides east-west and
-   north-south routing plus some advanced services such as FWaaS or VPNaaS.
+   north-south routing plus some advanced services such as VPNaaS.
 
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~

@@ -49,5 +49,4 @@ Each plug-in that Networking uses has its own concepts. While not vital
 to operating the VNI and OpenStack environment, understanding these
 concepts can help you set up Networking. All Networking installations
 use a core plug-in and a security group plug-in (or just the No-Op
-security group plug-in). Additionally, Firewall-as-a-Service (FWaaS)
-is available.
+security group plug-in).
