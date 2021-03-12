@@ -480,6 +480,7 @@
         etcd: false
         br-ex-tcpdump: true
         br-int-flows: true
+        tls-proxy: false
         # Cinder services
         c-api: false
         c-bak: false
