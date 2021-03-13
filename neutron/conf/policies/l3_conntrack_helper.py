@@ -11,10 +11,15 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
 
+
+DEPRECATED_REASON = """
+The router conntrack API now supports system scope and default roles.
+"""
 
 COLLECTION_PATH = '/routers/{router_id}/conntrack_helpers'
 RESOURCE_PATH = ('/routers/{router_id}'
@@ -23,21 +28,32 @@ RESOURCE_PATH = ('/routers/{router_id}'
 
 rules = [
     policy.DocumentedRuleDefault(
-        'create_router_conntrack_helper',
-        base.RULE_ADMIN_OR_PARENT_OWNER,
-        'Create a router conntrack helper',
-        [
+        name='create_router_conntrack_helper',
+        check_str=base.policy_or(
+            base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+            base.RULE_PARENT_OWNER),
+        scope_types=['system', 'project'],
+        description='Create a router conntrack helper',
+        operations=[
             {
                 'method': 'POST',
                 'path': COLLECTION_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_router_conntrack_helper',
+            check_str=base.RULE_ADMIN_OR_PARENT_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'get_router_conntrack_helper',
-        base.RULE_ADMIN_OR_PARENT_OWNER,
-        'Get a router conntrack helper',
-        [
+        name='get_router_conntrack_helper',
+        check_str=base.policy_or(
+            base.SYSTEM_OR_PROJECT_READER,
+            base.RULE_PARENT_OWNER),
+        scope_types=['system', 'project'],
+        description='Get a router conntrack helper',
+        operations=[
             {
                 'method': 'GET',
                 'path': COLLECTION_PATH,
@@ -46,29 +62,50 @@ rules = [
                 'method': 'GET',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_router_conntrack_helper',
+            check_str=base.RULE_ADMIN_OR_PARENT_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'update_router_conntrack_helper',
-        base.RULE_ADMIN_OR_PARENT_OWNER,
-        'Update a router conntrack helper',
-        [
+        name='update_router_conntrack_helper',
+        check_str=base.policy_or(
+            base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+            base.RULE_PARENT_OWNER),
+        scope_types=['system', 'project'],
+        description='Update a router conntrack helper',
+        operations=[
             {
                 'method': 'PUT',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_router_conntrack_helper',
+            check_str=base.RULE_ADMIN_OR_PARENT_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
-        'delete_router_conntrack_helper',
-        base.RULE_ADMIN_OR_PARENT_OWNER,
-        'Delete a router conntrack helper',
-        [
+        name='delete_router_conntrack_helper',
+        check_str=base.policy_or(
+            base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+            base.RULE_PARENT_OWNER),
+        scope_types=['system', 'project'],
+        description='Delete a router conntrack helper',
+        operations=[
             {
                 'method': 'DELETE',
                 'path': RESOURCE_PATH,
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_router_conntrack_helper',
+            check_str=base.RULE_ADMIN_OR_PARENT_OWNER),
+        deprecated_reason=DEPRECATED_REASON,
+        deprecated_since=versionutils.deprecated.WALLABY
     ),
 ]
 
