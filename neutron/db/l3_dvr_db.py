@@ -375,6 +375,11 @@ class DVRResourceOperationHandler(object):
             # to clean up the fip namespace as it is no longer required.
             self.l3plugin.l3_rpc_notifier.delete_fipnamespace_for_ext_net(
                 payload.context, network_id)
+            # Delete the Floating IP agent gateway port
+            # bindings on all hosts
+            l3_obj.DvrFipGatewayPortAgentBinding.delete_objects(
+                payload.context,
+                network_id=network_id)
 
     def _delete_fip_agent_port(self, context, network_id, host_id):
         try:
