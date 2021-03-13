@@ -116,6 +116,9 @@ LEARN_FROM_TUN = 10
 UCAST_TO_TUN = 20
 ARP_RESPONDER = 21
 FLOOD_TO_TUN = 22
+# NOTE(vsaienko): transit table used by networking-bagpipe driver to
+# mirror traffic to EVPN and standard tunnels to gateway nodes
+BAGPIPE_FLOOD_TO_TUN_BROADCAST = 222
 
 TUN_BR_ALL_TABLES = (
     LOCAL_SWITCHING,
