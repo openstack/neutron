@@ -1500,14 +1500,14 @@ def ip_monitor(namespace, queue, event_stop, event_started):
 
 
 def add_ip_route(namespace, cidr, device=None, via=None, table=None,
-                 metric=None, scope=None, **kwargs):
+                 metric=None, scope=None, proto='static', **kwargs):
     """Add an IP route"""
     if table:
         table = IP_RULE_TABLES.get(table, table)
     ip_version = common_utils.get_ip_version(cidr or via)
     privileged.add_ip_route(namespace, cidr, ip_version,
                             device=device, via=via, table=table,
-                            metric=metric, scope=scope, **kwargs)
+                            metric=metric, scope=scope, proto=proto, **kwargs)
 
 
 def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
@@ -1516,6 +1516,12 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
     def get_device(index, devices):
         for device in (d for d in devices if d['index'] == index):
             return get_attr(device, 'IFLA_IFNAME')
+
+    def get_proto(proto_number):
+        if proto_number in rtnl.rt_proto:
+            return rtnl.rt_proto[proto_number]
+        elif str(proto_number) in constants.IP_PROTOCOL_NUM_TO_NAME_MAP:
+            return constants.IP_PROTOCOL_NUM_TO_NAME_MAP[str(proto_number)]
 
     table = table if table else 'main'
     table = IP_RULE_TABLES.get(table, table)
@@ -1532,6 +1538,7 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
         table = int(get_attr(route, 'RTA_TABLE'))
         metric = (get_attr(route, 'RTA_PRIORITY') or
                   IP_ROUTE_METRIC_DEFAULT[ip_version])
+        proto = get_proto(route['proto'])
         value = {
             'table': IP_RULE_TABLES_NAMES.get(table, table),
             'source_prefix': get_attr(route, 'RTA_PREFSRC'),
@@ -1540,6 +1547,7 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
             'device': get_device(int(get_attr(route, 'RTA_OIF')), devices),
             'via': get_attr(route, 'RTA_GATEWAY'),
             'metric': metric,
+            'proto': proto,
         }
 
         ret.append(value)
