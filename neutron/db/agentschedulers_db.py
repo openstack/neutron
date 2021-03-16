@@ -17,12 +17,16 @@ import datetime
 import random
 import time
 
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context as ncontext
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.exceptions import dhcpagentscheduler as das_exc
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -36,6 +40,7 @@ from neutron.db import agents_db
 from neutron.db.availability_zone import network as network_az
 from neutron.extensions import dhcpagentscheduler
 from neutron.objects import network
+from neutron.objects import subnet as subnet_obj
 from neutron import worker as neutron_worker
 
 
@@ -226,12 +231,15 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                              additional_time)
         return agent_expected_up > timeutils.utcnow()
 
-    def _schedule_network(self, context, network_id, dhcp_notifier):
+    def _schedule_network(self, context, network_id, dhcp_notifier,
+                          candidate_hosts=None):
         LOG.info("Scheduling unhosted network %s", network_id)
         try:
             # TODO(enikanorov): have to issue redundant db query
             # to satisfy scheduling interface
             network = self.get_network(context, network_id)
+            if candidate_hosts:
+                network['candidate_hosts'] = candidate_hosts
             agents = self.schedule_network(context, network)
             if not agents:
                 LOG.info("Failed to schedule network %s, "
@@ -480,6 +488,25 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
     def auto_schedule_networks(self, context, host):
         if self.network_scheduler:
             self.network_scheduler.auto_schedule_networks(self, context, host)
+
+    @registry.receives(resources.SEGMENT_HOST_MAPPING, [events.AFTER_CREATE])
+    def auto_schedule_new_network_segments(self, resource, event, trigger,
+                                           payload=None):
+        if not cfg.CONF.network_auto_schedule:
+            return
+        segment_plugin = directory.get_plugin('segments')
+        dhcp_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_DHCP)
+        segment_ids = payload.metadata.get('current_segment_ids')
+        segments = segment_plugin.get_segments(
+            payload.context, filters={'id': segment_ids})
+        subnets = subnet_obj.Subnet.get_objects(
+            payload.context, segment_id=segment_ids)
+        network_ids = {s.network_id for s in subnets}
+        for network_id in network_ids:
+            for segment in segments:
+                self._schedule_network(
+                    payload.context, network_id, dhcp_notifier,
+                    candidate_hosts=segment['hosts'])
 
 
 class AZDhcpAgentSchedulerDbMixin(DhcpAgentSchedulerDbMixin,
