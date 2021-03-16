@@ -1240,18 +1240,18 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 AssertionError, self.assertItemsEqual, db_router_ids,
                 monitor_lrouter_ids)
 
-        def _get_networks_for_router_port(port_fixed_ips):
+        def _get_networks_for_router_port(port):
             _ovn_client = self.l3_plugin._ovn_client
             networks, _ = (
                 _ovn_client._get_nets_and_ipv6_ra_confs_for_router_port(
-                    self.ctx, port_fixed_ips))
+                    self.ctx, port))
             return networks
 
-        def _get_ipv6_ra_configs_for_router_port(port_fixed_ips):
+        def _get_ipv6_ra_configs_for_router_port(port):
             _ovn_client = self.l3_plugin._ovn_client
             networks, ipv6_ra_configs = (
                 _ovn_client._get_nets_and_ipv6_ra_confs_for_router_port(
-                    self.ctx, port_fixed_ips))
+                    self.ctx, port))
             return ipv6_ra_configs
 
         for router_id in db_router_ids:
@@ -1260,10 +1260,10 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             r_port_ids = [p['id'] for p in r_ports['ports']]
             r_port_networks = {
                 p['id']:
-                    _get_networks_for_router_port(p['fixed_ips'])
+                    _get_networks_for_router_port(p)
                     for p in r_ports['ports']}
             r_port_ipv6_ra_configs = {
-                p['id']: _get_ipv6_ra_configs_for_router_port(p['fixed_ips'])
+                p['id']: _get_ipv6_ra_configs_for_router_port(p)
                 for p in r_ports['ports']}
             r_routes = db_routes[router_id]
             r_nats = db_nats[router_id]
