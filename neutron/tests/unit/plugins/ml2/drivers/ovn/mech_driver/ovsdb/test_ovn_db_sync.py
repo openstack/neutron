@@ -436,7 +436,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         ovn_nb_synchronizer._ovn_client = mock.Mock()
         ovn_nb_synchronizer._ovn_client.\
             _get_nets_and_ipv6_ra_confs_for_router_port.return_value = (
-                self.lrport_networks, {})
+                self.lrport_networks, {'fixed_ips': {}})
         ovn_nb_synchronizer._ovn_client._get_v4_network_of_all_router_ports. \
             side_effect = self._fake_get_v4_network_of_all_router_ports
         ovn_nb_synchronizer._ovn_client._get_gw_info = mock.Mock()
