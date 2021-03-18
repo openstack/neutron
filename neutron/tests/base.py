@@ -26,6 +26,7 @@ import os.path
 import queue
 import threading
 from unittest import mock
+import warnings
 
 import eventlet.timeout
 import fixtures
@@ -225,6 +226,17 @@ class DietTestCase(base.BaseTestCase, metaclass=_CatchTimeoutMetaclass):
 
     def setUp(self):
         super(DietTestCase, self).setUp()
+
+        # NOTE(slaweq): Make deprecation warnings only happen once.
+        warnings.simplefilter("once", DeprecationWarning)
+
+        # NOTE(slaweq): Let's not display such warnings in tests as we know
+        # that we have many places where policy enforcement depends on values
+        # like is_admin or project_id and there can be a lot of such warnings
+        # in the logs
+        warnings.filterwarnings(
+            'ignore', message=(
+                'Policy enforcement is depending on the value of '))
 
         # Suppress some log messages during test runs, otherwise it may cause
         # issues with subunit parser when running on Python 3. It happened for
