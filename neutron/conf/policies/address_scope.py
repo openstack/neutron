@@ -31,7 +31,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_address_scope',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
         description='Create an address scope',
         operations=[
             {
