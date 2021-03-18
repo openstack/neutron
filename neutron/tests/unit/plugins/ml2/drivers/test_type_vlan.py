@@ -34,17 +34,17 @@ TENANT_NET = 'phys_net2'
 UNCONFIGURED_NET = 'no_net'
 VLAN_MIN = 200
 VLAN_MAX = 209
-NETWORK_VLAN_RANGES = [PROVIDER_NET, "%s:%s:%s" %
-                       (TENANT_NET, VLAN_MIN, VLAN_MAX)]
+TENANT_VLAN_RANGES = ["%s:%s:%s" % (TENANT_NET, VLAN_MIN, VLAN_MAX)]
+NETWORK_VLAN_RANGES = [PROVIDER_NET] + TENANT_VLAN_RANGES
 UPDATED_VLAN_RANGES = {
-    PROVIDER_NET: [],
+    PROVIDER_NET: [(p_const.MIN_VLAN_TAG, p_const.MAX_VLAN_TAG)],
     TENANT_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)],
 }
 EMPTY_VLAN_RANGES = {
-    PROVIDER_NET: []
+    PROVIDER_NET: [(p_const.MIN_VLAN_TAG, p_const.MAX_VLAN_TAG)]
 }
 NETWORK_VLAN_RANGES_WITH_UNCONFIG = {
-    PROVIDER_NET: [],
+    PROVIDER_NET: [(p_const.MIN_VLAN_TAG, p_const.MAX_VLAN_TAG)],
     TENANT_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)],
     UNCONFIGURED_NET: [(VLAN_MIN, VLAN_MAX)]
 }
@@ -151,13 +151,6 @@ class VlanTypeTest(testlib_api.SqlTestCase):
                           self.driver.validate_provider_segment,
                           segment)
 
-    def test_validate_provider_segment_with_physical_network_only(self):
-        segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
-                   api.PHYSICAL_NETWORK: PROVIDER_NET}
-        self.assertRaises(exc.InvalidInput,
-                          self.driver.validate_provider_segment,
-                          segment)
-
     def test_sync_vlan_allocations(self):
         def check_in_ranges(network_vlan_ranges):
             vlan_min, vlan_max = network_vlan_ranges[TENANT_NET][0]
@@ -212,7 +205,9 @@ class VlanTypeTest(testlib_api.SqlTestCase):
                    api.PHYSICAL_NETWORK: PROVIDER_NET,
                    api.SEGMENTATION_ID: 101}
         alloc = self._get_allocation(self.context, segment)
-        self.assertIsNone(alloc)
+        expected = vlan_alloc_obj.VlanAllocation(
+            allocated=False, physical_network=PROVIDER_NET, vlan_id=101)
+        self.assertEqual(expected.__repr__(), alloc.__repr__())
         observed = self.driver.reserve_provider_segment(self.context, segment)
         alloc = self._get_allocation(self.context, observed)
         self.assertTrue(alloc.allocated)
@@ -252,19 +247,11 @@ class VlanTypeTest(testlib_api.SqlTestCase):
         observed = self.driver.reserve_provider_segment(self.context, segment)
         alloc = self._get_allocation(self.context, observed)
         self.assertTrue(alloc.allocated)
-        vlan_id = observed[api.SEGMENTATION_ID]
-        self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
-        self.assertThat(vlan_id, matchers.LessThan(VLAN_MAX + 1))
-        self.assertEqual(TENANT_NET, observed[api.PHYSICAL_NETWORK])
-
-    def test_reserve_provider_segment_all_allocateds(self):
-        for __ in range(VLAN_MIN, VLAN_MAX + 1):
-            self.driver.allocate_tenant_segment(self.context)
-        segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN}
-        self.assertRaises(exc.NoNetworkAvailable,
-                          self.driver.reserve_provider_segment,
-                          self.context,
-                          segment)
+        # NOTE(ralonsoh): first network provided in the configuration is
+        # PROVIDER_NET.
+        self.assertEqual(PROVIDER_NET, observed[api.PHYSICAL_NETWORK])
+        self.assertIn(observed[api.SEGMENTATION_ID],
+                      range(p_const.MIN_VLAN_TAG, p_const.MAX_VLAN_TAG + 1))
 
     def test_get_mtu(self):
         cfg.CONF.set_override('global_physnet_mtu', 1475)
@@ -288,20 +275,27 @@ class VlanTypeTest(testlib_api.SqlTestCase):
         self.assertEqual(0, self.driver.get_mtu('physnet1'))
 
     def test_allocate_tenant_segment(self):
+        cfg.CONF.set_override('network_vlan_ranges', TENANT_VLAN_RANGES,
+                              group='ml2_type_vlan')
+        driver = type_vlan.VlanTypeDriver()
+        driver._sync_vlan_allocations()
         for __ in range(VLAN_MIN, VLAN_MAX + 1):
             segment = self.driver.allocate_tenant_segment(self.context)
             alloc = self._get_allocation(self.context, segment)
             self.assertTrue(alloc.allocated)
             vlan_id = segment[api.SEGMENTATION_ID]
-            self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
-            self.assertThat(vlan_id, matchers.LessThan(VLAN_MAX + 1))
+            self.assertGreater(vlan_id, VLAN_MIN - 1)
+            self.assertLess(vlan_id, VLAN_MAX + 1)
             self.assertEqual(TENANT_NET, segment[api.PHYSICAL_NETWORK])
 
     def test_allocate_tenant_segment_no_available(self):
+        cfg.CONF.set_override('network_vlan_ranges', TENANT_VLAN_RANGES,
+                              group='ml2_type_vlan')
+        driver = type_vlan.VlanTypeDriver()
+        driver._sync_vlan_allocations()
         for __ in range(VLAN_MIN, VLAN_MAX + 1):
-            self.driver.allocate_tenant_segment(self.context)
-        segment = self.driver.allocate_tenant_segment(self.context)
-        self.assertIsNone(segment)
+            driver.allocate_tenant_segment(self.context)
+        self.assertIsNone(driver.allocate_tenant_segment(self.context))
 
     def test_release_segment(self):
         segment = self.driver.allocate_tenant_segment(self.context)
@@ -311,14 +305,14 @@ class VlanTypeTest(testlib_api.SqlTestCase):
 
     def test_release_segment_unallocated(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
-                   api.PHYSICAL_NETWORK: PROVIDER_NET,
+                   api.PHYSICAL_NETWORK: 'non_existing_physnet',
                    api.SEGMENTATION_ID: 101}
         with mock.patch.object(type_vlan.LOG, 'warning') as log_warn:
             self.driver.release_segment(self.context, segment)
             log_warn.assert_called_once_with(
                 "No vlan_id %(vlan_id)s found on physical network "
                 "%(physical_network)s",
-                {'vlan_id': 101, 'physical_network': PROVIDER_NET})
+                {'vlan_id': 101, 'physical_network': 'non_existing_physnet'})
 
 
 class VlanTypeAllocationTest(testlib_api.SqlTestCase):
@@ -347,11 +341,15 @@ class VlanTypeAllocationTest(testlib_api.SqlTestCase):
         for vlan in range(10):
             # then physnet2
             self.assertEqual(
-                {'network_type': 'vlan', 'physical_network': 'phys_net2',
+                {'network_type': 'vlan', 'physical_network': TENANT_NET,
                  'segmentation_id': mock.ANY, 'mtu': 1500},
                 driver.allocate_tenant_segment(ctx))
-        # then nothing
-        self.assertFalse(driver.allocate_tenant_segment(ctx))
+        # NOTE(ralonsoh): to save time, this test won't allocate 4094 segments
+        # for PROVIDER_NET.
+        self.assertEqual(
+                {'network_type': 'vlan', 'physical_network': PROVIDER_NET,
+                 'segmentation_id': p_const.MIN_VLAN_TAG, 'mtu': 1500},
+                driver.allocate_tenant_segment(ctx))
 
 
 class VlanTypeTestWithNetworkSegmentRange(testlib_api.SqlTestCase):
@@ -375,8 +373,16 @@ class VlanTypeTestWithNetworkSegmentRange(testlib_api.SqlTestCase):
         # one of the `service_plugins`
         ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
             self.context)
-        self.assertEqual(1, len(ret))
+        self.assertEqual(2, len(ret))
         network_segment_range = ret[0]
+        self.assertTrue(network_segment_range.default)
+        self.assertTrue(network_segment_range.shared)
+        self.assertIsNone(network_segment_range.project_id)
+        self.assertEqual(p_const.TYPE_VLAN, network_segment_range.network_type)
+        self.assertEqual(PROVIDER_NET, network_segment_range.physical_network)
+        self.assertEqual(p_const.MIN_VLAN_TAG, network_segment_range.minimum)
+        self.assertEqual(p_const.MAX_VLAN_TAG, network_segment_range.maximum)
+        network_segment_range = ret[1]
         self.assertTrue(network_segment_range.default)
         self.assertTrue(network_segment_range.shared)
         self.assertIsNone(network_segment_range.project_id)

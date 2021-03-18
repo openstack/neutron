@@ -32,7 +32,7 @@ VLAN_OUTSIDE = 100
 NETWORK_VLAN_RANGES = {
     TENANT_NET: [(VLAN_MIN, VLAN_MAX)],
 }
-NETWORK_VLAN_RANGES_CFG_ENTRIES = [TENANT_NET, "%s:%s:%s" %
+NETWORK_VLAN_RANGES_CFG_ENTRIES = ["%s:%s:%s" %
                                    (TENANT_NET, VLAN_MIN, VLAN_MAX)]
 SERVICE_PLUGIN_KLASS = ('neutron.services.network_segment_range.plugin.'
                         'NetworkSegmentRangePlugin')
