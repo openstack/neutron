@@ -324,8 +324,8 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self.mech_driver.post_fork_initialize(
             mock.ANY, mock.ANY, trigger_cls.trigger)
 
-        self.nb_api = self.mech_driver._nb_ovn
-        self.sb_api = self.mech_driver._sb_ovn
+        self.nb_api = self.mech_driver.nb_ovn
+        self.sb_api = self.mech_driver.sb_ovn
 
     def _collect_processes_logs(self):
         timestamp = datetime.now().strftime('%y-%m-%d_%H-%M-%S')
@@ -360,8 +360,8 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         if self.maintenance_worker:
             self.mech_driver.nb_synchronizer.stop()
             self.mech_driver.sb_synchronizer.stop()
-        self.mech_driver._nb_ovn.ovsdb_connection.stop()
-        self.mech_driver._sb_ovn.ovsdb_connection.stop()
+        self.mech_driver.nb_ovn.ovsdb_connection.stop()
+        self.mech_driver.sb_ovn.ovsdb_connection.stop()
 
     def restart(self):
         self.stop()

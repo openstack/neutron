@@ -100,7 +100,7 @@ class ChassisEvent(row_event.RowEvent):
                 event = self.ROW_CREATE
 
         if event == self.ROW_CREATE:
-            default_group = self.driver._nb_ovn.ha_chassis_group_get(
+            default_group = self.driver.nb_ovn.ha_chassis_group_get(
                 ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME).execute(
                 check_error=True)
 
@@ -110,12 +110,12 @@ class ChassisEvent(row_event.RowEvent):
                 [ch.priority for ch in default_group.ha_chassis],
                 default=ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY)
 
-            self.driver._nb_ovn.ha_chassis_group_add_chassis(
+            self.driver.nb_ovn.ha_chassis_group_add_chassis(
                 ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME, row.name,
                 priority=min_priority - 1).execute(check_error=True)
 
         elif event == self.ROW_DELETE:
-            self.driver._nb_ovn.ha_chassis_group_del_chassis(
+            self.driver.nb_ovn.ha_chassis_group_del_chassis(
                 ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME,
                 row.name, if_exists=True).execute(check_error=True)
 
@@ -200,8 +200,8 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
         if row.type == ovn_const.OVN_CHASSIS_REDIRECT:
             return False
         try:
-            lsp = self.driver._nb_ovn.lookup('Logical_Switch_Port',
-                                             row.logical_port)
+            lsp = self.driver.nb_ovn.lookup('Logical_Switch_Port',
+                                            row.logical_port)
         except idlutils.RowNotFound:
             LOG.warning("Logical Switch Port %(port)s not found for "
                         "Port_Binding %(binding)s",
