@@ -225,8 +225,8 @@ def main():
     # and will fail with a KeyError if it isn't there
     core_plugin.mechanism_manager.mech_drivers['ovn'] = driver
     ovn_driver = driver.obj
-    ovn_driver._nb_ovn = ovn_api
-    ovn_driver._sb_ovn = ovn_sb_api
+    ovn_driver.nb_ovn = ovn_api
+    ovn_driver.sb_ovn = ovn_sb_api
 
     synchronizer = ovn_db_sync.OvnNbSynchronizer(
         core_plugin, ovn_api, ovn_sb_api, mode, ovn_driver)

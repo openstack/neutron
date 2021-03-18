@@ -153,23 +153,27 @@ class OVNMechanismDriver(api.MechanismDriver):
     @property
     def _ovn_client(self):
         if self._ovn_client_inst is None:
-            if not(self._nb_ovn and self._sb_ovn):
-                # Wait until the post_fork_initialize method has finished and
-                # IDLs have been correctly setup.
-                self._post_fork_event.wait()
-            self._ovn_client_inst = ovn_client.OVNClient(self._nb_ovn,
-                                                         self._sb_ovn)
+            self._ovn_client_inst = ovn_client.OVNClient(self.nb_ovn,
+                                                         self.sb_ovn)
         return self._ovn_client_inst
 
     @property
     def nb_ovn(self):
-        # NOTE (twilson): This and sb_ovn can be moved to instance variables
-        # once all references to the private versions are changed
+        self._post_fork_event.wait()
         return self._nb_ovn
+
+    @nb_ovn.setter
+    def nb_ovn(self, val):
+        self._nb_ovn = val
 
     @property
     def sb_ovn(self):
+        self._post_fork_event.wait()
         return self._sb_ovn
+
+    @sb_ovn.setter
+    def sb_ovn(self, val):
+        self._sb_ovn = val
 
     def check_vlan_transparency(self, context):
         """OVN driver vlan transparency support."""
@@ -347,7 +351,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                                                        self.hash_ring_group)
 
         n_agent.AgentCache(self)  # Initialize singleton agent cache
-        self._nb_ovn, self._sb_ovn = impl_idl_ovn.get_ovn_idls(self, trigger)
+        self.nb_ovn, self.sb_ovn = impl_idl_ovn.get_ovn_idls(self, trigger)
 
         # Override agents API methods
         self.patch_plugin_merge("get_agents", get_agents)
@@ -367,8 +371,8 @@ class OVNMechanismDriver(api.MechanismDriver):
             # This sync neutron DB to OVN-NB DB only in inconsistent states
             self.nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
                 self._plugin,
-                self._nb_ovn,
-                self._sb_ovn,
+                self.nb_ovn,
+                self.sb_ovn,
                 ovn_conf.get_ovn_neutron_sync_mode(),
                 self
             )
@@ -377,7 +381,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             # This sync neutron DB to OVN-SB DB only in inconsistent states
             self.sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
                 self._plugin,
-                self._sb_ovn,
+                self.sb_ovn,
                 self
             )
             self.sb_synchronizer.sync()
@@ -488,7 +492,7 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def _get_max_tunid(self):
         try:
-            return int(self._nb_ovn.nb_global.options.get('max_tunid'))
+            return int(self.nb_ovn.nb_global.options.get('max_tunid'))
         except (ValueError, TypeError):
             # max_tunid may be absent in older OVN versions, return None
             pass
@@ -703,7 +707,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                       port['id'])
             return False
 
-        if not self._sb_ovn.chassis_exists(host):
+        if not self.sb_ovn.chassis_exists(host):
             LOG.debug('No provisioning block for port %(port_id)s since no '
                       'OVN chassis for host: %(host)s',
                       {'port_id': port['id'], 'host': host})
@@ -920,7 +924,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         chassis_physnets = []
         try:
             datapath_type, iface_types, chassis_physnets = (
-                self._sb_ovn.get_chassis_data_for_ml2_bind_port(context.host))
+                self.sb_ovn.get_chassis_data_for_ml2_bind_port(context.host))
             iface_types = iface_types.split(',') if iface_types else []
         except RuntimeError:
             LOG.debug('Refusing to bind port %(port_id)s due to '
@@ -993,12 +997,12 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def _update_dnat_entry_if_needed(self, port_id, up=True):
         """Update DNAT entry if using distributed floating ips."""
-        if not self._nb_ovn:
-            self._nb_ovn = self._ovn_client._nb_idl
+        if not self.nb_ovn:
+            self.nb_ovn = self._ovn_client._nb_idl
 
-        nat = self._nb_ovn.db_find('NAT',
-                                   ('logical_port', '=', port_id),
-                                   ('type', '=', 'dnat_and_snat')).execute()
+        nat = self.nb_ovn.db_find('NAT',
+                                  ('logical_port', '=', port_id),
+                                  ('type', '=', 'dnat_and_snat')).execute()
         if not nat:
             return
         # We take first entry as one port can only have one FIP
@@ -1007,23 +1011,23 @@ class OVNMechanismDriver(api.MechanismDriver):
         # TODO(dalvarez): Remove this code in T cycle when we're sure that
         # all DNAT entries have the external_id.
         if not nat['external_ids'].get(ovn_const.OVN_FIP_EXT_MAC_KEY):
-            self._nb_ovn.db_set('NAT', nat['_uuid'],
-                                ('external_ids',
-                                {ovn_const.OVN_FIP_EXT_MAC_KEY:
-                                 nat['external_mac']})).execute()
+            self.nb_ovn.db_set('NAT', nat['_uuid'],
+                               ('external_ids',
+                               {ovn_const.OVN_FIP_EXT_MAC_KEY:
+                                nat['external_mac']})).execute()
 
         if up and ovn_conf.is_ovn_distributed_floating_ip():
             mac = nat['external_ids'][ovn_const.OVN_FIP_EXT_MAC_KEY]
             if nat['external_mac'] != mac:
                 LOG.debug("Setting external_mac of port %s to %s",
                           port_id, mac)
-                self._nb_ovn.db_set(
+                self.nb_ovn.db_set(
                     'NAT', nat['_uuid'], ('external_mac', mac)).execute(
                     check_error=True)
         else:
             if nat['external_mac']:
                 LOG.debug("Clearing up external_mac of port %s", port_id)
-                self._nb_ovn.db_clear(
+                self.nb_ovn.db_clear(
                     'NAT', nat['_uuid'], 'external_mac').execute(
                     check_error=True)
 
@@ -1140,7 +1144,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         if not phynet:
             return
 
-        host_phynets_map = self._sb_ovn.get_chassis_hostname_and_physnets()
+        host_phynets_map = self.sb_ovn.get_chassis_hostname_and_physnets()
         hosts = {host for host, phynets in host_phynets_map.items()
                  if phynet in phynets}
         segment_service_db.map_segment_to_hosts(context, segment.id, hosts)
@@ -1152,11 +1156,11 @@ class OVNMechanismDriver(api.MechanismDriver):
         it resides. If metadata is disabled or DHCP is not enabled for its
         subnets, this function will return right away.
         """
-        if ovn_conf.is_ovn_metadata_enabled() and self._sb_ovn:
+        if ovn_conf.is_ovn_metadata_enabled() and self.sb_ovn:
             # Wait until metadata service has been setup for this port in the
             # chassis it resides.
             result = (
-                self._sb_ovn.get_logical_port_chassis_and_datapath(port_id))
+                self.sb_ovn.get_logical_port_chassis_and_datapath(port_id))
             if not result:
                 LOG.warning("Logical port %s doesn't exist in OVN", port_id)
                 return
@@ -1188,7 +1192,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             try:
                 n_utils.wait_until_true(
                     lambda: datapath in
-                    self._sb_ovn.get_chassis_metadata_networks(chassis),
+                    self.sb_ovn.get_chassis_metadata_networks(chassis),
                     timeout=METADATA_READY_WAIT_TIMEOUT,
                     exception=MetadataServiceReadyWaitTimeoutException)
             except MetadataServiceReadyWaitTimeoutException:
@@ -1244,7 +1248,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         :returns: (bool) True if nb_cfg was updated. False if it was updated
             recently and this call didn't trigger any update.
         """
-        last_ping = self._nb_ovn.nb_global.external_ids.get(
+        last_ping = self.nb_ovn.nb_global.external_ids.get(
             ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY)
         if last_ping:
             interval = max(cfg.CONF.agent_down_time // 2, 1)
@@ -1253,9 +1257,9 @@ class OVNMechanismDriver(api.MechanismDriver):
             if timeutils.utcnow(with_timezone=True) < next_ping:
                 return False
 
-        with self._nb_ovn.create_transaction(check_error=True,
-                                             bump_nb_cfg=True) as txn:
-            txn.add(self._nb_ovn.check_liveness())
+        with self.nb_ovn.create_transaction(check_error=True,
+                                            bump_nb_cfg=True) as txn:
+            txn.add(self.nb_ovn.check_liveness())
         return True
 
     def list_availability_zones(self, context, filters=None):
@@ -1266,7 +1270,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         # the availability zones from the agents API itself. That would
         # allow us to do things like: Do not schedule router ports on
         # chassis that are offline (via the "alive" attribute for agents).
-        for ch in self._sb_ovn.chassis_list().execute(check_error=True):
+        for ch in self.sb_ovn.chassis_list().execute(check_error=True):
             # Only take in consideration gateway chassis because that's where
             # the router ports are scheduled on
             if not ovn_utils.is_gateway_chassis(ch):
@@ -1309,7 +1313,7 @@ def update_agent(self, context, id, agent, _driver=None):
     if not agent.get('admin_state_up', True):
         pass
     elif 'description' in agent:
-        _driver._sb_ovn.set_chassis_neutron_description(
+        _driver.sb_ovn.set_chassis_neutron_description(
             chassis_name, agent['description'],
             agent_type).execute(check_error=True)
         return agent
@@ -1332,15 +1336,15 @@ def delete_agent(self, context, id, _driver=None):
     # will still show as up. The recreated Chassis will cause all kinds of
     # events to fire. But again, undefined behavior.
     chassis_name = agent['configurations']['chassis_name']
-    _driver._sb_ovn.chassis_del(chassis_name, if_exists=True).execute(
+    _driver.sb_ovn.chassis_del(chassis_name, if_exists=True).execute(
         check_error=True)
     # Send a specific event that all API workers can get to delete the agent
     # from their caches. Ideally we could send a single transaction that both
     # created and deleted the key, but alas python-ovs is too "smart"
-    _driver._sb_ovn.db_set(
+    _driver.sb_ovn.db_set(
         'SB_Global', '.', ('external_ids', {'delete_agent': str(id)})).execute(
             check_error=True)
-    _driver._sb_ovn.db_remove(
+    _driver.sb_ovn.db_remove(
         'SB_Global', '.', 'external_ids', delete_agent=str(id),
         if_exists=True).execute(check_error=True)
 

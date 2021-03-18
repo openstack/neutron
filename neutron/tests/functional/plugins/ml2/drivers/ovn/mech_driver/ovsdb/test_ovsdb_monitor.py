@@ -164,7 +164,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         self.mech_driver.sb_ovn.idl.update_tables(
             ['MAC_Binding'], self.mech_driver.sb_schema_helper.schema_json)
         row_event = WaitForDataPathBindingCreateEvent(net_name)
-        self.mech_driver._sb_ovn.idl.notify_handler.watch_event(row_event)
+        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(row_event)
         self._make_network(self.fmt, net_name, True)
         self.assertTrue(row_event.wait())
         dp = self.sb_api.db_find(
@@ -243,8 +243,8 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         self._test_port_binding_and_status(port['id'], 'unbind', 'DOWN')
 
     def _create_workers(self, row_event, worker_num):
-        self.mech_driver._nb_ovn.idl.notify_handler.watch_event(row_event)
-        worker_list = [self.mech_driver._nb_ovn]
+        self.mech_driver.nb_ovn.idl.notify_handler.watch_event(row_event)
+        worker_list = [self.mech_driver.nb_ovn]
 
         # Create 10 fake workers
         for _ in range(worker_num):

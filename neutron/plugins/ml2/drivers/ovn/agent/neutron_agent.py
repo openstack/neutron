@@ -77,8 +77,8 @@ class NeutronAgent(abc.ABC):
         if self.set_down:
             return False
         # TODO(twilson) Determine if we can go back to just checking:
-        # if self.driver._nb_ovn.nb_global.nb_cfg == self.nb_cfg:
-        if self.driver._nb_ovn.nb_global.nb_cfg - self.nb_cfg <= 1:
+        # if self.driver.nb_ovn.nb_global.nb_cfg == self.nb_cfg:
+        if self.driver.nb_ovn.nb_global.nb_cfg - self.nb_cfg <= 1:
             return True
         now = timeutils.utcnow(with_timezone=True)
         if (now - self.updated_at).total_seconds() < cfg.CONF.agent_down_time:

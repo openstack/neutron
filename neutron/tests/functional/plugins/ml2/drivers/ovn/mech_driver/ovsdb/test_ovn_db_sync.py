@@ -138,10 +138,10 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             'options': {'server_id': '01:02:03:04:05:06'}})
 
         n1_s1_dhcp_options_uuid = (
-            self.mech_driver._nb_ovn.get_subnet_dhcp_options(
+            self.mech_driver.nb_ovn.get_subnet_dhcp_options(
                 n1_s1['subnet']['id'])['subnet']['uuid'])
         n1_s2_dhcpv6_options_uuid = (
-            self.mech_driver._nb_ovn.get_subnet_dhcp_options(
+            self.mech_driver.nb_ovn.get_subnet_dhcp_options(
                 n1_s2['subnet']['id'])['subnet']['uuid'])
         update_port_ids_v4 = []
         update_port_ids_v6 = []
@@ -337,7 +337,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                         'dns_server': '8.8.8.8'}})
         self.missed_dhcp_options.extend([
             opts['uuid']
-            for opts in self.mech_driver._nb_ovn.get_subnets_dhcp_options(
+            for opts in self.mech_driver.nb_ovn.get_subnets_dhcp_options(
                 [n2_s1['subnet']['id'], n2_s2['subnet']['id']])])
 
         for port_id in update_port_ids_v4:
@@ -663,10 +663,10 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         n3_s2 = self.deserialize(self.fmt, res)
         if not restart_ovsdb_processes:
             # Test using original mac when syncing.
-            dhcp_mac_v4 = (self.mech_driver._nb_ovn.get_subnet_dhcp_options(
+            dhcp_mac_v4 = (self.mech_driver.nb_ovn.get_subnet_dhcp_options(
                 n3_s1['subnet']['id'])['subnet'].get('options', {})
                 .get('server_mac'))
-            dhcp_mac_v6 = (self.mech_driver._nb_ovn.get_subnet_dhcp_options(
+            dhcp_mac_v6 = (self.mech_driver.nb_ovn.get_subnet_dhcp_options(
                 n3_s2['subnet']['id'])['subnet'].get('options', {})
                 .get('server_id'))
             self.assertTrue(dhcp_mac_v4 is not None)
@@ -907,7 +907,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                         utils.ovn_provnet_port_name(seg['id']))
 
         # Get the list of lswitch ids stored in the OVN plugin IDL
-        _plugin_nb_ovn = self.mech_driver._nb_ovn
+        _plugin_nb_ovn = self.mech_driver.nb_ovn
         plugin_lswitch_ids = [
             row.name.replace('neutron-', '') for row in (
                 _plugin_nb_ovn._tables['Logical_Switch'].rows.values())]
@@ -967,7 +967,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         db_net_ids = {net['id'] for net in db_networks['networks']}
 
         # Retrieve all localports in OVN
-        _plugin_nb_ovn = self.mech_driver._nb_ovn
+        _plugin_nb_ovn = self.mech_driver.nb_ovn
         plugin_metadata_ports = [row.name for row in (
             _plugin_nb_ovn._tables['Logical_Switch_Port'].rows.values())
             if row.type == 'localport']
@@ -993,7 +993,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             if not utils.is_network_device_port(port) and
             port['id'] not in self.lport_dhcp_ignored)
 
-        _plugin_nb_ovn = self.mech_driver._nb_ovn
+        _plugin_nb_ovn = self.mech_driver.nb_ovn
         plugin_lport_ids = [
             row.name for row in (
                 _plugin_nb_ovn._tables['Logical_Switch_Port'].rows.values())
@@ -1079,7 +1079,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
     def _validate_dhcp_opts(self, should_match=True):
         observed_plugin_dhcp_options_rows = []
-        _plugin_nb_ovn = self.mech_driver._nb_ovn
+        _plugin_nb_ovn = self.mech_driver.nb_ovn
         for row in _plugin_nb_ovn._tables['DHCP_Options'].rows.values():
             opts = dict(row.options)
             ids = dict(row.external_ids)
@@ -1134,7 +1134,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         # Get the neutron DB ACLs.
         db_acls = []
 
-        _plugin_nb_ovn = self.mech_driver._nb_ovn
+        _plugin_nb_ovn = self.mech_driver.nb_ovn
 
         # ACLs due to SGs and default drop port group
         for sg in self._list('security-groups')['security_groups']:
@@ -1226,7 +1226,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                         fip['floating_ip_address'] + fip['fixed_ip_address'] +
                         'dnat_and_snat' + mac_address + fip_port)
 
-        _plugin_nb_ovn = self.mech_driver._nb_ovn
+        _plugin_nb_ovn = self.mech_driver.nb_ovn
         plugin_lrouter_ids = [
             row.name.replace('neutron-', '') for row in (
                 _plugin_nb_ovn._tables['Logical_Router'].rows.values())]
@@ -1277,7 +1277,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
             try:
                 lrouter = idlutils.row_by_value(
-                    self.mech_driver._nb_ovn.idl, 'Logical_Router', 'name',
+                    self.mech_driver.nb_ovn.idl, 'Logical_Router', 'name',
                     'neutron-' + str(router_id), None)
                 lports = getattr(lrouter, 'ports', [])
                 plugin_lrouter_port_ids = [lport.name.replace('lrp-', '')
@@ -1411,7 +1411,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                                      ext_ip, int(ext_port),
                                      int_ip, int(int_port))
 
-        _plugin_nb_ovn = self.mech_driver._nb_ovn
+        _plugin_nb_ovn = self.mech_driver.nb_ovn
         db_pfs = []
         fips = self._list('floatingips')
         for fip in fips['floatingips']:
@@ -1442,7 +1442,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                               nb_pfs, db_pfs)
 
     def _validate_port_groups(self, should_match=True):
-        _plugin_nb_ovn = self.mech_driver._nb_ovn
+        _plugin_nb_ovn = self.mech_driver.nb_ovn
 
         db_pgs = []
         for sg in self._list('security-groups')['security_groups']:
@@ -1485,7 +1485,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 self._delete('ports', port['id'])
                 ports_to_delete -= 1
 
-        _plugin_nb_ovn = self.mech_driver._nb_ovn
+        _plugin_nb_ovn = self.mech_driver.nb_ovn
         plugin_metadata_ports = [row.name for row in (
             _plugin_nb_ovn._tables['Logical_Switch_Port'].rows.values())
             if row.type == 'localport']
@@ -1521,7 +1521,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
     def _sync_resources(self, mode):
         nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver._nb_ovn, self.mech_driver._sb_ovn,
+            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
             mode, self.mech_driver)
         self.addCleanup(nb_synchronizer.stop)
         nb_synchronizer.do_sync()
@@ -1568,7 +1568,7 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
     def setUp(self):
         super(TestOvnSbSync, self).setUp(maintenance_worker=True)
         self.sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
-            self.plugin, self.mech_driver._sb_ovn, self.mech_driver)
+            self.plugin, self.mech_driver.sb_ovn, self.mech_driver)
         self.addCleanup(self.sb_synchronizer.stop)
         self.ctx = context.get_admin_context()
 

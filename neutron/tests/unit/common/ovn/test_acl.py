@@ -28,7 +28,7 @@ class TestACLs(base.BaseTestCase):
     def setUp(self):
         super(TestACLs, self).setUp()
         self.driver = mock.Mock()
-        self.driver._nb_ovn = fakes.FakeOvsdbNbOvnIdl()
+        self.driver.nb_ovn = fakes.FakeOvsdbNbOvnIdl()
         self.plugin = fakes.FakePlugin()
         self.admin_context = mock.Mock()
         self.fake_port = fakes.FakePort.create_one_port({

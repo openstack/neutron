@@ -810,7 +810,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         delete_dhcp_options_list = ['UUID2', 'UUID4', 'UUID5']
 
         ovn_nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver._nb_ovn, self.mech_driver._sb_ovn,
+            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
             'repair', self.mech_driver)
         self._test_ovn_nb_sync_helper(ovn_nb_synchronizer,
                                       self.networks,
@@ -858,7 +858,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         del_port_groups_list = []
 
         ovn_nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver._nb_ovn, self.mech_driver._sb_ovn,
+            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
             'log', self.mech_driver)
         self._test_ovn_nb_sync_helper(ovn_nb_synchronizer,
                                       self.networks,
@@ -889,7 +889,7 @@ class TestOvnSbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
     def test_ovn_sb_sync(self):
         ovn_sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
             self.plugin,
-            self.mech_driver._sb_ovn,
+            self.mech_driver.sb_ovn,
             self.mech_driver)
         ovn_api = ovn_sb_synchronizer.ovn_api
         hostname_with_physnets = {'hostname1': ['physnet1', 'physnet2'],
