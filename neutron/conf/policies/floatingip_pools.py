@@ -32,9 +32,9 @@ rules = [
         scope_types=['admin', 'project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_floatingip_pool',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

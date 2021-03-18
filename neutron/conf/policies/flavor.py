@@ -10,6 +10,7 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
@@ -40,9 +41,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_flavor',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_flavor',
@@ -61,9 +62,9 @@ rules = [
         scope_types=['system', 'project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_flavor',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_flavor',
@@ -78,9 +79,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='update_flavor',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_flavor',
@@ -95,9 +96,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_flavor',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 
     policy.DocumentedRuleDefault(
@@ -113,9 +114,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_service_profile',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_service_profile',
@@ -134,9 +135,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_service_profile',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_service_profile',
@@ -151,9 +152,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='update_service_profile',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_service_profile',
@@ -168,9 +169,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_service_profile',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 
     policy.RuleDefault(
@@ -184,9 +185,9 @@ rules = [
         scope_types=['system', 'project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_flavor_service_profile',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_flavor_service_profile',
@@ -201,9 +202,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_flavor_service_profile',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_flavor_service_profile',
@@ -218,9 +219,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_flavor_service_profile',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

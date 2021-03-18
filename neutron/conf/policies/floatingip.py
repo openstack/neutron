@@ -10,6 +10,7 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
@@ -35,9 +36,9 @@ rules = [
         scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_floatingip',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_floatingip:floating_ip_address',
@@ -52,9 +53,9 @@ rules = [
         scope_types=['system', 'project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_floatingip:floating_ip_address',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_floatingip',
@@ -73,9 +74,9 @@ rules = [
         scope_types=['system', 'project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_floatingip',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_floatingip',
@@ -90,9 +91,9 @@ rules = [
         scope_types=['system', 'project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_floatingip',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_floatingip',
@@ -107,9 +108,9 @@ rules = [
         scope_types=['system', 'project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_floatingip',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

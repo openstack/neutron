@@ -33,9 +33,9 @@ rules = [
         scope_types=['system', 'project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_service_provider',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

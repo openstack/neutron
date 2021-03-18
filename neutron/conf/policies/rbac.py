@@ -45,9 +45,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_rbac_policy',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_rbac_policy:target_tenant',
@@ -64,9 +64,9 @@ rules = [
         scope_types=['system', 'project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_rbac_policy:target_tenant',
-            check_str='rule:restrict_wildcard'),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str='rule:restrict_wildcard',
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_rbac_policy',
@@ -81,9 +81,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_rbac_policy',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_rbac_policy:target_tenant',
@@ -101,10 +101,10 @@ rules = [
             name='update_rbac_policy:target_tenant',
             check_str=base.policy_and(
                 'rule:restrict_wildcard',
-                base.RULE_ADMIN_OR_OWNER)),
+                base.RULE_ADMIN_OR_OWNER),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY),
         scope_types=['system', 'project'],
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
     ),
     policy.DocumentedRuleDefault(
         name='get_rbac_policy',
@@ -123,9 +123,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_rbac_policy',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_rbac_policy',
@@ -140,9 +140,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_rbac_policy',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

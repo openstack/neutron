@@ -57,9 +57,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_port',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_port:device_owner',
@@ -78,9 +78,9 @@ rules = [
             check_str=base.policy_or(
                 'not rule:network_device',
                 base.RULE_ADVSVC,
-                base.RULE_ADMIN_OR_NET_OWNER)),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                base.RULE_ADMIN_OR_NET_OWNER),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_port:mac_address',
@@ -96,9 +96,9 @@ rules = [
             name='create_port:mac_address',
             check_str=base.policy_or(
                 base.RULE_ADVSVC,
-                base.RULE_ADMIN_OR_NET_OWNER)),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                base.RULE_ADMIN_OR_NET_OWNER),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_port:fixed_ips',
@@ -116,9 +116,9 @@ rules = [
             check_str=base.policy_or(
                 base.RULE_ADVSVC,
                 base.RULE_ADMIN_OR_NET_OWNER,
-                'rule:shared')),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                'rule:shared'),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_port:fixed_ips:ip_address',
@@ -134,9 +134,9 @@ rules = [
             name='create_port:fixed_ips:ip_address',
             check_str=base.policy_or(
                 base.RULE_ADVSVC,
-                base.RULE_ADMIN_OR_NET_OWNER)),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                base.RULE_ADMIN_OR_NET_OWNER),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_port:fixed_ips:subnet_id',
@@ -154,9 +154,9 @@ rules = [
             check_str=base.policy_or(
                 base.RULE_ADVSVC,
                 base.RULE_ADMIN_OR_NET_OWNER,
-                'rule:shared')),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                'rule:shared'),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_port:port_security_enabled',
@@ -175,9 +175,9 @@ rules = [
             name='create_port:port_security_enabled',
             check_str=base.policy_or(
                 base.RULE_ADVSVC,
-                base.RULE_ADMIN_OR_NET_OWNER)),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                base.RULE_ADMIN_OR_NET_OWNER),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_port:binding:host_id',
@@ -190,9 +190,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_port:binding:host_id',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_port:binding:profile',
@@ -205,9 +205,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_port:binding:profile',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_port:binding:vnic_type',
@@ -220,9 +220,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_port:binding:vnic_type',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_port:allowed_address_pairs',
@@ -238,9 +238,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_port:allowed_address_pairs',
-            check_str=base.RULE_ADMIN_OR_NET_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_NET_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_port:allowed_address_pairs:mac_address',
@@ -256,9 +256,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_port:allowed_address_pairs:mac_address',
-            check_str=base.RULE_ADMIN_OR_NET_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_NET_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_port:allowed_address_pairs:ip_address',
@@ -274,9 +274,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_port:allowed_address_pairs:ip_address',
-            check_str=base.RULE_ADMIN_OR_NET_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_NET_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 
     policy.DocumentedRuleDefault(
@@ -292,9 +292,9 @@ rules = [
             name='get_port',
             check_str=base.policy_or(
                 base.RULE_ADVSVC,
-                'rule:admin_owner_or_network_owner')),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                'rule:admin_owner_or_network_owner'),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:vif_type',
@@ -304,9 +304,9 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_port:binding:vif_type',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:vif_details',
@@ -316,9 +316,9 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_port:binding:vif_details',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:host_id',
@@ -328,9 +328,9 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_port:binding:host_id',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:profile',
@@ -340,9 +340,9 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_port:binding:profile',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_port:resource_request',
@@ -352,9 +352,9 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_port:resource_request',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     # TODO(amotoki): Add get_port:binding:vnic_type
     # TODO(amotoki): Add get_port:binding:data_plane_status
@@ -372,9 +372,9 @@ rules = [
             name='update_port',
             check_str=base.policy_or(
                 base.RULE_ADMIN_OR_OWNER,
-                base.RULE_ADVSVC)),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                base.RULE_ADVSVC),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_port:device_owner',
@@ -393,9 +393,9 @@ rules = [
             check_str=base.policy_or(
                 'not rule:network_device',
                 base.RULE_ADVSVC,
-                base.RULE_ADMIN_OR_NET_OWNER)),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                base.RULE_ADMIN_OR_NET_OWNER),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_port:mac_address',
@@ -410,9 +410,9 @@ rules = [
             name='update_port:mac_address',
             check_str=base.policy_or(
                 base.RULE_ADMIN_ONLY,
-                base.RULE_ADVSVC)),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                base.RULE_ADVSVC),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_port:fixed_ips',
@@ -429,9 +429,9 @@ rules = [
             name='update_port:fixed_ips',
             check_str=base.policy_or(
                 base.RULE_ADVSVC,
-                base.RULE_ADMIN_OR_NET_OWNER)),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                base.RULE_ADMIN_OR_NET_OWNER),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_port:fixed_ips:ip_address',
@@ -451,9 +451,9 @@ rules = [
             name='update_port:fixed_ips:ip_address',
             check_str=base.policy_or(
                 base.RULE_ADVSVC,
-                base.RULE_ADMIN_OR_NET_OWNER)),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                base.RULE_ADMIN_OR_NET_OWNER),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_port:fixed_ips:subnet_id',
@@ -475,9 +475,9 @@ rules = [
             check_str=base.policy_or(
                 base.RULE_ADVSVC,
                 base.RULE_ADMIN_OR_NET_OWNER,
-                'rule:shared')),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                'rule:shared'),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_port:port_security_enabled',
@@ -494,9 +494,9 @@ rules = [
             name='update_port:port_security_enabled',
             check_str=base.policy_or(
                 base.RULE_ADVSVC,
-                base.RULE_ADMIN_OR_NET_OWNER)),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                base.RULE_ADMIN_OR_NET_OWNER),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_port:binding:host_id',
@@ -506,9 +506,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_port:binding:host_id',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_port:binding:profile',
@@ -518,9 +518,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_port:binding:profile',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_port:binding:vnic_type',
@@ -535,9 +535,9 @@ rules = [
             name='update_port:binding:vnic_type',
             check_str=base.policy_or(
                 base.RULE_ADMIN_OR_OWNER,
-                base.RULE_ADVSVC)),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                base.RULE_ADVSVC),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_port:allowed_address_pairs',
@@ -550,9 +550,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_port:allowed_address_pairs',
-            check_str=base.RULE_ADMIN_OR_NET_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_NET_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_port:allowed_address_pairs:mac_address',
@@ -568,9 +568,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_port:allowed_address_pairs:mac_address',
-            check_str=base.RULE_ADMIN_OR_NET_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_NET_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_port:allowed_address_pairs:ip_address',
@@ -586,9 +586,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_port:allowed_address_pairs:ip_address',
-            check_str=base.RULE_ADMIN_OR_NET_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_NET_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_port:data_plane_status',
@@ -600,9 +600,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_port:data_plane_status',
-            check_str='rule:admin_or_data_plane_int'),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str='rule:admin_or_data_plane_int',
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 
     policy.DocumentedRuleDefault(
@@ -618,9 +618,9 @@ rules = [
             name='delete_port',
             check_str=base.policy_or(
                 base.RULE_ADVSVC,
-                'rule:admin_owner_or_network_owner')),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                'rule:admin_owner_or_network_owner'),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

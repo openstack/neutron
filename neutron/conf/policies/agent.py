@@ -10,6 +10,7 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
@@ -39,9 +40,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_agent',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_agent',
@@ -56,9 +57,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='update_agent',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_agent',
@@ -73,9 +74,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_agent',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_dhcp-network',
@@ -90,9 +91,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_dhcp-network',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_dhcp-networks',
@@ -107,9 +108,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_dhcp-networs',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_dhcp-network',
@@ -124,9 +125,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_dhcp-networ',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_l3-router',
@@ -141,9 +142,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_l3-router',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_l3-routers',
@@ -158,9 +159,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_l3-routers',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_l3-router',
@@ -175,9 +176,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_l3-router',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_dhcp-agents',
@@ -192,9 +193,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_dhcp-agents',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_l3-agents',
@@ -209,9 +210,9 @@ rules = [
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_l3-agents',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATION_REASON,
-        deprecated_since='Wallaby'
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 
