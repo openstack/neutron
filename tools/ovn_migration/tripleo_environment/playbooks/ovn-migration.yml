@@ -33,6 +33,16 @@
   tags:
     - migration
 
+
+# It runs tasks on ovn-dbs nodes
+# 1. Change vxlan network type to Geneve
+- name: Prepare controllers
+  hosts: ovn-dbs
+  roles:
+    - prepare-controllers
+  tags:
+    - migration
+
 #
 # TripleO / Director is executed to deploy ovn using "br-migration" for the
 # dataplane, while br-int is left intact to avoid dataplane disruption.

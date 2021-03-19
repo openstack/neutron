@@ -1,0 +1,2 @@
+---
+neutron_conf_path: /var/lib/config-data/puppet-generated/neutron/etc/neutron/neutron.conf
