@@ -107,6 +107,9 @@ Perform the following steps in the undercloud
      step 1.
      Default: ~/overcloud-deploy-ovn.sh
 
+   * UNDERCLOUD_NODE_USER - user used on the undercloud nodes
+     Default: heat-admin
+
    * STACK_NAME - Name or ID of the heat stack
      Default: 'overcloud'
      If the stack that is migrated differs from the default, please set this
