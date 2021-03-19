@@ -22,7 +22,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='get_availability_zone',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
+        check_str=base.SYSTEM_READER,
         description='List availability zones',
         operations=[
             {
@@ -30,7 +30,7 @@ rules = [
                 'path': '/availability_zones',
             },
         ],
-        scope_types=['system', 'project'],
+        scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_availability_zone',
             check_str=base.RULE_ANY,
