@@ -37,6 +37,7 @@ class PolicyBaseTestCase(tests_base.BaseTestCase):
         self.user_id = uuidutils.generate_uuid()
         self._prepare_system_scope_personas()
         self._prepare_project_scope_personas()
+        self.alt_project_id = uuidutils.generate_uuid()
 
     def _prepare_system_scope_personas(self):
         self.system_admin_ctx = context.Context(
