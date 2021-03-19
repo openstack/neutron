@@ -126,6 +126,8 @@ EOF
 
 # Generate the inventory file for ansible migration playbook.
 generate_ansible_inventory_file() {
+    local dhcp_nodes
+
     echo "Generating the inventory file for ansible-playbook"
     source $STACKRC_FILE
     echo "[ovn-dbs]"  > hosts_for_migration
@@ -153,13 +155,22 @@ generate_ansible_inventory_file() {
         node_ip=$(get_host_ip "$inventory_file" $node_name)
         echo $node_name ansible_host=$node_ip ansible_ssh_user=$UNDERCLOUD_NODE_USER ansible_become=true ovn_controller=true >> hosts_for_migration
     done
+
+    echo "" >> hosts_for_migration
+    echo "[dhcp]" >> hosts_for_migration
+    dhcp_nodes=$(get_group_hosts "$inventory_file" neutron_dhcp)
+    for node_name in $dhcp_nodes; do
+        node_ip=$(get_host_ip "$inventory_file" $node_name)
+        echo $node_name ansible_host=$node_ip ansible_ssh_user=$UNDERCLOUD_NODE_USER ansible_become=true >> hosts_for_migration
+    done
+
     rm -f "$inventory_file"
     echo "" >> hosts_for_migration
 
     cat >> hosts_for_migration << EOF
 
 [overcloud-controllers:children]
-ovn-dbs
+dhcp
 
 [overcloud:children]
 ovn-controllers
