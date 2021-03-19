@@ -20,6 +20,7 @@ from oslo_versionedobjects import fields as obj_fields
 import sqlalchemy as sa
 
 from neutron._i18n import _
+from neutron.common import utils as common_utils
 from neutron.db import models_v2 as models
 from neutron.db import rbac_db_models
 from neutron.extensions import rbac as ext_rbac
@@ -116,7 +117,8 @@ class SubnetPool(rbac_db.NeutronRbacObject):
         policy = payload.request_body
 
         db_obj = obj_db_api.get_object(
-            cls, context.elevated(), id=policy['object_id'])
+            cls, common_utils.get_elevated_context(context),
+            id=policy['object_id'])
 
         if not db_obj["address_scope_id"]:
             # Nothing to validate

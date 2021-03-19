@@ -75,7 +75,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
 
     @classmethod
     def is_shared_with_tenant(cls, context, obj_id, tenant_id):
-        ctx = context.elevated()
+        ctx = utils.get_elevated_context(context)
         with cls.db_context_reader(ctx):
             return cls.get_shared_with_tenant(ctx, cls.rbac_db_cls,
                                               obj_id, tenant_id)
@@ -105,7 +105,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
 
     @classmethod
     def _validate_rbac_policy_delete(cls, context, obj_id, target_tenant):
-        ctx_admin = context.elevated()
+        ctx_admin = utils.get_elevated_context(context)
         rb_model = cls.rbac_db_cls.db_model
         bound_tenant_ids = cls.get_bound_tenant_ids(ctx_admin, obj_id)
         db_obj_sharing_entries = cls._get_db_obj_rbac_entries(
@@ -148,7 +148,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
             return
         target_tenant = policy['target_tenant']
         db_obj = obj_db_api.get_object(
-            cls, context.elevated(), id=policy['object_id'])
+            cls, utils.get_elevated_context(context), id=policy['object_id'])
         if db_obj.tenant_id == target_tenant:
             return
         cls._validate_rbac_policy_delete(context=context,
@@ -200,7 +200,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         if object_type != cls.rbac_db_cls.db_model.object_type:
             return
         db_obj = obj_db_api.get_object(
-            cls, context.elevated(), id=policy['object_id'])
+            cls, utils.get_elevated_context(context), id=policy['object_id'])
         if event in (events.BEFORE_CREATE, events.BEFORE_UPDATE):
             if (not context.is_admin and
                     db_obj['tenant_id'] != context.tenant_id):
@@ -224,7 +224,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         return self.create_rbac_policy(self.obj_context, rbac_policy)
 
     def update_shared(self, is_shared_new, obj_id):
-        admin_context = self.obj_context.elevated()
+        admin_context = utils.get_elevated_context(self.obj_context)
         shared_prev = obj_db_api.get_object(self.rbac_db_cls, admin_context,
                                             object_id=obj_id,
                                             target_tenant='*',
@@ -266,7 +266,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
             # instantiated and without DB interaction (get_object(s), update,
             # create), it should be rare case to load 'shared' by that method
             shared = self.get_shared_with_tenant(
-                self.obj_context.elevated(),
+                utils.get_elevated_context(self.obj_context),
                 self.rbac_db_cls,
                 self.id,
                 self.project_id

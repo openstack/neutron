@@ -28,6 +28,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _
+from neutron.common import utils as common_utils
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.objects import base as objects_base
@@ -339,7 +340,8 @@ def _prevent_segment_delete_with_port_bound(resource, event, trigger,
         plugin = directory.get_plugin()
     for port_id in auto_delete_port_ids:
         try:
-            plugin.delete_port(payload.context.elevated(), port_id)
+            plugin.delete_port(
+                common_utils.get_elevated_context(payload.context), port_id)
         except nlib_exc.PortNotFound:
             # Don't raise if something else concurrently deleted the port
             LOG.debug("Ignoring PortNotFound when deleting port '%s'. "

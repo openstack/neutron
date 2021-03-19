@@ -19,6 +19,7 @@ from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.services.qos import constants as qos_consts
 
+from neutron.common import utils as common_utils
 from neutron.core_extensions import base
 from neutron.objects.qos import policy as policy_object
 
@@ -47,7 +48,7 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
 
     def _update_port_policy(self, context, port, port_changes):
         old_policy = policy_object.QosPolicy.get_port_policy(
-            context.elevated(), port['id'])
+            common_utils.get_elevated_context(context), port['id'])
         if old_policy:
             self._check_policy_change_permission(context, old_policy)
             old_policy.detach_port(port['id'])
@@ -75,7 +76,7 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
 
     def _update_network_policy(self, context, network, network_changes):
         old_policy = policy_object.QosPolicy.get_network_policy(
-            context.elevated(), network['id'])
+            common_utils.get_elevated_context(context), network['id'])
         if old_policy:
             self._check_policy_change_permission(context, old_policy)
             old_policy.detach_network(network['id'])

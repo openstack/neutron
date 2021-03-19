@@ -18,6 +18,7 @@ from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 from oslo_versionedobjects import exception
 
+from neutron.common import utils as common_utils
 from neutron.objects.db import api as db_api
 from neutron.objects import network as net_obj
 from neutron.objects import ports as port_obj
@@ -145,7 +146,7 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
              test_to_dict_makes_primitive_field_value())
 
     def test_get_policy_obj_not_found(self):
-        context = self.context.elevated()
+        context = common_utils.get_elevated_context(self.context)
         self.assertRaises(qos_exc.QosPolicyNotFound,
                           policy.QosPolicy.get_policy_obj,
                           context, "fake_id")

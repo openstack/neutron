@@ -25,6 +25,7 @@ from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
+from neutron.common import utils as common_utils
 from neutron.db import l3_fip_pools_db
 from neutron.extensions import l3
 from neutron.objects import network as net_obj
@@ -128,7 +129,7 @@ class FloatingIPPoolsDBIntTestCase(test_l3.L3BaseForIntTests,
 
         self.setup_notification_driver()
         self.ctxt = context.Context('fake_user', 'fake_tenant')
-        self.admin_ctxt = self.ctxt.elevated()
+        self.admin_ctxt = common_utils.get_elevated_context(self.ctxt)
 
 
 class FloatingIPPoolsDBSepTestCase(test_l3.L3BaseForSepTests,
@@ -154,4 +155,4 @@ class FloatingIPPoolsDBSepTestCase(test_l3.L3BaseForSepTests,
         self.setup_notification_driver()
         self.plugin = directory.get_plugin(plugin_constants.L3)
         self.ctxt = context.Context('fake_user', 'fake_tenant')
-        self.admin_ctxt = self.ctxt.elevated()
+        self.admin_ctxt = common_utils.get_elevated_context(self.ctxt)

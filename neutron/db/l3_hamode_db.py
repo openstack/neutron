@@ -214,7 +214,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 cfg.CONF.l3_ha_network_physical_name)
 
     def _create_ha_network(self, context, tenant_id):
-        admin_ctx = context.elevated()
+        admin_ctx = n_utils.get_elevated_context(context)
 
         args = {'network':
                 {'name': constants.HA_NETWORK_NAME % tenant_id,
@@ -311,7 +311,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         return binding.db_obj
 
     def _delete_ha_interfaces(self, context, router_id):
-        admin_ctx = context.elevated()
+        admin_ctx = n_utils.get_elevated_context(context)
         device_filter = {'device_id': [router_id],
                          'device_owner':
                          [constants.DEVICE_OWNER_ROUTER_HA_INTF]}
@@ -322,7 +322,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                                           l3_port_check=False)
 
     def delete_ha_interfaces_on_host(self, context, router_id, host):
-        admin_ctx = context.elevated()
+        admin_ctx = n_utils.get_elevated_context(context)
         port_ids = (binding.port_id for binding
                     in self.get_ha_router_port_bindings(admin_ctx,
                                                         [router_id], host))
@@ -497,7 +497,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         self._notify_router_updated(context, router_db.id)
 
     def _delete_ha_network(self, context, net):
-        admin_ctx = context.elevated()
+        admin_ctx = n_utils.get_elevated_context(context)
         self._core_plugin.delete_network(admin_ctx, net.network_id)
 
     def safe_delete_ha_network(self, context, ha_network, tenant_id):
@@ -707,7 +707,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         self._update_router_port_bindings(context, states, host)
 
     def _update_router_port_bindings(self, context, states, host):
-        admin_ctx = context.elevated()
+        admin_ctx = n_utils.get_elevated_context(context)
         device_filter = {'device_id': list(states.keys()),
                          'device_owner':
                          [constants.DEVICE_OWNER_HA_REPLICATED_INT,
@@ -740,7 +740,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         gateway_port_status = gateway_port['status']
         gateway_port_binding_host = gateway_port[portbindings.HOST_ID]
 
-        admin_ctx = context.elevated()
+        admin_ctx = n_utils.get_elevated_context(context)
         router_id = router['id']
         ha_bindings = self.get_l3_bindings_hosting_router_with_ha_states(
             admin_ctx, router_id)
