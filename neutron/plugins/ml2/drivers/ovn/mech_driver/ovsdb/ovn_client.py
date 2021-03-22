@@ -1357,7 +1357,8 @@ class OVNClient(object):
         # logical router port is centralized in the chassis hosting the
         # distributed gateway port.
         # https://github.com/openvswitch/ovs/commit/85706c34d53d4810f54bec1de662392a3c06a996
-        if network.get(pnet.NETWORK_TYPE) == const.TYPE_VLAN:
+        if (network.get(pnet.NETWORK_TYPE) == const.TYPE_VLAN and
+           not ovn_conf.is_ovn_distributed_floating_ip()):
             options['reside-on-redirect-chassis'] = 'true'
 
         is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
