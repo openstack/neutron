@@ -12,18 +12,14 @@
 #    under the License.
 #
 
-import netaddr
 from neutron_lib import constants as const
 from neutron_lib import exceptions as n_exceptions
 from oslo_config import cfg
-from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 
-
-LOG = logging.getLogger(__name__)
 
 # Convert the protocol number from integer to strings because that's
 # how Neutron will pass it to us
@@ -87,19 +83,11 @@ def acl_ethertype(r):
 
 
 def acl_remote_ip_prefix(r, ip_version):
-    if not r['remote_ip_prefix']:
+    if not r['normalized_cidr']:
         return ''
-    cidr = netaddr.IPNetwork(r['remote_ip_prefix'])
-    normalized_ip_prefix = "%s/%s" % (cidr.network, cidr.prefixlen)
-    if r['remote_ip_prefix'] != normalized_ip_prefix:
-        LOG.info("remote_ip_prefix %(remote_ip_prefix)s configured in "
-                 "rule %(rule_id)s is not normalized. Normalized CIDR "
-                 "%(normalized_ip_prefix)s will be used instead.",
-                 {'remote_ip_prefix': r['remote_ip_prefix'],
-                  'rule_id': r['id'],
-                  'normalized_ip_prefix': normalized_ip_prefix})
     src_or_dst = 'src' if r['direction'] == const.INGRESS_DIRECTION else 'dst'
-    return ' && %s.%s == %s' % (ip_version, src_or_dst, normalized_ip_prefix)
+    return ' && %s.%s == %s' % (
+        ip_version, src_or_dst, r['normalized_cidr'])
 
 
 def _get_protocol_number(protocol):

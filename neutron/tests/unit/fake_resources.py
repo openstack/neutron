@@ -17,6 +17,7 @@ import copy
 from unittest import mock
 
 from neutron_lib.api.definitions import l3
+from neutron_lib.utils import net
 from oslo_utils import uuidutils
 
 from neutron.common.ovn import constants as ovn_const
@@ -561,12 +562,20 @@ class FakeSecurityGroupRule(object):
             'protocol': 'tcp',
             'remote_group_id': None,
             'remote_ip_prefix': '0.0.0.0/0',
+            'normalized_cidr': '0.0.0.0/0',
             'security_group_id': 'security-group-id-' + fake_uuid,
             'tenant_id': 'project-id-' + fake_uuid,
         }
 
         # Overwrite default attributes.
         security_group_rule_attrs.update(attrs)
+
+        if ('remote_ip_prefix' in attrs and 'normalized_cidr' not in attrs):
+            if attrs['remote_ip_prefix'] is None:
+                security_group_rule_attrs['normalized_cidr'] = None
+            else:
+                security_group_rule_attrs['normalized_cidr'] = (
+                        net.AuthenticIPNetwork(attrs['remote_ip_prefix']))
 
         return FakeResource(info=copy.deepcopy(security_group_rule_attrs),
                             loaded=True)
