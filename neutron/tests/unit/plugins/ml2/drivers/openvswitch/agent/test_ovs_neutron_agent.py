@@ -2208,6 +2208,23 @@ class TestOvsNeutronAgent(object):
         self._test_ovs_status(constants.OVS_NORMAL,
                               constants.OVS_RESTARTED)
 
+    def test_ovs_restart_for_ingress_direct_goto_flows(self):
+        with mock.patch.object(self.agent,
+                               'check_ovs_status',
+                               return_value=constants.OVS_RESTARTED), \
+             mock.patch.object(self.agent,
+                               '_agent_has_updates',
+                               side_effect=TypeError('loop exit')), \
+             mock.patch.object(self.agent, 'setup_integration_br'), \
+             mock.patch.object(self.agent,
+                               'install_ingress_direct_goto_flows') as \
+                install_ingress_direct_goto_flows:
+            try:
+                self.agent.rpc_loop(polling_manager=mock.Mock())
+            except TypeError:
+                pass
+        install_ingress_direct_goto_flows.assert_called_once_with()
+
     def test_rpc_loop_fail_to_process_network_ports_keep_flows(self):
         with mock.patch.object(async_process.AsyncProcess, "_spawn"),\
                 mock.patch.object(async_process.AsyncProcess, "start"),\
