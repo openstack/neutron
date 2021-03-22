@@ -40,9 +40,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_metering_label',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_metering_label',
@@ -61,9 +61,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_metering_label',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_metering_label',
@@ -78,9 +78,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_metering_label',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_metering_label_rule',
@@ -95,9 +95,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_metering_label_rule',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_metering_label_rule',
@@ -116,9 +116,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_metering_label_rule',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_metering_label_rule',
@@ -133,9 +133,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_metering_label_rule',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     )
 ]
 

@@ -57,9 +57,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_security_group',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_security_group',
@@ -78,9 +78,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_security_group',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_security_group',
@@ -95,9 +95,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_security_group',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_security_group',
@@ -112,9 +112,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_security_group',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 
     # TODO(amotoki): admin_or_owner is the right rule?
@@ -132,9 +132,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_security_group_rule',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_security_group_rule',
@@ -155,9 +155,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_security_group_rule',
-            check_str=RULE_ADMIN_OWNER_OR_SG_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=RULE_ADMIN_OWNER_OR_SG_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_security_group_rule',
@@ -172,9 +172,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_security_group_rule',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

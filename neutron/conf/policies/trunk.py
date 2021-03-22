@@ -37,9 +37,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_trunk',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_trunk',
@@ -58,9 +58,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_trunk',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_trunk',
@@ -75,9 +75,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_trunk',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_trunk',
@@ -92,9 +92,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_trunk',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_subports',
@@ -109,9 +109,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_subports',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='add_subports',
@@ -126,9 +126,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='add_subports',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='remove_subports',
@@ -143,9 +143,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='remove_subports',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

@@ -44,9 +44,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_subnetpool',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_subnetpool:shared',
@@ -61,9 +61,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_subnetpool:shared',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_subnetpool:is_default',
@@ -80,9 +80,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_subnetpool:is_default',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_subnetpool',
@@ -106,9 +106,9 @@ rules = [
             name='get_subnetpool',
             check_str=base.policy_or(
                 base.RULE_ADMIN_OR_OWNER,
-                'rule:shared_subnetpools')),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                'rule:shared_subnetpools'),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_subnetpool',
@@ -123,9 +123,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_subnetpool',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_subnetpool:is_default',
@@ -140,9 +140,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_subnetpool:is_default',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_subnetpool',
@@ -157,9 +157,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_subnetpool',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='onboard_network_subnets',
@@ -174,9 +174,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='onboard_network_subnets',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='add_prefixes',
@@ -191,9 +191,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='add_prefixes',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='remove_prefixes',
@@ -208,9 +208,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='remove_prefixes',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

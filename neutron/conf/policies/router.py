@@ -45,9 +45,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_router',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_router:distributed',
@@ -57,9 +57,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_router:distributed',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_router:ha',
@@ -69,9 +69,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_router:ha',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_router:external_gateway_info',
@@ -82,9 +82,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_router:external_gateway_info',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_router:external_gateway_info:network_id',
@@ -95,9 +95,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_router:external_gateway_info:network_id',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_router:external_gateway_info:enable_snat',
@@ -108,9 +108,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_router:external_gateway_info:enable_snat',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_router:external_gateway_info:external_fixed_ips',
@@ -122,9 +122,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_router:external_gateway_info:external_fixed_ips',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 
     policy.DocumentedRuleDefault(
@@ -135,9 +135,9 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_router',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_router:distributed',
@@ -147,9 +147,9 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_router:distributed',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_router:ha',
@@ -159,9 +159,9 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_router:ha',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 
     policy.DocumentedRuleDefault(
@@ -172,9 +172,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_router',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_router:distributed',
@@ -184,9 +184,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_router:distributed',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_router:ha',
@@ -196,9 +196,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_router:ha',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_router:external_gateway_info',
@@ -208,9 +208,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_router:external_gateway_info',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_router:external_gateway_info:network_id',
@@ -221,9 +221,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_router:external_gateway_info:network_id',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_router:external_gateway_info:enable_snat',
@@ -234,9 +234,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_router:external_gateway_info:enable_snat',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_router:external_gateway_info:external_fixed_ips',
@@ -247,9 +247,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_router:external_gateway_info:external_fixed_ips',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 
     policy.DocumentedRuleDefault(
@@ -260,9 +260,9 @@ rules = [
         operations=ACTION_DELETE,
         deprecated_rule=policy.DeprecatedRule(
             name='delete_router',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 
     policy.DocumentedRuleDefault(
@@ -278,9 +278,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='add_router_interface',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='remove_router_interface',
@@ -295,9 +295,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='remove_router_interface',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

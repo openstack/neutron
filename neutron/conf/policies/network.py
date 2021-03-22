@@ -51,9 +51,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_network',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_network:shared',
@@ -63,9 +63,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_network:shared',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_network:router:external',
@@ -75,9 +75,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_network:router:external',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_network:is_default',
@@ -87,9 +87,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_network:is_default',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_network:port_security_enabled',
@@ -102,9 +102,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_network:port_security_enabled',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_network:segments',
@@ -114,9 +114,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_network:segments',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_network:provider:network_type',
@@ -129,9 +129,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_network:provider:network_type',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_network:provider:physical_network',
@@ -144,9 +144,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_network:provider:physical_network',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_network:provider:segmentation_id',
@@ -158,9 +158,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_network:provider:segmentation_id',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 
     policy.DocumentedRuleDefault(
@@ -180,9 +180,9 @@ rules = [
                 base.RULE_ADMIN_OR_OWNER,
                 'rule:shared',
                 'rule:external',
-                base.RULE_ADVSVC)),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                base.RULE_ADVSVC),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_network:router:external',
@@ -192,9 +192,9 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_network:router:external',
-            check_str=base.RULE_ANY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_network:segments',
@@ -204,9 +204,9 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_network:segments',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_network:provider:network_type',
@@ -216,9 +216,9 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_network:provider:network_type',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_network:provider:physical_network',
@@ -228,9 +228,9 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_network:provider:physical_network',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_network:provider:segmentation_id',
@@ -240,9 +240,9 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_network:provider:segmentation_id',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 
     policy.DocumentedRuleDefault(
@@ -253,9 +253,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_network',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_network:segments',
@@ -265,9 +265,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_network:segments',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_network:shared',
@@ -277,9 +277,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_network:shared',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_network:provider:network_type',
@@ -289,9 +289,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_network:provider:network_type',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_network:provider:physical_network',
@@ -304,9 +304,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_network:provider:physical_network',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_network:provider:segmentation_id',
@@ -319,9 +319,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_network:provider:segmentation_id',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_network:router:external',
@@ -331,9 +331,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_network:router:external',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_network:is_default',
@@ -343,9 +343,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_network:is_default',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_network:port_security_enabled',
@@ -355,9 +355,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_network:port_security_enabled',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 
     policy.DocumentedRuleDefault(
@@ -368,9 +368,9 @@ rules = [
         operations=ACTION_DELETE,
         deprecated_rule=policy.DeprecatedRule(
             name='delete_network',
-            check_str=base.RULE_ADMIN_OR_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

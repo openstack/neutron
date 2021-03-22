@@ -42,9 +42,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_floatingip_port_forwarding',
-            check_str=base.RULE_ADMIN_OR_PARENT_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_PARENT_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_floatingip_port_forwarding',
@@ -65,9 +65,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_floatingip_port_forwarding',
-            check_str=base.RULE_ADMIN_OR_PARENT_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_PARENT_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_floatingip_port_forwarding',
@@ -84,9 +84,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_floatingip_port_forwarding',
-            check_str=base.RULE_ADMIN_OR_PARENT_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_PARENT_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_floatingip_port_forwarding',
@@ -103,9 +103,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_floatingip_port_forwarding',
-            check_str=base.RULE_ADMIN_OR_PARENT_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_PARENT_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

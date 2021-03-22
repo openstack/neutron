@@ -38,9 +38,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_network_ip_availability',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

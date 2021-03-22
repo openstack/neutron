@@ -42,9 +42,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_router_conntrack_helper',
-            check_str=base.RULE_ADMIN_OR_PARENT_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_PARENT_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_router_conntrack_helper',
@@ -65,9 +65,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_router_conntrack_helper',
-            check_str=base.RULE_ADMIN_OR_PARENT_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_PARENT_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_router_conntrack_helper',
@@ -84,9 +84,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_router_conntrack_helper',
-            check_str=base.RULE_ADMIN_OR_PARENT_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_PARENT_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_router_conntrack_helper',
@@ -103,9 +103,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_router_conntrack_helper',
-            check_str=base.RULE_ADMIN_OR_PARENT_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_PARENT_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

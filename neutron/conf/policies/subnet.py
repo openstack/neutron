@@ -47,9 +47,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_subnet',
-            check_str=base.RULE_ADMIN_OR_NET_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_NET_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_subnet:segment_id',
@@ -61,9 +61,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_subnet:segment_id',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='create_subnet:service_types',
@@ -75,9 +75,9 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_subnet:service_types',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_subnet',
@@ -91,9 +91,9 @@ rules = [
             name='get_subnet',
             check_str=base.policy_or(
                 base.RULE_ADMIN_OR_OWNER,
-                'rule:shared')),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+                'rule:shared'),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_subnet:segment_id',
@@ -103,9 +103,9 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_subnet:segment_id',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_subnet',
@@ -117,9 +117,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_subnet',
-            check_str=base.RULE_ADMIN_OR_NET_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_NET_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_subnet:segment_id',
@@ -129,9 +129,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_subnet:segment_id',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_subnet:service_types',
@@ -141,9 +141,9 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_subnet:service_types',
-            check_str=base.RULE_ADMIN_ONLY),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_subnet',
@@ -155,9 +155,9 @@ rules = [
         operations=ACTION_DELETE,
         deprecated_rule=policy.DeprecatedRule(
             name='delete_subnet',
-            check_str=base.RULE_ADMIN_OR_NET_OWNER),
-        deprecated_reason=DEPRECATED_REASON,
-        deprecated_since=versionutils.deprecated.WALLABY
+            check_str=base.RULE_ADMIN_OR_NET_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 
