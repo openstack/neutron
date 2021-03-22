@@ -19,7 +19,11 @@
         - neutron-fullstack-with-uwsgi
         - neutron-rally-task
         - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
+        - neutron-grenade-dvr-multinode:
+            # TODO(slaweq): make that job voting when bug
+            # https://bugs.launchpad.net/neutron/+bug/1920778
+            # will be fixed
+            voting: false
         - neutron-tempest-multinode-full-py3
         - neutron-tempest-dvr-ha-multinode-full
         - neutron-tempest-slow-py3
@@ -54,7 +58,10 @@
         - neutron-fullstack-with-uwsgi
         - neutron-tempest-multinode-full-py3
         - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
+        # TODO(slaweq): make that job gating when bug
+        # https://bugs.launchpad.net/neutron/+bug/1920778
+        # will be fixed
+        # - neutron-grenade-dvr-multinode
         - neutron-tempest-slow-py3
         - neutron-tempest-ipv6-only
         - neutron-ovn-tempest-ovs-release
