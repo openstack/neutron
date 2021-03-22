@@ -325,6 +325,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self.sb_api = self.mech_driver._sb_ovn
 
     def _collect_processes_logs(self):
+        timestamp = datetime.now().strftime('%y-%m-%d_%H-%M-%S')
         for database in ("nb", "sb"):
             for file_suffix in ("log", "db"):
                 src_filename = "ovn_%(db)s.%(suffix)s" % {
@@ -334,12 +335,23 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
                 dst_filename = "ovn_%(db)s-%(timestamp)s.%(suffix)s" % {
                     'db': database,
                     'suffix': file_suffix,
-                    'timestamp': datetime.now().strftime('%y-%m-%d_%H-%M-%S'),
+                    'timestamp': timestamp,
                 }
+                self._copy_log_file(src_filename, dst_filename)
 
-                filepath = os.path.join(self.temp_dir, src_filename)
-                shutil.copyfile(
-                    filepath, os.path.join(self.test_log_dir, dst_filename))
+        # Copy northd logs
+        northd_log = "ovn_northd"
+        dst_northd = "%(northd)s-%(timestamp)s.log" % {
+            "northd": northd_log,
+            "timestamp": timestamp,
+        }
+        self._copy_log_file("%s.log" % northd_log, dst_northd)
+
+    def _copy_log_file(self, src_filename, dst_filename):
+        """Copy log file from temporary dict to the test directory."""
+        filepath = os.path.join(self.temp_dir, src_filename)
+        shutil.copyfile(
+            filepath, os.path.join(self.test_log_dir, dst_filename))
 
     def stop(self):
         if self.maintenance_worker:
