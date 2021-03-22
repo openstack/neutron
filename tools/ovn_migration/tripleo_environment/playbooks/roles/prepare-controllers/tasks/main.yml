@@ -1,0 +1,9 @@
+---
+- name: Get DB connection string
+  command: crudini --get {{ neutron_conf_path }} database connection
+  when: ovn_central is defined
+  register: mysql_url
+
+- name: Change vxlan networks to Geneve
+  shell: podman exec -it neutron_api python3 -c $'from sqlalchemy import create_engine\nengine = create_engine("{{ mysql_url.stdout }}")\nwith engine.connect() as conn:\n\tconn.execute("update networksegments set networksegments.network_type=\'geneve\' where networksegments.network_type=\'vxlan\';")'
+  when: ovn_central is defined
