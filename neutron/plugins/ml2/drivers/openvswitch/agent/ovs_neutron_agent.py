@@ -2552,6 +2552,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     def _handle_ovs_restart(self, polling_manager):
         self.setup_integration_br()
+        self.install_ingress_direct_goto_flows()
         self.setup_physical_bridges(self.bridge_mappings)
         if self.enable_tunneling:
             self._reset_tunnel_ofports()
