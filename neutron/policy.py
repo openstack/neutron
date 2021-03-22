@@ -468,7 +468,10 @@ def check(context, action, target, plugin=None, might_not_exist=False,
     """
     # If we already know the context has admin rights do not perform an
     # additional check and authorize the operation
-    if context.is_admin:
+    # TODO(slaweq): Remove that is_admin check and always perform rules checks
+    # when old, deprecated rules will be removed and only rules with new
+    # personas will be supported
+    if not cfg.CONF.oslo_policy.enforce_new_defaults and context.is_admin:
         return True
     if might_not_exist and not (_ENFORCER.rules and action in _ENFORCER.rules):
         return True
@@ -502,7 +505,10 @@ def enforce(context, action, target, plugin=None, pluralized=None):
     """
     # If we already know the context has admin rights do not perform an
     # additional check and authorize the operation
-    if context.is_admin:
+    # TODO(slaweq): Remove that is_admin check and always perform rules checks
+    # when old, deprecated rules will be removed and only rules with new
+    # personas will be supported
+    if not cfg.CONF.oslo_policy.enforce_new_defaults and context.is_admin:
         return True
     rule, target, context = _prepare_check(context, action, target, pluralized)
     try:

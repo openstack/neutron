@@ -78,12 +78,68 @@ class PolicyTestCase(base.BaseTestCase):
             "example:early_or_success": "@ or !",
             "example:lowercase_admin": "role:admin or role:sysadmin",
             "example:uppercase_admin": "role:ADMIN or role:sysadmin",
+            "example:only_system_admin_allowed": (
+                "role:admin and system_scope:all"),
         }
         policy.refresh()
         # NOTE(vish): then overload underlying rules
         policy.set_rules(oslo_policy.Rules.from_dict(rules))
         self.context = context.Context('fake', 'fake', roles=['member'])
         self.target = {}
+
+    def _test_check_system_admin_allowed_action(self, enforce_new_defaults):
+        action = "example:only_system_admin_allowed"
+        cfg.CONF.set_override(
+            'enforce_new_defaults', enforce_new_defaults, group='oslo_policy')
+        project_admin_ctx = context.Context(
+            user="fake", project_id="fake",
+            roles=['admin', 'member', 'reader'])
+        system_admin_ctx = context.Context(
+            user="fake", project_id="fake",
+            roles=['admin', 'member', 'reader'],
+            system_scope='all')
+        self.assertTrue(policy.check(system_admin_ctx, action, self.target))
+        if enforce_new_defaults:
+            self.assertFalse(
+                policy.check(project_admin_ctx, action, self.target))
+        else:
+            self.assertTrue(
+                policy.check(project_admin_ctx, action, self.target))
+
+    def test_check_only_system_admin_new_defaults(self):
+        self._test_check_system_admin_allowed_action(enforce_new_defaults=True)
+
+    def test_check_only_system_admin_old_defaults(self):
+        self._test_check_system_admin_allowed_action(
+            enforce_new_defaults=False)
+
+    def _test_enforce_system_admin_allowed_action(self, enforce_new_defaults):
+        action = "example:only_system_admin_allowed"
+        cfg.CONF.set_override(
+            'enforce_new_defaults', enforce_new_defaults, group='oslo_policy')
+        project_admin_ctx = context.Context(
+            user="fake", project_id="fake",
+            roles=['admin', 'member', 'reader'])
+        system_admin_ctx = context.Context(
+            user="fake", project_id="fake",
+            roles=['admin', 'member', 'reader'],
+            system_scope='all')
+        self.assertTrue(policy.enforce(system_admin_ctx, action, self.target))
+        if enforce_new_defaults:
+            self.assertRaises(
+                oslo_policy.PolicyNotAuthorized,
+                policy.enforce, project_admin_ctx, action, self.target)
+        else:
+            self.assertTrue(
+                policy.enforce(project_admin_ctx, action, self.target))
+
+    def test_enforce_only_system_admin_new_defaults(self):
+        self._test_enforce_system_admin_allowed_action(
+            enforce_new_defaults=True)
+
+    def test_enforce_only_system_admin_old_defaults(self):
+        self._test_enforce_system_admin_allowed_action(
+            enforce_new_defaults=False)
 
     def test_enforce_nonexistent_action_throws(self):
         action = "example:noexist"
