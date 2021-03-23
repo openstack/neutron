@@ -138,20 +138,26 @@ class SegmentTypeDriver(BaseTypeDriver):
                     self.model_segmentation_id, **filters)]
         else:
             calls = [functools.partial(
-                self.segmentation_obj.get_unallocated_segments,
+                self.segmentation_obj.get_random_unallocated_segment,
                 context, **filters)]
 
+        try_to_allocate = False
         for call in calls:
             allocations = call()
+            if not isinstance(allocations, list):
+                allocations = [allocations] if allocations else []
             for alloc in allocations:
                 segment = dict((k, alloc[k]) for k in self.primary_keys)
+                try_to_allocate = True
                 if self.segmentation_obj.allocate(context, **segment):
                     LOG.debug('%(type)s segment allocate from pool success '
                               'with %(segment)s ', {'type': network_type,
                                                     'segment': segment})
                     return alloc
-                raise db_exc.RetryRequest(
-                    exceptions.NoNetworkFoundInMaximumAllowedAttempts())
+
+        if try_to_allocate:
+            raise db_exc.RetryRequest(
+                exceptions.NoNetworkFoundInMaximumAllowedAttempts())
 
     @db_api.retry_db_errors
     def _delete_expired_default_network_segment_ranges(self):
