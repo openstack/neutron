@@ -479,7 +479,7 @@ class KeepalivedManager(object):
                                         service_name=KEEPALIVED_SERVICE_NAME)
 
         pm = self.get_process()
-        pm.disable(sig=str(int(signal.SIGTERM)))
+        pm.disable(sig=signal.SIGTERM)
         try:
             utils.wait_until_true(lambda: not pm.active,
                                   timeout=SIGTERM_TIMEOUT)
@@ -487,7 +487,7 @@ class KeepalivedManager(object):
             LOG.warning('Keepalived process %s did not finish after SIGTERM '
                         'signal in %s seconds, sending SIGKILL signal',
                         pm.pid, SIGTERM_TIMEOUT)
-            pm.disable(sig=str(int(signal.SIGKILL)))
+            pm.disable(sig=signal.SIGKILL)
 
     def check_processes(self):
         keepalived_pm = self.get_process()

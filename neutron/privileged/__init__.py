@@ -26,7 +26,8 @@ default = priv_context.PrivContext(
                   caps.CAP_NET_ADMIN,
                   caps.CAP_DAC_OVERRIDE,
                   caps.CAP_DAC_READ_SEARCH,
-                  caps.CAP_SYS_PTRACE],
+                  caps.CAP_SYS_PTRACE,
+                  caps.CAP_KILL],
 )
 
 

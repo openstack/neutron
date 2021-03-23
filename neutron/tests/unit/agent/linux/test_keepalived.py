@@ -634,8 +634,7 @@ class KeepalivedManagerTestCase(base.BaseTestCase):
         mock_get_process.return_value = process
         process.active = False
         self.keepalived_manager.disable()
-        process.disable.assert_called_once_with(
-            sig=str(int(signal.SIGTERM)))
+        process.disable.assert_called_once_with(sig=int(signal.SIGTERM))
 
     def test_destroy_force(self):
         mock_get_process = self.mock_get_process.start()
@@ -645,5 +644,5 @@ class KeepalivedManagerTestCase(base.BaseTestCase):
             process.active = True
             self.keepalived_manager.disable()
             process.disable.assert_has_calls([
-                mock.call(sig=str(int(signal.SIGTERM))),
-                mock.call(sig=str(int(signal.SIGKILL)))])
+                mock.call(sig=signal.SIGTERM),
+                mock.call(sig=signal.SIGKILL)])
