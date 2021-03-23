@@ -11,4 +11,5 @@ OVN Driver
    migration.rst
    gaps.rst
    dhcp_opts.rst
+   ml2ovn_trace.rst
    faq/index.rst
