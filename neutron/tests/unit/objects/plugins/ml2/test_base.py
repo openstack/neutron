@@ -16,19 +16,19 @@
 
 class SegmentAllocationDbObjTestCase(object):
 
-    def test_get_unallocated_segments(self):
-        self.assertEqual(
-            [], self._test_class.get_unallocated_segments(self.context))
+    def test_get_random_unallocated_segment(self):
+        self.assertIsNone(
+            self._test_class.get_random_unallocated_segment(self.context))
 
         obj = self.objs[0]
         obj.allocated = True
         obj.create()
-        self.assertEqual(
-            [], self._test_class.get_unallocated_segments(self.context))
+        self.assertIsNone(
+            self._test_class.get_random_unallocated_segment(self.context))
 
         obj = self.objs[1]
         obj.allocated = False
         obj.create()
-        allocations = self._test_class.get_unallocated_segments(self.context)
-        self.assertEqual(1, len(allocations))
-        self.assertEqual(obj.segmentation_id, allocations[0].segmentation_id)
+        allocations = self._test_class.get_random_unallocated_segment(
+            self.context)
+        self.assertEqual(obj.segmentation_id, allocations.segmentation_id)

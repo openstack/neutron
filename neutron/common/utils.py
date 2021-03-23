@@ -48,6 +48,10 @@ from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from osprofiler import profiler
 import pkg_resources
+from sqlalchemy.dialects.mysql import dialect as mysql_dialect
+from sqlalchemy.dialects.postgresql import dialect as postgresql_dialect
+from sqlalchemy.dialects.sqlite import dialect as sqlite_dialect
+from sqlalchemy.sql.expression import func as sql_func
 
 import neutron
 from neutron._i18n import _
@@ -1047,3 +1051,16 @@ def get_elevated_context(context):
     if cfg.CONF.oslo_policy.enforce_new_defaults:
         admin_context.system_scope = 'all'
     return admin_context
+
+
+def get_sql_random_method(sql_dialect_name):
+    """Return the SQL random method supported depending on the dialect."""
+    # NOTE(ralonsoh): this method is a good candidate to be implemented in
+    # oslo.db.
+    # https://www.postgresql.org/docs/8.2/functions-math.html
+    # https://www.sqlite.org/c3ref/randomness.html
+    if sql_dialect_name in (postgresql_dialect.name, sqlite_dialect.name):
+        return sql_func.random
+    # https://dev.mysql.com/doc/refman/8.0/en/mathematical-functions.html
+    elif sql_dialect_name == mysql_dialect.name:
+        return sql_func.rand

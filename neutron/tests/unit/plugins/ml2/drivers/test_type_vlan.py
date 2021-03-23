@@ -348,7 +348,7 @@ class VlanTypeAllocationTest(testlib_api.SqlTestCase):
         # for PROVIDER_NET.
         self.assertEqual(
                 {'network_type': 'vlan', 'physical_network': PROVIDER_NET,
-                 'segmentation_id': p_const.MIN_VLAN_TAG, 'mtu': 1500},
+                 'segmentation_id': mock.ANY, 'mtu': 1500},
                 driver.allocate_tenant_segment(ctx))
 
 

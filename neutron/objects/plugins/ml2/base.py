@@ -16,7 +16,7 @@ import abc
 
 import netaddr
 
-from neutron.common import _constants as common_constants
+from neutron.common import utils as n_utils
 from neutron.objects import base
 
 
@@ -42,14 +42,18 @@ class EndpointBase(base.NeutronDbObject):
 class SegmentAllocation(object, metaclass=abc.ABCMeta):
 
     @classmethod
-    def get_unallocated_segments(cls, context, **filters):
+    def get_random_unallocated_segment(cls, context, **filters):
         with cls.db_context_reader(context):
             columns = set(dict(cls.db_model.__table__.columns))
             model_filters = dict((k, filters[k])
                                  for k in columns & set(filters.keys()))
             query = context.session.query(cls.db_model).filter_by(
                 allocated=False, **model_filters)
-            return query.limit(common_constants.IDPOOL_SELECT_SIZE).all()
+            rand_func = n_utils.get_sql_random_method(
+                context.session.bind.dialect.name)
+            if rand_func:
+                query = query.order_by(rand_func())
+            return query.first()
 
     @classmethod
     def allocate(cls, context, **segment):
