@@ -151,12 +151,14 @@ class PlacementState(object):
                 self._driver_uuid_namespace,
                 hypervisor['name'],
                 device)
+            agent_rp_uuid = place_utils.agent_resource_provider_uuid(
+                self._driver_uuid_namespace, hypervisor['name'])
             rps.append(
                 DeferredCall(
                     self._client.ensure_resource_provider,
                     {'name': rp_name,
                      'uuid': rp_uuid,
-                     'parent_provider_uuid': hypervisor['uuid']}))
+                     'parent_provider_uuid': agent_rp_uuid}))
         return rps
 
     def deferred_create_resource_providers(self):
