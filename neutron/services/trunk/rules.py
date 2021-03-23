@@ -25,6 +25,7 @@ from neutron_lib.plugins.ml2 import api
 from neutron_lib.services.trunk import constants
 
 from neutron._i18n import _
+from neutron.common import utils as common_utils
 from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import utils
@@ -212,7 +213,8 @@ class SubPortsValidator(object):
         for p in ports:
             network_port_map[p['network_id']].append({'port_id': p['id']})
         networks = core_plugin.get_networks(
-            context.elevated(), filters={'id': network_port_map})
+            common_utils.get_elevated_context(context),
+            filters={'id': network_port_map})
 
         subport_mtus = {}
         for net in networks:

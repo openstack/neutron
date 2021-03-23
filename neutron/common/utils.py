@@ -1037,3 +1037,13 @@ def with_metaclass(meta, *bases):
             return meta(name, bases, d)
 
     return metaclass('temporary_class', None, {})
+
+
+def get_elevated_context(context):
+    admin_context = context.elevated()
+    # NOTE(slaweq): system_scope='all' is needed if new policies are
+    # enforced. This should be set in context.elevated() method in the
+    # neutron-lib but as a temporary workaround it is done here
+    if cfg.CONF.oslo_policy.enforce_new_defaults:
+        admin_context.system_scope = 'all'
+    return admin_context

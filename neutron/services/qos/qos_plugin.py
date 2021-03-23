@@ -41,6 +41,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _
+from neutron.common import utils as common_utils
 from neutron.db import db_base_plugin_common
 from neutron.extensions import qos
 from neutron.objects import base as base_obj
@@ -250,7 +251,7 @@ class QoSPlugin(qos.QoSPluginBase):
             return
 
         policy = policy_object.QosPolicy.get_object(
-            context.elevated(), id=policy_id)
+            common_utils.get_elevated_context(context), id=policy_id)
         self.validate_policy_for_port(context, policy, port)
 
     def _check_port_for_placement_allocation_change(self, resource, event,
@@ -269,9 +270,10 @@ class QoSPlugin(qos.QoSPluginBase):
         if (nl_constants.DEVICE_OWNER_COMPUTE_PREFIX in
                 orig_port['device_owner']):
             original_policy = policy_object.QosPolicy.get_object(
-                context.elevated(), id=original_policy_id)
+                common_utils.get_elevated_context(context),
+                id=original_policy_id)
             policy = policy_object.QosPolicy.get_object(
-                context.elevated(), id=policy_id)
+                common_utils.get_elevated_context(context), id=policy_id)
             self._change_placement_allocation(original_policy, policy,
                                               orig_port)
 
@@ -343,7 +345,7 @@ class QoSPlugin(qos.QoSPluginBase):
         updated_port = ports_object.Port.get_object(
             context, id=payload.desired_state['id'])
         policy = policy_object.QosPolicy.get_object(
-            context.elevated(), id=policy_id)
+            common_utils.get_elevated_context(context), id=policy_id)
 
         self.validate_policy_for_port(context, policy, updated_port)
 
@@ -358,7 +360,7 @@ class QoSPlugin(qos.QoSPluginBase):
             return
 
         policy = policy_object.QosPolicy.get_object(
-            context.elevated(), id=policy_id)
+            common_utils.get_elevated_context(context), id=policy_id)
         self.validate_policy_for_network(context, policy, network_id)
 
     def _validate_update_network_callback(self, resource, event, trigger,
@@ -374,7 +376,7 @@ class QoSPlugin(qos.QoSPluginBase):
             return
 
         policy = policy_object.QosPolicy.get_object(
-            context.elevated(), id=policy_id)
+            common_utils.get_elevated_context(context), id=policy_id)
         self.validate_policy_for_network(
             context, policy, network_id=updated_network['id'])
 

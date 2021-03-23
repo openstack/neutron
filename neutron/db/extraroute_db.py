@@ -29,6 +29,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _
+from neutron.common import utils as common_utils
 from neutron.conf.db import extraroute_db
 from neutron.db import l3_db
 from neutron.objects import router as l3_obj
@@ -92,7 +93,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                 router_id=router_id,
                 quota=cfg.CONF.max_routes)
 
-        context = context.elevated()
+        context = common_utils.get_elevated_context(context)
         filters = {'device_id': [router_id]}
         ports = self._core_plugin.get_ports(context, filters)
         cidrs = []

@@ -28,6 +28,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 
+from neutron.common import utils as common_utils
 
 # Priorities - lower value is higher priority
 PRIORITY_NETWORK_CREATE = 0
@@ -194,7 +195,8 @@ class DhcpAgentNotifyAPI(object):
         if fanout_required:
             self._fanout_message(context, method, payload)
         elif cast_required:
-            admin_ctx = (context if context.is_admin else context.elevated())
+            admin_ctx = (context if context.is_admin else
+                         common_utils.get_elevated_context(context))
             network = self.plugin.get_network(admin_ctx, network_id)
             if 'subnet' in payload and payload['subnet'].get('segment_id'):
                 # if segment_id exists then the segment service plugin

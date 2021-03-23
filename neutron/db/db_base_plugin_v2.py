@@ -485,7 +485,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     _constants.AUTO_DELETE_PORT_OWNERS))]
         for port_id in auto_delete_port_ids:
             try:
-                self.delete_port(context.elevated(), port_id)
+                self.delete_port(utils.get_elevated_context(context), port_id)
             except exc.PortNotFound:
                 # Don't raise if something else concurrently deleted the port
                 LOG.debug("Ignoring PortNotFound when deleting port '%s'. "
@@ -710,7 +710,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     def _update_router_gw_port(self, context, router_id, network, subnet):
         l3plugin = directory.get_plugin(plugin_constants.L3)
-        ctx_admin = context.elevated()
+        ctx_admin = utils.get_elevated_context(context)
         ext_subnets_dict = {s['id']: s for s in network['subnets']}
         router = l3plugin.get_router(ctx_admin, router_id)
         external_gateway_info = router['external_gateway_info']
@@ -1587,7 +1587,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             if device_id:
                 if hasattr(self, 'get_router'):
                     try:
-                        ctx_admin = context.elevated()
+                        ctx_admin = utils.get_elevated_context(context)
                         router = self.get_router(ctx_admin, device_id)
                     except l3_exc.RouterNotFound:
                         return
@@ -1595,7 +1595,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     l3plugin = directory.get_plugin(plugin_constants.L3)
                     if l3plugin:
                         try:
-                            ctx_admin = context.elevated()
+                            ctx_admin = utils.get_elevated_context(context)
                             router = l3plugin.get_router(ctx_admin,
                                                          device_id)
                         except l3_exc.RouterNotFound:

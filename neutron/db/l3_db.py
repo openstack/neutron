@@ -320,17 +320,19 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             # the current transaction.
             context.GUARD_TRANSACTION = False
         gw_port = plugin_utils.create_port(
-            self._core_plugin, context.elevated(), {'port': port_data})
+            self._core_plugin, utils.get_elevated_context(context),
+            {'port': port_data})
 
         if not gw_port['fixed_ips']:
             LOG.debug('No IPs available for external network %s',
                       network_id)
         with plugin_utils.delete_port_on_error(
-                self._core_plugin, context.elevated(), gw_port['id']):
+                self._core_plugin, utils.get_elevated_context(context),
+                gw_port['id']):
             with db_api.CONTEXT_WRITER.using(context):
                 router = self._get_router(context, router['id'])
                 router.gw_port = self._core_plugin._get_port(
-                    context.elevated(), gw_port['id'])
+                    utils.get_elevated_context(context), gw_port['id'])
                 router_port = l3_obj.RouterPort(
                     context,
                     router_id=router.id,
@@ -373,7 +375,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             router.gw_port and router.gw_port['network_id'] != new_network_id)
         if not port_requires_deletion:
             return
-        admin_ctx = context.elevated()
+        admin_ctx = utils.get_elevated_context(context)
         old_network_id = router.gw_port['network_id']
 
         if self.router_gw_port_has_floating_ips(admin_ctx, router_id):
@@ -462,8 +464,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                  resource_id=router_id))
 
     def _update_current_gw_port(self, context, router_id, router, ext_ips):
-        self._core_plugin.update_port(context.elevated(), router.gw_port['id'],
-                                      {'port': {'fixed_ips': ext_ips}})
+        self._core_plugin.update_port(
+            utils.get_elevated_context(context), router.gw_port['id'],
+            {'port': {'fixed_ips': ext_ips}})
 
     def _update_router_gw_info(self, context, router_id, info, router=None):
         router = router or self._get_router(context, router_id)
@@ -532,8 +535,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             if context.session.is_active:
                 context.GUARD_TRANSACTION = False
             for rp_id in router_ports_ids:
-                self._core_plugin.delete_port(context.elevated(), rp_id,
-                                              l3_port_check=False)
+                self._core_plugin.delete_port(
+                    utils.get_elevated_context(context), rp_id,
+                    l3_port_check=False)
 
             router = self._get_router(context, id)
             registry.notify(resources.ROUTER, events.PRECOMMIT_DELETE,
@@ -586,7 +590,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                     raise n_exc.BadRequest(resource='router', msg=msg)
                 if p.get('device_owner') == DEVICE_OWNER_ROUTER_GW:
                     ext_subts = self._core_plugin.get_subnets(
-                        context.elevated(),
+                        utils.get_elevated_context(context),
                         filters={'network_id': [p['network_id']]})
                     for sub in ext_subts:
                         router_subnets.append(sub['id'])
@@ -597,8 +601,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         new_subnets = [s for s in new_subnets
                        if s['cidr'] != constants.PROVISIONAL_IPV6_PD_PREFIX]
         id_filter = {'id': router_subnets}
-        subnets = self._core_plugin.get_subnets(context.elevated(),
-                                                filters=id_filter)
+        subnets = self._core_plugin.get_subnets(
+            utils.get_elevated_context(context), filters=id_filter)
         for sub in subnets:
             cidr = sub['cidr']
             ipnet = netaddr.IPNetwork(cidr)
@@ -1340,11 +1344,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # 'status' in port dict could not be updated by default, use
         # check_allow_post to stop the verification of system
         external_port = plugin_utils.create_port(
-            self._core_plugin, context.elevated(),
+            self._core_plugin, utils.get_elevated_context(context),
             {'port': port}, check_allow_post=False)
 
         with plugin_utils.delete_port_on_error(
-                self._core_plugin, context.elevated(),
+                self._core_plugin, utils.get_elevated_context(context),
                 external_port['id']),\
                 db_api.CONTEXT_WRITER.using(context):
             # Ensure IPv4 addresses are allocated on external port
@@ -1381,7 +1385,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                             floatingip_db=floatingip_obj.db_obj)
 
         self._core_plugin.update_port(
-            context.elevated(), external_port['id'],
+            utils.get_elevated_context(context), external_port['id'],
             {'port': {'device_id': fip_id,
                       'project_id': fip['tenant_id']}})
         registry.notify(resources.FLOATING_IP,
@@ -1505,7 +1509,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # floating IP record once the port is deleted. We can't start
         # a transaction first to remove it ourselves because the delete_port
         # method will yield in its post-commit activities.
-        self._core_plugin.delete_port(context.elevated(),
+        self._core_plugin.delete_port(utils.get_elevated_context(context),
                                       floatingip.floating_port_id,
                                       l3_port_check=False)
         registry.notify(resources.FLOATING_IP, events.AFTER_DELETE,
@@ -1595,8 +1599,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                           "%(port_id)s no longer exists, allowing deletion.",
                           {'f_id': port['device_id'], 'port_id': port['id']})
                 return
-        elif not l3_obj.Router.objects_exist(context.elevated(),
-                                             id=port['device_id']):
+        elif not l3_obj.Router.objects_exist(
+                utils.get_elevated_context(context), id=port['device_id']):
             LOG.debug("Router %(router_id)s corresponding to port "
                       "%(port_id)s no longer exists, allowing deletion.",
                       {'router_id': port['device_id'],

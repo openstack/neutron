@@ -28,6 +28,7 @@ from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks.producer import registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import utils as common_utils
 from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk.rpc import constants
@@ -82,7 +83,7 @@ class TrunkSkeleton(object):
     @log_helpers.log_method_call
     def update_subport_bindings(self, context, subports):
         """Update subport bindings to match trunk host binding."""
-        el = context.elevated()
+        el = common_utils.get_elevated_context(context)
         ports_by_trunk_id = collections.defaultdict(list)
         updated_ports = collections.defaultdict(list)
 

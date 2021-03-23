@@ -142,8 +142,9 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         # dvr_no_external host to one dvr host. So we just do not allow
         # all dvr router's floating IP to be binded to a port which
         # already has port forwarding.
-        router = self.l3_plugin.get_router(payload.context.elevated(),
-                                           pf_objs[0].router_id)
+        router = self.l3_plugin.get_router(
+            utils.get_elevated_context(payload.context),
+            pf_objs[0].router_id)
         if l3_dvr_db.is_distributed_router(router):
             raise pf_exc.PortHasPortForwarding(port_id=port_id)
 
@@ -210,7 +211,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         # context to check if the floatingip or port forwarding resources
         # are owned by other tenants.
         if not context.is_admin:
-            context = context.elevated()
+            context = utils.get_elevated_context(context)
         # If the logic arrives here, that means we have got update_ip_set and
         # its value is not None. So we need to get all port forwarding
         # resources based on the request port_id for preparing the next
@@ -330,7 +331,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
     def _check_port_has_binding_floating_ip(self, context, port_forwarding):
         port_id = port_forwarding['internal_port_id']
         floatingip_objs = l3_obj.FloatingIP.get_objects(
-            context.elevated(),
+            utils.get_elevated_context(context),
             fixed_port_id=port_id)
         if floatingip_objs:
             floating_ip_address = floatingip_objs[0].floating_ip_address
