@@ -40,6 +40,11 @@
         s-container: false
         s-object: false
         s-proxy: false
+      devstack_local_conf:
+        post-config:
+          $NEUTRON_L3_CONF:
+            agent:
+              debug_iptables_rules: True
 
 - job:
     name: neutron-ovs-base
@@ -314,6 +319,11 @@
         s-container: false
         s-object: false
         s-proxy: false
+      devstack_local_conf:
+        post-config:
+          $NEUTRON_L3_CONF:
+            agent:
+              debug_iptables_rules: True
     irrelevant-files: &irrelevant-files
       - ^(test-|)requirements.txt$
       - ^.*\.rst$

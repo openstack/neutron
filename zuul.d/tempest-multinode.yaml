@@ -68,6 +68,7 @@
               agent_mode: dvr_snat
             agent:
               availability_zone: nova
+              debug_iptables_rules: True
           $NEUTRON_DHCP_CONF:
             agent:
               availability_zone: nova
@@ -115,6 +116,7 @@
                 agent_mode: dvr_snat
               agent:
                 availability_zone: nova
+                debug_iptables_rules: True
 
 - job:
     name: neutron-tempest-multinode-full-py3
@@ -144,12 +146,20 @@
           $NEUTRON_CONF:
             nova:
               live_migration_events: True
+          $NEUTRON_L3_CONF:
+            agent:
+              debug_iptables_rules: True
     group-vars:
       subnode:
         devstack_services:
           # Cinder services
           c-bak: false
           c-vol: false
+        devstack_local_conf:
+          post-config:
+            $NEUTRON_L3_CONF:
+              agent:
+                debug_iptables_rules: True
 
 - job:
     name: neutron-tempest-slow-py3
@@ -173,12 +183,22 @@
         s-container: false
         s-object: false
         s-proxy: false
+      devstack_local_conf:
+        post-config:
+          $NEUTRON_L3_CONF:
+            agent:
+              debug_iptables_rules: True
     group-vars:
       subnode:
         devstack_services:
           # Cinder services
           c-bak: false
           c-vol: false
+        devstack_local_conf:
+          post-config:
+            $NEUTRON_L3_CONF:
+              agent:
+                debug_iptables_rules: True
 
 - job:
     name: neutron-ovn-multinode-base
