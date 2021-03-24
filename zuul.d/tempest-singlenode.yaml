@@ -521,3 +521,13 @@
     name: neutron-ovn-tempest-ovs-release
     description: Job testing for devstack/tempest testing Neutron with ovn driver and latest released OVN branch
     parent: neutron-ovn-base
+
+- job:
+    name: neutron-ovn-tempest-ovs-master
+    description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch
+    parent: neutron-ovn-base
+    vars:
+      devstack_localrc:
+        OVN_BUILD_FROM_SOURCE: True
+        OVN_BRANCH: master
+        OVS_BRANCH: master

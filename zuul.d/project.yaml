@@ -72,6 +72,7 @@
         - neutron-grenade-ovn
         - neutron-tempest-with-uwsgi-loki
         - neutron-ovn-tempest-full-multinode-ovs-master
+        - neutron-ovn-tempest-ovs-master
         - neutron-tempest-with-neutron-lib-master
 
     periodic:
