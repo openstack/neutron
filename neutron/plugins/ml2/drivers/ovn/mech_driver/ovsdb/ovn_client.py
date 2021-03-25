@@ -1000,12 +1000,14 @@ class OVNClient(object):
             utils.ovn_lrouter_port_name(gw_port_id),
             gw_lrouter_name))
 
-    def _get_nets_and_ipv6_ra_confs_for_router_port(
-            self, context, port_fixed_ips):
+    def _get_nets_and_ipv6_ra_confs_for_router_port(self, context, port):
+        port_fixed_ips = port['fixed_ips']
         networks = set()
         ipv6_ra_configs = {}
         ipv6_ra_configs_supported = self._nb_idl.is_col_present(
             'Logical_Router_Port', 'ipv6_ra_configs')
+        is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
+            'device_owner')
 
         for fixed_ip in port_fixed_ips:
             subnet_id = fixed_ip['subnet_id']
@@ -1019,8 +1021,14 @@ class OVNClient(object):
                 ipv6_ra_configs['address_mode'] = (
                     utils.get_ovn_ipv6_address_mode(
                         subnet['ipv6_address_mode']))
-                ipv6_ra_configs['send_periodic'] = 'true'
                 net = self._plugin.get_network(context, subnet['network_id'])
+                # If it's a gateway port and connected to a provider
+                # network set send_periodic to False, that way we do not
+                # leak the RAs generated for the tenant networks via the
+                # provider network
+                ipv6_ra_configs['send_periodic'] = 'true'
+                if is_gw_port and utils.is_provider_network(net):
+                    ipv6_ra_configs['send_periodic'] = 'false'
                 ipv6_ra_configs['mtu'] = str(net['mtu'])
 
         return list(networks), ipv6_ra_configs
@@ -1343,8 +1351,7 @@ class OVNClient(object):
         """Create a logical router port."""
         lrouter = utils.ovn_name(router['id'])
         networks, ipv6_ra_configs = (
-            self._get_nets_and_ipv6_ra_confs_for_router_port(
-                context, port['fixed_ips']))
+            self._get_nets_and_ipv6_ra_confs_for_router_port(context, port))
         lrouter_port_name = utils.ovn_lrouter_port_name(port['id'])
         is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
             'device_owner')
@@ -1418,8 +1425,7 @@ class OVNClient(object):
     def _update_lrouter_port(self, context, port, if_exists=False, txn=None):
         """Update a logical router port."""
         networks, ipv6_ra_configs = (
-            self._get_nets_and_ipv6_ra_confs_for_router_port(
-                context, port['fixed_ips']))
+            self._get_nets_and_ipv6_ra_confs_for_router_port(context, port))
 
         lsp_address = ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER
         lrp_name = utils.ovn_lrouter_port_name(port['id'])
