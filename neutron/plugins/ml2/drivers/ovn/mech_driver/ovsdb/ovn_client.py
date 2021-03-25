@@ -25,6 +25,7 @@ from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib import constants as const
 from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as p_utils
@@ -1485,14 +1486,18 @@ class OVNClient(object):
 
             router_id = router_id or ovn_port.external_ids.get(
                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY)
-            if not router_id:
+            if port and not router_id:
                 router_id = port.get('device_id')
 
             router = None
             if router_id:
-                router = self._l3_plugin.get_router(context, router_id)
+                try:
+                    router = self._l3_plugin.get_router(context, router_id)
+                except l3_exc.RouterNotFound:
+                    # If the router is gone, the router port is also gone
+                    port_removed = True
 
-            if not router.get(l3.EXTERNAL_GW_INFO):
+            if not router or not router.get(l3.EXTERNAL_GW_INFO):
                 if port_removed:
                     self._delete_lrouter_port(context, port_id, router_id,
                                               txn=txn)
@@ -1507,12 +1512,15 @@ class OVNClient(object):
 
             cidr = None
             for sid in subnet_ids:
-                subnet = self._plugin.get_subnet(context, sid)
+                try:
+                    subnet = self._plugin.get_subnet(context, sid)
+                except n_exc.SubnetNotFound:
+                    continue
                 if subnet['ip_version'] == 4:
                     cidr = subnet['cidr']
                     break
 
-            if router and utils.is_snat_enabled(router) and cidr:
+            if utils.is_snat_enabled(router) and cidr:
                 self.update_nat_rules(
                     router, networks=[cidr], enable_snat=False, txn=txn)
 
