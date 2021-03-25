@@ -56,6 +56,21 @@ services:
   packets for relevant resources when the registered events occur. OVN supports
   this feature based on security groups.
 
+* Segments
+
+  Allows for Network segments ranges to be used with OVN. Requires OVN
+  version 20.06 or higher.
+
+.. TODO What about tenant networks?
+
+* Routed provider networks
+
+  Allows for multiple localnet ports to be attached to a single Logical
+  Switch entry. This work also assumes that only a single localnet
+  port (of the same Logical Switch) is actually mapped to a given
+  hypervisor. Requires OVN version 20.06 or higher.
+
+
 The following Neutron API extensions are supported with OVN:
 
 +----------------------------------+---------------------------+
@@ -74,6 +89,8 @@ The following Neutron API extensions are supported with OVN:
 | Multi Provider Network           | multi-provider            |
 +----------------------------------+---------------------------+
 | Network IP Availability          | network-ip-availability   |
++----------------------------------+---------------------------+
+| Network Segment                  | segment                   |
 +----------------------------------+---------------------------+
 | Neutron external network         | external-net              |
 +----------------------------------+---------------------------+

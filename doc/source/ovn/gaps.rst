@@ -50,24 +50,16 @@ at [1]_.
   ports on a Chassis (a "node" in OVN terms) where the availability
   zones match with the router availability zones [6]_.
 
-* Routed provider networks
-
-  Routed provider networks allow for a single provider network to
-  represent multiple L2 domains (segments). The OVN driver does not
-  understand this feature yet and will need to account for multiple
-  physical networks associated with a single OVN Logical Switch (a
-  network in Neutron terms) [7]_.
-
 * QoS minimum bandwidth allocation in Placement API
 
   ML2/OVN integration with the Nova placement API to provide guaranteed
-  minimum bandwidth for ports [8]_.
+  minimum bandwidth for ports [7]_.
 
 * IPv6 Prefix Delegation
 
   Currently ML2/OVN doesn't implement IPv6 prefix delegation. OVN logical
-  routers have this capability implemented in [9]_ and we have an open RFE to
-  fill this gap [10]_.
+  routers have this capability implemented in [8]_ and we have an open RFE to
+  fill this gap [9]_.
 
 * East/West Fragmentation
 
@@ -85,7 +77,6 @@ References
 .. [4] https://github.com/torvalds/linux/blob/master/net/openvswitch/meter.h
 .. [5] https://github.com/openstack/ironic/blob/123cb22c731f93d0c608d791b41e05884fe18c04/ironic/common/pxe_utils.py#L447-L462>
 .. [6] https://docs.openstack.org/neutron/latest/admin/config-az.html
-.. [7] https://bugs.launchpad.net/neutron/+bug/1865889
-.. [8] https://specs.openstack.org/openstack/neutron-specs/specs/rocky/minimum-bandwidth-allocation-placement-api.html
-.. [9] https://patchwork.ozlabs.org/project/openvswitch/patch/6aec0fb280f610a2083fbb6c61e251b1d237b21f.1576840560.git.lorenzo.bianconi@redhat.com/
-.. [10] https://bugs.launchpad.net/neutron/+bug/1895972
+.. [7] https://specs.openstack.org/openstack/neutron-specs/specs/rocky/minimum-bandwidth-allocation-placement-api.html
+.. [8] https://patchwork.ozlabs.org/project/openvswitch/patch/6aec0fb280f610a2083fbb6c61e251b1d237b21f.1576840560.git.lorenzo.bianconi@redhat.com/
+.. [9] https://bugs.launchpad.net/neutron/+bug/1895972

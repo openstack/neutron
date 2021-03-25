@@ -15,3 +15,4 @@ OVN Driver Administration Guide
    troubleshooting
    sriov
    router_availability_zones
+   routed_provider_networks
