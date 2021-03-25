@@ -440,12 +440,12 @@ class HaRouter(router.RouterInfo):
         pm = self._get_state_change_monitor_process_manager()
         process_monitor.unregister(
             self.router_id, IP_MONITOR_PROCESS_SERVICE)
-        pm.disable(sig=signal.SIGTERM)
+        pm.disable(sig=str(int(signal.SIGTERM)))
         try:
             common_utils.wait_until_true(lambda: not pm.active,
                                          timeout=SIGTERM_TIMEOUT)
         except common_utils.WaitTimeout:
-            pm.disable(sig=signal.SIGKILL)
+            pm.disable(sig=str(int(signal.SIGKILL)))
 
     @staticmethod
     def _gateway_ports_equal(port1, port2):

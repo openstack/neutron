@@ -82,9 +82,3 @@ def _create_process(cmd, addl_env=None):
     obj = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return obj, cmd
-
-
-@privileged.default.entrypoint
-def kill_process(pid, signal):
-    """Kill the process with the given pid using the given signal."""
-    os.kill(int(pid), int(signal))

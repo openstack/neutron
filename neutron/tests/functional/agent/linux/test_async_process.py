@@ -12,8 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import signal
-
 import eventlet
 
 from neutron._i18n import _
@@ -73,7 +71,7 @@ class TestAsyncProcess(AsyncProcessTestFramework):
         # Ensure that the same output is read twice
         self._check_stdout(proc)
         pid = proc.pid
-        utils.kill_process(pid, signal.SIGKILL)
+        utils.execute(['kill', '-9', pid])
         common_utils.wait_until_true(
             lambda: proc.is_active() and pid != proc.pid,
             timeout=5,
