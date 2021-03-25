@@ -42,8 +42,7 @@
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             voting: false
             irrelevant-files: *tempest-irrelevant-files
-        - tempest-slow-py3:
-            irrelevant-files: *tempest-irrelevant-files
+        - neutron-tempest-slow-py3
         - networking-ovn-tempest-dsvm-ovs-release:
             irrelevant-files: *tempest-irrelevant-files
         - networking-midonet-tempest-aio-ml2-centos-7:
@@ -51,8 +50,7 @@
             irrelevant-files: *tempest-irrelevant-files
         - grenade-py3:
             irrelevant-files: *tempest-irrelevant-files
-        - tempest-ipv6-only:
-            irrelevant-files: *tempest-irrelevant-files
+        - neutron-tempest-ipv6-only
         - openstacksdk-functional-devstack-networking:
             voting: false
         - neutron-functional-with-uwsgi:
@@ -82,12 +80,10 @@
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
         - neutron-grenade
-        - tempest-slow-py3:
-            irrelevant-files: *tempest-irrelevant-files
+        - neutron-tempest-slow-py3
         - grenade-py3:
             irrelevant-files: *tempest-irrelevant-files
-        - tempest-ipv6-only:
-            irrelevant-files: *tempest-irrelevant-files
+        - neutron-tempest-ipv6-only
     periodic:
       jobs:
         - neutron-functional
@@ -511,3 +507,56 @@
           - 'environments/services/neutron-ovs.yaml'
         tempest_test_whitelist:
           - 'tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_network_basic_ops'
+
+- job:
+    name: neutron-tempest-slow-py3
+    parent: tempest-slow-py3
+    timeout: 10800
+    irrelevant-files: *tempest-irrelevant-files
+    vars:
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron.git
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
+    group-vars:
+      subnode:
+        devstack_services:
+          # Cinder services
+          c-bak: false
+          c-vol: false
+
+- job:
+    name: neutron-tempest-ipv6-only
+    parent: tempest-ipv6-only
+    timeout: 10800
+    irrelevant-files: *tempest-irrelevant-files
+    vars:
+      tox_envlist: integrated-network
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron.git
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
