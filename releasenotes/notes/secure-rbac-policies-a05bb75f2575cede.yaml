@@ -1,0 +1,23 @@
+---
+features:
+  - |
+    Neutron now experimentally supports new API policies with the system scope
+    and the default roles (member, reader, admin).
+issues:
+  - |
+    Support for new policies and system scope context is experimentatal in
+    Neutron. When config option ``enforce_new_defaults`` is enabled in Neutron,
+    new default rules will be enforced and things may not work properly in
+    some cases.
+deprecations:
+  - |
+    Old API policies are deprecated now. They will be removed in future.
+other:
+  - |
+    When new default values for API policies are enabled, some API requests may
+    not be available for project admin users anymore as they are possible only
+    for system scope users.
+    Please note that system scope tokens don't have project_id included so for
+    example creation of the provider network, with specified physical network
+    details will now require from system scope admin user to explicitly set
+    project_id.
