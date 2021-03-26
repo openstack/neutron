@@ -15,7 +15,6 @@
 import abc
 import collections
 import os.path
-import signal
 
 import eventlet
 from oslo_concurrency import lockutils
@@ -97,10 +96,9 @@ class ProcessManager(MonitoredProcess):
         if self.custom_reload_callback:
             self.disable(get_stop_command=self.custom_reload_callback)
         else:
-            self.disable(signal.SIGHUP)
+            self.disable('HUP')
 
-    def disable(self, sig=signal.SIGKILL, get_stop_command=None):
-        sig = int(sig)
+    def disable(self, sig='9', get_stop_command=None):
         pid = self.pid
 
         if self.active:
@@ -111,9 +109,11 @@ class ProcessManager(MonitoredProcess):
                                          run_as_root=self.run_as_root,
                                          privsep_exec=True)
             else:
-                self._kill_process(sig, pid)
+                cmd = self.get_kill_cmd(sig, pid)
+                utils.execute(cmd, run_as_root=self.run_as_root,
+                              privsep_exec=True)
                 # In the case of shutting down, remove the pid file
-                if sig == signal.SIGKILL:
+                if sig == '9':
                     utils.delete_if_exists(self.get_pid_file_name(),
                                            run_as_root=self.run_as_root)
         elif pid:
@@ -125,14 +125,12 @@ class ProcessManager(MonitoredProcess):
             LOG.debug('No %(service)s process started for %(uuid)s',
                       {'service': self.service, 'uuid': self.uuid})
 
-    def _kill_process(self, sig, pid):
+    def get_kill_cmd(self, sig, pid):
         if self.kill_scripts_path:
             kill_file = "%s-kill" % self.service
             if os.path.isfile(os.path.join(self.kill_scripts_path, kill_file)):
-                utils.execute([kill_file, sig, pid],
-                              run_as_root=self.run_as_root)
-                return
-        utils.kill_process(pid, sig, run_as_root=self.run_as_root)
+                return [kill_file, sig, pid]
+        return ['kill', '-%s' % (sig), pid]
 
     def get_pid_file_name(self):
         """Returns the file name for a given kind of config file."""

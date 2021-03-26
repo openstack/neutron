@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import errno
 import functools
 import os
 import signal
@@ -42,8 +41,10 @@ class TestGetRootHelperChildPid(functional_base.BaseSudoTestCase):
         sleep_pid = utils.execute(
             ['ps', '--ppid', parent_pid, '-o', 'pid=']).strip()
         self.addCleanup(
-            utils.kill_process, sleep_pid, signal.SIGKILL, run_as_root=True,
-            raise_exception=False)
+            utils.execute,
+            ['kill', '-9', sleep_pid],
+            check_exit_code=False,
+            run_as_root=True)
 
     def test_get_root_helper_child_pid_returns_first_child(self):
         """Test that the first child, not lowest child pid is returned.
@@ -171,55 +172,3 @@ class TestFindChildPids(functional_base.BaseSudoTestCase):
         with open('/proc/sys/kernel/pid_max', 'r') as fd:
             pid_max = int(fd.readline().strip())
         self.assertEqual([], utils.find_child_pids(pid_max))
-
-
-class TestKillProcess(functional_base.BaseSudoTestCase):
-
-    # NOTE(ralonsoh): in 64bit systems, PID_MAX_LIMIT is 2^22
-    NON_EXISTING_PID = 2**22 + 1
-
-    def _test_exception(self, pid, error_no, run_as_root=False):
-        try:
-            utils.kill_process(pid, signal.SIGUSR1, run_as_root=run_as_root)
-        except OSError as exc:
-            self.assertEqual(error_no, exc.errno)
-
-    def test_root_no_such_process(self):
-        self._test_exception(self.NON_EXISTING_PID, errno.ESRCH,
-                             run_as_root=True)
-
-    def test_root_no_such_proces_hidden(self):
-        self.assertEqual(
-            errno.ESRCH,
-            utils.kill_process(self.NON_EXISTING_PID, signal.SIGUSR1,
-                               run_as_root=True, extra_ok_codes=[errno.ESRCH]))
-
-    def test_root_exception_not_risen(self):
-        self.assertEqual(
-            errno.ESRCH,
-            utils.kill_process(self.NON_EXISTING_PID, signal.SIGUSR1,
-                               run_as_root=True, raise_exception=False))
-
-    def test_non_root_no_such_process(self):
-        self._test_exception(self.NON_EXISTING_PID, errno.ESRCH)
-
-    def test_non_root_no_such_process_hidden(self):
-        self.assertEqual(
-            errno.ESRCH,
-            utils.kill_process(self.NON_EXISTING_PID, signal.SIGUSR1,
-                               extra_ok_codes=[errno.ESRCH]))
-
-    def test_non_root_operation_not_permitted(self):
-        self._test_exception(1, errno.EPERM)
-
-    def test_non_root_operation_not_permitted_hidden(self):
-        self.assertEqual(
-            errno.EPERM,
-            utils.kill_process(1, signal.SIGUSR1,
-                               extra_ok_codes=[errno.EPERM]))
-
-    def test_non_root_exception_not_risen(self):
-        self.assertEqual(
-            errno.ESRCH,
-            utils.kill_process(self.NON_EXISTING_PID, signal.SIGUSR1,
-                               raise_exception=False))

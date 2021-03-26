@@ -109,7 +109,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
             mock_pm.active = False
             ri.destroy_state_change_monitor(mock_pm)
 
-        mock_pm.disable.assert_called_once_with(sig=signal.SIGTERM)
+        mock_pm.disable.assert_called_once_with(
+            sig=str(int(signal.SIGTERM)))
 
     def test_destroy_state_change_monitor_force(self):
         ri = self._create_router(mock.MagicMock())
