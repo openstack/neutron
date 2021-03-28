@@ -4046,7 +4046,14 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                  namespaces.INTERNAL_DEV_PREFIX + '+',
                                  'value': self.conf.metadata_access_mark,
                                  'mask': lib_constants.ROUTER_MARK_MASK})])
+        v4_filter_calls = ([mock.call.add_rule(
+                                'scope',
+                                '-m mark --mark %s/%s -j DROP' %
+                                (self.conf.metadata_access_mark,
+                                 lib_constants.ROUTER_MARK_MASK))])
         mock_iptables_manager.ipv4['mangle'].assert_has_calls(v4_mangle_calls,
+                                                              any_order=True)
+        mock_iptables_manager.ipv4['filter'].assert_has_calls(v4_filter_calls,
                                                               any_order=True)
 
     def test_initialize_metadata_iptables_rules(self):

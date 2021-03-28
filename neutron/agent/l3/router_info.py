@@ -1089,8 +1089,14 @@ class RouterInfo(BaseRouterInfo):
              'interface_name': INTERNAL_DEV_PREFIX + '+',
              'value': self.agent_conf.metadata_access_mark,
              'mask': lib_constants.ROUTER_MARK_MASK})
+        drop_non_local_metadata = (
+            '-m mark --mark %s/%s -j DROP' % (
+                self.agent_conf.metadata_access_mark,
+                lib_constants.ROUTER_MARK_MASK))
         self.iptables_manager.ipv4['mangle'].add_rule(
             'PREROUTING', mark_metadata_for_internal_interfaces)
+        self.iptables_manager.ipv4['filter'].add_rule(
+            'scope', drop_non_local_metadata)
 
         if netutils.is_ipv6_enabled():
             mark_metadata_v6_for_internal_interfaces = (
@@ -1102,8 +1108,14 @@ class RouterInfo(BaseRouterInfo):
                  'interface_name': INTERNAL_DEV_PREFIX + '+',
                  'value': self.agent_conf.metadata_access_mark,
                  'mask': lib_constants.ROUTER_MARK_MASK})
+            drop_non_local_v6_metadata = (
+                '-m mark --mark %s/%s -j DROP' % (
+                    self.agent_conf.metadata_access_mark,
+                    lib_constants.ROUTER_MARK_MASK))
             self.iptables_manager.ipv6['mangle'].add_rule(
                 'PREROUTING', mark_metadata_v6_for_internal_interfaces)
+            self.iptables_manager.ipv6['filter'].add_rule(
+                'scope', drop_non_local_v6_metadata)
 
     def _get_port_devicename_scopemark(
             self, ports, name_generator, interface_name=None):
