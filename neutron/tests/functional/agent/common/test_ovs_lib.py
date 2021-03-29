@@ -497,3 +497,27 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.assertEqual(p_const.TYPE_GRE, ipv4_port_type)
         self.assertEqual(ovs_lib.TYPE_GRE_IP6, ipv6_port_type)
         self.assertEqual('legacy_l2', ipv6_port_options.get('packet_type'))
+
+    def test_set_igmp_snooping_flood(self):
+        port_name = 'test_output_port_2'
+        self._create_bridge()
+        self._create_port(port_name)
+        self.ovs.set_igmp_snooping_flood(port_name, True)
+        ports_other_config = self.ovs.db_get_val('Port', port_name,
+                                                 'other_config')
+        self.assertEqual(
+            'true',
+            ports_other_config.get('mcast-snooping-flood', '').lower())
+        self.assertEqual(
+            'true',
+            ports_other_config.get('mcast-snooping-flood-reports', '').lower())
+
+        self.ovs.set_igmp_snooping_flood(port_name, False)
+        ports_other_config = self.ovs.db_get_val('Port', port_name,
+                                                 'other_config')
+        self.assertEqual(
+            'false',
+            ports_other_config.get('mcast-snooping-flood', '').lower())
+        self.assertEqual(
+            'false',
+            ports_other_config.get('mcast-snooping-flood-reports', '').lower())
