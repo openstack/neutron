@@ -35,6 +35,7 @@ TRAIN = 'train'
 USSURI = 'ussuri'
 VICTORIA = 'victoria'
 WALLABY = 'wallaby'
+XENA = 'xena'
 
 NEUTRON_MILESTONES = [
     # earlier milestones were not tagged
@@ -49,6 +50,7 @@ NEUTRON_MILESTONES = [
     TRAIN,
     USSURI,
     VICTORIA,
+    WALLABY,
     # Do not add the milestone until the end of the release
 ]
 
