@@ -135,3 +135,22 @@ def wait_for_dscp_marked_packet(sender_vm, receiver_vm, dscp_mark):
         "to %(dst)s" % {'dscp_mark': dscp_mark,
                         'src': sender_vm.ip,
                         'dst': receiver_vm.ip})
+
+
+def extract_vlan_id(flows):
+    if flows:
+        flow_list = flows.splitlines()
+        for flow in flow_list:
+            if 'mod_vlan_vid' in flow:
+                actions = flow.partition('actions=')[2]
+                after_mod = actions.partition('mod_vlan_vid:')[2]
+                return int(after_mod.partition(',')[0])
+
+
+def wait_for_mod_vlan_id_applied(bridge, expected_vlan_id):
+    def _vlan_id_rule_applied():
+        flows = bridge.dump_flows_for(table='0')
+        vlan_id = extract_vlan_id(flows)
+        return vlan_id == expected_vlan_id
+
+    common_utils.wait_until_true(_vlan_id_rule_applied)
