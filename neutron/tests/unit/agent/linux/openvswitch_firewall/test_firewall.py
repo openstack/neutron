@@ -1030,6 +1030,19 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                     ipv6_src='2003::1',
                     actions='resubmit(,%d)' % (
                         ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)))
+        for icmp_type in agent_firewall.ICMPV6_RESTRICTED_EGRESS_TYPES:
+            expected_calls.append(
+                mock.call(
+                    table=ovs_consts.BASE_EGRESS_TABLE,
+                    priority=95,
+                    in_port=TESTING_VLAN_TAG,
+                    reg5=TESTING_VLAN_TAG,
+                    dl_type='0x86dd',
+                    nw_proto=constants.PROTO_NUM_IPV6_ICMP,
+                    icmp_type=icmp_type,
+                    nd_target='2003::1',
+                    actions='resubmit(,%d)' % (
+                        ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)))
         self.mock_bridge.br.add_flow.assert_has_calls(expected_calls)
 
     def test_process_trusted_ports_caches_port_id(self):
