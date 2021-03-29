@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    Neutron resource tags can now be 255 characters long, previously resource
+    tags was limited to 60 characters.
+
