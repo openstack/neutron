@@ -1,8 +1,15 @@
 ---
-- name: Get DB connection string
-  command: crudini --get {{ neutron_conf_path }} database connection
+- name: Fetch neutron configuration
+  fetch:
+    src: "{{ neutron_conf_path }}"
+    dest: "{{ neutron_conf_tempfile }}"
+    flat: yes
   when: ovn_central is defined
-  register: mysql_url
+
+- name: Get DB connection string
+  set_fact:
+    db_connection_string: "{{ lookup('ini', 'connection section=database file={{ neutron_conf_tempfile }}') }}"
+  when: ovn_central is defined
 
 # The shell below is not readable well. The code spawns a sqlalchemy engine
 # and connects to the Neutron database to run following SQL command:
@@ -16,5 +23,5 @@
 #     conn.execute("SQL COMMAND")
 #
 - name: Change vxlan networks to Geneve
-  shell: podman exec -it neutron_api python3 -c $'from sqlalchemy import create_engine\nengine = create_engine("{{ mysql_url.stdout }}")\nwith engine.connect() as conn:\n\tconn.execute("update networksegments set networksegments.network_type=\'geneve\' where networksegments.network_type=\'vxlan\';")'
+  shell: podman exec -it neutron_api python3 -c $'from sqlalchemy import create_engine\nengine = create_engine("{{ db_connection_string }}")\nwith engine.connect() as conn:\n\tconn.execute("update networksegments set networksegments.network_type=\'geneve\' where networksegments.network_type=\'vxlan\';")'
   when: ovn_central is defined
