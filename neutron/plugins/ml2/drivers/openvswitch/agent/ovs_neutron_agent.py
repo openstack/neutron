@@ -1431,6 +1431,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                       "version of OVS does not support tunnels or patch "
                       "ports. Agent terminated!")
             sys.exit(1)
+        self.int_br.set_igmp_snooping_flood(
+            self.conf.OVS.int_peer_patch_port,
+            self.conf.OVS.igmp_snooping_enable)
         if self.conf.AGENT.drop_flows_on_start:
             self.tun_br.uninstall_flows(cookie=ovs_lib.COOKIE_ANY)
 
@@ -1584,6 +1587,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     phys_ofport = br.add_patch_port(
                         phys_if_name, constants.NONEXISTENT_PEER)
 
+            self.int_br.set_igmp_snooping_flood(
+                int_if_name, self.conf.OVS.igmp_snooping_enable)
             self.int_ofports[physical_network] = int_ofport
             self.phys_ofports[physical_network] = phys_ofport
 
