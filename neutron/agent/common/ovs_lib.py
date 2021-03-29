@@ -287,7 +287,7 @@ class OVSBridge(BaseOVS):
     def set_igmp_snooping_state(self, state):
         state = bool(state)
         other_config = {
-            'mcast-snooping-disable-flood-unregistered': str(state)}
+            'mcast-snooping-disable-flood-unregistered': 'false'}
         with self.ovsdb.transaction() as txn:
             txn.add(
                 self.ovsdb.db_set('Bridge', self.br_name,
@@ -295,6 +295,16 @@ class OVSBridge(BaseOVS):
             txn.add(
                 self.ovsdb.db_set('Bridge', self.br_name,
                                   ('other_config', other_config)))
+
+    def set_igmp_snooping_flood(self, port_name, state):
+        state = str(state)
+        other_config = {
+            'mcast-snooping-flood-reports': state,
+            'mcast-snooping-flood': state}
+        self.ovsdb.db_set(
+            'Port', port_name,
+            ('other_config', other_config)).execute(
+                check_error=True, log_errors=True)
 
     def create(self, secure_mode=False):
         other_config = {
