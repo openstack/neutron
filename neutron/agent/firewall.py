@@ -39,8 +39,11 @@ ICMPV6_ALLOWED_INGRESS_TYPES = (n_const.ICMPV6_TYPE_MLD_QUERY,
 # List of ICMPv6 types that should be permitted (egress) by default.
 ICMPV6_ALLOWED_EGRESS_TYPES = (n_const.ICMPV6_TYPE_MLD_QUERY,
                                n_const.ICMPV6_TYPE_RS,
-                               n_const.ICMPV6_TYPE_NS,
-                               n_const.ICMPV6_TYPE_NA)
+                               n_const.ICMPV6_TYPE_NS)
+
+# List of ICMPv6 types that should be permitted depending on payload content
+# to avoid spoofing (egress) by default.
+ICMPV6_RESTRICTED_EGRESS_TYPES = (n_const.ICMPV6_TYPE_NA, )
 
 
 def port_sec_enabled(port):

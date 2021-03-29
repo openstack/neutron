@@ -892,8 +892,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self._initialize_ingress(port)
 
     def _initialize_egress_ipv6_icmp(self, port, allowed_pairs):
-        # NOTE(slaweq): should we include also fe80::/64 (link-local) subnet
-        # in the allowed pairs here?
+        allowed_pairs = allowed_pairs.union({(port.mac, port.lla_address)})
         for mac_addr, ip_addr in allowed_pairs:
             for icmp_type in firewall.ICMPV6_ALLOWED_EGRESS_TYPES:
                 self._add_flow(
@@ -906,6 +905,19 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                     icmp_type=icmp_type,
                     dl_src=mac_addr,
                     ipv6_src=ip_addr,
+                    actions='resubmit(,%d)' % (
+                        ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
+                )
+            for icmp_type in firewall.ICMPV6_RESTRICTED_EGRESS_TYPES:
+                self._add_flow(
+                    table=ovs_consts.BASE_EGRESS_TABLE,
+                    priority=95,
+                    in_port=port.ofport,
+                    reg_port=port.ofport,
+                    dl_type=constants.ETHERTYPE_IPV6,
+                    nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
+                    icmp_type=icmp_type,
+                    nd_target=ip_addr,
                     actions='resubmit(,%d)' % (
                         ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
                 )
@@ -983,9 +995,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         """Identify egress traffic and send it to egress base"""
 
         # Apply mac/ip pairs for IPv4
-        allowed_pairs = port.allowed_pairs_v4.union(
+        allowed_mac_ipv4_pairs = port.allowed_pairs_v4.union(
             {(port.mac, ip_addr) for ip_addr in port.ipv4_addresses})
-        for mac_addr, ip_addr in allowed_pairs:
+        for mac_addr, ip_addr in allowed_mac_ipv4_pairs:
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=95,
@@ -1011,10 +1023,10 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             )
 
         # Apply mac/ip pairs for IPv6
-        allowed_pairs = port.allowed_pairs_v6.union(
+        allowed_mac_ipv6_pairs = port.allowed_pairs_v6.union(
             {(port.mac, ip_addr) for ip_addr in port.ipv6_addresses})
-        self._initialize_egress_ipv6_icmp(port, allowed_pairs)
-        for mac_addr, ip_addr in allowed_pairs:
+        self._initialize_egress_ipv6_icmp(port, allowed_mac_ipv6_pairs)
+        for mac_addr, ip_addr in allowed_mac_ipv6_pairs:
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=65,
@@ -1029,21 +1041,31 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             )
 
         # DHCP discovery
-        for dl_type, src_port, dst_port in (
-                (constants.ETHERTYPE_IP, 68, 67),
-                (constants.ETHERTYPE_IPV6, 546, 547)):
-            self._add_flow(
-                table=ovs_consts.BASE_EGRESS_TABLE,
-                priority=80,
-                reg_port=port.ofport,
-                in_port=port.ofport,
-                dl_type=dl_type,
-                nw_proto=lib_const.PROTO_NUM_UDP,
-                tp_src=src_port,
-                tp_dst=dst_port,
-                actions='resubmit(,{:d})'.format(
-                    ovs_consts.ACCEPT_OR_INGRESS_TABLE)
-            )
+        additional_ipv4_filters = [
+            {"dl_src": mac, "nw_src": ip}
+            for mac, ip in allowed_mac_ipv4_pairs]
+        additional_ipv4_filters.append(
+            {"dl_src": port.mac, "nw_src": "0.0.0.0"})
+        additional_ipv6_filters = [
+            {"dl_src": mac, "ipv6_src": ip}
+            for mac, ip in allowed_mac_ipv6_pairs]
+        for dl_type, src_port, dst_port, filters_list in (
+                (constants.ETHERTYPE_IP, 68, 67, additional_ipv4_filters),
+                (constants.ETHERTYPE_IPV6, 546, 547, additional_ipv6_filters)):
+            for additional_filters in filters_list:
+                self._add_flow(
+                    table=ovs_consts.BASE_EGRESS_TABLE,
+                    priority=80,
+                    reg_port=port.ofport,
+                    in_port=port.ofport,
+                    dl_type=dl_type,
+                    nw_proto=lib_const.PROTO_NUM_UDP,
+                    tp_src=src_port,
+                    tp_dst=dst_port,
+                    actions='resubmit(,{:d})'.format(
+                        ovs_consts.ACCEPT_OR_INGRESS_TABLE),
+                    **additional_filters
+                )
         # Ban dhcp service running on an instance
         for dl_type, src_port, dst_port in (
                 (constants.ETHERTYPE_IP, 67, 68),
