@@ -20,6 +20,7 @@
 # In particular, the oslo.config and python module path must not
 # be writeable by the unprivileged user.
 
+# PRIVSEP
 # oslo.privsep default neutron context
 privsep: PathFilter, privsep-helper, root,
  --config-file, /etc/(?!\.\.).*,
@@ -29,3 +30,28 @@ privsep: PathFilter, privsep-helper, root,
 # NOTE: A second `--config-file` arg can also be added above. Since
 # many neutron components are installed like that (eg: by devstack).
 # Adjust to suit local requirements.
+
+# DEBUG
+sleep: RegExpFilter, sleep, root, sleep, \d+
+
+# EXECUTE COMMANDS IN A NAMESPACE
+ip: IpFilter, ip, root
+ip_exec: IpNetnsExecFilter, ip, root
+
+# METADATA PROXY
+haproxy: RegExpFilter, haproxy, root, haproxy, -f, .*
+
+# DHCP
+dnsmasq: CommandFilter, dnsmasq, root
+
+# DIBBLER
+dibbler-client: CommandFilter, dibbler-client, root
+
+# L3
+radvd: CommandFilter, radvd, root
+keepalived: CommandFilter, keepalived, root
+keepalived_state_change: CommandFilter, neutron-keepalived-state-change, root
+
+# OPEN VSWITCH
+ovs-ofctl: CommandFilter, ovs-ofctl, root
+ovsdb-client: CommandFilter, ovsdb-client, root
