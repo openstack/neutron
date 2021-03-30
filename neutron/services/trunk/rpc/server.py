@@ -128,6 +128,12 @@ class TrunkSkeleton(object):
         trunk_port_id = trunk.port_id
         trunk_port = self.core_plugin.get_port(context, trunk_port_id)
         trunk_host = trunk_port.get(portbindings.HOST_ID)
+        migrating_to_host = trunk_port.get(
+            portbindings.PROFILE, {}).get('migrating_to')
+        if migrating_to_host and trunk_host != migrating_to_host:
+            # Trunk is migrating now, so lets update host of the subports
+            # to the new host already
+            trunk_host = migrating_to_host
 
         # NOTE(status_police) Set the trunk in BUILD state before
         # processing subport bindings. The trunk will stay in BUILD
