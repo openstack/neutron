@@ -88,6 +88,9 @@ In the new stable branch, you should make sure that:
    To make stable jobs execute only the necessary tests the list in devstack
    (devstack/lib/tempest) must be checked and filled;
    https://review.opendev.org/c/openstack/devstack/+/769885
+#. Grafana dashboards for stable branches should be updated to point to the
+   latest releases;
+   https://review.opendev.org/c/openstack/project-config/+/757102
 
 Note that some of those steps are covered by the OpenStack release team and its
 release bot.
