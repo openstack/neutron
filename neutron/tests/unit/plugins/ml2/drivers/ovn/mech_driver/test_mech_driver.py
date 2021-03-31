@@ -66,7 +66,7 @@ from neutron.tests.unit.plugins.ml2 import test_security_group
 OVN_PROFILE = ovn_const.OVN_PORT_BINDING_PROFILE
 
 
-class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
+class TestOVNMechanismDriverBase(test_plugin.Ml2PluginV2TestCase):
 
     _mechanism_drivers = ['logger', 'ovn']
     _extension_drivers = ['port_security', 'dns']
@@ -87,7 +87,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                                        group='ovn')
         cfg.CONF.set_override('vlan_transparent', True)
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
-        super(TestOVNMechanismDriver, self).setUp()
+        super().setUp()
         mm = directory.get_plugin().mechanism_manager
         self.mech_driver = mm.mech_drivers['ovn'].obj
         neutron_agent.AgentCache(self.mech_driver)
@@ -121,6 +121,8 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         p.start()
         self.addCleanup(p.stop)
 
+
+class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     @mock.patch.object(ovsdb_monitor.OvnInitPGNbIdl, 'from_server')
     @mock.patch.object(ovsdb_monitor, 'short_living_ovsdb_api')
     def test__create_neutron_pg_drop_non_existing(

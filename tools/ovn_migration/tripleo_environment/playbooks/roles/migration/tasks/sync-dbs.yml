@@ -8,13 +8,13 @@
   command: podman exec "{{ neutron_id.stdout }}"
            neutron-ovn-db-sync-util --config-file /etc/neutron/neutron.conf
            --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
-           --ovn-neutron_sync_mode repair
+           --ovn-neutron_sync_mode migrate
 
 - name: Sync neutron db with OVN db (container) - Run 2
   command: podman exec "{{ neutron_id.stdout }}"
            neutron-ovn-db-sync-util --config-file /etc/neutron/neutron.conf
            --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
-           --ovn-neutron_sync_mode repair
+           --ovn-neutron_sync_mode migrate
 
 - name: Pause and let ovn-controllers settle before doing the final activation (5 minute)
   pause: minutes=5
