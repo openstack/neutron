@@ -40,28 +40,28 @@ class PolicyBaseTestCase(tests_base.BaseTestCase):
 
     def _prepare_system_scope_personas(self):
         self.system_admin_ctx = context.Context(
-            user=self.system_user_id,
+            user_id=self.system_user_id,
             roles=['admin', 'member', 'reader'],
             system_scope='all')
         self.system_member_ctx = context.Context(
-            user=self.system_user_id,
+            user_id=self.system_user_id,
             roles=['member', 'reader'],
             system_scope='all')
         self.system_reader_ctx = context.Context(
-            user=self.system_user_id,
+            user_id=self.system_user_id,
             roles=['reader'],
             system_scope='all')
 
     def _prepare_project_scope_personas(self):
         self.project_admin_ctx = context.Context(
-            user=self.user_id,
+            user_id=self.user_id,
             roles=['admin', 'member', 'reader'],
             project_id=self.project_id)
         self.project_member_ctx = context.Context(
-            user=self.user_id,
+            user_id=self.user_id,
             roles=['member', 'reader'],
             project_id=self.project_id)
         self.project_reader_ctx = context.Context(
-            user=self.user_id,
+            user_id=self.user_id,
             roles=['reader'],
             project_id=self.project_id)
