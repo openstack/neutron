@@ -373,7 +373,8 @@ class OVSBridge(BaseOVS):
         for i in range(1, 11):
             try:
                 return utils.execute(full_args, run_as_root=True,
-                                     process_input=process_input)
+                                     process_input=process_input,
+                                     privsep_exec=True)
             except Exception as e:
                 if "failed to connect to socket" in str(e):
                     LOG.debug("Failed to connect to OVS. Retrying "

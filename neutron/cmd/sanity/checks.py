@@ -113,7 +113,8 @@ def ofctl_arg_supported(cmd, **kwargs):
                      ovs_lib._build_flow_expr_str(kwargs, cmd.split('-')[0],
                                                   False)]
         try:
-            agent_utils.execute(full_args, run_as_root=True)
+            agent_utils.execute(full_args, run_as_root=True,
+                                privsep_exec=True)
         except RuntimeError as e:
             LOG.debug("Exception while checking supported feature via "
                       "command %s. Exception: %s", full_args, e)

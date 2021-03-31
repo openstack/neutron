@@ -200,12 +200,12 @@ class OVS_Lib_Test(base.BaseTestCase):
 
     def _ofctl_mock(self, cmd, *args, **kwargs):
         cmd = self._ofctl_args(cmd, *args)
-        return mock.call(cmd, run_as_root=True, **kwargs)
+        return mock.call(cmd, run_as_root=True, privsep_exec=True, **kwargs)
 
     def _verify_ofctl_mock(self, cmd, *args, **kwargs):
         cmd = self._ofctl_args(cmd, *args)
-        return self.execute.assert_called_once_with(cmd, run_as_root=True,
-                                                    **kwargs)
+        return self.execute.assert_called_once_with(
+            cmd, run_as_root=True, privsep_exec=True, **kwargs)
 
     def test_add_flow_timeout_set(self):
         flow_dict = collections.OrderedDict([

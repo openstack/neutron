@@ -1168,7 +1168,7 @@ class TestCookieContext(base.BaseTestCase):
                 mock.ANY,
                 process_input='hard_timeout=0,idle_timeout=0,priority=1,'
                               'cookie=%d,actions=drop' % cookie,
-                run_as_root=mock.ANY,
+                run_as_root=True, privsep_exec=True
             ) for cookie in (update_cookie, default_cookie)
         ]
 
