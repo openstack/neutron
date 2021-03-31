@@ -12,9 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
 import re
 
 from oslo_concurrency import processutils
+from oslo_utils import fileutils
 
 from neutron import privileged
 
@@ -40,3 +42,8 @@ def _find_listen_pids_namespace(namespace):
         if m:
             pids.add(m.group('pid'))
     return list(pids)
+
+
+@privileged.default.entrypoint
+def delete_if_exists(path, remove=os.unlink):
+    fileutils.delete_if_exists(path, remove=remove)

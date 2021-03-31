@@ -111,7 +111,8 @@ class ProcessManager(MonitoredProcess):
                 utils.execute(cmd, run_as_root=self.run_as_root)
                 # In the case of shutting down, remove the pid file
                 if sig == '9':
-                    fileutils.delete_if_exists(self.get_pid_file_name())
+                    utils.delete_if_exists(self.get_pid_file_name(),
+                                           run_as_root=self.run_as_root)
         elif pid:
             LOG.debug('%(service)s process for %(uuid)s pid %(pid)d is stale, '
                       'ignoring signal %(signal)s',
