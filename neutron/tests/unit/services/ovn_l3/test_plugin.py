@@ -23,6 +23,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import availability_zone as az_exc
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -386,6 +387,23 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                 ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
                 utils.ovn_name(self.fake_network['id'])})
+
+    def test_remove_router_interface_router_not_found(self):
+        router_id = 'router-id'
+        interface_info = {'port_id': 'router-port-id'}
+        self.get_port.side_effect = n_exc.PortNotFound(
+                                        port_id='router-port-id')
+        self.get_router.side_effect = l3_exc.RouterNotFound(
+            router_id='router-id')
+
+        self.l3_inst.remove_router_interface(
+            self.context, router_id, interface_info)
+
+        self.get_router.assert_called_once_with(self.context, 'router-id')
+        self.l3_inst._ovn.lrp_del.assert_called_once_with(
+            'lrp-router-port-id', 'neutron-router-id', if_exists=True)
+        self.del_rev_p.assert_called_once_with(
+            self.context, 'router-port-id', ovn_const.TYPE_ROUTER_PORTS)
 
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_router')
