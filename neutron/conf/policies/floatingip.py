@@ -25,7 +25,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='create_floatingip',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
         description='Create a floating IP',
         operations=[
             {
@@ -90,7 +90,7 @@ rules = [
         ],
         scope_types=['system', 'project'],
         deprecated_rule=policy.DeprecatedRule(
-            name='create_floatingip',
+            name='update_floatingip',
             check_str=base.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATION_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
@@ -107,7 +107,7 @@ rules = [
         ],
         scope_types=['system', 'project'],
         deprecated_rule=policy.DeprecatedRule(
-            name='create_floatingip',
+            name='delete_floatingip',
             check_str=base.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATION_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
