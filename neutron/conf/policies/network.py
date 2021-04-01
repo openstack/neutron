@@ -45,7 +45,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='create_network',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create a network',
         operations=ACTION_POST,
@@ -93,7 +93,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:port_security_enabled',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description=(
             'Specify ``port_security_enabled`` '
@@ -186,7 +186,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_network:router:external',
-        check_str=base.PROJECT_READER,
+        check_str=base.SYSTEM_OR_PROJECT_READER,
         scope_types=['project'],
         description='Get ``router:external`` attribute of a network',
         operations=ACTION_GET,
