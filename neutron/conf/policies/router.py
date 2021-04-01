@@ -39,7 +39,7 @@ ACTION_GET = [
 rules = [
     policy.DocumentedRuleDefault(
         name='create_router',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create a router',
         operations=ACTION_POST,
