@@ -51,7 +51,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='create_port',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
         scope_types=['system', 'project'],
         description='Create a port',
         operations=ACTION_POST,
@@ -211,7 +211,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_port:binding:vnic_type',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description=(
             'Specify ``binding:vnic_type`` '
