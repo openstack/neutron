@@ -10,6 +10,7 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from oslo_log import versionutils
 from oslo_policy import policy
 
 from neutron.conf.policies import base
@@ -17,6 +18,9 @@ from neutron.conf.policies import base
 
 AG_COLLECTION_PATH = '/address-groups'
 AG_RESOURCE_PATH = '/address-groups/{id}'
+
+DEPRECATION_REASON = (
+    "The Address scope API now supports system scope and default roles.")
 
 
 rules = [
@@ -27,8 +31,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_address_group',
-        check_str=base.policy_or(base.RULE_ADMIN_OR_OWNER,
-                                 'rule:shared_address_groups'),
+        check_str=base.policy_or(
+            base.SYSTEM_OR_PROJECT_READER,
+            'rule:shared_address_groups'),
         description='Get an address group',
         operations=[
             {
@@ -39,7 +44,14 @@ rules = [
                 'method': 'GET',
                 'path': AG_RESOURCE_PATH,
             },
-        ]
+        ],
+        scope_types=['system', 'project'],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_address_group',
+            check_str=base.policy_or(base.RULE_ADMIN_OR_OWNER,
+                                     'rule:shared_address_groups'),
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 
