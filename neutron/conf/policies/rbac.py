@@ -34,7 +34,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='create_rbac_policy',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
         scope_types=['system', 'project'],
         description='Create an RBAC policy',
         operations=[

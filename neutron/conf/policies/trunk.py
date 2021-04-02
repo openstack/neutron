@@ -26,7 +26,7 @@ DEPRECATED_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='create_trunk',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project', 'system'],
         description='Create a trunk',
         operations=[
