@@ -37,7 +37,7 @@ HEADS_FILENAME = 'HEADS'
 CONTRACT_HEAD_FILENAME = 'CONTRACT_HEAD'
 EXPAND_HEAD_FILENAME = 'EXPAND_HEAD'
 
-CURRENT_RELEASE = migration.WALLABY
+CURRENT_RELEASE = migration.XENA
 RELEASES = (
     migration.LIBERTY,
     migration.MITAKA,
@@ -51,6 +51,7 @@ RELEASES = (
     migration.USSURI,
     migration.VICTORIA,
     migration.WALLABY,
+    migration.XENA,
 )
 
 EXPAND_BRANCH = 'expand'

@@ -14,6 +14,7 @@
 from alembic import op
 import sqlalchemy as sa
 
+from neutron.db import migration
 
 """add_rbac_support_for_address_group
 
@@ -26,6 +27,9 @@ Create Date: 2021-01-22 11:24:07.435031
 # revision identifiers, used by Alembic.
 revision = '6135a7bd4425'
 down_revision = '1e0744e4ffea'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.WALLABY]
 
 
 def upgrade():
