@@ -994,7 +994,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self._clean_deleted_remote_sg_members_conntrack_entries()
 
     def _get_sg_members(self, sg_info, sg_id, ethertype):
-        return set(sg_info.get(sg_id, {}).get(ethertype, []))
+        ip_mac_addresses = sg_info.get(sg_id, {}).get(ethertype, [])
+        return set([ip_mac[0] for ip_mac in ip_mac_addresses])
 
     def filter_defer_apply_off(self):
         if self._defer_apply:
