@@ -324,25 +324,9 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
                     self.alembic_config, 'upgrade',
                     '%s@head' % migration.CONTRACT_BRANCH)
 
-    def _test_has_offline_migrations(self, revision, expected):
-        engine = self.get_engine()
-        cfg.CONF.set_override('connection', engine.url, group='database')
-        migration.do_alembic_command(self.alembic_config, 'upgrade', revision)
-        self.assertEqual(expected,
-                         migration.has_offline_migrations(self.alembic_config,
-                                                          'unused'))
-
-    def test_has_offline_migrations_pending_contract_scripts(self):
-        self._test_has_offline_migrations('kilo', True)
-
-    def test_has_offline_migrations_all_heads_upgraded(self):
-        self._test_has_offline_migrations('heads', False)
-
     # NOTE(ihrachys): if this test fails for you, it probably means that you
     # attempt to add an unsafe contract migration script, that is in
     # contradiction to blueprint online-upgrades
-    # TODO(ihrachys): revisit later in Pike+ where some contract scripts may be
-    # safe again
     def test_forbid_offline_migrations_starting_newton(self):
         engine = self.get_engine()
         cfg.CONF.set_override('connection', engine.url, group='database')
@@ -395,16 +379,6 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
     @test_base.skip_if_timeout("bug 1687027")
     def test_branches(self):
         super(TestModelsMigrationsMysql, self).test_branches()
-
-    @test_base.skip_if_timeout("bug 1687027")
-    def test_has_offline_migrations_pending_contract_scripts(self):
-        super(TestModelsMigrationsMysql,
-              self).test_has_offline_migrations_pending_contract_scripts()
-
-    @test_base.skip_if_timeout("bug 1687027")
-    def test_has_offline_migrations_all_heads_upgraded(self):
-        super(TestModelsMigrationsMysql,
-              self).test_has_offline_migrations_all_heads_upgraded()
 
     @test_base.skip_if_timeout("bug 1687027")
     def test_models_sync(self):
