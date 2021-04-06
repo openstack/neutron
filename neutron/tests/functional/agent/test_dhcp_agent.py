@@ -356,17 +356,12 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         new_network.subnets.append(dhcp_enabled_ipv4_subnet)
 
         self.mock_plugin_api.get_network_info.return_value = new_network
-        fixed_ip_mock = mock.Mock(
-            ip_address='192.168.10.2',
-            subnet_id=dhcp_enabled_ipv4_subnet.id)
-        dhcp_port_mock = mock.Mock(
-            dns_assignment={},
-            extra_dhcp_opts=[],
-            fixed_ips=[fixed_ip_mock],
-            id=new_network.ports[0].id,
+        dhcp_port_mock = self.create_port_dict(
+            network.id, dhcp_enabled_ipv4_subnet.id,
             mac_address=str(self._DHCP_PORT_MAC_ADDRESS))
-        self.mock_plugin_api.get_dhcp_port.return_value = dhcp_port_mock
-        self.mock_plugin_api.update_dhcp_port.return_value = dhcp_port_mock
+        self.mock_plugin_api.create_dhcp_port.return_value = dhcp_port_mock
+        network.ports = []
+        new_network.ports = []
 
         self.agent.refresh_dhcp_helper(network.id)
         # Metadata proxy should be spawned for the newly added subnet
