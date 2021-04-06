@@ -53,7 +53,7 @@ rules = [
         name='create_rbac_policy:target_tenant',
         check_str=base.policy_or(
             base.SYSTEM_ADMIN,
-            'rule:restrict_wildcard'),
+            '(not field:rbac_policy:target_tenant=*)'),
         description='Specify ``target_tenant`` when creating an RBAC policy',
         operations=[
             {
@@ -89,7 +89,7 @@ rules = [
         name='update_rbac_policy:target_tenant',
         check_str=base.policy_or(
             base.SYSTEM_ADMIN,
-            'rule:restrict_wildcard'),
+            '(not field:rbac_policy:target_tenant=*)'),
         description='Update ``target_tenant`` attribute of an RBAC policy',
         operations=[
             {
