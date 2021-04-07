@@ -1,0 +1,43 @@
+- name: Ensure nftables is installed
+  package:
+    name: 'nftables'
+    state: latest
+  become: yes
+
+- name: Switch to nftables binaries
+  shell:
+    cmd: |
+      /usr/bin/update-alternatives --set iptables /usr/sbin/iptables-nft
+      /usr/bin/update-alternatives --set ip6tables /usr/sbin/ip6tables-nft
+      /usr/bin/update-alternatives --set ebtables /usr/sbin/ebtables-nft
+      /usr/bin/update-alternatives --set arptables /usr/sbin/arptables-nft
+    executable: /bin/bash
+  become: yes
+
+- name: Restart nftables service, that will replace iptables(4,6), ebtables and arptables
+  ansible.builtin.systemd:
+    state: restarted
+    name: nftables.service
+  become: yes
+
+- name: Check ipv4 rules, stored by iptables-persistent
+  stat:
+    path: '/etc/iptables/rules.v4'
+  register: ipv4_rules_file
+
+- name: Check ipv6 rules, stored by iptables-persistent
+  stat:
+    path: '/etc/iptables/rules.v6'
+  register: ipv6_rules_file
+
+- name: Restore saved IPv4 iptables rules, stored by iptables-persistent
+  shell:
+    cmd: |
+      iptables-restore '{{ ipv4_rules_file }}'
+  become: yes
+
+- name: Restore saved IPv6 iptables rules, stored by iptables-persistent
+  shell:
+    cmd: |
+      ip6tables-restore '{{ ipv6_rules_file }}'
+  become: yes

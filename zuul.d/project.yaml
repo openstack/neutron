@@ -107,3 +107,5 @@
         - neutron-ovn-tripleo-ci-centos-8-containers-multinode:
             vars: *consumer_vars
             dependencies: *consumer_deps
+        - neutron-tempest-plugin-scenario-linuxbridge-nftables
+        - neutron-tempest-plugin-scenario-openvswitch-iptables_hybrid-nftables
