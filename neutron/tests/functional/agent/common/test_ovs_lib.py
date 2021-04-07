@@ -56,6 +56,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.br_name = ('br-' + uuidutils.generate_uuid())[:10]
         self.port_id = ('port-' + uuidutils.generate_uuid())[:8]
         self.ovs = ovs_lib.OVSBridge(self.br_name)
+        self._check_no_minbw_qos()
         self.elements_to_clean = {'bridges': [], 'devices': [],
                                   'qoses': [], 'queues': []}
         self.addCleanup(self._clean_system)
@@ -159,6 +160,25 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         except common_utils.WaitTimeout:
             self.fail('Expected value: %s, retrieved value: %s' %
                       (expected_value, ret[0]))
+
+    def _check_no_minbw_qos(self):
+        """Asserts that there are no min BW qos/queues for this OVS instance"""
+        qos_id, qos_queues = self.ovs._find_qos()
+        if not qos_id and not qos_queues:
+            return
+
+        qos = self.ovs._list_qos(_id=qos_id)
+        ovs_queues = self.ovs._list_queues(
+            _type=qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH)
+        queues = []
+        queue_uuids = list(qos_queues.values())
+        for ovs_queue in ovs_queues:
+            if ovs_queue['_uuid'] in queue_uuids:
+                queues.append(str(ovs_queue))
+
+        msg = ('There are QoS/queue registers\nQoS: %s\nqueues: %s' %
+               (str(qos), queues))
+        self.fail(msg)
 
     def test__update_queue_new(self):
         queue_id, neutron_port_id = self._create_queue()
