@@ -321,7 +321,6 @@
 - job:
     name: neutron-tempest-dvr-ha-multinode-full
     parent: tempest-multinode-full-py3
-    nodeset: openstack-three-node-bionic
     timeout: 10800
     roles:
       - zuul: openstack/neutron-tempest-plugin
@@ -355,7 +354,7 @@
               bridge_mappings: public:br-ex
           $NEUTRON_L3_CONF:
             DEFAULT:
-              agent_mode: dvr
+              agent_mode: dvr_snat
             agent:
               availability_zone: nova
           $NEUTRON_DHCP_CONF:
