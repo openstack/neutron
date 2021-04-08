@@ -219,6 +219,8 @@ class OVNClient(object):
 
         port_type = ''
         cidrs = ''
+        dhcpv4_options = self._get_port_dhcp_options(port, const.IP_VERSION_4)
+        dhcpv6_options = self._get_port_dhcp_options(port, const.IP_VERSION_6)
         if vtep_physical_switch:
             vtep_logical_switch = binding_prof.get('vtep-logical-switch')
             port_type = 'vtep'
@@ -253,11 +255,6 @@ class OVNClient(object):
                         options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY] = (
                             ','.join(parents))
 
-            port_security, new_macs = (
-                self._get_allowed_addresses_from_port(port))
-            addresses = [address]
-            addresses.extend(new_macs)
-
             # Only adjust the OVN type if the port is not owned by Neutron
             # DHCP agents.
             if (port['device_owner'] == const.DEVICE_OWNER_DHCP and
@@ -275,9 +272,21 @@ class OVNClient(object):
                     LOG.warning('The version of OVN used does not support '
                                 'the "external ports" feature used for '
                                 'SR-IOV ports with OVN native DHCP')
+            addresses = []
+            port_security, new_macs = (
+                self._get_allowed_addresses_from_port(port))
+            # TODO(egarciar): OVN supports MAC learning from v21.03. This
+            # if-else block is stated so as to keep compability with older OVN
+            # versions and should be removed in the future.
+            if self._sb_idl.is_table_present('FDB'):
+                if (port_security or port_type or dhcpv4_options or
+                        dhcpv6_options):
+                    addresses.append(address)
+                    addresses.extend(new_macs)
+            else:
+                addresses = [address]
+                addresses.extend(new_macs)
 
-            # The "unknown" address should only be set for the normal LSP
-            # ports (the ones which type is empty)
             if not port_security and not port_type:
                 # Port security is disabled for this port.
                 # So this port can send traffic with any mac address.
@@ -285,9 +294,6 @@ class OVNClient(object):
                 # is added to the Logical_Switch_Port.addresses column.
                 # So add it.
                 addresses.append(ovn_const.UNKNOWN_ADDR)
-
-        dhcpv4_options = self._get_port_dhcp_options(port, const.IP_VERSION_4)
-        dhcpv6_options = self._get_port_dhcp_options(port, const.IP_VERSION_6)
 
         # HA Chassis Group will bind the port to the highest
         # priority Chassis

@@ -464,8 +464,8 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                     self.assertEqual([],
                                      called_args_dict.get('port_security'))
 
-                    self.assertEqual(ovn_const.UNKNOWN_ADDR,
-                                     called_args_dict.get('addresses')[1])
+                    self.assertIn(ovn_const.UNKNOWN_ADDR,
+                            called_args_dict.get('addresses'))
                     data = {'port': {'mac_address': '00:00:00:00:00:01'}}
                     req = self.new_update_request(
                         'ports',
@@ -477,9 +477,8 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                          ).call_args_list[0][1])
                     self.assertEqual([],
                                      called_args_dict.get('port_security'))
-                    self.assertEqual(2, len(called_args_dict.get('addresses')))
-                    self.assertEqual(ovn_const.UNKNOWN_ADDR,
-                                     called_args_dict.get('addresses')[1])
+                    self.assertIn(ovn_const.UNKNOWN_ADDR,
+                            called_args_dict.get('addresses'))
 
                     # Enable port security
                     data = {'port': {'port_security_enabled': 'True'}}
