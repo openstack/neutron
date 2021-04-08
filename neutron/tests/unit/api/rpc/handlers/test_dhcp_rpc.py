@@ -245,6 +245,12 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         self.assertEqual(retval['non_local_subnets'],
                          sorted_nonlocal_subnet_retval)
         self.assertEqual(retval['ports'], port_retval)
+        subnet_filters = {'network_id': [network_retval['id']],
+                          'enable_dhcp': [True]}
+        self.plugin.assert_has_calls(
+            [mock.call.get_network(mock.ANY, 'a'),
+             mock.call.get_subnets(mock.ANY, filters=subnet_filters),
+             mock.call.get_ports(mock.ANY, filters={'network_id': ['a']})])
 
     def test_get_network_info(self):
         self._test_get_network_info()
