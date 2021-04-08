@@ -35,7 +35,7 @@ TAGS = TAG + 's'
 TAGS_ANY = TAGS + '-any'
 NOT_TAGS = 'not-' + TAGS
 NOT_TAGS_ANY = NOT_TAGS + '-any'
-MAX_TAG_LEN = 60
+MAX_TAG_LEN = 255
 TAG_PLUGIN_TYPE = 'TAG'
 
 TAG_SUPPORTED_RESOURCES = standard_attr.get_tag_resource_parent_map()
