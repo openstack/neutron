@@ -729,7 +729,7 @@ class ProjectMemberTests(ProjectAdminTests):
         self.context = self.project_member_ctx
 
 
-class ProjectReaderTests(NetworkAPITestCase):
+class ProjectReaderTests(ProjectMemberTests):
 
     def setUp(self):
         super(ProjectReaderTests, self).setUp()
@@ -829,23 +829,6 @@ class ProjectReaderTests(NetworkAPITestCase):
             policy.enforce,
             self.context, 'create_network:provider:segmentation_id',
             self.alt_target)
-
-    def test_get_network(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_network', self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'get_network', self.alt_target)
-
-    def test_get_network_external(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:router:external', self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'get_network:router:external', self.alt_target)
 
     def test_get_network_segments(self):
         self.assertRaises(
