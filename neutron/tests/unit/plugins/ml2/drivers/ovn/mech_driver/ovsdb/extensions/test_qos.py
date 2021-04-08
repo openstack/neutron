@@ -21,6 +21,7 @@ from neutron_lib.services.qos import constants as qos_constants
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
+from neutron.common.ovn import constants as ovn_const
 from neutron.core_extensions import qos as core_qos
 from neutron import manager
 from neutron.objects import network as network_obj
@@ -252,6 +253,13 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self.qos_driver.update_port(mock.ANY, port, original_port, reset=True)
         self.mock_rules.assert_called_once_with(
             mock.ANY, port.id, port.network_id, self.qos_policies[0].id, None)
+
+        # External port, OVN QoS extension does not apply.
+        self.mock_rules.reset_mock()
+        port.qos_policy_id = self.qos_policies[0].id
+        self.qos_driver.update_port(mock.ANY, port, original_port,
+                                    port_type=ovn_const.LSP_TYPE_EXTERNAL)
+        self.mock_rules.assert_not_called()
 
     def test_delete_port(self):
         self.mock_rules.reset_mock()
