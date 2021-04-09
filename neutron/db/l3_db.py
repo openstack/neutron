@@ -1621,6 +1621,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         @return: set of router-ids that require notification updates
         """
         with db_api.CONTEXT_WRITER.using(context):
+            if not l3_obj.FloatingIP.objects_exist(
+                    context, fixed_port_id=port_id):
+                return []
+
             floating_ip_objs = l3_obj.FloatingIP.get_objects(
                 context, fixed_port_id=port_id)
             router_ids = {fip.router_id for fip in floating_ip_objs}
@@ -1665,7 +1669,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _get_floatingips_by_port_id(self, context, port_id):
         """Helper function to retrieve the fips associated with a port_id."""
-        return l3_obj.FloatingIP.get_objects(context, fixed_port_id=port_id)
+        if l3_obj.FloatingIP.objects_exist(context, fixed_port_id=port_id):
+            return l3_obj.FloatingIP.get_objects(
+                context, fixed_port_id=port_id)
+        else:
+            return []
 
     def _build_routers_list(self, context, routers, gw_ports):
         """Subclasses can override this to add extra gateway info"""
