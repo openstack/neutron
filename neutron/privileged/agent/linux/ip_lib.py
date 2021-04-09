@@ -532,7 +532,7 @@ def dump_neigh_entries(ip_version, device, namespace, **kwargs):
     return entries
 
 
-@privileged.default.entrypoint
+@privileged.namespace_cmd.entrypoint
 def create_netns(name, **kwargs):
     """Create a network namespace.
 
@@ -553,7 +553,7 @@ def create_netns(name, **kwargs):
             raise RuntimeError(_('Error creating namespace %s' % name))
 
 
-@privileged.default.entrypoint
+@privileged.namespace_cmd.entrypoint
 def remove_netns(name, **kwargs):
     """Remove a network namespace.
 
@@ -566,7 +566,7 @@ def remove_netns(name, **kwargs):
             raise
 
 
-@privileged.default.entrypoint
+@privileged.namespace_cmd.entrypoint
 def list_netns(**kwargs):
     """List network namespaces.
 
