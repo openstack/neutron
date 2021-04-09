@@ -1519,12 +1519,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     @db_api.retry_if_session_inactive()
     def delete_disassociated_floatingips(self, context, network_id):
-        fip_objs = l3_obj.FloatingIP.get_objects(
-            context,
-            floating_network_id=network_id, router_id=None, fixed_port_id=None)
+        fip_ids = l3_obj.FloatingIP.get_disassociated_ids_for_net(
+            context, network_id)
 
-        for fip in fip_objs:
-            self.delete_floatingip(context, fip.id)
+        for fip_id in fip_ids:
+            self.delete_floatingip(context, fip_id)
 
     @db_api.retry_if_session_inactive()
     def get_floatingips_count(self, context, filters=None):

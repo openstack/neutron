@@ -310,6 +310,15 @@ class FloatingIP(base.NeutronDbObject):
             row = [r for r in six.next(value)]
             yield (cls._load_object(context, row[0]), row[1])
 
+    @classmethod
+    def get_disassociated_ids_for_net(cls, context, network_id):
+        query = context.session.query(cls.db_model.id)
+        query = query.filter_by(
+            floating_network_id=network_id,
+            router_id=None,
+            fixed_port_id=None)
+        return [f.id for f in query]
+
 
 @base.NeutronObjectRegistry.register
 class DvrFipGatewayPortAgentBinding(base.NeutronDbObject):
