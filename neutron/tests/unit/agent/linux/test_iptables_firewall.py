@@ -2086,6 +2086,22 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_rule('sg-chain', '-j ACCEPT')]
         self.v4filter_inst.assert_has_calls(calls)
 
+    def test__get_sg_members(self):
+        sg_info = {_uuid(): {constants.IPv4: [['ip1', None]],
+                             constants.IPv6: []},
+                   _uuid(): {constants.IPv4: [['ip2', None], ['ip3', None]],
+                             constants.IPv6: [['ip4', None]]},
+                   }
+        sg_ids = list(sg_info.keys())
+        self.assertEqual({'ip1'}, self.firewall._get_sg_members(
+            sg_info, sg_ids[0], constants.IPv4))
+        self.assertEqual(set([]), self.firewall._get_sg_members(
+            sg_info, sg_ids[0], constants.IPv6))
+        self.assertEqual({'ip2', 'ip3'}, self.firewall._get_sg_members(
+            sg_info, sg_ids[1], constants.IPv4))
+        self.assertEqual({'ip4'}, self.firewall._get_sg_members(
+            sg_info, sg_ids[1], constants.IPv6))
+
 
 class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
     def setUp(self):
