@@ -144,11 +144,11 @@ class DhcpAgentNotifyAPI(object):
                         network['id'])
         return new_agents + existing_agents
 
-    def _get_enabled_agents(self, context, network, agents, method, payload):
+    def _get_enabled_agents(
+            self, context, network_id, network, agents, method, payload):
         """Get the list of agents who can provide services."""
         if not agents:
             return []
-        network_id = network['id']
         enabled_agents = agents
         if not cfg.CONF.enable_services_on_agents_with_admin_state_down:
             enabled_agents = [x for x in agents if x.admin_state_up]
@@ -166,6 +166,10 @@ class DhcpAgentNotifyAPI(object):
         if not enabled_agents:
             num_ports = self.plugin.get_ports_count(
                 context, {'network_id': [network_id]})
+            if not network:
+                admin_ctx = (context if context.is_admin else
+                             common_utils.get_elevated_context(context))
+                network = self.plugin.get_network(admin_ctx, network_id)
             notification_required = (
                 num_ports > 0 and len(network['subnets']) >= 1)
             if notification_required:
@@ -180,7 +184,8 @@ class DhcpAgentNotifyAPI(object):
     def _is_reserved_dhcp_port(self, port):
         return port.get('device_id') == constants.DEVICE_ID_RESERVED_DHCP_PORT
 
-    def _notify_agents(self, context, method, payload, network_id):
+    def _notify_agents(
+            self, context, method, payload, network_id, network=None):
         """Notify all the agents that are hosting the network."""
         payload['priority'] = METHOD_PRIORITY_MAP.get(method)
         # fanout is required as we do not know who is "listening"
@@ -195,32 +200,36 @@ class DhcpAgentNotifyAPI(object):
         if fanout_required:
             self._fanout_message(context, method, payload)
         elif cast_required:
-            admin_ctx = (context if context.is_admin else
-                         common_utils.get_elevated_context(context))
-            network = self.plugin.get_network(admin_ctx, network_id)
+            candidate_hosts = None
             if 'subnet' in payload and payload['subnet'].get('segment_id'):
                 # if segment_id exists then the segment service plugin
                 # must be loaded
                 segment_plugin = directory.get_plugin('segments')
                 segment = segment_plugin.get_segment(
                     context, payload['subnet']['segment_id'])
-                network['candidate_hosts'] = segment['hosts']
+                candidate_hosts = segment['hosts']
 
             agents = self.plugin.get_dhcp_agents_hosting_networks(
-                context, [network_id], hosts=network.get('candidate_hosts'))
+                context, [network_id], hosts=candidate_hosts)
             # schedule the network first, if needed
             schedule_required = (
                 method == 'subnet_create_end' or
                 method == 'port_create_end' and
                 not self._is_reserved_dhcp_port(payload['port']))
             if schedule_required:
+                admin_ctx = (context if context.is_admin else
+                             common_utils.get_elevated_context(context))
+                network = network or self.plugin.get_network(
+                    admin_ctx, network_id)
+                if candidate_hosts:
+                    network['candidate_hosts'] = candidate_hosts
                 agents = self._schedule_network(admin_ctx, network, agents)
             if not agents:
                 LOG.debug("Network %s is not hosted by any dhcp agent",
                           network_id)
                 return
             enabled_agents = self._get_enabled_agents(
-                context, network, agents, method, payload)
+                context, network_id, network, agents, method, payload)
 
             if method == 'port_create_end' and enabled_agents:
                 high_agent = enabled_agents.pop(
@@ -348,6 +357,8 @@ class DhcpAgentNotifyAPI(object):
                     payload['network_id'] = network_id
                 if obj_type == 'port':
                     payload['fixed_ips'] = obj_value['fixed_ips']
-                self._notify_agents(context, method_name, payload, network_id)
+                self._notify_agents(context, method_name, payload, network_id,
+                                    obj_value.get('network'))
         else:
-            self._notify_agents(context, method_name, data, network_id)
+            self._notify_agents(context, method_name, data, network_id,
+                                obj_value.get('network'))
