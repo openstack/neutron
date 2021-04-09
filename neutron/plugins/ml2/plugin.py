@@ -1245,6 +1245,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # db base plugin post commit ops
         self._create_subnet_postcommit(context, result)
 
+        # add network to subnet dict to save a DB call on dhcp notification
+        result['network'] = mech_context.network.current
         kwargs = {'context': context, 'subnet': result}
         registry.notify(resources.SUBNET, events.AFTER_CREATE, self, **kwargs)
         try:
@@ -1408,6 +1410,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return self._after_create_port(context, result, mech_context)
 
     def _after_create_port(self, context, result, mech_context):
+        # add network to port dict to save a DB call on dhcp notification
+        result['network'] = mech_context.network.current
         # notify any plugin that is interested in port create events
         kwargs = {'context': context, 'port': result}
         registry.notify(resources.PORT, events.AFTER_CREATE, self, **kwargs)
