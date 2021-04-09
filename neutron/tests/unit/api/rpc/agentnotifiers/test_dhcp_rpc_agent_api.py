@@ -85,12 +85,12 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
                                      new_agents=None, existing_agents=[],
                                      expected_casts=0, expected_warnings=1)
 
-    def _test__get_enabled_agents(self, network,
+    def _test__get_enabled_agents(self, network_id,
                                   agents=None, port_count=0,
                                   expected_warnings=0, expected_errors=0):
         self.notifier.plugin.get_ports_count.return_value = port_count
         enabled_agents = self.notifier._get_enabled_agents(
-            mock.ANY, network, agents, mock.ANY, mock.ANY)
+            mock.Mock(), network_id, None, agents, mock.ANY, mock.ANY)
         if not cfg.CONF.enable_services_on_agents_with_admin_state_down:
             agents = [x for x in agents if x.admin_state_up]
         self.assertEqual(agents, enabled_agents)
@@ -104,8 +104,8 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         agent2 = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         agent2.admin_state_up = False
         agent2.heartbeat_timestamp = timeutils.utcnow()
-        network = {'id': 'foo_network_id'}
-        self._test__get_enabled_agents(network, agents=[agent1])
+        self._test__get_enabled_agents(network_id='foo_network_id',
+                                       agents=[agent1])
 
     def test__get_enabled_agents_with_inactive_ones(self):
         agent1 = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
@@ -115,17 +115,18 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         agent2.admin_state_up = True
         # This is effectively an inactive agent
         agent2.heartbeat_timestamp = datetime.datetime(2000, 1, 1, 0, 0)
-        network = {'id': 'foo_network_id'}
-        self._test__get_enabled_agents(network,
+        self._test__get_enabled_agents(network_id='foo_network_id',
                                        agents=[agent1, agent2],
                                        expected_warnings=1, expected_errors=0)
 
     def test__get_enabled_agents_with_notification_required(self):
         network = {'id': 'foo_network_id', 'subnets': ['foo_subnet_id']}
+        self.notifier.plugin.get_network.return_value = network
         agent = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         agent.admin_state_up = False
         agent.heartbeat_timestamp = timeutils.utcnow()
-        self._test__get_enabled_agents(network, [agent], port_count=20,
+        self._test__get_enabled_agents('foo_network_id',
+                                       [agent], port_count=20,
                                        expected_warnings=0, expected_errors=1)
 
     def test__get_enabled_agents_with_admin_state_down(self):
@@ -137,8 +138,8 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         agent2 = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         agent2.admin_state_up = False
         agent2.heartbeat_timestamp = timeutils.utcnow()
-        network = {'id': 'foo_network_id'}
-        self._test__get_enabled_agents(network, agents=[agent1, agent2])
+        self._test__get_enabled_agents(network_id='foo_network_id',
+                                       agents=[agent1, agent2])
 
     def test__notify_agents_allocate_priority(self):
         mock_context = mock.MagicMock()
