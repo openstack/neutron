@@ -171,7 +171,7 @@ class TestNeutronServer(base.BaseLoggingTestCase):
 
         try:
             utils.wait_until_true(is_temp_file_ok, timeout=5, sleep=1)
-        except utils.TimerTimeout:
+        except utils.WaitTimeout:
             if not os.path.isfile(self.temp_file):
                 raise RuntimeError(
                     "Timed out waiting for file %(filename)s to be created" %
