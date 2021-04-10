@@ -33,7 +33,7 @@ from neutron.tests import base
 
 OvnPortInfo = collections.namedtuple(
     'OvnPortInfo', ['datapath', 'type', 'mac', 'external_ids', 'logical_port'])
-DatapathInfo = collections.namedtuple('DatapathInfo', 'uuid')
+DatapathInfo = collections.namedtuple('DatapathInfo', ['uuid', 'external_ids'])
 
 
 def makePort(datapath=None, type='', mac=None, external_ids=None,
@@ -119,11 +119,14 @@ class TestMetadataAgent(base.BaseTestCase):
 
         ports = []
         for i in range(0, 3):
-            ports.append(makePort(datapath=DatapathInfo(uuid=str(i))))
-        ports.append(makePort(datapath=DatapathInfo(uuid='1')))
-        ports.append(makePort(datapath=DatapathInfo(uuid='3'),
-                              type='external'))
-        ports.append(makePort(datapath=DatapathInfo(uuid='5'), type='unknown'))
+            ports.append(makePort(datapath=DatapathInfo(uuid=str(i),
+                external_ids={'name': 'neutron-%d' % i})))
+        ports.append(makePort(datapath=DatapathInfo(uuid='1',
+            external_ids={'name': 'neutron-1'})))
+        ports.append(makePort(datapath=DatapathInfo(uuid='3',
+            external_ids={'name': 'neutron-3'}), type='external'))
+        ports.append(makePort(datapath=DatapathInfo(uuid='5',
+            external_ids={'name': 'neutron-5'}), type='unknown'))
 
         with mock.patch.object(self.agent, 'provision_datapath',
                                return_value=None) as pdp,\
@@ -131,40 +134,42 @@ class TestMetadataAgent(base.BaseTestCase):
                                   return_value=ports):
             self.agent.ensure_all_networks_provisioned()
 
-            expected_calls = [mock.call(str(i)) for i in range(0, 4)]
+            expected_calls = [mock.call(str(i), str(i)) for i in range(0, 4)]
             self.assertEqual(sorted(expected_calls),
                              sorted(pdp.call_args_list))
 
     def test_update_datapath_provision(self):
         ports = []
         for i in range(0, 3):
-            ports.append(makePort(datapath=DatapathInfo(uuid=str(i))))
-        ports.append(makePort(datapath=DatapathInfo(uuid='3'),
-                              type='external'))
+            ports.append(makePort(datapath=DatapathInfo(uuid=str(i),
+                external_ids={'name': 'neutron-%d' % i})))
+        ports.append(makePort(datapath=DatapathInfo(uuid='3',
+            external_ids={'name': 'neutron-3'}), type='external'))
 
         with mock.patch.object(self.agent, 'provision_datapath',
                                return_value=None) as pdp,\
                 mock.patch.object(self.agent, 'teardown_datapath') as tdp,\
                 mock.patch.object(self.agent.sb_idl, 'get_ports_on_chassis',
                                   return_value=ports):
-            self.agent.update_datapath('1')
-            self.agent.update_datapath('3')
-            expected_calls = [mock.call('1'), mock.call('3')]
+            self.agent.update_datapath('1', 'a')
+            self.agent.update_datapath('3', 'b')
+            expected_calls = [mock.call('1', 'a'), mock.call('3', 'b')]
             pdp.assert_has_calls(expected_calls)
             tdp.assert_not_called()
 
     def test_update_datapath_teardown(self):
         ports = []
         for i in range(0, 3):
-            ports.append(makePort(datapath=DatapathInfo(uuid=str(i))))
+            ports.append(makePort(datapath=DatapathInfo(uuid=str(i),
+                external_ids={'name': 'neutron-%d' % i})))
 
         with mock.patch.object(self.agent, 'provision_datapath',
                                return_value=None) as pdp,\
                 mock.patch.object(self.agent, 'teardown_datapath') as tdp,\
                 mock.patch.object(self.agent.sb_idl, 'get_ports_on_chassis',
                                   return_value=ports):
-            self.agent.update_datapath('5')
-            tdp.assert_called_once_with('5')
+            self.agent.update_datapath('5', 'a')
+            tdp.assert_called_once_with('5', 'a')
             pdp.assert_not_called()
 
     def test_teardown_datapath(self):
@@ -243,7 +248,7 @@ class TestMetadataAgent(base.BaseTestCase):
             # We need to assert that it was deleted first.
             self.agent.ovs_idl.list_br.return_value.execute.return_value = (
                 ['br-int', 'br-fake'])
-            self.agent.provision_datapath('1')
+            self.agent.provision_datapath('1', '1')
 
             # Check that the port was deleted from br-fake
             self.agent.ovs_idl.del_port.assert_called_once_with(
