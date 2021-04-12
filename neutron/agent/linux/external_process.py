@@ -128,8 +128,9 @@ class ProcessManager(MonitoredProcess):
     def get_kill_cmd(self, sig, pid):
         if self.kill_scripts_path:
             kill_file = "%s-kill" % self.service
-            if os.path.isfile(os.path.join(self.kill_scripts_path, kill_file)):
-                return [kill_file, sig, pid]
+            kill_file_path = os.path.join(self.kill_scripts_path, kill_file)
+            if os.path.isfile(kill_file_path):
+                return [kill_file_path, sig, pid]
         return ['kill', '-%s' % (sig), pid]
 
     def get_pid_file_name(self):

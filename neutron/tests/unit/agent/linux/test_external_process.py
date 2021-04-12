@@ -271,7 +271,8 @@ class TestProcessManager(base.BaseTestCase):
                                          kill_scripts_path='test-path/'):
         cfg.CONF.set_override("kill_scripts_path", kill_scripts_path, "AGENT")
         if kill_script_exists:
-            expected_cmd = ['test-service-kill', '9', 4]
+            expected_cmd = [
+                os.path.join(kill_scripts_path, 'test-service-kill'), '9', 4]
         else:
             expected_cmd = ['kill', '-9', 4]
 
