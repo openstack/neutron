@@ -1,0 +1,7 @@
+---
+issues:
+  - |
+    When using Linux Bridge mechanism driver in newer operating systems that
+    use ``nftables`` by default, it is needed to switch back to the legacy
+    tool, as documented in the admin documentation for ``Linux bridge
+    mechanism driver``.
