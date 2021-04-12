@@ -22,7 +22,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='get_service_provider',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
+        check_str='role:reader',
         description='Get service providers',
         operations=[
             {
