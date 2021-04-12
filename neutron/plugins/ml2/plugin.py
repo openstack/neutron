@@ -1877,7 +1877,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 return
             self._bind_port_if_needed(mech_context)
 
-    def _pre_delete_port(self, context, port_id, port_check):
+    def _pre_delete_port(self, context, port_id, port_check, port=None):
         """Do some preliminary operations before deleting the port."""
         LOG.debug("Deleting port %s", port_id)
         try:
@@ -1886,7 +1886,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             registry.publish(
                 resources.PORT, events.BEFORE_DELETE, self,
                 payload=events.DBEventPayload(
-                    context, metadata={'port_check': port_check},
+                    context, metadata={'port_check': port_check, 'port': port},
                     resource_id=port_id))
         except exceptions.CallbackFailure as e:
             # NOTE(armax): preserve old check's behavior
@@ -1897,21 +1897,22 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def delete_port(self, context, id, l3_port_check=True):
-        self._pre_delete_port(context, id, l3_port_check)
+        try:
+            port_db = self._get_port(context, id)
+            port = self._make_port_dict(port_db)
+        except exc.PortNotFound:
+            LOG.debug("The port '%s' was deleted", id)
+            return
+
+        self._pre_delete_port(context, id, l3_port_check, port)
         # TODO(armax): get rid of the l3 dependency in the with block
         router_ids = []
         l3plugin = directory.get_plugin(plugin_constants.L3)
 
         with db_api.CONTEXT_WRITER.using(context):
-            try:
-                port_db = self._get_port(context, id)
-                binding = p_utils.get_port_binding_by_status_and_host(
-                    port_db.port_bindings, const.ACTIVE,
-                    raise_if_not_found=True, port_id=id)
-            except exc.PortNotFound:
-                LOG.debug("The port '%s' was deleted", id)
-                return
-            port = self._make_port_dict(port_db)
+            binding = p_utils.get_port_binding_by_status_and_host(
+                port_db.port_bindings, const.ACTIVE,
+                raise_if_not_found=True, port_id=id)
 
             network = self.get_network(context, port['network_id'])
             bound_mech_contexts = []
@@ -1953,7 +1954,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
             LOG.debug("Calling delete_port for %(port_id)s owned by %(owner)s",
                       {"port_id": id, "owner": device_owner})
-            super(Ml2Plugin, self).delete_port(context, id)
+            super(Ml2Plugin, self).delete_port(context, id, port)
 
         self._post_delete_port(
             context, port, router_ids, bound_mech_contexts)

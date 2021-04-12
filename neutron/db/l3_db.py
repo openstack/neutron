@@ -105,7 +105,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         l3plugin = directory.get_plugin(plugin_constants.L3)
         if l3plugin and payload.metadata['port_check']:
             l3plugin.prevent_l3_port_deletion(
-                payload.context, payload.resource_id)
+                payload.context, payload.resource_id,
+                port=payload.metadata.get('port'))
 
     @staticmethod
     def _validate_subnet_address_mode(subnet):
@@ -1562,7 +1563,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         filters = filters or {}
         return l3_obj.FloatingIP.count(context, **filters)
 
-    def prevent_l3_port_deletion(self, context, port_id):
+    def prevent_l3_port_deletion(self, context, port_id, port=None):
         """Checks to make sure a port is allowed to be deleted.
 
         Raises an exception if this is not the case.  This should be called by
@@ -1572,7 +1573,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         deletion checks.
         """
         try:
-            port = self._core_plugin.get_port(context, port_id)
+            port = port or self._core_plugin.get_port(context, port_id)
         except n_exc.PortNotFound:
             # non-existent ports don't need to be protected from deletion
             return

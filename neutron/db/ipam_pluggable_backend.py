@@ -483,9 +483,9 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                             revert_on_fail=False)
         return changes
 
-    def delete_port(self, context, id):
+    def delete_port(self, context, id, port=None):
         # Get fixed_ips list before port deletion
-        port = self._get_port(context, id)
+        port = port or self._get_port(context, id)
         ipam_driver = driver.Pool.get_instance(None, context)
 
         super(IpamPluggableBackend, self).delete_port(context, id)
