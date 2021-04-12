@@ -1,6 +1,7 @@
 #!/bin/sh
 
 set -eu
+set -x
 
 usage () {
     echo "Usage: $0 [OPTION]..."
