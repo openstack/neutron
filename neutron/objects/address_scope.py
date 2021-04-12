@@ -71,6 +71,5 @@ class AddressScope(rbac_db.NeutronRbacObject):
     @classmethod
     def get_bound_tenant_ids(cls, context, obj_id):
         snp_objs = subnetpool.SubnetPool.get_objects(
-            context, address_scope_id=obj_id
-        )
-        return {snp.project_id for snp in snp_objs}
+            context, address_scope_id=obj_id, fields=['project_id'])
+        return {snp['project_id'] for snp in snp_objs}
