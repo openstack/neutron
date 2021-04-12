@@ -24,6 +24,7 @@ from oslo_utils import uuidutils
 import testtools
 
 from neutron.services.l3_router.service_providers import driver_controller
+from neutron.services.l3_router.service_providers import single_node
 from neutron.services import provider_configuration
 from neutron.tests import base
 from neutron.tests.unit import testlib_api
@@ -110,6 +111,18 @@ class TestDriverController(testlib_api.SqlTestCase):
                             None, request_body={'name': 'testname'},
                             states=({'flavor_id': 'old_fid'},)))
                     mock_cb.assert_not_called()
+
+    def test___attrs_to_driver(self):
+        test_dc = driver_controller.DriverController(self.fake_l3)
+        test_dc.default_provider = 'single_node'
+        self.assertIsInstance(test_dc._attrs_to_driver({}),
+                              single_node.SingleNodeDriver)
+
+        test_dc.default_provider = 'ha'
+        with mock.patch.object(driver_controller,
+                               "_is_driver_compatible", return_value=False):
+            self.assertRaises(NotImplementedError, test_dc._attrs_to_driver,
+                              {})
 
     def test__update_router_provider_with_flags(self):
         test_dc = driver_controller.DriverController(self.fake_l3)
