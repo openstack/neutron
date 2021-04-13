@@ -1510,4 +1510,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             # the actions field is bogus anyway.
             del flow['actions']
             del flow['priority']
+            # NOTE(hangyang) If cookie is not set then _delete_flows will
+            # use the OVSBridge._default_cookie to filter the flows but that
+            # will not match with the ip flow's cookie so OVS won't actually
+            # delete the flow
+            flow['cookie'] = ovs_lib.COOKIE_ANY
             self._delete_flows(deferred=False, **flow)
