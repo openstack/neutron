@@ -46,3 +46,11 @@ ovs_vsctl_cmd = priv_context.PrivContext(
     capabilities=[caps.CAP_SYS_ADMIN,
                   caps.CAP_NET_ADMIN]
 )
+
+
+namespace_cmd = priv_context.PrivContext(
+    __name__,
+    cfg_section='privsep_namespace',
+    pypath=__name__ + '.namespace_cmd',
+    capabilities=[caps.CAP_SYS_ADMIN]
+)
