@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Report external dns service OverQuota exception as new neutron
+    ConflictException (409) i.e. ExternalDNSOverQuota. Report the failure
+    as "External DNS Quota exceeded for resources: recordset".

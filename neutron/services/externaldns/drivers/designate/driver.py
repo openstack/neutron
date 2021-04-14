@@ -102,6 +102,8 @@ class Designate(driver.ExternalDNSService):
             raise dns_exc.DNSDomainNotFound(dns_domain=dns_domain)
         except d_exc.Conflict:
             raise dns_exc.DuplicateRecordSet(dns_name=dns_name)
+        except d_exc.OverQuota:
+            raise dns_exc.ExternalDNSOverQuota(resource="recordset")
 
         if not CONF.designate.allow_reverse_dns_lookup:
             return
