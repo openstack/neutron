@@ -34,7 +34,6 @@ from neutron_lib.objects import exceptions
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
-from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -289,8 +288,8 @@ class L3HATestCase(L3HATestFramework):
 
         def jam_in_interface(*args, **kwargs):
             ctx = context.get_admin_context()
-            net = self.plugin._ensure_vr_id_and_network(
-                ctx, self.plugin._get_router(ctx, router['id']))
+            net = self.plugin.get_ha_network(self.admin_ctx,
+                                             router['tenant_id'])
             self.plugin.add_ha_port(
                 ctx, router['id'], net.network_id, router['tenant_id'])
             registry.unsubscribe(jam_in_interface, resources.ROUTER,
@@ -667,80 +666,6 @@ class L3HATestCase(L3HATestFramework):
                           self.core_plugin.update_port,
                           self.admin_ctx, ports[0]['id'],
                           port)
-
-    def test_ensure_vr_id_and_network_net_exists(self):
-        router = self._create_router()
-        router_db = self.plugin._get_router(self.admin_ctx, router['id'])
-        with mock.patch.object(self.plugin, '_create_ha_network') as create:
-            self.plugin._ensure_vr_id_and_network(
-                self.admin_ctx, router_db)
-            self.assertFalse(create.called)
-
-    def test_ensure_vr_id_and_network_concurrent_create(self):
-        # create a non-ha router so we can manually invoke the create ha
-        # interfaces call down below
-        router = self._create_router(ha=False)
-        router_db = self.plugin._get_router(self.admin_ctx, router['id'])
-        orig_create = self.plugin._create_ha_network
-        created_nets = []
-
-        def _create_ha_network(*args, **kwargs):
-            # create the network and then raise the error to simulate another
-            # worker creating the network before us.
-            created_nets.append(orig_create(*args, **kwargs))
-            raise db_exc.DBDuplicateEntry(columns=['tenant_id'])
-        with mock.patch.object(self.plugin, '_create_ha_network',
-                               new=_create_ha_network):
-            net = self.plugin._ensure_vr_id_and_network(
-                self.admin_ctx, router_db)
-        # ensure that it used the concurrently created network
-        self.assertEqual([net], created_nets)
-
-    def _test_ensure_with_patched_ensure_vr_id(self, _ensure_vr_id):
-        # create a non-ha router so we can manually invoke the create ha
-        # interfaces call down below
-        router = self._create_router(ha=False)
-        router_db = self.plugin._get_router(self.admin_ctx, router['id'])
-        with mock.patch.object(self.plugin, '_ensure_vr_id',
-                               new=_ensure_vr_id):
-            self.plugin._ensure_vr_id_and_network(
-                self.admin_ctx, router_db)
-            self.assertTrue(_ensure_vr_id.called)
-
-    def test_ensure_vr_id_and_network_interface_failure(self):
-
-        def _ensure_vr_id(ctx, rdb, ha_net):
-            raise ValueError('broken')
-        with testtools.ExpectedException(ValueError):
-            self._test_ensure_with_patched_ensure_vr_id(_ensure_vr_id)
-        self.assertEqual([], self.core_plugin.get_networks(self.admin_ctx))
-
-    def test_ensure_vr_id_and_network_concurrent_delete(self):
-        orig_create = self.plugin._ensure_vr_id
-
-        def _ensure_vr_id(ctx, rdb, ha_net):
-            # concurrent delete on the first attempt
-            if not getattr(_ensure_vr_id, 'called', False):
-                setattr(_ensure_vr_id, 'called', True)
-                self.core_plugin.delete_network(self.admin_ctx,
-                                                ha_net['network_id'])
-            return orig_create(ctx, rdb, ha_net)
-        self._test_ensure_with_patched_ensure_vr_id(_ensure_vr_id)
-
-    def test_ensure_vr_id_and_network_concurrent_swap(self):
-        orig_create = self.plugin._ensure_vr_id
-
-        def _ensure_vr_id(ctx, rdb, ha_net):
-            # concurrent delete on the first attempt
-            if not getattr(_ensure_vr_id, 'called', False):
-                setattr(_ensure_vr_id, 'called', True)
-                self.core_plugin.delete_network(self.admin_ctx,
-                                                ha_net['network_id'])
-                self.plugin._create_ha_network(self.admin_ctx,
-                                               rdb.tenant_id)
-            return orig_create(ctx, rdb, ha_net)
-
-        self._test_ensure_with_patched_ensure_vr_id(_ensure_vr_id)
 
     def test_create_ha_network_tenant_binding_raises_duplicate(self):
         router = self._create_router()

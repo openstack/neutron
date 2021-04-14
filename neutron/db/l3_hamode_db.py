@@ -352,20 +352,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         return super(L3_HA_NAT_db_mixin,
                      self)._get_device_owner(context, router)
 
-    @n_utils.transaction_guard
-    def _ensure_vr_id_and_network(self, context, router_db):
-        """Attach vr_id to router while tolerating network deletes."""
-        creator = functools.partial(self._ensure_vr_id,
-                                    context, router_db)
-        dep_getter = functools.partial(self.get_ha_network,
-                                       context, router_db.tenant_id)
-        dep_creator = functools.partial(self._create_ha_network,
-                                        context, router_db.tenant_id)
-        dep_deleter = functools.partial(self._delete_ha_network, context)
-        dep_id_attr = 'network_id'
-        return n_utils.create_object_with_dependency(
-            creator, dep_getter, dep_creator, dep_id_attr, dep_deleter)[1]
-
     @registry.receives(resources.ROUTER, [events.BEFORE_CREATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     @db_api.retry_if_session_inactive()
