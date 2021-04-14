@@ -58,6 +58,7 @@ def main():
     conf = setup_conf()
     conf()
     config.setup_logging()
+    agent_config.setup_privsep()
     do_main(conf)
 
 
