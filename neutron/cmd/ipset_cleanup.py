@@ -33,6 +33,7 @@ def setup_conf():
     """
     conf = cfg.CONF
     agent_config.register_root_helper(conf=conf)
+    agent_config.setup_privsep()
     command.register_cmd_opts(command.ip_opts, conf)
     return conf
 

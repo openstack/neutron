@@ -22,6 +22,7 @@ from neutron._i18n import _
 from neutron.agent import dhcp_agent
 from neutron.cmd.sanity import checks
 from neutron.common import config
+from neutron.conf.agent import common as agent_config
 from neutron.conf.agent import securitygroups_rpc
 from neutron.conf.db import l3_hamode_db
 from neutron.conf.plugins.ml2 import config as ml2_conf
@@ -419,6 +420,7 @@ def main():
     cfg.CONF.set_override('use_stderr', True)
     config.setup_logging()
     config.init(sys.argv[1:], default_config_files=[])
+    agent_config.setup_privsep()
 
     if cfg.CONF.config_file:
         enable_tests_from_config()
