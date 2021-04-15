@@ -55,7 +55,6 @@ from neutron.api.rpc.callbacks.producer import registry as rpc_producer_reg
 from neutron.common import config
 from neutron.conf.agent import common as agent_config
 from neutron.db import agentschedulers_db
-from neutron.db import securitygroups_db
 from neutron import manager
 from neutron import policy
 from neutron.quota import resource_registry
@@ -570,8 +569,6 @@ class PluginFixture(fixtures.Fixture):
 
         # TODO(marun) Fix plugins that do not properly initialize notifiers
         agentschedulers_db.AgentSchedulerDbMixin.agent_notifiers = {}
-
-        securitygroups_db.SecurityGroupDbMixin.default_sg_cache = {}
 
         nm.clear_instance()
 
