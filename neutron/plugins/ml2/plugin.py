@@ -1206,7 +1206,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                        priority=0)
     def _network_delete_precommit_handler(self, rtype, event, trigger,
                                           context, network_id, **kwargs):
-        network = self.get_network(context, network_id)
+        network = (kwargs.get('network') or
+                   self.get_network(context, network_id))
         mech_context = driver_context.NetworkContext(self,
                                                      context,
                                                      network)
@@ -2309,12 +2310,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # TODO(boden); refactor into _handle_segment_change once all
         # event types use payloads
         return self._handle_segment_change(
-            rtype, event, trigger, payload.context, payload.latest_state)
+            rtype, event, trigger, payload.context, payload.latest_state,
+            for_net_delete=payload.metadata.get('for_net_delete'))
 
     @registry.receives(resources.SEGMENT, (events.PRECOMMIT_CREATE,
                                            events.PRECOMMIT_DELETE,
                                            events.AFTER_CREATE))
-    def _handle_segment_change(self, rtype, event, trigger, context, segment):
+    def _handle_segment_change(self, rtype, event, trigger, context, segment,
+                               for_net_delete=False):
         if (event == events.PRECOMMIT_CREATE and
                 not isinstance(trigger, segments_plugin.Plugin)):
             # TODO(xiaohhui): Now, when create network, ml2 will reserve
@@ -2334,6 +2337,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             segment[api.SEGMENTATION_ID] = updated_segment[api.SEGMENTATION_ID]
         elif event == events.PRECOMMIT_DELETE:
             self.type_manager.release_network_segment(context, segment)
+
+        if for_net_delete:
+            return
 
         # change in segments could affect resulting network mtu, so let's
         # recalculate it
