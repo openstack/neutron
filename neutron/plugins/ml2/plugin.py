@@ -1239,7 +1239,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _after_create_subnet(self, context, result, mech_context):
         # db base plugin post commit ops
-        self._create_subnet_postcommit(context, result)
+        self._create_subnet_postcommit(context, result,
+            network=mech_context.network.current)
 
         # add network to subnet dict to save a DB call on dhcp notification
         result['network'] = mech_context.network.current
