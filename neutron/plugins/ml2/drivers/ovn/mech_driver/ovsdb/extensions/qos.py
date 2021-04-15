@@ -82,6 +82,10 @@ class OVNClientQosExtension(object):
             elif isinstance(rule, qos_rule.QosDscpMarkingRule):
                 r = {rule.rule_type: {'dscp_mark': rule.dscp_mark}}
                 qos_rules[constants.EGRESS_DIRECTION].update(r)
+            elif isinstance(rule, qos_rule.QosMinimumBandwidthRule):
+                # Rule supported for Placement scheduling but not enforced in
+                # the driver.
+                pass
             else:
                 LOG.warning('Rule type %(rule_type)s from QoS policy '
                             '%(policy_id)s is not supported in OVN',
