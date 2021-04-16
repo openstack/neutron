@@ -263,7 +263,7 @@ def _parse_entry(entry, ipversion, zone):
     return tuple(parsed_entry)
 
 
-@privileged.default.entrypoint
+@privileged.conntrack_cmd.entrypoint
 def list_entries(zone):
     """List and parse all conntrack entries in zone
 
@@ -289,7 +289,7 @@ def list_entries(zone):
     return sorted(parsed_entries, key=lambda x: x[3])
 
 
-@privileged.default.entrypoint
+@privileged.conntrack_cmd.entrypoint
 def delete_entries(entries):
     """Delete selected entries
 

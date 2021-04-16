@@ -54,3 +54,11 @@ namespace_cmd = priv_context.PrivContext(
     pypath=__name__ + '.namespace_cmd',
     capabilities=[caps.CAP_SYS_ADMIN]
 )
+
+
+conntrack_cmd = priv_context.PrivContext(
+    __name__,
+    cfg_section='privsep_conntrack',
+    pypath=__name__ + '.conntrack_cmd',
+    capabilities=[caps.CAP_NET_ADMIN]
+)
