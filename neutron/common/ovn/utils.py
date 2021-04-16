@@ -32,9 +32,6 @@ from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import netutils
 from oslo_utils import strutils
-from ovs.db import idl
-from ovsdbapp.backend.ovs_idl import connection
-from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp import constants as ovsdbapp_const
 
 from neutron._i18n import _
@@ -419,16 +416,6 @@ def get_system_dns_resolvers(resolver_file=DNS_RESOLVER_FILE):
 def get_port_subnet_ids(port):
     fixed_ips = list(port['fixed_ips'])
     return [f['subnet_id'] for f in fixed_ips]
-
-
-def get_ovsdb_connection(connection_string, schema, timeout, tables=None):
-    helper = idlutils.get_schema_helper(connection_string, schema)
-    if tables:
-        for table in tables:
-            helper.register_table(table)
-    else:
-        helper.register_all()
-    return connection.Connection(idl.Idl(connection_string, helper), timeout)
 
 
 def get_method_class(method):
