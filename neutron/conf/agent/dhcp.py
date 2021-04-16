@@ -18,6 +18,7 @@
 from oslo_config import cfg
 
 from neutron._i18n import _
+from neutron.conf.agent import common
 
 
 DHCP_AGENT_OPTS = [
@@ -110,12 +111,6 @@ DNSMASQ_OPTS = [
         help=_('Limit number of leases to prevent a denial-of-service.')),
     cfg.BoolOpt('dhcp_broadcast_reply', default=False,
                 help=_("Use broadcast in DHCP replies.")),
-    cfg.IntOpt('dhcp_renewal_time', default=0,
-               help=_("DHCP renewal time T1 (in seconds). If set to 0, it "
-                      "will default to half of the lease time.")),
-    cfg.IntOpt('dhcp_rebinding_time', default=0,
-               help=_("DHCP rebinding time T2 (in seconds). If set to 0, it "
-                      "will default to 7/8 of the lease time.")),
     cfg.BoolOpt('dnsmasq_enable_addr6_list', default=False,
                 help=_("Enable dhcp-host entry with list of addresses when "
                        "port has multiple IPv6 addresses in the same subnet."))
@@ -126,3 +121,4 @@ def register_agent_dhcp_opts(cfg=cfg.CONF):
     cfg.register_opts(DHCP_AGENT_OPTS)
     cfg.register_opts(DHCP_OPTS)
     cfg.register_opts(DNSMASQ_OPTS)
+    cfg.register_opts(common.DHCP_PROTOCOL_OPTS)

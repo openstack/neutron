@@ -16,6 +16,7 @@ from neutron_lib import constants as n_const
 from oslo_config import cfg
 
 from neutron._i18n import _
+from neutron.conf.agent import common
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants
 
@@ -184,12 +185,6 @@ dhcp_opts = [
                 help=_("When set to True, the OVS agent DHCP "
                        "extension will add related flows for "
                        "DHCPv6 packets.")),
-    cfg.IntOpt('renewal_time', default=0,
-               help=_("DHCP renewal time T1 (in seconds). If set to 0, it "
-                      "will default to half of the lease time.")),
-    cfg.IntOpt('rebinding_time', default=0,
-               help=_("DHCP rebinding time T2 (in seconds). If set to 0, it "
-                      "will default to 7/8 of the lease time.")),
 ]
 
 
@@ -197,6 +192,7 @@ def register_ovs_agent_opts(cfg=cfg.CONF):
     cfg.register_opts(ovs_opts, "OVS")
     cfg.register_opts(agent_opts, "AGENT")
     cfg.register_opts(dhcp_opts, "DHCP")
+    cfg.register_opts(common.DHCP_PROTOCOL_OPTS, "DHCP")
 
 
 def register_ovs_opts(cfg=cfg.CONF):
