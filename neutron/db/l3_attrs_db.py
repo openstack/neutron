@@ -54,10 +54,6 @@ class ExtraAttributesMixin(object):
             router_db['extra_attributes'] = new
 
     def set_extra_attr_value(self, context, router_db, key, value):
-        if not context.session.is_active:
-            raise RuntimeError(_("set_extra_attr_value cannot be called "
-                                 "out of a transaction."))
-
         # set a single value explicitly
         if key in get_attr_info():
             info = get_attr_info()[key]
