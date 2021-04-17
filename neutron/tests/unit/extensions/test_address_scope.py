@@ -629,6 +629,33 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                     self.assertEqual(webob.exc.HTTPBadRequest.code,
                                      res.status_int)
 
+    def test_create_second_subnet_without_subnetpool_same_network(self):
+        with self.address_scope(constants.IP_VERSION_4,
+                                name='scope-a') as addr_scope:
+            addr_scope = addr_scope['address_scope']
+
+            with self.subnetpool(
+                        ['10.10.0.0/16'],
+                        name='subnetpool_a',
+                        tenant_id=addr_scope['tenant_id'],
+                        default_prefixlen=24,
+                        address_scope_id=addr_scope['id']) as subnetpool:
+                subnetpool = subnetpool['subnetpool']
+
+                with self.network(
+                        tenant_id=addr_scope['tenant_id']) as network:
+                    with self.subnet(cidr=None,
+                                     network=network,
+                                     ip_version=constants.IP_VERSION_4,
+                                     subnetpool_id=subnetpool['id']):
+                        res = self._create_subnet(
+                            self.fmt,
+                            cidr='192.168.16.0/24',
+                            net_id=network['network']['id'],
+                            tenant_id=addr_scope['tenant_id'])
+                        self.assertEqual(webob.exc.HTTPCreated.code,
+                                         res.status_int)
+
     def test_ipv6_pd_add_non_pd_subnet_to_same_network(self):
         with self.address_scope(constants.IP_VERSION_6,
                                 name='foo-address-scope') as addr_scope:

@@ -288,10 +288,6 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                             subnet.ip_version == new_subnetpool.ip_version and
                             not network_scope):
                         raise exc.NetworkSubnetPoolAffinityError()
-                else:
-                    if (subnet.subnetpool_id and
-                            subnet.ip_version == subnet_ip_version):
-                        raise exc.NetworkSubnetPoolAffinityError()
 
     def validate_allocation_pools(self, ip_pools, subnet_cidr):
         """Validate IP allocation pools.
