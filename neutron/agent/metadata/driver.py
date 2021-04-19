@@ -31,6 +31,7 @@ from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
 from neutron.agent.linux import utils as linux_utils
+from neutron.common import coordination
 from neutron.common import utils as common_utils
 
 
@@ -280,13 +281,7 @@ class MetadataDriver(object):
 def after_router_added(resource, event, l3_agent, **kwargs):
     router = kwargs['router']
     proxy = l3_agent.metadata_driver
-    for c, r in proxy.metadata_filter_rules(proxy.metadata_port,
-                                            proxy.metadata_access_mark):
-        router.iptables_manager.ipv4['filter'].add_rule(c, r)
-    for c, r in proxy.metadata_nat_rules(proxy.metadata_port):
-        router.iptables_manager.ipv4['nat'].add_rule(c, r)
-    router.iptables_manager.apply()
-
+    apply_metadata_nat_rules(router, proxy)
     if not isinstance(router, ha_router.HaRouter):
         proxy.spawn_monitored_metadata_proxy(
             l3_agent.process_monitor,
@@ -317,3 +312,13 @@ def before_router_removed(resource, event, l3_agent, payload=None):
                                            router.router['id'],
                                            l3_agent.conf,
                                            router.ns_name)
+
+
+@coordination.synchronized('router-lock-ns-{router.ns_name}')
+def apply_metadata_nat_rules(router, proxy):
+    for c, r in proxy.metadata_filter_rules(proxy.metadata_port,
+                                            proxy.metadata_access_mark):
+        router.iptables_manager.ipv4['filter'].add_rule(c, r)
+    for c, r in proxy.metadata_nat_rules(proxy.metadata_port):
+        router.iptables_manager.ipv4['nat'].add_rule(c, r)
+    router.iptables_manager.apply()
