@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import errno
 import grp
 import os
 import pwd
@@ -30,6 +29,7 @@ from neutron._i18n import _
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
+from neutron.agent.linux import utils as linux_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -163,13 +163,7 @@ class HaproxyConfigurator(object):
         cfg_path = os.path.join(
             HaproxyConfigurator.get_config_path(state_path),
             "%s.conf" % uuid)
-        try:
-            os.unlink(cfg_path)
-        except OSError as ex:
-            # It can happen that this function is called but metadata proxy
-            # was never spawned so its config file won't exist
-            if ex.errno != errno.ENOENT:
-                raise
+        linux_utils.delete_if_exists(cfg_path, run_as_root=True)
 
 
 class MetadataDriver(object):

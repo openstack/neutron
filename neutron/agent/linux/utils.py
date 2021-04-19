@@ -38,6 +38,7 @@ from neutron._i18n import _
 from neutron.agent.linux import xenapi_root_helper
 from neutron.common import utils
 from neutron.conf.agent import common as config
+from neutron.privileged.agent.linux import utils as priv_utils
 from neutron import wsgi
 
 
@@ -391,6 +392,14 @@ def is_effective_group(group_id_or_name):
         return True
     effective_group_name = grp.getgrgid(egid).gr_name
     return group_id_or_name == effective_group_name
+
+
+def delete_if_exists(path, run_as_root=False):
+    """Delete a path, executed as normal user or with elevated privileges"""
+    if run_as_root:
+        priv_utils.delete_if_exists(path)
+    else:
+        fileutils.delete_if_exists(path)
 
 
 class UnixDomainHTTPConnection(httplib.HTTPConnection):
