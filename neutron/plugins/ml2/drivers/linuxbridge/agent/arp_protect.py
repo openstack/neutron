@@ -73,12 +73,6 @@ def delete_arp_spoofing_protection(vifs):
     _delete_arp_spoofing_protection(vifs, current_rules, table='nat',
                                     chain='PREROUTING')
 
-    # TODO(haleyb) this can go away in "R" cycle, it's here to cleanup
-    # old chains in the filter table
-    current_rules = ebtables(['-L'], table='filter').splitlines()
-    _delete_arp_spoofing_protection(vifs, current_rules, table='filter',
-                                    chain='FORWARD')
-
 
 def _delete_arp_spoofing_protection(vifs, current_rules, table, chain):
     # delete the jump rule and then delete the whole chain
@@ -92,10 +86,11 @@ def _delete_arp_spoofing_protection(vifs, current_rules, table, chain):
                                     chain=chain)
 
 
-def _delete_unreferenced_arp_protection(current_vifs, table, chain):
+@lockutils.synchronized('ebtables')
+def delete_unreferenced_arp_protection(current_vifs):
     # deletes all jump rules and chains that aren't in current_vifs but match
     # the spoof prefix
-    current_rules = ebtables(['-L'], table=table).splitlines()
+    current_rules = ebtables(['-L'], table='nat').splitlines()
     to_delete = []
     for line in current_rules:
         # we're looking to find and turn the following:
@@ -107,19 +102,8 @@ def _delete_unreferenced_arp_protection(current_vifs, table, chain):
                 to_delete.append(devname)
     LOG.info("Clearing orphaned ARP spoofing entries for devices %s",
              to_delete)
-    _delete_arp_spoofing_protection(to_delete, current_rules, table=table,
-                                    chain=chain)
-
-
-@lockutils.synchronized('ebtables')
-def delete_unreferenced_arp_protection(current_vifs):
-    _delete_unreferenced_arp_protection(current_vifs,
-                                        table='nat', chain='PREROUTING')
-
-    # TODO(haleyb) this can go away in "R" cycle, it's here to cleanup
-    # old chains in the filter table
-    _delete_unreferenced_arp_protection(current_vifs,
-                                        table='filter', chain='FORWARD')
+    _delete_arp_spoofing_protection(to_delete, current_rules, table='nat',
+                                    chain='PREROUTING')
 
 
 @lockutils.synchronized('ebtables')
@@ -133,12 +117,17 @@ def _install_arp_spoofing_protection(vif, addresses, current_rules):
     vif_chain = chain_name(vif)
     if not chain_exists(vif_chain, current_rules):
         ebtables(['-N', vif_chain, '-P', 'DROP'])
-    # flush the chain to clear previous accepts. this will cause dropped ARP
-    # packets until the allows are installed, but that's better than leaked
-    # spoofed packets and ARP can handle losses.
-    ebtables(['-F', vif_chain])
+        # Append a default DROP rule at the end of the chain. This will
+        # avoid "ebtables-nft" error when listing the chain.
+        ebtables(['-A', vif_chain, '-j', 'DROP'])
+    else:
+        # Flush the chain to clear previous accepts. This will cause dropped
+        # ARP packets until the allows are installed, but that's better than
+        # leaked spoofed packets and ARP can handle losses.
+        ebtables(['-F', vif_chain])
+        ebtables(['-A', vif_chain, '-j', 'DROP'])
     for addr in sorted(addresses):
-        ebtables(['-A', vif_chain, '-p', 'ARP', '--arp-ip-src', addr,
+        ebtables(['-I', vif_chain, '-p', 'ARP', '--arp-ip-src', addr,
                   '-j', 'ACCEPT'])
     # check if jump rule already exists, if not, install it
     if not vif_jump_present(vif, current_rules):
@@ -178,17 +167,22 @@ def _install_mac_spoofing_protection(vif, port_details, current_rules):
     # mac filter chain for each vif which has a default deny
     if not chain_exists(vif_chain, current_rules):
         ebtables(['-N', vif_chain, '-P', 'DROP'])
+        # Append a default DROP rule at the end of the chain. This will
+        # avoid "ebtables-nft" error when listing the chain.
+        ebtables(['-A', vif_chain, '-j', 'DROP'])
+
     # check if jump rule already exists, if not, install it
     if not _mac_vif_jump_present(vif, current_rules):
-        ebtables(['-A', 'PREROUTING', '-i', vif, '-j', vif_chain])
+        ebtables(['-I', 'PREROUTING', '-i', vif, '-j', vif_chain])
+
+    _delete_vif_mac_rules(vif, current_rules)
     # we can't just feed all allowed macs at once because we can exceed
     # the maximum argument size. limit to 500 per rule.
     for chunk in (mac_addresses[i:i + 500]
                   for i in range(0, len(mac_addresses), 500)):
-        new_rule = ['-A', vif_chain, '-i', vif,
+        new_rule = ['-I', vif_chain, '-i', vif,
                     '--among-src', ','.join(sorted(chunk)), '-j', 'RETURN']
         ebtables(new_rule)
-    _delete_vif_mac_rules(vif, current_rules)
 
 
 def _mac_vif_jump_present(vif, current_rules):
@@ -227,7 +221,7 @@ NAMESPACE = None
 
 @tenacity.retry(
     wait=tenacity.wait_exponential(multiplier=0.02),
-    retry=tenacity.retry_if_exception(lambda e: e.returncode == 255),
+    retry=tenacity.retry_if_exception(lambda e: e.returncode in [255, 4]),
     reraise=True
 )
 def ebtables(comm, table='nat'):
