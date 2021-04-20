@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import datetime
 from unittest import mock
 
@@ -1523,6 +1524,11 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
         return net, sub, port
 
     def _notification_mocks(self, hosts, net, subnet, port, port_priority):
+        subnet['subnet']['network'] = copy.deepcopy(net['network'])
+        # 'availability_zones' is empty at the time subnet_create_end
+        # notification is sent
+        subnet['subnet']['network']['availability_zones'] = []
+        port['port']['network'] = net['network']
         host_calls = {}
         for host in hosts:
             expected_calls = [
