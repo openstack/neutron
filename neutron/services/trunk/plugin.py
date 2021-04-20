@@ -34,7 +34,6 @@ from oslo_utils import uuidutils
 from neutron.db import db_base_plugin_common
 from neutron.objects import base as objects_base
 from neutron.objects import trunk as trunk_objects
-from neutron.services.trunk import callbacks
 from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import rules
@@ -252,12 +251,14 @@ class TrunkPlugin(service_base.ServicePluginBase):
                                         sub_ports=sub_ports)
         with db_api.CONTEXT_WRITER.using(context):
             trunk_obj.create()
-            payload = callbacks.TrunkPayload(context, trunk_obj.id,
-                                             current_trunk=trunk_obj)
-            registry.notify(
+            payload = events.DBEventPayload(
+                context, resource_id=trunk_obj.id, desired_state=trunk_obj)
+            registry.publish(
                 resources.TRUNK, events.PRECOMMIT_CREATE, self,
                 payload=payload)
-        registry.notify(
+        payload = events.DBEventPayload(
+            context, resource_id=trunk_obj.id, states=(trunk_obj,))
+        registry.publish(
             resources.TRUNK, events.AFTER_CREATE, self, payload=payload)
         return trunk_obj
 
@@ -279,11 +280,11 @@ class TrunkPlugin(service_base.ServicePluginBase):
                 desired_state=trunk_obj, request_body=trunk_data)
             registry.publish(resources.TRUNK, events.PRECOMMIT_UPDATE, self,
                              payload=payload)
-        registry.notify(resources.TRUNK, events.AFTER_UPDATE, self,
-                        payload=callbacks.TrunkPayload(
-                            context, trunk_id,
-                            original_trunk=original_trunk,
-                            current_trunk=trunk_obj))
+        payload = events.DBEventPayload(
+            context, resource_id=trunk_id, states=(original_trunk, trunk_obj,),
+            request_body=trunk_data)
+        registry.publish(resources.TRUNK, events.AFTER_UPDATE, self,
+                         payload=payload)
         return trunk_obj
 
     def delete_trunk(self, context, trunk_id):
@@ -304,17 +305,18 @@ class TrunkPlugin(service_base.ServicePluginBase):
                         LOG.warning('Trunk driver raised exception when '
                                     'deleting trunk port %s: %s', trunk_id,
                                     str(e))
-                payload = callbacks.TrunkPayload(context, trunk_id,
-                                                 original_trunk=trunk)
-                registry.notify(resources.TRUNK,
-                                events.PRECOMMIT_DELETE,
-                                self, payload=payload)
+                payload = events.DBEventPayload(context, resource_id=trunk_id,
+                                                states=(trunk,))
+                registry.publish(resources.TRUNK, events.PRECOMMIT_DELETE,
+                                 self, payload=payload)
             else:
                 LOG.info('Trunk driver does not consider trunk %s '
                          'untrunkable', trunk_id)
                 raise trunk_exc.TrunkInUse(trunk_id=trunk_id)
-        registry.notify(resources.TRUNK, events.AFTER_DELETE, self,
-                        payload=payload)
+        registry.publish(resources.TRUNK, events.AFTER_DELETE, self,
+                         payload=events.DBEventPayload(
+                             context, resource_id=trunk_id,
+                             states=(trunk,)))
 
     @db_base_plugin_common.convert_result_to_dict
     def add_subports(self, context, trunk_id, subports):
@@ -356,15 +358,21 @@ class TrunkPlugin(service_base.ServicePluginBase):
                 obj.create()
                 trunk['sub_ports'].append(obj)
                 added_subports.append(obj)
-            payload = callbacks.TrunkPayload(context, trunk_id,
-                                             current_trunk=trunk,
-                                             original_trunk=original_trunk,
-                                             subports=added_subports)
+            payload = events.DBEventPayload(context, resource_id=trunk_id,
+                                            states=(original_trunk, trunk,),
+                                            metadata={
+                                                'subports': added_subports
+                                            })
             if added_subports:
-                registry.notify(resources.SUBPORTS, events.PRECOMMIT_CREATE,
-                                self, payload=payload)
+                registry.publish(resources.SUBPORTS, events.PRECOMMIT_CREATE,
+                                 self, payload=payload)
         if added_subports:
-            registry.notify(
+            payload = events.DBEventPayload(context, resource_id=trunk_id,
+                                            states=(original_trunk, trunk,),
+                                            metadata={
+                                                'subports': added_subports
+                                            })
+            registry.publish(
                 resources.SUBPORTS, events.AFTER_CREATE, self, payload=payload)
         return trunk
 
@@ -408,15 +416,21 @@ class TrunkPlugin(service_base.ServicePluginBase):
             # with multiple concurrent requests), the status is still forced
             # to DOWN. See add_subports() for more details.
             trunk.update(status=constants.TRUNK_DOWN_STATUS)
-            payload = callbacks.TrunkPayload(context, trunk_id,
-                                             current_trunk=trunk,
-                                             original_trunk=original_trunk,
-                                             subports=removed_subports)
+            payload = events.DBEventPayload(context, resource_id=trunk_id,
+                                            states=(original_trunk, trunk,),
+                                            metadata={
+                                                'subports': removed_subports
+                                            })
             if removed_subports:
-                registry.notify(resources.SUBPORTS, events.PRECOMMIT_DELETE,
-                                self, payload=payload)
+                registry.publish(resources.SUBPORTS, events.PRECOMMIT_DELETE,
+                                 self, payload=payload)
         if removed_subports:
-            registry.notify(
+            payload = events.DBEventPayload(context, resource_id=trunk_id,
+                                            states=(original_trunk, trunk,),
+                                            metadata={
+                                                'subports': removed_subports
+                                            })
+            registry.publish(
                 resources.SUBPORTS, events.AFTER_DELETE, self, payload=payload)
         return trunk
 

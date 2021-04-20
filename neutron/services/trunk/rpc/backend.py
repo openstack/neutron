@@ -33,30 +33,41 @@ class ServerSideRpcBackend(object):
 
         LOG.debug("RPC backend initialized for trunk plugin")
 
+    @registry.receives(resources.TRUNK,
+                       [events.AFTER_DELETE, events.AFTER_CREATE])
+    def process_trunk_payload_event(self, resource, event,
+                                    trunk_plugin, payload=None):
+        """Emit RPC notifications to registered subscribers."""
+        # TODO(boden): refactor back into process_event once all events use
+        # callback payloads
+        context = payload.context
+        LOG.debug("RPC notification needed for trunk %s", payload.resource_id)
+
+        # On AFTER_DELETE event, current_trunk is None
+        payload = payload.latest_state
+        method = {
+            events.AFTER_CREATE: self._stub.trunk_created,
+            events.AFTER_DELETE: self._stub.trunk_deleted,
+        }
+        LOG.debug("Emitting event %s for resource %s", event, resource)
+        method[event](context, payload)
+
     # Set up listeners to trunk events: they dispatch RPC messages
     # to agents as needed. These are designed to work with any
     # agent-based driver that may integrate with the trunk service
     # plugin, e.g. linux bridge or ovs.
-    @registry.receives(resources.TRUNK,
-                       [events.AFTER_CREATE, events.AFTER_DELETE])
     @registry.receives(resources.SUBPORTS,
                        [events.AFTER_CREATE, events.AFTER_DELETE])
-    def process_event(self, resource, event, trunk_plugin, payload):
+    def process_event(self, resource, event, trunk_plugin, payload=None):
         """Emit RPC notifications to registered subscribers."""
         context = payload.context
-        LOG.debug("RPC notification needed for trunk %s", payload.trunk_id)
-        if resource == resources.SUBPORTS:
-            payload = payload.subports
-            method = {
-                events.AFTER_CREATE: self._stub.subports_added,
-                events.AFTER_DELETE: self._stub.subports_deleted,
-            }
-        elif resource == resources.TRUNK:
-            # On AFTER_DELETE event, current_trunk is None
-            payload = payload.current_trunk or payload.original_trunk
-            method = {
-                events.AFTER_CREATE: self._stub.trunk_created,
-                events.AFTER_DELETE: self._stub.trunk_deleted,
-            }
+        LOG.debug("RPC notification needed for trunk %s", payload.resource_id)
+
+        payload = payload.metadata['subports']
+        method = {
+            events.AFTER_CREATE: self._stub.subports_added,
+            events.AFTER_DELETE: self._stub.subports_deleted,
+        }
+
         LOG.debug("Emitting event %s for resource %s", event, resource)
         method[event](context, payload)

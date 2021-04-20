@@ -24,7 +24,6 @@ from neutron_lib.services.trunk import constants
 import testtools
 
 from neutron.objects import trunk as trunk_objects
-from neutron.services.trunk import callbacks
 from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import plugin as trunk_plugin
@@ -116,10 +115,12 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
             callback = register_mock_callback(resources.TRUNK, event)
             trunk = self._create_test_trunk(parent_port)
             trunk_obj = self._get_trunk_obj(trunk['id'])
-            payload = callbacks.TrunkPayload(self.context, trunk['id'],
-                                             current_trunk=trunk_obj)
             callback.assert_called_once_with(
-                resources.TRUNK, event, self.trunk_plugin, payload=payload)
+                resources.TRUNK, event, self.trunk_plugin, payload=mock.ANY)
+            payload = callback.mock_calls[0][2]['payload']
+            self.assertEqual(self.context, payload.context)
+            self.assertEqual(trunk_obj, payload.latest_state)
+            self.assertEqual(trunk['id'], payload.resource_id)
 
     def test_create_trunk_notify_after_create(self):
         self._test_trunk_create_notify(events.AFTER_CREATE)
@@ -136,11 +137,13 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
             self.trunk_plugin.update_trunk(self.context, trunk['id'],
                                            trunk_req)
             trunk_obj = self._get_trunk_obj(trunk['id'])
-            payload = callbacks.TrunkPayload(self.context, trunk['id'],
-                                             original_trunk=orig_trunk_obj,
-                                             current_trunk=trunk_obj)
             callback.assert_called_once_with(
-                resources.TRUNK, event, self.trunk_plugin, payload=payload)
+                resources.TRUNK, event, self.trunk_plugin, payload=mock.ANY)
+            payload = callback.mock_calls[0][2]['payload']
+            self.assertEqual(self.context, payload.context)
+            self.assertEqual(trunk_obj, payload.latest_state)
+            self.assertEqual(trunk['id'], payload.resource_id)
+            self.assertEqual(orig_trunk_obj, payload.states[0])
 
     def test_trunk_update_notify_after_update(self):
         self._test_trunk_update_notify(events.AFTER_UPDATE)
@@ -170,13 +173,29 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
             trunk = self._create_test_trunk(parent_port)
             trunk_obj = self._get_trunk_obj(trunk['id'])
             self.trunk_plugin.delete_trunk(self.context, trunk['id'])
-            payload = callbacks.TrunkPayload(self.context, trunk['id'],
-                                             original_trunk=trunk_obj)
             callback.assert_called_once_with(
-                resources.TRUNK, event, self.trunk_plugin, payload=payload)
+                resources.TRUNK, event, self.trunk_plugin, payload=mock.ANY)
+            payload = callback.mock_calls[0][2]['payload']
+            self.assertEqual(self.context, payload.context)
+            self.assertEqual(trunk_obj, payload.latest_state)
+            self.assertEqual(trunk['id'], payload.resource_id)
 
     def test_delete_trunk_notify_after_delete(self):
-        self._test_trunk_delete_notify(events.AFTER_DELETE)
+        # TODO(boden): refactor into common method once all use payloads
+        with self.port() as parent_port:
+            callback = register_mock_callback(resources.TRUNK,
+                                              events.AFTER_DELETE)
+            trunk = self._create_test_trunk(parent_port)
+            trunk_obj = self._get_trunk_obj(trunk['id'])
+            self.trunk_plugin.delete_trunk(self.context, trunk['id'])
+
+            callback.assert_called_once_with(
+                resources.TRUNK, events.AFTER_DELETE,
+                self.trunk_plugin, payload=mock.ANY)
+
+            call_payload = callback.mock_calls[0][2]['payload']
+            self.assertEqual(trunk['id'], call_payload.resource_id)
+            self.assertEqual((trunk_obj,), call_payload.states)
 
     def test_delete_trunk_notify_precommit_delete(self):
         self._test_trunk_delete_notify(events.PRECOMMIT_DELETE)
@@ -218,12 +237,13 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
                 self.context, trunk['id'], {'sub_ports': [subport]})
             trunk_obj = self._get_trunk_obj(trunk['id'])
             subport_obj = self._get_subport_obj(subport['port_id'])
-            payload = callbacks.TrunkPayload(self.context, trunk['id'],
-                                             current_trunk=trunk_obj,
-                                             original_trunk=orig_trunk_obj,
-                                             subports=[subport_obj])
             callback.assert_called_once_with(
-                resources.SUBPORTS, event, self.trunk_plugin, payload=payload)
+                resources.SUBPORTS, event, self.trunk_plugin, payload=mock.ANY)
+            payload = callback.mock_calls[0][2]['payload']
+            self.assertEqual(trunk['id'], payload.resource_id)
+            self.assertEqual(trunk_obj, payload.latest_state)
+            self.assertEqual(orig_trunk_obj, payload.states[0])
+            self.assertEqual([subport_obj], payload.metadata['subports'])
 
     def test_add_subports_notify_after_create(self):
         self._test_add_subports_notify(events.AFTER_CREATE)
@@ -241,12 +261,13 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
             self.trunk_plugin.remove_subports(
                 self.context, trunk['id'], {'sub_ports': [subport]})
             trunk_obj = self._get_trunk_obj(trunk['id'])
-            payload = callbacks.TrunkPayload(self.context, trunk['id'],
-                                             current_trunk=trunk_obj,
-                                             original_trunk=orig_trunk_obj,
-                                             subports=[subport_obj])
             callback.assert_called_once_with(
-                resources.SUBPORTS, event, self.trunk_plugin, payload=payload)
+                resources.SUBPORTS, event, self.trunk_plugin, payload=mock.ANY)
+            payload = callback.mock_calls[0][2]['payload']
+            self.assertEqual(trunk['id'], payload.resource_id)
+            self.assertEqual(trunk_obj, payload.latest_state)
+            self.assertEqual(orig_trunk_obj, payload.states[0])
+            self.assertEqual([subport_obj], payload.metadata['subports'])
 
     def test_remove_subports_notify_after_delete(self):
         self._test_remove_subports_notify(events.AFTER_DELETE)
@@ -304,12 +325,14 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
                     parent, original_port,
                     constants.TRUNK_ACTIVE_STATUS,
                     constants.TRUNK_DOWN_STATUS))
-        payload = callbacks.TrunkPayload(self.context, original_trunk['id'],
-                                         original_trunk=original_trunk,
-                                         current_trunk=current_trunk)
         callback.assert_called_once_with(
             resources.TRUNK, events.AFTER_UPDATE,
-            self.trunk_plugin, payload=payload)
+            self.trunk_plugin, payload=mock.ANY)
+        payload = callback.mock_calls[0][2]['payload']
+        self.assertEqual(self.context, payload.context)
+        self.assertEqual(current_trunk, payload.latest_state)
+        self.assertEqual(original_trunk['id'], payload.resource_id)
+        self.assertEqual(original_trunk, payload.states[0])
 
     def test__trigger_trunk_status_change_vif_type_unchanged(self):
         with self.port() as parent:
