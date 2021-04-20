@@ -858,9 +858,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                       {'port_id': port['id'], 'vnic_type': vnic_type})
             return
 
-        capabilities = ovn_utils.get_port_capabilities(port)
-        if (vnic_type in ovn_const.EXTERNAL_PORT_TYPES and
-                ovn_const.PORT_CAP_SWITCHDEV not in capabilities):
+        if ovn_utils.is_port_external(port):
             LOG.debug("Refusing to bind port due to unsupported vnic_type: %s "
                       "with no switchdev capability", vnic_type)
             return
