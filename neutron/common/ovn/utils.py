@@ -30,6 +30,7 @@ from neutron_lib.plugins import directory
 from neutron_lib.utils import net as n_utils
 from oslo_config import cfg
 from oslo_log import log
+from oslo_serialization import jsonutils
 from oslo_utils import netutils
 from oslo_utils import strutils
 from ovs.db import idl
@@ -40,6 +41,8 @@ from ovsdbapp import constants as ovsdbapp_const
 from neutron._i18n import _
 from neutron.common.ovn import constants
 from neutron.common.ovn import exceptions as ovn_exc
+from neutron.db import models_v2
+from neutron.objects import ports as ports_obj
 
 LOG = log.getLogger(__name__)
 
@@ -584,3 +587,33 @@ def connection_config_to_target_string(connection_config):
                     _dict['ip'])
         elif _dict['file']:
             return 'p' + _dict['proto'] + ':' + _dict['file']
+
+
+def is_port_external(port):
+    # This port is represented in OVN DB as lsp.type=external
+    capabilities = []
+    vnic_type = portbindings.VNIC_NORMAL
+
+    if isinstance(port, dict):
+        capabilities = get_port_capabilities(port)
+        vnic_type = port.get(portbindings.VNIC_TYPE,
+                             portbindings.VNIC_NORMAL)
+    else:
+        if isinstance(port, models_v2.Port):
+            bindings = port.port_bindings
+        elif isinstance(port, ports_obj.Port):
+            bindings = port.bindings
+        else:  # What else could be "port"?
+            bindings = []
+
+        if bindings:
+            profile = bindings[0].get('profile')
+            if profile:
+                # DB object, not OVO, stores the dict in JSON.
+                profile = (jsonutils.loads(profile) if isinstance(profile, str)
+                           else profile)
+                capabilities = profile.get('capabilities', [])
+            vnic_type = bindings[0].get('vnic_type', portbindings.VNIC_NORMAL)
+
+    return (vnic_type in constants.EXTERNAL_PORT_TYPES and
+            constants.PORT_CAP_SWITCHDEV not in capabilities)

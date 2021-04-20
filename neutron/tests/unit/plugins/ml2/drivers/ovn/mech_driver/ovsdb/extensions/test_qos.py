@@ -15,6 +15,7 @@
 from unittest import mock
 
 import netaddr
+from neutron_lib.api.definitions import portbindings as portbindings_api
 from neutron_lib.api.definitions import qos as qos_api
 from neutron_lib import constants
 from neutron_lib import context
@@ -317,8 +318,13 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         # External port, OVN QoS extension does not apply.
         self.mock_rules.reset_mock()
         port.qos_policy_id = self.qos_policies[0].id
-        self.qos_driver.update_port(mock.ANY, port, original_port,
-                                    port_type=ovn_const.LSP_TYPE_EXTERNAL)
+        port_obj.PortBinding(self.ctx, port_id=port.id, host='host',
+                             profile={}, vif_type='',
+                             vnic_type=portbindings_api.VNIC_DIRECT).create()
+        # NOTE(ralonsoh): this OVO retrieval must include, in the port object,
+        # the port binding register created.
+        port = port_obj.Port.get_object(self.ctx, id=port.id)
+        self.qos_driver.update_port(mock.ANY, port, original_port)
         self.mock_rules.assert_not_called()
 
     def test_delete_port(self):
@@ -402,6 +408,37 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
                                self.ports[0].network_id, qos_policy_id, None)]
             self.mock_rules.assert_has_calls(calls)
             self.mock_rules.reset_mock()
+
+    def test_update_network_external_ports(self):
+        """Test update network with external ports.
+
+        - port10: no QoS port policy
+        - port11: no QoS port policy but external
+        - port12: qos_policy0
+        """
+        policies_ports = [(self.qos_policies[0].id, {self.ports[0].id})]
+        self.ports[2].qos_policy_id = self.qos_policies[0].id
+        self.ports[2].update()
+        port_obj.PortBinding(self.ctx, port_id=self.ports[1].id, host='host',
+                             profile={}, vif_type='',
+                             vnic_type=portbindings_api.VNIC_DIRECT).create()
+        with mock.patch.object(self.qos_driver._driver._nb_idl,
+                               'get_lswitch_port') as mock_lsp:
+            mock_lsp.side_effect = [
+                mock.Mock(type=ovn_const.LSP_TYPE_LOCALNET),
+                mock.Mock(type=ovn_const.LSP_TYPE_EXTERNAL)]
+            for qos_policy_id, reference_ports in policies_ports:
+                self.networks[0].qos_policy_id = qos_policy_id
+                self.networks[0].update()
+                original_network = {'qos_policy_id': self.qos_policies[0]}
+                reviewed_port_ids = self.qos_driver.update_network(
+                    mock.ANY, self.networks[0], original_network, reset=True)
+                self.assertEqual(reference_ports, reviewed_port_ids)
+                calls = [mock.call(
+                    mock.ANY, self.ports[0].id, self.ports[0].network_id,
+                    qos_policy_id, None)]
+                self.mock_rules.assert_has_calls(calls)
+                self.mock_rules.reset_mock()
 
     def test_update_policy(self):
         """Test update QoS policy, networks and ports bound are updated.
