@@ -200,7 +200,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             new_type.create()
         return updated_types
 
-    def update_db_subnet(self, context, subnet_id, s, oldpools):
+    def update_db_subnet(self, context, subnet_id, s, oldpools,
+            subnet_obj=None):
         changes = {}
         if "dns_nameservers" in s:
             changes['dns_nameservers'] = (
@@ -218,7 +219,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             changes['service_types'] = (
                 self._update_subnet_service_types(context, subnet_id, s))
 
-        subnet_obj = self._get_subnet_object(context, subnet_id)
+        subnet_obj = subnet_obj or self._get_subnet_object(context, subnet_id)
         subnet_obj.update_fields(s)
         subnet_obj.update()
         return subnet_obj, changes
