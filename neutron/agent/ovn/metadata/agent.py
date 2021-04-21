@@ -203,7 +203,8 @@ class MetadataAgent(object):
         self._load_config()
 
         # Launch the server that will act as a proxy between the VM's and Nova.
-        proxy = metadata_server.UnixDomainMetadataProxy(self.conf)
+        proxy = metadata_server.UnixDomainMetadataProxy(self.conf,
+                self.chassis)
         proxy.run()
 
         tables = ('Encap', 'Port_Binding', 'Datapath_Binding', 'SB_Global',
