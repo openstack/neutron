@@ -90,6 +90,7 @@
         - neutron-tempest-mariadb-full
         - neutron-tempest-with-os-ken-master
         - neutron-ovn-tempest-ovs-master-fedora
+        - neutron-tempest-with-neutron-lib-master
         - devstack-tobiko-faults-centos:
             voting: true
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
