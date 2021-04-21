@@ -41,6 +41,19 @@ from neutron.services.portforwarding import constants as pf_const
 LOG = log.getLogger(__name__)
 
 
+# Override wait_for_change to not use a timeout so we always try to reconnect
+def wait_for_change(idl_, timeout, seqno=None):
+    if seqno is None:
+        seqno = idl_.change_seqno
+        while idl_.change_seqno == seqno and not idl_.run():
+            poller = idlutils.poller.Poller()
+            idl_.wait(poller)
+            poller.block()
+
+
+idlutils.wait_for_change = wait_for_change
+
+
 class OvnNbTransaction(idl_trans.Transaction):
 
     def __init__(self, *args, **kwargs):
