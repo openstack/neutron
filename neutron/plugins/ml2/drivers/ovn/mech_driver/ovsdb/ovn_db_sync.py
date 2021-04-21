@@ -306,6 +306,27 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
 
         LOG.debug('ACL-SYNC: finished @ %s', str(datetime.now()))
 
+    def _calculate_routes_differences(self, ovn_routes, db_routes):
+        to_add = []
+        to_remove = []
+        for db_route in db_routes:
+            for ovn_route in ovn_routes:
+                if (ovn_route['destination'] == db_route['destination'] and
+                   ovn_route['nexthop'] == db_route['nexthop']):
+                    break
+            else:
+                to_add.append(db_route)
+
+        for ovn_route in ovn_routes:
+            for db_route in db_routes:
+                if (ovn_route['destination'] == db_route['destination'] and
+                   ovn_route['nexthop'] == db_route['nexthop']):
+                    break
+            else:
+                to_remove.append(ovn_route)
+
+        return to_add, to_remove
+
     def _calculate_fips_differences(self, ovn_fips, ovn_rtr_lb_pfs, db_fips):
         to_add = []
         to_remove = []
@@ -431,7 +452,11 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 if gw_info.gateway_ip:
                     db_extends[router['id']]['routes'].append(
                         {'destination': prefix,
-                         'nexthop': gw_info.gateway_ip})
+                         'nexthop': gw_info.gateway_ip,
+                         'external_ids': {
+                             ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
+                             ovn_const.OVN_SUBNET_EXT_ID_KEY:
+                             gw_info.subnet_id}})
                 if gw_info.ip_version == constants.IP_VERSION_6:
                     continue
                 if gw_info.router_ip and utils.is_snat_enabled(router):
@@ -495,7 +520,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                     db_routes.extend(db_extends[lrouter['name']]['routes'])
 
                 ovn_routes = lrouter['static_routes']
-                add_routes, del_routes = helpers.diff_list_of_dict(
+                add_routes, del_routes = self._calculate_routes_differences(
                     ovn_routes, db_routes)
                 update_sroutes_list.append({'id': lrouter['name'],
                                             'add': add_routes,
@@ -623,10 +648,15 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                         LOG.warning("Add static routes %s to OVN NB DB",
                                     sroute['add'])
                         for route in sroute['add']:
+                            columns = {}
+                            if 'external_ids' in route:
+                                columns['external_ids'] = route['external_ids']
                             txn.add(self.ovn_api.add_static_route(
                                 utils.ovn_name(sroute['id']),
                                 ip_prefix=route['destination'],
-                                nexthop=route['nexthop']))
+                                nexthop=route['nexthop'],
+                                **columns))
+
                 if sroute['del']:
                     LOG.warning("Router %(id)s static routes %(route)s "
                                 "found in OVN but not in Neutron",
