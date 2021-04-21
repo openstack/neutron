@@ -102,6 +102,19 @@ future to support existing VLAN-tagged traffic (coming from NFV VMs
 for instance) and/or to deal with potential QinQ support natively
 available in the Open vSwitch.
 
+OVS Filtering Tables
+--------------------
+
+ovs-neutron-agent and other L2 agent extensions use OVS filtering tables.
+
+For the list of tables and the short name for them used in Neutron see
+`ovs-neutron-agent constants`_
+
+For a detailed discussion of Open vSwitch firewall driver and how the
+filtering tables are used for security-groups see :doc:`openvswitch_firewall`.
+
+.. _ovs-neutron-agent constants: https://opendev.org/openstack/neutron-lib/src/branch/master/neutron_lib/constants.py
+
 Tackling the Network Trunking use case
 --------------------------------------
 
