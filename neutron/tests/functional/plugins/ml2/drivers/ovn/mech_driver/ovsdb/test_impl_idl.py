@@ -14,6 +14,7 @@
 
 import uuid
 
+from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp import event as ovsdb_event
 from ovsdbapp.tests.functional import base
 from ovsdbapp.tests import utils
@@ -147,3 +148,23 @@ class TestSbApi(base.FunctionalTestCase,
         self.assertEqual(
             (chassis.name, str(binding.datapath.uuid)),
             self.api.get_logical_port_chassis_and_datapath(port.name))
+
+
+class TestIgnoreConnectionTimeout(base.FunctionalTestCase,
+                                  n_base.BaseLoggingTestCase):
+    schemas = ['OVN_Southbound', 'OVN_Northbound']
+
+    def setUp(self):
+        super(TestIgnoreConnectionTimeout, self).setUp()
+        self.api = impl.OvsdbSbOvnIdl(self.connection['OVN_Southbound'])
+        self.nbapi = impl.OvsdbNbOvnIdl(self.connection['OVN_Northbound'])
+        self.handler = ovsdb_event.RowEventHandler()
+        self.api.idl.notify = self.handler.notify
+
+    @classmethod
+    def create_connection(cls, schema):
+        idl = connection.OvsdbIdl.from_server(cls.schema_map[schema], schema)
+        return connection.Connection(idl, 0)
+
+    def test_setUp_will_fail_if_this_is_broken(self):
+        pass
