@@ -17,7 +17,7 @@ git+https://github.com/sapcc/openstack-audit-middleware.git@master#egg=audit-mid
 
 # Networking Drivers
 -e git+https://github.com/sapcc/asr1k-neutron-l3@stable/ussuri-m3#egg=asr1k-neutron-l3
--e git+https://github.com/sapcc/networking-aci.git@stable/ussuri-m3#egg=networking_aci
+-e git+https://github.com/sapcc/networking-aci.git@stable/ussuri-m3#egg=networking_aci[acicobra]
 -e git+https://github.com/sapcc/networking-manila.git@stable/ussuri-m3#egg=networking_manila
 -e git+https://github.com/sapcc/networking-f5.git@stable/ussuri-m3#egg=networking_f5
 -e git+https://github.com/sapcc/networking-ucsm-bm.git@stable/ussuri-m3#egg=networking-ucsm-bm
