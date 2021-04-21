@@ -92,3 +92,25 @@
       # in base neutron-functional job as that is being used by neutron
       # stadium projects where they need to use stadium project as working dir.
       zuul_work_dir: src/opendev.org/openstack/neutron
+
+- job:
+    name: neutron-tempest-plugin-scenario-linuxbridge-nftables
+    parent: neutron-tempest-plugin-scenario-linuxbridge
+    pre-run: playbooks/install_nftables.yaml
+    vars:
+      devstack_local_conf:
+        post-config:
+          $NEUTRON_CONF:
+            SECURITYGROUP:
+              enable_ipset: false  # Not compatible with nftables
+
+- job:
+    name: neutron-tempest-plugin-scenario-openvswitch-iptables_hybrid-nftables
+    parent: neutron-tempest-plugin-scenario-openvswitch-iptables_hybrid
+    pre-run: playbooks/install_nftables.yaml
+    vars:
+      devstack_local_conf:
+        post-config:
+          $NEUTRON_CONF:
+            SECURITYGROUP:
+              enable_ipset: false  # Not compatible with nftables
