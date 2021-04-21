@@ -15,6 +15,7 @@
 import copy
 import uuid
 
+from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp import constants as const
 from ovsdbapp import event as ovsdb_event
 from ovsdbapp.tests.functional import base
@@ -259,3 +260,13 @@ class TestNbApi(BaseOvnIdlTest):
             lb_match = f(exp_fip_id)
             self.assertIn((lb_match['name'], lb_match['external_ids']),
                           exp_values)
+
+
+class TestIgnoreConnectionTimeout(BaseOvnIdlTest):
+    @classmethod
+    def create_connection(cls, schema):
+        idl = connection.OvsdbIdl.from_server(cls.schema_map[schema], schema)
+        return connection.Connection(idl, 0)
+
+    def test_setUp_will_fail_if_this_is_broken(self):
+        pass
