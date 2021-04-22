@@ -653,5 +653,4 @@ Known limitations
      SR-IOV features may require a specific NIC driver version, depending on the vendor.
      Intel NICs, for example, require ixgbe version 4.4.6 or greater, and ixgbevf version
      3.2.2 or greater.
-* Attaching SR-IOV ports to existing servers is not currently supported, see
-  `bug 1708433 <https://bugs.launchpad.net/nova/+bug/1708433>`_ for details.
+* Attaching SR-IOV ports to existing servers is supported starting with the Victoria release.
