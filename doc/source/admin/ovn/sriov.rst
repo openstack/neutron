@@ -112,22 +112,22 @@ port belongs to, to find that group do:
    _uuid               : 43047e7b-4c78-4984-9788-6263fcc69885
    external_ids        : {}
    ha_chassis          : [3005bf84-fc95-4361-866d-bfa1c980adc8, 72c7671e-dd48-4100-9741-c47221672961]
-   name                : default_ha_chassis_group
+   name                : neutron-4b2944ca-c7a3-4cf6-a9c8-6aa541a20535
 
 .. end
 
 .. note::
+  The external ports will be placed on a HA Chassis Group for the
+  network that the port belongs to. Those HA Chassis Groups are named as
+  ``neutron-<Neutron Network UUID>``, as seeing in the output above. You
+  can also use this "name" with the ``ovn-nbctl list`` command when
+  searching for a specific HA Chassis Group.
 
-  For now, the OVN driver only has one HA Chassis Group created called
-  ``default_ha_chassis_group``. All ``external`` ports in the system
-  will belong to this group.
-
-The chassis that are members of the ``default_ha_chassis_group`` HA
-Chassis Group are listed in the ``ha_chassis`` column. Those are the
-gateway nodes (controller or networker nodes) in the deployment and
-it's where the ``external`` ports will be scheduled. In order to
-find which gateway node the external ports are scheduled on use the
-following command:
+The chassis that are members of the HA Chassis Group are listed in
+the ``ha_chassis`` column. Those are the gateway nodes (controller
+or networker nodes) in the deployment and it's where the ``external``
+ports will be scheduled. In order to find which gateway node the external
+ports are scheduled on use the following command:
 
 .. code-block:: bash
 
@@ -160,10 +160,6 @@ Known limitations
 
 The current SR-IOV implementation for the OVN Neutron driver has a few
 known limitations that should be addressed in the future:
-
-#. At the moment, **all** external ports will be scheduled on a single
-   gateway node since there's only one HA Chassis Group for all of those
-   ports.
 
 #. Routing on VLAN tenant network will not work with SR-IOV. This
    is because the external ports are not being co-located with
