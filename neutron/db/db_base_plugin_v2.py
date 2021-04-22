@@ -1499,9 +1499,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         return self._make_port_dict(db_port)
 
     @db_api.retry_if_session_inactive()
-    def delete_port(self, context, id):
+    def delete_port(self, context, id, port=None):
         with db_api.CONTEXT_WRITER.using(context):
-            self.ipam.delete_port(context, id)
+            self.ipam.delete_port(context, id, port)
 
     def delete_ports_by_device_id(self, context, device_id, network_id=None):
         with db_api.CONTEXT_READER.using(context):

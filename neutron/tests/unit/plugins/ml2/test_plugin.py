@@ -1328,10 +1328,8 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         plugin = directory.get_plugin()
         with mock.patch.object(ml2_plugin.LOG, 'debug') as log_debug:
             plugin.delete_port(ctx, 'invalid-uuid', l3_port_check=False)
-            log_debug.assert_has_calls([
-                mock.call(_("Deleting port %s"), 'invalid-uuid'),
-                mock.call(_("The port '%s' was deleted"), 'invalid-uuid')
-            ])
+            log_debug.assert_called_with(
+                _("The port '%s' was deleted"), 'invalid-uuid')
 
     def test_l3_cleanup_on_net_delete(self):
         l3plugin = directory.get_plugin(plugin_constants.L3)
