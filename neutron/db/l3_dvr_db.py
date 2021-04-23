@@ -52,6 +52,7 @@ from neutron.ipam import utils as ipam_utils
 from neutron.objects import agent as ag_obj
 from neutron.objects import base as base_obj
 from neutron.objects import l3agent as rb_obj
+from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
 
 
@@ -790,6 +791,61 @@ class DVRResourceOperationHandler(object):
                                                            p['id'],
                                                            l3_port_check=False)
 
+    def _get_ext_nets_by_host(self, context, host):
+        ext_nets = set()
+        ports_ids = port_obj.Port.get_ports_by_host(context, host)
+        for port_id in ports_ids:
+            fips = self._get_floatingips_by_port_id(context, port_id)
+            for fip in fips:
+                ext_nets.add(fip.floating_network_id)
+        return ext_nets
+
+    @registry.receives(resources.AGENT, [events.AFTER_CREATE])
+    def create_fip_agent_gw_ports(self, resource, event,
+                                  trigger, payload=None):
+        """Create floating agent gw ports for DVR L3 agent.
+
+        Create floating IP Agent gateway ports when an L3 agent is created.
+        """
+        if not payload:
+            return
+        agent = payload.latest_state
+        if agent.get('agent_type') != const.AGENT_TYPE_L3:
+            return
+        # NOTE(slaweq) agent is passed in payload as dict so to avoid getting
+        # again from db, lets just get configuration from this dict directly
+        l3_agent_mode = agent.get('configurations', {}).get('agent_mode')
+        if l3_agent_mode not in [const.L3_AGENT_MODE_DVR,
+                                 const.L3_AGENT_MODE_DVR_SNAT]:
+            return
+
+        host = agent['host']
+        context = payload.context.elevated()
+        for ext_net in self._get_ext_nets_by_host(context, host):
+            self.create_fip_agent_gw_port_if_not_exists(
+                context, ext_net, host)
+
+    @registry.receives(resources.AGENT, [events.AFTER_DELETE])
+    def delete_fip_agent_gw_ports(self, resource, event,
+                                  trigger, payload=None):
+        """Delete floating agent gw ports for DVR.
+
+        Delete floating IP Agent gateway ports from host when an L3 agent is
+        deleted.
+        """
+        if not payload:
+            return
+        agent = payload.latest_state
+        if agent.get('agent_type') != const.AGENT_TYPE_L3:
+            return
+        if self._get_agent_mode(agent) not in [const.L3_AGENT_MODE_DVR,
+                                               const.L3_AGENT_MODE_DVR_SNAT]:
+            return
+
+        agent_gw_ports = self._get_agent_gw_ports(payload.context, agent['id'])
+        for gw_port in agent_gw_ports:
+            self._core_plugin.delete_port(payload.context, gw_port['id'])
+
 
 class _DVRAgentInterfaceMixin(object):
     """Contains calls made by the DVR scheduler and RPC interface.
@@ -1065,6 +1121,14 @@ class _DVRAgentInterfaceMixin(object):
         ports = self._core_plugin.get_ports(context, filters)
         if ports:
             return ports[0]
+
+    def _get_agent_gw_ports(self, context, agent_id):
+        """Return agent gw ports."""
+        filters = {
+            'device_id': [agent_id],
+            'device_owner': [const.DEVICE_OWNER_AGENT_GW]
+        }
+        return self._core_plugin.get_ports(context, filters)
 
     def check_for_fip_and_create_agent_gw_port_on_host_if_not_exists(
             self, context, port, host):
