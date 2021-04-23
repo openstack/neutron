@@ -20,11 +20,13 @@ from oslo_utils import uuidutils
 
 
 # Common database operation implementations
-def _get_filter_query(obj_cls, context, **kwargs):
+def _get_filter_query(obj_cls, context, query_field=None, query_limit=None,
+                      **kwargs):
     with obj_cls.db_context_reader(context):
         filters = _kwargs_to_filters(**kwargs)
         query = model_query.get_collection_query(
-            context, obj_cls.db_model, filters)
+            context, obj_cls.db_model, filters, limit=query_limit,
+            field=query_field)
         return query
 
 
@@ -32,8 +34,13 @@ def get_object(obj_cls, context, **kwargs):
     return _get_filter_query(obj_cls, context, **kwargs).first()
 
 
-def count(obj_cls, context, **kwargs):
-    return _get_filter_query(obj_cls, context, **kwargs).count()
+def count(obj_cls, context, query_field=None, query_limit=None, **kwargs):
+    if not query_field and obj_cls.primary_keys:
+        query_field = obj_cls.primary_keys[0]
+        if query_field in obj_cls.fields_need_translation:
+            query_field = obj_cls.fields_need_translation[query_field]
+    return _get_filter_query(obj_cls, context, query_field=query_field,
+                             query_limit=query_limit, **kwargs).count()
 
 
 def _kwargs_to_filters(**kwargs):

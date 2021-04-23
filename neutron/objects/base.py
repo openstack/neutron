@@ -933,5 +933,5 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
             cls.validate_filters(**kwargs)
         # Succeed if at least a single object matches; no need to fetch more
         return bool(obj_db_api.count(
-            cls, context, **cls.modify_fields_to_db(kwargs))
+            cls, context, query_limit=1, **cls.modify_fields_to_db(kwargs))
         )
