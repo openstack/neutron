@@ -1313,7 +1313,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if not validators.is_attr_set(network_id):
             msg = _("network_id must be specified.")
             raise exc.InvalidInput(error_message=msg)
-        if not network_obj.Network.objects_exist(context, id=network_id):
+        if not self._network_exists(context, network_id):
             raise exc.NetworkNotFound(net_id=network_id)
 
         subnetpool = subnetpool_obj.SubnetPool.get_object(context,
@@ -1423,7 +1423,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             port_data['mac_address'] = p.get('mac_address')
         with db_api.CONTEXT_WRITER.using(context):
             # Ensure that the network exists.
-            self._get_network(context, network_id)
+            if not self._network_exists(context, network_id):
+                raise exc.NetworkNotFound(net_id=network_id)
 
             # Create the port
             db_port = self._create_db_port_obj(context, port_data)
