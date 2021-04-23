@@ -29,7 +29,7 @@ rules = [
                 'path': '/floatingip_pools',
             },
         ],
-        scope_types=['admin', 'project'],
+        scope_types=['system', 'project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_floatingip_pool',
             check_str=base.RULE_ANY,
