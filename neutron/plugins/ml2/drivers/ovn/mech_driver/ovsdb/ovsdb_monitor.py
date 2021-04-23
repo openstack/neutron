@@ -537,6 +537,8 @@ class OvnSbIdl(OvnIdlDistributedLock):
         helper = idlutils.get_schema_helper(connection_string, schema_name)
         if 'Chassis_Private' in helper.schema_json['tables']:
             helper.register_table('Chassis_Private')
+        if 'FDB' in helper.schema_json['tables']:
+            helper.register_table('FDB')
         helper.register_table('Chassis')
         helper.register_table('Encap')
         helper.register_table('Port_Binding')
