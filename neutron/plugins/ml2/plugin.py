@@ -1362,9 +1362,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         registry.notify(resources.PORT, events.BEFORE_CREATE, self,
                         context=context, port=attrs)
-        # NOTE(kevinbenton): triggered outside of transaction since it
-        # emits 'AFTER' events if it creates.
-        self._ensure_default_security_group(context, attrs['tenant_id'])
 
     def _create_port_db(self, context, port):
         attrs = port[port_def.RESOURCE_NAME]
