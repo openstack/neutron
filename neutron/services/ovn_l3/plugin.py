@@ -33,7 +33,6 @@ from oslo_utils import excutils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import extensions
 from neutron.common.ovn import utils
-from neutron.common import utils as common_utils
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import dns_db
 from neutron.db import extraroute_db
@@ -288,7 +287,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         return fip
 
     def disassociate_floatingips(self, context, port_id, do_notify=True):
-        fips = self.get_floatingips(common_utils.get_elevated_context(context),
+        fips = self.get_floatingips(context.elevated(),
                                     filters={'port_id': [port_id]})
         router_ids = super(OVNL3RouterPlugin, self).disassociate_floatingips(
             context, port_id, do_notify)

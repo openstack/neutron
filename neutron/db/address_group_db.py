@@ -20,7 +20,6 @@ from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import address_group as ag_exc
 from oslo_utils import uuidutils
 
-from neutron.common import utils as common_utils
 from neutron.extensions import address_group as ag_ext
 from neutron.objects import address_group as ag_obj
 from neutron.objects import base as base_obj
@@ -176,9 +175,8 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
         ]
 
     def delete_address_group(self, context, id):
-        if sg_obj.SecurityGroupRule.get_objects(
-                common_utils.get_elevated_context(context),
-                remote_address_group_id=id):
+        if sg_obj.SecurityGroupRule.get_objects(context.elevated(),
+                                                remote_address_group_id=id):
             raise ag_exc.AddressGroupInUse(address_group_id=id)
         ag = self._get_address_group(context, id)
         ag.delete()

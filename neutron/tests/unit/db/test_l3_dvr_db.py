@@ -30,7 +30,6 @@ from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as plugin_utils
 from oslo_utils import uuidutils
 
-from neutron.common import utils as common_utils
 from neutron.db import agents_db
 from neutron.db import l3_dvr_db
 from neutron.db import l3_dvrscheduler_db
@@ -328,9 +327,9 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
              check_for_fip_and_create_agent_gw_port_on_host_if_not_exists(
                     ctxt, port, 'host'))
             if fip:
-                c_fip.assert_called_once_with(
-                    common_utils.get_elevated_context(ctxt),
-                    fip['floating_network_id'], 'host')
+                c_fip.assert_called_once_with(ctxt.elevated(),
+                                              fip['floating_network_id'],
+                                              'host')
             else:
                 c_fip.assert_not_called()
 

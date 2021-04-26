@@ -18,7 +18,6 @@ from neutron_lib import constants as lib_const
 from neutron_lib.db import utils as lib_db_utils
 from neutron_lib.plugins import directory
 
-from neutron.common import utils as common_utils
 from neutron.extensions import floatingip_pools as fip_pools_ext
 from neutron.objects import base as base_obj
 from neutron.objects import network as net_obj
@@ -50,7 +49,7 @@ class FloatingIPPoolsDbMixin(object):
         # NOTE(hongbin): Use elevated context to make sure we have enough
         # permission to retrieve subnets that are not in current tenant
         # but belongs to external networks shared with current tenant.
-        admin_context = common_utils.get_elevated_context(context)
+        admin_context = context.elevated()
         subnet_objs = subnet_obj.Subnet.get_objects(admin_context,
                                                     _pager=pager,
                                                     network_id=net_ids)

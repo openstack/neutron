@@ -22,7 +22,6 @@ from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import and_, or_
 from sqlalchemy.sql import exists
 
-from neutron.common import utils as common_utils
 from neutron.db.models import dns as dns_models
 from neutron.db.models import segment as segment_model
 from neutron.db.models import subnet_service_type
@@ -274,11 +273,10 @@ class Subnet(base.NeutronDbObject):
             # instantiated and without DB interaction (get_object(s), update,
             # create), it should be rare case to load 'shared' by that method
             shared = (rbac_db.RbacNeutronDbObjectMixin.
-                      get_shared_with_tenant(
-                          common_utils.get_elevated_context(self.obj_context),
-                          network.NetworkRBAC,
-                          self.network_id,
-                          self.project_id))
+                      get_shared_with_tenant(self.obj_context.elevated(),
+                                             network.NetworkRBAC,
+                                             self.network_id,
+                                             self.project_id))
         setattr(self, 'shared', shared)
         self.obj_reset_changes(['shared'])
 
