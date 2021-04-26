@@ -22,6 +22,7 @@ from neutron_lib.api.definitions import expose_port_forwarding_in_fip
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import extra_dhcp_opt
 from neutron_lib.api.definitions import extraroute
+from neutron_lib.api.definitions import filter_validation
 from neutron_lib.api.definitions import fip_pf_description
 from neutron_lib.api.definitions import fip_port_details
 from neutron_lib.api.definitions import floating_ip_port_forwarding
@@ -85,6 +86,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     default_subnetpools.ALIAS,
     external_net.ALIAS,
     extra_dhcp_opt.ALIAS,
+    filter_validation.ALIAS,
     multiprovidernet.ALIAS,
     network_mtu.ALIAS,
     network_mtu_writable.ALIAS,
