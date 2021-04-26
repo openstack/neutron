@@ -115,7 +115,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
                          neutron_context=neutron_context,
                          query_params=query_params)
         resource = resource.replace('-', '_')
-        self.assertItemsEqual([i['id'] for i in res['%ss' % resource]],
+        self.assertCountEqual([i['id'] for i in res['%ss' % resource]],
                               [i[resource]['id'] for i in items])
         return res
 

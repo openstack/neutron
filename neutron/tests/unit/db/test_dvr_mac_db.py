@@ -210,5 +210,5 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
             dvr_ports = self.mixin.get_ports_on_host_by_subnet(
                 self.ctx, HOST, subnet['subnet']['id'])
             self.assertEqual(len(expected_ids), len(dvr_ports))
-            self.assertItemsEqual(expected_ids,
+            self.assertCountEqual(expected_ids,
                                   [port['id'] for port in dvr_ports])

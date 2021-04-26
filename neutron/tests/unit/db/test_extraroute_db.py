@@ -45,7 +45,7 @@ class TestExtraRouteDb(testlib_api.SqlTestCase):
             }
         }
         router = self._plugin.create_router(ctx, create_request)
-        self.assertItemsEqual(router['routes'], [])
+        self.assertCountEqual(router['routes'], [])
         router_id = router['id']
         routes = [
             {'destination': '10.0.0.0/24', 'nexthop': '1.1.1.4'},
@@ -71,9 +71,9 @@ class TestExtraRouteDb(testlib_api.SqlTestCase):
                                                             update_request)
             mock_cb.assert_called_with('router', events.PRECOMMIT_UPDATE,
                                        self._plugin, payload=mock.ANY)
-        self.assertItemsEqual(updated_router['routes'], routes)
+        self.assertCountEqual(updated_router['routes'], routes)
         got_router = self._plugin.get_router(ctx, router_id)
-        self.assertItemsEqual(got_router['routes'], routes)
+        self.assertCountEqual(got_router['routes'], routes)
 
     def assertEqualRoutes(self, a, b):
         """Compare a list of routes without caring for the list order."""

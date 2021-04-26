@@ -352,7 +352,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             self.l3_inst._ovn.update_lrouter_port.call_args_list[0][1])
 
         self.assertEqual(1, self.l3_inst._ovn.update_lrouter_port.call_count)
-        self.assertItemsEqual(fake_rtr_intf_networks,
+        self.assertCountEqual(fake_rtr_intf_networks,
                               called_args_dict.get('networks', []))
         self.l3_inst._ovn.set_lrouter_port_in_lswitch_port.\
             assert_called_once_with(

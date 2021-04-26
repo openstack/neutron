@@ -136,7 +136,7 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
                                     physical_network='foo')
         obj = self._create_network_segment_range(range_minimum, range_maximum)
         available_alloc = self._test_class._get_available_allocation(obj)
-        self.assertItemsEqual(not_to_alloc, available_alloc)
+        self.assertCountEqual(not_to_alloc, available_alloc)
 
     def test__get_used_allocation_mapping(self):
         alloc_mapping = {}

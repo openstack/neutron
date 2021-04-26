@@ -1431,7 +1431,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             dvr_subnet_ports = self.mixin.get_ports_under_dvr_connected_subnet(
                 self.ctx, subnet['subnet']['id'])
             dvr_subnet_ports_ids = [p['id'] for p in dvr_subnet_ports]
-            self.assertItemsEqual(fake_bound_ports_ids, dvr_subnet_ports_ids)
+            self.assertCountEqual(fake_bound_ports_ids, dvr_subnet_ports_ids)
 
     @mock.patch.object(plugin_utils, 'can_port_be_bound_to_virtual_bridge',
                        return_value=True)

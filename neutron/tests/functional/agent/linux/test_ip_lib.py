@@ -393,7 +393,7 @@ class IpLibTestCase(IpLibTestFramework):
                             'scope': 'link'}]
 
         routes = ip_lib.get_routing_table(4, namespace=attr.namespace)
-        self.assertItemsEqual(expected_routes, routes)
+        self.assertCountEqual(expected_routes, routes)
         self.assertIsInstance(routes, list)
 
         expected_routes6 = [{'nexthop': "fd00::2",
@@ -406,7 +406,7 @@ class IpLibTestCase(IpLibTestFramework):
                                  netaddr.IPNetwork(attr.ip_cidrs[1]).cidr),
                              'scope': 'universe'}]
         routes6 = ip_lib.get_routing_table(6, namespace=attr.namespace)
-        self.assertItemsEqual(expected_routes6, routes6)
+        self.assertCountEqual(expected_routes6, routes6)
         self.assertIsInstance(routes6, list)
 
     def test_get_routing_table_no_namespace(self):
@@ -427,7 +427,7 @@ class IpLibTestCase(IpLibTestFramework):
                             'state': 'permanent'}]
 
         neighs = device.neigh.dump(4)
-        self.assertItemsEqual(expected_neighs, neighs)
+        self.assertCountEqual(expected_neighs, neighs)
         self.assertIsInstance(neighs, list)
 
         device.neigh.delete(TEST_IP_NEIGH, mac_address)
@@ -616,7 +616,7 @@ class IpLibTestCase(IpLibTestFramework):
              ip_info['scope'],
              ip_info['broadcast']) for
             ip_info in device.addr.list()]
-        self.assertItemsEqual(ip_addresses, device_ips_info)
+        self.assertCountEqual(ip_addresses, device_ips_info)
 
     def _flush_ips(self, device, ip_version):
         device.addr.flush(ip_version)
