@@ -33,11 +33,13 @@
 - name: Restore saved IPv4 iptables rules, stored by iptables-persistent
   shell:
     cmd: |
-      iptables-restore '{{ ipv4_rules_file }}'
+      iptables-restore '{{ ipv4_rules_file.stat.path }}'
   become: yes
+  when: ipv4_rules_file.stat.exists
 
 - name: Restore saved IPv6 iptables rules, stored by iptables-persistent
   shell:
     cmd: |
-      ip6tables-restore '{{ ipv6_rules_file }}'
+      ip6tables-restore '{{ ipv6_rules_file.stat.path }}'
   become: yes
+  when: ipv6_rules_file.stat.exists
