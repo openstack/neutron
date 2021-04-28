@@ -30,6 +30,7 @@ from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import exception as obj_exception
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import orm
+from sqlalchemy.orm import query as sqla_query
 
 from neutron._i18n import _
 from neutron.db import standard_attr
@@ -518,8 +519,14 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
         # db.keys() so we must fetch data based on object fields definition
         potential_fields = (list(cls.fields.keys()) +
                             list(cls.fields_need_translation.values()))
-        result = {field: db_obj[field] for field in potential_fields
-                  if db_obj.get(field) is not None}
+        # NOTE(ralonsoh): fields dynamically loaded will be represented as
+        # ``sqla_query.Query``, because the value is load when needed executing
+        # a query to the DB.
+        result = {
+            field: db_obj[field] for field in potential_fields
+            if (db_obj.get(field) is not None and
+                not issubclass(db_obj.get(field).__class__, sqla_query.Query))
+        }
         for field, field_db in cls.fields_need_translation.items():
             if field_db in result:
                 result[field] = result.pop(field_db)
@@ -933,5 +940,5 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
             cls.validate_filters(**kwargs)
         # Succeed if at least a single object matches; no need to fetch more
         return bool(obj_db_api.count(
-            cls, context, **cls.modify_fields_to_db(kwargs))
+            cls, context, query_limit=1, **cls.modify_fields_to_db(kwargs))
         )
