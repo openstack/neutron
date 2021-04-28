@@ -636,7 +636,7 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
             subnet = subnet['subnet']
 
         segment2 = self._test_create_segment(network_id=net['id'],
-                                             physical_network='phys_net2',
+                                             physical_network='phys_net3',
                                              segmentation_id=202)['segment']
 
         data = {'subnet': {'segment_id': segment2['id']}}

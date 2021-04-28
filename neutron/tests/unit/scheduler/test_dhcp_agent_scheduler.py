@@ -307,12 +307,12 @@ class TestAutoScheduleSegments(test_plugin.Ml2PluginV2TestCase,
                          'shared': True}})
         return net['id']
 
-    def _create_segment(self, network_id):
+    def _create_segment(self, network_id, physical_network='physnet1'):
         seg = self.segments_plugin.create_segment(
             self.ctx,
             {'segment': {'network_id': network_id,
                          'name': None, 'description': None,
-                         'physical_network': 'physnet1',
+                         'physical_network': physical_network,
                          'network_type': 'vlan',
                          'segmentation_id': constants.ATTR_NOT_SPECIFIED}})
         return seg['id']
@@ -381,7 +381,7 @@ class TestAutoScheduleSegments(test_plugin.Ml2PluginV2TestCase,
             self.ctx, [net_id])
         self.assertEqual(1, len(agents))
 
-        seg2_id = self._create_segment(net_id)
+        seg2_id = self._create_segment(net_id, 'physnet2')
         self._create_subnet(seg2_id, net_id, '192.168.11.0/24')
         helpers.register_dhcp_agent(HOST_C)
         segments_service_db.update_segment_host_mapping(

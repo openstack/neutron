@@ -1,0 +1,8 @@
+---
+upgrade:
+  - |
+    A unique constraint for (network_id, network_type, physical_network) is
+    added to the networksegments table. This was done to prevent race
+    conditions on dynamic segment allocation. Operators having networks with
+    multiple segments (e.g. when using hierarchical portbinding) should check
+    that this constraint is not violated with the included upgrade-check.
