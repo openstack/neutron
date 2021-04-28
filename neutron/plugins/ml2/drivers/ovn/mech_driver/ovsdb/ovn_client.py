@@ -1239,11 +1239,10 @@ class OVNClient(object):
                     else:
                         # Check if snat has been enabled/disabled and update
                         new_snat_state = gateway_new.get('enable_snat', True)
-                        if bool(ovn_snats) != new_snat_state:
-                            if utils.is_snat_enabled(new_router) and networks:
-                                self.update_nat_rules(
-                                    new_router, networks,
-                                    enable_snat=new_snat_state, txn=txn)
+                        if bool(ovn_snats) != new_snat_state and networks:
+                            self.update_nat_rules(
+                                new_router, networks,
+                                enable_snat=new_snat_state, txn=txn)
 
                 update = {'external_ids': self._gen_router_ext_ids(new_router)}
                 update['enabled'] = new_router.get('admin_state_up') or False
