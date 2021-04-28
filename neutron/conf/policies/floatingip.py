@@ -33,7 +33,7 @@ rules = [
                 'path': COLLECTION_PATH,
             },
         ],
-        scope_types=['project'],
+        scope_types=['system', 'project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_floatingip',
             check_str=base.RULE_ANY,

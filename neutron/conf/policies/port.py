@@ -212,7 +212,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_port:binding:vnic_type',
         check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
-        scope_types=['project'],
+        scope_types=['system', 'project'],
         description=(
             'Specify ``binding:vnic_type`` '
             'attribute when creating a port'
