@@ -31,7 +31,6 @@ import neutron.conf.agent.linux
 import neutron.conf.agent.metadata.config as meta_conf
 import neutron.conf.agent.ovs_conf
 import neutron.conf.agent.ovsdb_api
-import neutron.conf.agent.xenapi_conf
 import neutron.conf.common
 import neutron.conf.db.dvr_mac_db
 import neutron.conf.db.extraroute_db
@@ -342,10 +341,3 @@ def list_ironic_auth_opts():
                 opt_list.append(plugin_option)
     opt_list.sort(key=operator.attrgetter('name'))
     return [(IRONIC_GROUP, opt_list)]
-
-
-def list_xenapi_opts():
-    return [
-        ('xenapi',
-         neutron.conf.agent.xenapi_conf.XENAPI_OPTS)
-    ]
