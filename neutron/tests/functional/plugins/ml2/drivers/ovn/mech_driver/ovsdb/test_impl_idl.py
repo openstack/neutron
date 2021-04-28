@@ -130,7 +130,7 @@ class TestSbApi(BaseOvnIdlTest):
             check_error=True)
         self.assertEqual(nets, self.api.get_chassis_metadata_networks(name))
 
-    def test_get_network_port_bindings_by_ip(self):
+    def _create_bound_port_with_ip(self):
         chassis, switch, port, binding = self._add_switch_port(
             self.data['chassis'][0]['name'])
         mac = 'de:ad:be:ef:4d:ad'
@@ -143,9 +143,27 @@ class TestSbApi(BaseOvnIdlTest):
             port.name, [mac_ip]).execute(check_error=True)
         self.assertTrue(pb_update_event.wait())
         self.api.lsp_bind(port.name, chassis.name).execute(check_error=True)
+
+        return binding, ipaddr, switch
+
+    def test_get_network_port_bindings_by_ip(self):
+        binding, ipaddr, _ = self._create_bound_port_with_ip()
         result = self.api.get_network_port_bindings_by_ip(
             str(binding.datapath.uuid), ipaddr)
         self.assertIn(binding, result)
+
+    def test_get_network_port_bindings_by_ip_with_unbound_port(self):
+        binding, ipaddr, switch = self._create_bound_port_with_ip()
+        unbound_port_name = utils.get_rand_device_name(prefix="port")
+        mac_ip = "de:ad:be:ef:4d:ab %s" % ipaddr
+        with self.nbapi.transaction(check_error=True) as txn:
+            txn.add(
+                self.nbapi.lsp_add(switch.name, unbound_port_name, type=type))
+            txn.add(self.nbapi.lsp_set_addresses(unbound_port_name, [mac_ip]))
+        result = self.api.get_network_port_bindings_by_ip(
+            str(binding.datapath.uuid), ipaddr)
+        self.assertIn(binding, result)
+        self.assertEqual(1, len(result))
 
     def test_get_ports_on_chassis(self):
         chassis, switch, port, binding = self._add_switch_port(
