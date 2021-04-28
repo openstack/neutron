@@ -1054,7 +1054,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         with db_api.exc_to_retry(sql_exc.IntegrityError), \
                 db_api.CONTEXT_WRITER.using(context):
             registry.notify(resources.SUBNET, events.PRECOMMIT_DELETE,
-                            self, context=context, subnet_id=subnet.id)
+                            self, context=context, subnet_id=subnet.id,
+                            subnet_obj=subnet)
             subnet.delete()
             # Delete related ipam subnet manually,
             # since there is no FK relationship
