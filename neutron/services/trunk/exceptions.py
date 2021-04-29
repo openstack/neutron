@@ -27,7 +27,7 @@ class TrunkNotFound(n_exc.NotFound):
 
 
 class SubPortNotFound(n_exc.NotFound):
-    message = _("SubPort on trunk %(trunk_id)s with parent port %(port_id)s "
+    message = _("SubPort %(port_id)s on trunk %(trunk_id)s "
                 "could not be found.")
 
 
