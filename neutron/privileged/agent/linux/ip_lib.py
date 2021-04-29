@@ -296,6 +296,11 @@ def _run_iproute_addr(command, device, namespace, **kwargs):
 
 
 @privileged.default.entrypoint
+def privileged_get_link_id(device, namespace, raise_exception=True):
+    return get_link_id(device, namespace, raise_exception=raise_exception)
+
+
+@privileged.default.entrypoint
 def add_ip_address(ip_version, ip, prefixlen, device, namespace, scope,
                    broadcast=None):
     family = _IP_VERSION_FAMILY_MAP[ip_version]
@@ -698,7 +703,8 @@ def _make_pyroute2_route_args(namespace, ip_version, cidr, device, via, table,
     :param ip_version: (int) [4, 6]
     :param cidr: (string) source IP or CIDR address (IPv4, IPv6)
     :param device: (string) input interface name
-    :param via: (string) gateway IP address
+    :param via: (string) gateway IP address or (list of dicts) for multipath
+                definition.
     :param table: (string, int) table number or name
     :param metric: (int) route metric
     :param scope: (int) route scope
@@ -713,16 +719,29 @@ def _make_pyroute2_route_args(namespace, ip_version, cidr, device, via, table,
         args['scope'] = scope
     if cidr:
         args['dst'] = cidr
-    if device:
-        args['oif'] = get_link_id(device, namespace)
-    if via:
-        args['gateway'] = via
     if table:
         args['table'] = int(table)
     if metric:
         args['priority'] = int(metric)
     if protocol:
         args['proto'] = protocol
+    if isinstance(via, (list, tuple)):
+        args['multipath'] = []
+        for mp in via:
+            multipath = {}
+            if mp.get('device'):
+                multipath['oif'] = get_link_id(mp['device'], namespace)
+            if mp.get('via'):
+                multipath['gateway'] = mp['via']
+            if mp.get('weight'):
+                multipath['hops'] = mp['weight'] - 1
+            args['multipath'].append(multipath)
+    else:
+        if via:
+            args['gateway'] = via
+        if device:
+            args['oif'] = get_link_id(device, namespace)
+
     return args
 
 
