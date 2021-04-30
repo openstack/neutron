@@ -3316,6 +3316,10 @@ class TestOVNMechanismDriverSecurityGroup(
         self._test_create_port_with_vnic_type(
             portbindings.VNIC_MACVTAP)
 
+    def test_create_port_with_vnic_baremetal(self):
+        self._test_create_port_with_vnic_type(
+            portbindings.VNIC_BAREMETAL)
+
     def test_update_port_with_sgs(self):
         with self.network() as n, self.subnet(n):
             sg1 = self._create_empty_sg('sg1')
