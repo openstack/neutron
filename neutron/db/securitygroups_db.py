@@ -890,15 +890,23 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
 
     @registry.receives(resources.PORT, [events.BEFORE_CREATE,
                                         events.BEFORE_UPDATE])
-    @registry.receives(resources.NETWORK, [events.BEFORE_CREATE])
-    def _ensure_default_security_group_handler(self, resource, event, trigger,
-                                               context, **kwargs):
+    def _ensure_default_security_group_handler_port(
+            self, resource, event, trigger, context, **kwargs):
         if event == events.BEFORE_UPDATE:
             tenant_id = kwargs['original_' + resource]['tenant_id']
         else:
             tenant_id = kwargs[resource]['tenant_id']
         if tenant_id:
             self._ensure_default_security_group(context, tenant_id)
+
+    @registry.receives(resources.NETWORK, [events.BEFORE_CREATE])
+    def _ensure_default_security_group_handler_net(
+            self, resource, event, trigger, payload=None):
+
+        # TODO(boden): refactor into single callback method
+        project_id = payload.latest_state['tenant_id']
+        if project_id:
+            self._ensure_default_security_group(payload.context, project_id)
 
     def _ensure_default_security_group(self, context, tenant_id):
         """Create a default security group if one doesn't exist.

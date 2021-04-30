@@ -506,17 +506,19 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             with db_api.CONTEXT_WRITER.using(context):
                 network_db = self._get_network(context, id)
                 network = self._make_network_dict(network_db, context=context)
-                registry.notify(resources.NETWORK, events.PRECOMMIT_DELETE,
-                                self, context=context, network_id=id,
-                                network=network)
+                registry.publish(resources.NETWORK, events.PRECOMMIT_DELETE,
+                                 self, payload=events.DBEventPayload(
+                                     context, resource_id=id,
+                                     states=(network,)))
                 # We expire network_db here because precommit deletion
                 # might have left the relationship stale, for example,
                 # if we deleted a segment.
                 context.session.expire(network_db)
                 network_db = self._get_network(context, id)
                 context.session.delete(network_db)
-        registry.notify(resources.NETWORK, events.AFTER_DELETE,
-                        self, context=context, network=network)
+        registry.publish(resources.NETWORK, events.AFTER_DELETE,
+                         self, payload=events.DBEventPayload(
+                             context, resource_id=id, states=(network,)))
 
     @db_api.retry_if_session_inactive()
     def get_network(self, context, id, fields=None):

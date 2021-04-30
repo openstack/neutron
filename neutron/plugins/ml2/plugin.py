@@ -1042,8 +1042,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _before_create_network(self, context, network):
         net_data = network[net_def.RESOURCE_NAME]
-        registry.notify(resources.NETWORK, events.BEFORE_CREATE, self,
-                        context=context, network=net_data)
+        registry.publish(resources.NETWORK, events.BEFORE_CREATE, self,
+                         payload=events.DBEventPayload(
+                             context, desired_state=net_data))
 
     def _create_network_db(self, context, network):
         net_data = network[net_def.RESOURCE_NAME]
@@ -1080,8 +1081,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                 net_data[az_def.AZ_HINTS])
                 net_db[az_def.AZ_HINTS] = az_hints
                 result[az_def.AZ_HINTS] = az_hints
-            registry.notify(resources.NETWORK, events.PRECOMMIT_CREATE, self,
-                            context=context, request=net_data, network=result)
+            registry.publish(resources.NETWORK, events.PRECOMMIT_CREATE, self,
+                             payload=events.DBEventPayload(
+                                 context, states=(result,),
+                                 resource_id=result['id'],
+                                 request_body=net_data))
 
             resource_extend.apply_funcs('networks', result, net_db)
             mech_context = driver_context.NetworkContext(self, context,
@@ -1097,8 +1101,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return self._after_create_network(context, result, mech_context)
 
     def _after_create_network(self, context, result, mech_context):
-        kwargs = {'context': context, 'network': result}
-        registry.notify(resources.NETWORK, events.AFTER_CREATE, self, **kwargs)
+        registry.publish(resources.NETWORK, events.AFTER_CREATE, self,
+                         payload=events.DBEventPayload(
+                             context, states=(result,),
+                             resource_id=result['id']))
         try:
             self.mechanism_manager.create_network_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
@@ -1166,9 +1172,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # by re-calling update_network with the previous attributes. For
         # now the error is propagated to the caller, which is expected to
         # either undo/retry the operation or delete the resource.
-        kwargs = {'context': context, 'network': updated_network,
-                  'original_network': original_network}
-        registry.notify(resources.NETWORK, events.AFTER_UPDATE, self, **kwargs)
+        registry.publish(resources.NETWORK, events.AFTER_UPDATE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             states=(original_network, updated_network,),
+                             resource_id=updated_network['id']))
         self.mechanism_manager.update_network_postcommit(mech_context)
         if need_network_update_notify:
             self.notifier.network_update(context, updated_network)
@@ -1227,31 +1235,33 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @registry.receives(resources.NETWORK, [events.PRECOMMIT_DELETE],
                        priority=0)
     def _network_delete_precommit_handler(self, rtype, event, trigger,
-                                          context, network_id, **kwargs):
-        network = (kwargs.get('network') or
-                   self.get_network(context, network_id))
+                                          payload=None):
+        context = payload.context
+        network_id = payload.resource_id
+        network = payload.latest_state if payload.states else \
+            self.get_network(context, network_id)
         mech_context = driver_context.NetworkContext(self,
                                                      context,
                                                      network)
         # TODO(kevinbenton): move this mech context into something like
         # a 'delete context' so it's not polluting the real context object
-        setattr(context, '_mech_context', mech_context)
+        setattr(payload.context, '_mech_context', mech_context)
         self.mechanism_manager.delete_network_precommit(
             mech_context)
 
     @registry.receives(resources.NETWORK, [events.AFTER_DELETE])
     def _network_delete_after_delete_handler(self, rtype, event, trigger,
-                                             context, network, **kwargs):
+                                             payload=None):
         try:
             self.mechanism_manager.delete_network_postcommit(
-                context._mech_context)
+                payload.context._mech_context)
         except ml2_exc.MechanismDriverError:
             # TODO(apech) - One or more mechanism driver failed to
             # delete the network.  Ideally we'd notify the caller of
             # the fact that an error occurred.
             LOG.error("mechanism_manager.delete_network_postcommit"
                       " failed")
-        self.notifier.network_delete(context, network['id'])
+        self.notifier.network_delete(payload.context, payload.resource_id)
 
     def _before_create_subnet(self, context, subnet):
         subnet_data = subnet[subnet_def.RESOURCE_NAME]

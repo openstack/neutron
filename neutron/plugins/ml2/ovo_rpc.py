@@ -37,6 +37,8 @@ LOG = logging.getLogger(__name__)
 
 
 class _ObjectChangeHandler(object):
+    _PAYLOAD_RESOURCES = (resources.NETWORK,)
+
     def __init__(self, resource, object_class, resource_push_api):
         self._resource = resource
         self._obj_class = object_class
@@ -51,7 +53,12 @@ class _ObjectChangeHandler(object):
         self._semantic_warned = False
         for event in (events.AFTER_CREATE, events.AFTER_UPDATE,
                       events.AFTER_DELETE):
-            registry.subscribe(self.handle_event, resource, event)
+            handler = self.handle_event
+
+            # TODO(boden): remove shim below once all events use payloads
+            if resource in self._PAYLOAD_RESOURCES:
+                handler = self.handle_payload_event
+            registry.subscribe(handler, resource, event)
 
     def wait(self):
         """Waits for all outstanding events to be dispatched."""
@@ -78,6 +85,18 @@ class _ObjectChangeHandler(object):
                         {'r': resource, 'e': event, 'l': stack})
             self._semantic_warned = True
         return True
+
+    def handle_payload_event(self, resource, event,
+                             trigger, payload=None):
+        if self._is_session_semantic_violated(
+                payload.context, resource, event):
+            return
+        resource_id = payload.resource_id
+        # we preserve the context so we can trace a receive on the agent back
+        # to the server-side event that triggered it
+        self._resources_to_push[resource_id] = payload.context.to_dict()
+        # spawn worker so we don't block main AFTER_UPDATE thread
+        self.fts.append(self._worker_pool.submit(self.dispatch_events))
 
     def handle_event(self, resource, event, trigger,
                      context, *args, **kwargs):
