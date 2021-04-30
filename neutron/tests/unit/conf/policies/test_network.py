@@ -246,7 +246,7 @@ class SystemAdminTests(NetworkAPITestCase):
             policy.enforce(self.context, 'delete_network', self.alt_target))
 
 
-class SystemMemberTests(NetworkAPITestCase):
+class SystemMemberTests(SystemAdminTests):
 
     def setUp(self):
         super(SystemMemberTests, self).setUp()
@@ -346,58 +346,6 @@ class SystemMemberTests(NetworkAPITestCase):
             policy.enforce,
             self.context, 'create_network:provider:segmentation_id',
             self.alt_target)
-
-    def test_get_network(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_network', self.target))
-        self.assertTrue(
-            policy.enforce(self.context, 'get_network', self.alt_target))
-
-    def test_get_network_external(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:router:external', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:router:external', self.alt_target))
-
-    def test_get_network_segments(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:segments', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:segments', self.alt_target))
-
-    def test_get_network_provider_network_type(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:provider:network_type',
-                           self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:provider:network_type',
-                           self.alt_target))
-
-    def test_get_network_provider_physical_network(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:provider:physical_network',
-                           self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:provider:physical_network',
-                           self.alt_target))
-
-    def test_get_network_provider_segmentation_id(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:provider:segmentation_id',
-                           self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:provider:segmentation_id',
-                           self.alt_target))
 
     def test_update_network(self):
         self.assertRaises(
