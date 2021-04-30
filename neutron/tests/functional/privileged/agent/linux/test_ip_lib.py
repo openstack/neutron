@@ -509,7 +509,7 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
         table = table or iproute_linux.DEFAULT_TABLE
         if not scope:
             scope = 'universe' if gateway else 'link'
-        scope = priv_ip_lib._get_scope_name(scope)
+        scope = priv_ip_lib.get_scope_name(scope)
         for cidr in cidrs:
             ip_version = common_utils.get_ip_version(cidr)
             if ip_version == n_cons.IP_VERSION_6 and not metric:

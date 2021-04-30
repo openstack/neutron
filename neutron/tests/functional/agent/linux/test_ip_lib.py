@@ -370,49 +370,6 @@ class IpLibTestCase(IpLibTestFramework):
             self.assertIsNone(
                 device.route.get_gateway(ip_version=ip_version))
 
-    def test_get_routing_table(self):
-        attr = self.generate_device_details(
-            ip_cidrs=["%s/24" % TEST_IP, "fd00::1/64"]
-        )
-        device = self.manage_device(attr)
-        device_ip = attr.ip_cidrs[0].split('/')[0]
-        destination = '8.8.8.0/24'
-        device.route.add_route(destination, device_ip)
-
-        destination6 = 'fd01::/64'
-        device.route.add_route(destination6, "fd00::2")
-
-        expected_routes = [{'nexthop': device_ip,
-                            'device': attr.name,
-                            'destination': destination,
-                            'scope': 'universe'},
-                           {'nexthop': None,
-                            'device': attr.name,
-                            'destination': str(
-                                netaddr.IPNetwork(attr.ip_cidrs[0]).cidr),
-                            'scope': 'link'}]
-
-        routes = ip_lib.get_routing_table(4, namespace=attr.namespace)
-        self.assertCountEqual(expected_routes, routes)
-        self.assertIsInstance(routes, list)
-
-        expected_routes6 = [{'nexthop': "fd00::2",
-                             'device': attr.name,
-                             'destination': destination6,
-                             'scope': 'universe'},
-                            {'nexthop': None,
-                             'device': attr.name,
-                             'destination': str(
-                                 netaddr.IPNetwork(attr.ip_cidrs[1]).cidr),
-                             'scope': 'universe'}]
-        routes6 = ip_lib.get_routing_table(6, namespace=attr.namespace)
-        self.assertCountEqual(expected_routes6, routes6)
-        self.assertIsInstance(routes6, list)
-
-    def test_get_routing_table_no_namespace(self):
-        with testtools.ExpectedException(ip_lib.NetworkNamespaceNotFound):
-            ip_lib.get_routing_table(4, namespace="nonexistent-netns")
-
     def test_get_neigh_entries(self):
         attr = self.generate_device_details(
             ip_cidrs=["%s/24" % TEST_IP, "fd00::1/64"]
@@ -1137,3 +1094,52 @@ class GetDevicesWithIpTestCase(functional_base.BaseSudoTestCase):
             ip_addresses = self._remove_loopback_interface(ip_addresses)
             ip_addresses = self._remove_ipv6_scope_link(ip_addresses)
             self.assertEqual(0, len(ip_addresses))
+
+
+class ListIpRoutesTestCase(functional_base.BaseSudoTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
+        self.device_names = ['test_device1', 'test_device2']
+        self.device_ips = ['10.0.0.1/24', '10.0.1.1/24']
+        self.device_cidrs = [netaddr.IPNetwork(ip_address).cidr for ip_address
+                             in self.device_ips]
+        for idx, dev in enumerate(self.device_names):
+            ip_lib.IPWrapper(self.namespace).add_dummy(dev)
+            device = ip_lib.IPDevice(dev, namespace=self.namespace)
+            device.link.set_up()
+            device.addr.add(self.device_ips[idx])
+
+    def test_list_ip_routes_multipath(self):
+        multipath = [
+            {'device': self.device_names[0],
+             'via': str(self.device_cidrs[0].ip + 100), 'weight': 10},
+            {'device': self.device_names[1],
+             'via': str(self.device_cidrs[1].ip + 100), 'weight': 20},
+            {'via': str(self.device_cidrs[1].ip + 101), 'weight': 30},
+            {'via': str(self.device_cidrs[1].ip + 102)}]
+        ip_lib.add_ip_route(self.namespace, '1.2.3.0/24',
+                            constants.IP_VERSION_4, via=multipath)
+
+        routes = ip_lib.list_ip_routes(self.namespace, constants.IP_VERSION_4)
+        multipath[2]['device'] = self.device_names[1]
+        multipath[3]['device'] = self.device_names[1]
+        multipath[3]['weight'] = 1
+        for route in (route for route in routes if
+                      route['cidr'] == '1.2.3.0/24'):
+            if not isinstance(route['via'], list):
+                continue
+
+            self.assertEqual(len(multipath), len(route['via']))
+            for nexthop in multipath:
+                for mp in route['via']:
+                    if nexthop != mp:
+                        continue
+                    break
+                else:
+                    self.fail('Not matching route, routes: %s' % routes)
+
+            return
+
+        self.fail('Not matching route, routes: %s' % routes)
