@@ -197,6 +197,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                                      portbindings.VNIC_DIRECT_PHYSICAL,
                                      portbindings.VNIC_MACVTAP,
                                      portbindings.VNIC_VHOST_VDPA,
+                                     portbindings.VNIC_BAREMETAL,
                                      ]
         self.vif_details = {
             portbindings.VIF_TYPE_OVS: {

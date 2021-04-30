@@ -302,7 +302,9 @@ MCAST_FLOOD_UNREGISTERED = 'mcast_flood_unregistered'
 
 EXTERNAL_PORT_TYPES = (portbindings.VNIC_DIRECT,
                        portbindings.VNIC_DIRECT_PHYSICAL,
-                       portbindings.VNIC_MACVTAP)
+                       portbindings.VNIC_MACVTAP,
+                       portbindings.VNIC_BAREMETAL,
+                       )
 
 NEUTRON_AVAILABILITY_ZONES = 'neutron-availability-zones'
 OVN_CMS_OPTIONS = 'ovn-cms-options'

@@ -164,7 +164,12 @@ def get_lsp_dhcp_opts(port, ip_version):
     # in OVN.
     lsp_dhcp_disabled = False
     lsp_dhcp_opts = {}
-    if is_network_device_port(port):
+    vnic_type = port.get(portbindings.VNIC_TYPE, portbindings.VNIC_NORMAL)
+
+    # NOTE(lucasagomes): Baremetal does not yet work with OVN's built-in
+    # DHCP server, disable it for now
+    if (is_network_device_port(port) or
+            vnic_type == portbindings.VNIC_BAREMETAL):
         lsp_dhcp_disabled = True
     else:
         mapping = constants.SUPPORTED_DHCP_OPTS_MAPPING[ip_version]
