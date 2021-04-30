@@ -3614,6 +3614,10 @@ class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
         _, kwargs = self.mech_driver.nb_ovn.create_lswitch_port.call_args
         self.assertNotIn('vif-plug-type', kwargs['options'])
 
+    def test_create_port_with_vnic_baremetal(self):
+        self._test_create_port_with_vnic_type(
+            portbindings.VNIC_BAREMETAL)
+
     def test_update_port_with_sgs(self):
         with self.network() as n, self.subnet(n):
             sg1 = self._create_empty_sg('sg1')
