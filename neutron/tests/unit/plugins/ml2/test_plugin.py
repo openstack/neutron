@@ -3350,7 +3350,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
 
         self.driver._handle_segment_change(
             mock.ANY, events.PRECOMMIT_CREATE, segments_plugin.Plugin(),
-            self.context, segment)
+            payload=events.DBEventPayload(self.context, states=(segment,)))
 
         if seg_id:
             # Assert it is not changed
@@ -3438,7 +3438,8 @@ class TestML2Segments(Ml2PluginV2TestCase):
                                'update_network_precommit',
                                side_effect=record_network_context):
             self.driver._handle_segment_change(
-                mock.ANY, event, segments_plugin.Plugin(), self.context, seg1)
+                mock.ANY, event, segments_plugin.Plugin(),
+                payload=events.DBEventPayload(self.context, states=(seg1,)))
             # Make sure the mechanism manager can get the right amount of
             # segments of network
             self.assertEqual(
@@ -3453,7 +3454,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
             segment['network_id'] = network['network']['id']
             self.driver._handle_segment_change(
                 mock.ANY, events.PRECOMMIT_DELETE, mock.ANY,
-                self.context, segment)
+                payload=events.DBEventPayload(self.context, states=(segment,)))
             # Check that the segment_id is not reserved
             segment = self._reserve_segment(
                 network, segment[driver_api.SEGMENTATION_ID])

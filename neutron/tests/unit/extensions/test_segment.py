@@ -256,7 +256,8 @@ class TestSegment(SegmentTestCase):
     def test_create_segment_no_segmentation_id(self):
 
         def _mock_reserve_segmentation_id(rtype, event, trigger,
-                                          context, segment):
+                                          payload=None):
+            segment = payload.latest_state
             if not segment.get('segmentation_id'):
                 segment['segmentation_id'] = 200
 
@@ -278,8 +279,8 @@ class TestSegment(SegmentTestCase):
         with self.network() as network:
             network = network['network']
 
-        with mock.patch.object(registry, 'notify') as notify:
-            notify.side_effect = exceptions.CallbackFailure(errors=Exception)
+        with mock.patch.object(registry, 'publish') as publish:
+            publish.side_effect = exceptions.CallbackFailure(errors=Exception)
             self.assertRaises(webob.exc.HTTPClientError,
                               self.segment,
                               network_id=network['id'],
@@ -429,14 +430,13 @@ class TestSegmentML2(SegmentTestCase):
         super(TestSegmentML2, self).setUp(plugin='ml2')
 
     def test_segment_notification_on_create_network(self):
-        with mock.patch.object(registry, 'notify') as notify:
+        with mock.patch.object(registry, 'publish') as publish:
             with self.network():
                 pass
-        notify.assert_any_call(resources.SEGMENT,
-                               events.PRECOMMIT_CREATE,
-                               context=mock.ANY,
-                               segment=mock.ANY,
-                               trigger=mock.ANY)
+            publish.assert_any_call(resources.SEGMENT,
+                                    events.PRECOMMIT_CREATE,
+                                    mock.ANY,
+                                    payload=mock.ANY)
 
 
 class TestSegmentSubnetAssociation(SegmentTestCase):

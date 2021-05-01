@@ -466,7 +466,8 @@ class OVNMechanismDriver(api.MechanismDriver):
                 raise n_exc.InvalidInput(error_message=m)
 
     def create_segment_provnet_port(self, resource, event, trigger,
-                                    context, segment, payload=None):
+                                    payload=None):
+        segment = payload.latest_state
         if not segment.get(segment_def.PHYSICAL_NETWORK):
             return
         self._ovn_client.create_provnet_port(segment['network_id'], segment)
@@ -1075,7 +1076,9 @@ class OVNMechanismDriver(api.MechanismDriver):
             ctx, host, available_seg_ids)
 
     def _add_segment_host_mapping_for_segment(self, resource, event, trigger,
-                                              context, segment):
+                                              payload=None):
+        context = payload.context
+        segment = payload.latest_state
         phynet = segment.physical_network
         if not phynet:
             return
