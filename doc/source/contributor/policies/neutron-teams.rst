@@ -76,7 +76,7 @@ The following are the current Neutron Lieutenants.
 +========================+===========================+======================+
 | API                    | Akihiro Motoki            | amotoki              |
 +------------------------+---------------------------+----------------------+
-| DB                     | Nate Johnston             | njohnston            |
+| DB                     | Rodolfo Alonso Hernandez  | ralonsoh             |
 +------------------------+---------------------------+----------------------+
 | Built-In Control Plane | Miguel Lavalle            | mlavalle             |
 +------------------------+---------------------------+----------------------+
@@ -94,7 +94,7 @@ The following are the current Neutron Lieutenants.
 |                        +---------------------------+----------------------+
 |                        | Yulong Liu                | liuyulong            |
 +------------------------+---------------------------+----------------------+
-| Testing                | Rodolfo Alonso Hernandez  | ralonsoh             |
+| Testing                | Lajos Katona              | lajoskatona          |
 +------------------------+---------------------------+----------------------+
 
 Some notes on the above:
@@ -129,15 +129,11 @@ updating the core review team for the sub-project's repositories.
 |                         +-----------------------------+-------------------+
 |                         | Jens Harbott                | frickler          |
 +-------------------------+-----------------------------+-------------------+
-| neutron-fwaas           | Nate Johnston               | njohnston         |
-+-------------------------+-----------------------------+-------------------+
 | neutron-vpnaas          | YAMAMOTO Takashi            | yamamoto          |
 |                         +-----------------------------+-------------------+
 |                         | Dongcan Ye                  | yedongcan         |
 +-------------------------+-----------------------------+-------------------+
 | networking-odl          | Lajos Katona                | lajoskatona       |
-+-------------------------+-----------------------------+-------------------+
-| networking-ovn          | Lucas Alvares Gomes         | lucasagomes       |
 +-------------------------+-----------------------------+-------------------+
 | networking-sfc          | Dharmendra Kushwaha         | dkushwaha         |
 +-------------------------+-----------------------------+-------------------+
