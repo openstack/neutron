@@ -61,22 +61,59 @@ import neutron.plugins.ml2.drivers.mech_sriov.agent.common.config
 import neutron.wsgi
 
 
-NOVA_GROUP = 'nova'
-IRONIC_GROUP = 'ironic'
+AUTH_GROUPS_OPTS = {
+    'nova': {
+        'deprecations': {
+            'nova.cafile': [
+                cfg.DeprecatedOpt('ca_certificates_file', group='nova')
+            ],
+            'nova.insecure': [
+                cfg.DeprecatedOpt('api_insecure', group='nova')
+            ],
+            'nova.timeout': [
+                cfg.DeprecatedOpt('url_timeout', group='nova')
+            ]
+        }
+    },
+    'ironic': {},
+    'placement': {}
+}
 
 CONF = cfg.CONF
 
-deprecations = {'nova.cafile': [cfg.DeprecatedOpt('ca_certificates_file',
-                                                  group=NOVA_GROUP)],
-                'nova.insecure': [cfg.DeprecatedOpt('api_insecure',
-                                                    group=NOVA_GROUP)],
-                'nova.timeout': [cfg.DeprecatedOpt('url_timeout',
-                                                   group=NOVA_GROUP)]}
 
-_nova_options = ks_loading.register_session_conf_options(
-            CONF, NOVA_GROUP, deprecated_opts=deprecations)
-_ironic_options = ks_loading.register_session_conf_options(
-            CONF, IRONIC_GROUP)
+def list_auth_opts(group):
+    group_conf = AUTH_GROUPS_OPTS.get(group)
+    kwargs = {'conf': CONF, 'group': group}
+    deprecations = group_conf.get('deprecations')
+    if deprecations:
+        kwargs['deprecated_opts'] = deprecations
+    opts = ks_loading.register_session_conf_options(
+        **kwargs
+    )
+    opt_list = copy.deepcopy(opts)
+    opt_list.insert(0, ks_loading.get_auth_common_conf_options()[0])
+    # NOTE(mhickey): There are a lot of auth plugins, we just generate
+    # the config options for a few common ones
+    plugins = ['password', 'v2password', 'v3password']
+    for name in plugins:
+        for plugin_option in ks_loading.get_auth_plugin_conf_options(name):
+            if all(option.name != plugin_option.name for option in opt_list):
+                opt_list.append(plugin_option)
+    opt_list.sort(key=operator.attrgetter('name'))
+    return [(group, opt_list)]
+
+
+def list_ironic_auth_opts():
+    return list_auth_opts('ironic')
+
+
+def list_nova_auth_opts():
+    return list_auth_opts('nova')
+
+
+def list_placement_auth_opts():
+    return list_auth_opts('placement')
 
 
 def list_agent_opts():
@@ -149,6 +186,10 @@ def list_opts():
         (neutron.conf.common.IRONIC_CONF_SECTION,
          itertools.chain(
              neutron.conf.common.ironic_opts)
+         ),
+        (neutron.conf.common.PLACEMENT_CONF_SECTION,
+         itertools.chain(
+             neutron.conf.common.placement_opts)
          ),
         ('quotas', neutron.conf.quota.core_quota_opts)
     ]
@@ -313,31 +354,3 @@ def list_sriov_agent_opts():
         ('agent',
          neutron.conf.agent.agent_extensions_manager.AGENT_EXT_MANAGER_OPTS)
     ]
-
-
-def list_auth_opts():
-    opt_list = copy.deepcopy(_nova_options)
-    opt_list.insert(0, ks_loading.get_auth_common_conf_options()[0])
-    # NOTE(mhickey): There are a lot of auth plugins, we just generate
-    # the config options for a few common ones
-    plugins = ['password', 'v2password', 'v3password']
-    for name in plugins:
-        for plugin_option in ks_loading.get_auth_plugin_conf_options(name):
-            if all(option.name != plugin_option.name for option in opt_list):
-                opt_list.append(plugin_option)
-    opt_list.sort(key=operator.attrgetter('name'))
-    return [(NOVA_GROUP, opt_list)]
-
-
-def list_ironic_auth_opts():
-    opt_list = copy.deepcopy(_ironic_options)
-    opt_list.insert(0, ks_loading.get_auth_common_conf_options()[0])
-    # NOTE(mhickey): There are a lot of auth plugins, we just generate
-    # the config options for a few common ones
-    plugins = ['password', 'v2password', 'v3password']
-    for name in plugins:
-        for plugin_option in ks_loading.get_auth_plugin_conf_options(name):
-            if all(option.name != plugin_option.name for option in opt_list):
-                opt_list.append(plugin_option)
-    opt_list.sort(key=operator.attrgetter('name'))
-    return [(IRONIC_GROUP, opt_list)]
