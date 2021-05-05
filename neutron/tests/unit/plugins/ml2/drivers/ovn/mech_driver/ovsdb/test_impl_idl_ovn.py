@@ -355,7 +355,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self._tables['Address_Set'] = self.address_set_table
         self._tables['Load_Balancer'] = self.lb_table
 
-        with mock.patch.object(impl_idl_ovn, 'get_connection',
+        with mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'from_worker',
                                return_value=mock.Mock()):
             with mock.patch.object(ovs_idl.Backend, 'autocreate_indices',
                                    create=True):
