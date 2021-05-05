@@ -24,14 +24,17 @@ from neutron_lib import constants as n_const
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import extraroute as xroute_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as plugin_utils
 from oslo_utils import uuidutils
 import testtools
 
+from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db.models import l3 as l3_models
+from neutron.db import models_v2
 from neutron.extensions import segment as segment_ext
 from neutron.objects import base as base_obj
 from neutron.objects import network as network_obj
@@ -48,7 +51,12 @@ class TestL3_NAT_dbonly_mixin(
 
     def setUp(self, *args, **kwargs):
         super(TestL3_NAT_dbonly_mixin, self).setUp(*args, **kwargs)
-        self.db = l3_db.L3_NAT_dbonly_mixin()
+        # "extraroute_db.ExtraRoute_dbonly_mixin" inherits from
+        # "l3_db.L3_NAT_dbonly_mixin()", the class under test. This is used
+        # instead to test the validation of router routes and GW change because
+        # implements "_validate_routes".
+        self.db = extraroute_db.ExtraRoute_dbonly_mixin()
+        self.ctx = mock.Mock()
 
     def test__each_port_having_fixed_ips_none(self):
         """Be sure the method returns an empty list when None is passed"""
@@ -415,6 +423,93 @@ class TestL3_NAT_dbonly_mixin(
                 self.assertEqual(new_network_id,
                                  cb_payload.metadata.get('network_id'))
                 self.assertEqual(router_id, cb_payload.resource_id)
+
+    def _create_router(self, gw_port=True, num_ports=2, create_routes=True):
+        # GW CIDR: 10.0.0.0/24
+        # Interface CIDRS: 10.0.1.0/24, 10.0.2.0/24, etc.
+        router_id = uuidutils.generate_uuid()
+        port_gw_cidr = netaddr.IPNetwork('10.0.0.0/24')
+        rports = []
+        if gw_port:
+            port_gw = models_v2.Port(
+                id=uuidutils.generate_uuid(),
+                fixed_ips=[models_v2.IPAllocation(
+                    ip_address=str(port_gw_cidr.ip + 1))])
+            rports.append(l3_models.RouterPort(router_id=router_id,
+                                               port=port_gw))
+        else:
+            port_gw = None
+
+        port_cidrs = []
+        port_subnets = []
+        for idx in range(num_ports):
+            cidr = port_gw_cidr.cidr.next(idx + 1)
+            port = models_v2.Port(
+                id=uuidutils.generate_uuid(),
+                fixed_ips=[models_v2.IPAllocation(
+                    ip_address=str(cidr.ip + 1))])
+            port_cidrs.append(cidr)
+            rports.append(l3_models.RouterPort(router_id=router_id, port=port))
+            port_subnets.append({'cidr': str(cidr)})
+
+        routes = []
+        if create_routes:
+            for cidr in [*port_cidrs, port_gw_cidr]:
+                routes.append(l3_models.RouterRoute(
+                    destination=str(cidr.next(100)),
+                    nexthop=str(cidr.ip + 10)))
+        return (l3_models.Router(
+            id=router_id, attached_ports=rports, route_list=routes,
+            gw_port_id=port_gw.id if port_gw else None), port_subnets)
+
+    def test__validate_gw_info(self):
+        gw_network = mock.Mock(subnets=[mock.Mock(cidr='10.0.0.0/24')],
+                               external=True)
+        router, port_subnets = self._create_router(gw_port=False)
+        info = {'network_id': 'net_id'}
+        with mock.patch.object(self.db._core_plugin, '_get_network',
+                               return_value=gw_network), \
+                mock.patch.object(self.db._core_plugin, 'get_subnet',
+                                  side_effect=port_subnets):
+            self.assertEqual(
+                'net_id',
+                self.db._validate_gw_info(self.ctx, info, [], router))
+
+    def test__validate_gw_info_no_route_connectivity(self):
+        gw_network = mock.Mock(subnets=[mock.Mock(cidr='10.50.0.0/24')],
+                               external=True)
+        router, port_subnets = self._create_router(gw_port=False)
+        info = {'network_id': 'net_id'}
+        with mock.patch.object(self.db._core_plugin, '_get_network',
+                               return_value=gw_network), \
+                mock.patch.object(self.db._core_plugin, 'get_subnet',
+                                  side_effect=port_subnets):
+            self.assertRaises(
+                xroute_exc.InvalidRoutes, self.db._validate_gw_info, self.ctx,
+                info, [], router)
+
+    def test__validate_gw_info_delete_gateway(self):
+        router, port_subnets = self._create_router()
+        info = {'network_id': None}
+        with mock.patch.object(self.db._core_plugin, '_get_network',
+                               return_value=None), \
+                mock.patch.object(self.db._core_plugin, 'get_subnet',
+                                  side_effect=port_subnets):
+            self.assertRaises(
+                xroute_exc.InvalidRoutes, self.db._validate_gw_info, self.ctx,
+                info, [], router)
+
+    def test__validate_gw_info_delete_gateway_no_route(self):
+        gw_network = mock.Mock(subnets=[mock.Mock(cidr='10.50.0.0/24')],
+                               external=True)
+        router, port_subnets = self._create_router(create_routes=False)
+        info = {'network_id': None}
+        with mock.patch.object(self.db._core_plugin, '_get_network',
+                               return_value=gw_network), \
+                mock.patch.object(self.db._core_plugin, 'get_subnet',
+                                  side_effect=port_subnets):
+            self.assertIsNone(
+                self.db._validate_gw_info(mock.ANY, info, [], router))
 
 
 class L3_NAT_db_mixin(base.BaseTestCase):
