@@ -175,12 +175,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 self.expected_dns_records[0]['records'][hname] = port_ips
                 self.expected_ports_with_unknown_addr.append(lport_name)
 
-            if p == 'p1':
-                fake_subnet = {'cidr': '11.11.11.11/24'}
-                dhcp_acls = acl_utils.add_acl_dhcp(port['port'], fake_subnet)
-                for dhcp_acl in dhcp_acls:
-                    self.create_acls.append(dhcp_acl)
-            elif p == 'p2':
+            if p == 'p2':
                 self.delete_lswitch_ports.append((lport_name, lswitch_name))
                 update_port_ids_v4.append(port['port']['id'])
                 update_port_ids_v6.append(port['port']['id'])
@@ -729,10 +724,6 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             'external_ids': {'subnet_id': n3_s2['subnet']['id'],
                              'port_id': fake_port_id2}})
         self.stale_lport_dhcpv6_options.append(stale_dhcpv6_options2)
-        fake_port = {'id': fake_port_id1, 'network_id': n3['network']['id']}
-        dhcp_acls = acl_utils.add_acl_dhcp(fake_port, n3_s1['subnet'])
-        for dhcp_acl in dhcp_acls:
-            self.create_acls.append(dhcp_acl)
         columns = list(self.nb_api.tables['ACL'].columns)
         if not (('name' in columns) and ('severity' in columns)):
             for acl in self.create_acls:

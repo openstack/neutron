@@ -75,42 +75,6 @@ class TestACLs(base.BaseTestCase):
             if 'from-lport' in acl.values():
                 self.assertEqual(acl_from_lport, acl)
 
-    def test_add_acl_dhcp(self):
-        ovn_dhcp_acls = ovn_acl.add_acl_dhcp(self.fake_port, self.fake_subnet)
-        other_dhcp_acls = ovn_acl.add_acl_dhcp(self.fake_port,
-                                               self.fake_subnet,
-                                               ovn_dhcp=False)
-
-        expected_match_to_lport = (
-            'outport == "%s" && ip4 && ip4.src == %s && udp && udp.src == 67 '
-            '&& udp.dst == 68') % (self.fake_port['id'],
-                                   self.fake_subnet['cidr'])
-        acl_to_lport = {'action': 'allow', 'direction': 'to-lport',
-                        'external_ids': {'neutron:lport': 'fake_port_id1'},
-                        'log': False, 'name': [], 'severity': [],
-                        'lport': 'fake_port_id1',
-                        'lswitch': 'neutron-network_id1',
-                        'match': expected_match_to_lport, 'priority': 1002}
-        expected_match_from_lport = (
-            'inport == "%s" && ip4 && '
-            'ip4.dst == {255.255.255.255, %s} && '
-            'udp && udp.src == 68 && udp.dst == 67'
-        ) % (self.fake_port['id'], self.fake_subnet['cidr'])
-        acl_from_lport = {'action': 'allow', 'direction': 'from-lport',
-                          'external_ids': {'neutron:lport': 'fake_port_id1'},
-                          'log': False, 'name': [], 'severity': [],
-                          'lport': 'fake_port_id1',
-                          'lswitch': 'neutron-network_id1',
-                          'match': expected_match_from_lport, 'priority': 1002}
-        self.assertEqual(1, len(ovn_dhcp_acls))
-        self.assertEqual(acl_from_lport, ovn_dhcp_acls[0])
-        self.assertEqual(2, len(other_dhcp_acls))
-        for acl in other_dhcp_acls:
-            if 'to-lport' in acl.values():
-                self.assertEqual(acl_to_lport, acl)
-            if 'from-lport' in acl.values():
-                self.assertEqual(acl_from_lport, acl)
-
     def test_acl_protocol_and_ports_for_tcp_udp_and_sctp_number(self):
         sg_rule = {'port_range_min': None,
                    'port_range_max': None}
