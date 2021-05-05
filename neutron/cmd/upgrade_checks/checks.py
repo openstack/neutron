@@ -12,6 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from neutron_lib.api import converters
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import model_query
@@ -83,6 +84,12 @@ def count_vlan_allocations_invalid_segmentation_id():
     return query.count()
 
 
+def port_mac_addresses():
+    ctx = context.get_admin_context()
+    return [port[0] for port in
+            ctx.session.query(models_v2.Port.mac_address).all()]
+
+
 class CoreChecks(base.BaseChecks):
 
     def get_checks(self):
@@ -100,6 +107,8 @@ class CoreChecks(base.BaseChecks):
              self.vlan_allocations_segid_check),
             (_('Policy File JSON to YAML Migration'),
              (common_checks.check_policy_json, {'conf': cfg.CONF})),
+            (_('Port MAC address sanity check'),
+             self.port_mac_address_sanity),
         ]
 
     @staticmethod
@@ -284,3 +293,29 @@ class CoreChecks(base.BaseChecks):
             upgradecheck.Code.SUCCESS,
             _("All 'ml2_vlan_allocations' registers have a valid "
               "segmentation ID."))
+
+    @staticmethod
+    def port_mac_address_sanity(checker):
+        """Checks the MAC address sanity of each port in the BD
+
+        All MAC addresses should be stored in the format xx:xx:xx:xx:xx:xx.
+        """
+        if not cfg.CONF.database.connection:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("Database connection string is not set. Check for port MAC "
+                  "sanity can't be done."))
+
+        for mac in port_mac_addresses():
+            if mac != converters.convert_to_sanitized_mac_address(mac):
+                return upgradecheck.Result(
+                    upgradecheck.Code.WARNING,
+                    _("There port MAC addresses not correctly formated in the"
+                      "database. The script "
+                      "neutron-sanitize-port-mac-addresses should be "
+                      "executed"))
+
+        return upgradecheck.Result(
+            upgradecheck.Code.SUCCESS,
+            _("All port MAC addresses are correctly formated in the "
+              "database."))

@@ -190,3 +190,14 @@ class TestChecks(base.BaseTestCase):
                 result = checks.CoreChecks.vlan_allocations_segid_check(
                     mock.ANY)
                 self.assertEqual(returned_code, result.code)
+
+    def test_port_mac_address_sanity(self):
+        cases = ((['ca:fe:ca:fe:ca:fe'], Code.SUCCESS),
+                 (['ca:fe:ca:fe:ca:f'], Code.WARNING))
+        with mock.patch.object(
+                checks, 'port_mac_addresses') \
+                as mock_port_mac_addresses:
+            for mac_addresses, returned_code in cases:
+                mock_port_mac_addresses.return_value = mac_addresses
+                result = checks.CoreChecks.port_mac_address_sanity(mock.ANY)
+                self.assertEqual(returned_code, result.code)

@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    The ``port.mac_address`` field is sanitized to have a common format
+    "xx:xx:xx:xx:xx:xx". The values stored in the database can be sanitized
+    executing the new script provided ``neutron-sanitize-port-mac-addresses``.
+    This script will read all ``port`` registers and fix, if needed, the
+    stored MAC address format.
+    The ``port`` API is also modified to sanitize the user input. This change
+    was added to neutron-lib 2.12.0 in
+    `788300 <https://review.opendev.org/c/openstack/neutron-lib/+/788300>`_.
