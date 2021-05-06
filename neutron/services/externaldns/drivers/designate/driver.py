@@ -51,6 +51,7 @@ def get_clients(context):
         admin_auth = loading.load_auth_from_conf_options(
             CONF, 'designate')
     else:
+        # TODO(tkajinam): Make this fail when admin_* parameters are removed.
         admin_auth = password.Password(
             auth_url=CONF.designate.admin_auth_url,
             username=CONF.designate.admin_username,

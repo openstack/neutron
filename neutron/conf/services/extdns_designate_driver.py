@@ -22,19 +22,39 @@ designate_opts = [
     cfg.StrOpt('url',
                help=_('URL for connecting to designate')),
     cfg.StrOpt('admin_username',
+               deprecated_for_removal=True,
+               deprecated_since='Xena',
+               deprecated_reason=("This option will be completely replaced by "
+                                  "keystoneauth parameters."),
                help=_('Username for connecting to designate in admin '
                       'context')),
     cfg.StrOpt('admin_password',
+               deprecated_for_removal=True,
+               deprecated_since='Xena',
+               deprecated_reason=("This option will be completely replaced by "
+                                  "keystoneauth parameters."),
                help=_('Password for connecting to designate in admin '
                       'context'),
                secret=True),
     cfg.StrOpt('admin_tenant_id',
+               deprecated_for_removal=True,
+               deprecated_since='Xena',
+               deprecated_reason=("This option will be completely replaced by "
+                                  "keystoneauth parameters."),
                help=_('Tenant id for connecting to designate in admin '
                       'context')),
     cfg.StrOpt('admin_tenant_name',
+               deprecated_for_removal=True,
+               deprecated_since='Xena',
+               deprecated_reason=("This option will be completely replaced by "
+                                  "keystoneauth parameters."),
                help=_('Tenant name for connecting to designate in admin '
                       'context')),
     cfg.StrOpt('admin_auth_url',
+               deprecated_for_removal=True,
+               deprecated_since='Xena',
+               deprecated_reason=("This option will be completely replaced by "
+                                  "keystoneauth parameters."),
                help=_('Authorization URL for connecting to designate in admin '
                       'context')),
     cfg.BoolOpt('allow_reverse_dns_lookup', default=True,

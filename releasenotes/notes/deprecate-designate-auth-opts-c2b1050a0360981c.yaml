@@ -1,0 +1,13 @@
+---
+deprecations:
+  - |
+    The following parameters in the ``designate`` section have been deprecated
+    and will be removed in a future release.
+    The ``[designate] auth_type`` parameter and required keystoneauth
+    parameters should be used instead.
+
+    - ``admin_username``
+    - ``admin_password``
+    - ``admin_tenant_id``
+    - ``admin_tenant_name``
+    - ``admin_auth_url``
