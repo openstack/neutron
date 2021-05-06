@@ -495,8 +495,8 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         self._ipam_deallocate_ips(context, ipam_driver, port,
                                   port['fixed_ips'])
 
-    def update_db_subnet(self, context, id, s, old_pools):
-        subnet = obj_subnet.Subnet.get_object(context, id=id)
+    def update_db_subnet(self, context, id, s, old_pools, subnet_obj=None):
+        subnet = subnet_obj or obj_subnet.Subnet.get_object(context, id=id)
         old_segment_id = subnet.segment_id if subnet else None
         if 'segment_id' in s:
             self._validate_segment(
@@ -507,7 +507,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         # so create unchanged copy for ipam driver
         subnet_copy = copy.deepcopy(s)
         subnet, changes = super(IpamPluggableBackend, self).update_db_subnet(
-            context, id, s, old_pools)
+            context, id, s, old_pools, subnet_obj=subnet_obj)
         ipam_driver = driver.Pool.get_instance(None, context)
 
         # Set old allocation pools if no new pools are provided by user.
