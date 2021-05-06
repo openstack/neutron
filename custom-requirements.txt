@@ -11,6 +11,9 @@ openstack-agent-checks
 python-memcached
 pymemcache
 
+#mysql
+pymysql
+
 # 3rd party middleware
 git+https://github.com/sapcc/openstack-watcher-middleware.git#egg=watcher-middleware
 git+https://github.com/sapcc/openstack-audit-middleware.git@master#egg=audit-middleware
@@ -22,9 +25,7 @@ git+https://github.com/sapcc/openstack-audit-middleware.git@master#egg=audit-mid
 -e git+https://github.com/sapcc/networking-f5.git@stable/ussuri-m3#egg=networking_f5
 -e git+https://github.com/sapcc/networking-ucsm-bm.git@stable/ussuri-m3#egg=networking-ucsm-bm
 -e git+https://github.com/sapcc/networking-arista.git@stable/ussuri-m3#egg=networking_arista
-
-# Todo: Policy API USSURI
--e git+https://github.com/sapcc/networking-nsx-t.git@stable/train-m3#egg=networking_nsxv3
+-e git+https://github.com/sapcc/networking-nsx-t.git@stable/ussuri-m3#egg=networking_nsxv3
 
 # Upstream
 -e git+https://github.com/openstack/networking-bgpvpn@stable/ussuri#egg=networking-bgpvpn
