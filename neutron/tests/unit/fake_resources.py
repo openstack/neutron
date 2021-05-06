@@ -119,6 +119,8 @@ class FakeOvsdbNbOvnIdl(object):
         self.get_router_floatingip_lbs.return_value = []
         self.is_col_present = mock.Mock()
         self.is_col_present.return_value = False
+        self.is_col_supports_value = mock.Mock()
+        self.is_col_supports_value.return_value = False
         self.get_lrouter = mock.Mock()
         self.get_lrouter.return_value = None
         self.delete_lrouter_ext_gw = mock.Mock()

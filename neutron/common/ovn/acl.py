@@ -172,12 +172,16 @@ def drop_all_ip_traffic_for_port(port):
     return acl_list
 
 
-def add_sg_rule_acl_for_port_group(port_group, r, match):
+def add_sg_rule_acl_for_port_group(port_group, r, stateful, match):
     dir_map = {const.INGRESS_DIRECTION: 'to-lport',
                const.EGRESS_DIRECTION: 'from-lport'}
+    if stateful:
+        action = ovn_const.ACL_ACTION_ALLOW_RELATED
+    else:
+        action = ovn_const.ACL_ACTION_ALLOW_STATELESS
     acl = {"port_group": port_group,
            "priority": ovn_const.ACL_PRIORITY_ALLOW,
-           "action": ovn_const.ACL_ACTION_ALLOW_RELATED,
+           "action": action,
            "log": False,
            "name": [],
            "severity": [],
@@ -266,7 +270,7 @@ def acl_remote_group_id(r, ip_version):
     return ' && %s.%s == $%s' % (ip_version, src_or_dst, addrset_name)
 
 
-def _add_sg_rule_acl_for_port_group(port_group, r):
+def _add_sg_rule_acl_for_port_group(port_group, stateful, r):
     # Update the match based on which direction this rule is for (ingress
     # or egress).
     match = acl_direction(r, port_group=port_group)
@@ -286,7 +290,7 @@ def _add_sg_rule_acl_for_port_group(port_group, r):
     match += acl_protocol_and_ports(r, icmp)
 
     # Finally, create the ACL entry for the direction specified.
-    return add_sg_rule_acl_for_port_group(port_group, r, match)
+    return add_sg_rule_acl_for_port_group(port_group, r, stateful, match)
 
 
 def _acl_columns_name_severity_supported(nb_idl):
@@ -294,10 +298,15 @@ def _acl_columns_name_severity_supported(nb_idl):
     return ('name' in columns) and ('severity' in columns)
 
 
-def add_acls_for_sg_port_group(ovn, security_group, txn):
+def add_acls_for_sg_port_group(ovn, security_group, txn,
+                               stateless_supported=True):
+    if stateless_supported:
+        stateful = security_group.get("stateful", True)
+    else:
+        stateful = True
     for r in security_group['security_group_rules']:
         acl = _add_sg_rule_acl_for_port_group(
-            utils.ovn_port_group_name(security_group['id']), r)
+            utils.ovn_port_group_name(security_group['id']), stateful, r)
         txn.add(ovn.pg_acl_add(**acl, may_exist=True))
 
 
@@ -306,7 +315,8 @@ def update_acls_for_security_group(plugin,
                                    ovn,
                                    security_group_id,
                                    security_group_rule,
-                                   is_add_acl=True):
+                                   is_add_acl=True,
+                                   stateless_supported=True):
 
     # Skip ACLs if security groups aren't enabled
     if not is_sg_enabled():
@@ -315,9 +325,15 @@ def update_acls_for_security_group(plugin,
     # Check if ACL log name and severity supported or not
     keep_name_severity = _acl_columns_name_severity_supported(ovn)
 
+    if stateless_supported:
+        sg = plugin.get_security_group(admin_context, security_group_id)
+        stateful = sg.get("stateful", True)
+    else:
+        stateful = True
+
     acl = _add_sg_rule_acl_for_port_group(
         utils.ovn_port_group_name(security_group_id),
-        security_group_rule)
+        stateful, security_group_rule)
     # Remove ACL log name and severity if not supported
     if is_add_acl:
         if not keep_name_severity:

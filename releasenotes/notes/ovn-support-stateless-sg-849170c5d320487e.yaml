@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Support stateless security groups with the latest OVN 21.06+.
+    The stateful=False security groups are mapped to the new
+    "allow-stateless" OVN ACL verb.

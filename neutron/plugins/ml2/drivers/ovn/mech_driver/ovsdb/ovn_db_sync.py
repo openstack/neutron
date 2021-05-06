@@ -247,10 +247,24 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         LOG.debug('ACL-SYNC: started @ %s', str(datetime.now()))
 
         neutron_acls = []
-        for sgr in self.core_plugin.get_security_group_rules(ctx):
-            pg_name = utils.ovn_port_group_name(sgr['security_group_id'])
-            neutron_acls.append(acl_utils._add_sg_rule_acl_for_port_group(
-                pg_name, sgr))
+        # if allow-stateless supported, we have to fetch groups to determine if
+        # stateful is set
+        if self._ovn_client.is_allow_stateless_supported():
+            for sg in self.core_plugin.get_security_groups(ctx):
+                stateful = sg.get("stateful", True)
+                pg_name = utils.ovn_port_group_name(sg['id'])
+                for sgr in self.core_plugin.get_security_group_rules(
+                        ctx, {'security_group_id': sg['id']}):
+                    neutron_acls.append(
+                        acl_utils._add_sg_rule_acl_for_port_group(
+                            pg_name, stateful, sgr)
+                    )
+        else:
+            # TODO(ihrachys) remove when min OVN version >= 21.06
+            for sgr in self.core_plugin.get_security_group_rules(ctx):
+                pg_name = utils.ovn_port_group_name(sgr['security_group_id'])
+                neutron_acls.append(acl_utils._add_sg_rule_acl_for_port_group(
+                    pg_name, True, sgr))
         neutron_acls += acl_utils.add_acls_for_drop_port_group(
             ovn_const.OVN_DROP_PORT_GROUP_NAME)
 
@@ -1166,7 +1180,9 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 ext_ids = {ovn_const.OVN_SG_EXT_ID_KEY: sg['id']}
                 txn.add(self.ovn_api.pg_add(
                     name=pg_name, acls=[], external_ids=ext_ids))
-                acl_utils.add_acls_for_sg_port_group(self.ovn_api, sg, txn)
+                acl_utils.add_acls_for_sg_port_group(
+                    self.ovn_api, sg, txn,
+                    self._ovn_client.is_allow_stateless_supported())
             for port in db_ports:
                 for sg in port['security_groups']:
                     txn.add(self.ovn_api.pg_add_ports(

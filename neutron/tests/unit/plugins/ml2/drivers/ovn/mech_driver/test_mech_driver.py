@@ -199,18 +199,42 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             self._test__validate_network_segments_id_succeed, 300)
 
     @mock.patch.object(ovn_revision_numbers_db, 'bump_revision')
-    def test__create_security_group(self, mock_bump):
-        self.mech_driver._create_security_group(
-            resources.SECURITY_GROUP, events.AFTER_CREATE, {},
-            security_group=self.fake_sg, context=self.context)
+    def _test__create_security_group(
+            self, stateful, stateless_supported, mock_bump):
+        self.fake_sg["stateful"] = stateful
+        with mock.patch.object(self.mech_driver._ovn_client,
+                               'is_allow_stateless_supported',
+                               return_value=stateless_supported):
+            self.mech_driver._create_security_group(
+                resources.SECURITY_GROUP, events.AFTER_CREATE, {},
+                security_group=self.fake_sg, context=self.context)
         external_ids = {ovn_const.OVN_SG_EXT_ID_KEY: self.fake_sg['id']}
         pg_name = ovn_utils.ovn_port_group_name(self.fake_sg['id'])
 
         self.nb_ovn.pg_add.assert_called_once_with(
             name=pg_name, acls=[], external_ids=external_ids)
 
+        if stateful or not stateless_supported:
+            expected = ovn_const.ACL_ACTION_ALLOW_RELATED
+        else:
+            expected = ovn_const.ACL_ACTION_ALLOW_STATELESS
+        for c in self.nb_ovn.pg_acl_add.call_args_list:
+            self.assertEqual(expected, c[1]["action"])
+
         mock_bump.assert_called_once_with(
             mock.ANY, self.fake_sg, ovn_const.TYPE_SECURITY_GROUPS)
+
+    def test__create_security_group_stateful_supported(self):
+        self._test__create_security_group(True, True)
+
+    def test__create_security_group_stateful_not_supported(self):
+        self._test__create_security_group(True, False)
+
+    def test__create_security_group_stateless_supported(self):
+        self._test__create_security_group(False, True)
+
+    def test__create_security_group_stateless_not_supported(self):
+        self._test__create_security_group(False, False)
 
     @mock.patch.object(ovn_revision_numbers_db, 'delete_revision')
     def test__delete_security_group(self, mock_del_rev):
@@ -239,7 +263,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             has_same_rules.assert_not_called()
             ovn_acl_up.assert_called_once_with(
                 mock.ANY, mock.ANY, mock.ANY,
-                'sg_id', rule, is_add_acl=True)
+                'sg_id', rule, is_add_acl=True, stateless_supported=False)
             mock_bump.assert_called_once_with(
                 mock.ANY, rule, ovn_const.TYPE_SECURITY_GROUP_RULES)
 
@@ -259,7 +283,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             has_same_rules.assert_not_called()
             ovn_acl_up.assert_called_once_with(
                 mock.ANY, mock.ANY, mock.ANY,
-                'sg_id', rule, is_add_acl=True)
+                'sg_id', rule, is_add_acl=True, stateless_supported=False)
             mock_bump.assert_called_once_with(
                 mock.ANY, rule, ovn_const.TYPE_SECURITY_GROUP_RULES)
 
@@ -276,7 +300,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 security_group_rule=rule, context=self.context)
             ovn_acl_up.assert_called_once_with(
                 mock.ANY, mock.ANY, mock.ANY,
-                'sg_id', rule, is_add_acl=False)
+                'sg_id', rule, is_add_acl=False, stateless_supported=False)
             mock_delrev.assert_called_once_with(
                 mock.ANY, rule['id'], ovn_const.TYPE_SECURITY_GROUP_RULES)
 
@@ -2967,8 +2991,8 @@ class TestOVNMechanismDriverSecurityGroup(
         for r in res['security_group_rules']:
             self._delete('security-group-rules', r['id'])
 
-    def _create_sg(self, sg_name):
-        sg = self._make_security_group(self.fmt, sg_name, '')
+    def _create_sg(self, sg_name, **kwargs):
+        sg = self._make_security_group(self.fmt, sg_name, '', **kwargs)
         return sg['security_group']
 
     def _create_empty_sg(self, sg_name):

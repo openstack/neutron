@@ -141,6 +141,7 @@ class OVNDriver(base.DriverBase):
             return set()
         if log_obj.event == log_const.ACCEPT_EVENT:
             return {ovn_const.ACL_ACTION_ALLOW_RELATED,
+                    ovn_const.ACL_ACTION_ALLOW_STATELESS,
                     ovn_const.ACL_ACTION_ALLOW}
         if log_obj.event == log_const.DROP_EVENT:
             return {ovn_const.ACL_ACTION_DROP,
@@ -149,6 +150,7 @@ class OVNDriver(base.DriverBase):
         return {ovn_const.ACL_ACTION_DROP,
                 ovn_const.ACL_ACTION_REJECT,
                 ovn_const.ACL_ACTION_ALLOW_RELATED,
+                ovn_const.ACL_ACTION_ALLOW_STATELESS,
                 ovn_const.ACL_ACTION_ALLOW}
 
     def _remove_acls_log(self, pgs, ovn_txn, log_name=None):
