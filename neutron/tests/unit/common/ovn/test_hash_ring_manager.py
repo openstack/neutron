@@ -14,7 +14,6 @@
 #    under the License.
 
 import datetime
-import time
 
 import mock
 from neutron_lib import context
@@ -24,6 +23,7 @@ from neutron.common.ovn import constants
 from neutron.common.ovn import exceptions
 from neutron.common.ovn import hash_ring_manager
 from neutron.db import ovn_hash_ring_db as db_hash_ring
+from neutron import service
 from neutron.tests.unit import testlib_api
 
 HASH_RING_TEST_GROUP = 'test_group'
@@ -110,24 +110,21 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
         # The ring should re-balance and as it was before
         self._verify_hashes(hash_dict_before)
 
-    def test__wait_startup_before_caching(self):
+    @mock.patch.object(service, '_get_api_workers', return_value=2)
+    def test__wait_startup_before_caching(self, api_workers):
         db_hash_ring.add_node(self.admin_ctx, HASH_RING_TEST_GROUP, 'node-1')
-        db_hash_ring.add_node(self.admin_ctx, HASH_RING_TEST_GROUP, 'node-2')
 
-        # Assert it will return True until created_at != updated_at
+        # Assert it will return True until until we equal api_workers
         self.assertTrue(self.hash_ring_manager._wait_startup_before_caching)
-        self.assertTrue(self.hash_ring_manager._cache_startup_timeout)
+        self.assertTrue(self.hash_ring_manager._check_hashring_startup)
 
-        # Touch the nodes (== update the updated_at column)
-        time.sleep(1)
-        db_hash_ring.touch_nodes_from_host(
-            self.admin_ctx, HASH_RING_TEST_GROUP)
+        db_hash_ring.add_node(self.admin_ctx, HASH_RING_TEST_GROUP, 'node-2')
 
         # Assert it's now False. Waiting is not needed anymore
         self.assertFalse(self.hash_ring_manager._wait_startup_before_caching)
-        self.assertFalse(self.hash_ring_manager._cache_startup_timeout)
+        self.assertFalse(self.hash_ring_manager._check_hashring_startup)
 
-        # Now assert that since the _cache_startup_timeout has been
+        # Now assert that since the _check_hashring_startup has been
         # flipped, we no longer will read from the database
         with mock.patch.object(hash_ring_manager.db_hash_ring,
                                'get_active_nodes') as get_nodes_mock:
