@@ -43,7 +43,7 @@ limits are currently not enforced on RPC interfaces listening on the AMQP
 bus.
 
 Plugin and ML2 drivers are not supposed to enforce quotas for resources they
-manage. However, the subnet_allocation [#]_ extension is an exception and will
+manage. However, the subnet_allocation [1]_ extension is an exception and will
 be discussed below.
 
 The quota management and enforcement mechanisms discussed here apply to every
@@ -59,12 +59,14 @@ There are two main components in the Neutron quota system:
  * The Quota Engine.
 
 Both components rely on a quota driver. The neutron codebase currently defines
-two quota drivers:
+three quota drivers:
 
  * neutron.db.quota.driver.DbQuotaDriver
+ * neutron.db.quota.driver_nolock.DbQuotaNoLockDriver (default)
  * neutron.quota.ConfDriver
 
-The latter driver is however deprecated.
+The latter driver is however deprecated. The ``DbQuotaNoLockDriver`` is the
+default quota driver, defined in the configuration option ``quota_driver``.
 
 The Quota API extension handles quota management, whereas the Quota Engine
 component handles quota enforcement. This API extension is loaded like any
@@ -91,7 +93,7 @@ For a reservation to be successful, the total amount of resources requested,
 plus the total amount of resources reserved, plus the total amount of resources
 already stored in the database should not exceed the project's quota limit.
 
-Finally, both quota management and enforcement rely on a "quota driver" [#]_,
+Finally, both quota management and enforcement rely on a "quota driver" [2]_,
 whose task is basically to perform database operations.
 
 Quota Management
@@ -100,14 +102,14 @@ Quota Management
 The quota management component is fairly straightforward.
 
 However, unlike the vast majority of Neutron extensions, it uses it own
-controller class [#]_.
+controller class [3]_.
 This class does not implement the POST operation. List, get, update, and
 delete operations are implemented by the usual index, show, update and
 delete methods. These method simply call into the quota driver for either
 fetching project quotas or updating them.
 
 The _update_attributes method is called only once in the controller lifetime.
-This method dynamically updates Neutron's resource attribute map [#]_ so that
+This method dynamically updates Neutron's resource attribute map [4]_ so that
 an attribute is added for every resource managed by the quota engine.
 Request authorisation is performed in this controller, and only 'admin' users
 are allowed to modify quotas for projects. As the neutron policy engine is not
@@ -131,11 +133,18 @@ Resource Usage Info
 Neutron has two ways of tracking resource usage info:
 
  * CountableResource, where resource usage is calculated every time quotas
-   limits are enforced by counting rows in the resource table and reservations
-   for that resource.
- * TrackedResource, which instead relies on a specific table tracking usage
-   data, and performs explicitly counting only when the data in this table are
-   not in sync with actual used and reserved resources.
+   limits are enforced by counting rows in the resource table or resources
+   tables and reservations for that resource.
+ * TrackedResource, depends on the selected driver:
+
+   * DbQuotaDriver: the resource usage relies on a specific table tracking
+     usage data, and performs explicitly counting only when the data in this
+     table are not in sync with actual used and reserved resources.
+   * DbQuotaNoLockDriver: the resource usage is counted directly from the
+     database table associated to the resource. In this new driver,
+     CountableResource and TrackedResource could look similar but
+     TrackedResource depends on one single database model (table) and the
+     resource count is done directly on this table only.
 
 Another difference between CountableResource and TrackedResource is that the
 former invokes a plugin method to count resources. CountableResource should be
@@ -146,6 +155,9 @@ TrackedResource instances will be created, otherwise the quota engine will
 use CountableResource instances.
 Resource creation is performed by the create_resource_instance factory method
 in the neutron.quota.resource module.
+
+DbQuotaDriver description
+-------------------------
 
 From a performance perspective, having a table tracking resource usage
 has some advantages, albeit not fundamental. Indeed the time required for
@@ -183,15 +195,48 @@ caveats' section, it is more reliable than solutions such as:
  * Having a periodic task synchronising quota usage data with actual data in
    the Neutron DB.
 
-Finally, regardless of whether CountableResource or TrackedResource is used,
-the quota engine always invokes its count() method to retrieve resource usage.
+
+DbQuotaNoLockDriver description
+-------------------------------
+
+The strategy of this quota driver is the opposite to ``DbQuotaDriver``.
+Instead of tracking the usage quota of each resource in a specific table,
+this driver retrieves the used resources directly form the database.
+Each TrackedResource is linked to a database table that stores the tracked
+resources. This driver claims that a trivial query on the resource table,
+filtering by project ID, is faster than attending to the DB events and tracking
+the quota usage in an independent table.
+
+This driver relays on the database engine transactionality isolation. Each
+time a new resource is requested, the quota driver opens a database transaction
+to:
+
+ * Clean up the expired reservations. The amount of expired reservations is
+   always limited because of the short timeout set (2 minutes).
+ * Retrieve the used resources for a specific project. This query retrieves
+   only the "project_id" column of the resource to avoid backref requests; that
+   limits the scope of the query and speeds up it.
+ * Retrieve the reserved resources, created by other concurrent operations.
+ * If there is enough quota, create a new reservation register.
+
+Those operations, executed in the same transaction, are fast enough to avoid
+another concurrent resource reservation, exceeding the available quota. At the
+same time, this driver does not create a lock per resource and project ID,
+allowing concurrent requests that won't be blocked by the resource lock.
+Because the quota reservation process, described before, is a fast operation,
+the chances of overcommiting resources over the quota limits are low. Neutron
+does not enforce quota in such way that a quota limit violation could never
+occur [5]_.
+
+Regardless of whether CountableResource or TrackedResource is used, the quota
+engine always invokes its count() method to retrieve resource usage.
 Therefore, from the perspective of the Quota engine there is absolutely no
 difference between CountableResource and TrackedResource.
 
-Quota Enforcement
------------------
+Quota Enforcement in DbQuotaDriver
+----------------------------------
 
-Before dispatching a request to the plugin, the Neutron 'base' controller [#]_
+Before dispatching a request to the plugin, the Neutron 'base' controller [6]_
 attempts to make a reservation for requested resource(s).
 Reservations are made by calling the make_reservation method in
 neutron.quota.QuotaEngine.
@@ -228,7 +273,7 @@ While non-locking approaches are possible, it has been found out that, since
 a non-locking algorithms increases the chances of collision, the cost of
 handling a DBDeadlock is still lower than the cost of retrying the operation
 when a collision is detected. A study in this direction was conducted for
-IP allocation operations, but the same principles apply here as well [#]_.
+IP allocation operations, but the same principles apply here as well [7]_.
 Nevertheless, moving away for DB-level locks is something that must happen
 for quota enforcement in the future.
 
@@ -345,9 +390,10 @@ Please be aware of the following limitations of the quota enforcement engine:
 References
 ----------
 
-.. [#] Subnet allocation extension: http://opendev.org/openstack/neutron/tree/neutron/extensions/subnetallocation.py
-.. [#] DB Quota driver class: http://opendev.org/openstack/neutron/tree/neutron/db/quota/driver.py#n30
-.. [#] Quota API extension controller: http://opendev.org/openstack/neutron/tree/neutron/extensions/quotasv2.py#n40
-.. [#] Neutron resource attribute map: http://opendev.org/openstack/neutron/tree/neutron/api/v2/attributes.py#n639
-.. [#] Base controller class: http://opendev.org/openstack/neutron/tree/neutron/api/v2/base.py#n50
-.. [#] http://lists.openstack.org/pipermail/openstack-dev/2015-February/057534.html
+.. [1] Subnet allocation extension: http://opendev.org/openstack/neutron/tree/neutron/extensions/subnetallocation.py
+.. [2] DB Quota driver class: http://opendev.org/openstack/neutron/tree/neutron/db/quota/driver.py#n30
+.. [3] Quota API extension controller: http://opendev.org/openstack/neutron/tree/neutron/extensions/quotasv2.py#n40
+.. [4] Neutron resource attribute map: http://opendev.org/openstack/neutron/tree/neutron/api/v2/attributes.py#n639
+.. [5] Quota limit exceeded: https://bugs.launchpad.net/neutron/+bug/1862050/
+.. [6] Base controller class: http://opendev.org/openstack/neutron/tree/neutron/api/v2/base.py#n50
+.. [7] http://lists.openstack.org/pipermail/openstack-dev/2015-February/057534.html

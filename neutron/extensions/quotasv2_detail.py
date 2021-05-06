@@ -23,6 +23,8 @@ from oslo_config import cfg
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import resource
+from neutron.db.quota import driver
+from neutron.db.quota import driver_nolock
 from neutron.extensions import quotasv2
 from neutron.quota import resource_registry
 
@@ -32,7 +34,11 @@ RESOURCE_NAME = 'quota'
 ALIAS = RESOURCE_NAME + '_' + DETAIL_QUOTAS_ACTION
 QUOTA_DRIVER = cfg.CONF.QUOTAS.quota_driver
 RESOURCE_COLLECTION = RESOURCE_NAME + "s"
-DB_QUOTA_DRIVER = 'neutron.db.quota.driver.DbQuotaDriver'
+DB_QUOTA_DRIVERS = tuple('.'.join([klass.__module__, klass.__name__])
+                         for klass in (driver.DbQuotaDriver,
+                                       driver_nolock.DbQuotaNoLockDriver,
+                                       )
+                         )
 EXTENDED_ATTRIBUTES_2_0 = {
     RESOURCE_COLLECTION: {}
 }
@@ -61,8 +67,7 @@ class Quotasv2_detail(api_extensions.ExtensionDescriptor):
 
     # Ensure new extension is not loaded with old conf driver.
     extensions.register_custom_supported_check(
-        ALIAS, lambda: QUOTA_DRIVER == DB_QUOTA_DRIVER,
-        plugin_agnostic=True)
+        ALIAS, lambda: QUOTA_DRIVER in DB_QUOTA_DRIVERS, plugin_agnostic=True)
 
     @classmethod
     def get_name(cls):

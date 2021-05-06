@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
+
 from neutron_lib.db import api as db_api
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
@@ -22,6 +24,8 @@ from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import session as se
 
 from neutron._i18n import _
+from neutron.common import utils as n_utils
+from neutron.conf import quota as quota_conf
 from neutron.db.quota import api as quota_api
 
 LOG = log.getLogger(__name__)
@@ -55,7 +59,7 @@ def _count_resource(context, collection_name, tenant_id):
         _('No plugins that support counting %s found.') % collection_name)
 
 
-class BaseResource(object):
+class BaseResource(object, metaclass=abc.ABCMeta):
     """Describe a single resource for quota checking."""
 
     def __init__(self, name, flag, plural_name=None):
@@ -98,6 +102,7 @@ class BaseResource(object):
         return max(value, -1)
 
     @property
+    @abc.abstractmethod
     def dirty(self):
         """Return the current state of the Resource instance.
 
@@ -105,6 +110,10 @@ class BaseResource(object):
                   False if it is in sync, and None if the resource instance
                   does not track usage.
         """
+
+    @abc.abstractmethod
+    def count(self, context, plugin, project_id, **kwargs):
+        """Return the total count of this resource"""
 
 
 class CountableResource(BaseResource):
@@ -143,9 +152,13 @@ class CountableResource(BaseResource):
             name, flag=flag, plural_name=plural_name)
         self._count_func = count
 
-    def count(self, context, plugin, tenant_id, **kwargs):
+    @property
+    def dirty(self):
+        return
+
+    def count(self, context, plugin, project_id, **kwargs):
         # NOTE(ihrachys) _count_resource doesn't receive plugin
-        return self._count_func(context, self.plural_name, tenant_id)
+        return self._count_func(context, self.plural_name, project_id)
 
 
 class TrackedResource(BaseResource):
@@ -184,13 +197,21 @@ class TrackedResource(BaseResource):
         self._model_class = model_class
         self._dirty_tenants = set()
         self._out_of_sync_tenants = set()
+        # NOTE(ralonsoh): "DbQuotaNoLockDriver" driver does not need to track
+        # the DB events or resync the resource quota usage.
+        if cfg.CONF.QUOTAS.quota_driver == quota_conf.QUOTA_DB_DRIVER:
+            self._track_resource_events = False
+        else:
+            self._track_resource_events = True
 
     @property
     def dirty(self):
+        if not self._track_resource_events:
+            return
         return self._dirty_tenants
 
     def mark_dirty(self, context):
-        if not self._dirty_tenants:
+        if not self._dirty_tenants or not self._track_resource_events:
             return
         with db_api.CONTEXT_WRITER.using(context):
             # It is not necessary to protect this operation with a lock.
@@ -236,7 +257,8 @@ class TrackedResource(BaseResource):
         return usage_info
 
     def resync(self, context, tenant_id):
-        if tenant_id not in self._out_of_sync_tenants:
+        if (tenant_id not in self._out_of_sync_tenants or
+                not self._track_resource_events):
             return
         LOG.debug(("Synchronizing usage tracker for tenant:%(tenant_id)s on "
                    "resource:%(resource)s"),
@@ -302,15 +324,37 @@ class TrackedResource(BaseResource):
         reserved = reservations.get(self.name, 0)
         return reserved
 
-    def count(self, context, _plugin, tenant_id, resync_usage=True):
+    def count(self, context, _plugin, tenant_id, resync_usage=True,
+              count_db_registers=False):
         """Return the count of the resource.
 
         The _plugin parameter is unused but kept for
         compatibility with the signature of the count method for
         CountableResource instances.
         """
-        return (self.count_used(context, tenant_id, resync_usage) +
-                self.count_reserved(context, tenant_id))
+        if count_db_registers:
+            count = self._count_db_registers(context, tenant_id)
+        else:
+            count = self.count_used(context, tenant_id, resync_usage)
+
+        return count + self.count_reserved(context, tenant_id)
+
+    def _count_db_registers(self, context, project_id):
+        """Return the existing resources (self._model_class) in a project.
+
+        The query executed must be as fast as possible. To avoid retrieving all
+        model backref relationship columns, only "project_id" is requested
+        (this column always exists in the DB model because is used in the
+        filter).
+        """
+        # TODO(ralonsoh): declare the OVO class instead the DB model and use
+        # ``NeutronDbObject.count`` with the needed filters and fields to
+        # retrieve ("project_id").
+        admin_context = n_utils.get_elevated_context(context)
+        with db_api.CONTEXT_READER.using(admin_context):
+            query = admin_context.session.query(self._model_class.project_id)
+            query = query.filter(self._model_class.project_id == project_id)
+            return query.count()
 
     def _except_bulk_delete(self, delete_context):
         if delete_context.mapper.class_ == self._model_class:
@@ -321,12 +365,16 @@ class TrackedResource(BaseResource):
                                self._model_class)
 
     def register_events(self):
+        if not self._track_resource_events:
+            return
         listen = db_api.sqla_listen
         listen(self._model_class, 'after_insert', self._db_event_handler)
         listen(self._model_class, 'after_delete', self._db_event_handler)
         listen(se.Session, 'after_bulk_delete', self._except_bulk_delete)
 
     def unregister_events(self):
+        if not self._track_resource_events:
+            return
         try:
             db_api.sqla_remove(self._model_class, 'after_insert',
                                self._db_event_handler)
