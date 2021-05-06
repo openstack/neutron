@@ -245,7 +245,8 @@ def list_metadata_agent_opts():
          itertools.chain(
              meta_conf.SHARED_OPTS,
              meta_conf.METADATA_PROXY_HANDLER_OPTS,
-             meta_conf.UNIX_DOMAIN_METADATA_PROXY_OPTS)
+             meta_conf.UNIX_DOMAIN_METADATA_PROXY_OPTS,
+             neutron.conf.service.RPC_EXTRA_OPTS)
          ),
         ('agent', neutron.conf.agent.common.AGENT_STATE_OPTS)
     ]
