@@ -98,7 +98,12 @@ class TestOvnDbNotifyHandler(base.BaseTestCase):
     def setUp(self):
         super(TestOvnDbNotifyHandler, self).setUp()
         self.handler = ovsdb_monitor.OvnDbNotifyHandler(mock.ANY)
-        self.watched_events = self.handler._RowEventHandler__watched_events
+        # NOTE(ralonsoh): once the ovsdbapp library version is bumped beyond
+        # 1.5.0, the first assignation (using name mangling) can be deleted.
+        try:
+            self.watched_events = self.handler._RowEventHandler__watched_events
+        except AttributeError:
+            self.watched_events = self.handler._watched_events
 
     def test_watch_and_unwatch_events(self):
         expected_events = set()
