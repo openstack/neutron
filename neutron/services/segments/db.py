@@ -91,8 +91,10 @@ class SegmentDbMixin(object):
             new_segment = self._create_segment_db(context, segment_id, segment)
         except db_exc.DBReferenceError:
             raise n_exc.NetworkNotFound(net_id=segment['network_id'])
-        registry.notify(resources.SEGMENT, events.AFTER_CREATE, self,
-                        context=context, segment=new_segment)
+        registry.publish(resources.SEGMENT, events.AFTER_CREATE, self,
+                         payload=events.DBEventPayload(
+                             context, resource_id=segment_id,
+                             states=(new_segment,)))
         return self._make_segment_dict(new_segment)
 
     def _create_segment_db(self, context, segment_id, segment):
@@ -136,9 +138,10 @@ class SegmentDbMixin(object):
             new_segment.create()
             # Do some preliminary operations before committing the segment to
             # db
-            registry.notify(
+            registry.publish(
                 resources.SEGMENT, events.PRECOMMIT_CREATE, self,
-                context=context, segment=new_segment)
+                payload=events.DBEventPayload(context, resource_id=segment_id,
+                                              states=(new_segment,)))
             # The new segment might have been updated by the callbacks
             # subscribed to the PRECOMMIT_CREATE event. So update it in the DB
             new_segment.update()
@@ -200,10 +203,13 @@ class SegmentDbMixin(object):
             if not network.NetworkSegment.delete_objects(context, id=uuid):
                 raise exceptions.SegmentNotFound(segment_id=uuid)
             # Do some preliminary operations before deleting segment in db
-            registry.notify(resources.SEGMENT, events.PRECOMMIT_DELETE,
-                            self.delete_segment, context=context,
-                            segment=segment_dict,
-                            for_net_delete=for_net_delete)
+            registry.publish(resources.SEGMENT, events.PRECOMMIT_DELETE,
+                             self.delete_segment,
+                             payload=events.DBEventPayload(
+                                 context, metadata={
+                                     FOR_NET_DELETE: for_net_delete},
+                                 resource_id=uuid,
+                                 states=(segment_dict,)))
 
         registry.publish(resources.SEGMENT, events.AFTER_DELETE,
                          self.delete_segment,
@@ -313,7 +319,9 @@ def _update_segment_host_mapping_for_agent(resource, event, trigger,
 
 
 def _add_segment_host_mapping_for_segment(resource, event, trigger,
-                                          context, segment):
+                                          payload=None):
+    context = payload.context
+    segment = payload.latest_state
     if not context.session.is_active:
         # The session might be in partial rollback state, due to errors in
         # peer callback. In that case, there is no need to add the mapping.

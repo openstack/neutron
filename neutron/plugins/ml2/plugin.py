@@ -2297,20 +2297,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     return True
         return False
 
-    @registry.receives(resources.SEGMENT, [events.AFTER_DELETE])
-    def _handle_after_delete_segment_change(
-            self, rtype, event, trigger, payload=None):
-        # TODO(boden); refactor into _handle_segment_change once all
-        # event types use payloads
-        return self._handle_segment_change(
-            rtype, event, trigger, payload.context, payload.latest_state,
-            for_net_delete=payload.metadata.get('for_net_delete'))
-
     @registry.receives(resources.SEGMENT, (events.PRECOMMIT_CREATE,
                                            events.PRECOMMIT_DELETE,
-                                           events.AFTER_CREATE))
-    def _handle_segment_change(self, rtype, event, trigger, context, segment,
-                               for_net_delete=False):
+                                           events.AFTER_CREATE,
+                                           events.AFTER_DELETE))
+    def _handle_segment_change(self, rtype, event, trigger, payload=None):
         if (event == events.PRECOMMIT_CREATE and
                 not isinstance(trigger, segments_plugin.Plugin)):
             # TODO(xiaohhui): Now, when create network, ml2 will reserve
@@ -2320,6 +2311,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # by unifying segment creation procedure.
             return
 
+        segment = payload.latest_state
+        context = payload.context
         network_id = segment.get('network_id')
 
         if event == events.PRECOMMIT_CREATE:
@@ -2331,6 +2324,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         elif event == events.PRECOMMIT_DELETE:
             self.type_manager.release_network_segment(context, segment)
 
+        for_net_delete = payload.metadata.get('for_net_delete')
         if for_net_delete:
             return
 
