@@ -230,7 +230,8 @@ class Subnet(standard_attr.HasStandardAttributes, model_base.BASEV2,
     rbac_entries = orm.relationship(
         rbac_db_models.NetworkRBAC, lazy='subquery', uselist=True,
         foreign_keys='Subnet.network_id',
-        primaryjoin='Subnet.network_id==NetworkRBAC.object_id')
+        primaryjoin='Subnet.network_id==NetworkRBAC.object_id',
+        viewonly=True)
     api_collections = [subnet_def.COLLECTION_NAME]
     collection_resource_map = {subnet_def.COLLECTION_NAME:
                                subnet_def.RESOURCE_NAME}
