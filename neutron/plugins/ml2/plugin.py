@@ -1085,9 +1085,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._update_provider_network_attributes(
                 context, original_network, net_data)
 
-            updated_network = super(Ml2Plugin, self).update_network(context,
-                                                                    id,
-                                                                    network)
+            updated_network = super(Ml2Plugin, self).update_network(
+                context, id, network, db_network=db_network)
             self.extension_manager.process_update_network(context, net_data,
                                                           updated_network)
             self._process_l3_update(context, updated_network, net_data)
@@ -1649,7 +1648,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             need_port_update_notify |= mac_address_updated
             original_port = self._make_port_dict(port_db)
             updated_port = super(Ml2Plugin, self).update_port(context, id,
-                                                              port)
+                                                              port,
+                                                              db_port=port_db)
             self.extension_manager.process_update_port(context, attrs,
                                                        updated_port)
             self._portsec_ext_port_update_processing(updated_port, context,
