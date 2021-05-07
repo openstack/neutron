@@ -22,6 +22,7 @@ from tooz import hashring
 from neutron.common.ovn import constants
 from neutron.common.ovn import exceptions
 from neutron.db import ovn_hash_ring_db as db_hash_ring
+from neutron import service
 from neutron_lib import context
 
 LOG = log.getLogger(__name__)
@@ -32,7 +33,7 @@ class HashRingManager(object):
     def __init__(self, group_name):
         self._hash_ring = None
         self._last_time_loaded = None
-        self._cache_startup_timeout = True
+        self._check_hashring_startup = True
         self._group = group_name
         self.admin_ctx = context.get_admin_context()
 
@@ -41,28 +42,26 @@ class HashRingManager(object):
         # NOTE(lucasagomes): Some events are processed at the service's
         # startup time and since many services may be started concurrently
         # we do not want to use a cached hash ring at that point. This
-        # method checks if the created_at and updated_at columns from the
-        # nodes in the ring from this host is equal, and if so it means
-        # that the service just started.
+        # method ensures that we start allowing the use of cached HashRings
+        # once the number of HashRing nodes >= the number of api workers.
 
         # If the startup timeout already expired, there's no reason to
         # keep reading from the DB. At this point this will always
         # return False
-        if not self._cache_startup_timeout:
+        if not self._check_hashring_startup:
             return False
 
+        api_workers = service._get_api_workers()
         nodes = db_hash_ring.get_active_nodes(
             self.admin_ctx,
             constants.HASH_RING_CACHE_TIMEOUT, self._group, from_host=True)
-        # created_at and updated_at differ in microseonds so we compare their
-        # difference is less than a second to be safe on slow machines
-        dont_cache = nodes and (
-            nodes[0].updated_at - nodes[0].created_at < datetime.timedelta(
-                seconds=1))
-        if not dont_cache:
-            self._cache_startup_timeout = False
 
-        return dont_cache
+        if len(nodes) >= api_workers:
+            LOG.debug("Allow caching, nodes %s>=%s", len(nodes), api_workers)
+            self._check_hashring_startup = False
+            return False
+        LOG.debug("Disallow caching, nodes %s<%s", len(nodes), api_workers)
+        return True
 
     def _load_hash_ring(self, refresh=False):
         cache_timeout = timeutils.utcnow() - datetime.timedelta(
