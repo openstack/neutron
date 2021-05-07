@@ -29,6 +29,9 @@ LANG=C
 # overcloud deploy script for OVN migration.
 : ${OVERCLOUD_OVN_DEPLOY_SCRIPT:=~/overcloud-deploy-ovn.sh}
 
+# user on the nodes in the undercloud
+: ${UNDERCLOUD_NODE_USER:=heat-admin}
+
 : ${OPT_WORKDIR:=$PWD}
 : ${STACK_NAME:=overcloud}
 : ${PUBLIC_NETWORK_NAME:=public}
@@ -138,7 +141,7 @@ generate_ansible_inventory_file() {
             ovn_central=False
             node="$node_name ansible_host=$node_ip ovn_central=true"
         fi
-        echo $node ansible_ssh_user=heat-admin ansible_become=true >> hosts_for_migration
+        echo $node ansible_ssh_user=$UNDERCLOUD_NODE_USER ansible_become=true >> hosts_for_migration
     done
 
     echo "" >> hosts_for_migration
@@ -148,7 +151,7 @@ generate_ansible_inventory_file() {
     OVN_CONTROLLERS=$(get_group_hosts "$inventory_file" neutron_ovs_agent)
     for node_name in $OVN_CONTROLLERS; do
         node_ip=$(get_host_ip "$inventory_file" $node_name)
-        echo $node_name ansible_host=$node_ip ansible_ssh_user=heat-admin ansible_become=true ovn_controller=true >> hosts_for_migration
+        echo $node_name ansible_host=$node_ip ansible_ssh_user=$UNDERCLOUD_NODE_USER ansible_become=true ovn_controller=true >> hosts_for_migration
     done
     rm -f "$inventory_file"
     echo "" >> hosts_for_migration
@@ -168,7 +171,7 @@ EOF
     cat >> hosts_for_migration << EOF
 
 [$1:vars]
-remote_user=heat-admin
+remote_user=$UNDERCLOUD_NODE_USER
 public_network_name=$PUBLIC_NETWORK_NAME
 image_name=$IMAGE_NAME
 working_dir=$OPT_WORKDIR
