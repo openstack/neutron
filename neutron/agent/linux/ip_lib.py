@@ -822,21 +822,6 @@ def flush_ip_addresses(ip_version, device, namespace=None):
     privileged.flush_ip_addresses(ip_version, device, namespace)
 
 
-def get_routing_table(ip_version, namespace=None):
-    """Return a list of dictionaries, each representing a route.
-
-    @param ip_version: the routes of version to return, for example 4
-    @param namespace
-    @return: a list of dictionaries, each representing a route.
-    The dictionary format is: {'destination': cidr,
-                               'nexthop': ip,
-                               'device': device_name,
-                               'scope': scope}
-    """
-    # oslo.privsep turns lists to tuples in its IPC code. Change it back
-    return list(privileged.get_routing_table(ip_version, namespace))
-
-
 # NOTE(haleyb): These neighbour functions live outside the IpNeighCommand
 # class since not all callers require it.
 def add_neigh_entry(ip_address, mac_address, device, namespace=None,
@@ -1544,11 +1529,23 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
             'source_prefix': get_attr(route, 'RTA_PREFSRC'),
             'cidr': cidr,
             'scope': IP_ADDRESS_SCOPE[int(route['scope'])],
-            'device': get_device(int(get_attr(route, 'RTA_OIF')), devices),
-            'via': get_attr(route, 'RTA_GATEWAY'),
             'metric': metric,
             'proto': proto,
         }
+
+        multipath = get_attr(route, 'RTA_MULTIPATH')
+        if multipath:
+            value['device'] = None
+            mp_via = []
+            for mp in multipath:
+                mp_via.append({'device': get_device(int(mp['oif']), devices),
+                               'via': get_attr(mp, 'RTA_GATEWAY'),
+                               'weight': int(mp['hops']) + 1})
+            value['via'] = mp_via
+        else:
+            value['device'] = get_device(int(get_attr(route, 'RTA_OIF')),
+                                         devices)
+            value['via'] = get_attr(route, 'RTA_GATEWAY')
 
         ret.append(value)
 

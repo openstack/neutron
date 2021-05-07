@@ -39,7 +39,7 @@ NETNS_RUN_DIR = '/var/run/netns'
 NUD_STATES = {state[1]: state[0] for state in ndmsg.states.items()}
 
 
-def _get_scope_name(scope):
+def get_scope_name(scope):
     """Return the name of the scope (given as a number), or the scope number
     if the name is unknown.
 
@@ -136,54 +136,6 @@ def _make_route_dict(destination, nexthop, device, scope):
             'nexthop': nexthop,
             'device': device,
             'scope': scope}
-
-
-@privileged.default.entrypoint
-def get_routing_table(ip_version, namespace=None):
-    """Return a list of dictionaries, each representing a route.
-
-    :param ip_version: IP version of routes to return, for example 4
-    :param namespace: The name of the namespace from which to get the routes
-    :return: a list of dictionaries, each representing a route.
-    The dictionary format is: {'destination': cidr,
-                               'nexthop': ip,
-                               'device': device_name,
-                               'scope': scope}
-    """
-    family = _IP_VERSION_FAMILY_MAP[ip_version]
-    try:
-        netns = pyroute2.NetNS(namespace, flags=0) if namespace else None
-    except OSError as e:
-        if e.errno == errno.ENOENT:
-            raise NetworkNamespaceNotFound(netns_name=namespace)
-        raise
-    routes = []
-    with pyroute2.IPDB(nl=netns) as ipdb:
-        ipdb_routes = ipdb.routes
-        ipdb_interfaces = ipdb.interfaces
-        for route in ipdb_routes:
-            if route['family'] != family:
-                continue
-            dst = route['dst']
-            nexthop = route.get('gateway')
-            oif = route.get('oif')
-            scope = _get_scope_name(route['scope'])
-
-            # If there is not a valid outgoing interface id, check if
-            # this is a multipath route (i.e. same destination with
-            # multiple outgoing interfaces)
-            if oif:
-                device = ipdb_interfaces[oif]['ifname']
-                rt = _make_route_dict(dst, nexthop, device, scope)
-                routes.append(rt)
-            elif route.get('multipath'):
-                for mpr in route['multipath']:
-                    oif = mpr['oif']
-                    device = ipdb_interfaces[oif]['ifname']
-                    rt = _make_route_dict(dst, nexthop, device, scope)
-                    routes.append(rt)
-
-    return routes
 
 
 def get_iproute(namespace):
@@ -312,7 +264,7 @@ def add_ip_address(ip_version, ip, prefixlen, device, namespace, scope,
                           mask=prefixlen,
                           family=family,
                           broadcast=broadcast,
-                          scope=_get_scope_name(scope))
+                          scope=get_scope_name(scope))
     except NetlinkError as e:
         if e.code == errno.EEXIST:
             raise IpAddressAlreadyExists(ip=ip, device=device)
@@ -714,7 +666,7 @@ def _make_pyroute2_route_args(namespace, ip_version, cidr, device, via, table,
     args = {'family': _IP_VERSION_FAMILY_MAP[ip_version]}
     if not scope:
         scope = 'global' if via else 'link'
-    scope = _get_scope_name(scope)
+    scope = get_scope_name(scope)
     if scope:
         args['scope'] = scope
     if cidr:
