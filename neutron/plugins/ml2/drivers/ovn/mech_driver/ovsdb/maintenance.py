@@ -667,6 +667,9 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
     # once per lock due to the use of periodics.NeverAgain().
     @periodics.periodic(spacing=600, run_immediately=True)
     def check_for_mcast_flood_reports(self):
+        if not self.has_lock:
+            return
+
         cmds = []
         for port in self._nb_idl.lsp_list().execute(check_error=True):
             port_type = port.type.strip()
