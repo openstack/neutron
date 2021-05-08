@@ -1,0 +1,17 @@
+---
+issues:
+  - |
+    When using the minimim-bandwidth QoS feature due to bug
+    https://launchpad.net/bugs/1921150 physical NIC resource providers
+    were for some time created with the wrong parent (i.e. the
+    hypervisor RP). This is now partially fixed and new resource
+    providers are created now with the expected parent (i.e. the agent
+    RP).  However Placement does not allow re-parenting an already
+    existing resource provider, therefore the following Placement
+    DB update may be needed after the fix for bug 1921150 is applied:
+    neutron/tools/bug-1921150-re-parent-device-rps.sql
+    Until all resource providers have the proper parent, neutron-server
+    will retry the re-parenting update, which will be rejected every time,
+    therefore expect polluted logs and some wasted load on Placement.
+    However please note that the bandwidth-aware scheduling is supposed
+    to work even with the wrongly parented resource providers.
