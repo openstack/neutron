@@ -410,6 +410,8 @@ class DhcpAgent(manager.Manager):
             return
 
         for subnet in network.subnets:
+            # TODO(isabek): in Y release below 'if' can be removed
+            # because only dhcp enbaled subnets are returned from server
             if subnet.enable_dhcp:
                 if self.call_driver('enable', network):
                     self.update_isolated_metadata_proxy(network)

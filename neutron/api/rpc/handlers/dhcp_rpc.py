@@ -73,10 +73,11 @@ class DhcpRpcCallback(object):
     #           the major version as above applies here too.
     #     1.7 - Add get_networks
     #     1.8 - Add get_dhcp_port
+    #     1.9 - get_network_info returns info with only DHCP enabled subnets
 
     target = oslo_messaging.Target(
         namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
-        version='1.8')
+        version='1.9')
 
     def _get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active networks."""
@@ -207,7 +208,11 @@ class DhcpRpcCallback(object):
         return networks
 
     def get_network_info(self, context, **kwargs):
-        """Retrieve and return extended information about a network."""
+        """Retrieve and return information about a network.
+
+        Retrieve and return extended information about a network
+        with only DHCP enabled subnets.
+        """
         network_id = kwargs.get('network_id')
         host = kwargs.get('host')
         LOG.debug('Network %(network_id)s requested from '
@@ -220,8 +225,8 @@ class DhcpRpcCallback(object):
             LOG.debug("Network %s could not be found, it might have "
                       "been deleted concurrently.", network_id)
             return
-        filters = dict(network_id=[network_id])
-        subnets = plugin.get_subnets(context, filters=filters)
+        subnet_filters = {'network_id': [network_id], 'enable_dhcp': [True]}
+        subnets = plugin.get_subnets(context, filters=subnet_filters)
         seg_plug = directory.get_plugin(
             segment_ext.SegmentPluginBase.get_plugin_type())
         nonlocal_subnets = []
@@ -247,7 +252,8 @@ class DhcpRpcCallback(object):
         network['subnets'] = sorted(subnets, key=operator.itemgetter('id'))
         network['non_local_subnets'] = sorted(nonlocal_subnets,
                                               key=operator.itemgetter('id'))
-        network['ports'] = plugin.get_ports(context, filters=filters)
+        port_filters = {'network_id': [network_id]}
+        network['ports'] = plugin.get_ports(context, filters=port_filters)
         return network
 
     @db_api.retry_db_errors
