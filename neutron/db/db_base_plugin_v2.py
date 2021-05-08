@@ -942,8 +942,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         self, **kwargs)
 
         with db_api.CONTEXT_WRITER.using(context):
-            subnet, changes = self.ipam.update_db_subnet(context, id, s,
-                                                         db_pools)
+            subnet, changes = self.ipam.update_db_subnet(
+                context, id, s, db_pools, subnet_obj=subnet_obj)
         return self._make_subnet_dict(subnet, context=context), orig
 
     @property
