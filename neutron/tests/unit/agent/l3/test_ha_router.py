@@ -55,6 +55,31 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ri._get_cidrs_from_keepalived = mock.MagicMock(return_value=addresses)
         self.assertEqual(set(addresses), ri.get_router_cidrs(device))
 
+    def test_routes_updated_with_dvr(self):
+        ri = self._create_router(router={'distributed': True})
+        ri.keepalived_manager = mock.Mock()
+        base_routes_updated = mock.patch(
+            'neutron.agent.l3.router_info.'
+            'RouterInfo.routes_updated').start()
+        mock_instance = mock.Mock()
+        mock_instance.virtual_routes.gateway_routes = []
+        ri._get_keepalived_instance = mock.Mock(
+            return_value=mock_instance)
+        ri.routes_updated([], [])
+        self.assertTrue(base_routes_updated.called)
+
+    def test_routes_updated_with_non_dvr(self):
+        ri = self._create_router(router={'distributed': False})
+        ri.keepalived_manager = mock.Mock()
+        base_routes_updated = mock.patch(
+            'neutron.agent.l3.router_info.'
+            'RouterInfo.routes_updated').start()
+        mock_instance = mock.Mock()
+        mock_instance.virtual_routes.gateway_routes = []
+        ri._get_keepalived_instance = mock.Mock(return_value=mock_instance)
+        ri.routes_updated([], [])
+        self.assertFalse(base_routes_updated.called)
+
     def test__add_default_gw_virtual_route(self):
         ri = self._create_router()
         mock_instance = mock.Mock()
