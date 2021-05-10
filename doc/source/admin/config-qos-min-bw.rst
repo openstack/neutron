@@ -118,6 +118,13 @@ Limitations
   an Open vSwitch bridge, and another 5 Gbps NIC whose virtual functions
   can be handed out to servers by neutron-sriov-agent.
 
+* Neutron allows physnet names to be case sensitive. So physnet0 and
+  Physnet0 are treated as different physnets. Physnets are mapped to
+  traits in Placement for scheduling purposes. However Placement traits are
+  case insensitive and normalized to full capital. Therefore the scheduling
+  treats physnet0 and Physnet0 as the same physnet. It is advised not to use
+  physnet names that are only differ by case.
+
 Placement pre-requisites
 ------------------------
 
