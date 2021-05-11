@@ -1531,10 +1531,14 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     @db_api.retry_if_session_inactive()
     @db_api.CONTEXT_READER
     def get_port(self, context, id, fields=None):
-        port = self._get_port(context, id)
+        lazy_fields = [models_v2.Port.port_forwardings,
+                       models_v2.Port.binding_levels,
+                       models_v2.Port.distributed_port_binding]
+        port = self._get_port(context, id, lazy_fields=lazy_fields)
         return self._make_port_dict(port, fields)
 
-    def _get_ports_query(self, context, filters=None, *args, **kwargs):
+    def _get_ports_query(self, context, filters=None, lazy_fields=None,
+                         *args, **kwargs):
         Port = models_v2.Port
         IPAllocation = models_v2.IPAllocation
 
@@ -1545,6 +1549,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         vif_type = filters.pop(portbindings_def.VIF_TYPE, None)
         query = model_query.get_collection_query(context, Port,
                                                  filters=filters,
+                                                 lazy_fields=lazy_fields,
                                                  *args, **kwargs)
         ip_addresses = fixed_ips.get('ip_address')
         subnet_ids = fixed_ips.get('subnet_id')
@@ -1570,10 +1575,14 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                   page_reverse=False):
         marker_obj = ndb_utils.get_marker_obj(self, context, 'port',
                                               limit, marker)
+        lazy_fields = [models_v2.Port.port_forwardings,
+                       models_v2.Port.binding_levels,
+                       models_v2.Port.distributed_port_binding]
         query = self._get_ports_query(context, filters=filters,
                                       sorts=sorts, limit=limit,
                                       marker_obj=marker_obj,
-                                      page_reverse=page_reverse)
+                                      page_reverse=page_reverse,
+                                      lazy_fields=lazy_fields)
         items = [self._make_port_dict(c, fields, bulk=True) for c in query]
         resource_extend.apply_funcs(port_def.COLLECTION_NAME_BULK, items, None)
         if limit and page_reverse:
