@@ -63,10 +63,9 @@ three quota drivers:
 
  * neutron.db.quota.driver.DbQuotaDriver
  * neutron.db.quota.driver_nolock.DbQuotaNoLockDriver (default)
- * neutron.quota.ConfDriver
 
-The latter driver is however deprecated. The ``DbQuotaNoLockDriver`` is the
-default quota driver, defined in the configuration option ``quota_driver``.
+The ``DbQuotaNoLockDriver`` is the default quota driver, defined in the
+configuration option ``quota_driver``.
 
 The Quota API extension handles quota management, whereas the Quota Engine
 component handles quota enforcement. This API extension is loaded like any

@@ -752,7 +752,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_create_routers_native_quotas(self):
         tenant_id = _uuid()
         quota = 1
-        cfg.CONF.set_override('quota_router', quota, group='QUOTAS')
+        test_db_base_plugin_v2._set_temporary_quota('router', quota)
         res = self._create_router(self.fmt, tenant_id)
         self.assertEqual(exc.HTTPCreated.code, res.status_int)
         res = self._create_router(self.fmt, tenant_id)
@@ -3395,7 +3395,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_create_floatingips_native_quotas(self):
         quota = 1
-        cfg.CONF.set_override('quota_floatingip', quota, group='QUOTAS')
+        test_db_base_plugin_v2._set_temporary_quota('floatingip', quota)
+        self._tenant_id = uuidutils.generate_uuid()
         with self.subnet() as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
             res = self._create_floatingip(

@@ -80,7 +80,7 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         self.api = webtest.TestApp(router.APIRouter())
 
         quota.QUOTAS._driver = None
-        cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
+        cfg.CONF.set_override('quota_driver', quota.QUOTA_DB_DRIVER,
                               group='QUOTAS')
 
     def _prepare_net_data(self):

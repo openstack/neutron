@@ -53,7 +53,8 @@ class QuotaEnforcementHook(hooks.PecanHook):
                 LOG.debug("Made reservation on behalf of %(tenant_id)s "
                           "for: %(delta)s",
                           {'tenant_id': tenant_id, 'delta': {resource: delta}})
-                reservations.append(reservation)
+                if reservation:
+                    reservations.append(reservation)
             except exceptions.QuotaResourceUnknown as e:
                 # Quotas cannot be enforced on this resource
                 LOG.debug(e)

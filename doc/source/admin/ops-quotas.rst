@@ -38,7 +38,7 @@ default quota values:
    quota_port = 50
 
    # default driver to use for quota checks
-   quota_driver = neutron.quota.ConfDriver
+   quota_driver = neutron.quota.DbQuotaNoLockDriver
 
 OpenStack Networking also supports quotas for L3 resources:
 router and floating IP. Add these lines to the

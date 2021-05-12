@@ -83,7 +83,7 @@ class ExtensionTestCase(testlib_api.WebTestCase):
             setattr(instance, native_sorting_attr_name, True)
         if use_quota:
             quota.QUOTAS._driver = None
-            cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
+            cfg.CONF.set_override('quota_driver', quota.QUOTA_DB_DRIVER,
                                   group='QUOTAS')
         setattr(instance, 'path_prefix', resource_prefix)
 

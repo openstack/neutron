@@ -1977,8 +1977,8 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             sgr = self._list('security-group-rules').get(
                 'security_group_rules')
             quota = len(sgr) + 1
-            cfg.CONF.set_override(
-                'quota_security_group_rule', quota, group='QUOTAS')
+            test_db_base_plugin_v2._set_temporary_quota('security_group_rule',
+                                                        quota)
 
             security_group_id = sg['security_group']['id']
             rule = self._build_security_group_rule(

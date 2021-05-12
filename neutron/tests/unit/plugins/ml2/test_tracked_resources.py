@@ -16,8 +16,11 @@ from neutron_lib import context
 from neutron_lib import fixture
 from oslo_utils import uuidutils
 
+from neutron.conf import quota as quota_conf
 from neutron.db.quota import api as quota_db_api
+from neutron import quota
 from neutron.tests.unit.api import test_extensions
+from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit.extensions import test_securitygroup
 from neutron.tests.unit.plugins.ml2 import base as ml2_base
@@ -38,8 +41,16 @@ class BaseTestTrackedResources(test_plugin.Ml2PluginV2TestCase,
 
     def setUp(self):
         self.ctx = context.get_admin_context()
+        self.addCleanup(self._cleanup)
+        test_db_base_plugin_v2.NeutronDbPluginV2TestCase.quota_db_driver = (
+            'neutron.db.quota.driver.DbQuotaDriver')
         super(BaseTestTrackedResources, self).setUp()
         self._tenant_id = uuidutils.generate_uuid()
+
+    @staticmethod
+    def _cleanup():
+        test_db_base_plugin_v2.NeutronDbPluginV2TestCase.quota_db_driver = (
+            quota_conf.QUOTA_DB_DRIVER)
 
     def _test_init(self, resource_name):
         quota_db_api.set_quota_usage(
@@ -167,10 +178,19 @@ class TestL3ResourcesEventHandler(BaseTestEventHandler,
                                   test_l3.L3NatTestCaseMixin):
 
     def setUp(self):
+        self.addCleanup(self._cleanup)
+        test_db_base_plugin_v2.NeutronDbPluginV2TestCase.quota_db_driver = (
+            'neutron.db.quota.driver.DbQuotaDriver')
         super(TestL3ResourcesEventHandler, self).setUp()
         self.useFixture(fixture.APIDefinitionFixture())
         ext_mgr = test_l3.L3TestExtensionManager()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
+        quota.QUOTAS._driver = None
+
+    @staticmethod
+    def _cleanup():
+        test_db_base_plugin_v2.NeutronDbPluginV2TestCase.quota_db_driver = (
+            quota_conf.QUOTA_DB_DRIVER)
 
     def test_create_delete_floating_ip_triggers_event(self):
         net = self._make_network('json', 'meh', True)

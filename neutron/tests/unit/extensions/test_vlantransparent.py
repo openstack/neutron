@@ -72,7 +72,7 @@ class VlanTransparentExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
                                                             ext_mgr=ext_mgr)
 
         quota.QUOTAS._driver = None
-        cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
+        cfg.CONF.set_override('quota_driver', quota.QUOTA_DB_DRIVER,
                               group='QUOTAS')
 
     def test_network_create_with_vlan_transparent_attr(self):

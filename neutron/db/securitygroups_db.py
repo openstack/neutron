@@ -142,8 +142,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                 sg.rules.append(egress_rule)
             sg.obj_reset_changes(['rules'])
 
-            quota.QUOTAS.commit_reservation(context,
-                                            reservation.reservation_id)
+            if reservation:
+                quota.QUOTAS.commit_reservation(context,
+                                                reservation.reservation_id)
 
             # fetch sg from db to load the sg rules with sg model.
             sg = sg_obj.SecurityGroup.get_object(context, id=sg.id)

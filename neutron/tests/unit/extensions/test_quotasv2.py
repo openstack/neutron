@@ -88,9 +88,7 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
 
     def setUp(self):
         cfg.CONF.set_override(
-            'quota_driver',
-            'neutron.db.quota.driver.DbQuotaDriver',
-            group='QUOTAS')
+            'quota_driver', quota.QUOTA_DB_DRIVER, group='QUOTAS')
         super(QuotaExtensionDbTestCase, self).setUp()
 
     def test_quotas_loaded_right(self):
@@ -423,9 +421,7 @@ class QuotaExtensionCfgTestCase(QuotaExtensionTestCase):
 
     def setUp(self):
         cfg.CONF.set_override(
-            'quota_driver',
-            'neutron.quota.ConfDriver',
-            group='QUOTAS')
+            'quota_driver', quota.QUOTA_DB_DRIVER, group='QUOTAS')
         super(QuotaExtensionCfgTestCase, self).setUp()
 
     def test_quotas_default_values(self):
@@ -466,7 +462,7 @@ class QuotaExtensionCfgTestCase(QuotaExtensionTestCase):
         res = self.api.put(_get_path('quotas', id=tenant_id, fmt=self.fmt),
                            self.serialize(quotas),
                            expect_errors=True)
-        self.assertEqual(403, res.status_int)
+        self.assertEqual(200, res.status_int)
 
     def test_delete_quotas_forbidden(self):
         tenant_id = 'tenant_id1'
@@ -518,11 +514,8 @@ class TestQuotaDriverLoad(base.BaseTestCase):
             self.assertEqual(loaded_driver, driver.__class__.__name__)
 
     def test_quota_driver_load(self):
-        for klass in (quota.ConfDriver, driver.DbQuotaDriver,
+        for klass in (driver.DbQuotaDriver,
                       driver_nolock.DbQuotaNoLockDriver):
             self._test_quota_driver(
                 '.'.join([klass.__module__, klass.__name__]),
                 klass.__name__, True)
-
-    def test_quota_driver_fallback_conf_driver(self):
-        self._test_quota_driver(quota.QUOTA_DB_DRIVER, 'ConfDriver', False)
