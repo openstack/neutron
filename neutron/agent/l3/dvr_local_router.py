@@ -317,6 +317,11 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                                            p['mac_address'],
                                            subnet_id,
                                            'add')
+                for allowed_address_pair in p.get('allowed_address_pairs', []):
+                    self._update_arp_entry(allowed_address_pair['ip_address'],
+                                           allowed_address_pair['mac_address'],
+                                           subnet_id,
+                                           'add')
         self._process_arp_cache_for_internal_port(subnet_id)
 
     @staticmethod
