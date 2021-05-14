@@ -76,7 +76,7 @@ class DriverBase(object):
         trunk plugin so that they can integrate without an explicit
         register() method invocation.
 
-        :param resource: neutron.services.trunk.constants.TRUNK_PLUGIN
+        :param resource: neutron_lib.callbacks.resources.TRUNK_PLUGIN
         :param event: neutron_lib.callbacks.events.AFTER_INIT
         :param trigger: neutron.service.trunks.plugin.TrunkPlugin
         """

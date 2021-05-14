@@ -263,11 +263,14 @@ class TestTrunkHandler(base.BaseTestCase):
             status=trunk_consts.TRUNK_ACTIVE_STATUS)
 
     def _fake_trunk_event_payload(self):
+        original_trunk = mock.Mock()
+        original_trunk.port_id = 'original_trunk_port_id'
+        current_trunk = mock.Mock()
+        current_trunk.port_id = 'current_trunk_port_id'
+
         payload = mock.Mock()
-        payload.current_trunk = mock.Mock()
-        payload.current_trunk.port_id = 'current_trunk_port_id'
-        payload.original_trunk = mock.Mock()
-        payload.original_trunk.port_id = 'original_trunk_port_id'
+        payload.states = (original_trunk, current_trunk)
+
         current_subport = mock.Mock()
         current_subport.segmentation_id = 40
         current_subport.trunk_id = 'current_trunk_port_id'
@@ -276,8 +279,9 @@ class TestTrunkHandler(base.BaseTestCase):
         original_subport.segmentation_id = 41
         original_subport.trunk_id = 'original_trunk_port_id'
         original_subport.port_id = 'original_subport_port_id'
-        payload.current_trunk.sub_ports = [current_subport]
-        payload.original_trunk.sub_ports = [original_subport]
+        current_trunk.sub_ports = [current_subport]
+        original_trunk.sub_ports = [original_subport]
+
         return payload
 
     @mock.patch.object(trunk_driver.OVNTrunkHandler, '_set_sub_ports')
@@ -286,9 +290,9 @@ class TestTrunkHandler(base.BaseTestCase):
         self.handler.trunk_event(
             mock.ANY, events.AFTER_CREATE, mock.ANY, fake_payload)
         set_subports.assert_called_once_with(
-            fake_payload.current_trunk.port_id,
-            fake_payload.current_trunk.sub_ports)
-        fake_payload.current_trunk.update.assert_called_once_with(
+            fake_payload.states[0].port_id,
+            fake_payload.states[0].sub_ports)
+        fake_payload.states[0].update.assert_called_once_with(
             status=trunk_consts.TRUNK_ACTIVE_STATUS)
 
     @mock.patch.object(trunk_driver.OVNTrunkHandler, '_unset_sub_ports')
@@ -297,7 +301,7 @@ class TestTrunkHandler(base.BaseTestCase):
         self.handler.trunk_event(
             mock.ANY, events.AFTER_DELETE, mock.ANY, fake_payload)
         unset_subports.assert_called_once_with(
-            fake_payload.original_trunk.sub_ports)
+            fake_payload.states[0].sub_ports)
 
     @mock.patch.object(trunk_driver.OVNTrunkHandler, '_set_sub_ports')
     @mock.patch.object(trunk_driver.OVNTrunkHandler, '_unset_sub_ports')
@@ -309,14 +313,18 @@ class TestTrunkHandler(base.BaseTestCase):
         unset_subports.assert_not_called()
 
     def _fake_subport_event_payload(self):
+        original_trunk = mock.Mock()
+        original_trunk.port_id = 'original_trunk_port_id'
+
         payload = mock.Mock()
-        payload.original_trunk = mock.Mock()
-        payload.original_trunk.port_id = 'original_trunk_port_id'
+        payload.states = (original_trunk,)
+
         original_subport = mock.Mock()
         original_subport.segmentation_id = 41
         original_subport.trunk_id = 'original_trunk_port_id'
         original_subport.port_id = 'original_subport_port_id'
-        payload.subports = [original_subport]
+        payload.metadata = {'subports': [original_subport]}
+
         return payload
 
     @mock.patch.object(trunk_driver.OVNTrunkHandler, 'subports_added')
@@ -325,7 +333,7 @@ class TestTrunkHandler(base.BaseTestCase):
         self.handler.subport_event(
             mock.ANY, events.AFTER_CREATE, mock.ANY, fake_payload)
         s_added.assert_called_once_with(
-            fake_payload.original_trunk, fake_payload.subports)
+            fake_payload.states[0], fake_payload.metadata['subports'])
 
     @mock.patch.object(trunk_driver.OVNTrunkHandler, 'subports_deleted')
     def test_subport_event_delete(self, s_deleted):
@@ -333,7 +341,7 @@ class TestTrunkHandler(base.BaseTestCase):
         self.handler.subport_event(
             mock.ANY, events.AFTER_DELETE, mock.ANY, fake_payload)
         s_deleted.assert_called_once_with(
-            fake_payload.original_trunk, fake_payload.subports)
+            fake_payload.states[0], fake_payload.metadata['subports'])
 
     @mock.patch.object(trunk_driver.OVNTrunkHandler, 'subports_added')
     @mock.patch.object(trunk_driver.OVNTrunkHandler, 'subports_deleted')

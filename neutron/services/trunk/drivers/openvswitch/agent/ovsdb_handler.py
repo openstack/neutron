@@ -382,9 +382,10 @@ class OVSDBHandler(object):
             return
 
         try:
-            registry.notify(
+            registry.publish(
                 resources.TRUNK, events.BEFORE_CREATE, self,
-                context=ctx, trunk=trunk)
+                payload=events.DBEventPayload(ctx, resource_id=trunk.id,
+                                              desired_state=trunk))
             self.trunk_manager.create_trunk(
                 trunk.id, trunk.port_id,
                 port['external_ids'].get('attached-mac'))

@@ -18,7 +18,6 @@ from neutron_lib.callbacks import resources
 from neutron_lib import fixture
 
 from neutron.api.rpc.callbacks import resource_manager
-from neutron.services.trunk import callbacks
 from neutron.services.trunk.rpc import backend
 from neutron.tests import base
 from neutron.tests import tools
@@ -39,12 +38,12 @@ class ServerSideRpcBackendTest(base.BaseTestCase):
 
         calls = [mock.call(
                     *tools.get_subscribe_args(
-                        test_obj.process_event,
+                        test_obj.process_trunk_payload_event,
                         resources.TRUNK,
                         events.AFTER_CREATE)),
                  mock.call(
                     *tools.get_subscribe_args(
-                        test_obj.process_event,
+                        test_obj.process_trunk_payload_event,
                         resources.TRUNK,
                         events.AFTER_DELETE)),
                  mock.call(
@@ -65,19 +64,20 @@ class ServerSideRpcBackendTest(base.BaseTestCase):
         test_obj._stub = mock_stub = mock.Mock()
         trunk_plugin = mock.Mock()
 
-        test_obj.process_event(
+        test_obj.process_trunk_payload_event(
             resources.TRUNK, events.AFTER_CREATE, trunk_plugin,
-            callbacks.TrunkPayload("context",
-                                   "id",
-                                   current_trunk="current_trunk"))
-        test_obj.process_event(
+            events.DBEventPayload("context",
+                                  resource_id="id",
+                                  states=("current_trunk",)))
+
+        test_obj.process_trunk_payload_event(
             resources.TRUNK, events.AFTER_DELETE, trunk_plugin,
-            callbacks.TrunkPayload("context",
-                                   "id",
-                                   original_trunk="original_trunk"))
+            events.DBEventPayload("context",
+                                  resource_id="id",
+                                  states=("original_trunk",)))
 
         calls = [mock.call.trunk_created("context",
-                           "current_trunk"),
+                                         "current_trunk"),
                  mock.call.trunk_deleted("context",
-                           "original_trunk")]
+                                         "original_trunk")]
         mock_stub.assert_has_calls(calls, any_order=False)
