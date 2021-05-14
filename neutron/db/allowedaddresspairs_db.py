@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
+import collections
 
 from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
 from neutron_lib.api.definitions import port as port_def
@@ -64,6 +65,17 @@ class AllowedAddressPairsMixin(object):
             context, port_id=port_id)
         return [self._make_allowed_address_pairs_dict(pair.db_obj)
                 for pair in pairs]
+
+    def get_allowed_address_pairs_for_ports(self, context, port_ids):
+        pairs = (
+            obj_addr_pair.AllowedAddressPair.
+            get_allowed_address_pairs_for_ports(
+                context, port_ids=port_ids))
+        result = collections.defaultdict(list)
+        for pair in pairs:
+            result[pair.port_id].append(
+                self._make_allowed_address_pairs_dict(pair.db_obj))
+        return result
 
     @staticmethod
     @resource_extend.extends([port_def.COLLECTION_NAME])
