@@ -1929,12 +1929,12 @@ class TestMl2PluginOnly(Ml2PluginV2TestCase):
         host = 'fake-host'
         plugin = directory.get_plugin()
         plugin.delete_port_binding(self.context, host, port_id)
-        self.assertTrue(clear_bl_mock.called_with(self.context,
-                                                  port_id=port_id,
-                                                  host=host))
-        self.assertTrue(delete_port_binding_mock.called_with(self.context,
-                                                             host=host,
-                                                             port_id=port_id))
+        clear_bl_mock.assert_called_once_with(self.context,
+                                              port_id=port_id,
+                                              host=host)
+        delete_port_binding_mock.assert_called_once_with(self.context,
+                                                         host=host,
+                                                         port_id=port_id)
 
 
 class Test_GetNetworkMtu(Ml2PluginV2TestCase):
