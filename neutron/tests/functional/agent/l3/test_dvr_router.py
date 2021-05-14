@@ -1005,21 +1005,25 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         # cache is properly populated.
         self.agent.conf.agent_mode = 'dvr_snat'
         router_info = self.generate_dvr_router_info(enable_snat=True)
-        expected_neighbor = '35.4.1.10'
+        expected_neighbors = ['35.4.1.10', '10.0.0.10']
         port_data = {
-            'fixed_ips': [{'ip_address': expected_neighbor}],
+            'fixed_ips': [{'ip_address': expected_neighbors[0]}],
             'mac_address': 'fa:3e:aa:bb:cc:dd',
-            'device_owner': DEVICE_OWNER_COMPUTE
+            'device_owner': DEVICE_OWNER_COMPUTE,
+            'allowed_address_pairs': [
+                {'ip_address': expected_neighbors[1],
+                 'mac_address': 'fa:3e:aa:bb:cc:dd'}]
         }
         self.agent.plugin_rpc.get_ports_by_subnet.return_value = [port_data]
         router1 = self.manage_router(self.agent, router_info)
         internal_device = router1.get_internal_device_name(
             router_info['_interfaces'][0]['id'])
-        neighbor = ip_lib.dump_neigh_entries(4, internal_device,
-                                             router1.ns_name,
-                                             dst=expected_neighbor)
-        self.assertNotEqual([], neighbor)
-        self.assertEqual(expected_neighbor, neighbor[0]['dst'])
+        for expected_neighbor in expected_neighbors:
+            neighbor = ip_lib.dump_neigh_entries(4, internal_device,
+                                                 router1.ns_name,
+                                                 dst=expected_neighbor)
+            self.assertNotEqual([], neighbor)
+            self.assertEqual(expected_neighbor, neighbor[0]['dst'])
 
     def _assert_rfp_fpr_mtu(self, router, expected_mtu=1500):
         dev_mtu = self.get_device_mtu(
