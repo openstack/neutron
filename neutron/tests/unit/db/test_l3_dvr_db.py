@@ -1110,6 +1110,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         router = self._create_router(router_dict)
         with self.network() as network,\
                 self.subnet(network=network) as subnet:
+            self.mixin._core_plugin.get_allowed_address_pairs_for_ports = (
+                mock.Mock())
             fake_bound_ports_ids = []
 
             def fake_is_port_bound(port):
@@ -1131,6 +1133,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 self.ctx, subnet['subnet']['id'])
             dvr_subnet_ports_ids = [p['id'] for p in dvr_subnet_ports]
             self.assertItemsEqual(fake_bound_ports_ids, dvr_subnet_ports_ids)
+            (self.mixin._core_plugin.get_allowed_address_pairs_for_ports.
+                assert_called_once_with(self.ctx, dvr_subnet_ports_ids))
 
     @mock.patch.object(plugin_utils, 'can_port_be_bound_to_virtual_bridge',
                        return_value=True)
