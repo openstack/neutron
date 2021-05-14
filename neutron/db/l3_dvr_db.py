@@ -1338,11 +1338,23 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
     def get_ports_under_dvr_connected_subnet(self, context, subnet_id):
         query = dvr_mac_db.get_ports_query_by_subnet_and_ip(context, subnet_id)
         ports = [p for p in query.all() if is_port_bound(p)]
-        return [
+        # TODO(slaweq): if there would be way to pass to neutron-lib only
+        # list of extensions which actually should be processed, than setting
+        # process_extensions=True below could avoid that second loop and
+        # getting allowed_address_pairs for each of the ports
+        ports_list = [
             self.l3plugin._core_plugin._make_port_dict(
                 port, process_extensions=False)
             for port in ports
         ]
+        ports_ids = [p['id'] for p in ports_list]
+        allowed_address_pairs = (
+            self._core_plugin.get_allowed_address_pairs_for_ports(
+                context, ports_ids))
+        for port in ports_list:
+            port['allowed_address_pairs'] = allowed_address_pairs.get(
+                port['id'], [])
+        return ports_list
 
 
 def is_distributed_router(router):
