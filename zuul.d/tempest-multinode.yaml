@@ -357,8 +357,11 @@
       # tempest.scenario.test_network_v6.TestGettingAddress module from
       # prohibit list when bug https://bugs.launchpad.net/neutron/+bug/1863577
       # will be fixed
+      # TODO(ralonsoh): "test_update_router_admin_state" excluded until bug
+      # https://bugs.launchpad.net/neutron/+bug/1890445 is fixed.
       tempest_exclude_regex: "\
-          (^tempest.scenario.test_network_v6.TestGettingAddress)"
+          (^tempest.scenario.test_network_v6.TestGettingAddress)|\
+          (^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_update_router_admin_state)"
 
 
 - job:

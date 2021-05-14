@@ -382,13 +382,16 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
 
     @test_base.skip_if_timeout("bug 1687027")
     def test_models_sync(self):
+        self.skipTest('bug 1929518')
         super(TestModelsMigrationsMysql, self).test_models_sync()
 
 
 class TestModelsMigrationsPsql(testlib_api.PostgreSQLTestCaseMixin,
                                _TestModelsMigrations,
                                testlib_api.SqlTestCaseLight):
-    pass
+    def test_models_sync(self):
+        self.skipTest('bug 1929518')
+        super().test_models_sync()
 
 
 class TestSanityCheck(testlib_api.SqlTestCaseLight):

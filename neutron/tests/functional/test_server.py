@@ -29,6 +29,7 @@ import psutil
 from neutron.common import utils
 from neutron import manager
 from neutron import service
+from neutron.tests import base as tests_base
 from neutron.tests.functional import base
 from neutron import wsgi
 
@@ -242,6 +243,7 @@ class TestWsgiServer(TestNeutronServer):
 
             server.wait()
 
+    @tests_base.unstable_test('bug 1930367')
     def test_restart_wsgi_on_sighup_multiple_workers(self):
         self._test_restart_service_on_sighup(service=self._run_wsgi,
                                              workers=2)
