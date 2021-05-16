@@ -420,9 +420,7 @@ class TestSegment(SegmentTestCase):
         dsn.assert_called_with(resources.NETWORK,
                                events.PRECOMMIT_DELETE,
                                mock.ANY,
-                               context=mock.ANY,
-                               network_id=mock.ANY,
-                               network=mock.ANY)
+                               payload=mock.ANY)
 
 
 class TestSegmentML2(SegmentTestCase):

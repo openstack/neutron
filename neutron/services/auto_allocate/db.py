@@ -41,20 +41,13 @@ CHECK_REQUIREMENTS = 'dry-run'
 
 
 def _ensure_external_network_default_value_callback(
-        resource, event, trigger, **kwargs):
+        resource, event, trigger, payload=None):
     """Ensure the is_default db field matches the create/update request."""
 
-    # TODO(boden): remove shim once all callbacks use payloads
-    if 'payload' in kwargs:
-        _request = kwargs['payload'].request_body
-        _context = kwargs['payload'].context
-        _network = kwargs['payload'].desired_state
-        _orig = kwargs['payload'].states[0]
-    else:
-        _request = kwargs['request']
-        _context = kwargs['context']
-        _network = kwargs['network']
-        _orig = kwargs.get('original_network')
+    _request = payload.request_body
+    _context = payload.context
+    _network = payload.desired_state or payload.latest_state
+    _orig = payload.states[0]
 
     @db_api.retry_if_session_inactive()
     def _do_ensure_external_network_default_value_callback(

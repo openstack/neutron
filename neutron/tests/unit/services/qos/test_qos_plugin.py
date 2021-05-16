@@ -1274,8 +1274,9 @@ class TestQosPluginDB(base.BaseQosTestCase):
                                'validate_policy_for_network') \
                 as mock_validate_policy:
             self.qos_plugin._validate_create_network_callback(
-                'NETWORK', 'precommit_create', 'test_plugin', **kwargs)
-
+                "NETWORK", "precommit_create", "test_plugin",
+                payload=events.DBEventPayload(
+                    self.context, resource_id=kwargs['network']['id'],))
         qos_policy = None
         if network_qos:
             qos_policy = net_qos_obj

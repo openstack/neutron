@@ -239,10 +239,10 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
         with self.network() as n:
             after_create.assert_called_once_with(
                 resources.NETWORK, events.AFTER_CREATE, mock.ANY,
-                context=mock.ANY, network=mock.ANY)
-            kwargs = after_create.mock_calls[0][2]
+                payload=mock.ANY)
+            payload = after_create.mock_calls[0][2]['payload']
             self.assertEqual(n['network']['id'],
-                             kwargs['network']['id'])
+                             payload.resource_id)
 
     def test_network_precommit_create_callback(self):
         precommit_create = mock.Mock()
@@ -251,7 +251,7 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
         with self.network():
             precommit_create.assert_called_once_with(
                 resources.NETWORK, events.PRECOMMIT_CREATE, mock.ANY,
-                context=mock.ANY, network=mock.ANY, request=mock.ANY)
+                payload=mock.ANY)
 
     def test_network_precommit_create_callback_aborts(self):
         precommit_create = mock.Mock()
@@ -289,11 +289,11 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
             self.deserialize(self.fmt, req.get_response(self.api))
             after_update.assert_called_once_with(
                 resources.NETWORK, events.AFTER_UPDATE, mock.ANY,
-                context=mock.ANY, network=mock.ANY, original_network=mock.ANY)
-            kwargs = after_update.mock_calls[0][2]
+                payload=mock.ANY)
+            payload = after_update.mock_calls[0][2]['payload']
             self.assertEqual(n['network']['name'],
-                             kwargs['original_network']['name'])
-            self.assertEqual('updated', kwargs['network']['name'])
+                             payload.states[0]['name'])
+            self.assertEqual('updated', payload.latest_state['name'])
 
     def test_network_after_delete_callback(self):
         after_delete = mock.Mock()
@@ -304,10 +304,10 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
             req.get_response(self.api)
             after_delete.assert_called_once_with(
                 resources.NETWORK, events.AFTER_DELETE, mock.ANY,
-                context=mock.ANY, network=mock.ANY)
-            kwargs = after_delete.mock_calls[0][2]
+                payload=mock.ANY)
+            payload = after_delete.mock_calls[0][2]['payload']
             self.assertEqual(n['network']['id'],
-                             kwargs['network']['id'])
+                             payload.resource_id)
 
     def test_create_port_obj_bulk(self):
         cfg.CONF.set_override('base_mac', "12:34:56:00")
@@ -350,8 +350,13 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
         # capture session states during each before and after event
         before = []
         after = []
-        b_func = lambda *a, **k: before.append(k['context'].session.is_active)
-        a_func = lambda *a, **k: after.append(k['context'].session.is_active)
+
+        def b_func(r, c, v, payload=None):
+            before.append(payload.context.session.is_active)
+
+        def a_func(r, c, v, payload=None):
+            after.append(payload.context.session.is_active)
+
         registry.subscribe(b_func, resources.NETWORK, events.BEFORE_CREATE)
         registry.subscribe(a_func, resources.NETWORK, events.AFTER_CREATE)
         data = [{'tenant_id': self._tenant_id}] * 4

@@ -29,7 +29,6 @@ from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
 from oslo_utils import uuidutils
 
-from neutron.common import utils as common_utils
 from neutron.db import segments_db as db
 from neutron.extensions import segment as extension
 from neutron import manager
@@ -344,8 +343,9 @@ def _add_segment_host_mapping_for_segment(resource, event, trigger,
 
 
 def _delete_segments_for_network(resource, event, trigger,
-                                 context, network_id, **kwargs):
-    admin_ctx = common_utils.get_elevated_context(context)
+                                 payload=None, **kwargs):
+    network_id = payload.resource_id
+    admin_ctx = payload.context.elevated()
     global segments_plugin
     if not segments_plugin:
         segments_plugin = manager.NeutronManager.load_class_for_provider(

@@ -350,9 +350,9 @@ class QoSPlugin(qos.QoSPluginBase):
         self.validate_policy_for_port(context, policy, updated_port)
 
     def _validate_create_network_callback(self, resource, event, trigger,
-                                          **kwargs):
-        context = kwargs['context']
-        network_id = kwargs['network']['id']
+                                          payload=None):
+        context = payload.context
+        network_id = payload.resource_id
         network = network_object.Network.get_object(context, id=network_id)
 
         policy_id = network.qos_policy_id

@@ -417,12 +417,13 @@ class DVRResourceOperationHandler(object):
 
     @registry.receives(resources.NETWORK, [events.AFTER_DELETE])
     def delete_fip_namespaces_for_ext_net(self, rtype, event, trigger,
-                                          context, network, **kwargs):
+                                          payload=None):
+        network = payload.latest_state
         if network.get(extnet_apidef.EXTERNAL):
             # Send the information to all the L3 Agent hosts
             # to clean up the fip namespace as it is no longer required.
             self.l3plugin.l3_rpc_notifier.delete_fipnamespace_for_ext_net(
-                context, network['id'])
+                payload.context, payload.resource_id)
 
     def _get_ports_for_allowed_address_pair_ip(self, context, network_id,
                                                fixed_ip):

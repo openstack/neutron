@@ -14,6 +14,7 @@
 from unittest import mock
 
 from neutron_lib.api.definitions import constants as api_const
+from neutron_lib.callbacks import events
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
@@ -65,7 +66,10 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
             return_value=network_mock
         ) as get_external_net:
             db._ensure_external_network_default_value_callback(
-                "NETWORK", "precommit_update", "test_plugin", **kwargs)
+                "NETWORK", "precommit_update", "test_plugin",
+                payload=events.DBEventPayload(
+                    self.ctx, request_body=kwargs['request'],
+                    states=(kwargs['original_network'], kwargs['network'])))
             get_external_nets.assert_called_once_with(
                 self.ctx, _pager=mock.ANY, is_default=True)
             get_external_net.assert_called_once_with(
@@ -94,7 +98,10 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
             return_value=network_mock
         ) as get_external_net:
             db._ensure_external_network_default_value_callback(
-                "NETWORK", "precommit_update", "test_plugin", **kwargs)
+                "NETWORK", "precommit_update", "test_plugin",
+                payload=events.DBEventPayload(
+                    self.ctx, request_body=kwargs['request'],
+                    states=(kwargs['network'],)))
             get_external_nets.assert_not_called()
             get_external_net.assert_not_called()
             network_mock.update.assert_not_called()
@@ -125,7 +132,10 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
             return_value=network_mock
         ) as get_external_net:
             db._ensure_external_network_default_value_callback(
-                "NETWORK", "precommit_update", "test_plugin", **kwargs)
+                "NETWORK", "precommit_update", "test_plugin",
+                payload=events.DBEventPayload(
+                    self.ctx, request_body=kwargs['request'],
+                    states=(kwargs['original_network'], kwargs['network'])))
             get_external_nets.assert_called_once_with(
                 self.ctx, _pager=mock.ANY, is_default=True)
             get_external_net.assert_not_called()
@@ -158,7 +168,10 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
         ) as get_external_net:
             self.assertRaises(exceptions.DefaultExternalNetworkExists,
                 db._ensure_external_network_default_value_callback,
-                "NETWORK", "precommit_update", "test_plugin", **kwargs)
+                "NETWORK", "precommit_update", "test_plugin",
+                payload=events.DBEventPayload(
+                    self.ctx, request_body=kwargs['request'],
+                    states=(kwargs['original_network'], kwargs['network'])))
             get_external_nets.assert_called_once_with(
                 self.ctx, _pager=mock.ANY, is_default=True)
             get_external_net.assert_not_called()

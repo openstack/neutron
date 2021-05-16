@@ -112,12 +112,15 @@ class DhcpAgentNotifyAPI(object):
             self.uses_native_notifications[resource] = {'create': False,
                                                         'update': False,
                                                         'delete': False}
-            registry.subscribe(self._native_event_send_dhcp_notification,
-                               resource, events.AFTER_CREATE)
-            registry.subscribe(self._native_event_send_dhcp_notification,
-                               resource, events.AFTER_UPDATE)
-            registry.subscribe(self._native_event_send_dhcp_notification,
-                               resource, events.AFTER_DELETE)
+            callback = self._native_event_send_dhcp_notification
+
+            # TODO(boden): remove shim below once all events use payloads
+            if resource == resources.NETWORK:
+                callback = self._native_event_send_dhcp_notification_payload
+
+            registry.subscribe(callback, resource, events.AFTER_CREATE)
+            registry.subscribe(callback, resource, events.AFTER_UPDATE)
+            registry.subscribe(callback, resource, events.AFTER_DELETE)
 
     @property
     def plugin(self):
@@ -282,6 +285,26 @@ class DhcpAgentNotifyAPI(object):
                             {'port_id': kwargs['port']['id'],
                              'fixed_ips': kwargs['port']['fixed_ips']},
                             kwargs['port']['network_id'])
+
+    def _native_event_send_dhcp_notification_payload(
+            self, resource, event, trigger, payload=None):
+
+        # TODO(boden): collapse the native event methods back into one
+
+        action = event.replace('after_', '')
+        # we unsubscribe the _send_dhcp_notification method now that we know
+        # the loaded core plugin emits native resource events
+        if resource not in self._unsubscribed_resources:
+            self.uses_native_notifications[resource][action] = True
+            if all(self.uses_native_notifications[resource].values()):
+                # only unsubscribe the API level listener if we are
+                # receiving all event types for this resource
+                self._unsubscribed_resources.append(resource)
+                registry.unsubscribe_by_resource(self._send_dhcp_notification,
+                                                 resource)
+        method_name = '.'.join((resource, action, 'end'))
+        data = {resource: payload.latest_state}
+        self.notify(payload.context, data, method_name)
 
     def _native_event_send_dhcp_notification(self, resource, event, trigger,
                                              context, **kwargs):
