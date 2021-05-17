@@ -304,10 +304,7 @@
         q-qos: true
         neutron-segments: True
         q-port-forwarding: true
-        # NOTE(slaweq): disable dstat until bug
-        # https://bugs.launchpad.net/ubuntu/+source/dstat/+bug/1866619 will be
-        # fixed
-        dstat: false
+        dstat: true
     group-vars:
       subnode:
         devstack_services:
@@ -328,10 +325,7 @@
           q-metering: false
           q-ovn-metadata-agent: true
           tls-proxy: true
-          # NOTE(slaweq): disable dstat until bug
-          # https://bugs.launchpad.net/ubuntu/+source/dstat/+bug/1866619 will be
-          # fixed
-          dstat: false
+          dstat: true
           # Cinder services
           c-bak: false
           c-vol: false
