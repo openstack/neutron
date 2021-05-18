@@ -1823,7 +1823,7 @@ class L3AgentSchedulerDbMixinTestCase(L3HATestCaseMixin):
         self.assertNotIn(agent.id, results)
 
     def test_add_ha_interface_to_l3_agent(self):
-        agent = self.plugin.get_agents_db(self.adminContext)[0]
+        agent = self.plugin.get_agent_objects(self.adminContext)[0]
         router = self._create_ha_router()
         self.plugin.add_router_to_l3_agent(self.adminContext, agent.id,
                                            router['id'])
