@@ -147,15 +147,8 @@ In neutron-ovn-metadata-agent.
     Southbound database and look for all rows with the ``chassis`` column set
     to the host the agent is running on. For all those entries, make sure a
     metadata proxy instance is spawned for every ``datapath`` (Neutron
-    network) those ports are attached to. The agent will keep record of the
-    list of networks it currently has proxies running on by updating the
-    ``external-ids`` key ``neutron-metadata-proxy-networks`` of the OVN
-    ``Chassis`` record in the OVN Southbound database that corresponds to this
-    host. As an example, this key would look like
-    ``neutron-metadata-proxy-networks=NET1_UUID,NET4_UUID`` meaning that this
-    chassis is hosting one or more VM's connected to networks 1 and 4 so we
-    should have a metadata proxy instance running for each. Ensure any running
-    metadata proxies no longer needed are torn down.
+    network) those ports are attached to. Ensure any running metadata proxies
+    no longer needed are torn down.
 
 * Open and maintain a connection to the OVN Northbound database (using the
   ovsdbapp library).  On first connection, and anytime a reconnect happens:
@@ -218,9 +211,6 @@ Launching a metadata proxy includes:
 
 * Starting haproxy in this network namespace.
 
-* Add the network UUID to ``external-ids:neutron-metadata-proxy-networks`` on
-  the Chassis table for our chassis in OVN Southbound database.
-
 Tearing down a metadata proxy includes:
 
 * Removing the network UUID from our chassis.
@@ -239,18 +229,12 @@ have to deal with the complexity of it (haproxy instances, network namespaces,
 etcetera). In this case, the agent would not create the neutron ports needed
 for metadata.
 
-There could be a race condition when the first VM for a certain network boots
-on a hypervisor if it does so before the metadata proxy instance has been
-spawned.
-
 Right now, the ``vif-plugged`` event to Nova is sent out when the up column
 in the OVN Northbound database's Logical_Switch_Port table changes to True,
-indicating that the VIF is now up. To overcome this race condition we want
-to wait until all network UUID's to which this VM is connected to are present
-in ``external-ids:neutron-metadata-proxy-networks`` on the Chassis table
-for our chassis in OVN Southbound database. This will delay the event to Nova
-until the metadata proxy instance is up and running on the host ensuring the
-VM will be able to get the metadata on boot.
+indicating that the VIF is now up. There could be a race condition when the
+first VM for a certain network boots on a hypervisor if it does so before the
+metadata proxy instance has been spawned. Fortunately, retries on cloud-init
+should eventually fetch metadata even when this might happen.
 
 Alternatives Considered
 -----------------------

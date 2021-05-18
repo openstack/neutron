@@ -335,8 +335,6 @@ class MetadataAgent(object):
         This function will shutdown metadata proxy if it's running and delete
         the VETH pair, the OVS port and the namespace.
         """
-        self.update_chassis_metadata_networks(datapath, remove=True)
-
         # TODO(dalvarez): Remove this in Y cycle when we are sure that all
         # namespaces will be created with the Neutron network UUID and not
         # anymore with the OVN datapath UUID.
@@ -515,7 +513,6 @@ class MetadataAgent(object):
             self.conf, bind_address=n_const.METADATA_V4_IP,
             network_id=net_name)
 
-        self.update_chassis_metadata_networks(net_name)
         return namespace
 
     def ensure_all_networks_provisioned(self):
@@ -541,30 +538,3 @@ class MetadataAgent(object):
                 namespaces.append(netns)
 
         return namespaces
-
-    # NOTE(lucasagomes): Even tho the metadata agent is a multi-process
-    # application, there's only one Southbound database IDL instance in
-    # the agent which handles the OVSDB events therefore we do not need
-    # the external=True parameter in the @synchronized decorator.
-    @lockutils.synchronized(CHASSIS_METADATA_LOCK)
-    def update_chassis_metadata_networks(self, datapath, remove=False):
-        """Update metadata networks hosted in this chassis.
-
-        Add or remove a datapath from the list of current datapaths that
-        we're currently serving metadata.
-        """
-        current_dps = self.sb_idl.get_chassis_metadata_networks(self.chassis)
-        updated = False
-        if remove:
-            if datapath in current_dps:
-                current_dps.remove(datapath)
-                updated = True
-        else:
-            if datapath not in current_dps:
-                current_dps.append(datapath)
-                updated = True
-
-        if updated:
-            with self.sb_idl.create_transaction(check_error=True) as txn:
-                txn.add(self.sb_idl.set_chassis_metadata_networks(
-                    self.chassis, current_dps))

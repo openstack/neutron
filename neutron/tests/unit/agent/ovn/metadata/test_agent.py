@@ -178,10 +178,7 @@ class TestMetadataAgent(base.BaseTestCase):
         Check that the VETH pair, OVS port and namespace associated to this
         namespace are deleted and the metadata proxy is destroyed.
         """
-        with mock.patch.object(self.agent,
-                               'update_chassis_metadata_networks'),\
-                mock.patch.object(
-                    ip_netns, 'exists', return_value=True),\
+        with mock.patch.object(ip_netns, 'exists', return_value=True),\
                 mock.patch.object(
                     ip_lib, 'device_exists', return_value=True),\
                 mock.patch.object(
@@ -236,9 +233,6 @@ class TestMetadataAgent(base.BaseTestCase):
                     return_value=[ip_lib.IPDevice('ip1'),
                                   ip_lib.IPDevice('ip2')]) as add_veth,\
                 mock.patch.object(
-                    self.agent,
-                    'update_chassis_metadata_networks') as update_chassis,\
-                mock.patch.object(
                     driver.MetadataDriver,
                     'spawn_monitored_metadata_proxy') as spawn_mdp, \
                 mock.patch.object(
@@ -273,53 +267,4 @@ class TestMetadataAgent(base.BaseTestCase):
             spawn_mdp.assert_called_once_with(
                 mock.ANY, 'namespace', 80, mock.ANY,
                 bind_address=n_const.METADATA_V4_IP, network_id='1')
-            # Check that the chassis has been updated with the datapath.
-            update_chassis.assert_called_once_with('1')
             mock_checksum.assert_called_once_with('namespace')
-
-    def _test_update_chassis_metadata_networks_helper(
-            self, dp, remove, expected_dps, txn_called=True):
-        current_dps = ['0', '1', '2']
-        with mock.patch.object(self.agent.sb_idl,
-                               'get_chassis_metadata_networks',
-                               return_value=current_dps),\
-                mock.patch.object(self.agent.sb_idl,
-                                  'set_chassis_metadata_networks',
-                                  retrurn_value=True),\
-                mock.patch.object(self.agent.sb_idl,
-                                  'create_transaction') as create_txn_mock:
-
-            self.agent.update_chassis_metadata_networks(dp, remove=remove)
-            updated_dps = self.agent.sb_idl.get_chassis_metadata_networks(
-                self.agent.chassis)
-
-            self.assertEqual(updated_dps, expected_dps)
-            self.assertEqual(create_txn_mock.called, txn_called)
-
-    def test_update_chassis_metadata_networks_add(self):
-        dp = '4'
-        remove = False
-        expected_dps = ['0', '1', '2', '4']
-        self._test_update_chassis_metadata_networks_helper(
-            dp, remove, expected_dps)
-
-    def test_update_chassis_metadata_networks_remove(self):
-        dp = '2'
-        remove = True
-        expected_dps = ['0', '1']
-        self._test_update_chassis_metadata_networks_helper(
-            dp, remove, expected_dps)
-
-    def test_update_chassis_metadata_networks_add_dp_exists(self):
-        dp = '2'
-        remove = False
-        expected_dps = ['0', '1', '2']
-        self._test_update_chassis_metadata_networks_helper(
-            dp, remove, expected_dps, txn_called=False)
-
-    def test_update_chassis_metadata_networks_remove_no_dp(self):
-        dp = '3'
-        remove = True
-        expected_dps = ['0', '1', '2']
-        self._test_update_chassis_metadata_networks_helper(
-            dp, remove, expected_dps, txn_called=False)

@@ -833,25 +833,6 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
                                 ('type', '=', 'localport'))
         return next(iter(cmd.execute(check_error=True)), None)
 
-    def get_chassis_metadata_networks(self, chassis_name):
-        """Return a list with the metadata networks the chassis is hosting."""
-        try:
-            chassis = self.lookup('Chassis', chassis_name)
-        except idlutils.RowNotFound:
-            LOG.warning("Couldn't find Chassis named %s in OVN while looking "
-                        "for metadata networks", chassis_name)
-            return []
-        proxy_networks = chassis.external_ids.get(
-            'neutron-metadata-proxy-networks', None)
-        return proxy_networks.split(',') if proxy_networks else []
-
-    def set_chassis_metadata_networks(self, chassis, networks):
-        nets = ','.join(networks) if networks else ''
-        # TODO(twilson) This could just use DbSetCommand
-        return cmd.UpdateChassisExtIdsCommand(
-            self, chassis, {'neutron-metadata-proxy-networks': nets},
-            if_exists=True)
-
     def set_chassis_neutron_description(self, chassis, description,
                                         agent_type):
         desc_key = (ovn_const.OVN_AGENT_METADATA_DESC_KEY

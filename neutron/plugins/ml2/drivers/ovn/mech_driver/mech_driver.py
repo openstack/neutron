@@ -43,7 +43,6 @@ from neutron.common.ovn import acl as ovn_acl
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import extensions as ovn_extensions
 from neutron.common.ovn import utils as ovn_utils
-from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
 from neutron.db import ovn_revision_numbers_db
@@ -64,11 +63,6 @@ import neutron.wsgi
 
 
 LOG = log.getLogger(__name__)
-METADATA_READY_WAIT_TIMEOUT = 15
-
-
-class MetadataServiceReadyWaitTimeoutException(Exception):
-    pass
 
 
 class OVNPortUpdateError(n_exc.BadRequest):
@@ -993,7 +987,6 @@ class OVNMechanismDriver(api.MechanismDriver):
         LOG.info("OVN reports status up for port: %s", port_id)
 
         self._update_dnat_entry_if_needed(port_id)
-        self._wait_for_metadata_provisioned_if_needed(port_id)
 
         admin_context = n_context.get_admin_context()
         provisioning_blocks.provisioning_complete(
@@ -1087,61 +1080,6 @@ class OVNMechanismDriver(api.MechanismDriver):
         hosts = {host for host, phynets in host_phynets_map.items()
                  if phynet in phynets}
         segment_service_db.map_segment_to_hosts(context, segment.id, hosts)
-
-    def _wait_for_metadata_provisioned_if_needed(self, port_id):
-        """Wait for metadata service to be provisioned.
-
-        Wait until metadata service has been setup for this port in the chassis
-        it resides. If metadata is disabled or DHCP is not enabled for its
-        subnets, this function will return right away.
-        """
-        if ovn_conf.is_ovn_metadata_enabled() and self._sb_ovn:
-            # Wait until metadata service has been setup for this port in the
-            # chassis it resides.
-            result = (
-                self._sb_ovn.get_logical_port_chassis_and_datapath(port_id))
-            if not result:
-                LOG.warning("Logical port %s doesn't exist in OVN", port_id)
-                return
-            chassis, datapath = result
-            if not chassis:
-                LOG.warning("Logical port %s is not bound to a "
-                            "chassis", port_id)
-                return
-
-            # Check if the port belongs to some IPv4 subnet with DHCP enabled.
-            context = n_context.get_admin_context()
-            port = self._plugin.get_port(context, port_id)
-            port_subnet_ids = set(
-                ip['subnet_id'] for ip in port['fixed_ips'] if
-                n_utils.get_ip_version(ip['ip_address']) == const.IP_VERSION_4)
-            if not port_subnet_ids:
-                # The port doesn't belong to any IPv4 subnet
-                return
-
-            subnets = self._plugin.get_subnets(context, filters=dict(
-                network_id=[port['network_id']], ip_version=[4],
-                enable_dhcp=True))
-
-            subnet_ids = set(
-                s['id'] for s in subnets if s['id'] in port_subnet_ids)
-            if not subnet_ids:
-                return
-
-            try:
-                n_utils.wait_until_true(
-                    lambda: datapath in
-                    self._sb_ovn.get_chassis_metadata_networks(chassis),
-                    timeout=METADATA_READY_WAIT_TIMEOUT,
-                    exception=MetadataServiceReadyWaitTimeoutException)
-            except MetadataServiceReadyWaitTimeoutException:
-                # If we reach this point it means that metadata agent didn't
-                # provision the datapath for this port on its chassis. Either
-                # the agent is not running or it crashed. We'll complete the
-                # provisioning block though.
-                LOG.warning("Metadata service is not ready for port %s, check"
-                            " neutron-ovn-metadata-agent status/logs.",
-                            port_id)
 
     def patch_plugin_merge(self, method_name, new_fn, op=operator.add):
         old_method = getattr(self._plugin, method_name)

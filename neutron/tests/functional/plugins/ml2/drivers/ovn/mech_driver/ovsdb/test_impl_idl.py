@@ -123,13 +123,6 @@ class TestSbApi(BaseOvnIdlTest):
         val = str(uuid.uuid4())
         self.assertIsNone(self.api.get_metadata_port_network(val))
 
-    def test_set_get_chassis_metadata_networks(self):
-        name = self.data['chassis'][0]['name']
-        nets = [str(uuid.uuid4()) for _ in range(3)]
-        self.api.set_chassis_metadata_networks(name, nets).execute(
-            check_error=True)
-        self.assertEqual(nets, self.api.get_chassis_metadata_networks(name))
-
     def _create_bound_port_with_ip(self):
         chassis, switch, port, binding = self._add_switch_port(
             self.data['chassis'][0]['name'])
