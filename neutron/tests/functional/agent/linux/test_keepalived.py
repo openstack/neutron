@@ -23,7 +23,6 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
 from neutron.common import utils as common_utils
 from neutron.conf.agent.l3 import config as l3_config
-from neutron.tests import base as tests_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base
@@ -120,14 +119,14 @@ class KeepalivedManagerTestCase(base.BaseSudoTestCase,
 
         self._spawn_keepalived(self.manager)
 
-    @tests_base.unstable_test("bug 1921154")
     def test_keepalived_spawns_conflicting_pid_base_process(self):
+        self.skipTest('bug 1921154')
         process = self.manager.get_process()
         pid_file = process.get_pid_file_name()
         self._test_keepalived_spawns_conflicting_pid(process, pid_file)
 
-    @tests_base.unstable_test("bug 1921154")
     def test_keepalived_spawns_conflicting_pid_vrrp_subprocess(self):
+        self.skipTest('bug 1921154')
         process = self.manager.get_process()
         pid_file = process.get_pid_file_name()
         self._test_keepalived_spawns_conflicting_pid(
