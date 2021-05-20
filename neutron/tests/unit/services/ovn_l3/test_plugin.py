@@ -891,8 +891,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 'ovn_client.OVNClient._check_external_ips_changed')
     @mock.patch.object(utils, 'get_lrouter_snats')
     @mock.patch.object(utils, 'get_lrouter_ext_gw_static_route')
-    @mock.patch('neutron.common.ovn.utils.is_snat_enabled',
-                mock.Mock(return_value=True))
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient._get_router_ports')
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
