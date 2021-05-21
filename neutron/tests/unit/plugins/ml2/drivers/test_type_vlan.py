@@ -247,11 +247,16 @@ class VlanTypeTest(testlib_api.SqlTestCase):
         observed = self.driver.reserve_provider_segment(self.context, segment)
         alloc = self._get_allocation(self.context, observed)
         self.assertTrue(alloc.allocated)
-        # NOTE(ralonsoh): first network provided in the configuration is
-        # PROVIDER_NET.
-        self.assertEqual(PROVIDER_NET, observed[api.PHYSICAL_NETWORK])
-        self.assertIn(observed[api.SEGMENTATION_ID],
-                      range(p_const.MIN_VLAN_TAG, p_const.MAX_VLAN_TAG + 1))
+        if observed[api.PHYSICAL_NETWORK] == PROVIDER_NET:
+            self.assertIn(observed[api.SEGMENTATION_ID],
+                          range(p_const.MIN_VLAN_TAG,
+                                p_const.MAX_VLAN_TAG + 1))
+        elif observed[api.PHYSICAL_NETWORK] == TENANT_NET:
+            self.assertIn(observed[api.SEGMENTATION_ID],
+                          range(VLAN_MIN, VLAN_MAX + 1))
+        else:
+            self.fail('The observed physical network %s does not match with '
+                      'any configured' % [api.PHYSICAL_NETWORK])
 
     def test_get_mtu(self):
         cfg.CONF.set_override('global_physnet_mtu', 1475)
