@@ -21,9 +21,12 @@ from unittest import mock
 from neutron_lib.api.definitions import l3_ext_ha_mode
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import router_availability_zone
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context as n_context
 from neutron_lib.exceptions import l3 as l3_exc
+from neutron_lib import fixture
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib import rpc as n_rpc
@@ -810,6 +813,7 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
             service_plugins = None
         super(L3DvrSchedulerTestCase, self).setUp('ml2',
             service_plugins=service_plugins)
+        self.useFixture(fixture.CallbackRegistryFixture())
         self.setup_coreplugin('ml2')
         self.adminContext = n_context.get_admin_context()
         self.dut = L3DvrScheduler()
@@ -947,35 +951,28 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
         self.assertFalse(l3plugin.get_dvr_routers_to_remove.called)
 
     def test__notify_l3_agent_new_port_action(self):
-        kwargs = {
-            'context': self.adminContext,
-            'original_port': None,
-            'port': {
-                'device_owner': DEVICE_OWNER_COMPUTE,
-            },
-        }
+        port_dict = {'device_owner': DEVICE_OWNER_COMPUTE}
         l3plugin = mock.Mock()
         directory.add_plugin(plugin_constants.L3, l3plugin)
         l3_dvrscheduler_db._notify_l3_agent_new_port(
-            'port', 'after_create', mock.ANY, **kwargs)
+            resources.PORT, events.AFTER_CREATE, mock.ANY,
+            payload=events.DBEventPayload(
+                self.adminContext, states=(port_dict,)))
         l3plugin.update_arp_entry_for_dvr_service_port.\
             assert_called_once_with(
-                self.adminContext, kwargs.get('port'))
+                self.adminContext, port_dict)
         l3plugin.dvr_handle_new_service_port.assert_called_once_with(
-            self.adminContext, kwargs.get('port'))
+            self.adminContext, port_dict)
 
     def test__notify_l3_agent_new_port_no_action(self):
-        kwargs = {
-            'context': self.adminContext,
-            'original_port': None,
-            'port': {
-                'device_owner': constants.DEVICE_OWNER_NETWORK_PREFIX + 'None',
-            }
-        }
+        port_dict = {
+                'device_owner': constants.DEVICE_OWNER_NETWORK_PREFIX + 'None'}
         l3plugin = mock.Mock()
         directory.add_plugin(plugin_constants.L3, l3plugin)
         l3_dvrscheduler_db._notify_l3_agent_new_port(
-            'port', 'after_create', mock.ANY, **kwargs)
+            resources.PORT, events.AFTER_CREATE, mock.ANY,
+            payload=events.DBEventPayload(
+                self.adminContext, states=(port_dict,)))
         self.assertFalse(
             l3plugin.update_arp_entry_for_dvr_service_port.called)
         self.assertFalse(

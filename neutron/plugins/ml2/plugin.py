@@ -1461,8 +1461,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # add network to port dict to save a DB call on dhcp notification
         result['network'] = mech_context.network.current
         # notify any plugin that is interested in port create events
-        kwargs = {'context': context, 'port': result}
-        registry.notify(resources.PORT, events.AFTER_CREATE, self, **kwargs)
+        registry.publish(resources.PORT, events.AFTER_CREATE, self,
+                         payload=events.DBEventPayload(
+                             context, states=(result,),
+                             resource_id=result['id']))
 
         try:
             self.mechanism_manager.create_port_postcommit(mech_context)

@@ -455,12 +455,13 @@ def _filter_by_subnet(context, fixed_ips):
         return [str(ip['ip_address']) for ip in fixed_ips]
 
 
-def _create_port_in_external_dns_service(resource, event, trigger, **kwargs):
+def _create_port_in_external_dns_service(resource, event,
+                                         trigger, payload=None):
     dns_driver = _get_dns_driver()
     if not dns_driver:
         return
-    context = kwargs['context']
-    port = kwargs['port']
+    context = payload.context
+    port = payload.latest_state
     dns_data_db = port_obj.PortDNS.get_object(
         context, port_id=port['id'])
     if not (dns_data_db and dns_data_db['current_dns_name']):

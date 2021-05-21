@@ -1080,8 +1080,10 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
     def test_port_after_create_outside_transaction(self):
         self.tx_open = True
-        receive = lambda *a, **k: setattr(self, 'tx_open',
-                                          k['context'].session.is_active)
+
+        def receive(r, e, t, payload=None):
+            setattr(self, 'tx_open', payload.context.session.is_active)
+
         registry.subscribe(receive, resources.PORT, events.AFTER_CREATE)
         with self.port():
             self.assertFalse(self.tx_open)
@@ -1752,7 +1754,10 @@ class TestMl2PortsV2WithRevisionPlugin(Ml2PluginV2TestCase):
         updated_ports = []
         created_ports = []
         ureceiver = lambda *a, **k: updated_ports.append(k['port'])
-        creceiver = lambda *a, **k: created_ports.append(k['port'])
+
+        def creceiver(r, e, t, payload=None):
+            created_ports.append(payload.latest_state)
+
         registry.subscribe(ureceiver, resources.PORT,
                            events.AFTER_UPDATE)
         registry.subscribe(creceiver, resources.PORT,

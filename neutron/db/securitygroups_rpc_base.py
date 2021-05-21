@@ -41,8 +41,15 @@ DHCP_RULE_PORT = {4: (67, 68, const.IPv4), 6: (547, 546, const.IPv6)}
 class SecurityGroupServerNotifierRpcMixin(sg_db.SecurityGroupDbMixin):
     """Mixin class to add agent-based security group implementation."""
 
-    @registry.receives(resources.PORT, [events.AFTER_CREATE,
-                                        events.AFTER_UPDATE,
+    @registry.receives(resources.PORT, [events.AFTER_CREATE])
+    def _notify_sg_on_port_after_update(
+            self, resource, event, trigger, payload=None):
+        # TODO(boden): refact back into single method when all callbacks are
+        # moved to payload style events
+        self.notify_security_groups_member_updated(
+            payload.context, payload.latest_state)
+
+    @registry.receives(resources.PORT, [events.AFTER_UPDATE,
                                         events.AFTER_DELETE])
     def notify_sg_on_port_change(self, resource, event, trigger, context,
                                  port, *args, **kwargs):
