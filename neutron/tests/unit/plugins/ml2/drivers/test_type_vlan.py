@@ -252,10 +252,16 @@ class VlanTypeTest(testlib_api.SqlTestCase):
         observed = self.driver.reserve_provider_segment(self.context, segment)
         alloc = self._get_allocation(self.context, observed)
         self.assertTrue(alloc.allocated)
-        vlan_id = observed[api.SEGMENTATION_ID]
-        self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
-        self.assertThat(vlan_id, matchers.LessThan(VLAN_MAX + 1))
-        self.assertEqual(TENANT_NET, observed[api.PHYSICAL_NETWORK])
+        if observed[api.PHYSICAL_NETWORK] == PROVIDER_NET:
+            self.assertIn(observed[api.SEGMENTATION_ID],
+                          range(p_const.MIN_VLAN_TAG,
+                                p_const.MAX_VLAN_TAG + 1))
+        elif observed[api.PHYSICAL_NETWORK] == TENANT_NET:
+            self.assertIn(observed[api.SEGMENTATION_ID],
+                          range(VLAN_MIN, VLAN_MAX + 1))
+        else:
+            self.fail('The observed physical network %s does not match with '
+                      'any configured' % [api.PHYSICAL_NETWORK])
 
     def test_reserve_provider_segment_all_allocateds(self):
         for __ in range(VLAN_MIN, VLAN_MAX + 1):
