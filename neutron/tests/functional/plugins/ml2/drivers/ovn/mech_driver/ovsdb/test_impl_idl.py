@@ -244,7 +244,7 @@ class TestNbApi(BaseOvnIdlTest):
         exp_values = [(lb['name'], lb['external_ids'])
                       for lb in self.data['lbs']]
         lbs_values = [(lb.name, lb.external_ids) for lb in lbs]
-        self.assertItemsEqual(exp_values, lbs_values)
+        self.assertCountEqual(exp_values, lbs_values)
 
     def test_get_router_floatingip_lbs(self):
         f = self.nbapi.get_router_floatingip_lbs
@@ -260,7 +260,7 @@ class TestNbApi(BaseOvnIdlTest):
             lbs_values = [(lb.name, lb.external_ids)
                           for lb in f(exp_router_name)]
             self.assertTrue(exp_values)
-            self.assertItemsEqual(exp_values, lbs_values)
+            self.assertCountEqual(exp_values, lbs_values)
 
     def test_get_floatingip_in_nat_or_lb(self):
         f = self.nbapi.get_floatingip_in_nat_or_lb

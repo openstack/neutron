@@ -91,9 +91,9 @@ def check_asserttruefalse(logical_line, filename):
 
 @core.flake8ext
 def check_assertitemsequal(logical_line, filename):
-    """N328 - Don't use assertItemsEqual."""
+    """N329 - Don't use assertItemsEqual."""
     if 'neutron/tests/' in filename:
-        if re.search(r"assertItemsEqual\(", logical_line):
+        if re.search(r"assertItemsEqual[\(,]", logical_line):
             msg = ("N329: Use assertCountEqual() instead of "
                    "assertItemsEqual()")
             yield (0, msg)
