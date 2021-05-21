@@ -1429,9 +1429,9 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                     nb_pfs.append(pf)
 
         if should_match:
-            self.assertItemsEqual(nb_pfs, db_pfs)
+            self.assertCountEqual(nb_pfs, db_pfs)
         else:
-            self.assertRaises(AssertionError, self.assertItemsEqual,
+            self.assertRaises(AssertionError, self.assertCountEqual,
                               nb_pfs, db_pfs)
 
     def _validate_port_groups(self, should_match=True):

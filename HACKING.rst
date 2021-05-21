@@ -16,6 +16,7 @@ Below you can find a list of checks specific to this repository.
 
 - [N322] Detect common errors with assert_called_once_with
 - [N328] Detect wrong usage with assertEqual
+- [N329] Use assertCountEqual() instead of assertItemsEqual()
 - [N330] Use assertEqual(*empty*, observed) instead of
          assertEqual(observed, *empty*)
 - [N331] Detect wrong usage with assertTrue(isinstance()).
