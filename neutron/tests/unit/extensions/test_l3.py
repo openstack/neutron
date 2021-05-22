@@ -2113,7 +2113,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_router_remove_interface_callback_failure_returns_409(self):
         with self.router() as r,\
                 self.subnet() as s,\
-                mock.patch.object(registry, 'notify') as notify:
+                mock.patch.object(registry, 'publish') as notify:
             errors = [
                 exceptions.NotificationError(
                     'foo_callback_id', n_exc.InUse()),
@@ -2138,7 +2138,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_router_clear_gateway_callback_failure_returns_409(self):
         with self.router() as r,\
                 self.subnet() as s,\
-                mock.patch.object(registry, 'notify') as notify:
+                mock.patch.object(registry, 'publish') as notify:
             errors = [
                 exceptions.NotificationError(
                     'foo_callback_id', n_exc.InUse()),

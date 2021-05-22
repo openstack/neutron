@@ -275,7 +275,7 @@ class TestL3_NAT_dbonly_mixin(
                 mock.ANY, fip, floatingip_obj)
 
     def test__notify_attaching_interface(self):
-        with mock.patch.object(l3_db.registry, 'notify') as mock_notify:
+        with mock.patch.object(l3_db.registry, 'publish') as mock_notify:
             context = mock.MagicMock()
             router_id = 'router_id'
             net_id = 'net_id'
@@ -284,12 +284,17 @@ class TestL3_NAT_dbonly_mixin(
             port = {'network_id': net_id}
             intf = {}
             self.db._notify_attaching_interface(context, router_db, port, intf)
-            kwargs = {'context': context, 'router_id': router_id,
-                      'network_id': net_id, 'interface_info': intf,
-                      'router_db': router_db, 'port': port}
+
             mock_notify.assert_called_once_with(
                 resources.ROUTER_INTERFACE, events.BEFORE_CREATE, self.db,
-                **kwargs)
+                payload=mock.ANY)
+            payload = mock_notify.mock_calls[0][2]['payload']
+            self.assertEqual(context, payload.context)
+            self.assertEqual(router_id, payload.resource_id)
+            self.assertEqual(net_id, payload.metadata.get('network_id'))
+            self.assertEqual(intf, payload.metadata.get('interface_info'))
+            self.assertEqual(router_db, payload.latest_state)
+            self.assertEqual(port, payload.metadata.get('port'))
 
     def test__create_gw_port(self):
         # NOTE(slaweq): this test is probably wrong

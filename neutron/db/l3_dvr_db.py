@@ -497,30 +497,34 @@ class DVRResourceOperationHandler(object):
             self.update_arp_entry_for_dvr_service_port(context,
                                                        service_port_dict)
 
-    @registry.receives(resources.ROUTER_INTERFACE, [events.BEFORE_CREATE])
     @db_api.retry_if_session_inactive()
-    def _add_csnat_on_interface_create(self, resource, event, trigger,
-                                       context, router_db, port, **kwargs):
-        """Event handler to for csnat port creation on interface creation."""
-        if not router_db.extra_attributes.distributed or not router_db.gw_port:
+    def _retry_add_csnat_on_interface_create(self, context, payload):
+        router_db = payload.latest_state
+        if not router_db.extra_attributes.distributed or not \
+                router_db.gw_port:
             return
-        admin_context = n_utils.get_elevated_context(context)
+        admin_context = payload.context.elevated()
+        port = payload.metadata.get('port')
         self._add_csnat_router_interface_port(
-            admin_context, router_db, port['network_id'],
+            admin_context, payload.latest_state,
+            port['network_id'],
             [{'subnet_id': port['fixed_ips'][-1]['subnet_id']}])
 
-    @registry.receives(resources.ROUTER_INTERFACE, [events.AFTER_CREATE])
+    @registry.receives(resources.ROUTER_INTERFACE, [events.BEFORE_CREATE])
+    def _add_csnat_on_interface_create(self, resource, event, trigger,
+                                       payload=None):
+        """Event handler to for csnat port creation on interface creation."""
+        return self._retry_add_csnat_on_interface_create(
+            payload.context, payload)
+
     @db_api.retry_if_session_inactive()
-    def _update_snat_v6_addrs_after_intf_update(self, resource, event, trigger,
-                                                context, subnets, port,
-                                                router_id, new_interface,
-                                                **kwargs):
-        if new_interface:
+    def _retry_update_snat_v6_addrs_after_intf_update(self, context, payload):
+        if payload.metadata.get('new_interface'):
             # _add_csnat_on_interface_create handler deals with new ports
             return
         # if not a new interface, the interface was added to a new subnet,
         # which is the first in this list
-        subnet = subnets[0]
+        subnet = payload.metadata.get('subnets')[0]
         if not subnet or subnet['ip_version'] != 6:
             return
         # NOTE: For IPv6 additional subnets added to the same
@@ -528,8 +532,8 @@ class DVRResourceOperationHandler(object):
         # IPv6 subnet
         # Add new prefix to an existing ipv6 csnat port with the
         # same network id if one exists
-        admin_ctx = n_utils.get_elevated_context(context)
-        router = self.l3plugin._get_router(admin_ctx, router_id)
+        admin_ctx = payload.context.elevated()
+        router = self.l3plugin._get_router(admin_ctx, payload.resource_id)
         cs_port = self._find_v6_router_port_by_network_and_device_owner(
             router, subnet['network_id'], const.DEVICE_OWNER_ROUTER_SNAT)
         if not cs_port:
@@ -537,9 +541,11 @@ class DVRResourceOperationHandler(object):
         new_fixed_ip = {'subnet_id': subnet['id']}
         fixed_ips = list(cs_port['fixed_ips'])
         fixed_ips.append(new_fixed_ip)
+        port = payload.metadata.get('port')
         try:
             updated_port = self._core_plugin.update_port(
-                admin_ctx, cs_port['id'], {'port': {'fixed_ips': fixed_ips}})
+                admin_ctx, cs_port['id'],
+                {'port': {'fixed_ips': fixed_ips}})
         except Exception:
             with excutils.save_and_reraise_exception():
                 # we need to try to undo the updated router
@@ -557,10 +563,11 @@ class DVRResourceOperationHandler(object):
                     # future with a compare-and-swap style update
                     # using the revision number of the port.
                     p = self._core_plugin.get_port(admin_ctx, port['id'])
-                    rollback_fixed_ips = [ip for ip in p['fixed_ips']
-                                          if ip['subnet_id'] != subnet['id']]
-                    upd = {'port': {'fixed_ips': rollback_fixed_ips}}
-                    self._core_plugin.update_port(admin_ctx, port['id'], upd)
+                    fixed_ips = [ip for ip in p['fixed_ips']
+                                 if ip['subnet_id'] != subnet['id']]
+                    upd = {'port': {'fixed_ips': fixed_ips}}
+                    self._core_plugin.update_port(
+                        admin_ctx, port['id'], upd)
                 try:
                     revert()
                 except Exception:
@@ -569,8 +576,14 @@ class DVRResourceOperationHandler(object):
                                   port['id'])
         LOG.debug("CSNAT port updated for IPv6 subnet: %s", updated_port)
 
-    def _find_v6_router_port_by_network_and_device_owner(self, router, net_id,
-                                                         device_owner):
+    @registry.receives(resources.ROUTER_INTERFACE, [events.AFTER_CREATE])
+    def _update_snat_v6_addrs_after_intf_update(self, resource, event, trigger,
+                                                payload=None):
+        return self._retry_update_snat_v6_addrs_after_intf_update(
+            payload.context, payload)
+
+    def _find_v6_router_port_by_network_and_device_owner(
+            self, router, net_id, device_owner):
         for port in router.attached_ports:
             p = port['port']
             if (p['network_id'] == net_id and
@@ -635,13 +648,11 @@ class DVRResourceOperationHandler(object):
         self.related_dvr_router_routers[cache_key] = (
             existing_routers | other_routers)
 
-    @registry.receives(resources.ROUTER_INTERFACE, [events.AFTER_DELETE])
     @db_api.retry_if_session_inactive()
-    def _cleanup_after_interface_removal(self, resource, event, trigger,
-                                         context, port, interface_info,
-                                         router_id, **kwargs):
-        """Handler to cleanup distributed resources after intf removal."""
-        router = self.l3plugin._get_router(context, router_id)
+    def _retry_cleanup_after_interface_removal(self, context, payload):
+        context = payload.context
+        port = payload.metadata.get('port')
+        router = self.l3plugin._get_router(context, payload.resource_id)
         if not router.extra_attributes.distributed:
             return
 
@@ -649,29 +660,31 @@ class DVRResourceOperationHandler(object):
         # the removed port's subnets and then subtract out any hosts still
         # hosting the router for the remaining interfaces
         router_hosts_for_removed = self.l3plugin._get_dvr_hosts_for_subnets(
-            context, subnet_ids={ip['subnet_id'] for ip in port['fixed_ips']})
+            context,
+            subnet_ids={ip['subnet_id'] for ip in port['fixed_ips']})
         router_hosts_after = self.l3plugin._get_dvr_hosts_for_router(
-            context, router_id)
+            context, payload.resource_id)
         removed_hosts = set(router_hosts_for_removed) - set(router_hosts_after)
         if removed_hosts:
             # Get hosts where this router is placed as "related" to other dvr
             # routers and don't remove it from such hosts
-            related_hosts = self._get_other_dvr_hosts(context, router_id)
+            related_hosts = self._get_other_dvr_hosts(context,
+                                                      payload.resource_id)
             agents = self.l3plugin.get_l3_agents(
                 context, filters={'host': removed_hosts})
             bindings = rb_obj.RouterL3AgentBinding.get_objects(
-                context, router_id=router_id)
+                context, router_id=payload.resource_id)
             snat_binding = bindings.pop() if bindings else None
             connected_dvr_routers = set(
                 self.l3plugin._get_other_dvr_router_ids_connected_router(
-                    context, router_id))
+                    context, payload.resource_id))
             for agent in agents:
                 is_this_snat_agent = (
                     snat_binding and snat_binding.l3_agent_id == agent['id'])
                 if (not is_this_snat_agent and
                         agent['host'] not in related_hosts):
                     self.l3plugin.l3_rpc_notifier.router_removed_from_agent(
-                        context, router_id, agent['host'])
+                        context, payload.resource_id, agent['host'])
                     for connected_router_id in connected_dvr_routers:
                         connected_router_hosts = set(
                             self.l3plugin._get_dvr_hosts_for_router(
@@ -680,17 +693,18 @@ class DVRResourceOperationHandler(object):
                             self._get_other_dvr_hosts(
                                 context, connected_router_id))
                         if agent['host'] not in connected_router_hosts:
-                            self.l3plugin.l3_rpc_notifier.\
+                            self.l3plugin.l3_rpc_notifier. \
                                 router_removed_from_agent(
                                     context, connected_router_id,
                                     agent['host'])
         # if subnet_id not in interface_info, request was to remove by port
+        interface_info = payload.metadata.get('interface_info')
         sub_id = (interface_info.get('subnet_id') or
                   port['fixed_ips'][0]['subnet_id'])
         self._cleanup_related_hosts_after_interface_removal(
-            context, router_id, sub_id)
+            context, payload.resource_id, sub_id)
         self._cleanup_related_routers_after_interface_removal(
-            context, router_id, sub_id)
+            context, payload.resource_id, sub_id)
         is_multiple_prefix_csport = (
             self._check_for_multiprefix_csnat_port_and_update(
                 context, router, port['network_id'], sub_id))
@@ -699,6 +713,13 @@ class DVRResourceOperationHandler(object):
             self.delete_csnat_router_interface_ports(
                 n_utils.get_elevated_context(context),
                 router, subnet_id=sub_id)
+
+    @registry.receives(resources.ROUTER_INTERFACE, [events.AFTER_DELETE])
+    def _cleanup_after_interface_removal(self, resource, event, trigger,
+                                         payload=None):
+        """Handler to cleanup distributed resources after intf removal."""
+        return self._retry_cleanup_after_interface_removal(
+            payload.context, payload)
 
     def _cleanup_related_hosts_after_interface_removal(
             self, context, router_id, subnet_id):

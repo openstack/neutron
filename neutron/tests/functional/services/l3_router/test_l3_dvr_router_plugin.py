@@ -1970,27 +1970,22 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             interface_info = {'subnet_id': subnet['subnet']['id']}
             self.l3_plugin.add_router_interface(
                     self.context, router['id'], interface_info)
-            kwargs = {'context': self.context, 'router_id': router['id'],
-                      'network_id': net['network']['id'],
-                      'router_db': mock.ANY,
-                      'port': mock.ANY,
-                      'interface_info': interface_info}
             notif_handler_before.callback.assert_called_once_with(
                 resources.ROUTER_INTERFACE, events.BEFORE_CREATE,
-                mock.ANY, **kwargs)
-            kwargs_after = {'cidrs': mock.ANY,
-                            'context': mock.ANY,
-                            'gateway_ips': mock.ANY,
-                            'interface_info': mock.ANY,
-                            'network_id': None,
-                            'port': mock.ANY,
-                            'new_interface': True,
-                            'subnets': mock.ANY,
-                            'port_id': mock.ANY,
-                            'router_id': router['id']}
+                mock.ANY, payload=mock.ANY)
+            payload = notif_handler_before.mock_calls[0][2]['payload']
+            self.assertEqual(self.context, payload.context)
+            self.assertEqual(router['id'], payload.resource_id)
+            self.assertEqual(net['network']['id'],
+                             payload.metadata.get('network_id'))
+            self.assertEqual(interface_info,
+                             payload.metadata.get('interface_info'))
+
             notif_handler_after.callback.assert_called_once_with(
                 resources.ROUTER_INTERFACE, events.AFTER_CREATE,
-                mock.ANY, **kwargs_after)
+                mock.ANY, payload=mock.ANY)
+            payload = notif_handler_before.mock_calls[0][2]['payload']
+            self.assertEqual(router['id'], payload.resource_id)
 
     def test_add_router_interface_by_port_notifications(self):
         notif_handler_before = mock.Mock()
@@ -2007,28 +2002,26 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 self.port(subnet=subnet) as port:
             interface_info = {'port_id': port['port']['id']}
             self.l3_plugin.add_router_interface(
-                    self.context, router['id'], interface_info)
-            kwargs = {'context': self.context, 'router_id': router['id'],
-                      'network_id': net['network']['id'],
-                      'router_db': mock.ANY,
-                      'port': mock.ANY,
-                      'interface_info': interface_info}
+                self.context, router['id'], interface_info)
+
             notif_handler_before.callback.assert_called_once_with(
                 resources.ROUTER_INTERFACE, events.BEFORE_CREATE,
-                mock.ANY, **kwargs)
-            kwargs_after = {'cidrs': mock.ANY,
-                            'context': mock.ANY,
-                            'gateway_ips': mock.ANY,
-                            'interface_info': mock.ANY,
-                            'network_id': None,
-                            'port': mock.ANY,
-                            'new_interface': True,
-                            'subnets': mock.ANY,
-                            'port_id': port['port']['id'],
-                            'router_id': router['id']}
+                mock.ANY, payload=mock.ANY)
+            payload = notif_handler_before.mock_calls[0][2]['payload']
+            self.assertEqual(interface_info,
+                             payload.metadata.get('interface_info'))
+            self.assertEqual(net['network']['id'],
+                             payload.metadata.get('network_id'))
+            self.assertEqual(router['id'], payload.resource_id)
+            self.assertEqual(self.context, payload.context)
+
             notif_handler_after.callback.assert_called_once_with(
                 resources.ROUTER_INTERFACE, events.AFTER_CREATE,
-                mock.ANY, **kwargs_after)
+                mock.ANY, payload=mock.ANY)
+            payload = notif_handler_after.mock_calls[0][2]['payload']
+            self.assertEqual(port['port']['id'],
+                             payload.metadata.get('port').get('id'))
+            self.assertEqual(router['id'], payload.resource_id)
 
 
 class L3DvrTestCaseMigration(L3DvrTestCaseBase):

@@ -238,19 +238,23 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
                                   expected_scheduling=0, expected_casts=0)
 
     def test__notify_agents_with_router_interface_add(self):
+        payload = events.DBEventPayload(
+            mock.Mock(), metadata={
+                'port': {'id': 'foo_port_id',
+                         'network_id': 'foo_network_id'}})
         self._test__notify_agents_with_function(
             lambda: self.notifier._after_router_interface_created(
-                mock.ANY, mock.ANY, mock.ANY, context=mock.Mock(),
-                port={'id': 'foo_port_id', 'network_id': 'foo_network_id'}),
+                mock.ANY, mock.ANY, mock.ANY, payload=payload),
             expected_scheduling=1, expected_casts=1)
 
     def test__notify_agents_with_router_interface_delete(self):
+        payload = events.DBEventPayload(
+            mock.Mock(), metadata={
+                'port': {'id': 'foo_port_id',
+                         'network_id': 'foo_network_id'}})
         self._test__notify_agents_with_function(
             lambda: self.notifier._after_router_interface_deleted(
-                mock.ANY, mock.ANY, mock.ANY, context=mock.Mock(),
-                port={'id': 'foo_port_id', 'network_id': 'foo_network_id',
-                      'fixed_ips': {'subnet_id': 'subnet1',
-                                    'ip_address': '10.0.0.1'}}),
+                mock.ANY, mock.ANY, mock.ANY, payload=payload),
             expected_scheduling=0, expected_casts=1)
 
     def test__fanout_message(self):
