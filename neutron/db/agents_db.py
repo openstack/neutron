@@ -28,7 +28,6 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import api as db_api
-from neutron_lib.db import model_query
 from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.exceptions import availability_zone as az_exc
@@ -43,7 +42,6 @@ from oslo_utils import timeutils
 from neutron.agent.common import utils
 from neutron.api.rpc.callbacks import version_manager
 from neutron.conf.agent.database import agents_db
-from neutron.db.models import agent as agent_model
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import availability_zone as az_ext
 from neutron.objects import agent as agent_obj
@@ -278,15 +276,6 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
             agent.update_fields(agent_data)
             agent.update()
         return self._make_agent_dict(agent)
-
-    @db_api.retry_if_session_inactive()
-    def get_agents_db(self, context, filters=None):
-        # TODO(annp): keep this method for backward compatibility,
-        #             will need to clean it up later
-        query = model_query.get_collection_query(context,
-                                                 agent_model.Agent,
-                                                 filters=filters)
-        return query.all()
 
     @db_api.retry_if_session_inactive()
     def get_agent_objects(self, context, filters=None):
