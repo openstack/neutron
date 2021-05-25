@@ -225,6 +225,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             {k: [v] for k, v in self.bridge_mappings.items()}
         )
 
+        self.phys_brs = {}
+        self.int_ofports = {}
+        self.phys_ofports = {}
         self.setup_physical_bridges(self.bridge_mappings)
         self.vlan_manager = vlanmanager.LocalVlanManager()
 
@@ -1485,9 +1488,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
         :param bridge_mappings: map physical network names to bridge names.
         '''
-        self.phys_brs = {}
-        self.int_ofports = {}
-        self.phys_ofports = {}
         datapath_ids_set = set()
         ovs = ovs_lib.BaseOVS()
         ovs_bridges = ovs.get_bridges()

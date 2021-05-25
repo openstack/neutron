@@ -13,6 +13,7 @@
 #    under the License.
 
 import contextlib
+import copy
 import sys
 import time
 from unittest import mock
@@ -1543,8 +1544,21 @@ class TestOvsNeutronAgent(object):
 
     def _test_setup_physical_bridges(self, port_exists=False,
                                      dvr_enabled=False,
-                                     igmp_snooping_enabled=False):
+                                     igmp_snooping_enabled=False,
+                                     recreate=False):
         self.agent.enable_distributed_routing = dvr_enabled
+        phys_brs = {"physnet1": mock.Mock()}
+        int_ofports = {"physnet1": "int_ofport"}
+        phys_ofports = {"physnet1": "phy_ofport"}
+        if recreate:
+            phys_brs["physnet2"] = mock.Mock()
+            int_ofports["physnet2"] = "int_ofport2"
+            phys_ofports["physnet2"] = "phy_ofport2"
+            # Pre-setting that the agent already contains bridges and ofports:
+            self.agent.phys_brs = copy.deepcopy(phys_brs)
+            self.agent.int_ofports = copy.deepcopy(int_ofports)
+            self.agent.phys_ofports = copy.deepcopy(phys_ofports)
+
         with mock.patch.object(ip_lib.IPDevice, "exists") as devex_fn,\
                 mock.patch.object(sys, "exit"),\
                 mock.patch.object(self.agent, 'br_phys_cls') as phys_br_cls,\
@@ -1618,10 +1632,11 @@ class TestOvsNeutronAgent(object):
                                                    {'peer': 'int-br-eth'}),
             ]
             parent.assert_has_calls(expected_calls)
-            self.assertEqual("int_ofport",
-                             self.agent.int_ofports["physnet1"])
-            self.assertEqual("phy_ofport",
-                             self.agent.phys_ofports["physnet1"])
+            physnets_expected = set(phys_brs.keys())
+            physnets_actual = set(self.agent.phys_brs.keys())
+            self.assertEqual(physnets_expected, physnets_actual)
+            self.assertEqual(int_ofports, self.agent.int_ofports)
+            self.assertEqual(phys_ofports, self.agent.phys_ofports)
 
     def test_setup_physical_bridges(self):
         self._test_setup_physical_bridges()
@@ -1635,6 +1650,9 @@ class TestOvsNeutronAgent(object):
     def test_setup_physical_bridges_igmp_snooping_enabled(self):
         cfg.CONF.set_override('igmp_snooping_enable', True, 'OVS')
         self._test_setup_physical_bridges(igmp_snooping_enabled=True)
+
+    def test_setup_physical_bridges_recreate(self):
+        self._test_setup_physical_bridges(recreate=True)
 
     def _test_setup_physical_bridges_change_from_veth_to_patch_conf(
             self, port_exists=False):
@@ -1973,7 +1991,7 @@ class TestOvsNeutronAgent(object):
         ex_br_mocks = [mock.Mock(br_name='br-ex0'),
                        mock.Mock(br_name='br-ex1')]
         phys_bridges = {'physnet0': ex_br_mocks[0],
-                        'physnet1': ex_br_mocks[1]},
+                        'physnet1': ex_br_mocks[1]}
         bridges_added = ['br-ex0']
         expected_added_bridges = (
             bridges_added if setup_bridges_side_effect else [])
@@ -4193,7 +4211,7 @@ class TestOvsDvrNeutronAgent(object):
         ex_br_mocks = [mock.Mock(br_name='br-ex0'),
                        mock.Mock(br_name='br-ex1')]
         phys_bridges = {'physnet0': ex_br_mocks[0],
-                        'physnet1': ex_br_mocks[1]},
+                        'physnet1': ex_br_mocks[1]}
         bridges_added = ['br-ex0']
         with mock.patch.object(self.agent, 'check_ovs_status',
                                return_value=constants.OVS_NORMAL), \
