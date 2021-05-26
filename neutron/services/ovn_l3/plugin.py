@@ -440,13 +440,13 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
 
     @staticmethod
     @registry.receives(resources.SUBNET, [events.AFTER_UPDATE])
-    def _subnet_update(resource, event, trigger, **kwargs):
+    def _subnet_update(resource, event, trigger, payload):
         l3plugin = directory.get_plugin(plugin_constants.L3)
         if not l3plugin:
             return
-        context = kwargs['context']
-        orig = kwargs['original_subnet']
-        current = kwargs['subnet']
+        context = payload.context
+        orig = payload.states[0]
+        current = payload.latest_state
         orig_gw_ip = orig['gateway_ip']
         current_gw_ip = current['gateway_ip']
         if orig_gw_ip == current_gw_ip:
