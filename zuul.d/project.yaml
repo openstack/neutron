@@ -65,8 +65,7 @@
         # https://bugs.launchpad.net/neutron/+bug/1920778
         # will be fixed
         # - neutron-grenade-dvr-multinode
-        # TODO(obondarev): this job is disabled untill switched back to OVS
-        #- neutron-tempest-slow-py3
+        - neutron-tempest-slow-py3
         - neutron-tempest-ipv6-only
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only
