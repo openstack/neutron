@@ -313,10 +313,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if not self.mechanism_manager.ordered_mech_drivers:
             return aliases
 
-        supported_extensions = set([])
+        supported_extensions = set(aliases)
         for mech_driver in self.mechanism_manager.ordered_mech_drivers:
-            supported_extensions |= mech_driver.obj.supported_extensions(
-                set(aliases))
+            supported_extensions &= mech_driver.obj.supported_extensions(
+                supported_extensions)
         return list(supported_extensions)
 
     @registry.receives(resources.PORT,

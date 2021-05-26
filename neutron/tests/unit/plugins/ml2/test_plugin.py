@@ -177,15 +177,14 @@ class TestMl2FilterExtensions(Ml2PluginV2TestCase):
     def test__filter_extensions_by_mech_driver(self):
         extension_aliases = ['ext1', 'ext2', 'ext3', 'ext4', 'ext5']
         supported_aliases = [{'ext0', 'ext1', 'ext2'},
-                             {'ext4', 'ext5', 'ext6'}]
+                             {'ext1', 'ext5', 'ext6'}]
         for idx, mech_driver in enumerate(
                 self.plugin.mechanism_manager.ordered_mech_drivers):
             mech_driver.obj._supported_extensions = supported_aliases[idx]
 
         supported_extensions = sorted(
             self.plugin._filter_extensions_by_mech_driver(extension_aliases))
-        self.assertEqual(['ext1', 'ext2', 'ext4', 'ext5'],
-                         supported_extensions)
+        self.assertEqual(['ext1'], supported_extensions)
 
 
 class TestMl2BasicGet(test_plugin.TestBasicGet,
