@@ -388,7 +388,7 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+--------------------------+
 | baremetal_                    | A bug affecting Ironic support          | N/A                      |
 +-------------------------------+-----------------------------------------+--------------------------+
-| db_                           | A bug affecting the DB layer            | Nate Johnston            |
+| db_                           | A bug affecting the DB layer            | Rodolfo Alonso Hernandez |
 +-------------------------------+-----------------------------------------+--------------------------+
 | deprecation_                  | To track config/feature deprecations    | Neutron PTL/drivers      |
 +-------------------------------+-----------------------------------------+--------------------------+
@@ -399,8 +399,6 @@ more will be added over time if needed.
 | fullstack_                    | A bug in the fullstack subtree          | Rodolfo Alonso Hernandez |
 +-------------------------------+-----------------------------------------+--------------------------+
 | functional-tests_             | A bug in the functional tests subtree   | Rodolfo Alonso Hernandez |
-+-------------------------------+-----------------------------------------+--------------------------+
-| fwaas_                        | A bug affecting neutron-fwaas           | Nate Johnston            |
 +-------------------------------+-----------------------------------------+--------------------------+
 | gate-failure_                 | A bug affecting gate stability          | Slawek Kaplonski         |
 +-------------------------------+-----------------------------------------+--------------------------+
@@ -422,9 +420,10 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+--------------------------+
 | linuxbridge_                  | A bug affecting ML2/linuxbridge         | N/A                      |
 +-------------------------------+-----------------------------------------+--------------------------+
-| loadimpact_                   | Performance penalty/improvements        | Miguel Lavalle           |
+| loadimpact_                   | Performance penalty/improvements        | Miguel Lavalle/          |
+|                               |                                         | Oleg Bondarev            |
 +-------------------------------+-----------------------------------------+--------------------------+
-| logging_                      | An issue with logging guidelines        | Matt Riedemann           |
+| logging_                      | An issue with logging guidelines        | N/A                      |
 +-------------------------------+-----------------------------------------+--------------------------+
 | low-hanging-fruit_            | Starter bugs for new contributors       | Miguel Lavalle           |
 +-------------------------------+-----------------------------------------+--------------------------+
@@ -451,7 +450,7 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+--------------------------+
 | ovsdb-lib_                    | A bug affecting OVSDB library           | Terry Wilson             |
 +-------------------------------+-----------------------------------------+--------------------------+
-| qos_                          | A bug affecting ML2/QoS                 | Slawek Kaplonski         |
+| qos_                          | A bug affecting ML2/QoS                 | Rodolfo Alonso Hernandez |
 +-------------------------------+-----------------------------------------+--------------------------+
 | rfe_                          | Feature enhancements being screened     | Drivers Team             |
 +-------------------------------+-----------------------------------------+--------------------------+
@@ -469,7 +468,7 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+--------------------------+
 | tempest_                      | A bug in tempest subtree tests          | Rodolfo Alonso Hernandez |
 +-------------------------------+-----------------------------------------+--------------------------+
-| troubleshooting_              | An issue affecting ease of debugging    | Nate Johnston            |
+| troubleshooting_              | An issue affecting ease of debugging    | PTL/Drivers Team         |
 +-------------------------------+-----------------------------------------+--------------------------+
 | unittest_                     | A bug affecting the unit test subtree   | Rodolfo Alonso Hernandez |
 +-------------------------------+-----------------------------------------+--------------------------+
