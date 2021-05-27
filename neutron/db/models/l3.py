@@ -88,11 +88,11 @@ class FloatingIP(standard_attr.HasStandardAttributes, model_base.BASEV2,
     port = orm.relationship(models_v2.Port,
                             backref=orm.backref('floating_ips',
                                                 cascade='all,delete-orphan'),
-                            foreign_keys='FloatingIP.floating_port_id')
+                            foreign_keys=floating_port_id)
     fixed_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'))
     fixed_port = orm.relationship(models_v2.Port,
-                                  foreign_keys='FloatingIP.fixed_port_id',
-                                  lazy='joined')
+                                  foreign_keys=fixed_port_id,
+                                  lazy='joined', viewonly=True)
     fixed_ip_address = sa.Column(sa.String(64))
     router_id = sa.Column(sa.String(36), sa.ForeignKey('routers.id'))
     # Additional attribute for keeping track of the router where the floating
