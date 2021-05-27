@@ -342,6 +342,7 @@ def list_ovs_opts():
              neutron.conf.agent.common.DHCP_PROTOCOL_OPTS)),
         ('metadata',
          itertools.chain(
+             neutron.conf.plugins.ml2.drivers.ovs_conf.metadata_opts,
              meta_conf.METADATA_PROXY_HANDLER_OPTS))
     ]
 

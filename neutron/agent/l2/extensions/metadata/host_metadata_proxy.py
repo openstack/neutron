@@ -44,7 +44,7 @@ global
     daemon
 
 frontend public
-    bind            *:80 name clear
+    bind            *:{{ bind_port }} name clear
     mode            http
     log             global
     option          httplog
@@ -142,6 +142,7 @@ class HostMedataHAProxyDaemonMonitor:
             user=username,
             group=groupname,
             maxconn=1024,
+            bind_port=cfg.CONF.METADATA.host_proxy_listen_port,
             instance_list=instance_infos,
             meta_api=meta_api))
 

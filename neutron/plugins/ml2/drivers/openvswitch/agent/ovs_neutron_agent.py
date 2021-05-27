@@ -165,6 +165,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
         self.enable_openflow_dhcp = 'dhcp' in self.ext_manager.names()
         self.enable_local_ips = 'local_ip' in self.ext_manager.names()
+        self.enable_openflow_metadata = (
+            'metadata_path' in self.ext_manager.names())
 
         self.fullsync = False
         # init bridge classes with configured datapath type.
@@ -263,6 +265,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.phys_brs = {}
         self.int_ofports = {}
         self.phys_ofports = {}
+
+        if (self.enable_openflow_metadata and
+                'meta' not in self.bridge_mappings):
+            self.bridge_mappings['meta'] = 'br-meta'
+
         self.setup_physical_bridges(self.bridge_mappings)
         self.vlan_manager = vlanmanager.LocalVlanManager()
 

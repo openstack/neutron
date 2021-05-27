@@ -257,6 +257,29 @@ local_ip_opts = [
 ]
 
 
+metadata_opts = [
+    cfg.StrOpt('provider_cidr', default='240.0.0.0/16',
+               help=_("Local metadata CIDR for VMs metadata traffic, "
+                      "will be used as the IP range to generate the "
+                      "VM's metadata IP.")),
+    cfg.IntOpt('provider_vlan_id', default=1,
+               help=_("The metadata tap device local vlan ID. This is only "
+                      "available on the metadata bridge device.")),
+    cfg.StrOpt('provider_base_mac', default="fa:16:ee:00:00:00",
+               help=_("The base MAC address Neutron Openvswitch agent "
+                      "will use for metadata traffic.")),
+    cfg.IntOpt('host_proxy_listen_port', default=80,
+               help=_("Host haproxy listen port for metadata path. This "
+                      "is transparent for metadata traffic, VMs still try to "
+                      "access 169.254.169.254:80 for metadata. But in "
+                      "the metadata datapath flow pipeline, the destination "
+                      "TCP port 80 will be changed to the value of "
+                      "`host_proxy_listen_port` which the host haproxy "
+                      "will listen on. For return traffic, the TCP source "
+                      "port will be changed back to 80.")),
+]
+
+
 def register_ovs_agent_opts(cfg=cfg.CONF):
     cfg.register_opts(ovs_opts, "OVS")
     cfg.register_opts(agent_opts, "AGENT")
@@ -264,6 +287,7 @@ def register_ovs_agent_opts(cfg=cfg.CONF):
     cfg.register_opts(common.DHCP_PROTOCOL_OPTS, "DHCP")
     cfg.register_opts(local_ip_opts, "LOCAL_IP")
     cfg.register_opts(meta_conf.METADATA_PROXY_HANDLER_OPTS, "METADATA")
+    cfg.register_opts(metadata_opts, "METADATA")
 
 
 def register_ovs_opts(cfg=cfg.CONF):
