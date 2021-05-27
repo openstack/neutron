@@ -412,6 +412,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                                 dstport=None,
                                                 ttl=None,
                                                 dev=self.lbm.local_int,
+                                                local=self.lbm.local_ip,
                                                 proxy=expected_proxy)
 
     def test_ensure_vxlan_arp_responder_enabled(self):
