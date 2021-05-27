@@ -70,6 +70,7 @@ kill_keepalived_monitor_py: KillFilter, root, python, -15, -9
 kill_keepalived_monitor_py3: KillFilter, root, python3, -15, -9
 kill_keepalived_monitor_py36: KillFilter, root, python3.6, -15, -9
 kill_keepalived_monitor_py37: KillFilter, root, python3.7, -15, -9
+kill_keepalived_monitor_py38: KillFilter, root, python3.8, -15, -9
 # For e.g. RHEL8 neutron-keepalived-state-change is run by "system python"
 # which is /usr/libexec/platform-python3.6 so this should be in filters also.
 # Path /usr/libexec isn't in PATH by default so it has to be given here as
