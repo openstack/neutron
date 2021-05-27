@@ -17,7 +17,6 @@
         OVN_BRANCH={{ OVN_BRANCH }}
 
         source $DEVSTACK_PATH/functions
-        source $NEUTRON_DIR/devstack/lib/ovs
         source $DEVSTACK_PATH/lib/neutron_plugins/ovn_agent
         source $NEUTRON_DIR/tools/configure_for_func_testing.sh
 

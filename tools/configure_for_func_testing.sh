@@ -109,7 +109,6 @@ function _install_base_deps {
         PACKAGES=$(echo $PACKAGES | perl -pe 's|python-(?!dev)[^ ]*||g')
         install_package $PACKAGES
 
-        source $NEUTRON_DIR/devstack/lib/ovs
         source $DEVSTACK_PATH/lib/neutron_plugins/ovn_agent
         echo_summary "OVN_BRANCH: ${OVN_BRANCH} OVS_BRANCH: ${OVS_BRANCH}"
         compile_ovs False /usr /var

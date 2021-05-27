@@ -9,7 +9,6 @@ source $LIBDIR/l3_conntrack_helper
 source $LIBDIR/ml2
 source $LIBDIR/network_segment_range
 source $LIBDIR/qos
-source $LIBDIR/ovs
 source $LIBDIR/segments
 source $LIBDIR/trunk
 source $LIBDIR/placement
@@ -19,6 +18,9 @@ source $LIBDIR/uplink_status_propagation
 source $LIBDIR/tag_ports_during_bulk_creation
 source $LIBDIR/octavia
 source $LIBDIR/loki
+
+# source the OVS/OVN compilation helper methods
+source $DEST/devstack/lib/neutron_plugins/ovs_source
 
 Q_BUILD_OVS_FROM_GIT=$(trueorfalse False Q_BUILD_OVS_FROM_GIT)
 
