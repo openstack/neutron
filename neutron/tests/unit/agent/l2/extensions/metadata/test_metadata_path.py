@@ -16,9 +16,11 @@
 from unittest import mock
 
 from neutron_lib import context
+from neutron_lib.plugins.ml2 import ovs_constants as p_const
 from oslo_config import cfg
 
 from neutron.agent.common import ovs_lib
+from neutron.agent.l2.extensions.metadata import metadata_flows_process
 from neutron.agent.l2.extensions.metadata import metadata_path
 from neutron.api.rpc.callbacks import resources
 from neutron.conf.plugins.ml2.drivers import ovs_conf
@@ -43,6 +45,7 @@ class MetadataPathAgentExtensionTestCase(base.BaseTestCase):
         self.bridge_mappings = {"meta": "br-meta"}
         self.int_ofport = 200
         self.phys_ofport = 100
+        self.tap_meta_ofport = 300
         self.agent_api = ovs_ext_api.OVSAgentExtensionAPI(
             self.int_br,
             tun_br=mock.Mock(),
@@ -51,6 +54,12 @@ class MetadataPathAgentExtensionTestCase(base.BaseTestCase):
             phys_ofports={"meta": self.phys_ofport},
             bridge_mappings=self.bridge_mappings)
         self.meta_ext.consume_api(self.agent_api)
+        self.m_install_arp_responder = mock.patch(
+            "neutron.agent.l2.extensions.metadata.metadata_path."
+            "MetadataPathAgentExtension.install_arp_responder").start()
+        mock.patch(
+            "neutron.agent.l2.extensions.metadata.metadata_path."
+            "MetadataPathAgentExtension.metadata_path_defaults").start()
         mock.patch(
             "neutron.agent.linux.ip_lib.IpLinkCommand.set_address").start()
         mock.patch(
@@ -63,21 +72,31 @@ class MetadataPathAgentExtensionTestCase(base.BaseTestCase):
         self.meta_ext.int_br = self.int_br
         # set meta_br back to mock
         self.meta_ext.meta_br = self.meta_br
-        self.get_port_ofport = mock.patch.object(
+        self.meta_ext.ofport_int_to_meta = self.int_ofport
+        self.meta_ext.metadata_ofport = self.tap_meta_ofport
+        mock.patch.object(
             self.int_br, 'get_port_ofport',
             return_value=self.int_ofport).start()
+        mock.patch.object(
+            self.meta_br, 'get_port_ofport',
+            return_value=self.phys_ofport).start()
 
         self.meta_daemon = mock.Mock()
         self.meta_ext.meta_daemon = mock.Mock()
 
         self.port_provider_ip = "100.100.100.100"
         self.port_provider_mac = "fa:16:ee:11:22:33"
+        self.port_local_vlan = 1
 
         def m_get_value_from_ovsdb_other_config(p, key, value_type=None):
             if key == "provider_ip":
                 return self.port_provider_ip
             if key == "provider_mac":
                 return self.port_provider_mac
+            if key == "tag":
+                return self.port_local_vlan
+
+        self.meta_ext.rcache_api = mock.Mock()
 
         mock.patch.object(
             self.int_br, 'get_value_from_other_config',
@@ -88,12 +107,46 @@ class MetadataPathAgentExtensionTestCase(base.BaseTestCase):
         mock.patch.object(
             self.meta_br, 'set_value_to_other_config').start()
 
+        mock.patch.object(
+            self.meta_ext.rcache_api, 'get_resources',
+            return_value=[]).start()
+
+        self.m_add_f_nat = mock.patch(
+            "neutron.agent.l2.extensions.metadata.metadata_path."
+            "MetadataPathAgentExtension.add_flow_snat_br_meta").start()
+
+        self.m_in_direct_to_int = mock.patch(
+            "neutron.agent.l2.extensions.metadata.metadata_path."
+            "MetadataPathAgentExtension."
+            "add_flow_ingress_dnat_direct_to_int_br").start()
+
+        self.m_out_egress_direct = mock.patch(
+            "neutron.agent.l2.extensions.metadata.metadata_path."
+            "MetadataPathAgentExtension."
+            "add_flow_int_br_egress_direct").start()
+
+        self.m_ingress_output = mock.patch(
+            "neutron.agent.l2.extensions.metadata.metadata_path."
+            "MetadataPathAgentExtension."
+            "add_flow_int_br_ingress_output").start()
+
+        self.m_remove_direct = mock.patch(
+            "neutron.agent.l2.extensions.metadata.metadata_path."
+            "MetadataPathAgentExtension."
+            "remove_port_metadata_direct_flow").start()
+
+        self.m_remove_port_flows = mock.patch(
+            "neutron.agent.l2.extensions.metadata.metadata_path."
+            "MetadataPathAgentExtension."
+            "remove_port_metadata_path_nat_and_arp_flow").start()
+
     def test_handle_port(self):
         port_mac_address = "aa:aa:aa:aa:aa:aa"
         port_name = "tap-p1"
         port_id = "p1"
         port_ofport = 1
         port_device_owner = "compute:test"
+        port_ip = "1.1.1.1"
         with mock.patch.object(self.meta_ext.meta_daemon,
                  "config") as h_config, mock.patch.object(
                      self.meta_ext.ext_api,
@@ -106,7 +159,7 @@ class MetadataPathAgentExtensionTestCase(base.BaseTestCase):
             }
 
             port = {"port_id": port_id,
-                    "fixed_ips": [{"ip_address": "1.1.1.1",
+                    "fixed_ips": [{"ip_address": port_ip,
                                    "subnet_id": "1"}],
                     "vif_port": ovs_lib.VifPort(port_name, port_ofport,
                                                 port_id,
@@ -122,6 +175,34 @@ class MetadataPathAgentExtensionTestCase(base.BaseTestCase):
                 self.port_provider_mac)
             h_config.assert_called_once_with(
                 list(self.meta_ext.instance_infos.values()))
+
+        self.m_install_arp_responder.assert_has_calls(
+            [mock.call(
+                 bridge=mock.ANY,
+                 ip=metadata_flows_process.METADATA_V4_IP,
+                 mac=metadata_path.METADATA_DEFAULT_MAC,
+                 table=p_const.TRANSIENT_TABLE),
+             mock.call(
+                 ip=self.port_provider_ip,
+                 mac=self.port_provider_mac)])
+        self.m_add_f_nat.assert_called_once_with(
+            self.port_local_vlan, port_mac_address, port_ip,
+            self.port_provider_mac, self.port_provider_ip)
+
+        self.m_in_direct_to_int.assert_called_once_with(
+            self.port_local_vlan, self.meta_ext.provider_vlan_id,
+            self.port_provider_ip,
+            port_mac_address,
+            port_ip,
+            self.phys_ofport,
+            self.tap_meta_ofport)
+        self.m_out_egress_direct.assert_called_once_with(
+            port_ofport, self.port_local_vlan, self.int_ofport)
+        self.m_ingress_output.assert_called_once_with(
+            self.int_ofport,
+            self.port_local_vlan,
+            port_mac_address,
+            port_ofport)
 
     def test_get_port_no_more_provider_ip(self):
 
@@ -180,10 +261,11 @@ class MetadataPathAgentExtensionTestCase(base.BaseTestCase):
         port_id = "p1"
         port_ofport = 1
         port_device_owner = "compute:test"
+        port_ip = "1.1.1.1"
         with mock.patch.object(self.meta_ext.meta_daemon,
                  "config") as h_config:
             port = {"port_id": port_id,
-                    "fixed_ips": [{"ip_address": "1.1.1.1",
+                    "fixed_ips": [{"ip_address": port_ip,
                                    "subnet_id": "1"}],
                     "vif_port": ovs_lib.VifPort(port_name, port_ofport,
                                                 port_id,
@@ -201,3 +283,10 @@ class MetadataPathAgentExtensionTestCase(base.BaseTestCase):
                              self.meta_ext.ext_api.allocated_ips)
             self.assertNotIn(self.port_provider_mac,
                              self.meta_ext.ext_api.allocated_macs)
+
+        self.m_remove_direct.assert_called_once_with(
+            port_ofport, self.port_local_vlan,
+            port_mac_address, self.int_ofport)
+        self.m_remove_port_flows.assert_called_once_with(
+            self.port_local_vlan, port_mac_address,
+            port_ip, port_ofport, mock.ANY)

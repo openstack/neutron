@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import os
 import secrets
 import time
@@ -31,12 +32,15 @@ from oslo_log import log as logging
 from neutron._i18n import _
 from neutron.agent.common import ip_lib
 from neutron.agent.l2.extensions.metadata import host_metadata_proxy
+from neutron.agent.l2.extensions.metadata import metadata_flows_process
 from neutron.agent.linux import external_process
 from neutron.api.rpc.callbacks import resources
+from neutron.common import coordination
 
 LOG = logging.getLogger(__name__)
 
 DEFAULT_META_GATEWAY_MAC = "fa:16:ee:00:00:01"
+METADATA_DEFAULT_MAC = 'fa:16:ee:ff:ff:ff'
 
 
 class InvalidProviderCIDR(n_exc.NeutronException):
@@ -123,10 +127,15 @@ class MetadataPathExtensionPortInfoAPI():
         return info
 
 
-class MetadataPathAgentExtension(l2_agent_extension.L2AgentExtension):
+class MetadataPathAgentExtension(
+        l2_agent_extension.L2AgentExtension,
+        metadata_flows_process.MetadataDataPathFlows):
 
     PORT_INFO_CACHE = {}
     META_DEV_NAME = "tap-meta"
+
+    NETWORK_DHCP_PORTS = {}
+    NETWORK_PORTS = collections.defaultdict(set)
 
     @lockutils.synchronized('networking-path-ofport-cache')
     def set_port_info_cache(self, port_id, port_info):
@@ -175,12 +184,23 @@ class MetadataPathAgentExtension(l2_agent_extension.L2AgentExtension):
 
         self.provider_vlan_id = cfg.CONF.METADATA.provider_vlan_id
         self.provider_cidr = cfg.CONF.METADATA.provider_cidr
-        # TODO(liuyulong): init related flows
 
         self.provider_gateway_ip = str(netaddr.IPAddress(
             netaddr.IPNetwork(cfg.CONF.METADATA.provider_cidr).first + 1))
 
         self._create_internal_port()
+
+        # In order to cover the situation that the VM has a link reachable
+        # route to 169.254.169.254.
+        self.install_arp_responder(
+            bridge=self.int_br,
+            ip=metadata_flows_process.METADATA_V4_IP,
+            mac=METADATA_DEFAULT_MAC,
+            table=p_const.TRANSIENT_TABLE)
+
+        self.set_path_br(self.meta_br)
+        self.metadata_ofport = self.meta_br.get_port_ofport(self.META_DEV_NAME)
+        self.init_br_snat_metadata_path()
 
     def _set_port_vlan(self):
         ovsdb = self.meta_br.ovsdb
@@ -299,7 +319,8 @@ class MetadataPathAgentExtension(l2_agent_extension.L2AgentExtension):
             LOG.info("Failed to get or set port %s info, error: %s",
                      port_detail['port_id'], err)
         else:
-            # TODO(liuyulong): Add flows for metadata
+            self.process_install_metadata_path_flows(port_info)
+            self.install_dhcp_ports_arp_responder(port_info)
             self._reload_host_metadata_proxy()
 
     def _get_fixed_ip(self, port_info):
@@ -311,8 +332,132 @@ class MetadataPathAgentExtension(l2_agent_extension.L2AgentExtension):
     def delete_port(self, context, port_detail):
         ins_info = self.instance_infos.pop(port_detail['port_id'], None)
         self._reload_host_metadata_proxy(force_reload=True)
+        port_info = self.get_port_info_from_cache(port_detail['port_id'])
+        if not port_info:
+            LOG.info("No port_info cache found for %s, "
+                     "skipping remove networking path related flows.",
+                     port_detail['port_id'])
+            return
+
+        self.remove_port_metadata_direct_flow(port_info["ofport"],
+                                              port_info["vlan"],
+                                              port_info['mac_address'],
+                                              self.ofport_int_to_meta)
+        self.remove_dhcp_ports_arp_responder(port_info)
+
         if not ins_info:
             return
-        # TODO(liuyulong): Remove flows for metadata
         self.ext_api.remove_allocated_ip(ins_info['provider_ip'])
         self.ext_api.remove_allocated_mac(ins_info['provider_port_mac'])
+
+        port_fixed_ip = self._get_fixed_ip(port_info)
+        if not port_fixed_ip:
+            return
+
+        self.remove_port_metadata_path_nat_and_arp_flow(
+            port_info['vlan'], port_info['mac_address'], port_fixed_ip,
+            self.provider_vlan_id, ins_info["provider_ip"])
+
+    def init_br_snat_metadata_path(self):
+        self.metadata_host_info = {
+            "gateway_ip": self.provider_gateway_ip,
+            "provider_ip": self.provider_gateway_ip,
+            "mac_address": DEFAULT_META_GATEWAY_MAC,
+            "service_protocol_port": cfg.CONF.METADATA.host_proxy_listen_port}
+        self.metadata_path_defaults(
+            pvid=self.provider_vlan_id,
+            to_int_ofport=self.ofport_meta_to_int,
+            metadata_ofport=self.metadata_ofport,
+            metadata_host_info=self.metadata_host_info)
+
+    def process_install_metadata_path_flows(self, port_info):
+        if not self.meta_br:
+            return
+
+        try:
+            self.install_port_metadata_path_direct_flows(port_info)
+        except Exception as err:
+            LOG.debug("Failed to install networking path direct flows "
+                      "for port %s, error: %s",
+                      port_info['port_id'], err)
+        try:
+            self.install_port_metadata_path_nat_and_arp_flows(port_info)
+        except Exception as err:
+            LOG.debug("Failed to install networking path nat and "
+                      "ARP responder flows for port %s, error: %s",
+                      port_info['port_id'], err)
+
+    def install_port_metadata_path_nat_and_arp_flows(
+            self, port_info):
+        phys_port = self.agent_api.phys_ofports['meta']
+        info = self.instance_infos.get(port_info['port_id'])
+        if not info:
+            return
+        provider_ip_addr = info["provider_ip"]
+        provider_port_mac = info["provider_port_mac"]
+
+        port_fixed_ip = self._get_fixed_ip(port_info)
+        if not port_fixed_ip:
+            return
+
+        self.add_flow_snat_br_meta(
+            port_info["vlan"], port_info['mac_address'], port_fixed_ip,
+            provider_port_mac, provider_ip_addr)
+        self.install_arp_responder(
+            ip=provider_ip_addr,
+            mac=provider_port_mac)
+        self.add_flow_ingress_dnat_direct_to_int_br(
+            port_info["vlan"], self.provider_vlan_id, provider_ip_addr,
+            port_info['mac_address'], port_fixed_ip,
+            phys_port,
+            self.metadata_ofport)
+
+    def install_port_metadata_path_direct_flows(self, port_info):
+        self.add_flow_int_br_egress_direct(
+            port_info["ofport"], port_info["vlan"],
+            self.ofport_int_to_meta)
+        self.add_flow_int_br_ingress_output(
+            self.ofport_int_to_meta, port_info["vlan"],
+            port_info['mac_address'], port_info["ofport"])
+
+    @coordination.synchronized('meta-net-{port_info[network_id]}')
+    def install_dhcp_ports_arp_responder(self, port_info):
+        filters = {'network_id': (port_info['network_id'], ),
+                   'device_owner': (constants.DEVICE_OWNER_DHCP, )}
+        dhcp_ports = self.rcache_api.get_resources(resources.PORT, filters)
+        for p in dhcp_ports:
+            for ip in p['fixed_ips']:
+                ip_addr = netaddr.IPNetwork(str(ip.ip_address))
+                if ip_addr.version != constants.IP_VERSION_4:
+                    continue
+                self.install_arp_responder(
+                    bridge=self.int_br,
+                    ip=str(ip.ip_address),
+                    mac=str(p.mac_address),
+                    table=p_const.TRANSIENT_TABLE,
+                    in_port=port_info["ofport"])
+
+        self.NETWORK_DHCP_PORTS[port_info['network_id']] = dhcp_ports
+        self.NETWORK_PORTS[port_info['network_id']].add(port_info['port_id'])
+
+    @coordination.synchronized('meta-net-{port_info[network_id]}')
+    def remove_dhcp_ports_arp_responder(self, port_info):
+        if self.NETWORK_PORTS[port_info['network_id']]:
+            self.NETWORK_PORTS[port_info['network_id']].remove(
+                port_info['port_id'])
+
+        # No ports from this network, remove the DHCP ports ARP responder.
+        if not self.NETWORK_PORTS[port_info['network_id']]:
+            dhcp_ports = self.NETWORK_DHCP_PORTS.pop(
+                port_info['network_id'], [])
+            for p in dhcp_ports:
+                for ip in p['fixed_ips']:
+                    ip_addr = netaddr.IPNetwork(str(ip.ip_address))
+                    if ip_addr.version != constants.IP_VERSION_4:
+                        continue
+                    self.delete_arp_responder(
+                        bridge=self.int_br,
+                        ip=str(ip.ip_address),
+                        table=p_const.ARP_SPOOF_TABLE,
+                        in_port=port_info["ofport"])
+            self.NETWORK_PORTS.pop(port_info['network_id'], [])
