@@ -161,11 +161,19 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
                 try:
                     LOG.debug('placement client: {}'.format(deferred))
                     deferred.execute()
-                except Exception:
+                except Exception as e:
                     errors = True
-                    LOG.exception(
-                        'placement client call failed: %s',
-                        str(deferred))
+                    placement_error_str = \
+                        're-parenting a provider is not currently allowed'
+                    if (placement_error_str in str(e)):
+                        msg = (
+                            'placement client call failed'
+                            ' (this may be due to bug'
+                            ' https://launchpad.net/bugs/1921150): %s'
+                        )
+                    else:
+                        msg = 'placement client call failed: %s'
+                    LOG.exception(msg, str(deferred))
 
             resources_synced = not errors
             agent_db.resources_synced = resources_synced
