@@ -476,7 +476,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'id': self.uuid}]
 
         ip_prefixes = {'source_ip_prefix': '10.0.0.0/24',
-                       'destination_ip_prefix': '00.0.0.0/0'}
+                       'destination_ip_prefix': '0.0.0.0/0'}
         with self.router(tenant_id=self.tenant_id, set_context=True):
             with self.metering_label(tenant_id=self.tenant_id,
                                      set_context=True) as label:
