@@ -60,6 +60,7 @@
             voting: false
         - tripleo-ci-centos-8-content-provider:
             voting: false
+            irrelevant-files: *irrelevant-files
         - neutron-centos-8-tripleo-standalone:
             vars: &consumer_vars
               consumer_job: true
