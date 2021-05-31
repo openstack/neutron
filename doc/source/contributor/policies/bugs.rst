@@ -24,7 +24,7 @@ Neutron project and has a desire to assist with bug triage.
 
 If you would like to join this Launchpad group, it's best to reach out to a
 member of the above mentioned neutron-drivers-core team in #openstack-neutron
-on Freenode and let them know why you would like to be a member. The team is
+on OFTC and let them know why you would like to be a member. The team is
 more than happy to add additional bug triage capability, but it helps to know
 who is requesting access, and IRC is a quick way to make the connection.
 
