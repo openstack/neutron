@@ -105,7 +105,7 @@ Deployment steps
 
 #. Grab a coffee, that may take around 1 hour (depending on your hardware).
 
-#. If anything goes wrong, go to IRC on freenode, and ask on #oooq
+#. If anything goes wrong, go to IRC on OFTC, and ask on #oooq
 
 Description of the environment
 ==============================
