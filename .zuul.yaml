@@ -59,16 +59,6 @@
             voting: false
         - neutron-tempest-with-uwsgi:
             voting: false
-        - tripleo-ci-centos-7-content-provider:
-            voting: false
-        - neutron-centos-7-tripleo-standalone:
-            vars:
-              consumer_job: true
-              build_container_images: false
-              remove_tags:
-                - build
-            dependencies:
-              - tripleo-ci-centos-7-content-provider
     gate:
       jobs:
         - neutron-functional
@@ -518,19 +508,6 @@
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: true
     irrelevant-files: *tempest-irrelevant-files
-
-- job:
-    name: neutron-centos-7-tripleo-standalone
-    parent: tripleo-ci-base-standalone
-    nodeset: single-centos-7-node
-    voting: false
-    vars:
-      featureset: '052'
-      featureset_override:
-        standalone_environment_files:
-          - 'environments/services/neutron-ovs.yaml'
-        tempest_test_whitelist:
-          - 'tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_network_basic_ops'
 
 - job:
     name: neutron-tempest-slow-py3
