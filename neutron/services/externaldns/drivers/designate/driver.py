@@ -23,6 +23,7 @@ from keystoneauth1 import token_endpoint
 from neutron_lib import constants
 from neutron_lib.exceptions import dns as dns_exc
 from oslo_config import cfg
+from oslo_log import log
 
 from neutron.conf.services import extdns_designate_driver
 from neutron.services.externaldns import driver
@@ -36,6 +37,8 @@ _SESSION = None
 
 CONF = cfg.CONF
 extdns_designate_driver.register_designate_opts()
+
+LOG = log.getLogger(__name__)
 
 
 def get_clients(context):
@@ -122,9 +125,21 @@ class Designate(driver.ExternalDNSService):
                                                   in_addr_name, 'PTR',
                                                   [recordset_name])
             except d_exc.NotFound:
-                designate_admin.zones.create(
-                    in_addr_zone_name, email=ptr_zone_email,
-                    description=in_addr_zone_description)
+                # Note(jh): If multiple PTRs get created at the same time,
+                # the creation of the zone may fail with a conflict because
+                # it has already been created by a parallel job. So we
+                # ignore that error and try to create the recordset
+                # anyway. That call will still fail in the end if something
+                # is really broken. See bug 1891309.
+                try:
+                    designate_admin.zones.create(
+                        in_addr_zone_name, email=ptr_zone_email,
+                        description=in_addr_zone_description)
+                except d_exc.Conflict:
+                    LOG.debug('Conflict when trying to create PTR zone %s,'
+                              ' assuming it exists.',
+                              in_addr_zone_name)
+                    pass
                 designate_admin.recordsets.create(in_addr_zone_name,
                                                   in_addr_name, 'PTR',
                                                   [recordset_name])
