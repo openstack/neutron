@@ -1374,7 +1374,8 @@ class TestOvsNeutronAgent(object):
         self.assertNotIn('activated_port_id', port_info['added'])
 
     def _test_setup_physical_bridges(self, port_exists=False,
-                                     dvr_enabled=False):
+                                     dvr_enabled=False,
+                                     igmp_snooping_enabled=False):
         self.agent.enable_distributed_routing = dvr_enabled
         with mock.patch.object(ip_lib.IPDevice, "exists") as devex_fn,\
                 mock.patch.object(sys, "exit"),\
@@ -1432,6 +1433,8 @@ class TestOvsNeutronAgent(object):
                         'phy-br-eth', constants.NONEXISTENT_PEER),
                 ]
             expected_calls += [
+                    mock.call.int_br.set_igmp_snooping_flood(
+                        'int-br-eth', igmp_snooping_enabled),
                     mock.call.int_br.drop_port(in_port='int_ofport')
             ]
             if not dvr_enabled:
@@ -1501,6 +1504,10 @@ class TestOvsNeutronAgent(object):
             int_br.add_port.assert_called_with("int-br-eth")
             phys_br.add_port.assert_called_with("phy-br-eth")
 
+    def test_setup_physical_bridges_igmp_snooping_enabled(self):
+        cfg.CONF.set_override('igmp_snooping_enable', True, 'OVS')
+        self._test_setup_physical_bridges(igmp_snooping_enabled=True)
+
     def _test_setup_physical_bridges_change_from_veth_to_patch_conf(
             self, port_exists=False):
         with mock.patch.object(sys, "exit"),\
@@ -1556,6 +1563,8 @@ class TestOvsNeutronAgent(object):
                         'phy-br-eth', constants.NONEXISTENT_PEER),
                 ]
             expected_calls += [
+                mock.call.int_br.set_igmp_snooping_flood(
+                    'int-br-eth', False),
                 mock.call.int_br.drop_port(in_port='int_ofport'),
                 mock.call.phys_br.drop_port(in_port='phy_ofport'),
                 mock.call.int_br.set_db_attribute('Interface', 'int-br-eth',
@@ -1596,6 +1605,8 @@ class TestOvsNeutronAgent(object):
                                   return_value=False),\
                 mock.patch.object(self.agent.int_br, 'port_exists',
                                   return_value=False),\
+                mock.patch.object(self.agent.int_br,
+                                  'set_igmp_snooping_flood'),\
                 mock.patch.object(sys, "exit"):
             self.agent.setup_tunnel_br(None)
             self.agent.setup_tunnel_br()
@@ -1620,6 +1631,8 @@ class TestOvsNeutronAgent(object):
                                   "add_patch_port") as int_patch_port,\
                 mock.patch.object(self.agent.tun_br,
                                   "add_patch_port") as tun_patch_port,\
+                mock.patch.object(self.agent.int_br,
+                                  'set_igmp_snooping_flood'),\
                 mock.patch.object(sys, "exit"):
             self.agent.setup_tunnel_br(None)
             self.agent.setup_tunnel_br()
