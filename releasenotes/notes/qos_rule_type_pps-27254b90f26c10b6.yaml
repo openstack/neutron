@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Added new API extension to QoS service plugin
+    to support CRUD actions for packet rate limit (packet per
+    second) rule in Neutron server side.

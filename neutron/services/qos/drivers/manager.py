@@ -24,6 +24,7 @@ from neutron.api.rpc.callbacks.producer import registry as rpc_registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.objects.qos import policy as policy_object
+from neutron.services.qos import constants as qos_constants
 
 
 LOG = logging.getLogger(__name__)
@@ -168,7 +169,7 @@ class QosServiceDriverManager(object):
         if not self._drivers:
             return []
 
-        rule_types = set(qos_consts.VALID_RULE_TYPES)
+        rule_types = set(qos_constants.VALID_RULE_TYPES)
 
         # Recalculate on every call to allow drivers determine supported rule
         # types dynamically

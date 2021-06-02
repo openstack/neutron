@@ -192,3 +192,29 @@ class QosMinimumBandwidthRule(model_base.HasId, model_base.BASEV2):
             name='qos_minimum_bandwidth_rules0qos_policy_id0direction'),
         model_base.BASEV2.__table_args__
     )
+
+
+class QosPacketRateLimitRule(model_base.HasId, model_base.BASEV2):
+    __tablename__ = 'qos_packet_rate_limit_rules'
+    qos_policy_id = sa.Column(sa.String(36),
+                              sa.ForeignKey('qos_policies.id',
+                                            ondelete='CASCADE'),
+                              nullable=False,
+                              index=True)
+    max_kpps = sa.Column(sa.Integer)
+    max_burst_kpps = sa.Column(sa.Integer)
+    revises_on_change = ('qos_policy',)
+    qos_policy = sa.orm.relationship(QosPolicy, load_on_pending=True)
+    direction = sa.Column(
+        sa.Enum(constants.EGRESS_DIRECTION,
+                constants.INGRESS_DIRECTION,
+                name="qos_packet_rate_limit_rules_directions"),
+        default=constants.EGRESS_DIRECTION,
+        server_default=constants.EGRESS_DIRECTION,
+        nullable=False)
+    __table_args__ = (
+        sa.UniqueConstraint(
+            qos_policy_id, direction,
+            name="qos_packet_rate_limit_rules0qos_policy_id0direction"),
+        model_base.BASEV2.__table_args__
+    )

@@ -13,17 +13,17 @@
 from neutron_lib.objects import common_types
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
-from neutron_lib.services.qos import constants as qos_consts
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.objects import base
+from neutron.services.qos import constants as qos_constants
 
 
 class RuleTypeField(obj_fields.BaseEnumField):
 
     def __init__(self, **kwargs):
         self.AUTO_TYPE = obj_fields.Enum(
-            valid_values=qos_consts.VALID_RULE_TYPES)
+            valid_values=qos_constants.VALID_RULE_TYPES)
         super(RuleTypeField, self).__init__(**kwargs)
 
 
@@ -33,7 +33,8 @@ class QosRuleType(base.NeutronObject):
     # Version 1.1: Added QosDscpMarkingRule
     # Version 1.2: Added QosMinimumBandwidthRule
     # Version 1.3: Added drivers field
-    VERSION = '1.3'
+    # Version 1.4: Added QosPacketRateLimitRule
+    VERSION = '1.4'
 
     fields = {
         'type': RuleTypeField(),

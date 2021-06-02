@@ -84,9 +84,12 @@ class QoSPluginBase(service_base.ServicePluginBase, metaclass=abc.ABCMeta):
     path_prefix = apidef.API_PREFIX
 
     # The rule object type to use for each incoming rule-related request.
-    rule_objects = {'bandwidth_limit': rule_object.QosBandwidthLimitRule,
-                    'dscp_marking': rule_object.QosDscpMarkingRule,
-                    'minimum_bandwidth': rule_object.QosMinimumBandwidthRule}
+    rule_objects = {
+        'bandwidth_limit': rule_object.QosBandwidthLimitRule,
+        'dscp_marking': rule_object.QosDscpMarkingRule,
+        'minimum_bandwidth': rule_object.QosMinimumBandwidthRule,
+        'packet_rate_limit': rule_object.QosPacketRateLimitRule,
+    }
 
     # Patterns used to call method proxies for all policy-rule-specific
     # method calls (see __getattr__ docstring, below).

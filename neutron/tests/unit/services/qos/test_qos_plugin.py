@@ -38,6 +38,7 @@ from neutron.objects import network as network_object
 from neutron.objects import ports as ports_object
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule as rule_object
+from neutron.services.qos import constants as qos_constants
 from neutron.services.qos import qos_plugin
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.services.qos import base
@@ -98,7 +99,11 @@ class TestQosPlugin(base.BaseQosTestCase):
                                   'dscp_mark': 16},
             'minimum_bandwidth_rule': {
                 'id': uuidutils.generate_uuid(),
-                'min_kbps': 10}}
+                'min_kbps': 10},
+            'packet_rate_limit_rule': {
+                'id': uuidutils.generate_uuid(),
+                'max_kpps': 20,
+                'max_burst_kpps': 130}}
 
         self.policy = policy_object.QosPolicy(
             self.ctxt, **self.policy_data['policy'])
@@ -111,6 +116,9 @@ class TestQosPlugin(base.BaseQosTestCase):
 
         self.min_rule = rule_object.QosMinimumBandwidthRule(
             self.ctxt, **self.rule_data['minimum_bandwidth_rule'])
+
+        self.pps_rule = rule_object.QosPacketRateLimitRule(
+            self.ctxt, **self.rule_data['packet_rate_limit_rule'])
 
     def _validate_driver_params(self, method_name, ctxt):
         call_args = self.qos_plugin.driver_manager.call.call_args[0]
@@ -1025,12 +1033,12 @@ class TestQosPlugin(base.BaseQosTestCase):
 
     def test_get_rule_types(self):
         rule_types_mock = mock.PropertyMock(
-            return_value=qos_consts.VALID_RULE_TYPES)
+            return_value=qos_constants.VALID_RULE_TYPES)
         filters = {'type': 'type_id'}
         with mock.patch.object(qos_plugin.QoSPlugin, 'supported_rule_types',
                                new_callable=rule_types_mock):
             types = self.qos_plugin.get_rule_types(self.ctxt, filters=filters)
-            self.assertEqual(sorted(qos_consts.VALID_RULE_TYPES),
+            self.assertEqual(sorted(qos_constants.VALID_RULE_TYPES),
                              sorted(type_['type'] for type_ in types))
 
     @mock.patch('neutron.objects.ports.Port')
@@ -1077,6 +1085,180 @@ class TestQosPlugin(base.BaseQosTestCase):
 
             self.assertLess(
                 action_index, mock_manager.mock_calls.index(driver_mock_call))
+
+    def test_create_policy_packet_rate_limit_rule(self):
+        _policy = policy_object.QosPolicy(
+            self.ctxt, **self.policy_data['policy'])
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=_policy):
+            setattr(_policy, "rules", [self.pps_rule])
+            self.qos_plugin.create_policy_packet_rate_limit_rule(
+                self.ctxt, self.policy.id, self.rule_data)
+            self._validate_driver_params('update_policy', self.ctxt)
+
+    def test_create_policy_pps_rule_duplicates(self):
+        _policy = self._get_policy()
+        setattr(_policy, "rules", [self.pps_rule])
+        new_rule_data = {
+            'packet_rate_limit_rule': {
+                'max_kpps': 400,
+                'direction': self.pps_rule.direction
+            }
+        }
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=_policy) as mock_qos_get_obj:
+            self.assertRaises(
+                qos_exc.QoSRulesConflict,
+                self.qos_plugin.create_policy_packet_rate_limit_rule,
+                self.ctxt, _policy.id, new_rule_data)
+            mock_qos_get_obj.assert_called_once_with(self.ctxt, id=_policy.id)
+
+    def test_update_policy_packet_rate_limit_rule(self):
+        _policy = policy_object.QosPolicy(
+            self.ctxt, **self.policy_data['policy'])
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=_policy):
+            setattr(_policy, "rules", [self.pps_rule])
+            self.qos_plugin.update_policy_packet_rate_limit_rule(
+                self.ctxt, self.pps_rule.id, self.policy.id, self.rule_data)
+            self._validate_driver_params('update_policy', self.ctxt)
+
+    def test_update_policy_pps_rule_bad_policy(self):
+        _policy = policy_object.QosPolicy(
+            self.ctxt, **self.policy_data['policy'])
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=_policy):
+            setattr(_policy, "rules", [])
+            self.assertRaises(
+                qos_exc.QosRuleNotFound,
+                self.qos_plugin.update_policy_packet_rate_limit_rule,
+                self.ctxt, self.pps_rule.id, self.policy.id,
+                self.rule_data)
+
+    def test_delete_policy_packet_rate_limit_rule(self):
+        _policy = policy_object.QosPolicy(
+            self.ctxt, **self.policy_data['policy'])
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=_policy):
+            setattr(_policy, "rules", [self.pps_rule])
+            self.qos_plugin.delete_policy_packet_rate_limit_rule(
+                self.ctxt, self.pps_rule.id, self.policy.id)
+            self._validate_driver_params('update_policy', self.ctxt)
+
+    def test_delete_policy_pps_rule_bad_policy(self):
+        _policy = policy_object.QosPolicy(
+            self.ctxt, **self.policy_data['policy'])
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=_policy):
+            setattr(_policy, "rules", [])
+            self.assertRaises(
+                qos_exc.QosRuleNotFound,
+                self.qos_plugin.delete_policy_packet_rate_limit_rule,
+                self.ctxt, self.pps_rule.id, _policy.id)
+
+    def test_get_policy_packet_rate_limit_rule(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=self.policy):
+            with mock.patch('neutron.objects.qos.rule.'
+                            'QosPacketRateLimitRule.'
+                            'get_object') as get_object_mock:
+                self.qos_plugin.get_policy_packet_rate_limit_rule(
+                    self.ctxt, self.pps_rule.id, self.policy.id)
+                get_object_mock.assert_called_once_with(self.ctxt,
+                                                        id=self.pps_rule.id)
+
+    def test_get_policy_packet_rate_limit_rules_for_policy(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=self.policy):
+            with mock.patch('neutron.objects.qos.rule.'
+                            'QosPacketRateLimitRule.'
+                            'get_objects') as get_objects_mock:
+                self.qos_plugin.get_policy_packet_rate_limit_rules(
+                    self.ctxt, self.policy.id)
+                get_objects_mock.assert_called_once_with(
+                    self.ctxt, _pager=mock.ANY, qos_policy_id=self.policy.id)
+
+    def test_get_policy_packet_rate_limit_rules_for_policy_with_filters(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=self.policy):
+            with mock.patch('neutron.objects.qos.rule.'
+                            'QosPacketRateLimitRule.'
+                            'get_objects') as get_objects_mock:
+                filters = {'filter': 'filter_id'}
+                self.qos_plugin.get_policy_packet_rate_limit_rules(
+                    self.ctxt, self.policy.id, filters=filters)
+                get_objects_mock.assert_called_once_with(
+                    self.ctxt, _pager=mock.ANY,
+                    qos_policy_id=self.policy.id,
+                    filter='filter_id')
+
+    def test_get_policy_packet_rate_limit_rule_for_nonexistent_policy(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=None):
+            self.assertRaises(
+                qos_exc.QosPolicyNotFound,
+                self.qos_plugin.get_policy_packet_rate_limit_rule,
+                self.ctxt, self.pps_rule.id, self.policy.id)
+
+    def test_get_policy_packet_rate_limit_rules_for_nonexistent_policy(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=None):
+            self.assertRaises(
+                qos_exc.QosPolicyNotFound,
+                self.qos_plugin.get_policy_packet_rate_limit_rules,
+                self.ctxt, self.policy.id)
+
+    def test_create_policy_pps_rule_for_nonexistent_policy(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=None):
+            self.assertRaises(
+                qos_exc.QosPolicyNotFound,
+                self.qos_plugin.create_policy_packet_rate_limit_rule,
+                self.ctxt, self.policy.id, self.rule_data)
+
+    def test_update_policy_pps_rule_for_nonexistent_policy(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=None):
+            self.assertRaises(
+                qos_exc.QosPolicyNotFound,
+                self.qos_plugin.update_policy_packet_rate_limit_rule,
+                self.ctxt, self.pps_rule.id, self.policy.id, self.rule_data)
+
+    def test_delete_policy_pps_rule_for_nonexistent_policy(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=None):
+            self.assertRaises(
+                qos_exc.QosPolicyNotFound,
+                self.qos_plugin.delete_policy_packet_rate_limit_rule,
+                self.ctxt, self.pps_rule.id, self.policy.id)
+
+    def test_get_pps_rule_type(self):
+        admin_ctxt = context.get_admin_context()
+        drivers_details = [{
+            'name': 'fake-driver',
+            'supported_parameters': [{
+                'parameter_name': 'max_kpps',
+                'parameter_type': lib_constants.VALUES_TYPE_RANGE,
+                'parameter_range': {'start': 0, 'end': 100}
+            }]
+        }]
+        with mock.patch.object(
+            qos_plugin.QoSPlugin, "supported_rule_type_details",
+            return_value=drivers_details
+        ):
+            rule_type_details = self.qos_plugin.get_rule_type(
+                admin_ctxt, qos_constants.RULE_TYPE_PACKET_RATE_LIMIT)
+            self.assertEqual(
+                qos_constants.RULE_TYPE_PACKET_RATE_LIMIT,
+                rule_type_details['type'])
+            self.assertEqual(
+                drivers_details, rule_type_details['drivers'])
+
+    def test_get_pps_rule_type_as_user(self):
+        self.assertRaises(
+            lib_exc.NotAuthorized,
+            self.qos_plugin.get_rule_type,
+            self.ctxt, qos_constants.RULE_TYPE_PACKET_RATE_LIMIT)
 
 
 class QoSRuleAliasTestExtensionManager(object):

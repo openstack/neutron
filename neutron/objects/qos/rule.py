@@ -26,6 +26,7 @@ from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.qos import models as qos_db_model
 from neutron.objects import base
+from neutron.services.qos import constants as qos_constants
 
 DSCP_MARK = 'dscp_mark'
 
@@ -36,7 +37,7 @@ def get_rules(obj_cls, context, qos_policy_id):
         return all_rules
 
     with obj_cls.db_context_reader(context):
-        for rule_type in qos_consts.VALID_RULE_TYPES:
+        for rule_type in qos_constants.VALID_RULE_TYPES:
             rule_cls_name = 'Qos%sRule' % helpers.camelize(rule_type)
             rule_cls = getattr(sys.modules[__name__], rule_cls_name)
 
@@ -50,11 +51,12 @@ class QosRule(base.NeutronDbObject, metaclass=abc.ABCMeta):
     #         1.1: Added DscpMarkingRule
     #         1.2: Added QosMinimumBandwidthRule
     #         1.3: Added direction for BandwidthLimitRule
+    #         1.4: Added PacketRateLimitRule
     #
     # NOTE(mangelajo): versions need to be handled from the top QosRule object
     #                  because it's the only reference QosPolicy can make
     #                  to them via obj_relationships version map
-    VERSION = '1.3'
+    VERSION = '1.4'
 
     fields = {
         'id': common_types.UUIDField(),
@@ -167,3 +169,20 @@ class QosMinimumBandwidthRule(QosRule):
     duplicates_compare_fields = ['direction']
 
     rule_type = qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH
+
+
+@base.NeutronObjectRegistry.register
+class QosPacketRateLimitRule(QosRule):
+
+    db_model = qos_db_model.QosPacketRateLimitRule
+
+    fields = {
+        'max_kpps': obj_fields.IntegerField(nullable=True),
+        'max_burst_kpps': obj_fields.IntegerField(nullable=True),
+        'direction': common_types.FlowDirectionEnumField(
+            default=constants.EGRESS_DIRECTION)
+    }
+
+    duplicates_compare_fields = ['direction']
+
+    rule_type = qos_constants.RULE_TYPE_PACKET_RATE_LIMIT
