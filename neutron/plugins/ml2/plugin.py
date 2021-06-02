@@ -125,6 +125,7 @@ from neutron.extensions import vlantransparent
 from neutron.ipam import exceptions as ipam_exc
 from neutron.objects import base as base_obj
 from neutron.objects import ports as ports_obj
+from neutron.plugins.ml2.common import constants as ml2_consts
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_context
@@ -1405,6 +1406,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _setup_dhcp_agent_provisioning_component(self, context, port):
         if not cfg.CONF.enable_traditional_dhcp:
             return
+
+        if port['device_owner'] in ml2_consts.NO_PBLOCKS_TYPES:
+            # do not set provisioning_block if it is neutron service port
+            return
+
         subnet_ids = [f['subnet_id'] for f in port['fixed_ips']]
         if (db.is_dhcp_active_on_any_subnet(context, subnet_ids) and
             len(self.get_dhcp_agents_hosting_networks(context,

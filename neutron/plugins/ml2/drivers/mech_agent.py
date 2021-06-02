@@ -25,6 +25,7 @@ from oslo_log import log
 
 from neutron._i18n import _
 from neutron.db import provisioning_blocks
+from neutron.plugins.ml2.common import constants as ml2_consts
 
 LOG = log.getLogger(__name__)
 
@@ -71,6 +72,11 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
         if not context.host or port['status'] == const.PORT_STATUS_ACTIVE:
             # no point in putting in a block if the status is already ACTIVE
             return
+
+        if port['device_owner'] in ml2_consts.NO_PBLOCKS_TYPES:
+            # do not set provisioning_block if it is neutron service port
+            return
+
         vnic_type = context.current.get(portbindings.VNIC_TYPE,
                                         portbindings.VNIC_NORMAL)
         if vnic_type not in self.supported_vnic_types:
