@@ -40,7 +40,7 @@ class L3HARouterAgentPortBinding(model_base.BASEV2):
     port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id',
                                                      ondelete='CASCADE'),
                         nullable=False, primary_key=True)
-    port = orm.relationship(models_v2.Port)
+    port = orm.relationship(models_v2.Port, lazy='joined')
 
     router_id = sa.Column(sa.String(36), sa.ForeignKey('routers.id',
                                                        ondelete='CASCADE'),
@@ -49,7 +49,7 @@ class L3HARouterAgentPortBinding(model_base.BASEV2):
     l3_agent_id = sa.Column(sa.String(36),
                             sa.ForeignKey("agents.id",
                                           ondelete='CASCADE'))
-    agent = orm.relationship(agent_model.Agent)
+    agent = orm.relationship(agent_model.Agent, lazy='joined')
 
     state = sa.Column(sa.Enum(n_const.HA_ROUTER_STATE_ACTIVE,
                               n_const.HA_ROUTER_STATE_STANDBY,
