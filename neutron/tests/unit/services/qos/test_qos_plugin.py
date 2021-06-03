@@ -1307,7 +1307,10 @@ class TestQosPluginDB(base.BaseQosTestCase):
         with mock.patch.object(self.qos_plugin, 'validate_policy_for_port') \
                 as mock_validate_policy:
             self.qos_plugin._validate_create_port_callback(
-                'PORT', 'precommit_create', 'test_plugin', **kwargs)
+                "PORT", "precommit_create", "test_plugin",
+                payload=events.DBEventPayload(
+                    self.context,
+                    resource_id=kwargs['port']['id'],))
 
         qos_policy = None
         if port_qos:
