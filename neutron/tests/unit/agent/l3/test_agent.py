@@ -36,6 +36,7 @@ from testtools import matchers
 from neutron.agent.common import resource_processing_queue
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import dvr_edge_router as dvr_router
+from neutron.agent.l3 import dvr_local_router
 from neutron.agent.l3 import dvr_router_base
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import ha_router
@@ -211,6 +212,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def setUp(self):
         super(TestBasicRouterOperations, self).setUp()
         self.useFixture(IptablesFixture())
+        self._mock_load_fip = mock.patch.object(
+            dvr_local_router.DvrLocalRouter, '_load_used_fip_information')
+        self.mock_load_fip = self._mock_load_fip.start()
 
     def test_request_id_changes(self):
         a = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -1148,11 +1152,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertIsNone(res_ip)
             self.assertTrue(log_error.called)
 
-    @mock.patch.object(dvr_router.DvrEdgeRouter, 'load_used_fip_information')
     @mock.patch.object(dvr_router_base.LOG, 'error')
-    def test_get_snat_port_for_internal_port_ipv6_same_port(self,
-                                                            log_error,
-                                                            load_used_fips):
+    def test_get_snat_port_for_internal_port_ipv6_same_port(self, log_error):
         router = l3_test_common.prepare_router_data(
             ip_version=lib_constants.IP_VERSION_4, enable_snat=True,
             num_internal_ports=1)
