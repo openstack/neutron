@@ -26,11 +26,13 @@ from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import netutils
-from pyroute2.netlink import exceptions as netlink_exceptions
-from pyroute2.netlink import rtnl
-from pyroute2.netlink.rtnl import ifaddrmsg
-from pyroute2.netlink.rtnl import ifinfmsg
-from pyroute2 import netns
+from pyroute2.netlink import exceptions \
+    as netlink_exceptions  # pylint: disable=no-name-in-module
+from pyroute2.netlink import rtnl  # pylint: disable=no-name-in-module
+from pyroute2.netlink.rtnl import \
+    ifaddrmsg  # pylint: disable=no-name-in-module
+from pyroute2.netlink.rtnl import ifinfmsg  # pylint: disable=no-name-in-module
+from pyroute2 import netns  # pylint: disable=no-name-in-module
 
 from neutron._i18n import _
 from neutron.agent.common import utils

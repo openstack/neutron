@@ -20,7 +20,8 @@ from neutron_lib import constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
-from pyroute2.netlink import exceptions as netlink_exceptions
+from pyroute2.netlink import exceptions \
+    as netlink_exceptions  # pylint: disable=no-name-in-module
 
 from neutron.agent.linux import bridge_lib
 from neutron.conf.agent import l2_ext_fdb_population

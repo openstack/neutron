@@ -17,7 +17,8 @@ import socket
 
 from neutron_lib import constants as n_constants
 import pyroute2
-from pyroute2 import protocols as pyroute2_protocols
+from pyroute2 import protocols \
+    as pyroute2_protocols  # pylint: disable=no-name-in-module
 
 from neutron._i18n import _
 from neutron import privileged

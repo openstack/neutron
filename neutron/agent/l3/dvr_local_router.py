@@ -19,7 +19,8 @@ import netaddr
 from neutron_lib import constants as lib_constants
 from oslo_log import log as logging
 from oslo_utils import excutils
-from pyroute2.netlink import exceptions as pyroute2_exc
+from pyroute2.netlink import exceptions \
+    as pyroute2_exc  # pylint: disable=no-name-in-module
 
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_router_base

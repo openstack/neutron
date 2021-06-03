@@ -17,13 +17,13 @@ import socket
 from neutron_lib import constants
 from oslo_log import log as logging
 import pyroute2
-from pyroute2 import netlink
-from pyroute2.netlink import exceptions as netlink_exceptions
-from pyroute2.netlink import rtnl
-from pyroute2.netlink.rtnl import ifinfmsg
-from pyroute2.netlink.rtnl import ndmsg
-from pyroute2 import NetlinkError
-from pyroute2 import netns
+from pyroute2 import netlink  # pylint: disable=no-name-in-module
+from pyroute2.netlink import exceptions \
+    as netlink_exceptions  # pylint: disable=no-name-in-module
+from pyroute2.netlink import rtnl  # pylint: disable=no-name-in-module
+from pyroute2.netlink.rtnl import ifinfmsg  # pylint: disable=no-name-in-module
+from pyroute2.netlink.rtnl import ndmsg  # pylint: disable=no-name-in-module
+from pyroute2 import netns  # pylint: disable=no-name-in-module
 
 from neutron._i18n import _
 from neutron import privileged
@@ -258,7 +258,7 @@ def _run_iproute_link(command, device, namespace=None, **kwargs):
         with get_iproute(namespace) as ip:
             idx = get_link_id(device, namespace)
             return ip.link(command, index=idx, **kwargs)
-    except NetlinkError as e:
+    except netlink.NetlinkError as e:
         _translate_ip_device_exception(e, device, namespace)
         raise
     except OSError as e:
@@ -272,7 +272,7 @@ def _run_iproute_neigh(command, device, namespace, **kwargs):
         with get_iproute(namespace) as ip:
             idx = get_link_id(device, namespace)
             return ip.neigh(command, ifindex=idx, **kwargs)
-    except NetlinkError as e:
+    except netlink_exceptions.NetlinkError as e:
         _translate_ip_device_exception(e, device, namespace)
         raise
     except OSError as e:
@@ -286,7 +286,7 @@ def _run_iproute_addr(command, device, namespace, **kwargs):
         with get_iproute(namespace) as ip:
             idx = get_link_id(device, namespace)
             return ip.addr(command, index=idx, **kwargs)
-    except NetlinkError as e:
+    except netlink_exceptions.NetlinkError as e:
         _translate_ip_device_exception(e, device, namespace)
         raise
     except OSError as e:
@@ -308,7 +308,7 @@ def add_ip_address(ip_version, ip, prefixlen, device, namespace, scope,
                           family=family,
                           broadcast=broadcast,
                           scope=_get_scope_name(scope))
-    except NetlinkError as e:
+    except netlink_exceptions.NetlinkError as e:
         if e.code == errno.EEXIST:
             raise IpAddressAlreadyExists(ip=ip, device=device)
         raise
@@ -324,7 +324,7 @@ def delete_ip_address(ip_version, ip, prefixlen, device, namespace):
                           address=ip,
                           mask=prefixlen,
                           family=family)
-    except NetlinkError as e:
+    except netlink_exceptions.NetlinkError as e:
         # when trying to delete a non-existent IP address, pyroute2 raises
         # NetlinkError with code EADDRNOTAVAIL (99, 'Cannot assign requested
         # address')
@@ -357,7 +357,7 @@ def create_interface(ifname, namespace, kind, **kwargs):
                 link_key = "vxlan_link" if kind == "vxlan" else "link"
                 kwargs[link_key] = get_link_id(physical_interface, namespace)
             return ip.link("add", ifname=ifname, kind=kind, **kwargs)
-    except NetlinkError as e:
+    except netlink_exceptions.NetlinkError as e:
         if e.code == errno.EEXIST:
             raise InterfaceAlreadyExists(device=ifname)
         raise
@@ -495,7 +495,7 @@ def delete_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
                            lladdr=mac_address,
                            family=family,
                            **kwargs)
-    except NetlinkError as e:
+    except netlink_exceptions.NetlinkError as e:
         # trying to delete a non-existent entry shouldn't raise an error
         if e.code == errno.ENOENT:
             return
