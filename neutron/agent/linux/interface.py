@@ -21,7 +21,8 @@ from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_log import log as logging
 from oslo_utils import excutils
-from pyroute2.netlink import exceptions as pyroute2_exc
+from pyroute2.netlink import exceptions \
+    as pyroute2_exc  # pylint: disable=no-name-in-module
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib

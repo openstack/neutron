@@ -21,9 +21,11 @@ from neutron_lib import exceptions
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log as logging
-from pyroute2.iproute import linux as iproute_linux
-from pyroute2.netlink import rtnl
-from pyroute2.netlink.rtnl.tcmsg import common as rtnl_common
+from pyroute2.iproute import linux \
+    as iproute_linux  # pylint: disable=no-name-in-module
+from pyroute2.netlink import rtnl  # pylint: disable=no-name-in-module
+from pyroute2.netlink.rtnl.tcmsg import common \
+    as rtnl_common  # pylint: disable=no-name-in-module
 
 from neutron._i18n import _
 from neutron.agent.linux import ip_lib
