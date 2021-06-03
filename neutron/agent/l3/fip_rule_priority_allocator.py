@@ -31,6 +31,9 @@ class FipPriority(object):
         else:
             return False
 
+    def __int__(self):
+        return int(self.index)
+
 
 class FipRulePriorityAllocator(ItemAllocator):
     """Manages allocation of floating ips rule priorities.
