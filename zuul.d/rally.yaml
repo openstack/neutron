@@ -7,6 +7,9 @@
         USE_PYTHON3: true
         OSPROFILER_COLLECTOR: redis
         OSPROFILER_HMAC_KEYS: "neutron-hmac-key-used-in-zuul-ci"
+        Q_ML2_TENANT_NETWORK_TYPE: vxlan
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+        Q_AGENT: openvswitch
       rally_task: rally-jobs/task-neutron.yaml
       devstack_plugins:
         osprofiler: https://opendev.org/openstack/osprofiler
@@ -25,6 +28,19 @@
         s-container: false
         s-object: false
         s-proxy: false
+        # OVN services
+        ovn-controller: false
+        ovn-northd: false
+        ovs-vswitchd: false
+        ovsdb-server: false
+        q-ovn-metadata-agent: false
+        # Neutron services
+        q-agt: true
+        q-dhcp: true
+        q-l3: true
+        q-meta: true
+        q-metering: true
+        q-svc: true
       devstack_local_conf:
         post-config:
           $NEUTRON_CONF:
