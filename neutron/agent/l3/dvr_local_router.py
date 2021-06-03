@@ -47,27 +47,64 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         self.rtr_fip_connect = False
         self.fip_ns = None
         self._pending_arp_set = set()
+        self._load_used_fip_information()
 
-        self.load_used_fip_information()
+    def _load_used_fip_information(self):
+        """Load FIP from the FipRulePriorityAllocator state file.
 
-    def load_used_fip_information(self):
-        """Some information needed to remove a floating ip e.g. it's associated
-        ip rule priorities, are stored in memory to avoid extra db lookups.
-        Since this is lost on agent restart we need to reload them.
+        If, for any reason, the FIP is not stored in the state file, this
+        method reads the namespace "ip rule" list and search for the
+        corresponding fixed IP of the FIP. If present, this "ip rule" is
+        (1) deleted, (2) a new rule priority is allocated and (3) the "ip rule"
+        is written again with the new assigned priority.
+
+        At the end of the method, all existing "ip rule" registers in
+        FIP_RT_TBL table (where FIP rules are stored) that don't match with
+        any register memoized in self._rule_priorities is deleted.
         """
         ex_gw_port = self.get_ex_gw_port()
-        if ex_gw_port:
-            fip_ns = self.agent.get_fip_ns(ex_gw_port['network_id'])
+        if not ex_gw_port:
+            return
 
-            for fip in self.get_floating_ips():
-                floating_ip = fip['floating_ip_address']
-                fixed_ip = fip['fixed_ip_address']
-                rule_pr = fip_ns.lookup_rule_priority(floating_ip)
-                if rule_pr:
-                    self.floating_ips_dict[floating_ip] = (fixed_ip, rule_pr)
-                else:
-                    LOG.error("Rule priority not found for floating ip %s",
-                              floating_ip)
+        fip_ns = self.agent.get_fip_ns(ex_gw_port['network_id'])
+        for fip in self.get_floating_ips():
+            floating_ip = fip['floating_ip_address']
+            fixed_ip = fip['fixed_ip_address']
+            if not fixed_ip:
+                continue
+
+            rule_pr = fip_ns.lookup_rule_priority(floating_ip)
+            if rule_pr:
+                self.floating_ips_dict[floating_ip] = (fixed_ip, rule_pr)
+                continue
+
+            rule_pr = fip_ns.allocate_rule_priority(floating_ip)
+            ip_rule = ip_lib.IPRule(namespace=self.ns_name)
+            ip_rule.rule.add(ip=fixed_ip,
+                             table=dvr_fip_ns.FIP_RT_TBL,
+                             priority=rule_pr)
+            self.floating_ips_dict[floating_ip] = (fixed_ip, rule_pr)
+
+        self._cleanup_unused_fip_ip_rules()
+
+    def _cleanup_unused_fip_ip_rules(self):
+        if not self.router_namespace.exists():
+            # It could be a new router, thus the namespace is not created yet.
+            return
+
+        ns_ipr = ip_lib.IPRule(namespace=self.ns_name)
+        ip_rules = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_4)
+        ip_rules = [ipr for ipr in ip_rules
+                    if ipr['table'] == dvr_fip_ns.FIP_RT_TBL]
+        for ip_rule in ip_rules:
+            for fixed_ip, rule_pr in self.floating_ips_dict.values():
+                if (ip_rule['from'] == fixed_ip and
+                        ip_rule['priority'] == rule_pr):
+                    break
+            else:
+                ip_lib.delete_ip_rule(self.ns_name, ip_rule['from'],
+                                      table=dvr_fip_ns.FIP_RT_TBL,
+                                      priority=ip_rule['priority'])
 
     def migrate_centralized_floating_ip(self, fip, interface_name, device):
         # Remove the centralized fip first and then add fip to the host
@@ -185,10 +222,10 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                                 priority=rule_pr)
             self.fip_ns.deallocate_rule_priority(floating_ip)
         else:
-            LOG.error("Unable to find necessary information to complete "
-                      "removal of floating ip rules for %s - will require "
-                      "manual cleanup (see LP 1891673 for details).",
-                      floating_ip)
+            LOG.error('Floating IP %s not stored in this agent. Because of '
+                      'the initilization method "_load_used_fip_information", '
+                      'all floating IPs should be memoized in the local '
+                      'memory.', floating_ip)
 
     def floating_ip_removed_dist(self, fip_cidr):
         """Remove floating IP from FIP namespace."""
