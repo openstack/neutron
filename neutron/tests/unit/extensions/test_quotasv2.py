@@ -30,6 +30,7 @@ from neutron.api.v2 import router
 from neutron.common import config
 from neutron.conf import quota as qconf
 from neutron.db.quota import driver
+from neutron.db.quota import driver_nolock
 from neutron import quota
 from neutron.quota import resource_registry
 from neutron.tests import base
@@ -504,29 +505,24 @@ class TestDbQuotaDriver(base.BaseTestCase):
 
 
 class TestQuotaDriverLoad(base.BaseTestCase):
-    def setUp(self):
-        super(TestQuotaDriverLoad, self).setUp()
-        # Make sure QuotaEngine is reinitialized in each test.
-        quota.QUOTAS._driver = None
 
     def _test_quota_driver(self, cfg_driver, loaded_driver,
                            with_quota_db_module=True):
+        quota.QUOTAS._driver = None
         cfg.CONF.set_override('quota_driver', cfg_driver, group='QUOTAS')
         with mock.patch.dict(sys.modules, {}):
             if (not with_quota_db_module and
-                    'neutron.db.quota.driver' in sys.modules):
-                del sys.modules['neutron.db.quota.driver']
+                    quota.QUOTA_DB_MODULE in sys.modules):
+                del sys.modules[quota.QUOTA_DB_MODULE]
             driver = quota.QUOTAS.get_driver()
             self.assertEqual(loaded_driver, driver.__class__.__name__)
 
-    def test_quota_db_driver_with_quotas_table(self):
-        self._test_quota_driver('neutron.db.quota.driver.DbQuotaDriver',
-                                'DbQuotaDriver', True)
+    def test_quota_driver_load(self):
+        for klass in (quota.ConfDriver, driver.DbQuotaDriver,
+                      driver_nolock.DbQuotaNoLockDriver):
+            self._test_quota_driver(
+                '.'.join([klass.__module__, klass.__name__]),
+                klass.__name__, True)
 
-    def test_quota_db_driver_fallback_conf_driver(self):
-        self._test_quota_driver('neutron.db.quota.driver.DbQuotaDriver',
-                                'ConfDriver', False)
-
-    def test_quota_conf_driver(self):
-        self._test_quota_driver('neutron.quota.ConfDriver',
-                                'ConfDriver', True)
+    def test_quota_driver_fallback_conf_driver(self):
+        self._test_quota_driver(quota.QUOTA_DB_DRIVER, 'ConfDriver', False)

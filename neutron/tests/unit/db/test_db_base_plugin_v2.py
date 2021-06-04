@@ -51,6 +51,7 @@ from neutron.common import ipv6_utils
 from neutron.common import test_lib
 from neutron.common import utils
 from neutron.conf import policies
+from neutron.conf import quota as quota_conf
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_backend_mixin
 from neutron.db.models import l3 as l3_models
@@ -110,7 +111,10 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def setUp(self, plugin=None, service_plugins=None,
               ext_mgr=None):
-
+        quota_conf.register_quota_opts(quota_conf.core_quota_opts, cfg.CONF)
+        cfg.CONF.set_override(
+            'quota_driver', 'neutron.db.quota.driver.DbQuotaDriver',
+            group=quota_conf.QUOTAS_CFG_GROUP)
         super(NeutronDbPluginV2TestCase, self).setUp()
         cfg.CONF.set_override('notify_nova_on_port_status_changes', False)
         cfg.CONF.set_override('allow_overlapping_ips', True)

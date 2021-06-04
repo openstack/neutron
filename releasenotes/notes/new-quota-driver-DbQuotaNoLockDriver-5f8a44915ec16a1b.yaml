@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    A new quota driver is added: ``DbQuotaNoLockDriver``. This driver, unlike
+    ``DbQuotaDriver``, does not create a unique lock per (resource,
+    project_id). That may lead to a database deadlock state if the number of
+    server requests exceeds the number of resolved resource creations, as
+    described in `LP#1926787 <https://bugs.launchpad.net/neutron/+bug/1926787>`_.
+    This driver relays on the database transactionality isolation and counts
+    the number of used and reserved resources and, if available, creates the
+    new resource reservations in one single database transaction.

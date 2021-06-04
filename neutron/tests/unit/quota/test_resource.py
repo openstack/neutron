@@ -30,34 +30,44 @@ from neutron.tests.unit import testlib_api
 
 
 DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+QUOTA_DRIVER = 'neutron.db.quota.DbQuotaDriver'
 
 
 meh_quota_flag = 'quota_meh'
 meh_quota_opts = [cfg.IntOpt(meh_quota_flag, default=99)]
 
 
+class _BaseResource(resource.BaseResource):
+
+    @property
+    def dirty(self):
+        return False
+
+    def count(self, context, plugin, project_id, **kwargs):
+        pass
+
+
 class TestResource(base.DietTestCase):
     """Unit tests for neutron.quota.resource.BaseResource"""
 
     def test_create_resource_without_plural_name(self):
-        res = resource.BaseResource('foo', None)
+        res = _BaseResource('foo', None)
         self.assertEqual('foos', res.plural_name)
-        res = resource.BaseResource('foy', None)
+        res = _BaseResource('foy', None)
         self.assertEqual('foies', res.plural_name)
 
     def test_create_resource_with_plural_name(self):
-        res = resource.BaseResource('foo', None,
-                                    plural_name='foopsies')
+        res = _BaseResource('foo', None, plural_name='foopsies')
         self.assertEqual('foopsies', res.plural_name)
 
     def test_resource_default_value(self):
-        res = resource.BaseResource('foo', 'foo_quota')
+        res = _BaseResource('foo', 'foo_quota')
         with mock.patch('oslo_config.cfg.CONF') as mock_cfg:
             mock_cfg.QUOTAS.foo_quota = 99
             self.assertEqual(99, res.default)
 
     def test_resource_negative_default_value(self):
-        res = resource.BaseResource('foo', 'foo_quota')
+        res = _BaseResource('foo', 'foo_quota')
         with mock.patch('oslo_config.cfg.CONF') as mock_cfg:
             mock_cfg.QUOTAS.foo_quota = -99
             self.assertEqual(-1, res.default)
@@ -94,6 +104,7 @@ class TestTrackedResource(testlib_api.SqlTestCase):
                 session.add(item)
 
     def setUp(self):
+        cfg.CONF.set_override('quota_driver', QUOTA_DRIVER, group='QUOTAS')
         super(TestTrackedResource, self).setUp()
         self.setup_coreplugin(DB_PLUGIN_KLASS)
         self.resource = 'meh'

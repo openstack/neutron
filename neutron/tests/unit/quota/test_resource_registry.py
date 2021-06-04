@@ -160,6 +160,7 @@ class TestAuxiliaryFunctions(base.DietTestCase):
                         'TrackedResource.mark_dirty') as mock_mark_dirty:
             self.registry.set_tracked_resource('meh', test_quota.MehModel)
             self.registry.register_resource_by_name('meh')
+            self.registry.resources['meh']._track_resource_events = True
             res = self.registry.get_resource('meh')
             # This ensures dirty is true
             res._dirty_tenants.add('tenant_id')
