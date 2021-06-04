@@ -214,6 +214,7 @@ def remove_reservation(context, reservation_id, set_dirty=False):
 
 
 @db_api.retry_if_session_inactive()
+@db_api.CONTEXT_READER
 def get_reservations_for_resources(context, tenant_id, resources,
                                    expired=False):
     """Retrieve total amount of reservations for specified resources.
