@@ -68,19 +68,16 @@ Below is a summary of those jobs.
     |(non-voting)                                  |tempest.scenario                  |         |       |             |                 | dvr_snat |       |        |            |             |
     |                                              |                                  |         |       |             |                 | dvr_snat |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-iptables_hybrid               |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | iptables_hybrid | legacy   | False | False  | True       | Yes         |
-    |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
-    |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
-    |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |tempest-slow-py3                              |tempest slow tests                |   3.6   |   2   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
+    |neutron-tempest-slow-py3                      |tempest slow tests                |   3.6   |   2   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-with-uwsgi                    |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
     |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |tempest-ipv6-only                             |tempest smoke + IPv6 tests        |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
+    |neutron-tempest-ipv6-only                     |tempest smoke + IPv6 tests        |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
+    |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovn-tempest-ovs-release               |Various tempest api, scenario     |   3.6   |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
