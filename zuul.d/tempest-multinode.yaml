@@ -26,6 +26,17 @@
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_local_conf:
@@ -66,6 +77,17 @@
           q-meta: true
           br-ex-tcpdump: true
           br-int-flows: true
+          # Cinder services
+          c-api: false
+          c-bak: false
+          c-sch: false
+          c-vol: false
+          cinder: false
+          # Swift services
+          s-account: false
+          s-container: false
+          s-object: false
+          s-proxy: false
         devstack_local_conf:
           post-config:
             $NEUTRON_CONF:
@@ -98,6 +120,26 @@
       tox_envlist: integrated-network
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
+    group-vars:
+      subnode:
+        devstack_services:
+          # Cinder services
+          c-bak: false
+          c-vol: false
 
 - job:
     name: neutron-ovn-multinode-base
@@ -148,7 +190,6 @@
       extensions_to_txt:
         db: true
       devstack_services:
-        c-bak: false
         etcd: false
         br-ex-tcpdump: true
         br-int-flows: true
@@ -165,6 +206,12 @@
         q-meta: false
         q-metering: false
         q-dns: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
         # When running python3 Swift should be disabled for now
         s-account: false
         s-container: false
@@ -194,6 +241,9 @@
           q-metering: false
           q-ovn-metadata-agent: true
           tls-proxy: true
+          # Cinder services
+          c-bak: false
+          c-vol: false
         devstack_localrc:
           Q_AGENT: ovn
           Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger

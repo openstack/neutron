@@ -29,6 +29,17 @@
         q-meta: true
         q-metering: true
         q-svc: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
 
 - job:
     name: neutron-ovs-base
@@ -135,6 +146,17 @@
         mysql: false
         br-ex-tcpdump: true
         br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
     irrelevant-files: *irrelevant-files
 
 - job:
@@ -152,6 +174,17 @@
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
     # NOTE(ralonsoh): once MariaDB default version in Ubuntu is bumped to
     # >10.1, this workaround can be removed (bug 1855912)
     pre-run: playbooks/add_mariadb_repo.yaml
@@ -170,6 +203,17 @@
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
     irrelevant-files: *irrelevant-files
 
 - job:
@@ -215,9 +259,6 @@
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
-        c-api: true
-        c-sch: true
-        c-vol: true
         dstat: true
         g-api: true
         g-reg: true
@@ -238,7 +279,6 @@
         placement-api: true
         q-svc: true
         q-dns: true
-        c-bak: false
         etcd: false
         q-agt: false
         q-dhcp: false
@@ -253,6 +293,12 @@
         tls-proxy: true
         q-qos: true
         q-port-forwarding: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
 
 - job:
     name: neutron-ovn-tempest-ovs-ipv6-only-base
