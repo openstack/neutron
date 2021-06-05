@@ -30,6 +30,7 @@ from neutron.tests.common import helpers
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack.resources import client as client_resource
+from neutron.tests.fullstack.resources import machine
 from neutron.tests.unit import testlib_api
 
 
@@ -158,6 +159,20 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
             "Port", vm.port.name,
             "tag", network.get("provider:segmentation_id"))
         return vm
+
+    def _prepare_vms_in_net(self, tenant_uuid, network, use_dhcp=False):
+        vms = machine.FakeFullstackMachinesList(
+            self.useFixture(
+                machine.FakeFullstackMachine(
+                    host,
+                    network['id'],
+                    tenant_uuid,
+                    self.safe_client,
+                    use_dhcp=use_dhcp))
+            for host in self.environment.hosts)
+
+        vms.block_until_all_boot()
+        return vms
 
     def assert_namespace_exists(self, ns_name):
         common_utils.wait_until_true(

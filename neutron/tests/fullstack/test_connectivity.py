@@ -24,7 +24,6 @@ from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import config
 from neutron.tests.fullstack.resources import environment
-from neutron.tests.fullstack.resources import machine
 from neutron.tests.unit import testlib_api
 
 load_tests = testlib_api.module_load_tests
@@ -74,24 +73,10 @@ class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):
 
         return network
 
-    def _prepare_vms_in_net(self, tenant_uuid, network):
-        vms = machine.FakeFullstackMachinesList(
-            self.useFixture(
-                machine.FakeFullstackMachine(
-                    host,
-                    network['id'],
-                    tenant_uuid,
-                    self.safe_client,
-                    use_dhcp=self.use_dhcp))
-            for host in self.environment.hosts)
-
-        vms.block_until_all_boot()
-        return vms
-
     def _prepare_vms_in_single_network(self):
         tenant_uuid = uuidutils.generate_uuid()
         network = self._prepare_network(tenant_uuid)
-        return self._prepare_vms_in_net(tenant_uuid, network)
+        return self._prepare_vms_in_net(tenant_uuid, network, self.use_dhcp)
 
     def _test_connectivity(self):
         vms = self._prepare_vms_in_single_network()
