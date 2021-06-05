@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import segment
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 from neutron_lib.db import standard_attr
@@ -21,7 +22,6 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.db import models_v2
-from neutron.extensions import segment
 
 
 # Some standalone plugins need a DB table to store provider
@@ -51,7 +51,7 @@ class NetworkSegment(standard_attr.HasStandardAttributes,
                                backref=orm.backref("segments",
                                                    lazy='subquery',
                                                    cascade='delete'))
-    api_collections = [segment.SEGMENTS]
+    api_collections = [segment.COLLECTION_NAME]
 
     __table_args__ = (
         sa.UniqueConstraint(

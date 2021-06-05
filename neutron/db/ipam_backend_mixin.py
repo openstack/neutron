@@ -20,6 +20,7 @@ import itertools
 import netaddr
 from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import segment
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib.db import api as db_api
@@ -35,7 +36,6 @@ from neutron._i18n import _
 from neutron.common import ipv6_utils
 from neutron.db import db_base_plugin_common
 from neutron.db import models_v2
-from neutron.extensions import segment
 from neutron.ipam import exceptions as ipam_exceptions
 from neutron.ipam import utils as ipam_utils
 from neutron.objects import address_scope as addr_scope_obj

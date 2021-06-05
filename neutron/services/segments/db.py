@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import segment as extension
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -31,7 +32,6 @@ from oslo_utils import uuidutils
 
 from neutron.common import utils
 from neutron.db import segments_db as db
-from neutron.extensions import segment as extension
 from neutron import manager
 from neutron.objects import base as base_obj
 from neutron.objects import network

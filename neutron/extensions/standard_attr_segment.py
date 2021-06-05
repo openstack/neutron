@@ -10,7 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.extensions import _standard_attr_segment_lib as apidef
+from neutron_lib.api.definitions import standard_attr_segment as apidef
 from neutron_lib.api import extensions
 
 
