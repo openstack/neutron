@@ -308,6 +308,10 @@ def list_ovs_opts():
 
 def list_sriov_agent_opts():
     return [
+        ('DEFAULT',
+         itertools.chain(
+             neutron.conf.service.RPC_EXTRA_OPTS)
+         ),
         ('sriov_nic',
          neutron.conf.plugins.ml2.drivers.mech_sriov.agent_common.
          sriov_nic_opts),
