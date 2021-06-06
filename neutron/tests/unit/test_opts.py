@@ -21,4 +21,7 @@ from neutron.tests import base
 class OptsTestCase(base.BaseTestCase):
 
     def test_list_sriov_agent_opts(self):
-        self.assertEqual('sriov_nic', opts.list_sriov_agent_opts()[0][0])
+        sriov_agent_opts = opts.list_sriov_agent_opts()
+        self.assertEqual('DEFAULT', sriov_agent_opts[0][0])
+        self.assertEqual('sriov_nic', sriov_agent_opts[1][0])
+        self.assertEqual('agent', sriov_agent_opts[2][0])
