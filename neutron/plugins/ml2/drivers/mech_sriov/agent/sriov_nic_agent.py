@@ -45,6 +45,7 @@ from neutron.common import config as common_config
 from neutron.common import profiler as setup_profiler
 from neutron.common import utils as n_utils
 from neutron.conf.agent import common as agent_config
+from neutron.conf import service as service_conf
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
@@ -549,6 +550,8 @@ def main():
 
     common_config.setup_logging()
     agent_config.setup_privsep()
+    service_conf.register_service_opts(service_conf.RPC_EXTRA_OPTS, cfg.CONF)
+
     try:
         config_parser = SriovNicAgentConfigParser()
         config_parser.parse()
