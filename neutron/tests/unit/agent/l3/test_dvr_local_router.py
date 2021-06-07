@@ -532,7 +532,10 @@ class TestDvrRouterOperations(base.BaseTestCase):
                        'device_owner': lib_constants.DEVICE_OWNER_DHCP,
                        'fixed_ips': [{'ip_address': '1.2.3.4',
                                       'prefixlen': 24,
-                                      'subnet_id': subnet_id}]},
+                                      'subnet_id': subnet_id}],
+                       'allowed_address_pairs': [
+                           {'ip_address': '10.20.30.40',
+                            'mac_address': '00:11:22:33:44:55'}]},
                       {'mac_address': '11:22:33:44:55:66',
                        'device_owner': lib_constants.DEVICE_OWNER_LOADBALANCER,
                        'fixed_ips': [{'ip_address': '1.2.3.5',
@@ -554,8 +557,9 @@ class TestDvrRouterOperations(base.BaseTestCase):
                                '_process_arp_cache_for_internal_port') as parp:
             ri._set_subnet_arp_info(subnet_id)
         self.assertEqual(1, parp.call_count)
-        self.mock_ip_dev.neigh.add.assert_called_once_with(
-            '1.2.3.4', '00:11:22:33:44:55')
+        self.mock_ip_dev.neigh.add.assert_has_calls([
+            mock.call('1.2.3.4', '00:11:22:33:44:55'),
+            mock.call('10.20.30.40', '00:11:22:33:44:55')])
 
         # Test negative case
         router['distributed'] = False
