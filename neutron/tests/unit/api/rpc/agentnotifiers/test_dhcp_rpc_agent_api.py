@@ -266,8 +266,13 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         for res in (resources.PORT, resources.SUBNET):
             self.notifier._unsubscribed_resources = []
             kwargs = {res: {}}
-            registry.notify(res, events.AFTER_CREATE, self,
-                            context=mock.Mock(), **kwargs)
+            if res == resources.PORT:
+                registry.publish(res, events.AFTER_CREATE, self,
+                                 payload=events.DBEventPayload(
+                                     mock.Mock(), states=({res: {}},)))
+            else:
+                registry.notify(res, events.AFTER_CREATE, self,
+                                context=mock.Mock(), **kwargs)
             # don't unsubscribe until all three types are observed
             self.assertEqual([], self.notifier._unsubscribed_resources)
             registry.notify(res, events.AFTER_UPDATE, self,
@@ -277,8 +282,13 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
                             context=mock.Mock(), **kwargs)
             self.assertEqual([res], self.notifier._unsubscribed_resources)
             # after first time, no further unsubscribing should happen
-            registry.notify(res, events.AFTER_CREATE, self,
-                            context=mock.Mock(), **kwargs)
+            if res == resources.PORT:
+                registry.publish(res, events.AFTER_CREATE, self,
+                                 payload=events.DBEventPayload(
+                                     mock.Mock(), states=({res: {}})))
+            else:
+                registry.notify(res, events.AFTER_CREATE, self,
+                                context=mock.Mock(), **kwargs)
             self.assertEqual([res], self.notifier._unsubscribed_resources)
 
         for res in [resources.NETWORK]:

@@ -533,17 +533,17 @@ def _dvr_handle_unbound_allowed_addr_pair_del(
             context, port, fixed_ips_to_delete=aa_fixed_ips)
 
 
-def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
+def _notify_l3_agent_new_port(resource, event, trigger, payload=None):
     LOG.debug('Received %(resource)s %(event)s', {
         'resource': resource,
         'event': event})
-    port = kwargs.get('port')
+    port = payload.latest_state
     if not port:
         return
 
     if n_utils.is_dvr_serviced(port['device_owner']):
         l3plugin = directory.get_plugin(plugin_constants.L3)
-        context = kwargs['context']
+        context = payload.context
         l3plugin.dvr_handle_new_service_port(context, port)
         l3plugin.update_arp_entry_for_dvr_service_port(context, port)
 
