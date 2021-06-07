@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from neutron_lib.utils import net as net_utils
 
@@ -61,3 +62,12 @@ class AllowedAddressPair(base.NeutronDbObject):
             fields['mac_address'] = net_utils.AuthenticEUI(
                 fields['mac_address'])
         return fields
+
+    @classmethod
+    def get_allowed_address_pairs_for_ports(cls, context, port_ids):
+        with db_api.CONTEXT_READER.using(context):
+            query = context.session.query(models.AllowedAddressPair).filter(
+                    models.AllowedAddressPair.port_id.in_(port_ids))
+            pairs = [cls._load_object(context, db_obj)
+                     for db_obj in query.all()]
+        return pairs
