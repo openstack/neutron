@@ -345,8 +345,12 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
 
             if self.vxlan_mode == lconst.VXLAN_MCAST:
                 args['group'] = self.get_vxlan_group(segmentation_id)
+
             if cfg.CONF.VXLAN.l2_population:
                 args['proxy'] = cfg.CONF.VXLAN.arp_responder
+                # L2population should set the local ip address to handle
+                # a source dev with multiple ip addresses configured.
+                args['local'] = self.local_ip
 
             try:
                 int_vxlan = self.ip.add_vxlan(interface, segmentation_id,
