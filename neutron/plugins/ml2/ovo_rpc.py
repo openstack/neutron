@@ -148,10 +148,7 @@ class OVOServerRpcInterface(object):
             resources.NETWORK: network.Network,
             resources.SECURITY_GROUP: securitygroup.SecurityGroup,
             resources.SECURITY_GROUP_RULE: securitygroup.SecurityGroupRule,
-            # TODO(mlavalle) Following line should be replaced by:
-            # resources.ADDRESS_GROUP: address_group.AddressGroup,
-            # when https://review.opendev.org/#/c/756927/ is released
-            'address_group': address_group.AddressGroup,
+            resources.ADDRESS_GROUP: address_group.AddressGroup,
         }
         self._resource_handlers = {
             res: _ObjectChangeHandler(res, obj_class, self._rpc_pusher)

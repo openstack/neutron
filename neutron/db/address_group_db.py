@@ -13,32 +13,18 @@
 import netaddr
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
-from neutron_lib import exceptions
 from neutron_lib.exceptions import address_group as ag_exc
 from oslo_utils import uuidutils
 
-from neutron._i18n import _
 from neutron.common import utils as common_utils
 from neutron.extensions import address_group as ag_ext
 from neutron.objects import address_group as ag_obj
 from neutron.objects import base as base_obj
 from neutron.objects import securitygroup as sg_obj
-
-
-# TODO(hangyang): Remove this exception once neutron_lib > 2.6.1 is released.
-class AddressGroupInUse(exceptions.InUse):
-    message = _("Address group %(address_group_id)s is in use on one or more "
-                "security group rules.")
-
-
-# TODO(mlavalle) Following line should be deleted when
-# https://review.opendev.org/#/c/756927/ is released. All references in this
-# module to ADDRESS_GROUP should point to the definition in
-# neutron_lib/callbacks/resources
-ADDRESS_GROUP = 'address_group'
 
 
 @resource_extend.has_resource_extenders
@@ -116,7 +102,7 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
         # the callback handler handle_event, class _ObjectChangeHandler in
         # neutron.plugins.ml2.ovo_rpc is updated to receive notifications with
         # new style payload objects as argument.
-        registry.notify(ADDRESS_GROUP, events.AFTER_UPDATE, self,
+        registry.notify(resources.ADDRESS_GROUP, events.AFTER_UPDATE, self,
                         context=context, **kwargs)
         return ag_dict
 
@@ -138,7 +124,7 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
         # the callback handler handle_event, class _ObjectChangeHandler in
         # neutron.plugins.ml2.ovo_rpc is updated to receive notifications with
         # new style payload objects as argument.
-        registry.notify(ADDRESS_GROUP, events.AFTER_UPDATE, self,
+        registry.notify(resources.ADDRESS_GROUP, events.AFTER_UPDATE, self,
                         context=context, **kwargs)
         return ag_dict
 
@@ -156,7 +142,7 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
         # the callback handler handle_event, class _ObjectChangeHandler in
         # neutron.plugins.ml2.ovo_rpc is updated to receive notifications with
         # new style payload objects as argument.
-        registry.notify(ADDRESS_GROUP, events.AFTER_CREATE, self,
+        registry.notify(resources.ADDRESS_GROUP, events.AFTER_CREATE, self,
                         context=context, **kwargs)
         # NOTE(hangyang): after sent the create notification we then handle
         # adding addresses which will send another update notification
@@ -177,7 +163,7 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
         # the callback handler handle_event, class _ObjectChangeHandler in
         # neutron.plugins.ml2.ovo_rpc is updated to receive notifications with
         # new style payload objects as argument.
-        registry.notify(ADDRESS_GROUP, events.AFTER_UPDATE, self,
+        registry.notify(resources.ADDRESS_GROUP, events.AFTER_UPDATE, self,
                         context=context, **kwargs)
         return ag_dict
 
@@ -200,8 +186,7 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
         if sg_obj.SecurityGroupRule.get_objects(
                 common_utils.get_elevated_context(context),
                 remote_address_group_id=id):
-            # TODO(hangyang): use exception from neutron_lib
-            raise AddressGroupInUse(address_group_id=id)
+            raise ag_exc.AddressGroupInUse(address_group_id=id)
         ag = self._get_address_group(context, id)
         ag.delete()
         kwargs = {'address_group_id': id, 'name': ag['name'],
@@ -210,5 +195,5 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
         # the callback handler handle_event, class _ObjectChangeHandler in
         # neutron.plugins.ml2.ovo_rpc is updated to receive notifications with
         # new style payload objects as argument.
-        registry.notify(ADDRESS_GROUP, events.AFTER_DELETE, self,
+        registry.notify(resources.ADDRESS_GROUP, events.AFTER_DELETE, self,
                         context=context, **kwargs)
