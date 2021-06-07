@@ -279,8 +279,15 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
                                 context=mock.Mock(), **kwargs)
             # don't unsubscribe until all three types are observed
             self.assertEqual([], self.notifier._unsubscribed_resources)
-            registry.notify(res, events.AFTER_UPDATE, self,
-                            context=mock.Mock(), **kwargs)
+            if res == resources.PORT:
+                registry.publish(res, events.AFTER_UPDATE, self,
+                                 payload=events.DBEventPayload(
+                                     mock.Mock(), states=({},)))
+
+            else:
+                registry.notify(res, events.AFTER_UPDATE, self,
+                                context=mock.Mock(), **kwargs)
+
             self.assertEqual([], self.notifier._unsubscribed_resources)
             registry.notify(res, events.AFTER_DELETE, self,
                             context=mock.Mock(), **kwargs)

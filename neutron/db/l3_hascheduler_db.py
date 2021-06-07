@@ -55,10 +55,10 @@ class L3_HA_scheduler_db_mixin(l3_sch_db.AZL3AgentSchedulerDbMixin):
         return self._get_agents_dict_for_router(agents)
 
 
-def _notify_l3_agent_ha_port_update(resource, event, trigger, **kwargs):
-    new_port = kwargs.get('port')
-    original_port = kwargs.get('original_port')
-    context = kwargs.get('context')
+def _notify_l3_agent_ha_port_update(resource, event, trigger, payload):
+    new_port = payload.latest_state
+    original_port = payload.states[0]
+    context = payload.context
     host = new_port.get(portbindings.HOST_ID)
 
     if new_port and original_port and host:

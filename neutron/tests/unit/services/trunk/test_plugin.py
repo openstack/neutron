@@ -360,11 +360,12 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
         trunk_details = {'trunk_id': trunk.id}
         new_parent['trunk_details'] = trunk_details
         original_parent['trunk_details'] = trunk_details
-        kwargs = {'context': self.context, 'port': new_parent,
-                  'original_port': original_parent}
-        self.trunk_plugin._trigger_trunk_status_change(resources.PORT,
-                                                       events.AFTER_UPDATE,
-                                                       None, **kwargs)
+        self.trunk_plugin._trigger_trunk_status_change(
+            resources.PORT,
+            events.AFTER_UPDATE,
+            None,
+            payload=events.DBEventPayload(
+                self.context, states=(original_parent, new_parent)))
         current_trunk = self._get_trunk_obj(trunk.id)
         self.assertEqual(final_trunk_status, current_trunk.status)
         return trunk, current_trunk

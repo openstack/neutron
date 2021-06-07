@@ -443,10 +443,10 @@ class NovaSegmentNotifier(object):
                       segment_id, reserved=ipv4_subnets_number))
 
     @registry.receives(resources.PORT, [events.AFTER_UPDATE])
-    def _notify_port_updated(self, resource, event, trigger, context,
-                             **kwargs):
-        port = kwargs.get('port')
-        original_port = kwargs.get('original_port')
+    def _notify_port_updated(self, resource, event, trigger, payload):
+        context = payload.context
+        port = payload.latest_state
+        original_port = payload.states[0]
         does_original_port_require_nova_inventory_update = (
             self._does_port_require_nova_inventory_update(original_port))
         does_port_require_nova_inventory_update = (

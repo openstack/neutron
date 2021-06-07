@@ -566,9 +566,9 @@ def _notify_port_delete(event, resource, trigger, **kwargs):
             context, info['router_id'], info['host'])
 
 
-def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
-    new_port = kwargs.get('port')
-    original_port = kwargs.get('original_port')
+def _notify_l3_agent_port_update(resource, event, trigger, payload):
+    new_port = payload.latest_state
+    original_port = payload.states[0]
 
     is_fixed_ips_changed = n_utils.port_ip_changed(new_port, original_port)
 
@@ -581,7 +581,7 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
 
     if new_port and original_port:
         l3plugin = directory.get_plugin(plugin_constants.L3)
-        context = kwargs['context']
+        context = payload.context
         new_port_host = new_port.get(portbindings.HOST_ID)
         original_port_host = original_port.get(portbindings.HOST_ID)
         is_new_port_binding_changed = (
@@ -670,7 +670,7 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
                         l3plugin, context, original_port, address_pair)
                 return
 
-        if kwargs.get('mac_address_updated') or is_fixed_ips_changed:
+        if payload.metadata.get('mac_address_updated') or is_fixed_ips_changed:
             l3plugin.update_arp_entry_for_dvr_service_port(
                 context, new_port)
 

@@ -1377,19 +1377,22 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient.update_router_port')
     def test_port_update_postcommit(self, update_rp_mock):
-        kwargs = {'port': {'device_owner': 'foo'},
-                  'context': 'fake_context'}
+        context = 'fake_context'
+        port = {'device_owner': 'foo'}
         self.l3_inst._port_update(resources.PORT, events.AFTER_UPDATE, None,
-                                  **kwargs)
+                                  payload=events.DBEventPayload(
+                                      context,
+                                      states=(port,)))
         update_rp_mock.assert_not_called()
 
-        kwargs = {'port': {'device_owner': constants.DEVICE_OWNER_ROUTER_INTF},
-                  'context': 'fake_context'}
+        port = {'device_owner': constants.DEVICE_OWNER_ROUTER_INTF}
         self.l3_inst._port_update(resources.PORT, events.AFTER_UPDATE, None,
-                                  **kwargs)
+                                  payload=events.DBEventPayload(
+                                      context,
+                                      states=(port,)))
 
-        update_rp_mock.assert_called_once_with(kwargs['context'],
-                                               kwargs['port'],
+        update_rp_mock.assert_called_once_with(context,
+                                               port,
                                                if_exists=True)
 
     @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.update_port_status')

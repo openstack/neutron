@@ -287,12 +287,11 @@ class TestL3NatBasePlugin(TestL3PluginBaseAttributes,
             new_port = super(TestL3NatBasePlugin, self).update_port(
                 context, id, port)
         # Notifications must be sent after the above transaction is complete
-        kwargs = {
-            'context': context,
-            'port': new_port,
-            'original_port': original_port,
-        }
-        registry.notify(resources.PORT, events.AFTER_UPDATE, self, **kwargs)
+        registry.publish(resources.PORT, events.AFTER_UPDATE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             resource_id=id,
+                             states=(original_port, new_port,)))
         return new_port
 
 
