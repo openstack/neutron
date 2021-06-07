@@ -14,6 +14,7 @@
 
 import netaddr
 from neutron_lib.api.definitions import port as port_def
+from neutron_lib.api import extensions
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
@@ -801,6 +802,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
         :returns: the default security group id for given tenant.
         """
+        if not extensions.is_extension_supported(self, 'security-group'):
+            return
         default_group_id = self._get_default_sg_id(context, tenant_id)
         if default_group_id:
             return default_group_id
@@ -852,7 +855,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         if not validators.is_attr_set(port.get(ext_sg.SECURITYGROUPS)):
             default_sg = self._ensure_default_security_group(context,
                                                              port['tenant_id'])
-            port[ext_sg.SECURITYGROUPS] = [default_sg]
+            if default_sg:
+                port[ext_sg.SECURITYGROUPS] = [default_sg]
 
     def _check_update_deletes_security_groups(self, port):
         """Return True if port has as a security group and it's value
