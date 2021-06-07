@@ -106,7 +106,8 @@ class DbQuotaDriver(object):
         # update with specific tenant limits
         quota_objs = quota_obj.Quota.get_objects(context, project_id=tenant_id)
         for item in quota_objs:
-            tenant_quota_ext[item['resource']]['limit'] = item['limit']
+            if item['resource'] in tenant_quota_ext:
+                tenant_quota_ext[item['resource']]['limit'] = item['limit']
         return tenant_quota_ext
 
     @staticmethod
