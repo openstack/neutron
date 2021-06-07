@@ -37,7 +37,7 @@ LOG = logging.getLogger(__name__)
 
 
 class _ObjectChangeHandler(object):
-    _PAYLOAD_RESOURCES = (resources.NETWORK,)
+    _PAYLOAD_RESOURCES = (resources.NETWORK, resources.ADDRESS_GROUP,)
 
     def __init__(self, resource, object_class, resource_push_api):
         self._resource = resource

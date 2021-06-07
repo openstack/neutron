@@ -83,7 +83,7 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
 
     def add_addresses(self, context, address_group_id, addresses):
         ag = self._get_address_group(context, address_group_id)
-        kwargs = {'original_address_group': self._make_address_group_dict(ag)}
+        original_address_group = self._make_address_group_dict(ag)
         addrs_in_ag, addrs_not_in_ag = self._process_requested_addresses(
             ag, addresses['addresses'])
         if addrs_in_ag:
@@ -97,18 +97,16 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
             addr_assoc.create()
         ag.update()  # reload synthetic fields
         ag_dict = {'address_group': self._make_address_group_dict(ag)}
-        kwargs.update(ag_dict)
-        # TODO(hangyang) this notification should be updated to publish when
-        # the callback handler handle_event, class _ObjectChangeHandler in
-        # neutron.plugins.ml2.ovo_rpc is updated to receive notifications with
-        # new style payload objects as argument.
-        registry.notify(resources.ADDRESS_GROUP, events.AFTER_UPDATE, self,
-                        context=context, **kwargs)
+        registry.publish(resources.ADDRESS_GROUP, events.AFTER_UPDATE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             resource_id=address_group_id,
+                             states=(original_address_group, ag_dict,)))
         return ag_dict
 
     def remove_addresses(self, context, address_group_id, addresses):
         ag = self._get_address_group(context, address_group_id)
-        kwargs = {'original_address_group': self._make_address_group_dict(ag)}
+        original_address_group = self._make_address_group_dict(ag)
         addrs_in_ag, addrs_not_in_ag = self._process_requested_addresses(
             ag, addresses['addresses'])
         if addrs_not_in_ag:
@@ -119,13 +117,11 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
                 context, address_group_id=address_group_id, address=addr)
         ag.update()  # reload synthetic fields
         ag_dict = {'address_group': self._make_address_group_dict(ag)}
-        kwargs.update(ag_dict)
-        # TODO(hangyang) this notification should be updated to publish when
-        # the callback handler handle_event, class _ObjectChangeHandler in
-        # neutron.plugins.ml2.ovo_rpc is updated to receive notifications with
-        # new style payload objects as argument.
-        registry.notify(resources.ADDRESS_GROUP, events.AFTER_UPDATE, self,
-                        context=context, **kwargs)
+        registry.publish(resources.ADDRESS_GROUP, events.AFTER_UPDATE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             resource_id=address_group_id,
+                             states=(original_address_group, ag_dict,)))
         return ag_dict
 
     def create_address_group(self, context, address_group):
@@ -137,13 +133,12 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
                 'description': fields['description']}
         ag = ag_obj.AddressGroup(context, **args)
         ag.create()
-        kwargs = {'address_group': self._make_address_group_dict(ag)}
-        # TODO(mlavalle) this notification should be updated to publish when
-        # the callback handler handle_event, class _ObjectChangeHandler in
-        # neutron.plugins.ml2.ovo_rpc is updated to receive notifications with
-        # new style payload objects as argument.
-        registry.notify(resources.ADDRESS_GROUP, events.AFTER_CREATE, self,
-                        context=context, **kwargs)
+        address_group = self._make_address_group_dict(ag)
+        registry.publish(resources.ADDRESS_GROUP, events.AFTER_CREATE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             resource_id=ag.id,
+                             states=(address_group,)))
         # NOTE(hangyang): after sent the create notification we then handle
         # adding addresses which will send another update notification
         if fields.get('addresses') is not constants.ATTR_NOT_SPECIFIED:
@@ -154,17 +149,15 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
     def update_address_group(self, context, id, address_group):
         fields = address_group['address_group']
         ag = self._get_address_group(context, id)
-        kwargs = {'original_address_group': self._make_address_group_dict(ag)}
+        original_address_group = self._make_address_group_dict(ag)
         ag.update_fields(fields)
         ag.update()
         ag_dict = self._make_address_group_dict(ag)
-        kwargs['address_group'] = ag_dict
-        # TODO(mlavalle) this notification should be updated to publish when
-        # the callback handler handle_event, class _ObjectChangeHandler in
-        # neutron.plugins.ml2.ovo_rpc is updated to receive notifications with
-        # new style payload objects as argument.
-        registry.notify(resources.ADDRESS_GROUP, events.AFTER_UPDATE, self,
-                        context=context, **kwargs)
+        registry.publish(resources.ADDRESS_GROUP, events.AFTER_UPDATE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             resource_id=id,
+                             states=(original_address_group, ag_dict,)))
         return ag_dict
 
     def get_address_group(self, context, id, fields=None):
@@ -189,11 +182,6 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
             raise ag_exc.AddressGroupInUse(address_group_id=id)
         ag = self._get_address_group(context, id)
         ag.delete()
-        kwargs = {'address_group_id': id, 'name': ag['name'],
-                  'description': ag['description']}
-        # TODO(mlavalle) this notification should be updated to publish when
-        # the callback handler handle_event, class _ObjectChangeHandler in
-        # neutron.plugins.ml2.ovo_rpc is updated to receive notifications with
-        # new style payload objects as argument.
-        registry.notify(resources.ADDRESS_GROUP, events.AFTER_DELETE, self,
-                        context=context, **kwargs)
+        registry.publish(resources.ADDRESS_GROUP, events.AFTER_DELETE, self,
+                         payload=events.DBEventPayload(context, resource_id=id,
+                                                       states=(ag,)))
